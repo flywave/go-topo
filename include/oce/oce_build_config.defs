@@ -1,0 +1,46 @@
+/****************************************************************
+**
+**  File: oce_build_config.h.cmake, build-inc/oce-config.h
+**
+**  This configuration header is used to build OCE. It is
+**  installed along other header files in order to know which
+**  macros had been defined when compiling OCE, but it must
+**  NOT be included when compiling 3rd party programs.
+**
+****************************************************************/
+
+
+/* Define to 1 if you have the <strings.h> header file. */
+#define HAVE_STRINGS_H 1
+
+/* Define to 1 if you have the <mm_malloc.h> header file. */
+#define HAVE_MM_MALLOC_H 1
+
+/* Define to 1 if you have the <atomic.h> header file. */
+/* #undef OCE_HAVE_ATOMIC_H */
+
+/* Define to 1 if the localtime_r function is available. */
+#define HAVE_LOCALTIME_R 1
+
+/* Define to 1 if the clock_gettime function is available in libc. */
+#define HAVE_CLOCK_GETTIME 1
+
+/* Define to 1 if the posix_memalign function is available. */
+#define HAVE_POSIX_MEMALIGN 1
+
+/* Define if your processor stores words with the most significant byte first
+   (like Motorola and SPARC, unlike Intel and VAX). */
+/* #undef WORDS_BIGENDIAN */
+
+/* Whether OCE is build as static lib */
+/* #undef OCE_BUILD_STATIC_LIB */
+
+/* Define MACOSX_USE_GLX to use X11 OpenGL on OSX */
+/* #undef MACOSX_USE_GLX */
+
+/* Define if uint32_t and int are the same type */
+/* #undef OCE_IS_DUPLICATE_UINT32_T */
+
+/* Make OCE release number visible when displaying OCCT version number */
+#define OCC_VERSION_DEVELOPMENT "oce-0.18"
+
