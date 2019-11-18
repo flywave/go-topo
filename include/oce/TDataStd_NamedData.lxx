@@ -33,10 +33,10 @@ inline Standard_Boolean TDataStd_NamedData::HasReals() const
 }
 
 //=======================================================================
-//function : HasStrings
+//function : Hastd::strings
 //purpose  : Returns true if there are some named strings in the attribute.
 //=======================================================================
-inline Standard_Boolean TDataStd_NamedData::HasStrings() const
+inline Standard_Boolean TDataStd_NamedData::Hastd::strings() const
 {
   return !myStrings.IsNull();
 }

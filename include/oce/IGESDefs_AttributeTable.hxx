@@ -84,7 +84,7 @@ public:
   Standard_EXPORT   Standard_Real AttributeAsReal (const Standard_Integer AtNum, const Standard_Integer Rownum, const Standard_Integer ValNum)  const;
   
   //! Returns Attribute Value <AtNum, Rownum, rank ValNum> as an Integer
-  Standard_EXPORT   Handle(TCollection_HAsciiString) AttributeAsString (const Standard_Integer AtNum, const Standard_Integer Rownum, const Standard_Integer ValNum)  const;
+  Standard_EXPORT   Handle(TCollection_HAsciiString) AttributeAstd::string (const Standard_Integer AtNum, const Standard_Integer Rownum, const Standard_Integer ValNum)  const;
   
   //! Returns Attribute Value <AtNum, Rownum, rank ValNum> as an Entity
   //! Error if Indices out of Range, or no Value defined, or not an Entity

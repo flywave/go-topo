@@ -129,7 +129,7 @@ public:
   Standard_EXPORT   Standard_Boolean IsReal()  const;
   
   //! Tells if <me> is for a String value
-  Standard_EXPORT   Standard_Boolean IsString()  const;
+  Standard_EXPORT   Standard_Boolean Istd::string()  const;
   
   //! Tells if <me> is for a Boolean value (false,true)
   Standard_EXPORT   Standard_Boolean IsBoolean()  const;

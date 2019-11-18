@@ -104,7 +104,7 @@ public:
   Standard_EXPORT   Standard_Boolean HasReals()  const;
   
   //! Returns true if at least one named string value is kept.
-  Standard_EXPORT   Standard_Boolean HasStrings()  const;
+  Standard_EXPORT   Standard_Boolean Hastd::strings()  const;
   
   //! Returns true if at least one named byte value is kept.
   Standard_EXPORT   Standard_Boolean HasBytes()  const;

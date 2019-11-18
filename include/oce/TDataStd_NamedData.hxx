@@ -110,14 +110,14 @@ public:
   Standard_EXPORT   void ChangeReals (const TDataStd_DataMapOfStringReal& theReals) ;
   
   //! Returns true if there are some named strings in the attribute.
-      Standard_Boolean HasStrings()  const;
+      Standard_Boolean Hastd::strings()  const;
   
   //! Returns true if the attribute contains this named string.
-  Standard_EXPORT   Standard_Boolean HasString (const TCollection_ExtendedString& theName)  const;
+  Standard_EXPORT   Standard_Boolean Hastd::string (const TCollection_ExtendedString& theName)  const;
   
   //! Returns the named string.
   //! It returns an empty string if there is no such a named string
-  //! (use HasString()).
+  //! (use Hastd::string()).
   Standard_EXPORT  const  TCollection_ExtendedString& GetString (const TCollection_ExtendedString& theName) ;
   
   //! Defines a named string.

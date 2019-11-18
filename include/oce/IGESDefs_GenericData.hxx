@@ -81,7 +81,7 @@ public:
   Standard_EXPORT   Standard_Real ValueAsReal (const Standard_Integer ValueNum)  const;
   
   //! Returns Attribute Value <AttrNum, rank ValueNum> as an Integer
-  Standard_EXPORT   Handle(TCollection_HAsciiString) ValueAsString (const Standard_Integer ValueNum)  const;
+  Standard_EXPORT   Handle(TCollection_HAsciiString) ValueAstd::string (const Standard_Integer ValueNum)  const;
   
   //! Returns Attribute Value <AttrNum, rank ValueNum> as an Entity
   //! Error if Index out of Range, or not a Entity
