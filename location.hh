@@ -10,8 +10,7 @@ namespace topo {
 class topo_location {
 public:
   topo_location() : _loc() {}
-  topo_location(trsf t) : _loc(cast_to_gp(t)) {}
-  topo_location(matrix34<Standard_Real> m) : _loc(cast_to_gp(m)) {}
+  topo_location(gp_Trsf t) : _loc(t) {}
   topo_location(TopLoc_Location l) : _loc(l) {}
 
   virtual ~topo_location() = default;
@@ -20,9 +19,6 @@ public:
 
   operator gp_Trsf() const { return gp_Trsf(_loc); }
 
-  operator matrix34<Standard_Real>() const {
-    return cast_from_gp(gp_Trsf(*this));
-  }
   topo_location inverted() const { return topo_location{_loc.Inverted()}; }
   topo_location operator/(const topo_location &o) const {
     return topo_location{_loc / o._loc};

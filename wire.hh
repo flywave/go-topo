@@ -21,19 +21,13 @@ public:
 
   static wire make_polygon();
 
-  static wire make_polygon(const vector3<Standard_Real> &P1,
-                           const vector3<Standard_Real> &P2);
+  static wire make_polygon(const gp_Pnt &P1, const gp_Pnt &P2);
 
-  static wire make_polygon(const vector3<Standard_Real> &P1,
-                           const vector3<Standard_Real> &P2,
-                           const vector3<Standard_Real> &P3,
+  static wire make_polygon(const gp_Pnt &P1, const gp_Pnt &P2, const gp_Pnt &P3,
                            const bool Close = false);
 
-  static wire make_polygon(const vector3<Standard_Real> &P1,
-                           const vector3<Standard_Real> &P2,
-                           const vector3<Standard_Real> &P3,
-                           const vector3<Standard_Real> &P4,
-                           const bool Close = false);
+  static wire make_polygon(const gp_Pnt &P1, const gp_Pnt &P2, const gp_Pnt &P3,
+                           const gp_Pnt &P4, const bool Close = false);
 
   static wire make_polygon(const vertex &V1, const vertex &V2);
 

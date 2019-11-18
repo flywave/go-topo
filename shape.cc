@@ -33,6 +33,7 @@
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopoDS.hxx>
 #include <gp_Quaternion.hxx>
+#include <TColStd_Array1OfReal.hxx>
 
 #include <unordered_map>
 
@@ -141,18 +142,17 @@ geometry_object_type shape::type() const {
   return geometry_object_type::ShapeType;
 }
 
-bbox3d shape::bounding_box(double tolerance) const {
+Bnd_Box shape::bounding_box(double tolerance) const {
   try {
     const TopoDS_Shape &shape = _shape;
     Bnd_Box aBox;
     BRepBndLib::Add(shape, aBox);
     aBox.SetGap(tolerance);
-    Standard_Real aXmin, aYmin, aZmin;
-    Standard_Real aXmax, aYmax, aZmax;
-    aBox.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
-    return {{aXmin, aYmin, aZmin}, {aXmax, aYmax, aZmax}};
+    return aBox;
   } catch (Standard_Failure &err) {
-    return {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
+    Bnd_Box aBox;
+    aBox.Update(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    return aBox;
   }
 }
 
@@ -168,13 +168,8 @@ bool shape::equals(const geometry_object &other) const {
   return false;
 }
 
-int shape::transform(matrix43<Standard_Real> mat) {
-  gp_Trsf trans = cast_to_gp(mat);
-  transform_impl(trans);
-}
-int shape::transform(matrix34<Standard_Real> mat) {
-  gp_Trsf trans = cast_to_gp(mat);
-  transform_impl(trans);
+int shape::transform(gp_Trsf mat) {
+  transform_impl(mat);
 }
 
 int shape::transform_impl(gp_Trsf &trans) {
@@ -201,7 +196,7 @@ int shape::transform_impl(gp_Trsf &trans) {
   return 1;
 }
 
-int shape::translate(vector3<Standard_Real> delta) {
+int shape::translate(gp_Pnt delta) {
   try {
     TopoDS_Shape &shape = _shape;
 
@@ -209,7 +204,7 @@ int shape::translate(vector3<Standard_Real> delta) {
       throw std::runtime_error("Null shape");
 
     gp_Trsf trans;
-    trans.SetTranslation(gp_Pnt(0, 0, 0), gp_Pnt(delta.x, delta.y, delta.z));
+    trans.SetTranslation(gp_Pnt(0, 0, 0), gp_Pnt(delta.X, delta.Y, delta.Z));
     BRepBuilderAPI_Transform aTrans(shape, trans);
     aTrans.Build();
     aTrans.Check();
@@ -227,8 +222,8 @@ int shape::translate(vector3<Standard_Real> delta) {
   return 1;
 }
 
-int shape::rotate(double angle, vector3<Standard_Real> p1,
-                  vector3<Standard_Real> p2) {
+int shape::rotate(double angle, gp_Pnt p1,
+                  gp_Pnt p2) {
   try {
     TopoDS_Shape &shape = _shape;
 
@@ -236,8 +231,8 @@ int shape::rotate(double angle, vector3<Standard_Real> p1,
       throw std::runtime_error("Null shape");
 
     gp_Trsf trans;
-    gp_Vec dir(gp_Pnt(p1.x, p1.y, p1.z), gp_Pnt(p2.x, p2.y, p2.z));
-    gp_Ax1 axis(gp_Pnt(p1.x, p1.y, p1.z), dir);
+    gp_Vec dir(gp_Pnt(p1.X, p1.Y, p1.Z), gp_Pnt(p2.X, p2.Y, p2.Z));
+    gp_Ax1 axis(gp_Pnt(p1.X, p1.Y, p1.Z), dir);
     trans.SetRotation(axis, angle);
     BRepBuilderAPI_Transform aTrans(shape, trans);
     aTrans.Build();
@@ -256,7 +251,7 @@ int shape::rotate(double angle, vector3<Standard_Real> p1,
   return 1;
 }
 
-int shape::rotate(double angle, axis1 a) {
+int shape::rotate(double angle, gp_Ax1 a) {
   try {
     TopoDS_Shape &shape = _shape;
 
@@ -264,7 +259,7 @@ int shape::rotate(double angle, axis1 a) {
       throw std::runtime_error("Null shape");
 
     gp_Trsf trans;
-    trans.SetRotation(cast_to_gp(a), angle);
+    trans.SetRotation(a, angle);
     BRepBuilderAPI_Transform aTrans(shape, trans);
     aTrans.Build();
     aTrans.Check();
@@ -282,7 +277,7 @@ int shape::rotate(double angle, axis1 a) {
   return 1;
 }
 
-int shape::rotate(quaternionf R) {
+int shape::rotate(gp_Quaternion R) {
   try {
     TopoDS_Shape &shape = _shape;
 
@@ -290,7 +285,7 @@ int shape::rotate(quaternionf R) {
       throw std::runtime_error("Null shape");
 
     gp_Trsf trans;
-    trans.SetRotation(cast_to_gp(R));
+    trans.SetRotation(R);
     BRepBuilderAPI_Transform aTrans(shape, trans);
     aTrans.Build();
     aTrans.Check();
@@ -308,7 +303,7 @@ int shape::rotate(quaternionf R) {
   return 1;
 }
 
-int shape::scale(vector3<Standard_Real> pnt, double scale) {
+int shape::scale(gp_Pnt pnt, double scale) {
   try {
     TopoDS_Shape &shape = _shape;
 
@@ -316,7 +311,7 @@ int shape::scale(vector3<Standard_Real> pnt, double scale) {
       throw std::runtime_error("Null shape");
 
     gp_Trsf trans;
-    trans.SetScale(gp_Pnt(pnt.x, pnt.y, pnt.z), scale);
+    trans.SetScale(gp_Pnt(pnt.X, pnt.Y, pnt.Z), scale);
     BRepBuilderAPI_Transform aTrans(shape, trans);
     aTrans.Build();
     aTrans.Check();
@@ -334,14 +329,14 @@ int shape::scale(vector3<Standard_Real> pnt, double scale) {
   return 1;
 }
 
-int shape::mirror(vector3<Standard_Real> pnt, vector3<Standard_Real> nor) {
+int shape::mirror(gp_Pnt pnt, gp_Pnt nor) {
   try {
     TopoDS_Shape &shape = _shape;
 
     if (shape.IsNull())
       throw std::runtime_error("Null shape");
 
-    gp_Ax2 ax2(gp_Pnt(pnt.x, pnt.y, pnt.z), gp_Dir(nor.x, nor.y, nor.z));
+    gp_Ax2 ax2(gp_Pnt(pnt.X, pnt.Y, pnt.Z), gp_Dir(nor.X, nor.Y, nor.Z));
     gp_Trsf trans;
     trans.SetMirror(ax2);
     BRepBuilderAPI_Transform aTrans(shape, trans);
@@ -359,7 +354,7 @@ int shape::mirror(vector3<Standard_Real> pnt, vector3<Standard_Real> nor) {
   return 1;
 }
 
-int shape::mirror(axis1 a) {
+int shape::mirror(gp_Ax1 a) {
   try {
     TopoDS_Shape &shape = _shape;
 
@@ -367,7 +362,7 @@ int shape::mirror(axis1 a) {
       throw std::runtime_error("Null shape");
 
     gp_Trsf trans;
-    trans.SetMirror(cast_to_gp(a));
+    trans.SetMirror(a);
     BRepBuilderAPI_Transform aTrans(shape, trans);
     _shape = aTrans.Shape();
   } catch (Standard_Failure &err) {
@@ -383,7 +378,7 @@ int shape::mirror(axis1 a) {
   return 1;
 }
 
-int shape::mirror(axis2 a) {
+int shape::mirror(gp_Ax2 a) {
   try {
     TopoDS_Shape &shape = _shape;
 
@@ -391,7 +386,7 @@ int shape::mirror(axis2 a) {
       throw std::runtime_error("Null shape");
 
     gp_Trsf trans;
-    trans.SetMirror(cast_to_gp(a));
+    trans.SetMirror(a);
     BRepBuilderAPI_Transform aTrans(shape, trans);
     _shape = aTrans.Shape();
   } catch (Standard_Failure &err) {
@@ -407,69 +402,63 @@ int shape::mirror(axis2 a) {
   return 1;
 }
 
-shape shape::transformed(matrix43<Standard_Real> mat) const {
+shape shape::transformed(gp_Trsf mat) const {
   auto shp = copy();
   shp.transform(mat);
   return shp;
 }
 
-shape shape::transformed(matrix34<Standard_Real> mat) const {
-  auto shp = copy();
-  shp.transform(mat);
-  return shp;
-}
-
-shape shape::translated(vector3<Standard_Real> delta) const {
+shape shape::translated(gp_Pnt delta) const {
   auto shp = copy();
   shp.translate(delta);
   return shp;
 }
 
-shape shape::rotated(double angle, vector3<Standard_Real> p1,
-                     vector3<Standard_Real> p2) const {
+shape shape::rotated(double angle, gp_Pnt p1,
+                     gp_Pnt p2) const {
   auto shp = copy();
   shp.rotate(angle, p1, p2);
   return shp;
 }
 
-shape shape::rotated(double angle, axis1 a) const {
+shape shape::rotated(double angle, gp_Ax1 a) const {
   auto shp = copy();
   shp.rotate(angle, a);
   return shp;
 }
 
-shape shape::rotated(quaternionf R) const {
+shape shape::rotated(gp_Quaternion R) const {
   auto shp = copy();
   shp.rotate(R);
   return shp;
 }
 
-shape shape::scaled(vector3<Standard_Real> pnt, double scale) const {
+shape shape::scaled(gp_Pnt pnt, double scale) const {
   auto shp = copy();
   shp.scale(pnt, scale);
   return shp;
 }
 
-shape shape::mirrored(vector3<Standard_Real> pnt,
-                      vector3<Standard_Real> nor) const {
+shape shape::mirrored(gp_Pnt pnt,
+                      gp_Pnt nor) const {
   auto shp = copy();
   shp.mirror(pnt, nor);
   return shp;
 }
 
-shape shape::mirrored(axis1 a) const {
+shape shape::mirrored(gp_Ax1 a) const {
   auto shp = copy();
   shp.mirror(a);
   return shp;
 }
 
-shape shape::mirrored(axis2 a) const {
+shape shape::mirrored(gp_Ax2 a) const {
   auto shp = copy();
   shp.mirror(a);
   return shp;
 }
 
-plane shape::find_plane(double tolerance) {
+gp_Pln shape::find_plane(double tolerance) {
   try {
     const TopoDS_Shape &shape = _shape;
     BRepBuilderAPI_FindPlane FP(shape, tolerance);
@@ -480,8 +469,7 @@ plane shape::find_plane(double tolerance) {
 
     const gp_Pnt loc = axis.Location();
     const gp_Dir dir = axis.Direction();
-
-    return plane::make_pln(cast_from_gp(loc), cast_from_gp(dir));
+    return gp_Pln(loc, dir);
   } catch (Standard_Failure &err) {
     Handle_Standard_Failure e = Standard_Failure::Caught();
     const Standard_CString msg = e->GetMessageString();
@@ -580,12 +568,9 @@ bool shape::fix_shape() {
   return aChecker.IsValid();
 }
 
-future<> shape::write_triangulation(mesh_receiver &meshReceiver,
+void shape::write_triangulation(mesh_receiver &meshReceiver,
                                     double tolerance, double deflection,
                                     double angle) {
-  return async([this, tolerance, &meshReceiver, deflection, angle]() mutable {
-    //    if (!is_valid())
-    //      return;
     TopTools_IndexedMapOfShape faceMap;
     TopoDS_Shape shape = *this;
     TopExp::MapShapes(shape, TopAbs_FACE, faceMap);
@@ -671,9 +656,8 @@ future<> shape::write_triangulation(mesh_receiver &meshReceiver,
           gp_Dir dir(norms.Value((j * 3) + 1), norms.Value((j * 3) + 2),
                      norms.Value((j * 3) + 3));
           meshReceiver
-              .append_node(faceId, double3{px, py, pz},
-                           double3{dir.X(), dir.Y(), dir.Z()})
-              .get();
+              .append_node(faceId, gp_Pnt{px, py, pz},
+                           gp_Pnt{dir.X(), dir.Y(), dir.Z()});
         }
       } else {
         for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
@@ -689,9 +673,8 @@ future<> shape::write_triangulation(mesh_receiver &meshReceiver,
             dir.Reverse();
           dir = quaternion.Multiply(dir);
           meshReceiver
-              .append_node(faceId, double3{px, py, pz},
-                           double3{dir.X(), dir.Y(), dir.Z()})
-              .get();
+              .append_node(faceId, gp_Pnt{px, py, pz},
+                           gp_Pnt{dir.X(), dir.Y(), dir.Z()});
         }
       }
 
@@ -704,13 +687,11 @@ future<> shape::write_triangulation(mesh_receiver &meshReceiver,
         else
           triangles(j).Get(t[0], t[1], t[2]);
         meshReceiver
-            .append_triangle(faceId, uint3{t[0] - 1, t[1] - 1, t[2] - 1})
-            .get();
+            .append_triangle(faceId, uint3{t[0] - 1, t[1] - 1, t[2] - 1});
       }
     }
 
     meshReceiver.end();
-  });
 }
 
 namespace detail {
@@ -790,7 +771,7 @@ template boost::optional<wire> shape::cast<wire>() const;
 template boost::optional<edge> shape::cast<edge>() const;
 template boost::optional<vertex> shape::cast<vertex>() const;
 
-optional<shape> shape::auto_cast() const {
+boost::optional<shape> shape::auto_cast() const {
   if (!_shape.IsNull()) {
     switch (_shape.ShapeType()) {
     case TopAbs_VERTEX:
@@ -812,7 +793,7 @@ optional<shape> shape::auto_cast() const {
   return boost::none;
 }
 
-optional<shape> shape::make_shape(TopoDS_Shape shp) {
+boost::optional<shape> shape::make_shape(TopoDS_Shape shp) {
   if (!shp.IsNull()) {
     switch (shp.ShapeType()) {
     case TopAbs_VERTEX:

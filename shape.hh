@@ -38,7 +38,7 @@ public:
 
   virtual geometry_object_type type() const override;
 
-  virtual bbox3d bounding_box(double tolerance = 1e-12) const override;
+  virtual Bnd_Box bounding_box(double tolerance = 1e-12) const override;
 
   int hash_code() const;
   virtual bool equals(const geometry_object &) const override;
@@ -55,33 +55,29 @@ public:
 
   bool surface_colour(double *colour) const;
 
-  int transform(matrix43<Standard_Real> mat);
-  int transform(matrix34<Standard_Real> mat);
+  int transform(gp_Trsf mat);
 
-  int translate(vector3<Standard_Real> delta);
-  int rotate(double angle, vector3<Standard_Real> p1,
-             vector3<Standard_Real> p2);
-  int rotate(double angle, axis1 a);
-  int rotate(quaternionf R);
-  int scale(vector3<Standard_Real> pnt, double scale);
-  int mirror(vector3<Standard_Real> pnt, vector3<Standard_Real> nor);
-  int mirror(axis1 a);
-  int mirror(axis2 a);
+  int translate(gp_Pnt delta);
+  int rotate(double angle, gp_Pnt p1, gp_Pnt p2);
+  int rotate(double angle, gp_Ax1 a);
+  int rotate(gp_Quaternion R);
+  int scale(gp_Pnt pnt, double scale);
+  int mirror(gp_Pnt pnt, gp_Pnt nor);
+  int mirror(gp_Ax1 a);
+  int mirror(gp_Ax2 a);
 
-  shape transformed(matrix43<Standard_Real> mat) const;
-  shape transformed(matrix34<Standard_Real> mat) const;
+  shape transformed(gp_Trsf mat) const;
 
-  shape translated(vector3<Standard_Real> delta) const;
-  shape rotated(double angle, vector3<Standard_Real> p1,
-                vector3<Standard_Real> p2) const;
-  shape rotated(double angle, axis1 a) const;
-  shape rotated(quaternionf R) const;
-  shape scaled(vector3<Standard_Real> pnt, double scale) const;
-  shape mirrored(vector3<Standard_Real> pnt, vector3<Standard_Real> nor) const;
-  shape mirrored(axis1 a) const;
-  shape mirrored(axis2 a) const;
+  shape translated(gp_Pnt delta) const;
+  shape rotated(double angle, gp_Pnt p1, gp_Pnt p2) const;
+  shape rotated(double angle, gp_Ax1 a) const;
+  shape rotated(gp_Quaternion R) const;
+  shape scaled(gp_Pnt pnt, double scale) const;
+  shape mirrored(gp_Pnt pnt, gp_Pnt nor) const;
+  shape mirrored(gp_Ax1 a) const;
+  shape mirrored(gp_Ax2 a) const;
 
-  plane find_plane(double tolerance = 1e-6);
+  gp_Pln find_plane(double tolerance = 1e-6);
 
   TopoDS_Shape &value();
   const TopoDS_Shape &value() const;

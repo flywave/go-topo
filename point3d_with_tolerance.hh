@@ -19,7 +19,7 @@ public:
   inline double z() const { return _point.Z(); }
   inline gp_Pnt point() const { return _point; }
   inline double tolerance() const { return _tolerance; }
-  inline double3 vector() const { return {_point.X(), _point.Y(), _point.Z()}; }
+  inline gp_Pnt vector() const { return {_point.X(), _point.Y(), _point.Z()}; }
 
   inline int hash_code() const { return _hashCode; }
 

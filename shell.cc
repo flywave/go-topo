@@ -47,12 +47,12 @@ shape shell::copy(bool deep) const {
   return shell{};
 }
 
-shell shell::make_shell(const geom_surface &S, const bool Segment) {
+shell shell::make_shell(const Handle(Geom_Surface) &S, const bool Segment) {
   BRepBuilderAPI_MakeShell mb(S, Segment);
   return shell{mb.Shell()};
 }
 
-shell shell::make_shell(const geom_surface &S, const Standard_Real UMin,
+shell shell::make_shell(const Handle(Geom_Surface) &S, const Standard_Real UMin,
                         const Standard_Real UMax, const Standard_Real VMin,
                         const Standard_Real VMax, const bool Segment) {
   BRepBuilderAPI_MakeShell mb(S, UMin, UMax, VMin, VMax, Segment);
@@ -65,20 +65,20 @@ shell shell::make_shell_from_box(const Standard_Real dx, const Standard_Real dy,
   return shell{mb.Shell()};
 }
 
-shell shell::make_shell_from_box(const vector3<Standard_Real> &P,
+shell shell::make_shell_from_box(const gp_Pnt &P,
                                  const Standard_Real dx, const Standard_Real dy,
                                  const Standard_Real dz) {
   BRepPrimAPI_MakeBox mb(cast_to_gp(P), dx, dy, dz);
   return shell{mb.Shell()};
 }
 
-shell shell::make_shell_from_box(const vector3<Standard_Real> &P1,
-                                 const vector3<Standard_Real> &P2) {
+shell shell::make_shell_from_box(const gp_Pnt &P1,
+                                 const gp_Pnt &P2) {
   BRepPrimAPI_MakeBox mb(cast_to_gp(P1), cast_to_gp(P2));
   return shell{mb.Shell()};
 }
 
-shell shell::make_shell_from_box(const axis2 &Axes, const Standard_Real dx,
+shell shell::make_shell_from_box(const gp_Ax2 &Axes, const Standard_Real dx,
                                  const Standard_Real dy,
                                  const Standard_Real dz) {
   BRepPrimAPI_MakeBox mb(cast_to_gp(Axes), dx, dy, dz);
@@ -98,13 +98,13 @@ shell shell::make_shell_from_cylinder(const Standard_Real R,
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_cylinder(const axis2 &Axes, const Standard_Real R,
+shell shell::make_shell_from_cylinder(const gp_Ax2 &Axes, const Standard_Real R,
                                       const Standard_Real H) {
   BRepPrimAPI_MakeCylinder mw(cast_to_gp(Axes), R, H);
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_cylinder(const axis2 &Axes, const Standard_Real R,
+shell shell::make_shell_from_cylinder(const gp_Ax2 &Axes, const Standard_Real R,
                                       const Standard_Real H,
                                       const Standard_Real Angle) {
   BRepPrimAPI_MakeCylinder mw(cast_to_gp(Axes), R, H, Angle);
@@ -125,39 +125,39 @@ shell shell::make_shell_from_cone(const Standard_Real R1,
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_cone(const axis2 &Axes, const Standard_Real R1,
+shell shell::make_shell_from_cone(const gp_Ax2 &Axes, const Standard_Real R1,
                                   const Standard_Real R2,
                                   const Standard_Real H) {
   BRepPrimAPI_MakeCone mw(cast_to_gp(Axes), R1, R2, H);
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_cone(const axis2 &Axes, const Standard_Real R1,
+shell shell::make_shell_from_cone(const gp_Ax2 &Axes, const Standard_Real R1,
                                   const Standard_Real R2, const Standard_Real H,
                                   const Standard_Real angle) {
   BRepPrimAPI_MakeCone mw(cast_to_gp(Axes), R1, R2, H, angle);
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_revolution(const geom_curve &Meridian) {
+shell shell::make_shell_from_revolution(const Handle(Geom_Curve) &Meridian) {
   BRepPrimAPI_MakeRevolution mw(Meridian);
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_revolution(const geom_curve &Meridian,
+shell shell::make_shell_from_revolution(const Handle(Geom_Curve) &Meridian,
                                         const Standard_Real angle) {
   BRepPrimAPI_MakeRevolution mw(Meridian, angle);
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_revolution(const geom_curve &Meridian,
+shell shell::make_shell_from_revolution(const Handle(Geom_Curve) &Meridian,
                                         const Standard_Real VMin,
                                         const Standard_Real VMax) {
   BRepPrimAPI_MakeRevolution mw(Meridian, VMin, VMax);
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_revolution(const geom_curve &Meridian,
+shell shell::make_shell_from_revolution(const Handle(Geom_Curve) &Meridian,
                                         const Standard_Real VMin,
                                         const Standard_Real VMax,
                                         const Standard_Real angle) {
@@ -165,29 +165,29 @@ shell shell::make_shell_from_revolution(const geom_curve &Meridian,
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_revolution(const axis2 &Axes,
-                                        const geom_curve &Meridian) {
+shell shell::make_shell_from_revolution(const gp_Ax2 &Axes,
+                                        const Handle(Geom_Curve) &Meridian) {
   BRepPrimAPI_MakeRevolution mw(cast_to_gp(Axes), Meridian);
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_revolution(const axis2 &Axes,
-                                        const geom_curve &Meridian,
+shell shell::make_shell_from_revolution(const gp_Ax2 &Axes,
+                                        const Handle(Geom_Curve) &Meridian,
                                         const Standard_Real angle) {
   BRepPrimAPI_MakeRevolution mw(cast_to_gp(Axes), Meridian, angle);
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_revolution(const axis2 &Axes,
-                                        const geom_curve &Meridian,
+shell shell::make_shell_from_revolution(const gp_Ax2 &Axes,
+                                        const Handle(Geom_Curve) &Meridian,
                                         const Standard_Real VMin,
                                         const Standard_Real VMax) {
   BRepPrimAPI_MakeRevolution mw(cast_to_gp(Axes), Meridian, VMin, VMax);
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_revolution(const axis2 &Axes,
-                                        const geom_curve &Meridian,
+shell shell::make_shell_from_revolution(const gp_Ax2 &Axes,
+                                        const Handle(Geom_Curve) &Meridian,
                                         const Standard_Real VMin,
                                         const Standard_Real VMax,
                                         const Standard_Real angle) {
@@ -221,20 +221,20 @@ shell shell::make_shell_from_sphere(const Standard_Real R,
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_sphere(const vector3<Standard_Real> &Center,
+shell shell::make_shell_from_sphere(const gp_Pnt &Center,
                                     const Standard_Real R) {
   BRepPrimAPI_MakeSphere mw(cast_to_gp(Center), R);
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_sphere(const vector3<Standard_Real> &Center,
+shell shell::make_shell_from_sphere(const gp_Pnt &Center,
                                     const Standard_Real R,
                                     const Standard_Real angle) {
   BRepPrimAPI_MakeSphere mw(cast_to_gp(Center), R, angle);
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_sphere(const vector3<Standard_Real> &Center,
+shell shell::make_shell_from_sphere(const gp_Pnt &Center,
                                     const Standard_Real R,
                                     const Standard_Real angle1,
                                     const Standard_Real angle2) {
@@ -242,7 +242,7 @@ shell shell::make_shell_from_sphere(const vector3<Standard_Real> &Center,
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_sphere(const vector3<Standard_Real> &Center,
+shell shell::make_shell_from_sphere(const gp_Pnt &Center,
                                     const Standard_Real R,
                                     const Standard_Real angle1,
                                     const Standard_Real angle2,
@@ -251,25 +251,25 @@ shell shell::make_shell_from_sphere(const vector3<Standard_Real> &Center,
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_sphere(const axis2 &Axis, const Standard_Real R) {
+shell shell::make_shell_from_sphere(const gp_Ax2 &Axis, const Standard_Real R) {
   BRepPrimAPI_MakeSphere ms(cast_to_gp(Axis), R);
   return shell{ms.Shell()};
 }
 
-shell shell::make_shell_from_sphere(const axis2 &Axis, const Standard_Real R,
+shell shell::make_shell_from_sphere(const gp_Ax2 &Axis, const Standard_Real R,
                                     const Standard_Real angle) {
   BRepPrimAPI_MakeSphere ms(cast_to_gp(Axis), R, angle);
   return shell{ms.Shell()};
 }
 
-shell shell::make_shell_from_sphere(const axis2 &Axis, const Standard_Real R,
+shell shell::make_shell_from_sphere(const gp_Ax2 &Axis, const Standard_Real R,
                                     const Standard_Real angle1,
                                     const Standard_Real angle2) {
   BRepPrimAPI_MakeSphere ms(cast_to_gp(Axis), R, angle1, angle2);
   return shell{ms.Shell()};
 }
 
-shell shell::make_shell_from_sphere(const axis2 &Axis, const Standard_Real R,
+shell shell::make_shell_from_sphere(const gp_Ax2 &Axis, const Standard_Real R,
                                     const Standard_Real angle1,
                                     const Standard_Real angle2,
                                     const Standard_Real angle3) {
@@ -307,20 +307,20 @@ shell shell::make_shell_from_torus(const Standard_Real R1,
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_torus(const axis2 &Axes, const Standard_Real R1,
+shell shell::make_shell_from_torus(const gp_Ax2 &Axes, const Standard_Real R1,
                                    const Standard_Real R2) {
   BRepPrimAPI_MakeTorus mw(cast_to_gp(Axes), R1, R2);
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_torus(const axis2 &Axes, const Standard_Real R1,
+shell shell::make_shell_from_torus(const gp_Ax2 &Axes, const Standard_Real R1,
                                    const Standard_Real R2,
                                    const Standard_Real angle) {
   BRepPrimAPI_MakeTorus mw(cast_to_gp(Axes), R1, R2, angle);
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_torus(const axis2 &Axes, const Standard_Real R1,
+shell shell::make_shell_from_torus(const gp_Ax2 &Axes, const Standard_Real R1,
                                    const Standard_Real R2,
                                    const Standard_Real angle1,
                                    const Standard_Real angle2) {
@@ -328,7 +328,7 @@ shell shell::make_shell_from_torus(const axis2 &Axes, const Standard_Real R1,
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_torus(const axis2 &Axes, const Standard_Real R1,
+shell shell::make_shell_from_torus(const gp_Ax2 &Axes, const Standard_Real R1,
                                    const Standard_Real R2,
                                    const Standard_Real angle1,
                                    const Standard_Real angle2,
@@ -345,7 +345,7 @@ shell shell::make_shell_from_wedge(const Standard_Real dx,
   return shell{mw.Shell()};
 }
 
-shell shell::make_shell_from_wedge(const axis2 &Axes, const Standard_Real dx,
+shell shell::make_shell_from_wedge(const gp_Ax2 &Axes, const Standard_Real dx,
                                    const Standard_Real dy,
                                    const Standard_Real dz,
                                    const Standard_Real ltx) {
@@ -362,7 +362,7 @@ shell shell::make_shell_from_wedge(
 }
 
 shell shell::make_shell_from_wedge(
-    const axis2 &Axes, const Standard_Real dx, const Standard_Real dy,
+    const gp_Ax2 &Axes, const Standard_Real dx, const Standard_Real dy,
     const Standard_Real dz, const Standard_Real xmin, const Standard_Real zmin,
     const Standard_Real xmax, const Standard_Real zmax) {
   BRepPrimAPI_MakeWedge mw(cast_to_gp(Axes), dx, dy, dz, xmin, zmin, xmax,

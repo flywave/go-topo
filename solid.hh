@@ -3,6 +3,7 @@
 
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Solid.hxx>
+#include <gp_Pln.hxx>
 
 #include "bool_type.hh"
 #include "shape.hh"
@@ -45,15 +46,13 @@ public:
                                    const Standard_Real dy,
                                    const Standard_Real dz);
 
-  static solid make_solid_from_box(const vector3<Standard_Real> &P,
-                                   const Standard_Real dx,
+  static solid make_solid_from_box(const gp_Pnt &P, const Standard_Real dx,
                                    const Standard_Real dy,
                                    const Standard_Real dz);
 
-  static solid make_solid_from_box(const vector3<Standard_Real> &P1,
-                                   const vector3<Standard_Real> &P2);
+  static solid make_solid_from_box(const gp_Pnt &P1, const gp_Pnt &P2);
 
-  static solid make_solid_from_box(const axis2 &Axes, const Standard_Real dx,
+  static solid make_solid_from_box(const gp_Ax2 &Axes, const Standard_Real dx,
                                    const Standard_Real dy,
                                    const Standard_Real dz);
 
@@ -64,11 +63,11 @@ public:
                                         const Standard_Real H,
                                         const Standard_Real Angle);
 
-  static solid make_solid_from_cylinder(const axis2 &Axes,
+  static solid make_solid_from_cylinder(const gp_Ax2 &Axes,
                                         const Standard_Real R,
                                         const Standard_Real H);
 
-  static solid make_solid_from_cylinder(const axis2 &Axes,
+  static solid make_solid_from_cylinder(const gp_Ax2 &Axes,
                                         const Standard_Real R,
                                         const Standard_Real H,
                                         const Standard_Real Angle);
@@ -82,43 +81,43 @@ public:
                                     const Standard_Real H,
                                     const Standard_Real angle);
 
-  static solid make_solid_from_cone(const axis2 &Axes, const Standard_Real R1,
+  static solid make_solid_from_cone(const gp_Ax2 &Axes, const Standard_Real R1,
                                     const Standard_Real R2,
                                     const Standard_Real H);
 
-  static solid make_solid_from_cone(const axis2 &Axes, const Standard_Real R1,
+  static solid make_solid_from_cone(const gp_Ax2 &Axes, const Standard_Real R1,
                                     const Standard_Real R2,
                                     const Standard_Real H,
                                     const Standard_Real angle);
 
-  static solid make_solid_from_revolution(const geom_curve &Meridian);
+  static solid make_solid_from_revolution(const Handle(Geom_Curve) & Meridian);
 
-  static solid make_solid_from_revolution(const geom_curve &Meridian,
+  static solid make_solid_from_revolution(const Handle(Geom_Curve) & Meridian,
                                           const Standard_Real angle);
 
-  static solid make_solid_from_revolution(const geom_curve &Meridian,
+  static solid make_solid_from_revolution(const Handle(Geom_Curve) & Meridian,
                                           const Standard_Real VMin,
                                           const Standard_Real VMax);
 
-  static solid make_solid_from_revolution(const geom_curve &Meridian,
+  static solid make_solid_from_revolution(const Handle(Geom_Curve) & Meridian,
                                           const Standard_Real VMin,
                                           const Standard_Real VMax,
                                           const Standard_Real angle);
 
-  static solid make_solid_from_revolution(const axis2 &Axes,
-                                          const geom_curve &Meridian);
+  static solid make_solid_from_revolution(const gp_Ax2 &Axes,
+                                          const Handle(Geom_Curve) & Meridian);
 
-  static solid make_solid_from_revolution(const axis2 &Axes,
-                                          const geom_curve &Meridian,
+  static solid make_solid_from_revolution(const gp_Ax2 &Axes,
+                                          const Handle(Geom_Curve) & Meridian,
                                           const Standard_Real angle);
 
-  static solid make_solid_from_revolution(const axis2 &Axes,
-                                          const geom_curve &Meridian,
+  static solid make_solid_from_revolution(const gp_Ax2 &Axes,
+                                          const Handle(Geom_Curve) & Meridian,
                                           const Standard_Real VMin,
                                           const Standard_Real VMax);
 
-  static solid make_solid_from_revolution(const axis2 &Axes,
-                                          const geom_curve &Meridian,
+  static solid make_solid_from_revolution(const gp_Ax2 &Axes,
+                                          const Handle(Geom_Curve) & Meridian,
                                           const Standard_Real VMin,
                                           const Standard_Real VMax,
                                           const Standard_Real angle);
@@ -137,34 +136,35 @@ public:
                                       const Standard_Real angle2,
                                       const Standard_Real angle3);
 
-  static solid make_solid_from_sphere(const vector3<Standard_Real> &Center,
+  static solid make_solid_from_sphere(const gp_Pnt &Center,
                                       const Standard_Real R);
 
-  static solid make_solid_from_sphere(const vector3<Standard_Real> &Center,
+  static solid make_solid_from_sphere(const gp_Pnt &Center,
                                       const Standard_Real R,
                                       const Standard_Real angle);
 
-  static solid make_solid_from_sphere(const vector3<Standard_Real> &Center,
+  static solid make_solid_from_sphere(const gp_Pnt &Center,
                                       const Standard_Real R,
                                       const Standard_Real angle1,
                                       const Standard_Real angle2);
 
-  static solid make_solid_from_sphere(const vector3<Standard_Real> &Center,
+  static solid make_solid_from_sphere(const gp_Pnt &Center,
                                       const Standard_Real R,
                                       const Standard_Real angle1,
                                       const Standard_Real angle2,
                                       const Standard_Real angle3);
 
-  static solid make_solid_from_sphere(const axis2 &Axis, const Standard_Real R);
+  static solid make_solid_from_sphere(const gp_Ax2 &Axis,
+                                      const Standard_Real R);
 
-  static solid make_solid_from_sphere(const axis2 &Axis, const Standard_Real R,
+  static solid make_solid_from_sphere(const gp_Ax2 &Axis, const Standard_Real R,
                                       const Standard_Real angle);
 
-  static solid make_solid_from_sphere(const axis2 &Axis, const Standard_Real R,
+  static solid make_solid_from_sphere(const gp_Ax2 &Axis, const Standard_Real R,
                                       const Standard_Real angle1,
                                       const Standard_Real angle2);
 
-  static solid make_solid_from_sphere(const axis2 &Axis, const Standard_Real R,
+  static solid make_solid_from_sphere(const gp_Ax2 &Axis, const Standard_Real R,
                                       const Standard_Real angle1,
                                       const Standard_Real angle2,
                                       const Standard_Real angle3);
@@ -187,19 +187,19 @@ public:
                                      const Standard_Real angle2,
                                      const Standard_Real angle);
 
-  static solid make_solid_from_torus(const axis2 &Axes, const Standard_Real R1,
+  static solid make_solid_from_torus(const gp_Ax2 &Axes, const Standard_Real R1,
                                      const Standard_Real R2);
 
-  static solid make_solid_from_torus(const axis2 &Axes, const Standard_Real R1,
+  static solid make_solid_from_torus(const gp_Ax2 &Axes, const Standard_Real R1,
                                      const Standard_Real R2,
                                      const Standard_Real angle);
 
-  static solid make_solid_from_torus(const axis2 &Axes, const Standard_Real R1,
+  static solid make_solid_from_torus(const gp_Ax2 &Axes, const Standard_Real R1,
                                      const Standard_Real R2,
                                      const Standard_Real angle1,
                                      const Standard_Real angle2);
 
-  static solid make_solid_from_torus(const axis2 &Axes, const Standard_Real R1,
+  static solid make_solid_from_torus(const gp_Ax2 &Axes, const Standard_Real R1,
                                      const Standard_Real R2,
                                      const Standard_Real angle1,
                                      const Standard_Real angle2,
@@ -210,7 +210,7 @@ public:
                                      const Standard_Real dz,
                                      const Standard_Real ltx);
 
-  static solid make_solid_from_wedge(const axis2 &Axes, const Standard_Real dx,
+  static solid make_solid_from_wedge(const gp_Ax2 &Axes, const Standard_Real dx,
                                      const Standard_Real dy,
                                      const Standard_Real dz,
                                      const Standard_Real ltx);
@@ -222,7 +222,7 @@ public:
                         const Standard_Real zmax);
 
   static solid
-  make_solid_from_wedge(const axis2 &Axes, const Standard_Real dx,
+  make_solid_from_wedge(const gp_Ax2 &Axes, const Standard_Real dx,
                         const Standard_Real dy, const Standard_Real dz,
                         const Standard_Real xmin, const Standard_Real zmin,
                         const Standard_Real xmax, const Standard_Real zmax);
@@ -235,15 +235,15 @@ public:
 
   double volume() const;
 
-  bbox3d inertia() const;
+  Bnd_Box inertia() const;
 
-  double3 centre_of_mass() const;
+  gp_Pnt centre_of_mass() const;
 
-  int extrude(const face &f, double3 p1, double3 p2);
+  int extrude(const face &f, gp_Pnt p1, gp_Pnt p2);
 
-  int extrude(const face &f, double3 dir);
+  int extrude(const face &f, gp_Vec dir);
 
-  int revolve(const face &f, double3 p1, double3 p2, double angle);
+  int revolve(const face &f, gp_Pnt p1, gp_Pnt p2, double angle);
 
   int loft(std::vector<shape> &profiles, bool ruled = false,
            double tolerance = 1.0e-06);
@@ -263,18 +263,18 @@ public:
 
   int offset(const face &f, double offset, double tolerance = 1.0e-06);
 
-  int draft(std::vector<face> &faces, dir d, double angle, plane p);
+  int draft(std::vector<face> &faces, gp_Dir d, double angle, gp_Pln p);
 
   int evolved(const face &Spine, const wire &Profil);
 
   int evolved(const wire &Spine, const wire &Profil);
 
-  int feat_prism(const face &f, dir d, double height, bool fuse = true);
+  int feat_prism(const face &f, gp_Dir d, double height, bool fuse = true);
 
-  int feat_prism(const face &f, dir d, const face &from, const face &end,
+  int feat_prism(const face &f, gp_Dir d, const face &from, const face &end,
                  bool fuse = true);
 
-  int feat_prism(const face &f, dir d, const face &until, bool fuse = true);
+  int feat_prism(const face &f, gp_Dir d, const face &until, bool fuse = true);
 
   int feat_draft_prism(const face &f, double angle, double height,
                        bool fuse = true);
@@ -285,10 +285,10 @@ public:
   int feat_draft_prism(const face &f, double angle, const face &until,
                        bool fuse = true);
 
-  int feat_revol(const face &f, const axis1 &Axes, const face &from,
+  int feat_revol(const face &f, const gp_Ax1 &Axes, const face &from,
                  const face &end, bool fuse = true);
 
-  int feat_revol(const face &f, const axis1 &Axes, const face &until,
+  int feat_revol(const face &f, const gp_Ax1 &Axes, const face &until,
                  bool fuse = true);
 
   int feat_pipe(const face &f, const wire &Spine, const face &from,
@@ -297,13 +297,14 @@ public:
   int feat_pipe(const face &f, const wire &Spine, const face &until,
                 bool fuse = true);
 
-  int linear_form(const wire &w, geom_plane_surface p, dir d, dir d1,
-                  bool fuse = true);
+  int linear_form(const wire &w, const Handle(Geom_Plane) & p, gp_Dir d,
+                  gp_Dir d1, bool fuse = true);
 
-  int revolution_form(const wire &w, geom_plane_surface p, const axis1 &Axes,
-                      Standard_Real h1, Standard_Real h2, bool fuse = true);
+  int revolution_form(const wire &w, const Handle(Geom_Plane) & p,
+                      const gp_Ax1 &Axes, Standard_Real h1, Standard_Real h2,
+                      bool fuse = true);
 
-  boost::optional<face> section(double3 pnt, double3 nor);
+  boost::optional<face> section(gp_Pnt pnt, gp_Pnt nor);
 
   int convert_to_nurbs();
 
@@ -321,7 +322,6 @@ public:
 protected:
   friend class solid_iterator;
   friend class shape;
-
 };
 
 class solid_iterator {

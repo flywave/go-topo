@@ -19,192 +19,181 @@ public:
 
   static edge make_edge(const vertex &V1, const vertex &V2);
 
-  static edge make_edge(const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2);
+  static edge make_edge(const gp_Pnt &P1, const gp_Pnt &P2);
 
-  static edge make_edge(const line &L);
+  static edge make_edge(const gp_Lin &L);
 
-  static edge make_edge(const line &L, const Standard_Real p1,
+  static edge make_edge(const gp_Lin &L, const Standard_Real p1,
                         const Standard_Real p2);
 
-  static edge make_edge(const line &L, const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2);
+  static edge make_edge(const gp_Lin &L, const gp_Pnt &P1, const gp_Pnt &P2);
 
-  static edge make_edge(const line &L, const vertex &V1, const vertex &V2);
+  static edge make_edge(const gp_Lin &L, const vertex &V1, const vertex &V2);
 
-  static edge make_edge(const circ &L);
+  static edge make_edge(const gp_Circ &L);
 
-  static edge make_edge(const circ &L, const Standard_Real p1,
+  static edge make_edge(const gp_Circ &L, const Standard_Real p1,
                         const Standard_Real p2);
 
-  static edge make_edge(const circ &L, const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2);
+  static edge make_edge(const gp_Circ &L, const gp_Pnt &P1, const gp_Pnt &P2);
 
-  static edge make_edge(const circ &L, const vertex &V1, const vertex &V2);
+  static edge make_edge(const gp_Circ &L, const vertex &V1, const vertex &V2);
 
-  static edge make_edge(const elips &L);
+  static edge make_edge(const gp_Elips &L);
 
-  static edge make_edge(const elips &L, const Standard_Real p1,
+  static edge make_edge(const gp_Elips &L, const Standard_Real p1,
                         const Standard_Real p2);
 
-  static edge make_edge(const elips &L, const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2);
+  static edge make_edge(const gp_Elips &L, const gp_Pnt &P1, const gp_Pnt &P2);
 
-  static edge make_edge(const elips &L, const vertex &V1, const vertex &V2);
+  static edge make_edge(const gp_Elips &L, const vertex &V1, const vertex &V2);
 
-  static edge make_edge(const hyperbola &L);
+  static edge make_edge(const gp_Hypr &L);
 
-  static edge make_edge(const hyperbola &L, const Standard_Real p1,
+  static edge make_edge(const gp_Hypr &L, const Standard_Real p1,
                         const Standard_Real p2);
 
-  static edge make_edge(const hyperbola &L, const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2);
+  static edge make_edge(const gp_Hypr &L, const gp_Pnt &P1, const gp_Pnt &P2);
 
-  static edge make_edge(const hyperbola &L, const vertex &V1, const vertex &V2);
+  static edge make_edge(const gp_Hypr &L, const vertex &V1, const vertex &V2);
 
-  static edge make_edge(const parabola &L);
+  static edge make_edge(const gp_Parab &L);
 
-  static edge make_edge(const parabola &L, const Standard_Real p1,
+  static edge make_edge(const gp_Parab &L, const Standard_Real p1,
                         const Standard_Real p2);
 
-  static edge make_edge(const parabola &L, const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2);
+  static edge make_edge(const gp_Parab &L, const gp_Pnt &P1, const gp_Pnt &P2);
 
-  static edge make_edge(const parabola &L, const vertex &V1, const vertex &V2);
+  static edge make_edge(const gp_Parab &L, const vertex &V1, const vertex &V2);
 
-  static edge make_edge(const geom_curve &L);
+  static edge make_edge(const Handle(Geom_Curve) & L);
 
-  static edge make_edge(const geom_curve &L, const Standard_Real p1,
+  static edge make_edge(const Handle(Geom_Curve) & L, const Standard_Real p1,
                         const Standard_Real p2);
 
-  static edge make_edge(const geom_curve &L, const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2);
+  static edge make_edge(const Handle(Geom_Curve) & L, const gp_Pnt &P1,
+                        const gp_Pnt &P2);
 
-  static edge make_edge(const geom_curve &L, const vertex &V1,
+  static edge make_edge(const Handle(Geom_Curve) & L, const vertex &V1,
                         const vertex &V2);
 
-  static edge make_edge(const geom_curve &L, const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2,
-                        const Standard_Real p1, const Standard_Real p2);
+  static edge make_edge(const Handle(Geom_Curve) & L, const gp_Pnt &P1,
+                        const gp_Pnt &P2, const Standard_Real p1,
+                        const Standard_Real p2);
 
-  static edge make_edge(const geom_curve &L, const vertex &V1, const vertex &V2,
-                        const Standard_Real p1, const Standard_Real p2);
+  static edge make_edge(const Handle(Geom_Curve) & L, const vertex &V1,
+                        const vertex &V2, const Standard_Real p1,
+                        const Standard_Real p2);
 
-  static edge make_edge(const geom2d_curve &L, const geom_surface &S);
+  static edge make_edge(const Handle(Geom2d_Curve) & L,
+                        const Handle(Geom_Surface) & S);
 
-  static edge make_edge(const geom2d_curve &L, const geom_surface &S,
-                        const Standard_Real p1, const Standard_Real p2);
+  static edge make_edge(const Handle(Geom2d_Curve) & L,
+                        const Handle(Geom_Surface) & S, const Standard_Real p1,
+                        const Standard_Real p2);
 
-  static edge make_edge(const geom2d_curve &L, const geom_surface &S,
-                        const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2);
+  static edge make_edge(const Handle(Geom2d_Curve) & L,
+                        const Handle(Geom_Surface) & S, const gp_Pnt &P1,
+                        const gp_Pnt &P2);
 
-  static edge make_edge(const geom2d_curve &L, const geom_surface &S,
-                        const vertex &V1, const vertex &V2);
+  static edge make_edge(const Handle(Geom2d_Curve) & L,
+                        const Handle(Geom_Surface) & S, const vertex &V1,
+                        const vertex &V2);
 
-  static edge make_edge(const geom2d_curve &L, const geom_surface &S,
-                        const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2,
-                        const Standard_Real p1, const Standard_Real p2);
+  static edge make_edge(const Handle(Geom2d_Curve) & L,
+                        const Handle(Geom_Surface) & S, const gp_Pnt &P1,
+                        const gp_Pnt &P2, const Standard_Real p1,
+                        const Standard_Real p2);
 
-  static edge make_edge(const geom2d_curve &L, const geom_surface &S,
-                        const vertex &V1, const vertex &V2,
-                        const Standard_Real p1, const Standard_Real p2);
+  static edge make_edge(const Handle(Geom2d_Curve) & L,
+                        const Handle(Geom_Surface) & S, const vertex &V1,
+                        const vertex &V2, const Standard_Real p1,
+                        const Standard_Real p2);
 
   static edge make_edge2d(const vertex &V1, const vertex &V2);
 
-  static edge make_edge2d(const vector2<Standard_Real> &P1,
-                          const vector2<Standard_Real> &P2);
+  static edge make_edge2d(const gp_Pnt2d &P1, const gp_Pnt2d &P2);
 
-  static edge make_edge2d(const line2d &L);
+  static edge make_edge2d(const gp_Lin2d &L);
 
-  static edge make_edge2d(const line2d &L, const Standard_Real p1,
+  static edge make_edge2d(const gp_Lin2d &L, const Standard_Real p1,
                           const Standard_Real p2);
 
-  static edge make_edge2d(const line2d &L, const vector2<Standard_Real> &P1,
-                          const vector2<Standard_Real> &P2);
+  static edge make_edge2d(const gp_Lin2d &L, const gp_Pnt2d &P1,
+                          const gp_Pnt2d &P2);
 
-  static edge make_edge2d(const line2d &L, const vertex &V1, const vertex &V2);
-
-  static edge make_edge2d(const circ2d &L);
-
-  static edge make_edge2d(const circ2d &L, const Standard_Real p1,
-                          const Standard_Real p2);
-
-  static edge make_edge2d(const circ2d &L, const vector2<Standard_Real> &P1,
-                          const vector2<Standard_Real> &P2);
-
-  static edge make_edge2d(const circ2d &L, const vertex &V1, const vertex &V2);
-
-  static edge make_edge2d(const elips2d &L);
-
-  static edge make_edge2d(const elips2d &L, const Standard_Real p1,
-                          const Standard_Real p2);
-
-  static edge make_edge2d(const elips2d &L, const vector2<Standard_Real> &P1,
-                          const vector2<Standard_Real> &P2);
-
-  static edge make_edge2d(const elips2d &L, const vertex &V1, const vertex &V2);
-
-  static edge make_edge2d(const hyperbola2d &L);
-
-  static edge make_edge2d(const hyperbola2d &L, const Standard_Real p1,
-                          const Standard_Real p2);
-
-  static edge make_edge2d(const hyperbola2d &L,
-                          const vector2<Standard_Real> &P1,
-                          const vector2<Standard_Real> &P2);
-
-  static edge make_edge2d(const hyperbola2d &L, const vertex &V1,
+  static edge make_edge2d(const gp_Lin2d &L, const vertex &V1,
                           const vertex &V2);
 
-  static edge make_edge2d(const parabola2d &L);
+  static edge make_edge2d(const gp_Circ2d &L);
 
-  static edge make_edge2d(const parabola2d &L, const Standard_Real p1,
+  static edge make_edge2d(const gp_Circ2d &L, const Standard_Real p1,
                           const Standard_Real p2);
 
-  static edge make_edge2d(const parabola2d &L, const vector2<Standard_Real> &P1,
-                          const vector2<Standard_Real> &P2);
+  static edge make_edge2d(const gp_Circ2d &L, const gp_Pnt2d &P1,
+                          const gp_Pnt2d &P2);
 
-  static edge make_edge2d(const parabola2d &L, const vertex &V1,
+  static edge make_edge2d(const gp_Circ2d &L, const vertex &V1,
                           const vertex &V2);
 
-  static edge make_edge2d(const geom2d_curve &L);
+  static edge make_edge2d(const gp_Elips2d &L);
 
-  static edge make_edge2d(const geom2d_curve &L, const Standard_Real p1,
+  static edge make_edge2d(const gp_Elips2d &L, const Standard_Real p1,
                           const Standard_Real p2);
 
-  static edge make_edge2d(const geom2d_curve &L,
-                          const vector2<Standard_Real> &P1,
-                          const vector2<Standard_Real> &P2);
+  static edge make_edge2d(const gp_Elips2d &L, const gp_Pnt2d &P1,
+                          const gp_Pnt2d &P2);
 
-  static edge make_edge2d(const geom2d_curve &L, const vertex &V1,
+  static edge make_edge2d(const gp_Elips2d &L, const vertex &V1,
                           const vertex &V2);
 
-  static edge make_edge2d(const geom2d_curve &L,
-                          const vector2<Standard_Real> &P1,
-                          const vector2<Standard_Real> &P2,
-                          const Standard_Real p1, const Standard_Real p2);
+  static edge make_edge2d(const gp_Hypr2d &L);
 
-  static edge make_edge2d(const geom2d_curve &L, const vertex &V1,
+  static edge make_edge2d(const gp_Hypr2d &L, const Standard_Real p1,
+                          const Standard_Real p2);
+
+  static edge make_edge2d(const gp_Hypr2d &L, const gp_Pnt2d &P1,
+                          const gp_Pnt2d &P2);
+
+  static edge make_edge2d(const gp_Hypr2d &L, const vertex &V1,
+                          const vertex &V2);
+
+  static edge make_edge2d(const gp_Parab2d &L);
+
+  static edge make_edge2d(const gp_Parab2d &L, const Standard_Real p1,
+                          const Standard_Real p2);
+
+  static edge make_edge2d(const gp_Parab2d &L, const gp_Pnt2d &P1,
+                          const gp_Pnt2d &P2);
+
+  static edge make_edge2d(const gp_Parab2d &L, const vertex &V1,
+                          const vertex &V2);
+
+  static edge make_edge2d(const Handle(Geom2d_Curve) & L);
+
+  static edge make_edge2d(const Handle(Geom2d_Curve) & L, const gp_Pnt2d &P1,
+                          const gp_Pnt2d &P2);
+
+  static edge make_edge2d(const Handle(Geom2d_Curve) & L, const vertex &V1,
+                          const vertex &V2);
+
+  static edge make_edge2d(const Handle(Geom2d_Curve) & L, const gp_Pnt2d &P1,
+                          const gp_Pnt2d &P2, const Standard_Real p1,
+                          const Standard_Real p2);
+
+  static edge make_edge2d(const Handle(Geom2d_Curve) & L, const vertex &V1,
                           const vertex &V2, const Standard_Real p1,
                           const Standard_Real p2);
 
   static edge make_polygon();
 
-  static edge make_polygon(const vector3<Standard_Real> &P1,
-                           const vector3<Standard_Real> &P2);
+  static edge make_polygon(const gp_Pnt &P1, const gp_Pnt &P2);
 
-  static edge make_polygon(const vector3<Standard_Real> &P1,
-                           const vector3<Standard_Real> &P2,
-                           const vector3<Standard_Real> &P3,
+  static edge make_polygon(const gp_Pnt &P1, const gp_Pnt &P2, const gp_Pnt &P3,
                            const bool Close = false);
 
-  static edge make_polygon(const vector3<Standard_Real> &P1,
-                           const vector3<Standard_Real> &P2,
-                           const vector3<Standard_Real> &P3,
-                           const vector3<Standard_Real> &P4,
-                           const bool Close = false);
+  static edge make_polygon(const gp_Pnt &P1, const gp_Pnt &P2, const gp_Pnt &P3,
+                           const gp_Pnt &P4, const bool Close = false);
 
   static edge make_polygon(const vertex &V1, const vertex &V2);
 
@@ -220,12 +209,11 @@ public:
   static edge make_polygon(std::initializer_list<vertex> vertexs,
                            const bool Close = false);
 
-  static edge make_polygon(std::vector<vector3<Standard_Real>> &vertexs,
+  static edge make_polygon(std::vector<gp_Pnt> &vertexs,
                            const bool Close = false);
 
-  static edge
-  make_polygon(std::initializer_list<vector3<Standard_Real>> vertexs,
-               const bool Close = false);
+  static edge make_polygon(std::initializer_list<gp_Pnt> vertexs,
+                           const bool Close = false);
 
   TopoDS_Edge &value();
   const TopoDS_Edge &value() const;

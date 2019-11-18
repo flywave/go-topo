@@ -3,12 +3,16 @@
 
 #include "geometry_object_type.hh"
 
+#include <Bnd_Box.hxx>
+
 #include <boost/optional.hpp>
+
+#include <memory>
 
 namespace flywave {
 namespace topo {
 
-class geometry_object : enable_shared_from_this<geometry_object> {
+class geometry_object : std::enable_shared_from_this<geometry_object> {
 protected:
   void *tag;
 
@@ -21,7 +25,7 @@ public:
 
   virtual geometry_object_type type() const = 0;
 
-  virtual bbox3d bounding_box(double tolerance = 1e-12) const = 0;
+  virtual Bnd_Box bounding_box(double tolerance = 1e-12) const = 0;
 
   virtual bool equals(const geometry_object &) const = 0;
 

@@ -15,16 +15,16 @@ class vertex : public shape {
 public:
   vertex() = default;
   vertex(Standard_Real x, Standard_Real y, Standard_Real z);
-  vertex(const vector3<Standard_Real> &P);
+  vertex(const gp_Pnt &P);
 
   virtual ~vertex() = default;
 
-  static vertex make_vertex(const vector3<Standard_Real> &P);
+  static vertex make_vertex(const gp_Pnt &P);
 
   TopoDS_Vertex &value();
   const TopoDS_Vertex &value() const;
 
-  operator const vector3<Standard_Real>() const;
+  operator const gp_Pnt() const;
 
   virtual geometry_object_type type() const override {
     return geometry_object_type::VertexType;

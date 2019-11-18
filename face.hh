@@ -1,6 +1,7 @@
 #ifndef __FLYWAVE_MESH_TOPO_FACE_HH__
 #define __FLYWAVE_MESH_TOPO_FACE_HH__
 
+#include <Geom_Surface.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Face.hxx>
 
@@ -22,59 +23,62 @@ public:
 
   static face make_face(const face &F);
 
-  static face make_face(const plane &P);
+  static face make_face(const gp_Pln &P);
 
-  static face make_face(const cylinder &C);
+  static face make_face(const gp_Cylinder &C);
 
-  static face make_face(const cone &C);
+  static face make_face(const gp_Cone &C);
 
-  static face make_face(const sphere &S);
+  static face make_face(const gp_Sphere &S);
 
-  static face make_face(const torus &C);
+  static face make_face(const gp_Torus &C);
 
-  static face make_face(const geom_surface &S, const Standard_Real TolDegen);
+  static face make_face(const Handle(Geom_Surface) & S,
+                        const Standard_Real TolDegen);
 
-  static face make_face(const plane &P, const Standard_Real UMin,
+  static face make_face(const gp_Pln &P, const Standard_Real UMin,
                         const Standard_Real UMax, const Standard_Real VMin,
                         const Standard_Real VMax);
 
-  static face make_face(const cylinder &C, const Standard_Real UMin,
+  static face make_face(const gp_Cylinder &C, const Standard_Real UMin,
                         const Standard_Real UMax, const Standard_Real VMin,
                         const Standard_Real VMax);
 
-  static face make_face(const cone &C, const Standard_Real UMin,
+  static face make_face(const gp_Cone &C, const Standard_Real UMin,
                         const Standard_Real UMax, const Standard_Real VMin,
                         const Standard_Real VMax);
 
-  static face make_face(const sphere &S, const Standard_Real UMin,
+  static face make_face(const gp_Sphere &S, const Standard_Real UMin,
                         const Standard_Real UMax, const Standard_Real VMin,
                         const Standard_Real VMax);
 
-  static face make_face(const torus &C, const Standard_Real UMin,
+  static face make_face(const gp_Torus &C, const Standard_Real UMin,
                         const Standard_Real UMax, const Standard_Real VMin,
                         const Standard_Real VMax);
 
-  static face make_face(const geom_surface &S, const Standard_Real UMin,
-                        const Standard_Real UMax, const Standard_Real VMin,
-                        const Standard_Real VMax, const Standard_Real TolDegen);
+  static face make_face(const Handle(Geom_Surface) & S,
+                        const Standard_Real UMin, const Standard_Real UMax,
+                        const Standard_Real VMin, const Standard_Real VMax,
+                        const Standard_Real TolDegen);
 
   static face make_face(const wire &W, const bool OnlyPlane = false);
 
-  static face make_face(const plane &P, const wire &W,
+  static face make_face(const gp_Pln &P, const wire &W,
                         const bool Inside = true);
 
-  static face make_face(const cylinder &C, const wire &W,
+  static face make_face(const gp_Cylinder &C, const wire &W,
                         const bool Inside = true);
 
-  static face make_face(const cone &C, const wire &W, const bool Inside = true);
-
-  static face make_face(const sphere &S, const wire &W,
+  static face make_face(const gp_Cone &C, const wire &W,
                         const bool Inside = true);
 
-  static face make_face(const torus &C, const wire &W,
+  static face make_face(const gp_Sphere &S, const wire &W,
                         const bool Inside = true);
 
-  static face make_face(const geom_surface &S, const wire &W,
+  static face make_face(const gp_Torus &C, const wire &W,
+                        const bool Inside = true);
+
+  static face make_face(const Handle(Geom_Surface) & S, const wire &W,
                         const bool Inside = true);
 
   static face make_face(const face &F, const wire &W);
@@ -83,12 +87,11 @@ public:
 
   static face make_face(std::initializer_list<wire> wires);
 
-  static face make_face(std::vector<edge> &edges,
-                        std::vector<vector3<Standard_Real>> points);
+  static face make_face(std::vector<edge> &edges, std::vector<gp_Pnt> points);
 
-  static face make_face(std::vector<vector3<Standard_Real>> points);
+  static face make_face(std::vector<gp_Pnt> points);
 
-  static face make_face(std::initializer_list<vector3<Standard_Real>> points);
+  static face make_face(std::initializer_list<gp_Pnt> points);
 
   int num_wires() const;
 
@@ -98,15 +101,15 @@ public:
 
   float tolerance() const;
 
-  bbox3d inertia() const;
+  Bnd_Box inertia() const;
 
-  double3 centre_of_mass() const;
+  gp_Pnt centre_of_mass() const;
 
   int offset(double offset, double tolerance = 1e-6);
 
-  int extrude(const shape &shp, double3 p1, double3 p2);
+  int extrude(const shape &shp, gp_Pnt p1, gp_Pnt p2);
 
-  int revolve(const shape &shp, double3 p1, double3 p2, double angle);
+  int revolve(const shape &shp, gp_Pnt p1, gp_Pnt p2, double angle);
 
   int sweep(const wire &spine, std::vector<shape *> profiles, int cornerMode);
 
@@ -117,7 +120,7 @@ public:
   TopoDS_Face &value();
   const TopoDS_Face &value() const;
 
-  operator geom_surface() const;
+  operator Handle(Geom_Surface)() const;
 
   virtual geometry_object_type type() const override {
     return geometry_object_type::FaceType;

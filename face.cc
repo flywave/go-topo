@@ -1,5 +1,5 @@
-#include "edge.hh"
 #include "face.hh"
+#include "edge.hh"
 #include "solid.hh"
 #include "wire.hh"
 
@@ -60,72 +60,73 @@ face face::make_face(const face &F) {
   return face{mf.Face()};
 }
 
-face face::make_face(const plane &P) {
-  BRepBuilderAPI_MakeFace mf(cast_to_gp(P));
+face face::make_face(const gp_Pln &P) {
+  BRepBuilderAPI_MakeFace mf(P);
   return face{mf.Face()};
 }
 
-face face::make_face(const cylinder &C) {
-  BRepBuilderAPI_MakeFace mf(cast_to_gp(C));
+face face::make_face(const gp_Cylinder &C) {
+  BRepBuilderAPI_MakeFace mf(C);
   return face{mf.Face()};
 }
 
-face face::make_face(const cone &C) {
-  BRepBuilderAPI_MakeFace mf(cast_to_gp(C));
+face face::make_face(const gp_Cone &C) {
+  BRepBuilderAPI_MakeFace mf(C);
   return face{mf.Face()};
 }
 
-face face::make_face(const sphere &S) {
-  BRepBuilderAPI_MakeFace mf(cast_to_gp(S));
+face face::make_face(const gp_Sphere &S) {
+  BRepBuilderAPI_MakeFace mf(S);
   return face{mf.Face()};
 }
 
-face face::make_face(const torus &C) {
-  BRepBuilderAPI_MakeFace mf(cast_to_gp(C));
+face face::make_face(const gp_Torus &C) {
+  BRepBuilderAPI_MakeFace mf(C);
   return face{mf.Face()};
 }
 
-face face::make_face(const geom_surface &S, const Standard_Real TolDegen) {
+face face::make_face(const Handle(Geom_Surface) & S,
+                     const Standard_Real TolDegen) {
   BRepBuilderAPI_MakeFace mf(S, TolDegen);
   return face{mf.Face()};
 }
 
-face face::make_face(const plane &P, const Standard_Real UMin,
+face face::make_face(const gp_Pln &P, const Standard_Real UMin,
                      const Standard_Real UMax, const Standard_Real VMin,
                      const Standard_Real VMax) {
-  BRepBuilderAPI_MakeFace mf(cast_to_gp(P), UMin, UMax, VMin, VMax);
+  BRepBuilderAPI_MakeFace mf(P, UMin, UMax, VMin, VMax);
   return face{mf.Face()};
 }
 
-face face::make_face(const cylinder &C, const Standard_Real UMin,
+face face::make_face(const gp_Cylinder &C, const Standard_Real UMin,
                      const Standard_Real UMax, const Standard_Real VMin,
                      const Standard_Real VMax) {
-  BRepBuilderAPI_MakeFace mf(cast_to_gp(C), UMin, UMax, VMin, VMax);
+  BRepBuilderAPI_MakeFace mf(C, UMin, UMax, VMin, VMax);
   return face{mf.Face()};
 }
 
-face face::make_face(const cone &C, const Standard_Real UMin,
+face face::make_face(const gp_Cone &C, const Standard_Real UMin,
                      const Standard_Real UMax, const Standard_Real VMin,
                      const Standard_Real VMax) {
-  BRepBuilderAPI_MakeFace mf(cast_to_gp(C), UMin, UMax, VMin, VMax);
+  BRepBuilderAPI_MakeFace mf(C, UMin, UMax, VMin, VMax);
   return face{mf.Face()};
 }
 
-face face::make_face(const sphere &S, const Standard_Real UMin,
+face face::make_face(const gp_Sphere &S, const Standard_Real UMin,
                      const Standard_Real UMax, const Standard_Real VMin,
                      const Standard_Real VMax) {
-  BRepBuilderAPI_MakeFace mf(cast_to_gp(S), UMin, UMax, VMin, VMax);
+  BRepBuilderAPI_MakeFace mf(S, UMin, UMax, VMin, VMax);
   return face{mf.Face()};
 }
 
-face face::make_face(const torus &C, const Standard_Real UMin,
+face face::make_face(const gp_Torus &C, const Standard_Real UMin,
                      const Standard_Real UMax, const Standard_Real VMin,
                      const Standard_Real VMax) {
-  BRepBuilderAPI_MakeFace mf(cast_to_gp(C), UMin, UMax, VMin, VMax);
+  BRepBuilderAPI_MakeFace mf(C, UMin, UMax, VMin, VMax);
   return face{mf.Face()};
 }
 
-face face::make_face(const geom_surface &S, const Standard_Real UMin,
+face face::make_face(const Handle(Geom_Surface) & S, const Standard_Real UMin,
                      const Standard_Real UMax, const Standard_Real VMin,
                      const Standard_Real VMax, const Standard_Real TolDegen) {
   BRepBuilderAPI_MakeFace mf(S, UMin, UMax, VMin, VMax, TolDegen);
@@ -137,32 +138,33 @@ face face::make_face(const wire &W, const bool OnlyPlane) {
   return face{mf.Face()};
 }
 
-face face::make_face(const plane &P, const wire &W, const bool Inside) {
-  BRepBuilderAPI_MakeFace mf(cast_to_gp(P), W.value(), Inside);
+face face::make_face(const gp_Pln &P, const wire &W, const bool Inside) {
+  BRepBuilderAPI_MakeFace mf(P, W.value(), Inside);
   return face{mf.Face()};
 }
 
-face face::make_face(const cylinder &C, const wire &W, const bool Inside) {
-  BRepBuilderAPI_MakeFace mf(cast_to_gp(C), W.value(), Inside);
+face face::make_face(const gp_Cylinder &C, const wire &W, const bool Inside) {
+  BRepBuilderAPI_MakeFace mf(C, W.value(), Inside);
   return face{mf.Face()};
 }
 
-face face::make_face(const cone &C, const wire &W, const bool Inside) {
-  BRepBuilderAPI_MakeFace mf(cast_to_gp(C), W.value(), Inside);
+face face::make_face(const gp_Cone &C, const wire &W, const bool Inside) {
+  BRepBuilderAPI_MakeFace mf(C, W.value(), Inside);
   return face{mf.Face()};
 }
 
-face face::make_face(const sphere &S, const wire &W, const bool Inside) {
-  BRepBuilderAPI_MakeFace mf(cast_to_gp(S), W.value(), Inside);
+face face::make_face(const gp_Sphere &S, const wire &W, const bool Inside) {
+  BRepBuilderAPI_MakeFace mf(S, W.value(), Inside);
   return face{mf.Face()};
 }
 
-face face::make_face(const torus &C, const wire &W, const bool Inside) {
-  BRepBuilderAPI_MakeFace mf(cast_to_gp(C), W.value(), Inside);
+face face::make_face(const gp_Torus &C, const wire &W, const bool Inside) {
+  BRepBuilderAPI_MakeFace mf(C, W.value(), Inside);
   return face{mf.Face()};
 }
 
-face face::make_face(const geom_surface &S, const wire &W, const bool Inside) {
+face face::make_face(const Handle(Geom_Surface) & S, const wire &W,
+                     const bool Inside) {
   BRepBuilderAPI_MakeFace mf(S, W.value(), Inside);
   return face{mf.Face()};
 }
@@ -248,8 +250,7 @@ face face::make_face(std::initializer_list<wire> wires) {
   return f;
 }
 
-face face::make_face(std::vector<edge> &edges,
-                     std::vector<vector3<Standard_Real>> points) {
+face face::make_face(std::vector<edge> &edges, std::vector<gp_Pnt> points) {
   face f;
   try {
     BRepOffsetAPI_MakeFilling aGenerator;
@@ -258,7 +259,7 @@ face face::make_face(std::vector<edge> &edges,
       aGenerator.Add(edge->value(), GeomAbs_C0);
     }
     for (unsigned i = 0; i < points.size(); i++) {
-      gp_Pnt aPnt(points[i].x, points[i].y, points[i].z);
+      gp_Pnt aPnt(points[i].X, points[i].Y, points[i].Z);
       aGenerator.Add(aPnt);
     }
     aGenerator.Build();
@@ -279,12 +280,12 @@ face face::make_face(std::vector<edge> &edges,
   return f;
 }
 
-face face::make_face(std::vector<vector3<Standard_Real>> points) {
+face face::make_face(std::vector<gp_Pnt> points) {
   face f;
   try {
     BRepBuilderAPI_MakePolygon MP;
     for (unsigned i = 0; i < points.size(); i++) {
-      MP.Add(gp_Pnt(points[i].x, points[i].y, points[i].z));
+      MP.Add(gp_Pnt(points[i].X, points[i].Y, points[i].Z));
     }
     MP.Close();
     if (!MP.IsDone()) {
@@ -309,12 +310,12 @@ face face::make_face(std::vector<vector3<Standard_Real>> points) {
   return f;
 }
 
-face face::make_face(std::initializer_list<vector3<Standard_Real>> points) {
+face face::make_face(std::initializer_list<gp_Pnt> points) {
   face f;
   try {
     BRepBuilderAPI_MakePolygon MP;
     for (auto _p : points) {
-      MP.Add(gp_Pnt(_p.x, _p.y, _p.z));
+      MP.Add(gp_Pnt(_p.X, _p.Y, _p.Z));
     }
     MP.Close();
     if (!MP.IsDone()) {
@@ -362,27 +363,28 @@ double face::area() const {
   return prop.Mass();
 }
 
-bbox3d face::inertia() const {
+Bnd_Box face::inertia() const {
   GProp_GProps prop;
   BRepGProp::SurfaceProperties(value(), prop);
   gp_Mat mat = prop.MatrixOfInertia();
-  return bbox3d{{mat(1, 1), mat(2, 2), mat(3, 3)},
-                {mat(1, 2), mat(1, 3), mat(2, 3)}};
+  Bnd_Box bbox;
+  bbox.Update(mat(1, 1), mat(2, 2), mat(3, 3), mat(1, 2), mat(1, 3), mat(2, 3));
+  return bbox;
 }
 
-double3 face::centre_of_mass() const {
-  double3 ret;
+gp_Pnt face::centre_of_mass() const {
+  gp_Pnt ret;
   GProp_GProps prop;
   BRepGProp::SurfaceProperties(value(), prop);
   gp_Pnt cg = prop.CentreOfMass();
-  return double3{cg.X(), cg.Y(), cg.Z()};
+  return gp_Pnt{cg.X(), cg.Y(), cg.Z()};
 }
 
 float face::tolerance() const { return BRep_Tool::Tolerance(value()); }
 
-face::operator geom_surface() const {
+face::operator Handle(Geom_Surface)() const {
   Handle(Geom_Surface) aSurface = BRep_Tool::Surface(value());
-  return geom_surface{aSurface};
+  return Handle(Geom_Surface){aSurface};
 }
 
 int face::offset(double offset, double tolerance) {
@@ -420,7 +422,7 @@ int face::offset(double offset, double tolerance) {
   return 1;
 }
 
-int face::extrude(const shape &shp, double3 p1, double3 p2) {
+int face::extrude(const shape &shp, gp_Pnt p1, gp_Pnt p2) {
   try {
     const TopoDS_Shape &shp = value();
     TopAbs_ShapeEnum type = shp.ShapeType();
@@ -428,8 +430,8 @@ int face::extrude(const shape &shp, double3 p1, double3 p2) {
       throw std::runtime_error("expected Edge or Wire");
     }
 
-    gp_Vec direction(gp_Pnt(p1.x, p1.y, p1.z), gp_Pnt(p2.x, p2.y, p2.z));
-    gp_Ax1 axisOfRevolution(gp_Pnt(p1.x, p1.y, p1.z), direction);
+    gp_Vec direction(gp_Pnt(p1.X, p1.Y, p1.Z), gp_Pnt(p2.X, p2.Y, p2.Z));
+    gp_Ax1 axisOfRevolution(gp_Pnt(p1.X, p1.Y, p1.Z), direction);
 
     BRepPrimAPI_MakePrism MP(shp, direction, Standard_False);
     _shape = MP.Shape();
@@ -450,7 +452,7 @@ int face::extrude(const shape &shp, double3 p1, double3 p2) {
   return 1;
 }
 
-int face::revolve(const shape &shp, double3 p1, double3 p2, double angle) {
+int face::revolve(const shape &shp, gp_Pnt p1, gp_Pnt p2, double angle) {
   try {
     const TopoDS_Shape &shp = value();
 
@@ -459,8 +461,8 @@ int face::revolve(const shape &shp, double3 p1, double3 p2, double angle) {
       throw std::runtime_error("Expected Edge or Wire");
     }
 
-    gp_Dir direction(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z);
-    gp_Ax1 axisOfRevolution(gp_Pnt(p1.x, p1.y, p1.z), direction);
+    gp_Dir direction(p2.X - p1.X, p2.Y - p1.Y, p2.Z - p1.Z);
+    gp_Ax1 axisOfRevolution(gp_Pnt(p1.X, p1.Y, p1.Z), direction);
 
     BRepPrimAPI_MakeRevol MR(shp, axisOfRevolution, angle, Standard_False);
     if (!MR.IsDone()) {

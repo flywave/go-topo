@@ -9,6 +9,7 @@
 #include <BRepOffsetAPI_NormalProjection.hxx>
 #include <BRepTools_WireExplorer.hxx>
 #include <GProp_GProps.hxx>
+#include <Precision.hxx>
 #include <ShapeAnalysis_FreeBounds.hxx>
 #include <TopExp.hxx>
 #include <TopTools_HSequenceOfShape.hxx>
@@ -59,26 +60,20 @@ wire wire::make_polygon() {
   return wire{me.Wire()};
 }
 
-wire wire::make_polygon(const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2) {
-  BRepBuilderAPI_MakePolygon me(cast_to_gp(P1), cast_to_gp(P2));
+wire wire::make_polygon(const gp_Pnt &P1, const gp_Pnt &P2) {
+  BRepBuilderAPI_MakePolygon me(P1, P2);
   return wire{me.Wire()};
 }
 
-wire wire::make_polygon(const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2,
-                        const vector3<Standard_Real> &P3, const bool Close) {
-  BRepBuilderAPI_MakePolygon me(cast_to_gp(P1), cast_to_gp(P2), cast_to_gp(P3),
-                                Close);
+wire wire::make_polygon(const gp_Pnt &P1, const gp_Pnt &P2, const gp_Pnt &P3,
+                        const bool Close) {
+  BRepBuilderAPI_MakePolygon me(P1, P2, P3, Close);
   return wire{me.Wire()};
 }
 
-wire wire::make_polygon(const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2,
-                        const vector3<Standard_Real> &P3,
-                        const vector3<Standard_Real> &P4, const bool Close) {
-  BRepBuilderAPI_MakePolygon me(cast_to_gp(P1), cast_to_gp(P2), cast_to_gp(P3),
-                                cast_to_gp(P4), Close);
+wire wire::make_polygon(const gp_Pnt &P1, const gp_Pnt &P2, const gp_Pnt &P3,
+                        const gp_Pnt &P4, const bool Close) {
+  BRepBuilderAPI_MakePolygon me(P1, P2, P3, P4, Close);
   return wire{me.Wire()};
 }
 
@@ -442,7 +437,8 @@ int wire::fillet(std::vector<vertex> &vertices, std::vector<double> radius) {
 
     TopExp::MapShapes(MF.Shape(), TopAbs_WIRE, aMap);
     if (aMap.Extent() != 1)
-      throw std::runtime_error("Fillet operation did not result in single wire");
+      throw std::runtime_error(
+          "Fillet operation did not result in single wire");
 
     Ex.Clear();
     for (Ex.Init(TopoDS::Wire(aMap(1))); Ex.More(); Ex.Next()) {

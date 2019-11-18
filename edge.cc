@@ -54,26 +54,20 @@ edge edge::make_polygon() {
   return edge{me.Edge()};
 }
 
-edge edge::make_polygon(const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2) {
-  BRepBuilderAPI_MakePolygon me(cast_to_gp(P1), cast_to_gp(P2));
+edge edge::make_polygon(const gp_Pnt &P1, const gp_Pnt &P2) {
+  BRepBuilderAPI_MakePolygon me(P1, P2);
   return edge{me.Edge()};
 }
 
-edge edge::make_polygon(const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2,
-                        const vector3<Standard_Real> &P3, const bool Close) {
-  BRepBuilderAPI_MakePolygon me(cast_to_gp(P1), cast_to_gp(P2), cast_to_gp(P3),
-                                Close);
+edge edge::make_polygon(const gp_Pnt &P1, const gp_Pnt &P2, const gp_Pnt &P3,
+                        const bool Close) {
+  BRepBuilderAPI_MakePolygon me(P1, P2, P3, Close);
   return edge{me.Edge()};
 }
 
-edge edge::make_polygon(const vector3<Standard_Real> &P1,
-                        const vector3<Standard_Real> &P2,
-                        const vector3<Standard_Real> &P3,
-                        const vector3<Standard_Real> &P4, const bool Close) {
-  BRepBuilderAPI_MakePolygon me(cast_to_gp(P1), cast_to_gp(P2), cast_to_gp(P3),
-                                cast_to_gp(P4), Close);
+edge edge::make_polygon(const gp_Pnt &P1, const gp_Pnt &P2, const gp_Pnt &P3,
+                        const gp_Pnt &P4, const bool Close) {
+  BRepBuilderAPI_MakePolygon me(P1, P2, P3, P4, Close);
   return edge{me.Edge()};
 }
 
@@ -118,11 +112,10 @@ edge edge::make_polygon(std::initializer_list<vertex> vertexs,
   return edge{me.Edge()};
 }
 
-edge edge::make_polygon(std::vector<vector3<Standard_Real>> &vertexs,
-                        const bool Close) {
+edge edge::make_polygon(std::vector<gp_Pnt> &vertexs, const bool Close) {
   BRepBuilderAPI_MakePolygon me;
   for (auto _p : vertexs) {
-    me.Add(cast_to_gp(_p));
+    me.Add(_p);
   }
   if (Close) {
     me.Close();
@@ -130,11 +123,11 @@ edge edge::make_polygon(std::vector<vector3<Standard_Real>> &vertexs,
   return edge{me.Edge()};
 }
 
-edge edge::make_polygon(std::initializer_list<vector3<Standard_Real>> vertexs,
+edge edge::make_polygon(std::initializer_list<gp_Pnt> vertexs,
                         const bool Close) {
   BRepBuilderAPI_MakePolygon me;
   for (auto _p : vertexs) {
-    me.Add(cast_to_gp(_p));
+    me.Add(_p);
   }
   if (Close) {
     me.Close();
@@ -147,191 +140,191 @@ edge edge::make_edge(const vertex &V1, const vertex &V2) {
   return edge{me.Edge()};
 }
 
-edge edge::make_edge(const vector3<Standard_Real> &P1,
-                     const vector3<Standard_Real> &P2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(P1), cast_to_gp(P2));
+edge edge::make_edge(const gp_Pnt &P1, const gp_Pnt &P2) {
+  BRepBuilderAPI_MakeEdge me(P1, P2);
   return edge{me.Edge()};
 }
 
-edge edge::make_edge(const line &L) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const line &L, const Standard_Real p1,
-                     const Standard_Real p2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L), p1, p2);
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const line &L, const vector3<Standard_Real> &P1,
-                     const vector3<Standard_Real> &P2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const line &L, const vertex &V1, const vertex &V2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L), V1.value(), V2.value());
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const circ &L) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const circ &L, const Standard_Real p1,
-                     const Standard_Real p2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L), p1, p2);
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const circ &L, const vector3<Standard_Real> &P1,
-                     const vector3<Standard_Real> &P2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const circ &L, const vertex &V1, const vertex &V2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L), V1.value(), V2.value());
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const elips &L) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const elips &L, const Standard_Real p1,
-                     const Standard_Real p2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L), p1, p2);
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const elips &L, const vector3<Standard_Real> &P1,
-                     const vector3<Standard_Real> &P2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const elips &L, const vertex &V1, const vertex &V2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L), V1.value(), V2.value());
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const hyperbola &L) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const hyperbola &L, const Standard_Real p1,
-                     const Standard_Real p2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L), p1, p2);
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const hyperbola &L, const vector3<Standard_Real> &P1,
-                     const vector3<Standard_Real> &P2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const hyperbola &L, const vertex &V1, const vertex &V2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L), V1.value(), V2.value());
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const parabola &L) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const parabola &L, const Standard_Real p1,
-                     const Standard_Real p2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L), p1, p2);
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const parabola &L, const vector3<Standard_Real> &P1,
-                     const vector3<Standard_Real> &P2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const parabola &L, const vertex &V1, const vertex &V2) {
-  BRepBuilderAPI_MakeEdge me(cast_to_gp(L), V1.value(), V2.value());
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge(const geom_curve &L) {
+edge edge::make_edge(const gp_Lin &L) {
   BRepBuilderAPI_MakeEdge me(L);
   return edge{me.Edge()};
 }
 
-edge edge::make_edge(const geom_curve &L, const Standard_Real p1,
+edge edge::make_edge(const gp_Lin &L, const Standard_Real p1,
                      const Standard_Real p2) {
   BRepBuilderAPI_MakeEdge me(L, p1, p2);
   return edge{me.Edge()};
 }
 
-edge edge::make_edge(const geom_curve &L, const vector3<Standard_Real> &P1,
-                     const vector3<Standard_Real> &P2) {
-  BRepBuilderAPI_MakeEdge me(L, cast_to_gp(P1), cast_to_gp(P2));
+edge edge::make_edge(const gp_Lin &L, const gp_Pnt &P1, const gp_Pnt &P2) {
+  BRepBuilderAPI_MakeEdge me(L, P1, P2);
   return edge{me.Edge()};
 }
 
-edge edge::make_edge(const geom_curve &L, const vertex &V1, const vertex &V2) {
+edge edge::make_edge(const gp_Lin &L, const vertex &V1, const vertex &V2) {
   BRepBuilderAPI_MakeEdge me(L, V1.value(), V2.value());
   return edge{me.Edge()};
 }
 
-edge edge::make_edge(const geom_curve &L, const vector3<Standard_Real> &P1,
-                     const vector3<Standard_Real> &P2, const Standard_Real p1,
-                     const Standard_Real p2) {
-  BRepBuilderAPI_MakeEdge me(L, cast_to_gp(P1), cast_to_gp(P2), p1, p2);
+edge edge::make_edge(const gp_Circ &L) {
+  BRepBuilderAPI_MakeEdge me(L);
   return edge{me.Edge()};
 }
 
-edge edge::make_edge(const geom_curve &L, const vertex &V1, const vertex &V2,
-                     const Standard_Real p1, const Standard_Real p2) {
+edge edge::make_edge(const gp_Circ &L, const Standard_Real p1,
+                     const Standard_Real p2) {
+  BRepBuilderAPI_MakeEdge me(L, p1, p2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const gp_Circ &L, const gp_Pnt &P1, const gp_Pnt &P2) {
+  BRepBuilderAPI_MakeEdge me(L, P1, P2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const gp_Circ &L, const vertex &V1, const vertex &V2) {
+  BRepBuilderAPI_MakeEdge me(L, V1.value(), V2.value());
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const gp_Elips &L) {
+  BRepBuilderAPI_MakeEdge me(L);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const gp_Elips &L, const Standard_Real p1,
+                     const Standard_Real p2) {
+  BRepBuilderAPI_MakeEdge me(L, p1, p2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const gp_Elips &L, const gp_Pnt &P1, const gp_Pnt &P2) {
+  BRepBuilderAPI_MakeEdge me(L, P1, P2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const gp_Elips &L, const vertex &V1, const vertex &V2) {
+  BRepBuilderAPI_MakeEdge me(L, V1.value(), V2.value());
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const gp_Hypr &L) {
+  BRepBuilderAPI_MakeEdge me(L);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const gp_Hypr &L, const Standard_Real p1,
+                     const Standard_Real p2) {
+  BRepBuilderAPI_MakeEdge me(L, p1, p2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const gp_Hypr &L, const gp_Pnt &P1, const gp_Pnt &P2) {
+  BRepBuilderAPI_MakeEdge me(L, P1, P2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const gp_Hypr &L, const vertex &V1, const vertex &V2) {
+  BRepBuilderAPI_MakeEdge me(L, V1.value(), V2.value());
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const gp_Parab &L) {
+  BRepBuilderAPI_MakeEdge me(L);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const gp_Parab &L, const Standard_Real p1,
+                     const Standard_Real p2) {
+  BRepBuilderAPI_MakeEdge me(L, p1, p2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const gp_Parab &L, const gp_Pnt &P1, const gp_Pnt &P2) {
+  BRepBuilderAPI_MakeEdge me(L, P1, P2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const gp_Parab &L, const vertex &V1, const vertex &V2) {
+  BRepBuilderAPI_MakeEdge me(L, V1.value(), V2.value());
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const Handle(Geom_Curve) & L) {
+  BRepBuilderAPI_MakeEdge me(L);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const Handle(Geom_Curve) & L, const Standard_Real p1,
+                     const Standard_Real p2) {
+  BRepBuilderAPI_MakeEdge me(L, p1, p2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const Handle(Geom_Curve) & L, const gp_Pnt &P1,
+                     const gp_Pnt &P2) {
+  BRepBuilderAPI_MakeEdge me(L, P1, P2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const Handle(Geom_Curve) & L, const vertex &V1,
+                     const vertex &V2) {
+  BRepBuilderAPI_MakeEdge me(L, V1.value(), V2.value());
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const Handle(Geom_Curve) & L, const gp_Pnt &P1,
+                     const gp_Pnt &P2, const Standard_Real p1,
+                     const Standard_Real p2) {
+  BRepBuilderAPI_MakeEdge me(L, P1, P2, p1, p2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge(const Handle(Geom_Curve) & L, const vertex &V1,
+                     const vertex &V2, const Standard_Real p1,
+                     const Standard_Real p2) {
   BRepBuilderAPI_MakeEdge me(L, V1.value(), V2.value(), p1, p2);
   return edge{me.Edge()};
 }
 
-edge edge::make_edge(const geom2d_curve &L, const geom_surface &S) {
+edge edge::make_edge(const Handle(Geom2d_Curve) & L,
+                     const Handle(Geom_Surface) & S) {
   BRepBuilderAPI_MakeEdge me(L, S);
   return edge{me.Edge()};
 }
 
-edge edge::make_edge(const geom2d_curve &L, const geom_surface &S,
-                     const Standard_Real p1, const Standard_Real p2) {
+edge edge::make_edge(const Handle(Geom2d_Curve) & L,
+                     const Handle(Geom_Surface) & S, const Standard_Real p1,
+                     const Standard_Real p2) {
   BRepBuilderAPI_MakeEdge me(L, S, p1, p2);
   return edge{me.Edge()};
 }
 
-edge edge::make_edge(const geom2d_curve &L, const geom_surface &S,
-                     const vector3<Standard_Real> &P1,
-                     const vector3<Standard_Real> &P2) {
-  BRepBuilderAPI_MakeEdge me(L, S, cast_to_gp(P1), cast_to_gp(P2));
+edge edge::make_edge(const Handle(Geom2d_Curve) & L,
+                     const Handle(Geom_Surface) & S, const gp_Pnt &P1,
+                     const gp_Pnt &P2) {
+  BRepBuilderAPI_MakeEdge me(L, S, P1, P2);
   return edge{me.Edge()};
 }
 
-edge edge::make_edge(const geom2d_curve &L, const geom_surface &S,
-                     const vertex &V1, const vertex &V2) {
+edge edge::make_edge(const Handle(Geom2d_Curve) & L,
+                     const Handle(Geom_Surface) & S, const vertex &V1,
+                     const vertex &V2) {
   BRepBuilderAPI_MakeEdge me(L, S, V1.value(), V2.value());
   return edge{me.Edge()};
 }
 
-edge edge::make_edge(const geom2d_curve &L, const geom_surface &S,
-                     const vector3<Standard_Real> &P1,
-                     const vector3<Standard_Real> &P2, const Standard_Real p1,
+edge edge::make_edge(const Handle(Geom2d_Curve) & L,
+                     const Handle(Geom_Surface) & S, const gp_Pnt &P1,
+                     const gp_Pnt &P2, const Standard_Real p1,
                      const Standard_Real p2) {
-  BRepBuilderAPI_MakeEdge me(L, S, cast_to_gp(P1), cast_to_gp(P2), p1, p2);
+  BRepBuilderAPI_MakeEdge me(L, S, P1, P2, p1, p2);
   return edge{me.Edge()};
 }
 
-edge edge::make_edge(const geom2d_curve &L, const geom_surface &S,
-                     const vertex &V1, const vertex &V2, const Standard_Real p1,
+edge edge::make_edge(const Handle(Geom2d_Curve) & L,
+                     const Handle(Geom_Surface) & S, const vertex &V1,
+                     const vertex &V2, const Standard_Real p1,
                      const Standard_Real p2) {
   BRepBuilderAPI_MakeEdge me(L, S, V1.value(), V2.value(), p1, p2);
   return edge{me.Edge()};
@@ -342,155 +335,148 @@ edge edge::make_edge2d(const vertex &V1, const vertex &V2) {
   return edge{me.Edge()};
 }
 
-edge edge::make_edge2d(const vector2<Standard_Real> &P1,
-                       const vector2<Standard_Real> &P2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(P1), cast_to_gp(P2));
+edge edge::make_edge2d(const gp_Pnt2d &P1, const gp_Pnt2d &P2) {
+  BRepBuilderAPI_MakeEdge2d me(P1, P2);
   return edge{me.Edge()};
 }
 
-edge edge::make_edge2d(const line2d &L) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const line2d &L, const Standard_Real p1,
-                       const Standard_Real p2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L), p1, p2);
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const line2d &L, const vector2<Standard_Real> &P1,
-                       const vector2<Standard_Real> &P2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const line2d &L, const vertex &V1, const vertex &V2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L), V1.value(), V2.value());
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const circ2d &L) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const circ2d &L, const Standard_Real p1,
-                       const Standard_Real p2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L), p1, p2);
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const circ2d &L, const vector2<Standard_Real> &P1,
-                       const vector2<Standard_Real> &P2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const circ2d &L, const vertex &V1, const vertex &V2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L), V1.value(), V2.value());
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const elips2d &L) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const elips2d &L, const Standard_Real p1,
-                       const Standard_Real p2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L), p1, p2);
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const elips2d &L, const vector2<Standard_Real> &P1,
-                       const vector2<Standard_Real> &P2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const elips2d &L, const vertex &V1, const vertex &V2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L), V1.value(), V2.value());
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const hyperbola2d &L) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const hyperbola2d &L, const Standard_Real p1,
-                       const Standard_Real p2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L), p1, p2);
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const hyperbola2d &L, const vector2<Standard_Real> &P1,
-                       const vector2<Standard_Real> &P2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const hyperbola2d &L, const vertex &V1,
-                       const vertex &V2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L), V1.value(), V2.value());
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const parabola2d &L) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const parabola2d &L, const Standard_Real p1,
-                       const Standard_Real p2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L), p1, p2);
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const parabola2d &L, const vector2<Standard_Real> &P1,
-                       const vector2<Standard_Real> &P2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2));
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const parabola2d &L, const vertex &V1,
-                       const vertex &V2) {
-  BRepBuilderAPI_MakeEdge2d me(cast_to_gp(L), V1.value(), V2.value());
-  return edge{me.Edge()};
-}
-
-edge edge::make_edge2d(const geom2d_curve &L) {
+edge edge::make_edge2d(const gp_Lin2d &L) {
   BRepBuilderAPI_MakeEdge2d me(L);
   return edge{me.Edge()};
 }
 
-edge edge::make_edge2d(const geom2d_curve &L, const Standard_Real p1,
+edge edge::make_edge2d(const gp_Lin2d &L, const Standard_Real p1,
                        const Standard_Real p2) {
   BRepBuilderAPI_MakeEdge2d me(L, p1, p2);
   return edge{me.Edge()};
 }
 
-edge edge::make_edge2d(const geom2d_curve &L, const vector2<Standard_Real> &P1,
-                       const vector2<Standard_Real> &P2) {
-  BRepBuilderAPI_MakeEdge2d me(L, cast_to_gp(P1), cast_to_gp(P2));
+edge edge::make_edge2d(const gp_Lin2d &L, const gp_Pnt2d &P1,
+                       const gp_Pnt2d &P2) {
+  BRepBuilderAPI_MakeEdge2d me(L, P1, P2);
   return edge{me.Edge()};
 }
 
-edge edge::make_edge2d(const geom2d_curve &L, const vertex &V1,
+edge edge::make_edge2d(const gp_Lin2d &L, const vertex &V1, const vertex &V2) {
+  BRepBuilderAPI_MakeEdge2d me(L, V1.value(), V2.value());
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const gp_Circ2d &L) {
+  BRepBuilderAPI_MakeEdge2d me(L);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const gp_Circ2d &L, const Standard_Real p1,
+                       const Standard_Real p2) {
+  BRepBuilderAPI_MakeEdge2d me(L, p1, p2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const gp_Circ2d &L, const gp_Pnt2d &P1,
+                       const gp_Pnt2d &P2) {
+  BRepBuilderAPI_MakeEdge2d me(L, P1, P2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const gp_Circ2d &L, const vertex &V1, const vertex &V2) {
+  BRepBuilderAPI_MakeEdge2d me(L, V1.value(), V2.value());
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const gp_Elips2d &L) {
+  BRepBuilderAPI_MakeEdge2d me(L);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const gp_Elips2d &L, const Standard_Real p1,
+                       const Standard_Real p2) {
+  BRepBuilderAPI_MakeEdge2d me(L, p1, p2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const gp_Elips2d &L, const gp_Pnt2d &P1,
+                       const gp_Pnt2d &P2) {
+  BRepBuilderAPI_MakeEdge2d me(L, P1, P2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const gp_Elips2d &L, const vertex &V1,
                        const vertex &V2) {
   BRepBuilderAPI_MakeEdge2d me(L, V1.value(), V2.value());
   return edge{me.Edge()};
 }
 
-edge edge::make_edge2d(const geom2d_curve &L, const vector2<Standard_Real> &P1,
-                       const vector2<Standard_Real> &P2, const Standard_Real p1,
-                       const Standard_Real p2) {
-  BRepBuilderAPI_MakeEdge2d me(L, cast_to_gp(P1), cast_to_gp(P2), p1, p2);
+edge edge::make_edge2d(const gp_Hypr2d &L) {
+  BRepBuilderAPI_MakeEdge2d me(L);
   return edge{me.Edge()};
 }
 
-edge edge::make_edge2d(const geom2d_curve &L, const vertex &V1,
+edge edge::make_edge2d(const gp_Hypr2d &L, const Standard_Real p1,
+                       const Standard_Real p2) {
+  BRepBuilderAPI_MakeEdge2d me(L, p1, p2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const gp_Hypr2d &L, const gp_Pnt2d &P1,
+                       const gp_Pnt2d &P2) {
+  BRepBuilderAPI_MakeEdge2d me(L, P1, P2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const gp_Hypr2d &L, const vertex &V1, const vertex &V2) {
+  BRepBuilderAPI_MakeEdge2d me(L, V1.value(), V2.value());
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const gp_Parab2d &L) {
+  BRepBuilderAPI_MakeEdge2d me(L);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const gp_Parab2d &L, const Standard_Real p1,
+                       const Standard_Real p2) {
+  BRepBuilderAPI_MakeEdge2d me(L, p1, p2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const gp_Parab2d &L, const gp_Pnt2d &P1,
+                       const gp_Pnt2d &P2) {
+  BRepBuilderAPI_MakeEdge2d me(L, P1, P2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const gp_Parab2d &L, const vertex &V1,
+                       const vertex &V2) {
+  BRepBuilderAPI_MakeEdge2d me(L, V1.value(), V2.value());
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const Handle(Geom2d_Curve) & L) {
+  BRepBuilderAPI_MakeEdge2d me(L);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const Handle(Geom2d_Curve) & L, const Standard_Real p1,
+                       const Standard_Real p2) {
+  BRepBuilderAPI_MakeEdge2d me(L, p1, p2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const Handle(Geom2d_Curve) & L, const vertex &V1,
+                       const vertex &V2) {
+  BRepBuilderAPI_MakeEdge2d me(L, V1.value(), V2.value());
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const Handle(Geom2d_Curve) & L, const gp_Pnt2d &P1,
+                       const gp_Pnt2d &P2, const Standard_Real p1,
+                       const Standard_Real p2) {
+  BRepBuilderAPI_MakeEdge2d me(L, P1, P2, p1, p2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const Handle(Geom2d_Curve) & L, const vertex &V1,
                        const vertex &V2, const Standard_Real p1,
                        const Standard_Real p2) {
   BRepBuilderAPI_MakeEdge2d me(L, V1.value(), V2.value(), p1, p2);
@@ -517,9 +503,7 @@ bool edge::is_closed() const {
   return false;
 }
 
-bool edge::is_inifinite() const {
-  return value().Infinite();
-}
+bool edge::is_inifinite() const { return value().Infinite(); }
 
 bool edge::is_curve3d() const { return BRep_Tool::IsGeometric(value()); }
 
@@ -535,9 +519,7 @@ double edge::length() const {
   return prop.Mass();
 }
 
-float edge::tolerance() const {
-  return BRep_Tool::Tolerance(value());
-}
+float edge::tolerance() const { return BRep_Tool::Tolerance(value()); }
 
 void edge::convert_to_curve3d() { BRepLib::BuildCurve3d(value()); }
 

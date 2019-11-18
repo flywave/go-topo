@@ -175,23 +175,22 @@ solid solid::make_solid_from_box(const Standard_Real dx, const Standard_Real dy,
   return solid{mb.Solid()};
 }
 
-solid solid::make_solid_from_box(const vector3<Standard_Real> &P,
-                                 const Standard_Real dx, const Standard_Real dy,
-                                 const Standard_Real dz) {
-  BRepPrimAPI_MakeBox mb(cast_to_gp(P), dx, dy, dz);
-  return solid{mb.Solid()};
-}
-
-solid solid::make_solid_from_box(const vector3<Standard_Real> &P1,
-                                 const vector3<Standard_Real> &P2) {
-  BRepPrimAPI_MakeBox mb(cast_to_gp(P1), cast_to_gp(P2));
-  return solid{mb.Solid()};
-}
-
-solid solid::make_solid_from_box(const axis2 &Axes, const Standard_Real dx,
+solid solid::make_solid_from_box(const gp_Pnt &P, const Standard_Real dx,
                                  const Standard_Real dy,
                                  const Standard_Real dz) {
-  BRepPrimAPI_MakeBox mb(cast_to_gp(Axes), dx, dy, dz);
+  BRepPrimAPI_MakeBox mb(P, dx, dy, dz);
+  return solid{mb.Solid()};
+}
+
+solid solid::make_solid_from_box(const gp_Pnt &P1, const gp_Pnt &P2) {
+  BRepPrimAPI_MakeBox mb(P1, P2);
+  return solid{mb.Solid()};
+}
+
+solid solid::make_solid_from_box(const gp_Ax2 &Axes, const Standard_Real dx,
+                                 const Standard_Real dy,
+                                 const Standard_Real dz) {
+  BRepPrimAPI_MakeBox mb(Axes, dx, dy, dz);
   return solid{mb.Solid()};
 }
 
@@ -208,16 +207,16 @@ solid solid::make_solid_from_cylinder(const Standard_Real R,
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_cylinder(const axis2 &Axes, const Standard_Real R,
+solid solid::make_solid_from_cylinder(const gp_Ax2 &Axes, const Standard_Real R,
                                       const Standard_Real H) {
-  BRepPrimAPI_MakeCylinder mw(cast_to_gp(Axes), R, H);
+  BRepPrimAPI_MakeCylinder mw(Axes, R, H);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_cylinder(const axis2 &Axes, const Standard_Real R,
+solid solid::make_solid_from_cylinder(const gp_Ax2 &Axes, const Standard_Real R,
                                       const Standard_Real H,
                                       const Standard_Real Angle) {
-  BRepPrimAPI_MakeCylinder mw(cast_to_gp(Axes), R, H, Angle);
+  BRepPrimAPI_MakeCylinder mw(Axes, R, H, Angle);
   return solid{mw.Solid()};
 }
 
@@ -235,39 +234,39 @@ solid solid::make_solid_from_cone(const Standard_Real R1,
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_cone(const axis2 &Axes, const Standard_Real R1,
+solid solid::make_solid_from_cone(const gp_Ax2 &Axes, const Standard_Real R1,
                                   const Standard_Real R2,
                                   const Standard_Real H) {
-  BRepPrimAPI_MakeCone mw(cast_to_gp(Axes), R1, R2, H);
+  BRepPrimAPI_MakeCone mw(Axes, R1, R2, H);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_cone(const axis2 &Axes, const Standard_Real R1,
+solid solid::make_solid_from_cone(const gp_Ax2 &Axes, const Standard_Real R1,
                                   const Standard_Real R2, const Standard_Real H,
                                   const Standard_Real angle) {
-  BRepPrimAPI_MakeCone mw(cast_to_gp(Axes), R1, R2, H, angle);
+  BRepPrimAPI_MakeCone mw(Axes, R1, R2, H, angle);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_revolution(const geom_curve &Meridian) {
+solid solid::make_solid_from_revolution(const Handle(Geom_Curve) & Meridian) {
   BRepPrimAPI_MakeRevolution mw(Meridian);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_revolution(const geom_curve &Meridian,
+solid solid::make_solid_from_revolution(const Handle(Geom_Curve) & Meridian,
                                         const Standard_Real angle) {
   BRepPrimAPI_MakeRevolution mw(Meridian, angle);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_revolution(const geom_curve &Meridian,
+solid solid::make_solid_from_revolution(const Handle(Geom_Curve) & Meridian,
                                         const Standard_Real VMin,
                                         const Standard_Real VMax) {
   BRepPrimAPI_MakeRevolution mw(Meridian, VMin, VMax);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_revolution(const geom_curve &Meridian,
+solid solid::make_solid_from_revolution(const Handle(Geom_Curve) & Meridian,
                                         const Standard_Real VMin,
                                         const Standard_Real VMax,
                                         const Standard_Real angle) {
@@ -275,33 +274,33 @@ solid solid::make_solid_from_revolution(const geom_curve &Meridian,
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_revolution(const axis2 &Axes,
-                                        const geom_curve &Meridian) {
-  BRepPrimAPI_MakeRevolution mw(cast_to_gp(Axes), Meridian);
+solid solid::make_solid_from_revolution(const gp_Ax2 &Axes,
+                                        const Handle(Geom_Curve) & Meridian) {
+  BRepPrimAPI_MakeRevolution mw(Axes, Meridian);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_revolution(const axis2 &Axes,
-                                        const geom_curve &Meridian,
+solid solid::make_solid_from_revolution(const gp_Ax2 &Axes,
+                                        const Handle(Geom_Curve) & Meridian,
                                         const Standard_Real angle) {
-  BRepPrimAPI_MakeRevolution mw(cast_to_gp(Axes), Meridian, angle);
+  BRepPrimAPI_MakeRevolution mw(Axes, Meridian, angle);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_revolution(const axis2 &Axes,
-                                        const geom_curve &Meridian,
+solid solid::make_solid_from_revolution(const gp_Ax2 &Axes,
+                                        const Handle(Geom_Curve) & Meridian,
                                         const Standard_Real VMin,
                                         const Standard_Real VMax) {
-  BRepPrimAPI_MakeRevolution mw(cast_to_gp(Axes), Meridian, VMin, VMax);
+  BRepPrimAPI_MakeRevolution mw(Axes, Meridian, VMin, VMax);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_revolution(const axis2 &Axes,
-                                        const geom_curve &Meridian,
+solid solid::make_solid_from_revolution(const gp_Ax2 &Axes,
+                                        const Handle(Geom_Curve) & Meridian,
                                         const Standard_Real VMin,
                                         const Standard_Real VMax,
                                         const Standard_Real angle) {
-  BRepPrimAPI_MakeRevolution mw(cast_to_gp(Axes), Meridian, VMin, VMax, angle);
+  BRepPrimAPI_MakeRevolution mw(Axes, Meridian, VMin, VMax, angle);
   return solid{mw.Solid()};
 }
 
@@ -331,59 +330,56 @@ solid solid::make_solid_from_sphere(const Standard_Real R,
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_sphere(const vector3<Standard_Real> &Center,
+solid solid::make_solid_from_sphere(const gp_Pnt &Center,
                                     const Standard_Real R) {
-  BRepPrimAPI_MakeSphere mw(cast_to_gp(Center), R);
+  BRepPrimAPI_MakeSphere mw(Center, R);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_sphere(const vector3<Standard_Real> &Center,
-                                    const Standard_Real R,
+solid solid::make_solid_from_sphere(const gp_Pnt &Center, const Standard_Real R,
                                     const Standard_Real angle) {
-  BRepPrimAPI_MakeSphere mw(cast_to_gp(Center), R, angle);
+  BRepPrimAPI_MakeSphere mw(Center, R, angle);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_sphere(const vector3<Standard_Real> &Center,
-                                    const Standard_Real R,
+solid solid::make_solid_from_sphere(const gp_Pnt &Center, const Standard_Real R,
                                     const Standard_Real angle1,
                                     const Standard_Real angle2) {
-  BRepPrimAPI_MakeSphere mw(cast_to_gp(Center), R, angle1, angle2);
+  BRepPrimAPI_MakeSphere mw(Center, R, angle1, angle2);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_sphere(const vector3<Standard_Real> &Center,
-                                    const Standard_Real R,
+solid solid::make_solid_from_sphere(const gp_Pnt &Center, const Standard_Real R,
                                     const Standard_Real angle1,
                                     const Standard_Real angle2,
                                     const Standard_Real angle3) {
-  BRepPrimAPI_MakeSphere mw(cast_to_gp(Center), R, angle1, angle2, angle3);
+  BRepPrimAPI_MakeSphere mw(Center, R, angle1, angle2, angle3);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_sphere(const axis2 &Axis, const Standard_Real R) {
-  BRepPrimAPI_MakeSphere ms(cast_to_gp(Axis), R);
+solid solid::make_solid_from_sphere(const gp_Ax2 &Axis, const Standard_Real R) {
+  BRepPrimAPI_MakeSphere ms(Axis, R);
   return solid{ms.Solid()};
 }
 
-solid solid::make_solid_from_sphere(const axis2 &Axis, const Standard_Real R,
+solid solid::make_solid_from_sphere(const gp_Ax2 &Axis, const Standard_Real R,
                                     const Standard_Real angle) {
-  BRepPrimAPI_MakeSphere ms(cast_to_gp(Axis), R, angle);
+  BRepPrimAPI_MakeSphere ms(Axis, R, angle);
   return solid{ms.Solid()};
 }
 
-solid solid::make_solid_from_sphere(const axis2 &Axis, const Standard_Real R,
+solid solid::make_solid_from_sphere(const gp_Ax2 &Axis, const Standard_Real R,
                                     const Standard_Real angle1,
                                     const Standard_Real angle2) {
-  BRepPrimAPI_MakeSphere ms(cast_to_gp(Axis), R, angle1, angle2);
+  BRepPrimAPI_MakeSphere ms(Axis, R, angle1, angle2);
   return solid{ms.Solid()};
 }
 
-solid solid::make_solid_from_sphere(const axis2 &Axis, const Standard_Real R,
+solid solid::make_solid_from_sphere(const gp_Ax2 &Axis, const Standard_Real R,
                                     const Standard_Real angle1,
                                     const Standard_Real angle2,
                                     const Standard_Real angle3) {
-  BRepPrimAPI_MakeSphere ms(cast_to_gp(Axis), R, angle1, angle2, angle3);
+  BRepPrimAPI_MakeSphere ms(Axis, R, angle1, angle2, angle3);
   return solid{ms.Solid()};
 }
 
@@ -417,33 +413,33 @@ solid solid::make_solid_from_torus(const Standard_Real R1,
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_torus(const axis2 &Axes, const Standard_Real R1,
+solid solid::make_solid_from_torus(const gp_Ax2 &Axes, const Standard_Real R1,
                                    const Standard_Real R2) {
-  BRepPrimAPI_MakeTorus mw(cast_to_gp(Axes), R1, R2);
+  BRepPrimAPI_MakeTorus mw(Axes, R1, R2);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_torus(const axis2 &Axes, const Standard_Real R1,
+solid solid::make_solid_from_torus(const gp_Ax2 &Axes, const Standard_Real R1,
                                    const Standard_Real R2,
                                    const Standard_Real angle) {
-  BRepPrimAPI_MakeTorus mw(cast_to_gp(Axes), R1, R2, angle);
+  BRepPrimAPI_MakeTorus mw(Axes, R1, R2, angle);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_torus(const axis2 &Axes, const Standard_Real R1,
+solid solid::make_solid_from_torus(const gp_Ax2 &Axes, const Standard_Real R1,
                                    const Standard_Real R2,
                                    const Standard_Real angle1,
                                    const Standard_Real angle2) {
-  BRepPrimAPI_MakeTorus mw(cast_to_gp(Axes), R1, R2, angle1, angle2);
+  BRepPrimAPI_MakeTorus mw(Axes, R1, R2, angle1, angle2);
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_torus(const axis2 &Axes, const Standard_Real R1,
+solid solid::make_solid_from_torus(const gp_Ax2 &Axes, const Standard_Real R1,
                                    const Standard_Real R2,
                                    const Standard_Real angle1,
                                    const Standard_Real angle2,
                                    const Standard_Real angle) {
-  BRepPrimAPI_MakeTorus mw(cast_to_gp(Axes), R1, R2, angle1, angle2, angle);
+  BRepPrimAPI_MakeTorus mw(Axes, R1, R2, angle1, angle2, angle);
   return solid{mw.Solid()};
 }
 
@@ -455,11 +451,11 @@ solid solid::make_solid_from_wedge(const Standard_Real dx,
   return solid{mw.Solid()};
 }
 
-solid solid::make_solid_from_wedge(const axis2 &Axes, const Standard_Real dx,
+solid solid::make_solid_from_wedge(const gp_Ax2 &Axes, const Standard_Real dx,
                                    const Standard_Real dy,
                                    const Standard_Real dz,
                                    const Standard_Real ltx) {
-  BRepPrimAPI_MakeWedge mw(cast_to_gp(Axes), dx, dy, dz, ltx);
+  BRepPrimAPI_MakeWedge mw(Axes, dx, dy, dz, ltx);
   return solid{mw.Solid()};
 }
 
@@ -472,11 +468,10 @@ solid solid::make_solid_from_wedge(
 }
 
 solid solid::make_solid_from_wedge(
-    const axis2 &Axes, const Standard_Real dx, const Standard_Real dy,
+    const gp_Ax2 &Axes, const Standard_Real dx, const Standard_Real dy,
     const Standard_Real dz, const Standard_Real xmin, const Standard_Real zmin,
     const Standard_Real xmax, const Standard_Real zmax) {
-  BRepPrimAPI_MakeWedge mw(cast_to_gp(Axes), dx, dy, dz, xmin, zmin, xmax,
-                           zmax);
+  BRepPrimAPI_MakeWedge mw(Axes, dx, dy, dz, xmin, zmin, xmax, zmax);
   return solid{mw.Solid()};
 }
 
@@ -635,29 +630,30 @@ double solid::volume() const {
   return prop.Mass();
 }
 
-bbox3d solid::inertia() const {
+Bnd_Box solid::inertia() const {
   GProp_GProps prop;
   BRepGProp::VolumeProperties(value(), prop);
   gp_Mat mat = prop.MatrixOfInertia();
-  return bbox3d{{mat(1, 1), mat(2, 2), mat(3, 3)},
-                {mat(1, 2), mat(1, 3), mat(2, 3)}};
+  Bnd_Box bbox;
+  bbox.Update(mat(1, 1), mat(2, 2), mat(3, 3), mat(1, 2), mat(1, 3), mat(2, 3));
+  return bbox;
 }
 
-double3 solid::centre_of_mass() const {
-  double3 ret;
+gp_Pnt solid::centre_of_mass() const {
+  gp_Pnt ret;
   GProp_GProps prop;
   BRepGProp::VolumeProperties(value(), prop);
   gp_Pnt cg = prop.CentreOfMass();
-  ret.x = cg.X();
-  ret.y = cg.Y();
-  ret.z = cg.Z();
+  ret.X = cg.X();
+  ret.Y = cg.Y();
+  ret.Z = cg.Z();
   return ret;
 }
 
-int solid::extrude(const face &f, double3 p1, double3 p2) {
+int solid::extrude(const face &f, gp_Pnt p1, gp_Pnt p2) {
   try {
-    gp_Vec direction(gp_Pnt(p1.x, p1.y, p1.z), gp_Pnt(p2.x, p2.y, p2.z));
-    gp_Ax1 axisOfRevolution(gp_Pnt(p1.x, p1.y, p1.z), direction);
+    gp_Vec direction(gp_Pnt(p1.X, p1.Y, p1.Z), gp_Pnt(p2.X, p2.Y, p2.Z));
+    gp_Ax1 axisOfRevolution(gp_Pnt(p1.X, p1.Y, p1.Z), direction);
 
     BRepPrimAPI_MakePrism MP(f.value(), direction, Standard_False);
 
@@ -679,9 +675,9 @@ int solid::extrude(const face &f, double3 p1, double3 p2) {
   return 1;
 }
 
-int solid::extrude(const face &f, double3 d) {
+int solid::extrude(const face &f, gp_Vec d) {
   try {
-    BRepPrimAPI_MakePrism MP(f.value(), gp_Vec(cast_to_gp(d)), Standard_False);
+    BRepPrimAPI_MakePrism MP(f.value(), d, Standard_False);
 
     _shape = MP.Shape();
 
@@ -701,10 +697,10 @@ int solid::extrude(const face &f, double3 d) {
   return 1;
 }
 
-int solid::revolve(const face &f, double3 p1, double3 p2, double angle) {
+int solid::revolve(const face &f, gp_Pnt p1, gp_Pnt p2, double angle) {
   try {
-    gp_Dir direction(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z);
-    gp_Ax1 axisOfRevolution(gp_Pnt(p1.x, p1.y, p1.z), direction);
+    gp_Dir direction(p2.X - p1.X, p2.Y - p1.Y, p2.Z - p1.Z);
+    gp_Ax1 axisOfRevolution(gp_Pnt(p1.X, p1.Y, p1.Z), direction);
     BRepPrimAPI_MakeRevol MR(f.value(), axisOfRevolution, angle,
                              Standard_False);
 
@@ -1074,12 +1070,12 @@ int solid::offset(const face &f, double offset, double tolerance) {
   return 1;
 }
 
-int solid::draft(std::vector<face> &faces, dir d, double angle, plane p) {
+int solid::draft(std::vector<face> &faces, gp_Dir d, double angle, gp_Pln p) {
   try {
     BRepOffsetAPI_DraftAngle MD;
     for (unsigned i = 0; i < faces.size(); i++) {
       face *f = &faces[i];
-      MD.Add(f->value(), cast_to_gp(d), angle, cast_to_gp(p));
+      MD.Add(f->value(), d, angle, p);
     }
     MD.Build();
 
@@ -1175,10 +1171,9 @@ int solid::evolved(const wire &Spine, const wire &Profil) {
   return 1;
 }
 
-int solid::feat_prism(const face &f, dir d, double height, bool fuse) {
+int solid::feat_prism(const face &f, gp_Dir d, double height, bool fuse) {
   try {
-    BRepFeat_MakePrism MP(_shape, f.value(), TopoDS_Face(), cast_to_gp(d), fuse,
-                          false);
+    BRepFeat_MakePrism MP(_shape, f.value(), TopoDS_Face(), d, fuse, false);
     MP.Perform(height);
 
     if (!MP.IsDone())
@@ -1207,11 +1202,10 @@ int solid::feat_prism(const face &f, dir d, double height, bool fuse) {
   return 1;
 }
 
-int solid::feat_prism(const face &f, dir d, const face &from, const face &end,
-                      bool fuse) {
+int solid::feat_prism(const face &f, gp_Dir d, const face &from,
+                      const face &end, bool fuse) {
   try {
-    BRepFeat_MakePrism MP(_shape, f.value(), TopoDS_Face(), cast_to_gp(d), fuse,
-                          false);
+    BRepFeat_MakePrism MP(_shape, f.value(), TopoDS_Face(), d, fuse, false);
     MP.Perform(from.value(), end.value());
 
     if (!MP.IsDone())
@@ -1240,10 +1234,9 @@ int solid::feat_prism(const face &f, dir d, const face &from, const face &end,
   return 1;
 }
 
-int solid::feat_prism(const face &f, dir d, const face &until, bool fuse) {
+int solid::feat_prism(const face &f, gp_Dir d, const face &until, bool fuse) {
   try {
-    BRepFeat_MakePrism MP(_shape, f.value(), TopoDS_Face(), cast_to_gp(d), fuse,
-                          false);
+    BRepFeat_MakePrism MP(_shape, f.value(), TopoDS_Face(), d, fuse, false);
     MP.Perform(until.value());
 
     if (!MP.IsDone())
@@ -1371,11 +1364,10 @@ int solid::feat_draft_prism(const face &f, double angle, const face &until,
   return 1;
 }
 
-int solid::feat_revol(const face &f, const axis1 &Axes, const face &from,
+int solid::feat_revol(const face &f, const gp_Ax1 &Axes, const face &from,
                       const face &end, bool fuse) {
   try {
-    BRepFeat_MakeRevol MP(_shape, f.value(), TopoDS_Face(), cast_to_gp(Axes),
-                          fuse, false);
+    BRepFeat_MakeRevol MP(_shape, f.value(), TopoDS_Face(), Axes, fuse, false);
     MP.Perform(from.value(), end.value());
 
     if (!MP.IsDone())
@@ -1404,11 +1396,10 @@ int solid::feat_revol(const face &f, const axis1 &Axes, const face &from,
   return 1;
 }
 
-int solid::feat_revol(const face &f, const axis1 &Axes, const face &until,
+int solid::feat_revol(const face &f, const gp_Ax1 &Axes, const face &until,
                       bool fuse) {
   try {
-    BRepFeat_MakeRevol MP(_shape, f.value(), TopoDS_Face(), cast_to_gp(Axes),
-                          fuse, false);
+    BRepFeat_MakeRevol MP(_shape, f.value(), TopoDS_Face(), Axes, fuse, false);
     MP.Perform(until.value());
 
     if (!MP.IsDone())
@@ -1503,11 +1494,10 @@ int solid::feat_pipe(const face &f, const wire &Spine, const face &until,
   return 1;
 }
 
-int solid::linear_form(const wire &w, geom_plane_surface p, dir d, dir d1,
-                       bool fuse) {
+int solid::linear_form(const wire &w, const Handle(Geom_Plane) & p, gp_Dir d,
+                       gp_Dir d1, bool fuse) {
   try {
-    BRepFeat_MakeLinearForm MLF(_shape, w.value(), p, cast_to_gp(d),
-                                cast_to_gp(d1), fuse, false);
+    BRepFeat_MakeLinearForm MLF(_shape, w.value(), p, d, d1, fuse, false);
     MLF.Perform();
 
     if (!MLF.IsDone())
@@ -1536,13 +1526,13 @@ int solid::linear_form(const wire &w, geom_plane_surface p, dir d, dir d1,
   return 1;
 }
 
-int solid::revolution_form(const wire &w, geom_plane_surface p,
-                           const axis1 &Axes, Standard_Real h1,
+int solid::revolution_form(const wire &w, const Handle(Geom_Plane) & p,
+                           const gp_Ax1 &Axes, Standard_Real h1,
                            Standard_Real h2, bool fuse) {
   try {
     bool Sliding = false;
-    BRepFeat_MakeRevolutionForm MRF(_shape, w.value(), p, cast_to_gp(Axes), h1,
-                                    h2, fuse, Sliding);
+    BRepFeat_MakeRevolutionForm MRF(_shape, w.value(), p, Axes, h1, h2, fuse,
+                                    Sliding);
     MRF.Perform();
 
     if (!MRF.IsDone())
@@ -1571,13 +1561,13 @@ int solid::revolution_form(const wire &w, geom_plane_surface p,
   return 1;
 }
 
-optional<face> solid::section(double3 pnt, double3 nor) {
+boost::optional<face> solid::section(gp_Pnt pnt, gp_Pnt nor) {
   Handle(TopTools_HSequenceOfShape) wires = new TopTools_HSequenceOfShape;
   Handle(TopTools_HSequenceOfShape) edges = new TopTools_HSequenceOfShape;
   TopExp_Explorer ex;
   face ret;
   try {
-    gp_Pln pln(gp_Pnt(pnt.x, pnt.y, pnt.z), gp_Dir(nor.x, nor.y, nor.z));
+    gp_Pln pln(gp_Pnt(pnt.X, pnt.Y, pnt.Z), gp_Dir(nor.X, nor.Y, nor.Z));
 
     BRepAlgoAPI_Section mkSection(_shape, pln);
     if (!mkSection.IsDone())

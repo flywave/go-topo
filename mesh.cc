@@ -202,8 +202,8 @@ void mesh::triangulation(mesh_receiver &meshReceiver, double deflection,
         transform.Transforms(px, py, pz);
         gp_Dir dir(norms.Value((j * 3) + 1), norms.Value((j * 3) + 2),
                    norms.Value((j * 3) + 3));
-        meshReceiver.append_node(faceId, double3{px, py, pz},
-                                 double3{dir.X(), dir.Y(), dir.Z()});
+        meshReceiver.append_node(faceId, gp_Pnt{px, py, pz},
+                                 gp_Pnt{dir.X(), dir.Y(), dir.Z()});
       }
     } else {
       for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
@@ -218,8 +218,8 @@ void mesh::triangulation(mesh_receiver &meshReceiver, double deflection,
         if (faceReversed)
           dir.Reverse();
         dir = quaternion.Multiply(dir);
-        meshReceiver.append_node(faceId, double3{px, py, pz},
-                                 double3{dir.X(), dir.Y(), dir.Z()});
+        meshReceiver.append_node(faceId, gp_Pnt{px, py, pz},
+                                 gp_Pnt{dir.X(), dir.Y(), dir.Z()});
       }
     }
 

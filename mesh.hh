@@ -23,7 +23,7 @@
 namespace flywave {
 namespace topo {
 
-class mesh : public enable_shared_from_this<mesh> {
+class mesh : public std::enable_shared_from_this<mesh> {
 public:
   mesh();
   mesh(TopoDS_Shape shp);

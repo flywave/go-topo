@@ -15,7 +15,7 @@ vertex::vertex(Standard_Real x, Standard_Real y, Standard_Real z) {
   _shape = mkVertex.Vertex();
 }
 
-vertex::vertex(const vector3<Standard_Real> &P) : vertex(P.x, P.y, P.z) {}
+vertex::vertex(const gp_Pnt &P) : vertex(P.X, P.Y, P.Z) {}
 
 TopoDS_Vertex &vertex::value() { return TopoDS::Vertex(_shape); }
 
@@ -47,12 +47,12 @@ shape vertex::copy(bool deep) const {
   return vertex{};
 }
 
-vertex vertex::make_vertex(const vector3<Standard_Real> &P) {
-  BRepBuilderAPI_MakeVertex mkVertex(cast_to_gp(P));
+vertex vertex::make_vertex(const gp_Pnt &P) {
+  BRepBuilderAPI_MakeVertex mkVertex(P);
   return vertex{mkVertex.Vertex()};
 }
 
-vertex::operator const vector3<Standard_Real>() const {
+vertex::operator const gp_Pnt() const {
   gp_Pnt pnt = BRep_Tool::Pnt(value());
   return {pnt.X(), pnt.Y(), pnt.Z()};
 }
