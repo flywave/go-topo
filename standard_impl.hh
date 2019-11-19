@@ -49,6 +49,8 @@
 #include <gp_Sphere.hxx>
 #include <gp_Torus.hxx>
 
+#include <Quantity_Color.hxx>
+
 #include <TColgp_HArray1OfPnt.hxx>
 #include <TColgp_HArray1OfPnt2d.hxx>
 
@@ -419,6 +421,14 @@ inline gp_Trsf2d cast_to_gp(const trsf2d_t &a) {
 inline trsf2d_t cast_from_gp(const gp_Trsf2d &mat) {
   return trsf2d_t{{mat.Value(0, 0), mat.Value(0, 1), mat.Value(0, 2),
                    mat.Value(1, 0), mat.Value(1, 1), mat.Value(1, 2)}};
+}
+
+inline Quantity_Color cast_to_gp(const color_t &a) {
+  return Quantity_Color{a.r, a.g, a.b, Quantity_TOC_RGB};
+}
+
+inline color_t cast_from_gp(const Quantity_Color &mat) {
+  return color_t{mat.Red(), mat.Green(), mat.Blue()};
 }
 
 inline TColgp_Array1OfPnt &cast_to_gp(const std::vector<pnt3d_t> &a,
