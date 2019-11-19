@@ -137,12 +137,12 @@ struct _geom_ellipse_t {
   Handle(Geom_Ellipse) handle;
 };
 
-struct _geom_hyperbola_t {
-  Handle(Geom_Hyperbola) handle;
-};
-
 struct _geom_parabola_t {
   Handle(Geom_Parabola) handle;
+};
+
+struct _geom_hyperbola_t {
+  Handle(Geom_Hyperbola) handle;
 };
 
 struct _geom_line_t {
@@ -336,5 +336,566 @@ struct _geom2d_vector_with_magnitude_t {
 #ifdef __cplusplus
 }
 #endif
+
+inline Handle(Geom_Geometry) cast_to_geom(const _geom_geometry_t &p) {
+  return p.handle;
+}
+
+inline _geom_geometry_t cast_from_geom(const Handle(Geom_Geometry) & d) {
+  return _geom_geometry_t{d};
+}
+
+inline Handle(Geom_Transformation)
+    cast_to_geom(const _geom_transformation_t &p) {
+  return p.handle;
+}
+
+inline _geom_transformation_t cast_from_geom(const Handle(Geom_Transformation) &
+                                             d) {
+  return _geom_transformation_t{d};
+}
+
+inline Handle(Geom_AxisPlacement)
+    cast_to_geom(const _geom_axis_placement_t &p) {
+  return p.handle;
+}
+
+inline _geom_axis_placement_t cast_from_geom(const Handle(Geom_AxisPlacement) &
+                                             d) {
+  return _geom_axis_placement_t{d};
+}
+
+inline Handle(Geom_Axis1Placement)
+    cast_to_geom(const _geom_axis1_placement_t &p) {
+  return p.handle;
+}
+
+inline _geom_axis1_placement_t
+cast_from_geom(const Handle(Geom_Axis1Placement) & d) {
+  return _geom_axis1_placement_t{d};
+}
+
+inline Handle(Geom_Axis2Placement)
+    cast_to_geom(const _geom_axis2_placement_t &p) {
+  return p.handle;
+}
+
+inline _geom_axis2_placement_t
+cast_from_geom(const Handle(Geom_Axis2Placement) & d) {
+  return _geom_axis2_placement_t{d};
+}
+
+inline Handle(Geom_Curve) cast_to_geom(const _geom_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom_curve_t cast_from_geom(const Handle(Geom_Curve) & d) {
+  return _geom_curve_t{d};
+}
+
+inline Handle(Geom_BoundedCurve) cast_to_geom(const _geom_bounded_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom_bounded_curve_t cast_from_geom(const Handle(Geom_BoundedCurve) &
+                                            d) {
+  return _geom_bounded_curve_t{d};
+}
+
+inline Handle(Geom_BezierCurve) cast_to_geom(const _geom_bezier_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom_bezier_curve_t cast_from_geom(const Handle(Geom_BezierCurve) & d) {
+  return _geom_bezier_curve_t{d};
+}
+
+inline Handle(Geom_BSplineCurve) cast_to_geom(const _geom_bspline_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom_bspline_curve_t cast_from_geom(const Handle(Geom_BSplineCurve) &
+                                            d) {
+  return _geom_bspline_curve_t{d};
+}
+
+inline Handle(Geom_TrimmedCurve) cast_to_geom(const _geom_trimmed_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom_trimmed_curve_t cast_from_geom(const Handle(Geom_TrimmedCurve) &
+                                            d) {
+  return _geom_trimmed_curve_t{d};
+}
+
+inline Handle(Geom_Conic) cast_to_geom(const _geom_conic_t &p) {
+  return p.handle;
+}
+
+inline _geom_conic_t cast_from_geom(const Handle(Geom_Conic) & d) {
+  return _geom_conic_t{d};
+}
+
+inline Handle(Geom_Circle) cast_to_geom(const _geom_circle_t &p) {
+  return p.handle;
+}
+
+inline _geom_circle_t cast_from_geom(const Handle(Geom_Circle) & d) {
+  return _geom_circle_t{d};
+}
+
+inline Handle(Geom_Ellipse) cast_to_geom(const _geom_ellipse_t &p) {
+  return p.handle;
+}
+
+inline _geom_ellipse_t cast_from_geom(const Handle(Geom_Ellipse) & d) {
+  return _geom_ellipse_t{d};
+}
+
+inline Handle(Geom_Hyperbola) cast_to_geom(const _geom_hyperbola_t &p) {
+  return p.handle;
+}
+
+inline _geom_hyperbola_t cast_from_geom(const Handle(Geom_Hyperbola) & d) {
+  return _geom_hyperbola_t{d};
+}
+
+inline Handle(Geom_Parabola) cast_to_geom(const _geom_parabola_t &p) {
+  return p.handle;
+}
+
+inline _geom_parabola_t cast_from_geom(const Handle(Geom_Parabola) & d) {
+  return _geom_parabola_t{d};
+}
+
+inline Handle(Geom_Line) cast_to_geom(const _geom_line_t &p) {
+  return p.handle;
+}
+
+inline _geom_line_t cast_from_geom(const Handle(Geom_Line) & d) {
+  return _geom_line_t{d};
+}
+
+inline Handle(Geom_OffsetCurve) cast_to_geom(const _geom_offset_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom_offset_curve_t cast_from_geom(const Handle(Geom_OffsetCurve) & d) {
+  return _geom_offset_curve_t{d};
+}
+
+inline Handle(Geom_Point) cast_to_geom(const _geom_point_t &p) {
+  return p.handle;
+}
+
+inline _geom_point_t cast_from_geom(const Handle(Geom_Point) & d) {
+  return _geom_point_t{d};
+}
+
+inline Handle(Geom_CartesianPoint)
+    cast_to_geom(const _geom_cartesian_point_t &p) {
+  return p.handle;
+}
+
+inline _geom_cartesian_point_t
+cast_from_geom(const Handle(Geom_CartesianPoint) & d) {
+  return _geom_cartesian_point_t{d};
+}
+
+inline Handle(Geom_Surface) cast_to_geom(const _geom_surface_t &p) {
+  return p.handle;
+}
+
+inline _geom_surface_t cast_from_geom(const Handle(Geom_Surface) & d) {
+  return _geom_surface_t{d};
+}
+
+inline Handle(Geom_BoundedSurface)
+    cast_to_geom(const _geom_bounded_surface_t &p) {
+  return p.handle;
+}
+
+inline _geom_bounded_surface_t
+cast_from_geom(const Handle(Geom_BoundedSurface) & d) {
+  return _geom_bounded_surface_t{d};
+}
+
+inline Handle(Geom_BezierSurface)
+    cast_to_geom(const _geom_bezier_surface_t &p) {
+  return p.handle;
+}
+
+inline _geom_bezier_surface_t cast_from_geom(const Handle(Geom_BezierSurface) &
+                                             d) {
+  return _geom_bezier_surface_t{d};
+}
+
+inline Handle(Geom_BSplineSurface)
+    cast_to_geom(const _geom_bspline_surface_t &p) {
+  return p.handle;
+}
+
+inline _geom_bspline_surface_t
+cast_from_geom(const Handle(Geom_BSplineSurface) & d) {
+  return _geom_bspline_surface_t{d};
+}
+
+inline Handle(Geom_RectangularTrimmedSurface)
+    cast_to_geom(const _geom_rectangular_trimmed_surface_t &p) {
+  return p.handle;
+}
+
+inline _geom_rectangular_trimmed_surface_t
+cast_from_geom(const Handle(Geom_RectangularTrimmedSurface) & d) {
+  return _geom_rectangular_trimmed_surface_t{d};
+}
+
+inline Handle(Geom_ElementarySurface)
+    cast_to_geom(const _geom_elementary_surface_t &p) {
+  return p.handle;
+}
+
+inline _geom_elementary_surface_t
+cast_from_geom(const Handle(Geom_ElementarySurface) & d) {
+  return _geom_elementary_surface_t{d};
+}
+inline Handle(Geom_CylindricalSurface)
+    cast_to_geom(const _geom_cylindrical_surface_t &p) {
+  return p.handle;
+}
+
+inline _geom_cylindrical_surface_t
+cast_from_geom(const Handle(Geom_CylindricalSurface) & d) {
+  return _geom_cylindrical_surface_t{d};
+}
+
+inline Handle(Geom_Plane) cast_to_geom(const _geom_plane_surface_t &p) {
+  return p.handle;
+}
+
+inline _geom_plane_surface_t cast_from_geom(const Handle(Geom_Plane) & d) {
+  return _geom_plane_surface_t{d};
+}
+
+inline Handle(Geom_ConicalSurface)
+    cast_to_geom(const _geom_conical_surface_t &p) {
+  return p.handle;
+}
+
+inline _geom_conical_surface_t
+cast_from_geom(const Handle(Geom_ConicalSurface) & d) {
+  return _geom_conical_surface_t{d};
+}
+
+inline Handle(Geom_SphericalSurface)
+    cast_to_geom(const _geom_spherical_surface_t &p) {
+  return p.handle;
+}
+
+inline _geom_spherical_surface_t
+cast_from_geom(const Handle(Geom_SphericalSurface) & d) {
+  return _geom_spherical_surface_t{d};
+}
+
+inline Handle(Geom_ToroidalSurface)
+    cast_to_geom(const _geom_toroidal_surface_t &p) {
+  return p.handle;
+}
+
+inline _geom_toroidal_surface_t
+cast_from_geom(const Handle(Geom_ToroidalSurface) & d) {
+  return _geom_toroidal_surface_t{d};
+}
+
+inline Handle(Geom_OffsetSurface)
+    cast_to_geom(const _geom_offset_surface_t &p) {
+  return p.handle;
+}
+
+inline _geom_offset_surface_t cast_from_geom(const Handle(Geom_OffsetSurface) &
+                                             d) {
+  return _geom_offset_surface_t{d};
+}
+
+inline Handle(Geom_SweptSurface) cast_to_geom(const _geom_swept_surface_t &p) {
+  return p.handle;
+}
+
+inline _geom_swept_surface_t cast_from_geom(const Handle(Geom_SweptSurface) &
+                                            d) {
+  return _geom_swept_surface_t{d};
+}
+
+inline Handle(Geom_SurfaceOfLinearExtrusion)
+    cast_to_geom(const _geom_surface_of_linear_extrusion_t &p) {
+  return p.handle;
+}
+
+inline _geom_surface_of_linear_extrusion_t
+cast_from_geom(const Handle(Geom_SurfaceOfLinearExtrusion) & d) {
+  return _geom_surface_of_linear_extrusion_t{d};
+}
+
+inline Handle(Geom_SurfaceOfRevolution)
+    cast_to_geom(const _geom_surface_of_revolution_extrusion_t &p) {
+  return p.handle;
+}
+
+inline _geom_surface_of_revolution_extrusion_t
+cast_from_geom(const Handle(Geom_SurfaceOfRevolution) & d) {
+  return _geom_surface_of_revolution_extrusion_t{d};
+}
+
+inline Handle(GeomPlate_Surface) cast_to_geom(const _geom_plate_surface_t &p) {
+  return p.handle;
+}
+
+inline _geom_plate_surface_t cast_from_geom(const Handle(GeomPlate_Surface) &
+                                            d) {
+  return _geom_plate_surface_t{d};
+}
+
+inline Handle(Geom_Vector) cast_to_geom(const _geom_vector_t &p) {
+  return p.handle;
+}
+
+inline _geom_vector_t cast_from_geom(const Handle(Geom_Vector) & d) {
+  return _geom_vector_t{d};
+}
+
+inline Handle(Geom_Direction) cast_to_geom(const _geom_direction_t &p) {
+  return p.handle;
+}
+
+inline _geom_direction_t cast_from_geom(const Handle(Geom_Direction) & d) {
+  return _geom_direction_t{d};
+}
+
+inline Handle(Geom_VectorWithMagnitude)
+    cast_to_geom(const _geom_vector_with_magnitude_t &p) {
+  return p.handle;
+}
+
+inline _geom_vector_with_magnitude_t
+cast_from_geom(const Handle(Geom_VectorWithMagnitude) & d) {
+  return _geom_vector_with_magnitude_t{d};
+}
+
+inline Handle(Geom2d_Geometry) cast_to_geom(const _geom2d_geometry_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_geometry_t cast_from_geom(const Handle(Geom2d_Geometry) & d) {
+  return _geom2d_geometry_t{d};
+}
+
+inline Handle(Geom2d_Transformation)
+    cast_to_geom(const _geom2d_transformation_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_transformation_t
+cast_from_geom(const Handle(Geom2d_Transformation) & d) {
+  return _geom2d_transformation_t{d};
+}
+
+inline Handle(Geom2d_AxisPlacement)
+    cast_to_geom(const _geom2d_axis_placement_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_axis_placement_t
+cast_from_geom(const Handle(Geom2d_AxisPlacement) & d) {
+  return _geom2d_axis_placement_t{d};
+}
+
+inline Handle(Geom2d_Curve) cast_to_geom(const _geom2d_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_curve_t cast_from_geom(const Handle(Geom2d_Curve) & d) {
+  return _geom2d_curve_t{d};
+}
+
+inline Handle(Bisector_Curve) cast_to_geom(const _geom2d_bisector_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_bisector_curve_t cast_from_geom(const Handle(Bisector_Curve) &
+                                               d) {
+  return _geom2d_bisector_curve_t{d};
+}
+
+inline Handle(Bisector_BisecAna)
+    cast_to_geom(const _geom2d_bezier_bisec_ana_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_bezier_bisec_ana_curve_t
+cast_from_geom(const Handle(Bisector_BisecAna) & d) {
+  return _geom2d_bezier_bisec_ana_curve_t{d};
+}
+
+inline Handle(Bisector_BisecCC)
+    cast_to_geom(const _geom2d_bezier_bisec_cc_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_bezier_bisec_cc_curve_t
+cast_from_geom(const Handle(Bisector_BisecCC) & d) {
+  return _geom2d_bezier_bisec_cc_curve_t{d};
+}
+
+inline Handle(Bisector_BisecPC)
+    cast_to_geom(const _geom2d_bezier_bisec_pc_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_bezier_bisec_pc_curve_t
+cast_from_geom(const Handle(Bisector_BisecPC) & d) {
+  return _geom2d_bezier_bisec_pc_curve_t{d};
+}
+
+inline Handle(Geom2d_BoundedCurve)
+    cast_to_geom(const _geom2d_bounded_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_bounded_curve_t
+cast_from_geom(const Handle(Geom2d_BoundedCurve) & d) {
+  return _geom2d_bounded_curve_t{d};
+}
+
+inline Handle(Geom2d_BezierCurve)
+    cast_to_geom(const _geom2d_bezier_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_bezier_curve_t cast_from_geom(const Handle(Geom2d_BezierCurve) &
+                                             d) {
+  return _geom2d_bezier_curve_t{d};
+}
+
+inline Handle(Geom2d_BSplineCurve)
+    cast_to_geom(const _geom2d_bspline_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_bspline_curve_t
+cast_from_geom(const Handle(Geom2d_BSplineCurve) & d) {
+  return _geom2d_bspline_curve_t{d};
+}
+
+inline Handle(Geom2d_TrimmedCurve)
+    cast_to_geom(const _geom2d_trimmed_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_trimmed_curve_t
+cast_from_geom(const Handle(Geom2d_TrimmedCurve) & d) {
+  return _geom2d_trimmed_curve_t{d};
+}
+
+inline Handle(Geom2d_Conic) cast_to_geom(const _geom2d_conic_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_conic_t cast_from_geom(const Handle(Geom2d_Conic) & d) {
+  return _geom2d_conic_t{d};
+}
+
+inline Handle(Geom2d_Circle) cast_to_geom(const _geom2d_circle_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_circle_t cast_from_geom(const Handle(Geom2d_Circle) & d) {
+  return _geom2d_circle_t{d};
+}
+
+inline Handle(Geom2d_Ellipse) cast_to_geom(const _geom2d_ellipse_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_ellipse_t cast_from_geom(const Handle(Geom2d_Ellipse) & d) {
+  return _geom2d_ellipse_t{d};
+}
+
+inline Handle(Geom2d_Hyperbola) cast_to_geom(const _geom2d_hyperbola_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_hyperbola_t cast_from_geom(const Handle(Geom2d_Hyperbola) & d) {
+  return _geom2d_hyperbola_t{d};
+}
+
+inline Handle(Geom2d_Parabola) cast_to_geom(const _geom2d_parabola_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_parabola_t cast_from_geom(const Handle(Geom2d_Parabola) & d) {
+  return _geom2d_parabola_t{d};
+}
+
+inline Handle(Geom2d_Line) cast_to_geom(const _geom2d_line_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_line_t cast_from_geom(const Handle(Geom2d_Line) & d) {
+  return _geom2d_line_t{d};
+}
+
+inline Handle(Geom2d_OffsetCurve)
+    cast_to_geom(const _geom2d_offset_curve_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_offset_curve_t cast_from_geom(const Handle(Geom2d_OffsetCurve) &
+                                             d) {
+  return _geom2d_offset_curve_t{d};
+}
+
+inline Handle(Geom2d_Point) cast_to_geom(const _geom2d_point_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_point_t cast_from_geom(const Handle(Geom2d_Point) & d) {
+  return _geom2d_point_t{d};
+}
+
+inline Handle(Geom2d_CartesianPoint)
+    cast_to_geom(const _geom2d_cartesian_point_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_cartesian_point_t
+cast_from_geom(const Handle(Geom2d_CartesianPoint) & d) {
+  return _geom2d_cartesian_point_t{d};
+}
+
+inline Handle(Geom2d_Vector) cast_to_geom(const _geom2d_vector_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_vector_t cast_from_geom(const Handle(Geom2d_Vector) & d) {
+  return _geom2d_vector_t{d};
+}
+
+inline Handle(Geom2d_Direction) cast_to_geom(const _geom2d_direction_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_direction_t cast_from_geom(const Handle(Geom2d_Direction) & d) {
+  return _geom2d_direction_t{d};
+}
+
+inline Handle(Geom2d_VectorWithMagnitude)
+    cast_to_geom(const _geom2d_vector_with_magnitude_t &p) {
+  return p.handle;
+}
+
+inline _geom2d_vector_with_magnitude_t
+cast_from_geom(const Handle(Geom2d_VectorWithMagnitude) & d) {
+  return _geom2d_vector_with_magnitude_t{d};
+}
 
 #endif
