@@ -4,6 +4,8 @@
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Solid.hxx>
 #include <gp_Pln.hxx>
+#include <Geom_Curve.hxx>
+#include <Geom_Plane.hxx>
 
 #include "bool_type.hh"
 #include "shape.hh"

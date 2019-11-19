@@ -15,7 +15,7 @@ vertex::vertex(Standard_Real x, Standard_Real y, Standard_Real z) {
   _shape = mkVertex.Vertex();
 }
 
-vertex::vertex(const gp_Pnt &P) : vertex(P.X, P.Y, P.Z) {}
+vertex::vertex(const gp_Pnt &P) : vertex(P.X(), P.Y(), P.Z()) {}
 
 TopoDS_Vertex &vertex::value() { return TopoDS::Vertex(_shape); }
 

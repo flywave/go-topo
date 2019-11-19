@@ -1,6 +1,9 @@
 #ifndef __FLYWAVE_MESH_TOPO_EDGE_HH__
 #define __FLYWAVE_MESH_TOPO_EDGE_HH__
 
+#include <Geom2d_Curve.hxx>
+#include <Geom_Curve.hxx>
+#include <Geom_Surface.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Edge.hxx>
 
@@ -170,6 +173,9 @@ public:
                           const vertex &V2);
 
   static edge make_edge2d(const Handle(Geom2d_Curve) & L);
+
+  static edge make_edge2d(const Handle(Geom2d_Curve) & L,
+                          const Standard_Real p1, const Standard_Real p2);
 
   static edge make_edge2d(const Handle(Geom2d_Curve) & L, const gp_Pnt2d &P1,
                           const gp_Pnt2d &P2);

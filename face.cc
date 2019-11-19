@@ -259,7 +259,7 @@ face face::make_face(std::vector<edge> &edges, std::vector<gp_Pnt> points) {
       aGenerator.Add(edge->value(), GeomAbs_C0);
     }
     for (unsigned i = 0; i < points.size(); i++) {
-      gp_Pnt aPnt(points[i].X, points[i].Y, points[i].Z);
+      gp_Pnt aPnt(points[i].X(), points[i].Y(), points[i].Z());
       aGenerator.Add(aPnt);
     }
     aGenerator.Build();
@@ -285,7 +285,7 @@ face face::make_face(std::vector<gp_Pnt> points) {
   try {
     BRepBuilderAPI_MakePolygon MP;
     for (unsigned i = 0; i < points.size(); i++) {
-      MP.Add(gp_Pnt(points[i].X, points[i].Y, points[i].Z));
+      MP.Add(gp_Pnt(points[i].X(), points[i].Y(), points[i].Z()));
     }
     MP.Close();
     if (!MP.IsDone()) {
@@ -315,7 +315,7 @@ face face::make_face(std::initializer_list<gp_Pnt> points) {
   try {
     BRepBuilderAPI_MakePolygon MP;
     for (auto _p : points) {
-      MP.Add(gp_Pnt(_p.X, _p.Y, _p.Z));
+      MP.Add(gp_Pnt(_p.X(), _p.Y(), _p.Z()));
     }
     MP.Close();
     if (!MP.IsDone()) {
@@ -430,8 +430,8 @@ int face::extrude(const shape &shp, gp_Pnt p1, gp_Pnt p2) {
       throw std::runtime_error("expected Edge or Wire");
     }
 
-    gp_Vec direction(gp_Pnt(p1.X, p1.Y, p1.Z), gp_Pnt(p2.X, p2.Y, p2.Z));
-    gp_Ax1 axisOfRevolution(gp_Pnt(p1.X, p1.Y, p1.Z), direction);
+    gp_Vec direction(gp_Pnt(p1.X(), p1.Y(), p1.Z()), gp_Pnt(p2.X(), p2.Y(), p2.Z()));
+    gp_Ax1 axisOfRevolution(gp_Pnt(p1.X(), p1.Y(), p1.Z()), direction);
 
     BRepPrimAPI_MakePrism MP(shp, direction, Standard_False);
     _shape = MP.Shape();
@@ -461,8 +461,8 @@ int face::revolve(const shape &shp, gp_Pnt p1, gp_Pnt p2, double angle) {
       throw std::runtime_error("Expected Edge or Wire");
     }
 
-    gp_Dir direction(p2.X - p1.X, p2.Y - p1.Y, p2.Z - p1.Z);
-    gp_Ax1 axisOfRevolution(gp_Pnt(p1.X, p1.Y, p1.Z), direction);
+    gp_Dir direction(p2.X() - p1.X(), p2.Y() - p1.Y(), p2.Z() - p1.Z());
+    gp_Ax1 axisOfRevolution(gp_Pnt(p1.X(), p1.Y(), p1.Z()), direction);
 
     BRepPrimAPI_MakeRevol MR(shp, axisOfRevolution, angle, Standard_False);
     if (!MR.IsDone()) {

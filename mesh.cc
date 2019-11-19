@@ -26,6 +26,7 @@
 #include <ShapeFix_Wire.hxx>
 #include <ShapeFix_Wireframe.hxx>
 #include <Standard_ConstructionError.hxx>
+#include <TColStd_Array1OfReal.hxx>
 #include <TColgp_SequenceOfPnt.hxx>
 #include <TDF_ChildIterator.hxx>
 #include <TDF_LabelSequence.hxx>
@@ -53,6 +54,7 @@
 #include <XCAFPrs_DataMapOfStyleShape.hxx>
 #include <XCAFPrs_Style.hxx>
 #include <gp_Pnt.hxx>
+#include <gp_Quaternion.hxx>
 
 #include <TDF_Label.hxx>
 #include <TDocStd_Document.hxx>
@@ -61,6 +63,8 @@
 #include <XCAFDoc_ColorTool.hxx>
 #include <XCAFDoc_DocumentTool.hxx>
 #include <XCAFDoc_ShapeTool.hxx>
+
+#include <unordered_map>
 
 namespace flywave {
 namespace topo {
@@ -75,7 +79,7 @@ mesh::mesh(const shape &shp) {
   _doc.Nullify();
   map_shape(shp);
 }
-    
+
 mesh::mesh(TopoDS_Shape shp) {
   _app = XCAFApp_Application::GetApplication();
   _doc.Nullify();
@@ -113,15 +117,14 @@ void mesh::triangulation(mesh_receiver &meshReceiver, double deflection,
     }
   }
 
-  color4i color(255, 255, 255, 255);
+  Quantity_Color color(1., 1., 1., Quantity_TOC_RGB);
   for (int f = 1; f <= _fmap.Extent(); f++) {
     const TopoDS_Face &face = TopoDS::Face(_fmap(f));
     TopLoc_Location aLoc;
     bool alreadymeshed = true;
     Quantity_Color localColor;
     if (query_color(face, localColor)) {
-      color =
-          color4i(localColor.Red(), localColor.Green(), localColor.Blue(), 255);
+      color = localColor;
     }
 
     Handle(Poly_Triangulation) aPoly = BRep_Tool::Triangulation(face, aLoc);
@@ -231,7 +234,11 @@ void mesh::triangulation(mesh_receiver &meshReceiver, double deflection,
         triangles(j).Get(t[2], t[1], t[0]);
       else
         triangles(j).Get(t[0], t[1], t[2]);
-      meshReceiver.append_triangle(faceId, int3{t[0] - 1, t[1] - 1, t[2] - 1});
+      int tri[3];
+      tri[0] = t[0] - 1;
+      tri[1] = t[1] - 1;
+      tri[2] = t[2] - 1;
+      meshReceiver.append_triangle(faceId, tri);
     }
   }
 }

@@ -62,8 +62,7 @@ private:
 namespace std {
 
 template <> struct hash<::flywave::topo::point3d_with_tolerance> {
-  size_t
-  operator()(const ::flywave::topo::point3d_with_tolerance &v) const {
+  size_t operator()(const ::flywave::topo::point3d_with_tolerance &v) const {
     return v.hash_code();
   }
 };
