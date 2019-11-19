@@ -1,4 +1,5 @@
-#include "topovis_c_api.h"
+#ifndef GO_GEOMETRY_IMPL_H
+#define GO_GEOMETRY_IMPL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -6,4 +7,6 @@ extern "C" {
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

@@ -202,7 +202,8 @@ int shape::translate(gp_Pnt delta) {
       throw std::runtime_error("Null shape");
 
     gp_Trsf trans;
-    trans.SetTranslation(gp_Pnt(0, 0, 0), gp_Pnt(delta.X(), delta.Y(), delta.Z()));
+    trans.SetTranslation(gp_Pnt(0, 0, 0),
+                         gp_Pnt(delta.X(), delta.Y(), delta.Z()));
     BRepBuilderAPI_Transform aTrans(shape, trans);
     aTrans.Build();
     aTrans.Check();
@@ -333,7 +334,8 @@ int shape::mirror(gp_Pnt pnt, gp_Pnt nor) {
     if (shape.IsNull())
       throw std::runtime_error("Null shape");
 
-    gp_Ax2 ax2(gp_Pnt(pnt.X(), pnt.Y(), pnt.Z()), gp_Dir(nor.X(), nor.Y(), nor.Z()));
+    gp_Ax2 ax2(gp_Pnt(pnt.X(), pnt.Y(), pnt.Z()),
+               gp_Dir(nor.X(), nor.Y(), nor.Z()));
     gp_Trsf trans;
     trans.SetMirror(ax2);
     BRepBuilderAPI_Transform aTrans(shape, trans);

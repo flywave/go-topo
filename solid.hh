@@ -1,11 +1,11 @@
 #ifndef __FLYWAVE_MESH_TOPO_SOLID_HH__
 #define __FLYWAVE_MESH_TOPO_SOLID_HH__
 
+#include <Geom_Curve.hxx>
+#include <Geom_Plane.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Solid.hxx>
 #include <gp_Pln.hxx>
-#include <Geom_Curve.hxx>
-#include <Geom_Plane.hxx>
 
 #include "bool_type.hh"
 #include "shape.hh"

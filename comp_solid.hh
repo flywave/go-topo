@@ -4,7 +4,6 @@
 #include <BRep_Builder.hxx>
 #include <TopoDS_CompSolid.hxx>
 
-
 #include "solid.hh"
 
 namespace flywave {

@@ -1,4 +1,4 @@
-#include "topovis_c_api.h"
+#include "geometry_c_api.h"
 
 #ifdef __cplusplus
 extern "C" {

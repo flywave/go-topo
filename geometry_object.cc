@@ -1,6 +1,6 @@
-#include <BRepTools.hxx>
 #include "geometry_object.hh"
 #include "shape.hh"
+#include <BRepTools.hxx>
 
 namespace flywave {
 namespace topo {

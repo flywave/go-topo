@@ -16,23 +16,23 @@ public:
   shell() = default;
   virtual ~shell() = default;
 
-  static shell make_shell(const Handle(Geom_Surface) &S, const bool Segment = false);
+  static shell make_shell(const Handle(Geom_Surface) & S,
+                          const bool Segment = false);
 
-  static shell make_shell(const Handle(Geom_Surface) &S, const Standard_Real UMin,
-                          const Standard_Real UMax, const Standard_Real VMin,
-                          const Standard_Real VMax, const bool Segment = false);
+  static shell make_shell(const Handle(Geom_Surface) & S,
+                          const Standard_Real UMin, const Standard_Real UMax,
+                          const Standard_Real VMin, const Standard_Real VMax,
+                          const bool Segment = false);
 
   static shell make_shell_from_box(const Standard_Real dx,
                                    const Standard_Real dy,
                                    const Standard_Real dz);
 
-  static shell make_shell_from_box(const gp_Pnt &P,
-                                   const Standard_Real dx,
+  static shell make_shell_from_box(const gp_Pnt &P, const Standard_Real dx,
                                    const Standard_Real dy,
                                    const Standard_Real dz);
 
-  static shell make_shell_from_box(const gp_Pnt &P1,
-                                   const gp_Pnt &P2);
+  static shell make_shell_from_box(const gp_Pnt &P1, const gp_Pnt &P2);
 
   static shell make_shell_from_box(const gp_Ax2 &Axes, const Standard_Real dx,
                                    const Standard_Real dy,
@@ -72,34 +72,34 @@ public:
                                     const Standard_Real H,
                                     const Standard_Real angle);
 
-  static shell make_shell_from_revolution(const Handle(Geom_Curve) &Meridian);
+  static shell make_shell_from_revolution(const Handle(Geom_Curve) & Meridian);
 
-  static shell make_shell_from_revolution(const Handle(Geom_Curve) &Meridian,
+  static shell make_shell_from_revolution(const Handle(Geom_Curve) & Meridian,
                                           const Standard_Real angle);
 
-  static shell make_shell_from_revolution(const Handle(Geom_Curve) &Meridian,
+  static shell make_shell_from_revolution(const Handle(Geom_Curve) & Meridian,
                                           const Standard_Real VMin,
                                           const Standard_Real VMax);
 
-  static shell make_shell_from_revolution(const Handle(Geom_Curve) &Meridian,
+  static shell make_shell_from_revolution(const Handle(Geom_Curve) & Meridian,
                                           const Standard_Real VMin,
                                           const Standard_Real VMax,
                                           const Standard_Real angle);
 
   static shell make_shell_from_revolution(const gp_Ax2 &Axes,
-                                          const Handle(Geom_Curve) &Meridian);
+                                          const Handle(Geom_Curve) & Meridian);
 
   static shell make_shell_from_revolution(const gp_Ax2 &Axes,
-                                          const Handle(Geom_Curve) &Meridian,
+                                          const Handle(Geom_Curve) & Meridian,
                                           const Standard_Real angle);
 
   static shell make_shell_from_revolution(const gp_Ax2 &Axes,
-                                          const Handle(Geom_Curve) &Meridian,
+                                          const Handle(Geom_Curve) & Meridian,
                                           const Standard_Real VMin,
                                           const Standard_Real VMax);
 
   static shell make_shell_from_revolution(const gp_Ax2 &Axes,
-                                          const Handle(Geom_Curve) &Meridian,
+                                          const Handle(Geom_Curve) & Meridian,
                                           const Standard_Real VMin,
                                           const Standard_Real VMax,
                                           const Standard_Real angle);
@@ -136,7 +136,8 @@ public:
                                       const Standard_Real angle2,
                                       const Standard_Real angle3);
 
-  static shell make_shell_from_sphere(const gp_Ax2 &Axis, const Standard_Real R);
+  static shell make_shell_from_sphere(const gp_Ax2 &Axis,
+                                      const Standard_Real R);
 
   static shell make_shell_from_sphere(const gp_Ax2 &Axis, const Standard_Real R,
                                       const Standard_Real angle);

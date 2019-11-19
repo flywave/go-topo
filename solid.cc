@@ -648,7 +648,8 @@ gp_Pnt solid::centre_of_mass() const {
 
 int solid::extrude(const face &f, gp_Pnt p1, gp_Pnt p2) {
   try {
-    gp_Vec direction(gp_Pnt(p1.X(), p1.Y(), p1.Z()), gp_Pnt(p2.X(), p2.Y(), p2.Z()));
+    gp_Vec direction(gp_Pnt(p1.X(), p1.Y(), p1.Z()),
+                     gp_Pnt(p2.X(), p2.Y(), p2.Z()));
     gp_Ax1 axisOfRevolution(gp_Pnt(p1.X(), p1.Y(), p1.Z()), direction);
 
     BRepPrimAPI_MakePrism MP(f.value(), direction, Standard_False);
@@ -1563,7 +1564,8 @@ boost::optional<face> solid::section(gp_Pnt pnt, gp_Pnt nor) {
   TopExp_Explorer ex;
   face ret;
   try {
-    gp_Pln pln(gp_Pnt(pnt.X(), pnt.Y(), pnt.Z()), gp_Dir(nor.X(), nor.Y(), nor.Z()));
+    gp_Pln pln(gp_Pnt(pnt.X(), pnt.Y(), pnt.Z()),
+               gp_Dir(nor.X(), nor.Y(), nor.Z()));
 
     BRepAlgoAPI_Section mkSection(_shape, pln);
     if (!mkSection.IsDone())

@@ -1,4 +1,4 @@
-#include "topovis_c_api.h"
+#include "topo_c_api.h"
 
 #ifdef __cplusplus
 extern "C" {
