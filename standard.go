@@ -154,12 +154,32 @@ type Axis1 struct {
 	val C.struct__axis1_t
 }
 
+func (d Axis1) Point() Point3 {
+	return Point3{val: d.val.p}
+}
+
+func (d Axis1) Dir() Dir3 {
+	return Dir3{val: d.val.d}
+}
+
 func NewAxis1(p Point3, d Dir3) Axis1 {
 	return Axis1{val: C.make_axis(p.val, d.val)}
 }
 
 type Axis2 struct {
 	val C.struct__axis2_t
+}
+
+func (d Axis2) Axis() Axis1 {
+	return Axis1{val: d.val.a}
+}
+
+func (d Axis2) DirX() Dir3 {
+	return Dir3{val: d.val.vx}
+}
+
+func (d Axis2) DirY() Dir3 {
+	return Dir3{val: d.val.vy}
 }
 
 func NewAxis2FromNVX(p Point3, n Dir3, x Dir3) Axis2 {
@@ -172,6 +192,18 @@ func NewAxis2(p Point3, d Dir3) Axis2 {
 
 type Axis3 struct {
 	val C.struct__axis3_t
+}
+
+func (d Axis3) Axis() Axis1 {
+	return Axis1{val: d.val.a}
+}
+
+func (d Axis3) DirX() Dir3 {
+	return Dir3{val: d.val.vx}
+}
+
+func (d Axis3) DirY() Dir3 {
+	return Dir3{val: d.val.vy}
 }
 
 func NewAxis3FromV(p Point3, v Dir3) Axis3 {
@@ -190,12 +222,32 @@ type Axis2d struct {
 	val C.struct__axis2d_t
 }
 
+func (d Axis2d) Point() Point2 {
+	return Point2{val: d.val.p}
+}
+
+func (d Axis2d) Dir() Dir2 {
+	return Dir2{val: d.val.v}
+}
+
 func NewAxis2d(p Point2, v Dir2) Axis2d {
 	return Axis2d{val: C.make_axis2d(p.val, v.val)}
 }
 
 type Axis22d struct {
 	val C.struct__axis22d_t
+}
+
+func (d Axis22d) Point() Point2 {
+	return Point2{val: d.val.p}
+}
+
+func (d Axis22d) DirX() Dir2 {
+	return Dir2{val: d.val.vx}
+}
+
+func (d Axis22d) DirY() Dir2 {
+	return Dir2{val: d.val.vy}
 }
 
 func NewAxis22d(p Axis2d) Axis22d {
@@ -212,6 +264,14 @@ func NewAxis22dFromVXY(p Point2, vx Dir2, vy Dir2) Axis22d {
 
 type Circ struct {
 	val C.struct__circ_t
+}
+
+func (d Circ) Axis() Axis2 {
+	return Axis2{val: d.val.a2}
+}
+
+func (d Circ) Radius() float64 {
+	return float64(d.val.radius)
 }
 
 func NewCircFromAxis2(p Axis2, radius float64) Circ {
@@ -246,6 +306,14 @@ type Circ2d struct {
 	val C.struct__circ2d_t
 }
 
+func (d Circ2d) Axis() Axis22d {
+	return Axis22d{val: d.val.a2}
+}
+
+func (d Circ2d) Radius() float64 {
+	return float64(d.val.radius)
+}
+
 func NewCirc2dFromAxis2d(p Axis2d, radius float64) Circ2d {
 	return Circ2d{val: C.make_circ2d_from_axis2(p.val, C.double(radius))}
 }
@@ -276,6 +344,18 @@ func NewCirc2dFromCenterPoint(center Point2, p Point2) Circ2d {
 
 type Cone struct {
 	val C.struct__cone_t
+}
+
+func (d Cone) Axis() Axis3 {
+	return Axis3{val: d.val.a3}
+}
+
+func (d Cone) Angle() float64 {
+	return float64(d.val.ang)
+}
+
+func (d Cone) Radius() float64 {
+	return float64(d.val.radius)
 }
 
 func NewConeFromAxis2(a Axis2, ang float64, radius float64) Cone {
@@ -310,6 +390,14 @@ type Cylinder struct {
 	val C.struct__cylinder_t
 }
 
+func (d Cylinder) Axis() Axis3 {
+	return Axis3{val: d.val.a3}
+}
+
+func (d Cylinder) Radius() float64 {
+	return float64(d.val.radius)
+}
+
 func NewCylinderFromAxis2(a Axis2, radius float64) Cylinder {
 	return Cylinder{val: C.make_cylinder_from_axis2(a.val, C.double(radius))}
 }
@@ -338,6 +426,18 @@ type Elips struct {
 	val C.struct__elips_t
 }
 
+func (d Elips) Axis() Axis2 {
+	return Axis2{val: d.val.a2}
+}
+
+func (d Elips) MajorRadius() float64 {
+	return float64(d.val.major_radius)
+}
+
+func (d Elips) MinorRadius() float64 {
+	return float64(d.val.minor_radius)
+}
+
 func NewElipsFromAxis2Radius(a Axis2, major_radius, minor_radius float64) Elips {
 	return Elips{val: C.make_elips_from_axis2_radius(a.val, C.double(major_radius), C.double(minor_radius))}
 }
@@ -348,6 +448,18 @@ func NewElipsFromPoint(s1, s2, center Point3) Elips {
 
 type Elips2d struct {
 	val C.struct__elips2d_t
+}
+
+func (d Elips2d) Axis() Axis22d {
+	return Axis22d{val: d.val.a2}
+}
+
+func (d Elips2d) MajorRadius() float64 {
+	return float64(d.val.major_radius)
+}
+
+func (d Elips2d) MinorRadius() float64 {
+	return float64(d.val.minor_radius)
 }
 
 func NewElips2dFromAxis2dRadius(a Axis2d, major_radius, minor_radius float64) Elips2d {
@@ -362,6 +474,14 @@ type Mat3x3 struct {
 	val C.struct__mat3x3_t
 }
 
+func (m Mat3x3) Data() [9]float64 {
+	var out [9]float64
+	for i := range out {
+		out[i] = float64(m.val.mat[i])
+	}
+	return out
+}
+
 func NewMat3x3(mat [9]float64) Mat3x3 {
 	var m C.struct__mat3x3_t
 	for i := range mat {
@@ -372,6 +492,14 @@ func NewMat3x3(mat [9]float64) Mat3x3 {
 
 type Mat2x2 struct {
 	val C.struct__mat2x2_t
+}
+
+func (m Mat2x2) Data() [4]float64 {
+	var out [4]float64
+	for i := range out {
+		out[i] = float64(m.val.mat[i])
+	}
+	return out
 }
 
 func NewMat2x2(mat [4]float64) Mat2x2 {
@@ -386,6 +514,14 @@ type Transform struct {
 	val C.struct__transform_t
 }
 
+func (t Transform) Mat() Mat3x3 {
+	return Mat3x3{val: t.val.m}
+}
+
+func (t Transform) XYZ() XYZ {
+	return XYZ{val: t.val.v}
+}
+
 func NewTransform(mat Mat3x3, v XYZ) Transform {
 	var t C.struct__transform_t
 	t.m = mat.val
@@ -397,6 +533,14 @@ type Transform2d struct {
 	val C.struct__transform2d_t
 }
 
+func (t Transform2d) Mat() Mat2x2 {
+	return Mat2x2{val: t.val.m}
+}
+
+func (t Transform2d) XY() XY {
+	return XY{val: t.val.v}
+}
+
 func NewTransform2d(mat Mat2x2, v XY) Transform2d {
 	var t C.struct__transform2d_t
 	t.m = mat.val
@@ -406,6 +550,18 @@ func NewTransform2d(mat Mat2x2, v XY) Transform2d {
 
 type Hyperbola struct {
 	val C.struct__hyperbola_t
+}
+
+func (d Hyperbola) Axis() Axis2 {
+	return Axis2{val: d.val.a2}
+}
+
+func (d Hyperbola) MajorRadius() float64 {
+	return float64(d.val.major_radius)
+}
+
+func (d Hyperbola) MinorRadius() float64 {
+	return float64(d.val.minor_radius)
 }
 
 func NewHyperbolaFromAxis2(a Axis2, major_radius, minor_radius float64) Hyperbola {
@@ -422,6 +578,18 @@ func NewHyperbolaFromPoint(s1, s2, center Point3) Hyperbola {
 
 type Hyperbola2d struct {
 	val C.struct__hyperbola2d_t
+}
+
+func (d Hyperbola2d) Axis() Axis22d {
+	return Axis22d{val: d.val.a2}
+}
+
+func (d Hyperbola2d) MajorRadius() float64 {
+	return float64(d.val.major_radius)
+}
+
+func (d Hyperbola2d) MinorRadius() float64 {
+	return float64(d.val.minor_radius)
 }
 
 func NewHyperbola2dFromAxis22d(a Axis22d, major_radius, minor_radius float64) Hyperbola2d {
@@ -444,6 +612,14 @@ type Line struct {
 	val C.struct__line_t
 }
 
+func (d Line) Point() Point3 {
+	return Point3{val: d.val.p}
+}
+
+func (d Line) Dir() Dir3 {
+	return Dir3{val: d.val.v}
+}
+
 func NewLineFromAxis1(a Axis1) Line {
 	return Line{val: C.make_line_from_axis1(a.val)}
 }
@@ -462,6 +638,14 @@ func NewLineFromPoint(p1, p2 Point3) Line {
 
 type Line2d struct {
 	val C.struct__line2d_t
+}
+
+func (d Line2d) Point() Point2 {
+	return Point2{val: d.val.p}
+}
+
+func (d Line2d) Dir() Dir2 {
+	return Dir2{val: d.val.v}
 }
 
 func NewLine2dFromAxis2d(a Axis2d) Line2d {
@@ -488,6 +672,14 @@ type Parabola struct {
 	val C.struct__parabola_t
 }
 
+func (d Parabola) Axis() Axis2 {
+	return Axis2{val: d.val.a2}
+}
+
+func (d Parabola) Focal() float64 {
+	return float64(d.val.focal)
+}
+
 func NewParabolaFromAxis2(a Axis2, focal float64) Parabola {
 	return Parabola{val: C.make_parabola_from_axis2(a.val, C.double(focal))}
 }
@@ -498,6 +690,14 @@ func NewParabolaFromAxis1(a Axis1, v Point3) Parabola {
 
 type Parabola2d struct {
 	val C.struct__parabola2d_t
+}
+
+func (d Parabola2d) Axis() Axis22d {
+	return Axis22d{val: d.val.a2}
+}
+
+func (d Parabola2d) Focal() float64 {
+	return float64(d.val.focal)
 }
 
 func NewParabola2dFromAxis2d(a Axis2d, focal float64) Parabola2d {
@@ -518,6 +718,10 @@ func NewParabola2dFromPoint(s1, center Point2) Parabola2d {
 
 type Plane struct {
 	val C.struct__plane_t
+}
+
+func (d Plane) Axis() Axis3 {
+	return Axis3{val: d.val.p}
 }
 
 func NewPlaneFromAxis2(a Axis2) Plane {
@@ -556,6 +760,15 @@ type Quaternion struct {
 	val C.struct__quaternion_t
 }
 
+func (q Quaternion) Data() [4]float64 {
+	var out [4]float64
+	out[0] = float64(q.val.q[0])
+	out[1] = float64(q.val.q[1])
+	out[2] = float64(q.val.q[2])
+	out[3] = float64(q.val.q[3])
+	return out
+}
+
 func NewQuaternion(q [4]float64) Quaternion {
 	var m C.struct__quaternion_t
 	m.q[0] = C.double(q[0])
@@ -569,12 +782,32 @@ type Sphere struct {
 	val C.struct__sphere_t
 }
 
+func (d Sphere) Axis() Axis3 {
+	return Axis3{val: d.val.a3}
+}
+
+func (d Sphere) Radius() float64 {
+	return float64(d.val.radius)
+}
+
 func NewSphere(a Axis3, radius float64) Sphere {
 	return Sphere{val: C.make_sphere_from_axis3(a.val, C.double(radius))}
 }
 
 type Torus struct {
 	val C.struct__torus_t
+}
+
+func (d Torus) Axis() Axis3 {
+	return Axis3{val: d.val.a3}
+}
+
+func (d Torus) MajorRadius() float64 {
+	return float64(d.val.major_radius)
+}
+
+func (d Torus) MinorRadius() float64 {
+	return float64(d.val.minor_radius)
 }
 
 func NewTorusFromAxis3(a Axis3, major_radius, minor_radius float64) Torus {
@@ -587,6 +820,14 @@ func NewTorusFromElips(a Elips) Torus {
 
 type Trsf struct {
 	val C.struct__trsf_t
+}
+
+func (t Trsf) Data() [12]float64 {
+	var out [12]float64
+	for i := range out {
+		out[i] = float64(t.val.m[i])
+	}
+	return out
 }
 
 func NewTrsfMirrorFromPoint(p Point3) Trsf {
@@ -641,6 +882,14 @@ type Trsf2d struct {
 	val C.struct__trsf2d_t
 }
 
+func (t Trsf2d) Data() [6]float64 {
+	var out [6]float64
+	for i := range out {
+		out[i] = float64(t.val.m[i])
+	}
+	return out
+}
+
 func NewTrsf2dMirrorFromPoint(p Point2) Trsf2d {
 	return Trsf2d{val: C.make_trsf2d_mirror_from_point(p.val)}
 }
@@ -675,6 +924,10 @@ func NewTrsf2dTranslationFromPoint(p1, p2 Point2) Trsf2d {
 
 type Color struct {
 	val C.struct__color_t
+}
+
+func (c Color) RGB() [3]byte {
+	return [3]byte{byte(float64(c.val.r) * 255), byte(float64(c.val.g) * 255), byte(float64(c.val.b) * 255)}
 }
 
 func NewColor(c [3]float64) Color {
