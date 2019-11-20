@@ -1,6 +1,7 @@
 #include "geometry_c_api.h"
 #include "geometry_creator.hh"
 #include "geometry_impl.hh"
+#include "plate_plate_impl.hh"
 #include "standard_impl.hh"
 
 #ifdef __cplusplus
@@ -2599,6 +2600,470 @@ geom2d_geometry_t *geom2d_transform(geom2d_geometry_t *t, trsf2d_t tr) {
     return new geom2d_geometry_t{t->handle->Transformed(cast_to_gp(tr))};
   }
   return nullptr;
+}
+
+int geom_geometry_type(geom_geometry_t *t) {
+  if (t->handle->DynamicType() == STANDARD_TYPE(Geom_Axis1Placement)) {
+    return GeomAxis1Placement;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_Axis2Placement)) {
+    return GeomAxis2Placement;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_BezierCurve)) {
+    return GeomBezierCurve;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve)) {
+    return GeomBSplineCurve;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_TrimmedCurve)) {
+    return GeomTrimmedCurve;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_Line)) {
+    return GeomLine;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_OffsetCurve)) {
+    return GeomOffsetCurve;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_Circle)) {
+    return GeomCircle;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_Ellipse)) {
+    return GeomEllipse;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_Hyperbola)) {
+    return GeomHyperbola;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_Parabola)) {
+    return GeomParabola;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_BezierSurface)) {
+    return GeomBezierSurface;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_BSplineSurface)) {
+    return GeomBSplineSurface;
+  } else if (t->handle->DynamicType() ==
+             STANDARD_TYPE(Geom_RectangularTrimmedSurface)) {
+    return GeomRectangularTrimmedSurface;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface)) {
+    return GeomConicalSurface;
+  } else if (t->handle->DynamicType() ==
+             STANDARD_TYPE(Geom_CylindricalSurface)) {
+    return GeomCylindricalSurface;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_Plane)) {
+    return GeomPlane;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_SphericalSurface)) {
+    return GeomSphericalSurface;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_ToroidalSurface)) {
+    return GeomToroidalSurface;
+  } else if (t->handle->DynamicType() ==
+             STANDARD_TYPE(Geom_ElementarySurface)) {
+    return GeomElementarySurface;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_OffsetSurface)) {
+    return GeomOffsetSurface;
+  } else if (t->handle->DynamicType() ==
+             STANDARD_TYPE(Geom_SurfaceOfLinearExtrusion)) {
+    return GeomSurfaceOfLinearExtrusion;
+  } else if (t->handle->DynamicType() ==
+             STANDARD_TYPE(Geom_SurfaceOfRevolution)) {
+    return GeomSurfaceOfRevolution;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_SweptSurface)) {
+    return GeomSweptSurface;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(GeomPlate_Surface)) {
+    return GeomPlateSurface;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_CartesianPoint)) {
+    return GeomCartesianPoint;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom_Direction)) {
+    return GeomDirection;
+  } else if (t->handle->DynamicType() ==
+             STANDARD_TYPE(Geom_VectorWithMagnitude)) {
+    return GeomVectorWithMagnitude;
+  }
+  return -1;
+}
+
+int geom2d_geometry_type(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() == STANDARD_TYPE(Geom2d_AxisPlacement)) {
+    return Geom2dAxisPlacement;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Bisector_BisecAna)) {
+    return Geom2dBisectorBisecAna;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Bisector_BisecCC)) {
+    return Geom2dBisectorBisecCC;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Bisector_BisecPC)) {
+    return Geom2dBisectorBisecPC;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom2d_BezierCurve)) {
+    return Geom2dBezierCurve;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Bisector_Curve)) {
+    return Geom2dBisectorCurve;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom2d_BSplineCurve)) {
+    return Geom2dBSplineCurve;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom2d_TrimmedCurve)) {
+    return Geom2dTrimmedCurve;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom2d_Circle)) {
+    return Geom2dCircle;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom2d_Ellipse)) {
+    return Geom2dEllipse;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom2d_Hyperbola)) {
+    return Geom2dHyperbola;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom2d_Parabola)) {
+    return Geom2dParabola;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom2d_Conic)) {
+    return Geom2dConic;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom2d_Line)) {
+    return Geom2dLine;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom2d_Direction)) {
+    return Geom2dDirection;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom2d_OffsetCurve)) {
+    return Geom2dOffsetCurve;
+  } else if (t->handle->DynamicType() == STANDARD_TYPE(Geom2d_CartesianPoint)) {
+    return Geom2dCartesianPoint;
+  } else if (t->handle->DynamicType() ==
+             STANDARD_TYPE(Geom2d_VectorWithMagnitude)) {
+    return Geom2dVectorWithMagnitude;
+  }
+  return -1;
+}
+
+geom_axis1_placement_t *geom_make_axis1_placement(axis1_t A1) {
+  return new geom_axis1_placement_t{new Geom_Axis1Placement(cast_to_gp(A1))};
+}
+
+geom_axis1_placement_t *geom_make_axis1_placement_of_point_dir(pnt3d_t P,
+                                                               dir3d_t V) {
+  return new geom_axis1_placement_t{
+      new Geom_Axis1Placement(cast_to_gp(P), cast_to_gp(V))};
+}
+
+geom_axis2_placement_t *geom_make_axis2_placement(axis2_t A2) {
+  return new geom_axis2_placement_t{new Geom_Axis2Placement(cast_to_gp(A2))};
+}
+
+geom_axis2_placement_t *
+geom_make_axis2_placement_of_point_nvx(pnt3d_t P, dir3d_t N, dir3d_t VX) {
+  return new geom_axis2_placement_t{
+      new Geom_Axis2Placement(cast_to_gp(P), cast_to_gp(N), cast_to_gp(VX))};
+}
+
+geom_bezier_curve_t *geom_make_bezier_curve(pnt3d_t *CurvePoles, int count) {
+  TColgp_Array1OfPnt pnts{0, static_cast<Standard_Integer>(count)};
+  for (int i = 0; i < count; i++) {
+    pnts.SetValue(i, cast_to_gp(CurvePoles[i]));
+  }
+  return new geom_bezier_curve_t{new Geom_BezierCurve(pnts)};
+}
+
+geom_bezier_curve_t *geom_make_bezier_curve_from_weight(pnt3d_t *CurvePoles,
+                                                        double *PoleWeights,
+                                                        int count) {
+  TColgp_Array1OfPnt pnts{0, static_cast<Standard_Integer>(count)};
+  TColStd_Array1OfReal wei{0, static_cast<Standard_Integer>(count)};
+  for (int i = 0; i < count; i++) {
+    pnts.SetValue(i, cast_to_gp(CurvePoles[i]));
+    wei.SetValue(i, PoleWeights[i]);
+  }
+  return new geom_bezier_curve_t{new Geom_BezierCurve(pnts, wei)};
+}
+
+geom_bspline_curve_t *geom_make_bspline_curve(pnt3d_t *Poles, double *Knots,
+                                              int *Multiplicities, int count,
+                                              int Degree, _Bool Periodic) {
+  TColgp_Array1OfPnt pnts{0, static_cast<Standard_Integer>(count)};
+  TColStd_Array1OfReal kntss{0, static_cast<Standard_Integer>(count)};
+  TColStd_Array1OfInteger mu{0, static_cast<Standard_Integer>(count)};
+  for (int i = 0; i < count; i++) {
+    pnts.SetValue(i, cast_to_gp(Poles[i]));
+    kntss.SetValue(i, Knots[i]);
+    mu.SetValue(i, Multiplicities[i]);
+  }
+  return new geom_bspline_curve_t{
+      new Geom_BSplineCurve(pnts, kntss, mu, Degree, Periodic)};
+}
+
+geom_bspline_curve_t *geom_make_bspline_curve_from_weight(
+    pnt3d_t *Poles, double *Weights, double *Knots, int *Multiplicities,
+    int count, int Degree, _Bool Periodic, _Bool CheckRational) {
+  TColgp_Array1OfPnt pnts{0, static_cast<Standard_Integer>(count)};
+  TColStd_Array1OfReal wei{0, static_cast<Standard_Integer>(count)};
+  TColStd_Array1OfReal kntss{0, static_cast<Standard_Integer>(count)};
+  TColStd_Array1OfInteger mu{0, static_cast<Standard_Integer>(count)};
+  for (int i = 0; i < count; i++) {
+    pnts.SetValue(i, cast_to_gp(Poles[i]));
+    wei.SetValue(i, Weights[i]);
+    kntss.SetValue(i, Knots[i]);
+    mu.SetValue(i, Multiplicities[i]);
+  }
+  return new geom_bspline_curve_t{new Geom_BSplineCurve(
+      pnts, wei, kntss, mu, Degree, Periodic, CheckRational)};
+}
+
+geom_bezier_surface_t *geom_make_bezier_surface(pnt3d_t **SurfacePoles, int row,
+                                                int col) {
+  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col), 0,
+                         static_cast<Standard_Integer>(row)};
+  for (int i = 0; i < col; i++) {
+    for (int j = 0; j < row; j++) {
+      pnt.SetValue(j, i, cast_to_gp(SurfacePoles[j][i]));
+    }
+  }
+  return new geom_bezier_surface_t{new Geom_BezierSurface(pnt)};
+}
+
+geom_bezier_surface_t *
+geom_make_bezier_surface_from_weight(pnt3d_t **SurfacePoles,
+                                     double **PoleWeights, int row, int col) {
+  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col), 0,
+                         static_cast<Standard_Integer>(row)};
+  TColStd_Array2OfReal wei{0, static_cast<Standard_Integer>(col), 0,
+                           static_cast<Standard_Integer>(row)};
+  for (int i = 0; i < col; i++) {
+    for (int j = 0; j < row; j++) {
+      pnt.SetValue(j, i, cast_to_gp(SurfacePoles[j][i]));
+      wei.SetValue(j, i, PoleWeights[j][i]);
+    }
+  }
+  return new geom_bezier_surface_t{new Geom_BezierSurface(pnt, wei)};
+}
+
+geom_bspline_surface_t *
+geom_make_bspline_surface(pnt3d_t **Poles, double *UKnots, double *VKnots,
+                          int *UMults, int *VMults, int row, int col,
+                          int KnotsCount, int MultsCount, int UDegree,
+                          int VDegree, _Bool UPeriodic, _Bool VPeriodic) {
+  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col), 0,
+                         static_cast<Standard_Integer>(row)};
+  for (int i = 0; i < col; i++) {
+    for (int j = 0; j < row; j++) {
+      pnt.SetValue(j, i, cast_to_gp(Poles[j][i]));
+    }
+  }
+  TColStd_Array1OfReal ukets{0, static_cast<Standard_Integer>(KnotsCount)};
+  TColStd_Array1OfReal vkets{0, static_cast<Standard_Integer>(KnotsCount)};
+  for (int i = 0; i < KnotsCount; i++) {
+    ukets.SetValue(i, UKnots[i]);
+    vkets.SetValue(i, VKnots[i]);
+  }
+  TColStd_Array1OfInteger umus{0, static_cast<Standard_Integer>(MultsCount)};
+  TColStd_Array1OfInteger vmus{0, static_cast<Standard_Integer>(MultsCount)};
+  for (int i = 0; i < MultsCount; i++) {
+    umus.SetValue(i, UMults[i]);
+    vmus.SetValue(i, VMults[i]);
+  }
+  return new geom_bspline_surface_t{new Geom_BSplineSurface(
+      pnt, ukets, vkets, umus, vmus, UDegree, VDegree, UPeriodic, VPeriodic)};
+}
+
+geom_bspline_surface_t *geom_make_bspline_surface_from_weight(
+    pnt3d_t **Poles, double **Weights, double *UKnots, double *VKnots,
+    int *UMults, int *VMults, int row, int col, int KnotsCount, int MultsCount,
+    int UDegree, int VDegree, _Bool UPeriodic, _Bool VPeriodic) {
+  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col), 0,
+                         static_cast<Standard_Integer>(row)};
+  TColStd_Array2OfReal wei{0, static_cast<Standard_Integer>(col), 0,
+                           static_cast<Standard_Integer>(row)};
+  for (int i = 0; i < col; i++) {
+    for (int j = 0; j < row; j++) {
+      pnt.SetValue(j, i, cast_to_gp(Poles[j][i]));
+      wei.SetValue(j, i, Weights[j][i]);
+    }
+  }
+  TColStd_Array1OfReal ukets{0, static_cast<Standard_Integer>(KnotsCount)};
+  TColStd_Array1OfReal vkets{0, static_cast<Standard_Integer>(KnotsCount)};
+  for (int i = 0; i < KnotsCount; i++) {
+    ukets.SetValue(i, UKnots[i]);
+    vkets.SetValue(i, VKnots[i]);
+  }
+  TColStd_Array1OfInteger umus{0, static_cast<Standard_Integer>(MultsCount)};
+  TColStd_Array1OfInteger vmus{0, static_cast<Standard_Integer>(MultsCount)};
+  for (int i = 0; i < MultsCount; i++) {
+    umus.SetValue(i, UMults[i]);
+    vmus.SetValue(i, VMults[i]);
+  }
+  return new geom_bspline_surface_t{
+      new Geom_BSplineSurface(pnt, wei, ukets, vkets, umus, vmus, UDegree,
+                              VDegree, UPeriodic, VPeriodic)};
+}
+
+geom_rectangular_trimmed_surface_t *
+geom_make_rectangular_trimmed_surface_from_lrud(geom_surface_t *S, double U1,
+                                                double U2, double V1, double V2,
+                                                _Bool USense, _Bool VSense) {
+
+  return new geom_rectangular_trimmed_surface_t{
+      new Geom_RectangularTrimmedSurface(S->handle, U1, U2, V1, V2, USense,
+                                         VSense)};
+}
+
+geom_rectangular_trimmed_surface_t *
+geom_make_rectangular_trimmed_surface(geom_surface_t *S, double Param1,
+                                      double Param2, _Bool UTrim, _Bool Sense) {
+  return new geom_rectangular_trimmed_surface_t{
+      new Geom_RectangularTrimmedSurface(S->handle, Param1, Param2, UTrim,
+                                         Sense)};
+}
+
+geom_surface_of_linear_extrusion_t *
+geom_make_surface_of_linear_extrusion(geom_curve_t *C, dir3d_t V) {
+  return new geom_surface_of_linear_extrusion_t{
+      new Geom_SurfaceOfLinearExtrusion(C->handle, cast_to_gp(V))};
+}
+
+geom_surface_of_revolution_extrusion_t *
+geom_make_surface_of_revolution_extrusion(geom_curve_t *C, axis1_t V) {
+  return new geom_surface_of_revolution_extrusion_t{
+      new Geom_SurfaceOfRevolution(C->handle, cast_to_gp(V))};
+}
+
+geom_direction_t *geom_make_direction(double X, double Y, double Z) {
+  return new geom_direction_t{new Geom_Direction(X, Y, Z)};
+}
+
+geom_direction_t *geom_make_direction_with_dir(dir3d_t V) {
+  return new geom_direction_t{new Geom_Direction(cast_to_gp(V))};
+}
+
+geom_vector_with_magnitude_t *
+geom_make_vector_with_magnitude_with_vector(vec3d_t V) {
+  return new geom_vector_with_magnitude_t{
+      new Geom_VectorWithMagnitude(cast_to_gp(V))};
+}
+
+geom_vector_with_magnitude_t *
+geom_make_vector_with_magnitude_with_xyz(double X, double Y, double Z) {
+  return new geom_vector_with_magnitude_t{
+      new Geom_VectorWithMagnitude(X, Y, Z)};
+}
+
+geom_vector_with_magnitude_t *
+geom_make_vector_with_magnitude_with_point(pnt3d_t P1, pnt3d_t P2) {
+  return new geom_vector_with_magnitude_t{
+      new Geom_VectorWithMagnitude(cast_to_gp(P1), cast_to_gp(P2))};
+}
+
+geom_plate_surface_t *geom_make_plate_surface(geom_surface_t *Surfinit,
+                                              plate_plate_t *Surfinter) {
+  return new geom_plate_surface_t{
+      new GeomPlate_Surface(Surfinit->handle, Surfinter->pp)};
+}
+
+geom2d_axis_placement_t *geom2d_make_axis_placement(axis2d_t A) {
+  return new geom2d_axis_placement_t{new Geom2d_AxisPlacement(cast_to_gp(A))};
+}
+
+geom2d_axis_placement_t *geom2d_make_axis_placement_from_point(pnt2d_t P,
+                                                               dir2d_t V) {
+  return new geom2d_axis_placement_t{
+      new Geom2d_AxisPlacement(cast_to_gp(P), cast_to_gp(V))};
+}
+
+geom2d_bezier_bisec_cc_curve_t *
+geom2d_make_bezier_bisec_cc_curve(geom2d_curve_t *Cu1, geom2d_curve_t *Cu2,
+                                  double Side1, double Side2, pnt2d_t Origin,
+                                  double DistMax) {
+  return new geom2d_bezier_bisec_cc_curve_t{new Bisector_BisecCC(
+      Cu1->handle, Cu2->handle, Side1, Side2, cast_to_gp(Origin), DistMax)};
+}
+
+geom2d_bezier_bisec_pc_curve_t *
+geom2d_bezier_bisec_pc_curve_with_dist(geom2d_curve_t *Cu, pnt2d_t P,
+                                       double Side, double DistMax) {
+  return new geom2d_bezier_bisec_pc_curve_t{
+      new Bisector_BisecPC(Cu->handle, cast_to_gp(P), Side, DistMax)};
+}
+
+geom2d_bezier_bisec_pc_curve_t *
+geom2d_make_bezier_bisec_pc_curve(geom2d_curve_t *Cu, pnt2d_t P, double Side,
+                                  double UMin, double UMax) {
+  return new geom2d_bezier_bisec_pc_curve_t{
+      new Bisector_BisecPC(Cu->handle, cast_to_gp(P), Side, UMin, UMax)};
+}
+
+geom2d_bezier_curve_t *geom2d_make_bezier_curve(pnt2d_t *CurvePoles,
+                                                int count) {
+  TColgp_Array1OfPnt2d pnts{0, static_cast<Standard_Integer>(count)};
+  for (int i = 0; i < count; i++) {
+    pnts.SetValue(i, cast_to_gp(CurvePoles[i]));
+  }
+  return new geom2d_bezier_curve_t{new Geom2d_BezierCurve(pnts)};
+}
+
+geom2d_bezier_curve_t *geom2d_make_bezier_curve_with_weight(pnt2d_t *CurvePoles,
+                                                            double *PoleWeights,
+                                                            int count) {
+  TColgp_Array1OfPnt2d pnts{0, static_cast<Standard_Integer>(count)};
+  TColStd_Array1OfReal wei{0, static_cast<Standard_Integer>(count)};
+  for (int i = 0; i < count; i++) {
+    pnts.SetValue(i, cast_to_gp(CurvePoles[i]));
+    wei.SetValue(i, PoleWeights[i]);
+  }
+  return new geom2d_bezier_curve_t{new Geom2d_BezierCurve(pnts, wei)};
+}
+
+geom2d_bspline_curve_t *geom2d_make_bspline_curve(pnt2d_t *Poles, double *Knots,
+                                                  int *Multiplicities,
+                                                  int count, int Degree,
+                                                  _Bool Periodic) {
+  TColgp_Array1OfPnt2d pnts{0, static_cast<Standard_Integer>(count)};
+  TColStd_Array1OfReal kents{0, static_cast<Standard_Integer>(count)};
+  TColStd_Array1OfInteger mus{0, static_cast<Standard_Integer>(count)};
+  for (int i = 0; i < count; i++) {
+    pnts.SetValue(i, cast_to_gp(Poles[i]));
+    kents.SetValue(i, Knots[i]);
+    mus.SetValue(i, Multiplicities[i]);
+  }
+  return new geom2d_bspline_curve_t{
+      new Geom2d_BSplineCurve(pnts, kents, mus, Degree, Periodic)};
+}
+
+geom2d_bspline_curve_t *
+geom2d_make_bspline_curve_with_weight(pnt2d_t *CurvePoles, double *Weights,
+                                      double *Knots, int *Multiplicities,
+                                      int count, int Degree, _Bool Periodic) {
+  TColgp_Array1OfPnt2d pnts{0, static_cast<Standard_Integer>(count)};
+  TColStd_Array1OfReal wei{0, static_cast<Standard_Integer>(count)};
+  TColStd_Array1OfReal kents{0, static_cast<Standard_Integer>(count)};
+  TColStd_Array1OfInteger mus{0, static_cast<Standard_Integer>(count)};
+  for (int i = 0; i < count; i++) {
+    pnts.SetValue(i, cast_to_gp(CurvePoles[i]));
+    kents.SetValue(i, Knots[i]);
+    wei.SetValue(i, Weights[i]);
+    mus.SetValue(i, Multiplicities[i]);
+  }
+  return new geom2d_bspline_curve_t{
+      new Geom2d_BSplineCurve(pnts, wei, kents, mus, Degree, Periodic)};
+}
+
+geom2d_trimmed_curve_t *geom2d_make_trimmed_curve(geom2d_curve_t *C, double U1,
+                                                  double U2, _Bool Sense,
+                                                  _Bool theAdjustPeriodic) {
+  return new geom2d_trimmed_curve_t{
+      new Geom2d_TrimmedCurve(C->handle, U1, U2, Sense, theAdjustPeriodic)};
+}
+
+geom2d_offset_curve_t *
+geom2d_make_offset_curve(geom2d_curve_t *C, double Offset, _Bool isNotCheckC0) {
+  return new geom2d_offset_curve_t{
+      new Geom2d_OffsetCurve(C->handle, Offset, isNotCheckC0)};
+}
+
+geom2d_cartesian_point_t *geom2d_make_cartesian_point(pnt2d_t P) {
+  return new geom2d_cartesian_point_t{new Geom2d_CartesianPoint(cast_to_gp(P))};
+}
+
+geom2d_cartesian_point_t *geom2d_make_cartesian_point_xy(double X, double Y) {
+  return new geom2d_cartesian_point_t{new Geom2d_CartesianPoint(X, Y)};
+}
+
+geom2d_direction_t *geom2d_make_direction(double X, double Y) {
+  return new geom2d_direction_t{new Geom2d_Direction(X, Y)};
+}
+
+geom2d_direction_t *geom2d_make_direction_with_dir(dir2d_t V) {
+  return new geom2d_direction_t{new Geom2d_Direction(cast_to_gp(V))};
+}
+
+geom2d_vector_with_magnitude_t *
+geom2d_make_vector_with_magnitude_with_vector(vec2d_t V) {
+  return new geom2d_vector_with_magnitude_t{
+      new Geom2d_VectorWithMagnitude(cast_to_gp(V))};
+}
+
+geom2d_vector_with_magnitude_t *
+geom2d_make_vector_with_magnitude_with_xy(double X, double Y) {
+  return new geom2d_vector_with_magnitude_t{
+      new Geom2d_VectorWithMagnitude(X, Y)};
+}
+
+geom2d_vector_with_magnitude_t *
+geom2d_make_vector_with_magnitude_with_point(pnt2d_t P1, pnt2d_t P2) {
+  return new geom2d_vector_with_magnitude_t{
+      new Geom2d_VectorWithMagnitude(cast_to_gp(P1), cast_to_gp(P2))};
 }
 
 #ifdef __cplusplus

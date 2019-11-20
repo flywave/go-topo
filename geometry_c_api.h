@@ -15,6 +15,59 @@
 extern "C" {
 #endif
 
+enum {
+  GeomAxis1Placement,
+  GeomAxis2Placement,
+  GeomBSplineCurve,
+  GeomBSplineSurface,
+  GeomBezierCurve,
+  GeomBezierSurface,
+  GeomCartesianPoint,
+  GeomCircle,
+  GeomConicalSurface,
+  GeomCylindricalSurface,
+  GeomDirection,
+  GeomElementarySurface,
+  GeomEllipse,
+  GeomHyperbola,
+  GeomLine,
+  GeomOffsetCurve,
+  GeomOffsetSurface,
+  GeomParabola,
+  GeomPlane,
+  GeomRectangularTrimmedSurface,
+  GeomSphericalSurface,
+  GeomSurfaceOfLinearExtrusion,
+  GeomSurfaceOfRevolution,
+  GeomSweptSurface,
+  GeomToroidalSurface,
+  GeomTrimmedCurve,
+  GeomVectorWithMagnitude,
+  GeomPlateSurface,
+};
+
+enum {
+  Geom2dBisectorBisecAna,
+  Geom2dBisectorBisecCC,
+  Geom2dBisectorBisecPC,
+  Geom2dAxisPlacement,
+  Geom2dBSplineCurve,
+  Geom2dBezierCurve,
+  Geom2dBisectorCurve,
+  Geom2dBoundedCurve,
+  Geom2dCartesianPoint,
+  Geom2dCircle,
+  Geom2dConic,
+  Geom2dDirection,
+  Geom2dEllipse,
+  Geom2dHyperbola,
+  Geom2dLine,
+  Geom2dOffsetCurve,
+  Geom2dParabola,
+  Geom2dTrimmedCurve,
+  Geom2dVectorWithMagnitude,
+};
+
 typedef struct _geom_geometry_t geom_geometry_t;
 typedef struct _geom_transformation_t geom_transformation_t;
 typedef struct _geom_axis_placement_t geom_axis_placement_t;
@@ -81,6 +134,7 @@ typedef struct _geom2d_cartesian_point_t geom2d_cartesian_point_t;
 typedef struct _geom2d_vector_t geom2d_vector_t;
 typedef struct _geom2d_direction_t geom2d_direction_t;
 typedef struct _geom2d_vector_with_magnitude_t geom2d_vector_with_magnitude_t;
+typedef struct _plate_plate_t plate_plate_t;
 
 GEOMCAPICALL void geom_geometry_free(geom_geometry_t *p);
 GEOMCAPICALL void geom_transformation_free(geom_transformation_t *p);
@@ -153,6 +207,9 @@ GEOMCAPICALL void geom2d_vector_free(geom2d_vector_t *p);
 GEOMCAPICALL void geom2d_direction_free(geom2d_direction_t *p);
 GEOMCAPICALL void
 geom2d_vector_with_magnitude_free(geom2d_vector_with_magnitude_t *p);
+
+GEOMCAPICALL int geom_geometry_type(geom_geometry_t *p);
+GEOMCAPICALL int geom2d_geometry_type(geom2d_geometry_t *p);
 
 GEOMCAPICALL geom_geometry_t *geom_geometry_copy(geom_geometry_t *t);
 GEOMCAPICALL geom_transformation_t *
@@ -594,6 +651,70 @@ GEOMCAPICALL geom2d_geometry_t *geom2d_transform(geom2d_geometry_t *t,
 GEOMCAPICALL _Bool geom_curve_curve_point(geom_curve_t *curve, double s,
                                           double *point);
 
+GEOMCAPICALL geom_axis1_placement_t *geom_make_axis1_placement(axis1_t Axis);
+GEOMCAPICALL geom_axis1_placement_t *
+geom_make_axis1_placement_of_point_dir(pnt3d_t p, dir3d_t d);
+GEOMCAPICALL geom_axis2_placement_t *geom_make_axis2_placement(axis2_t Axis);
+GEOMCAPICALL geom_axis2_placement_t *
+geom_make_axis2_placement_of_point_nvx(pnt3d_t p, dir3d_t N, dir3d_t VX);
+GEOMCAPICALL geom_bezier_curve_t *geom_make_bezier_curve(pnt3d_t *CurvePoles,
+                                                         int count);
+GEOMCAPICALL geom_bezier_curve_t *
+geom_make_bezier_curve_from_weight(pnt3d_t *CurvePoles, double *PoleWeights,
+                                   int count);
+GEOMCAPICALL geom_bspline_curve_t *
+geom_make_bspline_curve(pnt3d_t *Poles, double *Knots, int *Multiplicities,
+                        int count, int Degree, _Bool Periodic);
+GEOMCAPICALL geom_bspline_curve_t *geom_make_bspline_curve_from_weight(
+    pnt3d_t *Poles, double *Weights, double *Knots, int *Multiplicities,
+    int count, int Degree, _Bool Periodic, _Bool CheckRational);
+
+GEOMCAPICALL geom_bezier_surface_t *
+geom_make_bezier_surface(pnt3d_t **SurfacePoles, int row, int col);
+
+GEOMCAPICALL geom_bezier_surface_t *
+geom_make_bezier_surface_from_weight(pnt3d_t **SurfacePoles,
+                                     double **PoleWeights, int row, int col);
+
+GEOMCAPICALL geom_plate_surface_t *
+geom_make_plate_surface(geom_surface_t *Surfinit, plate_plate_t *Surfinter);
+
+GEOMCAPICALL geom_bspline_surface_t *
+geom_make_bspline_surface(pnt3d_t **Poles, double *UKnots, double *VKnots,
+                          int *UMults, int *VMults, int row, int col,
+                          int KnotsCount, int MultsCount, int UDegree,
+                          int VDegree, _Bool UPeriodic, _Bool VPeriodic);
+
+GEOMCAPICALL geom_bspline_surface_t *geom_make_bspline_surface_from_weight(
+    pnt3d_t **Poles, double **Weights, double *UKnots, double *VKnots,
+    int *UMults, int *VMults, int row, int col, int KnotsCount, int MultsCount,
+    int UDegree, int VDegree, _Bool UPeriodic, _Bool VPeriodic);
+
+GEOMCAPICALL geom_rectangular_trimmed_surface_t *
+geom_make_rectangular_trimmed_surface_from_lrud(geom_surface_t *S, double U1,
+                                                double U2, double V1, double V2,
+                                                _Bool USense, _Bool VSense);
+
+GEOMCAPICALL geom_rectangular_trimmed_surface_t *
+geom_make_rectangular_trimmed_surface(geom_surface_t *S, double Param1,
+                                      double Param2, _Bool UTrim, _Bool Sense);
+
+GEOMCAPICALL geom_surface_of_linear_extrusion_t *
+geom_make_surface_of_linear_extrusion(geom_curve_t *C, dir3d_t V);
+GEOMCAPICALL geom_surface_of_revolution_extrusion_t *
+geom_make_surface_of_revolution_extrusion(geom_curve_t *C, axis1_t V);
+
+GEOMCAPICALL geom_direction_t *geom_make_direction(double X, double Y,
+                                                   double Z);
+
+GEOMCAPICALL geom_direction_t *geom_make_direction_with_dir(dir3d_t V);
+GEOMCAPICALL geom_vector_with_magnitude_t *
+geom_make_vector_with_magnitude_with_vector(vec3d_t V);
+GEOMCAPICALL geom_vector_with_magnitude_t *
+geom_make_vector_with_magnitude_with_xyz(double X, double Y, double Z);
+GEOMCAPICALL geom_vector_with_magnitude_t *
+geom_make_vector_with_magnitude_with_point(pnt3d_t P1, pnt3d_t P2);
+
 GEOMCAPICALL geom_trimmed_curve_t *
 geom_make_arc_of_circle_two_angles(circ_t Circ, double Alpha1, double Alpha2,
                                    _Bool Sense);
@@ -812,6 +933,50 @@ geom_make_trimmed_cylinder_of_circ_height(circ_t Circ, double Height);
 GEOMCAPICALL geom_rectangular_trimmed_surface_t *
 geom_make_trimmed_cylinder_axis_radius(axis1_t A1, double Radius,
                                        double Height);
+
+GEOMCAPICALL geom2d_axis_placement_t *geom2d_make_axis_placement(axis2d_t A);
+GEOMCAPICALL geom2d_axis_placement_t *
+geom2d_make_axis_placement_from_point(pnt2d_t P, dir2d_t V);
+GEOMCAPICALL geom2d_bezier_bisec_cc_curve_t *
+geom2d_make_bezier_bisec_cc_curve(geom2d_curve_t *Cu1, geom2d_curve_t *Cu2,
+                                  double Side1, double Side2, pnt2d_t Origin,
+                                  double DistMax);
+
+GEOMCAPICALL geom2d_bezier_bisec_pc_curve_t *
+geom2d_bezier_bisec_pc_curve_with_dist(geom2d_curve_t *Cu, pnt2d_t P,
+                                       double Side, double DistMax);
+GEOMCAPICALL geom2d_bezier_bisec_pc_curve_t *
+geom2d_make_bezier_bisec_pc_curve(geom2d_curve_t *Cu, pnt2d_t P, double Side,
+                                  double UMin, double UMax);
+
+GEOMCAPICALL geom2d_bezier_curve_t *
+geom2d_make_bezier_curve(pnt2d_t *CurvePoles, int count);
+GEOMCAPICALL geom2d_bezier_curve_t *
+geom2d_make_bezier_curve_with_weight(pnt2d_t *CurvePoles, double *PoleWeights,
+                                     int count);
+GEOMCAPICALL geom2d_bspline_curve_t *
+geom2d_make_bspline_curve(pnt2d_t *Poles, double *Knots, int *Multiplicities,
+                          int count, int Degree, _Bool Periodic);
+GEOMCAPICALL geom2d_bspline_curve_t *
+geom2d_make_bspline_curve_with_weight(pnt2d_t *CurvePoles, double *Weights,
+                                      double *Knots, int *Multiplicities,
+                                      int count, int Degree, _Bool Periodic);
+GEOMCAPICALL geom2d_trimmed_curve_t *
+geom2d_make_trimmed_curve(geom2d_curve_t *C, double U1, double U2, _Bool Sense,
+                          _Bool theAdjustPeriodic);
+GEOMCAPICALL geom2d_offset_curve_t *
+geom2d_make_offset_curve(geom2d_curve_t *C, double Offset, _Bool isNotCheckC0);
+GEOMCAPICALL geom2d_cartesian_point_t *geom2d_make_cartesian_point(pnt2d_t P);
+GEOMCAPICALL geom2d_cartesian_point_t *geom2d_make_cartesian_point_xy(double X,
+                                                                      double Y);
+GEOMCAPICALL geom2d_direction_t *geom2d_make_direction(double X, double Y);
+GEOMCAPICALL geom2d_direction_t *geom2d_make_direction_with_dir(dir2d_t V);
+GEOMCAPICALL geom2d_vector_with_magnitude_t *
+geom2d_make_vector_with_magnitude_with_vector(vec2d_t V);
+GEOMCAPICALL geom2d_vector_with_magnitude_t *
+geom2d_make_vector_with_magnitude_with_xy(double X, double Y);
+GEOMCAPICALL geom2d_vector_with_magnitude_t *
+geom2d_make_vector_with_magnitude_with_point(pnt2d_t P1, pnt2d_t P2);
 
 GEOMCAPICALL geom2d_trimmed_curve_t *
 geom2d_make_arc_of_circle_two_angles(circ2d_t Circ, double Alpha1,

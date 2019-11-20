@@ -10,6 +10,59 @@ package topovis
 */
 import "C"
 
+const (
+	GEOMAXIS1PLACEMENT            = int(C.GeomAxis1Placement)
+	GEOMAXIS2PLACEMENT            = int(C.GeomAxis2Placement)
+	GEOMBSPLINECURVE              = int(C.GeomBSplineCurve)
+	GEOMBSPLINESURFACE            = int(C.GeomBSplineSurface)
+	GEOMBEZIERCURVE               = int(C.GeomBezierCurve)
+	GEOMBEZIERSURFACE             = int(C.GeomBezierSurface)
+	GEOMCARTESIANPOINT            = int(C.GeomCartesianPoint)
+	GEOMCIRCLE                    = int(C.GeomCircle)
+	GEOMCONICALSURFACE            = int(C.GeomConicalSurface)
+	GEOMCYLINDRICALSURFACE        = int(C.GeomCylindricalSurface)
+	GEOMDIRECTION                 = int(C.GeomDirection)
+	GEOMELEMENTARYSURFACE         = int(C.GeomElementarySurface)
+	GEOMELLIPSE                   = int(C.GeomEllipse)
+	GEOMHYPERBOLA                 = int(C.GeomHyperbola)
+	GEOMLINE                      = int(C.GeomLine)
+	GEOMOFFSETCURVE               = int(C.GeomOffsetCurve)
+	GEOMOFFSETSURFACE             = int(C.GeomOffsetSurface)
+	GEOMPARABOLA                  = int(C.GeomParabola)
+	GEOMPLANE                     = int(C.GeomPlane)
+	GEOMRECTANGULARTRIMMEDSURFACE = int(C.GeomRectangularTrimmedSurface)
+	GEOMSPHERICALSURFACE          = int(C.GeomSphericalSurface)
+	GEOMSURFACEOFLINEAREXTRUSION  = int(C.GeomSurfaceOfLinearExtrusion)
+	GEOMSURFACEOFREVOLUTION       = int(C.GeomSurfaceOfRevolution)
+	GEOMSWEPTSURFACE              = int(C.GeomSweptSurface)
+	GEOMTOROIDALSURFACE           = int(C.GeomToroidalSurface)
+	GEOMTRIMMEDCURVE              = int(C.GeomTrimmedCurve)
+	GEOMVECTORWITHMAGNITUDE       = int(C.GeomVectorWithMagnitude)
+	GEOMPLATESURFACE              = int(C.GeomPlateSurface)
+)
+
+const (
+	GEOM2DBISECTORBISECANA    = int(C.Geom2dBisectorBisecAna)
+	GEOM2DBISECTORBISECCC     = int(C.Geom2dBisectorBisecCC)
+	GEOM2DBISECTORBISECPC     = int(C.Geom2dBisectorBisecPC)
+	GEOM2DAXISPLACEMENT       = int(C.Geom2dAxisPlacement)
+	GEOM2DBSPLINECURVE        = int(C.Geom2dBSplineCurve)
+	GEOM2DBEZIERCURVE         = int(C.Geom2dBezierCurve)
+	GEOM2DBOUNDEDCURVE        = int(C.Geom2dBoundedCurve)
+	GEOM2DCARTESIANPOINT      = int(C.Geom2dCartesianPoint)
+	GEOM2DCIRCLE              = int(C.Geom2dCircle)
+	GEOM2DCONIC               = int(C.Geom2dConic)
+	GEOM2DDIRECTION           = int(C.Geom2dDirection)
+	GEOM2DELLIPSE             = int(C.Geom2dEllipse)
+	GEOM2DHYPERBOLA           = int(C.Geom2dHyperbola)
+	GEOM2DLINE                = int(C.Geom2dLine)
+	GEOM2DOFFSETCURVE         = int(C.Geom2dOffsetCurve)
+	GEOM2DPARABOLA            = int(C.Geom2dParabola)
+	GEOM2DTRIMMEDCURVE        = int(C.Geom2dTrimmedCurve)
+	GEOM2DVECTORWITHMAGNITUDE = int(C.Geom2dVectorWithMagnitude)
+	GEOM2DBISECTORCURVE       = int(C.Geom2dBisectorCurve)
+)
+
 type GeomGeometry struct {
 	geom *C.struct__geom_geometry_t
 }
@@ -17,6 +70,10 @@ type GeomGeometry struct {
 func (g *GeomGeometry) Free() {
 	C.geom_geometry_free(g.geom)
 	g.geom = nil
+}
+
+func (g *GeomGeometry) Type() int {
+	return int(C.geom_geometry_type(g.geom))
 }
 
 func (g *GeomGeometry) Copy() *GeomGeometry {
@@ -85,6 +142,68 @@ func (g *GeomGeometry) TranslatedWithPoint(p1, p2 Point3) *GeomGeometry {
 
 func (g *GeomGeometry) Transformed(t Trsf) *GeomGeometry {
 	return &GeomGeometry{geom: C.geom_transform(g.geom, t.val)}
+}
+
+func (g *GeomGeometry) AutoCast() interface{} {
+	switch g.Type() {
+	case GEOMAXIS1PLACEMENT:
+		return NewGeomAxis1PlacementFromGeometry(g)
+	case GEOMAXIS2PLACEMENT:
+		return NewGeomAxis2PlacementFromGeometry(g)
+	case GEOMBSPLINECURVE:
+		return NewGeomBSplineCurveFromGeometry(g)
+	case GEOMBSPLINESURFACE:
+		return NewGeomBSplineSurfaceFromGeometry(g)
+	case GEOMBEZIERCURVE:
+		return NewGeomBezierCurveFromGeometry(g)
+	case GEOMBEZIERSURFACE:
+		return NewGeomBezierSurfaceFromGeometry(g)
+	case GEOMCARTESIANPOINT:
+		return NewGeomCartesianPointFromGeometry(g)
+	case GEOMCIRCLE:
+		return NewGeomCircleFromGeometry(g)
+	case GEOMCONICALSURFACE:
+		return NewGeomConicalSurfaceFromGeometry(g)
+	case GEOMCYLINDRICALSURFACE:
+		return NewGeomCylindricalSurfaceFromGeometry(g)
+	case GEOMDIRECTION:
+		return NewGeomDirectionFromGeometry(g)
+	case GEOMELEMENTARYSURFACE:
+		return NewGeomElementarySurfaceFromGeometry(g)
+	case GEOMELLIPSE:
+		return NewGeomEllipseFromGeometry(g)
+	case GEOMHYPERBOLA:
+		return NewGeomHyperbolaFromGeometry(g)
+	case GEOMLINE:
+		return NewGeomLineFromGeometry(g)
+	case GEOMOFFSETCURVE:
+		return NewGeomOffsetCurveFromGeometry(g)
+	case GEOMOFFSETSURFACE:
+		return NewGeomOffsetSurfaceFromGeometry(g)
+	case GEOMPARABOLA:
+		return NewGeomParabolaFromGeometry(g)
+	case GEOMPLANE:
+		return NewGeomPlaneFromGeometry(g)
+	case GEOMRECTANGULARTRIMMEDSURFACE:
+		return NewGeomRectangularTrimmedSurfaceFromGeometry(g)
+	case GEOMSPHERICALSURFACE:
+		return NewGeomSphericalSurfaceFromGeometry(g)
+	case GEOMSURFACEOFLINEAREXTRUSION:
+		return NewGeomSurfaceOfLinearExtrusionFromGeometry(g)
+	case GEOMSURFACEOFREVOLUTION:
+		return NewGeomSurfaceOfRevolutionFromGeometry(g)
+	case GEOMSWEPTSURFACE:
+		return NewGeomSweptSurfaceFromGeometry(g)
+	case GEOMTOROIDALSURFACE:
+		return NewGeomToroidalSurfaceFromGeometry(g)
+	case GEOMTRIMMEDCURVE:
+		return NewGeomTrimmedCurveFromGeometry(g)
+	case GEOMVECTORWITHMAGNITUDE:
+		return NewGeomVectorWithMagnitudeFromGeometry(g)
+	case GEOMPLATESURFACE:
+		return NewGeomPlateSurfaceFromGeometry(g)
+	}
+	return nil
 }
 
 type GeomTransformation struct {
@@ -385,7 +504,7 @@ func (g *GeomEllipse) Copy() *GeomEllipse {
 	return &GeomEllipse{geom: C.geom_ellipse_copy(g.geom)}
 }
 
-func NewGeomEllipseleFromGeometry(g *GeomGeometry) *GeomEllipse {
+func NewGeomEllipseFromGeometry(g *GeomGeometry) *GeomEllipse {
 	if p := C.geom_ellipse_from_geometry(g.geom); p != nil {
 		return &GeomEllipse{geom: p}
 	}
@@ -1072,6 +1191,10 @@ type Geom2dGeometry struct {
 	geom *C.struct__geom2d_geometry_t
 }
 
+func (g *Geom2dGeometry) Type() int {
+	return int(C.geom2d_geometry_type(g.geom))
+}
+
 func (g *Geom2dGeometry) Free() {
 	C.geom2d_geometry_free(g.geom)
 	g.geom = nil
@@ -1135,6 +1258,50 @@ func (g *Geom2dGeometry) TranslatedWithPoint(p1, p2 Point2) *Geom2dGeometry {
 
 func (g *Geom2dGeometry) Transformed(t Trsf2d) *Geom2dGeometry {
 	return &Geom2dGeometry{geom: C.geom2d_transform(g.geom, t.val)}
+}
+
+func (g *Geom2dGeometry) AutoCast() interface{} {
+	switch g.Type() {
+	case GEOM2DBISECTORBISECANA:
+		return NewGeom2dBisectorBisecAnaFromGeometry(g)
+	case GEOM2DBISECTORBISECCC:
+		return NewGeom2dBisectorBisecCCFromGeometry(g)
+	case GEOM2DBISECTORBISECPC:
+		return NewGeom2dBisectorBisecPCFromGeometry(g)
+	case GEOM2DAXISPLACEMENT:
+		return NewGeom2dAxisPlacementFromGeometry(g)
+	case GEOM2DBSPLINECURVE:
+		return NewGeom2dBSplineCurveFromGeometry(g)
+	case GEOM2DBEZIERCURVE:
+		return NewGeom2dBezierCurveFromGeometry(g)
+	case GEOM2DBOUNDEDCURVE:
+		return NewGeom2dBoundedCurveFromGeometry(g)
+	case GEOM2DCARTESIANPOINT:
+		return NewGeom2dCartesianPointFromGeometry(g)
+	case GEOM2DCIRCLE:
+		return NewGeom2dCircleFromGeometry(g)
+	case GEOM2DCONIC:
+		return NewGeom2dConicFromGeometry(g)
+	case GEOM2DDIRECTION:
+		return NewGeom2dDirectionFromGeometry(g)
+	case GEOM2DELLIPSE:
+		return NewGeom2dEllipseFromGeometry(g)
+	case GEOM2DHYPERBOLA:
+		return NewGeom2dHyperbolaFromGeometry(g)
+	case GEOM2DLINE:
+		return NewGeom2dLineFromGeometry(g)
+	case GEOM2DOFFSETCURVE:
+		return NewGeom2dOffsetCurveFromGeometry(g)
+	case GEOM2DPARABOLA:
+		return NewGeom2dParabolaFromGeometry(g)
+	case GEOM2DTRIMMEDCURVE:
+		return NewGeom2dTrimmedCurveFromGeometry(g)
+	case GEOM2DVECTORWITHMAGNITUDE:
+		return NewGeom2dVectorWithMagnitudeFromGeometry(g)
+	case GEOM2DBISECTORCURVE:
+		return NewGeom2dBisectorCurveFromGeometry(g)
+	}
+	return nil
 }
 
 type Geom2dTransformation struct {
