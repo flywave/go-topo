@@ -50,6 +50,7 @@
 #include <gp_Torus.hxx>
 
 #include <Quantity_Color.hxx>
+#include <Bnd_Box.hxx>
 
 #include <TColgp_HArray1OfPnt.hxx>
 #include <TColgp_HArray1OfPnt2d.hxx>
@@ -429,6 +430,18 @@ inline Quantity_Color cast_to_gp(const color_t &a) {
 
 inline color_t cast_from_gp(const Quantity_Color &mat) {
   return color_t{mat.Red(), mat.Green(), mat.Blue()};
+}
+
+inline Bnd_Box cast_to_gp(const bbox_t &a) {
+  Bnd_Box b;
+  b.Update(a.minx, a.miny, a.minz,a.maxx, a.maxy, a.maxz);
+  return b;
+}
+
+inline bbox_t cast_from_gp(const Bnd_Box &b) {
+  bbox_t a;
+  b.Get(a.minx, a.miny, a.minz,a.maxx, a.maxy, a.maxz);
+  return a;
 }
 
 inline TColgp_Array1OfPnt &cast_to_gp(const std::vector<pnt3d_t> &a,

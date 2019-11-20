@@ -945,3 +945,22 @@ func NewColorFromByte(c [3]byte) Color {
 	m.b = C.double(c[2] / 255)
 	return Color{val: m}
 }
+
+type BBox struct {
+	val C.struct__bbox_t
+}
+
+func (b BBox) Data() [6]float64 {
+	return [6]float64{float64(b.val.minx), float64(b.val.miny), float64(b.val.minz), float64(b.val.maxx), float64(b.val.maxy), float64(b.val.maxz)}
+}
+
+func NewBBox(c [6]float64) BBox {
+	var m C.struct__bbox_t
+	m.minx = C.double(c[0])
+	m.miny = C.double(c[1])
+	m.minz = C.double(c[2])
+	m.maxx = C.double(c[3])
+	m.maxy = C.double(c[4])
+	m.maxz = C.double(c[5])
+	return BBox{val: m}
+}

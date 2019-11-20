@@ -356,6 +356,15 @@ typedef struct _color_t {
   double b;
 } color_t;
 
+typedef struct _bbox_t {
+  double minx;
+  double miny;
+  double minz;
+  double maxx;
+  double maxy;
+  double maxz;
+} bbox_t;
+
 #ifdef __cplusplus
 }
 #endif
