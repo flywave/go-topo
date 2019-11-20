@@ -672,24 +672,24 @@ GEOMCAPICALL geom_bspline_curve_t *geom_make_bspline_curve_from_weight(
     int count, int Degree, _Bool Periodic, _Bool CheckRational);
 
 GEOMCAPICALL geom_bezier_surface_t *
-geom_make_bezier_surface(pnt3d_t **SurfacePoles, int row, int col);
+geom_make_bezier_surface(pnt3d_t *SurfacePoles, int row, int col);
 
 GEOMCAPICALL geom_bezier_surface_t *
-geom_make_bezier_surface_from_weight(pnt3d_t **SurfacePoles,
-                                     double **PoleWeights, int row, int col);
+geom_make_bezier_surface_from_weight(pnt3d_t *SurfacePoles,
+                                     double *PoleWeights, int row, int col);
 
 GEOMCAPICALL geom_plate_surface_t *
 geom_make_plate_surface(geom_surface_t *Surfinit, plate_plate_t *Surfinter);
 
 GEOMCAPICALL geom_bspline_surface_t *
-geom_make_bspline_surface(pnt3d_t **Poles, double *UKnots, double *VKnots,
+geom_make_bspline_surface(pnt3d_t *Poles, double *UKnots, double *VKnots,
                           int *UMults, int *VMults, int row, int col,
-                          int KnotsCount, int MultsCount, int UDegree,
+                          int UCount, int VCount, int UDegree,
                           int VDegree, _Bool UPeriodic, _Bool VPeriodic);
 
 GEOMCAPICALL geom_bspline_surface_t *geom_make_bspline_surface_from_weight(
-    pnt3d_t **Poles, double **Weights, double *UKnots, double *VKnots,
-    int *UMults, int *VMults, int row, int col, int KnotsCount, int MultsCount,
+    pnt3d_t *Poles, double *Weights, double *UKnots, double *VKnots,
+    int *UMults, int *VMults, int row, int col, int UCount, int VCount,
     int UDegree, int VDegree, _Bool UPeriodic, _Bool VPeriodic);
 
 GEOMCAPICALL geom_rectangular_trimmed_surface_t *
@@ -945,7 +945,7 @@ geom2d_make_bezier_bisec_cc_curve(geom2d_curve_t *Cu1, geom2d_curve_t *Cu2,
                                   double DistMax);
 
 GEOMCAPICALL geom2d_bezier_bisec_pc_curve_t *
-geom2d_bezier_bisec_pc_curve_with_dist(geom2d_curve_t *Cu, pnt2d_t P,
+geom2d_make_bezier_bisec_pc_curve_with_dist(geom2d_curve_t *Cu, pnt2d_t P,
                                        double Side, double DistMax);
 GEOMCAPICALL geom2d_bezier_bisec_pc_curve_t *
 geom2d_make_bezier_bisec_pc_curve(geom2d_curve_t *Cu, pnt2d_t P, double Side,
@@ -958,11 +958,11 @@ geom2d_make_bezier_curve_with_weight(pnt2d_t *CurvePoles, double *PoleWeights,
                                      int count);
 GEOMCAPICALL geom2d_bspline_curve_t *
 geom2d_make_bspline_curve(pnt2d_t *Poles, double *Knots, int *Multiplicities,
-                          int count, int Degree, _Bool Periodic);
+                          int Count, int Degree, _Bool Periodic);
 GEOMCAPICALL geom2d_bspline_curve_t *
 geom2d_make_bspline_curve_with_weight(pnt2d_t *CurvePoles, double *Weights,
                                       double *Knots, int *Multiplicities,
-                                      int count, int Degree, _Bool Periodic);
+                                      int Count, int Degree, _Bool Periodic);
 GEOMCAPICALL geom2d_trimmed_curve_t *
 geom2d_make_trimmed_curve(geom2d_curve_t *C, double U1, double U2, _Bool Sense,
                           _Bool theAdjustPeriodic);

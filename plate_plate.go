@@ -9,3 +9,7 @@ package topovis
 #cgo windows CXXFLAGS:  -I ./include/oce -I ./include/windows/oce -I ./
 */
 import "C"
+
+type Plate struct {
+	val C.struct__plate_plate_t
+}
