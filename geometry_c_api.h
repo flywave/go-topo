@@ -648,8 +648,10 @@ geom2d_translate_with_point(geom2d_geometry_t *t, pnt2d_t P1, pnt2d_t P2);
 GEOMCAPICALL geom2d_geometry_t *geom2d_transform(geom2d_geometry_t *t,
                                                  trsf2d_t tr);
 
-GEOMCAPICALL _Bool geom_curve_curve_point(geom_curve_t *curve, double s,
-                                          double *point);
+GEOMCAPICALL _Bool geom_curve_point(geom_curve_t *curve, double s,
+                                    double *point);
+GEOMCAPICALL _Bool geom_surface_point(geom_surface_t *curve, double s,
+                                      double *point);
 
 GEOMCAPICALL geom_axis1_placement_t *geom_make_axis1_placement(axis1_t Axis);
 GEOMCAPICALL geom_axis1_placement_t *

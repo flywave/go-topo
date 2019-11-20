@@ -695,9 +695,23 @@ geom2d_vector_with_magnitude_copy(geom2d_vector_with_magnitude_t *t) {
       Handle(Geom2d_VectorWithMagnitude)::DownCast(t->handle->Copy())};
 }
 
-_Bool geom_curve_curve_point(geom_curve_t *curve, double s, double *point) {
+_Bool geom_curve_point(geom_curve_t *curve, double s, double *point) {
   if (point != nullptr && curve != nullptr) {
     gp_Pnt pnt = curve->handle->Value(s);
+    point[0] = pnt.X();
+    point[1] = pnt.Y();
+    point[2] = pnt.Z();
+    return true;
+  }
+  return false;
+}
+
+_Bool geom_surface_point(geom_surface_t *curve, double s, double *point) {
+  gp_Vec d1u, d1v;
+  gp_Pnt pnt;
+  Standard_Real u, v;
+  if (point != nullptr && curve != nullptr) {
+    curve->handle->D1(u, v, pnt, d1u, d1v);
     point[0] = pnt.X();
     point[1] = pnt.Y();
     point[2] = pnt.Z();
