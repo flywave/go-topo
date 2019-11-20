@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include "standard_c_api.h"
+
 #if defined(WIN32) || defined(WINDOWS) || defined(_WIN32) || defined(_WINDOWS)
 #define GEOMCAPICALL __declspec(dllexport)
 #else
@@ -79,30 +81,6 @@ typedef struct _geom2d_cartesian_point_t geom2d_cartesian_point_t;
 typedef struct _geom2d_vector_t geom2d_vector_t;
 typedef struct _geom2d_direction_t geom2d_direction_t;
 typedef struct _geom2d_vector_with_magnitude_t geom2d_vector_with_magnitude_t;
-
-typedef struct _circ_t circ_t;
-typedef struct _pnt3d_t pnt3d_t;
-typedef struct _vec3d_t vec3d_t;
-typedef struct _pnt2d_t pnt2d_t;
-typedef struct _vec2d_t vec2d_t;
-typedef struct _elips_t elips_t;
-typedef struct _hyperbola_t hyperbola_t;
-typedef struct _parabola_t parabola_t;
-typedef struct _dir3d_t dir3d_t;
-typedef struct _dir2d_t dir2d_t;
-typedef struct _axis2_t axis2_t;
-typedef struct _cone_t cone_t;
-typedef struct _axis1_t axis1_t;
-typedef struct _cylinder_t cylinder_t;
-typedef struct _line_t line_t;
-typedef struct _plane_t plane_t;
-typedef struct _circ2d_t circ2d_t;
-typedef struct _elips2d_t elips2d_t;
-typedef struct _hyperbola2d_t hyperbola2d_t;
-typedef struct _parabola2d_t parabola2d_t;
-typedef struct _axis2d_t axis2d_t;
-typedef struct _axis22d_t axis22d_t;
-typedef struct _line2d_t line2d_t;
 
 GEOMCAPICALL void geom_geometry_free(geom_geometry_t *p);
 GEOMCAPICALL void geom_transformation_free(geom_transformation_t *p);
@@ -463,7 +441,8 @@ GEOMCAPICALL geom2d_trimmed_curve_t *
 geom2d_trimmed_curve_from_geometry(geom2d_geometry_t *t);
 GEOMCAPICALL geom2d_conic_t *geom2d_conic_from_geometry(geom2d_geometry_t *t);
 GEOMCAPICALL geom2d_circle_t *geom2d_circle_from_geometry(geom2d_geometry_t *t);
-GEOMCAPICALL geom2d_ellipse_t *geom2d_ellipse_from_geometry(geom2d_geometry_t *t);
+GEOMCAPICALL geom2d_ellipse_t *
+geom2d_ellipse_from_geometry(geom2d_geometry_t *t);
 GEOMCAPICALL geom2d_hyperbola_t *
 geom2d_hyperbola_from_geometry(geom2d_geometry_t *t);
 GEOMCAPICALL geom2d_parabola_t *
@@ -480,7 +459,140 @@ geom2d_direction_from_geometry(geom2d_geometry_t *t);
 GEOMCAPICALL geom2d_vector_with_magnitude_t *
 geom2d_vector_with_magnitude_from_geometry(geom2d_geometry_t *t);
 
-GEOMCAPICALL _Bool geom_curve_curve_point(geom_curve_t *curve, double s, double *point);
+GEOMCAPICALL geom_curve_t *
+geom_bounded_curve_to_geom_curve(geom_bounded_curve_t *t);
+GEOMCAPICALL geom_curve_t *
+geom_bezier_curve_to_geom_curve(geom_bezier_curve_t *t);
+GEOMCAPICALL geom_curve_t *
+geom_bspline_curve_to_geom_curve(geom_bspline_curve_t *t);
+GEOMCAPICALL geom_curve_t *
+geom_trimmed_curve_to_geom_curve(geom_trimmed_curve_t *t);
+GEOMCAPICALL geom_curve_t *geom_conic_to_geom_curve(geom_conic_t *t);
+GEOMCAPICALL geom_curve_t *geom_circle_to_geom_curve(geom_circle_t *t);
+GEOMCAPICALL geom_curve_t *geom_ellipse_to_geom_curve(geom_ellipse_t *t);
+GEOMCAPICALL geom_curve_t *geom_hyperbola_to_geom_curve(geom_hyperbola_t *t);
+GEOMCAPICALL geom_curve_t *geom_parabola_to_geom_curve(geom_parabola_t *t);
+GEOMCAPICALL geom_curve_t *geom_line_to_geom_curve(geom_line_t *t);
+GEOMCAPICALL geom_curve_t *
+geom_offset_curve_to_geom_curve(geom_offset_curve_t *t);
+
+GEOMCAPICALL geom_surface_t *
+geom_bounded_surface_to_geom_surface(geom_bounded_surface_t *t);
+GEOMCAPICALL geom_surface_t *
+geom_bezier_surface_to_geom_surface(geom_bezier_surface_t *t);
+GEOMCAPICALL geom_surface_t *
+geom_bspline_surface_to_geom_surface(geom_bspline_surface_t *t);
+GEOMCAPICALL geom_surface_t *geom_rectangular_trimmed_surface_to_geom_surface(
+    geom_rectangular_trimmed_surface_t *t);
+GEOMCAPICALL geom_surface_t *
+geom_elementary_surface_to_geom_surface(geom_elementary_surface_t *t);
+GEOMCAPICALL geom_surface_t *
+geom_cylindrical_surface_to_geom_surface(geom_cylindrical_surface_t *t);
+GEOMCAPICALL geom_surface_t *
+geom_plane_surface_to_geom_surface(geom_plane_surface_t *t);
+GEOMCAPICALL geom_surface_t *
+geom_conical_surface_to_geom_surface(geom_conical_surface_t *t);
+GEOMCAPICALL geom_surface_t *
+geom_spherical_surface_to_geom_surface(geom_spherical_surface_t *t);
+GEOMCAPICALL geom_surface_t *
+geom_toroidal_surface_to_geom_surface(geom_toroidal_surface_t *t);
+GEOMCAPICALL geom_surface_t *
+geom_offset_surface_to_geom_surface(geom_offset_surface_t *t);
+GEOMCAPICALL geom_surface_t *
+geom_swept_surface_to_geom_surface(geom_swept_surface_t *t);
+GEOMCAPICALL geom_surface_t *geom_surface_of_linear_extrusion_to_geom_surface(
+    geom_surface_of_linear_extrusion_t *t);
+GEOMCAPICALL geom_surface_t *
+geom_surface_of_revolution_extrusion_to_geom_surface(
+    geom_surface_of_revolution_extrusion_t *t);
+GEOMCAPICALL geom_surface_t *
+geom_plate_surface_to_geom_surface(geom_plate_surface_t *t);
+
+GEOMCAPICALL geom2d_curve_t *
+geom2d_bisector_curve_to_geom2d_curve(geom2d_bisector_curve_t *t);
+GEOMCAPICALL geom2d_curve_t *geom2d_bezier_bisec_ana_curve_to_geom2d_curve(
+    geom2d_bezier_bisec_ana_curve_t *t);
+GEOMCAPICALL geom2d_curve_t *
+geom2d_bezier_bisec_cc_curve_to_geom2d_curve(geom2d_bezier_bisec_cc_curve_t *t);
+GEOMCAPICALL geom2d_curve_t *
+geom2d_bezier_bisec_pc_curve_to_geom2d_curve(geom2d_bezier_bisec_pc_curve_t *t);
+GEOMCAPICALL geom2d_curve_t *
+geom2d_bounded_curve_to_geom2d_curve(geom2d_bounded_curve_t *t);
+GEOMCAPICALL geom2d_curve_t *
+geom2d_bezier_curve_to_geom2d_curve(geom2d_bezier_curve_t *t);
+GEOMCAPICALL geom2d_curve_t *
+geom2d_bspline_curve_to_geom2d_curve(geom2d_bspline_curve_t *t);
+GEOMCAPICALL geom2d_curve_t *
+geom2d_trimmed_curve_to_geom2d_curve(geom2d_trimmed_curve_t *t);
+GEOMCAPICALL geom2d_curve_t *geom2d_conic_to_geom2d_curve(geom2d_conic_t *t);
+GEOMCAPICALL geom2d_curve_t *geom2d_circle_to_geom2d_curve(geom2d_circle_t *t);
+GEOMCAPICALL geom2d_curve_t *
+geom2d_ellipse_to_geom2d_curve(geom2d_ellipse_t *t);
+GEOMCAPICALL geom2d_curve_t *
+geom2d_hyperbola_to_geom2d_curve(geom2d_hyperbola_t *t);
+GEOMCAPICALL geom2d_curve_t *
+geom2d_parabola_to_geom2d_curve(geom2d_parabola_t *t);
+GEOMCAPICALL geom2d_curve_t *geom2d_line_to_geom2d_curve(geom2d_line_t *t);
+GEOMCAPICALL geom2d_curve_t *
+geom2d_offset_curve_to_geom2d_curve(geom2d_offset_curve_t *t);
+
+GEOMCAPICALL void geom_apply_mirror_with_point(geom_geometry_t *t, pnt3d_t P);
+GEOMCAPICALL void geom_apply_mirror_with_axis1(geom_geometry_t *t, axis1_t A1);
+GEOMCAPICALL void geom_apply_mirror_with_axis2(geom_geometry_t *t, axis2_t A2);
+GEOMCAPICALL void geom_apply_rotate(geom_geometry_t *t, axis1_t A1, double Ang);
+GEOMCAPICALL void geom_apply_scale(geom_geometry_t *t, pnt3d_t P, double S);
+GEOMCAPICALL void geom_apply_translate_with_vector(geom_geometry_t *t,
+                                                   vec3d_t V);
+GEOMCAPICALL void geom_apply_translate_with_point(geom_geometry_t *t,
+                                                  pnt3d_t P1, pnt3d_t P2);
+GEOMCAPICALL void geom_apply_transform(geom_geometry_t *t, trsf_t tr);
+
+GEOMCAPICALL geom_geometry_t *geom_mirror_with_point(geom_geometry_t *t,
+                                                     pnt3d_t P);
+GEOMCAPICALL geom_geometry_t *geom_mirror_with_axis1(geom_geometry_t *t,
+                                                     axis1_t A1);
+GEOMCAPICALL geom_geometry_t *geom_mirror_with_axis2(geom_geometry_t *t,
+                                                     axis2_t A2);
+GEOMCAPICALL geom_geometry_t *geom_rotate(geom_geometry_t *t, axis1_t A1,
+                                          double Ang);
+GEOMCAPICALL geom_geometry_t *geom_scale(geom_geometry_t *t, pnt3d_t P,
+                                         double S);
+GEOMCAPICALL geom_geometry_t *geom_translate_with_vector(geom_geometry_t *t,
+                                                         vec3d_t V);
+GEOMCAPICALL geom_geometry_t *geom_translate_with_point(geom_geometry_t *t,
+                                                        pnt3d_t P1, pnt3d_t P2);
+GEOMCAPICALL geom_geometry_t *geom_transform(geom_geometry_t *t, trsf_t tr);
+
+GEOMCAPICALL void geom2d_apply_mirror_with_point(geom2d_geometry_t *t,
+                                                 pnt2d_t P);
+GEOMCAPICALL void geom2d_apply_mirror_with_axis2(geom2d_geometry_t *t,
+                                                 axis2d_t A2);
+GEOMCAPICALL void geom2d_apply_rotate(geom2d_geometry_t *t, pnt2d_t P,
+                                      double Ang);
+GEOMCAPICALL void geom2d_apply_scale(geom2d_geometry_t *t, pnt2d_t P, double S);
+GEOMCAPICALL void geom2d_apply_translate_with_vector(geom2d_geometry_t *t,
+                                                     vec2d_t V);
+GEOMCAPICALL void geom2d_apply_translate_with_point(geom2d_geometry_t *t,
+                                                    pnt2d_t P1, pnt2d_t P2);
+GEOMCAPICALL void geom2d_apply_transform(geom2d_geometry_t *t, trsf2d_t tr);
+
+GEOMCAPICALL geom2d_geometry_t *geom2d_mirror_with_point(geom2d_geometry_t *t,
+                                                         pnt2d_t P);
+GEOMCAPICALL geom2d_geometry_t *geom2d_mirror_with_axis2(geom2d_geometry_t *t,
+                                                         axis2d_t A2);
+GEOMCAPICALL geom2d_geometry_t *geom2d_rotate(geom2d_geometry_t *t, pnt2d_t P,
+                                              double Ang);
+GEOMCAPICALL geom2d_geometry_t *geom2d_scale(geom2d_geometry_t *t, pnt2d_t P,
+                                             double S);
+GEOMCAPICALL geom2d_geometry_t *
+geom2d_translate_with_vector(geom2d_geometry_t *t, vec2d_t V);
+GEOMCAPICALL geom2d_geometry_t *
+geom2d_translate_with_point(geom2d_geometry_t *t, pnt2d_t P1, pnt2d_t P2);
+GEOMCAPICALL geom2d_geometry_t *geom2d_transform(geom2d_geometry_t *t,
+                                                 trsf2d_t tr);
+
+GEOMCAPICALL _Bool geom_curve_curve_point(geom_curve_t *curve, double s,
+                                          double *point);
 
 GEOMCAPICALL geom_trimmed_curve_t *
 geom_make_arc_of_circle_two_angles(circ_t Circ, double Alpha1, double Alpha2,

@@ -399,138 +399,172 @@ geom_axis1_placement_t *geom_axis1_placement_copy(geom_axis1_placement_t *t) {
   return new geom_axis1_placement_t{
       Handle(Geom_Axis1Placement)::DownCast(t->handle->Copy())};
 }
+
 geom_axis2_placement_t *geom_axis2_placement_copy(geom_axis2_placement_t *t) {
   return new geom_axis2_placement_t{
       Handle(Geom_Axis2Placement)::DownCast(t->handle->Copy())};
 }
+
 geom_curve_t *geom_curve_copy(geom_curve_t *t) {
   return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle->Copy())};
 }
+
 geom_bounded_curve_t *geom_bounded_curve_copy(geom_bounded_curve_t *t) {
   return new geom_bounded_curve_t{
       Handle(Geom_BoundedCurve)::DownCast(t->handle->Copy())};
 }
+
 geom_bezier_curve_t *geom_bezier_curve_copy(geom_bezier_curve_t *t) {
   return new geom_bezier_curve_t{
       Handle(Geom_BezierCurve)::DownCast(t->handle->Copy())};
 }
+
 geom_bspline_curve_t *geom_bspline_curve_copy(geom_bspline_curve_t *t) {
   return new geom_bspline_curve_t{
       Handle(Geom_BSplineCurve)::DownCast(t->handle->Copy())};
 }
+
 geom_trimmed_curve_t *geom_trimmed_curve_copy(geom_trimmed_curve_t *t) {
   return new geom_trimmed_curve_t{
       Handle(Geom_TrimmedCurve)::DownCast(t->handle->Copy())};
 }
+
 geom_conic_t *geom_conic_copy(geom_conic_t *t) {
   return new geom_conic_t{Handle(Geom_Conic)::DownCast(t->handle->Copy())};
 }
+
 geom_circle_t *geom_circle_copy(geom_circle_t *t) {
   return new geom_circle_t{Handle(Geom_Circle)::DownCast(t->handle->Copy())};
 }
+
 geom_ellipse_t *geom_ellipse_copy(geom_ellipse_t *t) {
   return new geom_ellipse_t{Handle(Geom_Ellipse)::DownCast(t->handle->Copy())};
 }
+
 geom_hyperbola_t *geom_hyperbola_copy(geom_hyperbola_t *t) {
   return new geom_hyperbola_t{
       Handle(Geom_Hyperbola)::DownCast(t->handle->Copy())};
 }
+
 geom_parabola_t *geom_parabola_copy(geom_parabola_t *t) {
   return new geom_parabola_t{
       Handle(Geom_Parabola)::DownCast(t->handle->Copy())};
 }
+
 geom_line_t *geom_line_copy(geom_line_t *t) {
   return new geom_line_t{Handle(Geom_Line)::DownCast(t->handle->Copy())};
 }
+
 geom_offset_curve_t *geom_offset_curve_copy(geom_offset_curve_t *t) {
   return new geom_offset_curve_t{
       Handle(Geom_OffsetCurve)::DownCast(t->handle->Copy())};
 }
+
 geom_point_t *geom_point_copy(geom_point_t *t) {
   return new geom_point_t{Handle(Geom_Point)::DownCast(t->handle->Copy())};
 }
+
 geom_cartesian_point_t *geom_cartesian_point_copy(geom_cartesian_point_t *t) {
   return new geom_cartesian_point_t{
       Handle(Geom_CartesianPoint)::DownCast(t->handle->Copy())};
 }
+
 geom_surface_t *geom_surface_copy(geom_surface_t *t) {
   return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle->Copy())};
 }
+
 geom_bounded_surface_t *geom_bounded_surface_copy(geom_bounded_surface_t *t) {
   return new geom_bounded_surface_t{
       Handle(Geom_BoundedSurface)::DownCast(t->handle->Copy())};
 }
+
 geom_bezier_surface_t *geom_bezier_surface_copy(geom_bezier_surface_t *t) {
   return new geom_bezier_surface_t{
       Handle(Geom_BezierSurface)::DownCast(t->handle->Copy())};
 }
+
 geom_bspline_surface_t *geom_bspline_surface_copy(geom_bspline_surface_t *t) {
   return new geom_bspline_surface_t{
       Handle(Geom_BSplineSurface)::DownCast(t->handle->Copy())};
 }
+
 geom_rectangular_trimmed_surface_t *
 geom_rectangular_trimmed_surface_copy(geom_rectangular_trimmed_surface_t *t) {
   return new geom_rectangular_trimmed_surface_t{
       Handle(Geom_RectangularTrimmedSurface)::DownCast(t->handle->Copy())};
 }
+
 geom_elementary_surface_t *
 geom_elementary_surface_copy(geom_elementary_surface_t *t) {
   return new geom_elementary_surface_t{
       Handle(Geom_ElementarySurface)::DownCast(t->handle->Copy())};
 }
+
 geom_cylindrical_surface_t *
 geom_cylindrical_surface_copy(geom_cylindrical_surface_t *t) {
   return new geom_cylindrical_surface_t{
       Handle(Geom_CylindricalSurface)::DownCast(t->handle->Copy())};
 }
+
 geom_plane_surface_t *geom_plane_surface_copy(geom_plane_surface_t *t) {
   return new geom_plane_surface_t{
       Handle(Geom_Plane)::DownCast(t->handle->Copy())};
 }
+
 geom_conical_surface_t *geom_conical_surface_copy(geom_conical_surface_t *t) {
   return new geom_conical_surface_t{
       Handle(Geom_ConicalSurface)::DownCast(t->handle->Copy())};
 }
+
 geom_spherical_surface_t *
 geom_spherical_surface_copy(geom_spherical_surface_t *t) {
   return new geom_spherical_surface_t{
       Handle(Geom_SphericalSurface)::DownCast(t->handle->Copy())};
 }
+
 geom_toroidal_surface_t *
 geom_toroidal_surface_copy(geom_toroidal_surface_t *t) {
   return new geom_toroidal_surface_t{
       Handle(Geom_ToroidalSurface)::DownCast(t->handle->Copy())};
 }
+
 geom_offset_surface_t *geom_offset_surface_copy(geom_offset_surface_t *t) {
   return new geom_offset_surface_t{
       Handle(Geom_OffsetSurface)::DownCast(t->handle->Copy())};
 }
+
 geom_swept_surface_t *geom_swept_surface_copy(geom_swept_surface_t *t) {
   return new geom_swept_surface_t{
       Handle(Geom_SweptSurface)::DownCast(t->handle->Copy())};
 }
+
 geom_surface_of_linear_extrusion_t *
 geom_surface_of_linear_extrusion_copy(geom_surface_of_linear_extrusion_t *t) {
   return new geom_surface_of_linear_extrusion_t{
       Handle(Geom_SurfaceOfLinearExtrusion)::DownCast(t->handle->Copy())};
 }
+
 geom_surface_of_revolution_extrusion_t *
 geom_surface_of_revolution_extrusion_copy(
     geom_surface_of_revolution_extrusion_t *t) {
   return new geom_surface_of_revolution_extrusion_t{
       Handle(Geom_SurfaceOfRevolution)::DownCast(t->handle->Copy())};
 }
+
 geom_plate_surface_t *geom_plate_surface_copy(geom_plate_surface_t *t) {
   return new geom_plate_surface_t{
       Handle(GeomPlate_Surface)::DownCast(t->handle->Copy())};
 }
+
 geom_vector_t *geom_vector_copy(geom_vector_t *t) {
   return new geom_vector_t{Handle(Geom_Vector)::DownCast(t->handle->Copy())};
 }
+
 geom_direction_t *geom_direction_copy(geom_direction_t *t) {
   return new geom_direction_t{
       Handle(Geom_Direction)::DownCast(t->handle->Copy())};
 }
+
 geom_vector_with_magnitude_t *
 geom_vector_with_magnitude_copy(geom_vector_with_magnitude_t *t) {
   return new geom_vector_with_magnitude_t{
@@ -540,97 +574,120 @@ geom_vector_with_magnitude_copy(geom_vector_with_magnitude_t *t) {
 geom2d_geometry_t *geom2d_geometry_copy(geom2d_geometry_t *t) {
   return new geom2d_geometry_t{t->handle->Copy()};
 }
+
 geom2d_transformation_t *
 geom2d_transformation_copy(geom2d_transformation_t *t) {
   return new geom2d_transformation_t{
       Handle(Geom2d_Transformation)::DownCast(t->handle->Copy())};
 }
+
 geom2d_axis_placement_t *
 geom2d_axis_placement_copy(geom2d_axis_placement_t *t) {
   return new geom2d_axis_placement_t{
       Handle(Geom2d_AxisPlacement)::DownCast(t->handle->Copy())};
 }
+
 geom2d_curve_t *geom2d_curve_copy(geom2d_curve_t *t) {
   return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle->Copy())};
 }
+
 geom2d_bisector_curve_t *
 geom2d_bisector_curve_copy(geom2d_bisector_curve_t *t) {
   return new geom2d_bisector_curve_t{
       Handle(Bisector_Curve)::DownCast(t->handle->Copy())};
 }
+
 geom2d_bezier_bisec_ana_curve_t *
 geom2d_bezier_bisec_ana_curve_copy(geom2d_bezier_bisec_ana_curve_t *t) {
   return new geom2d_bezier_bisec_ana_curve_t{
       Handle(Bisector_BisecAna)::DownCast(t->handle->Copy())};
 }
+
 geom2d_bezier_bisec_cc_curve_t *
 geom2d_bezier_bisec_cc_curve_copy(geom2d_bezier_bisec_cc_curve_t *t) {
   return new geom2d_bezier_bisec_cc_curve_t{
       Handle(Bisector_BisecCC)::DownCast(t->handle->Copy())};
 }
+
 geom2d_bezier_bisec_pc_curve_t *
 geom2d_bezier_bisec_pc_curve_copy(geom2d_bezier_bisec_pc_curve_t *t) {
   return new geom2d_bezier_bisec_pc_curve_t{
       Handle(Bisector_BisecPC)::DownCast(t->handle->Copy())};
 }
+
 geom2d_bounded_curve_t *geom2d_bounded_curve_copy(geom2d_bounded_curve_t *t) {
   return new geom2d_bounded_curve_t{
       Handle(Geom2d_BoundedCurve)::DownCast(t->handle->Copy())};
 }
+
 geom2d_bezier_curve_t *geom2d_bezier_curve_copy(geom2d_bezier_curve_t *t) {
   return new geom2d_bezier_curve_t{
       Handle(Geom2d_BezierCurve)::DownCast(t->handle->Copy())};
 }
+
 geom2d_bspline_curve_t *geom2d_bspline_curve_copy(geom2d_bspline_curve_t *t) {
   return new geom2d_bspline_curve_t{
       Handle(Geom2d_BSplineCurve)::DownCast(t->handle->Copy())};
 }
+
 geom2d_trimmed_curve_t *geom2d_trimmed_curve_copy(geom2d_trimmed_curve_t *t) {
   return new geom2d_trimmed_curve_t{
       Handle(Geom2d_TrimmedCurve)::DownCast(t->handle->Copy())};
 }
+
 geom2d_conic_t *geom2d_conic_copy(geom2d_conic_t *t) {
   return new geom2d_conic_t{Handle(Geom2d_Conic)::DownCast(t->handle->Copy())};
 }
+
 geom2d_circle_t *geom2d_circle_copy(geom2d_circle_t *t) {
   return new geom2d_circle_t{
       Handle(Geom2d_Circle)::DownCast(t->handle->Copy())};
 }
+
 geom2d_ellipse_t *geom2d_ellipse_copy(geom2d_ellipse_t *t) {
   return new geom2d_ellipse_t{
       Handle(Geom2d_Ellipse)::DownCast(t->handle->Copy())};
 }
+
 geom2d_hyperbola_t *geom2d_hyperbola_copy(geom2d_hyperbola_t *t) {
   return new geom2d_hyperbola_t{
       Handle(Geom2d_Hyperbola)::DownCast(t->handle->Copy())};
 }
+
 geom2d_parabola_t *geom2d_parabola_copy(geom2d_parabola_t *t) {
   return new geom2d_parabola_t{
       Handle(Geom2d_Parabola)::DownCast(t->handle->Copy())};
 }
+
 geom2d_line_t *geom2d_line_copy(geom2d_line_t *t) {
   return new geom2d_line_t{Handle(Geom2d_Line)::DownCast(t->handle->Copy())};
 }
+
 geom2d_offset_curve_t *geom2d_offset_curve_copy(geom2d_offset_curve_t *t) {
   return new geom2d_offset_curve_t{
       Handle(Geom2d_OffsetCurve)::DownCast(t->handle->Copy())};
 }
+
 geom2d_point_t *geom2d_point_copy(geom2d_point_t *t) {
   return new geom2d_point_t{Handle(Geom2d_Point)::DownCast(t->handle->Copy())};
 }
+
 geom2d_cartesian_point_t *
 geom2d_cartesian_point_copy(geom2d_cartesian_point_t *t) {
   return new geom2d_cartesian_point_t{
       Handle(Geom2d_CartesianPoint)::DownCast(t->handle->Copy())};
 }
+
 geom2d_vector_t *geom2d_vector_copy(geom2d_vector_t *t) {
   return new geom2d_vector_t{
       Handle(Geom2d_Vector)::DownCast(t->handle->Copy())};
 }
+
 geom2d_direction_t *geom2d_direction_copy(geom2d_direction_t *t) {
   return new geom2d_direction_t{
       Handle(Geom2d_Direction)::DownCast(t->handle->Copy())};
 }
+
 geom2d_vector_with_magnitude_t *
 geom2d_vector_with_magnitude_copy(geom2d_vector_with_magnitude_t *t) {
   return new geom2d_vector_with_magnitude_t{
@@ -1702,232 +1759,846 @@ geom2d_vector_with_magnitude_to_geometry(geom2d_vector_with_magnitude_t *t) {
 }
 
 geom_axis_placement_t *geom_axis_placement_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_AxisPlacement)) {
+    return nullptr;
+  }
   return new geom_axis_placement_t{
       Handle(Geom_AxisPlacement)::DownCast(t->handle)};
 }
 
 geom_axis1_placement_t *geom_axis1_placement_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_Axis1Placement)) {
+    return nullptr;
+  }
   return new geom_axis1_placement_t{
       Handle(Geom_Axis1Placement)::DownCast(t->handle)};
 }
+
 geom_axis2_placement_t *geom_axis2_placement_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_Axis2Placement)) {
+    return nullptr;
+  }
   return new geom_axis2_placement_t{
       Handle(Geom_Axis2Placement)::DownCast(t->handle)};
 }
+
 geom_curve_t *geom_curve_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_Curve)) {
+    return nullptr;
+  }
   return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
 }
+
 geom_bounded_curve_t *geom_bounded_curve_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_BoundedCurve)) {
+    return nullptr;
+  }
   return new geom_bounded_curve_t{
       Handle(Geom_BoundedCurve)::DownCast(t->handle)};
 }
+
 geom_bezier_curve_t *geom_bezier_curve_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_BezierCurve)) {
+    return nullptr;
+  }
   return new geom_bezier_curve_t{Handle(Geom_BezierCurve)::DownCast(t->handle)};
 }
+
 geom_bspline_curve_t *geom_bspline_curve_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_BSplineCurve)) {
+    return nullptr;
+  }
   return new geom_bspline_curve_t{
       Handle(Geom_BSplineCurve)::DownCast(t->handle)};
 }
+
 geom_trimmed_curve_t *geom_trimmed_curve_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_TrimmedCurve)) {
+    return nullptr;
+  }
   return new geom_trimmed_curve_t{
       Handle(Geom_TrimmedCurve)::DownCast(t->handle)};
 }
+
 geom_conic_t *geom_conic_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_Conic)) {
+    return nullptr;
+  }
   return new geom_conic_t{Handle(Geom_Conic)::DownCast(t->handle)};
 }
+
 geom_circle_t *geom_circle_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_Circle)) {
+    return nullptr;
+  }
   return new geom_circle_t{Handle(Geom_Circle)::DownCast(t->handle)};
 }
+
 geom_ellipse_t *geom_ellipse_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_Ellipse)) {
+    return nullptr;
+  }
   return new geom_ellipse_t{Handle(Geom_Ellipse)::DownCast(t->handle)};
 }
+
 geom_hyperbola_t *geom_hyperbola_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_Hyperbola)) {
+    return nullptr;
+  }
   return new geom_hyperbola_t{Handle(Geom_Hyperbola)::DownCast(t->handle)};
 }
+
 geom_parabola_t *geom_parabola_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_Parabola)) {
+    return nullptr;
+  }
   return new geom_parabola_t{Handle(Geom_Parabola)::DownCast(t->handle)};
 }
+
 geom_line_t *geom_line_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_Line)) {
+    return nullptr;
+  }
   return new geom_line_t{Handle(Geom_Line)::DownCast(t->handle)};
 }
+
 geom_offset_curve_t *geom_offset_curve_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_OffsetCurve)) {
+    return nullptr;
+  }
   return new geom_offset_curve_t{Handle(Geom_OffsetCurve)::DownCast(t->handle)};
 }
+
 geom_point_t *geom_point_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_Point)) {
+    return nullptr;
+  }
   return new geom_point_t{Handle(Geom_Point)::DownCast(t->handle)};
 }
+
 geom_cartesian_point_t *geom_cartesian_point_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_CartesianPoint)) {
+    return nullptr;
+  }
   return new geom_cartesian_point_t{
       Handle(Geom_CartesianPoint)::DownCast(t->handle)};
 }
+
 geom_surface_t *geom_surface_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_Surface)) {
+    return nullptr;
+  }
   return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
 }
+
 geom_bounded_surface_t *geom_bounded_surface_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_BoundedSurface)) {
+    return nullptr;
+  }
   return new geom_bounded_surface_t{
       Handle(Geom_BoundedSurface)::DownCast(t->handle)};
 }
+
 geom_bezier_surface_t *geom_bezier_surface_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_BezierSurface)) {
+    return nullptr;
+  }
   return new geom_bezier_surface_t{
       Handle(Geom_BezierSurface)::DownCast(t->handle)};
 }
+
 geom_bspline_surface_t *geom_bspline_surface_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_BSplineSurface)) {
+    return nullptr;
+  }
   return new geom_bspline_surface_t{
       Handle(Geom_BSplineSurface)::DownCast(t->handle)};
 }
+
 geom_rectangular_trimmed_surface_t *
 geom_rectangular_trimmed_surface_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() !=
+      STANDARD_TYPE(Geom_RectangularTrimmedSurface)) {
+    return nullptr;
+  }
   return new geom_rectangular_trimmed_surface_t{
       Handle(Geom_RectangularTrimmedSurface)::DownCast(t->handle)};
 }
+
 geom_elementary_surface_t *
 geom_elementary_surface_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_ElementarySurface)) {
+    return nullptr;
+  }
   return new geom_elementary_surface_t{
       Handle(Geom_ElementarySurface)::DownCast(t->handle)};
 }
+
 geom_cylindrical_surface_t *
 geom_cylindrical_surface_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_CylindricalSurface)) {
+    return nullptr;
+  }
   return new geom_cylindrical_surface_t{
       Handle(Geom_CylindricalSurface)::DownCast(t->handle)};
 }
+
 geom_plane_surface_t *geom_plane_surface_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_Plane)) {
+    return nullptr;
+  }
   return new geom_plane_surface_t{Handle(Geom_Plane)::DownCast(t->handle)};
 }
+
 geom_conical_surface_t *geom_conical_surface_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_ConicalSurface)) {
+    return nullptr;
+  }
   return new geom_conical_surface_t{
       Handle(Geom_ConicalSurface)::DownCast(t->handle)};
 }
+
 geom_spherical_surface_t *
 geom_spherical_surface_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_SphericalSurface)) {
+    return nullptr;
+  }
   return new geom_spherical_surface_t{
       Handle(Geom_SphericalSurface)::DownCast(t->handle)};
 }
+
 geom_toroidal_surface_t *
 geom_toroidal_surface_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_ToroidalSurface)) {
+    return nullptr;
+  }
   return new geom_toroidal_surface_t{
       Handle(Geom_ToroidalSurface)::DownCast(t->handle)};
 }
+
 geom_offset_surface_t *geom_offset_surface_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_OffsetSurface)) {
+    return nullptr;
+  }
   return new geom_offset_surface_t{
       Handle(Geom_OffsetSurface)::DownCast(t->handle)};
 }
+
 geom_swept_surface_t *geom_swept_surface_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_SweptSurface)) {
+    return nullptr;
+  }
   return new geom_swept_surface_t{
       Handle(Geom_SweptSurface)::DownCast(t->handle)};
 }
+
 geom_surface_of_linear_extrusion_t *
 geom_surface_of_linear_extrusion_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() !=
+      STANDARD_TYPE(Geom_SurfaceOfLinearExtrusion)) {
+    return nullptr;
+  }
   return new geom_surface_of_linear_extrusion_t{
       Handle(Geom_SurfaceOfLinearExtrusion)::DownCast(t->handle)};
 }
+
 geom_surface_of_revolution_extrusion_t *
 geom_surface_of_revolution_extrusion_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_SurfaceOfRevolution)) {
+    return nullptr;
+  }
   return new geom_surface_of_revolution_extrusion_t{
       Handle(Geom_SurfaceOfRevolution)::DownCast(t->handle)};
 }
+
 geom_plate_surface_t *geom_plate_surface_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(GeomPlate_Surface)) {
+    return nullptr;
+  }
   return new geom_plate_surface_t{
       Handle(GeomPlate_Surface)::DownCast(t->handle)};
 }
+
 geom_vector_t *geom_vector_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_Vector)) {
+    return nullptr;
+  }
   return new geom_vector_t{Handle(Geom_Vector)::DownCast(t->handle)};
 }
+
 geom_direction_t *geom_direction_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_Direction)) {
+    return nullptr;
+  }
   return new geom_direction_t{Handle(Geom_Direction)::DownCast(t->handle)};
 }
+
 geom_vector_with_magnitude_t *
 geom_vector_with_magnitude_from_geometry(geom_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom_VectorWithMagnitude)) {
+    return nullptr;
+  }
   return new geom_vector_with_magnitude_t{
       Handle(Geom_VectorWithMagnitude)::DownCast(t->handle)};
 }
 
 geom2d_axis_placement_t *
 geom2d_axis_placement_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_AxisPlacement)) {
+    return nullptr;
+  }
   return new geom2d_axis_placement_t{
       Handle(Geom2d_AxisPlacement)::DownCast(t->handle)};
 }
+
 geom2d_curve_t *geom2d_curve_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_Curve)) {
+    return nullptr;
+  }
   return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
 }
+
 geom2d_bisector_curve_t *
 geom2d_bisector_curve_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Bisector_Curve)) {
+    return nullptr;
+  }
   return new geom2d_bisector_curve_t{
       Handle(Bisector_Curve)::DownCast(t->handle)};
 }
+
 geom2d_bezier_bisec_ana_curve_t *
 geom2d_bezier_bisec_ana_curve_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Bisector_BisecAna)) {
+    return nullptr;
+  }
   return new geom2d_bezier_bisec_ana_curve_t{
       Handle(Bisector_BisecAna)::DownCast(t->handle)};
 }
+
 geom2d_bezier_bisec_cc_curve_t *
 geom2d_bezier_bisec_cc_curve_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Bisector_BisecCC)) {
+    return nullptr;
+  }
   return new geom2d_bezier_bisec_cc_curve_t{
       Handle(Bisector_BisecCC)::DownCast(t->handle)};
 }
+
 geom2d_bezier_bisec_pc_curve_t *
 geom2d_bezier_bisec_pc_curve_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Bisector_BisecPC)) {
+    return nullptr;
+  }
   return new geom2d_bezier_bisec_pc_curve_t{
       Handle(Bisector_BisecPC)::DownCast(t->handle)};
 }
+
 geom2d_bounded_curve_t *
 geom2d_bounded_curve_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_BoundedCurve)) {
+    return nullptr;
+  }
   return new geom2d_bounded_curve_t{
       Handle(Geom2d_BoundedCurve)::DownCast(t->handle)};
 }
+
 geom2d_bezier_curve_t *geom2d_bezier_curve_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_BezierCurve)) {
+    return nullptr;
+  }
   return new geom2d_bezier_curve_t{
       Handle(Geom2d_BezierCurve)::DownCast(t->handle)};
 }
+
 geom2d_bspline_curve_t *
 geom2d_bspline_curve_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_BSplineCurve)) {
+    return nullptr;
+  }
   return new geom2d_bspline_curve_t{
       Handle(Geom2d_BSplineCurve)::DownCast(t->handle)};
 }
+
 geom2d_trimmed_curve_t *
 geom2d_trimmed_curve_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_TrimmedCurve)) {
+    return nullptr;
+  }
   return new geom2d_trimmed_curve_t{
       Handle(Geom2d_TrimmedCurve)::DownCast(t->handle)};
 }
+
 geom2d_conic_t *geom2d_conic_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_Conic)) {
+    return nullptr;
+  }
   return new geom2d_conic_t{Handle(Geom2d_Conic)::DownCast(t->handle)};
 }
+
 geom2d_circle_t *geom2d_circle_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_Circle)) {
+    return nullptr;
+  }
   return new geom2d_circle_t{Handle(Geom2d_Circle)::DownCast(t->handle)};
 }
+
 geom2d_ellipse_t *geom2d_ellipse_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_Ellipse)) {
+    return nullptr;
+  }
   return new geom2d_ellipse_t{Handle(Geom2d_Ellipse)::DownCast(t->handle)};
 }
+
 geom2d_hyperbola_t *geom2d_hyperbola_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_Hyperbola)) {
+    return nullptr;
+  }
   return new geom2d_hyperbola_t{Handle(Geom2d_Hyperbola)::DownCast(t->handle)};
 }
+
 geom2d_parabola_t *geom2d_parabola_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_Parabola)) {
+    return nullptr;
+  }
   return new geom2d_parabola_t{Handle(Geom2d_Parabola)::DownCast(t->handle)};
 }
+
 geom2d_line_t *geom2d_line_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_Line)) {
+    return nullptr;
+  }
   return new geom2d_line_t{Handle(Geom2d_Line)::DownCast(t->handle)};
 }
+
 geom2d_offset_curve_t *geom2d_offset_curve_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_OffsetCurve)) {
+    return nullptr;
+  }
   return new geom2d_offset_curve_t{
       Handle(Geom2d_OffsetCurve)::DownCast(t->handle)};
 }
+
 geom2d_point_t *geom2d_point_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_Point)) {
+    return nullptr;
+  }
   return new geom2d_point_t{Handle(Geom2d_Point)::DownCast(t->handle)};
 }
+
 geom2d_cartesian_point_t *
 geom2d_cartesian_point_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_CartesianPoint)) {
+    return nullptr;
+  }
   return new geom2d_cartesian_point_t{
       Handle(Geom2d_CartesianPoint)::DownCast(t->handle)};
 }
+
 geom2d_vector_t *geom2d_vector_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_Vector)) {
+    return nullptr;
+  }
   return new geom2d_vector_t{Handle(Geom2d_Vector)::DownCast(t->handle)};
 }
+
 geom2d_direction_t *geom2d_direction_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_Direction)) {
+    return nullptr;
+  }
   return new geom2d_direction_t{Handle(Geom2d_Direction)::DownCast(t->handle)};
 }
+
 geom2d_vector_with_magnitude_t *
 geom2d_vector_with_magnitude_from_geometry(geom2d_geometry_t *t) {
+  if (t->handle->DynamicType() != STANDARD_TYPE(Geom2d_VectorWithMagnitude)) {
+    return nullptr;
+  }
   return new geom2d_vector_with_magnitude_t{
       Handle(Geom2d_VectorWithMagnitude)::DownCast(t->handle)};
+}
+
+geom_curve_t *geom_bounded_curve_to_geom_curve(geom_bounded_curve_t *t) {
+  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+}
+
+geom_curve_t *geom_bezier_curve_to_geom_curve(geom_bezier_curve_t *t) {
+  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+}
+
+geom_curve_t *geom_bspline_curve_to_geom_curve(geom_bspline_curve_t *t) {
+  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+}
+
+geom_curve_t *geom_trimmed_curve_to_geom_curve(geom_trimmed_curve_t *t) {
+  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+}
+
+geom_curve_t *geom_conic_to_geom_curve(geom_conic_t *t) {
+  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+}
+
+geom_curve_t *geom_circle_to_geom_curve(geom_circle_t *t) {
+  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+}
+
+geom_curve_t *geom_ellipse_to_geom_curve(geom_ellipse_t *t) {
+  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+}
+
+geom_curve_t *geom_hyperbola_to_geom_curve(geom_hyperbola_t *t) {
+  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+}
+
+geom_curve_t *geom_parabola_to_geom_curve(geom_parabola_t *t) {
+  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+}
+
+geom_curve_t *geom_line_to_geom_curve(geom_line_t *t) {
+  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+}
+
+geom_curve_t *geom_offset_curve_to_geom_curve(geom_offset_curve_t *t) {
+  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+}
+
+geom_surface_t *
+geom_bounded_surface_to_geom_surface(geom_bounded_surface_t *t) {
+  return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
+}
+
+geom_surface_t *geom_bezier_surface_to_geom_surface(geom_bezier_surface_t *t) {
+  return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
+}
+
+geom_surface_t *
+geom_bspline_surface_to_geom_surface(geom_bspline_surface_t *t) {
+  return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
+}
+
+geom_surface_t *geom_rectangular_trimmed_surface_to_geom_surface(
+    geom_rectangular_trimmed_surface_t *t) {
+  return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
+}
+
+geom_surface_t *
+geom_elementary_surface_to_geom_surface(geom_elementary_surface_t *t) {
+  return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
+}
+
+geom_surface_t *
+geom_cylindrical_surface_to_geom_surface(geom_cylindrical_surface_t *t) {
+  return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
+}
+
+geom_surface_t *geom_plane_surface_to_geom_surface(geom_plane_surface_t *t) {
+  return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
+}
+
+geom_surface_t *
+geom_conical_surface_to_geom_surface(geom_conical_surface_t *t) {
+  return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
+}
+
+geom_surface_t *
+geom_spherical_surface_to_geom_surface(geom_spherical_surface_t *t) {
+  return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
+}
+
+geom_surface_t *
+geom_toroidal_surface_to_geom_surface(geom_toroidal_surface_t *t) {
+  return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
+}
+
+geom_surface_t *geom_offset_surface_to_geom_surface(geom_offset_surface_t *t) {
+  return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
+}
+
+geom_surface_t *geom_swept_surface_to_geom_surface(geom_swept_surface_t *t) {
+  return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
+}
+
+geom_surface_t *geom_surface_of_linear_extrusion_to_geom_surface(
+    geom_surface_of_linear_extrusion_t *t) {
+  return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
+}
+
+geom_surface_t *geom_surface_of_revolution_extrusion_to_geom_surface(
+    geom_surface_of_revolution_extrusion_t *t) {
+  return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
+}
+
+geom_surface_t *geom_plate_surface_to_geom_surface(geom_plate_surface_t *t) {
+  return new geom_surface_t{Handle(Geom_Surface)::DownCast(t->handle)};
+}
+
+geom2d_curve_t *
+geom2d_bisector_curve_to_geom2d_curve(geom2d_bisector_curve_t *t) {
+  return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
+}
+
+geom2d_curve_t *geom2d_bezier_bisec_ana_curve_to_geom2d_curve(
+    geom2d_bezier_bisec_ana_curve_t *t) {
+  return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
+}
+
+geom2d_curve_t *geom2d_bezier_bisec_cc_curve_to_geom2d_curve(
+    geom2d_bezier_bisec_cc_curve_t *t) {
+  return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
+}
+
+geom2d_curve_t *geom2d_bezier_bisec_pc_curve_to_geom2d_curve(
+    geom2d_bezier_bisec_pc_curve_t *t) {
+  return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
+}
+
+geom2d_curve_t *
+geom2d_bounded_curve_to_geom2d_curve(geom2d_bounded_curve_t *t) {
+  return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
+}
+
+geom2d_curve_t *geom2d_bezier_curve_to_geom2d_curve(geom2d_bezier_curve_t *t) {
+  return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
+}
+
+geom2d_curve_t *
+geom2d_bspline_curve_to_geom2d_curve(geom2d_bspline_curve_t *t) {
+  return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
+}
+
+geom2d_curve_t *
+geom2d_trimmed_curve_to_geom2d_curve(geom2d_trimmed_curve_t *t) {
+  return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
+}
+
+geom2d_curve_t *geom2d_conic_to_geom2d_curve(geom2d_conic_t *t) {
+  return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
+}
+
+geom2d_curve_t *geom2d_circle_to_geom2d_curve(geom2d_circle_t *t) {
+  return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
+}
+
+geom2d_curve_t *geom2d_ellipse_to_geom2d_curve(geom2d_ellipse_t *t) {
+  return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
+}
+
+geom2d_curve_t *geom2d_hyperbola_to_geom2d_curve(geom2d_hyperbola_t *t) {
+  return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
+}
+
+geom2d_curve_t *geom2d_parabola_to_geom2d_curve(geom2d_parabola_t *t) {
+  return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
+}
+
+geom2d_curve_t *geom2d_line_to_geom2d_curve(geom2d_line_t *t) {
+  return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
+}
+
+geom2d_curve_t *geom2d_offset_curve_to_geom2d_curve(geom2d_offset_curve_t *t) {
+  return new geom2d_curve_t{Handle(Geom2d_Curve)::DownCast(t->handle)};
+}
+
+void geom_apply_mirror_with_point(geom_geometry_t *t, pnt3d_t P) {
+  if (t) {
+    t->handle->Mirror(cast_to_gp(P));
+  }
+}
+
+void geom_apply_mirror_with_axis1(geom_geometry_t *t, axis1_t A1) {
+  if (t) {
+    t->handle->Mirror(cast_to_gp(A1));
+  }
+}
+
+void geom_apply_mirror_with_axis2(geom_geometry_t *t, axis2_t A2) {
+  if (t) {
+    t->handle->Mirror(cast_to_gp(A2));
+  }
+}
+
+void geom_apply_rotate(geom_geometry_t *t, axis1_t A1, double Ang) {
+  if (t) {
+    t->handle->Rotate(cast_to_gp(A1), Ang);
+  }
+}
+
+void geom_apply_scale(geom_geometry_t *t, pnt3d_t P, double S) {
+  if (t) {
+    t->handle->Scale(cast_to_gp(P), S);
+  }
+}
+
+void geom_apply_translate_with_vector(geom_geometry_t *t, vec3d_t V) {
+  if (t) {
+    t->handle->Translate(cast_to_gp(V));
+  }
+}
+
+void geom_apply_translate_with_point(geom_geometry_t *t, pnt3d_t P1,
+                                     pnt3d_t P2) {
+  if (t) {
+    t->handle->Translate(cast_to_gp(P1), cast_to_gp(P2));
+  }
+}
+
+void geom_apply_transform(geom_geometry_t *t, trsf_t tr) {
+  if (t) {
+    t->handle->Transform(cast_to_gp(tr));
+  }
+}
+
+geom_geometry_t *geom_mirror_with_point(geom_geometry_t *t, pnt3d_t P) {
+  if (t) {
+    return new geom_geometry_t{t->handle->Mirrored(cast_to_gp(P))};
+  }
+  return nullptr;
+}
+
+geom_geometry_t *geom_mirror_with_axis1(geom_geometry_t *t, axis1_t A1) {
+  if (t) {
+    return new geom_geometry_t{t->handle->Mirrored(cast_to_gp(A1))};
+  }
+  return nullptr;
+}
+
+geom_geometry_t *geom_mirror_with_axis2(geom_geometry_t *t, axis2_t A2) {
+  if (t) {
+    return new geom_geometry_t{t->handle->Mirrored(cast_to_gp(A2))};
+  }
+  return nullptr;
+}
+
+geom_geometry_t *geom_rotate(geom_geometry_t *t, axis1_t A1, double Ang) {
+  if (t) {
+    return new geom_geometry_t{t->handle->Rotated(cast_to_gp(A1), Ang)};
+  }
+  return nullptr;
+}
+
+geom_geometry_t *geom_scale(geom_geometry_t *t, pnt3d_t P, double S) {
+  if (t) {
+    return new geom_geometry_t{t->handle->Scaled(cast_to_gp(P), S)};
+  }
+  return nullptr;
+}
+
+geom_geometry_t *geom_translate_with_vector(geom_geometry_t *t, vec3d_t V) {
+  if (t) {
+    return new geom_geometry_t{t->handle->Translated(cast_to_gp(V))};
+  }
+  return nullptr;
+}
+
+geom_geometry_t *geom_translate_with_point(geom_geometry_t *t, pnt3d_t P1,
+                                           pnt3d_t P2) {
+  if (t) {
+    return new geom_geometry_t{
+        t->handle->Translated(cast_to_gp(P1), cast_to_gp(P2))};
+  }
+  return nullptr;
+}
+
+geom_geometry_t *geom_transform(geom_geometry_t *t, trsf_t tr) {
+  if (t) {
+    return new geom_geometry_t{t->handle->Transformed(cast_to_gp(tr))};
+  }
+  return nullptr;
+}
+
+void geom2d_apply_mirror_with_point(geom2d_geometry_t *t, pnt2d_t P) {
+  if (t) {
+    t->handle->Mirror(cast_to_gp(P));
+  }
+}
+
+void geom2d_apply_mirror_with_axis2(geom2d_geometry_t *t, axis2d_t A2) {
+  if (t) {
+    t->handle->Mirror(cast_to_gp(A2));
+  }
+}
+
+void geom2d_apply_rotate(geom2d_geometry_t *t, pnt2d_t P, double Ang) {
+  if (t) {
+    t->handle->Rotate(cast_to_gp(P), Ang);
+  }
+}
+
+void geom2d_apply_scale(geom2d_geometry_t *t, pnt2d_t P, double S) {
+  if (t) {
+    t->handle->Scale(cast_to_gp(P), S);
+  }
+}
+
+void geom2d_apply_translate_with_vector(geom2d_geometry_t *t, vec2d_t V) {
+  if (t) {
+    t->handle->Translate(cast_to_gp(V));
+  }
+}
+
+void geom2d_apply_translate_with_point(geom2d_geometry_t *t, pnt2d_t P1,
+                                       pnt2d_t P2) {
+  if (t) {
+    t->handle->Translate(cast_to_gp(P1), cast_to_gp(P2));
+  }
+}
+
+void geom2d_apply_transform(geom2d_geometry_t *t, trsf2d_t tr) {
+  if (t) {
+    t->handle->Transform(cast_to_gp(tr));
+  }
+}
+
+geom2d_geometry_t *geom2d_mirror_with_point(geom2d_geometry_t *t, pnt2d_t P) {
+  if (t) {
+    return new geom2d_geometry_t{t->handle->Mirrored(cast_to_gp(P))};
+  }
+  return nullptr;
+}
+
+geom2d_geometry_t *geom2d_mirror_with_axis2(geom2d_geometry_t *t, axis2d_t A2) {
+  if (t) {
+    return new geom2d_geometry_t{t->handle->Mirrored(cast_to_gp(A2))};
+  }
+  return nullptr;
+}
+
+geom2d_geometry_t *geom2d_rotate(geom2d_geometry_t *t, pnt2d_t P, double Ang) {
+  if (t) {
+    return new geom2d_geometry_t{t->handle->Rotated(cast_to_gp(P), Ang)};
+  }
+  return nullptr;
+}
+
+geom2d_geometry_t *geom2d_scale(geom2d_geometry_t *t, pnt2d_t P, double S) {
+  if (t) {
+    return new geom2d_geometry_t{t->handle->Scaled(cast_to_gp(P), S)};
+  }
+  return nullptr;
+}
+
+geom2d_geometry_t *geom2d_translate_with_vector(geom2d_geometry_t *t,
+                                                vec2d_t V) {
+  if (t) {
+    return new geom2d_geometry_t{t->handle->Translated(cast_to_gp(V))};
+  }
+  return nullptr;
+}
+
+geom2d_geometry_t *geom2d_translate_with_point(geom2d_geometry_t *t, pnt2d_t P1,
+                                               pnt2d_t P2) {
+  if (t) {
+    return new geom2d_geometry_t{
+        t->handle->Translated(cast_to_gp(P1), cast_to_gp(P2))};
+  }
+  return nullptr;
+}
+
+geom2d_geometry_t *geom2d_transform(geom2d_geometry_t *t, trsf2d_t tr) {
+  if (t) {
+    return new geom2d_geometry_t{t->handle->Transformed(cast_to_gp(tr))};
+  }
+  return nullptr;
 }
 
 #ifdef __cplusplus
