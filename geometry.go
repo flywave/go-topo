@@ -10,10 +10,6 @@ package topovis
 */
 import "C"
 
-import (
-	"unsafe"
-)
-
 const (
 	GEOMAXIS1PLACEMENT            = int(C.GeomAxis1Placement)
 	GEOMAXIS2PLACEMENT            = int(C.GeomAxis2Placement)
@@ -264,14 +260,6 @@ func (g *GeomAxis1Placement) Copy() *GeomAxis1Placement {
 	return &GeomAxis1Placement{geom: C.geom_axis1_placement_copy(g.geom)}
 }
 
-func NewGeomAxis1Placement(a Axis1) *GeomAxis1Placement {
-	return &GeomAxis1Placement{geom: C.geom_make_axis1_placement(a.val)}
-}
-
-func NewGeomAxis1PlacementFromPointDir(p Point3, d Dir3) *GeomAxis1Placement {
-	return &GeomAxis1Placement{geom: C.geom_make_axis1_placement_of_point_dir(p.val, d.val)}
-}
-
 func NewGeomAxis1PlacementFromGeometry(g *GeomGeometry) *GeomAxis1Placement {
 	if p := C.geom_axis1_placement_from_geometry(g.geom); p != nil {
 		return &GeomAxis1Placement{geom: p}
@@ -294,14 +282,6 @@ func (g *GeomAxis2Placement) Free() {
 
 func (g *GeomAxis2Placement) Copy() *GeomAxis2Placement {
 	return &GeomAxis2Placement{geom: C.geom_axis2_placement_copy(g.geom)}
-}
-
-func NewGeomAxis2Placement(a Axis2) *GeomAxis2Placement {
-	return &GeomAxis2Placement{geom: C.geom_make_axis2_placement(a.val)}
-}
-
-func NewGeomAxis2PlacementForPointNVX(p Point3, n Dir3, vx Dir3) *GeomAxis2Placement {
-	return &GeomAxis2Placement{geom: C.geom_make_axis2_placement_of_point_nvx(p.val, n.val, vx.val)}
 }
 
 func NewGeomAxis2PlacementFromGeometry(g *GeomGeometry) *GeomAxis2Placement {
@@ -384,22 +364,6 @@ func (g *GeomBezierCurve) Copy() *GeomBezierCurve {
 	return &GeomBezierCurve{geom: C.geom_bezier_curve_copy(g.geom)}
 }
 
-func NewGeomBezierCurve(poles []Point3) *GeomBezierCurve {
-	in := make([]C.struct__pnt3d_t, len(poles))
-	for i := range poles {
-		in[i] = poles[i].val
-	}
-	return &GeomBezierCurve{geom: C.geom_make_bezier_curve(&in[0], C.int(len(poles)))}
-}
-
-func NewGeomBezierCurveFromWeight(poles []Point3, Weights []float64) *GeomBezierCurve {
-	in := make([]C.struct__pnt3d_t, len(poles))
-	for i := range poles {
-		in[i] = poles[i].val
-	}
-	return &GeomBezierCurve{geom: C.geom_make_bezier_curve_from_weight(&in[0], (*C.double)(unsafe.Pointer(&Weights[0])), C.int(len(poles)))}
-}
-
 func NewGeomBezierCurveFromGeometry(g *GeomGeometry) *GeomBezierCurve {
 	if p := C.geom_bezier_curve_from_geometry(g.geom); p != nil {
 		return &GeomBezierCurve{geom: p}
@@ -426,22 +390,6 @@ func (g *GeomBSplineCurve) Free() {
 
 func (g *GeomBSplineCurve) Copy() *GeomBSplineCurve {
 	return &GeomBSplineCurve{geom: C.geom_bspline_curve_copy(g.geom)}
-}
-
-func NewGeomBSplineCurve(poles []Point3, Knots []float64, Multiplicities []int, Degree int, Periodic bool) *GeomBSplineCurve {
-	in := make([]C.struct__pnt3d_t, len(poles))
-	for i := range poles {
-		in[i] = poles[i].val
-	}
-	return &GeomBSplineCurve{geom: C.geom_make_bspline_curve(&in[0], (*C.double)(unsafe.Pointer(&Knots[0])), (*C.int)(unsafe.Pointer(&Multiplicities[0])), C.int(len(poles)), C.int(Degree), C.bool(Periodic))}
-}
-
-func NewGeomBSplineCurveFromWeight(poles []Point3, weights []float64, Knots []float64, Multiplicities []int, Degree int, Periodic bool) *GeomBSplineCurve {
-	in := make([]C.struct__pnt3d_t, len(poles))
-	for i := range poles {
-		in[i] = poles[i].val
-	}
-	return &GeomBSplineCurve{geom: C.geom_make_bspline_curve_from_weight(&in[0], (*C.double)(unsafe.Pointer(&weights[0])), (*C.double)(unsafe.Pointer(&Knots[0])), (*C.int)(unsafe.Pointer(&Multiplicities[0])), C.int(len(poles)), C.int(Degree), C.bool(Periodic), C.bool(false))}
 }
 
 func NewGeomBSplineCurveFromGeometry(g *GeomGeometry) *GeomBSplineCurve {
@@ -796,33 +744,6 @@ func (g *GeomBezierSurface) Copy() *GeomBezierSurface {
 	return &GeomBezierSurface{geom: C.geom_bezier_surface_copy(g.geom)}
 }
 
-func NewGeomBezierSurface(poles [][]Point3) *GeomBezierSurface {
-	row := len(poles)
-	col := len(poles[0])
-	in := make([]C.struct__pnt3d_t, col*row)
-	for i := 0; i < row; i++ {
-		for j := 0; j < col; j++ {
-			in[i*col+j] = poles[i][j].val
-		}
-	}
-	return &GeomBezierSurface{geom: C.geom_make_bezier_surface(&in[0], C.int(row), C.int(col))}
-}
-
-func NewGeomBezierSurfaceFromWeight(poles [][]Point3, weights [][]float64) *GeomBezierSurface {
-	row := len(poles)
-	col := len(poles[0])
-	in := make([]C.struct__pnt3d_t, col*row)
-	inw := make([]C.double, col*row)
-
-	for i := 0; i < row; i++ {
-		for j := 0; j < col; j++ {
-			in[i*col+j] = poles[i][j].val
-			inw[i*col+j] = C.double(weights[j][i])
-		}
-	}
-	return &GeomBezierSurface{geom: C.geom_make_bezier_surface_from_weight(&in[0], &inw[0], C.int(row), C.int(col))}
-}
-
 func NewGeomBezierSurfaceFromGeometry(g *GeomGeometry) *GeomBezierSurface {
 	if p := C.geom_bezier_surface_from_geometry(g.geom); p != nil {
 		return &GeomBezierSurface{geom: p}
@@ -851,33 +772,6 @@ func (g *GeomBSplineSurface) Copy() *GeomBSplineSurface {
 	return &GeomBSplineSurface{geom: C.geom_bspline_surface_copy(g.geom)}
 }
 
-func NewGeomBSplineSurface(poles [][]Point3, UKnots, VKnots []float64, UMults, VMults []int, UDegree, VDegree int, UPeriodic, VPeriodic bool) *GeomBSplineSurface {
-	row := len(poles)
-	col := len(poles[0])
-	in := make([]C.struct__pnt3d_t, col*row)
-	for i := 0; i < row; i++ {
-		for j := 0; j < col; j++ {
-			in[i*col+j] = poles[i][j].val
-		}
-	}
-	return &GeomBSplineSurface{geom: C.geom_make_bspline_surface(&in[0], (*C.double)(unsafe.Pointer(&UKnots[0])), (*C.double)(unsafe.Pointer(&VKnots[0])), (*C.int)(unsafe.Pointer(&UMults[0])), (*C.int)(unsafe.Pointer(&VMults[0])), C.int(row), C.int(col), C.int(len(UKnots)), C.int(len(VKnots)), C.int(UDegree), C.int(VDegree), C.bool(UPeriodic), C.bool(VPeriodic))}
-}
-
-func NewGeomBSplineSurfaceFromWeight(poles [][]Point3, weights [][]float64, UKnots, VKnots []float64, UMults, VMults []int, UDegree, VDegree int, UPeriodic, VPeriodic bool) *GeomBSplineSurface {
-	row := len(poles)
-	col := len(poles[0])
-	in := make([]C.struct__pnt3d_t, col*row)
-	inw := make([]C.double, col*row)
-
-	for i := 0; i < row; i++ {
-		for j := 0; j < col; j++ {
-			in[i*col+j] = poles[i][j].val
-			inw[i*col+j] = C.double(weights[j][i])
-		}
-	}
-	return &GeomBSplineSurface{geom: C.geom_make_bspline_surface_from_weight(&in[0], (*C.double)(unsafe.Pointer(&inw[0])), (*C.double)(unsafe.Pointer(&UKnots[0])), (*C.double)(unsafe.Pointer(&VKnots[0])), (*C.int)(unsafe.Pointer(&UMults[0])), (*C.int)(unsafe.Pointer(&VMults[0])), C.int(row), C.int(col), C.int(len(UKnots)), C.int(len(VKnots)), C.int(UDegree), C.int(VDegree), C.bool(UPeriodic), C.bool(VPeriodic))}
-}
-
 func NewGeomBSplineSurfaceFromGeometry(g *GeomGeometry) *GeomBSplineSurface {
 	if p := C.geom_bspline_surface_from_geometry(g.geom); p != nil {
 		return &GeomBSplineSurface{geom: p}
@@ -904,14 +798,6 @@ func (g *GeomRectangularTrimmedSurface) Free() {
 
 func (g *GeomRectangularTrimmedSurface) Copy() *GeomRectangularTrimmedSurface {
 	return &GeomRectangularTrimmedSurface{geom: C.geom_rectangular_trimmed_surface_copy(g.geom)}
-}
-
-func NewGeomRectangularTrimmedSurfaceFromLRUD(s *GeomSurface, u1, u2, v1, v2 float64, UTrim, Sense bool) *GeomRectangularTrimmedSurface {
-	return &GeomRectangularTrimmedSurface{geom: C.geom_make_rectangular_trimmed_surface_from_lrud(s.geom, C.double(u1), C.double(u2), C.double(v1), C.double(v2), C.bool(UTrim), C.bool(Sense))}
-}
-
-func NewGeomRectangularTrimmedSurface(s *GeomSurface, Param1, Param2 float64, UTrim, Sense bool) *GeomRectangularTrimmedSurface {
-	return &GeomRectangularTrimmedSurface{geom: C.geom_make_rectangular_trimmed_surface(s.geom, C.double(Param1), C.double(Param2), C.bool(UTrim), C.bool(Sense))}
 }
 
 func NewGeomRectangularTrimmedSurfaceFromGeometry(g *GeomGeometry) *GeomRectangularTrimmedSurface {
@@ -1166,10 +1052,6 @@ func (g *GeomSurfaceOfLinearExtrusion) Copy() *GeomSurfaceOfLinearExtrusion {
 	return &GeomSurfaceOfLinearExtrusion{geom: C.geom_surface_of_linear_extrusion_copy(g.geom)}
 }
 
-func NewGeomSurfaceOfLinearExtrusion(c *GeomCurve, V Dir3) *GeomSurfaceOfLinearExtrusion {
-	return &GeomSurfaceOfLinearExtrusion{geom: C.geom_make_surface_of_linear_extrusion(c.geom, V.val)}
-}
-
 func NewGeomSurfaceOfLinearExtrusionFromGeometry(g *GeomGeometry) *GeomSurfaceOfLinearExtrusion {
 	if p := C.geom_surface_of_linear_extrusion_from_geometry(g.geom); p != nil {
 		return &GeomSurfaceOfLinearExtrusion{geom: p}
@@ -1198,10 +1080,6 @@ func (g *GeomSurfaceOfRevolution) Copy() *GeomSurfaceOfRevolution {
 	return &GeomSurfaceOfRevolution{geom: C.geom_surface_of_revolution_extrusion_copy(g.geom)}
 }
 
-func NewGeomSurfaceOfRevolution(c *GeomCurve, V Axis1) *GeomSurfaceOfRevolution {
-	return &GeomSurfaceOfRevolution{geom: C.geom_make_surface_of_revolution_extrusion(c.geom, V.val)}
-}
-
 func NewGeomSurfaceOfRevolutionFromGeometry(g *GeomGeometry) *GeomSurfaceOfRevolution {
 	if p := C.geom_surface_of_revolution_extrusion_from_geometry(g.geom); p != nil {
 		return &GeomSurfaceOfRevolution{geom: p}
@@ -1228,10 +1106,6 @@ func (g *GeomPlateSurface) Free() {
 
 func (g *GeomPlateSurface) Copy() *GeomPlateSurface {
 	return &GeomPlateSurface{geom: C.geom_plate_surface_copy(g.geom)}
-}
-
-func NewGeomPlateSurface(s *GeomSurface, p *Plate) *GeomPlateSurface {
-	return &GeomPlateSurface{geom: C.geom_make_plate_surface(s.geom, &p.val)}
 }
 
 func NewGeomPlateSurfaceFromGeometry(g *GeomGeometry) *GeomPlateSurface {
@@ -1282,14 +1156,6 @@ func (g *GeomDirection) Copy() *GeomDirection {
 	return &GeomDirection{geom: C.geom_direction_copy(g.geom)}
 }
 
-func NewGeomDirection(x, y, z float64) *GeomDirection {
-	return &GeomDirection{geom: C.geom_make_direction(C.double(x), C.double(y), C.double(z))}
-}
-
-func NewGeomDirectionFromDir(V Dir3) *GeomDirection {
-	return &GeomDirection{geom: C.geom_make_direction_with_dir(V.val)}
-}
-
 func NewGeomDirectionFromGeometry(g *GeomGeometry) *GeomDirection {
 	if p := C.geom_direction_from_geometry(g.geom); p != nil {
 		return &GeomDirection{geom: p}
@@ -1312,18 +1178,6 @@ func (g *GeomVectorWithMagnitude) Free() {
 
 func (g *GeomVectorWithMagnitude) Copy() *GeomVectorWithMagnitude {
 	return &GeomVectorWithMagnitude{geom: C.geom_vector_with_magnitude_copy(g.geom)}
-}
-
-func NewGeomVectorWithMagnitudeFromVector(V Vector3) *GeomVectorWithMagnitude {
-	return &GeomVectorWithMagnitude{geom: C.geom_make_vector_with_magnitude_with_vector(V.val)}
-}
-
-func NewGeomVectorWithMagnitude(x, y, z float64) *GeomVectorWithMagnitude {
-	return &GeomVectorWithMagnitude{geom: C.geom_make_vector_with_magnitude_with_xyz(C.double(x), C.double(y), C.double(z))}
-}
-
-func NewGeomVectorWithMagnitudeFromPoint(p1, p2 Point3) *GeomVectorWithMagnitude {
-	return &GeomVectorWithMagnitude{geom: C.geom_make_vector_with_magnitude_with_point(p1.val, p2.val)}
 }
 
 func NewGeomVectorWithMagnitudeFromGeometry(g *GeomGeometry) *GeomVectorWithMagnitude {
@@ -1480,14 +1334,6 @@ func (g *Geom2dAxisPlacement) Copy() *Geom2dAxisPlacement {
 	return &Geom2dAxisPlacement{geom: C.geom2d_axis_placement_copy(g.geom)}
 }
 
-func NewGeom2dAxisPlacement(A Axis2d) *Geom2dAxisPlacement {
-	return &Geom2dAxisPlacement{geom: C.geom2d_make_axis_placement(A.val)}
-}
-
-func NewGeom2dAxisPlacementFromPoint(P Point2, V Dir2) *Geom2dAxisPlacement {
-	return &Geom2dAxisPlacement{geom: C.geom2d_make_axis_placement_from_point(P.val, V.val)}
-}
-
 func NewGeom2dAxisPlacementFromGeometry(g *Geom2dGeometry) *Geom2dAxisPlacement {
 	if p := C.geom2d_axis_placement_from_geometry(g.geom); p != nil {
 		return &Geom2dAxisPlacement{geom: p}
@@ -1596,10 +1442,6 @@ func (g *Geom2dBisectorBisecCC) Copy() *Geom2dBisectorBisecCC {
 	return &Geom2dBisectorBisecCC{geom: C.geom2d_bezier_bisec_cc_curve_copy(g.geom)}
 }
 
-func NewGeom2dBisectorBisecCC(Cu1, Cu2 *Geom2dCurve, Side1, Side2 float64, Origin Point2, DistMax float64) *Geom2dBisectorBisecCC {
-	return &Geom2dBisectorBisecCC{geom: C.geom2d_make_bezier_bisec_cc_curve(Cu1.geom, Cu2.geom, C.double(Side1), C.double(Side2), Origin.val, C.double(DistMax))}
-}
-
 func NewGeom2dBisectorBisecCCFromGeometry(g *Geom2dGeometry) *Geom2dBisectorBisecCC {
 	if p := C.geom2d_bezier_bisec_cc_curve_from_geometry(g.geom); p != nil {
 		return &Geom2dBisectorBisecCC{geom: p}
@@ -1626,14 +1468,6 @@ func (g *Geom2dBisectorBisecPC) Free() {
 
 func (g *Geom2dBisectorBisecPC) Copy() *Geom2dBisectorBisecPC {
 	return &Geom2dBisectorBisecPC{geom: C.geom2d_bezier_bisec_pc_curve_copy(g.geom)}
-}
-
-func NewGeom2dBisectorBisecPCFromDist(Cu1 *Geom2dCurve, p Point2, side2, distMax float64) *Geom2dBisectorBisecPC {
-	return &Geom2dBisectorBisecPC{geom: C.geom2d_make_bezier_bisec_pc_curve_with_dist(Cu1.geom, p.val, C.double(side2), C.double(distMax))}
-}
-
-func NewGeom2dBisectorBisecPC(Cu1 *Geom2dCurve, p Point2, side2, UMin, UMax float64) *Geom2dBisectorBisecPC {
-	return &Geom2dBisectorBisecPC{geom: C.geom2d_make_bezier_bisec_pc_curve(Cu1.geom, p.val, C.double(side2), C.double(UMin), C.double(UMax))}
 }
 
 func NewGeom2dBisectorBisecPCFromGeometry(g *Geom2dGeometry) *Geom2dBisectorBisecPC {
@@ -1692,22 +1526,6 @@ func (g *Geom2dBezierCurve) Copy() *Geom2dBezierCurve {
 	return &Geom2dBezierCurve{geom: C.geom2d_bezier_curve_copy(g.geom)}
 }
 
-func NewGeom2dBezierCurve(poles []Point2) *Geom2dBezierCurve {
-	in := make([]C.struct__pnt2d_t, len(poles))
-	for i := range poles {
-		in[i] = poles[i].val
-	}
-	return &Geom2dBezierCurve{geom: C.geom2d_make_bezier_curve(&in[0], C.int(len(poles)))}
-}
-
-func NewGeom2dBezierCurveFromWeight(poles []Point2, weights []float64) *Geom2dBezierCurve {
-	in := make([]C.struct__pnt2d_t, len(poles))
-	for i := range poles {
-		in[i] = poles[i].val
-	}
-	return &Geom2dBezierCurve{geom: C.geom2d_make_bezier_curve_with_weight(&in[0], (*C.double)(unsafe.Pointer(&weights[0])), C.int(len(poles)))}
-}
-
 func NewGeom2dBezierCurveFromGeometry(g *Geom2dGeometry) *Geom2dBezierCurve {
 	if p := C.geom2d_bezier_curve_from_geometry(g.geom); p != nil {
 		return &Geom2dBezierCurve{geom: p}
@@ -1736,22 +1554,6 @@ func (g *Geom2dBSplineCurve) Copy() *Geom2dBSplineCurve {
 	return &Geom2dBSplineCurve{geom: C.geom2d_bspline_curve_copy(g.geom)}
 }
 
-func NewGeom2dBSplineCurve(poles []Point2, Knots []float64, Multiplicities []int, Degree int, Periodic bool) *Geom2dBSplineCurve {
-	in := make([]C.struct__pnt2d_t, len(poles))
-	for i := range poles {
-		in[i] = poles[i].val
-	}
-	return &Geom2dBSplineCurve{geom: C.geom2d_make_bspline_curve(&in[0], (*C.double)(unsafe.Pointer(&Knots[0])), (*C.int)(unsafe.Pointer(&Multiplicities[0])), C.int(len(poles)), C.int(Degree), C.bool(Periodic))}
-}
-
-func NewGeom2dBSplineCurveFromWeight(poles []Point2, weights []float64, Knots []float64, Multiplicities []int, Degree int, Periodic bool) *Geom2dBSplineCurve {
-	in := make([]C.struct__pnt2d_t, len(poles))
-	for i := range poles {
-		in[i] = poles[i].val
-	}
-	return &Geom2dBSplineCurve{geom: C.geom2d_make_bspline_curve_with_weight(&in[0], (*C.double)(unsafe.Pointer(&weights[0])), (*C.double)(unsafe.Pointer(&Knots[0])), (*C.int)(unsafe.Pointer(&Multiplicities[0])), C.int(len(poles)), C.int(Degree), C.bool(Periodic))}
-}
-
 func NewGeom2dBSplineCurveFromGeometry(g *Geom2dGeometry) *Geom2dBSplineCurve {
 	if p := C.geom2d_bspline_curve_from_geometry(g.geom); p != nil {
 		return &Geom2dBSplineCurve{geom: p}
@@ -1778,10 +1580,6 @@ func (g *Geom2dTrimmedCurve) Free() {
 
 func (g *Geom2dTrimmedCurve) Copy() *Geom2dTrimmedCurve {
 	return &Geom2dTrimmedCurve{geom: C.geom2d_trimmed_curve_copy(g.geom)}
-}
-
-func NewGeom2dTrimmedCurve(g *Geom2dCurve, u1, u2 float64, sense, adj bool) *Geom2dTrimmedCurve {
-	return &Geom2dTrimmedCurve{geom: C.geom2d_make_trimmed_curve(g.geom, C.double(u1), C.double(u2), C.bool(sense), C.bool(adj))}
 }
 
 func NewGeom2dTrimmedCurveFromGeometry(g *Geom2dGeometry) *Geom2dTrimmedCurve {
@@ -1980,10 +1778,6 @@ func (g *Geom2dOffsetCurve) Copy() *Geom2dOffsetCurve {
 	return &Geom2dOffsetCurve{geom: C.geom2d_offset_curve_copy(g.geom)}
 }
 
-func NewGeom2dOffsetCurve(g *Geom2dCurve, offset float64, nocheck bool) *Geom2dOffsetCurve {
-	return &Geom2dOffsetCurve{geom: C.geom2d_make_offset_curve(g.geom, C.double(offset), C.bool(nocheck))}
-}
-
 func NewGeom2dOffsetCurveFromGeometry(g *Geom2dGeometry) *Geom2dOffsetCurve {
 	if p := C.geom2d_offset_curve_from_geometry(g.geom); p != nil {
 		return &Geom2dOffsetCurve{geom: p}
@@ -2030,14 +1824,6 @@ func (g *Geom2dCartesianPoint) Free() {
 
 func (g *Geom2dCartesianPoint) Copy() *Geom2dCartesianPoint {
 	return &Geom2dCartesianPoint{geom: C.geom2d_cartesian_point_copy(g.geom)}
-}
-
-func NewGeom2dCartesianPointp1(p Point2) *Geom2dCartesianPoint {
-	return &Geom2dCartesianPoint{geom: C.geom2d_make_cartesian_point(p.val)}
-}
-
-func NewGeom2dCartesianPointFromXY(x, y float64) *Geom2dCartesianPoint {
-	return &Geom2dCartesianPoint{geom: C.geom2d_make_cartesian_point_xy(C.double(x), C.double(y))}
 }
 
 func NewGeom2dCartesianPointFromGeometry(g *Geom2dGeometry) *Geom2dCartesianPoint {
@@ -2088,14 +1874,6 @@ func (g *Geom2dDirection) Copy() *Geom2dDirection {
 	return &Geom2dDirection{geom: C.geom2d_direction_copy(g.geom)}
 }
 
-func NewGeom2dDirectionFromFromDir(p Dir2) *Geom2dDirection {
-	return &Geom2dDirection{geom: C.geom2d_make_direction_with_dir(p.val)}
-}
-
-func NewGeom2dDirection(x, y float64) *Geom2dDirection {
-	return &Geom2dDirection{geom: C.geom2d_make_direction(C.double(x), C.double(y))}
-}
-
 func NewGeom2dDirectionFromGeometry(g *Geom2dGeometry) *Geom2dDirection {
 	if p := C.geom2d_direction_from_geometry(g.geom); p != nil {
 		return &Geom2dDirection{geom: p}
@@ -2118,18 +1896,6 @@ func (g *Geom2dVectorWithMagnitude) Free() {
 
 func (g *Geom2dVectorWithMagnitude) Copy() *Geom2dVectorWithMagnitude {
 	return &Geom2dVectorWithMagnitude{geom: C.geom2d_vector_with_magnitude_copy(g.geom)}
-}
-
-func NewGeom2dDirectionFromFromVector(p Vector2) *Geom2dVectorWithMagnitude {
-	return &Geom2dVectorWithMagnitude{geom: C.geom2d_make_vector_with_magnitude_with_vector(p.val)}
-}
-
-func NewGeom2dDirectionFromFromXY(x, y float64) *Geom2dVectorWithMagnitude {
-	return &Geom2dVectorWithMagnitude{geom: C.geom2d_make_vector_with_magnitude_with_xy(C.double(x), C.double(y))}
-}
-
-func NewGeom2dDirectionFromFromPoint(p1, p2 Point2) *Geom2dVectorWithMagnitude {
-	return &Geom2dVectorWithMagnitude{geom: C.geom2d_make_vector_with_magnitude_with_point(p1.val, p2.val)}
 }
 
 func NewGeom2dVectorWithMagnitudeFromGeometry(g *Geom2dGeometry) *Geom2dVectorWithMagnitude {
