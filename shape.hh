@@ -57,7 +57,7 @@ public:
 
   int transform(gp_Trsf mat);
 
-  int translate(gp_Pnt delta);
+  int translate(gp_Vec delta);
   int rotate(double angle, gp_Pnt p1, gp_Pnt p2);
   int rotate(double angle, gp_Ax1 a);
   int rotate(gp_Quaternion R);
@@ -68,7 +68,7 @@ public:
 
   shape transformed(gp_Trsf mat) const;
 
-  shape translated(gp_Pnt delta) const;
+  shape translated(gp_Vec delta) const;
   shape rotated(double angle, gp_Pnt p1, gp_Pnt p2) const;
   shape rotated(double angle, gp_Ax1 a) const;
   shape rotated(gp_Quaternion R) const;
@@ -96,14 +96,6 @@ public:
   void set_orientation(orientation ori);
 
   shape oriented(orientation ori) const;
-
-  void reverse();
-
-  shape reversed() const;
-
-  void complement();
-
-  shape complemented() const;
 
   bool fix_shape();
 

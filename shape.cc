@@ -194,7 +194,7 @@ int shape::transform_impl(gp_Trsf &trans) {
   return 1;
 }
 
-int shape::translate(gp_Pnt delta) {
+int shape::translate(gp_Vec delta) {
   try {
     TopoDS_Shape &shape = _shape;
 
@@ -407,7 +407,7 @@ shape shape::transformed(gp_Trsf mat) const {
   return shp;
 }
 
-shape shape::translated(gp_Pnt delta) const {
+shape shape::translated(gp_Vec delta) const {
   auto shp = copy();
   shp.translate(delta);
   return shp;

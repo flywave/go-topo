@@ -42,38 +42,38 @@ const (
 	UNKNOW   = int(C.ORI_UNKNOW)
 )
 
-type CompSolid struct {
-	val *C.struct__topo_comp_solid_t
-}
-
-type Compound struct {
-	val *C.struct__topo_compound_t
-}
-
-type Edge struct {
-	val *C.struct__topo_edge_t
-}
-
-type Face struct {
-	val *C.struct__topo_face_t
-}
-
 type Shape struct {
 	val *C.struct__topo_shape_t
 }
 
+type CompSolid struct {
+	val C.struct__topo_comp_solid_t
+}
+
+type Compound struct {
+	val C.struct__topo_compound_t
+}
+
+type Edge struct {
+	val C.struct__topo_edge_t
+}
+
+type Face struct {
+	val C.struct__topo_face_t
+}
+
 type Shell struct {
-	val *C.struct__topo_shell_t
+	val C.struct__topo_shell_t
 }
 
 type Solid struct {
-	val *C.struct__topo_solid_t
+	val C.struct__topo_solid_t
 }
 
 type Vertex struct {
-	val *C.struct__topo_vertex_t
+	val C.struct__topo_vertex_t
 }
 
 type Wire struct {
-	val *C.struct__topo_wire_t
+	val C.struct__topo_wire_t
 }
