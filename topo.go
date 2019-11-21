@@ -56,7 +56,7 @@ type MeshReceiver struct {
 }
 
 func NewMeshReceiver() *MeshReceiver {
-	ret := &MeshReceiver{val: nil, index: 0}
+	ret := &MeshReceiver{val: nil, index: -1}
 	var cb C.struct__mesh_receiver_cb_t
 	cb.ctx = unsafe.Pointer(ret)
 	ret.val = C.topo_mesh_receiver_new(cb)
@@ -76,7 +76,7 @@ func (m *MeshReceiver) end() {
 }
 
 func (m *MeshReceiver) appendFace(c Color) int {
-	return m.index - 1
+	return m.index
 }
 
 func (m *MeshReceiver) appendNodeNorm(f int, p, n Point3) {
