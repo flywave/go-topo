@@ -118,9 +118,9 @@ public:
   inline bool operator==(const shape &s) const { return this->equals(s); }
   inline bool operator!=(const shape &s) const { return !(*this == s); }
 
-protected:
   shape(TopoDS_Shape shp) : _shape(shp) {}
 
+protected:
   void clear_maps();
   void build_maps();
   int transform_impl(gp_Trsf &trans);

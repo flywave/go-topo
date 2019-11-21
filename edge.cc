@@ -89,10 +89,10 @@ edge edge::make_polygon(const vertex &V1, const vertex &V2, const vertex &V3,
   return edge{me.Edge()};
 }
 
-edge edge::make_polygon(std::vector<vertex> &vertexs, const bool Close) {
+edge edge::make_polygon(std::vector<vertex*> &vertexs, const bool Close) {
   BRepBuilderAPI_MakePolygon me;
   for (auto _vert : vertexs) {
-    me.Add(_vert.value());
+    me.Add(_vert->value());
   }
   if (Close) {
     me.Close();
@@ -100,11 +100,11 @@ edge edge::make_polygon(std::vector<vertex> &vertexs, const bool Close) {
   return edge{me.Edge()};
 }
 
-edge edge::make_polygon(std::initializer_list<vertex> vertexs,
+edge edge::make_polygon(std::initializer_list<vertex*> vertexs,
                         const bool Close) {
   BRepBuilderAPI_MakePolygon me;
   for (auto _vert : vertexs) {
-    me.Add(_vert.value());
+    me.Add(_vert->value());
   }
   if (Close) {
     me.Close();
@@ -460,6 +460,12 @@ edge edge::make_edge2d(const Handle(Geom2d_Curve) & L) {
 edge edge::make_edge2d(const Handle(Geom2d_Curve) & L, const Standard_Real p1,
                        const Standard_Real p2) {
   BRepBuilderAPI_MakeEdge2d me(L, p1, p2);
+  return edge{me.Edge()};
+}
+
+edge edge::make_edge2d(const Handle(Geom2d_Curve) & L, const gp_Pnt2d &P1,
+                          const gp_Pnt2d &P2) {
+  BRepBuilderAPI_MakeEdge2d me(L, P1, P2);
   return edge{me.Edge()};
 }
 

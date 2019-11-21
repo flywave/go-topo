@@ -209,10 +209,10 @@ public:
   static edge make_polygon(const vertex &V1, const vertex &V2, const vertex &V3,
                            const vertex &V4, const bool Close = false);
 
-  static edge make_polygon(std::vector<vertex> &vertexs,
+  static edge make_polygon(std::vector<vertex*> &vertexs,
                            const bool Close = false);
 
-  static edge make_polygon(std::initializer_list<vertex> vertexs,
+  static edge make_polygon(std::initializer_list<vertex*> vertexs,
                            const bool Close = false);
 
   static edge make_polygon(std::vector<gp_Pnt> &vertexs,
@@ -248,11 +248,11 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
+  edge(TopoDS_Shape shp) : shape(shp) {}
+
 protected:
   friend class edge_iterator;
   friend class shape;
-
-  edge(TopoDS_Shape shp) : shape(shp) {}
 };
 
 class edge_iterator {

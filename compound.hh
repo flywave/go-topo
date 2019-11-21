@@ -32,11 +32,11 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
+  compound(TopoDS_Shape shp) : solid(shp) {}
+
 protected:
   friend class compound_iterator;
   friend class shape;
-
-  compound(TopoDS_Shape shp) : solid(shp) {}
 };
 
 namespace _helper {

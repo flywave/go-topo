@@ -33,11 +33,11 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
+  comp_solid(TopoDS_Shape shp) : solid(shp) {}
+
 protected:
   friend class comp_solid_iterator;
   friend class shape;
-
-  comp_solid(TopoDS_Shape shp) : solid(shp) {}
 };
 
 namespace _helper {

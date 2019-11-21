@@ -54,6 +54,18 @@ typedef struct _topo_solid_t {
   topo_shape_t *shp;
 } topo_solid_t;
 
+typedef struct _topo_vertex_t {
+  topo_shape_t *shp;
+} topo_vertex_t;
+
+typedef struct _topo_wire_t {
+  topo_shape_t *shp;
+} topo_wire_t;
+
+typedef struct _topo_edge_t {
+  topo_shape_t *shp;
+} topo_edge_t;
+
 TOPOCAPICALL void topo_shape_free(topo_shape_t *p);
 TOPOCAPICALL _Bool topo_shape_is_null(topo_shape_t *p);
 TOPOCAPICALL _Bool topo_shape_is_valid(topo_shape_t *p);
@@ -114,17 +126,9 @@ TOPOCAPICALL color_t topo_shape_get_curve_colour(topo_shape_t *p);
 TOPOCAPICALL const char *topo_shape_get_label(topo_shape_t *p);
 TOPOCAPICALL _Bool topo_shape_surface_colour(topo_shape_t *p, double *colour);
 
-typedef struct _topo_vertex_t {
-  topo_shape_t *shp;
-} topo_vertex_t;
-
 TOPOCAPICALL topo_vertex_t topo_vertex_new(double x, double y, double z);
 TOPOCAPICALL void topo_vertex_free(topo_vertex_t t);
 TOPOCAPICALL pnt3d_t topo_vertex_get_point(topo_vertex_t t);
-
-typedef struct _topo_wire_t {
-  topo_shape_t *shp;
-} topo_wire_t;
 
 TOPOCAPICALL void topo_wire_free(topo_wire_t t);
 TOPOCAPICALL topo_wire_t topo_make_polygon();
@@ -184,10 +188,6 @@ TOPOCAPICALL int topo_wire_fillet(topo_wire_t w, topo_vertex_t *vertices,
 TOPOCAPICALL int topo_wire_chamfer(topo_wire_t w, topo_vertex_t *vertices,
                                    int vertcount, double *distances,
                                    int distcount);
-
-typedef struct _topo_edge_t {
-  topo_shape_t *shp;
-} topo_edge_t;
 
 TOPOCAPICALL void topo_edge_free(topo_edge_t t);
 
@@ -424,6 +424,569 @@ TOPOCAPICALL double topo_edge_length(topo_edge_t e);
 TOPOCAPICALL float topo_edge_tolerance(topo_edge_t e);
 TOPOCAPICALL bool topo_edge_is_curve3d(topo_edge_t e);
 TOPOCAPICALL void topo_edge_convert_to_curve3d(topo_edge_t e);
+
+TOPOCAPICALL void topo_face_free(topo_face_t t);
+
+TOPOCAPICALL topo_face_t topo_face_make_face(topo_face_t F);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_plane(plane_t P);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_cylinder(cylinder_t C);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_cone(cone_t C);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_sphere(sphere_t S);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_torus(torus_t C);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_surface(geom_surface_t *S,
+                                                          double TolDegen);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_plane_p(
+    plane_t P, double UMin, double UMax, double VMin, double VMax);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_cylinder_p(
+    cylinder_t C, double UMin, double UMax, double VMin, double VMax);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_cone_p(cone_t C, double UMin,
+                                                         double UMax,
+                                                         double VMin,
+                                                         double VMax);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_sphere_p(
+    sphere_t S, double UMin, double UMax, double VMin, double VMax);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_torus_p(
+    torus_t C, double UMin, double UMax, double VMin, double VMax);
+
+TOPOCAPICALL topo_face_t
+topo_face_make_face_from_surface_p(geom_surface_t *S, double UMin, double UMax,
+                                   double VMin, double VMax, double TolDegen);
+
+TOPOCAPICALL topo_face_t
+topo_face_make_face_from_wire_onlyplane(topo_wire_t W, _Bool OnlyPlane);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_plane_wire(plane_t P,
+                                                             topo_wire_t W,
+                                                             _Bool Inside);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_cylinder_wire(cylinder_t C,
+                                                                topo_wire_t W,
+                                                                _Bool Inside);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_cone_wire(cone_t C,
+                                                            topo_wire_t W,
+                                                            _Bool Inside);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_sphere_wire(sphere_t S,
+                                                              topo_wire_t W,
+                                                              _Bool Inside);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_torus_wire(torus_t C,
+                                                             topo_wire_t W,
+                                                             _Bool Inside);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_surface_wire(
+    geom_surface_t *S, topo_wire_t W, _Bool Inside);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_face_wire(topo_face_t F,
+                                                            topo_wire_t W);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_wire(topo_wire_t *wires,
+                                                       int count);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_egdes(topo_edge_t *edges,
+                                                        int edgecount,
+                                                        pnt3d_t *points,
+                                                        int pcount);
+
+TOPOCAPICALL topo_face_t topo_face_make_face_from_points(pnt3d_t *points,
+                                                         int count);
+
+TOPOCAPICALL int topo_face_num_wires(topo_face_t f);
+
+TOPOCAPICALL int topo_face_num_faces(topo_face_t f);
+
+TOPOCAPICALL double topo_face_area(topo_face_t f);
+
+TOPOCAPICALL float topo_face_tolerance(topo_face_t f);
+
+TOPOCAPICALL bbox_t topo_face_inertia(topo_face_t f);
+
+TOPOCAPICALL pnt3d_t topo_face_centre_of_mass(topo_face_t f);
+
+TOPOCAPICALL int topo_face_offset(topo_face_t f, double offset,
+                                  double tolerance);
+
+TOPOCAPICALL int topo_face_extrude(topo_face_t f, topo_shape_t *shp, pnt3d_t p1,
+                                   pnt3d_t p2);
+
+TOPOCAPICALL int topo_face_revolve(topo_face_t f, topo_shape_t *shp, pnt3d_t p1,
+                                   pnt3d_t p2, double angle);
+
+TOPOCAPICALL int topo_face_sweep(topo_face_t f, topo_wire_t spine,
+                                 topo_shape_t **profiles, int profilesCount,
+                                 int cornerMode);
+
+TOPOCAPICALL int topo_face_loft(topo_face_t f, topo_shape_t **profiles,
+                                int profilesCount, bool ruled,
+                                double tolerance);
+
+TOPOCAPICALL int topo_face_boolean(topo_face_t f, topo_face_t tool, int op);
+
+TOPOCAPICALL void topo_shell_free(topo_shell_t t);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_surface(geom_surface_t *S,
+                                                             _Bool Segment);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_surface_p(
+    geom_surface_t *S, double UMin, double UMax, double VMin, double VMax,
+    _Bool Segment);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_box(double dx, double dy,
+                                                         double dz);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_box_point(pnt3d_t P,
+                                                               double dx,
+                                                               double dy,
+                                                               double dz);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_box_two_point(pnt3d_t P1,
+                                                                   pnt3d_t P2);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_box_axis2(axis2_t Axes,
+                                                               double dx,
+                                                               double dy,
+                                                               double dz);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_cylinder(double R,
+                                                              double H);
+
+TOPOCAPICALL topo_shell_t
+topo_shell_make_shell_from_cylinder_angle(double R, double H, double Angle);
+
+TOPOCAPICALL topo_shell_t
+topo_shell_make_shell_from_cylinder_axis2(axis2_t Axes, double R, double H);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_cylinder_axis2_angle(
+    axis2_t Axes, double R, double H, double Angle);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_cone(double R1, double R2,
+                                                          double H);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_cone_angle(double R1,
+                                                                double R2,
+                                                                double H,
+                                                                double angle);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_cone_axis2(axis2_t Axes,
+                                                                double R1,
+                                                                double R2,
+                                                                double H);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_cone_axis2_angle(
+    axis2_t Axes, double R1, double R2, double H, double angle);
+
+TOPOCAPICALL topo_shell_t
+topo_shell_make_shell_from_revolution(geom_curve_t *Meridian);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_revolution_angle(
+    geom_curve_t *Meridian, double angle);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_revolution_limit(
+    geom_curve_t *Meridian, double VMin, double VMax);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_revolution_limit_angle(
+    geom_curve_t *Meridian, double VMin, double VMax, double angle);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_revolution_axis2(
+    axis2_t Axes, geom_curve_t *Meridian);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_revolution_axis2_angle(
+    axis2_t Axes, geom_curve_t *Meridian, double angle);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_revolution_axis2_limit(
+    axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax);
+
+TOPOCAPICALL topo_shell_t
+topo_shell_make_shell_from_revolution_axis2_limit_angle(axis2_t Axes,
+                                                        geom_curve_t *Meridian,
+                                                        double VMin,
+                                                        double VMax,
+                                                        double angle);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere(double R);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_angle(double R,
+                                                                  double angle);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_two_angle(
+    double R, double angle1, double angle2);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_three_angle(
+    double R, double angle1, double angle2, double angle3);
+
+TOPOCAPICALL topo_shell_t
+topo_shell_make_shell_from_sphere_center_raduis(pnt3d_t Center, double R);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_center_angle(
+    pnt3d_t Center, double R, double angle);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_center_two_angle(
+    pnt3d_t Center, double R, double angle1, double angle2);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_center_three_angle(
+    pnt3d_t Center, double R, double angle1, double angle2, double angle3);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_axis2(axis2_t Axis,
+                                                                  double R);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_axis2_raduis(
+    axis2_t Axis, double R, double angle);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_axis2_two_angle(
+    axis2_t Axis, double R, double angle1, double angle2);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_axis2_three_angle(
+    axis2_t Axis, double R, double angle1, double angle2, double angle3);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus(double R1,
+                                                           double R2);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus_angle(double R1,
+                                                                 double R2,
+                                                                 double angle);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus_two_angle(
+    double R1, double R2, double angle1, double angle2);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus_three_angle(
+    double R1, double R2, double angle1, double angle2, double angle);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus_axis2(axis2_t Axes,
+                                                                 double R1,
+                                                                 double R2);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus_axis2_angle(
+    axis2_t Axes, double R1, double R2, double angle);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus_axis2_two_angle(
+    axis2_t Axes, double R1, double R2, double angle1, double angle2);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus_axis2_three_angle(
+    axis2_t Axes, double R1, double R2, double angle1, double angle2,
+    double angle);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_wedge(double dx, double dy,
+                                                           double dz,
+                                                           double ltx);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_wedge_axis2(
+    axis2_t Axes, double dx, double dy, double dz, double ltx);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_wedge_limit(
+    double dx, double dy, double dz, double xmin, double zmin, double xmax,
+    double zmax);
+
+TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_wedge_axis2_limit(
+    axis2_t Axes, double dx, double dy, double dz, double xmin, double zmin,
+    double xmax, double zmax);
+
+TOPOCAPICALL int topo_shell_sweep(topo_shell_t ss, topo_wire_t spine,
+                                  topo_shape_t **profiles, int count,
+                                  int cornerMode);
+
+TOPOCAPICALL void topo_solid_free(topo_solid_t t);
+
+TOPOCAPICALL topo_solid_t
+topo_shell_make_solid_from_comp_solid(topo_comp_solid_t S);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solidd_from_shell(topo_shell_t S);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_two_shell(topo_shell_t S1,
+                                                               topo_shell_t S2);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_three_shell(
+    topo_shell_t S1, topo_shell_t S2, topo_shell_t S3);
+
+TOPOCAPICALL topo_solid_t
+topo_shell_make_solid_from_shells(topo_shell_t *shells, int count);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_solid(topo_solid_t So);
+
+TOPOCAPICALL topo_solid_t
+topo_shell_make_solid_from_solid_shell(topo_solid_t So, topo_shell_t S);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_faces(topo_face_t *faces,
+                                                           int count,
+                                                           double tolerance);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_box(double dx, double dy,
+                                                         double dz);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_box_point(pnt3d_t P,
+                                                               double dx,
+                                                               double dy,
+                                                               double dz);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_box_two_point(pnt3d_t P1,
+                                                                   pnt3d_t P2);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_box_axis2(axis2_t Axes,
+                                                               double dx,
+                                                               double dy,
+                                                               double dz);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_cylinder(double R,
+                                                              double H);
+
+TOPOCAPICALL topo_solid_t
+topo_shell_make_solid_from_cylinder_angle(double R, double H, double Angle);
+
+TOPOCAPICALL topo_solid_t
+topo_shell_make_solid_from_cylinder_axis2(axis2_t Axes, double R, double H);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_cylinder_axis2_angle(
+    axis2_t Axes, double R, double H, double Angle);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_cone(double R1, double R2,
+                                                          double H);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_cone_angle(double R1,
+                                                                double R2,
+                                                                double H,
+                                                                double angle);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_cone_axis2(axis2_t Axes,
+                                                                double R1,
+                                                                double R2,
+                                                                double H);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_cone_axis2_angle(
+    axis2_t Axes, double R1, double R2, double H, double angle);
+
+TOPOCAPICALL topo_solid_t
+topo_shell_make_solid_from_revolution(geom_curve_t *Meridian);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_revolution_angle(
+    geom_curve_t *Meridian, double angle);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_revolution_limit(
+    geom_curve_t *Meridian, double VMin, double VMax);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_revolution_limit_angle(
+    geom_curve_t *Meridian, double VMin, double VMax, double angle);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_revolution_axis2(
+    axis2_t Axes, geom_curve_t *Meridian);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_revolution_axis2_angle(
+    axis2_t Axes, geom_curve_t *Meridian, double angle);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_revolution_axis2_limit(
+    axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax);
+
+TOPOCAPICALL topo_solid_t
+topo_shell_make_solid_from_revolution_axis2_limit_angle(axis2_t Axes,
+                                                        geom_curve_t *Meridian,
+                                                        double VMin,
+                                                        double VMax,
+                                                        double angle);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere(double R);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_angle(double R,
+                                                                  double angle);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_two_angle(
+    double R, double angle1, double angle2);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_three_angle(
+    double R, double angle1, double angle2, double angle3);
+
+TOPOCAPICALL topo_solid_t
+topo_shell_make_solid_from_sphere_center_raduis(pnt3d_t Center, double R);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_center_angle(
+    pnt3d_t Center, double R, double angle);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_center_two_angle(
+    pnt3d_t Center, double R, double angle1, double angle2);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_center_three_angle(
+    pnt3d_t Center, double R, double angle1, double angle2, double angle3);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_axis2(axis2_t Axis,
+                                                                  double R);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_axis2_angle(
+    axis2_t Axis, double R, double angle);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_axis2_two_angle(
+    axis2_t Axis, double R, double angle1, double angle2);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_axis2_three_angle(
+    axis2_t Axis, double R, double angle1, double angle2, double angle3);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus(double R1,
+                                                           double R2);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus_angle(double R1,
+                                                                 double R2,
+                                                                 double angle);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus_two_angle(
+    double R1, double R2, double angle1, double angle2);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus_three_angle(
+    double R1, double R2, double angle1, double angle2, double angle);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus_axis2(axis2_t Axes,
+                                                                 double R1,
+                                                                 double R2);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus_axis2_angle(
+    axis2_t Axes, double R1, double R2, double angle);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus_axis2_two_angle(
+    axis2_t Axes, double R1, double R2, double angle1, double angle2);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus_axis2_three_angle(
+    axis2_t Axes, double R1, double R2, double angle1, double angle2,
+    double angle);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_wedge(double dx, double dy,
+                                                           double dz,
+                                                           double ltx);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_wedge_axis2(
+    axis2_t Axes, double dx, double dy, double dz, double ltx);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_wedge_limit(
+    double dx, double dy, double dz, double xmin, double zmin, double xmax,
+    double zmax);
+
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_wedge_axis2_limit(
+    axis2_t Axes, double dx, double dy, double dz, double xmin, double zmin,
+    double xmax, double zmax);
+
+TOPOCAPICALL int topo_solid_num_solids(topo_solid_t s);
+
+TOPOCAPICALL int topo_solid_num_faces(topo_solid_t s);
+
+TOPOCAPICALL double topo_solid_area(topo_solid_t s);
+
+TOPOCAPICALL double topo_solid_volume(topo_solid_t s);
+
+TOPOCAPICALL bbox_t topo_solid_inertia(topo_solid_t s);
+
+TOPOCAPICALL pnt3d_t topo_solid_centre_of_mass(topo_solid_t s);
+
+TOPOCAPICALL int topo_solid_extrude(topo_solid_t s, topo_face_t f, pnt3d_t p1,
+                                    pnt3d_t p2);
+
+TOPOCAPICALL int topo_solid_extrude_from_dir(topo_solid_t s, topo_face_t f,
+                                             vec3d_t dir);
+
+TOPOCAPICALL int topo_solid_revolve(topo_solid_t s, topo_face_t f, pnt3d_t p1,
+                                    pnt3d_t p2, double angle);
+
+TOPOCAPICALL int topo_solid_loft(topo_solid_t s, topo_shape_t **profiles,
+                                 int count, _Bool ruled, double tolerance);
+
+TOPOCAPICALL int topo_solid_pipe(topo_solid_t s, topo_face_t f, topo_wire_t w);
+
+TOPOCAPICALL int topo_solid_sweep(topo_solid_t s, topo_wire_t spine,
+                                  topo_shape_t **profiles, int count,
+                                  int cornerMode);
+
+TOPOCAPICALL int topo_solid_boolean(topo_solid_t s, topo_solid_t tool, int op);
+
+TOPOCAPICALL int topo_solid_fillet(topo_solid_t s, topo_edge_t *edges,
+                                   int count, double *radius, int rcount);
+
+TOPOCAPICALL int topo_solid_chamfer(topo_solid_t s, topo_edge_t *edges,
+                                    int count, double *distances, int dcount);
+
+TOPOCAPICALL int topo_solid_shelling(topo_solid_t s, topo_face_t *faces,
+                                     int count, double offset,
+                                     double tolerance);
+
+TOPOCAPICALL int topo_solid_offset(topo_solid_t s, topo_face_t f, double offset,
+                                   double tolerance);
+
+TOPOCAPICALL int topo_solid_draft(topo_solid_t s, topo_face_t *faces, int count,
+                                  dir3d_t d, double angle, plane_t p);
+
+TOPOCAPICALL int topo_solid_evolved_from_face(topo_solid_t s, topo_face_t Spine,
+                                              topo_wire_t Profil);
+
+TOPOCAPICALL int topo_solid_evolved_from_wire(topo_solid_t s, topo_wire_t Spine,
+                                              topo_wire_t Profil);
+
+TOPOCAPICALL int topo_solid_feat_prism(topo_solid_t s, topo_face_t f, dir3d_t d,
+                                       double height, _Bool fuse);
+
+TOPOCAPICALL int topo_solid_feat_prism_for_range(topo_solid_t s, topo_face_t f,
+                                                 dir3d_t d, topo_face_t from,
+                                                 topo_face_t end, _Bool fuse);
+
+TOPOCAPICALL int topo_solid_feat_prism_for_until(topo_solid_t s, topo_face_t f,
+                                                 dir3d_t d, topo_face_t until,
+                                                 _Bool fuse);
+
+TOPOCAPICALL int topo_solid_feat_draft_prism(topo_solid_t s, topo_face_t f,
+                                             double angle, double height,
+                                             _Bool fuse);
+
+TOPOCAPICALL int
+topo_solid_feat_draft_prism_for_range(topo_solid_t s, topo_face_t f,
+                                      double angle, topo_face_t from,
+                                      topo_face_t end, _Bool fuse);
+
+TOPOCAPICALL int topo_solid_feat_draft_prism_for_until(
+    topo_solid_t s, topo_face_t f, double angle, topo_face_t until, _Bool fuse);
+
+TOPOCAPICALL int topo_solid_feat_revol_for_range(topo_solid_t s, topo_face_t f,
+                                                 axis1_t Axes, topo_face_t from,
+                                                 topo_face_t end, _Bool fuse);
+
+TOPOCAPICALL int topo_solid_feat_revol_for_until(topo_solid_t s, topo_face_t f,
+                                                 axis1_t Axes,
+                                                 topo_face_t until, _Bool fuse);
+
+TOPOCAPICALL int topo_solid_feat_pipe_for_range(topo_solid_t s, topo_face_t f,
+                                                topo_wire_t Spine,
+                                                topo_face_t from,
+                                                topo_face_t end, _Bool fuse);
+
+TOPOCAPICALL int topo_solid_feat_pipe_for_until(topo_solid_t s, topo_face_t f,
+                                                topo_wire_t Spine,
+                                                topo_face_t until, _Bool fuse);
+
+TOPOCAPICALL int topo_solid_linear_form(topo_solid_t s, topo_wire_t w,
+                                        geom_plane_surface_t *p, dir3d_t d,
+                                        dir3d_t d1, _Bool fuse);
+
+TOPOCAPICALL int topo_solid_revolution_form(topo_solid_t s, topo_wire_t w,
+                                            geom_plane_surface_t *p,
+                                            axis1_t Axes, double h1, double h2,
+                                            _Bool fuse);
+
+TOPOCAPICALL topo_face_t topo_solid_section_face(topo_solid_t s, pnt3d_t pnt,
+                                                 pnt3d_t nor);
+
+TOPOCAPICALL int topo_solid_convert_to_nurbs(topo_solid_t s);
+
+TOPOCAPICALL void topo_compound_free(topo_compound_t t);
+
+TOPOCAPICALL topo_compound_t topo_compound_make_compound(topo_shape_t **S,
+                                                         int count);
+
+TOPOCAPICALL void topo_comp_solid_free(topo_comp_solid_t t);
+
+TOPOCAPICALL topo_comp_solid_t topo_comp_solid_make_comp_solid(topo_solid_t *S,
+                                                               int count);
 
 #ifdef __cplusplus
 }

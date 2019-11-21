@@ -220,11 +220,11 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
+  shell(TopoDS_Shape shp) : shape(shp) {}
+
 protected:
   friend class shell_iterator;
   friend class shape;
-
-  shell(TopoDS_Shape shp) : shape(shp) {}
 };
 
 class shell_iterator {
