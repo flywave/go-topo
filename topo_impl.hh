@@ -24,7 +24,7 @@ struct _topo_location_t {
 };
 
 struct _topo_mesh_receiver_t {
-  flywave::topo::mesh_receiver *recv;
+  std::unique_ptr<flywave::topo::mesh_receiver> recv;
 };
 
 #ifdef __cplusplus

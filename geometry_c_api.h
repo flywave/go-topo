@@ -675,8 +675,8 @@ GEOMCAPICALL geom_bezier_surface_t *
 geom_make_bezier_surface(pnt3d_t *SurfacePoles, int row, int col);
 
 GEOMCAPICALL geom_bezier_surface_t *
-geom_make_bezier_surface_from_weight(pnt3d_t *SurfacePoles,
-                                     double *PoleWeights, int row, int col);
+geom_make_bezier_surface_from_weight(pnt3d_t *SurfacePoles, double *PoleWeights,
+                                     int row, int col);
 
 GEOMCAPICALL geom_plate_surface_t *
 geom_make_plate_surface(geom_surface_t *Surfinit, plate_plate_t *Surfinter);
@@ -684,8 +684,8 @@ geom_make_plate_surface(geom_surface_t *Surfinit, plate_plate_t *Surfinter);
 GEOMCAPICALL geom_bspline_surface_t *
 geom_make_bspline_surface(pnt3d_t *Poles, double *UKnots, double *VKnots,
                           int *UMults, int *VMults, int row, int col,
-                          int UCount, int VCount, int UDegree,
-                          int VDegree, _Bool UPeriodic, _Bool VPeriodic);
+                          int UCount, int VCount, int UDegree, int VDegree,
+                          _Bool UPeriodic, _Bool VPeriodic);
 
 GEOMCAPICALL geom_bspline_surface_t *geom_make_bspline_surface_from_weight(
     pnt3d_t *Poles, double *Weights, double *UKnots, double *VKnots,
@@ -946,7 +946,7 @@ geom2d_make_bezier_bisec_cc_curve(geom2d_curve_t *Cu1, geom2d_curve_t *Cu2,
 
 GEOMCAPICALL geom2d_bezier_bisec_pc_curve_t *
 geom2d_make_bezier_bisec_pc_curve_with_dist(geom2d_curve_t *Cu, pnt2d_t P,
-                                       double Side, double DistMax);
+                                            double Side, double DistMax);
 GEOMCAPICALL geom2d_bezier_bisec_pc_curve_t *
 geom2d_make_bezier_bisec_pc_curve(geom2d_curve_t *Cu, pnt2d_t P, double Side,
                                   double UMin, double UMax);

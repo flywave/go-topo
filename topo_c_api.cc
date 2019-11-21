@@ -2394,6 +2394,77 @@ topo_comp_solid_t topo_comp_solid_make_comp_solid(topo_solid_t *S, int count) {
           flywave::topo::comp_solid::make_comp_solid(sps))}};
 }
 
+class go_mesh_receiver : public flywave::topo::mesh_receiver {
+public:
+  go_mesh_receiver(mesh_receiver_cb_t cb) : _cb(cb) {}
+  virtual ~go_mesh_receiver() {}
+
+  void begin() override { _cb.begin(_cb.ctx); }
+
+  void end() override { _cb.end(_cb.ctx); }
+
+  int append_face(Quantity_Color color) override {
+    return _cb.append_face(_cb.ctx, cast_from_gp(color));
+  }
+
+  void append_node(int face, gp_Pnt p, gp_Pnt n) override {
+    return _cb.append_node_norm(_cb.ctx, face, cast_from_gp(p),
+                                cast_from_gp(n));
+  }
+
+  void append_node(int face, gp_Pnt p) override {
+    return _cb.append_node(_cb.ctx, face, cast_from_gp(p));
+  }
+
+  void append_triangle(int face, int tri[3]) override {
+    return _cb.append_triangle(_cb.ctx, face, tri[0], tri[1], tri[2]);
+  }
+
+protected:
+  mesh_receiver_cb_t _cb;
+};
+
+extern void begin(void *ctx);
+extern void end(void *ctx);
+extern int appendFace(void *ctx, color_t color);
+extern void appendNodeNorm(void *ctx, int face, pnt3d_t p, pnt3d_t n);
+extern void appendNode(void *ctx, int face, pnt3d_t p);
+extern void appendTriangle(void *ctx, int face, int a, int b, int c);
+
+topo_mesh_receiver_t *topo_mesh_receiver_new(mesh_receiver_cb_t cb) {
+  cb.begin = begin;
+  cb.end = end;
+  cb.append_face = appendFace;
+  cb.append_node = appendNode;
+  cb.append_node_norm = appendNodeNorm;
+  cb.append_triangle = appendTriangle;
+  return new topo_mesh_receiver_t{
+      std::unique_ptr<flywave::topo::mesh_receiver>(new go_mesh_receiver(cb))};
+}
+
+void topo_mesh_receiver_free(topo_mesh_receiver_t *p) {
+  if (p) {
+    delete p;
+  }
+}
+
+topo_location_t *topo_location_new(trsf_t t) {
+  return new topo_location_t{flywave::topo::topo_location{cast_to_gp(t)}};
+}
+
+void topo_location_free(topo_location_t *p) {
+  if (p) {
+    delete p;
+  }
+}
+
+trsf_t topo_location_get_trsf(topo_location_t *p) {
+  if (p) {
+    return cast_from_gp(gp_Trsf(p->loc));
+  }
+  return trsf_t{};
+}
+
 #ifdef __cplusplus
 }
 #endif

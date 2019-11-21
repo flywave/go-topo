@@ -2803,23 +2803,23 @@ geom_bezier_surface_t *geom_make_bezier_surface(pnt3d_t *SurfacePoles, int row,
                          static_cast<Standard_Integer>(row)};
   for (int i = 0; i < row; i++) {
     for (int j = 0; j < col; j++) {
-      pnt.SetValue(i, j, cast_to_gp(SurfacePoles[i*col+j]));
+      pnt.SetValue(i, j, cast_to_gp(SurfacePoles[i * col + j]));
     }
   }
   return new geom_bezier_surface_t{new Geom_BezierSurface(pnt)};
 }
 
 geom_bezier_surface_t *
-geom_make_bezier_surface_from_weight(pnt3d_t *SurfacePoles,
-                                     double *PoleWeights, int row, int col) {
+geom_make_bezier_surface_from_weight(pnt3d_t *SurfacePoles, double *PoleWeights,
+                                     int row, int col) {
   TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col), 0,
                          static_cast<Standard_Integer>(row)};
   TColStd_Array2OfReal wei{0, static_cast<Standard_Integer>(col), 0,
                            static_cast<Standard_Integer>(row)};
   for (int i = 0; i < row; i++) {
     for (int j = 0; j < col; j++) {
-      pnt.SetValue(i, j, cast_to_gp(SurfacePoles[i*col+j]));
-      wei.SetValue(i, j, PoleWeights[i*col+j]);
+      pnt.SetValue(i, j, cast_to_gp(SurfacePoles[i * col + j]));
+      wei.SetValue(i, j, PoleWeights[i * col + j]);
     }
   }
   return new geom_bezier_surface_t{new Geom_BezierSurface(pnt, wei)};
@@ -2834,7 +2834,7 @@ geom_make_bspline_surface(pnt3d_t *Poles, double *UKnots, double *VKnots,
                          static_cast<Standard_Integer>(row)};
   for (int i = 0; i < row; i++) {
     for (int j = 0; j < col; j++) {
-      pnt.SetValue(i, j, cast_to_gp(Poles[i*col+j]));
+      pnt.SetValue(i, j, cast_to_gp(Poles[i * col + j]));
     }
   }
   TColStd_Array1OfInteger umus{0, static_cast<Standard_Integer>(UCount)};
@@ -2863,8 +2863,8 @@ geom_bspline_surface_t *geom_make_bspline_surface_from_weight(
                            static_cast<Standard_Integer>(row)};
   for (int i = 0; i < row; i++) {
     for (int j = 0; j < col; j++) {
-      pnt.SetValue(i, j, cast_to_gp(Poles[i*col+j]));
-      wei.SetValue(i, j, Weights[i*col+j]);
+      pnt.SetValue(i, j, cast_to_gp(Poles[i * col + j]));
+      wei.SetValue(i, j, Weights[i * col + j]);
     }
   }
   TColStd_Array1OfInteger umus{0, static_cast<Standard_Integer>(UCount)};
@@ -2966,7 +2966,7 @@ geom2d_make_bezier_bisec_cc_curve(geom2d_curve_t *Cu1, geom2d_curve_t *Cu2,
 
 geom2d_bezier_bisec_pc_curve_t *
 geom2d_make_bezier_bisec_pc_curve_with_dist(geom2d_curve_t *Cu, pnt2d_t P,
-                                       double Side, double DistMax) {
+                                            double Side, double DistMax) {
   return new geom2d_bezier_bisec_pc_curve_t{
       new Bisector_BisecPC(Cu->handle, cast_to_gp(P), Side, DistMax)};
 }
@@ -3018,7 +3018,7 @@ geom2d_bspline_curve_t *geom2d_make_bspline_curve(pnt2d_t *Poles, double *Knots,
 geom2d_bspline_curve_t *
 geom2d_make_bspline_curve_with_weight(pnt2d_t *CurvePoles, double *Weights,
                                       double *Knots, int *Multiplicities,
-                                      int Count, int Degree, _Bool Periodic) { 
+                                      int Count, int Degree, _Bool Periodic) {
   TColgp_Array1OfPnt2d pnts{0, static_cast<Standard_Integer>(Count)};
   TColStd_Array1OfReal wei{0, static_cast<Standard_Integer>(Count)};
   TColStd_Array1OfReal kents{0, static_cast<Standard_Integer>(Count)};

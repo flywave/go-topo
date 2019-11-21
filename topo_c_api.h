@@ -66,6 +66,24 @@ typedef struct _topo_edge_t {
   topo_shape_t *shp;
 } topo_edge_t;
 
+typedef struct _mesh_receiver_cb_t {
+  void *ctx;
+  void (*begin)(void *ctx);
+  void (*end)(void *ctx);
+  int (*append_face)(void *ctx, color_t color);
+  void (*append_node_norm)(void *ctx, int face, pnt3d_t p, pnt3d_t n);
+  void (*append_node)(void *ctx, int face, pnt3d_t p);
+  void (*append_triangle)(void *ctx, int face, int a, int b, int c);
+} mesh_receiver_cb_t;
+
+TOPOCAPICALL topo_mesh_receiver_t *
+topo_mesh_receiver_new(mesh_receiver_cb_t cb);
+TOPOCAPICALL void topo_mesh_receiver_free(topo_mesh_receiver_t *p);
+
+TOPOCAPICALL topo_location_t *topo_location_new(trsf_t t);
+TOPOCAPICALL void topo_location_free(topo_location_t *p);
+TOPOCAPICALL trsf_t topo_location_get_trsf(topo_location_t *p);
+
 TOPOCAPICALL void topo_shape_free(topo_shape_t *p);
 TOPOCAPICALL _Bool topo_shape_is_null(topo_shape_t *p);
 TOPOCAPICALL _Bool topo_shape_is_valid(topo_shape_t *p);
