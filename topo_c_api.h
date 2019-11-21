@@ -16,6 +16,8 @@
 extern "C" {
 #endif
 
+enum { BOOLFUSE, BOOLCUT, BOOLCOMMON };
+
 enum { DIR_WEST, DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_UP, DIR_DOWN };
 enum {
   TopoSolid,
