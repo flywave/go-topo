@@ -1,4 +1,4 @@
-package topovis
+package topo
 
 /*
 #include <stdlib.h>
