@@ -355,232 +355,297 @@ func (t *Edge) Free() {
 	C.topo_edge_free(t.val)
 }
 
-/**
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_two_vertex(topo_vertex_t V1,
-                                                             topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_two_point(pnt3d_t P1,
-                                                            pnt3d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_line(line_t L);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_line_p(line_t L, double p1,
-                                                         double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_line_point(line_t L,
-                                                             pnt3d_t P1,
-                                                             pnt3d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_line_vertex(line_t L,
-                                                              topo_vertex_t V1,
-                                                              topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_circ(circ_t L);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_circ_p(circ_t L, double p1,
-                                                         double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_circ_point(circ_t L,
-                                                             pnt3d_t P1,
-                                                             pnt3d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_circ_vertex(circ_t L,
-                                                              topo_vertex_t V1,
-                                                              topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_elips(elips_t L);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_elips_p(elips_t L, double p1,
-                                                          double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_elips_point(elips_t L,
-                                                              pnt3d_t P1,
-                                                              pnt3d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_elips_vertex(
-    elips_t L, topo_vertex_t V1, topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_hyper(hyperbola_t L);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_hyper_p(hyperbola_t L,
-                                                          double p1, double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_hyper_point(hyperbola_t L,
-                                                              pnt3d_t P1,
-                                                              pnt3d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_hyper_vertex(
-    hyperbola_t L, topo_vertex_t V1, topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_parab(parabola_t L);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_parab_p(parabola_t L,
-                                                          double p1, double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_parab_point(parabola_t L,
-                                                              pnt3d_t P1,
-                                                              pnt3d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_parab_vertex(
-    parabola_t L, topo_vertex_t V1, topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edgee_from_curve(geom_curve_t *L);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_curve_p(geom_curve_t *L,
-                                                          double p1, double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_curve_point(geom_curve_t *L,
-                                                              pnt3d_t P1,
-                                                              pnt3d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_curve_vertex(
-    geom_curve_t *L, topo_vertex_t V1, topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edgee_from_curve_point_p(
-    geom_curve_t *L, pnt3d_t P1, pnt3d_t P2, double p1, double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_curve_vertex_p(
-    geom_curve_t *L, topo_vertex_t V1, topo_vertex_t V2, double p1, double p2);
-
-TOPOCAPICALL topo_edge_t
-topo_edge_make_edge_from_curve_surface(geom2d_curve_t *L, geom_surface_t *S);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_curve_surface_p(
-    geom2d_curve_t *L, geom_surface_t *S, double p1, double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_curve_surface_point(
-    geom2d_curve_t *L, geom_surface_t *S, pnt3d_t P1, pnt3d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_curve_surface_vertex(
-    geom2d_curve_t *L, geom_surface_t *S, topo_vertex_t V1, topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_curve_surface_point_p(
-    geom2d_curve_t *L, geom_surface_t *S, pnt3d_t P1, pnt3d_t P2, double p1,
-    double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_curve_surface_vertex_p(
-    geom2d_curve_t *L, geom_surface_t *S, topo_vertex_t V1, topo_vertex_t V2,
-    double p1, double p2);
-
-TOPOCAPICALL topo_edge_t
-topo_edge_make_edge2d_from_two_vertex(topo_vertex_t V1, topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_two_point(pnt2d_t P1,
-                                                              pnt2d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_line(line2d_t L);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_line_p(line2d_t L,
-                                                           double p1,
-                                                           double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_line_point(line2d_t L,
-                                                               pnt2d_t P1,
-                                                               pnt2d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_line_vertex(
-    line2d_t L, topo_vertex_t V1, topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_circ(circ2d_t L);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_circ_p(circ2d_t L,
-                                                           double p1,
-                                                           double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_circ_point(circ2d_t L,
-                                                               pnt2d_t P1,
-                                                               pnt2d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_circ_vertex(
-    circ2d_t L, topo_vertex_t V1, topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_elips(elips2d_t L);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_elips_p(elips2d_t L,
-                                                            double p1,
-                                                            double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_elips_point(elips2d_t L,
-                                                                pnt2d_t P1,
-                                                                pnt2d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_elips_vertex(
-    elips2d_t L, topo_vertex_t V1, topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_hyper(hyperbola2d_t L);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_hyper_p(hyperbola2d_t L,
-                                                            double p1,
-                                                            double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_hyper_point(hyperbola2d_t L,
-                                                                pnt2d_t P1,
-                                                                pnt2d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_hyper_vertex(
-    hyperbola2d_t L, topo_vertex_t V1, topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_parab(parabola2d_t L);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_parab_p(parabola2d_t L,
-                                                            double p1,
-                                                            double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_parab_point(parabola2d_t L,
-                                                                pnt2d_t P1,
-                                                                pnt2d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_parab_vertex(
-    parabola2d_t L, topo_vertex_t V1, topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_curve(geom2d_curve_t *L);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_curve_p(geom2d_curve_t *L,
-                                                            double p1,
-                                                            double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_curve_point(
-    geom2d_curve_t *L, pnt2d_t P1, pnt2d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_curve_vertex(
-    geom2d_curve_t *L, topo_vertex_t V1, topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_curve_point_p(
-    geom2d_curve_t *L, pnt2d_t P1, pnt2d_t P2, double p1, double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_edge2d_from_curve_vertex_p(
-    geom2d_curve_t *L, topo_vertex_t V1, topo_vertex_t V2, double p1,
-    double p2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_polygon();
-
-TOPOCAPICALL topo_edge_t topo_edge_make_polygon_from_two_point(pnt3d_t P1,
-                                                               pnt3d_t P2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_polygon_from_three_point(pnt3d_t P1,
-                                                                 pnt3d_t P2,
-                                                                 pnt3d_t P3,
-                                                                 _Bool Close);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_polygon_from_four_point(
-    pnt3d_t P1, pnt3d_t P2, pnt3d_t P3, pnt3d_t P4, _Bool Close);
-
-TOPOCAPICALL topo_edge_t
-topo_edge_make_polygon_from_two_vertex(topo_vertex_t V1, topo_vertex_t V2);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_polygon_from_three_vertex(
-    topo_vertex_t V1, topo_vertex_t V2, topo_vertex_t V3, _Bool Close);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_polygon_from_four_vertex(
-    topo_vertex_t V1, topo_vertex_t V2, topo_vertex_t V3, topo_vertex_t V4,
-    _Bool Close);
-
-TOPOCAPICALL topo_edge_t topo_edge_make_polygon_from_vertices(
-    topo_vertex_t *vertices, int vertcount, _Bool Close);
-TOPOCAPICALL topo_edge_t topo_edge_make_polygonn_from_points(pnt3d_t *vertexs,
-
-**/
+func TopoMakeEdgeFromTwoVertex(v1, v2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_two_vertex(v1.val, v2.val)}
+}
+
+func TopoMakeEdgeFromTwoPoint(p1, p2 Point3) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_two_point(p1.val, p2.val)}
+}
+
+func TopoMakeEdgeFromLine(l Line) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_line(l.val)}
+}
+
+func TopoMakeEdgeFromLineParm(l Line, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_line_p(l.val, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdgeFromLinePoint(l Line, p1, p2 Point3) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_line_point(l.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdgeFromLineVertex(l Line, p1, p2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_line_vertex(l.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdgeFromCirc(s Circ) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_circ(s.val)}
+}
+
+func TopoMakeEdgeFromCircParm(s Circ, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_circ_p(s.val, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdgeFromCircPoint(s Circ, p1, p2 Point3) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_circ_point(s.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdgeFromCircVertex(s Circ, p1, p2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_circ_vertex(s.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdgeFromElips(s Elips) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_elips(s.val)}
+}
+
+func TopoMakeEdgeFromElipsParm(s Elips, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_elips_p(s.val, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdgeFromElipsPoint(s Elips, p1, p2 Point3) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_elips_point(s.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdgeFromElipsVertex(s Elips, p1, p2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_elips_vertex(s.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdgeFromHyper(s Hyperbola) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_hyper(s.val)}
+}
+
+func TopoMakeEdgeFromHyperParm(s Hyperbola, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_hyper_p(s.val, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdgeFromHyperPoint(s Hyperbola, p1, p2 Point3) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_hyper_point(s.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdgeFromHyperVertex(s Hyperbola, p1, p2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_hyper_vertex(s.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdgeFromPara(s Parabola) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_parab(s.val)}
+}
+
+func TopoMakeEdgeFromParaParm(s Parabola, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_parab_p(s.val, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdgeFromParaPoint(s Parabola, p1, p2 Point3) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_parab_point(s.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdgeFromParaVertex(s Parabola, p1, p2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_parab_vertex(s.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdgeFromCurve(s GeomCurve) *Edge {
+	return &Edge{val: C.topo_edge_make_edgee_from_curve(s.geom)}
+}
+
+func TopoMakeEdgeFromCurveParm(s GeomCurve, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_curve_p(s.geom, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdgeFromCurvePoint(s GeomCurve, p1, p2 Point3) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_curve_point(s.geom, p1.val, p2.val)}
+}
+
+func TopoMakeEdgeFromCurveVertex(s GeomCurve, p1, p2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_curve_vertex(s.geom, p1.val, p2.val)}
+}
+
+func TopoMakeEdgeFromCurvePointParm(s GeomCurve, pt1, pt2 Point3, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edgee_from_curve_point_p(s.geom, pt1.val, pt2.val, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdgeFromCurveVertexParm(s GeomCurve, pt1, pt2 Vertex, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_curve_vertex_p(s.geom, pt1.val, pt2.val, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdgeFromSurface(cu Geom2dCurve, s GeomSurface) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_curve_surface(cu.geom, s.geom)}
+}
+
+func TopoMakeEdgeFromSurfaceParm(cu Geom2dCurve, s GeomSurface, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_curve_surface_p(cu.geom, s.geom, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdgeFromSurfacePoint(cu Geom2dCurve, s GeomSurface, p1, p2 Point3) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_curve_surface_point(cu.geom, s.geom, p1.val, p2.val)}
+}
+
+func TopoMakeEdgeFromSurfaceVertex(cu Geom2dCurve, s GeomSurface, p1, p2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_curve_surface_vertex(cu.geom, s.geom, p1.val, p2.val)}
+}
+
+func TopoMakeEdgeFromSurfacePointParm(cu Geom2dCurve, s GeomSurface, pt1, pt2 Point3, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_curve_surface_point_p(cu.geom, s.geom, pt1.val, pt2.val, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdgeFromSurfaceVertexParm(cu Geom2dCurve, s GeomSurface, pt1, pt2 Vertex, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_curve_surface_vertex_p(cu.geom, s.geom, pt1.val, pt2.val, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdge2dFromTwoVertex(pt1, pt2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_two_vertex(pt1.val, pt2.val)}
+}
+
+func TopoMakeEdge2dFromTwoPoint(pt1, pt2 Point2) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_two_point(pt1.val, pt2.val)}
+}
+
+func TopoMakeEdge2dFromLine(l Line2d) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_line(l.val)}
+}
+
+func TopoMakeEdge2dFromLineParm(l Line2d, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_line_p(l.val, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdge2dFromLinePoint(l Line2d, p1, p2 Point2) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_line_point(l.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdge2dFromLineVertex(l Line2d, p1, p2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_line_vertex(l.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdge2dFromCirc(l Circ2d) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_circ(l.val)}
+}
+
+func TopoMakeEdge2dFromCircParm(l Circ2d, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_circ_p(l.val, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdge2dFromCircPoint(l Circ2d, p1, p2 Point2) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_circ_point(l.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdge2dFromCircVertex(l Circ2d, p1, p2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_circ_vertex(l.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdge2dFromElips(l Elips2d) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_elips(l.val)}
+}
+
+func TopoMakeEdge2dFromElipsParm(l Elips2d, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_elips_p(l.val, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdge2dFromElipsPoint(l Elips2d, p1, p2 Point2) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_elips_point(l.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdge2dFromElipsVertex(l Elips2d, p1, p2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_elips_vertex(l.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdge2dFromHyper(l Hyperbola2d) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_hyper(l.val)}
+}
+
+func TopoMakeEdge2dFromHyperParm(l Hyperbola2d, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_hyper_p(l.val, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdge2dFromHyperPoint(l Hyperbola2d, p1, p2 Point2) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_hyper_point(l.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdge2dFromHyperVertex(l Hyperbola2d, p1, p2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_hyper_vertex(l.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdge2dFromPara(l Parabola2d) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_parab(l.val)}
+}
+
+func TopoMakeEdge2dFromParaParm(l Parabola2d, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_parab_p(l.val, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdge2dFromParaPoint(l Parabola2d, p1, p2 Point2) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_parab_point(l.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdge2dFromParaVertex(l Parabola2d, p1, p2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_parab_vertex(l.val, p1.val, p2.val)}
+}
+
+func TopoMakeEdge2dFromCurve(l Geom2dCurve) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_curve(l.geom)}
+}
+
+func TopoMakeEdge2dFromCurveParm(l Geom2dCurve, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_curve_p(l.geom, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdge2dFromCurvePoint(l Geom2dCurve, p1, p2 Point2) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_curve_point(l.geom, p1.val, p2.val)}
+}
+
+func TopoMakeEdge2dFromCurveVertex(l Geom2dCurve, p1, p2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_curve_vertex(l.geom, p1.val, p2.val)}
+}
+
+func TopoMakeEdge2dFromCurvePointParm(l Geom2dCurve, pt1, pt2 Point2, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_curve_point_p(l.geom, pt1.val, pt2.val, C.double(p1), C.double(p2))}
+}
+
+func TopoMakeEdge2dFromCurveVertexParm(l Geom2dCurve, pt1, pt2 Vertex, p1, p2 float64) *Edge {
+	return &Edge{val: C.topo_edge_make_edge2d_from_curve_vertex_p(l.geom, pt1.val, pt2.val, C.double(p1), C.double(p2))}
+}
+
+func TopoEdgeMakePolygon() *Edge {
+	return &Edge{val: C.topo_edge_make_polygon()}
+}
+
+func TopoEdgeMakePolygonFromTwoPoint(p1, p2 Point3) *Edge {
+	return &Edge{val: C.topo_edge_make_polygon_from_two_point(p1.val, p2.val)}
+}
+
+func TopoEdgeMakePolygonFromThreePoint(p1, p2, p3 Point3, Close bool) *Edge {
+	return &Edge{val: C.topo_edge_make_polygon_from_three_point(p1.val, p2.val, p3.val, C.bool(Close))}
+}
+
+func TopoEdgeMakePolygonFromFourPoint(p1, p2, p3, p4 Point3, Close bool) *Edge {
+	return &Edge{val: C.topo_edge_make_polygon_from_four_point(p1.val, p2.val, p3.val, p4.val, C.bool(Close))}
+}
+
+func TopoEdgeMakePolygonFromTwoVertex(p1, p2 Vertex) *Edge {
+	return &Edge{val: C.topo_edge_make_polygon_from_two_vertex(p1.val, p2.val)}
+}
+
+func TopoEdgeMakePolygonFromThreeVertex(p1, p2, p3 Vertex, Close bool) *Edge {
+	return &Edge{val: C.topo_edge_make_polygon_from_three_vertex(p1.val, p2.val, p3.val, C.bool(Close))}
+}
+
+func TopoEdgeMakePolygonFromFourVertex(p1, p2, p3, p4 Vertex, Close bool) *Edge {
+	return &Edge{val: C.topo_edge_make_polygon_from_four_vertex(p1.val, p2.val, p3.val, p4.val, C.bool(Close))}
+}
+
+func TopoEdgeMakePolygonFromVertices(vers []Vertex, Close bool) *Edge {
+	cvs := make([]C.struct__topo_vertex_t, len(vers))
+	for i := range vers {
+		cvs[i] = vers[i].val
+	}
+	return &Edge{val: C.topo_edge_make_polygon_from_vertices(&cvs[0], C.int(len(vers)), C.bool(Close))}
+}
+
+func TopoEdgeMakePolygonFromPoints(points []Point3, Close bool) *Edge {
+	cvs := make([]C.struct__pnt3d_t, len(points))
+	for i := range points {
+		cvs[i] = points[i].val
+	}
+	return &Edge{val: C.topo_edge_make_polygonn_from_points(&cvs[0], C.int(len(points)), C.bool(Close))}
+}
 
 type Face struct {
 	val C.struct__topo_face_t
@@ -646,552 +711,697 @@ func (t *Face) Free() {
 	C.topo_face_free(t.val)
 }
 
-/**
+func TopoMakeFace(f *Face) *Face {
+	return &Face{val: C.topo_face_make_face(f.val)}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face(topo_face_t F);
+func TopoMakeFaceFromPlane(f Plane) *Face {
+	return &Face{val: C.topo_face_make_face_from_plane(f.val)}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_plane(plane_t P);
+func TopoMakeFaceFromCylinder(f Cylinder) *Face {
+	return &Face{val: C.topo_face_make_face_from_cylinder(f.val)}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_cylinder(cylinder_t C);
+func TopoMakeFaceFromCone(f Cone) *Face {
+	return &Face{val: C.topo_face_make_face_from_cone(f.val)}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_cone(cone_t C);
+func TopoMakeFaceFromSphere(f Sphere) *Face {
+	return &Face{val: C.topo_face_make_face_from_sphere(f.val)}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_sphere(sphere_t S);
+func TopoMakeFaceFromTorus(f Torus) *Face {
+	return &Face{val: C.topo_face_make_face_from_torus(f.val)}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_torus(torus_t C);
+func TopoMakeFaceFromSurface(S *GeomSurface, TolDegen float64) *Face {
+	return &Face{val: C.topo_face_make_face_from_surface(S.geom, C.double(TolDegen))}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_surface(geom_surface_t *S,
-                                                          double TolDegen);
+func TopoMakeFaceFromPlaneParm(f Plane, UMin, UMax, VMin, VMax float64) *Face {
+	return &Face{val: C.topo_face_make_face_from_plane_p(f.val, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax))}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_plane_p(
-    plane_t P, double UMin, double UMax, double VMin, double VMax);
+func TopoMakeFaceFromCylinderParm(f Cylinder, UMin, UMax, VMin, VMax float64) *Face {
+	return &Face{val: C.topo_face_make_face_from_cylinder_p(f.val, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax))}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_cylinder_p(
-    cylinder_t C, double UMin, double UMax, double VMin, double VMax);
+func TopoMakeFaceFromConeParm(f Cone, UMin, UMax, VMin, VMax float64) *Face {
+	return &Face{val: C.topo_face_make_face_from_cone_p(f.val, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax))}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_cone_p(cone_t C, double UMin,
-                                                         double UMax,
-                                                         double VMin,
-                                                         double VMax);
+func TopoMakeFaceFromSphereParm(f Sphere, UMin, UMax, VMin, VMax float64) *Face {
+	return &Face{val: C.topo_face_make_face_from_sphere_p(f.val, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax))}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_sphere_p(
-    sphere_t S, double UMin, double UMax, double VMin, double VMax);
+func TopoMakeFaceFromTorusParm(f Torus, UMin, UMax, VMin, VMax float64) *Face {
+	return &Face{val: C.topo_face_make_face_from_torus_p(f.val, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax))}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_torus_p(
-    torus_t C, double UMin, double UMax, double VMin, double VMax);
+func TopoMakeFaceFromSurfaceParm(S *GeomSurface, UMin, UMax, VMin, VMax, TolDegen float64) *Face {
+	return &Face{val: C.topo_face_make_face_from_surface_p(S.geom, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax), C.double(TolDegen))}
+}
 
-TOPOCAPICALL topo_face_t
-topo_face_make_face_from_surface_p(geom_surface_t *S, double UMin, double UMax,
-                                   double VMin, double VMax, double TolDegen);
+func TopoMakeFaceFromWire(w Wire, OnlyPlane bool) *Face {
+	return &Face{val: C.topo_face_make_face_from_wire_onlyplane(w.val, C.bool(OnlyPlane))}
+}
 
-TOPOCAPICALL topo_face_t
-topo_face_make_face_from_wire_onlyplane(topo_wire_t W, _Bool OnlyPlane);
+func TopoMakeFaceFromPlaneWire(p Plane, w Wire, Inside bool) *Face {
+	return &Face{val: C.topo_face_make_face_from_plane_wire(p.val, w.val, C.bool(Inside))}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_plane_wire(plane_t P,
-                                                             topo_wire_t W,
-                                                             _Bool Inside);
+func TopoMakeFaceFromCylinderWire(p Cylinder, w Wire, Inside bool) *Face {
+	return &Face{val: C.topo_face_make_face_from_cylinder_wire(p.val, w.val, C.bool(Inside))}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_cylinder_wire(cylinder_t C,
-                                                                topo_wire_t W,
-                                                                _Bool Inside);
+func TopoMakeFaceFromConeWire(p Cone, w Wire, Inside bool) *Face {
+	return &Face{val: C.topo_face_make_face_from_cone_wire(p.val, w.val, C.bool(Inside))}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_cone_wire(cone_t C,
-                                                            topo_wire_t W,
-                                                            _Bool Inside);
+func TopoMakeFaceFromSphereWire(p Sphere, w Wire, Inside bool) *Face {
+	return &Face{val: C.topo_face_make_face_from_sphere_wire(p.val, w.val, C.bool(Inside))}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_sphere_wire(sphere_t S,
-                                                              topo_wire_t W,
-                                                              _Bool Inside);
+func TopoMakeFaceFromTorusWire(p Torus, w Wire, Inside bool) *Face {
+	return &Face{val: C.topo_face_make_face_from_torus_wire(p.val, w.val, C.bool(Inside))}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_torus_wire(torus_t C,
-                                                             topo_wire_t W,
-                                                             _Bool Inside);
+func TopoMakeFaceFromSurfaceWire(S *GeomSurface, w Wire, Inside bool) *Face {
+	return &Face{val: C.topo_face_make_face_from_surface_wire(S.geom, w.val, C.bool(Inside))}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_surface_wire(
-    geom_surface_t *S, topo_wire_t W, _Bool Inside);
+func TopoMakeFaceFromFaceWire(f *Face, w Wire) *Face {
+	return &Face{val: C.topo_face_make_face_from_face_wire(f.val, w.val)}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_face_wire(topo_face_t F,
-                                                            topo_wire_t W);
+func TopoMakeFaceFromWires(ws []Wire) *Face {
+	cws := make([]C.struct__topo_wire_t, len(ws))
+	for i := range ws {
+		cws[i] = ws[i].val
+	}
+	return &Face{val: C.topo_face_make_face_from_wire(&cws[0], C.int(len(ws)))}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_wire(topo_wire_t *wires,
-                                                       int count);
+func TopoMakeFaceFromEdges(ws []Edge, pts []Point3) *Face {
+	cws := make([]C.struct__topo_edge_t, len(ws))
+	for i := range ws {
+		cws[i] = ws[i].val
+	}
+	cpts := make([]C.struct__pnt3d_t, len(pts))
+	for i := range pts {
+		cpts[i] = pts[i].val
+	}
+	return &Face{val: C.topo_face_make_face_from_egdes(&cws[0], C.int(len(ws)), &cpts[0], C.int(len(pts)))}
+}
 
-TOPOCAPICALL topo_face_t topo_face_make_face_from_egdes(topo_edge_t *edges,
-                                                        int edgecount,
-                                                        pnt3d_t *points,
-                                                        int pcount);
-
-TOPOCAPICALL topo_face_t topo_face_make_face_from_points(pnt3d_t *points,
-
-**/
+func TopoMakeFaceFromPoints(pts []Point3) *Face {
+	cpts := make([]C.struct__pnt3d_t, len(pts))
+	for i := range pts {
+		cpts[i] = pts[i].val
+	}
+	return &Face{val: C.topo_face_make_face_from_points(&cpts[0], C.int(len(pts)))}
+}
 
 type Shell struct {
 	val C.struct__topo_shell_t
+}
+
+func (t *Shell) Sweep(spine *Wire, shps []Shape, cornerMode int) int {
+	cshp := make([]*C.struct__topo_shape_t, len(shps))
+	for i := range shps {
+		cshp[i] = shps[i].val
+	}
+	return int(C.topo_shell_sweep(t.val, spine.val, &cshp[0], C.int(len(shps)), C.int(cornerMode)))
 }
 
 func (t *Shell) Free() {
 	C.topo_shell_free(t.val)
 }
 
-/**
+func TopoMakeShellFromSurface(S *GeomSurface, Segment bool) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_surface(S.geom, C.bool(Segment))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_surface(geom_surface_t *S,
-                                                             _Bool Segment);
+func TopoMakeShellFromSurfaceFromSurfaceParm(S *GeomSurface, UMin, UMax, VMin, VMax float64, Segment bool) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_surface_p(S.geom, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax), C.bool(Segment))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_surface_p(
-    geom_surface_t *S, double UMin, double UMax, double VMin, double VMax,
-    _Bool Segment);
+func TopoMakeShellFromBox(dx, dy, dz float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_box(C.double(dx), C.double(dy), C.double(dz))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_box(double dx, double dy,
-                                                         double dz);
+func TopoMakeShellFromBoxPoint(p Point3, dx, dy, dz float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_box_point(p.val, C.double(dx), C.double(dy), C.double(dz))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_box_point(pnt3d_t P,
-                                                               double dx,
-                                                               double dy,
-                                                               double dz);
+func TopoMakeShellFromBoxTwoPoint(p1, p2 Point3) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_box_two_point(p1.val, p2.val)}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_box_two_point(pnt3d_t P1,
-                                                                   pnt3d_t P2);
+func TopoMakeShellFromBoxAxis2(a Axis2, dx, dy, dz float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_box_axis2(a.val, C.double(dx), C.double(dy), C.double(dz))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_box_axis2(axis2_t Axes,
-                                                               double dx,
-                                                               double dy,
-                                                               double dz);
+func TopoMakeShellFromCylinder(R, H float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_cylinder(C.double(R), C.double(H))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_cylinder(double R,
-                                                              double H);
+func TopoMakeShellFromCylinderAngle(R, H, Angle float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_cylinder_angle(C.double(R), C.double(H), C.double(Angle))}
+}
 
-TOPOCAPICALL topo_shell_t
-topo_shell_make_shell_from_cylinder_angle(double R, double H, double Angle);
+func TopoMakeShellFromCylinderAxis2(a Axis2, R, H float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_cylinder_axis2(a.val, C.double(R), C.double(H))}
+}
 
-TOPOCAPICALL topo_shell_t
-topo_shell_make_shell_from_cylinder_axis2(axis2_t Axes, double R, double H);
+func TopoMakeShellFromCylinderAxis2Angle(a Axis2, R, H, Angle float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_cylinder_axis2_angle(a.val, C.double(R), C.double(H), C.double(Angle))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_cylinder_axis2_angle(
-    axis2_t Axes, double R, double H, double Angle);
+func TopoMakeShellFromCone(R1, R2, H float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_cone(C.double(R1), C.double(R2), C.double(H))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_cone(double R1, double R2,
-                                                          double H);
+func TopoMakeShellFromConeAngle(R1, R2, H, Angle float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_cone_angle(C.double(R1), C.double(R2), C.double(H), C.double(Angle))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_cone_angle(double R1,
-                                                                double R2,
-                                                                double H,
-                                                                double angle);
+func TopoMakeShellFromConeAxis2(a Axis2, R1, R2, H float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_cone_axis2(a.val, C.double(R1), C.double(R2), C.double(H))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_cone_axis2(axis2_t Axes,
-                                                                double R1,
-                                                                double R2,
-                                                                double H);
+func TopoMakeShellFromConeAxis2Angle(a Axis2, R1, R2, H, Angle float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_cone_axis2_angle(a.val, C.double(R1), C.double(R2), C.double(H), C.double(Angle))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_cone_axis2_angle(
-    axis2_t Axes, double R1, double R2, double H, double angle);
+func TopoMakeShellFromRevolution(m *GeomCurve) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_revolution(m.geom)}
+}
 
-TOPOCAPICALL topo_shell_t
-topo_shell_make_shell_from_revolution(geom_curve_t *Meridian);
+func TopoMakeShellFromRevolutionAngle(m *GeomCurve, Angle float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_revolution_angle(m.geom, C.double(Angle))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_revolution_angle(
-    geom_curve_t *Meridian, double angle);
+func TopoMakeShellFromRevolutionLimit(m *GeomCurve, VMin, VMax float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_revolution_limit(m.geom, C.double(VMin), C.double(VMax))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_revolution_limit(
-    geom_curve_t *Meridian, double VMin, double VMax);
+func TopoMakeShellFromRevolutionLimitAngle(m *GeomCurve, VMin, VMax, Angle float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_revolution_limit_angle(m.geom, C.double(VMin), C.double(VMax), C.double(Angle))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_revolution_limit_angle(
-    geom_curve_t *Meridian, double VMin, double VMax, double angle);
+func TopoMakeShellFromRevolutionAxis2(a Axis2, m *GeomCurve) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_revolution_axis2(a.val, m.geom)}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_revolution_axis2(
-    axis2_t Axes, geom_curve_t *Meridian);
+func TopoMakeShellFromRevolutionAxis2Angle(a Axis2, m *GeomCurve, Angle float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_revolution_axis2_angle(a.val, m.geom, C.double(Angle))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_revolution_axis2_angle(
-    axis2_t Axes, geom_curve_t *Meridian, double angle);
+func TopoMakeShellFromRevolutionAxis2Limit(a Axis2, m *GeomCurve, VMin, VMax float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_revolution_axis2_limit(a.val, m.geom, C.double(VMin), C.double(VMax))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_revolution_axis2_limit(
-    axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax);
+func TopoMakeShellFromRevolutionAxis2LimitAngle(a Axis2, m *GeomCurve, VMin, VMax, Angle float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_revolution_axis2_limit_angle(a.val, m.geom, C.double(VMin), C.double(VMax), C.double(Angle))}
+}
 
-TOPOCAPICALL topo_shell_t
-topo_shell_make_shell_from_revolution_axis2_limit_angle(axis2_t Axes,
-                                                        geom_curve_t *Meridian,
-                                                        double VMin,
-                                                        double VMax,
-                                                        double angle);
+func TopoMakeShellFromSpere(R float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_sphere(C.double(R))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere(double R);
+func TopoMakeShellFromSpereAngle(R float64, Angle float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_sphere_angle(C.double(R), C.double(Angle))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_angle(double R,
-                                                                  double angle);
+func TopoMakeShellFromSpereTwoAngle(R float64, Angle1, Angle2 float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_sphere_two_angle(C.double(R), C.double(Angle1), C.double(Angle2))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_two_angle(
-    double R, double angle1, double angle2);
+func TopoMakeShellFromSpereThreeAngle(R float64, Angle1, Angle2, Angle3 float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_sphere_three_angle(C.double(R), C.double(Angle1), C.double(Angle2), C.double(Angle3))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_three_angle(
-    double R, double angle1, double angle2, double angle3);
+func TopoMakeShellFromSpereCenterRaduis(Center Point3, R float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_sphere_center_raduis(Center.val, C.double(R))}
+}
 
-TOPOCAPICALL topo_shell_t
-topo_shell_make_shell_from_sphere_center_raduis(pnt3d_t Center, double R);
+func TopoMakeShellFromSpereCenterAngle(Center Point3, R, Angle float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_sphere_center_angle(Center.val, C.double(R), C.double(Angle))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_center_angle(
-    pnt3d_t Center, double R, double angle);
+func TopoMakeShellFromSpereCenterTwoAngle(Center Point3, R, Angle1, Angle2 float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_sphere_center_two_angle(Center.val, C.double(R), C.double(Angle1), C.double(Angle2))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_center_two_angle(
-    pnt3d_t Center, double R, double angle1, double angle2);
+func TopoMakeShellFromSpereCenterThreeAngle(Center Point3, R, Angle1, Angle2, Angle3 float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_sphere_center_three_angle(Center.val, C.double(R), C.double(Angle1), C.double(Angle2), C.double(Angle3))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_center_three_angle(
-    pnt3d_t Center, double R, double angle1, double angle2, double angle3);
+func TopoMakeShellFromSpereAxis2(a Axis2, R float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_sphere_axis2(a.val, C.double(R))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_axis2(axis2_t Axis,
-                                                                  double R);
+func TopoMakeShellFromSpereAxis2Angle(a Axis2, R, Angle float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_sphere_axis2_raduis(a.val, C.double(R), C.double(Angle))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_axis2_raduis(
-    axis2_t Axis, double R, double angle);
+func TopoMakeShellFromSpereAxis2TwoAngle(a Axis2, R, Angle1, Angle2 float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_sphere_axis2_two_angle(a.val, C.double(R), C.double(Angle1), C.double(Angle2))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_axis2_two_angle(
-    axis2_t Axis, double R, double angle1, double angle2);
+func TopoMakeShellFromSpereAxis2ThreeAngle(a Axis2, R, Angle1, Angle2, Angle3 float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_sphere_axis2_three_angle(a.val, C.double(R), C.double(Angle1), C.double(Angle2), C.double(Angle3))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_sphere_axis2_three_angle(
-    axis2_t Axis, double R, double angle1, double angle2, double angle3);
+func TopoMakeShellFromTorus(R1, R2 float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_torus(C.double(R1), C.double(R2))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus(double R1,
-                                                           double R2);
+func TopoMakeShellFromTorusAngle(R1, R2, Angle float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_torus_angle(C.double(R1), C.double(R2), C.double(Angle))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus_angle(double R1,
-                                                                 double R2,
-                                                                 double angle);
+func TopoMakeShellFromTorusTwoAngle(R1, R2, Angle1, Angle2 float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_torus_two_angle(C.double(R1), C.double(R2), C.double(Angle1), C.double(Angle2))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus_two_angle(
-    double R1, double R2, double angle1, double angle2);
+func TopoMakeShellFromTorusThreeAngle(R1, R2, Angle1, Angle2, Angle3 float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_torus_three_angle(C.double(R1), C.double(R2), C.double(Angle1), C.double(Angle2), C.double(Angle3))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus_three_angle(
-    double R1, double R2, double angle1, double angle2, double angle);
+func TopoMakeShellFromTorusAxis2(a Axis2, R1, R2 float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_torus_axis2(a.val, C.double(R1), C.double(R2))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus_axis2(axis2_t Axes,
-                                                                 double R1,
-                                                                 double R2);
+func TopoMakeShellFromTorusAxis2Angle(a Axis2, R1, R2, Angle float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_torus_axis2_angle(a.val, C.double(R1), C.double(R2), C.double(Angle))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus_axis2_angle(
-    axis2_t Axes, double R1, double R2, double angle);
+func TopoMakeShellFromTorusAxis2TwoAngle(a Axis2, R1, R2, Angle1, Angle2 float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_torus_axis2_two_angle(a.val, C.double(R1), C.double(R2), C.double(Angle1), C.double(Angle2))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus_axis2_two_angle(
-    axis2_t Axes, double R1, double R2, double angle1, double angle2);
+func TopoMakeShellFromTorusAxis2ThreeAngle(a Axis2, R1, R2, Angle1, Angle2, Angle3 float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_torus_axis2_three_angle(a.val, C.double(R1), C.double(R2), C.double(Angle1), C.double(Angle2), C.double(Angle3))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_torus_axis2_three_angle(
-    axis2_t Axes, double R1, double R2, double angle1, double angle2,
-    double angle);
+func TopoMakeShellFromWedge(dx, dy, dz, ltx float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_wedge(C.double(dx), C.double(dy), C.double(dz), C.double(ltx))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_wedge(double dx, double dy,
-                                                           double dz,
-                                                           double ltx);
+func TopoMakeShellFromWedgeAxis2(a Axis2, dx, dy, dz, ltx float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_wedge_axis2(a.val, C.double(dx), C.double(dy), C.double(dz), C.double(ltx))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_wedge_axis2(
-    axis2_t Axes, double dx, double dy, double dz, double ltx);
+func TopoMakeShellFromWedgeLimit(dx, dy, dz, xmin, zmin, xmax, zmax float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_wedge_limit(C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax))}
+}
 
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_wedge_limit(
-    double dx, double dy, double dz, double xmin, double zmin, double xmax,
-    double zmax);
-
-TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_wedge_axis2_limit(
-    axis2_t Axes, double dx, double dy, double dz, double xmin, double zmin,
-    double xmax, double zmax);
-
-TOPOCAPICALL int topo_shell_sweep(topo_shell_t ss, topo_wire_t spine,
-                                  topo_shape_t **profiles, int count,
-                                  int cornerMode);
-
-**/
+func TopoMakeShellFromWedgeAxis2Limit(a Axis2, dx, dy, dz, xmin, zmin, xmax, zmax float64) *Shell {
+	return &Shell{val: C.topo_shell_make_shell_from_wedge_axis2_limit(a.val, C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax))}
+}
 
 type Solid struct {
 	val C.struct__topo_solid_t
 }
 
-/**
+func (s *Solid) NumSolids() int {
+	return int(C.topo_solid_num_solids(s.val))
+}
 
-TOPOCAPICALL int topo_solid_num_solids(topo_solid_t s);
+func (s *Solid) NumFaces() int {
+	return int(C.topo_solid_num_faces(s.val))
+}
 
-TOPOCAPICALL int topo_solid_num_faces(topo_solid_t s);
+func (s *Solid) Area() float64 {
+	return float64(C.topo_solid_area(s.val))
+}
 
-TOPOCAPICALL double topo_solid_area(topo_solid_t s);
+func (s *Solid) Volume() float64 {
+	return float64(C.topo_solid_volume(s.val))
+}
 
-TOPOCAPICALL double topo_solid_volume(topo_solid_t s);
+func (s *Solid) Inertia() BBox {
+	return BBox{val: C.topo_solid_inertia(s.val)}
+}
 
-TOPOCAPICALL bbox_t topo_solid_inertia(topo_solid_t s);
+func (s *Solid) CentreOfMass() Point3 {
+	return Point3{val: C.topo_solid_centre_of_mass(s.val)}
+}
 
-TOPOCAPICALL pnt3d_t topo_solid_centre_of_mass(topo_solid_t s);
+func (s *Solid) Extrude(f *Face, p1, p2 Point3) int {
+	return int(C.topo_solid_extrude(s.val, f.val, p1.val, p2.val))
+}
 
-TOPOCAPICALL int topo_solid_extrude(topo_solid_t s, topo_face_t f, pnt3d_t p1,
-                                    pnt3d_t p2);
+func (s *Solid) ExtrudeFromDir(f *Face, d Vector3) int {
+	return int(C.topo_solid_extrude_from_dir(s.val, f.val, d.val))
+}
 
-TOPOCAPICALL int topo_solid_extrude_from_dir(topo_solid_t s, topo_face_t f,
-                                             vec3d_t dir);
+func (s *Solid) Revolve(f *Face, p1, p2 Point3, angle float64) int {
+	return int(C.topo_solid_revolve(s.val, f.val, p1.val, p2.val, C.double(angle)))
+}
 
-TOPOCAPICALL int topo_solid_revolve(topo_solid_t s, topo_face_t f, pnt3d_t p1,
-                                    pnt3d_t p2, double angle);
+func (s *Solid) Loft(profiles []Shape, ruled bool, tolerance float64) int {
+	cshp := make([]*C.struct__topo_shape_t, len(profiles))
+	for i := range profiles {
+		cshp[i] = profiles[i].val
+	}
+	return int(C.topo_solid_loft(s.val, &cshp[0], C.int(len(profiles)), C.bool(ruled), C.double(tolerance)))
+}
 
-TOPOCAPICALL int topo_solid_loft(topo_solid_t s, topo_shape_t **profiles,
-                                 int count, _Bool ruled, double tolerance);
+func (s *Solid) Pipe(f *Face, w Wire) int {
+	return int(C.topo_solid_pipe(s.val, f.val, w.val))
+}
 
-TOPOCAPICALL int topo_solid_pipe(topo_solid_t s, topo_face_t f, topo_wire_t w);
+func (s *Solid) Sweep(spine *Wire, profiles []Shape, cornerMode int) int {
+	cshp := make([]*C.struct__topo_shape_t, len(profiles))
+	for i := range profiles {
+		cshp[i] = profiles[i].val
+	}
+	return int(C.topo_solid_sweep(s.val, spine.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
+}
 
-TOPOCAPICALL int topo_solid_sweep(topo_solid_t s, topo_wire_t spine,
-                                  topo_shape_t **profiles, int count,
-                                  int cornerMode);
+func (s *Solid) Boolean(tool *Solid, op int) int {
+	return int(C.topo_solid_boolean(s.val, tool.val, C.int(op)))
+}
 
-TOPOCAPICALL int topo_solid_boolean(topo_solid_t s, topo_solid_t tool, int op);
+func (s *Solid) Fillet(edges []Edge, radius []float64) int {
+	cshp := make([]C.struct__topo_edge_t, len(edges))
+	for i := range edges {
+		cshp[i] = edges[i].val
+	}
+	return int(C.topo_solid_fillet(s.val, &cshp[0], C.int(len(edges)), (*C.double)(unsafe.Pointer(&radius[0])), C.int(len(radius))))
+}
 
-TOPOCAPICALL int topo_solid_fillet(topo_solid_t s, topo_edge_t *edges,
-                                   int count, double *radius, int rcount);
+func (s *Solid) Chamfer(edges []Edge, distances []float64) int {
+	cshp := make([]C.struct__topo_edge_t, len(edges))
+	for i := range edges {
+		cshp[i] = edges[i].val
+	}
+	return int(C.topo_solid_chamfer(s.val, &cshp[0], C.int(len(edges)), (*C.double)(unsafe.Pointer(&distances[0])), C.int(len(distances))))
+}
 
-TOPOCAPICALL int topo_solid_chamfer(topo_solid_t s, topo_edge_t *edges,
-                                    int count, double *distances, int dcount);
+func (s *Solid) Shelling(faces []Face, offset, tolerance float64) int {
+	cshp := make([]C.struct__topo_face_t, len(faces))
+	for i := range faces {
+		cshp[i] = faces[i].val
+	}
+	return int(C.topo_solid_shelling(s.val, &cshp[0], C.int(len(faces)), C.double(offset), C.double(tolerance)))
+}
 
-TOPOCAPICALL int topo_solid_shelling(topo_solid_t s, topo_face_t *faces,
-                                     int count, double offset,
-                                     double tolerance);
+func (s *Solid) Offset(f *Face, offset, tolerance float64) int {
+	return int(C.topo_solid_offset(s.val, f.val, C.double(offset), C.double(tolerance)))
+}
 
-TOPOCAPICALL int topo_solid_offset(topo_solid_t s, topo_face_t f, double offset,
-                                   double tolerance);
+func (s *Solid) Draft(faces []Face, d Dir3, angle float64, p Plane) int {
+	fs := make([]C.struct__topo_face_t, len(faces))
+	for i := range faces {
+		fs[i] = faces[i].val
+	}
+	return int(C.topo_solid_draft(s.val, &fs[0], C.int(len(faces)), d.val, C.double(angle), p.val))
+}
 
-TOPOCAPICALL int topo_solid_draft(topo_solid_t s, topo_face_t *faces, int count,
-                                  dir3d_t d, double angle, plane_t p);
+func (s *Solid) EvolvedFromFace(Spine *Face, Profil *Wire) int {
+	return int(C.topo_solid_evolved_from_face(s.val, Spine.val, Profil.val))
+}
 
-TOPOCAPICALL int topo_solid_evolved_from_face(topo_solid_t s, topo_face_t Spine,
-                                              topo_wire_t Profil);
+func (s *Solid) EvolvedFromWire(Spine *Wire, Profil *Wire) int {
+	return int(C.topo_solid_evolved_from_wire(s.val, Spine.val, Profil.val))
+}
 
-TOPOCAPICALL int topo_solid_evolved_from_wire(topo_solid_t s, topo_wire_t Spine,
-                                              topo_wire_t Profil);
+func (s *Solid) FeatPrism(f *Face, d Dir3, height float64, fuse bool) int {
+	return int(C.topo_solid_feat_prism(s.val, f.val, d.val, C.double(height), C.bool(fuse)))
+}
 
-TOPOCAPICALL int topo_solid_feat_prism(topo_solid_t s, topo_face_t f, dir3d_t d,
-                                       double height, _Bool fuse);
+func (s *Solid) FeatPrismForRange(f *Face, d Dir3, from, end Face, fuse bool) int {
+	return int(C.topo_solid_feat_prism_for_range(s.val, f.val, d.val, from.val, end.val, C.bool(fuse)))
+}
 
-TOPOCAPICALL int topo_solid_feat_prism_for_range(topo_solid_t s, topo_face_t f,
-                                                 dir3d_t d, topo_face_t from,
-                                                 topo_face_t end, _Bool fuse);
+func (s *Solid) FeatPrismForUntil(f *Face, d Dir3, until Face, fuse bool) int {
+	return int(C.topo_solid_feat_prism_for_until(s.val, f.val, d.val, until.val, C.bool(fuse)))
+}
 
-TOPOCAPICALL int topo_solid_feat_prism_for_until(topo_solid_t s, topo_face_t f,
-                                                 dir3d_t d, topo_face_t until,
-                                                 _Bool fuse);
+func (s *Solid) DraftPrism(f *Face, angle, height float64, fuse bool) int {
+	return int(C.topo_solid_feat_draft_prism(s.val, f.val, C.double(angle), C.double(height), C.bool(fuse)))
+}
 
-TOPOCAPICALL int topo_solid_feat_draft_prism(topo_solid_t s, topo_face_t f,
-                                             double angle, double height,
-                                             _Bool fuse);
+func (s *Solid) DraftPrismForRange(f *Face, angle float64, from, end Face, fuse bool) int {
+	return int(C.topo_solid_feat_draft_prism_for_range(s.val, f.val, C.double(angle), from.val, end.val, C.bool(fuse)))
+}
 
-TOPOCAPICALL int
-topo_solid_feat_draft_prism_for_range(topo_solid_t s, topo_face_t f,
-                                      double angle, topo_face_t from,
-                                      topo_face_t end, _Bool fuse);
+func (s *Solid) DraftPrismForUntil(f *Face, angle float64, until Face, fuse bool) int {
+	return int(C.topo_solid_feat_draft_prism_for_until(s.val, f.val, C.double(angle), until.val, C.bool(fuse)))
+}
 
-TOPOCAPICALL int topo_solid_feat_draft_prism_for_until(
-    topo_solid_t s, topo_face_t f, double angle, topo_face_t until, _Bool fuse);
+func (s *Solid) RevolForRange(f *Face, a Axis1, from, end Face, fuse bool) int {
+	return int(C.topo_solid_feat_revol_for_range(s.val, f.val, a.val, from.val, end.val, C.bool(fuse)))
+}
 
-TOPOCAPICALL int topo_solid_feat_revol_for_range(topo_solid_t s, topo_face_t f,
-                                                 axis1_t Axes, topo_face_t from,
-                                                 topo_face_t end, _Bool fuse);
+func (s *Solid) RevolForUntil(f *Face, a Axis1, until Face, fuse bool) int {
+	return int(C.topo_solid_feat_revol_for_until(s.val, f.val, a.val, until.val, C.bool(fuse)))
+}
 
-TOPOCAPICALL int topo_solid_feat_revol_for_until(topo_solid_t s, topo_face_t f,
-                                                 axis1_t Axes,
-                                                 topo_face_t until, _Bool fuse);
+func (s *Solid) PipeForRange(f *Face, w *Wire, from, end Face, fuse bool) int {
+	return int(C.topo_solid_feat_pipe_for_range(s.val, f.val, w.val, from.val, end.val, C.bool(fuse)))
+}
 
-TOPOCAPICALL int topo_solid_feat_pipe_for_range(topo_solid_t s, topo_face_t f,
-                                                topo_wire_t Spine,
-                                                topo_face_t from,
-                                                topo_face_t end, _Bool fuse);
+func (s *Solid) PipeForUntil(f *Face, w *Wire, until Face, fuse bool) int {
+	return int(C.topo_solid_feat_pipe_for_until(s.val, f.val, w.val, until.val, C.bool(fuse)))
+}
 
-TOPOCAPICALL int topo_solid_feat_pipe_for_until(topo_solid_t s, topo_face_t f,
-                                                topo_wire_t Spine,
-                                                topo_face_t until, _Bool fuse);
+func (s *Solid) LinearForm(w *Wire, p *GeomPlane, d, d1 Dir3, fuse bool) int {
+	return int(C.topo_solid_linear_form(s.val, w.val, p.geom, d.val, d1.val, C.bool(fuse)))
+}
 
-TOPOCAPICALL int topo_solid_linear_form(topo_solid_t s, topo_wire_t w,
-                                        geom_plane_surface_t *p, dir3d_t d,
-                                        dir3d_t d1, _Bool fuse);
+func (s *Solid) RevolutionForm(w *Wire, p *GeomPlane, a Axis1, h1, h2 float64, fuse bool) int {
+	return int(C.topo_solid_revolution_form(s.val, w.val, p.geom, a.val, C.double(h1), C.double(h2), C.bool(fuse)))
+}
 
-TOPOCAPICALL int topo_solid_revolution_form(topo_solid_t s, topo_wire_t w,
-                                            geom_plane_surface_t *p,
-                                            axis1_t Axes, double h1, double h2,
-                                            _Bool fuse);
+func (s *Solid) SectionFace(pnt, nor Point3) *Face {
+	return &Face{val: C.topo_solid_section_face(s.val, pnt.val, nor.val)}
+}
 
-TOPOCAPICALL topo_face_t topo_solid_section_face(topo_solid_t s, pnt3d_t pnt,
-                                                 pnt3d_t nor);
-
-TOPOCAPICALL int topo_solid_convert_to_nurbs(topo_solid_t s);
-
-**/
+func (s *Solid) ConvertToNurbs() int {
+	return int(C.topo_solid_convert_to_nurbs(s.val))
+}
 
 func (t *Solid) Free() {
 	C.topo_solid_free(t.val)
 }
 
-/**
+func TopoMakeSolidFromCompSolid(S *CompSolid) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_comp_solid(S.val)}
+}
 
-TOPOCAPICALL topo_solid_t
-topo_shell_make_solid_from_comp_solid(topo_comp_solid_t S);
+func TopoMakeSolidFromShell(S *Shell) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_shell(S.val)}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solidd_from_shell(topo_shell_t S);
+func TopoMakeSolidFromTwoShell(S1, S2 *Shell) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_two_shell(S1.val, S2.val)}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_two_shell(topo_shell_t S1,
-                                                               topo_shell_t S2);
+func TopoMakeSolidFromThreeShell(S1, S2, S3 *Shell) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_three_shell(S1.val, S2.val, S3.val)}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_three_shell(
-    topo_shell_t S1, topo_shell_t S2, topo_shell_t S3);
+func TopoMakeSolidFromShells(S []Shell) *Solid {
+	shls := make([]C.struct__topo_shell_t, len(S))
+	for i := range S {
+		shls[i] = S[i].val
+	}
+	return &Solid{val: C.topo_solid_make_solid_from_shells(&shls[0], C.int(len(S)))}
+}
 
-TOPOCAPICALL topo_solid_t
-topo_shell_make_solid_from_shells(topo_shell_t *shells, int count);
+func TopoMakeSolidFromSolid(S *Solid) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_solid(S.val)}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_solid(topo_solid_t So);
+func TopoMakeSolidFromSolidShell(S *Solid, sl *Shell) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_solid_shell(S.val, sl.val)}
+}
 
-TOPOCAPICALL topo_solid_t
-topo_shell_make_solid_from_solid_shell(topo_solid_t So, topo_shell_t S);
+func TopoMakeSolidFromFaces(S []Face, tolerance float64) *Solid {
+	shls := make([]C.struct__topo_face_t, len(S))
+	for i := range S {
+		shls[i] = S[i].val
+	}
+	return &Solid{val: C.topo_solid_make_solid_from_faces(&shls[0], C.int(len(S)), C.double(tolerance))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_faces(topo_face_t *faces,
-                                                           int count,
-                                                           double tolerance);
+func TopoMakeSolidFromBox(dx, dy, dz float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_box(C.double(dx), C.double(dy), C.double(dz))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_box(double dx, double dy,
-                                                         double dz);
+func TopoMakeSolidFromBoxPoint(p Point3, dx, dy, dz float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_box_point(p.val, C.double(dx), C.double(dy), C.double(dz))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_box_point(pnt3d_t P,
-                                                               double dx,
-                                                               double dy,
-                                                               double dz);
+func TopoMakeSolidFromBoxTwoPoint(p1, p2 Point3) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_box_two_point(p1.val, p2.val)}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_box_two_point(pnt3d_t P1,
-                                                                   pnt3d_t P2);
+func TopoMakeSolidFromBoxAxis2(a Axis2, dx, dy, dz float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_box_axis2(a.val, C.double(dx), C.double(dy), C.double(dz))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_box_axis2(axis2_t Axes,
-                                                               double dx,
-                                                               double dy,
-                                                               double dz);
+func TopoMakeSolidFromCylinder(R, H float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_cylinder(C.double(R), C.double(H))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_cylinder(double R,
-                                                              double H);
+func TopoMakeSolidFromCylinderAngle(R, H, Angle float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_cylinder_angle(C.double(R), C.double(H), C.double(Angle))}
+}
 
-TOPOCAPICALL topo_solid_t
-topo_shell_make_solid_from_cylinder_angle(double R, double H, double Angle);
+func TopoMakeSolidFromCylinderAxis2(a Axis2, R, H float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_cylinder_axis2(a.val, C.double(R), C.double(H))}
+}
 
-TOPOCAPICALL topo_solid_t
-topo_shell_make_solid_from_cylinder_axis2(axis2_t Axes, double R, double H);
+func TopoMakeSolidFromCylinderAxis2Angle(a Axis2, R, H, Angle float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_cylinder_axis2_angle(a.val, C.double(R), C.double(H), C.double(Angle))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_cylinder_axis2_angle(
-    axis2_t Axes, double R, double H, double Angle);
+func TopoMakeSolidFromCone(R1, R2, H float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_cone(C.double(R1), C.double(R2), C.double(H))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_cone(double R1, double R2,
-                                                          double H);
+func TopoMakeSolidFromConeAngle(R1, R2, H, Angle float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_cone_angle(C.double(R1), C.double(R2), C.double(H), C.double(Angle))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_cone_angle(double R1,
-                                                                double R2,
-                                                                double H,
-                                                                double angle);
+func TopoMakeSolidFromConeAxis2(a Axis2, R1, R2, H float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_cone_axis2(a.val, C.double(R1), C.double(R2), C.double(H))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_cone_axis2(axis2_t Axes,
-                                                                double R1,
-                                                                double R2,
-                                                                double H);
+func TopoMakeSolidFromConeAxis2Angle(a Axis2, R1, R2, H, Angle float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_cone_axis2_angle(a.val, C.double(R1), C.double(R2), C.double(H), C.double(Angle))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_cone_axis2_angle(
-    axis2_t Axes, double R1, double R2, double H, double angle);
+func TopoMakeSolidFroRevolution(Meridian *GeomCurve) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_revolution(Meridian.geom)}
+}
 
-TOPOCAPICALL topo_solid_t
-topo_shell_make_solid_from_revolution(geom_curve_t *Meridian);
+func TopoMakeSolidFroRevolutionAngle(Meridian *GeomCurve, angle float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_revolution_angle(Meridian.geom, C.double(angle))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_revolution_angle(
-    geom_curve_t *Meridian, double angle);
+func TopoMakeSolidFroRevolutionLimit(Meridian *GeomCurve, VMin, VMax float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_revolution_limit(Meridian.geom, C.double(VMin), C.double(VMax))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_revolution_limit(
-    geom_curve_t *Meridian, double VMin, double VMax);
+func TopoMakeSolidFroRevolutionLimitAngle(Meridian *GeomCurve, VMin, VMax, angle float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_revolution_limit_angle(Meridian.geom, C.double(VMin), C.double(VMax), C.double(angle))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_revolution_limit_angle(
-    geom_curve_t *Meridian, double VMin, double VMax, double angle);
+func TopoMakeSolidFroRevolutionAxis2(a Axis2, Meridian *GeomCurve) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_revolution_axis2(a.val, Meridian.geom)}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_revolution_axis2(
-    axis2_t Axes, geom_curve_t *Meridian);
+func TopoMakeSolidFroRevolutionAxis2Angle(a Axis2, Meridian *GeomCurve, angle float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_revolution_axis2_angle(a.val, Meridian.geom, C.double(angle))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_revolution_axis2_angle(
-    axis2_t Axes, geom_curve_t *Meridian, double angle);
+func TopoMakeSolidFroRevolutionAxis2Limit(a Axis2, Meridian *GeomCurve, VMin, VMax float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_revolution_axis2_limit(a.val, Meridian.geom, C.double(VMin), C.double(VMax))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_revolution_axis2_limit(
-    axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax);
+func TopoMakeSolidFroRevolutionAxis2LimitAngle(a Axis2, Meridian *GeomCurve, VMin, VMax, angle float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_revolution_axis2_limit_angle(a.val, Meridian.geom, C.double(VMin), C.double(VMax), C.double(angle))}
+}
 
-TOPOCAPICALL topo_solid_t
-topo_shell_make_solid_from_revolution_axis2_limit_angle(axis2_t Axes,
-                                                        geom_curve_t *Meridian,
-                                                        double VMin,
-                                                        double VMax,
-                                                        double angle);
+func TopoMakeSolidFromSphere(R float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_sphere(C.double(R))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere(double R);
+func TopoMakeSolidFromSphereAngle(R, angle float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_sphere_angle(C.double(R), C.double(angle))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_angle(double R,
-                                                                  double angle);
+func TopoMakeSolidFromSphereTwoAngle(R, angle1, angle2 float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_sphere_two_angle(C.double(R), C.double(angle1), C.double(angle2))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_two_angle(
-    double R, double angle1, double angle2);
+func TopoMakeSolidFromSphereThreeAngle(R, angle1, angle2, angle3 float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_sphere_three_angle(C.double(R), C.double(angle1), C.double(angle2), C.double(angle3))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_three_angle(
-    double R, double angle1, double angle2, double angle3);
+func TopoMakeSolidFromSphereCenterAngle(c Point3, R, angle float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_sphere_center_angle(c.val, C.double(R), C.double(angle))}
+}
 
-TOPOCAPICALL topo_solid_t
-topo_shell_make_solid_from_sphere_center_raduis(pnt3d_t Center, double R);
+func TopoMakeSolidFromSphereCenterTwoAngle(c Point3, R, angle1, angle2 float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_sphere_center_two_angle(c.val, C.double(R), C.double(angle1), C.double(angle2))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_center_angle(
-    pnt3d_t Center, double R, double angle);
+func TopoMakeSolidFromSphereCenterThreeAngle(c Point3, R, angle1, angle2, angle3 float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_sphere_center_three_angle(c.val, C.double(R), C.double(angle1), C.double(angle2), C.double(angle3))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_center_two_angle(
-    pnt3d_t Center, double R, double angle1, double angle2);
+func TopoMakeSolidFromSphereAxis2(a Axis2, R float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_sphere_axis2(a.val, C.double(R))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_center_three_angle(
-    pnt3d_t Center, double R, double angle1, double angle2, double angle3);
+func TopoMakeSolidFromSphereAxis2Angle(a Axis2, R, angle float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_sphere_axis2_angle(a.val, C.double(R), C.double(angle))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_axis2(axis2_t Axis,
-                                                                  double R);
+func TopoMakeSolidFromSphereAxis2TwoAngle(a Axis2, R, angle1, angle2 float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_sphere_axis2_two_angle(a.val, C.double(R), C.double(angle1), C.double(angle2))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_axis2_angle(
-    axis2_t Axis, double R, double angle);
+func TopoMakeSolidFromSphereAxis2ThreeAngle(a Axis2, R, angle1, angle2, angle3 float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_sphere_axis2_three_angle(a.val, C.double(R), C.double(angle1), C.double(angle2), C.double(angle3))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_axis2_two_angle(
-    axis2_t Axis, double R, double angle1, double angle2);
+func TopoMakeSolidFromSphereTorus(R1, R2 float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_torus(C.double(R1), C.double(R2))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_sphere_axis2_three_angle(
-    axis2_t Axis, double R, double angle1, double angle2, double angle3);
+func TopoMakeSolidFromSphereTorusAngle(R1, R2, angle float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_torus_angle(C.double(R1), C.double(R2), C.double(angle))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus(double R1,
-                                                           double R2);
+func TopoMakeSolidFromSphereTorusTwoAngle(R1, R2, angle1, angle2 float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_torus_two_angle(C.double(R1), C.double(R2), C.double(angle1), C.double(angle2))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus_angle(double R1,
-                                                                 double R2,
-                                                                 double angle);
+func TopoMakeSolidFromSphereTorusThreeAngle(R1, R2, angle1, angle2, angle3 float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_torus_three_angle(C.double(R1), C.double(R2), C.double(angle1), C.double(angle2), C.double(angle3))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus_two_angle(
-    double R1, double R2, double angle1, double angle2);
+func TopoMakeSolidFromSphereTorusAxis2(a Axis2, R1, R2 float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_torus_axis2(a.val, C.double(R1), C.double(R2))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus_three_angle(
-    double R1, double R2, double angle1, double angle2, double angle);
+func TopoMakeSolidFromSphereTorusAxis2Angle(a Axis2, R1, R2, angle float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_torus_axis2_angle(a.val, C.double(R1), C.double(R2), C.double(angle))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus_axis2(axis2_t Axes,
-                                                                 double R1,
-                                                                 double R2);
+func TopoMakeSolidFromSphereTorusAxis2TwoAngle(a Axis2, R1, R2, angle1, angle2 float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_torus_axis2_two_angle(a.val, C.double(R1), C.double(R2), C.double(angle1), C.double(angle2))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus_axis2_angle(
-    axis2_t Axes, double R1, double R2, double angle);
+func TopoMakeSolidFromSphereTorusAxis2ThreeAngle(a Axis2, R1, R2, angle1, angle2, angle3 float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_torus_axis2_three_angle(a.val, C.double(R1), C.double(R2), C.double(angle1), C.double(angle2), C.double(angle3))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus_axis2_two_angle(
-    axis2_t Axes, double R1, double R2, double angle1, double angle2);
+func TopoMakeSolidFromSphereWedge(dx, dy, dz, ltx float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_wedge(C.double(dx), C.double(dy), C.double(dz), C.double(ltx))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_torus_axis2_three_angle(
-    axis2_t Axes, double R1, double R2, double angle1, double angle2,
-    double angle);
+func TopoMakeSolidFromSphereWedgeAxis2(a Axis2, dx, dy, dz, ltx float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_wedge_axis2(a.val, C.double(dx), C.double(dy), C.double(dz), C.double(ltx))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_wedge(double dx, double dy,
-                                                           double dz,
-                                                           double ltx);
+func TopoMakeSolidFromSphereWedgeLimit(dx, dy, dz, xmin, zmin, xmax, zmax float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_wedge_limit(C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax))}
+}
 
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_wedge_axis2(
-    axis2_t Axes, double dx, double dy, double dz, double ltx);
-
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_wedge_limit(
-    double dx, double dy, double dz, double xmin, double zmin, double xmax,
-    double zmax);
-
-TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_wedge_axis2_limit(
-    axis2_t Axes, double dx, double dy, double dz, double xmin, double zmin,
-    double xmax, double zmax);
-
-**/
+func TopoMakeSolidFromSphereWedgeAxis2Limit(a Axis2, dx, dy, dz, xmin, zmin, xmax, zmax float64) *Solid {
+	return &Solid{val: C.topo_solid_make_solid_from_wedge_axis2_limit(a.val, C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax))}
+}
 
 type Vertex struct {
 	val C.struct__topo_vertex_t

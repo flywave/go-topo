@@ -1657,7 +1657,7 @@ topo_solid_t topo_solid_make_solid_from_comp_solid(topo_comp_solid_t S) {
       flywave::topo::solid::make_solid(*cast_to_topo(S)))}};
 }
 
-topo_solid_t topo_solid_make_solidd_from_shell(topo_shell_t S) {
+topo_solid_t topo_solid_make_solid_from_shell(topo_shell_t S) {
   return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
       flywave::topo::solid::make_solid(*cast_to_topo(S)))}};
 }
@@ -1811,7 +1811,7 @@ topo_solid_t topo_solid_make_solid_from_revolution_limit_angle(
 }
 
 topo_solid_t
-topo_shell_make_solid_from_revolution_axis2(axis2_t Axes,
+topo_solid_make_solid_from_revolution_axis2(axis2_t Axes,
                                             geom_curve_t *Meridian) {
   return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
       flywave::topo::solid::make_solid_from_revolution(cast_to_gp(Axes),
