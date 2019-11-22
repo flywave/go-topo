@@ -244,6 +244,10 @@ func (s *Shape) Copy() *Shape {
 	return &Shape{val: C.topo_shape_copy(s.val)}
 }
 
+func (s *Shape) Share() *Shape {
+	return &Shape{val: C.topo_shape_share(s.val)}
+}
+
 func (s *Shape) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
 	C.topo_shape_mesh(s.val, m.val, C.double(tolerance), C.double(deflection), C.double(angle))
 }
@@ -279,12 +283,398 @@ func (t *Shape) Free() {
 	t.val = nil
 }
 
+func (t *Shape) AutoCast() interface{} {
+	switch t.Type() {
+	case TopoSolid:
+		var val C.struct__topo_solid_t
+		val.shp = C.topo_shape_share(t.val)
+		return &Solid{val: val}
+	case TopoShell:
+		var val C.struct__topo_shell_t
+		val.shp = C.topo_shape_share(t.val)
+		return &Shell{val: val}
+	case TopoFace:
+		var val C.struct__topo_face_t
+		val.shp = C.topo_shape_share(t.val)
+		return &Face{val: val}
+	case TopoEdge:
+		var val C.struct__topo_edge_t
+		val.shp = C.topo_shape_share(t.val)
+		return &Edge{val: val}
+	case TopoVertex:
+		var val C.struct__topo_vertex_t
+		val.shp = C.topo_shape_share(t.val)
+		return &Vertex{val: val}
+	case TopoWire:
+		var val C.struct__topo_wire_t
+		val.shp = C.topo_shape_share(t.val)
+		return &Wire{val: val}
+	case TopoCompound:
+		var val C.struct__topo_compound_t
+		val.shp = C.topo_shape_share(t.val)
+		return &Compound{val: val}
+	case TopoCompSolid:
+		var val C.struct__topo_comp_solid_t
+		val.shp = C.topo_shape_share(t.val)
+		return &CompSolid{val: val}
+	case TopoShape:
+		return &Shape{val: C.topo_shape_share(t.val)}
+	}
+	return nil
+}
+
 type CompSolid struct {
 	val C.struct__topo_comp_solid_t
 }
 
+func (s *CompSolid) IsNull() bool {
+	return bool(C.topo_shape_is_null(s.val.shp))
+}
+
+func (s *CompSolid) IsValid() bool {
+	return bool(C.topo_shape_is_valid(s.val.shp))
+}
+
+func (s *CompSolid) Equals(e *Shape) bool {
+	return bool(C.topo_shape_equals(s.val.shp, e.val))
+}
+
+func (s *CompSolid) Type() int {
+	return int(C.topo_shape_type(s.val.shp))
+}
+
+func (s *CompSolid) BBox() BBox {
+	return BBox{val: C.topo_shape_bounding_box(s.val.shp)}
+}
+
+func (s *CompSolid) Hash() int {
+	return int(C.topo_shape_hash_code(s.val.shp))
+}
+
+func (s *CompSolid) Transform(t Trsf) int {
+	return int(C.topo_shape_transform(s.val.shp, t.val))
+}
+
+func (s *CompSolid) Translate(v Vector3) int {
+	return int(C.topo_shape_translate(s.val.shp, v.val))
+}
+
+func (s *CompSolid) RotateFromPoint(angle float64, p1, p2 Point3) int {
+	return int(C.topo_shape_rotate_from_two_point(s.val.shp, C.double(angle), p1.val, p2.val))
+}
+
+func (s *CompSolid) RotateFromAxis1(angle float64, a Axis1) int {
+	return int(C.topo_shape_rotate_from_axis1(s.val.shp, C.double(angle), a.val))
+}
+
+func (s *CompSolid) RotateFromQuaternion(q Quaternion) int {
+	return int(C.topo_shape_rotate_from_quaternion(s.val.shp, q.val))
+}
+
+func (s *CompSolid) Scale(angle float64, a Point3) int {
+	return int(C.topo_shape_scale(s.val.shp, C.double(angle), a.val))
+}
+
+func (s *CompSolid) MirrorFromPointNorm(pnt, ner Point3) int {
+	return int(C.topo_shape_mirror_from_point_norm(s.val.shp, pnt.val, ner.val))
+}
+
+func (s *CompSolid) MirrorFromAxis1(a Axis1) int {
+	return int(C.topo_shape_mirror_from_axis1(s.val.shp, a.val))
+}
+
+func (s *CompSolid) MirrorFromAxis2(a Axis2) int {
+	return int(C.topo_shape_mirror_from_axis2(s.val.shp, a.val))
+}
+
+func (s *CompSolid) Transformed(t Trsf) *CompSolid {
+	var val C.struct__topo_comp_solid_t
+	val.shp = C.topo_shape_transformed(s.val.shp, t.val)
+	return &CompSolid{val: val}
+}
+
+func (s *CompSolid) Translated(v Vector3) *CompSolid {
+	var val C.struct__topo_comp_solid_t
+	val.shp = C.topo_shape_translated(s.val.shp, v.val)
+	return &CompSolid{val: val}
+}
+
+func (s *CompSolid) RotatedFromPoint(angle float64, p1, p2 Point3) *CompSolid {
+	var val C.struct__topo_comp_solid_t
+	val.shp = C.topo_shape_rotated_from_two_point(s.val.shp, C.double(angle), p1.val, p2.val)
+	return &CompSolid{val: val}
+}
+
+func (s *CompSolid) RotatedFromAxis1(angle float64, a Axis1) *CompSolid {
+	var val C.struct__topo_comp_solid_t
+	val.shp = C.topo_shape_rotated_from_axis1(s.val.shp, C.double(angle), a.val)
+	return &CompSolid{val: val}
+}
+
+func (s *CompSolid) RotatedFromQuaternion(q Quaternion) *CompSolid {
+	var val C.struct__topo_comp_solid_t
+	val.shp = C.topo_shape_rotated_from_quaternion(s.val.shp, q.val)
+	return &CompSolid{val: val}
+}
+
+func (s *CompSolid) Scaled(angle float64, a Point3) *CompSolid {
+	var val C.struct__topo_comp_solid_t
+	val.shp = C.topo_shape_scaled(s.val.shp, C.double(angle), a.val)
+	return &CompSolid{val: val}
+}
+
+func (s *CompSolid) MirroredFromPointNorm(pnt, ner Point3) *CompSolid {
+	var val C.struct__topo_comp_solid_t
+	val.shp = C.topo_shape_mirrored_from_point_norm(s.val.shp, pnt.val, ner.val)
+	return &CompSolid{val: val}
+}
+
+func (s *CompSolid) MirroredFromAxis1(a Axis1) *CompSolid {
+	var val C.struct__topo_comp_solid_t
+	val.shp = C.topo_shape_mirrored_from_axis1(s.val.shp, a.val)
+	return &CompSolid{val: val}
+}
+
+func (s *CompSolid) MirroredFromAxis2(a Axis2) *CompSolid {
+	var val C.struct__topo_comp_solid_t
+	val.shp = C.topo_shape_mirrored_from_axis2(s.val.shp, a.val)
+	return &CompSolid{val: val}
+}
+
+func (s *CompSolid) GetOrientation() int {
+	return int(C.topo_shape_get_orientation(s.val.shp))
+}
+
+func (s *CompSolid) SetOrientation(t int) {
+	C.topo_shape_set_orientation(s.val.shp, C.int(t))
+}
+
+func (s *CompSolid) GetLocation() *Location {
+	return &Location{val: C.topo_shape_get_location(s.val.shp)}
+}
+
+func (s *CompSolid) SetLocation(t *Location) {
+	C.topo_shape_set_location(s.val.shp, t.val)
+}
+
+func (s *CompSolid) FixShape() bool {
+	return bool(C.topo_shape_fix_shape(s.val.shp))
+}
+
+func (s *CompSolid) Copy() *CompSolid {
+	var val C.struct__topo_comp_solid_t
+	val.shp = C.topo_shape_copy(s.val.shp)
+	return &CompSolid{val: val}
+}
+
+func (s *CompSolid) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
+	C.topo_shape_mesh(s.val.shp, m.val, C.double(tolerance), C.double(deflection), C.double(angle))
+}
+
+func (s *CompSolid) SetSurfaceColour(c Color) {
+	C.topo_shape_set_surface_colour(s.val.shp, c.val)
+}
+
+func (s *CompSolid) SetCurveColour(c Color) {
+	C.topo_shape_set_curve_colour(s.val.shp, c.val)
+}
+
+func (s *CompSolid) SetLabel(l string) {
+	str := C.CString(l)
+	defer C.free(unsafe.Pointer(str))
+	C.topo_shape_set_label(s.val.shp, str)
+}
+
+func (s *CompSolid) GetSurfaceColour() Color {
+	return Color{val: C.topo_shape_get_surface_colour(s.val.shp)}
+}
+
+func (s *CompSolid) GetCurveColour() Color {
+	return Color{val: C.topo_shape_get_surface_colour(s.val.shp)}
+}
+
+func (s *CompSolid) GetLabel() string {
+	return C.GoString(C.topo_shape_get_label(s.val.shp))
+}
+
 func (t *CompSolid) Free() {
 	C.topo_comp_solid_free(t.val)
+}
+
+func (t *CompSolid) solid() C.struct__topo_solid_t {
+	var val C.struct__topo_solid_t
+	val.shp = t.val.shp
+	return val
+}
+
+func (t *CompSolid) ToShape() *Shape {
+	return &Shape{val: C.topo_shape_share(t.val.shp)}
+}
+
+func (t *CompSolid) ToSolid() *Solid {
+	var val C.struct__topo_solid_t
+	val.shp = C.topo_shape_share(t.val.shp)
+	return &Solid{val: val}
+}
+
+func (s *CompSolid) NumSolids() int {
+	return int(C.topo_solid_num_solids(s.solid()))
+}
+
+func (s *CompSolid) NumFaces() int {
+	return int(C.topo_solid_num_faces(s.solid()))
+}
+
+func (s *CompSolid) Area() float64 {
+	return float64(C.topo_solid_area(s.solid()))
+}
+
+func (s *CompSolid) Volume() float64 {
+	return float64(C.topo_solid_volume(s.solid()))
+}
+
+func (s *CompSolid) Inertia() BBox {
+	return BBox{val: C.topo_solid_inertia(s.solid())}
+}
+
+func (s *CompSolid) CentreOfMass() Point3 {
+	return Point3{val: C.topo_solid_centre_of_mass(s.solid())}
+}
+
+func (s *CompSolid) Extrude(f *Face, p1, p2 Point3) int {
+	return int(C.topo_solid_extrude(s.solid(), f.val, p1.val, p2.val))
+}
+
+func (s *CompSolid) ExtrudeFromDir(f *Face, d Vector3) int {
+	return int(C.topo_solid_extrude_from_dir(s.solid(), f.val, d.val))
+}
+
+func (s *CompSolid) Revolve(f *Face, p1, p2 Point3, angle float64) int {
+	return int(C.topo_solid_revolve(s.solid(), f.val, p1.val, p2.val, C.double(angle)))
+}
+
+func (s *CompSolid) Loft(profiles []Shape, ruled bool, tolerance float64) int {
+	cshp := make([]*C.struct__topo_shape_t, len(profiles))
+	for i := range profiles {
+		cshp[i] = profiles[i].val
+	}
+	return int(C.topo_solid_loft(s.solid(), &cshp[0], C.int(len(profiles)), C.bool(ruled), C.double(tolerance)))
+}
+
+func (s *CompSolid) Pipe(f *Face, w Wire) int {
+	return int(C.topo_solid_pipe(s.solid(), f.val, w.val))
+}
+
+func (s *CompSolid) Sweep(spine *Wire, profiles []Shape, cornerMode int) int {
+	cshp := make([]*C.struct__topo_shape_t, len(profiles))
+	for i := range profiles {
+		cshp[i] = profiles[i].val
+	}
+	return int(C.topo_solid_sweep(s.solid(), spine.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
+}
+
+func (s *CompSolid) Boolean(tool *Solid, op int) int {
+	return int(C.topo_solid_boolean(s.solid(), tool.val, C.int(op)))
+}
+
+func (s *CompSolid) Fillet(edges []Edge, radius []float64) int {
+	cshp := make([]C.struct__topo_edge_t, len(edges))
+	for i := range edges {
+		cshp[i] = edges[i].val
+	}
+	return int(C.topo_solid_fillet(s.solid(), &cshp[0], C.int(len(edges)), (*C.double)(unsafe.Pointer(&radius[0])), C.int(len(radius))))
+}
+
+func (s *CompSolid) Chamfer(edges []Edge, distances []float64) int {
+	cshp := make([]C.struct__topo_edge_t, len(edges))
+	for i := range edges {
+		cshp[i] = edges[i].val
+	}
+	return int(C.topo_solid_chamfer(s.solid(), &cshp[0], C.int(len(edges)), (*C.double)(unsafe.Pointer(&distances[0])), C.int(len(distances))))
+}
+
+func (s *CompSolid) Shelling(faces []Face, offset, tolerance float64) int {
+	cshp := make([]C.struct__topo_face_t, len(faces))
+	for i := range faces {
+		cshp[i] = faces[i].val
+	}
+	return int(C.topo_solid_shelling(s.solid(), &cshp[0], C.int(len(faces)), C.double(offset), C.double(tolerance)))
+}
+
+func (s *CompSolid) Offset(f *Face, offset, tolerance float64) int {
+	return int(C.topo_solid_offset(s.solid(), f.val, C.double(offset), C.double(tolerance)))
+}
+
+func (s *CompSolid) Draft(faces []Face, d Dir3, angle float64, p Plane) int {
+	fs := make([]C.struct__topo_face_t, len(faces))
+	for i := range faces {
+		fs[i] = faces[i].val
+	}
+	return int(C.topo_solid_draft(s.solid(), &fs[0], C.int(len(faces)), d.val, C.double(angle), p.val))
+}
+
+func (s *CompSolid) EvolvedFromFace(Spine *Face, Profil *Wire) int {
+	return int(C.topo_solid_evolved_from_face(s.solid(), Spine.val, Profil.val))
+}
+
+func (s *CompSolid) EvolvedFromWire(Spine *Wire, Profil *Wire) int {
+	return int(C.topo_solid_evolved_from_wire(s.solid(), Spine.val, Profil.val))
+}
+
+func (s *CompSolid) FeatPrism(f *Face, d Dir3, height float64, fuse bool) int {
+	return int(C.topo_solid_feat_prism(s.solid(), f.val, d.val, C.double(height), C.bool(fuse)))
+}
+
+func (s *CompSolid) FeatPrismForRange(f *Face, d Dir3, from, end Face, fuse bool) int {
+	return int(C.topo_solid_feat_prism_for_range(s.solid(), f.val, d.val, from.val, end.val, C.bool(fuse)))
+}
+
+func (s *CompSolid) FeatPrismForUntil(f *Face, d Dir3, until Face, fuse bool) int {
+	return int(C.topo_solid_feat_prism_for_until(s.solid(), f.val, d.val, until.val, C.bool(fuse)))
+}
+
+func (s *CompSolid) DraftPrism(f *Face, angle, height float64, fuse bool) int {
+	return int(C.topo_solid_feat_draft_prism(s.solid(), f.val, C.double(angle), C.double(height), C.bool(fuse)))
+}
+
+func (s *CompSolid) DraftPrismForRange(f *Face, angle float64, from, end Face, fuse bool) int {
+	return int(C.topo_solid_feat_draft_prism_for_range(s.solid(), f.val, C.double(angle), from.val, end.val, C.bool(fuse)))
+}
+
+func (s *CompSolid) DraftPrismForUntil(f *Face, angle float64, until Face, fuse bool) int {
+	return int(C.topo_solid_feat_draft_prism_for_until(s.solid(), f.val, C.double(angle), until.val, C.bool(fuse)))
+}
+
+func (s *CompSolid) RevolForRange(f *Face, a Axis1, from, end Face, fuse bool) int {
+	return int(C.topo_solid_feat_revol_for_range(s.solid(), f.val, a.val, from.val, end.val, C.bool(fuse)))
+}
+
+func (s *CompSolid) RevolForUntil(f *Face, a Axis1, until Face, fuse bool) int {
+	return int(C.topo_solid_feat_revol_for_until(s.solid(), f.val, a.val, until.val, C.bool(fuse)))
+}
+
+func (s *CompSolid) PipeForRange(f *Face, w *Wire, from, end Face, fuse bool) int {
+	return int(C.topo_solid_feat_pipe_for_range(s.solid(), f.val, w.val, from.val, end.val, C.bool(fuse)))
+}
+
+func (s *CompSolid) PipeForUntil(f *Face, w *Wire, until Face, fuse bool) int {
+	return int(C.topo_solid_feat_pipe_for_until(s.solid(), f.val, w.val, until.val, C.bool(fuse)))
+}
+
+func (s *CompSolid) LinearForm(w *Wire, p *GeomPlane, d, d1 Dir3, fuse bool) int {
+	return int(C.topo_solid_linear_form(s.solid(), w.val, p.geom, d.val, d1.val, C.bool(fuse)))
+}
+
+func (s *CompSolid) RevolutionForm(w *Wire, p *GeomPlane, a Axis1, h1, h2 float64, fuse bool) int {
+	return int(C.topo_solid_revolution_form(s.solid(), w.val, p.geom, a.val, C.double(h1), C.double(h2), C.bool(fuse)))
+}
+
+func (s *CompSolid) SectionFace(pnt, nor Point3) *Face {
+	return &Face{val: C.topo_solid_section_face(s.solid(), pnt.val, nor.val)}
+}
+
+func (s *CompSolid) ConvertToNurbs() int {
+	return int(C.topo_solid_convert_to_nurbs(s.solid()))
 }
 
 func TopoCompSolidMake(s []Solid) *CompSolid {
@@ -299,8 +689,354 @@ type Compound struct {
 	val C.struct__topo_compound_t
 }
 
+func (s *Compound) IsNull() bool {
+	return bool(C.topo_shape_is_null(s.val.shp))
+}
+
+func (s *Compound) IsValid() bool {
+	return bool(C.topo_shape_is_valid(s.val.shp))
+}
+
+func (s *Compound) Equals(e *Shape) bool {
+	return bool(C.topo_shape_equals(s.val.shp, e.val))
+}
+
+func (s *Compound) Type() int {
+	return int(C.topo_shape_type(s.val.shp))
+}
+
+func (s *Compound) BBox() BBox {
+	return BBox{val: C.topo_shape_bounding_box(s.val.shp)}
+}
+
+func (s *Compound) Hash() int {
+	return int(C.topo_shape_hash_code(s.val.shp))
+}
+
+func (s *Compound) Transform(t Trsf) int {
+	return int(C.topo_shape_transform(s.val.shp, t.val))
+}
+
+func (s *Compound) Translate(v Vector3) int {
+	return int(C.topo_shape_translate(s.val.shp, v.val))
+}
+
+func (s *Compound) RotateFromPoint(angle float64, p1, p2 Point3) int {
+	return int(C.topo_shape_rotate_from_two_point(s.val.shp, C.double(angle), p1.val, p2.val))
+}
+
+func (s *Compound) RotateFromAxis1(angle float64, a Axis1) int {
+	return int(C.topo_shape_rotate_from_axis1(s.val.shp, C.double(angle), a.val))
+}
+
+func (s *Compound) RotateFromQuaternion(q Quaternion) int {
+	return int(C.topo_shape_rotate_from_quaternion(s.val.shp, q.val))
+}
+
+func (s *Compound) Scale(angle float64, a Point3) int {
+	return int(C.topo_shape_scale(s.val.shp, C.double(angle), a.val))
+}
+
+func (s *Compound) MirrorFromPointNorm(pnt, ner Point3) int {
+	return int(C.topo_shape_mirror_from_point_norm(s.val.shp, pnt.val, ner.val))
+}
+
+func (s *Compound) MirrorFromAxis1(a Axis1) int {
+	return int(C.topo_shape_mirror_from_axis1(s.val.shp, a.val))
+}
+
+func (s *Compound) MirrorFromAxis2(a Axis2) int {
+	return int(C.topo_shape_mirror_from_axis2(s.val.shp, a.val))
+}
+
+func (s *Compound) Transformed(t Trsf) *Compound {
+	var val C.struct__topo_compound_t
+	val.shp = C.topo_shape_transformed(s.val.shp, t.val)
+	return &Compound{val: val}
+}
+
+func (s *Compound) Translated(v Vector3) *Compound {
+	var val C.struct__topo_compound_t
+	val.shp = C.topo_shape_translated(s.val.shp, v.val)
+	return &Compound{val: val}
+}
+
+func (s *Compound) RotatedFromPoint(angle float64, p1, p2 Point3) *Compound {
+	var val C.struct__topo_compound_t
+	val.shp = C.topo_shape_rotated_from_two_point(s.val.shp, C.double(angle), p1.val, p2.val)
+	return &Compound{val: val}
+}
+
+func (s *Compound) RotatedFromAxis1(angle float64, a Axis1) *Compound {
+	var val C.struct__topo_compound_t
+	val.shp = C.topo_shape_rotated_from_axis1(s.val.shp, C.double(angle), a.val)
+	return &Compound{val: val}
+}
+
+func (s *Compound) RotatedFromQuaternion(q Quaternion) *Compound {
+	var val C.struct__topo_compound_t
+	val.shp = C.topo_shape_rotated_from_quaternion(s.val.shp, q.val)
+	return &Compound{val: val}
+}
+
+func (s *Compound) Scaled(angle float64, a Point3) *Compound {
+	var val C.struct__topo_compound_t
+	val.shp = C.topo_shape_scaled(s.val.shp, C.double(angle), a.val)
+	return &Compound{val: val}
+}
+
+func (s *Compound) MirroredFromPointNorm(pnt, ner Point3) *Compound {
+	var val C.struct__topo_compound_t
+	val.shp = C.topo_shape_mirrored_from_point_norm(s.val.shp, pnt.val, ner.val)
+	return &Compound{val: val}
+}
+
+func (s *Compound) MirroredFromAxis1(a Axis1) *Compound {
+	var val C.struct__topo_compound_t
+	val.shp = C.topo_shape_mirrored_from_axis1(s.val.shp, a.val)
+	return &Compound{val: val}
+}
+
+func (s *Compound) MirroredFromAxis2(a Axis2) *Compound {
+	var val C.struct__topo_compound_t
+	val.shp = C.topo_shape_mirrored_from_axis2(s.val.shp, a.val)
+	return &Compound{val: val}
+}
+
+func (s *Compound) GetOrientation() int {
+	return int(C.topo_shape_get_orientation(s.val.shp))
+}
+
+func (s *Compound) SetOrientation(t int) {
+	C.topo_shape_set_orientation(s.val.shp, C.int(t))
+}
+
+func (s *Compound) GetLocation() *Location {
+	return &Location{val: C.topo_shape_get_location(s.val.shp)}
+}
+
+func (s *Compound) SetLocation(t *Location) {
+	C.topo_shape_set_location(s.val.shp, t.val)
+}
+
+func (s *Compound) FixShape() bool {
+	return bool(C.topo_shape_fix_shape(s.val.shp))
+}
+
+func (s *Compound) Copy() *Compound {
+	var val C.struct__topo_compound_t
+	val.shp = C.topo_shape_copy(s.val.shp)
+	return &Compound{val: val}
+}
+
+func (s *Compound) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
+	C.topo_shape_mesh(s.val.shp, m.val, C.double(tolerance), C.double(deflection), C.double(angle))
+}
+
+func (s *Compound) SetSurfaceColour(c Color) {
+	C.topo_shape_set_surface_colour(s.val.shp, c.val)
+}
+
+func (s *Compound) SetCurveColour(c Color) {
+	C.topo_shape_set_curve_colour(s.val.shp, c.val)
+}
+
+func (s *Compound) SetLabel(l string) {
+	str := C.CString(l)
+	defer C.free(unsafe.Pointer(str))
+	C.topo_shape_set_label(s.val.shp, str)
+}
+
+func (s *Compound) GetSurfaceColour() Color {
+	return Color{val: C.topo_shape_get_surface_colour(s.val.shp)}
+}
+
+func (s *Compound) GetCurveColour() Color {
+	return Color{val: C.topo_shape_get_surface_colour(s.val.shp)}
+}
+
+func (s *Compound) GetLabel() string {
+	return C.GoString(C.topo_shape_get_label(s.val.shp))
+}
+
 func (t *Compound) Free() {
 	C.topo_compound_free(t.val)
+}
+
+func (t *Compound) solid() C.struct__topo_solid_t {
+	var val C.struct__topo_solid_t
+	val.shp = t.val.shp
+	return val
+}
+
+func (t *Compound) ToShape() *Shape {
+	return &Shape{val: C.topo_shape_share(t.val.shp)}
+}
+
+func (t *Compound) ToSolid() *Solid {
+	var val C.struct__topo_solid_t
+	val.shp = C.topo_shape_share(t.val.shp)
+	return &Solid{val: val}
+}
+
+func (s *Compound) NumSolids() int {
+	return int(C.topo_solid_num_solids(s.solid()))
+}
+
+func (s *Compound) NumFaces() int {
+	return int(C.topo_solid_num_faces(s.solid()))
+}
+
+func (s *Compound) Area() float64 {
+	return float64(C.topo_solid_area(s.solid()))
+}
+
+func (s *Compound) Volume() float64 {
+	return float64(C.topo_solid_volume(s.solid()))
+}
+
+func (s *Compound) Inertia() BBox {
+	return BBox{val: C.topo_solid_inertia(s.solid())}
+}
+
+func (s *Compound) CentreOfMass() Point3 {
+	return Point3{val: C.topo_solid_centre_of_mass(s.solid())}
+}
+
+func (s *Compound) Extrude(f *Face, p1, p2 Point3) int {
+	return int(C.topo_solid_extrude(s.solid(), f.val, p1.val, p2.val))
+}
+
+func (s *Compound) ExtrudeFromDir(f *Face, d Vector3) int {
+	return int(C.topo_solid_extrude_from_dir(s.solid(), f.val, d.val))
+}
+
+func (s *Compound) Revolve(f *Face, p1, p2 Point3, angle float64) int {
+	return int(C.topo_solid_revolve(s.solid(), f.val, p1.val, p2.val, C.double(angle)))
+}
+
+func (s *Compound) Loft(profiles []Shape, ruled bool, tolerance float64) int {
+	cshp := make([]*C.struct__topo_shape_t, len(profiles))
+	for i := range profiles {
+		cshp[i] = profiles[i].val
+	}
+	return int(C.topo_solid_loft(s.solid(), &cshp[0], C.int(len(profiles)), C.bool(ruled), C.double(tolerance)))
+}
+
+func (s *Compound) Pipe(f *Face, w Wire) int {
+	return int(C.topo_solid_pipe(s.solid(), f.val, w.val))
+}
+
+func (s *Compound) Sweep(spine *Wire, profiles []Shape, cornerMode int) int {
+	cshp := make([]*C.struct__topo_shape_t, len(profiles))
+	for i := range profiles {
+		cshp[i] = profiles[i].val
+	}
+	return int(C.topo_solid_sweep(s.solid(), spine.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
+}
+
+func (s *Compound) Boolean(tool *Solid, op int) int {
+	return int(C.topo_solid_boolean(s.solid(), tool.val, C.int(op)))
+}
+
+func (s *Compound) Fillet(edges []Edge, radius []float64) int {
+	cshp := make([]C.struct__topo_edge_t, len(edges))
+	for i := range edges {
+		cshp[i] = edges[i].val
+	}
+	return int(C.topo_solid_fillet(s.solid(), &cshp[0], C.int(len(edges)), (*C.double)(unsafe.Pointer(&radius[0])), C.int(len(radius))))
+}
+
+func (s *Compound) Chamfer(edges []Edge, distances []float64) int {
+	cshp := make([]C.struct__topo_edge_t, len(edges))
+	for i := range edges {
+		cshp[i] = edges[i].val
+	}
+	return int(C.topo_solid_chamfer(s.solid(), &cshp[0], C.int(len(edges)), (*C.double)(unsafe.Pointer(&distances[0])), C.int(len(distances))))
+}
+
+func (s *Compound) Shelling(faces []Face, offset, tolerance float64) int {
+	cshp := make([]C.struct__topo_face_t, len(faces))
+	for i := range faces {
+		cshp[i] = faces[i].val
+	}
+	return int(C.topo_solid_shelling(s.solid(), &cshp[0], C.int(len(faces)), C.double(offset), C.double(tolerance)))
+}
+
+func (s *Compound) Offset(f *Face, offset, tolerance float64) int {
+	return int(C.topo_solid_offset(s.solid(), f.val, C.double(offset), C.double(tolerance)))
+}
+
+func (s *Compound) Draft(faces []Face, d Dir3, angle float64, p Plane) int {
+	fs := make([]C.struct__topo_face_t, len(faces))
+	for i := range faces {
+		fs[i] = faces[i].val
+	}
+	return int(C.topo_solid_draft(s.solid(), &fs[0], C.int(len(faces)), d.val, C.double(angle), p.val))
+}
+
+func (s *Compound) EvolvedFromFace(Spine *Face, Profil *Wire) int {
+	return int(C.topo_solid_evolved_from_face(s.solid(), Spine.val, Profil.val))
+}
+
+func (s *Compound) EvolvedFromWire(Spine *Wire, Profil *Wire) int {
+	return int(C.topo_solid_evolved_from_wire(s.solid(), Spine.val, Profil.val))
+}
+
+func (s *Compound) FeatPrism(f *Face, d Dir3, height float64, fuse bool) int {
+	return int(C.topo_solid_feat_prism(s.solid(), f.val, d.val, C.double(height), C.bool(fuse)))
+}
+
+func (s *Compound) FeatPrismForRange(f *Face, d Dir3, from, end Face, fuse bool) int {
+	return int(C.topo_solid_feat_prism_for_range(s.solid(), f.val, d.val, from.val, end.val, C.bool(fuse)))
+}
+
+func (s *Compound) FeatPrismForUntil(f *Face, d Dir3, until Face, fuse bool) int {
+	return int(C.topo_solid_feat_prism_for_until(s.solid(), f.val, d.val, until.val, C.bool(fuse)))
+}
+
+func (s *Compound) DraftPrism(f *Face, angle, height float64, fuse bool) int {
+	return int(C.topo_solid_feat_draft_prism(s.solid(), f.val, C.double(angle), C.double(height), C.bool(fuse)))
+}
+
+func (s *Compound) DraftPrismForRange(f *Face, angle float64, from, end Face, fuse bool) int {
+	return int(C.topo_solid_feat_draft_prism_for_range(s.solid(), f.val, C.double(angle), from.val, end.val, C.bool(fuse)))
+}
+
+func (s *Compound) DraftPrismForUntil(f *Face, angle float64, until Face, fuse bool) int {
+	return int(C.topo_solid_feat_draft_prism_for_until(s.solid(), f.val, C.double(angle), until.val, C.bool(fuse)))
+}
+
+func (s *Compound) RevolForRange(f *Face, a Axis1, from, end Face, fuse bool) int {
+	return int(C.topo_solid_feat_revol_for_range(s.solid(), f.val, a.val, from.val, end.val, C.bool(fuse)))
+}
+
+func (s *Compound) RevolForUntil(f *Face, a Axis1, until Face, fuse bool) int {
+	return int(C.topo_solid_feat_revol_for_until(s.solid(), f.val, a.val, until.val, C.bool(fuse)))
+}
+
+func (s *Compound) PipeForRange(f *Face, w *Wire, from, end Face, fuse bool) int {
+	return int(C.topo_solid_feat_pipe_for_range(s.solid(), f.val, w.val, from.val, end.val, C.bool(fuse)))
+}
+
+func (s *Compound) PipeForUntil(f *Face, w *Wire, until Face, fuse bool) int {
+	return int(C.topo_solid_feat_pipe_for_until(s.solid(), f.val, w.val, until.val, C.bool(fuse)))
+}
+
+func (s *Compound) LinearForm(w *Wire, p *GeomPlane, d, d1 Dir3, fuse bool) int {
+	return int(C.topo_solid_linear_form(s.solid(), w.val, p.geom, d.val, d1.val, C.bool(fuse)))
+}
+
+func (s *Compound) RevolutionForm(w *Wire, p *GeomPlane, a Axis1, h1, h2 float64, fuse bool) int {
+	return int(C.topo_solid_revolution_form(s.solid(), w.val, p.geom, a.val, C.double(h1), C.double(h2), C.bool(fuse)))
+}
+
+func (s *Compound) SectionFace(pnt, nor Point3) *Face {
+	return &Face{val: C.topo_solid_section_face(s.solid(), pnt.val, nor.val)}
+}
+
+func (s *Compound) ConvertToNurbs() int {
+	return int(C.topo_solid_convert_to_nurbs(s.solid()))
 }
 
 func TopoCompoundMake(s []Shape) *Compound {
@@ -313,6 +1049,176 @@ func TopoCompoundMake(s []Shape) *Compound {
 
 type Edge struct {
 	val C.struct__topo_edge_t
+}
+
+func (s *Edge) IsNull() bool {
+	return bool(C.topo_shape_is_null(s.val.shp))
+}
+
+func (s *Edge) IsValid() bool {
+	return bool(C.topo_shape_is_valid(s.val.shp))
+}
+
+func (s *Edge) Equals(e *Shape) bool {
+	return bool(C.topo_shape_equals(s.val.shp, e.val))
+}
+
+func (s *Edge) Type() int {
+	return int(C.topo_shape_type(s.val.shp))
+}
+
+func (s *Edge) BBox() BBox {
+	return BBox{val: C.topo_shape_bounding_box(s.val.shp)}
+}
+
+func (s *Edge) Hash() int {
+	return int(C.topo_shape_hash_code(s.val.shp))
+}
+
+func (s *Edge) Transform(t Trsf) int {
+	return int(C.topo_shape_transform(s.val.shp, t.val))
+}
+
+func (s *Edge) Translate(v Vector3) int {
+	return int(C.topo_shape_translate(s.val.shp, v.val))
+}
+
+func (s *Edge) RotateFromPoint(angle float64, p1, p2 Point3) int {
+	return int(C.topo_shape_rotate_from_two_point(s.val.shp, C.double(angle), p1.val, p2.val))
+}
+
+func (s *Edge) RotateFromAxis1(angle float64, a Axis1) int {
+	return int(C.topo_shape_rotate_from_axis1(s.val.shp, C.double(angle), a.val))
+}
+
+func (s *Edge) RotateFromQuaternion(q Quaternion) int {
+	return int(C.topo_shape_rotate_from_quaternion(s.val.shp, q.val))
+}
+
+func (s *Edge) Scale(angle float64, a Point3) int {
+	return int(C.topo_shape_scale(s.val.shp, C.double(angle), a.val))
+}
+
+func (s *Edge) MirrorFromPointNorm(pnt, ner Point3) int {
+	return int(C.topo_shape_mirror_from_point_norm(s.val.shp, pnt.val, ner.val))
+}
+
+func (s *Edge) MirrorFromAxis1(a Axis1) int {
+	return int(C.topo_shape_mirror_from_axis1(s.val.shp, a.val))
+}
+
+func (s *Edge) MirrorFromAxis2(a Axis2) int {
+	return int(C.topo_shape_mirror_from_axis2(s.val.shp, a.val))
+}
+
+func (s *Edge) Transformed(t Trsf) *Edge {
+	var val C.struct__topo_edge_t
+	val.shp = C.topo_shape_transformed(s.val.shp, t.val)
+	return &Edge{val: val}
+}
+
+func (s *Edge) Translated(v Vector3) *Edge {
+	var val C.struct__topo_edge_t
+	val.shp = C.topo_shape_translated(s.val.shp, v.val)
+	return &Edge{val: val}
+}
+
+func (s *Edge) RotatedFromPoint(angle float64, p1, p2 Point3) *Edge {
+	var val C.struct__topo_edge_t
+	val.shp = C.topo_shape_rotated_from_two_point(s.val.shp, C.double(angle), p1.val, p2.val)
+	return &Edge{val: val}
+}
+
+func (s *Edge) RotatedFromAxis1(angle float64, a Axis1) *Edge {
+	var val C.struct__topo_edge_t
+	val.shp = C.topo_shape_rotated_from_axis1(s.val.shp, C.double(angle), a.val)
+	return &Edge{val: val}
+}
+
+func (s *Edge) RotatedFromQuaternion(q Quaternion) *Edge {
+	var val C.struct__topo_edge_t
+	val.shp = C.topo_shape_rotated_from_quaternion(s.val.shp, q.val)
+	return &Edge{val: val}
+}
+
+func (s *Edge) Scaled(angle float64, a Point3) *Edge {
+	var val C.struct__topo_edge_t
+	val.shp = C.topo_shape_scaled(s.val.shp, C.double(angle), a.val)
+	return &Edge{val: val}
+}
+
+func (s *Edge) MirroredFromPointNorm(pnt, ner Point3) *Edge {
+	var val C.struct__topo_edge_t
+	val.shp = C.topo_shape_mirrored_from_point_norm(s.val.shp, pnt.val, ner.val)
+	return &Edge{val: val}
+}
+
+func (s *Edge) MirroredFromAxis1(a Axis1) *Edge {
+	var val C.struct__topo_edge_t
+	val.shp = C.topo_shape_mirrored_from_axis1(s.val.shp, a.val)
+	return &Edge{val: val}
+}
+
+func (s *Edge) MirroredFromAxis2(a Axis2) *Edge {
+	var val C.struct__topo_edge_t
+	val.shp = C.topo_shape_mirrored_from_axis2(s.val.shp, a.val)
+	return &Edge{val: val}
+}
+
+func (s *Edge) GetOrientation() int {
+	return int(C.topo_shape_get_orientation(s.val.shp))
+}
+
+func (s *Edge) SetOrientation(t int) {
+	C.topo_shape_set_orientation(s.val.shp, C.int(t))
+}
+
+func (s *Edge) GetLocation() *Location {
+	return &Location{val: C.topo_shape_get_location(s.val.shp)}
+}
+
+func (s *Edge) SetLocation(t *Location) {
+	C.topo_shape_set_location(s.val.shp, t.val)
+}
+
+func (s *Edge) FixShape() bool {
+	return bool(C.topo_shape_fix_shape(s.val.shp))
+}
+
+func (s *Edge) Copy() *Edge {
+	var val C.struct__topo_edge_t
+	val.shp = C.topo_shape_copy(s.val.shp)
+	return &Edge{val: val}
+}
+
+func (s *Edge) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
+	C.topo_shape_mesh(s.val.shp, m.val, C.double(tolerance), C.double(deflection), C.double(angle))
+}
+
+func (s *Edge) SetSurfaceColour(c Color) {
+	C.topo_shape_set_surface_colour(s.val.shp, c.val)
+}
+
+func (s *Edge) SetCurveColour(c Color) {
+	C.topo_shape_set_curve_colour(s.val.shp, c.val)
+}
+
+func (s *Edge) SetLabel(l string) {
+	str := C.CString(l)
+	defer C.free(unsafe.Pointer(str))
+	C.topo_shape_set_label(s.val.shp, str)
+}
+
+func (s *Edge) GetSurfaceColour() Color {
+	return Color{val: C.topo_shape_get_surface_colour(s.val.shp)}
+}
+
+func (s *Edge) GetCurveColour() Color {
+	return Color{val: C.topo_shape_get_surface_colour(s.val.shp)}
+}
+
+func (s *Edge) GetLabel() string {
+	return C.GoString(C.topo_shape_get_label(s.val.shp))
 }
 
 func (t *Edge) IsSeam(f Face) bool {
@@ -349,6 +1255,10 @@ func (t *Edge) IsCurve3d() bool {
 
 func (t *Edge) ToCurve3d() {
 	C.topo_edge_convert_to_curve3d(t.val)
+}
+
+func (t *Edge) ToShape() *Shape {
+	return &Shape{val: C.topo_shape_share(t.val.shp)}
 }
 
 func (t *Edge) Free() {
@@ -651,6 +1561,176 @@ type Face struct {
 	val C.struct__topo_face_t
 }
 
+func (s *Face) IsNull() bool {
+	return bool(C.topo_shape_is_null(s.val.shp))
+}
+
+func (s *Face) IsValid() bool {
+	return bool(C.topo_shape_is_valid(s.val.shp))
+}
+
+func (s *Face) Equals(e *Shape) bool {
+	return bool(C.topo_shape_equals(s.val.shp, e.val))
+}
+
+func (s *Face) Type() int {
+	return int(C.topo_shape_type(s.val.shp))
+}
+
+func (s *Face) BBox() BBox {
+	return BBox{val: C.topo_shape_bounding_box(s.val.shp)}
+}
+
+func (s *Face) Hash() int {
+	return int(C.topo_shape_hash_code(s.val.shp))
+}
+
+func (s *Face) Transform(t Trsf) int {
+	return int(C.topo_shape_transform(s.val.shp, t.val))
+}
+
+func (s *Face) Translate(v Vector3) int {
+	return int(C.topo_shape_translate(s.val.shp, v.val))
+}
+
+func (s *Face) RotateFromPoint(angle float64, p1, p2 Point3) int {
+	return int(C.topo_shape_rotate_from_two_point(s.val.shp, C.double(angle), p1.val, p2.val))
+}
+
+func (s *Face) RotateFromAxis1(angle float64, a Axis1) int {
+	return int(C.topo_shape_rotate_from_axis1(s.val.shp, C.double(angle), a.val))
+}
+
+func (s *Face) RotateFromQuaternion(q Quaternion) int {
+	return int(C.topo_shape_rotate_from_quaternion(s.val.shp, q.val))
+}
+
+func (s *Face) Scale(angle float64, a Point3) int {
+	return int(C.topo_shape_scale(s.val.shp, C.double(angle), a.val))
+}
+
+func (s *Face) MirrorFromPointNorm(pnt, ner Point3) int {
+	return int(C.topo_shape_mirror_from_point_norm(s.val.shp, pnt.val, ner.val))
+}
+
+func (s *Face) MirrorFromAxis1(a Axis1) int {
+	return int(C.topo_shape_mirror_from_axis1(s.val.shp, a.val))
+}
+
+func (s *Face) MirrorFromAxis2(a Axis2) int {
+	return int(C.topo_shape_mirror_from_axis2(s.val.shp, a.val))
+}
+
+func (s *Face) Transformed(t Trsf) *Face {
+	var val C.struct__topo_face_t
+	val.shp = C.topo_shape_transformed(s.val.shp, t.val)
+	return &Face{val: val}
+}
+
+func (s *Face) Translated(v Vector3) *Face {
+	var val C.struct__topo_face_t
+	val.shp = C.topo_shape_translated(s.val.shp, v.val)
+	return &Face{val: val}
+}
+
+func (s *Face) RotatedFromPoint(angle float64, p1, p2 Point3) *Face {
+	var val C.struct__topo_face_t
+	val.shp = C.topo_shape_rotated_from_two_point(s.val.shp, C.double(angle), p1.val, p2.val)
+	return &Face{val: val}
+}
+
+func (s *Face) RotatedFromAxis1(angle float64, a Axis1) *Face {
+	var val C.struct__topo_face_t
+	val.shp = C.topo_shape_rotated_from_axis1(s.val.shp, C.double(angle), a.val)
+	return &Face{val: val}
+}
+
+func (s *Face) RotatedFromQuaternion(q Quaternion) *Face {
+	var val C.struct__topo_face_t
+	val.shp = C.topo_shape_rotated_from_quaternion(s.val.shp, q.val)
+	return &Face{val: val}
+}
+
+func (s *Face) Scaled(angle float64, a Point3) *Face {
+	var val C.struct__topo_face_t
+	val.shp = C.topo_shape_scaled(s.val.shp, C.double(angle), a.val)
+	return &Face{val: val}
+}
+
+func (s *Face) MirroredFromPointNorm(pnt, ner Point3) *Face {
+	var val C.struct__topo_face_t
+	val.shp = C.topo_shape_mirrored_from_point_norm(s.val.shp, pnt.val, ner.val)
+	return &Face{val: val}
+}
+
+func (s *Face) MirroredFromAxis1(a Axis1) *Face {
+	var val C.struct__topo_face_t
+	val.shp = C.topo_shape_mirrored_from_axis1(s.val.shp, a.val)
+	return &Face{val: val}
+}
+
+func (s *Face) MirroredFromAxis2(a Axis2) *Face {
+	var val C.struct__topo_face_t
+	val.shp = C.topo_shape_mirrored_from_axis2(s.val.shp, a.val)
+	return &Face{val: val}
+}
+
+func (s *Face) GetOrientation() int {
+	return int(C.topo_shape_get_orientation(s.val.shp))
+}
+
+func (s *Face) SetOrientation(t int) {
+	C.topo_shape_set_orientation(s.val.shp, C.int(t))
+}
+
+func (s *Face) GetLocation() *Location {
+	return &Location{val: C.topo_shape_get_location(s.val.shp)}
+}
+
+func (s *Face) SetLocation(t *Location) {
+	C.topo_shape_set_location(s.val.shp, t.val)
+}
+
+func (s *Face) FixShape() bool {
+	return bool(C.topo_shape_fix_shape(s.val.shp))
+}
+
+func (s *Face) Copy() *Face {
+	var val C.struct__topo_face_t
+	val.shp = C.topo_shape_copy(s.val.shp)
+	return &Face{val: val}
+}
+
+func (s *Face) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
+	C.topo_shape_mesh(s.val.shp, m.val, C.double(tolerance), C.double(deflection), C.double(angle))
+}
+
+func (s *Face) SetSurfaceColour(c Color) {
+	C.topo_shape_set_surface_colour(s.val.shp, c.val)
+}
+
+func (s *Face) SetCurveColour(c Color) {
+	C.topo_shape_set_curve_colour(s.val.shp, c.val)
+}
+
+func (s *Face) SetLabel(l string) {
+	str := C.CString(l)
+	defer C.free(unsafe.Pointer(str))
+	C.topo_shape_set_label(s.val.shp, str)
+}
+
+func (s *Face) GetSurfaceColour() Color {
+	return Color{val: C.topo_shape_get_surface_colour(s.val.shp)}
+}
+
+func (s *Face) GetCurveColour() Color {
+	return Color{val: C.topo_shape_get_surface_colour(s.val.shp)}
+}
+
+func (s *Face) GetLabel() string {
+	return C.GoString(C.topo_shape_get_label(s.val.shp))
+}
+
 func (t *Face) NumWires() int {
 	return int(C.topo_face_num_wires(t.val))
 }
@@ -705,6 +1785,10 @@ func (t *Face) Loft(profiles []Shape, ruled bool, tolerance float64) int {
 
 func (t *Face) Boolean(tool *Face, op int) int {
 	return int(C.topo_face_boolean(t.val, tool.val, C.int(op)))
+}
+
+func (t *Face) ToShape() *Shape {
+	return &Shape{val: C.topo_shape_share(t.val.shp)}
 }
 
 func (t *Face) Free() {
@@ -833,6 +1917,10 @@ func (t *Shell) Sweep(spine *Wire, shps []Shape, cornerMode int) int {
 		cshp[i] = shps[i].val
 	}
 	return int(C.topo_shell_sweep(t.val, spine.val, &cshp[0], C.int(len(shps)), C.int(cornerMode)))
+}
+
+func (t *Shell) ToShape() *Shape {
+	return &Shape{val: C.topo_shape_share(t.val.shp)}
 }
 
 func (t *Shell) Free() {
@@ -1027,6 +2115,176 @@ type Solid struct {
 	val C.struct__topo_solid_t
 }
 
+func (s *Solid) IsNull() bool {
+	return bool(C.topo_shape_is_null(s.val.shp))
+}
+
+func (s *Solid) IsValid() bool {
+	return bool(C.topo_shape_is_valid(s.val.shp))
+}
+
+func (s *Solid) Equals(e *Shape) bool {
+	return bool(C.topo_shape_equals(s.val.shp, e.val))
+}
+
+func (s *Solid) Type() int {
+	return int(C.topo_shape_type(s.val.shp))
+}
+
+func (s *Solid) BBox() BBox {
+	return BBox{val: C.topo_shape_bounding_box(s.val.shp)}
+}
+
+func (s *Solid) Hash() int {
+	return int(C.topo_shape_hash_code(s.val.shp))
+}
+
+func (s *Solid) Transform(t Trsf) int {
+	return int(C.topo_shape_transform(s.val.shp, t.val))
+}
+
+func (s *Solid) Translate(v Vector3) int {
+	return int(C.topo_shape_translate(s.val.shp, v.val))
+}
+
+func (s *Solid) RotateFromPoint(angle float64, p1, p2 Point3) int {
+	return int(C.topo_shape_rotate_from_two_point(s.val.shp, C.double(angle), p1.val, p2.val))
+}
+
+func (s *Solid) RotateFromAxis1(angle float64, a Axis1) int {
+	return int(C.topo_shape_rotate_from_axis1(s.val.shp, C.double(angle), a.val))
+}
+
+func (s *Solid) RotateFromQuaternion(q Quaternion) int {
+	return int(C.topo_shape_rotate_from_quaternion(s.val.shp, q.val))
+}
+
+func (s *Solid) Scale(angle float64, a Point3) int {
+	return int(C.topo_shape_scale(s.val.shp, C.double(angle), a.val))
+}
+
+func (s *Solid) MirrorFromPointNorm(pnt, ner Point3) int {
+	return int(C.topo_shape_mirror_from_point_norm(s.val.shp, pnt.val, ner.val))
+}
+
+func (s *Solid) MirrorFromAxis1(a Axis1) int {
+	return int(C.topo_shape_mirror_from_axis1(s.val.shp, a.val))
+}
+
+func (s *Solid) MirrorFromAxis2(a Axis2) int {
+	return int(C.topo_shape_mirror_from_axis2(s.val.shp, a.val))
+}
+
+func (s *Solid) Transformed(t Trsf) *Solid {
+	var val C.struct__topo_solid_t
+	val.shp = C.topo_shape_transformed(s.val.shp, t.val)
+	return &Solid{val: val}
+}
+
+func (s *Solid) Translated(v Vector3) *Solid {
+	var val C.struct__topo_solid_t
+	val.shp = C.topo_shape_translated(s.val.shp, v.val)
+	return &Solid{val: val}
+}
+
+func (s *Solid) RotatedFromPoint(angle float64, p1, p2 Point3) *Solid {
+	var val C.struct__topo_solid_t
+	val.shp = C.topo_shape_rotated_from_two_point(s.val.shp, C.double(angle), p1.val, p2.val)
+	return &Solid{val: val}
+}
+
+func (s *Solid) RotatedFromAxis1(angle float64, a Axis1) *Solid {
+	var val C.struct__topo_solid_t
+	val.shp = C.topo_shape_rotated_from_axis1(s.val.shp, C.double(angle), a.val)
+	return &Solid{val: val}
+}
+
+func (s *Solid) RotatedFromQuaternion(q Quaternion) *Solid {
+	var val C.struct__topo_solid_t
+	val.shp = C.topo_shape_rotated_from_quaternion(s.val.shp, q.val)
+	return &Solid{val: val}
+}
+
+func (s *Solid) Scaled(angle float64, a Point3) *Solid {
+	var val C.struct__topo_solid_t
+	val.shp = C.topo_shape_scaled(s.val.shp, C.double(angle), a.val)
+	return &Solid{val: val}
+}
+
+func (s *Solid) MirroredFromPointNorm(pnt, ner Point3) *Solid {
+	var val C.struct__topo_solid_t
+	val.shp = C.topo_shape_mirrored_from_point_norm(s.val.shp, pnt.val, ner.val)
+	return &Solid{val: val}
+}
+
+func (s *Solid) MirroredFromAxis1(a Axis1) *Solid {
+	var val C.struct__topo_solid_t
+	val.shp = C.topo_shape_mirrored_from_axis1(s.val.shp, a.val)
+	return &Solid{val: val}
+}
+
+func (s *Solid) MirroredFromAxis2(a Axis2) *Solid {
+	var val C.struct__topo_solid_t
+	val.shp = C.topo_shape_mirrored_from_axis2(s.val.shp, a.val)
+	return &Solid{val: val}
+}
+
+func (s *Solid) GetOrientation() int {
+	return int(C.topo_shape_get_orientation(s.val.shp))
+}
+
+func (s *Solid) SetOrientation(t int) {
+	C.topo_shape_set_orientation(s.val.shp, C.int(t))
+}
+
+func (s *Solid) GetLocation() *Location {
+	return &Location{val: C.topo_shape_get_location(s.val.shp)}
+}
+
+func (s *Solid) SetLocation(t *Location) {
+	C.topo_shape_set_location(s.val.shp, t.val)
+}
+
+func (s *Solid) FixShape() bool {
+	return bool(C.topo_shape_fix_shape(s.val.shp))
+}
+
+func (s *Solid) Copy() *Solid {
+	var val C.struct__topo_solid_t
+	val.shp = C.topo_shape_copy(s.val.shp)
+	return &Solid{val: val}
+}
+
+func (s *Solid) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
+	C.topo_shape_mesh(s.val.shp, m.val, C.double(tolerance), C.double(deflection), C.double(angle))
+}
+
+func (s *Solid) SetSurfaceColour(c Color) {
+	C.topo_shape_set_surface_colour(s.val.shp, c.val)
+}
+
+func (s *Solid) SetCurveColour(c Color) {
+	C.topo_shape_set_curve_colour(s.val.shp, c.val)
+}
+
+func (s *Solid) SetLabel(l string) {
+	str := C.CString(l)
+	defer C.free(unsafe.Pointer(str))
+	C.topo_shape_set_label(s.val.shp, str)
+}
+
+func (s *Solid) GetSurfaceColour() Color {
+	return Color{val: C.topo_shape_get_surface_colour(s.val.shp)}
+}
+
+func (s *Solid) GetCurveColour() Color {
+	return Color{val: C.topo_shape_get_surface_colour(s.val.shp)}
+}
+
+func (s *Solid) GetLabel() string {
+	return C.GoString(C.topo_shape_get_label(s.val.shp))
+}
+
 func (s *Solid) NumSolids() int {
 	return int(C.topo_solid_num_solids(s.val))
 }
@@ -1185,6 +2443,10 @@ func (s *Solid) SectionFace(pnt, nor Point3) *Face {
 
 func (s *Solid) ConvertToNurbs() int {
 	return int(C.topo_solid_convert_to_nurbs(s.val))
+}
+
+func (t *Solid) ToShape() *Shape {
+	return &Shape{val: C.topo_shape_share(t.val.shp)}
 }
 
 func (t *Solid) Free() {
@@ -1407,8 +2669,182 @@ type Vertex struct {
 	val C.struct__topo_vertex_t
 }
 
+func (s *Vertex) IsNull() bool {
+	return bool(C.topo_shape_is_null(s.val.shp))
+}
+
+func (s *Vertex) IsValid() bool {
+	return bool(C.topo_shape_is_valid(s.val.shp))
+}
+
+func (s *Vertex) Equals(e *Shape) bool {
+	return bool(C.topo_shape_equals(s.val.shp, e.val))
+}
+
+func (s *Vertex) Type() int {
+	return int(C.topo_shape_type(s.val.shp))
+}
+
+func (s *Vertex) BBox() BBox {
+	return BBox{val: C.topo_shape_bounding_box(s.val.shp)}
+}
+
+func (s *Vertex) Hash() int {
+	return int(C.topo_shape_hash_code(s.val.shp))
+}
+
+func (s *Vertex) Transform(t Trsf) int {
+	return int(C.topo_shape_transform(s.val.shp, t.val))
+}
+
+func (s *Vertex) Translate(v Vector3) int {
+	return int(C.topo_shape_translate(s.val.shp, v.val))
+}
+
+func (s *Vertex) RotateFromPoint(angle float64, p1, p2 Point3) int {
+	return int(C.topo_shape_rotate_from_two_point(s.val.shp, C.double(angle), p1.val, p2.val))
+}
+
+func (s *Vertex) RotateFromAxis1(angle float64, a Axis1) int {
+	return int(C.topo_shape_rotate_from_axis1(s.val.shp, C.double(angle), a.val))
+}
+
+func (s *Vertex) RotateFromQuaternion(q Quaternion) int {
+	return int(C.topo_shape_rotate_from_quaternion(s.val.shp, q.val))
+}
+
+func (s *Vertex) Scale(angle float64, a Point3) int {
+	return int(C.topo_shape_scale(s.val.shp, C.double(angle), a.val))
+}
+
+func (s *Vertex) MirrorFromPointNorm(pnt, ner Point3) int {
+	return int(C.topo_shape_mirror_from_point_norm(s.val.shp, pnt.val, ner.val))
+}
+
+func (s *Vertex) MirrorFromAxis1(a Axis1) int {
+	return int(C.topo_shape_mirror_from_axis1(s.val.shp, a.val))
+}
+
+func (s *Vertex) MirrorFromAxis2(a Axis2) int {
+	return int(C.topo_shape_mirror_from_axis2(s.val.shp, a.val))
+}
+
+func (s *Vertex) Transformed(t Trsf) *Vertex {
+	var val C.struct__topo_vertex_t
+	val.shp = C.topo_shape_transformed(s.val.shp, t.val)
+	return &Vertex{val: val}
+}
+
+func (s *Vertex) Translated(v Vector3) *Vertex {
+	var val C.struct__topo_vertex_t
+	val.shp = C.topo_shape_translated(s.val.shp, v.val)
+	return &Vertex{val: val}
+}
+
+func (s *Vertex) RotatedFromPoint(angle float64, p1, p2 Point3) *Vertex {
+	var val C.struct__topo_vertex_t
+	val.shp = C.topo_shape_rotated_from_two_point(s.val.shp, C.double(angle), p1.val, p2.val)
+	return &Vertex{val: val}
+}
+
+func (s *Vertex) RotatedFromAxis1(angle float64, a Axis1) *Vertex {
+	var val C.struct__topo_vertex_t
+	val.shp = C.topo_shape_rotated_from_axis1(s.val.shp, C.double(angle), a.val)
+	return &Vertex{val: val}
+}
+
+func (s *Vertex) RotatedFromQuaternion(q Quaternion) *Vertex {
+	var val C.struct__topo_vertex_t
+	val.shp = C.topo_shape_rotated_from_quaternion(s.val.shp, q.val)
+	return &Vertex{val: val}
+}
+
+func (s *Vertex) Scaled(angle float64, a Point3) *Vertex {
+	var val C.struct__topo_vertex_t
+	val.shp = C.topo_shape_scaled(s.val.shp, C.double(angle), a.val)
+	return &Vertex{val: val}
+}
+
+func (s *Vertex) MirroredFromPointNorm(pnt, ner Point3) *Vertex {
+	var val C.struct__topo_vertex_t
+	val.shp = C.topo_shape_mirrored_from_point_norm(s.val.shp, pnt.val, ner.val)
+	return &Vertex{val: val}
+}
+
+func (s *Vertex) MirroredFromAxis1(a Axis1) *Vertex {
+	var val C.struct__topo_vertex_t
+	val.shp = C.topo_shape_mirrored_from_axis1(s.val.shp, a.val)
+	return &Vertex{val: val}
+}
+
+func (s *Vertex) MirroredFromAxis2(a Axis2) *Vertex {
+	var val C.struct__topo_vertex_t
+	val.shp = C.topo_shape_mirrored_from_axis2(s.val.shp, a.val)
+	return &Vertex{val: val}
+}
+
+func (s *Vertex) GetOrientation() int {
+	return int(C.topo_shape_get_orientation(s.val.shp))
+}
+
+func (s *Vertex) SetOrientation(t int) {
+	C.topo_shape_set_orientation(s.val.shp, C.int(t))
+}
+
+func (s *Vertex) GetLocation() *Location {
+	return &Location{val: C.topo_shape_get_location(s.val.shp)}
+}
+
+func (s *Vertex) SetLocation(t *Location) {
+	C.topo_shape_set_location(s.val.shp, t.val)
+}
+
+func (s *Vertex) FixShape() bool {
+	return bool(C.topo_shape_fix_shape(s.val.shp))
+}
+
+func (s *Vertex) Copy() *Vertex {
+	var val C.struct__topo_vertex_t
+	val.shp = C.topo_shape_copy(s.val.shp)
+	return &Vertex{val: val}
+}
+
+func (s *Vertex) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
+	C.topo_shape_mesh(s.val.shp, m.val, C.double(tolerance), C.double(deflection), C.double(angle))
+}
+
+func (s *Vertex) SetSurfaceColour(c Color) {
+	C.topo_shape_set_surface_colour(s.val.shp, c.val)
+}
+
+func (s *Vertex) SetCurveColour(c Color) {
+	C.topo_shape_set_curve_colour(s.val.shp, c.val)
+}
+
+func (s *Vertex) SetLabel(l string) {
+	str := C.CString(l)
+	defer C.free(unsafe.Pointer(str))
+	C.topo_shape_set_label(s.val.shp, str)
+}
+
+func (s *Vertex) GetSurfaceColour() Color {
+	return Color{val: C.topo_shape_get_surface_colour(s.val.shp)}
+}
+
+func (s *Vertex) GetCurveColour() Color {
+	return Color{val: C.topo_shape_get_surface_colour(s.val.shp)}
+}
+
+func (s *Vertex) GetLabel() string {
+	return C.GoString(C.topo_shape_get_label(s.val.shp))
+}
+
 func (t *Vertex) GetPoint() Point3 {
 	return Point3{val: C.topo_vertex_get_point(t.val)}
+}
+
+func (t *Vertex) ToShape() *Shape {
+	return &Shape{val: C.topo_shape_share(t.val.shp)}
 }
 
 func (t *Vertex) Free() {
@@ -1421,6 +2857,180 @@ func NewVertex(x, y, z float64) *Vertex {
 
 type Wire struct {
 	val C.struct__topo_wire_t
+}
+
+func (s *Wire) IsNull() bool {
+	return bool(C.topo_shape_is_null(s.val.shp))
+}
+
+func (s *Wire) IsValid() bool {
+	return bool(C.topo_shape_is_valid(s.val.shp))
+}
+
+func (s *Wire) Equals(e *Shape) bool {
+	return bool(C.topo_shape_equals(s.val.shp, e.val))
+}
+
+func (s *Wire) Type() int {
+	return int(C.topo_shape_type(s.val.shp))
+}
+
+func (s *Wire) BBox() BBox {
+	return BBox{val: C.topo_shape_bounding_box(s.val.shp)}
+}
+
+func (s *Wire) Hash() int {
+	return int(C.topo_shape_hash_code(s.val.shp))
+}
+
+func (s *Wire) Transform(t Trsf) int {
+	return int(C.topo_shape_transform(s.val.shp, t.val))
+}
+
+func (s *Wire) Translate(v Vector3) int {
+	return int(C.topo_shape_translate(s.val.shp, v.val))
+}
+
+func (s *Wire) RotateFromPoint(angle float64, p1, p2 Point3) int {
+	return int(C.topo_shape_rotate_from_two_point(s.val.shp, C.double(angle), p1.val, p2.val))
+}
+
+func (s *Wire) RotateFromAxis1(angle float64, a Axis1) int {
+	return int(C.topo_shape_rotate_from_axis1(s.val.shp, C.double(angle), a.val))
+}
+
+func (s *Wire) RotateFromQuaternion(q Quaternion) int {
+	return int(C.topo_shape_rotate_from_quaternion(s.val.shp, q.val))
+}
+
+func (s *Wire) Scale(angle float64, a Point3) int {
+	return int(C.topo_shape_scale(s.val.shp, C.double(angle), a.val))
+}
+
+func (s *Wire) MirrorFromPointNorm(pnt, ner Point3) int {
+	return int(C.topo_shape_mirror_from_point_norm(s.val.shp, pnt.val, ner.val))
+}
+
+func (s *Wire) MirrorFromAxis1(a Axis1) int {
+	return int(C.topo_shape_mirror_from_axis1(s.val.shp, a.val))
+}
+
+func (s *Wire) MirrorFromAxis2(a Axis2) int {
+	return int(C.topo_shape_mirror_from_axis2(s.val.shp, a.val))
+}
+
+func (s *Wire) Transformed(t Trsf) *Wire {
+	var val C.struct__topo_wire_t
+	val.shp = C.topo_shape_transformed(s.val.shp, t.val)
+	return &Wire{val: val}
+}
+
+func (s *Wire) Translated(v Vector3) *Wire {
+	var val C.struct__topo_wire_t
+	val.shp = C.topo_shape_translated(s.val.shp, v.val)
+	return &Wire{val: val}
+}
+
+func (s *Wire) RotatedFromPoint(angle float64, p1, p2 Point3) *Wire {
+	var val C.struct__topo_wire_t
+	val.shp = C.topo_shape_rotated_from_two_point(s.val.shp, C.double(angle), p1.val, p2.val)
+	return &Wire{val: val}
+}
+
+func (s *Wire) RotatedFromAxis1(angle float64, a Axis1) *Wire {
+	var val C.struct__topo_wire_t
+	val.shp = C.topo_shape_rotated_from_axis1(s.val.shp, C.double(angle), a.val)
+	return &Wire{val: val}
+}
+
+func (s *Wire) RotatedFromQuaternion(q Quaternion) *Wire {
+	var val C.struct__topo_wire_t
+	val.shp = C.topo_shape_rotated_from_quaternion(s.val.shp, q.val)
+	return &Wire{val: val}
+}
+
+func (s *Wire) Scaled(angle float64, a Point3) *Wire {
+	var val C.struct__topo_wire_t
+	val.shp = C.topo_shape_scaled(s.val.shp, C.double(angle), a.val)
+	return &Wire{val: val}
+}
+
+func (s *Wire) MirroredFromPointNorm(pnt, ner Point3) *Wire {
+	var val C.struct__topo_wire_t
+	val.shp = C.topo_shape_mirrored_from_point_norm(s.val.shp, pnt.val, ner.val)
+	return &Wire{val: val}
+}
+
+func (s *Wire) MirroredFromAxis1(a Axis1) *Wire {
+	var val C.struct__topo_wire_t
+	val.shp = C.topo_shape_mirrored_from_axis1(s.val.shp, a.val)
+	return &Wire{val: val}
+}
+
+func (s *Wire) MirroredFromAxis2(a Axis2) *Wire {
+	var val C.struct__topo_wire_t
+	val.shp = C.topo_shape_mirrored_from_axis2(s.val.shp, a.val)
+	return &Wire{val: val}
+}
+
+func (s *Wire) GetOrientation() int {
+	return int(C.topo_shape_get_orientation(s.val.shp))
+}
+
+func (s *Wire) SetOrientation(t int) {
+	C.topo_shape_set_orientation(s.val.shp, C.int(t))
+}
+
+func (s *Wire) GetLocation() *Location {
+	return &Location{val: C.topo_shape_get_location(s.val.shp)}
+}
+
+func (s *Wire) SetLocation(t *Location) {
+	C.topo_shape_set_location(s.val.shp, t.val)
+}
+
+func (s *Wire) FixShape() bool {
+	return bool(C.topo_shape_fix_shape(s.val.shp))
+}
+
+func (s *Wire) Copy() *Wire {
+	var val C.struct__topo_wire_t
+	val.shp = C.topo_shape_copy(s.val.shp)
+	return &Wire{val: val}
+}
+
+func (s *Wire) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
+	C.topo_shape_mesh(s.val.shp, m.val, C.double(tolerance), C.double(deflection), C.double(angle))
+}
+
+func (s *Wire) SetSurfaceColour(c Color) {
+	C.topo_shape_set_surface_colour(s.val.shp, c.val)
+}
+
+func (s *Wire) SetCurveColour(c Color) {
+	C.topo_shape_set_curve_colour(s.val.shp, c.val)
+}
+
+func (s *Wire) SetLabel(l string) {
+	str := C.CString(l)
+	defer C.free(unsafe.Pointer(str))
+	C.topo_shape_set_label(s.val.shp, str)
+}
+
+func (s *Wire) GetSurfaceColour() Color {
+	return Color{val: C.topo_shape_get_surface_colour(s.val.shp)}
+}
+
+func (s *Wire) GetCurveColour() Color {
+	return Color{val: C.topo_shape_get_surface_colour(s.val.shp)}
+}
+
+func (s *Wire) GetLabel() string {
+	return C.GoString(C.topo_shape_get_label(s.val.shp))
+}
+
+func (t *Wire) ToShape() *Shape {
+	return &Shape{val: C.topo_shape_share(t.val.shp)}
 }
 
 func (t *Wire) Free() {

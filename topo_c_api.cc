@@ -13,6 +13,13 @@ void topo_shape_free(topo_shape_t *p) {
   }
 }
 
+topo_shape_t *topo_shape_share(topo_shape_t *p) {
+  if (p) {
+    return new topo_shape_t{p->shp};
+  }
+  return nullptr;
+}
+
 _Bool topo_shape_is_null(topo_shape_t *p) {
   if (p) {
     return p->shp->is_null();
