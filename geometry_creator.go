@@ -130,7 +130,7 @@ func GeomMakeSurfaceOfRevolution(c *GeomCurve, V Axis1) *GeomSurfaceOfRevolution
 }
 
 func GeomMakePlateSurface(s *GeomSurface, p *Plate) *GeomPlateSurface {
-	return &GeomPlateSurface{geom: C.geom_make_plate_surface(s.geom, &p.val)}
+	return &GeomPlateSurface{geom: C.geom_make_plate_surface(s.geom, p.val)}
 }
 
 func GeomMakeDirection(x, y, z float64) *GeomDirection {
