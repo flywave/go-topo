@@ -276,7 +276,8 @@ void topo_vertex_free(topo_vertex_t t) {
 pnt3d_t topo_vertex_get_point(topo_vertex_t t) {
   auto opt = cast_to_topo(t);
   if (opt) {
-    return cast_from_gp((gp_Pnt)(*opt));
+    gp_Pnt pt = (*opt);
+    return cast_from_gp(pt);
   }
   return pnt3d_t{0., 0., 0.};
 }

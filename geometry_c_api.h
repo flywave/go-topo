@@ -1,9 +1,7 @@
 #ifndef GO_GEOMETRY_C_API_H
 #define GO_GEOMETRY_C_API_H
-
-#include <stdbool.h>
-
 #include "standard_c_api.h"
+#include <stdbool.h>
 
 #if defined(WIN32) || defined(WINDOWS) || defined(_WIN32) || defined(_WINDOWS)
 #define GEOMCAPICALL __declspec(dllexport)
@@ -14,7 +12,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 enum {
   GeomAxis1Placement,
   GeomAxis2Placement,

@@ -1,4 +1,5 @@
 #include "point3d_with_tolerance.hh"
+#include <cmath>
 
 namespace flywave {
 namespace topo {
