@@ -147,6 +147,8 @@ wire wire::make_wire(std::vector<edge> &edges) {
       throw std::runtime_error("non-manifold wire");
       break;
     }
+    default:
+      break;
     }
 
     ret = wire(MW.Wire());
@@ -189,6 +191,8 @@ wire wire::make_wire(std::initializer_list<edge> edges) {
       throw std::runtime_error("non-manifold wire");
       break;
     }
+    default:
+      break;
     }
 
     ret = wire(MW.Wire());
@@ -231,6 +235,8 @@ wire wire::make_wire(std::vector<wire> &wires) {
       throw std::runtime_error("non-manifold wire");
       break;
     }
+    default:
+      break;
     }
 
     ret = wire(MW.Wire());
@@ -273,6 +279,8 @@ wire wire::make_wire(std::initializer_list<wire> wires) {
       throw std::runtime_error("non-manifold wire");
       break;
     }
+    default:
+      break;
     }
 
     ret = wire(MW.Wire());

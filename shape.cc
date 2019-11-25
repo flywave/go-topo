@@ -61,6 +61,7 @@ shape &shape::operator=(shape &&o) noexcept {
   _shape = o._shape;
   if (!o._shape.IsNull())
     o._shape.Free();
+  return *this;
 }
 
 shape shape::copy(bool deep) const {
@@ -168,7 +169,7 @@ bool shape::equals(const geometry_object &other) const {
   return false;
 }
 
-int shape::transform(gp_Trsf mat) { transform_impl(mat); }
+int shape::transform(gp_Trsf mat) { return transform_impl(mat); }
 
 int shape::transform_impl(gp_Trsf &trans) {
   try {
@@ -515,6 +516,8 @@ orientation shape::get_orientation() const {
     return orientation::INTERNAL;
   case TopAbs_EXTERNAL:
     return orientation::EXTERNAL;
+  default:
+    break;
   }
   return orientation::UNKNOW;
 }
@@ -532,6 +535,8 @@ void shape::set_orientation(orientation ori) {
     break;
   case orientation::EXTERNAL:
     _shape.Orientation(TopAbs_EXTERNAL);
+    break;
+  default:
     break;
   }
 }
@@ -841,6 +846,8 @@ std::string shape::shape_type() const {
     break;
   case TopAbs_SHAPE:
     type = "shape";
+    break;
+  default:
     break;
   }
 

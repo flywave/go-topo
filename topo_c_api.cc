@@ -54,58 +54,67 @@ int topo_shape_hash_code(topo_shape_t *p) { return p->shp->hash_code(); }
 
 int topo_shape_transform(topo_shape_t *p, trsf_t mat) {
   if (p) {
-    p->shp->transform(cast_to_gp(mat));
+    return p->shp->transform(cast_to_gp(mat));
   }
+  return -1;
 }
 
 int topo_shape_translate(topo_shape_t *p, vec3d_t delta) {
   if (p) {
-    p->shp->translate(cast_to_gp(delta));
+    return p->shp->translate(cast_to_gp(delta));
   }
+  return -1;
 }
 
 int topo_shape_rotate_from_two_point(topo_shape_t *p, double angle, pnt3d_t p1,
                                      pnt3d_t p2) {
   if (p) {
-    p->shp->rotate(angle, cast_to_gp(p1), cast_to_gp(p2));
+    return p->shp->rotate(angle, cast_to_gp(p1), cast_to_gp(p2));
   }
+  return -1;
 }
 
 int topo_shape_rotate_from_axis1(topo_shape_t *p, double angle, axis1_t a) {
   if (p) {
-    p->shp->rotate(angle, cast_to_gp(a));
+    return p->shp->rotate(angle, cast_to_gp(a));
   }
+  return -1;
 }
 
 int topo_shape_rotate_from_quaternion(topo_shape_t *p, quaternion_t q) {
   if (p) {
-    p->shp->rotate(cast_to_gp(q));
+    return p->shp->rotate(cast_to_gp(q));
   }
+  return -1;
 }
 
 int topo_shape_scale(topo_shape_t *p, double angle, pnt3d_t a) {
   if (p) {
-    p->shp->scale(cast_to_gp(a), angle);
+    return p->shp->scale(cast_to_gp(a), angle);
   }
+  return -1;
 }
 
 int topo_shape_mirror_from_point_norm(topo_shape_t *p, pnt3d_t pnt,
                                       pnt3d_t ner) {
   if (p) {
-    p->shp->mirror(cast_to_gp(pnt), cast_to_gp(ner));
+    return p->shp->mirror(cast_to_gp(pnt), cast_to_gp(ner));
   }
+  return -1;
 }
 
 int topo_shape_mirror_from_axis1(topo_shape_t *p, axis1_t a) {
   if (p) {
-    p->shp->mirror(cast_to_gp(a));
+    return p->shp->mirror(cast_to_gp(a));
   }
+  return -1;
 }
 
 int topo_shape_mirror_from_axis2(topo_shape_t *p, axis2_t a) {
   if (p) {
-    p->shp->mirror(cast_to_gp(a));
+    return p->shp->mirror(cast_to_gp(a));
   }
+  return -1;
 }
 
 topo_shape_t *topo_shape_transformed(topo_shape_t *p, trsf_t mat) {
