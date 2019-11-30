@@ -81,6 +81,8 @@
 #include <TColGeom2d_SequenceOfCurve.hxx>
 #include <TColGeom2d_SequenceOfGeometry.hxx>
 
+#include <GeomAPI_Interpolate.hxx>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

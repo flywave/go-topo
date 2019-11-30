@@ -425,6 +425,8 @@ GEOMCAPICALL geom_bezier_curve_t *
 geom_bezier_curve_from_geometry(geom_geometry_t *t);
 GEOMCAPICALL geom_bspline_curve_t *
 geom_bspline_curve_from_geometry(geom_geometry_t *t);
+GEOMCAPICALL geom_bspline_curve_t *geom_bspline_curve_from_points(pnt3d_t *t,
+                                                                  int size);
 GEOMCAPICALL geom_trimmed_curve_t *
 geom_trimmed_curve_from_geometry(geom_geometry_t *t);
 GEOMCAPICALL geom_conic_t *geom_conic_from_geometry(geom_geometry_t *t);

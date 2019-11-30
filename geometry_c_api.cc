@@ -1826,6 +1826,22 @@ geom_bspline_curve_t *geom_bspline_curve_from_geometry(geom_geometry_t *t) {
   return new geom_bspline_curve_t{
       Handle(Geom_BSplineCurve)::DownCast(t->handle)};
 }
+geom_bspline_curve_t *geom_bspline_curve_from_points(pnt3d_t *t, int size) {
+  std::vector<pnt3d_t> pts(size);
+  ::memcpy(pts.data(), t, sizeof(pnt3d_t) * size);
+  auto points =
+      new TColgp_HArray1OfPnt(1, static_cast<Standard_Integer>(pts.size()));
+  cast_to_gp(pts, *points);
+  Handle_TColgp_HArray1OfPnt p(points);
+  GeomAPI_Interpolate interp(p, Standard_False, 1.0e-5);
+  interp.Perform();
+  if (!interp.IsDone())
+    return nullptr;
+  auto cur = interp.Curve();
+  if (cur.IsNull())
+    return nullptr;
+  return new geom_bspline_curve_t{cur};
+}
 
 geom_trimmed_curve_t *geom_trimmed_curve_from_geometry(geom_geometry_t *t) {
   if (t->handle->DynamicType() != STANDARD_TYPE(Geom_TrimmedCurve)) {
