@@ -399,6 +399,14 @@ func NewGeomBSplineCurveFromGeometry(g *GeomGeometry) *GeomBSplineCurve {
 	return nil
 }
 
+func NewGeomBSplineCurveFromPoints(pts []Point3) *GeomBSplineCurve {
+	ptr := &pts[0].val
+	if p := C.geom_bspline_curve_from_points(ptr, C.int(len(pts))); p != nil {
+		return &GeomBSplineCurve{geom: p}
+	}
+	return nil
+}
+
 type GeomTrimmedCurve struct {
 	geom *C.struct__geom_trimmed_curve_t
 }
