@@ -212,6 +212,8 @@ TOPOCAPICALL int topo_wire_chamfer(topo_wire_t w, topo_vertex_t *vertices,
 
 TOPOCAPICALL void topo_edge_free(topo_edge_t t);
 
+TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_points(pnt3d_t *pts,int size);
+
 TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_two_vertex(topo_vertex_t V1,
                                                              topo_vertex_t V2);
 

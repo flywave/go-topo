@@ -494,6 +494,15 @@ void topo_edge_free(topo_edge_t t) {
   }
 }
 
+topo_edge_t topo_edge_make_edge_from_points(pnt3d_t *pts, int size) {
+  std::vector<gp_Pnt> vec;
+  for (int i = 0; i < size; i++) {
+    vec.emplace_back(cast_to_gp(pts[i]));
+  }
+  return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
+      flywave::topo::edge::make_polygon(vec))}};
+}
+
 topo_edge_t topo_edge_make_edge_from_two_vertex(topo_vertex_t V1,
                                                 topo_vertex_t V2) {
   return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(

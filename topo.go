@@ -1265,6 +1265,11 @@ func (t *Edge) Free() {
 	C.topo_edge_free(t.val)
 }
 
+func TopoMakeEdgeFromPoints(pts []Point3) *Edge {
+	return &Edge{val: C.topo_edge_make_edge_from_points(&pts[0].val,C.int(len(pts)))}
+}
+
+
 func TopoMakeEdgeFromTwoVertex(v1, v2 Vertex) *Edge {
 	return &Edge{val: C.topo_edge_make_edge_from_two_vertex(v1.val, v2.val)}
 }
