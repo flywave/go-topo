@@ -20,6 +20,11 @@ topo_shape_t *topo_shape_share(topo_shape_t *p) {
   return nullptr;
 }
 
+topo_solid_t topo_make_solid() {
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>()}};
+}
+
 _Bool topo_shape_is_null(topo_shape_t *p) {
   if (p) {
     return p->shp->is_null();
@@ -291,6 +296,11 @@ pnt3d_t topo_vertex_get_point(topo_vertex_t t) {
   return pnt3d_t{0., 0., 0.};
 }
 
+topo_wire_t topo_make_wire() {
+  return topo_wire_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>()}};
+}
+
 void topo_wire_free(topo_wire_t t) {
   if (t.shp) {
     delete t.shp;
@@ -486,6 +496,11 @@ int topo_wire_chamfer(topo_wire_t w, topo_vertex_t *vertices, int vertcount,
     return opt->chamfer(ows, ors);
   }
   return -1;
+}
+
+topo_edge_t topo_make_edge() {
+  return topo_edge_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>()}};
 }
 
 void topo_edge_free(topo_edge_t t) {
@@ -1056,6 +1071,11 @@ void topo_edge_convert_to_curve3d(topo_edge_t e) {
   }
 }
 
+topo_face_t topo_make_face() {
+  return topo_face_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>()}};
+}
+
 void topo_face_free(topo_face_t t) {
   if (t.shp) {
     delete t.shp;
@@ -1332,6 +1352,11 @@ int topo_face_boolean(topo_face_t f, topo_face_t tool, int op) {
                         static_cast<flywave::topo::bool_op_type>(op));
   }
   return -1;
+}
+
+topo_shell_t topo_make_shell() {
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>()}};
 }
 
 void topo_shell_free(topo_shell_t t) {
@@ -2388,6 +2413,12 @@ int topo_solid_convert_to_nurbs(topo_solid_t s) {
   return -1;
 }
 
+topo_compound_t topo_make_compound() {
+  return topo_compound_t{
+      .shp =
+          new topo_shape_t{.shp = std::make_shared<flywave::topo::compound>()}};
+}
+
 void topo_compound_free(topo_compound_t t) {
   if (t.shp) {
     delete t.shp;
@@ -2402,6 +2433,12 @@ topo_compound_t topo_compound_make_compound(topo_shape_t **S, int count) {
   return topo_compound_t{
       new topo_shape_t{std::make_shared<flywave::topo::compound>(
           flywave::topo::compound::make_compound(sps))}};
+}
+
+topo_comp_solid_t topo_make_comp_solid() {
+  return topo_comp_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::comp_solid>()}};
 }
 
 void topo_comp_solid_free(topo_comp_solid_t t) {
@@ -2489,6 +2526,11 @@ trsf_t topo_location_get_trsf(topo_location_t *p) {
     return cast_from_gp(gp_Trsf(p->loc));
   }
   return trsf_t{};
+}
+
+void topo_shape_to_stl(topo_shape_t *p, char *str) {
+  StlAPI_Writer writer = StlAPI_Writer();
+  writer.Write(p->shp->value(), str);
 }
 
 #ifdef __cplusplus

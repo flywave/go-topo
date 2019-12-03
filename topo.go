@@ -124,6 +124,13 @@ type Shape struct {
 	val *C.struct__topo_shape_t
 }
 
+
+func (s *Shape)WriteToStl(ph string){
+	str := C.CString(ph)
+	defer C.free(unsafe.Pointer(str))
+	C.topo_shape_to_stl(s.val, str)
+}
+
 func (s *Shape) IsNull() bool {
 	return bool(C.topo_shape_is_null(s.val))
 }
@@ -325,6 +332,10 @@ func (t *Shape) AutoCast() interface{} {
 
 type CompSolid struct {
 	val C.struct__topo_comp_solid_t
+}
+
+func  TopoMakeCompSolid() *CompSolid {
+	return &CompSolid{val:C.topo_make_comp_solid()}
 }
 
 func (s *CompSolid) IsNull() bool {
@@ -689,6 +700,10 @@ type Compound struct {
 	val C.struct__topo_compound_t
 }
 
+func  TopoMakeCompound() *Compound {
+	return &Compound{val:C.topo_make_compound()}
+}
+
 func (s *Compound) IsNull() bool {
 	return bool(C.topo_shape_is_null(s.val.shp))
 }
@@ -1049,6 +1064,10 @@ func TopoCompoundMake(s []Shape) *Compound {
 
 type Edge struct {
 	val C.struct__topo_edge_t
+}
+
+func  TopoMakeEdge() *Edge {
+	return &Edge{val:C.topo_make_edge()}
 }
 
 func (s *Edge) IsNull() bool {
@@ -1566,6 +1585,10 @@ type Face struct {
 	val C.struct__topo_face_t
 }
 
+func  TopoMakeFace() *Face {
+	return &Face{val:C.topo_make_face()}
+}
+
 func (s *Face) IsNull() bool {
 	return bool(C.topo_shape_is_null(s.val.shp))
 }
@@ -1799,10 +1822,7 @@ func (t *Face) ToShape() *Shape {
 func (t *Face) Free() {
 	C.topo_face_free(t.val)
 }
-
-func TopoMakeFace(f *Face) *Face {
-	return &Face{val: C.topo_face_make_face(f.val)}
-}
+ 
 
 func TopoMakeFaceFromPlane(f Plane) *Face {
 	return &Face{val: C.topo_face_make_face_from_plane(f.val)}
@@ -1914,6 +1934,10 @@ func TopoMakeFaceFromPoints(pts []Point3) *Face {
 
 type Shell struct {
 	val C.struct__topo_shell_t
+}
+
+func  TopoMakeShell() *Shell {
+	return &Shell{val:C.topo_make_shell()}
 }
 
 func (t *Shell) Sweep(spine *Wire, shps []Shape, cornerMode int) int {
@@ -2118,6 +2142,10 @@ func TopoMakeShellFromWedgeAxis2Limit(a Axis2, dx, dy, dz, xmin, zmin, xmax, zma
 
 type Solid struct {
 	val C.struct__topo_solid_t
+}
+
+func  TopoMakeSolid() *Solid {
+	return &Solid{val:C.topo_make_solid()}
 }
 
 func (s *Solid) IsNull() bool {
@@ -2864,6 +2892,10 @@ type Wire struct {
 	val C.struct__topo_wire_t
 }
 
+func  TopoMakeWire() *Wire {
+	return &Wire{val:C.topo_make_wire()}
+}
+
 func (s *Wire) IsNull() bool {
 	return bool(C.topo_shape_is_null(s.val.shp))
 }
@@ -3153,3 +3185,4 @@ func TopoMakeWireFromWires(wires []Wire) *Wire {
 	}
 	return &Wire{val: C.topo_make_wire_from_wries(&es[0], C.int(len(wires)))}
 }
+
