@@ -88,6 +88,8 @@ TOPOCAPICALL trsf_t topo_location_get_trsf(topo_location_t *p);
 
 TOPOCAPICALL void topo_shape_free(topo_shape_t *p);
 TOPOCAPICALL topo_shape_t *topo_shape_share(topo_shape_t *p);
+
+TOPOCAPICALL topo_solid_t topo_make_solid();
 TOPOCAPICALL _Bool topo_shape_is_null(topo_shape_t *p);
 TOPOCAPICALL _Bool topo_shape_is_valid(topo_shape_t *p);
 TOPOCAPICALL _Bool topo_shape_equals(topo_shape_t *p, topo_shape_t *o);
@@ -151,6 +153,8 @@ TOPOCAPICALL topo_vertex_t topo_vertex_new(double x, double y, double z);
 TOPOCAPICALL void topo_vertex_free(topo_vertex_t t);
 TOPOCAPICALL pnt3d_t topo_vertex_get_point(topo_vertex_t t);
 
+TOPOCAPICALL topo_wire_t topo_make_wire();
+
 TOPOCAPICALL void topo_wire_free(topo_wire_t t);
 TOPOCAPICALL topo_wire_t topo_make_polygon();
 TOPOCAPICALL topo_wire_t topo_make_polygon_from_two_point(pnt3d_t P1,
@@ -210,7 +214,12 @@ TOPOCAPICALL int topo_wire_chamfer(topo_wire_t w, topo_vertex_t *vertices,
                                    int vertcount, double *distances,
                                    int distcount);
 
+TOPOCAPICALL topo_edge_t topo_make_edge();
+
 TOPOCAPICALL void topo_edge_free(topo_edge_t t);
+
+TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_points(pnt3d_t *pts,
+                                                         int size);
 
 TOPOCAPICALL topo_edge_t topo_edge_make_edge_from_two_vertex(topo_vertex_t V1,
                                                              topo_vertex_t V2);
@@ -448,6 +457,8 @@ TOPOCAPICALL void topo_edge_convert_to_curve3d(topo_edge_t e);
 
 TOPOCAPICALL void topo_face_free(topo_face_t t);
 
+TOPOCAPICALL topo_face_t topo_make_face();
+
 TOPOCAPICALL topo_face_t topo_face_make_face(topo_face_t F);
 
 TOPOCAPICALL topo_face_t topo_face_make_face_from_plane(plane_t P);
@@ -556,6 +567,8 @@ TOPOCAPICALL int topo_face_loft(topo_face_t f, topo_shape_t **profiles,
 TOPOCAPICALL int topo_face_boolean(topo_face_t f, topo_face_t tool, int op);
 
 TOPOCAPICALL void topo_shell_free(topo_shell_t t);
+
+TOPOCAPICALL topo_shell_t topo_make_shell();
 
 TOPOCAPICALL topo_shell_t topo_shell_make_shell_from_surface(geom_surface_t *S,
                                                              _Bool Segment);
@@ -999,15 +1012,21 @@ TOPOCAPICALL topo_face_t topo_solid_section_face(topo_solid_t s, pnt3d_t pnt,
 
 TOPOCAPICALL int topo_solid_convert_to_nurbs(topo_solid_t s);
 
+TOPOCAPICALL topo_compound_t topo_make_compound();
+
 TOPOCAPICALL void topo_compound_free(topo_compound_t t);
 
 TOPOCAPICALL topo_compound_t topo_compound_make_compound(topo_shape_t **S,
                                                          int count);
 
+TOPOCAPICALL topo_comp_solid_t topo_make_comp_solid();
+
 TOPOCAPICALL void topo_comp_solid_free(topo_comp_solid_t t);
 
 TOPOCAPICALL topo_comp_solid_t topo_comp_solid_make_comp_solid(topo_solid_t *S,
                                                                int count);
+
+TOPOCAPICALL void topo_shape_to_stl(topo_shape_t *p, char *);
 
 #ifdef __cplusplus
 }
