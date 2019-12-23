@@ -830,11 +830,11 @@ func (t Trsf) Data() [12]float64 {
 	return out
 }
 func NewTrsf(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12 float64) Trsf {
-	return Trsf{val: C.trsf_t{m: {C.double(f1), C.double(f2), C.double(f3), C.double(f4), C.double(f5), C.double(f6), C.double(f7), C.double(f8), C.double(f9), C.double(f10), C.double(f11), C.double(f12)}}}
+	return Trsf{val: C.trsf_t{m: [12]C.double{C.double(f1), C.double(f2), C.double(f3), C.double(f4), C.double(f5), C.double(f6), C.double(f7), C.double(f8), C.double(f9), C.double(f10), C.double(f11), C.double(f12)}}}
 }
 
 func NewTrsfMirrorFromPoint(p Point3) Trsf {
-	return Trsf{val: C.trsf_t(p.val)}
+	return Trsf{val: C.make_trsf_mirror_from_point(p.val)}
 }
 
 func NewTrsfMirrorFromAxis1(a Axis1) Trsf {
