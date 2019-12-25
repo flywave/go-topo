@@ -933,8 +933,8 @@ func (c Color) RGB() [3]byte {
 	return [3]byte{byte(float64(c.val.r) * 255), byte(float64(c.val.g) * 255), byte(float64(c.val.b) * 255)}
 }
 
-func (c Color) RGBF() (float64, float64, float64) {
-	return float64(c.val.r), float64(c.val.g), float64(c.val.b)
+func (c Color) RGBF() (float32, float32, float32) {
+	return float32(c.val.r), float32(c.val.g), float32(c.val.b)
 }
 
 func NewColor(c [3]float64) Color {
