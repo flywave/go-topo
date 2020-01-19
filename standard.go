@@ -941,6 +941,7 @@ func (c Color) RGBD() (float64, float64, float64) {
 	return  c.val.r, c.val.g, c.val.b
 }
 
+
 func NewColor(c [3]float64) Color {
 	var m C.struct__color_t
 	m.r = C.double(c[0])
