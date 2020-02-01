@@ -734,32 +734,7 @@ endif(IS_ABSOLUTE ${OCE_INSTALL_INCLUDE_DIR})
 # Now the relative path can be generated
 file(RELATIVE_PATH OCE_CMAKE_DATA_TO_INCLUDE_RELATIVE_DIR "${_OCE_INSTALL_CMAKE_DATA_DIR}" "${_OCE_INSTALL_INCLUDE_DIR}")
 
-foreach(RESOURCE_FILE ${INSTALL_RESOURCE_FILES})
-	get_filename_component(RESOURCE_PATH ${RESOURCE_FILE} PATH)
-	install(FILES ${RESOURCE_FILE}
-		DESTINATION ${OCE_INSTALL_DATA_DIR}/${RESOURCE_PATH})
-endforeach(RESOURCE_FILE ${INSTALL_RESOURCE_FILES})
-install(FILES ${INSTALL_STDRESOURCE_FILES}
-	DESTINATION ${OCE_INSTALL_DATA_DIR}/src/StdResource)
-
-if(WIN32)
-	set(ENV_SCRIPTS
-		${OCE_SOURCE_DIR}/scripts/env.bat
-		${OCE_SOURCE_DIR}/scripts/msvc.bat
-	)
-	install(FILES ${ENV_SCRIPTS}
-		DESTINATION ${OCE_INSTALL_SCRIPT_DIR})
-endif(WIN32)
-
 file(GLOB header_files ${OCE_SOURCE_DIR}/inc/*.*)
-
-# Install each header file individually to work around a 8192 character
-# argument limit on Visual Studio generators.
-foreach(header ${header_files})
-  install(FILES ${header}
-    DESTINATION ${OCE_INSTALL_INCLUDE_DIR} COMPONENT Development
-  )
-endforeach()
 
 set(OCE_INSTALL_DATA_DIR ${OCE_INSTALL_DATA_DIR})
 
