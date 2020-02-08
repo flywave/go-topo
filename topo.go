@@ -4,12 +4,12 @@ package topo
 #include <stdlib.h>
 #include "topo_c_api.h"
 #cgo CFLAGS: -I ./
-#cgo linux CXXFLAGS: -I ./include/oce -I ./include/linux/oce -I ./
-#cgo darwin CXXFLAGS: -I ./include/oce -I ./include/darwin/oce -I ./ -std=gnu++14
-#cgo windows CXXFLAGS:  -I ./include/oce -I ./include/windows/oce -I ./
-#cgo linux LDFLAGS: -L ./lib/linux_amd64 -L /usr/lib/x86_64-linux-gnu/ -Wl,--start-group -lpthread -ldl -lm -lGL -lGLU -lX11 -lfreetype -lTKernel -lTKMath -lTKG2d -lTKG3d -lTKGeomBase -lTKBRep -lTKGeomAlgo -lTKTopAlgo -lTKPrim -lTKBO -lTKHLR -lTKMesh -lTKShHealing -lTKXMesh -lTKBool -lTKFillet -lTKFeat -lTKOffset -lTKService -lTKV3d -lTKCDF -lPTKernel -lTKLCAF -lFWOSPlugin -lTKPShape -lTKBinL -lTKXmlL -lTKPLCAF -lTKTObj -lTKShapeSchema -lTKStdLSchema -lTKCAF -lTKBin -lTKXml -lTKPCAF -lTKBinTObj -lTKXmlTObj -lTKStdSchema -lTKSTL -lTKXSBase -lTKSTEPBase -lTKIGES -lTKSTEPAttr -lTKSTEP209 -lTKSTEP -lTKVRML -lTKXCAF -lTKXCAFSchema -lTKXmlXCAF -lTKBinXCAF -lTKXDEIGES -lTKXDESTEP -Wl,--end-group
-#cgo darwin LDFLAGS: -L ./lib/darwin_amd64  -framework Foundation -framework CoreFoundation -framework CoreGraphics -framework Cocoa -lfreetype -lTKernel -lTKMath -lTKG2d -lTKG3d -lTKGeomBase -lTKBRep -lTKGeomAlgo -lTKTopAlgo -lTKPrim -lTKBO -lTKHLR -lTKMesh -lTKShHealing -lTKXMesh -lTKBool -lTKFillet -lTKFeat -lTKOffset -lTKService -lTKV3d -lTKCDF -lPTKernel -lTKLCAF -lFWOSPlugin -lTKPShape -lTKBinL -lTKXmlL -lTKPLCAF -lTKTObj -lTKShapeSchema -lTKStdLSchema -lTKCAF -lTKBin -lTKXml -lTKPCAF -lTKBinTObj -lTKXmlTObj -lTKStdSchema -lTKSTL -lTKXSBase -lTKSTEPBase -lTKIGES -lTKSTEPAttr -lTKSTEP209 -lTKSTEP -lTKVRML -lTKXCAF -lTKXCAFSchema -lTKXmlXCAF -lTKBinXCAF -lTKXDEIGES -lTKXDESTEP
-#cgo windows LDFLAGS: -L ./lib/windows_amd64 -lfreetype -lTKernel -lTKMath -lTKG2d -lTKG3d -lTKGeomBase -lTKBRep -lTKGeomAlgo -lTKTopAlgo -lTKPrim -lTKBO -lTKHLR -lTKMesh -lTKShHealing -lTKXMesh -lTKBool -lTKFillet -lTKFeat -lTKOffset -lTKService -lTKV3d -lTKCDF -lPTKernel -lTKLCAF -lFWOSPlugin -lTKPShape -lTKBinL -lTKXmlL -lTKPLCAF -lTKTObj -lTKShapeSchema -lTKStdLSchema -lTKCAF -lTKBin -lTKXml -lTKPCAF -lTKBinTObj -lTKXmlTObj -lTKStdSchema -lTKSTL -lTKXSBase -lTKSTEPBase -lTKIGES -lTKSTEPAttr -lTKSTEP209 -lTKSTEP -lTKVRML -lTKXCAF -lTKXCAFSchema -lTKXmlXCAF -lTKBinXCAF -lTKXDEIGES -lTKXDESTEP
+#cgo linux CXXFLAGS: -I ./external/freetype2 -I ./external/freetype2/src/include  -I ./external/freetype2/include  -I ./external/zlib  -I ./   -I ./external/oce/inc -I ./external/oce/src/Standard -I ./external/oce/src/gp -I ./external/oce/src/Precision -I ./external/oce/src/TCollection -I ./external/oce/src/TopoDS -I ./external/oce/src/TopLoc -I ./external/oce/src/GeomAdaptor -I ./external/oce/src/Geom2dAdaptor -I ./external/oce/src/BRepAdaptor -I ./external/oce/src/ShapeFix -I ./external/oce/src/ShapeAnalysis -I ./external/oce/src/ShapeBuild -I ./external/oce/src/ShapeExtend -I ./external/oce/src/ShapeConstruct -I ./external/oce/src/ShapeUpgrade -I ./external/oce/src/ShapeAlgo -I ./external/oce/src/ShapeProcess -I ./external/oce/src/ShapeProcessAPI -I ./external/oce/src/BRepGProp -I ./external/oce/src/BRepMesh -I ./external/oce/src/Bnd -I ./external/oce/src/Adaptor2d -I ./external/oce/src/Adaptor3d -I ./external/oce/src/BOPAlgo -I ./external/oce/src/BOPDS -I ./external/oce/src/BRep -I ./external/oce/src/BRepApprox -I ./external/oce/src/BRepBlend -I ./external/oce/src/BRepBuilderAPI -I ./external/oce/src/BRepCheck -I ./external/oce/src/NCollection -I ./external/oce/src/TopTools -I ./external/oce/src/GCPnts -I ./external/oce/src/Poly -I ./external/oce/src/BRepFilletAPI -I ./external/oce/src/TopExp -I ./external/oce/src/BOPCol -I ./external/oce/src/BRepSweep -I ./external/oce/src/Sweep -I ./external/oce/src/ChFi2d -I ./external/oce/src/BRepTools -I ./external/oce/src/IntPatch -I ./external/oce/src/GeomInt -I ./external/oce/src/IntSurf -I ./external/oce/src/GeomAPI -I ./external/oce/src/Extrema -I ./external/oce/src/math -I ./external/oce/src/CPnts -I ./external/oce/src/BRepPrim -I ./external/oce/src/GC -I ./external/oce/src/ChFiDS -I ./external/oce/src/ElCLib -I ./external/oce/src/gce -I ./external/oce/src/Interface -I ./external/oce/src/MoniTool -I ./external/oce/src/TDF -I ./external/oce/src/Message -I ./external/oce/src/Plate -I ./external/oce/src/GCE2d -I ./external/oce/src/BRepFeat -I ./external/oce/src/GeomConvert -I ./external/oce/src/LocOpe -I ./external/oce/src/TDocStd -I ./external/oce/src/CDF -I ./external/oce/src/TNaming -I ./external/oce/src/IGESControl -I ./external/oce/src/XCAFPrs -I ./external/oce/src/XCAFDoc -I ./external/oce/src/XCAFDrivers -I ./external/oce/src/XCAFSchema -I ./external/oce/src/XmlXCAFDrivers -I ./external/oce/src/STEPCAFControl
+#cgo darwin CXXFLAGS:  -I ./external/freetype2 -I ./external/freetype2/src/include  -I ./external/freetype2/include  -I ./external/zlib  -I ./  -I ./external/oce/inc -I ./external/oce/src/Standard -I ./external/oce/src/gp -I ./external/oce/src/Precision -I ./external/oce/src/TCollection -I ./external/oce/src/TopoDS -I ./external/oce/src/TopLoc -I ./external/oce/src/GeomAdaptor -I ./external/oce/src/Geom2dAdaptor -I ./external/oce/src/BRepAdaptor -I ./external/oce/src/ShapeFix -I ./external/oce/src/ShapeAnalysis -I ./external/oce/src/ShapeBuild -I ./external/oce/src/ShapeExtend -I ./external/oce/src/ShapeConstruct -I ./external/oce/src/ShapeUpgrade -I ./external/oce/src/ShapeAlgo -I ./external/oce/src/ShapeProcess -I ./external/oce/src/ShapeProcessAPI -I ./external/oce/src/BRepGProp -I ./external/oce/src/BRepMesh -I ./external/oce/src/Bnd -I ./external/oce/src/Adaptor2d -I ./external/oce/src/Adaptor3d -I ./external/oce/src/BOPAlgo -I ./external/oce/src/BOPDS -I ./external/oce/src/BRep -I ./external/oce/src/BRepApprox -I ./external/oce/src/BRepBlend -I ./external/oce/src/BRepBuilderAPI -I ./external/oce/src/BRepCheck -I ./external/oce/src/NCollection -I ./external/oce/src/TopTools -I ./external/oce/src/GCPnts -I ./external/oce/src/Poly -I ./external/oce/src/BRepFilletAPI -I ./external/oce/src/TopExp -I ./external/oce/src/BOPCol -I ./external/oce/src/BRepSweep -I ./external/oce/src/Sweep -I ./external/oce/src/ChFi2d -I ./external/oce/src/BRepTools -I ./external/oce/src/IntPatch -I ./external/oce/src/GeomInt -I ./external/oce/src/IntSurf -I ./external/oce/src/GeomAPI -I ./external/oce/src/Extrema -I ./external/oce/src/math -I ./external/oce/src/CPnts -I ./external/oce/src/BRepPrim -I ./external/oce/src/GC -I ./external/oce/src/ChFiDS -I ./external/oce/src/ElCLib -I ./external/oce/src/gce -I ./external/oce/src/Interface -I ./external/oce/src/MoniTool -I ./external/oce/src/TDF -I ./external/oce/src/Message -I ./external/oce/src/Plate -I ./external/oce/src/GCE2d -I ./external/oce/src/BRepFeat -I ./external/oce/src/GeomConvert -I ./external/oce/src/LocOpe -I ./external/oce/src/TDocStd -I ./external/oce/src/CDF -I ./external/oce/src/TNaming -I ./external/oce/src/IGESControl -I ./external/oce/src/XCAFPrs -I ./external/oce/src/XCAFDoc -I ./external/oce/src/XCAFDrivers -I ./external/oce/src/XCAFSchema -I ./external/oce/src/XmlXCAFDrivers -I ./external/oce/src/STEPCAFControl  -std=gnu++14
+#cgo windows CXXFLAGS: -I ./external/freetype2 -I ./external/freetype2/src/include -I ./external/freetype2/include  -I ./external/zlib  -I ./   -I ./external/oce/inc -I ./external/oce/src/Standard -I ./external/oce/src/gp -I ./external/oce/src/Precision -I ./external/oce/src/TCollection -I ./external/oce/src/TopoDS -I ./external/oce/src/TopLoc -I ./external/oce/src/GeomAdaptor -I ./external/oce/src/Geom2dAdaptor -I ./external/oce/src/BRepAdaptor -I ./external/oce/src/ShapeFix -I ./external/oce/src/ShapeAnalysis -I ./external/oce/src/ShapeBuild -I ./external/oce/src/ShapeExtend -I ./external/oce/src/ShapeConstruct -I ./external/oce/src/ShapeUpgrade -I ./external/oce/src/ShapeAlgo -I ./external/oce/src/ShapeProcess -I ./external/oce/src/ShapeProcessAPI -I ./external/oce/src/BRepGProp -I ./external/oce/src/BRepMesh -I ./external/oce/src/Bnd -I ./external/oce/src/Adaptor2d -I ./external/oce/src/Adaptor3d -I ./external/oce/src/BOPAlgo -I ./external/oce/src/BOPDS -I ./external/oce/src/BRep -I ./external/oce/src/BRepApprox -I ./external/oce/src/BRepBlend -I ./external/oce/src/BRepBuilderAPI -I ./external/oce/src/BRepCheck -I ./external/oce/src/NCollection -I ./external/oce/src/TopTools -I ./external/oce/src/GCPnts -I ./external/oce/src/Poly -I ./external/oce/src/BRepFilletAPI -I ./external/oce/src/TopExp -I ./external/oce/src/BOPCol -I ./external/oce/src/BRepSweep -I ./external/oce/src/Sweep -I ./external/oce/src/ChFi2d -I ./external/oce/src/BRepTools -I ./external/oce/src/IntPatch -I ./external/oce/src/GeomInt -I ./external/oce/src/IntSurf -I ./external/oce/src/GeomAPI -I ./external/oce/src/Extrema -I ./external/oce/src/math -I ./external/oce/src/CPnts -I ./external/oce/src/BRepPrim -I ./external/oce/src/GC -I ./external/oce/src/ChFiDS -I ./external/oce/src/ElCLib -I ./external/oce/src/gce -I ./external/oce/src/Interface -I ./external/oce/src/MoniTool -I ./external/oce/src/TDF -I ./external/oce/src/Message -I ./external/oce/src/Plate -I ./external/oce/src/GCE2d -I ./external/oce/src/BRepFeat -I ./external/oce/src/GeomConvert -I ./external/oce/src/LocOpe -I ./external/oce/src/TDocStd -I ./external/oce/src/CDF -I ./external/oce/src/TNaming -I ./external/oce/src/IGESControl -I ./external/oce/src/XCAFPrs -I ./external/oce/src/XCAFDoc -I ./external/oce/src/XCAFDrivers -I ./external/oce/src/XCAFSchema -I ./external/oce/src/XmlXCAFDrivers -I ./external/oce/src/STEPCAFControl
+#cgo linux LDFLAGS: -L ./libs/ -L /usr/lib/x86_64-linux-gnu/ -Wl,--start-group -lpthread -ldl -lm -lGL -lGLU -lX11 -lfreetype -lTKernel -lTKMath -lTKG2d -lTKG3d -lTKGeomBase -lTKBRep -lTKGeomAlgo -lTKTopAlgo -lTKPrim -lTKBO -lTKHLR -lTKMesh -lTKShHealing -lTKXMesh -lTKBool -lTKFillet -lTKFeat -lTKOffset -lTKService -lTKV3d -lTKCDF -lPTKernel -lTKLCAF -lFWOSPlugin -lTKPShape -lTKBinL -lTKXmlL -lTKPLCAF -lTKTObj -lTKShapeSchema -lTKStdLSchema -lTKCAF -lTKBin -lTKXml -lTKPCAF -lTKBinTObj -lTKXmlTObj -lTKStdSchema -lTKSTL -lTKXSBase -lTKSTEPBase -lTKIGES -lTKSTEPAttr -lTKSTEP209 -lTKSTEP -lTKVRML -lTKXCAF -lTKXCAFSchema -lTKXmlXCAF -lTKBinXCAF -lTKXDEIGES -lTKXDESTEP -Wl,--end-group
+#cgo darwin LDFLAGS: -L ./libs/  -framework Foundation -framework CoreFoundation -framework CoreGraphics -framework Cocoa -lfreetype -lTKernel -lTKMath -lTKG2d -lTKG3d -lTKGeomBase -lTKBRep -lTKGeomAlgo -lTKTopAlgo -lTKPrim -lTKBO -lTKHLR -lTKMesh -lTKShHealing -lTKXMesh -lTKBool -lTKFillet -lTKFeat -lTKOffset -lTKService -lTKV3d -lTKCDF -lPTKernel -lTKLCAF -lFWOSPlugin -lTKPShape -lTKBinL -lTKXmlL -lTKPLCAF -lTKTObj -lTKShapeSchema -lTKStdLSchema -lTKCAF -lTKBin -lTKXml -lTKPCAF -lTKBinTObj -lTKXmlTObj -lTKStdSchema -lTKSTL -lTKXSBase -lTKSTEPBase -lTKIGES -lTKSTEPAttr -lTKSTEP209 -lTKSTEP -lTKVRML -lTKXCAF -lTKXCAFSchema -lTKXmlXCAF -lTKBinXCAF -lTKXDEIGES -lTKXDESTEP
+#cgo windows LDFLAGS: -L ./libs/ -lfreetype -lTKernel -lTKMath -lTKG2d -lTKG3d -lTKGeomBase -lTKBRep -lTKGeomAlgo -lTKTopAlgo -lTKPrim -lTKBO -lTKHLR -lTKMesh -lTKShHealing -lTKXMesh -lTKBool -lTKFillet -lTKFeat -lTKOffset -lTKService -lTKV3d -lTKCDF -lPTKernel -lTKLCAF -lFWOSPlugin -lTKPShape -lTKBinL -lTKXmlL -lTKPLCAF -lTKTObj -lTKShapeSchema -lTKStdLSchema -lTKCAF -lTKBin -lTKXml -lTKPCAF -lTKBinTObj -lTKXmlTObj -lTKStdSchema -lTKSTL -lTKXSBase -lTKSTEPBase -lTKIGES -lTKSTEPAttr -lTKSTEP209 -lTKSTEP -lTKVRML -lTKXCAF -lTKXCAFSchema -lTKXmlXCAF -lTKBinXCAF -lTKXDEIGES -lTKXDESTEP
 */
 import "C"
 
@@ -124,8 +124,7 @@ type Shape struct {
 	val *C.struct__topo_shape_t
 }
 
-
-func (s *Shape)WriteToStl(ph string){
+func (s *Shape) WriteToStl(ph string) {
 	str := C.CString(ph)
 	defer C.free(unsafe.Pointer(str))
 	C.topo_shape_to_stl(s.val, str)
@@ -334,8 +333,8 @@ type CompSolid struct {
 	val C.struct__topo_comp_solid_t
 }
 
-func  TopoMakeCompSolid() *CompSolid {
-	return &CompSolid{val:C.topo_make_comp_solid()}
+func TopoMakeCompSolid() *CompSolid {
+	return &CompSolid{val: C.topo_make_comp_solid()}
 }
 
 func (s *CompSolid) IsNull() bool {
@@ -700,8 +699,8 @@ type Compound struct {
 	val C.struct__topo_compound_t
 }
 
-func  TopoMakeCompound() *Compound {
-	return &Compound{val:C.topo_make_compound()}
+func TopoMakeCompound() *Compound {
+	return &Compound{val: C.topo_make_compound()}
 }
 
 func (s *Compound) IsNull() bool {
@@ -1066,8 +1065,8 @@ type Edge struct {
 	val C.struct__topo_edge_t
 }
 
-func  TopoMakeEdge() *Edge {
-	return &Edge{val:C.topo_make_edge()}
+func TopoMakeEdge() *Edge {
+	return &Edge{val: C.topo_make_edge()}
 }
 
 func (s *Edge) IsNull() bool {
@@ -1285,9 +1284,8 @@ func (t *Edge) Free() {
 }
 
 func TopoMakeEdgeFromPoints(pts []Point3) *Edge {
-	return &Edge{val: C.topo_edge_make_edge_from_points(&pts[0].val,C.int(len(pts)))}
+	return &Edge{val: C.topo_edge_make_edge_from_points(&pts[0].val, C.int(len(pts)))}
 }
-
 
 func TopoMakeEdgeFromTwoVertex(v1, v2 Vertex) *Edge {
 	return &Edge{val: C.topo_edge_make_edge_from_two_vertex(v1.val, v2.val)}
@@ -1585,8 +1583,8 @@ type Face struct {
 	val C.struct__topo_face_t
 }
 
-func  TopoMakeFace() *Face {
-	return &Face{val:C.topo_make_face()}
+func TopoMakeFace() *Face {
+	return &Face{val: C.topo_make_face()}
 }
 
 func (s *Face) IsNull() bool {
@@ -1822,7 +1820,6 @@ func (t *Face) ToShape() *Shape {
 func (t *Face) Free() {
 	C.topo_face_free(t.val)
 }
- 
 
 func TopoMakeFaceFromPlane(f Plane) *Face {
 	return &Face{val: C.topo_face_make_face_from_plane(f.val)}
@@ -1936,8 +1933,8 @@ type Shell struct {
 	val C.struct__topo_shell_t
 }
 
-func  TopoMakeShell() *Shell {
-	return &Shell{val:C.topo_make_shell()}
+func TopoMakeShell() *Shell {
+	return &Shell{val: C.topo_make_shell()}
 }
 
 func (t *Shell) Sweep(spine *Wire, shps []Shape, cornerMode int) int {
@@ -2144,8 +2141,8 @@ type Solid struct {
 	val C.struct__topo_solid_t
 }
 
-func  TopoMakeSolid() *Solid {
-	return &Solid{val:C.topo_make_solid()}
+func TopoMakeSolid() *Solid {
+	return &Solid{val: C.topo_make_solid()}
 }
 
 func (s *Solid) IsNull() bool {
@@ -2892,8 +2889,8 @@ type Wire struct {
 	val C.struct__topo_wire_t
 }
 
-func  TopoMakeWire() *Wire {
-	return &Wire{val:C.topo_make_wire()}
+func TopoMakeWire() *Wire {
+	return &Wire{val: C.topo_make_wire()}
 }
 
 func (s *Wire) IsNull() bool {
@@ -3185,4 +3182,3 @@ func TopoMakeWireFromWires(wires []Wire) *Wire {
 	}
 	return &Wire{val: C.topo_make_wire_from_wries(&es[0], C.int(len(wires)))}
 }
-

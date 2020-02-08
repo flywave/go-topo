@@ -938,9 +938,8 @@ func (c Color) RGBF() (float32, float32, float32) {
 }
 
 func (c Color) RGBD() (float64, float64, float64) {
-	return  c.val.r, c.val.g, c.val.b
+	return float64(c.val.r), float64(c.val.g), float64(c.val.b)
 }
-
 
 func NewColor(c [3]float64) Color {
 	var m C.struct__color_t
