@@ -578,7 +578,7 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
     TopExp::MapShapes(shape, TopAbs_FACE, faceMap);
     int faceCount = faceMap.Extent();
     if (faceCount == 0)
-      return;
+      return 1;
     std::vector<bool> hasSeams;
     hasSeams.resize(faceCount);
     for (int f = 0; f < faceMap.Extent(); f++) {
