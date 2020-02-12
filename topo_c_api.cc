@@ -223,11 +223,13 @@ topo_shape_t *topo_shape_copy(topo_shape_t *p) {
       std::make_shared<flywave::topo::shape>(p->shp->copy())};
 }
 
-void topo_shape_mesh(topo_shape_t *p, topo_mesh_receiver_t *receiver,
-                     double tolerance, double deflection, double angle) {
+int topo_shape_mesh(topo_shape_t *p, topo_mesh_receiver_t *receiver,
+                    double tolerance, double deflection, double angle) {
   if (p) {
-    p->shp->write_triangulation(*receiver->recv, tolerance, deflection, angle);
+    return p->shp->write_triangulation(*receiver->recv, tolerance, deflection,
+                                       angle);
   }
+  return 1;
 }
 
 void topo_shape_set_surface_colour(topo_shape_t *p, color_t c) {

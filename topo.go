@@ -254,8 +254,8 @@ func (s *Shape) Share() *Shape {
 	return &Shape{val: C.topo_shape_share(s.val)}
 }
 
-func (s *Shape) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
-	C.topo_shape_mesh(s.val, m.val, C.double(tolerance), C.double(deflection), C.double(angle))
+func (s *Shape) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) int8 {
+	return int8(C.topo_shape_mesh(s.val, m.val, C.double(tolerance), C.double(deflection), C.double(angle)))
 }
 
 func (s *Shape) SetSurfaceColour(c Color) {
