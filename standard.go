@@ -4,9 +4,9 @@ package topo
 #include <stdlib.h>
 #include "standard_c_api.h"
 #cgo CFLAGS: -I ./
-#cgo linux CXXFLAGS: -I ./include/oce -I ./include/linux/oce -I ./
-#cgo darwin CXXFLAGS: -I ./include/oce -I ./include/darwin/oce -I ./ -std=gnu++14
-#cgo windows CXXFLAGS:  -I ./include/oce -I ./include/windows/oce -I ./
+#cgo linux CXXFLAGS: -I ./external/libboost/boost_1_67_0 -I ./include/oce -I ./include/linux/oce -I ./
+#cgo darwin CXXFLAGS: -I ./external/libboost/boost_1_67_0 -I ./include/oce -I ./include/darwin/oce -I ./ -std=gnu++14
+#cgo windows CXXFLAGS: -I ./external/libboost/boost_1_67_0  -I ./include/oce -I ./include/windows/oce -I ./
 */
 import "C"
 
