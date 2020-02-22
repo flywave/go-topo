@@ -20,6 +20,7 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src/src/base")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../zlib")
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/../zlib")
 
 set(BASE_SRCS
       src/src/base/ftsystem.c
