@@ -92,7 +92,9 @@ func GeomMakeBSplineSurface(poles [][]Point3, UKnots, VKnots []float64, UMults, 
 	in := make([]C.struct__pnt3d_t, col*row)
 	for i := 0; i < row; i++ {
 		for j := 0; j < col; j++ {
-			in[i*col+j] = poles[i][j].val
+			if j < len(poles[i]) {
+				in[i*col+j] = poles[i][j].val
+			}
 		}
 	}
 	return &GeomBSplineSurface{geom: C.geom_make_bspline_surface(&in[0], (*C.double)(unsafe.Pointer(&UKnots[0])), (*C.double)(unsafe.Pointer(&VKnots[0])), (*C.int)(unsafe.Pointer(&UMults[0])), (*C.int)(unsafe.Pointer(&VMults[0])), C.int(row), C.int(col), C.int(len(UKnots)), C.int(len(VKnots)), C.int(UDegree), C.int(VDegree), C.bool(UPeriodic), C.bool(VPeriodic))}
@@ -106,8 +108,10 @@ func GeomMakeBSplineSurfaceFromWeight(poles [][]Point3, weights [][]float64, UKn
 
 	for i := 0; i < row; i++ {
 		for j := 0; j < col; j++ {
-			in[i*col+j] = poles[i][j].val
-			inw[i*col+j] = C.double(weights[j][i])
+			if j < len(poles[i]) {
+				in[i*col+j] = poles[i][j].val
+				inw[i*col+j] = C.double(weights[j][i])
+			}
 		}
 	}
 	return &GeomBSplineSurface{geom: C.geom_make_bspline_surface_from_weight(&in[0], (*C.double)(unsafe.Pointer(&inw[0])), (*C.double)(unsafe.Pointer(&UKnots[0])), (*C.double)(unsafe.Pointer(&VKnots[0])), (*C.int)(unsafe.Pointer(&UMults[0])), (*C.int)(unsafe.Pointer(&VMults[0])), C.int(row), C.int(col), C.int(len(UKnots)), C.int(len(VKnots)), C.int(UDegree), C.int(VDegree), C.bool(UPeriodic), C.bool(VPeriodic))}
