@@ -135,10 +135,10 @@ TOPOCAPICALL void topo_shape_set_location(topo_shape_t *p,
                                           topo_location_t *loc);
 TOPOCAPICALL _Bool topo_shape_fix_shape(topo_shape_t *p);
 TOPOCAPICALL topo_shape_t *topo_shape_copy(topo_shape_t *p);
-TOPOCAPICALL void topo_shape_mesh(topo_shape_t *p,
-                                  topo_mesh_receiver_t *receiver,
-                                  double tolerance, double deflection,
-                                  double angle);
+TOPOCAPICALL int topo_shape_mesh(topo_shape_t *p,
+                                 topo_mesh_receiver_t *receiver,
+                                 double tolerance, double deflection,
+                                 double angle);
 
 TOPOCAPICALL void topo_shape_set_surface_colour(topo_shape_t *p, color_t c);
 TOPOCAPICALL void topo_shape_set_curve_colour(topo_shape_t *p, color_t c);

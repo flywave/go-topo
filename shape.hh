@@ -105,11 +105,11 @@ public:
 
   std::string shape_type() const;
 
-  virtual void write_triangulation(mesh_receiver &mesh, double tolerance,
-                                   double deflection, double angle);
+  virtual int write_triangulation(mesh_receiver &mesh, double tolerance,
+                                  double deflection, double angle);
 
-  virtual void mesh(mesh_receiver &mesh, double precision = 1.0e-06,
-                    double deflection = 0.1, double angle = 0.5) {
+  virtual int mesh(mesh_receiver &mesh, double precision = 1.0e-06,
+                   double deflection = 0.1, double angle = 0.5) {
     return write_triangulation(mesh, precision, deflection, angle);
   }
 

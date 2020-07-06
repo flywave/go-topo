@@ -36,6 +36,18 @@ IF(NOT FREETYPE_INCLUDE)
   SET(FREETYPE_INCLUDE YES)
 ENDIF()
 
+# boost
+IF(UNIX)
+IF(NOT BOOST_INCLUDE)
+  ADD_SUBDIRECTORY("${CMAKE_CURRENT_SOURCE_DIR}/external/libboost")
+
+  LIST(APPEND FLYWAVE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/external/libboost/boost_1_67_0")
+  LIST(APPEND FLYWAVE_LIBRARY_DEPES "boost_regex_internal" "boost_program_options_internal" "boost_date_time_internal" "boost_filesystem_internal" "boost_system_internal")
+  LIST(APPEND FLYWAVE_LIBRARY_DIRS "${CMAKE_CURRENT_BINARY_DIR}/external/libboost/")
+  SET(BOOST_INCLUDE YES)
+ENDIF()
+ENDIF()
+
 # oce
 IF(NOT OCE_INCLUDE)
   ADD_SUBDIRECTORY("${CMAKE_CURRENT_SOURCE_DIR}/external/oce/")

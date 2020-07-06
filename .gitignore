@@ -26,4 +26,4 @@ Session.vim
 .netrwhist
 *~
 build
-libs
+/libs
