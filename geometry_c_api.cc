@@ -2850,7 +2850,6 @@ geom_make_bspline_surface(pnt3d_t *Poles, double *UKnots, double *VKnots,
                          static_cast<Standard_Integer>(row)};
   for (int i = 0; i < row; i++) {
     for (int j = 0; j < col; j++) {
-      if (Poles[i * col + j])
         pnt.SetValue(i, j, cast_to_gp(Poles[i * col + j]));
     }
   }
@@ -2880,10 +2879,8 @@ geom_bspline_surface_t *geom_make_bspline_surface_from_weight(
                            static_cast<Standard_Integer>(row)};
   for (int i = 0; i < row; i++) {
     for (int j = 0; j < col; j++) {
-      if (Poles[i * col + j]) {
         pnt.SetValue(i, j, cast_to_gp(Poles[i * col + j]));
         wei.SetValue(i, j, Weights[i * col + j]);
-      }
     }
   }
   TColStd_Array1OfInteger umus{0, static_cast<Standard_Integer>(UCount)};

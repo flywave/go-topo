@@ -681,13 +681,13 @@ GEOMCAPICALL geom_plate_surface_t *
 geom_make_plate_surface(geom_surface_t *Surfinit, plate_plate_t *Surfinter);
 
 GEOMCAPICALL geom_bspline_surface_t *
-geom_make_bspline_surface(pnt3d_t *Poles, int pcount, double *UKnots,
-                          double *VKnots, int *UMults, int *VMults, int row,
-                          int col, int UCount, int VCount, int UDegree,
-                          int VDegree, _Bool UPeriodic, _Bool VPeriodic);
+geom_make_bspline_surface(pnt3d_t *Poles, double *UKnots, double *VKnots,
+                          int *UMults, int *VMults, int row, int col,
+                          int UCount, int VCount, int UDegree, int VDegree,
+                          _Bool UPeriodic, _Bool VPeriodic);
 
 GEOMCAPICALL geom_bspline_surface_t *geom_make_bspline_surface_from_weight(
-    pnt3d_t *Poles, int pcount, double *Weights, double *UKnots, double *VKnots,
+    pnt3d_t *Poles, double *Weights, double *UKnots, double *VKnots,
     int *UMults, int *VMults, int row, int col, int UCount, int VCount,
     int UDegree, int VDegree, _Bool UPeriodic, _Bool VPeriodic);
 
