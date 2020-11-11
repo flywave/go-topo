@@ -583,6 +583,14 @@ func (s *CompSolid) Sweep(spine *Wire, profiles []Shape, cornerMode int) int {
 	return int(C.topo_solid_sweep(s.solid(), spine.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
 }
 
+func (s *CompSolid) SweepWire(spine *Wire, profiles []Wire, cornerMode int) int {
+	cshp := make([]C.struct__topo_wire_t, len(profiles))
+	for i := range profiles {
+		cshp[i] = profiles[i].val
+	}
+	return int(C.topo_solid_sweep_wire(s.solid(), spine.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
+}
+
 func (s *CompSolid) Boolean(tool *Solid, op int) int {
 	return int(C.topo_solid_boolean(s.solid(), tool.val, C.int(op)))
 }
@@ -1801,6 +1809,14 @@ func (t *Face) Sweep(spine *Wire, profiles []Shape, cornerMode int) int {
 	return int(C.topo_face_sweep(t.val, spine.val, &prs[0], C.int(len(profiles)), C.int(cornerMode)))
 }
 
+func (s *Face) SweepWire(spine *Wire, profiles []Wire, cornerMode int) int {
+	cshp := make([]C.struct__topo_wire_t, len(profiles))
+	for i := range profiles {
+		cshp[i] = profiles[i].val
+	}
+	return int(C.topo_face_sweep_wire(s.val, spine.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
+}
+
 func (t *Face) Loft(profiles []Shape, ruled bool, tolerance float64) int {
 	prs := make([]*C.struct__topo_shape_t, len(profiles))
 	for i := range profiles {
@@ -1943,6 +1959,14 @@ func (t *Shell) Sweep(spine *Wire, shps []Shape, cornerMode int) int {
 		cshp[i] = shps[i].val
 	}
 	return int(C.topo_shell_sweep(t.val, spine.val, &cshp[0], C.int(len(shps)), C.int(cornerMode)))
+}
+
+func (s *Shell) SweepWire(spine *Wire, profiles []Wire, cornerMode int) int {
+	cshp := make([]C.struct__topo_wire_t, len(profiles))
+	for i := range profiles {
+		cshp[i] = profiles[i].val
+	}
+	return int(C.topo_shell_sweep_wire(s.val, spine.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
 }
 
 func (t *Shell) ToShape() *Shape {
@@ -2369,6 +2393,14 @@ func (s *Solid) Sweep(spine *Wire, profiles []Shape, cornerMode int) int {
 		cshp[i] = profiles[i].val
 	}
 	return int(C.topo_solid_sweep(s.val, spine.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
+}
+
+func (s *Solid) SweepWire(spine *Wire, profiles []Wire, cornerMode int) int {
+	cshp := make([]C.struct__topo_wire_t, len(profiles))
+	for i := range profiles {
+		cshp[i] = profiles[i].val
+	}
+	return int(C.topo_solid_sweep_wire(s.val, spine.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
 }
 
 func (s *Solid) Boolean(tool *Solid, op int) int {
