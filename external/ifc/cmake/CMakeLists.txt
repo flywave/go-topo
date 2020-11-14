@@ -1,0 +1,134 @@
+cmake_minimum_required (VERSION 2.6)
+project (IFCConverter)
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+if(COMPILER_SUPPORTS_CXX11)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+elseif(COMPILER_SUPPORTS_CXX0X)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+else()
+        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+endif()
+ 
+IF(NOT CMAKE_BUILD_TYPE)
+ 	SET(CMAKE_BUILD_TYPE "Release")
+ENDIF(NOT CMAKE_BUILD_TYPE)
+
+set(SCHEMA_VERSIONS "2x3" "4" "4x1" "4x2" "4x3_rc1")
+
+
+IF(MSVC)
+    ADD_DEFINITIONS(-D_UNICODE)
+ElSE(MSVC)
+    ADD_DEFINITIONS(-fPIC -Wno-non-virtual-dtor)
+ENDIF(MSVC)
+
+INCLUDE_DIRECTORIES(
+    ${INCLUDE_DIRECTORIES}
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../libboost/boost_1_67_0"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/inc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Standard"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/gp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Precision"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TCollection"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TopoDS"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TopLoc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/GeomAdaptor"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Geom2dAdaptor"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepAdaptor"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeFix"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeAnalysis"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeBuild"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeExtend"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeConstruct"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeUpgrade"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeAlgo"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeProcess"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeProcessAPI"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepGProp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepMesh"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Bnd"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Adaptor2d"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Adaptor3d"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BOPAlgo"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BOPDS"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRep"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepApprox"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepBlend"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepBuilderAPI"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepCheck"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/NCollection"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TopTools"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/GCPnts"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Poly"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepFilletAPI"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TopExp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BOPCol"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepSweep"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Sweep"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ChFi2d"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepTools"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/IntPatch"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/GeomInt"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/IntSurf"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/GeomAPI"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Extrema"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/math"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/CPnts"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepPrim"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/GC"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ChFiDS"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ElCLib"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/gce"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Interface"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/MoniTool"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TDF"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Message"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Plate"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/GCE2d"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepFeat"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/GeomConvert"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/LocOpe"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TDocStd"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/CDF"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TNaming"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/IGESControl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/XCAFPrs"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/XCAFDoc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/XCAFDrivers"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/XCAFSchema"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/XmlXCAFDrivers" 
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/STEPCAFControl" 
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepExtrema"
+)
+
+file(GLOB cpp_file
+    ../src/*.cc
+)
+
+ADD_LIBRARY(Ifc STATIC ${cpp_file})
+ 
+TARGET_LINK_LIBRARIES(Ifc)
+
+file(GLOB include_files_geom
+    ../src/ifcgeom/*.h     
+)
+
+file(GLOB include_files_parse
+    ../src/ifcparse/*.h
+)
+
+file(GLOB include_files_geom_scheme
+    ../src/ifcgeom_schema_agnostic/*.h
+)
+ 
+
+IF(FLYWAVE_ENABLE_SOLUTION_FOLDERS)
+    SET_TARGET_PROPERTIES(Ifc PROPERTIES FOLDER external)
+ENDIF(FLYWAVE_ENABLE_SOLUTION_FOLDERS)
+
+INSTALL(FILES ${include_files_geom} DESTINATION include/ifc/ifcgeom)
+INSTALL(FILES ${include_files_parse} DESTINATION include/ifc/ifcparse)
+INSTALL(FILES ${include_files_geom_scheme} DESTINATION include/ifc/ifcgeom_schema_agnostic)
+INSTALL(TARGETS Ifc)

@@ -124,6 +124,10 @@ type Shape struct {
 	val *C.struct__topo_shape_t
 }
 
+func NewShape(v *C.struct__topo_shape_t) *Shape {
+	return &Shape{val: v}
+}
+
 func (s *Shape) WriteToStl(ph string) {
 	str := C.CString(ph)
 	defer C.free(unsafe.Pointer(str))
