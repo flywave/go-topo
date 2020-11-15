@@ -16,8 +16,6 @@ namespace  IFC_NAMESPACE{
 #include "ifcgeom/IfcGeomTree.h"
 #include "ifcgeom/IfcGeomShapeType.h"
 
-
-
 #include "ifcgeom_schema_agnostic/IfcGeomFilter.h"
 #include "ifcgeom_schema_agnostic/IfcGeomIterator.h"
 #include "ifcgeom_schema_agnostic/IfcGeomMaterial.h"

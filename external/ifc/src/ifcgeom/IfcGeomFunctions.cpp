@@ -174,8 +174,8 @@
 namespace IFC_NAMESPACE{
 namespace {
 	struct MAKE_TYPE_NAME(factory_t) {
-		IfcGeom::Kernel* operator()(IfcParse::IfcFile* file) const {
-      IfcGeom::Kernel* k = new IfcGeom::Kernel{};
+		IfcGeom::Kernel_T* operator()(IfcParse::IfcFile* file) const {
+      IfcGeom::Kernel_T* k = new IfcGeom::Kernel_T{};
 			if (file) {
 				double unit_magnitude = 1.;
 
@@ -219,7 +219,7 @@ namespace {
 					}
 				}
 
-				k->setValue(IfcGeom::Kernel::GV_PRECISION, precision_to_set);
+				k->setValue(IfcGeom::Kernel_T::GV_PRECISION, precision_to_set);
 			}
 			return k;
 		}
@@ -232,7 +232,7 @@ void MAKE_INIT_FN(KernelImplementation_)(IfcGeom::impl::KernelFactoryImplementat
 	mapping->bind(schema_name, factory);
 }
 
-#define Kernel MAKE_TYPE_NAME(Kernel)
+#define Kernel_T MAKE_TYPE_NAME(Kernel)
 
 namespace {
 	void copy_operand(const TopTools_ListOfShape& l, TopTools_ListOfShape& r) {
@@ -518,19 +518,19 @@ namespace {
 	}
 }
 
-void IfcGeom::Kernel::set_offset(const std::array<double, 3> &p_offset) {
+void IfcGeom::Kernel_T::set_offset(const std::array<double, 3> &p_offset) {
     offset = gp_Vec(p_offset[0], p_offset[1], p_offset[2]);
 
     offset_and_rotation = combine_offset_and_rotation(offset, rotation);
 }
 
-void IfcGeom::Kernel::set_rotation(const std::array<double, 4> &p_rotation) {
+void IfcGeom::Kernel_T::set_rotation(const std::array<double, 4> &p_rotation) {
     rotation = gp_Quaternion(p_rotation[0], p_rotation[1], p_rotation[2], p_rotation[3]);
 
     offset_and_rotation = combine_offset_and_rotation(offset, rotation);
 }
 
-bool IfcGeom::Kernel::create_solid_from_compound(const TopoDS_Shape& compound, TopoDS_Shape& shape) {
+bool IfcGeom::Kernel_T::create_solid_from_compound(const TopoDS_Shape& compound, TopoDS_Shape& shape) {
 	TopTools_ListOfShape face_list;
 	TopExp_Explorer exp(compound, TopAbs_FACE);
 	for (; exp.More(); exp.Next()) {
@@ -545,7 +545,7 @@ bool IfcGeom::Kernel::create_solid_from_compound(const TopoDS_Shape& compound, T
 	return create_solid_from_faces(face_list, shape);
 }
 
-bool IfcGeom::Kernel::create_solid_from_faces(const TopTools_ListOfShape& face_list, TopoDS_Shape& shape) {
+bool IfcGeom::Kernel_T::create_solid_from_faces(const TopTools_ListOfShape& face_list, TopoDS_Shape& shape) {
 	bool valid_shell = false;
 
 	if (face_list.Extent() == 1) {
@@ -712,7 +712,7 @@ bool IfcGeom::Kernel::create_solid_from_faces(const TopTools_ListOfShape& face_l
 	return valid_shell;
 }
 
-bool IfcGeom::Kernel::is_compound(const TopoDS_Shape& shape) {
+bool IfcGeom::Kernel_T::is_compound(const TopoDS_Shape& shape) {
 	bool has_solids = TopExp_Explorer(shape,TopAbs_SOLID).More() != 0;
 	bool has_shells = TopExp_Explorer(shape,TopAbs_SHELL).More() != 0;
 	bool has_compounds = TopExp_Explorer(shape,TopAbs_COMPOUND).More() != 0;
@@ -720,7 +720,7 @@ bool IfcGeom::Kernel::is_compound(const TopoDS_Shape& shape) {
 	return has_compounds && has_faces && !has_solids && !has_shells;
 }
 
-const TopoDS_Shape& IfcGeom::Kernel::ensure_fit_for_subtraction(const TopoDS_Shape& shape, TopoDS_Shape& solid) {
+const TopoDS_Shape& IfcGeom::Kernel_T::ensure_fit_for_subtraction(const TopoDS_Shape& shape, TopoDS_Shape& solid) {
 	const bool is_comp = is_compound(shape);
 	if (!is_comp) {
 		return solid = shape;
@@ -738,7 +738,7 @@ const TopoDS_Shape& IfcGeom::Kernel::ensure_fit_for_subtraction(const TopoDS_Sha
 	return solid;
 }
 
-bool IfcGeom::Kernel::convert_openings(const IfcSchema::IfcProduct* entity, const IfcSchema::IfcRelVoidsElement::list::ptr& openings, 
+bool IfcGeom::Kernel_T::convert_openings(const IfcSchema::IfcProduct* entity, const IfcSchema::IfcRelVoidsElement::list::ptr& openings, 
 							   const IfcGeom::IfcRepresentationShapeItems& entity_shapes, const gp_Trsf& entity_trsf, IfcGeom::IfcRepresentationShapeItems& cut_shapes) {
 
 	// TODO: Refactor convert_openings() convert_openings_fast() and convert(IfcBooleanResult) to use
@@ -912,7 +912,7 @@ bool IfcGeom::Kernel::convert_openings(const IfcSchema::IfcProduct* entity, cons
 }
 
 #if OCC_VERSION_HEX < 0x60900
-bool IfcGeom::Kernel::convert_openings_fast(const IfcSchema::IfcProduct* entity, const IfcSchema::IfcRelVoidsElement::list::ptr& openings, 
+bool IfcGeom::Kernel_T::convert_openings_fast(const IfcSchema::IfcProduct* entity, const IfcSchema::IfcRelVoidsElement::list::ptr& openings, 
 							   const IfcGeom::IfcRepresentationShapeItems& entity_shapes, const gp_Trsf& entity_trsf, IfcGeom::IfcRepresentationShapeItems& cut_shapes) {
 	
 	// Create a compound of all opening shapes in order to speed up the boolean operations
@@ -1003,7 +1003,7 @@ namespace {
 	};
 }
 
-bool IfcGeom::Kernel::convert_openings_fast(const IfcSchema::IfcProduct* entity, const IfcSchema::IfcRelVoidsElement::list::ptr& openings,
+bool IfcGeom::Kernel_T::convert_openings_fast(const IfcSchema::IfcProduct* entity, const IfcSchema::IfcRelVoidsElement::list::ptr& openings,
 	const IfcGeom::IfcRepresentationShapeItems& entity_shapes, const gp_Trsf& entity_trsf, IfcGeom::IfcRepresentationShapeItems& cut_shapes) {
 
 	std::vector< std::pair<double, TopoDS_Shape> > opening_vector;
@@ -1097,7 +1097,7 @@ bool IfcGeom::Kernel::convert_openings_fast(const IfcSchema::IfcProduct* entity,
 }
 #endif
 
-bool IfcGeom::Kernel::convert_wire_to_face(const TopoDS_Wire& w, TopoDS_Face& face) {
+bool IfcGeom::Kernel_T::convert_wire_to_face(const TopoDS_Wire& w, TopoDS_Face& face) {
 	TopoDS_Wire wire = w;
 	
 	TopTools_ListOfShape results;
@@ -1140,7 +1140,7 @@ bool IfcGeom::Kernel::convert_wire_to_face(const TopoDS_Wire& w, TopoDS_Face& fa
 	return true;
 }
 
-bool IfcGeom::Kernel::convert_wire_to_faces(const TopoDS_Wire& w, TopoDS_Compound& faces) {
+bool IfcGeom::Kernel_T::convert_wire_to_faces(const TopoDS_Wire& w, TopoDS_Compound& faces) {
 	bool is_2d = true;
 	TopExp_Explorer exp(w, TopAbs_EDGE);
 	for (; exp.More(); exp.Next()) {
@@ -1210,7 +1210,7 @@ bool IfcGeom::Kernel::convert_wire_to_faces(const TopoDS_Wire& w, TopoDS_Compoun
 }
 
 
-void IfcGeom::Kernel::assert_closed_wire(TopoDS_Wire& wire) {
+void IfcGeom::Kernel_T::assert_closed_wire(TopoDS_Wire& wire) {
 	if (wire.Closed() == 0) {
 		TopoDS_Vertex v0, v1;
 		TopExp::Vertices(wire, v0, v1);
@@ -1231,7 +1231,7 @@ void IfcGeom::Kernel::assert_closed_wire(TopoDS_Wire& wire) {
 	}
 }
 
-bool IfcGeom::Kernel::convert_curve_to_wire(const Handle(Geom_Curve)& curve, TopoDS_Wire& wire) {
+bool IfcGeom::Kernel_T::convert_curve_to_wire(const Handle(Geom_Curve)& curve, TopoDS_Wire& wire) {
 	try {
 		wire = BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(curve));
 		return true;
@@ -1247,7 +1247,7 @@ bool IfcGeom::Kernel::convert_curve_to_wire(const Handle(Geom_Curve)& curve, Top
 	return false;
 }
 
-bool IfcGeom::Kernel::profile_helper(int numVerts, double* verts, int numFillets, int* filletIndices, double* filletRadii, gp_Trsf2d trsf, TopoDS_Shape& face_shape) {
+bool IfcGeom::Kernel_T::profile_helper(int numVerts, double* verts, int numFillets, int* filletIndices, double* filletRadii, gp_Trsf2d trsf, TopoDS_Shape& face_shape) {
 	TopoDS_Vertex* vertices = new TopoDS_Vertex[numVerts];
 	
 	for ( int i = 0; i < numVerts; i ++ ) {
@@ -1283,17 +1283,17 @@ bool IfcGeom::Kernel::profile_helper(int numVerts, double* verts, int numFillets
 	delete[] vertices;
 	return true;
 }
-double IfcGeom::Kernel::shape_volume(const TopoDS_Shape& s) {
+double IfcGeom::Kernel_T::shape_volume(const TopoDS_Shape& s) {
 	GProp_GProps prop;
 	BRepGProp::VolumeProperties(s, prop);
 	return prop.Mass();
 }
-double IfcGeom::Kernel::face_area(const TopoDS_Face& f) {
+double IfcGeom::Kernel_T::face_area(const TopoDS_Face& f) {
 	GProp_GProps prop;
 	BRepGProp::SurfaceProperties(f,prop);
 	return prop.Mass();
 }
-bool IfcGeom::Kernel::is_convex(const TopoDS_Wire& wire) {
+bool IfcGeom::Kernel_T::is_convex(const TopoDS_Wire& wire) {
 	for ( TopExp_Explorer exp1(wire,TopAbs_VERTEX); exp1.More(); exp1.Next() ) {
 		TopoDS_Vertex V1 = TopoDS::Vertex(exp1.Current());
 		gp_Pnt P1 = BRep_Tool::Pnt(V1);
@@ -1339,11 +1339,11 @@ bool IfcGeom::Kernel::is_convex(const TopoDS_Wire& wire) {
 	}
 	return true;
 }
-TopoDS_Shape IfcGeom::Kernel::halfspace_from_plane(const gp_Pln& pln,const gp_Pnt& cent) {
+TopoDS_Shape IfcGeom::Kernel_T::halfspace_from_plane(const gp_Pln& pln,const gp_Pnt& cent) {
 	TopoDS_Face face = BRepBuilderAPI_MakeFace(pln).Face();
 	return BRepPrimAPI_MakeHalfSpace(face,cent).Solid();
 }
-gp_Pln IfcGeom::Kernel::plane_from_face(const TopoDS_Face& face) {
+gp_Pln IfcGeom::Kernel_T::plane_from_face(const TopoDS_Face& face) {
 	BRepGProp_Face prop(face);
 	Standard_Real u1,u2,v1,v2;
 	prop.Bounds(u1,u2,v1,v2);
@@ -1354,7 +1354,7 @@ gp_Pln IfcGeom::Kernel::plane_from_face(const TopoDS_Face& face) {
 	prop.Normal(u,v,p,n);
 	return gp_Pln(p,n);
 }
-gp_Pnt IfcGeom::Kernel::point_above_plane(const gp_Pln& pln, bool agree) {
+gp_Pnt IfcGeom::Kernel_T::point_above_plane(const gp_Pln& pln, bool agree) {
 	if ( agree ) {
 		return pln.Location().Translated(pln.Axis().Direction());
 	} else {
@@ -1362,7 +1362,7 @@ gp_Pnt IfcGeom::Kernel::point_above_plane(const gp_Pln& pln, bool agree) {
 	}
 }
 
-void IfcGeom::Kernel::apply_tolerance(TopoDS_Shape& s, double t) {
+void IfcGeom::Kernel_T::apply_tolerance(TopoDS_Shape& s, double t) {
 	/*
 	// This does not result in actionable error messages and has been disabled.
 	ShapeAnalysis_ShapeTolerance toler;
@@ -1390,7 +1390,7 @@ void IfcGeom::Kernel::apply_tolerance(TopoDS_Shape& s, double t) {
 #endif
 }
 
-void IfcGeom::Kernel::setValue(GeomValue var, double value) {
+void IfcGeom::Kernel_T::setValue(GeomValue var, double value) {
 	switch (var) {
 	case GV_DEFLECTION_TOLERANCE:
 		deflection_tolerance = value;
@@ -1418,7 +1418,7 @@ void IfcGeom::Kernel::setValue(GeomValue var, double value) {
 	}
 }
 
-double IfcGeom::Kernel::getValue(GeomValue var) const {
+double IfcGeom::Kernel_T::getValue(GeomValue var) const {
 	switch (var) {
 	case GV_DEFLECTION_TOLERANCE:
 		return deflection_tolerance;
@@ -1473,7 +1473,7 @@ namespace {
 
 }
 
-bool IfcGeom::Kernel::fill_nonmanifold_wires_with_planar_faces(TopoDS_Shape& shape) {
+bool IfcGeom::Kernel_T::fill_nonmanifold_wires_with_planar_faces(TopoDS_Shape& shape) {
 	BRepOffsetAPI_Sewing sew;
 	sew.Add(shape);
 
@@ -1562,7 +1562,7 @@ bool IfcGeom::Kernel::fill_nonmanifold_wires_with_planar_faces(TopoDS_Shape& sha
 	return true;
 }
 
-bool IfcGeom::Kernel::flatten_shape_list(const IfcGeom::IfcRepresentationShapeItems& shapes, TopoDS_Shape& result, bool fuse) {
+bool IfcGeom::Kernel_T::flatten_shape_list(const IfcGeom::IfcRepresentationShapeItems& shapes, TopoDS_Shape& result, bool fuse) {
 	TopoDS_Compound compound;
 	BRep_Builder builder;
 	builder.MakeCompound(compound);
@@ -1623,7 +1623,7 @@ bool IfcGeom::Kernel::flatten_shape_list(const IfcGeom::IfcRepresentationShapeIt
 	return success;
 }
 	
-void IfcGeom::Kernel::remove_duplicate_points_from_loop(TColgp_SequenceOfPnt& polygon, bool closed, double tol) {
+void IfcGeom::Kernel_T::remove_duplicate_points_from_loop(TColgp_SequenceOfPnt& polygon, bool closed, double tol) {
 	if (tol <= 0.) tol = getValue(GV_PRECISION);
 	tol *= tol;
 
@@ -1647,7 +1647,7 @@ void IfcGeom::Kernel::remove_duplicate_points_from_loop(TColgp_SequenceOfPnt& po
 	}
 }
 
-void IfcGeom::Kernel::remove_collinear_points_from_loop(TColgp_SequenceOfPnt& polygon, bool closed, double tol) {
+void IfcGeom::Kernel_T::remove_collinear_points_from_loop(TColgp_SequenceOfPnt& polygon, bool closed, double tol) {
 	if (tol <= 0.) tol = getValue(GV_PRECISION);
 	const int start = closed ? 1 : 2;
 	const int end = polygon.Length() - (closed ? 0 : 1);
@@ -1672,7 +1672,7 @@ void IfcGeom::Kernel::remove_collinear_points_from_loop(TColgp_SequenceOfPnt& po
 	}
 }
 
-bool IfcGeom::Kernel::wire_to_sequence_of_point(const TopoDS_Wire& w, TColgp_SequenceOfPnt& p) {
+bool IfcGeom::Kernel_T::wire_to_sequence_of_point(const TopoDS_Wire& w, TColgp_SequenceOfPnt& p) {
 	TopExp_Explorer exp(w, TopAbs_EDGE);
 	for (; exp.More(); exp.Next()) {
 		double a, b;
@@ -1699,7 +1699,7 @@ bool IfcGeom::Kernel::wire_to_sequence_of_point(const TopoDS_Wire& w, TColgp_Seq
 	return true;
 }
 
-void IfcGeom::Kernel::sequence_of_point_to_wire(const TColgp_SequenceOfPnt& p, TopoDS_Wire& w, bool close) {
+void IfcGeom::Kernel_T::sequence_of_point_to_wire(const TColgp_SequenceOfPnt& p, TopoDS_Wire& w, bool close) {
 	BRepBuilderAPI_MakePolygon builder;
 	for (int i = 1; i <= p.Length(); ++i) {
 		builder.Add(p.Value(i));
@@ -1710,7 +1710,7 @@ void IfcGeom::Kernel::sequence_of_point_to_wire(const TColgp_SequenceOfPnt& p, T
 	w = builder.Wire();	
 }
 
-IfcSchema::IfcRelVoidsElement::list::ptr IfcGeom::Kernel::find_openings(IfcSchema::IfcProduct* product) {
+IfcSchema::IfcRelVoidsElement::list::ptr IfcGeom::Kernel_T::find_openings(IfcSchema::IfcProduct* product) {
 	std::vector<IfcSchema::IfcRelVoidsElement*> rs;
 
 	if ( product->declaration().is(IfcSchema::IfcElement::Class()) && !product->declaration().is(IfcSchema::IfcOpeningElement::Class()) ) {
@@ -1748,7 +1748,7 @@ IfcSchema::IfcRelVoidsElement::list::ptr IfcGeom::Kernel::find_openings(IfcSchem
 	return openings;
 }
 
-const IfcSchema::IfcMaterial* IfcGeom::Kernel::get_single_material_association(const IfcSchema::IfcProduct* product) {
+const IfcSchema::IfcMaterial* IfcGeom::Kernel_T::get_single_material_association(const IfcSchema::IfcProduct* product) {
 	IfcSchema::IfcMaterial* single_material = 0;
 	IfcSchema::IfcRelAssociatesMaterial::list::ptr associated_materials = product->HasAssociations()->as<IfcSchema::IfcRelAssociatesMaterial>();
 	if (associated_materials->size() == 1) {
@@ -1771,7 +1771,7 @@ const IfcSchema::IfcMaterial* IfcGeom::Kernel::get_single_material_association(c
 }
 
 template <typename P, typename PP>
-IfcGeom::BRepElement<P, PP>* IfcGeom::Kernel::create_brep_for_representation_and_product(
+IfcGeom::BRepElement<P, PP>* IfcGeom::Kernel_T::create_brep_for_representation_and_product(
     const IteratorSettings& settings, IfcSchema::IfcRepresentation* representation, IfcSchema::IfcProduct* product)
 {
 	std::stringstream representation_id_builder;
@@ -2046,7 +2046,7 @@ IfcGeom::BRepElement<P, PP>* IfcGeom::Kernel::create_brep_for_representation_and
 	return elem;
 }
 
-IfcSchema::IfcRepresentation* IfcGeom::Kernel::representation_mapped_to(const IfcSchema::IfcRepresentation* representation) {
+IfcSchema::IfcRepresentation* IfcGeom::Kernel_T::representation_mapped_to(const IfcSchema::IfcRepresentation* representation) {
 	IfcSchema::IfcRepresentation* representation_mapped_to = 0;
 	try {
 		IfcSchema::IfcRepresentationItem::list::ptr items = representation->Items();
@@ -2071,7 +2071,7 @@ IfcSchema::IfcRepresentation* IfcGeom::Kernel::representation_mapped_to(const If
 	return representation_mapped_to;
 }
 
-IfcSchema::IfcProduct::list::ptr IfcGeom::Kernel::products_represented_by(const IfcSchema::IfcRepresentation* representation) {
+IfcSchema::IfcProduct::list::ptr IfcGeom::Kernel_T::products_represented_by(const IfcSchema::IfcRepresentation* representation) {
 	IfcSchema::IfcProduct::list::ptr products(new IfcSchema::IfcProduct::list);
 
 	IfcSchema::IfcProductRepresentation::list::ptr prodreps = representation->OfProductRepresentation();
@@ -2130,7 +2130,7 @@ IfcSchema::IfcProduct::list::ptr IfcGeom::Kernel::products_represented_by(const 
 }
 
 template <typename P, typename PP>
-IfcGeom::BRepElement<P, PP>* IfcGeom::Kernel::create_brep_for_processed_representation(
+IfcGeom::BRepElement<P, PP>* IfcGeom::Kernel_T::create_brep_for_processed_representation(
     const IteratorSettings& /*settings*/, IfcSchema::IfcRepresentation* representation, IfcSchema::IfcProduct* product,
     IfcGeom::BRepElement<P, PP>* brep)
 {
@@ -2178,24 +2178,24 @@ IfcGeom::BRepElement<P, PP>* IfcGeom::Kernel::create_brep_for_processed_represen
 	);
 }
 
-template IFC_GEOM_API IfcGeom::BRepElement<float, float>* IfcGeom::Kernel::create_brep_for_representation_and_product<float, float>(
+template IFC_GEOM_API IfcGeom::BRepElement<float, float>* IfcGeom::Kernel_T::create_brep_for_representation_and_product<float, float>(
     const IteratorSettings& settings, IfcSchema::IfcRepresentation* representation, IfcSchema::IfcProduct* product);
-template IFC_GEOM_API IfcGeom::BRepElement<float, double>* IfcGeom::Kernel::create_brep_for_representation_and_product<float, double>(
+template IFC_GEOM_API IfcGeom::BRepElement<float, double>* IfcGeom::Kernel_T::create_brep_for_representation_and_product<float, double>(
     const IteratorSettings& settings, IfcSchema::IfcRepresentation* representation, IfcSchema::IfcProduct* product);
-template IFC_GEOM_API IfcGeom::BRepElement<double, double>* IfcGeom::Kernel::create_brep_for_representation_and_product<double, double>(
+template IFC_GEOM_API IfcGeom::BRepElement<double, double>* IfcGeom::Kernel_T::create_brep_for_representation_and_product<double, double>(
 	const IteratorSettings& settings, IfcSchema::IfcRepresentation* representation, IfcSchema::IfcProduct* product);
 
-template IFC_GEOM_API IfcGeom::BRepElement<float, float>* IfcGeom::Kernel::create_brep_for_processed_representation<float, float>(
+template IFC_GEOM_API IfcGeom::BRepElement<float, float>* IfcGeom::Kernel_T::create_brep_for_processed_representation<float, float>(
     const IteratorSettings& settings, IfcSchema::IfcRepresentation* representation, IfcSchema::IfcProduct* product, IfcGeom::BRepElement<float, float>* brep);
-template IFC_GEOM_API IfcGeom::BRepElement<float, double>* IfcGeom::Kernel::create_brep_for_processed_representation<float, double>(
+template IFC_GEOM_API IfcGeom::BRepElement<float, double>* IfcGeom::Kernel_T::create_brep_for_processed_representation<float, double>(
     const IteratorSettings& settings, IfcSchema::IfcRepresentation* representation, IfcSchema::IfcProduct* product, IfcGeom::BRepElement<float, double>* brep);
-template IFC_GEOM_API IfcGeom::BRepElement<double, double>* IfcGeom::Kernel::create_brep_for_processed_representation<double, double>(
+template IFC_GEOM_API IfcGeom::BRepElement<double, double>* IfcGeom::Kernel_T::create_brep_for_processed_representation<double, double>(
 	const IteratorSettings& settings, IfcSchema::IfcRepresentation* representation, IfcSchema::IfcProduct* product, IfcGeom::BRepElement<double, double>* brep);
 
-std::pair<std::string, double> IfcGeom::Kernel::initializeUnits(IfcSchema::IfcUnitAssignment* unit_assignment) {
+std::pair<std::string, double> IfcGeom::Kernel_T::initializeUnits(IfcSchema::IfcUnitAssignment* unit_assignment) {
 	// Set default units, set length to meters, angles to undefined
-	setValue(IfcGeom::Kernel::GV_LENGTH_UNIT, 1.0);
-	setValue(IfcGeom::Kernel::GV_PLANEANGLE_UNIT, -1.0);
+	setValue(IfcGeom::Kernel_T::GV_LENGTH_UNIT, 1.0);
+	setValue(IfcGeom::Kernel_T::GV_PLANEANGLE_UNIT, -1.0);
 
 	std::string unit_name = "METER";
 	double unit_magnitude = 1.;
@@ -2230,10 +2230,10 @@ std::pair<std::string, double> IfcGeom::Kernel::initializeUnits(IfcSchema::IfcUn
 							if (named_unit->UnitType() == IfcSchema::IfcUnitEnum::IfcUnit_LENGTHUNIT) {
 								unit_name = current_unit_name;
 								unit_magnitude = current_unit_magnitude;
-								setValue(IfcGeom::Kernel::GV_LENGTH_UNIT, current_unit_magnitude);
+								setValue(IfcGeom::Kernel_T::GV_LENGTH_UNIT, current_unit_magnitude);
 								length_unit_encountered = true;
 							} else {
-								setValue(IfcGeom::Kernel::GV_PLANEANGLE_UNIT, current_unit_magnitude);
+								setValue(IfcGeom::Kernel_T::GV_PLANEANGLE_UNIT, current_unit_magnitude);
 								angle_unit_encountered = true;
 							}
 						}
@@ -2258,7 +2258,7 @@ std::pair<std::string, double> IfcGeom::Kernel::initializeUnits(IfcSchema::IfcUn
 	return std::pair<std::string, double>(unit_name, unit_magnitude);
 }
 
-bool IfcGeom::Kernel::convert_layerset(const IfcSchema::IfcProduct* product, std::vector<Handle_Geom_Surface>& surfaces, std::vector<const SurfaceStyle*>& styles, std::vector<double>& thicknesses) {
+bool IfcGeom::Kernel_T::convert_layerset(const IfcSchema::IfcProduct* product, std::vector<Handle_Geom_Surface>& surfaces, std::vector<const SurfaceStyle*>& styles, std::vector<double>& thicknesses) {
 	IfcSchema::IfcMaterialLayerSetUsage* usage = 0;
 	Handle_Geom_Surface reference_surface;
 
@@ -2292,7 +2292,7 @@ bool IfcGeom::Kernel::convert_layerset(const IfcSchema::IfcProduct* product, std
 
 		IfcRepresentationShapeItems axis_items;
 		{
-			Kernel temp = *this;
+			Kernel_T temp = *this;
 			temp.setValue(GV_DIMENSIONALITY, -1.);
 			temp.convert_shapes(axis_representation, axis_items);
 		}
@@ -2404,7 +2404,7 @@ bool IfcGeom::Kernel::convert_layerset(const IfcSchema::IfcProduct* product, std
 	return true;
 }
 
-const Handle_Geom_Curve IfcGeom::Kernel::intersect(const Handle_Geom_Surface& a, const Handle_Geom_Surface& b) {
+const Handle_Geom_Curve IfcGeom::Kernel_T::intersect(const Handle_Geom_Surface& a, const Handle_Geom_Surface& b) {
 	GeomAPI_IntSS x(a, b, 1.e-7);
 	if (x.IsDone() && x.NbLines() == 1) {
 		return x.Line(1);
@@ -2413,15 +2413,15 @@ const Handle_Geom_Curve IfcGeom::Kernel::intersect(const Handle_Geom_Surface& a,
 	}
 }
 
-const Handle_Geom_Curve IfcGeom::Kernel::intersect(const Handle_Geom_Surface& a, const TopoDS_Face& b) {
+const Handle_Geom_Curve IfcGeom::Kernel_T::intersect(const Handle_Geom_Surface& a, const TopoDS_Face& b) {
 	return intersect(a, BRep_Tool::Surface(b));
 }
 
-const Handle_Geom_Curve IfcGeom::Kernel::intersect(const TopoDS_Face& a, const Handle_Geom_Surface& b) {
+const Handle_Geom_Curve IfcGeom::Kernel_T::intersect(const TopoDS_Face& a, const Handle_Geom_Surface& b) {
 	return intersect(BRep_Tool::Surface(a), b);
 }
 
-bool IfcGeom::Kernel::intersect(const Handle_Geom_Curve& a, const Handle_Geom_Surface& b, gp_Pnt& p) {
+bool IfcGeom::Kernel_T::intersect(const Handle_Geom_Curve& a, const Handle_Geom_Surface& b, gp_Pnt& p) {
 	GeomAPI_IntCS x(a, b);
 	if (x.IsDone() && x.NbPoints() == 1) {
 		p = x.Point(1);
@@ -2431,11 +2431,11 @@ bool IfcGeom::Kernel::intersect(const Handle_Geom_Curve& a, const Handle_Geom_Su
 	}
 }
 
-bool IfcGeom::Kernel::intersect(const Handle_Geom_Curve& a, const TopoDS_Face& b, gp_Pnt &c) {
+bool IfcGeom::Kernel_T::intersect(const Handle_Geom_Curve& a, const TopoDS_Face& b, gp_Pnt &c) {
 	return intersect(a, BRep_Tool::Surface(b), c);
 }
 
-bool IfcGeom::Kernel::intersect(const Handle_Geom_Curve& a, const TopoDS_Shape& b, std::vector<gp_Pnt>& out) {
+bool IfcGeom::Kernel_T::intersect(const Handle_Geom_Curve& a, const TopoDS_Shape& b, std::vector<gp_Pnt>& out) {
 	TopExp_Explorer exp(b, TopAbs_FACE);
 	gp_Pnt p;
 	for (; exp.More(); exp.Next()) {
@@ -2446,7 +2446,7 @@ bool IfcGeom::Kernel::intersect(const Handle_Geom_Curve& a, const TopoDS_Shape& 
 	return !out.empty();
 }
 
-bool IfcGeom::Kernel::intersect(const Handle_Geom_Surface& a, const TopoDS_Shape& b, std::vector< std::pair<Handle_Geom_Surface, Handle_Geom_Curve> >& out) {
+bool IfcGeom::Kernel_T::intersect(const Handle_Geom_Surface& a, const TopoDS_Shape& b, std::vector< std::pair<Handle_Geom_Surface, Handle_Geom_Curve> >& out) {
 	TopExp_Explorer exp(b, TopAbs_FACE);
 	for (; exp.More(); exp.Next()) {
 		const TopoDS_Face& f = TopoDS::Face(exp.Current());
@@ -2459,7 +2459,7 @@ bool IfcGeom::Kernel::intersect(const Handle_Geom_Surface& a, const TopoDS_Shape
 	return !out.empty();
 }
 
-bool IfcGeom::Kernel::closest(const gp_Pnt& a, const std::vector<gp_Pnt>& b, gp_Pnt& c) {
+bool IfcGeom::Kernel_T::closest(const gp_Pnt& a, const std::vector<gp_Pnt>& b, gp_Pnt& c) {
 	double minimal_distance = std::numeric_limits<double>::infinity();
 	for (std::vector<gp_Pnt>::const_iterator it = b.begin(); it != b.end(); ++it) {
 		const double d = a.Distance(*it);
@@ -2471,14 +2471,14 @@ bool IfcGeom::Kernel::closest(const gp_Pnt& a, const std::vector<gp_Pnt>& b, gp_
 	return minimal_distance != std::numeric_limits<double>::infinity();
 }
 
-bool IfcGeom::Kernel::project(const Handle_Geom_Curve& crv, const gp_Pnt& pt, gp_Pnt& p, double& u, double& d) {
+bool IfcGeom::Kernel_T::project(const Handle_Geom_Curve& crv, const gp_Pnt& pt, gp_Pnt& p, double& u, double& d) {
 	ShapeAnalysis_Curve sac;
 	sac.Project(crv, pt, 1e-3, p, u, false);
 	d = pt.Distance(p);
 	return true;
 }
 
-bool IfcGeom::Kernel::find_wall_end_points(const IfcSchema::IfcWall* wall, gp_Pnt& start, gp_Pnt& end) {
+bool IfcGeom::Kernel_T::find_wall_end_points(const IfcSchema::IfcWall* wall, gp_Pnt& start, gp_Pnt& end) {
 	IfcSchema::IfcRepresentation* axis_representation = find_representation(wall, "Axis");
 	if (!axis_representation) {
 		return false;
@@ -2486,7 +2486,7 @@ bool IfcGeom::Kernel::find_wall_end_points(const IfcSchema::IfcWall* wall, gp_Pn
 		
 	IfcRepresentationShapeItems items;
 	{
-		Kernel temp = *this;
+		auto temp = *this;
 		temp.setValue(GV_DIMENSIONALITY, -1.);
 		temp.convert_shapes(axis_representation, items);
 	}
@@ -2512,7 +2512,7 @@ bool IfcGeom::Kernel::find_wall_end_points(const IfcSchema::IfcWall* wall, gp_Pn
 	return true;
 }
 
-bool IfcGeom::Kernel::fold_layers(const IfcSchema::IfcWall* wall, const IfcRepresentationShapeItems& items, const std::vector<Handle_Geom_Surface>& surfaces, const std::vector<double>& thicknesses, std::vector< std::vector<Handle_Geom_Surface> >& result) {
+bool IfcGeom::Kernel_T::fold_layers(const IfcSchema::IfcWall* wall, const IfcRepresentationShapeItems& items, const std::vector<Handle_Geom_Surface>& surfaces, const std::vector<double>& thicknesses, std::vector< std::vector<Handle_Geom_Surface> >& result) {
 	/*
 	 * @todo isn't it easier to do this based on the non-folded surfaces of
 	 * the connected walls and fold both pairs of layersets simultaneously?
@@ -2670,7 +2670,7 @@ bool IfcGeom::Kernel::fold_layers(const IfcSchema::IfcWall* wall, const IfcRepre
 		
 		IfcRepresentationShapeItems axis_items;
 		{
-			Kernel temp = *this;
+			Kernel_T temp = *this;
 			temp.setValue(GV_DIMENSIONALITY, -1.);
 			temp.convert_shapes(axis_representation, axis_items);
 		}
@@ -2872,7 +2872,7 @@ namespace {
 	}
 
 #if OCC_VERSION_HEX >= 0x70200
-	bool split(IfcGeom::Kernel&, const TopoDS_Shape& input, const TopTools_ListOfShape& operands, double eps, std::vector<TopoDS_Shape>& slices) {
+	bool split(IfcGeom::Kernel_T&, const TopoDS_Shape& input, const TopTools_ListOfShape& operands, double eps, std::vector<TopoDS_Shape>& slices) {
 		if (operands.Extent() < 2) {
 			// Needs to have at least two cutting surfaces for the ordering based on surface containment to work.
 			return false;
@@ -2964,7 +2964,7 @@ namespace {
 		return true;
 	}
 #else
-	bool split(IfcGeom::Kernel& k, const TopoDS_Shape& input, const TopTools_ListOfShape& operands, double, std::vector<TopoDS_Shape>& slices) {
+	bool split(IfcGeom::Kernel_T& k, const TopoDS_Shape& input, const TopTools_ListOfShape& operands, double, std::vector<TopoDS_Shape>& slices) {
 		TopTools_ListIteratorOfListOfShape it(operands);
 		TopoDS_Shape i = input;
 		for (; it.More(); it.Next()) {
@@ -2991,7 +2991,7 @@ namespace {
 #endif
 }
 
-bool IfcGeom::Kernel::apply_folded_layerset(const IfcRepresentationShapeItems& items, const std::vector< std::vector<Handle_Geom_Surface> >& surfaces, const std::vector<const SurfaceStyle*>& styles, IfcRepresentationShapeItems& result) {
+bool IfcGeom::Kernel_T::apply_folded_layerset(const IfcRepresentationShapeItems& items, const std::vector< std::vector<Handle_Geom_Surface> >& surfaces, const std::vector<const SurfaceStyle*>& styles, IfcRepresentationShapeItems& result) {
 	Bnd_Box bb;
 	TopoDS_Shape input;
 	flatten_shape_list(items, input, false);
@@ -3103,7 +3103,7 @@ bool IfcGeom::Kernel::apply_folded_layerset(const IfcRepresentationShapeItems& i
 
 }
 
-bool IfcGeom::Kernel::apply_layerset(const IfcRepresentationShapeItems& items, const std::vector<Handle_Geom_Surface>& surfaces, const std::vector<const SurfaceStyle*>& styles, IfcRepresentationShapeItems& result) {
+bool IfcGeom::Kernel_T::apply_layerset(const IfcRepresentationShapeItems& items, const std::vector<Handle_Geom_Surface>& surfaces, const std::vector<const SurfaceStyle*>& styles, IfcRepresentationShapeItems& result) {
 	if (surfaces.size() < 3) {
 
 		return false;
@@ -3185,7 +3185,7 @@ bool IfcGeom::Kernel::apply_layerset(const IfcRepresentationShapeItems& items, c
 	}
 }
 
-IfcSchema::IfcRepresentation* IfcGeom::Kernel::find_representation(const IfcSchema::IfcProduct* product, const std::string& identifier) {
+IfcSchema::IfcRepresentation* IfcGeom::Kernel_T::find_representation(const IfcSchema::IfcProduct* product, const std::string& identifier) {
 	if (!product->hasRepresentation()) return 0;
 	IfcSchema::IfcProductRepresentation* prod_rep = product->Representation();
 	IfcSchema::IfcRepresentation::list::ptr reps = prod_rep->Representations();
@@ -3197,7 +3197,7 @@ IfcSchema::IfcRepresentation* IfcGeom::Kernel::find_representation(const IfcSche
 	return 0;
 }
 
-bool IfcGeom::Kernel::split_solid_by_surface(const TopoDS_Shape& input, const Handle_Geom_Surface& surface, TopoDS_Shape& front, TopoDS_Shape& back) {
+bool IfcGeom::Kernel_T::split_solid_by_surface(const TopoDS_Shape& input, const Handle_Geom_Surface& surface, TopoDS_Shape& front, TopoDS_Shape& back) {
 	// Use an unbounded surface, that isolate part of the input shape,
 	// to split this shape into two parts. Make sure that the addition
 	// of the two result volumes matches that of the input.
@@ -3218,7 +3218,7 @@ bool IfcGeom::Kernel::split_solid_by_surface(const TopoDS_Shape& input, const Ha
 	return b;
 }
 
-bool IfcGeom::Kernel::split_solid_by_shell(const TopoDS_Shape& input, const TopoDS_Shape& shell, TopoDS_Shape& front, TopoDS_Shape& back) {
+bool IfcGeom::Kernel_T::split_solid_by_shell(const TopoDS_Shape& input, const TopoDS_Shape& shell, TopoDS_Shape& front, TopoDS_Shape& back) {
 	// Use a shell, typically one or more connected faces, that isolate part
 	// of the input shape, to split this shape into two parts. Make sure that
 	// the addition of the two result volumes matches that of the input.
@@ -3289,7 +3289,7 @@ bool IfcGeom::Kernel::split_solid_by_shell(const TopoDS_Shape& input, const Topo
 	return ALMOST_THE_SAME(ab, a+b, 1.e-3);
 }
 
-bool IfcGeom::Kernel::project(const Handle_Geom_Surface& srf, const TopoDS_Shape& shp, double& u1, double& v1, double& u2, double& v2, double widen) {
+bool IfcGeom::Kernel_T::project(const Handle_Geom_Surface& srf, const TopoDS_Shape& shp, double& u1, double& v1, double& u2, double& v2, double widen) {
 	// @todo std::unique_ptr for C++11
 	ShapeAnalysis_Surface* sas = 0;
 	Handle(Geom_Plane) pln;
@@ -3368,7 +3368,7 @@ bool IfcGeom::Kernel::project(const Handle_Geom_Surface& srf, const TopoDS_Shape
 	return vertex_count > 0;
 }
 
-const IfcSchema::IfcRepresentationItem* IfcGeom::Kernel::find_item_carrying_style(const IfcSchema::IfcRepresentationItem* item) {
+const IfcSchema::IfcRepresentationItem* IfcGeom::Kernel_T::find_item_carrying_style(const IfcSchema::IfcRepresentationItem* item) {
 	if (item->StyledByItem()->size()) {
 		return item;
 	}
@@ -3390,7 +3390,7 @@ const IfcSchema::IfcRepresentationItem* IfcGeom::Kernel::find_item_carrying_styl
 	return item;
 }
 
-bool IfcGeom::Kernel::is_identity_transform(IfcUtil::IfcBaseClass* l) {
+bool IfcGeom::Kernel_T::is_identity_transform(IfcUtil::IfcBaseClass* l) {
 	IfcSchema::IfcAxis2Placement2D* ax2d;
 	IfcSchema::IfcAxis2Placement3D* ax3d;
 
@@ -3428,7 +3428,7 @@ bool IfcGeom::Kernel::is_identity_transform(IfcUtil::IfcBaseClass* l) {
 	}
 }
 
-bool IfcGeom::Kernel::approximate_plane_through_wire(const TopoDS_Wire& wire, gp_Pln& plane, double eps) {
+bool IfcGeom::Kernel_T::approximate_plane_through_wire(const TopoDS_Wire& wire, gp_Pln& plane, double eps) {
 	// Newell's Method is used for the normal calculation
 	// as a simple edge cross product can give opposite results
 	// for a concave face boundary.
@@ -3491,7 +3491,7 @@ bool IfcGeom::Kernel::approximate_plane_through_wire(const TopoDS_Wire& wire, gp
 	return true;
 }
 
-bool IfcGeom::Kernel::flatten_wire(TopoDS_Wire& wire) {
+bool IfcGeom::Kernel_T::flatten_wire(TopoDS_Wire& wire) {
 	gp_Pln pln;
 	if (!approximate_plane_through_wire(wire, pln)) {
 		return false;
@@ -3512,7 +3512,7 @@ bool IfcGeom::Kernel::flatten_wire(TopoDS_Wire& wire) {
 	return true;
 }
 
-bool IfcGeom::Kernel::triangulate_wire(const std::vector<TopoDS_Wire>& wires, TopTools_ListOfShape& faces) {
+bool IfcGeom::Kernel_T::triangulate_wire(const std::vector<TopoDS_Wire>& wires, TopTools_ListOfShape& faces) {
 	// This is a bit of a precarious approach, but seems to work for the 
 	// versions of OCCT tested for. OCCT has a Delaunay triangulation function 
 	// BRepMesh_Delaun, but it is notoriously hard to interpret the results 
@@ -3718,7 +3718,7 @@ bool IfcGeom::Kernel::triangulate_wire(const std::vector<TopoDS_Wire>& wires, To
 	return true;
 }
 
-TopoDS_Shape IfcGeom::Kernel::apply_transformation(const TopoDS_Shape& s, const gp_Trsf& t) {
+TopoDS_Shape IfcGeom::Kernel_T::apply_transformation(const TopoDS_Shape& s, const gp_Trsf& t) {
 	if (t.Form() == gp_Identity) {
 		return s;
 	} else {
@@ -3731,7 +3731,7 @@ TopoDS_Shape IfcGeom::Kernel::apply_transformation(const TopoDS_Shape& s, const 
 	}
 }
 
-TopoDS_Shape IfcGeom::Kernel::apply_transformation(const TopoDS_Shape& s, const gp_GTrsf& t) {
+TopoDS_Shape IfcGeom::Kernel_T::apply_transformation(const TopoDS_Shape& s, const gp_GTrsf& t) {
 	if (t.Form() == gp_Other) {
 		return BRepBuilderAPI_GTransform(s, t, true);
 	} else {
@@ -3772,7 +3772,7 @@ namespace {
 	};
 }
 
-bool IfcGeom::Kernel::wire_intersections(const TopoDS_Wire& wire, TopTools_ListOfShape& wires) {
+bool IfcGeom::Kernel_T::wire_intersections(const TopoDS_Wire& wire, TopTools_ListOfShape& wires) {
 	if (!wire.Closed()) {
 		wires.Append(wire);
 		return false;
@@ -3950,7 +3950,7 @@ bool IfcGeom::Kernel::wire_intersections(const TopoDS_Wire& wire, TopTools_ListO
 	return intersected;
 }
 
-void IfcGeom::Kernel::select_largest(const TopTools_ListOfShape& shapes, TopoDS_Shape& largest) {
+void IfcGeom::Kernel_T::select_largest(const TopTools_ListOfShape& shapes, TopoDS_Shape& largest) {
 	double mass = 0.;	
 	TopTools_ListIteratorOfListOfShape it(shapes);
 	for (; it.More(); it.Next()) {
@@ -3985,7 +3985,7 @@ void IfcGeom::Kernel::select_largest(const TopTools_ListOfShape& shapes, TopoDS_
 	}
 }
 
-bool IfcGeom::Kernel::fit_halfspace(const TopoDS_Shape& a, const TopoDS_Shape& b, TopoDS_Shape& box, double& height) {
+bool IfcGeom::Kernel_T::fit_halfspace(const TopoDS_Shape& a, const TopoDS_Shape& b, TopoDS_Shape& box, double& height) {
 	TopExp_Explorer exp(b, TopAbs_FACE);
 	if (!exp.More()) {
 		return false;
@@ -4083,7 +4083,7 @@ bool IfcGeom::Kernel::fit_halfspace(const TopoDS_Shape& a, const TopoDS_Shape& b
 }
 
 #if OCC_VERSION_HEX < 0x60900
-bool IfcGeom::Kernel::boolean_operation(const TopoDS_Shape& a, const TopTools_ListOfShape& b, BOPAlgo_Operation op, TopoDS_Shape& result) {
+bool IfcGeom::Kernel_T::boolean_operation(const TopoDS_Shape& a, const TopTools_ListOfShape& b, BOPAlgo_Operation op, TopoDS_Shape& result) {
 	result = a;
 	TopTools_ListIteratorOfListOfShape it(b);
 	for (; it.More(); it.Next()) {
@@ -4095,7 +4095,7 @@ bool IfcGeom::Kernel::boolean_operation(const TopoDS_Shape& a, const TopTools_Li
 	}
 	return true;
 }
-bool IfcGeom::Kernel::boolean_operation(const TopoDS_Shape& a, const TopoDS_Shape& b, BOPAlgo_Operation op, TopoDS_Shape& result) {
+bool IfcGeom::Kernel_T::boolean_operation(const TopoDS_Shape& a, const TopoDS_Shape& b, BOPAlgo_Operation op, TopoDS_Shape& result) {
 	bool succesful = true;
 	BRepAlgoAPI_BooleanOperation* builder;
 	if (op == BOPAlgo_CUT) {
@@ -4141,7 +4141,7 @@ bool IfcGeom::Kernel::boolean_operation(const TopoDS_Shape& a, const TopoDS_Shap
 }
 #else
 
-bool IfcGeom::Kernel::boolean_operation(const TopoDS_Shape& a_, const TopTools_ListOfShape& b__, BOPAlgo_Operation op, TopoDS_Shape& result, double fuzziness) {
+bool IfcGeom::Kernel_T::boolean_operation(const TopoDS_Shape& a_, const TopTools_ListOfShape& b__, BOPAlgo_Operation op, TopoDS_Shape& result, double fuzziness) {
 	
 	if (fuzziness < 0.) {
 		fuzziness = getValue(GV_PRECISION) / 10.;
@@ -4340,7 +4340,7 @@ bool IfcGeom::Kernel::boolean_operation(const TopoDS_Shape& a_, const TopTools_L
 	return success;
 }
 
-bool IfcGeom::Kernel::boolean_operation(const TopoDS_Shape& a, const TopoDS_Shape& b, BOPAlgo_Operation op, TopoDS_Shape& result, double fuzziness) {
+bool IfcGeom::Kernel_T::boolean_operation(const TopoDS_Shape& a, const TopoDS_Shape& b, BOPAlgo_Operation op, TopoDS_Shape& result, double fuzziness) {
 	TopTools_ListOfShape bs;
 	bs.Append(b);
 	return boolean_operation(a, bs, op, result, fuzziness);
@@ -4369,11 +4369,11 @@ namespace {
 	}
 }
 
-IfcGeom::Kernel::faceset_helper::~faceset_helper() {
+IfcGeom::Kernel_T::faceset_helper::~faceset_helper() {
 	kernel_->faceset_helper_ = nullptr;
 }
 
-IfcGeom::Kernel::faceset_helper::faceset_helper(Kernel* kernel, const IfcSchema::IfcConnectedFaceSet* l)
+IfcGeom::Kernel_T::faceset_helper::faceset_helper(Kernel_T* kernel, const IfcSchema::IfcConnectedFaceSet* l)
 	: kernel_(kernel) 
 	, non_manifold_(false)
 {

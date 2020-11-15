@@ -1,4 +1,4 @@
-﻿/********************************************************************************
+/********************************************************************************
 *                                                                              *
 * This file is part of IfcOpenShell.                                           *
 *                                                                              *
@@ -22,11 +22,11 @@
 
 namespace IFC_NAMESPACE {
 
-#define Kernel MAKE_TYPE_NAME(Kernel)
+#define Kernel_T MAKE_TYPE_NAME(Kernel)
 
 using namespace IfcUtil;
 
-bool IfcGeom::Kernel::convert_shapes(const IfcBaseClass* l, IfcRepresentationShapeItems& r) {
+bool IfcGeom::Kernel_T::convert_shapes(const IfcBaseClass* l, IfcRepresentationShapeItems& r) {
 	if (shape_type(l) != ST_SHAPELIST) {
 		TopoDS_Shape shp;
 		if (convert_shape(l, shp)) {
@@ -41,12 +41,12 @@ bool IfcGeom::Kernel::convert_shapes(const IfcBaseClass* l, IfcRepresentationSha
 	return false;
 }
 
-IfcGeom::ShapeType IfcGeom::Kernel::shape_type(const IfcBaseClass* l) {
+IfcGeom::ShapeType IfcGeom::Kernel_T::shape_type(const IfcBaseClass* l) {
 #include "IfcRegisterShapeType.h"
 	return ST_OTHER;
 }
 
-bool IfcGeom::Kernel::convert_shape(const IfcBaseClass* l, TopoDS_Shape& r) {
+bool IfcGeom::Kernel_T::convert_shape(const IfcBaseClass* l, TopoDS_Shape& r) {
 	const unsigned int id = l->data().id();
 	bool success = false;
 	bool processed = false;
@@ -102,23 +102,23 @@ bool IfcGeom::Kernel::convert_shape(const IfcBaseClass* l, TopoDS_Shape& r) {
 	return success;
 }
 
-bool IfcGeom::Kernel::convert_wire(const IfcBaseClass* l, TopoDS_Wire& r) {
+bool IfcGeom::Kernel_T::convert_wire(const IfcBaseClass* l, TopoDS_Wire& r) {
 #include "IfcRegisterConvertWire.h"
 	Handle(Geom_Curve) curve;
-	if (IfcGeom::Kernel::convert_curve(l, curve)) {
-		return IfcGeom::Kernel::convert_curve_to_wire(curve, r);
+	if (IfcGeom::Kernel_T::convert_curve(l, curve)) {
+		return IfcGeom::Kernel_T::convert_curve_to_wire(curve, r);
 	}
 	Logger::Message(Logger::LOG_ERROR,"No operation defined for:",l);
 	return false;
 }
 
-bool IfcGeom::Kernel::convert_face(const IfcBaseClass* l, TopoDS_Shape& r) {
+bool IfcGeom::Kernel_T::convert_face(const IfcBaseClass* l, TopoDS_Shape& r) {
 #include "IfcRegisterConvertFace.h"
 	Logger::Message(Logger::LOG_ERROR,"No operation defined for:",l);
 	return false;
 }
 
-bool IfcGeom::Kernel::convert_curve(const IfcBaseClass* l, Handle(Geom_Curve)& r) {
+bool IfcGeom::Kernel_T::convert_curve(const IfcBaseClass* l, Handle(Geom_Curve)& r) {
 #include "IfcRegisterConvertCurve.h"
 	Logger::Message(Logger::LOG_ERROR,"No operation defined for:",l);
 	return false;

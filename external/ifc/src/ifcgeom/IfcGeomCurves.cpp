@@ -1,4 +1,4 @@
-﻿/********************************************************************************
+/********************************************************************************
  *                                                                              *
  * This file is part of IfcOpenShell.                                           *
  *                                                                              *
@@ -85,9 +85,9 @@
 
 namespace IFC_NAMESPACE {
 
-#define Kernel MAKE_TYPE_NAME(Kernel)
+#define Kernel_T MAKE_TYPE_NAME(Kernel)
 
-bool IfcGeom::Kernel::convert(const IfcSchema::IfcCircle* l, Handle(Geom_Curve)& curve) {
+bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcCircle* l, Handle(Geom_Curve)& curve) {
 	const double r = l->Radius() * getValue(GV_LENGTH_UNIT);
 	if ( r < ALMOST_ZERO ) { 
 		Logger::Message(Logger::LOG_ERROR, "Radius not greater than zero for:", l);
@@ -96,17 +96,17 @@ bool IfcGeom::Kernel::convert(const IfcSchema::IfcCircle* l, Handle(Geom_Curve)&
 	gp_Trsf trsf;
 	IfcSchema::IfcAxis2Placement* placement = l->Position();
 	if (placement->declaration().is(IfcSchema::IfcAxis2Placement3D::Class())) {
-		IfcGeom::Kernel::convert((IfcSchema::IfcAxis2Placement3D*)placement,trsf);
+		IfcGeom::Kernel_T::convert((IfcSchema::IfcAxis2Placement3D*)placement,trsf);
 	} else {
 		gp_Trsf2d trsf2d;
-		IfcGeom::Kernel::convert((IfcSchema::IfcAxis2Placement2D*)placement,trsf2d);
+		IfcGeom::Kernel_T::convert((IfcSchema::IfcAxis2Placement2D*)placement,trsf2d);
 		trsf = trsf2d;
 	}
 	gp_Ax2 ax = gp_Ax2().Transformed(trsf);
 	curve = new Geom_Circle(ax, r);
 	return true;
 }
-bool IfcGeom::Kernel::convert(const IfcSchema::IfcEllipse* l, Handle(Geom_Curve)& curve) {
+bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcEllipse* l, Handle(Geom_Curve)& curve) {
 	double x = l->SemiAxis1() * getValue(GV_LENGTH_UNIT);
 	double y = l->SemiAxis2() * getValue(GV_LENGTH_UNIT);
 	if (x < ALMOST_ZERO || y < ALMOST_ZERO) { 
@@ -138,13 +138,13 @@ bool IfcGeom::Kernel::convert(const IfcSchema::IfcEllipse* l, Handle(Geom_Curve)
 }
 
 #ifdef SCHEMA_HAS_IfcSurfaceCurve
-bool IfcGeom::Kernel::convert(const IfcSchema::IfcSurfaceCurve* sc, Handle(Geom_Curve)& curve) {
+bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcSurfaceCurve* sc, Handle(Geom_Curve)& curve) {
 	// @todo take into account PCurves.
 	return convert_curve(sc->Curve3D(), curve);
 }
 #endif
 
-bool IfcGeom::Kernel::convert(const IfcSchema::IfcLine* l, Handle(Geom_Curve)& curve) {
+bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcLine* l, Handle(Geom_Curve)& curve) {
 	gp_Pnt pnt;gp_Vec vec;
 	convert(l->Pnt(),pnt);
 	convert(l->Dir(),vec);	
@@ -154,7 +154,7 @@ bool IfcGeom::Kernel::convert(const IfcSchema::IfcLine* l, Handle(Geom_Curve)& c
 }
 
 #ifdef SCHEMA_HAS_IfcBSplineCurveWithKnots
-bool IfcGeom::Kernel::convert(const IfcSchema::IfcBSplineCurveWithKnots* l, Handle(Geom_Curve)& curve) {
+bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcBSplineCurveWithKnots* l, Handle(Geom_Curve)& curve) {
 
 	const bool is_rational = l->declaration().is(IfcSchema::IfcRationalBSplineCurveWithKnots::Class());
 

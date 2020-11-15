@@ -55,8 +55,8 @@
  *                                                                              *
  ********************************************************************************/
 
-#ifndef IFCGEOMITERATOR_H
-#define IFCGEOMITERATOR_H
+#ifndef IFCGEOMITERATORIMPLEMENTION_H
+#define IFCGEOMITERATORIMPLEMENTION_H
 
 #include <map>
 #include <set>

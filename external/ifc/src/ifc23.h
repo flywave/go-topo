@@ -4,15 +4,6 @@
 namespace  IFC_NAMESPACE{
   #define IfcSchema Ifc2x3
 }
-#include "ifcgeom/ifc_geom_api.h"
-#include "ifcgeom/IfcGeom.h"
-#include "ifcgeom/IfcGeomElement.h"
-#include "ifcgeom/IfcGeomRepresentation.h"
-#include "ifcgeom/IfcGeomShapeType.h"
-#include "ifcgeom/IfcRepresentationShapeItem.h"
-#include "ifcgeom/IfcGeomIteratorImplementation.h"
-#include "ifcgeom/IfcGeomTree.h"
-#include "ifcgeom/IfcGeomShapeType.h"
 
 #include "ifcgeom_schema_agnostic/IfcGeomFilter.h"
 #include "ifcgeom_schema_agnostic/IfcGeomIterator.h"
@@ -22,6 +13,15 @@ namespace  IFC_NAMESPACE{
 #include "ifcgeom_schema_agnostic/Kernel.h"
 #include "ifcgeom_schema_agnostic/Serialization.h"
 
+#include "ifcgeom/ifc_geom_api.h"
+#include "ifcgeom/IfcGeom.h"
+#include "ifcgeom/IfcGeomElement.h"
+#include "ifcgeom/IfcGeomRepresentation.h"
+#include "ifcgeom/IfcGeomShapeType.h"
+#include "ifcgeom/IfcRepresentationShapeItem.h"
+#include "ifcgeom/IfcGeomIteratorImplementation.h"
+#include "ifcgeom/IfcGeomTree.h"
+#include "ifcgeom/IfcGeomShapeType.h"
 
 #include "ifcparse/ifc_parse_api.h"
 #include "ifcparse/Argument.h"

@@ -55,9 +55,9 @@ namespace {
 
 }
 
-#define Kernel MAKE_TYPE_NAME(Kernel)
+#define Kernel_T MAKE_TYPE_NAME(Kernel)
 
-const IfcGeom::SurfaceStyle* IfcGeom::Kernel::internalize_surface_style(const std::pair<IfcUtil::IfcBaseClass*, IfcUtil::IfcBaseClass*>& shading_styles) {
+const IfcGeom::SurfaceStyle* IfcGeom::Kernel_T::internalize_surface_style(const std::pair<IfcUtil::IfcBaseClass*, IfcUtil::IfcBaseClass*>& shading_styles) {
 	if (shading_styles.second == 0) {
 		return 0;
 	}
@@ -117,11 +117,11 @@ const IfcGeom::SurfaceStyle* IfcGeom::Kernel::internalize_surface_style(const st
 	return &(style_cache[surface_style_id] = surface_style);
 }
 
-const IfcGeom::SurfaceStyle* IfcGeom::Kernel::get_style(const IfcSchema::IfcRepresentationItem* item) {
+const IfcGeom::SurfaceStyle* IfcGeom::Kernel_T::get_style(const IfcSchema::IfcRepresentationItem* item) {
 	return internalize_surface_style(get_surface_style<IfcSchema::IfcSurfaceStyleShading>(item));	
 }
 
-const IfcGeom::SurfaceStyle* IfcGeom::Kernel::get_style(const IfcSchema::IfcMaterial* material) {
+const IfcGeom::SurfaceStyle* IfcGeom::Kernel_T::get_style(const IfcSchema::IfcMaterial* material) {
 	IfcSchema::IfcMaterialDefinitionRepresentation::list::ptr defs = material->HasRepresentation();
 	for (IfcSchema::IfcMaterialDefinitionRepresentation::list::it jt = defs->begin(); jt != defs->end(); ++jt) {
 		IfcSchema::IfcRepresentation::list::ptr reps = (*jt)->Representations();
