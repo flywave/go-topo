@@ -33,8 +33,8 @@
 
 const char* const Ifc4x3_rc1::Identifier = "IFC4X3_RC1";
 
-using namespace IfcParse;
-using namespace IfcWrite;
+using namespace IFC_NAMESPACE::IfcParse;
+using namespace IFC_NAMESPACE::IfcWrite;
 
 // External definitions
 extern entity* IFC4X3_RC1_IfcActionRequest_type;

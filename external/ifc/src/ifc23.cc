@@ -1,6 +1,8 @@
 #include "ifc23.h"
 
 #define IFC_NAMESPACE ifc23
+#define IfcSchema Ifc2x3
+#define USE_23
 
 #include "ifcgeom/IfcGeomCurves.cpp"
 #include "ifcgeom/IfcGeomFaces.cpp"
@@ -34,4 +36,8 @@
 #include "ifcgeom_schema_agnostic/Serialization.cpp"
 #include "ifcgeom_schema_agnostic/SurfaceStyle.cpp"
 
+
+#undef USE_23
+#undef IfcSchema
 #undef IFC_NAMESPACE
+

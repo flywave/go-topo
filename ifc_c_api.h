@@ -1,8 +1,8 @@
 #ifndef GO_IFC_C_API_H
 #define GO_IFC_C_API_H
 
-#include "../topo_c_api.h"
- 
+#include "topo_c_api.h"
+
 #if defined(WIN32) || defined(WINDOWS) || defined(_WIN32) || defined(_WINDOWS)
 #define IFCCAPICALL __declspec(dllexport)
 #else
@@ -13,9 +13,9 @@
 extern "C" {
 #endif
 
-IFCCAPICALL topo_shape_t** ifc_get_topo_shapes(const char *filename,int count);
+IFCCAPICALL topo_shape_t** ifc_get_topo_shapes(const char *filename,int *count);
 IFCCAPICALL void ifc_shapes_free(topo_shape_t **shps);
-
+IFCCAPICALL void ifc_register_schema();
 #ifdef __cplusplus
 }
 #endif

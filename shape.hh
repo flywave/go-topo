@@ -24,7 +24,7 @@ namespace topo {
 class shape : public geometry_object {
 public:
   shape();
-
+  virtual ~shape() = default;
   shape(const shape &) = default;
   shape &operator=(const shape &) = default;
 

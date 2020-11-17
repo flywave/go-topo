@@ -5,15 +5,10 @@
 #include "../ifcgeom/IfcGeomIteratorSettings.h"
 #include "../ifcgeom/IfcRepresentationShapeItem.h"
 
-#include "../ifcparse/Ifc2x3.h"
-#include "../ifcparse/Ifc4.h"
-#include "../ifcparse/Ifc4x1.h"
-#include "../ifcparse/Ifc4x2.h"
-#include "../ifcparse/Ifc4x3_rc1.h"
-
 #include <boost/function.hpp>
 
 #include <TopExp_Explorer.hxx>
+ 
 
 namespace IFC_NAMESPACE{
 namespace IfcGeom {

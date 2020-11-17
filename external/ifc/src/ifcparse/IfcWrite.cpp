@@ -27,6 +27,7 @@
 #include "../ifcparse/IfcWrite.h"
 #include "../ifcparse/IfcCharacterDecoder.h"
 #include "../ifcparse/IfcFile.h"
+namespace IFC_NAMESPACE{
 
 using namespace IfcWrite;
 
@@ -292,4 +293,5 @@ void IfcWriteArgument::set(IfcUtil::IfcBaseClass*const& v) {
 	} else {
 		container = boost::blank();
 	}
+}
 }

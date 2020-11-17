@@ -151,7 +151,7 @@ struct ifcxml_parse_state {
 	IfcParse::IfcFile* file;
 	std::vector<stack_node> stack;
 	std::map<std::string, int> idmap;
-	std::vector<std::pair<IfcWrite::IfcWriteArgument*, std::string> > forward_references;
+	std::vector<std::pair<IFC_NAMESPACE::IfcWrite::IfcWriteArgument*, std::string> > forward_references;
 	ifcxml_dialect dialect;
 };
 
@@ -168,7 +168,7 @@ std::vector<T> split(const std::string& value) {
 }
 
 Argument* parse_attribute_value(const IfcParse::parameter_type* ty, const std::string& value) {
-	auto v = new IfcWrite::IfcWriteArgument();
+	auto v = new IFC_NAMESPACE::IfcWrite::IfcWriteArgument();
 
 	auto cpp_type = IfcUtil::from_parameter_type(ty);
 	
@@ -183,7 +183,7 @@ Argument* parse_attribute_value(const IfcParse::parameter_type* ty, const std::s
 			boost::to_upper_copy(value));
 
 		if (it != enum_type->enumeration_items().end()) {
-			v->set(IfcWrite::IfcWriteArgument::EnumerationReference(it - enum_type->enumeration_items().begin(), it->c_str()));
+			v->set(IFC_NAMESPACE::IfcWrite::IfcWriteArgument::EnumerationReference(it - enum_type->enumeration_items().begin(), it->c_str()));
 		}		
 	} else if (cpp_type == IfcUtil::Argument_INT) {
 		v->set(boost::lexical_cast<int>(value));
@@ -390,13 +390,13 @@ static void start_element(void* user, const xmlChar* tag, const xmlChar** attrs)
 		// Create an attribute value from an instance. Potentially NULL in case it is a
 		// forward reference to an instance not yet encountered.
 		auto instance_to_attribute = [&state](const boost::variant<std::string, IfcUtil::IfcBaseClass*>& inst_or_ref, Argument*& attr, IfcUtil::IfcBaseClass*& inst) {
-			IfcWrite::IfcWriteArgument* wattr = new IfcWrite::IfcWriteArgument;
+			IFC_NAMESPACE::IfcWrite::IfcWriteArgument* wattr = new IFC_NAMESPACE::IfcWrite::IfcWriteArgument;
 			attr = wattr;
 			if (inst_or_ref.which() == 0) {
 				inst = nullptr;
 				// This attribute is NULL initially and after parsing the complete
 				// file populated in a subsequent step.
-				state->forward_references.push_back(std::make_pair((IfcWrite::IfcWriteArgument*) attr, boost::get<std::string>(inst_or_ref)));
+				state->forward_references.push_back(std::make_pair((IFC_NAMESPACE::IfcWrite::IfcWriteArgument*) attr, boost::get<std::string>(inst_or_ref)));
 			} else {
 				inst = boost::get<IfcUtil::IfcBaseClass*>(inst_or_ref);
 				wattr->set(inst);
@@ -537,7 +537,7 @@ static void start_element(void* user, const xmlChar* tag, const xmlChar** attrs)
 								int idx = (*found)->entity_reference()->attribute_index(
 									(*found)->attribute_reference()
 								);
-								IfcWrite::IfcWriteArgument* attr_inv = new IfcWrite::IfcWriteArgument();
+								IFC_NAMESPACE::IfcWrite::IfcWriteArgument* attr_inv = new IFC_NAMESPACE::IfcWrite::IfcWriteArgument();
 								attr_inv->set(state->stack.back().inst());
 								inst->data().setArgument(idx, attr_inv);
 								state->stack.push_back(stack_node::instance(id_in_file, inst));
@@ -611,7 +611,7 @@ static void start_element(void* user, const xmlChar* tag, const xmlChar** attrs)
 					int idx = state->stack.back().inv_attr()->entity_reference()->attribute_index(
 						state->stack.back().inv_attr()->attribute_reference()
 					);
-					IfcWrite::IfcWriteArgument* attr_inv = new IfcWrite::IfcWriteArgument();
+					IFC_NAMESPACE::IfcWrite::IfcWriteArgument* attr_inv = new IFC_NAMESPACE::IfcWrite::IfcWriteArgument();
 					attr_inv->set(state->stack.back().inst());
 					if (inst) {
 						inst->data().setArgument(idx, attr_inv);

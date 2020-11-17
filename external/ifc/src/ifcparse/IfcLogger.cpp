@@ -33,6 +33,8 @@
 #include <iostream>
 #include <algorithm>
 
+namespace IFC_NAMESPACE{
+
 namespace {
 	
 	template <typename T>
@@ -188,3 +190,4 @@ Logger::Severity Logger::verbosity = Logger::LOG_NOTICE;
 Logger::Severity Logger::max_severity = Logger::LOG_NOTICE;
 Logger::Format Logger::format = Logger::FMT_PLAIN;
 boost::optional<IfcUtil::IfcBaseClass*> Logger::current_product;
+}

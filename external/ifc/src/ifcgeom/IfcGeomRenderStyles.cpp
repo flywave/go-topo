@@ -24,7 +24,7 @@ namespace IFC_NAMESPACE {
 
 namespace {
 
-	bool process_colour(IfcSchema::IfcColourRgb* colour, double* rgb) {
+	bool process_colour(IFC_NAMESPACE::IfcSchema::IfcColourRgb* colour, double* rgb) {
 		if (colour != 0) {
 			rgb[0] = colour->Red();
 			rgb[1] = colour->Green();
@@ -33,7 +33,7 @@ namespace {
 		return colour != 0;
 	}
 
-	bool process_colour(IfcSchema::IfcNormalisedRatioMeasure* factor, double* rgb) {
+	bool process_colour(IFC_NAMESPACE::IfcSchema::IfcNormalisedRatioMeasure* factor, double* rgb) {
 		if (factor != 0) {
 			const double f = *factor;
 			rgb[0] = rgb[1] = rgb[2] = f;
@@ -41,13 +41,13 @@ namespace {
 		return factor != 0;
 	}
 
-	bool process_colour(IfcSchema::IfcColourOrFactor* colour_or_factor, double* rgb) {
+	bool process_colour(IFC_NAMESPACE::IfcSchema::IfcColourOrFactor* colour_or_factor, double* rgb) {
 		if (colour_or_factor == 0) {
 			return false;
-		} else if (colour_or_factor->declaration().is(IfcSchema::IfcColourRgb::Class())) {
-			return process_colour(static_cast<IfcSchema::IfcColourRgb*>(colour_or_factor), rgb);
-		} else if (colour_or_factor->declaration().is(IfcSchema::IfcNormalisedRatioMeasure::Class())) {
-			return process_colour(static_cast<IfcSchema::IfcNormalisedRatioMeasure*>(colour_or_factor), rgb);
+		} else if (colour_or_factor->declaration().is(IFC_NAMESPACE::IfcSchema::IfcColourRgb::Class())) {
+			return process_colour(static_cast<IFC_NAMESPACE::IfcSchema::IfcColourRgb*>(colour_or_factor), rgb);
+		} else if (colour_or_factor->declaration().is(IFC_NAMESPACE::IfcSchema::IfcNormalisedRatioMeasure::Class())) {
+			return process_colour(static_cast<IFC_NAMESPACE::IfcSchema::IfcNormalisedRatioMeasure*>(colour_or_factor), rgb);
 		} else {
 			return false;
 		}
@@ -68,8 +68,8 @@ const IfcGeom::SurfaceStyle* IfcGeom::Kernel_T::internalize_surface_style(const 
 	}
 	SurfaceStyle surface_style;
 
-	IfcSchema::IfcSurfaceStyle* style = shading_styles.first->as<IfcSchema::IfcSurfaceStyle>();
-	IfcSchema::IfcSurfaceStyleShading* shading = shading_styles.second->as<IfcSchema::IfcSurfaceStyleShading>();
+	IFC_NAMESPACE::IfcSchema::IfcSurfaceStyle* style = shading_styles.first->as<IFC_NAMESPACE::IfcSchema::IfcSurfaceStyle>();
+	IFC_NAMESPACE::IfcSchema::IfcSurfaceStyleShading* shading = shading_styles.second->as<IFC_NAMESPACE::IfcSchema::IfcSurfaceStyleShading>();
 
 	if (style->hasName()) {
 		surface_style = SurfaceStyle(surface_style_id, style->Name());
@@ -80,8 +80,8 @@ const IfcGeom::SurfaceStyle* IfcGeom::Kernel_T::internalize_surface_style(const 
 	if (process_colour(shading->SurfaceColour(), rgb)) {
 		surface_style.Diffuse().reset(SurfaceStyle::ColorComponent(rgb[0], rgb[1], rgb[2]));
 	}
-	if (shading_styles.second->declaration().is(IfcSchema::IfcSurfaceStyleRendering::Class())) {
-		IfcSchema::IfcSurfaceStyleRendering* rendering_style = static_cast<IfcSchema::IfcSurfaceStyleRendering*>(shading_styles.second);
+	if (shading_styles.second->declaration().is(IFC_NAMESPACE::IfcSchema::IfcSurfaceStyleRendering::Class())) {
+		IFC_NAMESPACE::IfcSchema::IfcSurfaceStyleRendering* rendering_style = static_cast<IFC_NAMESPACE::IfcSchema::IfcSurfaceStyleRendering*>(shading_styles.second);
 		if (rendering_style->hasDiffuseColour() && process_colour(rendering_style->DiffuseColour(), rgb)) {
 			SurfaceStyle::ColorComponent diffuse = surface_style.Diffuse().get_value_or(SurfaceStyle::ColorComponent(1,1,1));
 			surface_style.Diffuse().reset(SurfaceStyle::ColorComponent(diffuse.R() * rgb[0], diffuse.G() * rgb[1], diffuse.B() * rgb[2]));
@@ -96,14 +96,14 @@ const IfcGeom::SurfaceStyle* IfcGeom::Kernel_T::internalize_surface_style(const 
 			surface_style.Specular().reset(SurfaceStyle::ColorComponent(rgb[0], rgb[1], rgb[2]));
 		}
 		if (rendering_style->hasSpecularHighlight()) {
-			IfcSchema::IfcSpecularHighlightSelect* highlight = rendering_style->SpecularHighlight();
-			if (highlight->declaration().is(IfcSchema::IfcSpecularRoughness::Class())) {
-				double roughness = *((IfcSchema::IfcSpecularRoughness*)highlight);
+			IFC_NAMESPACE::IfcSchema::IfcSpecularHighlightSelect* highlight = rendering_style->SpecularHighlight();
+			if (highlight->declaration().is(IFC_NAMESPACE::IfcSchema::IfcSpecularRoughness::Class())) {
+				double roughness = *((IFC_NAMESPACE::IfcSchema::IfcSpecularRoughness*)highlight);
 				if (roughness >= 1e-9) {
 					surface_style.Specularity().reset(1.0 / roughness);
 				}
-			} else if (highlight->declaration().is(IfcSchema::IfcSpecularExponent::Class())) {
-				surface_style.Specularity().reset(*((IfcSchema::IfcSpecularExponent*)highlight));
+			} else if (highlight->declaration().is(IFC_NAMESPACE::IfcSchema::IfcSpecularExponent::Class())) {
+				surface_style.Specularity().reset(*((IFC_NAMESPACE::IfcSchema::IfcSpecularExponent*)highlight));
 			}
 		}
 		if (rendering_style->hasTransmissionColour()) {
@@ -117,20 +117,20 @@ const IfcGeom::SurfaceStyle* IfcGeom::Kernel_T::internalize_surface_style(const 
 	return &(style_cache[surface_style_id] = surface_style);
 }
 
-const IfcGeom::SurfaceStyle* IfcGeom::Kernel_T::get_style(const IfcSchema::IfcRepresentationItem* item) {
-	return internalize_surface_style(get_surface_style<IfcSchema::IfcSurfaceStyleShading>(item));	
+const IfcGeom::SurfaceStyle* IfcGeom::Kernel_T::get_style(const IFC_NAMESPACE::IfcSchema::IfcRepresentationItem* item) {
+	return internalize_surface_style(get_surface_style<IFC_NAMESPACE::IfcSchema::IfcSurfaceStyleShading>(item));	
 }
 
-const IfcGeom::SurfaceStyle* IfcGeom::Kernel_T::get_style(const IfcSchema::IfcMaterial* material) {
-	IfcSchema::IfcMaterialDefinitionRepresentation::list::ptr defs = material->HasRepresentation();
-	for (IfcSchema::IfcMaterialDefinitionRepresentation::list::it jt = defs->begin(); jt != defs->end(); ++jt) {
-		IfcSchema::IfcRepresentation::list::ptr reps = (*jt)->Representations();
-		IfcSchema::IfcStyledItem::list::ptr styles(new IfcSchema::IfcStyledItem::list);
-		for (IfcSchema::IfcRepresentation::list::it it = reps->begin(); it != reps->end(); ++it) {
-			styles->push((**it).Items()->as<IfcSchema::IfcStyledItem>());
+const IfcGeom::SurfaceStyle* IfcGeom::Kernel_T::get_style(const IFC_NAMESPACE::IfcSchema::IfcMaterial* material) {
+	IFC_NAMESPACE::IfcSchema::IfcMaterialDefinitionRepresentation::list::ptr defs = material->HasRepresentation();
+	for (IFC_NAMESPACE::IfcSchema::IfcMaterialDefinitionRepresentation::list::it jt = defs->begin(); jt != defs->end(); ++jt) {
+		IFC_NAMESPACE::IfcSchema::IfcRepresentation::list::ptr reps = (*jt)->Representations();
+		IFC_NAMESPACE::IfcSchema::IfcStyledItem::list::ptr styles(new IFC_NAMESPACE::IfcSchema::IfcStyledItem::list);
+		for (IFC_NAMESPACE::IfcSchema::IfcRepresentation::list::it it = reps->begin(); it != reps->end(); ++it) {
+			styles->push((**it).Items()->as<IFC_NAMESPACE::IfcSchema::IfcStyledItem>());
 		}
-		for (IfcSchema::IfcStyledItem::list::it it = styles->begin(); it != styles->end(); ++it) {
-			const std::pair<IfcSchema::IfcSurfaceStyle*, IfcSchema::IfcSurfaceStyleShading*> ss = get_surface_style<IfcSchema::IfcSurfaceStyleShading>(*it);
+		for (IFC_NAMESPACE::IfcSchema::IfcStyledItem::list::it it = styles->begin(); it != styles->end(); ++it) {
+			const std::pair<IFC_NAMESPACE::IfcSchema::IfcSurfaceStyle*, IFC_NAMESPACE::IfcSchema::IfcSurfaceStyleShading*> ss = get_surface_style<IFC_NAMESPACE::IfcSchema::IfcSurfaceStyleShading>(*it);
 			if (ss.second) {
 				return internalize_surface_style(ss);
 			}

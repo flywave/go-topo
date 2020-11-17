@@ -20,7 +20,7 @@
 /********************************************************************************
  *                                                                              *
  * This file provides functions for loading an IFC file into memory and access  *
- * its entities either by ID, by an IfcSchema::Type or by reference             * 
+ * its entities either by ID, by an IFC_NAMESPACE::IfcSchema::Type or by reference             * 
  *                                                                              *
  ********************************************************************************/
 

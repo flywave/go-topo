@@ -39,13 +39,13 @@ protected:
 	HeaderEntity(const char * const datatype, size_t size, IfcParse::IfcFile* file);
 
 	void setValue(unsigned int i, const std::string& s) {
-		IfcWrite::IfcWriteArgument* argument = new IfcWrite::IfcWriteArgument;
+		IFC_NAMESPACE::IfcWrite::IfcWriteArgument* argument = new IFC_NAMESPACE::IfcWrite::IfcWriteArgument;
 		argument->set(s);
 		setArgument(i, argument);
 	}
 
 	void setValue(unsigned int i, const std::vector<std::string>& s) {
-		IfcWrite::IfcWriteArgument* argument = new IfcWrite::IfcWriteArgument;
+		IFC_NAMESPACE::IfcWrite::IfcWriteArgument* argument = new IFC_NAMESPACE::IfcWrite::IfcWriteArgument;
 		argument->set(s);
 		setArgument(i, argument);
 	}

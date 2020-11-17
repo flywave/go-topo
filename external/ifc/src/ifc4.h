@@ -1,9 +1,47 @@
 #pragma once
 
-#define IFC_NAMESPACE ifc40
+#undef IFCWRITE_H
+#undef IFCPARSE_UTILS_H
+#undef IFCSPFSTREAM_H
+#undef IFCSPFHEADER_H
+#undef IFCSIPREFIX
+#undef IFCSCHEMA_H
+#undef IFCPARSE_H
+#undef IFCLOGGER_H
+#undef IFCHIERARCHYHELPER_H
+#undef IFCGLOBALID_H
+#undef IFCFILE_H
+#undef IFCEXCEPTION_H
+#undef IFCENTITYLIST_H
+#undef IFCENTITYINSTANCEDATA_H
+#undef IFCCHARACTERDECODER_H
+#undef IFCBASECLASS_H
+#undef ARGUMENTTYPE_H
+#undef ARGUMENT_H
+#undef ITERATOR_KERNEL_H
+#undef ITERATOR_IMPLEMENTATION_H
+#undef IFCGEOMRENDERSTYLES_H
+#undef IFCGEOMMATERIAL_H
+#undef IFCGEOMITERATOR_H
+#undef IFCGEOMFILTER_H
+#undef IFCSHAPELIST_H
+#undef IFCGEOMTREE_H
+#undef IFCGEOMSHAPETYPE_H
+#undef IFCGEOMREPRESENTATION_H
+#undef IFCGEOMITERATORSETTINGS_H
+#undef IFCGEOMITERATORIMPLEMENTION_H
+#undef IFCGEOMELEMENT_H
+#undef IFCGEOM_H
 
-namespace  IFC_NAMESPACE{
-  #define IfcSchema Ifc4
+#include "ifcparse/ifc2x3-undef.h"
+#include "ifcparse/Ifc4-definitions.h"
+
+
+#define IFC_NAMESPACE ifc4
+#define IfcSchema Ifc4
+#define USE_4
+namespace IFC_NAMESPACE{
+  
 }
 
 #include "ifcgeom/ifc_geom_api.h"
@@ -22,7 +60,6 @@ namespace  IFC_NAMESPACE{
 #include "ifcgeom_schema_agnostic/IfcGeomRenderStyles.h"
 #include "ifcgeom_schema_agnostic/IteratorImplementation.h"
 #include "ifcgeom_schema_agnostic/Kernel.h"
-#include "ifcgeom_schema_agnostic/Serialization.h"
  
 #include "ifcparse/ifc_parse_api.h"
 #include "ifcparse/Argument.h"
@@ -44,7 +81,8 @@ namespace  IFC_NAMESPACE{
 #include "ifcparse/IfcWrite.h"
 #include "ifcparse/macros.h"
 #include "ifcparse/utils.h"
-#include "ifcparse/Ifc4-definitions.h"
 #include "ifcparse/Ifc4.h"
  
+#undef IfcSchema
 #undef IFC_NAMESPACE
+#undef USE_4

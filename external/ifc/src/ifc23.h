@@ -1,9 +1,14 @@
 #pragma once
 
 #define IFC_NAMESPACE ifc23
-namespace  IFC_NAMESPACE{
-  #define IfcSchema Ifc2x3
+#define IfcSchema Ifc2x3
+#define USE_23
+
+namespace IFC_NAMESPACE{
+  
 }
+#include "ifcparse/Ifc2x3-definitions.h"
+
 
 #include "ifcgeom_schema_agnostic/IfcGeomFilter.h"
 #include "ifcgeom_schema_agnostic/IfcGeomIterator.h"
@@ -11,7 +16,6 @@ namespace  IFC_NAMESPACE{
 #include "ifcgeom_schema_agnostic/IfcGeomRenderStyles.h"
 #include "ifcgeom_schema_agnostic/IteratorImplementation.h"
 #include "ifcgeom_schema_agnostic/Kernel.h"
-#include "ifcgeom_schema_agnostic/Serialization.h"
 
 #include "ifcgeom/ifc_geom_api.h"
 #include "ifcgeom/IfcGeom.h"
@@ -43,7 +47,8 @@ namespace  IFC_NAMESPACE{
 #include "ifcparse/IfcWrite.h"
 #include "ifcparse/macros.h"
 #include "ifcparse/utils.h"
-#include "ifcparse/Ifc2x3-definitions.h"
 #include "ifcparse/Ifc2x3.h"
 
+#undef USE_23
+#undef IfcSchema
 #undef IFC_NAMESPACE

@@ -3,6 +3,14 @@
 
 #include <map>
 
+#ifndef INCLUDE_PARENT_DIR
+#define INCLUDE_PARENT_DIR(x) STRINGIFY(../ifcparse/x.h)
+#include INCLUDE_PARENT_DIR(IfcSchema)
+#endif
+#undef INCLUDE_PARENT_DIR
+
+namespace IFC_NAMESPACE{
+
 bool IfcParse::declaration::is(const std::string& name) const {
 	if (name_lower_ == boost::to_lower_copy(name)) return true;
 
@@ -75,24 +83,16 @@ void IfcParse::register_schema(schema_definition* s) {
 	schemas.insert({ s->name(), s });
 }
 
+ 
 
-#include "../ifcparse/Ifc2x3.h"
-#include "../ifcparse/Ifc4.h"
-#include "../ifcparse/Ifc4x1.h"
-#include "../ifcparse/Ifc4x2.h"
-#include "../ifcparse/Ifc4x3_rc1.h"
 
 const IfcParse::schema_definition* IfcParse::schema_by_name(const std::string& name) {
 	// TODO: initialize automatically somehow
-	Ifc2x3::get_schema();
-	Ifc4::get_schema();
-	Ifc4x1::get_schema();
-	Ifc4x2::get_schema();
-	Ifc4x3_rc1::get_schema();
-
+	IFC_NAMESPACE::IfcSchema::get_schema();
 	std::map<std::string, const IfcParse::schema_definition*>::const_iterator it = schemas.find(name);
 	if (it == schemas.end()) {
 		throw IfcParse::IfcException("No schema named " + name);
 	}
 	return it->second;
+}
 }

@@ -104,7 +104,8 @@ INCLUDE_DIRECTORIES(
 )
 
 file(GLOB cpp_file
-    ../src/*.cc
+    ../src/ifc23.cc
+    ../src/ifc4.cc
 )
 
 ADD_LIBRARY(Ifc STATIC ${cpp_file})

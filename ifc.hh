@@ -24,10 +24,10 @@ public:
 
 class base_convert {
 public:
-  virtual std::vector<Topo_Shape> get_shape() = 0;
+  virtual std::vector<TopoDS_Shape> get_shape()=0;
 
-  virtual void process_with_callback(visitor &vst) = 0;
-}
+  virtual void process_with_callback(visitor &vst)=0;
+};
 
 struct geom_filter {
   geom_filter(bool include, bool traverse)
@@ -70,7 +70,7 @@ struct filter_settings {
   static void parse_filter(geom_filter &filter,
                            const std::vector<std::string> &values) {
     if (values.size() == 0) {
-      throw parse::ifc_exception("at_least_one_value_required");
+      return;
     }
     std::string type = *values.begin();
     if (type == "entities") {
@@ -82,10 +82,10 @@ struct filter_settings {
       filter.arg = *(values.begin() + 1);
       if (std::find(supported_args.begin(), supported_args.end(), filter.arg) ==
           supported_args.end()) {
-        throw parse::ifc_exception("invalid_option_value");
+        return;
       }
     } else {
-      throw parse::ifc_exception("invalid_option_value");
+      return;
     }
     filter.values.insert(values.begin() +
                              (filter.type == geom_filter::ENTITY_ARG ? 2 : 1),
@@ -140,15 +140,7 @@ struct filter_settings {
   protected:                                                                   \
     NAME_SPACE::IfcGeom::entity_filter entity_filter;                          \
     NAME_SPACE::IfcGeom::layer_filter layer_filter;                            \
-    NAME_SPACE::IfcGeom::string_arg_filter guid_filter{                        \
-        NAME_SPACE::IfcSchema::Type::IfcRoot, 0};                              \
-    NAME_SPACE::IfcGeom::string_arg_filter name_filter{                        \
-        NAME_SPACE::IfcSchema::Type::IfcRoot, 2};                              \
-    NAME_SPACE::IfcGeom::string_arg_filter desc_filter{                        \
-        NAME_SPACE::IfcSchema::Type::IfcRoot, 3};                              \
-    NAME_SPACE::IfcGeom::string_arg_filter tag_filter{                         \
-        NAME_SPACE::IfcSchema::Type::IfcProxy, 8,                              \
-        NAME_SPACE::IfcSchema::Type::IfcElement, 7};                           \
+    NAME_SPACE::IfcGeom::attribute_filter attribute_filter;                    \
                                                                                \
     std::vector<NAME_SPACE::IfcGeom::filter_t>                                 \
     setup_filters(const std::vector<geom_filter> &);                           \
@@ -166,11 +158,11 @@ struct filter_settings {
         unsigned int &vcount_total);                                           \
                                                                                \
   public:                                                                      \
-    NAME_SPACE##_convert(const file_path &filename,                            \
+    NAME_SPACE##_convert(const std::string &filename,                          \
                          NAME_SPACE##_serializer_settings set =                \
                              NAME_SPACE##_serializer_settings{},               \
                          filter_settings filters = filter_settings{})          \
-        : settings(set), _inited(false), _file_name(filename) {                \
+        : settings(set), _file_name(filename) {                                \
       if (filters.include_filter.type != geom_filter::UNUSED) {                \
         used_filters.push_back(filters.include_filter);                        \
       }                                                                        \
@@ -184,11 +176,10 @@ struct filter_settings {
         used_filters.push_back(filters.exclude_traverse_filter);               \
       }                                                                        \
       filter_funcs = setup_filters(used_filters);                              \
-      static_assert(!filter_funcs.empty());                                    \
     }                                                                          \
     ~NAME_SPACE##_convert() {}                                                 \
                                                                                \
-    std::vector<Topo_Shape> get_shape();                                       \
+    std::vector<TopoDS_Shape> get_shape();                                     \
                                                                                \
     void process_with_callback(visitor &vst);                                  \
   };
@@ -197,14 +188,21 @@ GEN_CONVERT(ifc23)
 GEN_CONVERT(ifc4)
 
 inline std::unique_ptr<base_convert> get_convert(const std::string &f) {
-  ifc23::IfcParse::IfcFile f{};
-  auto v = f.GetVersion(f);
-  if (v == ifc23::ifc2x3::Identifier) {
-    return std::make_unique<base_convert>(ifc23_convert{f});
-  } else if (v == ifc4::ifc4::Identifier) {
-    return std::make_unique<base_convert>(ifc4_convert{f});
+   ifc23::IfcParse::IfcFile fl{&ifc23::Ifc2x3::get_schema()};
+  auto v = fl.GetVersion(f);
+  if (v == ifc23::Ifc2x3::Identifier) {
+    return std::make_unique<ifc23_convert>(ifc23_convert{f});
+  } else if (v == ifc4::Ifc4::Identifier) {
+    return std::make_unique<ifc4_convert>(ifc4_convert{f});
   }
-  return std::unique_ptr<base_convert>(nullptr);
+  return std::unique_ptr<ifc23_convert>(nullptr);
+}
+
+inline void ifc_register_schema() {
+  static ifc23::IfcParse::schema_definition schem23 = ifc23::Ifc2x3::get_schema();
+  static ifc4::IfcParse::schema_definition schem4 = ifc4::Ifc4::get_schema();
+  ifc23::IfcParse::register_schema(&schem23);
+  ifc4::IfcParse::register_schema(&schem4);
 }
 
 } // namespace ifc

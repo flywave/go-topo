@@ -77,14 +77,14 @@ namespace IfcGeom {
 		Iterator(const Iterator&); // N/I
 		Iterator& operator=(const Iterator&); // N/I
 
-		IfcParse::IfcFile* file_;
+		IFC_NAMESPACE::IfcParse::IfcFile* file_;
 		IfcGeom::IteratorSettings settings_;
 		std::vector<IfcGeom::filter_t> filters_;
 
 		IteratorImplementation<P, PP>* implementation_;
 
 	public:
-		Iterator(const IfcGeom::IteratorSettings& settings, IfcParse::IfcFile* file, int num_threads = 1)
+		Iterator(const IfcGeom::IteratorSettings& settings, IFC_NAMESPACE::IfcParse::IfcFile* file, int num_threads = 1)
 			: file_(file)
 			, settings_(settings)
 		{
@@ -96,7 +96,7 @@ namespace IfcGeom {
 			}
 		}
 
-		Iterator(const IfcGeom::IteratorSettings& settings, IfcParse::IfcFile* file, const std::vector<IfcGeom::filter_t>& filters, size_t num_threads = 1)
+		Iterator(const IfcGeom::IteratorSettings& settings, IFC_NAMESPACE::IfcParse::IfcFile* file, const std::vector<IfcGeom::filter_t>& filters, size_t num_threads = 1)
 			: file_(file)
 			, settings_(settings)
 			, filters_(filters)
@@ -128,7 +128,7 @@ namespace IfcGeom {
 
 		double unit_magnitude() const { return implementation_->getUnitMagnitude(); }
 
-		IfcParse::IfcFile* file() const { return implementation_->file(); }
+		IFC_NAMESPACE::IfcParse::IfcFile* file() const { return implementation_->file(); }
 
 		IfcUtil::IfcBaseClass* next() const { return implementation_->next(); }
 

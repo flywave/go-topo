@@ -1,9 +1,9 @@
 ﻿#include "IfcRegisterUndef.h"
 #define SHAPE(T) \
-	if ( !processed && l->declaration().is(IfcSchema::T::Class()) ) { \
+	if ( !processed && l->declaration().is(IFC_NAMESPACE::IfcSchema::T::Class()) ) { \
 		processed = true; \
 		try { \
-			if ( convert((IfcSchema::T*)l,r) ) { \
+			if ( convert((IFC_NAMESPACE::IfcSchema::T*)l,r) ) { \
 				success = true; \
 			} \
 		} catch (const std::exception& e) { \

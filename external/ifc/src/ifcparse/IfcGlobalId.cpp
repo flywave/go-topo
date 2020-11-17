@@ -31,6 +31,9 @@
 #include "../ifcparse/IfcBaseClass.h"
 #include "../ifcparse/IfcLogger.h"
 
+namespace IFC_NAMESPACE{
+
+
 static const char* chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$";
 
 // Converts an unsigned integer into a base64 string of length l
@@ -137,4 +140,5 @@ IfcParse::IfcGlobalId::operator const boost::uuids::uuid&() const {
 
 const std::string& IfcParse::IfcGlobalId::formatted() const {
 	return formatted_string;
+}
 }

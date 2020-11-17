@@ -14,27 +14,28 @@ template IteratorFactoryImplementation<float, double>& iterator_implementations<
 template IteratorFactoryImplementation<double, double>& iterator_implementations<double, double>();
 
 template <typename P, typename PP>
-extern void init_IteratorImplementation_Ifc2x3(IteratorFactoryImplementation<P, PP>*);
+extern void MAKE_TYPE_NAME(init_IteratorImplementation_)(IteratorFactoryImplementation<P, PP>*);
 
-template <typename P, typename PP>
-extern void init_IteratorImplementation_Ifc4(IteratorFactoryImplementation<P, PP>*);
+// template <typename P, typename PP>
+// extern void init_IteratorImplementation_Ifc4(IteratorFactoryImplementation<P, PP>*);
 
-template <typename P, typename PP>
-extern void init_IteratorImplementation_Ifc4x1(IteratorFactoryImplementation<P, PP>*);
+// template <typename P, typename PP>
+// extern void init_IteratorImplementation_Ifc4x1(IteratorFactoryImplementation<P, PP>*);
 
-template <typename P, typename PP>
-extern void init_IteratorImplementation_Ifc4x2(IteratorFactoryImplementation<P, PP>*);
+// template <typename P, typename PP>
+// extern void init_IteratorImplementation_Ifc4x2(IteratorFactoryImplementation<P, PP>*);
 
-template <typename P, typename PP>
-extern void init_IteratorImplementation_Ifc4x3_rc1(IteratorFactoryImplementation<P, PP>*);
+// template <typename P, typename PP>
+// extern void init_IteratorImplementation_Ifc4x3_rc1(IteratorFactoryImplementation<P, PP>*);
 
 template <typename P, typename PP>
 IteratorFactoryImplementation<P, PP>::IteratorFactoryImplementation() {
-	init_IteratorImplementation_Ifc2x3(this);
-	init_IteratorImplementation_Ifc4(this);
-	init_IteratorImplementation_Ifc4x1(this);
-	init_IteratorImplementation_Ifc4x2(this);
-	init_IteratorImplementation_Ifc4x3_rc1(this);
+	// init_IteratorImplementation_Ifc2x3(this);
+	// init_IteratorImplementation_Ifc4(this);
+	// init_IteratorImplementation_Ifc4x1(this);
+	// init_IteratorImplementation_Ifc4x2(this);
+	// init_IteratorImplementation_Ifc4x3_rc1(this);
+	MAKE_TYPE_NAME(init_IteratorImplementation_)(this);
 }
 
 template <typename P, typename PP>

@@ -131,7 +131,7 @@ namespace {
 	}
 }
 
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcCartesianPoint* l, gp_Pnt& point) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcCartesianPoint* l, gp_Pnt& point) {
 	IN_CACHE(IfcCartesianPoint,l,gp_Pnt,point)
 	std::vector<double> xyz = l->Coordinates();
 	point = gp_Pnt(
@@ -143,7 +143,7 @@ bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcCartesianPoint* l, gp_Pnt& p
 	return true;
 }
 
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcDirection* l, gp_Dir& dir) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcDirection* l, gp_Dir& dir) {
 	IN_CACHE(IfcDirection,l,gp_Dir,dir)
 	std::vector<double> xyz = l->DirectionRatios();
 	dir = gp_Dir(
@@ -155,7 +155,7 @@ bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcDirection* l, gp_Dir& dir) {
 	return true;
 }
 
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcVector* l, gp_Vec& v) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcVector* l, gp_Vec& v) {
 	IN_CACHE(IfcVector,l,gp_Vec,v)
 	gp_Dir d;
 	IfcGeom::Kernel_T::convert(l->Orientation(),d);
@@ -164,7 +164,7 @@ bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcVector* l, gp_Vec& v) {
 	return true;
 }
 
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcAxis2Placement3D* l, gp_Trsf& trsf) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcAxis2Placement3D* l, gp_Trsf& trsf) {
 	IN_CACHE(IfcAxis2Placement3D, l, gp_Trsf, trsf)
 
 	gp_Pnt o;
@@ -206,7 +206,7 @@ bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcAxis2Placement3D* l, gp_Trsf
 	return true;
 }
 
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcAxis1Placement* l, gp_Ax1& ax) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcAxis1Placement* l, gp_Ax1& ax) {
 	IN_CACHE(IfcAxis1Placement,l,gp_Ax1,ax)
 	gp_Pnt o;gp_Dir axis = gp_Dir(0,0,1);
 	IfcGeom::Kernel_T::convert(l->Location(),o);
@@ -216,7 +216,7 @@ bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcAxis1Placement* l, gp_Ax1& a
 	return true;
 }
 
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcCartesianTransformationOperator3D* l, gp_Trsf& trsf) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcCartesianTransformationOperator3D* l, gp_Trsf& trsf) {
 	IN_CACHE(IfcCartesianTransformationOperator3D,l,gp_Trsf,trsf)
 	gp_Pnt origin;
 	IfcGeom::Kernel_T::convert(l->LocalOrigin(),origin);
@@ -242,7 +242,7 @@ bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcCartesianTransformationOpera
 	return true;
 }
 
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcCartesianTransformationOperator2D* l, gp_Trsf2d& trsf) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcCartesianTransformationOperator2D* l, gp_Trsf2d& trsf) {
 	IN_CACHE(IfcCartesianTransformationOperator2D,l,gp_Trsf2d,trsf)
 
 	gp_Pnt origin;
@@ -281,7 +281,7 @@ bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcCartesianTransformationOpera
 	return true;
 }
 
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcCartesianTransformationOperator3DnonUniform* l, gp_GTrsf& gtrsf) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcCartesianTransformationOperator3DnonUniform* l, gp_GTrsf& gtrsf) {
 	IN_CACHE(IfcCartesianTransformationOperator3DnonUniform,l,gp_GTrsf,gtrsf)
 	gp_Trsf trsf;
 	gp_Pnt origin;
@@ -313,7 +313,7 @@ bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcCartesianTransformationOpera
 	return true;
 }
 
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcCartesianTransformationOperator2DnonUniform* l, gp_GTrsf2d& gtrsf) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcCartesianTransformationOperator2DnonUniform* l, gp_GTrsf2d& gtrsf) {
 	IN_CACHE(IfcCartesianTransformationOperator2DnonUniform,l,gp_GTrsf2d,gtrsf)
 
 	gp_Trsf2d trsf;
@@ -354,9 +354,9 @@ bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcCartesianTransformationOpera
 	return true;
 }
 
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcPlane* pln, gp_Pln& plane) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcPlane* pln, gp_Pln& plane) {
 	IN_CACHE(IfcPlane,pln,gp_Pln,plane)
-	IfcSchema::IfcAxis2Placement3D* l = pln->Position();
+	IFC_NAMESPACE::IfcSchema::IfcAxis2Placement3D* l = pln->Position();
 	gp_Pnt o;gp_Dir axis = gp_Dir(0,0,1);gp_Dir refDirection;
 	IfcGeom::Kernel_T::convert(l->Location(),o);
 	bool hasRef = l->hasRefDirection();
@@ -370,7 +370,7 @@ bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcPlane* pln, gp_Pln& plane) {
 	return true;
 }
 
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcAxis2Placement2D* l, gp_Trsf2d& trsf) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcAxis2Placement2D* l, gp_Trsf2d& trsf) {
 	IN_CACHE(IfcAxis2Placement2D,l,gp_Trsf2d,trsf)
 	gp_Pnt P; gp_Dir V (1,0,0);
 	IfcGeom::Kernel_T::convert(l->Location(),P);
@@ -391,32 +391,32 @@ void IfcGeom::Kernel_T::set_conversion_placement_rel_to(const IfcParse::declarat
 	placement_rel_to = type;
 }
 
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcObjectPlacement* l, gp_Trsf& trsf) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcObjectPlacement* l, gp_Trsf& trsf) {
 	IN_CACHE(IfcObjectPlacement,l,gp_Trsf,trsf)
-	if ( ! l->declaration().is(IfcSchema::IfcLocalPlacement::Class()) ) {
+	if ( ! l->declaration().is(IFC_NAMESPACE::IfcSchema::IfcLocalPlacement::Class()) ) {
 		Logger::Message(Logger::LOG_ERROR, "Unsupported IfcObjectPlacement:", l);
 		return false; 		
 	}
-	IfcSchema::IfcLocalPlacement* current = (IfcSchema::IfcLocalPlacement*)l;
+	IFC_NAMESPACE::IfcSchema::IfcLocalPlacement* current = (IFC_NAMESPACE::IfcSchema::IfcLocalPlacement*)l;
 	for (;;) {
 		gp_Trsf trsf2;
-		IfcSchema::IfcAxis2Placement* relplacement = current->RelativePlacement();
-		if ( relplacement->declaration().is(IfcSchema::IfcAxis2Placement3D::Class()) ) {
-			IfcGeom::Kernel_T::convert((IfcSchema::IfcAxis2Placement3D*)relplacement,trsf2);
+		IFC_NAMESPACE::IfcSchema::IfcAxis2Placement* relplacement = current->RelativePlacement();
+		if ( relplacement->declaration().is(IFC_NAMESPACE::IfcSchema::IfcAxis2Placement3D::Class()) ) {
+			IfcGeom::Kernel_T::convert((IFC_NAMESPACE::IfcSchema::IfcAxis2Placement3D*)relplacement,trsf2);
 			trsf.PreMultiply(trsf2);
 		}
 		if ( current->hasPlacementRelTo() ) {
-			IfcSchema::IfcObjectPlacement* parent = current->PlacementRelTo();
-			IfcSchema::IfcProduct::list::ptr parentPlaces = parent->PlacesObject();
+			IFC_NAMESPACE::IfcSchema::IfcObjectPlacement* parent = current->PlacementRelTo();
+			IFC_NAMESPACE::IfcSchema::IfcProduct::list::ptr parentPlaces = parent->PlacesObject();
 			bool parentPlacesType = false;
-			for ( IfcSchema::IfcProduct::list::it iter = parentPlaces->begin();
+			for ( IFC_NAMESPACE::IfcSchema::IfcProduct::list::it iter = parentPlaces->begin();
 				  iter != parentPlaces->end(); ++iter) {
 				if ( (*iter)->declaration().is(*placement_rel_to) ) parentPlacesType = true;
 			}
 
 			if ( parentPlacesType ) break;
-			else if ( parent->declaration().is(IfcSchema::IfcLocalPlacement::Class()) )
-				current = (IfcSchema::IfcLocalPlacement*)current->PlacementRelTo();
+			else if ( parent->declaration().is(IFC_NAMESPACE::IfcSchema::IfcLocalPlacement::Class()) )
+				current = (IFC_NAMESPACE::IfcSchema::IfcLocalPlacement*)current->PlacementRelTo();
 			else break;
 		} else break;
 	}

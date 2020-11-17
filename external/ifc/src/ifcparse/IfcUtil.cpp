@@ -1,4 +1,4 @@
-﻿/********************************************************************************
+/********************************************************************************
  *                                                                              *
  * This file is part of IfcOpenShell.                                           *
  *                                                                              *
@@ -63,7 +63,7 @@
 #include <iostream>
 #include <algorithm>
 
-
+namespace IFC_NAMESPACE{
 void IfcEntityList::push(IfcUtil::IfcBaseClass* l) {
 	if (l) {
 		ls.push_back(l);
@@ -337,3 +337,4 @@ IFC_PARSE_API bool IfcUtil::path::delete_file(const std::string& filename) {
 }
 
 #endif
+}

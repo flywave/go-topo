@@ -33,7 +33,7 @@ static const char * const DATA				= "DATA";
 // static const char * const SECTION_LANGUAGE  = "SECTION_LANGUAGE";
 // static const char * const SECTION_CONTEXT   = "SECTION_CONTEXT";
 
-using namespace IfcParse;
+using namespace IFC_NAMESPACE::IfcParse;
 
 HeaderEntity::HeaderEntity(const char * const datatype, size_t size, IfcFile* file)
 	: IfcEntityInstanceData(file, size)

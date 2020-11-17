@@ -74,8 +74,8 @@ using boost::locale::conv::utf_to_utf;
 #define HEX_TO_INT(C)						((C >= 0x30 && C <= 0x39 ) ? C - 0x30 : (C+10) - 0x41)
 #define CLEAR_HEX(C)						(C &= ~(HEX(1)|HEX(2)|HEX(3)|HEX(4)|HEX(5)|HEX(6)|HEX(7)|HEX(8)))
 
-using namespace IfcParse;
-using namespace IfcWrite;
+namespace IFC_NAMESPACE{
+
 
 IfcCharacterDecoder::IfcCharacterDecoder(IfcParse::IfcSpfStream* f) {
   file = f;
@@ -407,5 +407,6 @@ std::string IfcUtil::convert_utf8(const std::wstring& s) {
 
 std::wstring IfcUtil::convert_utf8(const std::string& s) {
 	return std::wstring_convert<std::codecvt_utf8<std::wstring::value_type>>().from_bytes(s);
+}
 }
 #endif

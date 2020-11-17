@@ -1,8 +1,8 @@
-#include  "ifc.hh"
-#include <IfcException.hh>
+#include "ifc.hh"
 #include <IfcFile.h>
-#include <IfcParse.h>
 #include <IfcGeomIterator.h>
+#include <IfcParse.h>
+#include <boost/program_options.hpp>
 
 namespace flywave {
 namespace ifc {
@@ -22,74 +22,46 @@ std::array<std::string, 4> filter_settings::supported_args{
       if (f.type == geom_filter::ENTITY_TYPE) {                                \
         entity_filter.include = f.include;                                     \
         entity_filter.traverse = f.traverse;                                   \
-        try {                                                                  \
-          entity_filter.populate(f.values);                                    \
-        } catch (const parse::ifc_exception &e) {                              \
-          return std::vector<NS::IfcGeom::filter_t>();                         \
-        }                                                                      \
+        entity_filter.entity_names = f.values;                                 \
       } else if (f.type == geom_filter::LAYER_NAME) {                          \
         layer_filter.include = f.include;                                      \
         layer_filter.traverse = f.traverse;                                    \
         layer_filter.populate(f.values);                                       \
       } else if (f.type == geom_filter::ENTITY_ARG) {                          \
-        if (f.arg == filter_settings::GUID_ARG) {                              \
-          guid_filter.include = f.include;                                     \
-          guid_filter.traverse = f.traverse;                                   \
-          guid_filter.populate(f.values);                                      \
-        } else if (f.arg == filter_settings::NAME_ARG) {                       \
-          name_filter.include = f.include;                                     \
-          name_filter.traverse = f.traverse;                                   \
-          name_filter.populate(f.values);                                      \
-        } else if (f.arg == filter_settings::DESC_ARG) {                       \
-          desc_filter.include = f.include;                                     \
-          desc_filter.traverse = f.traverse;                                   \
-          desc_filter.populate(f.values);                                      \
-        } else if (f.arg == filter_settings::TAG_ARG) {                        \
-          tag_filter.include = f.include;                                      \
-          tag_filter.traverse = f.traverse;                                    \
-          tag_filter.populate(f.values);                                       \
-        }                                                                      \
+        attribute_filter.include = f.include;                                  \
+        attribute_filter.traverse = f.traverse;                                \
+        attribute_filter.attribute_name = f.arg;                               \
+        attribute_filter.populate(f.values);                                   \
       }                                                                        \
     }                                                                          \
                                                                                \
-    if (entity_filter.values.empty()) {                                        \
-      try {                                                                    \
-        std::set<std::string> entities;                                        \
-        entities.insert("IfcSpace");                                           \
-        entities.insert("IfcOpeningElement");                                  \
-        entity_filter.populate(entities);                                      \
-      } catch (const parse::ifc_exception &e) {                                \
-        return std::vector<NS::IfcGeom::filter_t>();                           \
-      }                                                                        \
+    if (entity_filter.entity_names.empty()) {                                  \
+      std::set<std::string> entities;                                          \
+      entity_filter.include = false;                                           \
+      entities.emplace("IfcSpace");                                            \
+      entities.emplace("IfcOpeningElement");                                   \
+      entity_filter.entity_names = entities;                                   \
     }                                                                          \
                                                                                \
     if (!layer_filter.values.empty()) {                                        \
-      filter_funcs.push_back(std::ref(layer_filter));                          \
+      filter_funcs.push_back(boost::ref(layer_filter));                          \
     }                                                                          \
-    if (!entity_filter.values.empty()) {                                       \
-      filter_funcs.push_back(std::ref(entity_filter));                         \
+    if (!entity_filter.entity_names.empty()) {                                 \
+      filter_funcs.push_back(boost::ref(entity_filter));                         \
     }                                                                          \
-    if (!guid_filter.values.empty()) {                                         \
-      filter_funcs.push_back(std::ref(guid_filter));                           \
-    }                                                                          \
-    if (!name_filter.values.empty()) {                                         \
-      filter_funcs.push_back(std::ref(name_filter));                           \
-    }                                                                          \
-    if (!desc_filter.values.empty()) {                                         \
-      filter_funcs.push_back(std::ref(desc_filter));                           \
-    }                                                                          \
-    if (!tag_filter.values.empty()) {                                          \
-      filter_funcs.push_back(std::ref(tag_filter));                            \
+    if (!attribute_filter.values.empty()) {                                    \
+      filter_funcs.push_back(boost::ref(attribute_filter));                      \
     }                                                                          \
     return filter_funcs;                                                       \
   }                                                                            \
                                                                                \
-  std::vector<Topo_Shape> NS##_convert::get_shape() {                          \
-    NS::IfcGeom::Iterator<double> iter{settings, &file, filter_funcs};         \
-    std::vector<TopoShape> shps;                                               \
+  std::vector<TopoDS_Shape> NS##_convert::get_shape() {                        \
+    NS::IfcParse::IfcFile fl{_file_name};                                      \
+    NS::IfcGeom::Iterator<double> iter{settings, &fl, filter_funcs};           \
+    std::vector<TopoDS_Shape> shps;                                            \
     if (iter.initialize()) {                                                   \
       do {                                                                     \
-        auto ele = iter.get();                                                 \
+        auto ele = iter.get_native();                                          \
         for (auto &sp : ele->geometry()) {                                     \
           shps.emplace_back(sp.Shape());                                       \
         }                                                                      \
@@ -99,7 +71,8 @@ std::array<std::string, 4> filter_settings::supported_args{
   }                                                                            \
                                                                                \
   void NS##_convert::process_with_callback(visitor &vst) {                     \
-    NS::IfcGeom::Iterator<double> iter{settings, &file, filter_funcs};         \
+    NS::IfcParse::IfcFile fl{_file_name};                                      \
+    NS::IfcGeom::Iterator<double> iter{settings, &fl, filter_funcs};           \
     unsigned int vcount_total = 0;                                             \
     if (iter.initialize()) {                                                   \
       do {                                                                     \

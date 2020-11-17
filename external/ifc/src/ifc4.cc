@@ -1,7 +1,9 @@
 #include "ifc4.h"
 
-#define IFC_NAMESPACE ifc40
-
+#define IFC_NAMESPACE ifc4
+#define IfcSchema Ifc4
+#define USE_4
+ 
 #include "ifcgeom/IfcGeomCurves.cpp"
 #include "ifcgeom/IfcGeomFaces.cpp"
 #include "ifcgeom/IfcGeomFunctions.cpp"
@@ -34,4 +36,6 @@
 #include "ifcgeom_schema_agnostic/Serialization.cpp"
 #include "ifcgeom_schema_agnostic/SurfaceStyle.cpp"
 
+#undef USE_4
+#undef IfcSchema Ifc4
 #undef IFC_NAMESPACE

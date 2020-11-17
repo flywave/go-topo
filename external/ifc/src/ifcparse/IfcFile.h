@@ -117,6 +117,8 @@ public:
 
 	virtual ~IfcFile();
 
+	std::string GetVersion(const std::string&);
+
 	bool good() const { return good_; }
 	
 	/// Returns the first entity in the file, this probably is the entity

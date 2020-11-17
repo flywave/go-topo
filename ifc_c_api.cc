@@ -1,5 +1,7 @@
 #include "ifc_c_api.h"
 #include "ifc.hh"
+#include "shape.hh"
+#include "topo_impl.hh"
 
 #include <memory>
 #include <string>
@@ -11,14 +13,17 @@ extern "C" {
 
 topo_shape_t** ifc_get_topo_shapes(const char *filename,int *count) {
   std::string f{filename};
-  flywave::ifc::convert ct{f};
-  auto shps = ct.get_shape();
+  auto ct = flywave::ifc::get_convert(f);
+  if(!ct){
+    *count = 0;
+    return nullptr;
+  }
+  auto shps = ct->get_shape();
   *count = shps.size();
   auto sp = new topo_shape_t*[shps.size()];
-  for (auto &s : shps) {
-    auto shp = std::make_shared<flywave::topo::shape>(std::move(s));
-    sp = new topo_shape_t{shp : shp};
-    sp++;
+  for (int i=0;i<shps.size();i++) {
+    auto shp = std::make_shared<flywave::topo::shape>(shps[i]);
+    sp[i] = new _topo_shape_t{shp : shp};
   }
   return sp;
 }
@@ -27,6 +32,10 @@ void ifc_shapes_free(topo_shape_t **shps){
   if(shps){
     delete[] shps;
   }
+}
+
+void ifc_register_schema(){
+  flywave::ifc::ifc_register_schema();
 }
 
 #ifdef __cplusplus

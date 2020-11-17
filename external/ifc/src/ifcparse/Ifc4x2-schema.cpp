@@ -27,6 +27,7 @@
 #include "../ifcparse/IfcSchema.h"
 #include "../ifcparse/Ifc4x2.h"
 
+namespace IFC_NAMESPACE{
 using namespace IfcParse;
 
 entity* IFC4X2_IfcActionRequest_type = 0;
@@ -15595,3 +15596,4 @@ const schema_definition& Ifc4x2::get_schema() {
     return *s;
 }
 
+}

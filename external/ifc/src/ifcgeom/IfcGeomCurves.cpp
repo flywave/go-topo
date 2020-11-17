@@ -87,26 +87,26 @@ namespace IFC_NAMESPACE {
 
 #define Kernel_T MAKE_TYPE_NAME(Kernel)
 
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcCircle* l, Handle(Geom_Curve)& curve) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcCircle* l, Handle(Geom_Curve)& curve) {
 	const double r = l->Radius() * getValue(GV_LENGTH_UNIT);
 	if ( r < ALMOST_ZERO ) { 
 		Logger::Message(Logger::LOG_ERROR, "Radius not greater than zero for:", l);
 		return false;
 	}
 	gp_Trsf trsf;
-	IfcSchema::IfcAxis2Placement* placement = l->Position();
-	if (placement->declaration().is(IfcSchema::IfcAxis2Placement3D::Class())) {
-		IfcGeom::Kernel_T::convert((IfcSchema::IfcAxis2Placement3D*)placement,trsf);
+	IFC_NAMESPACE::IfcSchema::IfcAxis2Placement* placement = l->Position();
+	if (placement->declaration().is(IFC_NAMESPACE::IfcSchema::IfcAxis2Placement3D::Class())) {
+		IfcGeom::Kernel_T::convert((IFC_NAMESPACE::IfcSchema::IfcAxis2Placement3D*)placement,trsf);
 	} else {
 		gp_Trsf2d trsf2d;
-		IfcGeom::Kernel_T::convert((IfcSchema::IfcAxis2Placement2D*)placement,trsf2d);
+		IfcGeom::Kernel_T::convert((IFC_NAMESPACE::IfcSchema::IfcAxis2Placement2D*)placement,trsf2d);
 		trsf = trsf2d;
 	}
 	gp_Ax2 ax = gp_Ax2().Transformed(trsf);
 	curve = new Geom_Circle(ax, r);
 	return true;
 }
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcEllipse* l, Handle(Geom_Curve)& curve) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcEllipse* l, Handle(Geom_Curve)& curve) {
 	double x = l->SemiAxis1() * getValue(GV_LENGTH_UNIT);
 	double y = l->SemiAxis2() * getValue(GV_LENGTH_UNIT);
 	if (x < ALMOST_ZERO || y < ALMOST_ZERO) { 
@@ -119,12 +119,12 @@ bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcEllipse* l, Handle(Geom_Curv
 	// when creating a trimmed curve off of an ellipse like this.
 	const bool rotated = y > x;
 	gp_Trsf trsf;
-	IfcSchema::IfcAxis2Placement* placement = l->Position();
-	if (placement->declaration().is(IfcSchema::IfcAxis2Placement3D::Class())) {
-		convert((IfcSchema::IfcAxis2Placement3D*)placement,trsf);
+	IFC_NAMESPACE::IfcSchema::IfcAxis2Placement* placement = l->Position();
+	if (placement->declaration().is(IFC_NAMESPACE::IfcSchema::IfcAxis2Placement3D::Class())) {
+		convert((IFC_NAMESPACE::IfcSchema::IfcAxis2Placement3D*)placement,trsf);
 	} else {
 		gp_Trsf2d trsf2d;
-		convert((IfcSchema::IfcAxis2Placement2D*)placement,trsf2d);
+		convert((IFC_NAMESPACE::IfcSchema::IfcAxis2Placement2D*)placement,trsf2d);
 		trsf = trsf2d;
 	}
 	gp_Ax2 ax = gp_Ax2();
@@ -138,13 +138,13 @@ bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcEllipse* l, Handle(Geom_Curv
 }
 
 #ifdef SCHEMA_HAS_IfcSurfaceCurve
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcSurfaceCurve* sc, Handle(Geom_Curve)& curve) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcSurfaceCurve* sc, Handle(Geom_Curve)& curve) {
 	// @todo take into account PCurves.
 	return convert_curve(sc->Curve3D(), curve);
 }
 #endif
 
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcLine* l, Handle(Geom_Curve)& curve) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcLine* l, Handle(Geom_Curve)& curve) {
 	gp_Pnt pnt;gp_Vec vec;
 	convert(l->Pnt(),pnt);
 	convert(l->Dir(),vec);	
@@ -154,11 +154,11 @@ bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcLine* l, Handle(Geom_Curve)&
 }
 
 #ifdef SCHEMA_HAS_IfcBSplineCurveWithKnots
-bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcBSplineCurveWithKnots* l, Handle(Geom_Curve)& curve) {
+bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcBSplineCurveWithKnots* l, Handle(Geom_Curve)& curve) {
 
-	const bool is_rational = l->declaration().is(IfcSchema::IfcRationalBSplineCurveWithKnots::Class());
+	const bool is_rational = l->declaration().is(IFC_NAMESPACE::IfcSchema::IfcRationalBSplineCurveWithKnots::Class());
 
-	const IfcSchema::IfcCartesianPoint::list::ptr cps = l->ControlPointsList();
+	const IFC_NAMESPACE::IfcSchema::IfcCartesianPoint::list::ptr cps = l->ControlPointsList();
 	const std::vector<int> mults = l->KnotMultiplicities();
 	const std::vector<double> knots = l->Knots();
 
@@ -174,7 +174,7 @@ bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcBSplineCurveWithKnots* l, Ha
 	int i;
 
 	if (is_rational) {
-		IfcSchema::IfcRationalBSplineCurveWithKnots* rl = (IfcSchema::IfcRationalBSplineCurveWithKnots*)l;
+		IFC_NAMESPACE::IfcSchema::IfcRationalBSplineCurveWithKnots* rl = (IFC_NAMESPACE::IfcSchema::IfcRationalBSplineCurveWithKnots*)l;
 		std::vector<double> weights = rl->WeightsData();
 
 		i = 0;
@@ -184,7 +184,7 @@ bool IfcGeom::Kernel_T::convert(const IfcSchema::IfcBSplineCurveWithKnots* l, Ha
 	}
 
 	i = 0;
-	for (IfcSchema::IfcCartesianPoint::list::it it = cps->begin(); it != cps->end(); ++it, ++i) {
+	for (IFC_NAMESPACE::IfcSchema::IfcCartesianPoint::list::it it = cps->begin(); it != cps->end(); ++it, ++i) {
 		gp_Pnt pnt;
 		if (!convert(*it, pnt)) return false;
 		Poles(i) = pnt;
