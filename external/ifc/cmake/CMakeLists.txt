@@ -106,11 +106,13 @@ INCLUDE_DIRECTORIES(
 file(GLOB cpp_file
     ../src/ifc23.cc
     ../src/ifc4.cc
+    ../src/ifc41.cc
+    ../src/ifc42.cc
+    ../src/ifc43_rc1.cc
 )
 
 ADD_LIBRARY(Ifc STATIC ${cpp_file})
- 
-TARGET_LINK_LIBRARIES(Ifc)
+set_target_properties(Ifc PROPERTIES COMPILE_FLAGS "-DUSE_MMAP")
 
 file(GLOB include_files_geom
     ../src/ifcgeom/*.h     

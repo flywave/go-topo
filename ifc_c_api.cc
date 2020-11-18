@@ -38,6 +38,10 @@ void ifc_register_schema(){
   flywave::ifc::ifc_register_schema();
 }
 
+topo_shape_t* ifc_get_topo_shape(topo_shape_t** ts,int index){
+  return ts[index];
+}
+
 #ifdef __cplusplus
 }
 #endif

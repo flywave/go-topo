@@ -16,6 +16,8 @@ extern "C" {
 IFCCAPICALL topo_shape_t** ifc_get_topo_shapes(const char *filename,int *count);
 IFCCAPICALL void ifc_shapes_free(topo_shape_t **shps);
 IFCCAPICALL void ifc_register_schema();
+IFCCAPICALL topo_shape_t* ifc_get_topo_shape(topo_shape_t**,int index);
+
 #ifdef __cplusplus
 }
 #endif

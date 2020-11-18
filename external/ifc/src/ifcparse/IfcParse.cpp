@@ -1323,13 +1323,6 @@ void IfcEntityInstanceData::setArgument(unsigned int i, Argument *a,
 // Parses the IFC file in fn
 // Creates the maps
 //
-#ifdef USE_MMAP
-IfcFile::IfcFile(const std::string &fn, bool mmap) {
-  return IfcFile::Init(new IfcSpfStream(fn, mmap));
-}
-#else
-IfcFile::IfcFile(const std::string &fn) { initialize_(new IfcSpfStream(fn)); }
-#endif
 
 IfcFile::IfcFile(std::istream &f, int len) {
   initialize_(new IfcSpfStream(f, len));
@@ -1341,6 +1334,14 @@ IfcFile::IfcFile(void *data, int len) {
 
 IfcFile::IfcFile(IfcParse::IfcSpfStream *s) { initialize_(s); }
 
+#ifdef USE_MMAP
+IfcFile::IfcFile(const std::string &fn, bool mmap) {
+    initialize_(new IfcSpfStream(fn, mmap));
+}
+#else
+IfcFile::IfcFile(const std::string &fn) { initialize_(new IfcSpfStream(fn)); }
+#endif
+  
 IfcFile::IfcFile(const IfcParse::schema_definition *schema)
     : parsing_complete_(true), good_(true), schema_(schema),
       ifcroot_type_(schema_->declaration_by_name("IfcRoot")), MaxId(0),

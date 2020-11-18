@@ -9,6 +9,9 @@
 
 #include <ifc23.h>
 #include <ifc4.h>
+#include <ifc41.h>
+#include <ifc42.h>
+#include <ifc43_rc1.h>
 
 namespace flywave {
 namespace ifc {
@@ -20,13 +23,21 @@ public:
   apply(const ifc23::IfcGeom::TriangulationElement<double> *element);
   virtual void
   apply(const ifc4::IfcGeom::TriangulationElement<double> *element);
+   virtual void
+  apply(const ifc41::IfcGeom::TriangulationElement<double> *element);
+   virtual void
+  apply(const ifc42::IfcGeom::TriangulationElement<double> *element);
+   virtual void
+  apply(const ifc43_rc1::IfcGeom::TriangulationElement<double> *element);
 };
 
 class base_convert {
 public:
-  virtual std::vector<TopoDS_Shape> get_shape()=0;
+  virtual std::vector<TopoDS_Shape> get_shape() = 0;
 
-  virtual void process_with_callback(visitor &vst)=0;
+  virtual void process_with_callback(visitor &vst) = 0;
+
+  virtual ~base_convert() = default;
 };
 
 struct geom_filter {
@@ -142,8 +153,7 @@ struct filter_settings {
     NAME_SPACE::IfcGeom::layer_filter layer_filter;                            \
     NAME_SPACE::IfcGeom::attribute_filter attribute_filter;                    \
                                                                                \
-    std::vector<NAME_SPACE::IfcGeom::filter_t>                                 \
-    setup_filters(const std::vector<geom_filter> &);                           \
+    void setup_filters(const std::vector<geom_filter> &);                      \
                                                                                \
     std::vector<geom_filter> used_filters;                                     \
                                                                                \
@@ -175,34 +185,58 @@ struct filter_settings {
       if (filters.exclude_traverse_filter.type != geom_filter::UNUSED) {       \
         used_filters.push_back(filters.exclude_traverse_filter);               \
       }                                                                        \
-      filter_funcs = setup_filters(used_filters);                              \
+      setup_filters(used_filters);                                             \
     }                                                                          \
     ~NAME_SPACE##_convert() {}                                                 \
                                                                                \
     std::vector<TopoDS_Shape> get_shape();                                     \
                                                                                \
     void process_with_callback(visitor &vst);                                  \
+                                                                               \
+    const std::vector<NAME_SPACE::IfcGeom::filter_t> &get_filter_funcs() {     \
+      return filter_funcs;                                                     \
+    }                                                                          \
   };
 
 GEN_CONVERT(ifc23)
 GEN_CONVERT(ifc4)
+GEN_CONVERT(ifc41)
+GEN_CONVERT(ifc42)
+GEN_CONVERT(ifc43_rc1)
 
 inline std::unique_ptr<base_convert> get_convert(const std::string &f) {
-   ifc23::IfcParse::IfcFile fl{&ifc23::Ifc2x3::get_schema()};
+  ifc23::IfcParse::IfcFile fl{&ifc23::Ifc2x3::get_schema()};
   auto v = fl.GetVersion(f);
   if (v == ifc23::Ifc2x3::Identifier) {
-    return std::make_unique<ifc23_convert>(ifc23_convert{f});
+    return std::unique_ptr<ifc23_convert>(new ifc23_convert{f});
   } else if (v == ifc4::Ifc4::Identifier) {
-    return std::make_unique<ifc4_convert>(ifc4_convert{f});
+    return std::unique_ptr<ifc4_convert>(new ifc4_convert{f});
+  } else if (v == ifc41::Ifc4x1::Identifier) {
+    return std::unique_ptr<ifc41_convert>(new ifc41_convert{f});
+  } else if (v == ifc42::Ifc4x2::Identifier) {
+    return std::unique_ptr<ifc42_convert>(new ifc42_convert{f});
+  } else if (v == ifc43_rc1::Ifc4x3_rc1::Identifier) {
+    return std::unique_ptr<ifc43_rc1_convert>(new ifc43_rc1_convert{f});
   }
   return std::unique_ptr<ifc23_convert>(nullptr);
 }
 
 inline void ifc_register_schema() {
-  static ifc23::IfcParse::schema_definition schem23 = ifc23::Ifc2x3::get_schema();
+  static ifc23::IfcParse::schema_definition schem23 =
+      ifc23::Ifc2x3::get_schema();
   static ifc4::IfcParse::schema_definition schem4 = ifc4::Ifc4::get_schema();
+  static ifc41::IfcParse::schema_definition schem41 =
+      ifc41::Ifc4x1::get_schema();
+  static ifc42::IfcParse::schema_definition schem42 =
+      ifc42::Ifc4x2::get_schema();
+  static ifc43_rc1::IfcParse::schema_definition schem43 =
+      ifc43_rc1::Ifc4x3_rc1::get_schema();
+
   ifc23::IfcParse::register_schema(&schem23);
   ifc4::IfcParse::register_schema(&schem4);
+  ifc41::IfcParse::register_schema(&schem41);
+  ifc42::IfcParse::register_schema(&schem42);
+  ifc43_rc1::IfcParse::register_schema(&schem43);
 }
 
 } // namespace ifc

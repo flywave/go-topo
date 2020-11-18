@@ -31,9 +31,8 @@ func IfcToTopoShape(f string) []Shape {
 		return sp
 	}
 	defer C.ifc_shapes_free(res)
-	// for i := 0; i < count; i++ {
-	// 	sp = append(sp, *NewShape(*res))
-	// 	res++
-	// }
+	for i := 0; i < count; i++ {
+		sp = append(sp, *NewShape(C.ifc_get_topo_shape(res, C.int(i))))
+	}
 	return sp
 }

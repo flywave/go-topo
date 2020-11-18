@@ -1,8 +1,8 @@
-#include "ifc4.h"
+#include "ifc42.h"
 
-#define IFC_NAMESPACE ifc4
-#define IfcSchema Ifc4
-#define USE_4
+#define IFC_NAMESPACE ifc42
+#define IfcSchema Ifc4x2
+#define USE_42
  
 #include "ifcgeom/IfcGeomCurves.cpp"
 #include "ifcgeom/IfcGeomFaces.cpp"
@@ -16,8 +16,8 @@
 #include "ifcgeom/IfcGeomWires.cpp"
 #include "ifcgeom/IfcRegister.cpp"
 
-#include "ifcparse/Ifc4-schema.cpp"
-#include "ifcparse/Ifc4.cpp"
+#include "ifcparse/Ifc4x2-schema.cpp"
+#include "ifcparse/Ifc4x2.cpp"
 #include "ifcparse/IfcCharacterDecoder.cpp"
 #include "ifcparse/IfcGlobalId.cpp"
 #include "ifcparse/IfcHierarchyHelper.cpp"
@@ -36,6 +36,6 @@
 #include "ifcgeom_schema_agnostic/Serialization.cpp"
 #include "ifcgeom_schema_agnostic/SurfaceStyle.cpp"
 
-#undef USE_4
+#undef USE_42
 #undef IfcSchema
 #undef IFC_NAMESPACE

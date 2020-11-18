@@ -393,28 +393,28 @@ public:
 	template <typename T> std::pair<IFC_NAMESPACE::IfcSchema::IfcSurfaceStyle*, T*> _get_surface_style(const IFC_NAMESPACE::IfcSchema::IfcStyledItem* si) {
 		std::vector<IFC_NAMESPACE::IfcSchema::IfcPresentationStyle*> prs_styles;
 
-#ifdef USE_4
-		IFC_NAMESPACE::IfcEntityList::ptr style_assignments = si->Styles();
-		for (IFC_NAMESPACE::IfcEntityList::it kt = style_assignments->begin(); kt != style_assignments->end(); ++kt) {
-			
-			// Using IfcPresentationStyleAssignment is deprecated, use the direct assignment of a subtype of IfcPresentationStyle instead.
-			auto style_k = (*kt)->as<IFC_NAMESPACE::IfcSchema::IfcPresentationStyle>();
-			if (style_k) {
-				prs_styles.push_back(style_k);
-				continue;
-			}
-
-			if (!(*kt)->declaration().is(IFC_NAMESPACE::IfcSchema::IfcPresentationStyleAssignment::Class())) {
-				continue;
-			}
-
-			IFC_NAMESPACE::IfcSchema::IfcPresentationStyleAssignment* style_assignment = (IFC_NAMESPACE::IfcSchema::IfcPresentationStyleAssignment*) *kt;
-
-			IFC_NAMESPACE::Logger::Warning("Deprecated usage of", style_assignment);
+#ifdef USE_23
+      IFC_NAMESPACE::IfcSchema::IfcPresentationStyleAssignment::list::ptr style_assignments = si->Styles();
+      for (IFC_NAMESPACE::IfcSchema::IfcPresentationStyleAssignment::list::it kt = style_assignments->begin(); kt != style_assignments->end(); ++kt) {
+        IFC_NAMESPACE::IfcSchema::IfcPresentationStyleAssignment* style_assignment = *kt;
 #else
-		IFC_NAMESPACE::IfcSchema::IfcPresentationStyleAssignment::list::ptr style_assignments = si->Styles();
-		for (IFC_NAMESPACE::IfcSchema::IfcPresentationStyleAssignment::list::it kt = style_assignments->begin(); kt != style_assignments->end(); ++kt) {
-			IFC_NAMESPACE::IfcSchema::IfcPresentationStyleAssignment* style_assignment = *kt;
+        IFC_NAMESPACE::IfcEntityList::ptr style_assignments = si->Styles();
+        for (IFC_NAMESPACE::IfcEntityList::it kt = style_assignments->begin(); kt != style_assignments->end(); ++kt) {
+          
+          // Using IfcPresentationStyleAssignment is deprecated, use the direct assignment of a subtype of IfcPresentationStyle instead.
+          auto style_k = (*kt)->as<IFC_NAMESPACE::IfcSchema::IfcPresentationStyle>();
+          if (style_k) {
+            prs_styles.push_back(style_k);
+            continue;
+          }
+          
+          if (!(*kt)->declaration().is(IFC_NAMESPACE::IfcSchema::IfcPresentationStyleAssignment::Class())) {
+            continue;
+          }
+          
+          IFC_NAMESPACE::IfcSchema::IfcPresentationStyleAssignment* style_assignment = (IFC_NAMESPACE::IfcSchema::IfcPresentationStyleAssignment*) *kt;
+          
+          IFC_NAMESPACE::Logger::Warning("Deprecated usage of", style_assignment);
 #endif
 
 			// Only in case of 2x3 or old style IfcPresentationStyleAssignment

@@ -15,9 +15,7 @@ std::array<std::string, 4> filter_settings::supported_args{
     {NAME_ARG, GUID_ARG, DESC_ARG, TAG_ARG}};
 
 #define GEN_CODE(NS)                                                           \
-  std::vector<NS::IfcGeom::filter_t> NS##_convert::setup_filters(              \
-      const std::vector<geom_filter> &filters) {                               \
-    std::vector<NS::IfcGeom::filter_t> filter_funcs;                           \
+  void NS##_convert::setup_filters(const std::vector<geom_filter> &filters) {  \
     BOOST_FOREACH (const geom_filter &f, filters) {                            \
       if (f.type == geom_filter::ENTITY_TYPE) {                                \
         entity_filter.include = f.include;                                     \
@@ -44,20 +42,19 @@ std::array<std::string, 4> filter_settings::supported_args{
     }                                                                          \
                                                                                \
     if (!layer_filter.values.empty()) {                                        \
-      filter_funcs.push_back(boost::ref(layer_filter));                          \
+      filter_funcs.push_back(boost::ref(layer_filter));                        \
     }                                                                          \
     if (!entity_filter.entity_names.empty()) {                                 \
-      filter_funcs.push_back(boost::ref(entity_filter));                         \
+      filter_funcs.push_back(boost::ref(entity_filter));                       \
     }                                                                          \
     if (!attribute_filter.values.empty()) {                                    \
-      filter_funcs.push_back(boost::ref(attribute_filter));                      \
+      filter_funcs.push_back(boost::ref(attribute_filter));                    \
     }                                                                          \
-    return filter_funcs;                                                       \
   }                                                                            \
                                                                                \
   std::vector<TopoDS_Shape> NS##_convert::get_shape() {                        \
     NS::IfcParse::IfcFile fl{_file_name};                                      \
-    NS::IfcGeom::Iterator<double> iter{settings, &fl, filter_funcs};           \
+    NS::IfcGeom::Iterator<double> iter{settings, &fl, this->filter_funcs};     \
     std::vector<TopoDS_Shape> shps;                                            \
     if (iter.initialize()) {                                                   \
       do {                                                                     \
@@ -86,5 +83,8 @@ std::array<std::string, 4> filter_settings::supported_args{
 
 GEN_CODE(ifc23)
 GEN_CODE(ifc4)
+GEN_CODE(ifc41)
+GEN_CODE(ifc42)
+GEN_CODE(ifc43_rc1)
 } // namespace ifc
 } // namespace flywave
