@@ -111,9 +111,8 @@ file(GLOB cpp_file
     ../src/ifc43_rc1.cc
 )
 
-ADD_LIBRARY(Ifc STATIC ${cpp_file})
-set_target_properties(Ifc PROPERTIES COMPILE_FLAGS "-DUSE_MMAP")
-
+ADD_LIBRARY(ifc STATIC ${cpp_file})
+ 
 file(GLOB include_files_geom
     ../src/ifcgeom/*.h     
 )
@@ -126,12 +125,11 @@ file(GLOB include_files_geom_scheme
     ../src/ifcgeom_schema_agnostic/*.h
 )
  
-
 IF(FLYWAVE_ENABLE_SOLUTION_FOLDERS)
-    SET_TARGET_PROPERTIES(Ifc PROPERTIES FOLDER external)
+    SET_TARGET_PROPERTIES(ifc PROPERTIES FOLDER external)
 ENDIF(FLYWAVE_ENABLE_SOLUTION_FOLDERS)
 
 INSTALL(FILES ${include_files_geom} DESTINATION include/ifc/ifcgeom)
 INSTALL(FILES ${include_files_parse} DESTINATION include/ifc/ifcparse)
 INSTALL(FILES ${include_files_geom_scheme} DESTINATION include/ifc/ifcgeom_schema_agnostic)
-INSTALL(TARGETS Ifc)
+INSTALL(TARGETS ifc)

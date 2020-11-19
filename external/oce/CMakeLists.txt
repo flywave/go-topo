@@ -199,8 +199,9 @@ else ()
 	set (DEB_DEFAULT "ON")
 endif ((MSVC OR BORLAND) AND CMAKE_CONFIGURATION_TYPES)
 
+set (DEB_DEFAULT "OFF")
 option_with_default( OCE_ENABLE_DEB_FLAG "Enables OCCT_DEBUG define in debug configuration" ${DEB_DEFAULT} )
-mark_as_advanced(OCE_ENABLE_DEB_FLAG)
+mark_as_advanced(CLEAN OCE_ENABLE_DEB_FLAG)
 
 if(NOT MSVC)
 	option_with_default( OCE_COVERAGE "Build with coverage testing" OFF )

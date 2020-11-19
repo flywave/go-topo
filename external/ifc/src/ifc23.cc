@@ -36,7 +36,6 @@
 #include "ifcgeom_schema_agnostic/Serialization.cpp"
 #include "ifcgeom_schema_agnostic/SurfaceStyle.cpp"
 
-
 #undef USE_23
 #undef IfcSchema
 #undef IFC_NAMESPACE
