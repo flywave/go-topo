@@ -12,7 +12,7 @@
 namespace flywave {
 namespace topo {
 
-class geometry_object : std::enable_shared_from_this<geometry_object> {
+class geometry_object : public std::enable_shared_from_this<geometry_object> {
 protected:
   void *tag;
 
