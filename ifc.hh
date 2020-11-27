@@ -23,11 +23,11 @@ public:
   apply(const ifc23::IfcGeom::TriangulationElement<double> *element);
   virtual void
   apply(const ifc4::IfcGeom::TriangulationElement<double> *element);
-   virtual void
+  virtual void
   apply(const ifc41::IfcGeom::TriangulationElement<double> *element);
-   virtual void
+  virtual void
   apply(const ifc42::IfcGeom::TriangulationElement<double> *element);
-   virtual void
+  virtual void
   apply(const ifc43_rc1::IfcGeom::TriangulationElement<double> *element);
 };
 

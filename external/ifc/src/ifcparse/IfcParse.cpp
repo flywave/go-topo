@@ -1336,12 +1336,12 @@ IfcFile::IfcFile(IfcParse::IfcSpfStream *s) { initialize_(s); }
 
 #ifdef USE_MMAP
 IfcFile::IfcFile(const std::string &fn, bool mmap) {
-    initialize_(new IfcSpfStream(fn, mmap));
+  initialize_(new IfcSpfStream(fn, mmap));
 }
 #else
 IfcFile::IfcFile(const std::string &fn) { initialize_(new IfcSpfStream(fn)); }
 #endif
-  
+
 IfcFile::IfcFile(const IfcParse::schema_definition *schema)
     : parsing_complete_(true), good_(true), schema_(schema),
       ifcroot_type_(schema_->declaration_by_name("IfcRoot")), MaxId(0),
@@ -1350,9 +1350,12 @@ IfcFile::IfcFile(const IfcParse::schema_definition *schema)
 }
 
 std::string IfcFile::GetVersion(const std::string &fn) {
+  init_locale();
   stream = new IfcSpfStream(fn);
-  if (!stream->valid) { return ""; }
-  tokens= new IfcSpfLexer(stream, this);
+  if (!stream->valid) {
+    return "";
+  }
+  tokens = new IfcSpfLexer(stream, this);
   _header.file(this);
   _header.tryRead();
 

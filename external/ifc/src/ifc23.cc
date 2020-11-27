@@ -8,13 +8,13 @@
 #include "ifcgeom/IfcGeomFaces.cpp"
 #include "ifcgeom/IfcGeomFunctions.cpp"
 #include "ifcgeom/IfcGeomHelpers.cpp"
+#include "ifcgeom/IfcGeomIteratorImplementation.cpp"
 #include "ifcgeom/IfcGeomRenderStyles.cpp"
 #include "ifcgeom/IfcGeomRepresentation.cpp"
 #include "ifcgeom/IfcGeomSerialisation.cpp"
 #include "ifcgeom/IfcGeomShapes.cpp"
 #include "ifcgeom/IfcGeomWires.cpp"
 #include "ifcgeom/IfcRegister.cpp"
-#include "ifcgeom/IfcGeomIteratorImplementation.cpp"
 
 #include "ifcparse/Ifc2x3-schema.cpp"
 #include "ifcparse/Ifc2x3.cpp"
@@ -23,8 +23,8 @@
 #include "ifcparse/IfcHierarchyHelper.cpp"
 #include "ifcparse/IfcLogger.cpp"
 #include "ifcparse/IfcParse.cpp"
-#include "ifcparse/IfcSchema.cpp"
 #include "ifcparse/IfcSIPrefix.cpp"
+#include "ifcparse/IfcSchema.cpp"
 #include "ifcparse/IfcSpfHeader.cpp"
 #include "ifcparse/IfcUtil.cpp"
 #include "ifcparse/IfcWrite.cpp"
@@ -39,4 +39,3 @@
 #undef USE_23
 #undef IfcSchema
 #undef IFC_NAMESPACE
-
