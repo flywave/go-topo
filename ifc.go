@@ -36,3 +36,9 @@ func IfcToTopoShape(f string) []Shape {
 	}
 	return sp
 }
+
+func IsIfc(f string) bool {
+	fl := C.CString(f)
+	defer C.free(unsafe.Pointer(fl))
+	return bool(C.is_ifc_file(fl))
+}

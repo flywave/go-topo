@@ -27,6 +27,13 @@ topo_shape_t **ifc_get_topo_shapes(const char *filename, int *count) {
   }
   return sp;
 }
+ 
+_Bool is_ifc_file(const char *filename){
+  std::string f{filename};
+  auto v = flywave::ifc::get_version(f);
+  return !v.empty();
+}
+
 
 void ifc_shapes_free(topo_shape_t **shps) {
   if (shps) {

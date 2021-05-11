@@ -205,8 +205,7 @@ GEN_CONVERT(ifc42)
 GEN_CONVERT(ifc43_rc1)
 
 inline std::unique_ptr<base_convert> get_convert(const std::string &f) {
-  ifc23::IfcParse::IfcFile fl{&ifc23::Ifc2x3::get_schema()};
-  auto v = fl.GetVersion(f);
+  auto v = get_version(f);
   if (v == ifc23::Ifc2x3::Identifier) {
     return std::unique_ptr<ifc23_convert>(new ifc23_convert{f});
   } else if (v == ifc4::Ifc4::Identifier) {
@@ -219,6 +218,11 @@ inline std::unique_ptr<base_convert> get_convert(const std::string &f) {
     return std::unique_ptr<ifc43_rc1_convert>(new ifc43_rc1_convert{f});
   }
   return std::unique_ptr<ifc23_convert>(nullptr);
+}
+
+inline std:string get_version(const std::string &f){
+    ifc23::IfcParse::IfcFile fl{&ifc23::Ifc2x3::get_schema()};
+    return  fl.GetVersion(f);
 }
 
 inline void ifc_register_schema() {
