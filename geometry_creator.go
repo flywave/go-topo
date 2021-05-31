@@ -326,51 +326,51 @@ func GeomMakeLineOfTwoPoint(p1, p2 Point3) *GeomLine {
 }
 
 func GeomMakeMirrorOfPoint(p Point3) *GeomTransformation {
-	return &GeomTransformation{geom: C.geom_make_mirror_of_point(p.val)}
+	return NewGeomTransformation(C.geom_make_mirror_of_point(p.val))
 }
 
 func GeomMakeMirrorOfAxis1(a Axis1) *GeomTransformation {
-	return &GeomTransformation{geom: C.geom_make_mirror_of_axis1(a.val)}
+	return NewGeomTransformation(C.geom_make_mirror_of_axis1(a.val))
 }
 
 func GeomMakeMirrorOfLine(l Line) *GeomTransformation {
-	return &GeomTransformation{geom: C.geom_make_mirror_of_line(l.val)}
+	return NewGeomTransformation(C.geom_make_mirror_of_line(l.val))
 }
 
 func GeomMakeMirrorOfPointDir(p Point3, d Dir3) *GeomTransformation {
-	return &GeomTransformation{geom: C.geom_make_mirror_of_point_dir(p.val, d.val)}
+	return NewGeomTransformation(C.geom_make_mirror_of_point_dir(p.val, d.val))
 }
 
 func GeomMakeMirrorOfPlane(p Plane) *GeomTransformation {
-	return &GeomTransformation{geom: C.geom_make_mirror_of_plane(p.val)}
+	return NewGeomTransformation(C.geom_make_mirror_of_plane(p.val))
 }
 
 func GeomMakeMirrorOfAxis2(p Axis2) *GeomTransformation {
-	return &GeomTransformation{geom: C.geom_make_mirror_of_axis2(p.val)}
+	return NewGeomTransformation(C.geom_make_mirror_of_axis2(p.val))
 }
 
 func GeomMakeRotationOfLine(l Line, ang float64) *GeomTransformation {
-	return &GeomTransformation{geom: C.geom_make_rotation_of_line(l.val, C.double(ang))}
+	return NewGeomTransformation(C.geom_make_rotation_of_line(l.val, C.double(ang)))
 }
 
 func GeomMakeRotationOfAxis1(l Axis1, ang float64) *GeomTransformation {
-	return &GeomTransformation{geom: C.geom_make_rotation_of_axis1(l.val, C.double(ang))}
+	return NewGeomTransformation(C.geom_make_rotation_of_axis1(l.val, C.double(ang)))
 }
 
 func GeomMakeRotationOfPointDir(p Point3, d Dir3, ang float64) *GeomTransformation {
-	return &GeomTransformation{geom: C.geom_make_rotation_of_point_dir(p.val, d.val, C.double(ang))}
+	return NewGeomTransformation(C.geom_make_rotation_of_point_dir(p.val, d.val, C.double(ang)))
 }
 
 func GeomMakeTranslationOfVector(v Vector3) *GeomTransformation {
-	return &GeomTransformation{geom: C.geom_make_translation_of_vect(v.val)}
+	return NewGeomTransformation(C.geom_make_translation_of_vect(v.val))
 }
 
 func GeomMakeTranslationOfTwoPoint(p1, p2 Point3) *GeomTransformation {
-	return &GeomTransformation{geom: C.geom_make_translation_of_two_point(p1.val, p2.val)}
+	return NewGeomTransformation(C.geom_make_translation_of_two_point(p1.val, p2.val))
 }
 
 func GeomMakeScaleOfPoint(p Point3, s float64) *GeomTransformation {
-	return &GeomTransformation{geom: C.geom_make_scale_of_point_scale(p.val, C.double(s))}
+	return NewGeomTransformation(C.geom_make_scale_of_point_scale(p.val, C.double(s)))
 }
 
 func GeomMakePlane(p Plane) *GeomPlane {

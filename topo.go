@@ -14,6 +14,7 @@ package topo
 import "C"
 
 import (
+	"runtime"
 	"unsafe"
 )
 
@@ -66,6 +67,7 @@ func NewMeshReceiver() *MeshReceiver {
 	var cb C.struct__mesh_receiver_cb_t
 	cb.ctx = unsafe.Pointer(ret)
 	ret.val = C.topo_mesh_receiver_new(cb)
+	runtime.SetFinalizer(ret, (*MeshReceiver).free)
 	return ret
 }
 
@@ -98,7 +100,7 @@ func (m *MeshReceiver) appendTriangle(f int, tri [3]int) {
 	m.Tris[f] = append(m.Tris[f], tri)
 }
 
-func (m *MeshReceiver) Free() {
+func (m *MeshReceiver) free() {
 	C.topo_mesh_receiver_free(m.val)
 	m.val = nil
 }
@@ -125,7 +127,9 @@ type Shape struct {
 }
 
 func NewShape(v *C.struct__topo_shape_t) *Shape {
-	return &Shape{val: v}
+	s := &Shape{val: v}
+	runtime.SetFinalizer(s, (*MeshReceiver).free)
+	return s
 }
 
 func (s *Shape) WriteToStl(ph string) {
@@ -288,7 +292,7 @@ func (s *Shape) GetLabel() string {
 	return C.GoString(C.topo_shape_get_label(s.val))
 }
 
-func (t *Shape) Free() {
+func (t *Shape) free() {
 	C.topo_shape_free(t.val)
 	t.val = nil
 }
