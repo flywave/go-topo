@@ -252,14 +252,12 @@ func (g *GeomAxisPlacement) free() {
 }
 
 func (g *GeomAxisPlacement) Copy() *GeomAxisPlacement {
-	return &GeomAxisPlacement{geom: C.geom_axis_placement_copy(g.geom)}
+	return NewGeomAxisPlacement(C.geom_axis_placement_copy(g.geom))
 }
 
 func NewGeomAxisPlacementFromGeometry(g *GeomGeometry) *GeomAxisPlacement {
 	if p := C.geom_axis_placement_from_geometry(g.geom); p != nil {
-		gg := &GeomAxisPlacement{geom: p}
-		runtime.SetFinalizer(gg, (*GeomAxisPlacement).free)
-		return gg
+		return NewGeomAxisPlacement(p)
 	}
 	return nil
 }
@@ -289,9 +287,7 @@ func (g *GeomAxis1Placement) Copy() *GeomAxis1Placement {
 
 func NewGeomAxis1PlacementFromGeometry(g *GeomGeometry) *GeomAxis1Placement {
 	if p := C.geom_axis1_placement_from_geometry(g.geom); p != nil {
-		gg := &GeomAxis1Placement{geom: p}
-		runtime.SetFinalizer(gg, (*GeomAxis1Placement).free)
-		return gg
+		return NewGeomAxis1Placement(p)
 	}
 	return nil
 }
@@ -316,14 +312,12 @@ func (g *GeomAxis2Placement) free() {
 }
 
 func (g *GeomAxis2Placement) Copy() *GeomAxis2Placement {
-	return &GeomAxis2Placement{geom: C.geom_axis2_placement_copy(g.geom)}
+	return NewGeomAxis2Placement(C.geom_axis2_placement_copy(g.geom))
 }
 
 func NewGeomAxis2PlacementFromGeometry(g *GeomGeometry) *GeomAxis2Placement {
 	if p := C.geom_axis2_placement_from_geometry(g.geom); p != nil {
-		gg := &GeomAxis2Placement{geom: p}
-		runtime.SetFinalizer(gg, (*GeomAxis2Placement).free)
-		return gg
+		return NewGeomAxis2Placement(p)
 	}
 	return nil
 }
@@ -333,7 +327,7 @@ type GeomCurve struct {
 }
 
 func NewGeomCurve(geom *C.struct__geom_curve_t) *GeomCurve {
-	g := &GeomCurve{geom: geom}
+	g := NewGeomCurve(geom}
 	runtime.SetFinalizer(g, (*GeomCurve).free)
 	return g
 }
@@ -348,14 +342,12 @@ func (g *GeomCurve) free() {
 }
 
 func (g *GeomCurve) Copy() *GeomCurve {
-	return &GeomCurve{geom: C.geom_curve_copy(g.geom)}
+	return NewGeomCurve(geom: C.geom_curve_copy(g.geom))
 }
 
 func NewGeomCurveFromGeometry(g *GeomGeometry) *GeomCurve {
 	if p := C.geom_curve_from_geometry(g.geom); p != nil {
-		gg := &GeomCurve{geom: p}
-		runtime.SetFinalizer(gg, (*GeomCurve).free)
-		return gg
+		return NewGeomCurve(p)
 	}
 	return nil
 }
@@ -371,7 +363,7 @@ func NewGeomBoundedCurve(geom *C.struct__geom_bounded_curve_t) *GeomBoundedCurve
 }
 
 func (g *GeomBoundedCurve) Curve() *GeomCurve {
-	return &GeomCurve{geom: C.geom_bounded_curve_to_geom_curve(g.geom)}
+	return NewGeomCurve(C.geom_bounded_curve_to_geom_curve(g.geom))
 }
 
 func (g *GeomBoundedCurve) Geometry() *GeomGeometry {
@@ -384,14 +376,12 @@ func (g *GeomBoundedCurve) free() {
 }
 
 func (g *GeomBoundedCurve) Copy() *GeomBoundedCurve {
-	return &GeomBoundedCurve{geom: C.geom_bounded_curve_copy(g.geom)}
+	return NewGeomBoundedCurve(geom: C.geom_bounded_curve_copy(g.geom))
 }
 
 func NewGeomBoundedCurveFromGeometry(g *GeomGeometry) *GeomBoundedCurve {
 	if p := C.geom_bounded_curve_from_geometry(g.geom); p != nil {
-		gg := &GeomBoundedCurve{geom: p}
-		runtime.SetFinalizer(gg, (*GeomBoundedCurve).free)
-		return gg
+		return NewGeomBoundedCurve(p)
 	}
 	return nil
 }
@@ -407,7 +397,7 @@ func NewGeomBezierCurve(geom *C.struct__geom_bezier_curve_t) *GeomBezierCurve {
 }
 
 func (g *GeomBezierCurve) Curve() *GeomCurve {
-	return &GeomCurve{geom: C.geom_bezier_curve_to_geom_curve(g.geom)}
+	return NewGeomCurve(C.geom_bezier_curve_to_geom_curve(g.geom))
 }
 
 func (g *GeomBezierCurve) Geometry() *GeomGeometry {
@@ -420,14 +410,12 @@ func (g *GeomBezierCurve) free() {
 }
 
 func (g *GeomBezierCurve) Copy() *GeomBezierCurve {
-	return &GeomBezierCurve{geom: C.geom_bezier_curve_copy(g.geom)}
+	return NewGeomBezierCurve(geom: C.geom_bezier_curve_copy(g.geom))
 }
 
 func NewGeomBezierCurveFromGeometry(g *GeomGeometry) *GeomBezierCurve {
 	if p := C.geom_bezier_curve_from_geometry(g.geom); p != nil {
-		gg := &GeomBezierCurve{geom: p}
-		runtime.SetFinalizer(gg, (*GeomBezierCurve).free)
-		return gg
+ 		return NewGeomBezierCurve(p)
 	}
 	return nil
 }
@@ -443,7 +431,7 @@ func NewGeomBSplineCurve(geom *C.struct__geom_bspline_curve_t) *GeomBSplineCurve
 }
 
 func (g *GeomBSplineCurve) Curve() *GeomCurve {
-	return &GeomCurve{geom: C.geom_bspline_curve_to_geom_curve(g.geom)}
+	return NewGeomCurve(C.geom_bspline_curve_to_geom_curve(g.geom))
 }
 
 func (g *GeomBSplineCurve) Geometry() *GeomGeometry {
@@ -456,14 +444,12 @@ func (g *GeomBSplineCurve) free() {
 }
 
 func (g *GeomBSplineCurve) Copy() *GeomBSplineCurve {
-	return &GeomBSplineCurve{geom: C.geom_bspline_curve_copy(g.geom)}
+	return NewGeomBSplineCurve(geom: C.geom_bspline_curve_copy(g.geom))
 }
 
 func NewGeomBSplineCurveFromGeometry(g *GeomGeometry) *GeomBSplineCurve {
 	if p := C.geom_bspline_curve_from_geometry(g.geom); p != nil {
-		gg := &GeomBSplineCurve{geom: p}
-		runtime.SetFinalizer(gg, (*GeomBSplineCurve).free)
-		return gg
+ 		return NewGeomBSplineCurve(p)
 	}
 	return nil
 }
@@ -471,9 +457,7 @@ func NewGeomBSplineCurveFromGeometry(g *GeomGeometry) *GeomBSplineCurve {
 func NewGeomBSplineCurveFromPoints(pts []Point3) *GeomBSplineCurve {
 	ptr := &pts[0].val
 	if p := C.geom_bspline_curve_from_points(ptr, C.int(len(pts))); p != nil {
-		gg := &GeomBSplineCurve{geom: p}
-		runtime.SetFinalizer(gg, (*GeomBSplineCurve).free)
-		return gg
+		return NewGeomBSplineCurve(p)
 	}
 	return nil
 }
@@ -489,7 +473,7 @@ func NewGeomTrimmedCurve(geom *C.struct__geom_trimmed_curve_t) *GeomTrimmedCurve
 }
 
 func (g *GeomTrimmedCurve) Curve() *GeomCurve {
-	return &GeomCurve{geom: C.geom_trimmed_curve_to_geom_curve(g.geom)}
+	return NewGeomCurve(C.geom_trimmed_curve_to_geom_curve(g.geom))
 }
 
 func (g *GeomTrimmedCurve) Geometry() *GeomGeometry {
@@ -502,14 +486,12 @@ func (g *GeomTrimmedCurve) free() {
 }
 
 func (g *GeomTrimmedCurve) Copy() *GeomTrimmedCurve {
-	return &GeomTrimmedCurve{geom: C.geom_trimmed_curve_copy(g.geom)}
+	return NewGeomTrimmedCurve(C.geom_trimmed_curve_copy(g.geom))
 }
 
 func NewGeomTrimmedCurveFromGeometry(g *GeomGeometry) *GeomTrimmedCurve {
 	if p := C.geom_trimmed_curve_from_geometry(g.geom); p != nil {
-		gg := &GeomTrimmedCurve{geom: p}
-		runtime.SetFinalizer(gg, (*GeomTrimmedCurve).free)
-		return gg
+ 		return NewGeomTrimmedCurve(p)
 	}
 	return nil
 }
@@ -525,7 +507,7 @@ func NewGeomConic(geom *C.struct__geom_conic_t) *GeomConic {
 }
 
 func (g *GeomConic) Curve() *GeomCurve {
-	return &GeomCurve{geom: C.geom_conic_to_geom_curve(g.geom)}
+	return NewGeomCurve(C.geom_conic_to_geom_curve(g.geom))
 }
 
 func (g *GeomConic) Geometry() *GeomGeometry {
@@ -538,14 +520,12 @@ func (g *GeomConic) free() {
 }
 
 func (g *GeomConic) Copy() *GeomConic {
-	return &GeomConic{geom: C.geom_conic_copy(g.geom)}
+	return NewGeomConic(C.geom_conic_copy(g.geom))
 }
 
 func NewGeomConicFromGeometry(g *GeomGeometry) *GeomConic {
 	if p := C.geom_conic_from_geometry(g.geom); p != nil {
-		gg := &GeomConic{geom: p}
-		runtime.SetFinalizer(gg, (*GeomConic).free)
-		return gg
+ 		return NewGeomConic(p)
 	}
 	return nil
 }
@@ -561,7 +541,7 @@ func NewGeomCircle(geom *C.struct__geom_circle_t) *GeomCircle {
 }
 
 func (g *GeomCircle) Curve() *GeomCurve {
-	return &GeomCurve{geom: C.geom_circle_to_geom_curve(g.geom)}
+	return NewGeomCurve(C.geom_circle_to_geom_curve(g.geom))
 }
 
 func (g *GeomCircle) Geometry() *GeomGeometry {
@@ -574,14 +554,12 @@ func (g *GeomCircle) free() {
 }
 
 func (g *GeomCircle) Copy() *GeomCircle {
-	return &GeomCircle{geom: C.geom_circle_copy(g.geom)}
+	return  NewGeomCircle(C.geom_circle_copy(g.geom))
 }
 
 func NewGeomCircleFromGeometry(g *GeomGeometry) *GeomCircle {
 	if p := C.geom_circle_from_geometry(g.geom); p != nil {
-		gg := &GeomCircle{geom: p}
-		runtime.SetFinalizer(gg, (*GeomCircle).free)
-		return gg
+		return NewGeomCircle(p)
 	}
 	return nil
 }
@@ -597,7 +575,7 @@ func NewGeomEllipse(geom *C.struct__geom_ellipse_t) *GeomEllipse {
 }
 
 func (g *GeomEllipse) Curve() *GeomCurve {
-	return &GeomCurve{geom: C.geom_ellipse_to_geom_curve(g.geom)}
+	return NewGeomCurve(C.geom_ellipse_to_geom_curve(g.geom))
 }
 
 func (g *GeomEllipse) Geometry() *GeomGeometry {
@@ -610,14 +588,12 @@ func (g *GeomEllipse) free() {
 }
 
 func (g *GeomEllipse) Copy() *GeomEllipse {
-	return &GeomEllipse{geom: C.geom_ellipse_copy(g.geom)}
+	return  NewGeomEllipse(C.geom_ellipse_copy(g.geom))
 }
 
 func NewGeomEllipseFromGeometry(g *GeomGeometry) *GeomEllipse {
 	if p := C.geom_ellipse_from_geometry(g.geom); p != nil {
-		gg := &GeomEllipse{geom: p}
-		runtime.SetFinalizer(gg, (*GeomEllipse).free)
-		return gg
+ 		return NewGeomEllipse(p)
 	}
 	return nil
 }
@@ -633,7 +609,7 @@ func NewGeomHyperbola(geom *C.struct__geom_hyperbola_t) *GeomHyperbola {
 }
 
 func (g *GeomHyperbola) Curve() *GeomCurve {
-	return &GeomCurve{geom: C.geom_hyperbola_to_geom_curve(g.geom)}
+	return NewGeomCurve(C.geom_hyperbola_to_geom_curve(g.geom))
 }
 
 func (g *GeomHyperbola) Geometry() *GeomGeometry {
@@ -646,14 +622,12 @@ func (g *GeomHyperbola) free() {
 }
 
 func (g *GeomHyperbola) Copy() *GeomHyperbola {
-	return &GeomHyperbola{geom: C.geom_hyperbola_copy(g.geom)}
+	return NewGeomHyperbola(C.geom_hyperbola_copy(g.geom)
 }
 
 func NewGeomHyperbolaFromGeometry(g *GeomGeometry) *GeomHyperbola {
 	if p := C.geom_hyperbola_from_geometry(g.geom); p != nil {
-		gg := &GeomHyperbola{geom: p}
-		runtime.SetFinalizer(gg, (*GeomHyperbola).free)
-		return gg
+		return NewGeomHyperbola(p)
 	}
 	return nil
 }
@@ -669,7 +643,7 @@ func NewGeomParabola(geom *C.struct__geom_parabola_t) *GeomParabola {
 }
 
 func (g *GeomParabola) Curve() *GeomCurve {
-	return &GeomCurve{geom: C.geom_parabola_to_geom_curve(g.geom)}
+	return NewGeomCurve(C.geom_parabola_to_geom_curve(g.geom))
 }
 
 func (g *GeomParabola) Geometry() *GeomGeometry {
@@ -682,14 +656,12 @@ func (g *GeomParabola) free() {
 }
 
 func (g *GeomParabola) Copy() *GeomParabola {
-	return &GeomParabola{geom: C.geom_parabola_copy(g.geom)}
+	return NewGeomParabola(C.geom_parabola_copy(g.geom))
 }
 
 func NewGeomParabolaFromGeometry(g *GeomGeometry) *GeomParabola {
 	if p := C.geom_parabola_from_geometry(g.geom); p != nil {
-		gg := &GeomParabola{geom: p}
-		runtime.SetFinalizer(gg, (*GeomParabola).free)
-		return gg
+ 		return NewGeomParabola(p)
 	}
 	return nil
 }
@@ -705,7 +677,7 @@ func NewGeomLine(geom *C.struct__geom_line_t) *GeomLine {
 }
 
 func (g *GeomLine) Curve() *GeomCurve {
-	return &GeomCurve{geom: C.geom_line_to_geom_curve(g.geom)}
+	return NewGeomCurve(C.geom_line_to_geom_curve(g.geom))
 }
 
 func (g *GeomLine) Geometry() *GeomGeometry {
@@ -718,14 +690,12 @@ func (g *GeomLine) free() {
 }
 
 func (g *GeomLine) Copy() *GeomLine {
-	return &GeomLine{geom: C.geom_line_copy(g.geom)}
+	return NewGeomLine(C.geom_line_copy(g.geom))
 }
 
 func NewGeomLineFromGeometry(g *GeomGeometry) *GeomLine {
 	if p := C.geom_line_from_geometry(g.geom); p != nil {
-		gg := &GeomLine{geom: p}
-		runtime.SetFinalizer(gg, (*GeomLine).free)
-		return gg
+ 		return NewGeomLine(p)
 	}
 	return nil
 }
@@ -741,7 +711,7 @@ func NewGeomOffsetCurve(geom *C.struct__geom_offset_curve_t) *GeomOffsetCurve {
 }
 
 func (g *GeomOffsetCurve) Curve() *GeomCurve {
-	return &GeomCurve{geom: C.geom_offset_curve_to_geom_curve(g.geom)}
+	return NewGeomCurve(C.geom_offset_curve_to_geom_curve(g.geom))
 }
 
 func (g *GeomOffsetCurve) Geometry() *GeomGeometry {
@@ -754,14 +724,12 @@ func (g *GeomOffsetCurve) free() {
 }
 
 func (g *GeomOffsetCurve) Copy() *GeomOffsetCurve {
-	return &GeomOffsetCurve{geom: C.geom_offset_curve_copy(g.geom)}
+	return NewGeomOffsetCurve(C.geom_offset_curve_copy(g.geom))
 }
 
 func NewGeomOffsetCurveFromGeometry(g *GeomGeometry) *GeomOffsetCurve {
 	if p := C.geom_offset_curve_from_geometry(g.geom); p != nil {
-		gg := &GeomOffsetCurve{geom: p}
-		runtime.SetFinalizer(gg, (*GeomOffsetCurve).free)
-		return gg
+		return NewGeomOffsetCurve(p)
 	}
 	return nil
 }
@@ -791,9 +759,7 @@ func (g *GeomPoint) Copy() *GeomPoint {
 
 func NewGeomPointFromGeometry(g *GeomGeometry) *GeomPoint {
 	if p := C.geom_point_from_geometry(g.geom); p != nil {
-		gg := &GeomPoint{geom: p}
-		runtime.SetFinalizer(gg, (*GeomPoint).free)
-		return gg
+		return NewGeomPoint(p)
 	}
 	return nil
 }
@@ -818,14 +784,12 @@ func (g *GeomCartesianPoint) free() {
 }
 
 func (g *GeomCartesianPoint) Copy() *GeomCartesianPoint {
-	return &GeomCartesianPoint{geom: C.geom_cartesian_point_copy(g.geom)}
+	return NewGeomCartesianPoint(C.geom_cartesian_point_copy(g.geom))
 }
 
 func NewGeomCartesianPointFromGeometry(g *GeomGeometry) *GeomCartesianPoint {
 	if p := C.geom_cartesian_point_from_geometry(g.geom); p != nil {
-		gg := &GeomCartesianPoint{geom: p}
-		runtime.SetFinalizer(gg, (*GeomCartesianPoint).free)
-		return gg
+		return NewGeomCartesianPoint(p)
 	}
 	return nil
 }
@@ -855,9 +819,7 @@ func (g *GeomSurface) Copy() *GeomSurface {
 
 func NewGeomSurfaceFromGeometry(g *GeomGeometry) *GeomSurface {
 	if p := C.geom_surface_from_geometry(g.geom); p != nil {
-		gg := NewGeomSurface(p)
-		runtime.SetFinalizer(gg, (*GeomSurface).free)
-		return gg
+ 		return NewGeomSurface(p)
 	}
 	return nil
 }
@@ -886,14 +848,12 @@ func (g *GeomBoundedSurface) free() {
 }
 
 func (g *GeomBoundedSurface) Copy() *GeomBoundedSurface {
-	return &GeomBoundedSurface{geom: C.geom_bounded_surface_copy(g.geom)}
+	return  NewGeomBoundedSurface(C.geom_bounded_surface_copy(g.geom))
 }
 
 func NewGeomBoundedSurfaceFromGeometry(g *GeomGeometry) *GeomBoundedSurface {
 	if p := C.geom_bounded_surface_from_geometry(g.geom); p != nil {
-		gg := &GeomBoundedSurface{geom: p}
-		runtime.SetFinalizer(gg, (*GeomBoundedSurface).free)
-		return gg
+		return NewGeomBoundedSurface(p)
 	}
 	return nil
 }
@@ -922,14 +882,12 @@ func (g *GeomBezierSurface) free() {
 }
 
 func (g *GeomBezierSurface) Copy() *GeomBezierSurface {
-	return &GeomBezierSurface{geom: C.geom_bezier_surface_copy(g.geom)}
+	return NewGeomBezierSurface(C.geom_bezier_surface_copy(g.geom))
 }
 
 func NewGeomBezierSurfaceFromGeometry(g *GeomGeometry) *GeomBezierSurface {
 	if p := C.geom_bezier_surface_from_geometry(g.geom); p != nil {
-		gg := &GeomBezierSurface{geom: p}
-		runtime.SetFinalizer(gg, (*GeomBezierSurface).free)
-		return gg
+ 		return NewGeomBezierSurface(p)
 	}
 	return nil
 }
@@ -958,14 +916,12 @@ func (g *GeomBSplineSurface) free() {
 }
 
 func (g *GeomBSplineSurface) Copy() *GeomBSplineSurface {
-	return &GeomBSplineSurface{geom: C.geom_bspline_surface_copy(g.geom)}
+	return NewGeomBSplineSurface(C.geom_bspline_surface_copy(g.geom))
 }
 
 func NewGeomBSplineSurfaceFromGeometry(g *GeomGeometry) *GeomBSplineSurface {
 	if p := C.geom_bspline_surface_from_geometry(g.geom); p != nil {
-		gg := &GeomBSplineSurface{geom: p}
-		runtime.SetFinalizer(gg, (*GeomBSplineSurface).free)
-		return gg
+ 		return NewGeomBSplineSurface(p)
 	}
 	return nil
 }
@@ -994,14 +950,12 @@ func (g *GeomRectangularTrimmedSurface) free() {
 }
 
 func (g *GeomRectangularTrimmedSurface) Copy() *GeomRectangularTrimmedSurface {
-	return &GeomRectangularTrimmedSurface{geom: C.geom_rectangular_trimmed_surface_copy(g.geom)}
+	return NewGeomRectangularTrimmedSurface(C.geom_rectangular_trimmed_surface_copy(g.geom))
 }
 
 func NewGeomRectangularTrimmedSurfaceFromGeometry(g *GeomGeometry) *GeomRectangularTrimmedSurface {
 	if p := C.geom_rectangular_trimmed_surface_from_geometry(g.geom); p != nil {
-		gg := &GeomRectangularTrimmedSurface{geom: p}
-		runtime.SetFinalizer(gg, (*GeomRectangularTrimmedSurface).free)
-		return gg
+ 		return NewGeomRectangularTrimmedSurface(p)
 	}
 	return nil
 }
@@ -1030,14 +984,12 @@ func (g *GeomElementarySurface) free() {
 }
 
 func (g *GeomElementarySurface) Copy() *GeomElementarySurface {
-	return &GeomElementarySurface{geom: C.geom_elementary_surface_copy(g.geom)}
+	return NewGeomElementarySurface(C.geom_elementary_surface_copy(g.geom))
 }
 
 func NewGeomElementarySurfaceFromGeometry(g *GeomGeometry) *GeomElementarySurface {
 	if p := C.geom_elementary_surface_from_geometry(g.geom); p != nil {
-		gg := &GeomElementarySurface{geom: p}
-		runtime.SetFinalizer(gg, (*GeomElementarySurface).free)
-		return gg
+ 		return NewGeomElementarySurface(p)
 	}
 	return nil
 }
@@ -1066,14 +1018,12 @@ func (g *GeomCylindricalSurface) free() {
 }
 
 func (g *GeomCylindricalSurface) Copy() *GeomCylindricalSurface {
-	return &GeomCylindricalSurface{geom: C.geom_cylindrical_surface_copy(g.geom)}
+	return NewGeomCylindricalSurface(C.geom_cylindrical_surface_copy(g.geom))
 }
 
 func NewGeomCylindricalSurfaceFromGeometry(g *GeomGeometry) *GeomCylindricalSurface {
 	if p := C.geom_cylindrical_surface_from_geometry(g.geom); p != nil {
-		gg := &GeomCylindricalSurface{geom: p}
-		runtime.SetFinalizer(gg, (*GeomCylindricalSurface).free)
-		return gg
+ 		return NewGeomCylindricalSurface(p)
 	}
 	return nil
 }
@@ -1102,14 +1052,12 @@ func (g *GeomPlane) free() {
 }
 
 func (g *GeomPlane) Copy() *GeomPlane {
-	return &GeomPlane{geom: C.geom_plane_surface_copy(g.geom)}
+	return NewGeomPlane(C.geom_plane_surface_copy(g.geom))
 }
 
 func NewGeomPlaneFromGeometry(g *GeomGeometry) *GeomPlane {
 	if p := C.geom_plane_surface_from_geometry(g.geom); p != nil {
-		gg := &GeomPlane{geom: p}
-		runtime.SetFinalizer(gg, (*GeomPlane).free)
-		return gg
+		return NewGeomPlane(p)
 	}
 	return nil
 }
@@ -1138,14 +1086,12 @@ func (g *GeomConicalSurface) free() {
 }
 
 func (g *GeomConicalSurface) Copy() *GeomConicalSurface {
-	return &GeomConicalSurface{geom: C.geom_conical_surface_copy(g.geom)}
+	return NewGeomConicalSurface(C.geom_conical_surface_copy(g.geom))
 }
 
 func NewGeomConicalSurfaceFromGeometry(g *GeomGeometry) *GeomConicalSurface {
 	if p := C.geom_conical_surface_from_geometry(g.geom); p != nil {
-		gg := &GeomConicalSurface{geom: p}
-		runtime.SetFinalizer(gg, (*GeomConicalSurface).free)
-		return gg
+ 		return NewGeomConicalSurface(p)
 	}
 	return nil
 }
@@ -1174,14 +1120,12 @@ func (g *GeomSphericalSurface) free() {
 }
 
 func (g *GeomSphericalSurface) Copy() *GeomSphericalSurface {
-	return &GeomSphericalSurface{geom: C.geom_spherical_surface_copy(g.geom)}
+	return NewGeomSphericalSurface(C.geom_spherical_surface_copy(g.geom))
 }
 
 func NewGeomSphericalSurfaceFromGeometry(g *GeomGeometry) *GeomSphericalSurface {
 	if p := C.geom_spherical_surface_from_geometry(g.geom); p != nil {
-		gg := &GeomSphericalSurface{geom: p}
-		runtime.SetFinalizer(gg, (*GeomSphericalSurface).free)
-		return gg
+ 		return NewGeomSphericalSurface(p)
 	}
 	return nil
 }
@@ -1210,14 +1154,12 @@ func (g *GeomToroidalSurface) free() {
 }
 
 func (g *GeomToroidalSurface) Copy() *GeomToroidalSurface {
-	return &GeomToroidalSurface{geom: C.geom_toroidal_surface_copy(g.geom)}
+	return NewGeomToroidalSurface(C.geom_toroidal_surface_copy(g.geom))
 }
 
 func NewGeomToroidalSurfaceFromGeometry(g *GeomGeometry) *GeomToroidalSurface {
 	if p := C.geom_toroidal_surface_from_geometry(g.geom); p != nil {
-		gg := &GeomToroidalSurface{geom: p}
-		runtime.SetFinalizer(gg, (*GeomToroidalSurface).free)
-		return gg
+ 		return NewGeomToroidalSurface(p)
 	}
 	return nil
 }
@@ -1246,14 +1188,12 @@ func (g *GeomOffsetSurface) free() {
 }
 
 func (g *GeomOffsetSurface) Copy() *GeomOffsetSurface {
-	return &GeomOffsetSurface{geom: C.geom_offset_surface_copy(g.geom)}
+	return NewGeomOffsetSurface(C.geom_offset_surface_copy(g.geom))
 }
 
 func NewGeomOffsetSurfaceFromGeometry(g *GeomGeometry) *GeomOffsetSurface {
 	if p := C.geom_offset_surface_from_geometry(g.geom); p != nil {
-		gg := &GeomOffsetSurface{geom: p}
-		runtime.SetFinalizer(gg, (*GeomOffsetSurface).free)
-		return gg
+		return NewGeomOffsetSurface(p)
 	}
 	return nil
 }
@@ -1282,14 +1222,12 @@ func (g *GeomSweptSurface) free() {
 }
 
 func (g *GeomSweptSurface) Copy() *GeomSweptSurface {
-	return &GeomSweptSurface{geom: C.geom_swept_surface_copy(g.geom)}
+	return NewGeomSweptSurface(C.geom_swept_surface_copy(g.geom))
 }
 
 func NewGeomSweptSurfaceFromGeometry(g *GeomGeometry) *GeomSweptSurface {
 	if p := C.geom_swept_surface_from_geometry(g.geom); p != nil {
-		gg := &GeomSweptSurface{geom: p}
-		runtime.SetFinalizer(gg, (*GeomSweptSurface).free)
-		return gg
+ 		return NewGeomSweptSurface(p)
 	}
 	return nil
 }
@@ -1318,14 +1256,12 @@ func (g *GeomSurfaceOfLinearExtrusion) free() {
 }
 
 func (g *GeomSurfaceOfLinearExtrusion) Copy() *GeomSurfaceOfLinearExtrusion {
-	return &GeomSurfaceOfLinearExtrusion{geom: C.geom_surface_of_linear_extrusion_copy(g.geom)}
+	return  NewGeomSurfaceOfLinearExtrusion(C.geom_surface_of_linear_extrusion_copy(g.geom))
 }
 
 func NewGeomSurfaceOfLinearExtrusionFromGeometry(g *GeomGeometry) *GeomSurfaceOfLinearExtrusion {
 	if p := C.geom_surface_of_linear_extrusion_from_geometry(g.geom); p != nil {
-		gg := &GeomSurfaceOfLinearExtrusion{geom: p}
-		runtime.SetFinalizer(gg, (*GeomSurfaceOfLinearExtrusion).free)
-		return gg
+ 		return NewGeomSurfaceOfLinearExtrusion(p)
 	}
 	return nil
 }
@@ -1354,14 +1290,12 @@ func (g *GeomSurfaceOfRevolution) free() {
 }
 
 func (g *GeomSurfaceOfRevolution) Copy() *GeomSurfaceOfRevolution {
-	return &GeomSurfaceOfRevolution{geom: C.geom_surface_of_revolution_extrusion_copy(g.geom)}
+	return  NewGeomSurfaceOfRevolution(C.geom_surface_of_revolution_extrusion_copy(g.geom))
 }
 
 func NewGeomSurfaceOfRevolutionFromGeometry(g *GeomGeometry) *GeomSurfaceOfRevolution {
 	if p := C.geom_surface_of_revolution_extrusion_from_geometry(g.geom); p != nil {
-		gg := &GeomSurfaceOfRevolution{geom: p}
-		runtime.SetFinalizer(gg, (*GeomSurfaceOfRevolution).free)
-		return gg
+ 		return NewGeomSurfaceOfRevolution(p)
 	}
 	return nil
 }
@@ -1390,14 +1324,12 @@ func (g *GeomPlateSurface) free() {
 }
 
 func (g *GeomPlateSurface) Copy() *GeomPlateSurface {
-	return &GeomPlateSurface{geom: C.geom_plate_surface_copy(g.geom)}
+	return NewGeomPlateSurface(C.geom_plate_surface_copy(g.geom))
 }
 
 func NewGeomPlateSurfaceFromGeometry(g *GeomGeometry) *GeomPlateSurface {
 	if p := C.geom_plate_surface_from_geometry(g.geom); p != nil {
-		gg := &GeomPlateSurface{geom: p}
-		runtime.SetFinalizer(gg, (*GeomPlateSurface).free)
-		return gg
+ 		return NewGeomPlateSurface(p)
 	}
 	return nil
 }
@@ -1422,12 +1354,12 @@ func (g *GeomVector) free() {
 }
 
 func (g *GeomVector) Copy() *GeomVector {
-	return &GeomVector{geom: C.geom_vector_copy(g.geom)}
+	return NewGeomVector(C.geom_vector_copy(g.geom))
 }
 
 func NewGeomVectorFromGeometry(g *GeomGeometry) *GeomVector {
 	if p := C.geom_vector_from_geometry(g.geom); p != nil {
-		return &GeomVector{geom: p}
+		return  NewGeomVector(p)
 	}
 	return nil
 }
@@ -1452,14 +1384,12 @@ func (g *GeomDirection) free() {
 }
 
 func (g *GeomDirection) Copy() *GeomDirection {
-	return &GeomDirection{geom: C.geom_direction_copy(g.geom)}
+	return NewGeomDirection(C.geom_direction_copy(g.geom))
 }
 
 func NewGeomDirectionFromGeometry(g *GeomGeometry) *GeomDirection {
 	if p := C.geom_direction_from_geometry(g.geom); p != nil {
-		gg := &GeomDirection{geom: p}
-		runtime.SetFinalizer(gg, (*GeomDirection).free)
-		return gg
+ 		return NewGeomDirection(p)
 	}
 	return nil
 }
@@ -1484,14 +1414,12 @@ func (g *GeomVectorWithMagnitude) free() {
 }
 
 func (g *GeomVectorWithMagnitude) Copy() *GeomVectorWithMagnitude {
-	return &GeomVectorWithMagnitude{geom: C.geom_vector_with_magnitude_copy(g.geom)}
+	return NewGeomVectorWithMagnitude(C.geom_vector_with_magnitude_copy(g.geom))
 }
 
 func NewGeomVectorWithMagnitudeFromGeometry(g *GeomGeometry) *GeomVectorWithMagnitude {
 	if p := C.geom_vector_with_magnitude_from_geometry(g.geom); p != nil {
-		gg := &GeomVectorWithMagnitude{geom: p}
-		runtime.SetFinalizer(gg, (*GeomVectorWithMagnitude).free)
-		return gg
+ 		return NewGeomVectorWithMagnitude(p)
 	}
 	return nil
 }
@@ -1501,7 +1429,7 @@ type Geom2dGeometry struct {
 }
 
 func NewGeom2dGeometry(geom *C.struct__geom2d_geometry_t) *Geom2dGeometry {
-	g := &Geom2dGeometry{geom: geom}
+	g := NewGeom2dGeometry(geom}
 	runtime.SetFinalizer(g, (*Geom2dGeometry).free)
 	return g
 }
@@ -1516,7 +1444,7 @@ func (g *Geom2dGeometry) free() {
 }
 
 func (g *Geom2dGeometry) Copy() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_geometry_copy(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_geometry_copy(g.geom))
 }
 
 func (g *Geom2dGeometry) MirrorWithPoint(p Point2) {
@@ -1548,31 +1476,31 @@ func (g *Geom2dGeometry) Transform(t Trsf2d) {
 }
 
 func (g *Geom2dGeometry) MirroredWithPoint(p Point2) *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_mirror_with_point(g.geom, p.val)}
+	return NewGeom2dGeometry(C.geom2d_mirror_with_point(g.geom, p.val)}
 }
 
 func (g *Geom2dGeometry) MirroredWithAxis2d(p Axis2d) *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_mirror_with_axis2(g.geom, p.val)}
+	return NewGeom2dGeometry(C.geom2d_mirror_with_axis2(g.geom, p.val)}
 }
 
 func (g *Geom2dGeometry) Rotated(p Point2, ang float64) *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_rotate(g.geom, p.val, C.double(ang))}
+	return NewGeom2dGeometry(C.geom2d_rotate(g.geom, p.val, C.double(ang))}
 }
 
 func (g *Geom2dGeometry) Scaled(p Point2, s float64) *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_scale(g.geom, p.val, C.double(s))}
+	return NewGeom2dGeometry(C.geom2d_scale(g.geom, p.val, C.double(s))}
 }
 
 func (g *Geom2dGeometry) TranslatedWithVector(p Vector2) *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_translate_with_vector(g.geom, p.val)}
+	return NewGeom2dGeometry(C.geom2d_translate_with_vector(g.geom, p.val)}
 }
 
 func (g *Geom2dGeometry) TranslatedWithPoint(p1, p2 Point2) *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_translate_with_point(g.geom, p1.val, p2.val)}
+	return NewGeom2dGeometry(C.geom2d_translate_with_point(g.geom, p1.val, p2.val)}
 }
 
 func (g *Geom2dGeometry) Transformed(t Trsf2d) *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_transform(g.geom, t.val)}
+	return NewGeom2dGeometry(C.geom2d_transform(g.geom, t.val)}
 }
 
 func (g *Geom2dGeometry) AutoCast() interface{} {
@@ -1623,21 +1551,33 @@ type Geom2dTransformation struct {
 	geom *C.struct__geom2d_transformation_t
 }
 
+func NewGeom2dTransformation(geom *C.struct__geom2d_transformation_t)*Geom2dTransformation{
+	g := Geom2dTransformation(geom}
+		runtime.SetFinalizer(g, (*Geom2dTransformation).free)
+		return g	
+}
+
 func (g *Geom2dTransformation) free() {
 	C.geom2d_transformation_free(g.geom)
 	g.geom = nil
 }
 
 func (g *Geom2dTransformation) Copy() *Geom2dTransformation {
-	return &Geom2dTransformation{geom: C.geom2d_transformation_copy(g.geom)}
+	return  NewGeom2dTransformation(C.geom2d_transformation_copy(g.geom))
 }
 
 type Geom2dAxisPlacement struct {
 	geom *C.struct__geom2d_axis_placement_t
 }
 
+func NewGeom2dAxisPlacement(geom *C.struct__geom2d_axis_placement_t)*Geom2dAxisPlacement{
+	g := Geom2dAxisPlacement(geom}
+		runtime.SetFinalizer(g, (*Geom2dAxisPlacement).free)
+		return g	
+}
+
 func (g *Geom2dAxisPlacement) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_axis_placement_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_axis_placement_to_geometry(g.geom))
 }
 
 func (g *Geom2dAxisPlacement) free() {
@@ -1646,14 +1586,12 @@ func (g *Geom2dAxisPlacement) free() {
 }
 
 func (g *Geom2dAxisPlacement) Copy() *Geom2dAxisPlacement {
-	return &Geom2dAxisPlacement{geom: C.geom2d_axis_placement_copy(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_axis_placement_copy(g.geom))
 }
 
 func NewGeom2dAxisPlacementFromGeometry(g *Geom2dGeometry) *Geom2dAxisPlacement {
 	if p := C.geom2d_axis_placement_from_geometry(g.geom); p != nil {
-		gg := &Geom2dAxisPlacement{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dAxisPlacement).free)
-		return gg
+ 		return NewGeom2dAxisPlacement(p)
 	}
 	return nil
 }
@@ -1669,7 +1607,7 @@ func NewGeom2dCurve(geom *C.struct__geom2d_curve_t) *Geom2dCurve {
 }
 
 func (g *Geom2dCurve) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_curve_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_curve_to_geometry(g.geom))
 }
 
 func (g *Geom2dCurve) free() {
@@ -1678,14 +1616,12 @@ func (g *Geom2dCurve) free() {
 }
 
 func (g *Geom2dCurve) Copy() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_curve_copy(g.geom)}
+	return NewGeom2dCurve(C.geom2d_curve_copy(g.geom))
 }
 
 func NewGeom2dCurveFromGeometry(g *Geom2dGeometry) *Geom2dCurve {
 	if p := C.geom2d_curve_from_geometry(g.geom); p != nil {
-		gg := &Geom2dCurve{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dCurve).free)
-		return gg
+ 		return NewGeom2dCurve(p)
 	}
 	return nil
 }
@@ -1701,11 +1637,11 @@ func NewGeom2dBisectorCurve(geom *C.struct__geom2d_bisector_curve_t) *Geom2dBise
 }
 
 func (g *Geom2dBisectorCurve) Curve() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_bisector_curve_to_geom2d_curve(g.geom)}
+	return NewGeom2dCurve(C.geom2d_bisector_curve_to_geom2d_curve(g.geom))
 }
 
 func (g *Geom2dBisectorCurve) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_bisector_curve_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_bisector_curve_to_geometry(g.geom))
 }
 
 func (g *Geom2dBisectorCurve) free() {
@@ -1714,14 +1650,12 @@ func (g *Geom2dBisectorCurve) free() {
 }
 
 func (g *Geom2dBisectorCurve) Copy() *Geom2dBisectorCurve {
-	return &Geom2dBisectorCurve{geom: C.geom2d_bisector_curve_copy(g.geom)}
+	return NewGeom2dBisectorCurve(C.geom2d_bisector_curve_copy(g.geom))
 }
 
 func NewGeom2dBisectorCurveFromGeometry(g *Geom2dGeometry) *Geom2dBisectorCurve {
 	if p := C.geom2d_bisector_curve_from_geometry(g.geom); p != nil {
-		gg := &Geom2dBisectorCurve{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dBisectorCurve).free)
-		return gg
+ 		return  NewGeom2dBisectorCurve(p)
 	}
 	return nil
 }
@@ -1737,11 +1671,11 @@ func NewGeom2dBisectorBisecAna(geom *C.struct__geom2d_bezier_bisec_ana_curve_t) 
 }
 
 func (g *Geom2dBisectorBisecAna) Curve() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_bezier_bisec_ana_curve_to_geom2d_curve(g.geom)}
+	return NewGeom2dCurve(C.geom2d_bezier_bisec_ana_curve_to_geom2d_curve(g.geom))
 }
 
 func (g *Geom2dBisectorBisecAna) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_bezier_bisec_ana_curve_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_bezier_bisec_ana_curve_to_geometry(g.geom))
 }
 
 func (g *Geom2dBisectorBisecAna) free() {
@@ -1750,14 +1684,12 @@ func (g *Geom2dBisectorBisecAna) free() {
 }
 
 func (g *Geom2dBisectorBisecAna) Copy() *Geom2dBisectorBisecAna {
-	return &Geom2dBisectorBisecAna{geom: C.geom2d_bezier_bisec_ana_curve_copy(g.geom)}
+	return NewGeom2dBisectorBisecAna(C.geom2d_bezier_bisec_ana_curve_copy(g.geom))
 }
 
 func NewGeom2dBisectorBisecAnaFromGeometry(g *Geom2dGeometry) *Geom2dBisectorBisecAna {
 	if p := C.geom2d_bezier_bisec_ana_curve_from_geometry(g.geom); p != nil {
-		gg := &Geom2dBisectorBisecAna{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dBisectorBisecAna).free)
-		return gg
+ 		return NewGeom2dBisectorBisecAna(p)
 	}
 	return nil
 }
@@ -1773,11 +1705,11 @@ func NewGeom2dBisectorBisecCC(geom *C.struct__geom2d_bezier_bisec_cc_curve_t) *G
 }
 
 func (g *Geom2dBisectorBisecCC) Curve() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_bezier_bisec_cc_curve_to_geom2d_curve(g.geom)}
+	return NewGeom2dCurve(C.geom2d_bezier_bisec_cc_curve_to_geom2d_curve(g.geom))
 }
 
 func (g *Geom2dBisectorBisecCC) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_bezier_bisec_cc_curve_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_bezier_bisec_cc_curve_to_geometry(g.geom))
 }
 
 func (g *Geom2dBisectorBisecCC) free() {
@@ -1786,12 +1718,12 @@ func (g *Geom2dBisectorBisecCC) free() {
 }
 
 func (g *Geom2dBisectorBisecCC) Copy() *Geom2dBisectorBisecCC {
-	return &Geom2dBisectorBisecCC{geom: C.geom2d_bezier_bisec_cc_curve_copy(g.geom)}
+	return NewGeom2dBisectorBisecCC(C.geom2d_bezier_bisec_cc_curve_copy(g.geom))
 }
 
 func NewGeom2dBisectorBisecCCFromGeometry(g *Geom2dGeometry) *Geom2dBisectorBisecCC {
 	if p := C.geom2d_bezier_bisec_cc_curve_from_geometry(g.geom); p != nil {
-		return &Geom2dBisectorBisecCC{geom: p}
+		return NewGeom2dBisectorBisecCC(p)
 	}
 	return nil
 }
@@ -1807,11 +1739,11 @@ func NewGeom2dBisectorBisecPC(geom *C.struct__geom2d_bezier_bisec_pc_curve_t) *G
 }
 
 func (g *Geom2dBisectorBisecPC) Curve() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_bezier_bisec_pc_curve_to_geom2d_curve(g.geom)}
+	return NewGeom2dCurve(C.geom2d_bezier_bisec_pc_curve_to_geom2d_curve(g.geom))
 }
 
 func (g *Geom2dBisectorBisecPC) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_bezier_bisec_pc_curve_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_bezier_bisec_pc_curve_to_geometry(g.geom))
 }
 
 func (g *Geom2dBisectorBisecPC) free() {
@@ -1820,14 +1752,12 @@ func (g *Geom2dBisectorBisecPC) free() {
 }
 
 func (g *Geom2dBisectorBisecPC) Copy() *Geom2dBisectorBisecPC {
-	return &Geom2dBisectorBisecPC{geom: C.geom2d_bezier_bisec_pc_curve_copy(g.geom)}
+	return NewGeom2dBisectorBisecPC(C.geom2d_bezier_bisec_pc_curve_copy(g.geom))
 }
 
 func NewGeom2dBisectorBisecPCFromGeometry(g *Geom2dGeometry) *Geom2dBisectorBisecPC {
 	if p := C.geom2d_bezier_bisec_pc_curve_from_geometry(g.geom); p != nil {
-		gg := &Geom2dBisectorBisecPC{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dBisectorBisecPC).free)
-		return gg
+		return NewGeom2dBisectorBisecPC(p)
 	}
 	return nil
 }
@@ -1843,11 +1773,11 @@ func NewGeom2dBoundedCurve(geom *C.struct__geom2d_bounded_curve_t) *Geom2dBounde
 }
 
 func (g *Geom2dBoundedCurve) Curve() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_bounded_curve_to_geom2d_curve(g.geom)}
+	return NewGeom2dCurve(C.geom2d_bounded_curve_to_geom2d_curve(g.geom))
 }
 
 func (g *Geom2dBoundedCurve) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_bounded_curve_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_bounded_curve_to_geometry(g.geom))
 }
 
 func (g *Geom2dBoundedCurve) free() {
@@ -1856,14 +1786,12 @@ func (g *Geom2dBoundedCurve) free() {
 }
 
 func (g *Geom2dBoundedCurve) Copy() *Geom2dBoundedCurve {
-	return &Geom2dBoundedCurve{geom: C.geom2d_bounded_curve_copy(g.geom)}
+	return NewGeom2dBoundedCurve(C.geom2d_bounded_curve_copy(g.geom))
 }
 
 func NewGeom2dBoundedCurveFromGeometry(g *Geom2dGeometry) *Geom2dBoundedCurve {
 	if p := C.geom2d_bounded_curve_from_geometry(g.geom); p != nil {
-		gg := &Geom2dBoundedCurve{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dBoundedCurve).free)
-		return gg
+ 		return NewGeom2dBoundedCurve(p)
 	}
 	return nil
 }
@@ -1879,11 +1807,11 @@ func NewGeom2dBezierCurve(geom *C.struct__geom2d_bezier_curve_t) *Geom2dBezierCu
 }
 
 func (g *Geom2dBezierCurve) Curve() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_bezier_curve_to_geom2d_curve(g.geom)}
+	return NewGeom2dCurve(C.geom2d_bezier_curve_to_geom2d_curve(g.geom))
 }
 
 func (g *Geom2dBezierCurve) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_bezier_curve_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_bezier_curve_to_geometry(g.geom))
 }
 
 func (g *Geom2dBezierCurve) free() {
@@ -1892,14 +1820,12 @@ func (g *Geom2dBezierCurve) free() {
 }
 
 func (g *Geom2dBezierCurve) Copy() *Geom2dBezierCurve {
-	return &Geom2dBezierCurve{geom: C.geom2d_bezier_curve_copy(g.geom)}
+	return NewGeom2dBezierCurve(C.geom2d_bezier_curve_copy(g.geom))
 }
 
 func NewGeom2dBezierCurveFromGeometry(g *Geom2dGeometry) *Geom2dBezierCurve {
 	if p := C.geom2d_bezier_curve_from_geometry(g.geom); p != nil {
-		gg := &Geom2dBezierCurve{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dBezierCurve).free)
-		return gg
+		return NewGeom2dBezierCurve(p)
 	}
 	return nil
 }
@@ -1915,11 +1841,11 @@ func NewGeom2dBSplineCurve(geom *C.struct__geom2d_bspline_curve_t) *Geom2dBSplin
 }
 
 func (g *Geom2dBSplineCurve) Curve() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_bspline_curve_to_geom2d_curve(g.geom)}
+	return NewGeom2dCurve(C.geom2d_bspline_curve_to_geom2d_curve(g.geom))
 }
 
 func (g *Geom2dBSplineCurve) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_bspline_curve_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_bspline_curve_to_geometry(g.geom))
 }
 
 func (g *Geom2dBSplineCurve) free() {
@@ -1928,14 +1854,12 @@ func (g *Geom2dBSplineCurve) free() {
 }
 
 func (g *Geom2dBSplineCurve) Copy() *Geom2dBSplineCurve {
-	return &Geom2dBSplineCurve{geom: C.geom2d_bspline_curve_copy(g.geom)}
+	return NewGeom2dBSplineCurve(C.geom2d_bspline_curve_copy(g.geom))
 }
 
 func NewGeom2dBSplineCurveFromGeometry(g *Geom2dGeometry) *Geom2dBSplineCurve {
 	if p := C.geom2d_bspline_curve_from_geometry(g.geom); p != nil {
-		gg := &Geom2dBSplineCurve{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dBSplineCurve).free)
-		return gg
+ 		return NewGeom2dBSplineCurve(p)
 	}
 	return nil
 }
@@ -1951,11 +1875,11 @@ func NewGeom2dTrimmedCurve(geom *C.struct__geom2d_trimmed_curve_t) *Geom2dTrimme
 }
 
 func (g *Geom2dTrimmedCurve) Curve() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_trimmed_curve_to_geom2d_curve(g.geom)}
+	return NewGeom2dCurve(C.geom2d_trimmed_curve_to_geom2d_curve(g.geom))
 }
 
 func (g *Geom2dTrimmedCurve) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_trimmed_curve_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_trimmed_curve_to_geometry(g.geom))
 }
 
 func (g *Geom2dTrimmedCurve) free() {
@@ -1964,14 +1888,12 @@ func (g *Geom2dTrimmedCurve) free() {
 }
 
 func (g *Geom2dTrimmedCurve) Copy() *Geom2dTrimmedCurve {
-	return &Geom2dTrimmedCurve{geom: C.geom2d_trimmed_curve_copy(g.geom)}
+	return NewGeom2dTrimmedCurve(C.geom2d_trimmed_curve_copy(g.geom))
 }
 
 func NewGeom2dTrimmedCurveFromGeometry(g *Geom2dGeometry) *Geom2dTrimmedCurve {
 	if p := C.geom2d_trimmed_curve_from_geometry(g.geom); p != nil {
-		gg := &Geom2dTrimmedCurve{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dTrimmedCurve).free)
-		return gg
+ 		return NewGeom2dTrimmedCurve(p)
 	}
 	return nil
 }
@@ -1987,11 +1909,11 @@ func NewGeom2dConic(geom *C.struct__geom2d_conic_t) *Geom2dConic {
 }
 
 func (g *Geom2dConic) Curve() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_conic_to_geom2d_curve(g.geom)}
+	return NewGeom2dCurve(C.geom2d_conic_to_geom2d_curve(g.geom))
 }
 
 func (g *Geom2dConic) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_conic_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_conic_to_geometry(g.geom))
 }
 
 func (g *Geom2dConic) free() {
@@ -2000,14 +1922,12 @@ func (g *Geom2dConic) free() {
 }
 
 func (g *Geom2dConic) Copy() *Geom2dConic {
-	return &Geom2dConic{geom: C.geom2d_conic_copy(g.geom)}
+	return NewGeom2dConicC.geom2d_conic_copy(g.geom))
 }
 
 func NewGeom2dConicFromGeometry(g *Geom2dGeometry) *Geom2dConic {
 	if p := C.geom2d_conic_from_geometry(g.geom); p != nil {
-		gg := &Geom2dConic{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dConic).free)
-		return gg
+ 		return NewGeom2dConic(p)
 	}
 	return nil
 }
@@ -2023,11 +1943,11 @@ func NewGeom2dCircle(geom *C.struct__geom2d_circle_t) *Geom2dCircle {
 }
 
 func (g *Geom2dCircle) Curve() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_circle_to_geom2d_curve(g.geom)}
+	return NewGeom2dCurve(C.geom2d_circle_to_geom2d_curve(g.geom))
 }
 
 func (g *Geom2dCircle) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_circle_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_circle_to_geometry(g.geom))
 }
 
 func (g *Geom2dCircle) free() {
@@ -2036,14 +1956,12 @@ func (g *Geom2dCircle) free() {
 }
 
 func (g *Geom2dCircle) Copy() *Geom2dCircle {
-	return &Geom2dCircle{geom: C.geom2d_circle_copy(g.geom)}
+	return NewGeom2dCircleC.geom2d_circle_copy(g.geom))
 }
 
 func NewGeom2dCircleFromGeometry(g *Geom2dGeometry) *Geom2dCircle {
 	if p := C.geom2d_circle_from_geometry(g.geom); p != nil {
-		gg := &Geom2dCircle{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dCircle).free)
-		return gg
+ 		return NewGeom2dCircle(p)
 	}
 	return nil
 }
@@ -2059,11 +1977,11 @@ func NewGeom2dEllipse(geom *C.struct__geom2d_ellipse_t) *Geom2dEllipse {
 }
 
 func (g *Geom2dEllipse) Curve() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_ellipse_to_geom2d_curve(g.geom)}
+	return NewGeom2dCurve(C.geom2d_ellipse_to_geom2d_curve(g.geom))
 }
 
 func (g *Geom2dEllipse) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_ellipse_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_ellipse_to_geometry(g.geom))
 }
 
 func (g *Geom2dEllipse) free() {
@@ -2072,14 +1990,12 @@ func (g *Geom2dEllipse) free() {
 }
 
 func (g *Geom2dEllipse) Copy() *Geom2dEllipse {
-	return &Geom2dEllipse{geom: C.geom2d_ellipse_copy(g.geom)}
+	return NewGeom2dEllipseC.geom2d_ellipse_copy(g.geom))
 }
 
 func NewGeom2dEllipseFromGeometry(g *Geom2dGeometry) *Geom2dEllipse {
 	if p := C.geom2d_ellipse_from_geometry(g.geom); p != nil {
-		gg := &Geom2dEllipse{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dEllipse).free)
-		return gg
+ 		return NewGeom2dEllipse(p)
 	}
 	return nil
 }
@@ -2095,11 +2011,11 @@ func NewGeom2dHyperbola(geom *C.struct__geom2d_hyperbola_t) *Geom2dHyperbola {
 }
 
 func (g *Geom2dHyperbola) Curve() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_hyperbola_to_geom2d_curve(g.geom)}
+	return NewGeom2dCurve(C.geom2d_hyperbola_to_geom2d_curve(g.geom))
 }
 
 func (g *Geom2dHyperbola) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_hyperbola_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_hyperbola_to_geometry(g.geom))
 }
 
 func (g *Geom2dHyperbola) free() {
@@ -2108,14 +2024,12 @@ func (g *Geom2dHyperbola) free() {
 }
 
 func (g *Geom2dHyperbola) Copy() *Geom2dHyperbola {
-	return &Geom2dHyperbola{geom: C.geom2d_hyperbola_copy(g.geom)}
+	return NewGeom2dHyperbola(C.geom2d_hyperbola_copy(g.geom))
 }
 
 func NewGeom2dHyperbolaFromGeometry(g *Geom2dGeometry) *Geom2dHyperbola {
 	if p := C.geom2d_hyperbola_from_geometry(g.geom); p != nil {
-		gg := &Geom2dHyperbola{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dHyperbola).free)
-		return gg
+ 		return NewGeom2dHyperbola(p)
 	}
 	return nil
 }
@@ -2131,11 +2045,11 @@ func NewGeom2dParabola(geom *C.struct__geom2d_parabola_t) *Geom2dParabola {
 }
 
 func (g *Geom2dParabola) Curve() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_parabola_to_geom2d_curve(g.geom)}
+	return NewGeom2dCurve(C.geom2d_parabola_to_geom2d_curve(g.geom))
 }
 
 func (g *Geom2dParabola) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_parabola_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_parabola_to_geometry(g.geom))
 }
 
 func (g *Geom2dParabola) free() {
@@ -2144,14 +2058,12 @@ func (g *Geom2dParabola) free() {
 }
 
 func (g *Geom2dParabola) Copy() *Geom2dParabola {
-	return &Geom2dParabola{geom: C.geom2d_parabola_copy(g.geom)}
+	return NewGeom2dParabola(C.geom2d_parabola_copy(g.geom))
 }
 
 func NewGeom2dParabolaFromGeometry(g *Geom2dGeometry) *Geom2dParabola {
 	if p := C.geom2d_parabola_from_geometry(g.geom); p != nil {
-		gg := &Geom2dParabola{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dParabola).free)
-		return gg
+ 		return NewGeom2dParabola(p)
 	}
 	return nil
 }
@@ -2167,11 +2079,11 @@ func NewGeom2dLine(geom *C.struct__geom2d_line_t) *Geom2dLine {
 }
 
 func (g *Geom2dLine) Curve() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_line_to_geom2d_curve(g.geom)}
+	return NewGeom2dCurve(C.geom2d_line_to_geom2d_curve(g.geom))
 }
 
 func (g *Geom2dLine) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_line_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_line_to_geometry(g.geom))
 }
 
 func (g *Geom2dLine) free() {
@@ -2180,14 +2092,12 @@ func (g *Geom2dLine) free() {
 }
 
 func (g *Geom2dLine) Copy() *Geom2dLine {
-	return &Geom2dLine{geom: C.geom2d_line_copy(g.geom)}
+	return NewGeom2dLine(C.geom2d_line_copy(g.geom))
 }
 
 func NewGeom2dLineFromGeometry(g *Geom2dGeometry) *Geom2dLine {
 	if p := C.geom2d_line_from_geometry(g.geom); p != nil {
-		gg := &Geom2dLine{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dLine).free)
-		return gg
+ 		return NewGeom2dLine(p)
 	}
 	return nil
 }
@@ -2203,11 +2113,11 @@ func NewGeom2dOffsetCurve(geom *C.struct__geom2d_offset_curve_t) *Geom2dOffsetCu
 }
 
 func (g *Geom2dOffsetCurve) Curve() *Geom2dCurve {
-	return &Geom2dCurve{geom: C.geom2d_offset_curve_to_geom2d_curve(g.geom)}
+	return NewGeom2dCurve(C.geom2d_offset_curve_to_geom2d_curve(g.geom))
 }
 
 func (g *Geom2dOffsetCurve) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_offset_curve_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_offset_curve_to_geometry(g.geom))
 }
 
 func (g *Geom2dOffsetCurve) free() {
@@ -2216,14 +2126,12 @@ func (g *Geom2dOffsetCurve) free() {
 }
 
 func (g *Geom2dOffsetCurve) Copy() *Geom2dOffsetCurve {
-	return &Geom2dOffsetCurve{geom: C.geom2d_offset_curve_copy(g.geom)}
+	return NewGeom2dOffsetCurve(C.geom2d_offset_curve_copy(g.geom))
 }
 
 func NewGeom2dOffsetCurveFromGeometry(g *Geom2dGeometry) *Geom2dOffsetCurve {
 	if p := C.geom2d_offset_curve_from_geometry(g.geom); p != nil {
-		gg := &Geom2dOffsetCurve{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dOffsetCurve).free)
-		return gg
+ 		return NewGeom2dOffsetCurve(p)
 	}
 	return nil
 }
@@ -2239,7 +2147,7 @@ func NewGeom2dPoint(geom *C.struct__geom2d_point_t) *Geom2dPoint {
 }
 
 func (g *Geom2dPoint) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_point_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_point_to_geometry(g.geom))
 }
 
 func (g *Geom2dPoint) free() {
@@ -2248,14 +2156,12 @@ func (g *Geom2dPoint) free() {
 }
 
 func (g *Geom2dPoint) Copy() *Geom2dPoint {
-	return &Geom2dPoint{geom: C.geom2d_point_copy(g.geom)}
+	return NewGeom2dPoint(C.geom2d_point_copy(g.geom))
 }
 
 func NewGeom2dPointFromGeometry(g *Geom2dGeometry) *Geom2dPoint {
 	if p := C.geom2d_point_from_geometry(g.geom); p != nil {
-		gg := &Geom2dPoint{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dPoint).free)
-		return gg
+ 		return NewGeom2dPoint(p)
 	}
 	return nil
 }
@@ -2271,7 +2177,7 @@ func NewGeom2dCartesianPoint(geom *C.struct__geom2d_cartesian_point_t) *Geom2dCa
 }
 
 func (g *Geom2dCartesianPoint) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_cartesian_point_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_cartesian_point_to_geometry(g.geom))
 }
 
 func (g *Geom2dCartesianPoint) free() {
@@ -2280,14 +2186,12 @@ func (g *Geom2dCartesianPoint) free() {
 }
 
 func (g *Geom2dCartesianPoint) Copy() *Geom2dCartesianPoint {
-	return &Geom2dCartesianPoint{geom: C.geom2d_cartesian_point_copy(g.geom)}
+	return NewGeom2dCartesianPoint(C.geom2d_cartesian_point_copy(g.geom))
 }
 
 func NewGeom2dCartesianPointFromGeometry(g *Geom2dGeometry) *Geom2dCartesianPoint {
 	if p := C.geom2d_cartesian_point_from_geometry(g.geom); p != nil {
-		gg := &Geom2dCartesianPoint{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dCartesianPoint).free)
-		return gg
+ 		return NewGeom2dCartesianPoint(p)
 	}
 	return nil
 }
@@ -2303,7 +2207,7 @@ func NewGeom2dVector(geom *C.struct__geom2d_vector_t) *Geom2dVector {
 }
 
 func (g *Geom2dVector) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_vector_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_vector_to_geometry(g.geom))
 }
 
 func (g *Geom2dVector) free() {
@@ -2312,14 +2216,12 @@ func (g *Geom2dVector) free() {
 }
 
 func (g *Geom2dVector) Copy() *Geom2dVector {
-	return &Geom2dVector{geom: C.geom2d_vector_copy(g.geom)}
+	return NewGeom2dVector(C.geom2d_vector_copy(g.geom))
 }
 
 func NewGeom2dVectorFromGeometry(g *Geom2dGeometry) *Geom2dVector {
 	if p := C.geom2d_vector_from_geometry(g.geom); p != nil {
-		gg := &Geom2dVector{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dVector).free)
-		return gg
+ 		return NewGeom2dVector(p)
 	}
 	return nil
 }
@@ -2335,7 +2237,7 @@ func NewGeom2dDirection(geom *C.struct__geom2d_direction_t) *Geom2dDirection {
 }
 
 func (g *Geom2dDirection) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_direction_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_direction_to_geometry(g.geom))
 }
 
 func (g *Geom2dDirection) free() {
@@ -2344,14 +2246,12 @@ func (g *Geom2dDirection) free() {
 }
 
 func (g *Geom2dDirection) Copy() *Geom2dDirection {
-	return &Geom2dDirection{geom: C.geom2d_direction_copy(g.geom)}
+	return NewGeom2dDirection(C.geom2d_direction_copy(g.geom))
 }
 
 func NewGeom2dDirectionFromGeometry(g *Geom2dGeometry) *Geom2dDirection {
 	if p := C.geom2d_direction_from_geometry(g.geom); p != nil {
-		gg := &Geom2dDirection{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dDirection).free)
-		return gg
+ 		return NewGeom2dDirection(p)
 	}
 	return nil
 }
@@ -2367,7 +2267,7 @@ func NewGeom2dVectorWithMagnitude(geom *C.struct__geom2d_vector_with_magnitude_t
 }
 
 func (g *Geom2dVectorWithMagnitude) Geometry() *Geom2dGeometry {
-	return &Geom2dGeometry{geom: C.geom2d_vector_with_magnitude_to_geometry(g.geom)}
+	return NewGeom2dGeometry(C.geom2d_vector_with_magnitude_to_geometry(g.geom))
 }
 
 func (g *Geom2dVectorWithMagnitude) free() {
@@ -2376,14 +2276,12 @@ func (g *Geom2dVectorWithMagnitude) free() {
 }
 
 func (g *Geom2dVectorWithMagnitude) Copy() *Geom2dVectorWithMagnitude {
-	return &Geom2dVectorWithMagnitude{geom: C.geom2d_vector_with_magnitude_copy(g.geom)}
+	return NewGeom2dVectorWithMagnitude(C.geom2d_vector_with_magnitude_copy(g.geom))
 }
 
 func NewGeom2dVectorWithMagnitudeFromGeometry(g *Geom2dGeometry) *Geom2dVectorWithMagnitude {
 	if p := C.geom2d_vector_with_magnitude_from_geometry(g.geom); p != nil {
-		gg := &Geom2dVectorWithMagnitude{geom: p}
-		runtime.SetFinalizer(gg, (*Geom2dVectorWithMagnitude).free)
-		return gg
+ 		return NewGeom2dVectorWithMagnitude(p)
 	}
 	return nil
 }
