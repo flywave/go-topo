@@ -110,14 +110,16 @@ type Location struct {
 }
 
 func NewLocation(t Trsf) *Location {
-	return &Location{val: C.topo_location_new(t.val)}
+	p := &Location{val: C.topo_location_new(t.val)}
+	runtime.SetFinalizer(p, (*Location).free)
+	return p
 }
 
 func (l *Location) Trsf() Trsf {
 	return Trsf{val: C.topo_location_get_trsf(l.val)}
 }
 
-func (l *Location) Free() {
+func (l *Location) free() {
 	C.topo_location_free(l.val)
 	l.val = nil
 }
@@ -342,7 +344,9 @@ type CompSolid struct {
 }
 
 func TopoMakeCompSolid() *CompSolid {
-	return &CompSolid{val: C.topo_make_comp_solid()}
+	p := &CompSolid{val: C.topo_make_comp_solid()}
+	runtime.SetFinalizer(p, (*CompSolid).free)
+	return p
 }
 
 func (s *CompSolid) IsNull() bool {
@@ -515,7 +519,7 @@ func (s *CompSolid) GetLabel() string {
 	return C.GoString(C.topo_shape_get_label(s.val.shp))
 }
 
-func (t *CompSolid) Free() {
+func (t *CompSolid) free() {
 	C.topo_comp_solid_free(t.val)
 }
 
@@ -889,7 +893,7 @@ func (s *Compound) GetLabel() string {
 	return C.GoString(C.topo_shape_get_label(s.val.shp))
 }
 
-func (t *Compound) Free() {
+func (t *Compound) free() {
 	C.topo_compound_free(t.val)
 }
 
@@ -1082,7 +1086,10 @@ type Edge struct {
 }
 
 func TopoMakeEdge() *Edge {
-	return &Edge{val: C.topo_make_edge()}
+	p := &Edge{val: C.topo_make_edge()}
+	runtime.SetFinalizer(p, (*Edge).free)
+	return p
+
 }
 
 func (s *Edge) IsNull() bool {
@@ -1295,7 +1302,7 @@ func (t *Edge) ToShape() *Shape {
 	return &Shape{val: C.topo_shape_share(t.val.shp)}
 }
 
-func (t *Edge) Free() {
+func (t *Edge) free() {
 	C.topo_edge_free(t.val)
 }
 
@@ -1600,7 +1607,9 @@ type Face struct {
 }
 
 func TopoMakeFace() *Face {
-	return &Face{val: C.topo_make_face()}
+	p := &Face{val: C.topo_make_face()}
+	runtime.SetFinalizer(p, (*Face).free)
+	return p
 }
 
 func (s *Face) IsNull() bool {
@@ -1841,7 +1850,7 @@ func (t *Face) ToShape() *Shape {
 	return &Shape{val: C.topo_shape_share(t.val.shp)}
 }
 
-func (t *Face) Free() {
+func (t *Face) free() {
 	C.topo_face_free(t.val)
 }
 
@@ -1958,7 +1967,9 @@ type Shell struct {
 }
 
 func TopoMakeShell() *Shell {
-	return &Shell{val: C.topo_make_shell()}
+	p := &Shell{val: C.topo_make_shell()}
+	runtime.SetFinalizer(p, (*Shell).free)
+	return p
 }
 
 func (t *Shell) Sweep(spine *Wire, shps []Shape, cornerMode int) int {
@@ -1981,7 +1992,7 @@ func (t *Shell) ToShape() *Shape {
 	return &Shape{val: C.topo_shape_share(t.val.shp)}
 }
 
-func (t *Shell) Free() {
+func (t *Shell) free() {
 	C.topo_shell_free(t.val)
 }
 
@@ -2174,7 +2185,9 @@ type Solid struct {
 }
 
 func TopoMakeSolid() *Solid {
-	return &Solid{val: C.topo_make_solid()}
+	p := &Solid{val: C.topo_make_solid()}
+	runtime.SetFinalizer(p, (*Solid).free)
+	return p
 }
 
 func (s *Solid) IsNull() bool {
@@ -2519,7 +2532,7 @@ func (t *Solid) ToShape() *Shape {
 	return &Shape{val: C.topo_shape_share(t.val.shp)}
 }
 
-func (t *Solid) Free() {
+func (t *Solid) free() {
 	C.topo_solid_free(t.val)
 }
 
@@ -2917,12 +2930,14 @@ func (t *Vertex) ToShape() *Shape {
 	return &Shape{val: C.topo_shape_share(t.val.shp)}
 }
 
-func (t *Vertex) Free() {
+func (t *Vertex) free() {
 	C.topo_vertex_free(t.val)
 }
 
 func NewVertex(x, y, z float64) *Vertex {
-	return &Vertex{val: C.topo_vertex_new(C.double(x), C.double(y), C.double(z))}
+	p := &Vertex{val: C.topo_vertex_new(C.double(x), C.double(y), C.double(z))}
+	runtime.SetFinalizer(p, (*Vertex).free)
+	return p
 }
 
 type Wire struct {
@@ -2930,7 +2945,9 @@ type Wire struct {
 }
 
 func TopoMakeWire() *Wire {
-	return &Wire{val: C.topo_make_wire()}
+	p := &Wire{val: C.topo_make_wire()}
+	runtime.SetFinalizer(p, (*Wire).free)
+	return p
 }
 
 func (s *Wire) IsNull() bool {
@@ -3107,7 +3124,7 @@ func (t *Wire) ToShape() *Shape {
 	return &Shape{val: C.topo_shape_share(t.val.shp)}
 }
 
-func (t *Wire) Free() {
+func (t *Wire) free() {
 	C.topo_wire_free(t.val)
 }
 

@@ -9,7 +9,10 @@ package topo
 #cgo windows CXXFLAGS:-I ./external/libboost/boost_1_67_0  -I ./include/oce -I ./include/windows/oce -I ./ -std=gnu++14
 */
 import "C"
-import "unsafe"
+import (
+	"runtime"
+	"unsafe"
+)
 
 type PlateD1 struct {
 	val C.struct__plate_d1_t
@@ -52,10 +55,13 @@ type Plate struct {
 }
 
 func NewPlate() *Plate {
-	return &Plate{val: C.plate_plate_new()}
+	p := &Plate{val: C.plate_plate_new()}
+	runtime.SetFinalizer(p, (*Plate).free)
+	return p
+
 }
 
-func (p *Plate) Free() {
+func (p *Plate) free() {
 	C.plate_plate_free(p.val)
 	p.val = nil
 }
@@ -104,20 +110,22 @@ type PinpointConstraint struct {
 	val *C.struct__plate_pinpoint_constraint_t
 }
 
-func (p *PinpointConstraint) Free() {
+func (p *PinpointConstraint) free() {
 	C.plate_pinpoint_constraint_free(p.val)
 	p.val = nil
 }
 
 func NewPinpointConstraint(p XY, v XYZ, iu, iv int) *PinpointConstraint {
-	return &PinpointConstraint{val: C.plate_pinpoint_constraint_new(p.val, v.val, C.int(iu), C.int(iv))}
+	pt := &PinpointConstraint{val: C.plate_pinpoint_constraint_new(p.val, v.val, C.int(iu), C.int(iv))}
+	runtime.SetFinalizer(p, (*PinpointConstraint).free)
+	return pt
 }
 
 type LinearXYZConstraint struct {
 	val *C.struct__plate_linear_xyz_constraint_t
 }
 
-func (p *LinearXYZConstraint) Free() {
+func (p *LinearXYZConstraint) free() {
 	C.plate_linear_xyz_constraint_free(p.val)
 	p.val = nil
 }
@@ -127,7 +135,9 @@ func NewLinearXYZConstraintDim1(ppc []PinpointConstraint, coffes []float64) *Lin
 	for i := range ppc {
 		ppcc[i] = ppc[i].val
 	}
-	return &LinearXYZConstraint{val: C.plate_linear_xyz_constraint_new_1dim(&ppcc[0], C.int(len(ppc)), (*C.double)(unsafe.Pointer(&coffes[0])), C.int(len(coffes)))}
+	p := &LinearXYZConstraint{val: C.plate_linear_xyz_constraint_new_1dim(&ppcc[0], C.int(len(ppc)), (*C.double)(unsafe.Pointer(&coffes[0])), C.int(len(coffes)))}
+	runtime.SetFinalizer(p, (*LinearXYZConstraint).free)
+	return p
 }
 
 func NewLinearXYZConstraintDim2(ppc []PinpointConstraint, coffes [][]float64) *LinearXYZConstraint {
@@ -144,20 +154,24 @@ func NewLinearXYZConstraintDim2(ppc []PinpointConstraint, coffes [][]float64) *L
 			inw[i*col+j] = C.double(coffes[j][i])
 		}
 	}
-	return &LinearXYZConstraint{val: C.plate_linear_xyz_constraint_new_2dim(&ppcc[0], C.int(len(ppc)), &inw[0], C.int(row), C.int(col))}
+	p := &LinearXYZConstraint{val: C.plate_linear_xyz_constraint_new_2dim(&ppcc[0], C.int(len(ppc)), &inw[0], C.int(row), C.int(col))}
+	runtime.SetFinalizer(p, (*LinearXYZConstraint).free)
+	return p
 }
 
 type LinearScalarConstraint struct {
 	val *C.struct__plate_linear_scalar_constraint_t
 }
 
-func (p *LinearScalarConstraint) Free() {
+func (p *LinearScalarConstraint) free() {
 	C.plate_linear_scalar_constraint_free(p.val)
 	p.val = nil
 }
 
 func NewLinearScalarConstraint(ppc *PinpointConstraint, x XYZ) *LinearScalarConstraint {
-	return &LinearScalarConstraint{val: C.plate_linear_scalar_constraint_new(ppc.val, x.val)}
+	p := &LinearScalarConstraint{val: C.plate_linear_scalar_constraint_new(ppc.val, x.val)}
+	runtime.SetFinalizer(p, (*LinearScalarConstraint).free)
+	return p
 }
 
 func NewLinearScalarConstraintDim1(ppc []PinpointConstraint, coffes []XYZ) *LinearScalarConstraint {
@@ -169,7 +183,9 @@ func NewLinearScalarConstraintDim1(ppc []PinpointConstraint, coffes []XYZ) *Line
 	for i := range coffes {
 		xyzc[i] = coffes[i].val
 	}
-	return &LinearScalarConstraint{val: C.plate_linear_scalar_constraint_new_1dim(&ppcc[0], C.int(len(ppc)), &xyzc[0], C.int(len(coffes)))}
+	p := &LinearScalarConstraint{val: C.plate_linear_scalar_constraint_new_1dim(&ppcc[0], C.int(len(ppc)), &xyzc[0], C.int(len(coffes)))}
+	runtime.SetFinalizer(p, (*LinearScalarConstraint).free)
+	return p
 }
 
 func NewLinearScalarConstraintDim2(ppc []PinpointConstraint, coffes [][]XYZ) *LinearScalarConstraint {
@@ -186,14 +202,16 @@ func NewLinearScalarConstraintDim2(ppc []PinpointConstraint, coffes [][]XYZ) *Li
 			inw[i*col+j] = coffes[j][i].val
 		}
 	}
-	return &LinearScalarConstraint{val: C.plate_linear_scalar_constraint_new_2dim(&ppcc[0], C.int(len(ppc)), &inw[0], C.int(row), C.int(col))}
+	p := &LinearScalarConstraint{val: C.plate_linear_scalar_constraint_new_2dim(&ppcc[0], C.int(len(ppc)), &inw[0], C.int(row), C.int(col))}
+	runtime.SetFinalizer(p, (*LinearScalarConstraint).free)
+	return p
 }
 
 type GlobalTranslationConstraint struct {
 	val *C.struct__plate_global_translation_constraint_t
 }
 
-func (p *GlobalTranslationConstraint) Free() {
+func (p *GlobalTranslationConstraint) free() {
 	C.plate_global_translation_constraint_free(p.val)
 	p.val = nil
 }
@@ -203,40 +221,46 @@ func NewGlobalTranslationConstraint(coffes []XY) *GlobalTranslationConstraint {
 	for i := range coffes {
 		xyc[i] = coffes[i].val
 	}
-	return &GlobalTranslationConstraint{val: C.plate_global_translation_constraint_new(&xyc[0], C.int(len(coffes)))}
+	p := &GlobalTranslationConstraint{val: C.plate_global_translation_constraint_new(&xyc[0], C.int(len(coffes)))}
+	runtime.SetFinalizer(p, (*GlobalTranslationConstraint).free)
+	return p
 }
 
 type LineConstraint struct {
 	val *C.struct__plate_line_constraint_t
 }
 
-func (p *LineConstraint) Free() {
+func (p *LineConstraint) free() {
 	C.plate_line_constraint_free(p.val)
 	p.val = nil
 }
 
 func NewLineConstraint(p XY, v Line, iu, iv int) *LineConstraint {
-	return &LineConstraint{val: C.plate_line_constraint_new(p.val, v.val, C.int(iu), C.int(iv))}
+	pt := &LineConstraint{val: C.plate_line_constraint_new(p.val, v.val, C.int(iu), C.int(iv))}
+	runtime.SetFinalizer(p, (*LineConstraint).free)
+	return pt
 }
 
 type PlaneConstraint struct {
 	val *C.struct__plate_plane_constraint_t
 }
 
-func (p *PlaneConstraint) Free() {
+func (p *PlaneConstraint) free() {
 	C.plate_plane_constraint_free(p.val)
 	p.val = nil
 }
 
 func NewPlaneConstraint(p XY, v Plane, iu, iv int) *PlaneConstraint {
-	return &PlaneConstraint{val: C.plate_plane_constraint_new(p.val, v.val, C.int(iu), C.int(iv))}
+	pt := &PlaneConstraint{val: C.plate_plane_constraint_new(p.val, v.val, C.int(iu), C.int(iv))}
+	runtime.SetFinalizer(p, (*PlaneConstraint).free)
+	return pt
 }
 
 type SampledCurveConstraint struct {
 	val *C.struct__plate_sampled_curve_constraint_t
 }
 
-func (p *SampledCurveConstraint) Free() {
+func (p *SampledCurveConstraint) free() {
 	C.plate_sampled_curve_constraint_free(p.val)
 	p.val = nil
 }
@@ -247,59 +271,79 @@ func NewSampledCurveConstraint(ppc []PinpointConstraint) *SampledCurveConstraint
 		ppcc[i] = ppc[i].val
 	}
 
-	return &SampledCurveConstraint{val: C.plate_sampled_curve_constraint_new(&ppcc[0], C.int(len(ppc)))}
+	p := &SampledCurveConstraint{val: C.plate_sampled_curve_constraint_new(&ppcc[0], C.int(len(ppc)))}
+	runtime.SetFinalizer(p, (*SampledCurveConstraint).free)
+	return p
 }
 
 type GtoCConstraint struct {
 	val *C.struct__plate_g_to_c_constraint_t
 }
 
-func (p *GtoCConstraint) Free() {
+func (p *GtoCConstraint) free() {
 	C.plate_g_to_c_constraint_free(p.val)
 	p.val = nil
 }
 
 func NewGtoCConstraintNew1(point2d XY, D1S, D1T PlateD1) *GtoCConstraint {
-	return &GtoCConstraint{val: C.plate_g_to_c_constraint_new_1(point2d.val, D1S.val, D1T.val)}
+	p := &GtoCConstraint{val: C.plate_g_to_c_constraint_new_1(point2d.val, D1S.val, D1T.val)}
+	runtime.SetFinalizer(p, (*GtoCConstraint).free)
+	return p
 }
 
 func NewGtoCConstraintNew2(point2d XY, D1S, D1T PlateD1, nP XYZ) *GtoCConstraint {
-	return &GtoCConstraint{val: C.plate_g_to_c_constraint_new_2(point2d.val, D1S.val, D1T.val, nP.val)}
+	p := &GtoCConstraint{val: C.plate_g_to_c_constraint_new_2(point2d.val, D1S.val, D1T.val, nP.val)}
+	runtime.SetFinalizer(p, (*GtoCConstraint).free)
+	return p
 }
 
 func NewGtoCConstraintNew3(point2d XY, D1S, D1T PlateD1, D2S, D2T PlateD2) *GtoCConstraint {
-	return &GtoCConstraint{val: C.plate_g_to_c_constraint_new_3(point2d.val, D1S.val, D1T.val, D2S.val, D2T.val)}
+	p := &GtoCConstraint{val: C.plate_g_to_c_constraint_new_3(point2d.val, D1S.val, D1T.val, D2S.val, D2T.val)}
+	runtime.SetFinalizer(p, (*GtoCConstraint).free)
+	return p
 }
 
 func NewGtoCConstraintNew4(point2d XY, D1S, D1T PlateD1, D2S, D2T PlateD2, nP XYZ) *GtoCConstraint {
-	return &GtoCConstraint{val: C.plate_g_to_c_constraint_new_4(point2d.val, D1S.val, D1T.val, D2S.val, D2T.val, nP.val)}
+	p := &GtoCConstraint{val: C.plate_g_to_c_constraint_new_4(point2d.val, D1S.val, D1T.val, D2S.val, D2T.val, nP.val)}
+	runtime.SetFinalizer(p, (*GtoCConstraint).free)
+	return p
 }
 
 func NewGtoCConstraintNew5(point2d XY, D1S, D1T PlateD1, D2S, D2T PlateD2, D3S, D3T PlateD3) *GtoCConstraint {
-	return &GtoCConstraint{val: C.plate_g_to_c_constraint_new_5(point2d.val, D1S.val, D1T.val, D2S.val, D2T.val, D3S.val, D3T.val)}
+	p := &GtoCConstraint{val: C.plate_g_to_c_constraint_new_5(point2d.val, D1S.val, D1T.val, D2S.val, D2T.val, D3S.val, D3T.val)}
+	runtime.SetFinalizer(p, (*GtoCConstraint).free)
+	return p
 }
 
 func NewGtoCConstraintNew6(point2d XY, D1S, D1T PlateD1, D2S, D2T PlateD2, D3S, D3T PlateD3, nP XYZ) *GtoCConstraint {
-	return &GtoCConstraint{val: C.plate_g_to_c_constraint_new_6(point2d.val, D1S.val, D1T.val, D2S.val, D2T.val, D3S.val, D3T.val, nP.val)}
+	p := &GtoCConstraint{val: C.plate_g_to_c_constraint_new_6(point2d.val, D1S.val, D1T.val, D2S.val, D2T.val, D3S.val, D3T.val, nP.val)}
+	runtime.SetFinalizer(p, (*GtoCConstraint).free)
+	return p
 }
 
 type FreeGtoCConstraint struct {
 	val *C.struct__plate_free_g_to_c_constraint_t
 }
 
-func (p *FreeGtoCConstraint) Free() {
+func (p *FreeGtoCConstraint) free() {
 	C.plate_free_g_to_c_constraint_free(p.val)
 	p.val = nil
 }
 
 func NewFreeGtoCConstraintNew1(point2d XY, D1S, D1T PlateD1, IncrementalLoad float64, orientation int) *FreeGtoCConstraint {
-	return &FreeGtoCConstraint{val: C.plate_free_g_to_c_constraint_new_1(point2d.val, D1S.val, D1T.val, C.double(IncrementalLoad), C.int(orientation))}
+	p := &FreeGtoCConstraint{val: C.plate_free_g_to_c_constraint_new_1(point2d.val, D1S.val, D1T.val, C.double(IncrementalLoad), C.int(orientation))}
+	runtime.SetFinalizer(p, (*FreeGtoCConstraint).free)
+	return p
 }
 
 func NewFreeGtoCConstraintNew2(point2d XY, D1S, D1T PlateD1, D2S, D2T PlateD2, IncrementalLoad float64, orientation int) *FreeGtoCConstraint {
-	return &FreeGtoCConstraint{val: C.plate_free_g_to_c_constraint_new_2(point2d.val, D1S.val, D1T.val, D2S.val, D2T.val, C.double(IncrementalLoad), C.int(orientation))}
+	p := &FreeGtoCConstraint{val: C.plate_free_g_to_c_constraint_new_2(point2d.val, D1S.val, D1T.val, D2S.val, D2T.val, C.double(IncrementalLoad), C.int(orientation))}
+	runtime.SetFinalizer(p, (*FreeGtoCConstraint).free)
+	return p
 }
 
 func NewFreeGtoCConstraintNew3(point2d XY, D1S, D1T PlateD1, D2S, D2T PlateD2, D3S, D3T PlateD3, IncrementalLoad float64, orientation int) *FreeGtoCConstraint {
-	return &FreeGtoCConstraint{val: C.plate_free_g_to_c_constraint_new_3(point2d.val, D1S.val, D1T.val, D2S.val, D2T.val, D3S.val, D3T.val, C.double(IncrementalLoad), C.int(orientation))}
+	p := &FreeGtoCConstraint{val: C.plate_free_g_to_c_constraint_new_3(point2d.val, D1S.val, D1T.val, D2S.val, D2T.val, D3S.val, D3T.val, C.double(IncrementalLoad), C.int(orientation))}
+	runtime.SetFinalizer(p, (*FreeGtoCConstraint).free)
+	return p
 }
