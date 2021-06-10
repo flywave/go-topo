@@ -3,10 +3,10 @@ package topo
 /*
 #include <stdlib.h>
 #include "topo_c_api.h"
-#cgo CFLAGS: -I ./
-#cgo linux CXXFLAGS: -I ./include/oce -I ./include/linux/oce -I ./ -std=gnu++14
-#cgo darwin CXXFLAGS: -I ./include/oce -I ./include/darwin/oce -I ./ -std=gnu++14
-#cgo windows CXXFLAGS:  -I ./include/oce -I ./include/windows/oce -I ./ -std=gnu++14
+#cgo CFLAGS: -I  ./libs
+#cgo linux CXXFLAGS: -I ./libs  -std=gnu++14
+#cgo darwin CXXFLAGS: -I ./libs  -std=gnu++14
+#cgo windows CXXFLAGS: -I ./libs  -std=gnu++14
 */
 import "C"
 import "unsafe"

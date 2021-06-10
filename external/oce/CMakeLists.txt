@@ -225,12 +225,6 @@ if( NOT DEFINED OCE_INSTALL_PREFIX )
 	endif( WIN32 )
 endif( NOT DEFINED OCE_INSTALL_PREFIX )
 
-set( OCE_INSTALL_PREFIX ${OCE_INSTALL_PREFIX} CACHE
-	PATH "Install prefix prepended to target to create install location" )
-set( CMAKE_INSTALL_PREFIX "${OCE_INSTALL_PREFIX}" CACHE INTERNAL "Prefix
-	prepended to install directories if target destination is not absolute,
-	immutable" FORCE )
-
 set( OCE_LIBRARY_TYPE STATIC )
 set( OCE_BUILD_STATIC_LIB TRUE )
 
@@ -742,12 +736,6 @@ set(OCE_INSTALL_DATA_DIR ${OCE_INSTALL_DATA_DIR})
 #this is the header used to build OCE
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/adm/cmake/config/oce_build_config.h.cmake
 	${CMAKE_CURRENT_BINARY_DIR}/build_inc/oce-config.h )
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/build_inc/oce-config.h
-	RENAME oce_build_config.defs
-	DESTINATION ${OCE_INSTALL_INCLUDE_DIR} COMPONENT Development )
-
-#installation paths are written into a separate file (which is not installed)
-#so that only few files have to be recompiled when installation paths are modified
 add_definitions(-DHAVE_OCE_PATHS_H)
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/adm/cmake/config/oce_build_paths.h.cmake
 	${CMAKE_CURRENT_BINARY_DIR}/build_inc/oce-paths.h )
@@ -755,8 +743,6 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/adm/cmake/config/oce_build_paths.h.c
 #this is the header that is installed on the system
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/adm/cmake/config/oce_install_config.h.cmake
 	${CMAKE_CURRENT_BINARY_DIR}/install_inc/oce-config.h )
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/install_inc/oce-config.h
-		DESTINATION ${OCE_INSTALL_INCLUDE_DIR} COMPONENT Development )
 
 # Version information
 if(NOT OCE_NO_LIBRARY_VERSION)

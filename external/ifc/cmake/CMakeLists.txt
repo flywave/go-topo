@@ -138,7 +138,3 @@ RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_BINARY_DIR}/../)
 IF(FLYWAVE_ENABLE_SOLUTION_FOLDERS)
     SET_TARGET_PROPERTIES(ifc PROPERTIES FOLDER external)
 ENDIF(FLYWAVE_ENABLE_SOLUTION_FOLDERS)
-
-INSTALL(FILES ${include_files_geom} DESTINATION include/ifc/ifcgeom)
-INSTALL(FILES ${include_files_parse} DESTINATION include/ifc/ifcparse)
-INSTALL(FILES ${include_files_geom_scheme} DESTINATION include/ifc/ifcgeom_schema_agnostic)
