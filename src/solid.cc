@@ -1005,7 +1005,7 @@ int solid::sweep(const wire &spine, std::vector<shape> &profiles,
     }
 
     for (unsigned i = 0; i < profiles.size(); i++) {
-      PS.Add(profiles[i].value(),false,true);
+      PS.Add(profiles[i].value(), true, true);
     }
     if (!PS.IsReady()) {
       throw std::runtime_error("Failed to create sweep");
