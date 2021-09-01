@@ -4,9 +4,10 @@ package topo
 #include <stdlib.h>
 #include "ifc_c_api.h"
 #cgo CFLAGS: -I  ./libs
-#cgo linux CXXFLAGS: -I  ./libs  -std=gnu++14
-#cgo darwin CXXFLAGS: -I  ./libs  -std=gnu++14
-#cgo windows CXXFLAGS:-I  ./libs  -std=gnu++14
+#cgo linux CXXFLAGS: -I ./libs  -std=gnu++14
+#cgo darwin CXXFLAGS: -I ./libs  -std=gnu++14
+#cgo darwin,arm CXXFLAGS: -I ./libs  -std=gnu++14
+#cgo windows CXXFLAGS: -I ./libs  -std=gnu++14
 */
 import "C"
 
