@@ -20,22 +20,22 @@ class visitor {
 public:
   virtual ~visitor() {}
   virtual void
-  apply(const ifc23::IfcGeom::TriangulationElement<double> *element);
+  apply(const ifc23::IfcGeom::TriangulationElement<double> *element) = 0;
   virtual void
-  apply(const ifc4::IfcGeom::TriangulationElement<double> *element);
+  apply(const ifc4::IfcGeom::TriangulationElement<double> *element) = 0;
   virtual void
-  apply(const ifc41::IfcGeom::TriangulationElement<double> *element);
+  apply(const ifc41::IfcGeom::TriangulationElement<double> *element) = 0;
   virtual void
-  apply(const ifc42::IfcGeom::TriangulationElement<double> *element);
+  apply(const ifc42::IfcGeom::TriangulationElement<double> *element) = 0;
   virtual void
-  apply(const ifc43_rc1::IfcGeom::TriangulationElement<double> *element);
+  apply(const ifc43_rc1::IfcGeom::TriangulationElement<double> *element) = 0;
 };
 
 class base_convert {
 public:
   virtual std::vector<TopoDS_Shape> get_shape() = 0;
 
-  virtual void process_with_callback(visitor &vst) = 0;
+  virtual void process_with_callback(visitor *vst) = 0;
 
   virtual ~base_convert() = default;
 };
@@ -191,7 +191,7 @@ struct filter_settings {
                                                                                \
     std::vector<TopoDS_Shape> get_shape();                                     \
                                                                                \
-    void process_with_callback(visitor &vst);                                  \
+    void process_with_callback(visitor *vst);                                  \
                                                                                \
     const std::vector<NAME_SPACE::IfcGeom::filter_t> &get_filter_funcs() {     \
       return filter_funcs;                                                     \
@@ -204,9 +204,9 @@ GEN_CONVERT(ifc41)
 GEN_CONVERT(ifc42)
 GEN_CONVERT(ifc43_rc1)
 
-inline std::string get_version(const std::string &f){
-    ifc23::IfcParse::IfcFile fl{&ifc23::Ifc2x3::get_schema()};
-    return  fl.GetVersion(f);
+inline std::string get_version(const std::string &f) {
+  ifc23::IfcParse::IfcFile fl{&ifc23::Ifc2x3::get_schema()};
+  return fl.GetVersion(f);
 }
 
 inline std::unique_ptr<base_convert> get_convert(const std::string &f) {

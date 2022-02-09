@@ -430,7 +430,8 @@ int face::extrude(const shape &shp, gp_Pnt p1, gp_Pnt p2) {
       throw std::runtime_error("expected Edge or Wire");
     }
 
-    gp_Vec direction(gp_Pnt(p1.X(), p1.Y(), p1.Z()), gp_Pnt(p2.X(), p2.Y(), p2.Z()));
+    gp_Vec direction(gp_Pnt(p1.X(), p1.Y(), p1.Z()),
+                     gp_Pnt(p2.X(), p2.Y(), p2.Z()));
     gp_Ax1 axisOfRevolution(gp_Pnt(p1.X(), p1.Y(), p1.Z()), direction);
 
     BRepPrimAPI_MakePrism MP(shp, direction, Standard_False);

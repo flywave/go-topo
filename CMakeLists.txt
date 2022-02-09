@@ -16,6 +16,8 @@ if(FLYWAVE_ENABLE_SOLUTION_FOLDERS)
   SET_PROPERTY(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
 endif()
 
+# SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
+
 Set(FLYWAVE_BASE_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs")
 IF(APPLE)
   if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "^arm")
@@ -188,7 +190,11 @@ IF(NOT IFC_INCLUDE)
   LIST(APPEND FLYWAVE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/external/ifc/src/ifcparse/")
   LIST(APPEND FLYWAVE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/external/ifc/src/ifcgeom_schema_agnostic/")
   LIST(APPEND FLYWAVE_LIBRARY_DIRS "${CMAKE_CURRENT_BINARY_DIR}/external/ifc/")
-  LIST(APPEND FLYWAVE_LIBRARY_DEPES "ifc")
+  LIST(APPEND FLYWAVE_LIBRARY_DEPES "ifc23"
+                                    "ifc4" 
+                                    "ifc41" 
+                                    "ifc42" 
+                                    "ifc43_rc1")
   SET(IFC_INCLUDE YES)
 ENDIF()
 

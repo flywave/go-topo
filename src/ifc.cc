@@ -67,7 +67,7 @@ std::array<std::string, 4> filter_settings::supported_args{
     return shps;                                                               \
   }                                                                            \
                                                                                \
-  void NS##_convert::process_with_callback(visitor &vst) {                     \
+  void NS##_convert::process_with_callback(visitor *vst) {                     \
     NS::IfcParse::IfcFile fl{_file_name};                                      \
     NS::IfcGeom::Iterator<double> iter{settings, &fl, filter_funcs};           \
     unsigned int vcount_total = 0;                                             \
@@ -76,7 +76,7 @@ std::array<std::string, 4> filter_settings::supported_args{
         auto ptr =                                                             \
             reinterpret_cast<NS::IfcGeom::TriangulationElement<double> *>(     \
                 iter.get());                                                   \
-        vst.apply(ptr);                                                        \
+        vst->apply(ptr);                                                       \
       } while (iter.next());                                                   \
     }                                                                          \
   }

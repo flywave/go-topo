@@ -23,3 +23,11 @@ SOURCE_GROUP("include" FILES ${gdal_HEADER_FILES})
 
 SET_TARGET_PROPERTIES(topo
                     PROPERTIES PUBLIC_HEADER "${headers}")
+
+                    ADD_EXECUTABLE(ifc_test ifc_test.cc)
+
+IF(UNIX AND NOT APPLE)
+TARGET_LINK_LIBRARIES(ifc_test -Wl,--start-group topo pthread dl stdc++ m ${FLYWAVE_LIBRARY_DEPES} -Wl,--end-group)
+ELSE()
+TARGET_LINK_LIBRARIES(ifc_test topo ${FLYWAVE_LIBRARY_DEPES})
+ENDIF()

@@ -36,6 +36,7 @@
 #include <BRepPrimAPI_MakeWedge.hxx>
 #include <BRep_Builder.hxx>
 #include <GProp_GProps.hxx>
+#include <GeomFill_Trihedron.hxx>
 #include <ShapeAnalysis_FreeBounds.hxx>
 #include <ShapeFix_Wire.hxx>
 #include <TopExp.hxx>
@@ -968,12 +969,11 @@ int solid::loft(std::vector<shape> &profiles, bool ruled, double tolerance) {
 
 int solid::pipe(const face &f, const wire &w) {
   try {
-    BRepOffsetAPI_MakePipe MP(w.value(), f.value());
+    BRepOffsetAPI_MakePipe MP(w.value(), f.value(), GeomFill_IsCorrectedFrenet,
+                              true);
     _shape = MP.Shape();
-
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
-
   } catch (Standard_Failure &err) {
     Handle_Standard_Failure e = Standard_Failure::Caught();
     const Standard_CString msg = e->GetMessageString();
@@ -991,7 +991,7 @@ int solid::sweep(const wire &spine, std::vector<shape> &profiles,
                  int cornerMode) {
   try {
     BRepOffsetAPI_MakePipeShell PS(spine.value());
-
+    PS.SetMode(true);
     switch (cornerMode) {
     case 1:
       PS.SetTransitionMode(BRepBuilderAPI_RightCorner);
@@ -1007,10 +1007,11 @@ int solid::sweep(const wire &spine, std::vector<shape> &profiles,
     for (unsigned i = 0; i < profiles.size(); i++) {
       PS.Add(profiles[i].value(), false, true);
     }
-    if (!PS.IsReady()) {
-      throw std::runtime_error("Failed to create sweep");
-    }
+
     PS.Build();
+    if (!PS.IsDone()) {
+      throw std::runtime_error("Failed to create a solid object from sweep");
+    }
     if (!PS.MakeSolid()) {
       throw std::runtime_error("Failed to create a solid object from sweep");
     }
