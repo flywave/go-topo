@@ -178,9 +178,10 @@ int shape::transform_impl(gp_Trsf &trans) {
     if (shape.IsNull())
       throw std::runtime_error("Null shape");
 
-    BRepBuilderAPI_Transform aTrans(shape, trans);
-    aTrans.Build();
-    aTrans.Check();
+    BRepBuilderAPI_Transform aTrans(trans);
+    aTrans.Perform(shape);
+    if (!aTrans.IsDone())
+      return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &err) {
     Handle_Standard_Failure e = Standard_Failure::Caught();
@@ -205,9 +206,10 @@ int shape::translate(gp_Vec delta) {
     gp_Trsf trans;
     trans.SetTranslation(gp_Pnt(0, 0, 0),
                          gp_Pnt(delta.X(), delta.Y(), delta.Z()));
-    BRepBuilderAPI_Transform aTrans(shape, trans);
-    aTrans.Build();
-    aTrans.Check();
+    BRepBuilderAPI_Transform aTrans(trans);
+    aTrans.Perform(shape);
+    if (!aTrans.IsDone())
+      return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &err) {
     Handle_Standard_Failure e = Standard_Failure::Caught();
@@ -233,9 +235,10 @@ int shape::rotate(double angle, gp_Pnt p1, gp_Pnt p2) {
     gp_Vec dir(gp_Pnt(p1.X(), p1.Y(), p1.Z()), gp_Pnt(p2.X(), p2.Y(), p2.Z()));
     gp_Ax1 axis(gp_Pnt(p1.X(), p1.Y(), p1.Z()), dir);
     trans.SetRotation(axis, angle);
-    BRepBuilderAPI_Transform aTrans(shape, trans);
-    aTrans.Build();
-    aTrans.Check();
+    BRepBuilderAPI_Transform aTrans(trans);
+    aTrans.Perform(shape);
+    if (!aTrans.IsDone())
+      return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &err) {
     Handle_Standard_Failure e = Standard_Failure::Caught();
@@ -259,9 +262,10 @@ int shape::rotate(double angle, gp_Ax1 a) {
 
     gp_Trsf trans;
     trans.SetRotation(a, angle);
-    BRepBuilderAPI_Transform aTrans(shape, trans);
-    aTrans.Build();
-    aTrans.Check();
+    BRepBuilderAPI_Transform aTrans(trans);
+    aTrans.Perform(shape);
+    if (!aTrans.IsDone())
+      return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &err) {
     Handle_Standard_Failure e = Standard_Failure::Caught();
@@ -285,9 +289,10 @@ int shape::rotate(gp_Quaternion R) {
 
     gp_Trsf trans;
     trans.SetRotation(R);
-    BRepBuilderAPI_Transform aTrans(shape, trans);
-    aTrans.Build();
-    aTrans.Check();
+    BRepBuilderAPI_Transform aTrans(trans);
+    aTrans.Perform(shape);
+    if (!aTrans.IsDone())
+      return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &err) {
     Handle_Standard_Failure e = Standard_Failure::Caught();
@@ -311,9 +316,10 @@ int shape::scale(gp_Pnt pnt, double scale) {
 
     gp_Trsf trans;
     trans.SetScale(gp_Pnt(pnt.X(), pnt.Y(), pnt.Z()), scale);
-    BRepBuilderAPI_Transform aTrans(shape, trans);
-    aTrans.Build();
-    aTrans.Check();
+    BRepBuilderAPI_Transform aTrans(trans);
+    aTrans.Perform(shape);
+    if (!aTrans.IsDone())
+      return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &err) {
     Handle_Standard_Failure e = Standard_Failure::Caught();
@@ -339,7 +345,10 @@ int shape::mirror(gp_Pnt pnt, gp_Pnt nor) {
                gp_Dir(nor.X(), nor.Y(), nor.Z()));
     gp_Trsf trans;
     trans.SetMirror(ax2);
-    BRepBuilderAPI_Transform aTrans(shape, trans);
+    BRepBuilderAPI_Transform aTrans(trans);
+    aTrans.Perform(shape);
+    if (!aTrans.IsDone())
+      return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &err) {
     Handle_Standard_Failure e = Standard_Failure::Caught();
@@ -363,7 +372,10 @@ int shape::mirror(gp_Ax1 a) {
 
     gp_Trsf trans;
     trans.SetMirror(a);
-    BRepBuilderAPI_Transform aTrans(shape, trans);
+    BRepBuilderAPI_Transform aTrans(trans);
+    aTrans.Perform(shape);
+    if (!aTrans.IsDone())
+      return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &err) {
     Handle_Standard_Failure e = Standard_Failure::Caught();
@@ -387,7 +399,10 @@ int shape::mirror(gp_Ax2 a) {
 
     gp_Trsf trans;
     trans.SetMirror(a);
-    BRepBuilderAPI_Transform aTrans(shape, trans);
+    BRepBuilderAPI_Transform aTrans(trans);
+    aTrans.Perform(shape);
+    if (!aTrans.IsDone())
+      return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &err) {
     Handle_Standard_Failure e = Standard_Failure::Caught();
