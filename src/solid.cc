@@ -969,6 +969,10 @@ int solid::loft(std::vector<shape> &profiles, bool ruled, double tolerance) {
 
 int solid::pipe(const face &f, const wire &w) {
   try {
+    auto ForceApproxC1 = false;
+    if (wire.num_vertices() >= 6) {
+      ForceApproxC1 = true;
+    }
     BRepOffsetAPI_MakePipe MP(w.value(), f.value(), GeomFill_IsCorrectedFrenet,
                               true);
     _shape = MP.Shape();
@@ -1005,7 +1009,7 @@ int solid::sweep(const wire &spine, std::vector<shape> &profiles,
     }
 
     for (unsigned i = 0; i < profiles.size(); i++) {
-      PS.Add(profiles[i].value(), false, true);
+      PS.Add(profiles[i].value(), false, false);
     }
 
     PS.Build();
