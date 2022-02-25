@@ -973,8 +973,11 @@ int solid::pipe(const face &f, const wire &w) {
     if (wire.num_vertices() >= 6) {
       ForceApproxC1 = true;
     }
-    BRepOffsetAPI_MakePipe MP(w.value(), f.value(), GeomFill_IsCorrectedFrenet,
-                              true);
+    GeomFill_Trihedron Mode = GeomFill_IsCorrectedFrenet;
+    if (wire.num_vertices() >= 5) {
+      Mode = GeomFill_IsFrenet;
+    }
+    BRepOffsetAPI_MakePipe MP(w.value(), f.value(), Mode, ForceApproxC1);
     _shape = MP.Shape();
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
