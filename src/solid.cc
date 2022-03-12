@@ -970,11 +970,11 @@ int solid::loft(std::vector<shape> &profiles, bool ruled, double tolerance) {
 int solid::pipe(const face &f, const wire &w) {
   try {
     auto ForceApproxC1 = false;
-    if (wire.num_vertices() >= 6) {
+    if (w.num_vertices() >= 6) {
       ForceApproxC1 = true;
     }
     GeomFill_Trihedron Mode = GeomFill_IsCorrectedFrenet;
-    if (wire.num_vertices() >= 5) {
+    if (w.num_vertices() >= 5) {
       Mode = GeomFill_IsFrenet;
     }
     BRepOffsetAPI_MakePipe MP(w.value(), f.value(), Mode, ForceApproxC1);
