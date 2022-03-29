@@ -293,10 +293,31 @@ face face::make_face(std::vector<gp_Pnt> points) {
     }
     BRepBuilderAPI_MakeFace MF(MP.Wire(), false);
 
-    f = face{MF.Face()};
-
-    if (!f.fix_shape())
-      throw std::runtime_error("Shapes not valid");
+    switch (MF.Error()) {
+    case BRepBuilderAPI_FaceDone:
+      f = face{MF.Face()};
+      break;
+    case BRepLib_NoFace:
+      throw std::runtime_error(
+          "Error. mkplane has been finished with \"No Face\" status.\n");
+      break;
+    case BRepLib_NotPlanar:
+      throw std::runtime_error(
+          "Error. mkplane has been finished with \"Not Planar\" status.\n");
+      break;
+    case BRepLib_CurveProjectionFailed:
+      throw std::runtime_error("Error. mkplane has been finished with \"Fail "
+                               "in projection curve\" status.\n");
+      break;
+    case BRepLib_ParametersOutOfRange:
+      throw std::runtime_error("Error. mkplane has been finished with "
+                               "\"Parameters are out of range\" status.\n");
+      break;
+    default:
+      throw std::runtime_error(
+          "Error. Undefined status. Please check the code.\n");
+      break;
+    }
 
   } catch (Standard_Failure &err) {
     Handle_Standard_Failure e = Standard_Failure::Caught();
