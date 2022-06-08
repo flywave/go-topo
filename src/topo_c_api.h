@@ -18,6 +18,7 @@ extern "C" {
 
 enum { BOOLFUSE, BOOLCUT, BOOLCOMMON };
 
+enum { TextureCube, TextureNormal, TextureNormalAutoScale };
 enum { DIR_WEST, DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_UP, DIR_DOWN };
 enum {
   TopoSolid,
@@ -140,16 +141,38 @@ TOPOCAPICALL topo_shape_t *topo_shape_copy(topo_shape_t *p);
 TOPOCAPICALL int topo_shape_mesh(topo_shape_t *p,
                                  topo_mesh_receiver_t *receiver,
                                  double tolerance, double deflection,
-                                 double angle);
+                                 double angle, _Bool uv_coords);
 
 TOPOCAPICALL void topo_shape_set_surface_colour(topo_shape_t *p, color_t c);
 TOPOCAPICALL void topo_shape_set_curve_colour(topo_shape_t *p, color_t c);
 TOPOCAPICALL void topo_shape_set_label(topo_shape_t *p, const char *name);
+TOPOCAPICALL void topo_shape_set_u_origin(topo_shape_t *p, double u);
+TOPOCAPICALL void topo_shape_set_v_origin(topo_shape_t *p, double v);
+TOPOCAPICALL void topo_shape_set_u_repeat(topo_shape_t *p, double u);
+TOPOCAPICALL void topo_shape_set_v_repeat(topo_shape_t *p, double v);
+TOPOCAPICALL void topo_shape_set_scale_v(topo_shape_t *p, double v);
+TOPOCAPICALL void topo_shape_set_scale_u(topo_shape_t *p, double u);
+TOPOCAPICALL void topo_shape_set_auto_scale_size_on_u(topo_shape_t *p,
+                                                      double u);
+TOPOCAPICALL void topo_shape_set_auto_scale_size_on_v(topo_shape_t *p,
+                                                      double v);
+TOPOCAPICALL void topo_shape_set_txture_map_type(topo_shape_t *p, int t);
+TOPOCAPICALL void topo_shape_set_rotation_angle(topo_shape_t *p, double angle);
 
 TOPOCAPICALL color_t topo_shape_get_surface_colour(topo_shape_t *p);
 TOPOCAPICALL color_t topo_shape_get_curve_colour(topo_shape_t *p);
 TOPOCAPICALL const char *topo_shape_get_label(topo_shape_t *p);
 TOPOCAPICALL _Bool topo_shape_surface_colour(topo_shape_t *p, double *colour);
+TOPOCAPICALL double topo_shape_get_u_origin(topo_shape_t *p);
+TOPOCAPICALL double topo_shape_get_v_origin(topo_shape_t *p);
+TOPOCAPICALL double topo_shape_get_u_repeat(topo_shape_t *p);
+TOPOCAPICALL double topo_shape_get_v_repeat(topo_shape_t *p);
+TOPOCAPICALL double topo_shape_get_scale_v(topo_shape_t *p);
+TOPOCAPICALL double topo_shape_get_scale_u(topo_shape_t *p);
+TOPOCAPICALL double topo_shape_get_auto_scale_size_on_u(topo_shape_t *p);
+TOPOCAPICALL double topo_shape_get_auto_scale_size_on_v(topo_shape_t *p);
+TOPOCAPICALL int topo_shape_get_txture_map_type(topo_shape_t *p);
+TOPOCAPICALL double topo_shape_get_rotation_angle(topo_shape_t *p);
 
 TOPOCAPICALL topo_vertex_t topo_vertex_new(double x, double y, double z);
 TOPOCAPICALL void topo_vertex_free(topo_vertex_t t);

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-const TOLERANCE = 1E-8
+const TOLERANCE = 1e-8
 
 func TestIfc(t *testing.T) {
 	ts := IfcToTopoShape("tests/buildingElementProxy.ifc")

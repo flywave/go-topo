@@ -29,6 +29,7 @@
 #include <ShapeFix_Shape.hxx>
 #include <ShapeFix_ShapeTolerance.hxx>
 #include <TColStd_Array1OfReal.hxx>
+#include <TColgp_Array1OfPnt2d.hxx>
 #include <TShort_Array1OfShortReal.hxx>
 #include <TopExp.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
@@ -42,7 +43,10 @@ namespace topo {
 
 shape::shape()
     : _shape(), _surface_colour(Quantity_NOC_WHITE),
-      _curve_colour(Quantity_NOC_WHITE) {}
+      _curve_colour(Quantity_NOC_WHITE), _u_origin(0.), _v_origin(0.),
+      _u_repeat(1.), _v_repeat(1.), _scale_u(1.), _scale_v(1.),
+      _auto_scale_size_on_u(1.), _auto_scale_size_on_v(1.),
+      _txture_map_type(texture_normal), _rotation_angle(0.) {}
 
 TopoDS_Shape &shape::value() { return _shape; }
 
@@ -585,6 +589,13 @@ bool shape::fix_shape() {
   return aChecker.IsValid();
 }
 
+void shape::set_txture_map_type(texture_mapping_rule t) {
+  _txture_map_type = t;
+  if (_txture_map_type == texture_cube) {
+    prepare_box_texture_coordinates(_shape);
+  }
+}
+
 int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
                                double deflection, double angle,
                                bool uv_coords) {
@@ -676,12 +687,12 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
         }
 
         if (uv_coords) {
-          if (_txture_map_type == atNormal ||
-              _txture_map_type == atNormalAutoScale) {
+          if (_txture_map_type == texture_normal ||
+              _txture_map_type == texture_normal_auto_scale) {
             BRepTools::UVBounds(face, Umin, Umax, Vmin, Vmax);
             dUmax = (Umax - Umin);
             dVmax = (Vmax - Vmin);
-            if (_txture_map_type == atNormalAutoScale) {
+            if (_txture_map_type == texture_normal_auto_scale) {
               _scale_u = _auto_scale_size_on_u / dUmax;
               _scale_v = _auto_scale_size_on_v / dVmax;
             }
@@ -689,12 +700,12 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
           const TColgp_Array1OfPnt2d &UVNodes = mesh->UVNodes();
           TColgp_Array1OfPnt2d coords(1, UVNodes.Length());
           for (int i = UVNodes.Lower(); i <= UVNodes.Upper(); i++) {
-            if (_txture_map_type == atCube) {
-              gp_Dir dir(norms.Value((j * 3) + 1), norms.Value((j * 3) + 2),
-                         norms.Value((j * 3) + 3));
+            if (_txture_map_type == texture_cube) {
+              gp_Dir dir(norms.Value((i * 3) + 1), norms.Value((i * 3) + 2),
+                         norms.Value((i * 3) + 3));
               get_box_texture_coordinate(
-                  nodes(i).Transformed(aLocation.Transformation()),
-                  dir.Transformed(aLocation.Transformation()), theCoord_p);
+                  nodes(i).Transformed(loc.Transformation()),
+                  dir.Transformed(loc.Transformation()), theCoord_p);
               d_coord.SetX(
                   (-_u_origin + (_u_repeat * theCoord_p.X()) / _bnd_box_sz) /
                   _scale_u);
@@ -711,7 +722,7 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
                   _scale_v);
             }
             d_coord.Rotate(gp::Origin2d(), _rotation_angle);
-            coords(i) = d_coord;
+            coords.SetValue(i, d_coord);
           }
 
           for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
@@ -741,12 +752,12 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
         }
       } else {
         if (uv_coords) {
-          if (_txture_map_type == atNormal ||
-              _txture_map_type == atNormalAutoScale) {
+          if (_txture_map_type == texture_normal ||
+              _txture_map_type == texture_normal_auto_scale) {
             BRepTools::UVBounds(face, Umin, Umax, Vmin, Vmax);
             dUmax = (Umax - Umin);
             dVmax = (Vmax - Vmin);
-            if (_txture_map_type == atNormalAutoScale) {
+            if (_txture_map_type == texture_normal_auto_scale) {
               _scale_u = _auto_scale_size_on_u / dUmax;
               _scale_v = _auto_scale_size_on_v / dVmax;
             }
@@ -754,13 +765,13 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
           const TColgp_Array1OfPnt2d &UVNodes = mesh->UVNodes();
           TColgp_Array1OfPnt2d coords(1, UVNodes.Length());
           for (int i = UVNodes.Lower(); i <= UVNodes.Upper(); i++) {
-            if (_txture_map_type == atCube) {
-              gp_Dir dir(mesh->Normals().Value((j * 3) + 1),
-                         mesh->Normals().Value((j * 3) + 2),
-                         mesh->Normals().Value((j * 3) + 3));
+            if (_txture_map_type == texture_cube) {
+              gp_Dir dir(mesh->Normals().Value((i * 3) + 1),
+                         mesh->Normals().Value((i * 3) + 2),
+                         mesh->Normals().Value((i * 3) + 3));
               get_box_texture_coordinate(
-                  nodes(i).Transformed(aLocation.Transformation()),
-                  dir.Transformed(aLocation.Transformation()), theCoord_p);
+                  nodes(i).Transformed(loc.Transformation()),
+                  dir.Transformed(loc.Transformation()), theCoord_p);
               d_coord.SetX(
                   (-_u_origin + (_u_repeat * theCoord_p.X()) / _bnd_box_sz) /
                   _scale_u);
@@ -777,7 +788,7 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
                   _scale_v);
             }
             d_coord.Rotate(gp::Origin2d(), _rotation_angle);
-            coords(i) = d_coord;
+            coords.SetValue(i, d_coord);
           }
 
           for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
@@ -792,6 +803,7 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
             if (faceReversed)
               dir.Reverse();
             dir = quaternion.Multiply(dir);
+            gp_Pnt2d coord = coords(j);
             meshReceiver.append_node(faceId, gp_Pnt{px, py, pz},
                                      gp_Pnt{dir.X(), dir.Y(), dir.Z()}, coord);
           }
@@ -1038,7 +1050,7 @@ void shape::prepare_box_texture_coordinates(const TopoDS_Shape &aShape) {
     aYmax += (zDim - yDim) / 2;
   }
 
-  aBndBoxSz = aXmax - aXmin;
+  _bnd_box_sz = aXmax - aXmin;
 }
 
 void shape::get_box_texture_coordinate(const gp_Pnt &p, const gp_Dir &N1,
@@ -1049,29 +1061,29 @@ void shape::get_box_texture_coordinate(const gp_Pnt &p, const gp_Dir &N1,
 
   if (x >= y && x >= z) {
     if (N1.X() > 0) {
-      theCoord_p.SetX(p.Y() - aYmin);
-      theCoord_p.SetY(p.Z() - aZmin);
+      theCoord_p.SetX(p.Y() - _Ymin);
+      theCoord_p.SetY(p.Z() - _Zmin);
       theCoord_p.Rotate(M_PI / 2.);
     } else {
-      theCoord_p.SetX(p.Z() - aZmin);
-      theCoord_p.SetY(p.Y() - aYmin);
+      theCoord_p.SetX(p.Z() - _Zmin);
+      theCoord_p.SetY(p.Y() - _Ymin);
     }
   } else if ((y >= z) && (y >= x)) {
     if (N1.Y() > 0) {
-      theCoord_p.SetX(p.X() - aXmin);
-      theCoord_p.SetY(-(p.Z() - aZmin));
+      theCoord_p.SetX(p.X() - _Xmin);
+      theCoord_p.SetY(-(p.Z() - _Zmin));
     } else {
-      theCoord_p.SetY(p.Z() - aZmin);
-      theCoord_p.SetX(p.X() - aXmin);
+      theCoord_p.SetY(p.Z() - _Zmin);
+      theCoord_p.SetX(p.X() - _Xmin);
       theCoord_p.Rotate(M_PI);
     }
   } else {
     if (N1.Z() > 0) {
-      theCoord_p.SetX(p.X() - aXmin);
-      theCoord_p.SetY(p.Y() - aYmin);
+      theCoord_p.SetX(p.X() - _Xmin);
+      theCoord_p.SetY(p.Y() - _Ymin);
     } else {
-      theCoord_p.SetX(p.Y() - aYmin);
-      theCoord_p.SetY(p.X() - aXmin);
+      theCoord_p.SetX(p.Y() - _Ymin);
+      theCoord_p.SetY(p.X() - _Xmin);
       theCoord_p.Rotate(M_PI / 2.);
     }
   }

@@ -224,10 +224,11 @@ topo_shape_t *topo_shape_copy(topo_shape_t *p) {
 }
 
 int topo_shape_mesh(topo_shape_t *p, topo_mesh_receiver_t *receiver,
-                    double tolerance, double deflection, double angle) {
+                    double tolerance, double deflection, double angle,
+                    _Bool uv_coords) {
   if (p) {
     return p->shp->write_triangulation(*receiver->recv, tolerance, deflection,
-                                       angle);
+                                       angle, uv_coords);
   }
   return 1;
 }
@@ -250,6 +251,67 @@ void topo_shape_set_label(topo_shape_t *p, const char *name) {
   }
 }
 
+void topo_shape_set_u_origin(topo_shape_t *p, double u) {
+  if (p) {
+    p->shp->set_u_origin(u);
+  }
+}
+
+void topo_shape_set_v_origin(topo_shape_t *p, double v) {
+  if (p) {
+    p->shp->set_v_origin(v);
+  }
+}
+
+void topo_shape_set_u_repeat(topo_shape_t *p, double u) {
+  if (p) {
+    p->shp->set_u_repeat(u);
+  }
+}
+
+void topo_shape_set_v_repeat(topo_shape_t *p, double v) {
+  if (p) {
+    p->shp->set_v_repeat(v);
+  }
+}
+
+void topo_shape_set_scale_v(topo_shape_t *p, double v) {
+  if (p) {
+    p->shp->set_scale_v(v);
+  }
+}
+
+void topo_shape_set_scale_u(topo_shape_t *p, double u) {
+  if (p) {
+    p->shp->set_scale_u(u);
+  }
+}
+
+void topo_shape_set_auto_scale_size_on_u(topo_shape_t *p, double u) {
+  if (p) {
+    p->shp->set_auto_scale_size_on_u(u);
+  }
+}
+
+void topo_shape_set_auto_scale_size_on_v(topo_shape_t *p, double v) {
+  if (p) {
+    p->shp->set_auto_scale_size_on_v(v);
+  }
+}
+
+void topo_shape_set_txture_map_type(topo_shape_t *p, int t) {
+  if (p) {
+    p->shp->set_txture_map_type(
+        static_cast<flywave::topo::texture_mapping_rule>(t));
+  }
+}
+
+void topo_shape_set_rotation_angle(topo_shape_t *p, double angle) {
+  if (p) {
+    p->shp->set_rotation_angle(angle);
+  }
+}
+
 color_t topo_shape_get_surface_colour(topo_shape_t *p) {
   if (p) {
     return cast_from_gp(p->shp->surface_colour());
@@ -269,6 +331,76 @@ const char *topo_shape_get_label(topo_shape_t *p) {
     return p->shp->label();
   }
   return nullptr;
+}
+
+double topo_shape_get_u_origin(topo_shape_t *p) {
+  if (p) {
+    return p->shp->get_u_origin();
+  }
+  return 0.;
+}
+
+double topo_shape_get_v_origin(topo_shape_t *p) {
+  if (p) {
+    return p->shp->get_v_origin();
+  }
+  return 0.;
+}
+
+double topo_shape_get_u_repeat(topo_shape_t *p) {
+  if (p) {
+    return p->shp->get_u_repeat();
+  }
+  return 1.;
+}
+
+double topo_shape_get_v_repeat(topo_shape_t *p) {
+  if (p) {
+    return p->shp->get_v_repeat();
+  }
+  return 1.;
+}
+
+double topo_shape_get_scale_v(topo_shape_t *p) {
+  if (p) {
+    return p->shp->get_scale_v();
+  }
+  return 1.;
+}
+
+double topo_shape_get_scale_u(topo_shape_t *p) {
+  if (p) {
+    return p->shp->get_scale_u();
+  }
+  return 1.;
+}
+
+double topo_shape_get_auto_scale_size_on_u(topo_shape_t *p) {
+  if (p) {
+    return p->shp->get_auto_scale_size_on_u();
+  }
+  return 1.;
+}
+
+double topo_shape_get_auto_scale_size_on_v(topo_shape_t *p) {
+  if (p) {
+    return p->shp->get_auto_scale_size_on_v();
+  }
+  return 1.;
+}
+
+int topo_shape_get_txture_map_type(topo_shape_t *p) {
+  if (p) {
+    return p->shp->get_txture_map_type();
+  }
+  return TextureNormal;
+}
+
+double topo_shape_get_rotation_angle(topo_shape_t *p) {
+  if (p) {
+    return p->shp->get_rotation_angle();
+  }
+  return 1.;
 }
 
 _Bool topo_shape_surface_colour(topo_shape_t *p, double *colour) {

@@ -21,7 +21,11 @@
 namespace flywave {
 namespace topo {
 
-enum texture_mapping_rule { atCube, atNormal, atNormalAutoScale };
+enum texture_mapping_rule {
+  texture_cube,
+  texture_normal,
+  texture_normal_auto_scale
+};
 
 class shape : public geometry_object {
 public:
@@ -50,10 +54,30 @@ public:
   void set_surface_colour(const Quantity_Color &c) { _surface_colour = c; }
   void set_curve_colour(const Quantity_Color &c) { _curve_colour = c; }
   void set_label(const char *name) { _label = std::string(name); }
+  void set_u_origin(double u) { _u_origin = u; }
+  void set_v_origin(double v) { _v_origin = v; }
+  void set_u_repeat(double u) { _u_repeat = u; }
+  void set_v_repeat(double v) { _v_repeat = v; }
+  void set_scale_v(double u) { _scale_v = u; }
+  void set_scale_u(double v) { _scale_u = v; }
+  void set_auto_scale_size_on_u(double u) { _auto_scale_size_on_u = u; }
+  void set_auto_scale_size_on_v(double v) { _auto_scale_size_on_v = v; }
+  void set_txture_map_type(texture_mapping_rule t);
+  void set_rotation_angle(double angle) { _rotation_angle = angle; }
 
   Quantity_Color surface_colour() const { return _surface_colour; }
   Quantity_Color curve_colour() const { return _curve_colour; }
   const char *label() const { return _label.c_str(); }
+  double get_u_origin() const { return _u_origin; }
+  double get_v_origin() const { return _v_origin; }
+  double get_u_repeat() const { return _u_repeat; }
+  double get_v_repeat() const { return _v_repeat; }
+  double get_scale_v() const { return _scale_v; }
+  double get_scale_u() const { return _scale_u; }
+  double get_auto_scale_size_on_u() const { return _auto_scale_size_on_u; }
+  double get_auto_scale_size_on_v() const { return _auto_scale_size_on_v; }
+  texture_mapping_rule get_txture_map_type() const { return _txture_map_type; }
+  double get_rotation_angle() const { return _rotation_angle; }
 
   bool surface_colour(double *colour) const;
 
@@ -153,6 +177,7 @@ protected:
   Standard_Real _rotation_angle;
   texture_mapping_rule _txture_map_type;
   Standard_Real _bnd_box_sz;
+  Standard_Real _Xmin, _Ymin, _Zmin, _Xmax, _Ymax, _Zmax;
 };
 } // namespace topo
 } // namespace flywave

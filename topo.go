@@ -36,6 +36,12 @@ const (
 )
 
 const (
+	TextureCube            = int(C.TextureCube)
+	TextureNormal          = int(C.TextureNormal)
+	TextureNormalAutoScale = int(C.TextureNormalAutoScale)
+)
+
+const (
 	TopoSolid     = int(C.TopoSolid)
 	TopoShell     = int(C.TopoShell)
 	TopoFace      = int(C.TopoFace)
@@ -56,13 +62,14 @@ const (
 )
 
 type MeshReceiver struct {
-	inner *innerMeshReceiver
-	index int
-	Faces []Color
-	Vers  [][]Point3
-	Norms [][]Point3
-	UVs   [][]Point2
-	Tris  [][][3]int
+	hasTexCoords bool
+	inner        *innerMeshReceiver
+	index        int
+	Faces        []Color
+	Vers         [][]Point3
+	Norms        [][]Point3
+	TexCoords    [][]Point2
+	Tris         [][][3]int
 }
 
 type innerMeshReceiver struct {
@@ -70,7 +77,7 @@ type innerMeshReceiver struct {
 }
 
 func NewMeshReceiver() *MeshReceiver {
-	ret := &MeshReceiver{inner: nil, index: -1}
+	ret := &MeshReceiver{inner: nil, index: -1, hasTexCoords: false}
 	var cb C.struct__mesh_receiver_cb_t
 	cb.ctx = unsafe.Pointer(ret)
 	ret.inner = &innerMeshReceiver{C.topo_mesh_receiver_new(cb)}
@@ -82,9 +89,15 @@ func (m *MeshReceiver) begin() {
 	m.Faces = append(m.Faces, Color{})
 	m.Vers = append(m.Vers, []Point3{})
 	m.Norms = append(m.Norms, []Point3{})
-	m.UVs = append(m.UVs, []Point2{})
 	m.Tris = append(m.Tris, [][3]int{})
+	if m.hasTexCoords {
+		m.TexCoords = append(m.TexCoords, []Point2{})
+	}
 	m.index++
+}
+
+func (m *MeshReceiver) HasTexCoord() bool {
+	return m.hasTexCoords
 }
 
 func (m *MeshReceiver) end() {
@@ -103,7 +116,9 @@ func (m *MeshReceiver) appendNodeNorm(f int, p, n Point3) {
 func (m *MeshReceiver) appendNodeNormUv(f int, p, n Point3, uv Point2) {
 	m.Vers[f] = append(m.Vers[f], p)
 	m.Norms[f] = append(m.Norms[f], n)
-	m.UVs[f] = append(m.UVs[f], uv)
+	if m.hasTexCoords {
+		m.TexCoords[f] = append(m.TexCoords[f], uv)
+	}
 }
 
 func (m *MeshReceiver) appendNode(f int, p Point3) {
@@ -287,7 +302,12 @@ func (s *Shape) Share() *Shape {
 }
 
 func (s *Shape) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) int8 {
-	return int8(C.topo_shape_mesh(s.inner.val, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle)))
+	return int8(C.topo_shape_mesh(s.inner.val, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(false)))
+}
+
+func (s *Shape) MeshWithTexture(m *MeshReceiver, tolerance, deflection, angle float64) int8 {
+	m.hasTexCoords = true
+	return int8(C.topo_shape_mesh(s.inner.val, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(true)))
 }
 
 func (s *Shape) SetSurfaceColour(c Color) {
@@ -296,6 +316,40 @@ func (s *Shape) SetSurfaceColour(c Color) {
 
 func (s *Shape) SetCurveColour(c Color) {
 	C.topo_shape_set_curve_colour(s.inner.val, c.val)
+}
+
+func (s *Shape) SetUVOrigin(u, v float64) {
+	C.topo_shape_set_u_origin(s.inner.val, C.double(u))
+	C.topo_shape_set_v_origin(s.inner.val, C.double(v))
+}
+
+func (s *Shape) SetUVRepeat(u, v float64) {
+	C.topo_shape_set_u_repeat(s.inner.val, C.double(u))
+	C.topo_shape_set_v_repeat(s.inner.val, C.double(v))
+}
+
+func (s *Shape) SetScaleU(u float64) {
+	C.topo_shape_set_scale_u(s.inner.val, C.double(u))
+}
+
+func (s *Shape) SetScaleV(v float64) {
+	C.topo_shape_set_scale_v(s.inner.val, C.double(v))
+}
+
+func (s *Shape) SetAutoScaleSizeOnU(u float64) {
+	C.topo_shape_set_auto_scale_size_on_u(s.inner.val, C.double(u))
+}
+
+func (s *Shape) SetAutoScaleSizeOnV(v float64) {
+	C.topo_shape_set_auto_scale_size_on_v(s.inner.val, C.double(v))
+}
+
+func (s *Shape) SetTxtureMapType(t int) {
+	C.topo_shape_set_txture_map_type(s.inner.val, C.int(t))
+}
+
+func (s *Shape) SetRotationAngle(a float64) {
+	C.topo_shape_set_rotation_angle(s.inner.val, C.double(a))
 }
 
 func (s *Shape) SetLabel(l string) {
@@ -314,6 +368,38 @@ func (s *Shape) GetCurveColour() Color {
 
 func (s *Shape) GetLabel() string {
 	return C.GoString(C.topo_shape_get_label(s.inner.val))
+}
+
+func (s *Shape) GetUVOrigin() (u, v float64) {
+	u = float64(C.topo_shape_get_u_origin(s.inner.val))
+	v = float64(C.topo_shape_get_v_origin(s.inner.val))
+	return
+}
+
+func (s *Shape) GetUVRepeat() (u, v float64) {
+	u = float64(C.topo_shape_get_u_repeat(s.inner.val))
+	v = float64(C.topo_shape_get_v_repeat(s.inner.val))
+	return
+}
+
+func (s *Shape) GetUVScale() (u, v float64) {
+	u = float64(C.topo_shape_get_scale_u(s.inner.val))
+	v = float64(C.topo_shape_get_scale_v(s.inner.val))
+	return
+}
+
+func (s *Shape) GetUVAutoScaleSize() (u, v float64) {
+	u = float64(C.topo_shape_get_auto_scale_size_on_u(s.inner.val))
+	v = float64(C.topo_shape_get_auto_scale_size_on_v(s.inner.val))
+	return
+}
+
+func (s *Shape) GetTxtureMapType() int {
+	return int(C.topo_shape_get_txture_map_type(s.inner.val))
+}
+
+func (s *Shape) GetRotationAngle() float64 {
+	return float64(C.topo_shape_get_rotation_angle(s.inner.val))
 }
 
 func (t *Shape) free() {
@@ -516,7 +602,12 @@ func (s *CompSolid) Copy() *CompSolid {
 }
 
 func (s *CompSolid) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
-	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle))
+	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(false))
+}
+
+func (s *CompSolid) MeshWithTexture(m *MeshReceiver, tolerance, deflection, angle float64) {
+	m.hasTexCoords = true
+	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(true))
 }
 
 func (s *CompSolid) SetSurfaceColour(c Color) {
@@ -886,7 +977,12 @@ func (s *Compound) Copy() *Compound {
 }
 
 func (s *Compound) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
-	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle))
+	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(false))
+}
+
+func (s *Compound) MeshWithTexture(m *MeshReceiver, tolerance, deflection, angle float64) {
+	m.hasTexCoords = true
+	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(true))
 }
 
 func (s *Compound) SetSurfaceColour(c Color) {
@@ -1259,7 +1355,12 @@ func (s *Edge) Copy() *Edge {
 }
 
 func (s *Edge) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
-	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle))
+	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(false))
+}
+
+func (s *Edge) MeshWithTexture(m *MeshReceiver, tolerance, deflection, angle float64) {
+	m.hasTexCoords = true
+	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(true))
 }
 
 func (s *Edge) SetSurfaceColour(c Color) {
@@ -1783,7 +1884,12 @@ func (s *Face) Copy() *Face {
 }
 
 func (s *Face) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
-	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle))
+	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(false))
+}
+
+func (s *Face) MeshWithTexture(m *MeshReceiver, tolerance, deflection, angle float64) {
+	m.hasTexCoords = true
+	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(true))
 }
 
 func (s *Face) SetSurfaceColour(c Color) {
@@ -2353,7 +2459,12 @@ func (s *Solid) Copy() *Solid {
 }
 
 func (s *Solid) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
-	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle))
+	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(false))
+}
+
+func (s *Solid) MeshWithTexture(m *MeshReceiver, tolerance, deflection, angle float64) {
+	m.hasTexCoords = true
+	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(true))
 }
 
 func (s *Solid) SetSurfaceColour(c Color) {
@@ -2911,7 +3022,12 @@ func (s *Vertex) Copy() *Vertex {
 }
 
 func (s *Vertex) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
-	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle))
+	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(false))
+}
+
+func (s *Vertex) MeshWithTexture(m *MeshReceiver, tolerance, deflection, angle float64) {
+	m.hasTexCoords = true
+	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(true))
 }
 
 func (s *Vertex) SetSurfaceColour(c Color) {
@@ -3113,7 +3229,12 @@ func (s *Wire) Copy() *Wire {
 }
 
 func (s *Wire) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
-	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle))
+	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(false))
+}
+
+func (s *Wire) MeshWithTexture(m *MeshReceiver, tolerance, deflection, angle float64) {
+	m.hasTexCoords = true
+	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(true))
 }
 
 func (s *Wire) SetSurfaceColour(c Color) {
