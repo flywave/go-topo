@@ -74,6 +74,8 @@ typedef struct _mesh_receiver_cb_t {
   void (*end)(void *ctx);
   int (*append_face)(void *ctx, color_t color);
   void (*append_node_norm)(void *ctx, int face, pnt3d_t p, pnt3d_t n);
+  void (*append_node_norm_uv)(void *ctx, int face, pnt3d_t p, pnt3d_t n,
+                              pnt2d_t uv);
   void (*append_node)(void *ctx, int face, pnt3d_t p);
   void (*append_triangle)(void *ctx, int face, int a, int b, int c);
 } mesh_receiver_cb_t;

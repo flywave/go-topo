@@ -2521,6 +2521,11 @@ public:
                                 cast_from_gp(n));
   }
 
+  void append_node(int face, gp_Pnt p, gp_Pnt n, gp_Pnt2d uv) override {
+    return _cb.append_node_norm_uv(_cb.ctx, face, cast_from_gp(p),
+                                   cast_from_gp(n), cast_from_gp(uv));
+  }
+
   void append_node(int face, gp_Pnt p) override {
     return _cb.append_node(_cb.ctx, face, cast_from_gp(p));
   }
@@ -2537,6 +2542,8 @@ extern void begin(void *ctx);
 extern void end(void *ctx);
 extern int appendFace(void *ctx, color_t color);
 extern void appendNodeNorm(void *ctx, int face, pnt3d_t p, pnt3d_t n);
+extern void appendNodeNormUv(void *ctx, int face, pnt3d_t p, pnt3d_t n,
+                             pnt2d_t uv);
 extern void appendNode(void *ctx, int face, pnt3d_t p);
 extern void appendTriangle(void *ctx, int face, int a, int b, int c);
 
@@ -2546,6 +2553,7 @@ topo_mesh_receiver_t *topo_mesh_receiver_new(mesh_receiver_cb_t cb) {
   cb.append_face = appendFace;
   cb.append_node = appendNode;
   cb.append_node_norm = appendNodeNorm;
+  cb.append_node_norm_uv = appendNodeNormUv;
   cb.append_triangle = appendTriangle;
   return new topo_mesh_receiver_t{
       std::unique_ptr<flywave::topo::mesh_receiver>(new go_mesh_receiver(cb))};

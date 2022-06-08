@@ -61,6 +61,7 @@ type MeshReceiver struct {
 	Faces []Color
 	Vers  [][]Point3
 	Norms [][]Point3
+	UVs   [][]Point2
 	Tris  [][][3]int
 }
 
@@ -81,6 +82,7 @@ func (m *MeshReceiver) begin() {
 	m.Faces = append(m.Faces, Color{})
 	m.Vers = append(m.Vers, []Point3{})
 	m.Norms = append(m.Norms, []Point3{})
+	m.UVs = append(m.UVs, []Point2{})
 	m.Tris = append(m.Tris, [][3]int{})
 	m.index++
 }
@@ -96,6 +98,12 @@ func (m *MeshReceiver) appendFace(c Color) int {
 func (m *MeshReceiver) appendNodeNorm(f int, p, n Point3) {
 	m.Vers[f] = append(m.Vers[f], p)
 	m.Norms[f] = append(m.Norms[f], n)
+}
+
+func (m *MeshReceiver) appendNodeNormUv(f int, p, n Point3, uv Point2) {
+	m.Vers[f] = append(m.Vers[f], p)
+	m.Norms[f] = append(m.Norms[f], n)
+	m.UVs[f] = append(m.UVs[f], uv)
 }
 
 func (m *MeshReceiver) appendNode(f int, p Point3) {

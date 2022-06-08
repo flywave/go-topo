@@ -586,7 +586,19 @@ bool shape::fix_shape() {
 }
 
 int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
-                               double deflection, double angle) {
+                               double deflection, double angle,
+                               bool uv_coords) {
+  Standard_Real Umin;
+  Standard_Real Umax;
+  Standard_Real Vmin;
+  Standard_Real Vmax;
+
+  Standard_Real dUmax;
+  Standard_Real dVmax;
+
+  gp_Vec2d theCoord_p;
+  gp_Pnt2d d_coord;
+
   try {
     TopTools_IndexedMapOfShape faceMap;
     TopoDS_Shape shape = *this;
@@ -629,7 +641,6 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
       Poly::ComputeNormals(mesh);
 
       if (hasSeam) {
-
         TColStd_Array1OfReal norms(1, mesh->Normals().Length());
         for (Standard_Integer i = 1; i <= mesh->NbNodes() * 3; i += 3) {
           gp_Dir dir(mesh->Normals().Value(i), mesh->Normals().Value(i + 1),
@@ -664,32 +675,142 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
             uniquePointsOnFace.emplace(pt, j);
         }
 
-        for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
-          gp_Pnt p = nodes.Value(j + 1);
-          Standard_Real px = p.X();
-          Standard_Real py = p.Y();
-          Standard_Real pz = p.Z();
-          transform.Transforms(px, py, pz);
-          gp_Dir dir(norms.Value((j * 3) + 1), norms.Value((j * 3) + 2),
-                     norms.Value((j * 3) + 3));
-          meshReceiver.append_node(faceId, gp_Pnt{px, py, pz},
-                                   gp_Pnt{dir.X(), dir.Y(), dir.Z()});
+        if (uv_coords) {
+          if (_txture_map_type == atNormal ||
+              _txture_map_type == atNormalAutoScale) {
+            BRepTools::UVBounds(face, Umin, Umax, Vmin, Vmax);
+            dUmax = (Umax - Umin);
+            dVmax = (Vmax - Vmin);
+            if (_txture_map_type == atNormalAutoScale) {
+              _scale_u = _auto_scale_size_on_u / dUmax;
+              _scale_v = _auto_scale_size_on_v / dVmax;
+            }
+          }
+          const TColgp_Array1OfPnt2d &UVNodes = mesh->UVNodes();
+          TColgp_Array1OfPnt2d coords(1, UVNodes.Length());
+          for (int i = UVNodes.Lower(); i <= UVNodes.Upper(); i++) {
+            if (_txture_map_type == atCube) {
+              gp_Dir dir(norms.Value((j * 3) + 1), norms.Value((j * 3) + 2),
+                         norms.Value((j * 3) + 3));
+              get_box_texture_coordinate(
+                  nodes(i).Transformed(aLocation.Transformation()),
+                  dir.Transformed(aLocation.Transformation()), theCoord_p);
+              d_coord.SetX(
+                  (-_u_origin + (_u_repeat * theCoord_p.X()) / _bnd_box_sz) /
+                  _scale_u);
+              d_coord.SetY(
+                  (-_v_origin + (_v_repeat * theCoord_p.Y()) / _bnd_box_sz) /
+                  _scale_v);
+            } else {
+              d_coord = UVNodes(i);
+              d_coord.SetX(
+                  (-_u_origin + (_u_repeat * (d_coord.X() - Umin)) / dUmax) /
+                  _scale_u);
+              d_coord.SetY(
+                  (-_v_origin + (_v_repeat * (d_coord.Y() - Vmin)) / dVmax) /
+                  _scale_v);
+            }
+            d_coord.Rotate(gp::Origin2d(), _rotation_angle);
+            coords(i) = d_coord;
+          }
+
+          for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
+            gp_Pnt p = nodes.Value(j + 1);
+            Standard_Real px = p.X();
+            Standard_Real py = p.Y();
+            Standard_Real pz = p.Z();
+            transform.Transforms(px, py, pz);
+            gp_Dir dir(norms.Value((j * 3) + 1), norms.Value((j * 3) + 2),
+                       norms.Value((j * 3) + 3));
+            gp_Pnt2d coord = coords(j);
+            meshReceiver.append_node(faceId, gp_Pnt{px, py, pz},
+                                     gp_Pnt{dir.X(), dir.Y(), dir.Z()}, coord);
+          }
+        } else {
+          for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
+            gp_Pnt p = nodes.Value(j + 1);
+            Standard_Real px = p.X();
+            Standard_Real py = p.Y();
+            Standard_Real pz = p.Z();
+            transform.Transforms(px, py, pz);
+            gp_Dir dir(norms.Value((j * 3) + 1), norms.Value((j * 3) + 2),
+                       norms.Value((j * 3) + 3));
+            meshReceiver.append_node(faceId, gp_Pnt{px, py, pz},
+                                     gp_Pnt{dir.X(), dir.Y(), dir.Z()});
+          }
         }
       } else {
-        for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
-          gp_Pnt p = nodes.Value(j + 1);
-          Standard_Real px = p.X();
-          Standard_Real py = p.Y();
-          Standard_Real pz = p.Z();
-          transform.Transforms(px, py, pz);
-          gp_Dir dir(mesh->Normals().Value((j * 3) + 1),
-                     mesh->Normals().Value((j * 3) + 2),
-                     mesh->Normals().Value((j * 3) + 3));
-          if (faceReversed)
-            dir.Reverse();
-          dir = quaternion.Multiply(dir);
-          meshReceiver.append_node(faceId, gp_Pnt{px, py, pz},
-                                   gp_Pnt{dir.X(), dir.Y(), dir.Z()});
+        if (uv_coords) {
+          if (_txture_map_type == atNormal ||
+              _txture_map_type == atNormalAutoScale) {
+            BRepTools::UVBounds(face, Umin, Umax, Vmin, Vmax);
+            dUmax = (Umax - Umin);
+            dVmax = (Vmax - Vmin);
+            if (_txture_map_type == atNormalAutoScale) {
+              _scale_u = _auto_scale_size_on_u / dUmax;
+              _scale_v = _auto_scale_size_on_v / dVmax;
+            }
+          }
+          const TColgp_Array1OfPnt2d &UVNodes = mesh->UVNodes();
+          TColgp_Array1OfPnt2d coords(1, UVNodes.Length());
+          for (int i = UVNodes.Lower(); i <= UVNodes.Upper(); i++) {
+            if (_txture_map_type == atCube) {
+              gp_Dir dir(mesh->Normals().Value((j * 3) + 1),
+                         mesh->Normals().Value((j * 3) + 2),
+                         mesh->Normals().Value((j * 3) + 3));
+              get_box_texture_coordinate(
+                  nodes(i).Transformed(aLocation.Transformation()),
+                  dir.Transformed(aLocation.Transformation()), theCoord_p);
+              d_coord.SetX(
+                  (-_u_origin + (_u_repeat * theCoord_p.X()) / _bnd_box_sz) /
+                  _scale_u);
+              d_coord.SetY(
+                  (-_v_origin + (_v_repeat * theCoord_p.Y()) / _bnd_box_sz) /
+                  _scale_v);
+            } else {
+              d_coord = UVNodes(i);
+              d_coord.SetX(
+                  (-_u_origin + (_u_repeat * (d_coord.X() - Umin)) / dUmax) /
+                  _scale_u);
+              d_coord.SetY(
+                  (-_v_origin + (_v_repeat * (d_coord.Y() - Vmin)) / dVmax) /
+                  _scale_v);
+            }
+            d_coord.Rotate(gp::Origin2d(), _rotation_angle);
+            coords(i) = d_coord;
+          }
+
+          for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
+            gp_Pnt p = nodes.Value(j + 1);
+            Standard_Real px = p.X();
+            Standard_Real py = p.Y();
+            Standard_Real pz = p.Z();
+            transform.Transforms(px, py, pz);
+            gp_Dir dir(mesh->Normals().Value((j * 3) + 1),
+                       mesh->Normals().Value((j * 3) + 2),
+                       mesh->Normals().Value((j * 3) + 3));
+            if (faceReversed)
+              dir.Reverse();
+            dir = quaternion.Multiply(dir);
+            meshReceiver.append_node(faceId, gp_Pnt{px, py, pz},
+                                     gp_Pnt{dir.X(), dir.Y(), dir.Z()}, coord);
+          }
+        } else {
+          for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
+            gp_Pnt p = nodes.Value(j + 1);
+            Standard_Real px = p.X();
+            Standard_Real py = p.Y();
+            Standard_Real pz = p.Z();
+            transform.Transforms(px, py, pz);
+            gp_Dir dir(mesh->Normals().Value((j * 3) + 1),
+                       mesh->Normals().Value((j * 3) + 2),
+                       mesh->Normals().Value((j * 3) + 3));
+            if (faceReversed)
+              dir.Reverse();
+            dir = quaternion.Multiply(dir);
+            meshReceiver.append_node(faceId, gp_Pnt{px, py, pz},
+                                     gp_Pnt{dir.X(), dir.Y(), dir.Z()});
+          }
         }
       }
 
@@ -884,6 +1005,76 @@ void shape::clear_maps() {
   _vmap.Clear();
   _emap.Clear();
   _fmap.Clear();
+}
+
+void shape::prepare_box_texture_coordinates(const TopoDS_Shape &aShape) {
+  Bnd_Box aBox;
+  Standard_Real aXmin, aYmin, aZmin, aXmax, aYmax, aZmax;
+
+  BRepBndLib::Add(aShape, aBox);
+  aBox.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
+
+  Standard_Real xDim = std::abs((long)aXmax - (long)aXmin);
+  Standard_Real yDim = std::abs((long)aYmax - (long)aYmin);
+  Standard_Real zDim = std::abs((long)aZmax - (long)aZmin);
+
+  if ((xDim > yDim) && (xDim > zDim)) {
+    aYmin -= (xDim - yDim) / 2;
+    aYmax += (xDim - yDim) / 2;
+
+    aZmin -= (xDim - zDim) / 2;
+    aZmax += (xDim - zDim) / 2;
+  } else if ((yDim > xDim) && (yDim > zDim)) {
+    aXmin -= (yDim - xDim) / 2;
+    aXmax += (yDim - xDim) / 2;
+
+    aZmin -= (yDim - zDim) / 2;
+    aZmax += (yDim - zDim) / 2;
+  } else {
+    aXmin -= (zDim - xDim) / 2;
+    aXmax += (zDim - xDim) / 2;
+
+    aYmin -= (zDim - yDim) / 2;
+    aYmax += (zDim - yDim) / 2;
+  }
+
+  aBndBoxSz = aXmax - aXmin;
+}
+
+void shape::get_box_texture_coordinate(const gp_Pnt &p, const gp_Dir &N1,
+                                       gp_Vec2d &theCoord_p) {
+  Standard_Real x = std::abs(N1.X());
+  Standard_Real y = std::abs(N1.Y());
+  Standard_Real z = std::abs(N1.Z());
+
+  if (x >= y && x >= z) {
+    if (N1.X() > 0) {
+      theCoord_p.SetX(p.Y() - aYmin);
+      theCoord_p.SetY(p.Z() - aZmin);
+      theCoord_p.Rotate(M_PI / 2.);
+    } else {
+      theCoord_p.SetX(p.Z() - aZmin);
+      theCoord_p.SetY(p.Y() - aYmin);
+    }
+  } else if ((y >= z) && (y >= x)) {
+    if (N1.Y() > 0) {
+      theCoord_p.SetX(p.X() - aXmin);
+      theCoord_p.SetY(-(p.Z() - aZmin));
+    } else {
+      theCoord_p.SetY(p.Z() - aZmin);
+      theCoord_p.SetX(p.X() - aXmin);
+      theCoord_p.Rotate(M_PI);
+    }
+  } else {
+    if (N1.Z() > 0) {
+      theCoord_p.SetX(p.X() - aXmin);
+      theCoord_p.SetY(p.Y() - aYmin);
+    } else {
+      theCoord_p.SetX(p.Y() - aYmin);
+      theCoord_p.SetY(p.X() - aXmin);
+      theCoord_p.Rotate(M_PI / 2.);
+    }
+  }
 }
 
 } // namespace topo

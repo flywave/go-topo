@@ -21,6 +21,8 @@
 namespace flywave {
 namespace topo {
 
+enum texture_mapping_rule { atCube, atNormal, atNormalAutoScale };
+
 class shape : public geometry_object {
 public:
   shape();
@@ -106,11 +108,13 @@ public:
   std::string shape_type() const;
 
   virtual int write_triangulation(mesh_receiver &mesh, double tolerance,
-                                  double deflection, double angle);
+                                  double deflection, double angle,
+                                  bool uv_coords);
 
   virtual int mesh(mesh_receiver &mesh, double precision = 1.0e-06,
-                   double deflection = 0.1, double angle = 0.5) {
-    return write_triangulation(mesh, precision, deflection, angle);
+                   double deflection = 0.1, double angle = 0.5,
+                   bool uv_coords = false) {
+    return write_triangulation(mesh, precision, deflection, angle, uv_coords);
   }
 
   virtual shape copy(bool deep = true) const;
@@ -121,6 +125,10 @@ public:
   shape(TopoDS_Shape shp) : _shape(shp) {}
 
 protected:
+  void prepare_box_texture_coordinates(const TopoDS_Shape &aShape);
+  void get_box_texture_coordinate(const gp_Pnt &p, const gp_Dir &N1,
+                                  gp_Vec2d &theCoord_p);
+
   void clear_maps();
   void build_maps();
   int transform_impl(gp_Trsf &trans);
@@ -133,6 +141,18 @@ protected:
   TopoDS_Shape _shape;
 
   TopTools_IndexedMapOfShape _vmap, _emap, _fmap;
+
+  Standard_Real _u_origin;
+  Standard_Real _v_origin;
+  Standard_Real _u_repeat;
+  Standard_Real _v_repeat;
+  Standard_Real _scale_u;
+  Standard_Real _scale_v;
+  Standard_Real _auto_scale_size_on_u;
+  Standard_Real _auto_scale_size_on_v;
+  Standard_Real _rotation_angle;
+  texture_mapping_rule _txture_map_type;
+  Standard_Real _bnd_box_sz;
 };
 } // namespace topo
 } // namespace flywave

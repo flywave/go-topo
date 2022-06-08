@@ -32,6 +32,11 @@ func appendNodeNorm(ctx unsafe.Pointer, face C.int, p, n C.struct__pnt3d_t) {
 	(*MeshReceiver)(ctx).appendNodeNorm(int(face), Point3{val: p}, Point3{val: n})
 }
 
+//export appendNodeNormUv
+func appendNodeNormUv(ctx unsafe.Pointer, face C.int, p, n C.struct__pnt3d_t, uv C.struct__pnt2d_t) {
+	(*MeshReceiver)(ctx).appendNodeNormUv(int(face), Point3{val: p}, Point3{val: n}, Point2{val: uv})
+}
+
 //export appendNode
 func appendNode(ctx unsafe.Pointer, face C.int, p C.struct__pnt3d_t) {
 	(*MeshReceiver)(ctx).appendNode(int(face), Point3{val: p})

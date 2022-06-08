@@ -21,6 +21,8 @@ public:
 
   virtual void append_node(int face, gp_Pnt p) = 0;
 
+  virtual void append_node(int face, gp_Pnt p, gp_Pnt n, gp_Pnt2d uv) = 0;
+
   virtual void append_triangle(int face, int tri[3]) = 0;
 };
 
