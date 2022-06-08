@@ -607,7 +607,7 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
   Standard_Real dUmax;
   Standard_Real dVmax;
 
-  gp_Vec2d theCoord_p;
+  gp_Vec2d _coord_p;
   gp_Pnt2d d_coord;
 
   try {
@@ -705,12 +705,12 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
                          norms.Value((i * 3) + 3));
               get_box_texture_coordinate(
                   nodes(i).Transformed(loc.Transformation()),
-                  dir.Transformed(loc.Transformation()), theCoord_p);
+                  dir.Transformed(loc.Transformation()), _coord_p);
               d_coord.SetX(
-                  (-_u_origin + (_u_repeat * theCoord_p.X()) / _bnd_box_sz) /
+                  (-_u_origin + (_u_repeat * _coord_p.X()) / _bnd_box_sz) /
                   _scale_u);
               d_coord.SetY(
-                  (-_v_origin + (_v_repeat * theCoord_p.Y()) / _bnd_box_sz) /
+                  (-_v_origin + (_v_repeat * _coord_p.Y()) / _bnd_box_sz) /
                   _scale_v);
             } else {
               d_coord = UVNodes(i);
@@ -771,12 +771,12 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
                          mesh->Normals().Value((i * 3) + 3));
               get_box_texture_coordinate(
                   nodes(i).Transformed(loc.Transformation()),
-                  dir.Transformed(loc.Transformation()), theCoord_p);
+                  dir.Transformed(loc.Transformation()), _coord_p);
               d_coord.SetX(
-                  (-_u_origin + (_u_repeat * theCoord_p.X()) / _bnd_box_sz) /
+                  (-_u_origin + (_u_repeat * _coord_p.X()) / _bnd_box_sz) /
                   _scale_u);
               d_coord.SetY(
-                  (-_v_origin + (_v_repeat * theCoord_p.Y()) / _bnd_box_sz) /
+                  (-_v_origin + (_v_repeat * _coord_p.Y()) / _bnd_box_sz) /
                   _scale_v);
             } else {
               d_coord = UVNodes(i);
@@ -1054,37 +1054,37 @@ void shape::prepare_box_texture_coordinates(const TopoDS_Shape &aShape) {
 }
 
 void shape::get_box_texture_coordinate(const gp_Pnt &p, const gp_Dir &N1,
-                                       gp_Vec2d &theCoord_p) {
+                                       gp_Vec2d &_coord_p) {
   Standard_Real x = std::abs(N1.X());
   Standard_Real y = std::abs(N1.Y());
   Standard_Real z = std::abs(N1.Z());
 
   if (x >= y && x >= z) {
     if (N1.X() > 0) {
-      theCoord_p.SetX(p.Y() - _Ymin);
-      theCoord_p.SetY(p.Z() - _Zmin);
-      theCoord_p.Rotate(M_PI / 2.);
+      _coord_p.SetX(p.Y() - _Ymin);
+      _coord_p.SetY(p.Z() - _Zmin);
+      _coord_p.Rotate(M_PI / 2.);
     } else {
-      theCoord_p.SetX(p.Z() - _Zmin);
-      theCoord_p.SetY(p.Y() - _Ymin);
+      _coord_p.SetX(p.Z() - _Zmin);
+      _coord_p.SetY(p.Y() - _Ymin);
     }
   } else if ((y >= z) && (y >= x)) {
     if (N1.Y() > 0) {
-      theCoord_p.SetX(p.X() - _Xmin);
-      theCoord_p.SetY(-(p.Z() - _Zmin));
+      _coord_p.SetX(p.X() - _Xmin);
+      _coord_p.SetY(-(p.Z() - _Zmin));
     } else {
-      theCoord_p.SetY(p.Z() - _Zmin);
-      theCoord_p.SetX(p.X() - _Xmin);
-      theCoord_p.Rotate(M_PI);
+      _coord_p.SetY(p.Z() - _Zmin);
+      _coord_p.SetX(p.X() - _Xmin);
+      _coord_p.Rotate(M_PI);
     }
   } else {
     if (N1.Z() > 0) {
-      theCoord_p.SetX(p.X() - _Xmin);
-      theCoord_p.SetY(p.Y() - _Ymin);
+      _coord_p.SetX(p.X() - _Xmin);
+      _coord_p.SetY(p.Y() - _Ymin);
     } else {
-      theCoord_p.SetX(p.Y() - _Ymin);
-      theCoord_p.SetY(p.X() - _Xmin);
-      theCoord_p.Rotate(M_PI / 2.);
+      _coord_p.SetX(p.Y() - _Ymin);
+      _coord_p.SetY(p.X() - _Xmin);
+      _coord_p.Rotate(M_PI / 2.);
     }
   }
 }

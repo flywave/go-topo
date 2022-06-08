@@ -624,6 +624,40 @@ func (s *CompSolid) SetLabel(l string) {
 	C.topo_shape_set_label(s.inner.val.shp, str)
 }
 
+func (s *CompSolid) SetUVOrigin(u, v float64) {
+	C.topo_shape_set_u_origin(s.inner.val.shp, C.double(u))
+	C.topo_shape_set_v_origin(s.inner.val.shp, C.double(v))
+}
+
+func (s *CompSolid) SetUVRepeat(u, v float64) {
+	C.topo_shape_set_u_repeat(s.inner.val.shp, C.double(u))
+	C.topo_shape_set_v_repeat(s.inner.val.shp, C.double(v))
+}
+
+func (s *CompSolid) SetScaleU(u float64) {
+	C.topo_shape_set_scale_u(s.inner.val.shp, C.double(u))
+}
+
+func (s *CompSolid) SetScaleV(v float64) {
+	C.topo_shape_set_scale_v(s.inner.val.shp, C.double(v))
+}
+
+func (s *CompSolid) SetAutoScaleSizeOnU(u float64) {
+	C.topo_shape_set_auto_scale_size_on_u(s.inner.val.shp, C.double(u))
+}
+
+func (s *CompSolid) SetAutoScaleSizeOnV(v float64) {
+	C.topo_shape_set_auto_scale_size_on_v(s.inner.val.shp, C.double(v))
+}
+
+func (s *CompSolid) SetTxtureMapType(t int) {
+	C.topo_shape_set_txture_map_type(s.inner.val.shp, C.int(t))
+}
+
+func (s *CompSolid) SetRotationAngle(a float64) {
+	C.topo_shape_set_rotation_angle(s.inner.val.shp, C.double(a))
+}
+
 func (s *CompSolid) GetSurfaceColour() Color {
 	return Color{val: C.topo_shape_get_surface_colour(s.inner.val.shp)}
 }
@@ -634,6 +668,38 @@ func (s *CompSolid) GetCurveColour() Color {
 
 func (s *CompSolid) GetLabel() string {
 	return C.GoString(C.topo_shape_get_label(s.inner.val.shp))
+}
+
+func (s *CompSolid) GetUVOrigin() (u, v float64) {
+	u = float64(C.topo_shape_get_u_origin(s.inner.val.shp))
+	v = float64(C.topo_shape_get_v_origin(s.inner.val.shp))
+	return
+}
+
+func (s *CompSolid) GetUVRepeat() (u, v float64) {
+	u = float64(C.topo_shape_get_u_repeat(s.inner.val.shp))
+	v = float64(C.topo_shape_get_v_repeat(s.inner.val.shp))
+	return
+}
+
+func (s *CompSolid) GetUVScale() (u, v float64) {
+	u = float64(C.topo_shape_get_scale_u(s.inner.val.shp))
+	v = float64(C.topo_shape_get_scale_v(s.inner.val.shp))
+	return
+}
+
+func (s *CompSolid) GetUVAutoScaleSize() (u, v float64) {
+	u = float64(C.topo_shape_get_auto_scale_size_on_u(s.inner.val.shp))
+	v = float64(C.topo_shape_get_auto_scale_size_on_v(s.inner.val.shp))
+	return
+}
+
+func (s *CompSolid) GetTxtureMapType() int {
+	return int(C.topo_shape_get_txture_map_type(s.inner.val.shp))
+}
+
+func (s *CompSolid) GetRotationAngle() float64 {
+	return float64(C.topo_shape_get_rotation_angle(s.inner.val.shp))
 }
 
 func (t *CompSolid) free() {
@@ -999,6 +1065,40 @@ func (s *Compound) SetLabel(l string) {
 	C.topo_shape_set_label(s.inner.val.shp, str)
 }
 
+func (s *Compound) SetUVOrigin(u, v float64) {
+	C.topo_shape_set_u_origin(s.inner.val.shp, C.double(u))
+	C.topo_shape_set_v_origin(s.inner.val.shp, C.double(v))
+}
+
+func (s *Compound) SetUVRepeat(u, v float64) {
+	C.topo_shape_set_u_repeat(s.inner.val.shp, C.double(u))
+	C.topo_shape_set_v_repeat(s.inner.val.shp, C.double(v))
+}
+
+func (s *Compound) SetScaleU(u float64) {
+	C.topo_shape_set_scale_u(s.inner.val.shp, C.double(u))
+}
+
+func (s *Compound) SetScaleV(v float64) {
+	C.topo_shape_set_scale_v(s.inner.val.shp, C.double(v))
+}
+
+func (s *Compound) SetAutoScaleSizeOnU(u float64) {
+	C.topo_shape_set_auto_scale_size_on_u(s.inner.val.shp, C.double(u))
+}
+
+func (s *Compound) SetAutoScaleSizeOnV(v float64) {
+	C.topo_shape_set_auto_scale_size_on_v(s.inner.val.shp, C.double(v))
+}
+
+func (s *Compound) SetTxtureMapType(t int) {
+	C.topo_shape_set_txture_map_type(s.inner.val.shp, C.int(t))
+}
+
+func (s *Compound) SetRotationAngle(a float64) {
+	C.topo_shape_set_rotation_angle(s.inner.val.shp, C.double(a))
+}
+
 func (s *Compound) GetSurfaceColour() Color {
 	return Color{val: C.topo_shape_get_surface_colour(s.inner.val.shp)}
 }
@@ -1009,6 +1109,38 @@ func (s *Compound) GetCurveColour() Color {
 
 func (s *Compound) GetLabel() string {
 	return C.GoString(C.topo_shape_get_label(s.inner.val.shp))
+}
+
+func (s *Compound) GetUVOrigin() (u, v float64) {
+	u = float64(C.topo_shape_get_u_origin(s.inner.val.shp))
+	v = float64(C.topo_shape_get_v_origin(s.inner.val.shp))
+	return
+}
+
+func (s *Compound) GetUVRepeat() (u, v float64) {
+	u = float64(C.topo_shape_get_u_repeat(s.inner.val.shp))
+	v = float64(C.topo_shape_get_v_repeat(s.inner.val.shp))
+	return
+}
+
+func (s *Compound) GetUVScale() (u, v float64) {
+	u = float64(C.topo_shape_get_scale_u(s.inner.val.shp))
+	v = float64(C.topo_shape_get_scale_v(s.inner.val.shp))
+	return
+}
+
+func (s *Compound) GetUVAutoScaleSize() (u, v float64) {
+	u = float64(C.topo_shape_get_auto_scale_size_on_u(s.inner.val.shp))
+	v = float64(C.topo_shape_get_auto_scale_size_on_v(s.inner.val.shp))
+	return
+}
+
+func (s *Compound) GetTxtureMapType() int {
+	return int(C.topo_shape_get_txture_map_type(s.inner.val.shp))
+}
+
+func (s *Compound) GetRotationAngle() float64 {
+	return float64(C.topo_shape_get_rotation_angle(s.inner.val.shp))
 }
 
 func (t *Compound) free() {
@@ -1377,6 +1509,40 @@ func (s *Edge) SetLabel(l string) {
 	C.topo_shape_set_label(s.inner.val.shp, str)
 }
 
+func (s *Edge) SetUVOrigin(u, v float64) {
+	C.topo_shape_set_u_origin(s.inner.val.shp, C.double(u))
+	C.topo_shape_set_v_origin(s.inner.val.shp, C.double(v))
+}
+
+func (s *Edge) SetUVRepeat(u, v float64) {
+	C.topo_shape_set_u_repeat(s.inner.val.shp, C.double(u))
+	C.topo_shape_set_v_repeat(s.inner.val.shp, C.double(v))
+}
+
+func (s *Edge) SetScaleU(u float64) {
+	C.topo_shape_set_scale_u(s.inner.val.shp, C.double(u))
+}
+
+func (s *Edge) SetScaleV(v float64) {
+	C.topo_shape_set_scale_v(s.inner.val.shp, C.double(v))
+}
+
+func (s *Edge) SetAutoScaleSizeOnU(u float64) {
+	C.topo_shape_set_auto_scale_size_on_u(s.inner.val.shp, C.double(u))
+}
+
+func (s *Edge) SetAutoScaleSizeOnV(v float64) {
+	C.topo_shape_set_auto_scale_size_on_v(s.inner.val.shp, C.double(v))
+}
+
+func (s *Edge) SetTxtureMapType(t int) {
+	C.topo_shape_set_txture_map_type(s.inner.val.shp, C.int(t))
+}
+
+func (s *Edge) SetRotationAngle(a float64) {
+	C.topo_shape_set_rotation_angle(s.inner.val.shp, C.double(a))
+}
+
 func (s *Edge) GetSurfaceColour() Color {
 	return Color{val: C.topo_shape_get_surface_colour(s.inner.val.shp)}
 }
@@ -1387,6 +1553,38 @@ func (s *Edge) GetCurveColour() Color {
 
 func (s *Edge) GetLabel() string {
 	return C.GoString(C.topo_shape_get_label(s.inner.val.shp))
+}
+
+func (s *Edge) GetUVOrigin() (u, v float64) {
+	u = float64(C.topo_shape_get_u_origin(s.inner.val.shp))
+	v = float64(C.topo_shape_get_v_origin(s.inner.val.shp))
+	return
+}
+
+func (s *Edge) GetUVRepeat() (u, v float64) {
+	u = float64(C.topo_shape_get_u_repeat(s.inner.val.shp))
+	v = float64(C.topo_shape_get_v_repeat(s.inner.val.shp))
+	return
+}
+
+func (s *Edge) GetUVScale() (u, v float64) {
+	u = float64(C.topo_shape_get_scale_u(s.inner.val.shp))
+	v = float64(C.topo_shape_get_scale_v(s.inner.val.shp))
+	return
+}
+
+func (s *Edge) GetUVAutoScaleSize() (u, v float64) {
+	u = float64(C.topo_shape_get_auto_scale_size_on_u(s.inner.val.shp))
+	v = float64(C.topo_shape_get_auto_scale_size_on_v(s.inner.val.shp))
+	return
+}
+
+func (s *Edge) GetTxtureMapType() int {
+	return int(C.topo_shape_get_txture_map_type(s.inner.val.shp))
+}
+
+func (s *Edge) GetRotationAngle() float64 {
+	return float64(C.topo_shape_get_rotation_angle(s.inner.val.shp))
 }
 
 func (t *Edge) IsSeam(f Face) bool {
@@ -1906,6 +2104,40 @@ func (s *Face) SetLabel(l string) {
 	C.topo_shape_set_label(s.inner.val.shp, str)
 }
 
+func (s *Face) SetUVOrigin(u, v float64) {
+	C.topo_shape_set_u_origin(s.inner.val.shp, C.double(u))
+	C.topo_shape_set_v_origin(s.inner.val.shp, C.double(v))
+}
+
+func (s *Face) SetUVRepeat(u, v float64) {
+	C.topo_shape_set_u_repeat(s.inner.val.shp, C.double(u))
+	C.topo_shape_set_v_repeat(s.inner.val.shp, C.double(v))
+}
+
+func (s *Face) SetScaleU(u float64) {
+	C.topo_shape_set_scale_u(s.inner.val.shp, C.double(u))
+}
+
+func (s *Face) SetScaleV(v float64) {
+	C.topo_shape_set_scale_v(s.inner.val.shp, C.double(v))
+}
+
+func (s *Face) SetAutoScaleSizeOnU(u float64) {
+	C.topo_shape_set_auto_scale_size_on_u(s.inner.val.shp, C.double(u))
+}
+
+func (s *Face) SetAutoScaleSizeOnV(v float64) {
+	C.topo_shape_set_auto_scale_size_on_v(s.inner.val.shp, C.double(v))
+}
+
+func (s *Face) SetTxtureMapType(t int) {
+	C.topo_shape_set_txture_map_type(s.inner.val.shp, C.int(t))
+}
+
+func (s *Face) SetRotationAngle(a float64) {
+	C.topo_shape_set_rotation_angle(s.inner.val.shp, C.double(a))
+}
+
 func (s *Face) GetSurfaceColour() Color {
 	return Color{val: C.topo_shape_get_surface_colour(s.inner.val.shp)}
 }
@@ -1916,6 +2148,38 @@ func (s *Face) GetCurveColour() Color {
 
 func (s *Face) GetLabel() string {
 	return C.GoString(C.topo_shape_get_label(s.inner.val.shp))
+}
+
+func (s *Face) GetUVOrigin() (u, v float64) {
+	u = float64(C.topo_shape_get_u_origin(s.inner.val.shp))
+	v = float64(C.topo_shape_get_v_origin(s.inner.val.shp))
+	return
+}
+
+func (s *Face) GetUVRepeat() (u, v float64) {
+	u = float64(C.topo_shape_get_u_repeat(s.inner.val.shp))
+	v = float64(C.topo_shape_get_v_repeat(s.inner.val.shp))
+	return
+}
+
+func (s *Face) GetUVScale() (u, v float64) {
+	u = float64(C.topo_shape_get_scale_u(s.inner.val.shp))
+	v = float64(C.topo_shape_get_scale_v(s.inner.val.shp))
+	return
+}
+
+func (s *Face) GetUVAutoScaleSize() (u, v float64) {
+	u = float64(C.topo_shape_get_auto_scale_size_on_u(s.inner.val.shp))
+	v = float64(C.topo_shape_get_auto_scale_size_on_v(s.inner.val.shp))
+	return
+}
+
+func (s *Face) GetTxtureMapType() int {
+	return int(C.topo_shape_get_txture_map_type(s.inner.val.shp))
+}
+
+func (s *Face) GetRotationAngle() float64 {
+	return float64(C.topo_shape_get_rotation_angle(s.inner.val.shp))
 }
 
 func (t *Face) NumWires() int {
@@ -2481,6 +2745,40 @@ func (s *Solid) SetLabel(l string) {
 	C.topo_shape_set_label(s.inner.val.shp, str)
 }
 
+func (s *Solid) SetUVOrigin(u, v float64) {
+	C.topo_shape_set_u_origin(s.inner.val.shp, C.double(u))
+	C.topo_shape_set_v_origin(s.inner.val.shp, C.double(v))
+}
+
+func (s *Solid) SetUVRepeat(u, v float64) {
+	C.topo_shape_set_u_repeat(s.inner.val.shp, C.double(u))
+	C.topo_shape_set_v_repeat(s.inner.val.shp, C.double(v))
+}
+
+func (s *Solid) SetScaleU(u float64) {
+	C.topo_shape_set_scale_u(s.inner.val.shp, C.double(u))
+}
+
+func (s *Solid) SetScaleV(v float64) {
+	C.topo_shape_set_scale_v(s.inner.val.shp, C.double(v))
+}
+
+func (s *Solid) SetAutoScaleSizeOnU(u float64) {
+	C.topo_shape_set_auto_scale_size_on_u(s.inner.val.shp, C.double(u))
+}
+
+func (s *Solid) SetAutoScaleSizeOnV(v float64) {
+	C.topo_shape_set_auto_scale_size_on_v(s.inner.val.shp, C.double(v))
+}
+
+func (s *Solid) SetTxtureMapType(t int) {
+	C.topo_shape_set_txture_map_type(s.inner.val.shp, C.int(t))
+}
+
+func (s *Solid) SetRotationAngle(a float64) {
+	C.topo_shape_set_rotation_angle(s.inner.val.shp, C.double(a))
+}
+
 func (s *Solid) GetSurfaceColour() Color {
 	return Color{val: C.topo_shape_get_surface_colour(s.inner.val.shp)}
 }
@@ -2491,6 +2789,38 @@ func (s *Solid) GetCurveColour() Color {
 
 func (s *Solid) GetLabel() string {
 	return C.GoString(C.topo_shape_get_label(s.inner.val.shp))
+}
+
+func (s *Solid) GetUVOrigin() (u, v float64) {
+	u = float64(C.topo_shape_get_u_origin(s.inner.val.shp))
+	v = float64(C.topo_shape_get_v_origin(s.inner.val.shp))
+	return
+}
+
+func (s *Solid) GetUVRepeat() (u, v float64) {
+	u = float64(C.topo_shape_get_u_repeat(s.inner.val.shp))
+	v = float64(C.topo_shape_get_v_repeat(s.inner.val.shp))
+	return
+}
+
+func (s *Solid) GetUVScale() (u, v float64) {
+	u = float64(C.topo_shape_get_scale_u(s.inner.val.shp))
+	v = float64(C.topo_shape_get_scale_v(s.inner.val.shp))
+	return
+}
+
+func (s *Solid) GetUVAutoScaleSize() (u, v float64) {
+	u = float64(C.topo_shape_get_auto_scale_size_on_u(s.inner.val.shp))
+	v = float64(C.topo_shape_get_auto_scale_size_on_v(s.inner.val.shp))
+	return
+}
+
+func (s *Solid) GetTxtureMapType() int {
+	return int(C.topo_shape_get_txture_map_type(s.inner.val.shp))
+}
+
+func (s *Solid) GetRotationAngle() float64 {
+	return float64(C.topo_shape_get_rotation_angle(s.inner.val.shp))
 }
 
 func (s *Solid) NumSolids() int {
@@ -3044,6 +3374,40 @@ func (s *Vertex) SetLabel(l string) {
 	C.topo_shape_set_label(s.inner.val.shp, str)
 }
 
+func (s *Vertex) SetUVOrigin(u, v float64) {
+	C.topo_shape_set_u_origin(s.inner.val.shp, C.double(u))
+	C.topo_shape_set_v_origin(s.inner.val.shp, C.double(v))
+}
+
+func (s *Vertex) SetUVRepeat(u, v float64) {
+	C.topo_shape_set_u_repeat(s.inner.val.shp, C.double(u))
+	C.topo_shape_set_v_repeat(s.inner.val.shp, C.double(v))
+}
+
+func (s *Vertex) SetScaleU(u float64) {
+	C.topo_shape_set_scale_u(s.inner.val.shp, C.double(u))
+}
+
+func (s *Vertex) SetScaleV(v float64) {
+	C.topo_shape_set_scale_v(s.inner.val.shp, C.double(v))
+}
+
+func (s *Vertex) SetAutoScaleSizeOnU(u float64) {
+	C.topo_shape_set_auto_scale_size_on_u(s.inner.val.shp, C.double(u))
+}
+
+func (s *Vertex) SetAutoScaleSizeOnV(v float64) {
+	C.topo_shape_set_auto_scale_size_on_v(s.inner.val.shp, C.double(v))
+}
+
+func (s *Vertex) SetTxtureMapType(t int) {
+	C.topo_shape_set_txture_map_type(s.inner.val.shp, C.int(t))
+}
+
+func (s *Vertex) SetRotationAngle(a float64) {
+	C.topo_shape_set_rotation_angle(s.inner.val.shp, C.double(a))
+}
+
 func (s *Vertex) GetSurfaceColour() Color {
 	return Color{val: C.topo_shape_get_surface_colour(s.inner.val.shp)}
 }
@@ -3054,6 +3418,38 @@ func (s *Vertex) GetCurveColour() Color {
 
 func (s *Vertex) GetLabel() string {
 	return C.GoString(C.topo_shape_get_label(s.inner.val.shp))
+}
+
+func (s *Vertex) GetUVOrigin() (u, v float64) {
+	u = float64(C.topo_shape_get_u_origin(s.inner.val.shp))
+	v = float64(C.topo_shape_get_v_origin(s.inner.val.shp))
+	return
+}
+
+func (s *Vertex) GetUVRepeat() (u, v float64) {
+	u = float64(C.topo_shape_get_u_repeat(s.inner.val.shp))
+	v = float64(C.topo_shape_get_v_repeat(s.inner.val.shp))
+	return
+}
+
+func (s *Vertex) GetUVScale() (u, v float64) {
+	u = float64(C.topo_shape_get_scale_u(s.inner.val.shp))
+	v = float64(C.topo_shape_get_scale_v(s.inner.val.shp))
+	return
+}
+
+func (s *Vertex) GetUVAutoScaleSize() (u, v float64) {
+	u = float64(C.topo_shape_get_auto_scale_size_on_u(s.inner.val.shp))
+	v = float64(C.topo_shape_get_auto_scale_size_on_v(s.inner.val.shp))
+	return
+}
+
+func (s *Vertex) GetTxtureMapType() int {
+	return int(C.topo_shape_get_txture_map_type(s.inner.val.shp))
+}
+
+func (s *Vertex) GetRotationAngle() float64 {
+	return float64(C.topo_shape_get_rotation_angle(s.inner.val.shp))
 }
 
 func (t *Vertex) GetPoint() Point3 {
@@ -3251,6 +3647,40 @@ func (s *Wire) SetLabel(l string) {
 	C.topo_shape_set_label(s.inner.val.shp, str)
 }
 
+func (s *Wire) SetUVOrigin(u, v float64) {
+	C.topo_shape_set_u_origin(s.inner.val.shp, C.double(u))
+	C.topo_shape_set_v_origin(s.inner.val.shp, C.double(v))
+}
+
+func (s *Wire) SetUVRepeat(u, v float64) {
+	C.topo_shape_set_u_repeat(s.inner.val.shp, C.double(u))
+	C.topo_shape_set_v_repeat(s.inner.val.shp, C.double(v))
+}
+
+func (s *Wire) SetScaleU(u float64) {
+	C.topo_shape_set_scale_u(s.inner.val.shp, C.double(u))
+}
+
+func (s *Wire) SetScaleV(v float64) {
+	C.topo_shape_set_scale_v(s.inner.val.shp, C.double(v))
+}
+
+func (s *Wire) SetAutoScaleSizeOnU(u float64) {
+	C.topo_shape_set_auto_scale_size_on_u(s.inner.val.shp, C.double(u))
+}
+
+func (s *Wire) SetAutoScaleSizeOnV(v float64) {
+	C.topo_shape_set_auto_scale_size_on_v(s.inner.val.shp, C.double(v))
+}
+
+func (s *Wire) SetTxtureMapType(t int) {
+	C.topo_shape_set_txture_map_type(s.inner.val.shp, C.int(t))
+}
+
+func (s *Wire) SetRotationAngle(a float64) {
+	C.topo_shape_set_rotation_angle(s.inner.val.shp, C.double(a))
+}
+
 func (s *Wire) GetSurfaceColour() Color {
 	return Color{val: C.topo_shape_get_surface_colour(s.inner.val.shp)}
 }
@@ -3261,6 +3691,38 @@ func (s *Wire) GetCurveColour() Color {
 
 func (s *Wire) GetLabel() string {
 	return C.GoString(C.topo_shape_get_label(s.inner.val.shp))
+}
+
+func (s *Wire) GetUVOrigin() (u, v float64) {
+	u = float64(C.topo_shape_get_u_origin(s.inner.val.shp))
+	v = float64(C.topo_shape_get_v_origin(s.inner.val.shp))
+	return
+}
+
+func (s *Wire) GetUVRepeat() (u, v float64) {
+	u = float64(C.topo_shape_get_u_repeat(s.inner.val.shp))
+	v = float64(C.topo_shape_get_v_repeat(s.inner.val.shp))
+	return
+}
+
+func (s *Wire) GetUVScale() (u, v float64) {
+	u = float64(C.topo_shape_get_scale_u(s.inner.val.shp))
+	v = float64(C.topo_shape_get_scale_v(s.inner.val.shp))
+	return
+}
+
+func (s *Wire) GetUVAutoScaleSize() (u, v float64) {
+	u = float64(C.topo_shape_get_auto_scale_size_on_u(s.inner.val.shp))
+	v = float64(C.topo_shape_get_auto_scale_size_on_v(s.inner.val.shp))
+	return
+}
+
+func (s *Wire) GetTxtureMapType() int {
+	return int(C.topo_shape_get_txture_map_type(s.inner.val.shp))
+}
+
+func (s *Wire) GetRotationAngle() float64 {
+	return float64(C.topo_shape_get_rotation_angle(s.inner.val.shp))
 }
 
 func (t *Wire) ToShape() *Shape {
