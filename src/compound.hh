@@ -33,6 +33,7 @@ public:
   virtual shape copy(bool deep = true) const override;
 
   compound(TopoDS_Shape shp) : solid(shp) {}
+  compound(const shape &c, TopoDS_Shape shp) : solid(c, shp) {}
 
 protected:
   friend class compound_iterator;

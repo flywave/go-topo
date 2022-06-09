@@ -320,6 +320,7 @@ public:
   virtual shape copy(bool deep = true) const override;
 
   solid(TopoDS_Shape shp);
+  solid(const shape &s, TopoDS_Shape shp);
 
 protected:
   friend class solid_iterator;

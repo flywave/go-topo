@@ -34,6 +34,7 @@ public:
   virtual shape copy(bool deep = true) const override;
 
   comp_solid(TopoDS_Shape shp) : solid(shp) {}
+  comp_solid(const shape &s, TopoDS_Shape shp) : solid(s, shp) {}
 
 protected:
   friend class comp_solid_iterator;

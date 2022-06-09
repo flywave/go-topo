@@ -45,7 +45,7 @@ shape compound::copy(bool deep) const {
     if (shp.IsNull())
       throw std::runtime_error("Shell operation resulted in Null shape");
 
-    return compound{shp};
+    return compound{*this, shp};
   } catch (Standard_Failure &err) {
     Handle_Standard_Failure e = Standard_Failure::Caught();
     const Standard_CString msg = e->GetMessageString();

@@ -48,6 +48,23 @@ shape::shape()
       _auto_scale_size_on_u(1.), _auto_scale_size_on_v(1.),
       _txture_map_type(texture_normal), _rotation_angle(0.) {}
 
+shape::shape(TopoDS_Shape shp)
+    : _shape(shp), _surface_colour(Quantity_NOC_WHITE),
+      _curve_colour(Quantity_NOC_WHITE), _u_origin(0.), _v_origin(0.),
+      _u_repeat(1.), _v_repeat(1.), _scale_u(1.), _scale_v(1.),
+      _auto_scale_size_on_u(1.), _auto_scale_size_on_v(1.),
+      _txture_map_type(texture_normal), _rotation_angle(0.) {}
+
+shape::shape(const shape &s, TopoDS_Shape shp)
+    : _shape(shp), _surface_colour(s._surface_colour),
+      _curve_colour(s._curve_colour), _u_origin(s._u_origin),
+      _v_origin(s._v_origin), _u_repeat(s._u_repeat), _v_repeat(s._v_repeat),
+      _scale_u(s._scale_u), _scale_v(s._scale_v),
+      _auto_scale_size_on_u(s._auto_scale_size_on_u),
+      _auto_scale_size_on_v(s._auto_scale_size_on_v),
+      _txture_map_type(s._txture_map_type), _rotation_angle(s._rotation_angle) {
+}
+
 TopoDS_Shape &shape::value() { return _shape; }
 
 const TopoDS_Shape &shape::value() const { return _shape; }
@@ -56,13 +73,32 @@ shape::operator TopoDS_Shape &() { return _shape; }
 
 shape::operator const TopoDS_Shape &() const { return _shape; }
 
-shape::shape(shape &&o) noexcept : _shape(o._shape) {
+shape::shape(shape &&o) noexcept
+    : _shape(o._shape), _surface_colour(o._surface_colour),
+      _curve_colour(o._curve_colour), _u_origin(o._u_origin),
+      _v_origin(o._v_origin), _u_repeat(o._u_repeat), _v_repeat(o._v_repeat),
+      _scale_u(o._scale_u), _scale_v(o._scale_v),
+      _auto_scale_size_on_u(o._auto_scale_size_on_u),
+      _auto_scale_size_on_v(o._auto_scale_size_on_v),
+      _txture_map_type(o._txture_map_type), _rotation_angle(o._rotation_angle) {
   if (!o._shape.IsNull())
     o._shape.Free();
 }
 
 shape &shape::operator=(shape &&o) noexcept {
   _shape = o._shape;
+  _surface_colour = o._surface_colour;
+  _curve_colour = o._curve_colour;
+  _u_origin = o._u_origin;
+  _v_origin = o._v_origin;
+  _u_repeat = o._u_repeat;
+  _v_repeat = o._v_repeat;
+  _scale_u = o._scale_u;
+  _scale_v = o._scale_v;
+  _auto_scale_size_on_u = o._auto_scale_size_on_u;
+  _auto_scale_size_on_v = o._auto_scale_size_on_v;
+  _txture_map_type = o._txture_map_type;
+  _rotation_angle = o._rotation_angle;
   if (!o._shape.IsNull())
     o._shape.Free();
   return *this;
@@ -83,17 +119,17 @@ shape shape::copy(bool deep) const {
 
     switch (shp.ShapeType()) {
     case TopAbs_VERTEX:
-      return vertex(shp);
+      return vertex(*this, shp);
     case TopAbs_EDGE:
-      return edge(shp);
+      return edge(*this, shp);
     case TopAbs_WIRE:
-      return wire(shp);
+      return wire(*this, shp);
     case TopAbs_FACE:
-      return face(shp);
+      return face(*this, shp);
     case TopAbs_SHELL:
-      return shell(shp);
+      return shell(*this, shp);
     case TopAbs_SOLID:
-      return solid(shp);
+      return solid(*this, shp);
     default:
       break;
     }
@@ -733,7 +769,7 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
             transform.Transforms(px, py, pz);
             gp_Dir dir(norms.Value((j * 3) + 1), norms.Value((j * 3) + 2),
                        norms.Value((j * 3) + 3));
-            gp_Pnt2d coord = coords(j);
+            gp_Pnt2d coord = coords(j + 1);
             meshReceiver.append_node(faceId, gp_Pnt{px, py, pz},
                                      gp_Pnt{dir.X(), dir.Y(), dir.Z()}, coord);
           }
@@ -803,7 +839,7 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
             if (faceReversed)
               dir.Reverse();
             dir = quaternion.Multiply(dir);
-            gp_Pnt2d coord = coords(j);
+            gp_Pnt2d coord = coords(j + 1);
             meshReceiver.append_node(faceId, gp_Pnt{px, py, pz},
                                      gp_Pnt{dir.X(), dir.Y(), dir.Z()}, coord);
           }
@@ -844,6 +880,8 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
 
     meshReceiver.end();
     return 0;
+  } catch (Standard_Failure &err) {
+    return 1;
   } catch (...) {
     return 1;
   }

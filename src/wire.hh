@@ -84,6 +84,7 @@ public:
   virtual shape copy(bool deep = true) const override;
 
   wire(TopoDS_Shape shp) : shape(shp) {}
+  wire(const shape &v, TopoDS_Shape shp) : shape(v, shp) {}
 
 protected:
   friend class wire_iterator;

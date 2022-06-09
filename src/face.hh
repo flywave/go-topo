@@ -129,6 +129,7 @@ public:
   virtual shape copy(bool deep = true) const override;
 
   face(TopoDS_Shape shp) : shape(shp) {}
+  face(const shape &v, TopoDS_Shape shp) : shape(v, shp) {}
 
 protected:
   friend class face_iterator;

@@ -33,6 +33,7 @@ public:
   virtual shape copy(bool deep = true) const override;
 
   vertex(TopoDS_Shape shp) : shape(shp) {}
+  vertex(const shape &v, TopoDS_Shape shp) : shape(v, shp) {}
 
 protected:
   friend class vertex_iterator;

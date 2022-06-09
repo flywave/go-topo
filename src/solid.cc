@@ -93,6 +93,46 @@ solid::solid(TopoDS_Shape shp) : shape(shp) {
   }
 }
 
+solid::solid(const shape &s, TopoDS_Shape shp) : shape(s, shp) {
+  TopAbs_ShapeEnum type = shp.ShapeType();
+  if (type == TopAbs_SOLID || type == TopAbs_COMPSOLID) {
+    _shape = shp;
+  } else {
+    int solids = 0;
+    TopExp_Explorer ex;
+
+    for (ex.Init(shp, TopAbs_SOLID); ex.More(); ex.Next()) {
+      solids++;
+    }
+
+    for (ex.Init(shp, TopAbs_COMPSOLID); ex.More(); ex.Next()) {
+      solids++;
+    }
+
+    if (solids == 1) {
+      for (ex.Init(shp, TopAbs_SOLID); ex.More(); ex.Next()) {
+        _shape = ex.Current();
+      }
+      for (ex.Init(shp, TopAbs_COMPSOLID); ex.More(); ex.Next()) {
+        _shape = ex.Current();
+      }
+    } else {
+      BRep_Builder B;
+      TopoDS_Compound C;
+      B.MakeCompound(C);
+
+      for (ex.Init(shp, TopAbs_SOLID); ex.More(); ex.Next()) {
+        B.Add(C, ex.Current());
+      }
+
+      for (ex.Init(shp, TopAbs_COMPSOLID); ex.More(); ex.Next()) {
+        B.Add(C, ex.Current());
+      }
+      _shape = C;
+    }
+  }
+}
+
 TopoDS_Solid &solid::value() { return TopoDS::Solid(_shape); }
 
 const TopoDS_Solid &solid::value() const { return TopoDS::Solid(_shape); }

@@ -146,8 +146,9 @@ public:
   inline bool operator==(const shape &s) const { return this->equals(s); }
   inline bool operator!=(const shape &s) const { return !(*this == s); }
 
-  shape(TopoDS_Shape shp) : _shape(shp) {}
-
+  shape(TopoDS_Shape shp);
+  shape(const shape &s, TopoDS_Shape shp);
+  
 protected:
   void prepare_box_texture_coordinates(const TopoDS_Shape &aShape);
   void get_box_texture_coordinate(const gp_Pnt &p, const gp_Dir &N1,
