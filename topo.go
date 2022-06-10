@@ -81,7 +81,7 @@ func NewMeshReceiver() *MeshReceiver {
 	var cb C.struct__mesh_receiver_cb_t
 	cb.ctx = unsafe.Pointer(ret)
 	ret.inner = &innerMeshReceiver{C.topo_mesh_receiver_new(cb)}
-	runtime.SetFinalizer(ret, (*MeshReceiver).free)
+	runtime.SetFinalizer(ret.inner, (*innerMeshReceiver).free)
 	return ret
 }
 
@@ -129,9 +129,9 @@ func (m *MeshReceiver) appendTriangle(f int, tri [3]int) {
 	m.Tris[f] = append(m.Tris[f], tri)
 }
 
-func (m *MeshReceiver) free() {
-	C.topo_mesh_receiver_free(m.inner.val)
-	m.inner.val = nil
+func (m *innerMeshReceiver) free() {
+	C.topo_mesh_receiver_free(m.val)
+	m.val = nil
 }
 
 type Location struct {
@@ -144,7 +144,7 @@ type innerLocation struct {
 
 func NewLocation(t Trsf) *Location {
 	p := &Location{inner: &innerLocation{val: C.topo_location_new(t.val)}}
-	runtime.SetFinalizer(p, (*Location).free)
+	runtime.SetFinalizer(p.inner, (*innerLocation).free)
 	return p
 }
 
@@ -152,9 +152,9 @@ func (l *Location) Trsf() Trsf {
 	return Trsf{val: C.topo_location_get_trsf(l.inner.val)}
 }
 
-func (l *Location) free() {
-	C.topo_location_free(l.inner.val)
-	l.inner.val = nil
+func (l *innerLocation) free() {
+	C.topo_location_free(l.val)
+	l.val = nil
 }
 
 type Shape struct {
@@ -167,7 +167,7 @@ type innerShape struct {
 
 func NewShape(v *C.struct__topo_shape_t) *Shape {
 	s := &Shape{inner: &innerShape{val: v}}
-	runtime.SetFinalizer(s, (*Shape).free)
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
@@ -238,39 +238,57 @@ func (s *Shape) MirrorFromAxis2(a Axis2) int {
 }
 
 func (s *Shape) Transformed(t Trsf) *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_transformed(s.inner.val, t.val)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_transformed(s.inner.val, t.val)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
 func (s *Shape) Translated(v Vector3) *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_translated(s.inner.val, v.val)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_translated(s.inner.val, v.val)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
 func (s *Shape) RotatedFromPoint(angle float64, p1, p2 Point3) *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_rotated_from_two_point(s.inner.val, C.double(angle), p1.val, p2.val)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_rotated_from_two_point(s.inner.val, C.double(angle), p1.val, p2.val)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
 func (s *Shape) RotatedFromAxis1(angle float64, a Axis1) *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_rotated_from_axis1(s.inner.val, C.double(angle), a.val)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_rotated_from_axis1(s.inner.val, C.double(angle), a.val)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
 func (s *Shape) RotatedFromQuaternion(q Quaternion) *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_rotated_from_quaternion(s.inner.val, q.val)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_rotated_from_quaternion(s.inner.val, q.val)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
 func (s *Shape) Scaled(angle float64, a Point3) *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_scaled(s.inner.val, C.double(angle), a.val)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_scaled(s.inner.val, C.double(angle), a.val)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
 func (s *Shape) MirroredFromPointNorm(pnt, ner Point3) *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_mirrored_from_point_norm(s.inner.val, pnt.val, ner.val)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_mirrored_from_point_norm(s.inner.val, pnt.val, ner.val)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
 func (s *Shape) MirroredFromAxis1(a Axis1) *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_mirrored_from_axis1(s.inner.val, a.val)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_mirrored_from_axis1(s.inner.val, a.val)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
 func (s *Shape) MirroredFromAxis2(a Axis2) *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_mirrored_from_axis2(s.inner.val, a.val)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_mirrored_from_axis2(s.inner.val, a.val)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
 func (s *Shape) GetOrientation() int {
@@ -282,7 +300,9 @@ func (s *Shape) SetOrientation(t int) {
 }
 
 func (s *Shape) GetLocation() *Location {
-	return &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val)}}
+	p := &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerLocation).free)
+	return p
 }
 
 func (s *Shape) SetLocation(t *Location) {
@@ -294,11 +314,15 @@ func (s *Shape) FixShape() bool {
 }
 
 func (s *Shape) Copy() *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_copy(s.inner.val)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_copy(s.inner.val)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
 func (s *Shape) Share() *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_share(s.inner.val)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_share(s.inner.val)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
 func (s *Shape) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) int8 {
@@ -402,9 +426,9 @@ func (s *Shape) GetRotationAngle() float64 {
 	return float64(C.topo_shape_get_rotation_angle(s.inner.val))
 }
 
-func (t *Shape) free() {
-	C.topo_shape_free(t.inner.val)
-	t.inner.val = nil
+func (t *innerShape) free() {
+	C.topo_shape_free(t.val)
+	t.val = nil
 }
 
 func (t *Shape) AutoCast() interface{} {
@@ -412,37 +436,55 @@ func (t *Shape) AutoCast() interface{} {
 	case TopoSolid:
 		var val C.struct__topo_solid_t
 		val.shp = C.topo_shape_share(t.inner.val)
-		return &Solid{inner: &innerSolid{val: val}}
+		sld := &Solid{inner: &innerSolid{val: val}}
+		runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+		return sld
 	case TopoShell:
 		var val C.struct__topo_shell_t
 		val.shp = C.topo_shape_share(t.inner.val)
-		return &Shell{inner: &innerShell{val: val}}
+		sh := &Shell{inner: &innerShell{val: val}}
+		runtime.SetFinalizer(sh.inner, (*innerShell).free)
+		return sh
 	case TopoFace:
 		var val C.struct__topo_face_t
 		val.shp = C.topo_shape_share(t.inner.val)
-		return &Face{inner: &innerFace{val: val}}
+		p := &Face{inner: &innerFace{val: val}}
+		runtime.SetFinalizer(p.inner, (*innerFace).free)
+		return p
 	case TopoEdge:
 		var val C.struct__topo_edge_t
 		val.shp = C.topo_shape_share(t.inner.val)
-		return &Edge{inner: &innerEdge{val: val}}
+		p := &Edge{inner: &innerEdge{val: val}}
+		runtime.SetFinalizer(p.inner, (*innerEdge).free)
+		return p
 	case TopoVertex:
 		var val C.struct__topo_vertex_t
 		val.shp = C.topo_shape_share(t.inner.val)
-		return &Vertex{inner: &innerVertex{val: val}}
+		vx := &Vertex{inner: &innerVertex{val: val}}
+		runtime.SetFinalizer(vx.inner, (*innerVertex).free)
+		return vx
 	case TopoWire:
 		var val C.struct__topo_wire_t
 		val.shp = C.topo_shape_share(t.inner.val)
-		return &Wire{inner: &innerWire{val: val}}
+		wr := &Wire{inner: &innerWire{val: val}}
+		runtime.SetFinalizer(wr.inner, (*innerWire).free)
+		return wr
 	case TopoCompound:
 		var val C.struct__topo_compound_t
 		val.shp = C.topo_shape_share(t.inner.val)
-		return &Compound{inner: &innerCompound{val: val}}
+		p := &Compound{inner: &innerCompound{val: val}}
+		runtime.SetFinalizer(p.inner, (*innerCompound).free)
+		return p
 	case TopoCompSolid:
 		var val C.struct__topo_comp_solid_t
 		val.shp = C.topo_shape_share(t.inner.val)
-		return &CompSolid{inner: &innerCompSolid{val: val}}
+		s := &CompSolid{inner: &innerCompSolid{val: val}}
+		runtime.SetFinalizer(s.inner, (*innerCompSolid).free)
+		return s
 	case TopoShape:
-		return &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val)}}
+		s := &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val)}}
+		runtime.SetFinalizer(s.inner, (*innerShape).free)
+		return s
 	}
 	return nil
 }
@@ -457,7 +499,7 @@ type innerCompSolid struct {
 
 func TopoMakeCompSolid() *CompSolid {
 	p := &CompSolid{inner: &innerCompSolid{val: C.topo_make_comp_solid()}}
-	runtime.SetFinalizer(p, (*CompSolid).free)
+	runtime.SetFinalizer(p, (*innerCompSolid).free)
 	return p
 }
 
@@ -584,7 +626,9 @@ func (s *CompSolid) SetOrientation(t int) {
 }
 
 func (s *CompSolid) GetLocation() *Location {
-	return &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	p := &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	runtime.SetFinalizer(p.inner, (*innerLocation).free)
+	return p
 }
 
 func (s *CompSolid) SetLocation(t *Location) {
@@ -702,8 +746,8 @@ func (s *CompSolid) GetRotationAngle() float64 {
 	return float64(C.topo_shape_get_rotation_angle(s.inner.val.shp))
 }
 
-func (t *CompSolid) free() {
-	C.topo_comp_solid_free(t.inner.val)
+func (t *innerCompSolid) free() {
+	C.topo_comp_solid_free(t.val)
 }
 
 func (t *CompSolid) solid() C.struct__topo_solid_t {
@@ -713,13 +757,17 @@ func (t *CompSolid) solid() C.struct__topo_solid_t {
 }
 
 func (t *CompSolid) ToShape() *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
 func (t *CompSolid) ToSolid() *Solid {
 	var val C.struct__topo_solid_t
 	val.shp = C.topo_shape_share(t.inner.val.shp)
-	return &Solid{inner: &innerSolid{val: val}}
+	sld := &Solid{inner: &innerSolid{val: val}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func (s *CompSolid) NumSolids() int {
@@ -875,7 +923,9 @@ func (s *CompSolid) RevolutionForm(w *Wire, p *GeomPlane, a Axis1, h1, h2 float6
 }
 
 func (s *CompSolid) SectionFace(pnt, nor Point3) *Face {
-	return &Face{inner: &innerFace{val: C.topo_solid_section_face(s.solid(), pnt.val, nor.val)}}
+	p := &Face{inner: &innerFace{val: C.topo_solid_section_face(s.solid(), pnt.val, nor.val)}}
+	runtime.SetFinalizer(p.inner, (*innerLocation).free)
+	return p
 }
 
 func (s *CompSolid) ConvertToNurbs() int {
@@ -887,7 +937,9 @@ func TopoCompSolidMake(s []Solid) *CompSolid {
 	for i := range s {
 		sos[i] = s[i].inner.val
 	}
-	return &CompSolid{inner: &innerCompSolid{val: C.topo_comp_solid_make_comp_solid(&sos[0], C.int(len(s)))}}
+	c := &CompSolid{inner: &innerCompSolid{val: C.topo_comp_solid_make_comp_solid(&sos[0], C.int(len(s)))}}
+	runtime.SetFinalizer(c.inner, (*innerCompSolid).free)
+	return c
 }
 
 type Compound struct {
@@ -899,7 +951,9 @@ type innerCompound struct {
 }
 
 func TopoMakeCompound() *Compound {
-	return &Compound{inner: &innerCompound{val: C.topo_make_compound()}}
+	c := &Compound{inner: &innerCompound{val: C.topo_make_compound()}}
+	runtime.SetFinalizer(c.inner, (*innerCompound).free)
+	return c
 }
 
 func (s *Compound) IsNull() bool {
@@ -1025,7 +1079,9 @@ func (s *Compound) SetOrientation(t int) {
 }
 
 func (s *Compound) GetLocation() *Location {
-	return &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	p := &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	runtime.SetFinalizer(p.inner, (*innerLocation).free)
+	return p
 }
 
 func (s *Compound) SetLocation(t *Location) {
@@ -1143,8 +1199,8 @@ func (s *Compound) GetRotationAngle() float64 {
 	return float64(C.topo_shape_get_rotation_angle(s.inner.val.shp))
 }
 
-func (t *Compound) free() {
-	C.topo_compound_free(t.inner.val)
+func (t *innerCompound) free() {
+	C.topo_compound_free(t.val)
 }
 
 func (t *Compound) solid() C.struct__topo_solid_t {
@@ -1154,13 +1210,17 @@ func (t *Compound) solid() C.struct__topo_solid_t {
 }
 
 func (t *Compound) ToShape() *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
 func (t *Compound) ToSolid() *Solid {
 	var val C.struct__topo_solid_t
 	val.shp = C.topo_shape_share(t.inner.val.shp)
-	return &Solid{inner: &innerSolid{val: val}}
+	sld := &Solid{inner: &innerSolid{val: val}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func (s *Compound) NumSolids() int {
@@ -1316,7 +1376,9 @@ func (s *Compound) RevolutionForm(w *Wire, p *GeomPlane, a Axis1, h1, h2 float64
 }
 
 func (s *Compound) SectionFace(pnt, nor Point3) *Face {
-	return &Face{inner: &innerFace{val: C.topo_solid_section_face(s.solid(), pnt.val, nor.val)}}
+	p := &Face{inner: &innerFace{val: C.topo_solid_section_face(s.solid(), pnt.val, nor.val)}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func (s *Compound) ConvertToNurbs() int {
@@ -1341,9 +1403,8 @@ type innerEdge struct {
 
 func TopoMakeEdge() *Edge {
 	p := &Edge{inner: &innerEdge{val: C.topo_make_edge()}}
-	runtime.SetFinalizer(p, (*Edge).free)
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
 	return p
-
 }
 
 func (s *Edge) IsNull() bool {
@@ -1409,55 +1470,73 @@ func (s *Edge) MirrorFromAxis2(a Axis2) int {
 func (s *Edge) Transformed(t Trsf) *Edge {
 	var val C.struct__topo_edge_t
 	val.shp = C.topo_shape_transformed(s.inner.val.shp, t.val)
-	return &Edge{inner: &innerEdge{val: val}}
+	p := &Edge{inner: &innerEdge{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func (s *Edge) Translated(v Vector3) *Edge {
 	var val C.struct__topo_edge_t
 	val.shp = C.topo_shape_translated(s.inner.val.shp, v.val)
-	return &Edge{inner: &innerEdge{val: val}}
+	p := &Edge{inner: &innerEdge{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func (s *Edge) RotatedFromPoint(angle float64, p1, p2 Point3) *Edge {
 	var val C.struct__topo_edge_t
 	val.shp = C.topo_shape_rotated_from_two_point(s.inner.val.shp, C.double(angle), p1.val, p2.val)
-	return &Edge{inner: &innerEdge{val: val}}
+	p := &Edge{inner: &innerEdge{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func (s *Edge) RotatedFromAxis1(angle float64, a Axis1) *Edge {
 	var val C.struct__topo_edge_t
 	val.shp = C.topo_shape_rotated_from_axis1(s.inner.val.shp, C.double(angle), a.val)
-	return &Edge{inner: &innerEdge{val: val}}
+	p := &Edge{inner: &innerEdge{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func (s *Edge) RotatedFromQuaternion(q Quaternion) *Edge {
 	var val C.struct__topo_edge_t
 	val.shp = C.topo_shape_rotated_from_quaternion(s.inner.val.shp, q.val)
-	return &Edge{inner: &innerEdge{val: val}}
+	p := &Edge{inner: &innerEdge{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func (s *Edge) Scaled(angle float64, a Point3) *Edge {
 	var val C.struct__topo_edge_t
 	val.shp = C.topo_shape_scaled(s.inner.val.shp, C.double(angle), a.val)
-	return &Edge{inner: &innerEdge{val: val}}
+	p := &Edge{inner: &innerEdge{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func (s *Edge) MirroredFromPointNorm(pnt, ner Point3) *Edge {
 	var val C.struct__topo_edge_t
 	val.shp = C.topo_shape_mirrored_from_point_norm(s.inner.val.shp, pnt.val, ner.val)
-	return &Edge{inner: &innerEdge{val: val}}
+	p := &Edge{inner: &innerEdge{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func (s *Edge) MirroredFromAxis1(a Axis1) *Edge {
 	var val C.struct__topo_edge_t
 	val.shp = C.topo_shape_mirrored_from_axis1(s.inner.val.shp, a.val)
-	return &Edge{inner: &innerEdge{val: val}}
+	p := &Edge{inner: &innerEdge{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func (s *Edge) MirroredFromAxis2(a Axis2) *Edge {
 	var val C.struct__topo_edge_t
 	val.shp = C.topo_shape_mirrored_from_axis2(s.inner.val.shp, a.val)
-	return &Edge{inner: &innerEdge{val: val}}
+	p := &Edge{inner: &innerEdge{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func (s *Edge) GetOrientation() int {
@@ -1469,7 +1548,9 @@ func (s *Edge) SetOrientation(t int) {
 }
 
 func (s *Edge) GetLocation() *Location {
-	return &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	p := &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	runtime.SetFinalizer(p.inner, (*innerLocation).free)
+	return p
 }
 
 func (s *Edge) SetLocation(t *Location) {
@@ -1483,7 +1564,9 @@ func (s *Edge) FixShape() bool {
 func (s *Edge) Copy() *Edge {
 	var val C.struct__topo_edge_t
 	val.shp = C.topo_shape_copy(s.inner.val.shp)
-	return &Edge{inner: &innerEdge{val: val}}
+	p := &Edge{inner: &innerEdge{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func (s *Edge) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
@@ -1624,291 +1707,428 @@ func (t *Edge) ToCurve3d() {
 }
 
 func (t *Edge) ToShape() *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
-func (t *Edge) free() {
-	C.topo_edge_free(t.inner.val)
+func (t *innerEdge) free() {
+	C.topo_edge_free(t.val)
 }
 
 func TopoMakeEdgeFromPoints(pts []Point3) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_points(&pts[0].val, C.int(len(pts)))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_points(&pts[0].val, C.int(len(pts)))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromTwoVertex(v1, v2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_two_vertex(v1.inner.val, v2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_two_vertex(v1.inner.val, v2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromTwoPoint(p1, p2 Point3) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_two_point(p1.val, p2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_two_point(p1.val, p2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromLine(l Line) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_line(l.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_line(l.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromLineParm(l Line, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_line_p(l.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_line_p(l.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromLinePoint(l Line, p1, p2 Point3) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_line_point(l.val, p1.val, p2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_line_point(l.val, p1.val, p2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromLineVertex(l Line, p1, p2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_line_vertex(l.val, p1.inner.val, p2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_line_vertex(l.val, p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromCirc(s Circ) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_circ(s.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_circ(s.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromCircParm(s Circ, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_circ_p(s.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_circ_p(s.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromCircPoint(s Circ, p1, p2 Point3) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_circ_point(s.val, p1.val, p2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_circ_point(s.val, p1.val, p2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromCircVertex(s Circ, p1, p2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_circ_vertex(s.val, p1.inner.val, p2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_circ_vertex(s.val, p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromElips(s Elips) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_elips(s.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_elips(s.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromElipsParm(s Elips, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_elips_p(s.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_elips_p(s.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromElipsPoint(s Elips, p1, p2 Point3) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_elips_point(s.val, p1.val, p2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_elips_point(s.val, p1.val, p2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromElipsVertex(s Elips, p1, p2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_elips_vertex(s.val, p1.inner.val, p2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_elips_vertex(s.val, p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromHyper(s Hyperbola) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_hyper(s.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_hyper(s.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromHyperParm(s Hyperbola, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_hyper_p(s.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_hyper_p(s.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromHyperPoint(s Hyperbola, p1, p2 Point3) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_hyper_point(s.val, p1.val, p2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_hyper_point(s.val, p1.val, p2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromHyperVertex(s Hyperbola, p1, p2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_hyper_vertex(s.val, p1.inner.val, p2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_hyper_vertex(s.val, p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromPara(s Parabola) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_parab(s.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_parab(s.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromParaParm(s Parabola, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_parab_p(s.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_parab_p(s.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
-
 func TopoMakeEdgeFromParaPoint(s Parabola, p1, p2 Point3) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_parab_point(s.val, p1.val, p2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_parab_point(s.val, p1.val, p2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromParaVertex(s Parabola, p1, p2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_parab_vertex(s.val, p1.inner.val, p2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_parab_vertex(s.val, p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
-
 func TopoMakeEdgeFromCurve(s GeomCurve) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edgee_from_curve(s.inner.geom)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edgee_from_curve(s.inner.geom)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
-
 func TopoMakeEdgeFromCurveParm(s GeomCurve, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_p(s.inner.geom, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_p(s.inner.geom, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
-
 func TopoMakeEdgeFromCurvePoint(s GeomCurve, p1, p2 Point3) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_point(s.inner.geom, p1.val, p2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_point(s.inner.geom, p1.val, p2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromCurveVertex(s GeomCurve, p1, p2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_vertex(s.inner.geom, p1.inner.val, p2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_vertex(s.inner.geom, p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromCurvePointParm(s GeomCurve, pt1, pt2 Point3, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edgee_from_curve_point_p(s.inner.geom, pt1.val, pt2.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edgee_from_curve_point_p(s.inner.geom, pt1.val, pt2.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
-
 func TopoMakeEdgeFromCurveVertexParm(s GeomCurve, pt1, pt2 Vertex, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_vertex_p(s.inner.geom, pt1.inner.val, pt2.inner.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_vertex_p(s.inner.geom, pt1.inner.val, pt2.inner.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromSurface(cu Geom2dCurve, s GeomSurface) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_surface(cu.inner.geom, s.inner.geom)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_surface(cu.inner.geom, s.inner.geom)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromSurfaceParm(cu Geom2dCurve, s GeomSurface, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_surface_p(cu.inner.geom, s.inner.geom, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_surface_p(cu.inner.geom, s.inner.geom, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromSurfacePoint(cu Geom2dCurve, s GeomSurface, p1, p2 Point3) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_surface_point(cu.inner.geom, s.inner.geom, p1.val, p2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_surface_point(cu.inner.geom, s.inner.geom, p1.val, p2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromSurfaceVertex(cu Geom2dCurve, s GeomSurface, p1, p2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_surface_vertex(cu.inner.geom, s.inner.geom, p1.inner.val, p2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_surface_vertex(cu.inner.geom, s.inner.geom, p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromSurfacePointParm(cu Geom2dCurve, s GeomSurface, pt1, pt2 Point3, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_surface_point_p(cu.inner.geom, s.inner.geom, pt1.val, pt2.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_surface_point_p(cu.inner.geom, s.inner.geom, pt1.val, pt2.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdgeFromSurfaceVertexParm(cu Geom2dCurve, s GeomSurface, pt1, pt2 Vertex, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_surface_vertex_p(cu.inner.geom, s.inner.geom, pt1.inner.val, pt2.inner.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_curve_surface_vertex_p(cu.inner.geom, s.inner.geom, pt1.inner.val, pt2.inner.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromTwoVertex(pt1, pt2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_two_vertex(pt1.inner.val, pt2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_two_vertex(pt1.inner.val, pt2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromTwoPoint(pt1, pt2 Point2) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_two_point(pt1.val, pt2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_two_point(pt1.val, pt2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromLine(l Line2d) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_line(l.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_line(l.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromLineParm(l Line2d, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_line_p(l.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_line_p(l.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromLinePoint(l Line2d, p1, p2 Point2) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_line_point(l.val, p1.val, p2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_line_point(l.val, p1.val, p2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromLineVertex(l Line2d, p1, p2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_line_vertex(l.val, p1.inner.val, p2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_line_vertex(l.val, p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromCirc(l Circ2d) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_circ(l.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_circ(l.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromCircParm(l Circ2d, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_circ_p(l.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_circ_p(l.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromCircPoint(l Circ2d, p1, p2 Point2) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_circ_point(l.val, p1.val, p2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_circ_point(l.val, p1.val, p2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromCircVertex(l Circ2d, p1, p2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_circ_vertex(l.val, p1.inner.val, p2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_circ_vertex(l.val, p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromElips(l Elips2d) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_elips(l.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_elips(l.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromElipsParm(l Elips2d, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_elips_p(l.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_elips_p(l.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromElipsPoint(l Elips2d, p1, p2 Point2) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_elips_point(l.val, p1.val, p2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_elips_point(l.val, p1.val, p2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromElipsVertex(l Elips2d, p1, p2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_elips_vertex(l.val, p1.inner.val, p2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_elips_vertex(l.val, p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromHyper(l Hyperbola2d) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_hyper(l.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_hyper(l.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromHyperParm(l Hyperbola2d, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_hyper_p(l.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_hyper_p(l.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromHyperPoint(l Hyperbola2d, p1, p2 Point2) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_hyper_point(l.val, p1.val, p2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_hyper_point(l.val, p1.val, p2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromHyperVertex(l Hyperbola2d, p1, p2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_hyper_vertex(l.val, p1.inner.val, p2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_hyper_vertex(l.val, p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromPara(l Parabola2d) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_parab(l.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_parab(l.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromParaParm(l Parabola2d, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_parab_p(l.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_parab_p(l.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromParaPoint(l Parabola2d, p1, p2 Point2) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_parab_point(l.val, p1.val, p2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_parab_point(l.val, p1.val, p2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromParaVertex(l Parabola2d, p1, p2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_parab_vertex(l.val, p1.inner.val, p2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_parab_vertex(l.val, p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromCurve(l Geom2dCurve) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_curve(l.inner.geom)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_curve(l.inner.geom)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromCurveParm(l Geom2dCurve, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_curve_p(l.inner.geom, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_curve_p(l.inner.geom, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromCurvePoint(l Geom2dCurve, p1, p2 Point2) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_curve_point(l.inner.geom, p1.val, p2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_curve_point(l.inner.geom, p1.val, p2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromCurveVertex(l Geom2dCurve, p1, p2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_curve_vertex(l.inner.geom, p1.inner.val, p2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_curve_vertex(l.inner.geom, p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromCurvePointParm(l Geom2dCurve, pt1, pt2 Point2, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_curve_point_p(l.inner.geom, pt1.val, pt2.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_curve_point_p(l.inner.geom, pt1.val, pt2.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoMakeEdge2dFromCurveVertexParm(l Geom2dCurve, pt1, pt2 Vertex, p1, p2 float64) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_curve_vertex_p(l.inner.geom, pt1.inner.val, pt2.inner.val, C.double(p1), C.double(p2))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge2d_from_curve_vertex_p(l.inner.geom, pt1.inner.val, pt2.inner.val, C.double(p1), C.double(p2))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoEdgeMakePolygon() *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon()}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon()}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoEdgeMakePolygonFromTwoPoint(p1, p2 Point3) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon_from_two_point(p1.val, p2.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon_from_two_point(p1.val, p2.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoEdgeMakePolygonFromThreePoint(p1, p2, p3 Point3, Close bool) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon_from_three_point(p1.val, p2.val, p3.val, C.bool(Close))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon_from_three_point(p1.val, p2.val, p3.val, C.bool(Close))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoEdgeMakePolygonFromFourPoint(p1, p2, p3, p4 Point3, Close bool) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon_from_four_point(p1.val, p2.val, p3.val, p4.val, C.bool(Close))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon_from_four_point(p1.val, p2.val, p3.val, p4.val, C.bool(Close))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoEdgeMakePolygonFromTwoVertex(p1, p2 Vertex) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon_from_two_vertex(p1.inner.val, p2.inner.val)}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon_from_two_vertex(p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoEdgeMakePolygonFromThreeVertex(p1, p2, p3 Vertex, Close bool) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon_from_three_vertex(p1.inner.val, p2.inner.val, p3.inner.val, C.bool(Close))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon_from_three_vertex(p1.inner.val, p2.inner.val, p3.inner.val, C.bool(Close))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoEdgeMakePolygonFromFourVertex(p1, p2, p3, p4 Vertex, Close bool) *Edge {
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon_from_four_vertex(p1.inner.val, p2.inner.val, p3.inner.val, p4.inner.val, C.bool(Close))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon_from_four_vertex(p1.inner.val, p2.inner.val, p3.inner.val, p4.inner.val, C.bool(Close))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoEdgeMakePolygonFromVertices(vers []Vertex, Close bool) *Edge {
@@ -1916,7 +2136,9 @@ func TopoEdgeMakePolygonFromVertices(vers []Vertex, Close bool) *Edge {
 	for i := range vers {
 		cvs[i] = vers[i].inner.val
 	}
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon_from_vertices(&cvs[0], C.int(len(vers)), C.bool(Close))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon_from_vertices(&cvs[0], C.int(len(vers)), C.bool(Close))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 func TopoEdgeMakePolygonFromPoints(points []Point3, Close bool) *Edge {
@@ -1924,7 +2146,9 @@ func TopoEdgeMakePolygonFromPoints(points []Point3, Close bool) *Edge {
 	for i := range points {
 		cvs[i] = points[i].val
 	}
-	return &Edge{inner: &innerEdge{val: C.topo_edge_make_polygonn_from_points(&cvs[0], C.int(len(points)), C.bool(Close))}}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_polygonn_from_points(&cvs[0], C.int(len(points)), C.bool(Close))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
 }
 
 type Face struct {
@@ -1937,7 +2161,7 @@ type innerFace struct {
 
 func TopoMakeFace() *Face {
 	p := &Face{inner: &innerFace{val: C.topo_make_face()}}
-	runtime.SetFinalizer(p, (*Face).free)
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
 	return p
 }
 
@@ -2004,55 +2228,73 @@ func (s *Face) MirrorFromAxis2(a Axis2) int {
 func (s *Face) Transformed(t Trsf) *Face {
 	var val C.struct__topo_face_t
 	val.shp = C.topo_shape_transformed(s.inner.val.shp, t.val)
-	return &Face{inner: &innerFace{val: val}}
+	p := &Face{inner: &innerFace{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func (s *Face) Translated(v Vector3) *Face {
 	var val C.struct__topo_face_t
 	val.shp = C.topo_shape_translated(s.inner.val.shp, v.val)
-	return &Face{inner: &innerFace{val: val}}
+	p := &Face{inner: &innerFace{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func (s *Face) RotatedFromPoint(angle float64, p1, p2 Point3) *Face {
 	var val C.struct__topo_face_t
 	val.shp = C.topo_shape_rotated_from_two_point(s.inner.val.shp, C.double(angle), p1.val, p2.val)
-	return &Face{inner: &innerFace{val: val}}
+	p := &Face{inner: &innerFace{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func (s *Face) RotatedFromAxis1(angle float64, a Axis1) *Face {
 	var val C.struct__topo_face_t
 	val.shp = C.topo_shape_rotated_from_axis1(s.inner.val.shp, C.double(angle), a.val)
-	return &Face{inner: &innerFace{val: val}}
+	p := &Face{inner: &innerFace{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func (s *Face) RotatedFromQuaternion(q Quaternion) *Face {
 	var val C.struct__topo_face_t
 	val.shp = C.topo_shape_rotated_from_quaternion(s.inner.val.shp, q.val)
-	return &Face{inner: &innerFace{val: val}}
+	p := &Face{inner: &innerFace{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func (s *Face) Scaled(angle float64, a Point3) *Face {
 	var val C.struct__topo_face_t
 	val.shp = C.topo_shape_scaled(s.inner.val.shp, C.double(angle), a.val)
-	return &Face{inner: &innerFace{val: val}}
+	p := &Face{inner: &innerFace{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func (s *Face) MirroredFromPointNorm(pnt, ner Point3) *Face {
 	var val C.struct__topo_face_t
 	val.shp = C.topo_shape_mirrored_from_point_norm(s.inner.val.shp, pnt.val, ner.val)
-	return &Face{inner: &innerFace{val: val}}
+	p := &Face{inner: &innerFace{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func (s *Face) MirroredFromAxis1(a Axis1) *Face {
 	var val C.struct__topo_face_t
 	val.shp = C.topo_shape_mirrored_from_axis1(s.inner.val.shp, a.val)
-	return &Face{inner: &innerFace{val: val}}
+	p := &Face{inner: &innerFace{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func (s *Face) MirroredFromAxis2(a Axis2) *Face {
 	var val C.struct__topo_face_t
 	val.shp = C.topo_shape_mirrored_from_axis2(s.inner.val.shp, a.val)
-	return &Face{inner: &innerFace{val: val}}
+	p := &Face{inner: &innerFace{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func (s *Face) GetOrientation() int {
@@ -2064,7 +2306,9 @@ func (s *Face) SetOrientation(t int) {
 }
 
 func (s *Face) GetLocation() *Location {
-	return &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	p := &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	runtime.SetFinalizer(p.inner, (*innerLocation).free)
+	return p
 }
 
 func (s *Face) SetLocation(t *Location) {
@@ -2078,7 +2322,9 @@ func (s *Face) FixShape() bool {
 func (s *Face) Copy() *Face {
 	var val C.struct__topo_face_t
 	val.shp = C.topo_shape_copy(s.inner.val.shp)
-	return &Face{inner: &innerFace{val: val}}
+	p := &Face{inner: &innerFace{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func (s *Face) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
@@ -2239,91 +2485,132 @@ func (t *Face) Boolean(tool *Face, op int) int {
 }
 
 func (t *Face) ToShape() *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
-func (t *Face) free() {
-	C.topo_face_free(t.inner.val)
+func (t *innerFace) free() {
+	C.topo_face_free(t.val)
 }
 
 func TopoMakeFaceFromPlane(f Plane) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_plane(f.val)}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_plane(f.val)}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromCylinder(f Cylinder) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_cylinder(f.val)}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_cylinder(f.val)}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromCone(f Cone) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_cone(f.val)}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_cone(f.val)}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromSphere(f Sphere) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_sphere(f.val)}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_sphere(f.val)}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromTorus(f Torus) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_torus(f.val)}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_torus(f.val)}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromSurface(S *GeomSurface, TolDegen float64) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_surface(S.inner.geom, C.double(TolDegen))}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_surface(S.inner.geom, C.double(TolDegen))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromPlaneParm(f Plane, UMin, UMax, VMin, VMax float64) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_plane_p(f.val, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax))}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_plane_p(f.val, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromCylinderParm(f Cylinder, UMin, UMax, VMin, VMax float64) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_cylinder_p(f.val, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax))}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_cylinder_p(f.val, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
-
 func TopoMakeFaceFromConeParm(f Cone, UMin, UMax, VMin, VMax float64) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_cone_p(f.val, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax))}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_cone_p(f.val, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromSphereParm(f Sphere, UMin, UMax, VMin, VMax float64) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_sphere_p(f.val, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax))}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_sphere_p(f.val, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromTorusParm(f Torus, UMin, UMax, VMin, VMax float64) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_torus_p(f.val, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax))}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_torus_p(f.val, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromSurfaceParm(S *GeomSurface, UMin, UMax, VMin, VMax, TolDegen float64) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_surface_p(S.inner.geom, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax), C.double(TolDegen))}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_surface_p(S.inner.geom, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax), C.double(TolDegen))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromWire(w Wire, OnlyPlane bool) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_wire_onlyplane(w.inner.val, C.bool(OnlyPlane))}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_wire_onlyplane(w.inner.val, C.bool(OnlyPlane))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromPlaneWire(p Plane, w Wire, Inside bool) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_plane_wire(p.val, w.inner.val, C.bool(Inside))}}
+	f := &Face{inner: &innerFace{val: C.topo_face_make_face_from_plane_wire(p.val, w.inner.val, C.bool(Inside))}}
+	runtime.SetFinalizer(f.inner, (*innerFace).free)
+	return f
 }
 
 func TopoMakeFaceFromCylinderWire(p Cylinder, w Wire, Inside bool) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_cylinder_wire(p.val, w.inner.val, C.bool(Inside))}}
+	f := &Face{inner: &innerFace{val: C.topo_face_make_face_from_cylinder_wire(p.val, w.inner.val, C.bool(Inside))}}
+	runtime.SetFinalizer(f.inner, (*innerFace).free)
+	return f
 }
 
 func TopoMakeFaceFromConeWire(p Cone, w Wire, Inside bool) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_cone_wire(p.val, w.inner.val, C.bool(Inside))}}
+	f := &Face{inner: &innerFace{val: C.topo_face_make_face_from_cone_wire(p.val, w.inner.val, C.bool(Inside))}}
+	runtime.SetFinalizer(f.inner, (*innerFace).free)
+	return f
 }
 
 func TopoMakeFaceFromSphereWire(p Sphere, w Wire, Inside bool) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_sphere_wire(p.val, w.inner.val, C.bool(Inside))}}
+	f := &Face{inner: &innerFace{val: C.topo_face_make_face_from_sphere_wire(p.val, w.inner.val, C.bool(Inside))}}
+	runtime.SetFinalizer(f.inner, (*innerFace).free)
+	return f
 }
 
 func TopoMakeFaceFromTorusWire(p Torus, w Wire, Inside bool) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_torus_wire(p.val, w.inner.val, C.bool(Inside))}}
+	f := &Face{inner: &innerFace{val: C.topo_face_make_face_from_torus_wire(p.val, w.inner.val, C.bool(Inside))}}
+	runtime.SetFinalizer(f.inner, (*innerFace).free)
+	return f
 }
 
 func TopoMakeFaceFromSurfaceWire(S *GeomSurface, w Wire, Inside bool) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_surface_wire(S.inner.geom, w.inner.val, C.bool(Inside))}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_surface_wire(S.inner.geom, w.inner.val, C.bool(Inside))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromFaceWire(f *Face, w Wire) *Face {
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_face_wire(f.inner.val, w.inner.val)}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_face_wire(f.inner.val, w.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromWires(ws []Wire) *Face {
@@ -2331,7 +2618,9 @@ func TopoMakeFaceFromWires(ws []Wire) *Face {
 	for i := range ws {
 		cws[i] = ws[i].inner.val
 	}
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_wire(&cws[0], C.int(len(ws)))}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_wire(&cws[0], C.int(len(ws)))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromEdges(ws []Edge, pts []Point3) *Face {
@@ -2343,7 +2632,9 @@ func TopoMakeFaceFromEdges(ws []Edge, pts []Point3) *Face {
 	for i := range pts {
 		cpts[i] = pts[i].val
 	}
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_egdes(&cws[0], C.int(len(ws)), &cpts[0], C.int(len(pts)))}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_egdes(&cws[0], C.int(len(ws)), &cpts[0], C.int(len(pts)))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func TopoMakeFaceFromPoints(pts []Point3) *Face {
@@ -2351,7 +2642,9 @@ func TopoMakeFaceFromPoints(pts []Point3) *Face {
 	for i := range pts {
 		cpts[i] = pts[i].val
 	}
-	return &Face{inner: &innerFace{val: C.topo_face_make_face_from_points(&cpts[0], C.int(len(pts)))}}
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_points(&cpts[0], C.int(len(pts)))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 type Shell struct {
@@ -2364,7 +2657,7 @@ type innerShell struct {
 
 func TopoMakeShell() *Shell {
 	p := &Shell{inner: &innerShell{val: C.topo_make_shell()}}
-	runtime.SetFinalizer(p, (*Shell).free)
+	runtime.SetFinalizer(p.inner, (*innerShell).free)
 	return p
 }
 
@@ -2377,195 +2670,289 @@ func (s *Shell) Sweep(spine *Wire, profiles []Wire, cornerMode int) int {
 }
 
 func (t *Shell) ToShape() *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
-func (t *Shell) free() {
-	C.topo_shell_free(t.inner.val)
+func (t *innerShell) free() {
+	C.topo_shell_free(t.val)
 }
 
 func TopoMakeShellFromSurface(S *GeomSurface, Segment bool) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_surface(S.inner.geom, C.bool(Segment))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_surface(S.inner.geom, C.bool(Segment))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromSurfaceFromSurfaceParm(S *GeomSurface, UMin, UMax, VMin, VMax float64, Segment bool) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_surface_p(S.inner.geom, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax), C.bool(Segment))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_surface_p(S.inner.geom, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax), C.bool(Segment))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromBox(dx, dy, dz float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_box(C.double(dx), C.double(dy), C.double(dz))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_box(C.double(dx), C.double(dy), C.double(dz))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromBoxPoint(p Point3, dx, dy, dz float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_box_point(p.val, C.double(dx), C.double(dy), C.double(dz))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_box_point(p.val, C.double(dx), C.double(dy), C.double(dz))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromBoxTwoPoint(p1, p2 Point3) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_box_two_point(p1.val, p2.val)}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_box_two_point(p1.val, p2.val)}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromBoxAxis2(a Axis2, dx, dy, dz float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_box_axis2(a.val, C.double(dx), C.double(dy), C.double(dz))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_box_axis2(a.val, C.double(dx), C.double(dy), C.double(dz))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromCylinder(R, H float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cylinder(C.double(R), C.double(H))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cylinder(C.double(R), C.double(H))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromCylinderAngle(R, H, Angle float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cylinder_angle(C.double(R), C.double(H), C.double(Angle))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cylinder_angle(C.double(R), C.double(H), C.double(Angle))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromCylinderAxis2(a Axis2, R, H float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cylinder_axis2(a.val, C.double(R), C.double(H))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cylinder_axis2(a.val, C.double(R), C.double(H))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromCylinderAxis2Angle(a Axis2, R, H, Angle float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cylinder_axis2_angle(a.val, C.double(R), C.double(H), C.double(Angle))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cylinder_axis2_angle(a.val, C.double(R), C.double(H), C.double(Angle))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromCone(R1, R2, H float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cone(C.double(R1), C.double(R2), C.double(H))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cone(C.double(R1), C.double(R2), C.double(H))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromConeAngle(R1, R2, H, Angle float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cone_angle(C.double(R1), C.double(R2), C.double(H), C.double(Angle))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cone_angle(C.double(R1), C.double(R2), C.double(H), C.double(Angle))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromConeAxis2(a Axis2, R1, R2, H float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cone_axis2(a.val, C.double(R1), C.double(R2), C.double(H))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cone_axis2(a.val, C.double(R1), C.double(R2), C.double(H))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromConeAxis2Angle(a Axis2, R1, R2, H, Angle float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cone_axis2_angle(a.val, C.double(R1), C.double(R2), C.double(H), C.double(Angle))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_cone_axis2_angle(a.val, C.double(R1), C.double(R2), C.double(H), C.double(Angle))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromRevolution(m *GeomCurve) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution(m.inner.geom)}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution(m.inner.geom)}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromRevolutionAngle(m *GeomCurve, Angle float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution_angle(m.inner.geom, C.double(Angle))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution_angle(m.inner.geom, C.double(Angle))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromRevolutionLimit(m *GeomCurve, VMin, VMax float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution_limit(m.inner.geom, C.double(VMin), C.double(VMax))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution_limit(m.inner.geom, C.double(VMin), C.double(VMax))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromRevolutionLimitAngle(m *GeomCurve, VMin, VMax, Angle float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution_limit_angle(m.inner.geom, C.double(VMin), C.double(VMax), C.double(Angle))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution_limit_angle(m.inner.geom, C.double(VMin), C.double(VMax), C.double(Angle))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromRevolutionAxis2(a Axis2, m *GeomCurve) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution_axis2(a.val, m.inner.geom)}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution_axis2(a.val, m.inner.geom)}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromRevolutionAxis2Angle(a Axis2, m *GeomCurve, Angle float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution_axis2_angle(a.val, m.inner.geom, C.double(Angle))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution_axis2_angle(a.val, m.inner.geom, C.double(Angle))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromRevolutionAxis2Limit(a Axis2, m *GeomCurve, VMin, VMax float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution_axis2_limit(a.val, m.inner.geom, C.double(VMin), C.double(VMax))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution_axis2_limit(a.val, m.inner.geom, C.double(VMin), C.double(VMax))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromRevolutionAxis2LimitAngle(a Axis2, m *GeomCurve, VMin, VMax, Angle float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution_axis2_limit_angle(a.val, m.inner.geom, C.double(VMin), C.double(VMax), C.double(Angle))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_revolution_axis2_limit_angle(a.val, m.inner.geom, C.double(VMin), C.double(VMax), C.double(Angle))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromSpere(R float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere(C.double(R))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere(C.double(R))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromSpereAngle(R float64, Angle float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_angle(C.double(R), C.double(Angle))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_angle(C.double(R), C.double(Angle))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromSpereTwoAngle(R float64, Angle1, Angle2 float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_two_angle(C.double(R), C.double(Angle1), C.double(Angle2))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_two_angle(C.double(R), C.double(Angle1), C.double(Angle2))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromSpereThreeAngle(R float64, Angle1, Angle2, Angle3 float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_three_angle(C.double(R), C.double(Angle1), C.double(Angle2), C.double(Angle3))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_three_angle(C.double(R), C.double(Angle1), C.double(Angle2), C.double(Angle3))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromSpereCenterRaduis(Center Point3, R float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_center_raduis(Center.val, C.double(R))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_center_raduis(Center.val, C.double(R))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromSpereCenterAngle(Center Point3, R, Angle float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_center_angle(Center.val, C.double(R), C.double(Angle))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_center_angle(Center.val, C.double(R), C.double(Angle))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromSpereCenterTwoAngle(Center Point3, R, Angle1, Angle2 float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_center_two_angle(Center.val, C.double(R), C.double(Angle1), C.double(Angle2))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_center_two_angle(Center.val, C.double(R), C.double(Angle1), C.double(Angle2))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromSpereCenterThreeAngle(Center Point3, R, Angle1, Angle2, Angle3 float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_center_three_angle(Center.val, C.double(R), C.double(Angle1), C.double(Angle2), C.double(Angle3))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_center_three_angle(Center.val, C.double(R), C.double(Angle1), C.double(Angle2), C.double(Angle3))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromSpereAxis2(a Axis2, R float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_axis2(a.val, C.double(R))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_axis2(a.val, C.double(R))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromSpereAxis2Angle(a Axis2, R, Angle float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_axis2_raduis(a.val, C.double(R), C.double(Angle))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_axis2_raduis(a.val, C.double(R), C.double(Angle))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromSpereAxis2TwoAngle(a Axis2, R, Angle1, Angle2 float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_axis2_two_angle(a.val, C.double(R), C.double(Angle1), C.double(Angle2))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_axis2_two_angle(a.val, C.double(R), C.double(Angle1), C.double(Angle2))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromSpereAxis2ThreeAngle(a Axis2, R, Angle1, Angle2, Angle3 float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_axis2_three_angle(a.val, C.double(R), C.double(Angle1), C.double(Angle2), C.double(Angle3))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_sphere_axis2_three_angle(a.val, C.double(R), C.double(Angle1), C.double(Angle2), C.double(Angle3))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromTorus(R1, R2 float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus(C.double(R1), C.double(R2))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus(C.double(R1), C.double(R2))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromTorusAngle(R1, R2, Angle float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus_angle(C.double(R1), C.double(R2), C.double(Angle))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus_angle(C.double(R1), C.double(R2), C.double(Angle))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromTorusTwoAngle(R1, R2, Angle1, Angle2 float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus_two_angle(C.double(R1), C.double(R2), C.double(Angle1), C.double(Angle2))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus_two_angle(C.double(R1), C.double(R2), C.double(Angle1), C.double(Angle2))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromTorusThreeAngle(R1, R2, Angle1, Angle2, Angle3 float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus_three_angle(C.double(R1), C.double(R2), C.double(Angle1), C.double(Angle2), C.double(Angle3))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus_three_angle(C.double(R1), C.double(R2), C.double(Angle1), C.double(Angle2), C.double(Angle3))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromTorusAxis2(a Axis2, R1, R2 float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus_axis2(a.val, C.double(R1), C.double(R2))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus_axis2(a.val, C.double(R1), C.double(R2))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromTorusAxis2Angle(a Axis2, R1, R2, Angle float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus_axis2_angle(a.val, C.double(R1), C.double(R2), C.double(Angle))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus_axis2_angle(a.val, C.double(R1), C.double(R2), C.double(Angle))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromTorusAxis2TwoAngle(a Axis2, R1, R2, Angle1, Angle2 float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus_axis2_two_angle(a.val, C.double(R1), C.double(R2), C.double(Angle1), C.double(Angle2))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus_axis2_two_angle(a.val, C.double(R1), C.double(R2), C.double(Angle1), C.double(Angle2))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromTorusAxis2ThreeAngle(a Axis2, R1, R2, Angle1, Angle2, Angle3 float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus_axis2_three_angle(a.val, C.double(R1), C.double(R2), C.double(Angle1), C.double(Angle2), C.double(Angle3))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_torus_axis2_three_angle(a.val, C.double(R1), C.double(R2), C.double(Angle1), C.double(Angle2), C.double(Angle3))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromWedge(dx, dy, dz, ltx float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_wedge(C.double(dx), C.double(dy), C.double(dz), C.double(ltx))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_wedge(C.double(dx), C.double(dy), C.double(dz), C.double(ltx))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromWedgeAxis2(a Axis2, dx, dy, dz, ltx float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_wedge_axis2(a.val, C.double(dx), C.double(dy), C.double(dz), C.double(ltx))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_wedge_axis2(a.val, C.double(dx), C.double(dy), C.double(dz), C.double(ltx))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromWedgeLimit(dx, dy, dz, xmin, zmin, xmax, zmax float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_wedge_limit(C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_wedge_limit(C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 func TopoMakeShellFromWedgeAxis2Limit(a Axis2, dx, dy, dz, xmin, zmin, xmax, zmax float64) *Shell {
-	return &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_wedge_axis2_limit(a.val, C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax))}}
+	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_wedge_axis2_limit(a.val, C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax))}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
 }
 
 type Solid struct {
@@ -2578,7 +2965,7 @@ type innerSolid struct {
 
 func TopoMakeSolid() *Solid {
 	p := &Solid{inner: &innerSolid{val: C.topo_make_solid()}}
-	runtime.SetFinalizer(p, (*Solid).free)
+	runtime.SetFinalizer(p.inner, (*innerSolid).free)
 	return p
 }
 
@@ -2645,55 +3032,73 @@ func (s *Solid) MirrorFromAxis2(a Axis2) int {
 func (s *Solid) Transformed(t Trsf) *Solid {
 	var val C.struct__topo_solid_t
 	val.shp = C.topo_shape_transformed(s.inner.val.shp, t.val)
-	return &Solid{inner: &innerSolid{val: val}}
+	sld := &Solid{inner: &innerSolid{val: val}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func (s *Solid) Translated(v Vector3) *Solid {
 	var val C.struct__topo_solid_t
 	val.shp = C.topo_shape_translated(s.inner.val.shp, v.val)
-	return &Solid{inner: &innerSolid{val: val}}
+	sld := &Solid{inner: &innerSolid{val: val}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func (s *Solid) RotatedFromPoint(angle float64, p1, p2 Point3) *Solid {
 	var val C.struct__topo_solid_t
 	val.shp = C.topo_shape_rotated_from_two_point(s.inner.val.shp, C.double(angle), p1.val, p2.val)
-	return &Solid{inner: &innerSolid{val: val}}
+	sld := &Solid{inner: &innerSolid{val: val}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func (s *Solid) RotatedFromAxis1(angle float64, a Axis1) *Solid {
 	var val C.struct__topo_solid_t
 	val.shp = C.topo_shape_rotated_from_axis1(s.inner.val.shp, C.double(angle), a.val)
-	return &Solid{inner: &innerSolid{val: val}}
+	sld := &Solid{inner: &innerSolid{val: val}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func (s *Solid) RotatedFromQuaternion(q Quaternion) *Solid {
 	var val C.struct__topo_solid_t
 	val.shp = C.topo_shape_rotated_from_quaternion(s.inner.val.shp, q.val)
-	return &Solid{inner: &innerSolid{val: val}}
+	sld := &Solid{inner: &innerSolid{val: val}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func (s *Solid) Scaled(angle float64, a Point3) *Solid {
 	var val C.struct__topo_solid_t
 	val.shp = C.topo_shape_scaled(s.inner.val.shp, C.double(angle), a.val)
-	return &Solid{inner: &innerSolid{val: val}}
+	sld := &Solid{inner: &innerSolid{val: val}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func (s *Solid) MirroredFromPointNorm(pnt, ner Point3) *Solid {
 	var val C.struct__topo_solid_t
 	val.shp = C.topo_shape_mirrored_from_point_norm(s.inner.val.shp, pnt.val, ner.val)
-	return &Solid{inner: &innerSolid{val: val}}
+	sld := &Solid{inner: &innerSolid{val: val}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func (s *Solid) MirroredFromAxis1(a Axis1) *Solid {
 	var val C.struct__topo_solid_t
 	val.shp = C.topo_shape_mirrored_from_axis1(s.inner.val.shp, a.val)
-	return &Solid{inner: &innerSolid{val: val}}
+	sld := &Solid{inner: &innerSolid{val: val}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func (s *Solid) MirroredFromAxis2(a Axis2) *Solid {
 	var val C.struct__topo_solid_t
 	val.shp = C.topo_shape_mirrored_from_axis2(s.inner.val.shp, a.val)
-	return &Solid{inner: &innerSolid{val: val}}
+	sld := &Solid{inner: &innerSolid{val: val}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func (s *Solid) GetOrientation() int {
@@ -2705,7 +3110,9 @@ func (s *Solid) SetOrientation(t int) {
 }
 
 func (s *Solid) GetLocation() *Location {
-	return &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	p := &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	runtime.SetFinalizer(p.inner, (*innerLocation).free)
+	return p
 }
 
 func (s *Solid) SetLocation(t *Location) {
@@ -2719,7 +3126,9 @@ func (s *Solid) FixShape() bool {
 func (s *Solid) Copy() *Solid {
 	var val C.struct__topo_solid_t
 	val.shp = C.topo_shape_copy(s.inner.val.shp)
-	return &Solid{inner: &innerSolid{val: val}}
+	sld := &Solid{inner: &innerSolid{val: val}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func (s *Solid) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
@@ -2976,7 +3385,9 @@ func (s *Solid) RevolutionForm(w *Wire, p *GeomPlane, a Axis1, h1, h2 float64, f
 }
 
 func (s *Solid) SectionFace(pnt, nor Point3) *Face {
-	return &Face{inner: &innerFace{val: C.topo_solid_section_face(s.inner.val, pnt.val, nor.val)}}
+	p := &Face{inner: &innerFace{val: C.topo_solid_section_face(s.inner.val, pnt.val, nor.val)}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
 }
 
 func (s *Solid) ConvertToNurbs() int {
@@ -2984,27 +3395,37 @@ func (s *Solid) ConvertToNurbs() int {
 }
 
 func (t *Solid) ToShape() *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
-func (t *Solid) free() {
-	C.topo_solid_free(t.inner.val)
+func (t *innerSolid) free() {
+	C.topo_solid_free(t.val)
 }
 
 func TopoMakeSolidFromCompSolid(S *CompSolid) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_comp_solid(S.inner.val)}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_comp_solid(S.inner.val)}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromShell(S *Shell) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_shell(S.inner.val)}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_shell(S.inner.val)}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromTwoShell(S1, S2 *Shell) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_two_shell(S1.inner.val, S2.inner.val)}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_two_shell(S1.inner.val, S2.inner.val)}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromThreeShell(S1, S2, S3 *Shell) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_three_shell(S1.inner.val, S2.inner.val, S3.inner.val)}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_three_shell(S1.inner.val, S2.inner.val, S3.inner.val)}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromShells(S []Shell) *Solid {
@@ -3012,15 +3433,21 @@ func TopoMakeSolidFromShells(S []Shell) *Solid {
 	for i := range S {
 		shls[i] = S[i].inner.val
 	}
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_shells(&shls[0], C.int(len(S)))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_shells(&shls[0], C.int(len(S)))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSolid(S *Solid) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_solid(S.inner.val)}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_solid(S.inner.val)}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSolidShell(S *Solid, sl *Shell) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_solid_shell(S.inner.val, sl.inner.val)}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_solid_shell(S.inner.val, sl.inner.val)}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromFaces(S []Face, tolerance float64) *Solid {
@@ -3028,179 +3455,267 @@ func TopoMakeSolidFromFaces(S []Face, tolerance float64) *Solid {
 	for i := range S {
 		shls[i] = S[i].inner.val
 	}
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_faces(&shls[0], C.int(len(S)), C.double(tolerance))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_faces(&shls[0], C.int(len(S)), C.double(tolerance))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromBox(dx, dy, dz float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_box(C.double(dx), C.double(dy), C.double(dz))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_box(C.double(dx), C.double(dy), C.double(dz))}}
+	runtime.SetFinalizer(sld.inner, (*innerLocation).free)
+	return sld
 }
 
 func TopoMakeSolidFromBoxPoint(p Point3, dx, dy, dz float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_box_point(p.val, C.double(dx), C.double(dy), C.double(dz))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_box_point(p.val, C.double(dx), C.double(dy), C.double(dz))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromBoxTwoPoint(p1, p2 Point3) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_box_two_point(p1.val, p2.val)}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_box_two_point(p1.val, p2.val)}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromBoxAxis2(a Axis2, dx, dy, dz float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_box_axis2(a.val, C.double(dx), C.double(dy), C.double(dz))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_box_axis2(a.val, C.double(dx), C.double(dy), C.double(dz))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromCylinder(R, H float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cylinder(C.double(R), C.double(H))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cylinder(C.double(R), C.double(H))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromCylinderAngle(R, H, Angle float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cylinder_angle(C.double(R), C.double(H), C.double(Angle))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cylinder_angle(C.double(R), C.double(H), C.double(Angle))}}
+	runtime.SetFinalizer(sld.inner, (*innerLocation).free)
+	return sld
 }
 
 func TopoMakeSolidFromCylinderAxis2(a Axis2, R, H float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cylinder_axis2(a.val, C.double(R), C.double(H))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cylinder_axis2(a.val, C.double(R), C.double(H))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromCylinderAxis2Angle(a Axis2, R, H, Angle float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cylinder_axis2_angle(a.val, C.double(R), C.double(H), C.double(Angle))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cylinder_axis2_angle(a.val, C.double(R), C.double(H), C.double(Angle))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromCone(R1, R2, H float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cone(C.double(R1), C.double(R2), C.double(H))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cone(C.double(R1), C.double(R2), C.double(H))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromConeAngle(R1, R2, H, Angle float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cone_angle(C.double(R1), C.double(R2), C.double(H), C.double(Angle))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cone_angle(C.double(R1), C.double(R2), C.double(H), C.double(Angle))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromConeAxis2(a Axis2, R1, R2, H float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cone_axis2(a.val, C.double(R1), C.double(R2), C.double(H))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cone_axis2(a.val, C.double(R1), C.double(R2), C.double(H))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromConeAxis2Angle(a Axis2, R1, R2, H, Angle float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cone_axis2_angle(a.val, C.double(R1), C.double(R2), C.double(H), C.double(Angle))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cone_axis2_angle(a.val, C.double(R1), C.double(R2), C.double(H), C.double(Angle))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFroRevolution(Meridian *GeomCurve) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution(Meridian.inner.geom)}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution(Meridian.inner.geom)}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFroRevolutionAngle(Meridian *GeomCurve, angle float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution_angle(Meridian.inner.geom, C.double(angle))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution_angle(Meridian.inner.geom, C.double(angle))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFroRevolutionLimit(Meridian *GeomCurve, VMin, VMax float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution_limit(Meridian.inner.geom, C.double(VMin), C.double(VMax))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution_limit(Meridian.inner.geom, C.double(VMin), C.double(VMax))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFroRevolutionLimitAngle(Meridian *GeomCurve, VMin, VMax, angle float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution_limit_angle(Meridian.inner.geom, C.double(VMin), C.double(VMax), C.double(angle))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution_limit_angle(Meridian.inner.geom, C.double(VMin), C.double(VMax), C.double(angle))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFroRevolutionAxis2(a Axis2, Meridian *GeomCurve) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution_axis2(a.val, Meridian.inner.geom)}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution_axis2(a.val, Meridian.inner.geom)}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFroRevolutionAxis2Angle(a Axis2, Meridian *GeomCurve, angle float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution_axis2_angle(a.val, Meridian.inner.geom, C.double(angle))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution_axis2_angle(a.val, Meridian.inner.geom, C.double(angle))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFroRevolutionAxis2Limit(a Axis2, Meridian *GeomCurve, VMin, VMax float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution_axis2_limit(a.val, Meridian.inner.geom, C.double(VMin), C.double(VMax))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution_axis2_limit(a.val, Meridian.inner.geom, C.double(VMin), C.double(VMax))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFroRevolutionAxis2LimitAngle(a Axis2, Meridian *GeomCurve, VMin, VMax, angle float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution_axis2_limit_angle(a.val, Meridian.inner.geom, C.double(VMin), C.double(VMax), C.double(angle))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_revolution_axis2_limit_angle(a.val, Meridian.inner.geom, C.double(VMin), C.double(VMax), C.double(angle))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphere(R float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere(C.double(R))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere(C.double(R))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereAngle(R, angle float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_angle(C.double(R), C.double(angle))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_angle(C.double(R), C.double(angle))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereTwoAngle(R, angle1, angle2 float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_two_angle(C.double(R), C.double(angle1), C.double(angle2))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_two_angle(C.double(R), C.double(angle1), C.double(angle2))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereThreeAngle(R, angle1, angle2, angle3 float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_three_angle(C.double(R), C.double(angle1), C.double(angle2), C.double(angle3))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_three_angle(C.double(R), C.double(angle1), C.double(angle2), C.double(angle3))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereCenterAngle(c Point3, R, angle float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_center_angle(c.val, C.double(R), C.double(angle))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_center_angle(c.val, C.double(R), C.double(angle))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereCenterTwoAngle(c Point3, R, angle1, angle2 float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_center_two_angle(c.val, C.double(R), C.double(angle1), C.double(angle2))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_center_two_angle(c.val, C.double(R), C.double(angle1), C.double(angle2))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereCenterThreeAngle(c Point3, R, angle1, angle2, angle3 float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_center_three_angle(c.val, C.double(R), C.double(angle1), C.double(angle2), C.double(angle3))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_center_three_angle(c.val, C.double(R), C.double(angle1), C.double(angle2), C.double(angle3))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereAxis2(a Axis2, R float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_axis2(a.val, C.double(R))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_axis2(a.val, C.double(R))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereAxis2Angle(a Axis2, R, angle float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_axis2_angle(a.val, C.double(R), C.double(angle))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_axis2_angle(a.val, C.double(R), C.double(angle))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereAxis2TwoAngle(a Axis2, R, angle1, angle2 float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_axis2_two_angle(a.val, C.double(R), C.double(angle1), C.double(angle2))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_axis2_two_angle(a.val, C.double(R), C.double(angle1), C.double(angle2))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereAxis2ThreeAngle(a Axis2, R, angle1, angle2, angle3 float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_axis2_three_angle(a.val, C.double(R), C.double(angle1), C.double(angle2), C.double(angle3))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_sphere_axis2_three_angle(a.val, C.double(R), C.double(angle1), C.double(angle2), C.double(angle3))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereTorus(R1, R2 float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus(C.double(R1), C.double(R2))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus(C.double(R1), C.double(R2))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereTorusAngle(R1, R2, angle float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus_angle(C.double(R1), C.double(R2), C.double(angle))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus_angle(C.double(R1), C.double(R2), C.double(angle))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereTorusTwoAngle(R1, R2, angle1, angle2 float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus_two_angle(C.double(R1), C.double(R2), C.double(angle1), C.double(angle2))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus_two_angle(C.double(R1), C.double(R2), C.double(angle1), C.double(angle2))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereTorusThreeAngle(R1, R2, angle1, angle2, angle3 float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus_three_angle(C.double(R1), C.double(R2), C.double(angle1), C.double(angle2), C.double(angle3))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus_three_angle(C.double(R1), C.double(R2), C.double(angle1), C.double(angle2), C.double(angle3))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereTorusAxis2(a Axis2, R1, R2 float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus_axis2(a.val, C.double(R1), C.double(R2))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus_axis2(a.val, C.double(R1), C.double(R2))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereTorusAxis2Angle(a Axis2, R1, R2, angle float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus_axis2_angle(a.val, C.double(R1), C.double(R2), C.double(angle))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus_axis2_angle(a.val, C.double(R1), C.double(R2), C.double(angle))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereTorusAxis2TwoAngle(a Axis2, R1, R2, angle1, angle2 float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus_axis2_two_angle(a.val, C.double(R1), C.double(R2), C.double(angle1), C.double(angle2))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus_axis2_two_angle(a.val, C.double(R1), C.double(R2), C.double(angle1), C.double(angle2))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereTorusAxis2ThreeAngle(a Axis2, R1, R2, angle1, angle2, angle3 float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus_axis2_three_angle(a.val, C.double(R1), C.double(R2), C.double(angle1), C.double(angle2), C.double(angle3))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_torus_axis2_three_angle(a.val, C.double(R1), C.double(R2), C.double(angle1), C.double(angle2), C.double(angle3))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereWedge(dx, dy, dz, ltx float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_wedge(C.double(dx), C.double(dy), C.double(dz), C.double(ltx))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_wedge(C.double(dx), C.double(dy), C.double(dz), C.double(ltx))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereWedgeAxis2(a Axis2, dx, dy, dz, ltx float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_wedge_axis2(a.val, C.double(dx), C.double(dy), C.double(dz), C.double(ltx))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_wedge_axis2(a.val, C.double(dx), C.double(dy), C.double(dz), C.double(ltx))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereWedgeLimit(dx, dy, dz, xmin, zmin, xmax, zmax float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_wedge_limit(C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_wedge_limit(C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 func TopoMakeSolidFromSphereWedgeAxis2Limit(a Axis2, dx, dy, dz, xmin, zmin, xmax, zmax float64) *Solid {
-	return &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_wedge_axis2_limit(a.val, C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax))}}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_wedge_axis2_limit(a.val, C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
 }
 
 type Vertex struct {
@@ -3274,55 +3789,73 @@ func (s *Vertex) MirrorFromAxis2(a Axis2) int {
 func (s *Vertex) Transformed(t Trsf) *Vertex {
 	var val C.struct__topo_vertex_t
 	val.shp = C.topo_shape_transformed(s.inner.val.shp, t.val)
-	return &Vertex{inner: &innerVertex{val: val}}
+	vx := &Vertex{inner: &innerVertex{val: val}}
+	runtime.SetFinalizer(vx.inner, (*innerVertex).free)
+	return vx
 }
 
 func (s *Vertex) Translated(v Vector3) *Vertex {
 	var val C.struct__topo_vertex_t
 	val.shp = C.topo_shape_translated(s.inner.val.shp, v.val)
-	return &Vertex{inner: &innerVertex{val: val}}
+	vx := &Vertex{inner: &innerVertex{val: val}}
+	runtime.SetFinalizer(vx.inner, (*innerVertex).free)
+	return vx
 }
 
 func (s *Vertex) RotatedFromPoint(angle float64, p1, p2 Point3) *Vertex {
 	var val C.struct__topo_vertex_t
 	val.shp = C.topo_shape_rotated_from_two_point(s.inner.val.shp, C.double(angle), p1.val, p2.val)
-	return &Vertex{inner: &innerVertex{val: val}}
+	vx := &Vertex{inner: &innerVertex{val: val}}
+	runtime.SetFinalizer(vx.inner, (*innerVertex).free)
+	return vx
 }
 
 func (s *Vertex) RotatedFromAxis1(angle float64, a Axis1) *Vertex {
 	var val C.struct__topo_vertex_t
 	val.shp = C.topo_shape_rotated_from_axis1(s.inner.val.shp, C.double(angle), a.val)
-	return &Vertex{inner: &innerVertex{val: val}}
+	vx := &Vertex{inner: &innerVertex{val: val}}
+	runtime.SetFinalizer(vx.inner, (*innerVertex).free)
+	return vx
 }
 
 func (s *Vertex) RotatedFromQuaternion(q Quaternion) *Vertex {
 	var val C.struct__topo_vertex_t
 	val.shp = C.topo_shape_rotated_from_quaternion(s.inner.val.shp, q.val)
-	return &Vertex{inner: &innerVertex{val: val}}
+	vx := &Vertex{inner: &innerVertex{val: val}}
+	runtime.SetFinalizer(vx.inner, (*innerVertex).free)
+	return vx
 }
 
 func (s *Vertex) Scaled(angle float64, a Point3) *Vertex {
 	var val C.struct__topo_vertex_t
 	val.shp = C.topo_shape_scaled(s.inner.val.shp, C.double(angle), a.val)
-	return &Vertex{inner: &innerVertex{val: val}}
+	vx := &Vertex{inner: &innerVertex{val: val}}
+	runtime.SetFinalizer(vx.inner, (*innerVertex).free)
+	return vx
 }
 
 func (s *Vertex) MirroredFromPointNorm(pnt, ner Point3) *Vertex {
 	var val C.struct__topo_vertex_t
 	val.shp = C.topo_shape_mirrored_from_point_norm(s.inner.val.shp, pnt.val, ner.val)
-	return &Vertex{inner: &innerVertex{val: val}}
+	vx := &Vertex{inner: &innerVertex{val: val}}
+	runtime.SetFinalizer(vx.inner, (*innerVertex).free)
+	return vx
 }
 
 func (s *Vertex) MirroredFromAxis1(a Axis1) *Vertex {
 	var val C.struct__topo_vertex_t
 	val.shp = C.topo_shape_mirrored_from_axis1(s.inner.val.shp, a.val)
-	return &Vertex{inner: &innerVertex{val: val}}
+	vx := &Vertex{inner: &innerVertex{val: val}}
+	runtime.SetFinalizer(vx.inner, (*innerVertex).free)
+	return vx
 }
 
 func (s *Vertex) MirroredFromAxis2(a Axis2) *Vertex {
 	var val C.struct__topo_vertex_t
 	val.shp = C.topo_shape_mirrored_from_axis2(s.inner.val.shp, a.val)
-	return &Vertex{inner: &innerVertex{val: val}}
+	vx := &Vertex{inner: &innerVertex{val: val}}
+	runtime.SetFinalizer(vx.inner, (*innerVertex).free)
+	return vx
 }
 
 func (s *Vertex) GetOrientation() int {
@@ -3334,7 +3867,9 @@ func (s *Vertex) SetOrientation(t int) {
 }
 
 func (s *Vertex) GetLocation() *Location {
-	return &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	p := &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	runtime.SetFinalizer(p.inner, (*innerLocation).free)
+	return p
 }
 
 func (s *Vertex) SetLocation(t *Location) {
@@ -3348,7 +3883,9 @@ func (s *Vertex) FixShape() bool {
 func (s *Vertex) Copy() *Vertex {
 	var val C.struct__topo_vertex_t
 	val.shp = C.topo_shape_copy(s.inner.val.shp)
-	return &Vertex{inner: &innerVertex{val: val}}
+	vx := &Vertex{inner: &innerVertex{val: val}}
+	runtime.SetFinalizer(vx.inner, (*innerVertex).free)
+	return vx
 }
 
 func (s *Vertex) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
@@ -3457,16 +3994,18 @@ func (t *Vertex) GetPoint() Point3 {
 }
 
 func (t *Vertex) ToShape() *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
-func (t *Vertex) free() {
-	C.topo_vertex_free(t.inner.val)
+func (t *innerVertex) free() {
+	C.topo_vertex_free(t.val)
 }
 
 func NewVertex(x, y, z float64) *Vertex {
 	p := &Vertex{inner: &innerVertex{val: C.topo_vertex_new(C.double(x), C.double(y), C.double(z))}}
-	runtime.SetFinalizer(p, (*Vertex).free)
+	runtime.SetFinalizer(p.inner, (*innerVertex).free)
 	return p
 }
 
@@ -3480,7 +4019,7 @@ type innerWire struct {
 
 func TopoMakeWire() *Wire {
 	p := &Wire{inner: &innerWire{val: C.topo_make_wire()}}
-	runtime.SetFinalizer(p, (*Wire).free)
+	runtime.SetFinalizer(p.inner, (*innerWire).free)
 	return p
 }
 
@@ -3547,55 +4086,73 @@ func (s *Wire) MirrorFromAxis2(a Axis2) int {
 func (s *Wire) Transformed(t Trsf) *Wire {
 	var val C.struct__topo_wire_t
 	val.shp = C.topo_shape_transformed(s.inner.val.shp, t.val)
-	return &Wire{inner: &innerWire{val: val}}
+	wr := &Wire{inner: &innerWire{val: val}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func (s *Wire) Translated(v Vector3) *Wire {
 	var val C.struct__topo_wire_t
 	val.shp = C.topo_shape_translated(s.inner.val.shp, v.val)
-	return &Wire{inner: &innerWire{val: val}}
+	wr := &Wire{inner: &innerWire{val: val}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func (s *Wire) RotatedFromPoint(angle float64, p1, p2 Point3) *Wire {
 	var val C.struct__topo_wire_t
 	val.shp = C.topo_shape_rotated_from_two_point(s.inner.val.shp, C.double(angle), p1.val, p2.val)
-	return &Wire{inner: &innerWire{val: val}}
+	wr := &Wire{inner: &innerWire{val: val}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func (s *Wire) RotatedFromAxis1(angle float64, a Axis1) *Wire {
 	var val C.struct__topo_wire_t
 	val.shp = C.topo_shape_rotated_from_axis1(s.inner.val.shp, C.double(angle), a.val)
-	return &Wire{inner: &innerWire{val: val}}
+	wr := &Wire{inner: &innerWire{val: val}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func (s *Wire) RotatedFromQuaternion(q Quaternion) *Wire {
 	var val C.struct__topo_wire_t
 	val.shp = C.topo_shape_rotated_from_quaternion(s.inner.val.shp, q.val)
-	return &Wire{inner: &innerWire{val: val}}
+	wr := &Wire{inner: &innerWire{val: val}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func (s *Wire) Scaled(angle float64, a Point3) *Wire {
 	var val C.struct__topo_wire_t
 	val.shp = C.topo_shape_scaled(s.inner.val.shp, C.double(angle), a.val)
-	return &Wire{inner: &innerWire{val: val}}
+	wr := &Wire{inner: &innerWire{val: val}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func (s *Wire) MirroredFromPointNorm(pnt, ner Point3) *Wire {
 	var val C.struct__topo_wire_t
 	val.shp = C.topo_shape_mirrored_from_point_norm(s.inner.val.shp, pnt.val, ner.val)
-	return &Wire{inner: &innerWire{val: val}}
+	wr := &Wire{inner: &innerWire{val: val}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func (s *Wire) MirroredFromAxis1(a Axis1) *Wire {
 	var val C.struct__topo_wire_t
 	val.shp = C.topo_shape_mirrored_from_axis1(s.inner.val.shp, a.val)
-	return &Wire{inner: &innerWire{val: val}}
+	wr := &Wire{inner: &innerWire{val: val}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func (s *Wire) MirroredFromAxis2(a Axis2) *Wire {
 	var val C.struct__topo_wire_t
 	val.shp = C.topo_shape_mirrored_from_axis2(s.inner.val.shp, a.val)
-	return &Wire{inner: &innerWire{val: val}}
+	wr := &Wire{inner: &innerWire{val: val}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func (s *Wire) GetOrientation() int {
@@ -3607,7 +4164,9 @@ func (s *Wire) SetOrientation(t int) {
 }
 
 func (s *Wire) GetLocation() *Location {
-	return &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	sp := &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
 func (s *Wire) SetLocation(t *Location) {
@@ -3621,7 +4180,9 @@ func (s *Wire) FixShape() bool {
 func (s *Wire) Copy() *Wire {
 	var val C.struct__topo_wire_t
 	val.shp = C.topo_shape_copy(s.inner.val.shp)
-	return &Wire{inner: &innerWire{val: val}}
+	wr := &Wire{inner: &innerWire{val: val}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func (s *Wire) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
@@ -3726,11 +4287,13 @@ func (s *Wire) GetRotationAngle() float64 {
 }
 
 func (t *Wire) ToShape() *Shape {
-	return &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	sp := &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+	runtime.SetFinalizer(sp.inner, (*innerShape).free)
+	return sp
 }
 
-func (t *Wire) free() {
-	C.topo_wire_free(t.inner.val)
+func (t *innerWire) free() {
+	C.topo_wire_free(t.val)
 }
 
 func (t *Wire) NumVertices() int {
@@ -3778,55 +4341,81 @@ func (t *Wire) Chamfer(vertices []Vertex, radius []float64) int {
 }
 
 func TopoMakePolygon() *Wire {
-	return &Wire{inner: &innerWire{val: C.topo_make_polygon()}}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_polygon()}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func TopoMakePolygonFromTwoPoint(p1, p2 Point3) *Wire {
-	return &Wire{inner: &innerWire{val: C.topo_make_polygon_from_two_point(p1.val, p2.val)}}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_polygon_from_two_point(p1.val, p2.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func TopoMakePolygonFromThreePoint(p1, p2, p3 Point3, Close bool) *Wire {
-	return &Wire{inner: &innerWire{val: C.topo_make_polygon_from_three_point(p1.val, p2.val, p3.val, C.bool(Close))}}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_polygon_from_three_point(p1.val, p2.val, p3.val, C.bool(Close))}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func TopoMakePolygonFromFourPoint(p1, p2, p3, p4 Point3, Close bool) *Wire {
-	return &Wire{inner: &innerWire{val: C.topo_make_polygon_from_four_point(p1.val, p2.val, p3.val, p4.val, C.bool(Close))}}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_polygon_from_four_point(p1.val, p2.val, p3.val, p4.val, C.bool(Close))}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func TopoMakePolygonFromTwoVertex(p1, p2 Vertex) *Wire {
-	return &Wire{inner: &innerWire{val: C.topo_make_polygon_two_vertex(p1.inner.val, p2.inner.val)}}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_polygon_two_vertex(p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func TopoMakePolygonFromThreeVertex(p1, p2, p3 Vertex, Close bool) *Wire {
-	return &Wire{inner: &innerWire{val: C.topo_make_polygon_from_three_vertex(p1.inner.val, p2.inner.val, p3.inner.val, C.bool(Close))}}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_polygon_from_three_vertex(p1.inner.val, p2.inner.val, p3.inner.val, C.bool(Close))}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func TopoMakePolygonFromFourVertex(p1, p2, p3, p4 Vertex, Close bool) *Wire {
-	return &Wire{inner: &innerWire{val: C.topo_make_polygon_from_four_vertex(p1.inner.val, p2.inner.val, p3.inner.val, p4.inner.val, C.bool(Close))}}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_polygon_from_four_vertex(p1.inner.val, p2.inner.val, p3.inner.val, p4.inner.val, C.bool(Close))}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func TopoMakeWireFromEdge(p Edge) *Wire {
-	return &Wire{inner: &innerWire{val: C.topo_make_wire_from_edge(p.inner.val)}}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_edge(p.inner.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func TopoMakeWireFromTwoEdge(p1, p2 Edge) *Wire {
-	return &Wire{inner: &innerWire{val: C.topo_make_wire_from_two_edge(p1.inner.val, p2.inner.val)}}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_two_edge(p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func TopoMakeWireFromThreeEdge(p1, p2, p3 Edge) *Wire {
-	return &Wire{inner: &innerWire{val: C.topo_make_wire_from_three_edge(p1.inner.val, p2.inner.val, p3.inner.val)}}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_three_edge(p1.inner.val, p2.inner.val, p3.inner.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func TopoMakeWireFromFourEdge(p1, p2, p3, p4 Edge) *Wire {
-	return &Wire{inner: &innerWire{val: C.topo_make_wire_from_four_edge(p1.inner.val, p2.inner.val, p3.inner.val, p4.inner.val)}}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_four_edge(p1.inner.val, p2.inner.val, p3.inner.val, p4.inner.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func TopoMakeWireFromWire(p Wire) *Wire {
-	return &Wire{inner: &innerWire{val: C.topo_make_wire_from_wire(p.inner.val)}}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_wire(p.inner.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func TopoMakeWireFromTwoWire(p1 Wire, p2 Edge) *Wire {
-	return &Wire{inner: &innerWire{val: C.topo_make_wire_from_two_wire(p1.inner.val, p2.inner.val)}}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_two_wire(p1.inner.val, p2.inner.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func TopoMakeWireFromEdges(edges []Edge) *Wire {
@@ -3834,7 +4423,9 @@ func TopoMakeWireFromEdges(edges []Edge) *Wire {
 	for i := range edges {
 		es[i] = edges[i].inner.val
 	}
-	return &Wire{inner: &innerWire{val: C.topo_make_wire_from_edges(&es[0], C.int(len(edges)))}}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_edges(&es[0], C.int(len(edges)))}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
 
 func TopoMakeWireFromWires(wires []Wire) *Wire {
@@ -3842,5 +4433,7 @@ func TopoMakeWireFromWires(wires []Wire) *Wire {
 	for i := range wires {
 		es[i] = wires[i].inner.val
 	}
-	return &Wire{inner: &innerWire{val: C.topo_make_wire_from_wries(&es[0], C.int(len(wires)))}}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_wries(&es[0], C.int(len(wires)))}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
 }
