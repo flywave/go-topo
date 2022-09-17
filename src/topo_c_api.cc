@@ -2719,6 +2719,147 @@ void topo_shape_to_stl(topo_shape_t *p, char *str) {
   writer.Write(p->shp->value(), str);
 }
 
+topo_comp_solid_iterator_t *topo_comp_solid_iterator_make(topo_shape_t *shp) {
+  return new topo_comp_solid_iterator_t{
+      flywave::topo::comp_solid_iterator{*shp->shp}};
+}
+
+void topo_comp_solid_iterator_reset(topo_comp_solid_iterator_t *it) {
+  it->iter.reset();
+}
+
+void topo_comp_solid_iterator_free(topo_comp_solid_iterator_t *it) {
+  delete it;
+}
+
+topo_shape_t *topo_comp_solid_iterator_next(topo_comp_solid_iterator_t *it) {
+  boost::optional<flywave::topo::comp_solid> opt = it->iter.next();
+  if (opt) {
+    return new topo_shape_t{std::make_shared<flywave::topo::comp_solid>(*opt)};
+  }
+  return nullptr;
+}
+
+topo_compound_iterator_t *topo_compound_iterator_make(topo_shape_t *shp) {
+  return new topo_compound_iterator_t{
+      flywave::topo::compound_iterator{*shp->shp}};
+}
+
+void topo_compound_iterator_reset(topo_compound_iterator_t *it) {
+  it->iter.reset();
+}
+
+void topo_compound_iterator_free(topo_compound_iterator_t *it) { delete it; }
+
+topo_shape_t *topo_compound_iterator_next(topo_compound_iterator_t *it) {
+  boost::optional<flywave::topo::compound> opt = it->iter.next();
+  if (opt) {
+    return new topo_shape_t{std::make_shared<flywave::topo::compound>(*opt)};
+  }
+  return nullptr;
+}
+
+topo_edge_iterator_t *topo_edge_iterator_make(topo_shape_t *shp) {
+  return new topo_edge_iterator_t{flywave::topo::edge_iterator{*shp->shp}};
+}
+
+void topo_edge_iterator_free(topo_edge_iterator_t *it) { delete it; }
+
+void topo_edge_iterator_reset(topo_edge_iterator_t *it) { it->iter.reset(); }
+
+topo_shape_t *topo_edge_iterator_next(topo_edge_iterator_t *it) {
+  boost::optional<flywave::topo::edge> opt = it->iter.next();
+  if (opt) {
+    return new topo_shape_t{std::make_shared<flywave::topo::edge>(*opt)};
+  }
+  return nullptr;
+}
+
+topo_face_iterator_t *topo_face_iterator_make(topo_shape_t *shp) {
+  return new topo_face_iterator_t{flywave::topo::face_iterator{*shp->shp}};
+}
+
+void topo_face_iterator_free(topo_face_iterator_t *it) { delete it; }
+
+void topo_face_iterator_reset(topo_face_iterator_t *it) { it->iter.reset(); }
+
+topo_shape_t *topo_face_iterator_next(topo_face_iterator_t *it) {
+  boost::optional<flywave::topo::face> opt = it->iter.next();
+  if (opt) {
+    return new topo_shape_t{std::make_shared<flywave::topo::face>(*opt)};
+  }
+  return nullptr;
+}
+
+topo_shell_iterator_t *topo_shell_iterator_make(topo_shape_t *shp) {
+  return new topo_shell_iterator_t{flywave::topo::shell_iterator{*shp->shp}};
+}
+
+void topo_shell_iterator_free(topo_shell_iterator_t *it) { delete it; }
+
+void topo_shell_iterator_reset(topo_shell_iterator_t *it) { it->iter.reset(); }
+
+topo_shape_t *topo_shell_iterator_next(topo_shell_iterator_t *it) {
+  boost::optional<flywave::topo::shell> opt = it->iter.next();
+  if (opt) {
+    return new topo_shape_t{std::make_shared<flywave::topo::shell>(*opt)};
+  }
+  return nullptr;
+}
+
+topo_solid_iterator_t *topo_solid_iterator_make(topo_shape_t *shp) {
+  return new topo_solid_iterator_t{flywave::topo::solid_iterator{*shp->shp}};
+}
+
+void topo_solid_iterator_free(topo_solid_iterator_t *it) { delete it; }
+
+void topo_solid_iterator_reset(topo_solid_iterator_t *it) { it->iter.reset(); }
+
+topo_shape_t *topo_solid_iterator_next(topo_solid_iterator_t *it) {
+  boost::optional<flywave::topo::solid> opt = it->iter.next();
+  if (opt) {
+    return new topo_shape_t{std::make_shared<flywave::topo::solid>(*opt)};
+  }
+  return nullptr;
+}
+
+topo_vertex_iterator_t *topo_vertex_iterator_make(topo_shape_t *shp) {
+  return new topo_vertex_iterator_t{flywave::topo::vertex_iterator{*shp->shp}};
+}
+
+
+void topo_vertex_iterator_free(topo_vertex_iterator_t *it) {
+  delete it;
+}
+
+void topo_vertex_iterator_reset(topo_vertex_iterator_t *it) {
+  it->iter.reset();
+}
+
+topo_shape_t *topo_vertex_iterator_next(topo_vertex_iterator_t *it) {
+  boost::optional<flywave::topo::vertex> opt = it->iter.next();
+  if (opt) {
+    return new topo_shape_t{std::make_shared<flywave::topo::vertex>(*opt)};
+  }
+  return nullptr;
+}
+
+topo_wire_iterator_t *topo_wire_iterator_make(topo_shape_t *shp) {
+  return new topo_wire_iterator_t{flywave::topo::wire_iterator{*shp->shp}};
+}
+
+void topo_wire_iterator_free(topo_wire_iterator_t *it) { delete it; }
+
+void topo_wire_iterator_reset(topo_wire_iterator_t *it) { it->iter.reset(); }
+
+topo_shape_t *topo_wire_iterator_next(topo_wire_iterator_t *it) {
+  boost::optional<flywave::topo::wire> opt = it->iter.next();
+  if (opt) {
+    return new topo_shape_t{std::make_shared<flywave::topo::wire>(*opt)};
+  }
+  return nullptr;
+}
+
 #ifdef __cplusplus
 }
 #endif

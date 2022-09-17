@@ -28,6 +28,38 @@ struct _topo_mesh_receiver_t {
   std::unique_ptr<flywave::topo::mesh_receiver> recv;
 };
 
+struct _topo_comp_solid_iterator_t {
+  flywave::topo::comp_solid_iterator iter;
+};
+
+struct _topo_compound_iterator_t {
+  flywave::topo::compound_iterator iter;
+};
+
+struct _topo_edge_iterator_t {
+  flywave::topo::edge_iterator iter;
+};
+
+struct _topo_face_iterator_t {
+  flywave::topo::face_iterator iter;
+};
+
+struct _topo_shell_iterator_t {
+  flywave::topo::shell_iterator iter;
+};
+
+struct _topo_solid_iterator_t {
+  flywave::topo::solid_iterator iter;
+};
+
+struct _topo_vertex_iterator_t {
+  flywave::topo::vertex_iterator iter;
+};
+
+struct _topo_wire_iterator_t {
+  flywave::topo::wire_iterator iter;
+};
+
 #ifdef __cplusplus
 }
 #endif

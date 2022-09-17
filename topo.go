@@ -4437,3 +4437,235 @@ func TopoMakeWireFromWires(wires []Wire) *Wire {
 	runtime.SetFinalizer(wr.inner, (*innerWire).free)
 	return wr
 }
+
+type CompSolidIterator struct {
+	inner *innerCompSolidIterator
+}
+type innerCompSolidIterator struct {
+	val *C.struct__topo_comp_solid_iterator_t
+}
+
+func TopoMakeCompSolidIterator(p Shape) *CompSolidIterator {
+	wr := &CompSolidIterator{inner: &innerCompSolidIterator{val: C.topo_comp_solid_iterator_make(p.inner.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerCompSolidIterator).free)
+	return wr
+}
+
+func (t *innerCompSolidIterator) free() {
+	C.topo_comp_solid_iterator_free(t.val)
+}
+
+func (t *CompSolidIterator) Next() *CompSolid {
+	v := C.topo_comp_solid_iterator_next(t.inner.val)
+	if v != nil {
+		var val C.struct__topo_comp_solid_t
+		val.shp = v
+		p := &CompSolid{inner: &innerCompSolid{val: val}}
+		runtime.SetFinalizer(p, (*innerCompSolid).free)
+		return p
+	}
+	return nil
+}
+
+type CompoundIterator struct {
+	inner *innerCompoundIterator
+}
+type innerCompoundIterator struct {
+	val *C.struct__topo_compound_iterator_t
+}
+
+func TopoMakeCompoundIterator(p Shape) *CompoundIterator {
+	wr := &CompoundIterator{inner: &innerCompoundIterator{val: C.topo_compound_iterator_make(p.inner.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerCompoundIterator).free)
+	return wr
+}
+
+func (t *innerCompoundIterator) free() {
+	C.topo_compound_iterator_free(t.val)
+}
+
+func (t *CompoundIterator) Next() *Compound {
+	v := C.topo_compound_iterator_next(t.inner.val)
+	if v != nil {
+		var val C.struct__topo_compound_t
+		val.shp = v
+		p := &Compound{inner: &innerCompound{val: val}}
+		runtime.SetFinalizer(p, (*innerCompound).free)
+		return p
+	}
+	return nil
+}
+
+type EdgeIterator struct {
+	inner *innerEdgeIterator
+}
+type innerEdgeIterator struct {
+	val *C.struct__topo_edge_iterator_t
+}
+
+func TopoMakeEdgeIterator(p Shape) *EdgeIterator {
+	wr := &EdgeIterator{inner: &innerEdgeIterator{val: C.topo_edge_iterator_make(p.inner.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerEdgeIterator).free)
+	return wr
+}
+
+func (t *innerEdgeIterator) free() {
+	C.topo_edge_iterator_free(t.val)
+}
+
+func (t *EdgeIterator) Next() *Edge {
+	v := C.topo_edge_iterator_next(t.inner.val)
+	if v != nil {
+		var val C.struct__topo_edge_t
+		val.shp = v
+		p := &Edge{inner: &innerEdge{val: val}}
+		runtime.SetFinalizer(p, (*innerEdge).free)
+		return p
+	}
+	return nil
+}
+
+type FaceIterator struct {
+	inner *innerFaceIterator
+}
+type innerFaceIterator struct {
+	val *C.struct__topo_face_iterator_t
+}
+
+func TopoMakeFaceIterator(p Shape) *FaceIterator {
+	wr := &FaceIterator{inner: &innerFaceIterator{val: C.topo_face_iterator_make(p.inner.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerFaceIterator).free)
+	return wr
+}
+
+func (t *innerFaceIterator) free() {
+	C.topo_face_iterator_free(t.val)
+}
+
+func (t *FaceIterator) Next() *Face {
+	v := C.topo_face_iterator_next(t.inner.val)
+	if v != nil {
+		var val C.struct__topo_face_t
+		val.shp = v
+		p := &Face{inner: &innerFace{val: val}}
+		runtime.SetFinalizer(p, (*innerFace).free)
+		return p
+	}
+	return nil
+}
+
+type ShellIterator struct {
+	inner *innerShellIterator
+}
+type innerShellIterator struct {
+	val *C.struct__topo_shell_iterator_t
+}
+
+func TopoMakeShellIterator(p Shape) *ShellIterator {
+	wr := &ShellIterator{inner: &innerShellIterator{val: C.topo_shell_iterator_make(p.inner.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerShellIterator).free)
+	return wr
+}
+
+func (t *innerShellIterator) free() {
+	C.topo_shell_iterator_free(t.val)
+}
+
+func (t *ShellIterator) Next() *Shell {
+	v := C.topo_shell_iterator_next(t.inner.val)
+	if v != nil {
+		var val C.struct__topo_shell_t
+		val.shp = v
+		p := &Shell{inner: &innerShell{val: val}}
+		runtime.SetFinalizer(p, (*innerShell).free)
+		return p
+	}
+	return nil
+}
+
+type SolidIterator struct {
+	inner *innerSolidIterator
+}
+type innerSolidIterator struct {
+	val *C.struct__topo_solid_iterator_t
+}
+
+func TopoMakeSolidIterator(p Shape) *SolidIterator {
+	wr := &SolidIterator{inner: &innerSolidIterator{val: C.topo_solid_iterator_make(p.inner.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerSolidIterator).free)
+	return wr
+}
+
+func (t *innerSolidIterator) free() {
+	C.topo_solid_iterator_free(t.val)
+}
+
+func (t *SolidIterator) Next() *Solid {
+	v := C.topo_solid_iterator_next(t.inner.val)
+	if v != nil {
+		var val C.struct__topo_solid_t
+		val.shp = v
+		p := &Solid{inner: &innerSolid{val: val}}
+		runtime.SetFinalizer(p, (*innerSolid).free)
+		return p
+	}
+	return nil
+}
+
+type VertexIterator struct {
+	inner *innerVertexIterator
+}
+type innerVertexIterator struct {
+	val *C.struct__topo_vertex_iterator_t
+}
+
+func TopoMakeVertexIterator(p Shape) *VertexIterator {
+	wr := &VertexIterator{inner: &innerVertexIterator{val: C.topo_vertex_iterator_make(p.inner.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerVertexIterator).free)
+	return wr
+}
+
+func (t *innerVertexIterator) free() {
+	C.topo_vertex_iterator_free(t.val)
+}
+
+func (t *VertexIterator) Next() *Vertex {
+	v := C.topo_vertex_iterator_next(t.inner.val)
+	if v != nil {
+		var val C.struct__topo_vertex_t
+		val.shp = v
+		p := &Vertex{inner: &innerVertex{val: val}}
+		runtime.SetFinalizer(p, (*innerVertex).free)
+		return p
+	}
+	return nil
+}
+
+type WireIterator struct {
+	inner *innerWireIterator
+}
+type innerWireIterator struct {
+	val *C.struct__topo_wire_iterator_t
+}
+
+func TopoMakeWireIterator(p Shape) *WireIterator {
+	wr := &WireIterator{inner: &innerWireIterator{val: C.topo_wire_iterator_make(p.inner.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerWireIterator).free)
+	return wr
+}
+
+func (t *innerWireIterator) free() {
+	C.topo_wire_iterator_free(t.val)
+}
+
+func (t *WireIterator) Next() *Wire {
+	v := C.topo_wire_iterator_next(t.inner.val)
+	if v != nil {
+		var val C.struct__topo_wire_t
+		val.shp = v
+		p := &Wire{inner: &innerWire{val: val}}
+		runtime.SetFinalizer(p, (*innerWire).free)
+		return p
+	}
+	return nil
+}
