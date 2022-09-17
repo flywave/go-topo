@@ -499,7 +499,7 @@ type innerCompSolid struct {
 
 func TopoMakeCompSolid() *CompSolid {
 	p := &CompSolid{inner: &innerCompSolid{val: C.topo_make_comp_solid()}}
-	runtime.SetFinalizer(p, (*innerCompSolid).free)
+	runtime.SetFinalizer(p.inner, (*innerCompSolid).free)
 	return p
 }
 
@@ -4461,7 +4461,7 @@ func (t *CompSolidIterator) Next() *CompSolid {
 		var val C.struct__topo_comp_solid_t
 		val.shp = v
 		p := &CompSolid{inner: &innerCompSolid{val: val}}
-		runtime.SetFinalizer(p, (*innerCompSolid).free)
+		runtime.SetFinalizer(p.inner, (*innerCompSolid).free)
 		return p
 	}
 	return nil
@@ -4490,7 +4490,7 @@ func (t *CompoundIterator) Next() *Compound {
 		var val C.struct__topo_compound_t
 		val.shp = v
 		p := &Compound{inner: &innerCompound{val: val}}
-		runtime.SetFinalizer(p, (*innerCompound).free)
+		runtime.SetFinalizer(p.inner, (*innerCompound).free)
 		return p
 	}
 	return nil
@@ -4519,7 +4519,7 @@ func (t *EdgeIterator) Next() *Edge {
 		var val C.struct__topo_edge_t
 		val.shp = v
 		p := &Edge{inner: &innerEdge{val: val}}
-		runtime.SetFinalizer(p, (*innerEdge).free)
+		runtime.SetFinalizer(p.inner, (*innerEdge).free)
 		return p
 	}
 	return nil
@@ -4548,7 +4548,7 @@ func (t *FaceIterator) Next() *Face {
 		var val C.struct__topo_face_t
 		val.shp = v
 		p := &Face{inner: &innerFace{val: val}}
-		runtime.SetFinalizer(p, (*innerFace).free)
+		runtime.SetFinalizer(p.inner, (*innerFace).free)
 		return p
 	}
 	return nil
@@ -4577,7 +4577,7 @@ func (t *ShellIterator) Next() *Shell {
 		var val C.struct__topo_shell_t
 		val.shp = v
 		p := &Shell{inner: &innerShell{val: val}}
-		runtime.SetFinalizer(p, (*innerShell).free)
+		runtime.SetFinalizer(p.inner, (*innerShell).free)
 		return p
 	}
 	return nil
@@ -4606,7 +4606,7 @@ func (t *SolidIterator) Next() *Solid {
 		var val C.struct__topo_solid_t
 		val.shp = v
 		p := &Solid{inner: &innerSolid{val: val}}
-		runtime.SetFinalizer(p, (*innerSolid).free)
+		runtime.SetFinalizer(p.inner, (*innerSolid).free)
 		return p
 	}
 	return nil
@@ -4635,7 +4635,7 @@ func (t *VertexIterator) Next() *Vertex {
 		var val C.struct__topo_vertex_t
 		val.shp = v
 		p := &Vertex{inner: &innerVertex{val: val}}
-		runtime.SetFinalizer(p, (*innerVertex).free)
+		runtime.SetFinalizer(p.inner, (*innerVertex).free)
 		return p
 	}
 	return nil
@@ -4664,7 +4664,7 @@ func (t *WireIterator) Next() *Wire {
 		var val C.struct__topo_wire_t
 		val.shp = v
 		p := &Wire{inner: &innerWire{val: val}}
-		runtime.SetFinalizer(p, (*innerWire).free)
+		runtime.SetFinalizer(p.inner, (*innerWire).free)
 		return p
 	}
 	return nil
