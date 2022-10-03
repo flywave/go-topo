@@ -36,6 +36,14 @@ enum { ORI_FORWARD, ORI_REVERSED, ORI_INTERNAL, ORI_EXTERNAL, ORI_UNKNOW };
 typedef struct _topo_shape_t topo_shape_t;
 typedef struct _topo_location_t topo_location_t;
 typedef struct _topo_mesh_receiver_t topo_mesh_receiver_t;
+typedef struct _topo_comp_solid_iterator_t topo_comp_solid_iterator_t;
+typedef struct _topo_compound_iterator_t topo_compound_iterator_t;
+typedef struct _topo_edge_iterator_t topo_edge_iterator_t;
+typedef struct _topo_face_iterator_t topo_face_iterator_t;
+typedef struct _topo_shell_iterator_t topo_shell_iterator_t;
+typedef struct _topo_solid_iterator_t topo_solid_iterator_t;
+typedef struct _topo_vertex_iterator_t topo_vertex_iterator_t;
+typedef struct _topo_wire_iterator_t topo_wire_iterator_t;
 
 typedef struct _topo_comp_solid_t {
   topo_shape_t *shp;
@@ -1062,6 +1070,54 @@ TOPOCAPICALL topo_comp_solid_t topo_comp_solid_make_comp_solid(topo_solid_t *S,
                                                                int count);
 
 TOPOCAPICALL void topo_shape_to_stl(topo_shape_t *p, char *);
+
+TOPOCAPICALL topo_comp_solid_iterator_t *
+topo_comp_solid_iterator_make(topo_shape_t *shp);
+TOPOCAPICALL void
+topo_comp_solid_iterator_free(topo_comp_solid_iterator_t *it);
+TOPOCAPICALL void
+topo_comp_solid_iterator_reset(topo_comp_solid_iterator_t *it);
+TOPOCAPICALL topo_shape_t *
+topo_comp_solid_iterator_next(topo_comp_solid_iterator_t *it);
+
+TOPOCAPICALL topo_compound_iterator_t *
+topo_compound_iterator_make(topo_shape_t *shp);
+TOPOCAPICALL void topo_compound_iterator_free(topo_compound_iterator_t *it);
+TOPOCAPICALL void topo_compound_iterator_reset(topo_compound_iterator_t *it);
+TOPOCAPICALL topo_shape_t *
+topo_compound_iterator_next(topo_compound_iterator_t *it);
+
+TOPOCAPICALL topo_edge_iterator_t *topo_edge_iterator_make(topo_shape_t *shp);
+TOPOCAPICALL void topo_edge_iterator_free(topo_edge_iterator_t *it);
+TOPOCAPICALL void topo_edge_iterator_reset(topo_edge_iterator_t *it);
+TOPOCAPICALL topo_shape_t *topo_edge_iterator_next(topo_edge_iterator_t *it);
+
+TOPOCAPICALL topo_face_iterator_t *topo_face_iterator_make(topo_shape_t *shp);
+TOPOCAPICALL void topo_face_iterator_free(topo_face_iterator_t *it);
+TOPOCAPICALL void topo_face_iterator_reset(topo_face_iterator_t *it);
+TOPOCAPICALL topo_shape_t *topo_face_iterator_next(topo_face_iterator_t *it);
+
+TOPOCAPICALL topo_shell_iterator_t *topo_shell_iterator_make(topo_shape_t *shp);
+TOPOCAPICALL void topo_shell_iterator_free(topo_shell_iterator_t *it);
+TOPOCAPICALL void topo_shell_iterator_reset(topo_shell_iterator_t *it);
+TOPOCAPICALL topo_shape_t *topo_shell_iterator_next(topo_shell_iterator_t *it);
+
+TOPOCAPICALL topo_solid_iterator_t *topo_solid_iterator_make(topo_shape_t *shp);
+TOPOCAPICALL void topo_solid_iterator_free(topo_solid_iterator_t *it);
+TOPOCAPICALL void topo_solid_iterator_reset(topo_solid_iterator_t *it);
+TOPOCAPICALL topo_shape_t *topo_solid_iterator_next(topo_solid_iterator_t *it);
+
+TOPOCAPICALL topo_vertex_iterator_t *
+topo_vertex_iterator_make(topo_shape_t *shp);
+TOPOCAPICALL void topo_vertex_iterator_free(topo_vertex_iterator_t *it);
+TOPOCAPICALL void topo_vertex_iterator_reset(topo_vertex_iterator_t *it);
+TOPOCAPICALL topo_shape_t *
+topo_vertex_iterator_next(topo_vertex_iterator_t *it);
+
+TOPOCAPICALL topo_wire_iterator_t *topo_wire_iterator_make(topo_shape_t *shp);
+TOPOCAPICALL void topo_wire_iterator_free(topo_wire_iterator_t *it);
+TOPOCAPICALL void topo_wire_iterator_reset(topo_wire_iterator_t *it);
+TOPOCAPICALL topo_shape_t *topo_wire_iterator_next(topo_wire_iterator_t *it);
 
 #ifdef __cplusplus
 }
