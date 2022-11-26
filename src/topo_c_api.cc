@@ -526,12 +526,16 @@ topo_wire_t topo_make_wire_from_two_wire(topo_wire_t W, topo_edge_t E) {
 }
 
 topo_wire_t topo_make_wire_from_edges(topo_edge_t *edges, int count) {
-  std::vector<flywave::topo::edge> oes;
-  for (int i = 0; i < count; i++) {
-    oes.emplace_back(*cast_to_topo(edges[i]));
+  try {
+    std::vector<flywave::topo::edge> oes;
+    for (int i = 0; i < count; i++) {
+      oes.emplace_back(*cast_to_topo(edges[i]));
+    }
+    return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
+        flywave::topo::wire::make_wire(oes))}};
+  } catch (...) {
+    return topo_wire_t{};
   }
-  return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
-      flywave::topo::wire::make_wire(oes))}};
 }
 
 topo_wire_t topo_make_wire_from_wries(topo_wire_t *wires, int count) {
@@ -1455,29 +1459,35 @@ int topo_face_revolve(topo_face_t f, topo_shape_t *shp, pnt3d_t p1, pnt3d_t p2,
 
 int topo_face_sweep(topo_face_t f, topo_wire_t spine, topo_shape_t **profiles,
                     int profilesCount, int cornerMode) {
-  auto opt = cast_to_topo(f);
-  if (opt) {
-    std::vector<flywave::topo::shape *> prs;
-    for (int i = 0; i < profilesCount; i++) {
-      prs.emplace_back(profiles[i]->shp.get());
+  try {
+    auto opt = cast_to_topo(f);
+    if (opt) {
+      std::vector<flywave::topo::shape *> prs;
+      for (int i = 0; i < profilesCount; i++) {
+        prs.emplace_back(profiles[i]->shp.get());
+      }
+      return opt->sweep(*cast_to_topo(spine), prs, cornerMode);
     }
-    return opt->sweep(*cast_to_topo(spine), prs, cornerMode);
+  } catch (...) {
+    return -1;
   }
-  return -1;
 }
 
 int topo_face_sweep_wire(topo_face_t f, topo_wire_t spine,
                          topo_wire_t *profiles, int profilesCount,
                          int cornerMode) {
-  auto opt = cast_to_topo(f);
-  if (opt) {
-    std::vector<flywave::topo::shape *> prs;
-    for (int i = 0; i < profilesCount; i++) {
-      prs.emplace_back(profiles[i].shp->shp.get());
+  try {
+    auto opt = cast_to_topo(f);
+    if (opt) {
+      std::vector<flywave::topo::shape *> prs;
+      for (int i = 0; i < profilesCount; i++) {
+        prs.emplace_back(profiles[i].shp->shp.get());
+      }
+      return opt->sweep(*cast_to_topo(spine), prs, cornerMode);
     }
-    return opt->sweep(*cast_to_topo(spine), prs, cornerMode);
+  } catch (...) {
+    return -1;
   }
-  return -1;
 }
 
 int topo_face_loft(topo_face_t f, topo_shape_t **profiles, int profilesCount,
@@ -1835,28 +1845,34 @@ topo_shell_t topo_shell_make_shell_from_wedge_axis2_limit(
 
 int topo_shell_sweep(topo_shell_t ss, topo_wire_t spine,
                      topo_shape_t **profiles, int count, int cornerMode) {
-  auto opt = cast_to_topo(ss);
-  if (opt) {
-    std::vector<flywave::topo::shape *> pros;
-    for (int i = 0; i < count; i++) {
-      pros.emplace_back(profiles[i]->shp.get());
+  try {
+    auto opt = cast_to_topo(ss);
+    if (opt) {
+      std::vector<flywave::topo::shape *> pros;
+      for (int i = 0; i < count; i++) {
+        pros.emplace_back(profiles[i]->shp.get());
+      }
+      return opt->sweep(*cast_to_topo(spine), pros, cornerMode);
     }
-    return opt->sweep(*cast_to_topo(spine), pros, cornerMode);
+  } catch (...) {
+    return -1;
   }
-  return -1;
 }
 
 int topo_shell_sweep_wire(topo_shell_t ss, topo_wire_t spine,
                           topo_wire_t *profiles, int count, int cornerMode) {
-  auto opt = cast_to_topo(ss);
-  if (opt) {
-    std::vector<flywave::topo::shape *> pros;
-    for (int i = 0; i < count; i++) {
-      pros.emplace_back(profiles[i].shp->shp.get());
+  try {
+    auto opt = cast_to_topo(ss);
+    if (opt) {
+      std::vector<flywave::topo::shape *> pros;
+      for (int i = 0; i < count; i++) {
+        pros.emplace_back(profiles[i].shp->shp.get());
+      }
+      return opt->sweep(*cast_to_topo(spine), pros, cornerMode);
     }
-    return opt->sweep(*cast_to_topo(spine), pros, cornerMode);
+  } catch (...) {
+    return -1;
   }
-  return -1;
 }
 
 void topo_solid_free(topo_solid_t t) {
@@ -2321,28 +2337,34 @@ int topo_solid_pipe(topo_solid_t s, topo_face_t f, topo_wire_t w) {
 
 int topo_solid_sweep(topo_solid_t s, topo_wire_t spine, topo_shape_t **profiles,
                      int count, int cornerMode) {
-  auto opt = cast_to_topo(s);
-  if (opt) {
-    std::vector<flywave::topo::shape> prs;
-    for (int i = 0; i < count; i++) {
-      prs.emplace_back(*(profiles[i]->shp.get()));
+  try {
+    auto opt = cast_to_topo(s);
+    if (opt) {
+      std::vector<flywave::topo::shape> prs;
+      for (int i = 0; i < count; i++) {
+        prs.emplace_back(*(profiles[i]->shp.get()));
+      }
+      return opt->sweep(*cast_to_topo(spine), prs, cornerMode);
     }
-    return opt->sweep(*cast_to_topo(spine), prs, cornerMode);
+  } catch (...) {
+    return -1;
   }
-  return -1;
 }
 
 int topo_solid_sweep_wire(topo_solid_t s, topo_wire_t spine,
                           topo_wire_t *profiles, int count, int cornerMode) {
-  auto opt = cast_to_topo(s);
-  if (opt) {
-    std::vector<flywave::topo::shape> prs;
-    for (int i = 0; i < count; i++) {
-      prs.emplace_back(*profiles[i].shp->shp.get());
+  try {
+    auto opt = cast_to_topo(s);
+    if (opt) {
+      std::vector<flywave::topo::shape> prs;
+      for (int i = 0; i < count; i++) {
+        prs.emplace_back(*profiles[i].shp->shp.get());
+      }
+      return opt->sweep(*cast_to_topo(spine), prs, cornerMode);
     }
-    return opt->sweep(*cast_to_topo(spine), prs, cornerMode);
+  } catch (...) {
+    return -1;
   }
-  return -1;
 }
 
 int topo_solid_boolean(topo_solid_t s, topo_solid_t tool, int op) {
@@ -2827,10 +2849,7 @@ topo_vertex_iterator_t *topo_vertex_iterator_make(topo_shape_t *shp) {
   return new topo_vertex_iterator_t{flywave::topo::vertex_iterator{*shp->shp}};
 }
 
-
-void topo_vertex_iterator_free(topo_vertex_iterator_t *it) {
-  delete it;
-}
+void topo_vertex_iterator_free(topo_vertex_iterator_t *it) { delete it; }
 
 void topo_vertex_iterator_reset(topo_vertex_iterator_t *it) {
   it->iter.reset();
