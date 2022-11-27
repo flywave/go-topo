@@ -539,20 +539,27 @@ topo_wire_t topo_make_wire_from_edges(topo_edge_t *edges, int count) {
 }
 
 topo_wire_t topo_make_wire_from_wries(topo_wire_t *wires, int count) {
-  std::vector<flywave::topo::wire> ows;
-  for (int i = 0; i < count; i++) {
-    ows.emplace_back(*cast_to_topo(wires[i]));
+  try {
+    std::vector<flywave::topo::wire> ows;
+    for (int i = 0; i < count; i++) {
+      ows.emplace_back(*cast_to_topo(wires[i]));
+    }
+    return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
+        flywave::topo::wire::make_wire(ows))}};
+  } catch (...) {
+    return topo_wire_t{};
   }
-  return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
-      flywave::topo::wire::make_wire(ows))}};
 }
 
 int topo_wire_num_vertices(topo_wire_t w) {
-  auto opt = cast_to_topo(w);
-  if (opt) {
-    return opt->num_vertices();
+  try {
+    auto opt = cast_to_topo(w);
+    if (opt) {
+      return opt->num_vertices();
+    }
+  } catch (...) {
+    return -1;
   }
-  return -1;
 }
 
 int topo_wire_num_edges(topo_wire_t w) {
