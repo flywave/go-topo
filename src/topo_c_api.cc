@@ -59,7 +59,8 @@ int topo_shape_hash_code(topo_shape_t *p) { return p->shp->hash_code(); }
 
 int topo_shape_transform(topo_shape_t *p, trsf_t mat) {
   if (p) {
-    return p->shp->transform(cast_to_gp(mat));
+    auto t = cast_to_gp(mat);
+    return p->shp->transform(t);
   }
   return -1;
 }

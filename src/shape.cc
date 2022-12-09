@@ -217,7 +217,6 @@ int shape::transform_impl(gp_Trsf &trans) {
 
     if (shape.IsNull())
       throw std::runtime_error("Null shape");
-
     BRepBuilderAPI_Transform aTrans(trans);
     aTrans.Perform(shape);
     if (!aTrans.IsDone())
