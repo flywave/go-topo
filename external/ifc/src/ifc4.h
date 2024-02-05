@@ -35,7 +35,7 @@
 
 #include "ifcparse/ifc2x3-undef.h"
 #include "ifcparse/Ifc4-definitions.h"
-
+#include "ifc.h"
 
 #define IFC_NAMESPACE ifc4
 #define IfcSchema Ifc4

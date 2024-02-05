@@ -38,6 +38,7 @@
 #define USE_23
 
 namespace IFC_NAMESPACE {}
+#include "ifc.h"
 #include "ifcparse/Ifc2x3-definitions.h"
 
 #include "ifcgeom_schema_agnostic/IfcGeomFilter.h"

@@ -89,7 +89,8 @@
 #include "../ifcgeom_schema_agnostic/IfcGeomFilter.h"
 #include "../ifcgeom_schema_agnostic/IteratorImplementation.h"
 
-#include <atomic>
+#include <mutex>
+#include <algorithm>
 
 // The infamous min & max Win32 #defines can leak here from OCE depending on the build configuration
 #ifdef min

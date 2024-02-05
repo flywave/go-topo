@@ -34,7 +34,7 @@
 #undef IFCGEOM_H
 
 #include "ifcparse/Ifc4x3_rc1-definitions.h"
-
+#include "ifc.h"
 
 #define IFC_NAMESPACE ifc43_rc1
 #define IfcSchema Ifc4x3_rc1

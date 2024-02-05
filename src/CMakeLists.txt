@@ -49,6 +49,8 @@ ADD_EXECUTABLE(topo_test topo_test.cc)
 
 IF(UNIX AND NOT APPLE)
     TARGET_LINK_LIBRARIES(topo_test -Wl,--start-group topo pthread dl stdc++ m ${FLYWAVE_LIBRARY_DEPES} -Wl,--end-group)
+ELSEIF(MINGW)
+    TARGET_LINK_LIBRARIES(topo_test -Wl,--start-group topo pthread stdc++ m ${FLYWAVE_LIBRARY_DEPES} -Wl,--end-group)
 ELSE()
     TARGET_LINK_LIBRARIES(topo_test topo ${FLYWAVE_LIBRARY_DEPES})
 ENDIF()
