@@ -8,6 +8,12 @@ else()
     add_definitions(-DCONSTEXPR=constexpr)
 endif()
 
+IF(APPLE)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
+ELSE()
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+ENDIF()
+
 FILE( GLOB topo_SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cc )
 FILE( GLOB topo_HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.hh ${CMAKE_CURRENT_SOURCE_DIR}/*.h )
 
@@ -47,10 +53,10 @@ SET_TARGET_PROPERTIES(topo
 
 ADD_EXECUTABLE(topo_test topo_test.cc)
 
-IF(UNIX AND NOT APPLE)
+IF(MINGW)
+     TARGET_LINK_LIBRARIES(topo_test -Wl,--start-group topo stdc++ ${FLYWAVE_LIBRARY_DEPES}  -Wl,--end-group)
+ELSEIF(UNIX AND NOT APPLE)
     TARGET_LINK_LIBRARIES(topo_test -Wl,--start-group topo pthread dl stdc++ m ${FLYWAVE_LIBRARY_DEPES} -Wl,--end-group)
-ELSEIF(MINGW)
-    TARGET_LINK_LIBRARIES(topo_test -Wl,--start-group topo pthread stdc++ m ${FLYWAVE_LIBRARY_DEPES} -Wl,--end-group)
 ELSE()
     TARGET_LINK_LIBRARIES(topo_test topo ${FLYWAVE_LIBRARY_DEPES})
 ENDIF()
