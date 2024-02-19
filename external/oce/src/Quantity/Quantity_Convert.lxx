@@ -22,9 +22,9 @@
 #ifndef __Quantity_API
 # if defined(WNT) && !defined(HAVE_NO_DLL)
 #  ifdef __Quantity_DLL
-#   define __Quantity_API __declspec( dllexport )
+#   define __Quantity_API //__declspec( dllexport )
 #  else
-#   define __Quantity_API __declspec( dllimport )
+#   define __Quantity_API //__declspec( dllimport )
 #  endif  // __Quantity_DLL
 # else
 #   define __Quantity_API

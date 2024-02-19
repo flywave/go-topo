@@ -20,9 +20,9 @@
 
 #if defined(_WIN32) && !defined(HAVE_NO_DLL)
   #ifdef __IVtkTools_DLL
-    #define IVtkTools_EXPORT __declspec( dllexport )
+    #define IVtkTools_EXPORT //__declspec( dllexport )
   #else
-    #define IVtkTools_EXPORT __declspec( dllimport )
+    #define IVtkTools_EXPORT //__declspec( dllimport )
   #endif
 #else
   #define IVtkTools_EXPORT

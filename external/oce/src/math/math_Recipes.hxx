@@ -22,9 +22,9 @@
 #ifndef __math_API
 # if defined(WNT) && !defined(HAVE_NO_DLL)
 #  ifdef __math_DLL
-#   define __math_API __declspec( dllexport )
+#   define __math_API //__declspec( dllexport )
 #  else
-#   define __math_API __declspec( dllimport )
+#   define __math_API //__declspec( dllimport )
 #  endif  /* __math_DLL */
 # else
 #  define __math_API

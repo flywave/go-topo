@@ -28,9 +28,9 @@
 #ifndef __Expr_API
 # if defined(WNT) && !defined(HAVE_NO_DLL)
 #  ifdef __Expr_DLL
-#   define __Expr_API __declspec( dllexport )
+#   define __Expr_API //__declspec( dllexport )
 #  else
-#   define __Expr_API __declspec( dllimport )
+#   define __Expr_API //__declspec( dllimport )
 #  endif  // __Expr_DLL
 # else
 #   define __Expr_API

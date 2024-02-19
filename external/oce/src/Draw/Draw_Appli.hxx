@@ -44,9 +44,9 @@ extern void Draw_Appli(Standard_Integer argc, char** argv,
 #if defined(WNT) && !defined(HAVE_NO_DLL)
 #ifndef __Draw_API
 # ifdef __Draw_DLL
-#  define __Draw_API __declspec ( dllexport )
+#  define __Draw_API //__declspec ( dllexport )
 # else
-#  define __Draw_API __declspec ( dllimport )
+#  define __Draw_API //__declspec ( dllimport )
 # endif
 #endif
 #else

@@ -19,9 +19,9 @@
 #ifndef __AppBlend_API
 # if defined(WNT) && !defined(HAVE_NO_DLL)
 #  ifdef __AppBlend_DLL
-#   define __AppBlend_API __declspec( dllexport )
+#   define __AppBlend_API //__declspec( dllexport )
 #  else
-#   define __AppBlend_API __declspec( dllimport )
+#   define __AppBlend_API //__declspec( dllimport )
 #  endif /*__AppBlend_DLL*/
 # else
 #  define __AppBlend_API

@@ -88,15 +88,15 @@
 # if defined(_WIN32) && !defined(HAVE_NO_DLL)
 
 #  ifndef Standard_EXPORT
-#   define Standard_EXPORT __declspec( dllexport )
+#   define Standard_EXPORT //__declspec( dllexport )
 // For global variables :
-#   define Standard_EXPORTEXTERN __declspec( dllexport ) extern
-#   define Standard_EXPORTEXTERNC extern "C" __declspec( dllexport )
+#   define Standard_EXPORTEXTERN extern // __declspec( dllexport ) 
+#   define Standard_EXPORTEXTERNC extern "C" //__declspec( dllexport )
 #  endif  /* Standard_EXPORT */
 
 #  ifndef Standard_IMPORT
-#   define Standard_IMPORT __declspec( dllimport ) extern
-#   define Standard_IMPORTC extern "C" __declspec( dllimport )
+#   define Standard_IMPORT extern //__declspec( dllimport ) 
+#   define Standard_IMPORTC extern "C" //__declspec( dllimport )
 #  endif  /* Standard_IMPORT */
 
 # else  /* WNT */

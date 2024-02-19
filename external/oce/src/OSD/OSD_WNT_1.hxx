@@ -26,9 +26,9 @@
 # ifndef OSDAPI
 #  if !defined(HAVE_NO_DLL)
 #   ifdef __OSD_DLL
-#    define OSDAPI __declspec( dllexport )
+#    define OSDAPI //__declspec( dllexport )
 #   else
-#    define OSDAPI __declspec( dllimport )
+#    define OSDAPI //__declspec( dllimport )
 #   endif  /* OSD_DLL */
 #  else
 #   define OSDAPI

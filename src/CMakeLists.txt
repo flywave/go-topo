@@ -54,7 +54,7 @@ SET_TARGET_PROPERTIES(topo
 ADD_EXECUTABLE(topo_test topo_test.cc)
 
 IF(MINGW)
-     TARGET_LINK_LIBRARIES(topo_test -Wl,--start-group topo stdc++ ${FLYWAVE_LIBRARY_DEPES}  -Wl,--end-group)
+     TARGET_LINK_LIBRARIES(topo_test -Wl,--start-group  stdc++ ${FLYWAVE_LIBRARY_DEPES} topo  -Wl,--end-group)
 ELSEIF(UNIX AND NOT APPLE)
     TARGET_LINK_LIBRARIES(topo_test -Wl,--start-group topo pthread dl stdc++ m ${FLYWAVE_LIBRARY_DEPES} -Wl,--end-group)
 ELSE()

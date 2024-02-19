@@ -34,9 +34,9 @@
 #  include <windows.h>
 #  if !defined(HAVE_NO_DLL)
 #   ifdef __Draw_DLL
-#    define __Draw_API __declspec( dllexport )
+#    define __Draw_API //__declspec( dllexport )
 #   else
-#    define __Draw_API __declspec( dllimport )
+#    define __Draw_API //__declspec( dllimport )
 #   endif
 #  else
 #   define __Draw_API
