@@ -37,6 +37,7 @@
 #include <gp_Quaternion.hxx>
 
 #include <unordered_map>
+#include <limits>
 
 namespace flywave {
 namespace topo {
