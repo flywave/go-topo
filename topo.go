@@ -368,7 +368,7 @@ func (s *Shape) SetAutoScaleSizeOnV(v float64) {
 	C.topo_shape_set_auto_scale_size_on_v(s.inner.val, C.double(v))
 }
 
-func (s *Shape) SetTxtureMapType(t int) {
+func (s *Shape) SetTextureMapType(t int) {
 	C.topo_shape_set_txture_map_type(s.inner.val, C.int(t))
 }
 
@@ -694,7 +694,7 @@ func (s *CompSolid) SetAutoScaleSizeOnV(v float64) {
 	C.topo_shape_set_auto_scale_size_on_v(s.inner.val.shp, C.double(v))
 }
 
-func (s *CompSolid) SetTxtureMapType(t int) {
+func (s *CompSolid) SetTextureMapType(t int) {
 	C.topo_shape_set_txture_map_type(s.inner.val.shp, C.int(t))
 }
 
@@ -1147,7 +1147,7 @@ func (s *Compound) SetAutoScaleSizeOnV(v float64) {
 	C.topo_shape_set_auto_scale_size_on_v(s.inner.val.shp, C.double(v))
 }
 
-func (s *Compound) SetTxtureMapType(t int) {
+func (s *Compound) SetTextureMapType(t int) {
 	C.topo_shape_set_txture_map_type(s.inner.val.shp, C.int(t))
 }
 
@@ -1618,7 +1618,7 @@ func (s *Edge) SetAutoScaleSizeOnV(v float64) {
 	C.topo_shape_set_auto_scale_size_on_v(s.inner.val.shp, C.double(v))
 }
 
-func (s *Edge) SetTxtureMapType(t int) {
+func (s *Edge) SetTextureMapType(t int) {
 	C.topo_shape_set_txture_map_type(s.inner.val.shp, C.int(t))
 }
 
@@ -2376,7 +2376,7 @@ func (s *Face) SetAutoScaleSizeOnV(v float64) {
 	C.topo_shape_set_auto_scale_size_on_v(s.inner.val.shp, C.double(v))
 }
 
-func (s *Face) SetTxtureMapType(t int) {
+func (s *Face) SetTextureMapType(t int) {
 	C.topo_shape_set_txture_map_type(s.inner.val.shp, C.int(t))
 }
 
@@ -3180,7 +3180,7 @@ func (s *Solid) SetAutoScaleSizeOnV(v float64) {
 	C.topo_shape_set_auto_scale_size_on_v(s.inner.val.shp, C.double(v))
 }
 
-func (s *Solid) SetTxtureMapType(t int) {
+func (s *Solid) SetTextureMapType(t int) {
 	C.topo_shape_set_txture_map_type(s.inner.val.shp, C.int(t))
 }
 
@@ -3937,7 +3937,7 @@ func (s *Vertex) SetAutoScaleSizeOnV(v float64) {
 	C.topo_shape_set_auto_scale_size_on_v(s.inner.val.shp, C.double(v))
 }
 
-func (s *Vertex) SetTxtureMapType(t int) {
+func (s *Vertex) SetTextureMapType(t int) {
 	C.topo_shape_set_txture_map_type(s.inner.val.shp, C.int(t))
 }
 
@@ -4234,7 +4234,7 @@ func (s *Wire) SetAutoScaleSizeOnV(v float64) {
 	C.topo_shape_set_auto_scale_size_on_v(s.inner.val.shp, C.double(v))
 }
 
-func (s *Wire) SetTxtureMapType(t int) {
+func (s *Wire) SetTextureMapType(t int) {
 	C.topo_shape_set_txture_map_type(s.inner.val.shp, C.int(t))
 }
 
