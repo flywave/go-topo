@@ -50,6 +50,22 @@ int topo_shape_type(topo_shape_t *p) {
   return static_cast<int>(p->shp->type());
 }
 
+int topo_shape_id(topo_shape_t *p) {
+  return p->id;
+}
+
+int topo_shape_parent_id(topo_shape_t *p) {
+  return p->parent_id;
+}
+
+const char * topo_shape_name(topo_shape_t *p) {
+  return p->name.c_str();
+}
+
+const char * topo_shape_guid(topo_shape_t *p) {
+  return p->guid.c_str();
+}
+
 bbox_t topo_shape_bounding_box(topo_shape_t *p) {
   auto b = p->shp->bounding_box();
   return cast_from_gp(b);

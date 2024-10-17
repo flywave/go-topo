@@ -193,6 +193,22 @@ func (s *Shape) Type() int {
 	return int(C.topo_shape_type(s.inner.val))
 }
 
+func (s *Shape) Id() int {
+	return int(C.topo_shape_id(s.inner.val))
+}
+
+func (s *Shape) ParentId() int {
+	return int(C.topo_shape_parent_id(s.inner.val))
+}
+
+func (s *Shape) Name() string {
+	return C.GoString(C.topo_shape_name(s.inner.val))
+}
+
+func (s *Shape) Guid() string {
+	return C.GoString(C.topo_shape_guid(s.inner.val))
+}
+
 func (s *Shape) BBox() BBox {
 	return BBox{val: C.topo_shape_bounding_box(s.inner.val)}
 }

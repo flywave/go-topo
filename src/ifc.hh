@@ -31,9 +31,17 @@ public:
   apply(const ifc43_rc1::IfcGeom::TriangulationElement<double> *element) = 0;
 };
 
+struct ifc_element_info {
+  TopoDS_Shape shp;
+  int id;
+  int parent_id;
+  std::string name;
+  std::string guid;
+};
+
 class base_convert {
 public:
-  virtual std::vector<TopoDS_Shape> get_shape() = 0;
+  virtual std::vector<ifc_element_info> get_shape() = 0;
 
   virtual void process_with_callback(visitor *vst) = 0;
 
@@ -189,7 +197,7 @@ struct filter_settings {
     }                                                                          \
     ~NAME_SPACE##_convert() {}                                                 \
                                                                                \
-    std::vector<TopoDS_Shape> get_shape();                                     \
+    std::vector<ifc_element_info> get_shape();                                     \
                                                                                \
     void process_with_callback(visitor *vst);                                  \
                                                                                \

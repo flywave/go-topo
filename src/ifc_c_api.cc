@@ -22,8 +22,15 @@ topo_shape_t **ifc_get_topo_shapes(const char *filename, int *count) {
   *count = shps.size();
   auto sp = new topo_shape_t *[shps.size()];
   for (int i = 0; i < shps.size(); i++) {
-    auto shp = std::make_shared<flywave::topo::shape>(shps[i]);
-    sp[i] = new _topo_shape_t{shp : shp};
+    auto s = shps[i];
+    auto shp = std::make_shared<flywave::topo::shape>(s.shp);
+    sp[i] = new _topo_shape_t{
+      shp : shp,
+      id : s.id,
+      parent_id : s.parent_id,
+      name : s.name,
+      guid : s.guid,
+    };
   }
   return sp;
 }

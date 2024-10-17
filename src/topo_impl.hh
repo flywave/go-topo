@@ -11,6 +11,7 @@
 #include "vertex.hh"
 #include "wire.hh"
 #include <StlAPI_Writer.hxx>
+#include <string>
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,6 +19,10 @@ extern "C" {
 
 struct _topo_shape_t {
   std::shared_ptr<flywave::topo::shape> shp;
+  int id;
+  int parent_id;
+  std::string name;
+  std::string guid;
 };
 
 struct _topo_location_t {

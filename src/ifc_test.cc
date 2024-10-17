@@ -8,17 +8,8 @@
 struct visitor : flywave::ifc::visitor {
   virtual void
   apply(const ifc23::IfcGeom::TriangulationElement<double> *element) {
-    std::cout << element->name() << " " << element->id() << " "
+    std::cout <<  "name: "<< element->name() << "  id: "<< element->id() << "  guid: "<< element->guid() << "  type: "
               << element->type() << std::endl;
-    auto prod = element->product();
-    auto decl = prod->declaration();
-    std::cout << decl.name() << std::endl;
-    for (auto &att : decl.attributes()) {
-      std::cout << att->name() << std::endl;
-      std::cout
-          << att->type_of_attribute()->as_named_type()->declared_type()->name()
-          << std::endl;
-    }
   }
   virtual void
   apply(const ifc4::IfcGeom::TriangulationElement<double> *element) {}
@@ -31,7 +22,7 @@ struct visitor : flywave::ifc::visitor {
 };
 
 int main() {
-  std::string path{"./tests/test.ifc"};
+  std::string path{"./tests/BIM.ifc"};
   auto ct = flywave::ifc::get_convert(path);
   visitor vt{};
   ct->process_with_callback(&vt);

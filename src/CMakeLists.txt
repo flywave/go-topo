@@ -42,13 +42,13 @@ ENDIF()
 SET_TARGET_PROPERTIES(topo
                     PROPERTIES PUBLIC_HEADER "${headers}")
 
-#                     ADD_EXECUTABLE(ifc_test ifc_test.cc)
+                    ADD_EXECUTABLE(ifc_test ifc_test.cc)
 
-# IF(UNIX AND NOT APPLE)
-# TARGET_LINK_LIBRARIES(ifc_test -Wl,--start-group topo pthread dl stdc++ m ${FLYWAVE_LIBRARY_DEPES} -Wl,--end-group)
-# ELSE()
-# TARGET_LINK_LIBRARIES(ifc_test topo ${FLYWAVE_LIBRARY_DEPES})
-# ENDIF()
+IF(UNIX AND NOT APPLE)
+TARGET_LINK_LIBRARIES(ifc_test -Wl,--start-group topo pthread dl stdc++ m ${FLYWAVE_LIBRARY_DEPES} -Wl,--end-group)
+ELSE()
+TARGET_LINK_LIBRARIES(ifc_test topo ${FLYWAVE_LIBRARY_DEPES})
+ENDIF()
 
 
 ADD_EXECUTABLE(topo_test topo_test.cc)

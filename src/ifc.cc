@@ -52,15 +52,22 @@ std::array<std::string, 4> filter_settings::supported_args{
     }                                                                          \
   }                                                                            \
                                                                                \
-  std::vector<TopoDS_Shape> NS##_convert::get_shape() {                        \
+  std::vector<ifc_element_info> NS##_convert::get_shape() {                    \
     NS::IfcParse::IfcFile fl{_file_name};                                      \
     NS::IfcGeom::Iterator<double> iter{settings, &fl, this->filter_funcs};     \
-    std::vector<TopoDS_Shape> shps;                                            \
+    std::vector<ifc_element_info> shps;                                        \
     if (iter.initialize()) {                                                   \
       do {                                                                     \
         auto ele = iter.get_native();                                          \
+        auto ele2 = iter.get();                                                \
         for (auto &sp : ele->geometry()) {                                     \
-          shps.emplace_back(sp.Shape());                                       \
+          shps.emplace_back(ifc_element_info{                                  \
+            shp : sp.Shape(),                                                  \
+            id : ele2->id(),                                                   \
+            parent_id : ele2->parent_id(),                                     \
+            name : ele2->name(),                                               \
+            guid : ele2->guid(),                                               \
+          });                                                                  \
         }                                                                      \
       } while (iter.next());                                                   \
     }                                                                          \
