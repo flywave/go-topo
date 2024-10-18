@@ -12,7 +12,6 @@ package topo
 import "C"
 
 import (
-	"errors"
 	"unsafe"
 
 	"github.com/flywave/go-mst"
@@ -60,8 +59,9 @@ func IsIfc(f string) bool {
 	return bool(C.is_ifc_file(fl))
 }
 
-func TopoShapeToMst(shp []*Shape) (*mst.Mesh, error) {
+func TopoShapeToMst(shp []*Shape) (*mst.Mesh, *vec3d.Box, error) {
 	mesh := mst.NewMesh()
+	bbx := vec3d.MinBox
 	for _, shp := range shp {
 		node := &mst.MeshNode{}
 		if shp == nil || shp.IsNull() {
@@ -73,7 +73,7 @@ func TopoShapeToMst(shp []*Shape) (*mst.Mesh, error) {
 		res = shp.Mesh(rev, 1e-8, 1, 0.5)
 
 		if res != 0 {
-			return nil, errors.New("gen mesh failed")
+			continue
 		}
 		mtrg := &mst.MeshTriangle{Batchid: int32(len(mesh.Materials))}
 		for i := range rev.Tris {
@@ -87,6 +87,7 @@ func TopoShapeToMst(shp []*Shape) (*mst.Mesh, error) {
 			for _, v := range vers {
 				rawV := (vec3d.T)(v.Data())
 				node.Vertices = append(node.Vertices, [3]float32{float32(rawV[0]), float32(rawV[1]), float32(rawV[2])})
+				bbx.Extend(&rawV)
 			}
 			nm := rev.Norms[i]
 			for _, v := range nm {
@@ -109,5 +110,5 @@ func TopoShapeToMst(shp []*Shape) (*mst.Mesh, error) {
 		mesh.Materials = append(mesh.Materials, mtl)
 		mesh.Nodes = append(mesh.Nodes, node)
 	}
-	return mesh, nil
+	return mesh, &bbx, nil
 }
