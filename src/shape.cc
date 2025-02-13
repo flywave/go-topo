@@ -667,7 +667,7 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
     }
 
     BRepMesh_IncrementalMesh incrementalMesh(*this, deflection, Standard_False,
-                                             angle);
+                                             angle,Standard_True);
     Quantity_Color color(1., 1., 1., Quantity_TOC_RGB);
     for (int f = 1; f <= faceMap.Extent(); f++) {
       meshReceiver.begin();
