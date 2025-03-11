@@ -17,6 +17,7 @@ e2e/cypress/screenshots
 e2e/cypress/videos
 e2e/results
 storybook-static
+ogg/
 
 # Vim temporary files
 [._]*.s[a-w][a-z]
