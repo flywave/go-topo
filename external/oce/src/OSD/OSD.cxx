@@ -18,7 +18,7 @@
 #include <math.h>
 #ifdef WNT
 # define finite _finite
-#elif defined(isfinite)
+#else
 # define finite isfinite
 #endif
 
