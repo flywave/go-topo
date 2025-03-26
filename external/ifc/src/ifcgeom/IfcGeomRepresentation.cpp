@@ -143,22 +143,22 @@ namespace {
 				TopLoc_Location loc;
 				Handle(Poly_Triangulation) tri = BRep_Tool::Triangulation(face, loc);
 				if (!tri.IsNull()) {
-					const TColgp_Array1OfPnt& nodes = tri->Nodes();
+                    Handle(TColgp_HArray1OfPnt) nodes = tri->MapNodeArray();
 					std::vector<gp_XYZ> coords;
-					coords.reserve(nodes.Length());
+					coords.reserve(nodes->Length());
 
-					for (int i = 1; i <= nodes.Length(); ++i) {
-						coords.push_back(nodes(i).Transformed(loc).XYZ());
+					for (int i = 1; i <= nodes->Length(); ++i) {
+						coords.push_back(nodes->Value(i).Transformed(loc).XYZ());
 					}
 
-					const Poly_Array1OfTriangle& triangles = tri->Triangles();
-					for (int i = 1; i <= triangles.Length(); ++i) {
+                    Handle(Poly_HArray1OfTriangle) triangles = tri->MapTriangleArray();
+					for (int i = 1; i <= triangles->Length(); ++i) {
 						int n1, n2, n3;
 
 						if (face.Orientation() == TopAbs_REVERSED) {
-							triangles(i).Get(n3, n2, n1);
+							triangles->Value(i).Get(n3, n2, n1);
 						} else {
-							triangles(i).Get(n1, n2, n3);
+                            triangles->Value(i).Get(n1, n2, n3);
 						}
 
 						const gp_XYZ& pt1 = coords[n1 - 1];

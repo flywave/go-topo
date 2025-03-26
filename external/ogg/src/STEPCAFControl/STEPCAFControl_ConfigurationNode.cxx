@@ -34,9 +34,13 @@ namespace
 //=======================================================================
 STEPCAFControl_ConfigurationNode::STEPCAFControl_ConfigurationNode() :
   DE_ConfigurationNode()
+<<<<<<< HEAD
 {
   UpdateLoad();
 }
+=======
+{}
+>>>>>>> accb2f351 (u)
 
 //=======================================================================
 // function : STEPCAFControl_ConfigurationNode
@@ -45,9 +49,13 @@ STEPCAFControl_ConfigurationNode::STEPCAFControl_ConfigurationNode() :
 STEPCAFControl_ConfigurationNode::STEPCAFControl_ConfigurationNode(const Handle(STEPCAFControl_ConfigurationNode)& theNode)
   :DE_ConfigurationNode(theNode),
   InternalParameters(theNode->InternalParameters)
+<<<<<<< HEAD
 {
   UpdateLoad();
 }
+=======
+{}
+>>>>>>> accb2f351 (u)
 
 //=======================================================================
 // function : Load

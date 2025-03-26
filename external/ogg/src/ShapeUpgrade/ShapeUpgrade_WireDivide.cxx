@@ -167,8 +167,13 @@ void ShapeUpgrade_WireDivide::SetSurface(const Handle(Geom_Surface)& S,
 //purpose  : 
 //=======================================================================
 
+<<<<<<< HEAD
 static void CorrectSplitValues(const Handle(TColStd_HSequenceOfReal) orig3d,
 			       const Handle(TColStd_HSequenceOfReal) orig2d,
+=======
+static void CorrectSplitValues(const Handle(TColStd_HSequenceOfReal)& orig3d,
+			       const Handle(TColStd_HSequenceOfReal)& orig2d,
+>>>>>>> accb2f351 (u)
 			       Handle(TColStd_HSequenceOfReal) new2d,
 			       Handle(TColStd_HSequenceOfReal) new3d)
 {

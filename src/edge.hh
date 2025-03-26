@@ -6,6 +6,16 @@
 #include <Geom_Surface.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Edge.hxx>
+#include <gp_Dir.hxx>
+#include <gp_Circ.hxx>
+#include <gp_Elips.hxx>
+#include <gp_Hypr.hxx>
+#include <gp_Parab.hxx>
+#include <gp_Lin2d.hxx>
+#include <gp_Circ2d.hxx>
+#include <gp_Elips2d.hxx>
+#include <gp_Hypr2d.hxx>
+#include <gp_Parab2d.hxx>
 
 #include "shape.hh"
 

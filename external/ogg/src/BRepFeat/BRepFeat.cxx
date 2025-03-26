@@ -312,7 +312,11 @@ void BRepFeat::ParametricMinMax(const TopoDS_Shape& S,
 //=======================================================================
 
 static Standard_Boolean IsIn (BRepTopAdaptor_FClass2d& FC,
+<<<<<<< HEAD
                               Geom2dAdaptor_Curve      AC)
+=======
+                              const Geom2dAdaptor_Curve& AC)
+>>>>>>> accb2f351 (u)
 {
  Standard_Real Def = 100*Precision::Confusion();
  GCPnts_QuasiUniformDeflection QU(AC,Def);

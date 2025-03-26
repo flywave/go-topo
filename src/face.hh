@@ -4,6 +4,10 @@
 #include <Geom_Surface.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Face.hxx>
+#include <gp_Cylinder.hxx>
+#include <gp_Cone.hxx>
+#include <gp_Sphere.hxx>
+#include <gp_Torus.hxx>
 
 #include "bool_type.hh"
 #include "shape.hh"

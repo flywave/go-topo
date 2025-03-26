@@ -135,6 +135,13 @@ namespace
     Image_FreeImageStream (std::istream& theStream)
     : myIStream (&theStream), myOStream (NULL), myInitPos (theStream.tellg()) {}
 
+<<<<<<< HEAD
+=======
+    //! Construct wrapper over output stream.
+    Image_FreeImageStream (std::ostream& theStream)
+    : myIStream (NULL), myOStream (&theStream), myInitPos (theStream.tellp()) {}
+
+>>>>>>> accb2f351 (u)
     //! Get io object.
     FreeImageIO GetFiIO() const
     {
@@ -143,12 +150,23 @@ namespace
       if (myIStream != NULL)
       {
         anIo.read_proc = readProc;
+<<<<<<< HEAD
         anIo.seek_proc = seekProc;
         anIo.tell_proc = tellProc;
+=======
+        anIo.seek_proc = seekProcIn;
+        anIo.tell_proc = tellProcIn;
+>>>>>>> accb2f351 (u)
       }
       if (myOStream != NULL)
       {
         anIo.write_proc = writeProc;
+<<<<<<< HEAD
+=======
+        // seek and tell are also used for saving in some formats (.tif for example)
+        anIo.seek_proc = seekProcOut;
+        anIo.tell_proc = tellProcOut;
+>>>>>>> accb2f351 (u)
       }
       return anIo;
     }
@@ -183,7 +201,11 @@ namespace
     }
 
     //! Simulate fseek().
+<<<<<<< HEAD
     static int DLL_CALLCONV seekProc (fi_handle theHandle, long theOffset, int theOrigin)
+=======
+    static int DLL_CALLCONV seekProcIn (fi_handle theHandle, long theOffset, int theOrigin)
+>>>>>>> accb2f351 (u)
     {
       Image_FreeImageStream* aThis = (Image_FreeImageStream* )theHandle;
       if (aThis->myIStream == NULL)
@@ -216,13 +238,61 @@ namespace
       return isSeekDone ? 0 : -1;
     }
 
+<<<<<<< HEAD
     //! Simulate ftell().
     static long DLL_CALLCONV tellProc (fi_handle theHandle)
+=======
+    static int DLL_CALLCONV seekProcOut (fi_handle theHandle, long theOffset, int theOrigin)
+    {
+      Image_FreeImageStream* aThis = (Image_FreeImageStream* )theHandle;
+      if (aThis->myOStream == NULL)
+      {
+        return -1;
+      }
+
+      bool isSeekDone = false;
+      switch (theOrigin)
+      {
+      case SEEK_SET:
+        if (aThis->myOStream->seekp ((std::streamoff )aThis->myInitPos + theOffset, std::ios::beg))
+        {
+          isSeekDone = true;
+        }
+        break;
+      case SEEK_CUR:
+        if (aThis->myOStream->seekp (theOffset, std::ios::cur))
+        {
+          isSeekDone = true;
+        }
+        break;
+      case SEEK_END:
+        if (aThis->myOStream->seekp (theOffset, std::ios::end))
+        {
+          isSeekDone = true;
+        }
+        break;
+      }
+      return isSeekDone ? 0 : -1;
+    }
+
+    //! Simulate ftell().
+    static long DLL_CALLCONV tellProcIn (fi_handle theHandle)
+>>>>>>> accb2f351 (u)
     {
       Image_FreeImageStream* aThis = (Image_FreeImageStream* )theHandle;
       const long aPos = aThis->myIStream != NULL ? (long )(aThis->myIStream->tellg() - aThis->myInitPos) : 0;
       return aPos;
     }
+<<<<<<< HEAD
+=======
+
+    static long DLL_CALLCONV tellProcOut (fi_handle theHandle)
+    {
+      Image_FreeImageStream* aThis = (Image_FreeImageStream* )theHandle;
+      const long aPos = aThis->myOStream != NULL ? (long )(aThis->myOStream->tellp() - aThis->myInitPos) : 0;
+      return aPos;
+    }
+>>>>>>> accb2f351 (u)
   private:
     std::istream*  myIStream;
     std::ostream*  myOStream;
@@ -238,6 +308,40 @@ namespace
     return aGuid;
   }
 
+<<<<<<< HEAD
+=======
+  //! Returns GUID of image format from file name
+  static GUID getFileFormatFromName (const TCollection_AsciiString& theFileName)
+  {
+    TCollection_AsciiString aFileNameLower = theFileName;
+    aFileNameLower.LowerCase();
+    GUID aFileFormat = getNullGuid();
+    if (aFileNameLower.EndsWith (".bmp"))
+    {
+      aFileFormat = GUID_ContainerFormatBmp;
+    }
+    else if (aFileNameLower.EndsWith (".png"))
+    {
+      aFileFormat = GUID_ContainerFormatPng;
+    }
+    else if (aFileNameLower.EndsWith (".jpg")
+          || aFileNameLower.EndsWith (".jpeg"))
+    {
+      aFileFormat = GUID_ContainerFormatJpeg;
+    }
+    else if (aFileNameLower.EndsWith (".tiff")
+          || aFileNameLower.EndsWith (".tif"))
+    {
+      aFileFormat = GUID_ContainerFormatTiff;
+    }
+    else if (aFileNameLower.EndsWith (".gif"))
+    {
+      aFileFormat = GUID_ContainerFormatGif;
+    }
+    return aFileFormat;
+  }
+
+>>>>>>> accb2f351 (u)
   //! Sentry over IUnknown pointer.
   template<class T> class Image_ComPtr
   {
@@ -346,7 +450,15 @@ namespace
 // purpose  :
 // =======================================================================
 Image_AlienPixMap::Image_AlienPixMap()
+<<<<<<< HEAD
 : myLibImage (NULL)
+=======
+#ifdef HAVE_WINCODEC
+: myPalette (NULL)
+#else
+: myLibImage (NULL)
+#endif
+>>>>>>> accb2f351 (u)
 {
   SetTopDown (false);
 }
@@ -505,6 +617,15 @@ void Image_AlienPixMap::Clear()
     FreeImage_Unload (myLibImage);
     myLibImage = NULL;
   }
+<<<<<<< HEAD
+=======
+#elif defined(HAVE_WINCODEC)
+  if (myPalette != NULL)
+  {
+    myPalette->Release();
+    myPalette = NULL;
+  }
+>>>>>>> accb2f351 (u)
 #elif defined(__EMSCRIPTEN__)
   if (myLibImage != NULL)
   {
@@ -535,7 +656,11 @@ bool Image_AlienPixMap::IsTopDownDefault()
 // =======================================================================
 #ifdef HAVE_FREEIMAGE
 bool Image_AlienPixMap::Load (const Standard_Byte* theData,
+<<<<<<< HEAD
                               Standard_Size theLength,
+=======
+                              const Standard_Size theLength,
+>>>>>>> accb2f351 (u)
                               const TCollection_AsciiString& theImagePath)
 {
   Clear();
@@ -705,7 +830,11 @@ bool Image_AlienPixMap::Load (std::istream& theStream,
 
 #elif defined(HAVE_WINCODEC)
 bool Image_AlienPixMap::Load (const Standard_Byte* theData,
+<<<<<<< HEAD
                               Standard_Size theLength,
+=======
+                              const Standard_Size theLength,
+>>>>>>> accb2f351 (u)
                               const TCollection_AsciiString& theFileName)
 {
   Clear();
@@ -751,7 +880,11 @@ bool Image_AlienPixMap::Load (const Standard_Byte* theData,
    || aFrameCount < 1
    || aWicDecoder->GetFrame (0, &aWicFrameDecode.ChangePtr()) != S_OK
    || aWicFrameDecode->GetSize (&aFrameSizeX, &aFrameSizeY) != S_OK
+<<<<<<< HEAD
    || aWicFrameDecode->GetPixelFormat (&aWicPixelFormat))
+=======
+   || aWicFrameDecode->GetPixelFormat (&aWicPixelFormat) != S_OK)
+>>>>>>> accb2f351 (u)
   {
     Message::SendFail ("Error: cannot get WIC Image Frame");
     return false;
@@ -768,7 +901,10 @@ bool Image_AlienPixMap::Load (const Standard_Byte* theData,
       Message::SendFail ("Error: cannot convert WIC Image Frame to RGB format");
       return false;
     }
+<<<<<<< HEAD
     aWicFrameDecode.Nullify();
+=======
+>>>>>>> accb2f351 (u)
   }
 
   if (!Image_PixMap::InitTrash (aPixelFormat, aFrameSizeX, aFrameSizeY))
@@ -777,17 +913,47 @@ bool Image_AlienPixMap::Load (const Standard_Byte* theData,
     return false;
   }
 
+<<<<<<< HEAD
+=======
+  TCollection_AsciiString aFileNameLower = theFileName;
+  aFileNameLower.LowerCase();
+  if (aFileNameLower.EndsWith (".gif")
+   && (aWicImgFactory->CreatePalette (&myPalette) != S_OK
+    || aWicFrameDecode->CopyPalette (myPalette) != S_OK))
+  {
+    Message::SendFail ("Error: cannot get palette for GIF image");
+    return false;
+  }
+
+>>>>>>> accb2f351 (u)
   IWICBitmapSource* aWicSrc = aWicFrameDecode.get();
   if(!aWicConvertedFrame.IsNull())
   {
     aWicSrc = aWicConvertedFrame.get();
   }
+<<<<<<< HEAD
+=======
+
+  IWICBitmapFlipRotator* aRotator;
+  bool isTopDown = true;
+  if (aWicImgFactory->CreateBitmapFlipRotator (&aRotator) == S_OK
+   && aRotator->Initialize (aWicSrc, WICBitmapTransformFlipVertical) == S_OK)
+  {
+    isTopDown = false;
+    aWicSrc = aRotator;
+  }
+
+>>>>>>> accb2f351 (u)
   if (aWicSrc->CopyPixels (NULL, (UINT )SizeRowBytes(), (UINT )SizeBytes(), ChangeData()) != S_OK)
   {
     Message::SendFail ("Error: cannot copy pixels from WIC Image");
     return false;
   }
+<<<<<<< HEAD
   SetTopDown (true);
+=======
+  SetTopDown (isTopDown);
+>>>>>>> accb2f351 (u)
   return true;
 }
 bool Image_AlienPixMap::Load (std::istream& theStream,
@@ -824,7 +990,11 @@ bool Image_AlienPixMap::Load (std::istream& ,
   return false;
 }
 bool Image_AlienPixMap::Load (const Standard_Byte* theData,
+<<<<<<< HEAD
                               Standard_Size theLength,
+=======
+                              const Standard_Size theLength,
+>>>>>>> accb2f351 (u)
                               const TCollection_AsciiString& theImagePath)
 {
   Clear();
@@ -857,7 +1027,11 @@ bool Image_AlienPixMap::Load (std::istream& ,
   return false;
 }
 bool Image_AlienPixMap::Load (const Standard_Byte* ,
+<<<<<<< HEAD
                               Standard_Size ,
+=======
+                              const Standard_Size ,
+>>>>>>> accb2f351 (u)
                               const TCollection_AsciiString& )
 {
   Clear();
@@ -908,10 +1082,58 @@ bool Image_AlienPixMap::savePPM (const TCollection_AsciiString& theFileName) con
 }
 
 // =======================================================================
+<<<<<<< HEAD
 // function : Save
 // purpose  :
 // =======================================================================
 bool Image_AlienPixMap::Save (const TCollection_AsciiString& theFileName)
+=======
+// function : convertData
+// purpose  :
+// =======================================================================
+#ifdef HAVE_WINCODEC
+static bool convertData (const Image_AlienPixMap& theSrcPixMapData,
+                         const WICPixelFormatGUID& theFormat,
+                         IWICImagingFactory& theWicImgFactory,
+                         Image_PixMapData& theDstPixMapData)
+{
+  const UINT aSizeRowBytes = (UINT)theSrcPixMapData.SizeRowBytes();
+  const UINT aSizeBytes = (UINT)theSrcPixMapData.SizeBytes();
+
+  Image_ComPtr<IWICBitmap> anSrcImg;
+  Image_ComPtr<IWICFormatConverter> aWicFormatConverter;
+  HRESULT anHResult = theWicImgFactory.CreateBitmapFromMemory ((UINT)theSrcPixMapData.SizeX(), (UINT)theSrcPixMapData.SizeY(),
+                                                               convertToWicFormat (theSrcPixMapData.Format()),
+                                                               aSizeRowBytes, aSizeBytes,
+                                                               (BYTE*)theSrcPixMapData.Data(), &anSrcImg.ChangePtr());
+  if (anHResult != S_OK
+   || theWicImgFactory.CreateFormatConverter (&aWicFormatConverter.ChangePtr()) != S_OK
+   || aWicFormatConverter->Initialize (anSrcImg.get(), theFormat, WICBitmapDitherTypeNone, theSrcPixMapData.GetPalette(), 0.0f, WICBitmapPaletteTypeCustom) != S_OK)
+  {
+    Message::SendFail ("Error: cannot convert WIC Image Frame to required format");
+    return false;
+  }
+
+  theDstPixMapData.Init (Image_PixMap::DefaultAllocator(), 1, theSrcPixMapData.SizeXYZ(), aSizeRowBytes, NULL);
+
+  if (aWicFormatConverter->CopyPixels (NULL, aSizeRowBytes, aSizeBytes, theDstPixMapData.ChangeData()) != S_OK)
+  {
+    Message::SendFail ("Error: cannot copy pixels from WIC Image");
+    return false;
+  }
+
+  return true;
+}
+#endif
+
+// =======================================================================
+// function : Save
+// purpose  :
+// =======================================================================
+bool Image_AlienPixMap::Save (Standard_Byte* theBuffer,
+                              const Standard_Size theLength,
+                              const TCollection_AsciiString& theFileName)
+>>>>>>> accb2f351 (u)
 {
 #ifdef HAVE_FREEIMAGE
   if (myLibImage == NULL)
@@ -939,10 +1161,406 @@ bool Image_AlienPixMap::Save (const TCollection_AsciiString& theFileName)
     SetTopDown (false);
   }
 
+<<<<<<< HEAD
   // FreeImage doesn't provide flexible format conversion API
   // so we should perform multiple conversions in some cases!
   FIBITMAP* anImageToDump = myLibImage;
   switch (anImageFormat)
+=======
+  FIBITMAP* anImageToDump = getImageToDump (anImageFormat);
+
+  if (anImageToDump == NULL)
+  {
+    return false;
+  }
+
+  bool isSaved = false;
+  if (theBuffer != NULL)
+  {
+    // a memory buffer wrapped by FreeImage is read only (images can be loaded but not be saved)
+    // so we call FreeImage_OpenMemory() with default arguments and just memcpy in requsted buffer.
+    FIMEMORY* aFiMem = FreeImage_OpenMemory();
+    isSaved = (FreeImage_SaveToMemory (anImageFormat, anImageToDump, aFiMem) != FALSE);
+    BYTE* aData = NULL;
+    DWORD aSize;
+    FreeImage_AcquireMemory (aFiMem, &aData, &aSize);
+    if (aSize > theLength)
+    {
+      Message::SendFail ("Error: memory buffer too small for storing image");
+      return false;
+    }
+    memcpy (theBuffer, aData, aSize);
+    FreeImage_CloseMemory (aFiMem);
+  }
+  else
+  {
+#ifdef _WIN32
+    isSaved = (FreeImage_SaveU (anImageFormat, anImageToDump, aFileNameW.ToWideString ()) != FALSE);
+#else
+    isSaved = (FreeImage_Save (anImageFormat, anImageToDump, theFileName.ToCString ()) != FALSE);
+#endif
+  }
+  if (anImageToDump != myLibImage)
+  {
+    FreeImage_Unload (anImageToDump);
+  }
+  return isSaved;
+
+#elif defined(HAVE_WINCODEC)
+
+  TCollection_AsciiString aFileNameLower = theFileName;
+  aFileNameLower.LowerCase();
+  if (aFileNameLower.EndsWith (".ppm"))
+  {
+    return savePPM (theFileName);
+  }
+
+  GUID aFileFormat = getFileFormatFromName (theFileName);
+  if (aFileFormat == getNullGuid())
+  {
+    Message::SendFail ("Error: unsupported image format");
+    return false;
+  }
+
+  Image_ComPtr<IWICImagingFactory> aWicImgFactory;
+  CoInitializeEx (NULL, COINIT_MULTITHREADED);
+  if (CoCreateInstance (CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&aWicImgFactory.ChangePtr())) != S_OK)
+  {
+    Message::SendFail ("Error: cannot initialize WIC Imaging Factory");
+    return false;
+  }
+
+  WICPixelFormatGUID aWicPixelFormat = convertToWicFormat (myImgFormat);
+  if (aWicPixelFormat == getNullGuid())
+  {
+    Message::SendFail ("Error: unsupported pixel format");
+    return false;
+  }
+
+  Image_PixMapData* aPixMapData = &myData;
+  Image_PixMapData aConvertedData;
+  if (aFileFormat == GUID_ContainerFormatGif)
+  {
+    aWicPixelFormat = GUID_WICPixelFormat8bppIndexed;
+    convertData (*this, aWicPixelFormat, *aWicImgFactory, aConvertedData);
+    aPixMapData = &aConvertedData;
+  }
+
+  Image_ComPtr<IWICStream> aWicStream;
+  Image_ComPtr<IWICBitmapEncoder> aWicEncoder;
+  const TCollection_ExtendedString aFileNameW (theFileName);
+  if (theBuffer != NULL)
+  {
+    if (aWicImgFactory->CreateStream (&aWicStream.ChangePtr()) != S_OK
+     || aWicStream->InitializeFromMemory (theBuffer,(DWORD )theLength) != S_OK)
+    {
+      Message::SendFail ("Error: cannot create WIC Memory Stream");
+      return false;
+    }
+  }
+  else
+  {
+    if (aWicImgFactory->CreateStream (&aWicStream.ChangePtr()) != S_OK
+     || aWicStream->InitializeFromFilename (aFileNameW.ToWideString(), GENERIC_WRITE) != S_OK)
+    {
+      Message::SendFail ("Error: cannot create WIC File Stream");
+      return false;
+    }
+  }
+  if (aWicImgFactory->CreateEncoder (aFileFormat, NULL, &aWicEncoder.ChangePtr()) != S_OK
+   || aWicEncoder->Initialize (aWicStream.get(), WICBitmapEncoderNoCache) != S_OK)
+  {
+    Message::SendFail ("Error: cannot create WIC Encoder");
+    return false;
+  }
+
+  WICPixelFormatGUID aWicPixelFormatRes = aWicPixelFormat;
+  Image_ComPtr<IWICBitmapFrameEncode> aWicFrameEncode;
+  if (aWicEncoder->CreateNewFrame (&aWicFrameEncode.ChangePtr(), NULL) != S_OK
+   || aWicFrameEncode->Initialize (NULL) != S_OK
+   || aWicFrameEncode->SetSize ((UINT )SizeX(), (UINT )SizeY()) != S_OK
+   || aWicFrameEncode->SetPixelFormat (&aWicPixelFormatRes) != S_OK)
+  {
+    Message::SendFail ("Error: cannot create WIC Frame");
+    return false;
+  }
+
+  if (aFileFormat == GUID_ContainerFormatGif
+   && (myPalette == NULL
+    || aWicFrameEncode->SetPalette (myPalette) != S_OK))
+  {
+    Message::SendFail ("Error: cannot set palette");
+    return false;
+  }
+
+  if (aWicPixelFormatRes != aWicPixelFormat)
+  {
+    Message::SendFail ("Error: pixel format is unsupported by image format");
+    return false;
+  }
+
+  if (IsTopDown())
+  {
+    if (aWicFrameEncode->WritePixels ((UINT )SizeY(), (UINT )SizeRowBytes(), (UINT )SizeBytes(), (BYTE* )aPixMapData->Data()) != S_OK)
+    {
+      Message::SendFail ("Error: cannot write pixels to WIC Frame");
+      return false;
+    }
+  }
+  else
+  {
+    for (Standard_Size aRow = 0; aRow < SizeY(); ++aRow)
+    {
+      if (aWicFrameEncode->WritePixels (1, (UINT )SizeRowBytes(), (UINT )SizeRowBytes(), (BYTE* )aPixMapData->Row (aRow)) != S_OK)
+      {
+        Message::SendFail ("Error: cannot write pixels to WIC Frame");
+        return false;
+      }
+    }
+  }
+  if (aWicFrameEncode->Commit() != S_OK
+   || aWicEncoder->Commit() != S_OK)
+  {
+    Message::SendFail ("Error: cannot commit data to WIC Frame");
+    return false;
+  }
+  if (aWicStream->Commit (STGC_DEFAULT) != S_OK)
+  {
+    //Message::Send ("Error: cannot commit data to WIC File Stream", Message_Fail);
+    //return false;
+  }
+  return true;
+#else
+  if (theBuffer != NULL)
+  {
+    Message::SendFail ("Error: no image library available");
+    return false;
+  }
+  const Standard_Integer aLen = theFileName.Length();
+  if ((aLen >= 4) && (theFileName.Value (aLen - 3) == '.')
+      && strcasecmp( theFileName.ToCString() + aLen - 3, "ppm") == 0 )
+  {
+    return savePPM (theFileName);
+  }
+  Message::SendTrace ("Image_PixMap, no image library available! Image saved in PPM format");
+  return savePPM (theFileName);
+#endif
+}
+
+bool Image_AlienPixMap::Save (std::ostream& theStream, const TCollection_AsciiString& theExtension)
+{
+#ifdef HAVE_FREEIMAGE
+  if (myLibImage == NULL)
+  {
+    return false;
+  }
+
+#ifdef _WIN32
+  const TCollection_ExtendedString anExtW (theExtension.ToCString(), Standard_True);
+  FREE_IMAGE_FORMAT anImageFormat = FreeImage_GetFIFFromFilenameU (anExtW.ToWideString());
+#else
+  FREE_IMAGE_FORMAT anImageFormat = FreeImage_GetFIFFromFilename (theExtension.ToCString());
+#endif
+  if (anImageFormat == FIF_UNKNOWN)
+  {
+#ifdef OCCT_DEBUG
+    std::cerr << "Image_PixMap, image format doesn't supported!\n";
+#endif
+    return false;
+  }
+
+  if (IsTopDown())
+  {
+    FreeImage_FlipVertical (myLibImage);
+    SetTopDown (false);
+  }
+
+  FIBITMAP* anImageToDump = getImageToDump (anImageFormat);
+
+  if (anImageToDump == NULL)
+  {
+    return false;
+  }
+
+  bool isSaved = false;
+  Image_FreeImageStream aStream (theStream);
+  FreeImageIO anIO = aStream.GetFiIO();
+
+  isSaved = (FreeImage_SaveToHandle(anImageFormat, anImageToDump, &anIO, &aStream) != FALSE);
+
+  if (anImageToDump != myLibImage)
+  {
+    FreeImage_Unload (anImageToDump);
+  }
+  return isSaved;
+#elif defined(HAVE_WINCODEC)
+  GUID aFileFormat = getFileFormatFromName (theExtension);
+  if (aFileFormat == getNullGuid())
+  {
+    Message::SendFail ("Error: unsupported image format");
+    return false;
+  }
+
+  Image_ComPtr<IWICImagingFactory> aWicImgFactory;
+  CoInitializeEx (NULL, COINIT_MULTITHREADED);
+  if (CoCreateInstance (CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&aWicImgFactory.ChangePtr())) != S_OK)
+  {
+    Message::SendFail ("Error: cannot initialize WIC Imaging Factory");
+    return false;
+  }
+
+  WICPixelFormatGUID aWicPixelFormat = convertToWicFormat (myImgFormat);
+  if (aWicPixelFormat == getNullGuid())
+  {
+    Message::SendFail ("Error: unsupported pixel format");
+    return false;
+  }
+
+  Image_PixMapData* aPixMapData = &myData;
+  Image_PixMapData aConvertedData;
+  if (aFileFormat == GUID_ContainerFormatGif)
+  {
+    aWicPixelFormat = GUID_WICPixelFormat8bppIndexed;
+    convertData (*this, aWicPixelFormat, *aWicImgFactory, aConvertedData);
+    aPixMapData = &aConvertedData;
+  }
+
+  Image_ComPtr<IStream> aStream;
+  Image_ComPtr<IWICBitmapEncoder> aWicEncoder;
+
+  if (CreateStreamOnHGlobal (NULL, Standard_True, &aStream.ChangePtr()) != S_OK)
+  {
+    Message::SendFail ("Error: cannot create Stream on global");
+    return false;
+  }
+
+  if (aWicImgFactory->CreateEncoder (aFileFormat, NULL, &aWicEncoder.ChangePtr()) != S_OK
+   || aWicEncoder->Initialize (aStream.get(), WICBitmapEncoderNoCache) != S_OK)
+  {
+    Message::SendFail ("Error: cannot create WIC Encoder");
+    return false;
+  }
+
+  WICPixelFormatGUID aWicPixelFormatRes = aWicPixelFormat;
+  Image_ComPtr<IWICBitmapFrameEncode> aWicFrameEncode;
+  if (aWicEncoder->CreateNewFrame (&aWicFrameEncode.ChangePtr(), NULL) != S_OK
+   || aWicFrameEncode->Initialize (NULL) != S_OK
+   || aWicFrameEncode->SetSize ((UINT )SizeX(), (UINT )SizeY()) != S_OK
+   || aWicFrameEncode->SetPixelFormat (&aWicPixelFormatRes) != S_OK)
+  {
+    Message::SendFail ("Error: cannot create WIC Frame");
+    return false;
+  }
+
+  if (aFileFormat == GUID_ContainerFormatGif
+   && (myPalette == NULL
+    || aWicFrameEncode->SetPalette (myPalette) != S_OK))
+  {
+    Message::SendFail ("Error: cannot set palette");
+    return false;
+  }
+
+  if (aWicPixelFormatRes != aWicPixelFormat)
+  {
+    Message::SendFail ("Error: pixel format is unsupported by image format");
+    return false;
+  }
+
+  if (IsTopDown())
+  {
+    if (aWicFrameEncode->WritePixels ((UINT )SizeY(), (UINT )SizeRowBytes(), (UINT )SizeBytes(), (BYTE* )aPixMapData->Data()) != S_OK)
+    {
+      Message::SendFail ("Error: cannot write pixels to WIC Frame");
+      return false;
+    }
+  }
+  else
+  {
+    for (Standard_Size aRow = 0; aRow < SizeY(); ++aRow)
+    {
+      if (aWicFrameEncode->WritePixels (1, (UINT )SizeRowBytes(), (UINT )SizeRowBytes(), (BYTE* )aPixMapData->Row (aRow)) != S_OK)
+      {
+        Message::SendFail ("Error: cannot write pixels to WIC Frame");
+        return false;
+      }
+    }
+  }
+  if (aWicFrameEncode->Commit() != S_OK
+   || aWicEncoder->Commit() != S_OK)
+  {
+    Message::SendFail ("Error: cannot commit data to WIC Frame");
+    return false;
+  }
+  if (aStream->Commit (STGC_DEFAULT) != S_OK)
+  {
+    //Message::Send ("Error: cannot commit data to Stream", Message_Fail);
+    //return false;
+  }
+
+  // WIC doesn't have the way to encode image directly in std::ostream
+  // so we use a workaround to transfer data from IStream to std::ostream
+  STATSTG aStat;
+  if (aStream->Stat (&aStat, STATFLAG_NONAME) != S_OK)
+  {
+    Message::SendFail ("Error: cannot get stat from stream");
+    return false;
+  }
+  HGLOBAL aMem;
+  if (GetHGlobalFromStream (aStream.get(), &aMem) != S_OK)
+  {
+    Message::SendFail ("Error: cannot get global from stream");
+    return false;
+  }
+
+  LPVOID aData = GlobalLock (aMem);
+  if (aData == NULL)
+  {
+    Message::SendFail ("Error: cannot lock global");
+    return false;
+  }
+  if (!theStream.write ((const char* )aData, aStat.cbSize.QuadPart))
+  {
+    Message::SendFail ("Error: cannot write data to ostream");
+    return false;
+  }
+  if (GlobalUnlock (aMem) == 0 && GetLastError() != NO_ERROR)
+  {
+    Message::SendFail ("Error: cannot unlock global");
+    return false;
+  }
+  return true;
+#else
+  Message::SendFail ("Error: no image library available");
+  return false;
+#endif
+}
+
+// =======================================================================
+// function : AdjustGamma
+// purpose  :
+// =======================================================================
+bool Image_AlienPixMap::AdjustGamma (const Standard_Real theGammaCorr)
+{
+#ifdef HAVE_FREEIMAGE
+  return FreeImage_AdjustGamma (myLibImage, theGammaCorr) != FALSE;
+#else
+  (void )theGammaCorr;
+  return false;
+#endif
+}
+
+#ifdef HAVE_FREEIMAGE
+// =======================================================================
+// function : GetImageToDump
+// purpose  :
+// =======================================================================
+FIBITMAP* Image_AlienPixMap::getImageToDump (const Standard_Integer theFormat)
+{
+  FIBITMAP* anImageToDump = myLibImage;
+  // FreeImage doesn't provide flexible format conversion API
+  // so we should perform multiple conversions in some cases!
+  switch (theFormat)
+>>>>>>> accb2f351 (u)
   {
     case FIF_PNG:
     case FIF_BMP:
@@ -973,7 +1591,11 @@ bool Image_AlienPixMap::Save (const TCollection_AsciiString& theFileName)
         aTmpBitmap = FreeImage_ConvertToType (myLibImage, FIT_BITMAP);
         if (aTmpBitmap == NULL)
         {
+<<<<<<< HEAD
           return false;
+=======
+          return NULL;
+>>>>>>> accb2f351 (u)
         }
       }
 
@@ -986,7 +1608,11 @@ bool Image_AlienPixMap::Save (const TCollection_AsciiString& theFileName)
         }
         if (aTmpBitmap24 == NULL)
         {
+<<<<<<< HEAD
           return false;
+=======
+          return NULL;
+>>>>>>> accb2f351 (u)
         }
         aTmpBitmap = aTmpBitmap24;
       }
@@ -1031,7 +1657,11 @@ bool Image_AlienPixMap::Save (const TCollection_AsciiString& theFileName)
         anImageToDump = FreeImage_ConvertToType (myLibImage, FIT_BITMAP);
         if (anImageToDump == NULL)
         {
+<<<<<<< HEAD
           return false;
+=======
+          return NULL;
+>>>>>>> accb2f351 (u)
         }
       }
 
@@ -1044,13 +1674,18 @@ bool Image_AlienPixMap::Save (const TCollection_AsciiString& theFileName)
         }
         if (aTmpBitmap24 == NULL)
         {
+<<<<<<< HEAD
           return false;
+=======
+          return NULL;
+>>>>>>> accb2f351 (u)
         }
         anImageToDump = aTmpBitmap24;
       }
       break;
     }
   }
+<<<<<<< HEAD
 
   if (anImageToDump == NULL)
   {
@@ -1211,3 +1846,8 @@ bool Image_AlienPixMap::AdjustGamma (const Standard_Real theGammaCorr)
   return false;
 #endif
 }
+=======
+  return anImageToDump;
+}
+#endif
+>>>>>>> accb2f351 (u)

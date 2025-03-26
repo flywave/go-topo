@@ -35,9 +35,8 @@ shape shell::copy(bool deep) const {
       throw std::runtime_error("Shell operation resulted in Null shape");
 
     return shell{shp};
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -582,9 +581,8 @@ int shell::sweep(const wire &spine, std::vector<shape *> profiles,
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {

@@ -5225,7 +5225,10 @@ void BRepOffset_BuildOffsetFaces::FilterInvalidEdges (const BRepOffset_DataMapOf
     const TopTools_ListOfShape* pEOrigins = myOEOrigins.Seek (aE);
     if (!pEOrigins)
     {
+<<<<<<< HEAD
       theMEUseInRebuild.Add (aE);
+=======
+>>>>>>> accb2f351 (u)
       continue;
     }
 
@@ -5393,6 +5396,32 @@ void BRepOffset_BuildOffsetFaces::FindFacesToRebuild()
   }
 }
 
+<<<<<<< HEAD
+=======
+
+namespace
+{
+//=======================================================================
+//function : mapShapes
+//purpose  : Collect theVecShapes into theMap with setted theType
+//=======================================================================
+  template<class Container>
+  static void mapShapes (const Container& theVecShapes, 
+                         const TopAbs_ShapeEnum theType,
+                         TopTools_MapOfShape& theMap)
+  {
+    for (const auto& aShape : theVecShapes)
+    {
+      for (TopExp_Explorer anExp(aShape, theType); anExp.More(); anExp.Next())
+      {
+        theMap.Add(anExp.Current());
+      }
+    }
+  }
+}
+
+
+>>>>>>> accb2f351 (u)
 //=======================================================================
 //function : IntersectFaces
 //purpose  : Intersection of the faces that should be rebuild to resolve all invalidities
@@ -5715,7 +5744,14 @@ void BRepOffset_BuildOffsetFaces::IntersectFaces (TopTools_MapOfShape& theVertsT
       TopoDS_Compound aCBE;
       aBB.MakeCompound (aCBE);
       //
+<<<<<<< HEAD
       TopExp_Explorer aExp (aCBInv, TopAbs_EDGE);
+=======
+      // remember inside edges and vertices to further check
+      TopTools_MapOfShape anInsideEdges;
+      TopTools_MapOfShape anInsideVertices;
+      TopExp_Explorer aExp(aCBInv, TopAbs_EDGE);
+>>>>>>> accb2f351 (u)
       for (; aExp.More(); aExp.Next())
       {
         const TopoDS_Shape& aE = aExp.Current();
@@ -5724,6 +5760,18 @@ void BRepOffset_BuildOffsetFaces::IntersectFaces (TopTools_MapOfShape& theVertsT
           if (aMEFence.Add (aE))
           {
             aBB.Add (aCBE, aE);
+<<<<<<< HEAD
+=======
+            if (!myEdgesToAvoid.Contains(aE) && myInvalidEdges.Contains(aE))
+            {
+              anInsideEdges.Add(aE);
+              TopoDS_Iterator anIt(aE);
+              for (; anIt.More(); anIt.Next())
+              {
+                anInsideVertices.Add(anIt.Value());
+              }
+            }
+>>>>>>> accb2f351 (u)
           }
         }
       }
@@ -5749,10 +5797,13 @@ void BRepOffset_BuildOffsetFaces::IntersectFaces (TopTools_MapOfShape& theVertsT
         TopExp::MapShapes (aCBELoc, TopAbs_EDGE, aME);
         aMECV = aME;
         TopExp::MapShapes (aCBELoc, TopAbs_VERTEX, aME);
+<<<<<<< HEAD
         //
         // Using the map <aME> find chain of faces to be intersected;
         //
         // faces for intersection
+=======
+>>>>>>> accb2f351 (u)
         TopTools_IndexedMapOfShape aMFInt;
         // additional faces for intersection
         TopTools_IndexedMapOfShape aMFIntExt;
@@ -5801,6 +5852,17 @@ void BRepOffset_BuildOffsetFaces::IntersectFaces (TopTools_MapOfShape& theVertsT
           if (pMFInter && !pInterFi)
             continue;
 
+<<<<<<< HEAD
+=======
+          // create map of edges and vertices for aLFImi
+          TopTools_MapOfShape  aMEVIm;
+          mapShapes(*aLFImi, TopAbs_EDGE, aMEVIm);
+          mapShapes(*aLFImi, TopAbs_VERTEX, aMEVIm);
+
+          Standard_Boolean isIContainsE = aMEVIm.HasIntersection(anInsideEdges);
+          Standard_Boolean isIContainsV = aMEVIm.HasIntersection(anInsideVertices);
+
+>>>>>>> accb2f351 (u)
           for (j = i + 1; j <= aNb; ++j)
           {
             const TopoDS_Face& aFj = TopoDS::Face (aMFInt (j));
@@ -5820,6 +5882,31 @@ void BRepOffset_BuildOffsetFaces::IntersectFaces (TopTools_MapOfShape& theVertsT
             if (!aLFEj)
               continue;
 
+<<<<<<< HEAD
+=======
+            // create map of edges and vertices for aLFImi
+            aMEVIm.Clear();
+            mapShapes(*aLFImj, TopAbs_EDGE, aMEVIm);
+            mapShapes(*aLFImj, TopAbs_VERTEX, aMEVIm);
+            // check images of both faces contain anInsideEdges and anInsideVertices
+            // not process if false and true 
+            Standard_Boolean isJContainsE = aMEVIm.HasIntersection(anInsideEdges);
+            Standard_Boolean isJContainsV = aMEVIm.HasIntersection(anInsideVertices);
+
+            // Check if one face is connected to inside edge then
+            // the other must be also connected
+            if ((isIContainsE && !isJContainsV) ||
+                (isJContainsE && !isIContainsV))
+            {
+              TopTools_ListOfShape aLVC;
+              // it is necessary to process the images if they already have 
+              // common vertices
+              FindCommonParts(*aLFImi, *aLFImj, aLVC, TopAbs_VERTEX);
+
+              if (aLVC.IsEmpty())
+                continue;
+            }
+>>>>>>> accb2f351 (u)
             //
             // if there are some common edges between faces
             // we should use these edges and do not intersect again.

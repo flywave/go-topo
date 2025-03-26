@@ -158,7 +158,11 @@ Standard_Integer  Interface_MSG::Read (Standard_IStream& S)
   for (; iter.More(); iter.Next()) {
     if (!iter.Key().StartsWith(rootkey)) continue;
     S<<"@"<<iter.Key()<<"\n";
+<<<<<<< HEAD
     const Handle(TCollection_HAsciiString) str = iter.Value();
+=======
+    const Handle(TCollection_HAsciiString)& str = iter.Value();
+>>>>>>> accb2f351 (u)
     if (str.IsNull()) continue;
     nb ++;
     S<<str->ToCString()<<"\n";

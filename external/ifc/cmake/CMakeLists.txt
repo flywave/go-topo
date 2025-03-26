@@ -30,83 +30,80 @@ ElSE(MSVC)
     ADD_DEFINITIONS(-fPIC -Wno-non-virtual-dtor)
 ENDIF(MSVC)
 
+set(OGG_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/../../ogg/include")
+
+# 添加所有子目录（按模块分类）
+set(OGG_SRC_SUBDIRS
+    FSD OSD Plugin Quantity Resource Standard StdFail Storage
+    TColStd TCollection TShort Units UnitsAPI UnitsMethods
+    NCollection Message FlexLexer math ElCLib ElSLib
+    BSplCLib BSplSLib PLib Precision GeomAbs Poly CSLib
+    Convert Bnd BVH gp TColgp TopLoc Expr ExprIntrp
+    Geom2d LProp TColGeom2d Adaptor2d Geom2dLProp
+    Geom2dAdaptor Geom2dEvaluator Geom TColGeom GeomAdaptor
+    AdvApprox GeomLProp Adaptor3d LProp3d TopAbs GeomEvaluator
+    GProp ProjLib GeomProjLib GCPnts CPnts Approx AppParCurves
+    FEmTool AppCont Extrema IntAna IntAna2d GeomConvert
+    AdvApp2Var GeomLib Geom2dConvert Hermit BndLib AppDef
+    GeomTools GC GCE2d gce TopoDS TopExp TopTools BRep
+    BRepLProp BRepAdaptor BRepTools BinTools Aspect Graphic3d
+    Xw Image Media Wasm WNT Cocoa Font V3d Select3D Prs3d
+    StdPrs SelectBasics SelectMgr PrsMgr AIS StdSelect
+    DsgPrs PrsDim ShapeBuild ShapeExtend ShapeConstruct
+    ShapeCustom ShapeAnalysis ShapeFix ShapeUpgrade ShapeAlgo
+    ShapeProcess ShapeProcessAPI IntCurvesFace MAT MAT2d
+    Bisector BRepMAT2d BRepCheck BRepBndLib BRepExtrema
+    BRepClass BRepClass3d BRepLib BRepGProp BRepIntCurveSurface
+    BRepTopAdaptor BRepBuilderAPI BRepApprox IMeshData IMeshTools
+    BRepMeshData BRepMesh Hatch GeomInt IntStart IntWalk IntImp
+    IntCurveSurface IntSurf IntPatch Geom2dInt IntImpParGen
+    IntRes2d IntCurve TopTrans Intf ApproxInt GccAna GccEnt
+    GccInt HatchGen Geom2dHatch Law AppBlend Plate GeomPlate
+    LocalAnalysis GeomAPI GeomFill Geom2dAPI Geom2dGcc FairCurve
+    NLPlate IntPolyh TopClass HLRTopoBRep HLRBRep HLRAlgo
+    HLRAppli Intrv TopBas TopCnx Contap MeshVS CDM PCDM
+    CDF UTL LDOM TDF TDataStd TFunction TDocStd AppStdL
+    TDataXtd TNaming AppStd IntTools BRepAlgoAPI BOPDS BOPAlgo
+    BOPTools BRepPrim BRepSweep Sweep BRepPreviewAPI BRepPrimAPI
+    BinMDF BinMDataStd BinMFunction BinMDocStd BinObjMgt
+    BinLDrivers XmlLDrivers XmlMDF XmlMDataStd XmlMDocStd
+    XmlMFunction XmlObjMgt BinDrivers BinMDataXtd BinMNaming
+    XmlDrivers XmlMDataXtd XmlMNaming StdLDrivers StdLPersistent
+    StdObjMgt StdDrivers StdObject StdPersistent StdStorage
+    ShapePersistent TObj BinTObjDrivers XmlTObjDrivers TPrsStd
+    DE Interface Transfer IFGraph IFSelect TransferBRep
+    XSControl StepData StepFile HeaderSection RWHeaderSection
+    APIHeaderSection StepSelect XSAlgo LibCtl MoniTool StepBasic
+    RWStepBasic StepRepr RWStepRepr StepGeom RWStepGeom StepShape
+    RWStepShape StepVisual RWStepVisual StepDimTol RWStepDimTol
+    StepKinematics RWStepKinematics StepElement StepFEA
+    RWStepElement RWStepFEA StepAP214 RWStepAP214 StepAP203
+    RWStepAP203 STEPConstruct STEPEdit GeomToStep StepToGeom
+    StepToTopoDS TopoDSToStep STEPControl STEPSelections StepAP209
+    RWStepAP242 StepAP242 IGESData IGESFile IGESBasic IGESGraph
+    IGESGeom IGESDimen IGESDraw IGESSolid IGESDefs IGESAppli
+    IGESConvGeom IGESSelect IGESToBRep GeomToIGES Geom2dToIGES
+    BRepToIGES BRepToIGESBRep IGESControl TopOpeBRep TopOpeBRepDS
+    TopOpeBRepBuild TopOpeBRepTool BRepAlgo BRepFill BRepProj
+    XCAFApp XCAFDimTolObjects XCAFNoteObjects XCAFDoc XCAFPrs
+    XCAFView IGESCAFControl STEPCAFControl StlAPI RWStl
+    VrmlConverter VrmlAPI Vrml VrmlData RWGltf RWMesh RWObj
+    RWPly XmlXCAFDrivers XmlMXCAFDoc BinXCAFDrivers BinMXCAFDoc
+    DEBRepCascade DEXCAFCascade Express BRepFilletAPI BRepOffsetAPI
+    BRepBuilderAPI BRepPreviewAPI BRepPrimAPI BRepAlgoAPI
+    ShapeProcessAPI ChFi2d BRepFeat LocOpe ChFi3d ChFiDS
+    BlendFunc Draft BRepOffset
+)
+
+# 批量添加所有子目录
+foreach(SUBDIR ${OGG_SRC_SUBDIRS})
+    list(APPEND OGG_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../ogg/src/${SUBDIR}")
+endforeach()
+
 INCLUDE_DIRECTORIES(
     ${INCLUDE_DIRECTORIES}
     "${CMAKE_CURRENT_SOURCE_DIR}/../../libboost/boost_1_67_0"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/inc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Standard"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/gp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Precision"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TCollection"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TopoDS"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TopLoc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/GeomAdaptor"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Geom2dAdaptor"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepAdaptor"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeFix"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeAnalysis"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeBuild"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeExtend"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeConstruct"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeUpgrade"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeAlgo"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeProcess"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ShapeProcessAPI"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepGProp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepMesh"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Bnd"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Adaptor2d"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Adaptor3d"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BOPAlgo"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BOPDS"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRep"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepApprox"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepBlend"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepBuilderAPI"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepCheck"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/NCollection"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TopTools"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/GCPnts"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Poly"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepFilletAPI"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TopExp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BOPCol"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepSweep"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Sweep"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ChFi2d"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepTools"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/IntPatch"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/GeomInt"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/IntSurf"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/GeomAPI"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Extrema"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/math"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/CPnts"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepPrim"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/GC"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ChFiDS"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/ElCLib"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/gce"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Interface"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/MoniTool"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TDF"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Message"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/Plate"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/GCE2d"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepFeat"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/GeomConvert"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/LocOpe"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TDocStd"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/CDF"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/TNaming"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/IGESControl"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/XCAFPrs"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/XCAFDoc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/XCAFDrivers"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/XCAFSchema"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/XmlXCAFDrivers" 
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/STEPCAFControl" 
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../oce/src/BRepExtrema"
+    ${OGG_INCLUDE_DIR}
 )
 
 ADD_LIBRARY(ifc23 STATIC ../src/ifc23.cc)

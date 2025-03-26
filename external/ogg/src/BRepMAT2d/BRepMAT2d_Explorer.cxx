@@ -163,7 +163,11 @@ void BRepMAT2d_Explorer::Add(const TopoDS_Wire& Spine,
 
   // Treatment of the next edges:
   for (; anExp.More(); anExp.Next()) {
+<<<<<<< HEAD
     TopoDS_Edge  anEdge = anExp.Current();
+=======
+    const TopoDS_Edge&  anEdge = anExp.Current();
+>>>>>>> accb2f351 (u)
 
     anOldNewE.Add(anEdge, anEdge);
     C2d  = BRep_Tool::CurveOnSurface (anEdge, aFace, UFirst, ULast);

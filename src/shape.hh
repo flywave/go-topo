@@ -92,6 +92,10 @@ public:
   int mirror(gp_Ax1 a);
   int mirror(gp_Ax2 a);
 
+  gp_Pnt center_of_mass() const;
+  double compute_mass() const;
+  double compute_area() const;
+
   shape transformed(gp_Trsf mat) const;
 
   shape translated(gp_Vec delta) const;
@@ -148,7 +152,7 @@ public:
 
   shape(TopoDS_Shape shp);
   shape(const shape &s, TopoDS_Shape shp);
-  
+
 protected:
   void prepare_box_texture_coordinates(const TopoDS_Shape &aShape);
   void get_box_texture_coordinate(const gp_Pnt &p, const gp_Dir &N1,

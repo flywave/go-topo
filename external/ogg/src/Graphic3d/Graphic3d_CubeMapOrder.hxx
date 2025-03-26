@@ -42,7 +42,11 @@ public:
                                           unsigned char theNegZLocation);
 
   //! Creates Graphic3d_CubeMapOrder using Graphic3d_ValidatedCubeMapOrder.
+<<<<<<< HEAD
   Standard_EXPORT Graphic3d_CubeMapOrder (const Graphic3d_ValidatedCubeMapOrder theOrder);
+=======
+  Standard_EXPORT Graphic3d_CubeMapOrder (const Graphic3d_ValidatedCubeMapOrder& theOrder);
+>>>>>>> accb2f351 (u)
 
   //! Alias of 'operator='.
   Standard_EXPORT Graphic3d_CubeMapOrder& Set (const Graphic3d_CubeMapOrder& theOrder);
@@ -61,10 +65,17 @@ public:
   Standard_EXPORT Graphic3d_CubeMapOrder& SetDefault();
 
   //! Applies another cubemap order as permutation for the current one.
+<<<<<<< HEAD
   Standard_EXPORT Graphic3d_CubeMapOrder& Permute (Graphic3d_ValidatedCubeMapOrder anOrder);
 
   //! Returns permuted by other cubemap order copy of current one. 
   Standard_EXPORT Graphic3d_CubeMapOrder Permuted (Graphic3d_ValidatedCubeMapOrder anOrder) const;
+=======
+  Standard_EXPORT Graphic3d_CubeMapOrder& Permute (const Graphic3d_ValidatedCubeMapOrder& anOrder);
+
+  //! Returns permuted by other cubemap order copy of current one. 
+  Standard_EXPORT Graphic3d_CubeMapOrder Permuted (const Graphic3d_ValidatedCubeMapOrder& anOrder) const;
+>>>>>>> accb2f351 (u)
 
   //! Swaps values of two cubemap sides.
   Standard_EXPORT Graphic3d_CubeMapOrder& Swap (Graphic3d_CubeMapSide theFirstSide,

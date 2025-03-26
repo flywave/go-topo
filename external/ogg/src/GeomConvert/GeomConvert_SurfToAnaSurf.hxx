@@ -115,7 +115,11 @@ private:
 
   static Standard_Real ComputeGap(const Handle(Geom_Surface)& theSurf,
     const Standard_Real theU1, const Standard_Real theU2, const Standard_Real theV1, const Standard_Real theV2,
+<<<<<<< HEAD
     const Handle(Geom_Surface) theNewSurf, const Standard_Real theTol = RealLast());
+=======
+    const Handle(Geom_Surface)& theNewSurf, const Standard_Real theTol = RealLast());
+>>>>>>> accb2f351 (u)
 
 
 

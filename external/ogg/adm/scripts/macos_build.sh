@@ -34,6 +34,10 @@ export BUILD_ModelingAlgorithms=ON
 export BUILD_Visualization=ON
 export BUILD_ApplicationFramework=ON
 export BUILD_DataExchange=ON
+<<<<<<< HEAD
+=======
+export BUILD_DETools=OFF
+>>>>>>> accb2f351 (u)
 export BUILD_Draw=ON
 
 export USE_FREETYPE=ON
@@ -145,6 +149,10 @@ function buildArch {
   -D BUILD_MODULE_Visualization:BOOL="${BUILD_Visualization}" \
   -D BUILD_MODULE_ApplicationFramework:BOOL="${BUILD_ApplicationFramework}" \
   -D BUILD_MODULE_DataExchange:BOOL="${BUILD_DataExchange}" \
+<<<<<<< HEAD
+=======
+  -D BUILD_MODULE_DETools:BOOL="${BUILD_DETools}" \
+>>>>>>> accb2f351 (u)
   -D BUILD_MODULE_Draw:BOOL="${BUILD_Draw}" \
   -D BUILD_DOC_Overview:BOOL="OFF" \
     "$aCasSrc" 2>&1 | tee -a "$aLogFile"

@@ -1,6 +1,10 @@
 cmake_minimum_required (VERSION 3.1 FATAL_ERROR)
 
+<<<<<<< HEAD
 set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/adm/cmake")
+=======
+set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/adm/cmake")
+>>>>>>> accb2f351 (u)
 
 set (CMAKE_SUPPRESS_REGENERATION TRUE)
 
@@ -10,6 +14,16 @@ set (CMAKE_CONFIGURATION_TYPES Release Debug RelWithDebInfo CACHE INTERNAL "" FO
 set (BUILD_CPP_STANDARD "C++11" CACHE STRING "Select using c++ standard.")
 set_property(CACHE BUILD_CPP_STANDARD PROPERTY STRINGS "C++11" "C++14" "C++17" "C++20" "C++23")
 
+<<<<<<< HEAD
+=======
+INCLUDE_DIRECTORIES(BEFORE 
+    "${CMAKE_CURRENT_SOURCE_DIR}/../freetype2/include/"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../freetype2/src/include/"
+)
+
+set (CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/ogg")
+
+>>>>>>> accb2f351 (u)
 # Set desired C++ standard
 if     ("${BUILD_CPP_STANDARD}" STREQUAL "C++11")
   set (CMAKE_CXX_STANDARD 11)
@@ -26,18 +40,28 @@ else ()
 endif()
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
+<<<<<<< HEAD
+=======
+set(CURRENT_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+
+>>>>>>> accb2f351 (u)
 # macro: include patched file if it exists
 macro (OCCT_INCLUDE_CMAKE_FILE BEING_INCLUDED_FILE)
   if (BUILD_PATCH AND EXISTS "${BUILD_PATCH}/${BEING_INCLUDED_FILE}.cmake")
     include (${BUILD_PATCH}/${BEING_INCLUDED_FILE}.cmake)
   else()
+<<<<<<< HEAD
     include (${CMAKE_SOURCE_DIR}/${BEING_INCLUDED_FILE}.cmake)
+=======
+    include (${CURRENT_PATH}/${BEING_INCLUDED_FILE}.cmake)
+>>>>>>> accb2f351 (u)
   endif()
 endmacro()
 
 # include variable description
 OCCT_INCLUDE_CMAKE_FILE ("adm/cmake/vardescr")
 
+<<<<<<< HEAD
 # set type of OCCT libraries
 if (NOT BUILD_LIBRARY_TYPE)
   set (BUILD_LIBRARY_TYPE "Shared" CACHE STRING "${BUILD_LIBRARY_TYPE_DESCR}" FORCE)
@@ -57,6 +81,11 @@ endif()
 
 # the name of the project
 project (OCCT)
+=======
+set(BUILD_LIBRARY_TYPE STATIC)
+unset (BUILD_SHARED_LIBS)
+unset (BUILD_SHARED_LIBRARY_NAME_POSTFIX)
+>>>>>>> accb2f351 (u)
 
 if (WIN32)
   add_definitions(-DUNICODE)
@@ -90,8 +119,11 @@ if (NOT BUILD_SOVERSION_NUMBERS)
   endif()
 endif()
 
+<<<<<<< HEAD
 set (INSTALL_TEST_CASES OFF CACHE BOOL "${INSTALL_TEST_CASES_DESCR}")
 
+=======
+>>>>>>> accb2f351 (u)
 # Regeneration of OCCT resource files
 set (BUILD_RESOURCES OFF CACHE BOOL "${BUILD_RESOURCES_DESCR}")
 
@@ -160,6 +192,7 @@ if (BUILD_USE_PCH)
 
 endif()
 
+<<<<<<< HEAD
 # copy samples to install directory
 set (INSTALL_SAMPLES OFF CACHE BOOL "${INSTALL_SAMPLES_DESCR}")
 
@@ -249,10 +282,13 @@ elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
   set (BIN_LETTER "i")
 endif()
 
+=======
+>>>>>>> accb2f351 (u)
 # Get all used variables: OS_WITH_BIT, COMPILER
 OCCT_MAKE_OS_WITH_BITNESS()
 OCCT_MAKE_COMPILER_SHORT_NAME()
 
+<<<<<<< HEAD
 # do not define INSTALL_DIR_BIN for win.
 # Leave library structure for win: <prefix>/win64/vc10/bin(d)
 if (NOT DEFINED INSTALL_DIR_BIN)
@@ -384,6 +420,11 @@ if(APPLE)
   set (INSTALL_NAME_DIR "" CACHE STRING "install_name library suffix on OS X (e.g. @executable_path/../Frameworks)")
 endif()
 
+=======
+# include occt macros
+OCCT_INCLUDE_CMAKE_FILE ("adm/cmake/occt_resources")
+
+>>>>>>> accb2f351 (u)
 # a directory recognized as a 'patch' for OCCT
 set (BUILD_PATCH "" CACHE PATH "${BUILD_PATCH_DESCR}")
 
@@ -408,8 +449,13 @@ if (MSVC)
 endif()
 
 # whether use optional 3rdparty or not
+<<<<<<< HEAD
 set (USE_TK        ON  CACHE BOOL "${USE_TK_DESCR}")
 set (USE_FREETYPE  ON  CACHE BOOL "${USE_FREETYPE_DESCR}")
+=======
+set (USE_TK        OFF CACHE BOOL "${USE_TK_DESCR}")
+set (USE_FREETYPE  ON CACHE BOOL "${USE_FREETYPE_DESCR}")
+>>>>>>> accb2f351 (u)
 set (USE_FREEIMAGE OFF CACHE BOOL "${USE_FREEIMAGE_DESCR}")
 set (USE_FFMPEG    OFF CACHE BOOL "${USE_FFMPEG_DESCR}")
 set (USE_OPENVR    OFF CACHE BOOL "${USE_OPENVR_DESCR}")
@@ -417,6 +463,7 @@ set (USE_RAPIDJSON OFF CACHE BOOL "${USE_RAPIDJSON_DESCR}")
 set (USE_DRACO     OFF CACHE BOOL "${USE_DRACO_DESCR}")
 set (USE_TBB       OFF CACHE BOOL "${USE_TBB_DESCR}")
 set (USE_EIGEN     OFF CACHE BOOL "${USE_EIGEN_DESCR}")
+<<<<<<< HEAD
 
 if (WIN32 OR ANDROID OR IOS OR EMSCRIPTEN)
   # no Xlib
@@ -451,6 +498,14 @@ else()
   set (USE_OPENGL ON CACHE BOOL "${USE_OPENGL_DESCR}")
   set (USE_GLES2 OFF CACHE BOOL "${USE_GLES2_DESCR}")
 endif()
+=======
+set (USE_XLIB      OFF CACHE BOOL "${USE_XLIB_DESCR}")
+set (USE_D3D       OFF CACHE BOOL "${USE_D3D_DESCR}")
+set (USE_OPENGL    ON CACHE BOOL "${USE_OPENGL_DESCR}")
+set (USE_GLES2     OFF CACHE BOOL "${USE_GLES2_DESCR}")
+set (BUILD_MODULE_Draw OFF CACHE BOOL "${BUILD_MODULE_Draw_DESCR}" FORCE)
+
+>>>>>>> accb2f351 (u)
 
 # include the patched or original list of modules
 # list <MODULENAME>_TOOLKITS is created foreach module and contains its toolkits
@@ -461,6 +516,7 @@ foreach (OCCT_MODULE ${OCCT_MODULES})
   BUILD_MODULE (${OCCT_MODULE})
 endforeach()
 
+<<<<<<< HEAD
 if (ANDROID AND BUILD_MODULE_Draw)
   message (STATUS "Info. Draw module is turned off due to it is not supported on Android")
   set (BUILD_MODULE_Draw OFF CACHE BOOL "${BUILD_MODULE_Draw_DESCR}" FORCE)
@@ -483,6 +539,8 @@ if (NOT DEFINED BUILD_DOC_Overview)
   set (BUILD_DOC_Overview ${CAN_DOXYGEN_BE_USED} CACHE BOOL "${BUILD_DOC_Overview_DESCR}")
 endif()
 
+=======
+>>>>>>> accb2f351 (u)
 # accumulate used toolkits (first level) in BUILD_TOOLKITS variable
 list (APPEND BUILD_TOOLKITS ${BUILD_ADDITIONAL_TOOLKITS})
 
@@ -503,11 +561,19 @@ endforeach()
 list (REMOVE_DUPLICATES RAW_BUILD_TOOLKITS)
 set (BUILD_TOOLKITS ${RAW_BUILD_TOOLKITS})
 
+<<<<<<< HEAD
+=======
+list (APPEND BUILD_TOOLKITS TKOffset TKFillet TKFeat TKXMesh)
+
+message (STATUS "Info. ${BUILD_TOOLKITS}")
+
+>>>>>>> accb2f351 (u)
 # include the patched or original list of definitions and flags
 OCCT_INCLUDE_CMAKE_FILE ("adm/cmake/occt_defs_flags")
 
 OCCT_INCLUDE_CMAKE_FILE ("adm/cmake/3rdparty_macro")
 
+<<<<<<< HEAD
 # search for TKIVtk and TKIVtkDraw in BUILD_TOOLKITS
 list (FIND BUILD_TOOLKITS TKIVtk CAN_USE_VTK)
 if (CAN_USE_VTK EQUAL -1)
@@ -521,6 +587,10 @@ if (NOT CAN_USE_VTK EQUAL -1)
 else()
   OCCT_CHECK_AND_UNSET (USE_VTK)
 endif()
+=======
+OCCT_CHECK_AND_UNSET (USE_VTK)
+
+>>>>>>> accb2f351 (u)
 
 # Rebuild *.yacc and *.lex files that are contained by TKMath toolkit
 list (FIND BUILD_TOOLKITS TKMath   CAN_REBUILD_PDC_FOR_TKMATH)
@@ -551,6 +621,7 @@ OCCT_IS_PRODUCT_REQUIRED (CSF_OpenGlesLibs CAN_USE_GLES2)
 OCCT_IS_PRODUCT_REQUIRED (CSF_TBB CAN_USE_TBB)
 OCCT_IS_PRODUCT_REQUIRED (CSF_EIGEN CAN_USE_EIGEN)
 
+<<<<<<< HEAD
 # define CSF variable
 OCCT_INCLUDE_CMAKE_FILE ("adm/cmake/occt_csf")
 
@@ -851,6 +922,66 @@ else()
   OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_TQTMALLOC")
   OCCT_CHECK_AND_UNSET ("INSTALL_QT")
 endif()
+=======
+if (CAN_USE_FREETYPE)
+ add_definitions (-DHAVE_FREETYPE)
+endif()
+
+# define CSF variable
+OCCT_INCLUDE_CMAKE_FILE ("adm/cmake/occt_csf")
+
+OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_TCL")
+OCCT_CHECK_AND_UNSET ("INSTALL_TCL")
+OCCT_CHECK_AND_UNSET ("USE_TK")
+OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_TK")
+OCCT_CHECK_AND_UNSET ("INSTALL_TK")
+OCCT_CHECK_AND_UNSET ("USE_XLIB")
+OCCT_CHECK_AND_UNSET ("USE_FREEIMAGE")
+OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_FREEIMAGE")
+OCCT_CHECK_AND_UNSET ("INSTALL_FREEIMAGE")
+OCCT_CHECK_AND_UNSET ("USE_OPENVR")
+OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_OPENVR")
+OCCT_CHECK_AND_UNSET ("INSTALL_OPENVR")
+OCCT_CHECK_AND_UNSET ("USE_FFMPEG")
+OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_FFMPEG")
+OCCT_CHECK_AND_UNSET ("INSTALL_FFMPEG")
+OCCT_CHECK_AND_UNSET ("USE_OPENGL")
+OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_EGL")
+OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_GLES2")
+OCCT_CHECK_AND_UNSET ("INSTALL_EGL")
+OCCT_CHECK_AND_UNSET ("INSTALL_GLES2")
+OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_TBB")
+OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_TBBMALLOC")
+OCCT_CHECK_AND_UNSET ("INSTALL_TBB")
+OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_RAPIDJSON")
+OCCT_CHECK_AND_UNSET ("INSTALL_RAPIDJSON")
+OCCT_CHECK_AND_UNSET ("USE_RAPIDJSON")
+OCCT_CHECK_AND_UNSET ("USE_DRACO")
+OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_DRACO")
+OCCT_CHECK_AND_UNSET ("INSTALL_DRACO")
+OCCT_CHECK_AND_UNSET ("USE_EIGEN")
+OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_EIGEN")
+OCCT_CHECK_AND_UNSET ("INSTALL_EIGEN")
+OCCT_CHECK_AND_UNSET ("INSTALL_DOC_Overview")
+OCCT_CHECK_AND_UNSET ("3RDPARTY_DOXYGEN_EXECUTABLE")
+OCCT_CHECK_AND_UNSET ("3RDPARTY_DOT_EXECUTABLE")
+OCCT_CHECK_AND_UNSET ("3RDPARTY_BISON_EXECUTABLE")
+OCCT_CHECK_AND_UNSET ("3RDPARTY_FLEX_EXECUTABLE")
+OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_QT")
+OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_TQTMALLOC")
+OCCT_CHECK_AND_UNSET ("INSTALL_QT")
+OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_VTK")
+
+list (REMOVE_ITEM BUILD_TOOLKITS TKOpenGles)
+list (REMOVE_ITEM BUILD_TOOLKITS TKOpenGlesTest)
+list (REMOVE_ITEM BUILD_TOOLKITS TKOpenGl)
+list (REMOVE_ITEM BUILD_TOOLKITS TKOpenGlTest)
+list (REMOVE_ITEM BUILD_TOOLKITS TKIVtk)
+list (REMOVE_ITEM BUILD_TOOLKITS TKIVtkDraw)
+list (REMOVE_ITEM BUILD_TOOLKITS TKD3DHost)
+list (REMOVE_ITEM BUILD_TOOLKITS TKD3DHostTest)
+
+>>>>>>> accb2f351 (u)
 
 # check all 3rdparty include paths
 string (REGEX REPLACE ";" " " 3RDPARTY_NOT_INCLUDED "${3RDPARTY_NOT_INCLUDED}")
@@ -866,7 +997,11 @@ if (3RDPARTY_INCLUDE_DIRS)
 endif()
 
 # include <cmake binary folder>/inc
+<<<<<<< HEAD
 include_directories (${CMAKE_BINARY_DIR}/${INSTALL_DIR_INCLUDE})
+=======
+include_directories (${CMAKE_CURRENT_BINARY_DIR}/${INSTALL_DIR_INCLUDE})
+>>>>>>> accb2f351 (u)
 
 # check all 3rdparty library paths
 string (REGEX REPLACE ";" " " 3RDPARTY_NO_LIBS "${3RDPARTY_NO_LIBS}")
@@ -890,6 +1025,7 @@ if (3RDPARTY_NO_DLLS)
   message (WARNING "Could not find DLLs of used third-party products: ${3RDPARTY_NO_DLLS}" )
 endif()
 
+<<<<<<< HEAD
 # build directories
 if (SINGLE_GENERATOR)
   set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/lib${BIN_LETTER}")
@@ -923,6 +1059,28 @@ message (STATUS "\nInfo: \(${CURRENT_TIME}\) Start collecting all OCCT header fi
 
 # collect all the headers to <binary dir>/inc folder
 COLLECT_AND_INSTALL_OCCT_HEADER_FILES ("${CMAKE_BINARY_DIR}" "${BUILD_TOOLKITS}" "${CMAKE_SOURCE_DIR}/src" "${INSTALL_DIR_INCLUDE}")
+=======
+set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/lib")
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/bin")
+set (CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/lib")
+
+set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/libi")
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/bini")
+set (CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/libi")
+
+set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/libd")
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/bind")
+set (CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/libd")
+
+if (WIN32)
+  set (CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE        "${CMAKE_CURRENT_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/bin")
+  set (CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/bini")
+  set (CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG          "${CMAKE_CURRENT_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/bind")
+endif()
+
+string(TIMESTAMP CURRENT_TIME "%H:%M:%S")
+message (STATUS "\nInfo: \(${CURRENT_TIME}\) Start collecting all OCCT header files into ${CMAKE_CURRENT_BINARY_DIR}/inc ...")
+>>>>>>> accb2f351 (u)
 
 string(TIMESTAMP CURRENT_TIME "%H:%M:%S")
 message (STATUS "Info: \(${CURRENT_TIME}\) End the collecting")
@@ -953,6 +1111,7 @@ if (BUILD_Inspector)
 
   # collect all the headers to <binary dir>/inc/inspector folder
   string(TIMESTAMP CURRENT_TIME "%H:%M:%S")
+<<<<<<< HEAD
   message (STATUS "\nInfo: \(${CURRENT_TIME}\) Start collecting all OCCT tool header files into ${CMAKE_BINARY_DIR}/inc/inspector ...")
   COLLECT_AND_INSTALL_OCCT_HEADER_FILES ("${CMAKE_BINARY_DIR}" "${BUILD_TOOL_TOOLKITS}" "${CMAKE_SOURCE_DIR}/tools" "${INSTALL_DIR_INCLUDE}/inspector")
 endif()
@@ -1011,6 +1170,12 @@ if (${DRAWEXE_INDEX} GREATER -1)
   # copy draw script to CMake binary folder
   OCCT_COPY_FILE_OR_DIR ("adm/templates/draw.${SCRIPT_EXT}" "${CMAKE_BINARY_DIR}")
 endif()
+=======
+  message (STATUS "\nInfo: \(${CURRENT_TIME}\) Start collecting all OCCT tool header files into ${CMAKE_CURRENT_BINARY_DIR}/inc/inspector ...")
+  COLLECT_AND_INSTALL_OCCT_HEADER_FILES ("${CMAKE_CURRENT_BINARY_DIR}" "${BUILD_TOOL_TOOLKITS}" "${CMAKE_CURRENT_SOURCE_DIR}/tools" "${INSTALL_DIR_INCLUDE}/inspector")
+endif()
+
+>>>>>>> accb2f351 (u)
 
 set (SUB_CUSTOM_NAME "custom_${COMPILER}_${COMPILER_BITNESS}.${SCRIPT_EXT}")
 
@@ -1020,6 +1185,7 @@ else()
   set (ADDITIONAL_CUSTOM_CONTENT "\nif [ -e \"\${aScriptPath}/${SUB_CUSTOM_NAME}\" ]; then\n  source \"\${aScriptPath}/${SUB_CUSTOM_NAME}\" \"\$1\" \"\$2\" \nfi")
 endif()
 
+<<<<<<< HEAD
  # change custom.bat/sh
 if (EXISTS "${INSTALL_DIR}/${INSTALL_DIR_SCRIPT}/custom.${SCRIPT_EXT}")
   file (READ "${INSTALL_DIR}/${INSTALL_DIR_SCRIPT}/custom.${SCRIPT_EXT}" CUSTOM_CONTENT)
@@ -1031,6 +1197,8 @@ else()
   OCCT_CONFIGURE_AND_INSTALL ("adm/templates/custom.${SCRIPT_EXT}.main" "custom.${SCRIPT_EXT}" "custom.${SCRIPT_EXT}" "${INSTALL_DIR_SCRIPT}")
 endif()
 
+=======
+>>>>>>> accb2f351 (u)
 if (WIN32)
   set (THIRDPARTY_DIR_REPLACE "%THIRDPARTY_DIR%")
 else()
@@ -1047,6 +1215,7 @@ foreach (USED_3RDPARTY_CACHE_VARIABLE ${USED_3RDPARTY_CACHE_VARIABLES})
    endif()
 endforeach()
 
+<<<<<<< HEAD
 # write current custom.bat/sh (for install directory)
 set (SUB_CUSTOM_BUILD_NAME "custom_${COMPILER}_${COMPILER_BITNESS}.install.${SCRIPT_EXT}")
 OCCT_CONFIGURE_AND_INSTALL ("adm/templates/custom.install.${SCRIPT_EXT}.in" "${SUB_CUSTOM_BUILD_NAME}" "${SUB_CUSTOM_NAME}" "${INSTALL_DIR_SCRIPT}")
@@ -1111,6 +1280,13 @@ if (BUILD_SAMPLES_QT)
 endif()
 
 
+=======
+# copy DrawAppliInit from OCCT source to build directory
+if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/DrawAppliInit")
+  OCCT_COPY_FILE_OR_DIR (DrawAppliInit "${CMAKE_CURRENT_BINARY_DIR}")
+endif()
+
+>>>>>>> accb2f351 (u)
 # patch installed DrawDefault file if BUILD_SHARED_LIBRARY_NAME_POSTFIX is changed
 if (NOT "${BUILD_SHARED_LIBRARY_NAME_POSTFIX}" STREQUAL "")
   OCCT_UPDATE_DRAW_DEFAULT_FILE()
@@ -1125,6 +1301,7 @@ if (BUILD_DOC_Overview)
   OCCT_ADD_SUBDIRECTORY (dox)
 endif()
 
+<<<<<<< HEAD
 # patch DRAWEXE
 if (MSVC AND 3RDPARTY_DLL_DIRS)
   list (FIND BUILD_TOOLKITS DRAWEXE DRAWEXE_INDEX)
@@ -1157,6 +1334,12 @@ message (STATUS "Info: \(${CURRENT_TIME}\) OCCT toolkits processed")
 # samples do not support patch usage
 if (BUILD_SAMPLES_MFC OR BUILD_SAMPLES_QT)
   set (OCCT_ROOT ${CMAKE_SOURCE_DIR})
+=======
+message (STATUS "Info: \(${CURRENT_TIME}\) OCCT toolkits processed")
+# samples do not support patch usage
+if (BUILD_SAMPLES_MFC OR BUILD_SAMPLES_QT)
+  set (OCCT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+>>>>>>> accb2f351 (u)
 endif()
 
 if (BUILD_SAMPLES_MFC)
@@ -1174,6 +1357,7 @@ endif()
 
 OCCT_MODULES_AND_TOOLKITS (SAMPLES "SAMPLES_TOOLKITS" OCCT_SAMPLES)
 
+<<<<<<< HEAD
 if (BUILD_Inspector OR BUILD_SAMPLES_QT)
   if (BUILD_SAMPLES_QT)
     if (NOT Qt5_FOUND OR "${Qt5Gui_EGL_INCLUDE_DIRS}" STREQUAL "" OR NOT WIN32)
@@ -1218,6 +1402,8 @@ if (BUILD_TOOL_TOOLKITS)
   OCCT_CONFIGURE ("adm/templates/TInspectorEXE.vcxproj.user.in" "${CMAKE_BINARY_DIR}/tools/TInspectorEXE/TInspectorEXE.vcxproj.user")
 endif()
 
+=======
+>>>>>>> accb2f351 (u)
 # Prepare variables for configuration of OpenCASCADE cmake config file
 set (OCCT_MODULES_ENABLED)
 set (OCCT_LIBRARIES)
@@ -1243,6 +1429,10 @@ foreach (OCCT_TOOLKIT ${BUILD_TOOLKITS})
     endif()
   endif()
 endforeach()
+<<<<<<< HEAD
+=======
+
+>>>>>>> accb2f351 (u)
 list (REMOVE_DUPLICATES OCCT_MODULES_ENABLED)
 list (REMOVE_DUPLICATES OCCT_COMPILE_DEFINITIONS)
 # these macros are defined for specific tookits, not globalwise
@@ -1261,11 +1451,16 @@ foreach (OCCT_CONFIGURATION ${CMAKE_CONFIGURATION_TYPES})
   endforeach()
   set (SET_OpenCASCADE_CMAKE_C_FLAGS "${CMAKE_C_FLAGS_${OCCT_CONFIGURATION_UPPER}}")
   set (SET_OpenCASCADE_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_${OCCT_CONFIGURATION_UPPER}}")
+<<<<<<< HEAD
   configure_file("${CMAKE_SOURCE_DIR}/adm/templates/OpenCASCADECompileDefinitionsAndFlags.cmake.in" "OpenCASCADECompileDefinitionsAndFlags-${OCCT_CONFIGURATION_LOWER}.cmake" @ONLY)
 endforeach()
 # install OpenCASCADE config file with compile definitions and C/C++ flags ONLY for current configuration
 install (CODE "string (TOLOWER \"\${CMAKE_INSTALL_CONFIG_NAME}\" CMAKE_INSTALL_CONFIG_NAME_LOWER)")
 install (CODE "file(INSTALL FILES \"${CMAKE_BINARY_DIR}/OpenCASCADECompileDefinitionsAndFlags-\${CMAKE_INSTALL_CONFIG_NAME_LOWER}.cmake\" DESTINATION \"${INSTALL_DIR}/${INSTALL_DIR_CMAKE}/\" TYPE FILE)")
+=======
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/adm/templates/OpenCASCADECompileDefinitionsAndFlags.cmake.in" "OpenCASCADECompileDefinitionsAndFlags-${OCCT_CONFIGURATION_LOWER}.cmake" @ONLY)
+endforeach()
+>>>>>>> accb2f351 (u)
 
 foreach (OCCT_MODULE ${OCCT_MODULES})
   if (BUILD_MODULE_${OCCT_MODULE})
@@ -1281,12 +1476,17 @@ endforeach()
 set (OCCT_MODULES_ENABLED ${OCCT_MODULES_ENABLED_SORTED})
 
 # Add all targets to the build-tree export set
+<<<<<<< HEAD
 export (TARGETS ${OCCT_LIBRARIES} FILE "${CMAKE_BINARY_DIR}/OpenCASCADETargets.cmake")
+=======
+export (TARGETS ${OCCT_LIBRARIES} FILE "${CMAKE_CURRENT_BINARY_DIR}/OpenCASCADETargets.cmake")
+>>>>>>> accb2f351 (u)
 
 # Export the package for use from the build-tree
 # (this registers the build-tree with a global CMake-registry)
 export(PACKAGE OpenCASCADE)
 
+<<<<<<< HEAD
 if (CMAKE_BUILD_TYPE)
   set (SET_OpenCASCADE_BUILD_TYPE "set (OpenCASCADE_BUILD_TYPE        \"${CMAKE_BUILD_TYPE}\")")
 endif()
@@ -1322,6 +1522,8 @@ foreach (OCCT_MODULE ${OCCT_MODULES_ENABLED})
   install(EXPORT OpenCASCADE${OCCT_MODULE}Targets DESTINATION "${INSTALL_DIR_CMAKE}")
 endforeach()
 
+=======
+>>>>>>> accb2f351 (u)
 # Update generated OpenCASCADETargets-*.cmake files
 # to have correct paths to libraries depending on the configuration
 OCCT_UPDATE_TARGET_FILE ()

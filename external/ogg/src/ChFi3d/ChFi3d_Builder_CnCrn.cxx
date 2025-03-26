@@ -145,9 +145,15 @@ static void Indices (     const  Standard_Integer n,
                    Standard_Integer & icmoins)
 {
   if (ic== (n-1)) icplus=0;
+<<<<<<< HEAD
     else icplus=ic+1;  
     if (ic==0) icmoins=n-1;
     else icmoins=ic-1;
+=======
+  else icplus=ic+1;  
+  if (ic==0) icmoins=n-1;
+  else icmoins=ic-1;
+>>>>>>> accb2f351 (u)
 }
 
 //=======================================================================
@@ -484,8 +490,13 @@ static void CalculDroite(const gp_Pnt2d & p2d1,
 //purpose  : calcule a batten between curves 2d  curv2d1 and curv2d2 at points p2d1 and p2d2  
 //=======================================================================
 
+<<<<<<< HEAD
 static void CalculBatten (const Handle (GeomAdaptor_Surface) ASurf, 
                           const TopoDS_Face Face ,
+=======
+static void CalculBatten (const Handle (GeomAdaptor_Surface)& ASurf, 
+                          const TopoDS_Face& Face ,
+>>>>>>> accb2f351 (u)
                           const Standard_Real xdir,
                           const Standard_Real  ydir,
                           const gp_Pnt2d & p2d1,
@@ -525,7 +536,11 @@ static void CalculBatten (const Handle (GeomAdaptor_Surface) ASurf,
   else if (contraint2)
   anglebig=Abs(ang2)>1.2; 
   if (isplane && (Abs(ang1)>M_PI/2 || Abs(ang2)>M_PI/2))
+<<<<<<< HEAD
   isplane=Standard_False;
+=======
+    isplane=Standard_False;
+>>>>>>> accb2f351 (u)
   if (anglebig && !isplane) {
     CalculDroite(p2d1,xdir,ydir,pcurve);
   }
@@ -1063,7 +1078,11 @@ void  ChFi3d_Builder::PerformMoreThreeCorner(const Standard_Integer Jndex,
   Standard_Integer jfp = 0,ii;
   Standard_Integer ic,icplus,icmoins,icplus2,
                    sense,index = 0,indice,isurf1,isurf2;
+<<<<<<< HEAD
   Standard_Integer cbplus=0, n3d=0,IVtx = 0,nb;
+=======
+  Standard_Integer n3d=0,IVtx = 0,nb;
+>>>>>>> accb2f351 (u)
   Standard_Boolean sameside,trouve,isfirst;
   Standard_Real pardeb ,parfin,xdir,ydir;
   Standard_Real tolapp=1.e-4,maxapp = 0.,maxapp1 = 0.,avedev;
@@ -1369,17 +1388,29 @@ void  ChFi3d_Builder::PerformMoreThreeCorner(const Standard_Integer Jndex,
 	  if (cp1.IsOnArc()){
             ChFi3d_cherche_vertex(Arc,cp1.Arc(),Vcom,trouve);
             if (trouve) angedg=Abs(ChFi3d_AngleEdge(Vcom,Arc,cp1.Arc()));
+<<<<<<< HEAD
 	    if (!cp1.Arc().IsSame(Arc) && Abs(angedg-M_PI)<0.01){
 	      Evive.SetValue(ic,cp1.Arc());
 	      ChFi3d_edge_common_faces(myEFMap(cp1.Arc()),F1,F2);
 	      if (!Fvive.Value(ic,icplus).IsSame(F1) && !Fvive.Value(ic,icplus).IsSame(F2)) {
+=======
+      if (!cp1.Arc().IsSame(Arc) && Abs(angedg-M_PI)<0.01){
+	      Evive.SetValue(ic,cp1.Arc());
+	      ChFi3d_edge_common_faces(myEFMap(cp1.Arc()),F1,F2);
+     if (!Fvive.Value(ic,icplus).IsSame(F1) && !Fvive.Value(ic,icplus).IsSame(F2)) {
+>>>>>>> accb2f351 (u)
 	        if (Fvive.Value(ic,icmoins).IsSame(F2))  {
 		  Fvive.SetValue(ic,icplus,F1);
                   Fvive.SetValue(icplus,ic,F1);
 		  numfa.SetValue(ic,icplus,DStr.AddShape(F1)); 
                   numfa.SetValue(icplus,ic,DStr.AddShape(F1)); 
+<<<<<<< HEAD
                 }
 		else  {
+=======
+      }
+      else  {
+>>>>>>> accb2f351 (u)
 		  Fvive.SetValue(ic,icplus,F2);
                   Fvive.SetValue(icplus,ic,F2);
 		  numfa.SetValue(ic,icplus,DStr.AddShape(F2)); 
@@ -1579,7 +1610,10 @@ void  ChFi3d_Builder::PerformMoreThreeCorner(const Standard_Integer Jndex,
       Indices(nedge,ic,icplus,icmoins);
       Indices(nedge,icplus,icplus2,ic);
       if (!oksea.Value(ic)) {
+<<<<<<< HEAD
 	cbplus++;
+=======
+>>>>>>> accb2f351 (u)
 	if (sharp.Value(ic)) {
           if (!samedge.Value(ic)){
             para=BRep_Tool::Parameter(V1,TopoDS::Edge(Evive.Value(ic)));
@@ -1682,7 +1716,10 @@ void  ChFi3d_Builder::PerformMoreThreeCorner(const Standard_Integer Jndex,
 	  if (oksea.Value(icmoins)) {
 	    oksea.SetValue(icmoins,Standard_False);
 	    inters=Standard_False;
+<<<<<<< HEAD
 	    cbplus++;
+=======
+>>>>>>> accb2f351 (u)
 	  }
 	  if (sens.Value(ic)==1) {
             para=p.Value(ic,icmoins) + ec;
@@ -1698,7 +1735,10 @@ void  ChFi3d_Builder::PerformMoreThreeCorner(const Standard_Integer Jndex,
 	  if(oksea.Value(ic)) { 
 	    oksea.SetValue(ic,Standard_False);
 	    inters=Standard_False;
+<<<<<<< HEAD
 	    cbplus++;
+=======
+>>>>>>> accb2f351 (u)
 	  }
 	  if (nconges!=1) {
 	    Standard_Real parold,parnew;
@@ -2053,7 +2093,11 @@ void  ChFi3d_Builder::PerformMoreThreeCorner(const Standard_Integer Jndex,
   // Using constraint order > 0 very often causes  unpredicable undulations of solution
   Standard_Integer degree = 3, nbcurvpnt = 10, nbiter = 1;
   Standard_Integer constr = 1; //G1
+<<<<<<< HEAD
   GeomPlate_BuildPlateSurface PSurf(degree, nbcurvpnt, nbiter, tol2d, tolesp, angular);
+=======
+  GeomPlate_BuildPlateSurface PSurf(degree, nbcurvpnt, nbiter, tol2d, tolapp3d, angular);
+>>>>>>> accb2f351 (u)
 // calculation of curves on surface for each stripe 
   for (ic=0;ic<nedge;ic++) {
     gp_Pnt2d p2d1, p2d2;
@@ -2081,7 +2125,11 @@ void  ChFi3d_Builder::PerformMoreThreeCorner(const Standard_Integer Jndex,
       //Order.SetValue(ic,1);
       Order.SetValue(ic, constr);
       Handle(GeomPlate_CurveConstraint) Cont =
+<<<<<<< HEAD
 	new GeomPlate_CurveConstraint(HCons,Order.Value(ic), nbcurvpnt,tolesp,angular,0.1);
+=======
+	new GeomPlate_CurveConstraint(HCons,Order.Value(ic),nbcurvpnt,tolapp3d,angular,0.1);
+>>>>>>> accb2f351 (u)
       PSurf.Add(Cont);
       
       // calculate indexes of points and of the curve for the DS         
@@ -2378,7 +2426,11 @@ void  ChFi3d_Builder::PerformMoreThreeCorner(const Standard_Integer Jndex,
          if (isG1.Value(ic)) 
            Order.SetValue(n3d,1);
          Handle(GeomPlate_CurveConstraint) Cont =
+<<<<<<< HEAD
            new GeomPlate_CurveConstraint(HCons,Order.Value(n3d),10,tolesp,angular,0.1);
+=======
+           new GeomPlate_CurveConstraint(HCons,Order.Value(n3d),10,tolapp3d,angular,0.1);
+>>>>>>> accb2f351 (u)
          PSurf.Add(Cont);
 
          //calculation of curve 3d if it is not a projection 
@@ -2502,7 +2554,11 @@ void  ChFi3d_Builder::PerformMoreThreeCorner(const Standard_Integer Jndex,
 	  Handle(Adaptor3d_CurveOnSurface) HCons =new Adaptor3d_CurveOnSurface(CurvOnS);
 	  Order.SetValue(n3d,1);
 	  Handle(GeomPlate_CurveConstraint) Cont =
+<<<<<<< HEAD
 	    new GeomPlate_CurveConstraint(HCons,Order.Value(n3d),10,tolesp,angular,0.1);
+=======
+	    new GeomPlate_CurveConstraint(HCons,Order.Value(n3d),10,tolapp3d,angular,0.1);
+>>>>>>> accb2f351 (u)
 	  PSurf.Add(Cont);
 	  TopOpeBRepDS_Curve tcurv3d( cproj,error);
 	  indcurve3d.SetValue(n3d, DStr.AddCurve(tcurv3d));
@@ -2615,7 +2671,11 @@ void  ChFi3d_Builder::PerformMoreThreeCorner(const Standard_Integer Jndex,
 	Handle(Adaptor3d_CurveOnSurface) HCons =new Adaptor3d_CurveOnSurface(CurvOnS);
 	Order.SetValue(n3d,0);
 	Handle(GeomPlate_CurveConstraint) Cont =
+<<<<<<< HEAD
 	  new GeomPlate_CurveConstraint(HCons,Order.Value(n3d),10,tolesp,angular,0.1);
+=======
+	  new GeomPlate_CurveConstraint(HCons,Order.Value(n3d),10,tolapp3d,angular,0.1);
+>>>>>>> accb2f351 (u)
 	PSurf.Add(Cont);
 	TopOpeBRepDS_Curve tcurv3d( ctrim,1.e-4);
 	indcurve3d.SetValue(n3d, DStr.AddCurve(tcurv3d));

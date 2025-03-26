@@ -622,7 +622,11 @@ function (cotire_get_target_include_directories _config _language _target _inclu
 	list (LENGTH _includeDirs _projectInsertIndex)
 	foreach (_dir ${_dirs})
 		if (CMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE)
+<<<<<<< HEAD
 			cotire_check_is_path_relative_to("${_dir}" _isRelative "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}")
+=======
+			cotire_check_is_path_relative_to("${_dir}" _isRelative "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}")
+>>>>>>> accb2f351 (u)
 			if (_isRelative)
 				list (LENGTH _includeDirs _len)
 				if (_len EQUAL _projectInsertIndex)
@@ -2415,7 +2419,11 @@ function (cotire_setup_pch_file_compilation _language _target _targetScript _pre
 			if (MSVC_IDE)
 				file (TO_NATIVE_PATH "${_pchFile}" _pchFileLogPath)
 			else()
+<<<<<<< HEAD
 				file (RELATIVE_PATH _pchFileLogPath "${CMAKE_BINARY_DIR}" "${_pchFile}")
+=======
+				file (RELATIVE_PATH _pchFileLogPath "${CMAKE_CURRENT_BINARY_DIR}" "${_pchFile}")
+>>>>>>> accb2f351 (u)
 			endif()
 			# make precompiled header compilation depend on the actual compiler executable used to force
 			# re-compilation when the compiler executable is updated. This prevents "created by a different GCC executable"
@@ -2529,7 +2537,11 @@ function (cotire_setup_combine_command _language _targetScript _joinedFile _cmds
 	if (MSVC_IDE)
 		file (TO_NATIVE_PATH "${_joinedFile}" _joinedFileLogPath)
 	else()
+<<<<<<< HEAD
 		file (RELATIVE_PATH _joinedFileLogPath "${CMAKE_BINARY_DIR}" "${_joinedFile}")
+=======
+		file (RELATIVE_PATH _joinedFileLogPath "${CMAKE_CURRENT_BINARY_DIR}" "${_joinedFile}")
+>>>>>>> accb2f351 (u)
 	endif()
 	get_filename_component(_joinedFileBaseName "${_joinedFile}" NAME_WE)
 	get_filename_component(_joinedFileExt "${_joinedFile}" EXT)
@@ -2549,7 +2561,11 @@ function (cotire_setup_combine_command _language _targetScript _joinedFile _cmds
 		COMMAND ${_prefixCmd}
 		DEPENDS ${_files}
 		COMMENT "${_comment}"
+<<<<<<< HEAD
 		WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+=======
+		WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+>>>>>>> accb2f351 (u)
 		VERBATIM)
 	list (APPEND ${_cmdsVar} COMMAND ${_prefixCmd})
 	set (${_cmdsVar} ${${_cmdsVar}} PARENT_SCOPE)
@@ -2651,7 +2667,11 @@ function (cotire_setup_unity_generation_commands _language _target _targetScript
 		if (MSVC_IDE)
 			file (TO_NATIVE_PATH "${_unityFile}" _unityFileLogPath)
 		else()
+<<<<<<< HEAD
 			file (RELATIVE_PATH _unityFileLogPath "${CMAKE_BINARY_DIR}" "${_unityFile}")
+=======
+			file (RELATIVE_PATH _unityFileLogPath "${CMAKE_CURRENT_BINARY_DIR}" "${_unityFile}")
+>>>>>>> accb2f351 (u)
 		endif()
 		if (COTIRE_DEBUG)
 			message (STATUS "add_custom_command: OUTPUT ${_unityFile} COMMAND ${_unityCmd} DEPENDS ${_unityCmdDepends}")
@@ -2685,7 +2705,11 @@ function (cotire_setup_prefix_generation_command _language _target _targetScript
 	if (MSVC_IDE)
 		file (TO_NATIVE_PATH "${_prefixFile}" _prefixFileLogPath)
 	else()
+<<<<<<< HEAD
 		file (RELATIVE_PATH _prefixFileLogPath "${CMAKE_BINARY_DIR}" "${_prefixFile}")
+=======
+		file (RELATIVE_PATH _prefixFileLogPath "${CMAKE_CURRENT_BINARY_DIR}" "${_prefixFile}")
+>>>>>>> accb2f351 (u)
 	endif()
 	get_filename_component(_prefixFileExt "${_prefixFile}" EXT)
 	if (_prefixFileExt MATCHES "^\\.c")
@@ -2769,10 +2793,17 @@ function (cotire_init_cotire_target_properties _target)
 	endif()
 	get_property(_isSet TARGET ${_target} PROPERTY COTIRE_PREFIX_HEADER_IGNORE_PATH SET)
 	if (NOT _isSet)
+<<<<<<< HEAD
 		set_property(TARGET ${_target} PROPERTY COTIRE_PREFIX_HEADER_IGNORE_PATH "${CMAKE_SOURCE_DIR}")
 		cotire_check_is_path_relative_to("${CMAKE_BINARY_DIR}" _isRelative "${CMAKE_SOURCE_DIR}")
 		if (NOT _isRelative)
 			set_property(TARGET ${_target} APPEND PROPERTY COTIRE_PREFIX_HEADER_IGNORE_PATH "${CMAKE_BINARY_DIR}")
+=======
+		set_property(TARGET ${_target} PROPERTY COTIRE_PREFIX_HEADER_IGNORE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
+		cotire_check_is_path_relative_to("${CMAKE_CURRENT_BINARY_DIR}" _isRelative "${CMAKE_CURRENT_SOURCE_DIR}")
+		if (NOT _isRelative)
+			set_property(TARGET ${_target} APPEND PROPERTY COTIRE_PREFIX_HEADER_IGNORE_PATH "${CMAKE_CURRENT_BINARY_DIR}")
+>>>>>>> accb2f351 (u)
 		endif()
 	endif()
 	get_property(_isSet TARGET ${_target} PROPERTY COTIRE_PREFIX_HEADER_INCLUDE_PATH SET)
@@ -3080,7 +3111,11 @@ function (cotire_setup_clean_target _target)
 		list (APPEND _cmds -P "${COTIRE_CMAKE_MODULE_FILE}" "cleanup" "${_outputDir}" "${COTIRE_INTDIR}" "${_target}")
 		add_custom_target(${_cleanTargetName}
 			COMMAND ${_cmds}
+<<<<<<< HEAD
 			WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+=======
+			WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+>>>>>>> accb2f351 (u)
 			COMMENT "Cleaning up target ${_target} cotire generated files"
 			VERBATIM)
 		cotire_init_target("${_cleanTargetName}")
@@ -3544,7 +3579,11 @@ function (cotire_add_to_pch_all_target _pchTargetName)
 	set (_targetName "${COTIRE_PCH_ALL_TARGET_NAME}")
 	if (NOT TARGET "${_targetName}")
 		add_custom_target("${_targetName}"
+<<<<<<< HEAD
 			WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+=======
+			WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+>>>>>>> accb2f351 (u)
 			VERBATIM)
 		cotire_init_target("${_targetName}")
 	endif()
@@ -3556,7 +3595,11 @@ function (cotire_add_to_unity_all_target _unityTargetName)
 	set (_targetName "${COTIRE_UNITY_BUILD_ALL_TARGET_NAME}")
 	if (NOT TARGET "${_targetName}")
 		add_custom_target("${_targetName}"
+<<<<<<< HEAD
 			WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+=======
+			WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+>>>>>>> accb2f351 (u)
 			VERBATIM)
 		cotire_init_target("${_targetName}")
 	endif()
@@ -3568,10 +3611,17 @@ function (cotire_setup_clean_all_target)
 	set (_targetName "${COTIRE_CLEAN_ALL_TARGET_NAME}")
 	if (NOT TARGET "${_targetName}")
 		cotire_set_cmd_to_prologue(_cmds)
+<<<<<<< HEAD
 		list (APPEND _cmds -P "${COTIRE_CMAKE_MODULE_FILE}" "cleanup" "${CMAKE_BINARY_DIR}" "${COTIRE_INTDIR}")
 		add_custom_target(${_targetName}
 			COMMAND ${_cmds}
 			WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+=======
+		list (APPEND _cmds -P "${COTIRE_CMAKE_MODULE_FILE}" "cleanup" "${CMAKE_CURRENT_BINARY_DIR}" "${COTIRE_INTDIR}")
+		add_custom_target(${_targetName}
+			COMMAND ${_cmds}
+			WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+>>>>>>> accb2f351 (u)
 			COMMENT "Cleaning up all cotire generated files"
 			VERBATIM)
 		cotire_init_target("${_targetName}")
@@ -4029,7 +4079,11 @@ else()
 			"The property can be set to a list of directories."
 			"If a header file is found in one of these directories or sub-directories, it will be excluded from the generated prefix header."
 			"Inherited from directory."
+<<<<<<< HEAD
 			"If not set, this property is initialized to \${CMAKE_SOURCE_DIR};\${CMAKE_BINARY_DIR}."
+=======
+			"If not set, this property is initialized to \${CMAKE_CURRENT_SOURCE_DIR};\${CMAKE_CURRENT_BINARY_DIR}."
+>>>>>>> accb2f351 (u)
 	)
 
 	define_property(

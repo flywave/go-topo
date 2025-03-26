@@ -18,7 +18,11 @@ proc DataExchange:toolkits { } {
   return [list TKXSBase TKSTEPBase TKSTEPAttr TKSTEP209 TKSTEP TKIGES \
                TKXCAF TKXDEIGES TKXDESTEP \
                TKXDE TKXDECascade \
+<<<<<<< HEAD
                TKSTL TKVRML TKXmlXCAF TKBinXCAF TKRWMesh TKExpress]
+=======
+               TKSTL TKVRML TKXmlXCAF TKBinXCAF TKRWMesh]
+>>>>>>> accb2f351 (u)
 }
 
 ;#
@@ -29,7 +33,10 @@ proc DataExchange:ressources { } {
 	    [list both r XSMessage {} ] \
 	    [list both r SHMessage {} ] \
 	    [list both r XSTEPResource {} ] \
+<<<<<<< HEAD
 	    [list both x ExpToCasExe {} ] \
+=======
+>>>>>>> accb2f351 (u)
 	    ]
 }
 ;#

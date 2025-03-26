@@ -3600,13 +3600,13 @@ bool IfcGeom::Kernel_T::triangulate_wire(const std::vector<TopoDS_Wire>& wires, 
 	Handle_Poly_Triangulation tri = BRep_Tool::Triangulation(face, loc);
 
 	if (!tri.IsNull()) {
-		const TColgp_Array1OfPnt& nodes = tri->Nodes();
+        Handle(TColgp_HArray1OfPnt) nodes = tri->MapNodeArray();
 
-		const Poly_Array1OfTriangle& triangles = tri->Triangles();
-		for (int i = 1; i <= triangles.Length(); ++i) {			
+        Handle(Poly_HArray1OfTriangle) triangles = tri->MapTriangleArray();
+		for (int i = 1; i <= triangles->Length(); ++i) {
 			if (face.Orientation() == TopAbs_REVERSED)
-				triangles(i).Get(n123[2], n123[1], n123[0]);
-			else triangles(i).Get(n123[0], n123[1], n123[2]);
+				triangles->Value(i).Get(n123[2], n123[1], n123[0]);
+			else triangles->Value(i).Get(n123[0], n123[1], n123[2]);
 			
 			// Create polygons from the mesh vertices
 			BRepBuilderAPI_MakeWire mp2;
@@ -3616,7 +3616,7 @@ bool IfcGeom::Kernel_T::triangulate_wire(const std::vector<TopoDS_Wire>& wires, 
 				TopoDS_Vertex vs[2];
 
 				for (int k = 0; k < 2; ++k) {
-					const gp_Pnt& uv = nodes.Value(n123[(j + k) % 3]);
+					const gp_Pnt& uv = nodes->Value(n123[(j + k) % 3]);
 					uvnodes[k] = std::make_pair(uv.X(), uv.Y());
 
 					auto it = mapping.find(uvnodes[k]);

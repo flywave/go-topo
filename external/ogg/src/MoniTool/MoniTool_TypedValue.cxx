@@ -192,7 +192,11 @@ static Standard_Boolean StaticPath(const Handle(TCollection_HAsciiString)& val)
         def.AssignCat(" , alpha: ");
         NCollection_DataMap<TCollection_AsciiString, Standard_Integer>::Iterator listadd(theeadds);
         for (; listadd.More(); listadd.Next()) {
+<<<<<<< HEAD
           TCollection_AsciiString aName = listadd.Key();
+=======
+          const TCollection_AsciiString& aName = listadd.Key();
+>>>>>>> accb2f351 (u)
           Standard_CString enva = aName.ToCString();
           if (enva[0] == '?') continue;
           Sprintf(mess,":%d ",listadd.Value());

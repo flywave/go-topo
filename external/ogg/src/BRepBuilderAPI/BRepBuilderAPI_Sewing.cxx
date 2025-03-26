@@ -374,7 +374,11 @@ TopoDS_Edge BRepBuilderAPI_Sewing::SameParameterEdge(const TopoDS_Shape& edge,
   for (Standard_Integer i = 1; i <= seqEdges.Length(); i++) {
 
     // Retrieve candidate section
+<<<<<<< HEAD
     TopoDS_Shape oedge2 = seqEdges(i);
+=======
+    const TopoDS_Shape& oedge2 = seqEdges(i);
+>>>>>>> accb2f351 (u)
 
     if (mySewing) {
 
@@ -1393,7 +1397,11 @@ void BRepBuilderAPI_Sewing::AnalysisNearestEdges(const TopTools_SequenceOfShape&
   // (they have other nearest edges belonging to the work face)
   for(Standard_Integer k = 1; k<= seqNotCandidate.Length(); k++) {
     Standard_Integer index1 = seqNotCandidate.Value(k);
+<<<<<<< HEAD
     TopoDS_Shape edge = sequenceSec.Value(index1);
+=======
+    const TopoDS_Shape& edge = sequenceSec.Value(index1);
+>>>>>>> accb2f351 (u)
     TopTools_SequenceOfShape tmpSeq;
     tmpSeq.Append(edge);
     for(Standard_Integer kk = 1; kk <= seqIndCandidate.Length();kk++) 
@@ -2928,7 +2936,11 @@ void BRepBuilderAPI_Sewing::VerticesAssembling(const Message_ProgressRange& theP
     for (i = 1; i <= myBoundFaces.Extent(); i++) {
       TopoDS_Shape bound = myBoundFaces.FindKey(i);
       for (TopoDS_Iterator itv(bound,Standard_False); itv.More(); itv.Next()) {
+<<<<<<< HEAD
 	TopoDS_Shape node = itv.Value();
+=======
+	const TopoDS_Shape& node = itv.Value();
+>>>>>>> accb2f351 (u)
 	if (myNodeSections.IsBound(node))
 	  myNodeSections(node).Append(bound);
 	else {
@@ -2991,7 +3003,11 @@ static void replaceNMVertices(const TopoDS_Edge& theEdge,
       theReShape->Replace(aSeqNMVert.Value(i),theV2);
       continue;
     }
+<<<<<<< HEAD
     TopoDS_Shape aV = aSeqNMVert.Value(i);
+=======
+    const TopoDS_Shape& aV = aSeqNMVert.Value(i);
+>>>>>>> accb2f351 (u)
     Standard_Integer j =1;
     for( ; j <= aEdParams.Length();j++) {
       Standard_Real apar2 = aEdParams.Value(j);
@@ -3508,7 +3524,11 @@ Standard_Boolean BRepBuilderAPI_Sewing::MergedNearestEdges(const TopoDS_Shape& e
   TopTools_MapOfShape mapEdges;
   mapEdges.Add(edge);
   for (Standard_Integer i = 1; i <= mapVert1.Extent(); i++) {
+<<<<<<< HEAD
     TopoDS_Shape node1 = mapVert1.FindKey(i);
+=======
+    const TopoDS_Shape& node1 = mapVert1.FindKey(i);
+>>>>>>> accb2f351 (u)
     if (!myNodeSections.IsBound(node1)) continue;
     TopTools_ListIteratorOfListOfShape ilsec(myNodeSections(node1));
     for (; ilsec.More(); ilsec.Next()) {
@@ -4453,7 +4473,11 @@ void BRepBuilderAPI_Sewing::CreateCuttingNodes(const TopTools_IndexedMapOfShape&
       if (jdist < 0.0) {
         // Bind new cutting node (end vertex only)
         seqDist.SetValue(indexMin,disProj);
+<<<<<<< HEAD
         TopoDS_Shape cvertex = seqVert.Value(indexMin);
+=======
+        const TopoDS_Shape& cvertex = seqVert.Value(indexMin);
+>>>>>>> accb2f351 (u)
         NodeCuttingVertex.Add(node,cvertex);
       }
       else {

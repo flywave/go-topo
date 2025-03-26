@@ -37,9 +37,8 @@ shape edge::copy(bool deep) const {
       throw std::runtime_error("Shell operation resulted in Null shape");
 
     return edge{*this, shp};
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {

@@ -14,10 +14,14 @@
 
 #include <AIS_AnimationObject.hxx>
 
+<<<<<<< HEAD
 #include <AIS_InteractiveContext.hxx>
 #include <V3d_View.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(AIS_AnimationObject, AIS_Animation)
+=======
+IMPLEMENT_STANDARD_RTTIEXT(AIS_AnimationObject, AIS_BaseAnimationObject)
+>>>>>>> accb2f351 (u)
 
 //=============================================================================
 //function : Constructor
@@ -28,9 +32,13 @@ AIS_AnimationObject::AIS_AnimationObject (const TCollection_AsciiString& theAnim
                                           const Handle(AIS_InteractiveObject)&  theObject,
                                           const gp_Trsf& theTrsfStart,
                                           const gp_Trsf& theTrsfEnd)
+<<<<<<< HEAD
 : AIS_Animation (theAnimationName),
   myContext  (theContext),
   myObject   (theObject),
+=======
+: AIS_BaseAnimationObject (theAnimationName, theContext, theObject),
+>>>>>>> accb2f351 (u)
   myTrsfLerp (theTrsfStart, theTrsfEnd)
 {
   //
@@ -49,6 +57,7 @@ void AIS_AnimationObject::update (const AIS_AnimationProgress& theProgress)
 
   gp_Trsf aTrsf;
   myTrsfLerp.Interpolate (theProgress.LocalNormalized, aTrsf);
+<<<<<<< HEAD
   if (!myContext.IsNull())
   {
     myContext->SetLocation (myObject, aTrsf);
@@ -97,4 +106,7 @@ void AIS_AnimationObject::invalidateViewer()
       }
     }
   }
+=======
+  updateTrsf (aTrsf);
+>>>>>>> accb2f351 (u)
 }

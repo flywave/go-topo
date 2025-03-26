@@ -276,6 +276,11 @@ GeomFill_SectionPlacement(const Handle(GeomFill_LocationLaw)& L,
 	      
 	      Standard_Integer NbLocalPnts = 10;
 	      Standard_Integer NbPnts = (NbKnots-1) * NbLocalPnts;
+<<<<<<< HEAD
+=======
+	      if (NbPnts < 0)
+	        NbPnts = 0;
+>>>>>>> accb2f351 (u)
 	      if (I1 != I2)
 		NbPnts += NbLocalPnts;
 	      if (I3 != I4 && first < BC->Knot(I3))

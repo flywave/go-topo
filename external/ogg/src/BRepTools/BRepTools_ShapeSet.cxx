@@ -14,8 +14,11 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+<<<<<<< HEAD
 // Modified:     Portage NT 7-5-97 DPF (strcasecmp)
 
+=======
+>>>>>>> accb2f351 (u)
 #include <BRep_Builder.hxx>
 #include <BRep_CurveOnClosedSurface.hxx>
 #include <BRep_CurveOnSurface.hxx>
@@ -45,6 +48,7 @@
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Vertex.hxx>
 
+<<<<<<< HEAD
 #ifdef MacOS
 #define strcasecmp(p,q) strcmp(p,q)
 #elseif _WIN32
@@ -53,6 +57,8 @@
 #include <string.h>
 #endif
 
+=======
+>>>>>>> accb2f351 (u)
 // Modified:    02 Nov 2000: BUC60769. JMB, PTV.  In order to be able to read BRep 
 //              files that came from a platform different from where CasCade 
 //              is run, we need the following modifications.

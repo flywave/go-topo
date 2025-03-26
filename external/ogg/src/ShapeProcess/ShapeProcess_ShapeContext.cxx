@@ -177,7 +177,11 @@ static void RecModif (const TopoDS_Shape &S,
 {
   TopoDS_Shape r = S;
   //gka  -modification to keep history for shape with location (OCC21617)
+<<<<<<< HEAD
   TopLoc_Location aShLoc = S.Location();
+=======
+  const TopLoc_Location& aShLoc = S.Location();
+>>>>>>> accb2f351 (u)
   TopLoc_Location aNullLoc;
   r.Location(aNullLoc);
 
@@ -204,9 +208,15 @@ static void RecModif (const TopoDS_Shape &S,
       Standard_Boolean modif = Standard_False;
       BRep_Builder B;
       for ( TopoDS_Iterator it(r,Standard_False); it.More(); it.Next() ) {
+<<<<<<< HEAD
 	TopoDS_Shape sh = it.Value();
 	if ( repl.IsBound(sh) ) {
 	  TopoDS_Shape newsh = repl.Find(sh);
+=======
+	const TopoDS_Shape& sh = it.Value();
+	if ( repl.IsBound(sh) ) {
+	  const TopoDS_Shape& newsh = repl.Find(sh);
+>>>>>>> accb2f351 (u)
 	  if ( ! newsh.IsNull() ) B.Add ( result, newsh );
 	  modif = Standard_True;
 	}
@@ -366,7 +376,11 @@ static void ExplodeModifier (const TopoDS_Shape &S,
 			     TopTools_DataMapOfShapeShape &map,
 			     const TopAbs_ShapeEnum until)
 {
+<<<<<<< HEAD
   TopoDS_Shape res = repl.ModifiedShape ( S );
+=======
+  const TopoDS_Shape& res = repl.ModifiedShape ( S );
+>>>>>>> accb2f351 (u)
   
   if ( res != S ) 
   {

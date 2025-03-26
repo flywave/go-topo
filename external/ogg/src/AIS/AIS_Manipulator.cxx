@@ -1116,18 +1116,36 @@ void AIS_Manipulator::ComputeSelection (const Handle(SelectMgr_Selection)& theSe
                                         const Standard_Integer theMode)
 {
   //Check mode
+<<<<<<< HEAD
   AIS_ManipulatorMode aMode = (AIS_ManipulatorMode) theMode;
+=======
+  const AIS_ManipulatorMode aMode = (AIS_ManipulatorMode) theMode;
+>>>>>>> accb2f351 (u)
   if (aMode == AIS_MM_None)
   {
     return;
   }
   Handle(SelectMgr_EntityOwner) anOwner;
+<<<<<<< HEAD
   if (aMode == AIS_MM_None)
   {
     anOwner = new SelectMgr_EntityOwner (this, 5);
   }
 
   if (aMode == AIS_MM_Translation || aMode == AIS_MM_None)
+=======
+
+  // Sensitivity calculation for manipulator parts allows to avoid
+  // overlapping of sensitive areas when size of manipulator is small.
+  // Sensitivity is calculated relative to the default size of the manipulator (100.0f).
+  const Standard_ShortReal aSensitivityCoef = myAxes[0].Size() / 100.0f;
+  const Standard_Integer aHighSensitivity = Max (Min (RealToInt (aSensitivityCoef * 15), 15), 3); // clamp sensitivity within range [3, 15]
+  const Standard_Integer aLowSensitivity  = Max (Min (RealToInt (aSensitivityCoef * 10), 10), 2); // clamp sensitivity within range [2, 10]
+
+  switch (aMode)
+  {
+  case AIS_MM_Translation:
+>>>>>>> accb2f351 (u)
   {
     for (Standard_Integer anIt = 0; anIt < 3; ++anIt)
     {
@@ -1136,6 +1154,7 @@ void AIS_Manipulator::ComputeSelection (const Handle(SelectMgr_Selection)& theSe
         continue;
       }
       const Axis& anAxis = myAxes[anIt];
+<<<<<<< HEAD
       if (aMode != AIS_MM_None)
       {
         anOwner = new AIS_ManipulatorOwner (this, anIt, AIS_MM_Translation, 9);
@@ -1153,6 +1172,23 @@ void AIS_Manipulator::ComputeSelection (const Handle(SelectMgr_Selection)& theSe
   }
 
   if (aMode == AIS_MM_Rotation || aMode == AIS_MM_None)
+=======
+      anOwner = new AIS_ManipulatorOwner(this, anIt, AIS_MM_Translation, 9);
+
+      // define sensitivity by line
+      Handle(Select3D_SensitiveSegment) aLine = new Select3D_SensitiveSegment(anOwner, gp::Origin(), anAxis.TranslatorTipPosition());
+      aLine->SetSensitivityFactor (aHighSensitivity);
+      theSelection->Add (aLine);
+
+      // enlarge sensitivity by triangulation
+      Handle(Select3D_SensitivePrimitiveArray) aTri = new Select3D_SensitivePrimitiveArray(anOwner);
+      aTri->InitTriangulation (anAxis.TriangleArray()->Attributes(), anAxis.TriangleArray()->Indices(), TopLoc_Location());
+      theSelection->Add (aTri);
+    }
+    break;
+  }
+  case AIS_MM_Rotation:
+>>>>>>> accb2f351 (u)
   {
     for (Standard_Integer anIt = 0; anIt < 3; ++anIt)
     {
@@ -1161,6 +1197,7 @@ void AIS_Manipulator::ComputeSelection (const Handle(SelectMgr_Selection)& theSe
         continue;
       }
       const Axis& anAxis = myAxes[anIt];
+<<<<<<< HEAD
       if (aMode != AIS_MM_None)
       {
         anOwner = new AIS_ManipulatorOwner (this, anIt, AIS_MM_Rotation, 9);
@@ -1177,6 +1214,22 @@ void AIS_Manipulator::ComputeSelection (const Handle(SelectMgr_Selection)& theSe
   }
 
   if (aMode == AIS_MM_Scaling || aMode == AIS_MM_None)
+=======
+      anOwner = new AIS_ManipulatorOwner(this, anIt, AIS_MM_Rotation, 9);
+
+      // define sensitivity by circle
+      const gp_Circ aGeomCircle (gp_Ax2(gp::Origin(), anAxis.ReferenceAxis().Direction()), anAxis.RotatorDiskRadius());
+      Handle(Select3D_SensitiveCircle) aCircle = new ManipSensCircle(anOwner, aGeomCircle);
+      aCircle->SetSensitivityFactor (aLowSensitivity);
+      theSelection->Add(aCircle);
+      // enlarge sensitivity by triangulation
+      Handle(Select3D_SensitiveTriangulation) aTri = new ManipSensTriangulation(anOwner, myAxes[anIt].RotatorDisk().Triangulation(), anAxis.ReferenceAxis().Direction());
+      theSelection->Add (aTri);
+    }
+    break;
+  }
+  case AIS_MM_Scaling:
+>>>>>>> accb2f351 (u)
   {
     for (Standard_Integer anIt = 0; anIt < 3; ++anIt)
     {
@@ -1184,6 +1237,7 @@ void AIS_Manipulator::ComputeSelection (const Handle(SelectMgr_Selection)& theSe
       {
         continue;
       }
+<<<<<<< HEAD
       if (aMode != AIS_MM_None)
       {
         anOwner = new AIS_ManipulatorOwner (this, anIt, AIS_MM_Scaling, 9);
@@ -1199,6 +1253,21 @@ void AIS_Manipulator::ComputeSelection (const Handle(SelectMgr_Selection)& theSe
   }
 
   if (aMode == AIS_MM_TranslationPlane || aMode == AIS_MM_None)
+=======
+      anOwner = new AIS_ManipulatorOwner(this, anIt, AIS_MM_Scaling, 9);
+
+      // define sensitivity by point
+      Handle(Select3D_SensitivePoint) aPnt = new Select3D_SensitivePoint(anOwner, myAxes[anIt].ScalerCubePosition());
+      aPnt->SetSensitivityFactor (aHighSensitivity);
+      theSelection->Add (aPnt);
+      // enlarge sensitivity by triangulation
+      Handle(Select3D_SensitiveTriangulation) aTri = new Select3D_SensitiveTriangulation(anOwner, myAxes[anIt].ScalerCube().Triangulation(), TopLoc_Location(), Standard_True);
+      theSelection->Add (aTri);
+    }
+    break;
+  }
+  case AIS_MM_TranslationPlane:
+>>>>>>> accb2f351 (u)
   {
     for (Standard_Integer anIt = 0; anIt < 3; ++anIt)
     {
@@ -1206,6 +1275,7 @@ void AIS_Manipulator::ComputeSelection (const Handle(SelectMgr_Selection)& theSe
       {
         continue;
       }
+<<<<<<< HEAD
       if (aMode != AIS_MM_None)
       {
         anOwner = new AIS_ManipulatorOwner(this, anIt, AIS_MM_TranslationPlane, 9);
@@ -1228,6 +1298,35 @@ void AIS_Manipulator::ComputeSelection (const Handle(SelectMgr_Selection)& theSe
       Handle(Select3D_SensitiveTriangulation) aTri = new Select3D_SensitiveTriangulation(anOwner, myAxes[anIt].DraggerSector().Triangulation(), TopLoc_Location(), Standard_True);
       theSelection->Add(aTri);
     }
+=======
+      anOwner = new AIS_ManipulatorOwner(this, anIt, AIS_MM_TranslationPlane, 9);
+
+      // define sensitivity by two crossed lines
+      Standard_Real aSensitivityOffset = ZoomPersistence() ? aHighSensitivity * (0.5 + M_SQRT2) : 0.0;
+      gp_Pnt aP1 = myAxes[((anIt + 1) % 3)].TranslatorTipPosition().Translated (myAxes[((anIt + 2) % 3)].ReferenceAxis().Direction().XYZ() * aSensitivityOffset);
+      gp_Pnt aP2 = myAxes[((anIt + 2) % 3)].TranslatorTipPosition().Translated (myAxes[((anIt + 1) % 3)].ReferenceAxis().Direction().XYZ() * aSensitivityOffset);
+      gp_XYZ aMidP = (aP1.XYZ() + aP2.XYZ()) / 2.0;
+      gp_XYZ anOrig = aMidP.Normalized().Multiplied (aSensitivityOffset);
+
+      Handle(Select3D_SensitiveSegment) aLine1 = new Select3D_SensitiveSegment(anOwner, aP1, aP2);
+      aLine1->SetSensitivityFactor(aLowSensitivity);
+      theSelection->Add (aLine1);
+      Handle(Select3D_SensitiveSegment) aLine2 = new Select3D_SensitiveSegment(anOwner, anOrig, aMidP);
+      aLine2->SetSensitivityFactor (aLowSensitivity);
+      theSelection->Add (aLine2);
+
+      // enlarge sensitivity by triangulation
+      Handle(Select3D_SensitiveTriangulation) aTri = new Select3D_SensitiveTriangulation(anOwner, myAxes[anIt].DraggerSector().Triangulation(), TopLoc_Location(), Standard_True); 
+      theSelection->Add (aTri);
+    }
+    break;
+  }
+  default:
+  {
+    anOwner = new SelectMgr_EntityOwner(this, 5);
+    break;
+  }
+>>>>>>> accb2f351 (u)
   }
 }
 

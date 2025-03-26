@@ -135,7 +135,11 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 
   //IntSurf_Transition Tline,Tarc;
 
+<<<<<<< HEAD
   Func.GetTolerance(tolerance,tolesp);
+=======
+  Func.GetTolerance(tolerance,tolpoint3d);
+>>>>>>> accb2f351 (u)
   Func.GetBounds(infbound,supbound);
 
   math_FunctionSetRoot rsnld(Func,tolerance,30);
@@ -173,10 +177,17 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
       if (Abs(stepw) < tolgui) {
         Ext1.SetValue(previousP.PointOnS1(),
                       sol(1),sol(2),
+<<<<<<< HEAD
                       previousP.Parameter(),tolesp);
         Ext2.SetValue(previousP.PointOnS2(),
                       sol(3),sol(4),
                       previousP.Parameter(),tolesp);
+=======
+                      previousP.Parameter(),tolpoint3d);
+        Ext2.SetValue(previousP.PointOnS2(),
+                      sol(3),sol(4),
+                      previousP.Parameter(),tolpoint3d);
+>>>>>>> accb2f351 (u)
         if (!previousP.IsTangencyPoint()) {
           Ext1.SetTangent(previousP.TangentOnS1());
           Ext2.SetTangent(previousP.TangentOnS2());
@@ -227,7 +238,11 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 	if (recad1) {
 	  Standard_Real wtemp;
 	  wtemp  = solrst1(2);
+<<<<<<< HEAD
 	  if ((param - wtemp)/sens>= -10*tolesp){
+=======
+	  if ((param - wtemp)/sens>= -10*tolgui){
+>>>>>>> accb2f351 (u)
 	    w1 = solrst1(2);
 	    control = Standard_True;
 	  }
@@ -253,7 +268,11 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 	if (recad2) {
 	  Standard_Real wtemp;
 	  wtemp = solrst2(2);
+<<<<<<< HEAD
 	  if ((param - wtemp)/sens>= -10*tolesp){
+=======
+	  if ((param - wtemp)/sens>= -10*tolgui){
+>>>>>>> accb2f351 (u)
 	    w2 = solrst2(2);
 	    control = Standard_True;
 	  }
@@ -505,10 +524,17 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 	  Arrive = Standard_True;
 	  Ext1.SetValue(previousP.PointOnS1(),
 			sol(1),sol(2),
+<<<<<<< HEAD
 			previousP.Parameter(), tolesp);
 	  Ext2.SetValue(previousP.PointOnS2(),
 			sol(3),sol(4),
 			previousP.Parameter(), tolesp);
+=======
+			previousP.Parameter(), tolpoint3d);
+	  Ext2.SetValue(previousP.PointOnS2(),
+			sol(3),sol(4),
+			previousP.Parameter(), tolpoint3d);
+>>>>>>> accb2f351 (u)
 	  if (!previousP.IsTangencyPoint()) {
 	    Ext1.SetTangent(previousP.TangentOnS1());
 	    Ext2.SetTangent(previousP.TangentOnS2());
@@ -533,10 +559,17 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 	if (Abs(stepw) < tolgui) {
 	  Ext1.SetValue(previousP.PointOnS1(),
 			sol(1),sol(2),
+<<<<<<< HEAD
 			previousP.Parameter(),tolesp);
 	  Ext2.SetValue(previousP.PointOnS2(),
 			sol(3),sol(4),
 			previousP.Parameter(),tolesp);
+=======
+			previousP.Parameter(),tolpoint3d);
+	  Ext2.SetValue(previousP.PointOnS2(),
+			sol(3),sol(4),
+			previousP.Parameter(),tolpoint3d);
+>>>>>>> accb2f351 (u)
 	  if (!previousP.IsTangencyPoint()) {
 	    Ext1.SetTangent(previousP.TangentOnS1());
 	    Ext2.SetTangent(previousP.TangentOnS2());
@@ -584,10 +617,17 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 	  Arrive = Standard_True;
 	  Ext1.SetValue(previousP.PointOnS1(),
 			sol(1),sol(2),
+<<<<<<< HEAD
 			previousP.Parameter(),tolesp);
 	  Ext2.SetValue(previousP.PointOnS2(),
 			sol(3),sol(4), 
 			previousP.Parameter(),tolesp);
+=======
+			previousP.Parameter(),tolpoint3d);
+	  Ext2.SetValue(previousP.PointOnS2(),
+			sol(3),sol(4), 
+			previousP.Parameter(),tolpoint3d);
+>>>>>>> accb2f351 (u)
 	  if (!previousP.IsTangencyPoint()) {
 	    Ext1.SetTangent(previousP.TangentOnS1());
 	    Ext2.SetTangent(previousP.TangentOnS2());
@@ -627,15 +667,25 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 	MakeExtremity(Ext1,Standard_True,Index1,
 		      solrst1(1),Isvtx1,Vtx1);
         // On blinde le cas singulier ou un des recadrage a planter
+<<<<<<< HEAD
         if (previousP.PointOnS1().IsEqual(previousP.PointOnS2(), 2*tolesp)) {
 	  Ext2.SetValue(previousP.PointOnS1(),
 			sol(3),sol(4),tolesp);
+=======
+        if (previousP.PointOnS1().IsEqual(previousP.PointOnS2(), 2.0 * tolpoint3d)) {
+	  Ext2.SetValue(previousP.PointOnS1(),
+			sol(3),sol(4),tolpoint3d);
+>>>>>>> accb2f351 (u)
 	  if (Isvtx1) MakeSingularExtremity(Ext2, Standard_False, Vtx1);
 	}
 	else {
 	  Ext2.SetValue(previousP.PointOnS2(),
 			sol(3),sol(4),
+<<<<<<< HEAD
 			previousP.Parameter(),tolesp);
+=======
+			previousP.Parameter(),tolpoint3d);
+>>>>>>> accb2f351 (u)
 	}
 	Arrive = Standard_True;
       }
@@ -661,15 +711,25 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 #endif
 
         // On blinde le cas singulier ou un des recadrage a plante
+<<<<<<< HEAD
         if (previousP.PointOnS1().IsEqual(previousP.PointOnS2(), 2*tolesp)) {
 	  Ext1.SetValue(previousP.PointOnS2(),
 			sol(1),sol(2),tolesp);
+=======
+        if (previousP.PointOnS1().IsEqual(previousP.PointOnS2(), 2.0 * tolpoint3d)) {
+	  Ext1.SetValue(previousP.PointOnS2(),
+			sol(1),sol(2),tolpoint3d);
+>>>>>>> accb2f351 (u)
 	  if (Isvtx2) MakeSingularExtremity(Ext1, Standard_True, Vtx2);
 	}
 	else {
 	  Ext1.SetValue(previousP.PointOnS1(),
 			sol(1),sol(2),
+<<<<<<< HEAD
 			previousP.Parameter(),tolesp);
+=======
+			previousP.Parameter(),tolpoint3d);
+>>>>>>> accb2f351 (u)
 	}
 	MakeExtremity(Ext2,Standard_False,Index2,
 		      solrst2(1),Isvtx2,Vtx2);
@@ -698,7 +758,11 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 #endif
 
 	if ( (Isvtx1 != Isvtx2) &&
+<<<<<<< HEAD
 	    (previousP.PointOnS1().IsEqual(previousP.PointOnS2(), 2*tolesp)) ) {
+=======
+	    (previousP.PointOnS1().IsEqual(previousP.PointOnS2(), 2.0 * tolpoint3d)) ) {
+>>>>>>> accb2f351 (u)
 	  // On blinde le cas singulier ou un seul recadrage
 	  // est reconnu comme vertex.
 	  if (Isvtx1) {
@@ -727,10 +791,17 @@ void Blend_Walking::InternalPerform(Blend_Function& Func,
 #endif
 	Ext1.SetValue(previousP.PointOnS1(),
 		      sol(1),sol(2),
+<<<<<<< HEAD
 		      previousP.Parameter(),tolesp);
 	Ext2.SetValue(previousP.PointOnS2(),
 		      sol(3),sol(4),
 		      previousP.Parameter(),tolesp);
+=======
+		      previousP.Parameter(),tolpoint3d);
+	Ext2.SetValue(previousP.PointOnS2(),
+		      sol(3),sol(4),
+		      previousP.Parameter(),tolpoint3d);
+>>>>>>> accb2f351 (u)
 	if (!previousP.IsTangencyPoint()) {
 	  Ext1.SetTangent(previousP.TangentOnS1());
 	  Ext2.SetTangent(previousP.TangentOnS2());

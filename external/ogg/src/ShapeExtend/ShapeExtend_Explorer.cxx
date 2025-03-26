@@ -56,7 +56,11 @@ static void FillList (const Handle(TopTools_HSequenceOfShape)& list,
 		      const TopoDS_Shape& comp, const Standard_Boolean expcomp)
 {
   for (TopoDS_Iterator it (comp); it.More(); it.Next()) {
+<<<<<<< HEAD
     TopoDS_Shape sub = it.Value();
+=======
+    const TopoDS_Shape& sub = it.Value();
+>>>>>>> accb2f351 (u)
     if (sub.ShapeType() != TopAbs_COMPOUND) list->Append (sub);
     else if (!expcomp) list->Append (sub);
     else FillList (list,sub,expcomp);
@@ -118,7 +122,11 @@ TopAbs_ShapeEnum ShapeExtend_Explorer::ShapeType (const TopoDS_Shape& shape,
   if (!compound || res != TopAbs_COMPOUND) return res;
   res = TopAbs_SHAPE;
   for (TopoDS_Iterator iter(shape); iter.More(); iter.Next()) {
+<<<<<<< HEAD
     TopoDS_Shape sh = iter.Value();
+=======
+    const TopoDS_Shape& sh = iter.Value();
+>>>>>>> accb2f351 (u)
     if (sh.IsNull()) continue;
     TopAbs_ShapeEnum typ = sh.ShapeType();
     if (typ == TopAbs_COMPOUND) typ = ShapeType (sh,compound);

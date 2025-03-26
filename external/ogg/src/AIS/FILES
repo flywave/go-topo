@@ -2,6 +2,11 @@ AIS.hxx
 AIS_Animation.cxx
 AIS_Animation.hxx
 AIS_AnimationTimer.hxx
+<<<<<<< HEAD
+=======
+AIS_AnimationAxisRotation.cxx
+AIS_AnimationAxisRotation.hxx
+>>>>>>> accb2f351 (u)
 AIS_AnimationCamera.cxx
 AIS_AnimationCamera.hxx
 AIS_AnimationObject.cxx
@@ -12,6 +17,11 @@ AIS_Axis.cxx
 AIS_Axis.hxx
 AIS_BadEdgeFilter.cxx
 AIS_BadEdgeFilter.hxx
+<<<<<<< HEAD
+=======
+AIS_BaseAnimationObject.cxx
+AIS_BaseAnimationObject.hxx
+>>>>>>> accb2f351 (u)
 AIS_C0RegularityFilter.cxx
 AIS_C0RegularityFilter.hxx
 AIS_CameraFrustum.cxx

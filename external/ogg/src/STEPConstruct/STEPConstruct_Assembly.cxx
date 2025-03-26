@@ -195,7 +195,11 @@ Standard_Boolean STEPConstruct_Assembly::CheckSRRReversesNAUO(const Interface_Gr
   Handle(Standard_Type) tSDR = STANDARD_TYPE(StepShape_ShapeDefinitionRepresentation);
   Interface_EntityIterator anIter = theGraph.Sharings(rep1);
   for (; anIter.More() && pd1.IsNull(); anIter.Next()) {
+<<<<<<< HEAD
       Handle(Standard_Transient) enti = anIter.Value();
+=======
+      const Handle(Standard_Transient)& enti = anIter.Value();
+>>>>>>> accb2f351 (u)
     if (enti->DynamicType() == tSDR) {
       Handle(StepShape_ShapeDefinitionRepresentation) SDR =
         Handle(StepShape_ShapeDefinitionRepresentation)::DownCast(enti);
@@ -206,7 +210,11 @@ Standard_Boolean STEPConstruct_Assembly::CheckSRRReversesNAUO(const Interface_Gr
   
   anIter = theGraph.Sharings(rep2);
   for (; anIter.More() && pd2.IsNull(); anIter.Next()) {
+<<<<<<< HEAD
       Handle(Standard_Transient) enti = anIter.Value();
+=======
+      const Handle(Standard_Transient)& enti = anIter.Value();
+>>>>>>> accb2f351 (u)
     if (enti->DynamicType() == tSDR) {
       Handle(StepShape_ShapeDefinitionRepresentation) SDR =
         Handle(StepShape_ShapeDefinitionRepresentation)::DownCast(enti);

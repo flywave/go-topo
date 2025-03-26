@@ -1302,6 +1302,12 @@ protected: //! @name internal methods
   Standard_EXPORT AIS_StatusOfDetection moveTo (const Handle(V3d_View)& theView,
                                                 const Standard_Boolean  theToRedrawOnUpdate);
 
+<<<<<<< HEAD
+=======
+  //! Returns True if the object is detected.
+  Standard_EXPORT Standard_Boolean isDetected (const Handle(AIS_InteractiveObject)& theObject);
+
+>>>>>>> accb2f351 (u)
   //! Helper function to unhighlight all entity owners currently highlighted with seleciton color.
   Standard_EXPORT void unselectOwners (const Handle(AIS_InteractiveObject)& theObject);
 

@@ -237,7 +237,11 @@ void BRepBuilderAPI_MakeShapeOnMesh::Build(const Message_ProgressRange& theRange
     gp_Pln aPln(myMesh->Node(anIdx[0]), aNorm);
 
     BRepBuilderAPI_MakeFace aFaceMaker(aPln, aWire);
+<<<<<<< HEAD
     const TopoDS_Face aFace = aFaceMaker.Face();
+=======
+    const TopoDS_Face& aFace = aFaceMaker.Face();
+>>>>>>> accb2f351 (u)
 
     aBB.Add(aResult, aFace);
   }

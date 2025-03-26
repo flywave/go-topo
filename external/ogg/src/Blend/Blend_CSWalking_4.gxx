@@ -40,7 +40,11 @@ void Blend_CSWalking::InternalPerform(Blend_CSFunction& Func,
 
   //IntSurf_Transition Tline,Tarc;
 
+<<<<<<< HEAD
   Func.GetTolerance(tolerance,tolesp);
+=======
+  Func.GetTolerance(tolerance,tolpoint3d);
+>>>>>>> accb2f351 (u)
   Func.GetBounds(infbound,supbound);
 
   math_FunctionSetRoot rsnld(Func,tolerance,30);
@@ -146,9 +150,15 @@ void Blend_CSWalking::InternalPerform(Blend_CSFunction& Func,
 */
 	  previousP.ParametersOnS(U,V);
 	  Exts.SetValue(previousP.PointOnS(),U,V, 
+<<<<<<< HEAD
 			previousP.Parameter(),tolesp);
 	  Extc.SetValue(previousP.PointOnC(),previousP.ParameterOnC(),
 			previousP.Parameter(),tolesp);
+=======
+			previousP.Parameter(),tolpoint3d);
+	  Extc.SetValue(previousP.PointOnC(),previousP.ParameterOnC(),
+			previousP.Parameter(),tolpoint3d);
+>>>>>>> accb2f351 (u)
 	  // Indiquer que fin sur Bound.
 	}
 	else {
@@ -171,9 +181,15 @@ void Blend_CSWalking::InternalPerform(Blend_CSFunction& Func,
 */
 	  previousP.ParametersOnS(U,V);
 	  Exts.SetValue(previousP.PointOnS(),U,V,
+<<<<<<< HEAD
 			previousP.Parameter(),tolesp);
 	  Extc.SetValue(previousP.PointOnC(),previousP.ParameterOnC(),
 			previousP.Parameter(),tolesp);
+=======
+			previousP.Parameter(),tolpoint3d);
+	  Extc.SetValue(previousP.PointOnC(),previousP.ParameterOnC(),
+			previousP.Parameter(),tolpoint3d);
+>>>>>>> accb2f351 (u)
 	  Arrive = Standard_True;
 	  if (line->NbPoints()>=2) {
 	    // Indiquer qu on s arrete en cours de cheminement
@@ -214,9 +230,15 @@ void Blend_CSWalking::InternalPerform(Blend_CSFunction& Func,
 */
 	  previousP.ParametersOnS(U,V);
 	  Exts.SetValue(previousP.PointOnS(),U,V,
+<<<<<<< HEAD
 			previousP.Parameter(),tolesp);
 	  Extc.SetValue(previousP.PointOnC(),previousP.ParameterOnC(),
 			previousP.Parameter(),tolesp);
+=======
+			previousP.Parameter(),tolpoint3d);
+	  Extc.SetValue(previousP.PointOnC(),previousP.ParameterOnC(),
+			previousP.Parameter(),tolpoint3d);
+>>>>>>> accb2f351 (u)
 	  // Indiquer que fin sur Bound.
 	}
 	else {
@@ -244,7 +266,11 @@ void Blend_CSWalking::InternalPerform(Blend_CSFunction& Func,
 	MakeExtremity(Exts,Index,solrst(1),Isvtx,Vtx);
 //	Extc.SetValue(previousP.PointOnC(),sol(3),tolesp);
 	Extc.SetValue(previousP.PointOnC(),previousP.ParameterOnC(),
+<<<<<<< HEAD
 		      previousP.Parameter(),tolesp);
+=======
+		      previousP.Parameter(),tolpoint3d);
+>>>>>>> accb2f351 (u)
 	Arrive = Standard_True;
       }
       break;
@@ -259,9 +285,15 @@ void Blend_CSWalking::InternalPerform(Blend_CSFunction& Func,
 */
 	previousP.ParametersOnS(U,V);
 	Exts.SetValue(previousP.PointOnS(),U,V,
+<<<<<<< HEAD
 		      previousP.Parameter(),tolesp);
 	Extc.SetValue(previousP.PointOnC(),previousP.ParameterOnC(),
 		      previousP.Parameter(),tolesp);
+=======
+		      previousP.Parameter(),tolpoint3d);
+	Extc.SetValue(previousP.PointOnC(),previousP.ParameterOnC(),
+		      previousP.Parameter(),tolpoint3d);
+>>>>>>> accb2f351 (u)
 	Arrive = Standard_True;
       }
       break;

@@ -242,7 +242,11 @@ static Standard_Boolean IsObst(const ChFiDS_CommonPoint& CP,
 //           
 //=======================================================================
 
+<<<<<<< HEAD
 static void CompParam(Geom2dAdaptor_Curve  Carc,
+=======
+static void CompParam(const Geom2dAdaptor_Curve&  Carc,
+>>>>>>> accb2f351 (u)
 		      Handle(Geom2d_Curve) Ctg,
 		      Standard_Real&       parc,
 		      Standard_Real&       ptg,
@@ -330,8 +334,13 @@ static void CompParam(Geom2dAdaptor_Curve  Carc,
 static Standard_Boolean CompBlendPoint(const TopoDS_Vertex& V,
 				       const TopoDS_Edge& E,
 				       const Standard_Real W,
+<<<<<<< HEAD
 				       const TopoDS_Face F1,
 				       const TopoDS_Face F2,
+=======
+				       const TopoDS_Face& F1,
+				       const TopoDS_Face& F2,
+>>>>>>> accb2f351 (u)
 				       Blend_Point& BP)
 {    
   gp_Pnt2d P1, P2;
@@ -416,7 +425,11 @@ Standard_Boolean ChFi3d_Builder::CompleteData
  const Standard_Boolean          Gf2)
 {
   TopOpeBRepDS_DataStructure& DStr = myDS->ChangeDS();
+<<<<<<< HEAD
   Data->ChangeSurf(DStr.AddSurface(TopOpeBRepDS_Surface(Surfcoin,tolesp)));
+=======
+  Data->ChangeSurf(DStr.AddSurface(TopOpeBRepDS_Surface(Surfcoin,tolapp3d)));
+>>>>>>> accb2f351 (u)
 #ifdef DRAW
   ChFi3d_SettraceDRAWFIL(Standard_True);
   if (ChFi3d_GettraceDRAWFIL()) {
@@ -987,7 +1000,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
   Standard_Real NewFirst = PFirst;
   if(RecP || RecS || RecRst){
     if(!TheWalk.PerformFirstSection(Func,FInv,FInvP,FInvC,PFirst,Target,Soldep,
+<<<<<<< HEAD
 				    tolesp,TolGuide,RecRst,RecP,RecS,
+=======
+				    tolapp3d,tolapp2d,TolGuide,RecRst,RecP,RecS,
+>>>>>>> accb2f351 (u)
 				    NewFirst,ParSol)){
 #ifdef OCCT_DEBUG
       std::cout<<"ChFi3d_Builder::ComputeData : calculation fail first section"<<std::endl;
@@ -1001,7 +1018,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
 
   while (again < 2){
     TheWalk.Perform (Func,FInv,FInvP,FInvC,NewFirst,Last,
+<<<<<<< HEAD
 		     MS,TolGuide,ParSol,tolesp,Fleche,Appro);
+=======
+		     MS,tolapp3d,tolapp2d,TolGuide,ParSol,Fleche,Appro);
+>>>>>>> accb2f351 (u)
 
     if (!TheWalk.IsDone()) {
 #ifdef OCCT_DEBUG
@@ -1119,7 +1140,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
   Standard_Real NewFirst = PFirst;
   if (RecP1 || RecRst1 || RecP2 || RecRst2) {
     if (!TheWalk.PerformFirstSection(Func, FInv1, FInvP1, FInv2, FInvP2, PFirst, Target, Soldep,
+<<<<<<< HEAD
 	  			     tolesp, TolGuide, RecRst1, RecP1, RecRst2, RecP2,
+=======
+               tolapp3d, TolGuide, RecRst1, RecP1, RecRst2, RecP2,
+>>>>>>> accb2f351 (u)
 				     NewFirst, ParSol)){
 #ifdef OCCT_DEBUG
       std::cout<<"ChFi3d_Builder::ComputeData : fail calculation first section"<<std::endl;
@@ -1133,7 +1158,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
 
   while (again < 2){
     TheWalk.Perform (Func, FInv1, FInvP1, FInv2, FInvP2, NewFirst, Last,
+<<<<<<< HEAD
 		     MS, TolGuide, ParSol, tolesp, Fleche, Appro);
+=======
+		     MS, tolapp3d, TolGuide, ParSol, Fleche, Appro);
+>>>>>>> accb2f351 (u)
 
     if (!TheWalk.IsDone()) {
 #ifdef OCCT_DEBUG
@@ -1249,7 +1278,11 @@ Standard_Boolean ChFi3d_Builder::SimulData
   Standard_Real NewFirst = PFirst;
   if(RecP || RecS || RecRst){
     if(!TheWalk.PerformFirstSection(Func,FInv,FInvP,FInvC,PFirst,Target,Soldep,
+<<<<<<< HEAD
 				    tolesp,TolGuide,RecRst,RecP,RecS,
+=======
+				    tolapp3d,tolapp2d,TolGuide,RecRst,RecP,RecS,
+>>>>>>> accb2f351 (u)
 				    NewFirst,ParSol)){
 #ifdef OCCT_DEBUG
 
@@ -1264,7 +1297,11 @@ Standard_Boolean ChFi3d_Builder::SimulData
 
   while (again < 2){
     TheWalk.Perform (Func,FInv,FInvP,FInvC,NewFirst,Last,
+<<<<<<< HEAD
 		     MS,TolGuide,ParSol,tolesp,Fleche,Appro);
+=======
+		     MS,tolapp3d,tolapp2d,TolGuide,ParSol,Fleche,Appro);
+>>>>>>> accb2f351 (u)
     if (!TheWalk.IsDone()) {
 #ifdef OCCT_DEBUG
       std::cout << "Path not done" << std::endl;
@@ -1375,7 +1412,11 @@ Standard_Boolean ChFi3d_Builder::SimulData
   Standard_Real NewFirst = PFirst;
   if (RecP1 || RecRst1 || RecP2 || RecRst2) {
     if(!TheWalk.PerformFirstSection(Func, FInv1, FInvP1, FInv2, FInvP2, PFirst, Target, Soldep,
+<<<<<<< HEAD
 	  			    tolesp, TolGuide, RecRst1, RecP1, RecRst2, RecP2,
+=======
+              tolapp3d, TolGuide, RecRst1, RecP1, RecRst2, RecP2,
+>>>>>>> accb2f351 (u)
 				    NewFirst,ParSol)){
 #ifdef OCCT_DEBUG
 
@@ -1390,7 +1431,11 @@ Standard_Boolean ChFi3d_Builder::SimulData
 
   while (again < 2){
     TheWalk.Perform (Func, FInv1, FInvP1, FInv2, FInvP2, NewFirst, Last,
+<<<<<<< HEAD
 		     MS, TolGuide, ParSol, tolesp, Fleche, Appro);
+=======
+		     MS, tolapp3d, TolGuide, ParSol, Fleche, Appro);
+>>>>>>> accb2f351 (u)
     if (!TheWalk.IsDone()) {
 #ifdef OCCT_DEBUG
       std::cout << "Path not created" << std::endl;
@@ -1518,7 +1563,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
   if(!HS.IsNull()) F2 = HS->Face();
   
   // Path framing variables
+<<<<<<< HEAD
   Standard_Real TolGuide=tolguide, TolEsp = tolesp;
+=======
+  Standard_Real TolGuide=tolguide;
+>>>>>>> accb2f351 (u)
   Standard_Integer nbptmin = 4;
 
   BRepBlend_Walking TheWalk(S1,S2,I1,I2,HGuide);
@@ -1559,7 +1608,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
 	BP.ParametersOnS1(vec(1),vec(2));
 	BP.ParametersOnS2(vec(3),vec(4));
 	Func.Set(param);
+<<<<<<< HEAD
 	if (Func.IsSolution(vec, tolesp)) {
+=======
+	if (Func.IsSolution(vec, tolapp3d)) {
+>>>>>>> accb2f351 (u)
 	  TheWalk.AddSingularPoint(BP);
 	}
       }
@@ -1574,7 +1627,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
 	BP.ParametersOnS1(vec(1),vec(2));
 	BP.ParametersOnS2(vec(3),vec(4));
 	Func.Set(param);
+<<<<<<< HEAD
 	if (Func.IsSolution(vec, tolesp)) {
+=======
+	if (Func.IsSolution(vec, tolapp3d)) {
+>>>>>>> accb2f351 (u)
 	  TheWalk.AddSingularPoint(BP);
 	}
       }
@@ -1587,7 +1644,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
   Standard_Real NewFirst = PFirst;
   if(RecOnS1 || RecOnS2){
     if(!TheWalk.PerformFirstSection(Func,FInv,PFirst,Target,Soldep,
+<<<<<<< HEAD
 				    tolesp,TolGuide,RecOnS1,RecOnS2,
+=======
+				    tolapp3d,TolGuide,RecOnS1,RecOnS2,
+>>>>>>> accb2f351 (u)
 				    NewFirst,ParSol)){
 #ifdef OCCT_DEBUG
       std::cout<<"ChFi3d_Builder::ComputeData : calculation fail first section"<<std::endl;
@@ -1617,10 +1678,16 @@ Standard_Boolean ChFi3d_Builder::ComputeData
     if(!again && (MS < 5*TolGuide)) MS = 5*TolGuide;
     else {
       if (5*TolGuide > MS) TolGuide = MS/5;
+<<<<<<< HEAD
       if (5*TolEsp > MS) TolEsp = MS/5;
     }
     TheWalk.Perform(Func,FInv,NewFirst,Target,MS,TolGuide,
 		    ParSol,TolEsp,Fleche,Appro);
+=======
+    }
+    TheWalk.Perform(Func,FInv,NewFirst,Target,MS,tolapp3d,TolGuide,
+		    ParSol,Fleche,Appro);
+>>>>>>> accb2f351 (u)
     if (!TheWalk.IsDone()) {
 #ifdef OCCT_DEBUG
       std::cout << "Path is not created" << std::endl;
@@ -1776,7 +1843,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
     narc2 = Lin->StartPointOnSecond().NbPointOnRst();
     if(narc1 != 0) {
       ChFi3d_FilCommonPoint(Lin->StartPointOnFirst(),Lin->TransitionOnS1(),
+<<<<<<< HEAD
 			    Standard_True, Data->ChangeVertexFirstOnS1(),tolesp);
+=======
+			    Standard_True, Data->ChangeVertexFirstOnS1(), tolapp3d);
+>>>>>>> accb2f351 (u)
       debarc1 = Standard_True;
       if(!SearchFace(Spine,Data->VertexFirstOnS1(),F1,bif)){
 	//It is checked if there is not an obstacle.
@@ -1794,7 +1865,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
     }
     if(narc2 != 0){
       ChFi3d_FilCommonPoint(Lin->StartPointOnSecond(),Lin->TransitionOnS2(),
+<<<<<<< HEAD
 			    Standard_True, Data->ChangeVertexFirstOnS2(),tolesp);
+=======
+			    Standard_True, Data->ChangeVertexFirstOnS2(),tolapp3d);
+>>>>>>> accb2f351 (u)
       debarc2 = Standard_True;
       if(!SearchFace(Spine,Data->VertexFirstOnS2(),F2,bif)){
 	//It is checked if it is not an obstacle.
@@ -1831,7 +1906,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
 	  backwContinueFailed = Lin->StartPointOnFirst().ParameterOnGuide() > Target;
 	else {
 	  ChFi3d_FilCommonPoint(Lin->StartPointOnFirst(),Lin->TransitionOnS1(),
+<<<<<<< HEAD
 				Standard_True, Data->ChangeVertexFirstOnS1(),tolesp);
+=======
+				Standard_True, Data->ChangeVertexFirstOnS1(), tolapp3d);
+>>>>>>> accb2f351 (u)
 	  debarc1 = Standard_True;
 	  if(!SearchFace(Spine,Data->VertexFirstOnS1(),F1,bif)){
 	    //It is checked if it is not an obstacle.
@@ -1853,7 +1932,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
 	  backwContinueFailed = Lin->StartPointOnSecond().ParameterOnGuide() > Target;
 	else {
 	  ChFi3d_FilCommonPoint(Lin->StartPointOnSecond(),Lin->TransitionOnS2(),
+<<<<<<< HEAD
                                 Standard_True, Data->ChangeVertexFirstOnS2(),tolesp);
+=======
+                                Standard_True, Data->ChangeVertexFirstOnS2(), tolapp3d);
+>>>>>>> accb2f351 (u)
           debarc2 = Standard_True;
           if(!SearchFace(Spine,Data->VertexFirstOnS2(),F2,bif)){
 	    //It is checked if it is not an obstacle.
@@ -1889,7 +1972,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
     narc2 = Lin->EndPointOnSecond().NbPointOnRst();
     if(narc1 != 0){
       ChFi3d_FilCommonPoint(Lin->EndPointOnFirst(),Lin->TransitionOnS1(),
+<<<<<<< HEAD
 			    Standard_False, Data->ChangeVertexLastOnS1(),tolesp);
+=======
+			    Standard_False, Data->ChangeVertexLastOnS1(), tolapp3d);
+>>>>>>> accb2f351 (u)
       finarc1 = Standard_True;
       if(!SearchFace(Spine,Data->VertexLastOnS1(),F1,bif)){
              //It is checked if it is not an obstacle.
@@ -1902,7 +1989,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
     }
     if(narc2 != 0){
       ChFi3d_FilCommonPoint(Lin->EndPointOnSecond(),Lin->TransitionOnS2(),
+<<<<<<< HEAD
 			    Standard_False, Data->ChangeVertexLastOnS2(),tolesp);
+=======
+			    Standard_False, Data->ChangeVertexLastOnS2(), tolapp3d);
+>>>>>>> accb2f351 (u)
       finarc2 = Standard_True;
       if(!SearchFace(Spine,Data->VertexLastOnS2(),F2,bif)){
 	 //It is checked if it is not an obstacle.
@@ -1934,7 +2025,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
 	  forwContinueFailed = Lin->EndPointOnFirst().ParameterOnGuide() < Target;
 	else {
 	  ChFi3d_FilCommonPoint(Lin->EndPointOnFirst(),Lin->TransitionOnS1(),
+<<<<<<< HEAD
 				Standard_False, Data->ChangeVertexLastOnS1(),tolesp);
+=======
+				Standard_False, Data->ChangeVertexLastOnS1(), tolapp3d);
+>>>>>>> accb2f351 (u)
 	  finarc1 = Standard_True;
 	  if(!SearchFace(Spine,Data->VertexLastOnS1(),F1,bif)){
              //It is checked if it is not an obstacle.
@@ -1951,7 +2046,11 @@ Standard_Boolean ChFi3d_Builder::ComputeData
 	  forwContinueFailed = Lin->EndPointOnSecond().ParameterOnGuide() < Target;
 	else {
 	  ChFi3d_FilCommonPoint(Lin->EndPointOnSecond(),Lin->TransitionOnS2(),
+<<<<<<< HEAD
 				Standard_False, Data->ChangeVertexLastOnS2(),tolesp);
+=======
+				Standard_False, Data->ChangeVertexLastOnS2(), tolapp3d);
+>>>>>>> accb2f351 (u)
 	  finarc2 = Standard_True;
 	  if(!SearchFace(Spine,Data->VertexLastOnS2(),F2,bif)){
 	    //On regarde si ce n'est pas un obstacle.
@@ -2125,7 +2224,11 @@ Standard_Boolean ChFi3d_Builder::SimulData
   TheWalk.Check2d(Standard_False);
   
   Standard_Real MS = MaxStep;
+<<<<<<< HEAD
   Standard_Real TolGuide=tolguide, TolEsp = tolesp;
+=======
+  Standard_Real TolGuide=tolguide;
+>>>>>>> accb2f351 (u)
   Standard_Integer Nbpnt = 0;
   Standard_Real SpFirst = HGuide->FirstParameter();
   Standard_Real SpLast =  HGuide->LastParameter();
@@ -2145,7 +2248,11 @@ Standard_Boolean ChFi3d_Builder::SimulData
   Standard_Real NewFirst = PFirst;
   if(RecOnS1 || RecOnS2){
     if(!TheWalk.PerformFirstSection(Func,FInv,PFirst,Target,Soldep,
+<<<<<<< HEAD
 				    tolesp,TolGuide,RecOnS1,RecOnS2,
+=======
+            tolapp3d,TolGuide,RecOnS1,RecOnS2,
+>>>>>>> accb2f351 (u)
 				    NewFirst,ParSol)){
 #ifdef OCCT_DEBUG
       std::cout<<"ChFi3d_Builder::SimulData : calculation fail first section"<<std::endl;
@@ -2163,11 +2270,18 @@ Standard_Boolean ChFi3d_Builder::SimulData
     if(!again && (MS < 5*TolGuide)) MS = 5*TolGuide;
     else  {
       if (5*TolGuide > MS) TolGuide = MS/5;
+<<<<<<< HEAD
       if (5*TolEsp > MS) TolEsp = MS/5;
     }
       
     TheWalk.Perform(Func,FInv,NewFirst,Target,MS,TolGuide,
 		    ParSol,TolEsp,Fleche,Appro);
+=======
+    }
+      
+    TheWalk.Perform(Func,FInv,NewFirst,Target,MS,tolapp3d,TolGuide,
+		    ParSol,Fleche,Appro);
+>>>>>>> accb2f351 (u)
     
     if (!TheWalk.IsDone()) {
 #ifdef OCCT_DEBUG

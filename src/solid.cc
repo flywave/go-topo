@@ -151,9 +151,8 @@ shape solid::copy(bool deep) const {
       throw std::runtime_error("Shell operation resulted in Null shape");
 
     return solid{shp};
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -773,9 +772,8 @@ solid solid::make_solid(std::vector<face> &faces, double tolerance) {
     if (!s.fix_shape())
       throw std::runtime_error("solid not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -834,9 +832,8 @@ solid solid::make_solid(std::initializer_list<face> faces, double tolerance) {
     if (!s.fix_shape())
       throw std::runtime_error("solid not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -908,9 +905,8 @@ int solid::extrude(const face &f, gp_Pnt p1, gp_Pnt p2) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -930,9 +926,8 @@ int solid::extrude(const face &f, gp_Vec d) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -955,9 +950,8 @@ int solid::revolve(const face &f, gp_Pnt p1, gp_Pnt p2, double angle) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -994,9 +988,8 @@ int solid::loft(std::vector<shape> &profiles, bool ruled, double tolerance) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1021,9 +1014,8 @@ int solid::pipe(const face &f, const wire &w) {
     _shape = MP.Shape();
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1067,9 +1059,8 @@ int solid::sweep(const wire &spine, std::vector<shape> &profiles,
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1123,9 +1114,8 @@ int solid::boolean(const solid &tool, bool_op_type op) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1137,8 +1127,8 @@ int solid::boolean(const solid &tool, bool_op_type op) {
 }
 
 int solid::fillet(std::vector<edge> &edges, std::vector<double> radius) {
-  int edges_size = edges.size();
-  int radius_size = radius.size();
+  size_t edges_size = edges.size();
+  size_t radius_size = radius.size();
 
   try {
     BRepFilletAPI_MakeFillet fill(_shape);
@@ -1186,9 +1176,8 @@ int solid::fillet(std::vector<edge> &edges, std::vector<double> radius) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1200,8 +1189,8 @@ int solid::fillet(std::vector<edge> &edges, std::vector<double> radius) {
 }
 
 int solid::chamfer(std::vector<edge> &edges, std::vector<double> distances) {
-  int edges_size = edges.size();
-  int distances_size = distances.size();
+  size_t edges_size = edges.size();
+  size_t distances_size = distances.size();
 
   try {
     BRepFilletAPI_MakeChamfer CF(_shape);
@@ -1223,11 +1212,9 @@ int solid::chamfer(std::vector<edge> &edges, std::vector<double> distances) {
         continue;
 
       if (distances_size == 1) {
-        CF.Add(distances[0], e->value(), face);
-
+        CF.Add(e->value());
       } else if (distances_size == edges_size) {
-        CF.Add(distances[i], e->value(), face);
-
+        CF.Add(e->value());
       } else {
         throw std::runtime_error("size of distances argument not correct");
         ;
@@ -1249,9 +1236,8 @@ int solid::chamfer(std::vector<edge> &edges, std::vector<double> distances) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1269,14 +1255,20 @@ int solid::shelling(std::vector<face> &faces, double offset, double tolerance) {
       face *f = &faces[i];
       facelist.Append(f->value());
     }
+      
+    BRepOffset_Mode mode = BRepOffset_Skin;
+    Standard_Boolean bIntersection = Standard_False;
+    Standard_Boolean bSelfInter = Standard_False;
+    GeomAbs_JoinType joinType = GeomAbs_Arc;
+      
+    BRepOffsetAPI_MakeThickSolid tool;
+    tool.MakeThickSolidByJoin(_shape, facelist, offset, tolerance, mode, bIntersection, bSelfInter, joinType);
+    tool.Build();
 
-    BRepOffsetAPI_MakeThickSolid TS(_shape, facelist, offset, tolerance);
-    TS.Build();
-
-    if (!TS.IsDone())
+    if (!tool.IsDone())
       throw std::runtime_error("Shell operation failed");
 
-    const TopoDS_Shape &tmp = TS.Shape();
+    const TopoDS_Shape &tmp = tool.Shape();
 
     if (tmp.IsNull())
       throw std::runtime_error("Shell operation resulted in Null shape");
@@ -1286,9 +1278,8 @@ int solid::shelling(std::vector<face> &faces, double offset, double tolerance) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1310,9 +1301,8 @@ int solid::offset(const face &f, double offset, double tolerance) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1345,9 +1335,8 @@ int solid::draft(std::vector<face> &faces, gp_Dir d, double angle, gp_Pln p) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1378,9 +1367,8 @@ int solid::evolved(const face &Spine, const wire &Profil) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1411,9 +1399,8 @@ int solid::evolved(const wire &Spine, const wire &Profil) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1442,9 +1429,8 @@ int solid::feat_prism(const face &f, gp_Dir d, double height, bool fuse) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1474,9 +1460,8 @@ int solid::feat_prism(const face &f, gp_Dir d, const face &from,
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1505,9 +1490,8 @@ int solid::feat_prism(const face &f, gp_Dir d, const face &until, bool fuse) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1538,9 +1522,8 @@ int solid::feat_draft_prism(const face &f, double angle, double height,
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1571,9 +1554,8 @@ int solid::feat_draft_prism(const face &f, double angle, const face &from,
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1604,9 +1586,8 @@ int solid::feat_draft_prism(const face &f, double angle, const face &until,
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1636,9 +1617,8 @@ int solid::feat_revol(const face &f, const gp_Ax1 &Axes, const face &from,
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1668,9 +1648,8 @@ int solid::feat_revol(const face &f, const gp_Ax1 &Axes, const face &until,
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1701,9 +1680,8 @@ int solid::feat_pipe(const face &f, const wire &Spine, const face &from,
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1734,9 +1712,8 @@ int solid::feat_pipe(const face &f, const wire &Spine, const face &until,
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1766,9 +1743,8 @@ int solid::linear_form(const wire &w, const Handle(Geom_Plane) & p, gp_Dir d,
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1801,9 +1777,8 @@ int solid::revolution_form(const wire &w, const Handle(Geom_Plane) & p,
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1854,9 +1829,8 @@ boost::optional<face> solid::section(gp_Pnt pnt, gp_Pnt nor) {
 
     _shape = MFRes.Face();
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -1881,9 +1855,8 @@ int solid::convert_to_nurbs() {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {

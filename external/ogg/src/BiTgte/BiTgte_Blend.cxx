@@ -215,7 +215,11 @@ static Standard_Boolean IsInFace(const TopoDS_Edge& E,
 //purpose  : 
 //=======================================================================
 
+<<<<<<< HEAD
 static void KPartCurve3d(TopoDS_Edge           Edge,
+=======
+static void KPartCurve3d(const TopoDS_Edge&           Edge,
+>>>>>>> accb2f351 (u)
 			 Handle(Geom2d_Curve)  Curve,
 			 Handle(Geom_Surface)  Surf)
 {
@@ -1420,12 +1424,20 @@ Standard_Integer BiTgte_Blend::NbBranches()
   exp.Init(Shells,TopAbs_SHELL);
   for (; exp.More(); exp.Next()) {
     // CurS = the current Shell.
+<<<<<<< HEAD
     const TopoDS_Shape CurS = exp.Current();
+=======
+    const TopoDS_Shape& CurS = exp.Current();
+>>>>>>> accb2f351 (u)
 
     TopExp_Explorer exp2(CurS, TopAbs_FACE);
     for (; exp2.More(); exp2.Next()) {
       // CurF = the current face of the current Shell.
+<<<<<<< HEAD
       const TopoDS_Shape CurF = exp2.Current();
+=======
+      const TopoDS_Shape& CurF = exp2.Current();
+>>>>>>> accb2f351 (u)
 
       for ( i = 1; i <= NbFaces; i++) {
 	const TopoDS_Shape& Center = myCenters(i);

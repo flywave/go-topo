@@ -180,7 +180,11 @@ static Standard_Boolean IsRadiusIntersected(const Handle(Geom2d_Curve)& theCurve
     if (gp_Vec2d(aPoint, theStart).IsOpposite(gp_Vec2d(aPoint, theEnd), Precision::Angular())) 
       return Standard_True;
   }
+<<<<<<< HEAD
   Handle(Geom2d_Curve) aCurve = theCurve;
+=======
+  const Handle(Geom2d_Curve)& aCurve = theCurve;
+>>>>>>> accb2f351 (u)
   for(a = anInter.NbSegments(); a > 0; a--) 
   {
     //anInter.Segment(a, aCurve); //not implemented (bug in OCC)

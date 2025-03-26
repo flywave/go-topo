@@ -229,7 +229,11 @@ Standard_Boolean STEPConstruct_ExternRefs::LoadExternRefs ()
       // for each DocumentFile, find associated with it data:
       Interface_EntityIterator subs = Graph().Sharings(DocFile);
       for (subs.Start(); subs.More(); subs.Next()) {
+<<<<<<< HEAD
         Handle(Standard_Transient) sub = subs.Value();
+=======
+        const Handle(Standard_Transient)& sub = subs.Value();
+>>>>>>> accb2f351 (u)
         
         // FORMAT - ???????
         //
@@ -659,7 +663,11 @@ Standard_Integer STEPConstruct_ExternRefs::AddExternRef (const Standard_CString 
 //      Handle(Standard_Transient) sub = subs.Value();
     Interface_EntityIterator subs = Graph().Sharings(PD);
     for (subs.Start(); subs.More(); subs.Next()) {
+<<<<<<< HEAD
       Handle(Standard_Transient) sub = subs.Value();
+=======
+      const Handle(Standard_Transient)& sub = subs.Value();
+>>>>>>> accb2f351 (u)
       if (!sub->IsKind(STANDARD_TYPE(StepRepr_ProductDefinitionShape))) continue;
       Handle(StepRepr_ProductDefinitionShape) ProdDefSh = 
         Handle(StepRepr_ProductDefinitionShape)::DownCast ( sub );
@@ -682,7 +690,11 @@ Standard_Integer STEPConstruct_ExternRefs::AddExternRef (const Standard_CString 
 //        Interface_EntityIterator subs2 = Graph().Sharings(ProdDef);
     Interface_EntityIterator subs2 = Graph().Sharings(PD);
     for (subs2.Start(); subs2.More(); subs2.Next()) {
+<<<<<<< HEAD
       Handle(Standard_Transient) sub2 = subs2.Value();
+=======
+      const Handle(Standard_Transient)& sub2 = subs2.Value();
+>>>>>>> accb2f351 (u)
 
       if (sub2->IsKind(STANDARD_TYPE(StepRepr_NextAssemblyUsageOccurrence))) {
         Handle(StepRepr_NextAssemblyUsageOccurrence) NAUO = 

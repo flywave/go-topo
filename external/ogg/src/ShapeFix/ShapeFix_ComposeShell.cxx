@@ -721,7 +721,11 @@ Standard_Integer ShapeFix_ComposeShell::ComputeCode (const Handle(ShapeExtend_Wi
 // After applying context to (seam) edge, distribute its indices on new edges,
 // according to their parameters on that edge
 static void DistributeSplitPoints (const Handle(ShapeExtend_WireData) &sbwd,
+<<<<<<< HEAD
                                    const TopoDS_Face myFace,
+=======
+                                   const TopoDS_Face& myFace,
+>>>>>>> accb2f351 (u)
                                    const Standard_Integer index,
                                    const Standard_Integer nsplit,
                                    TColStd_SequenceOfInteger& indexes,
@@ -785,7 +789,11 @@ static void DefinePatch (ShapeFix_WireSegment &wire, const Standard_Integer code
 //function : GetGridResolution
 //purpose  : auxiliary
 //=======================================================================
+<<<<<<< HEAD
 static Standard_Real GetGridResolution(const Handle(TColStd_HArray1OfReal) SplitValues,
+=======
+static Standard_Real GetGridResolution(const Handle(TColStd_HArray1OfReal)& SplitValues,
+>>>>>>> accb2f351 (u)
                                        const Standard_Integer cutIndex)
 {
   Standard_Integer nb = SplitValues->Length();
@@ -1869,7 +1877,11 @@ void ShapeFix_ComposeShell::BreakWires (ShapeFix_SequenceOfWireSegment &seqw)
     ShapeFix_WireSegment wire = seqw(i);
     if(wire.IsVertex())
       continue;
+<<<<<<< HEAD
     Handle(ShapeExtend_WireData) sbwd = wire.WireData();
+=======
+    const Handle(ShapeExtend_WireData)& sbwd = wire.WireData();
+>>>>>>> accb2f351 (u)
 
     // find first vertex for split
     Standard_Integer j; // svv #1
@@ -1933,7 +1945,11 @@ void ShapeFix_ComposeShell::BreakWires (ShapeFix_SequenceOfWireSegment &seqw)
 // -1 - short in 3d but not in 2d (to be checked after algo and atteching to 
 //      another wire if alone)
 static Standard_Integer IsShortSegment (const ShapeFix_WireSegment &seg,
+<<<<<<< HEAD
                                         const TopoDS_Face myFace,
+=======
+                                        const TopoDS_Face& myFace,
+>>>>>>> accb2f351 (u)
                                         const Handle(Geom_Surface)& myGrid,
                                         const TopLoc_Location &myLoc,
                                         const Standard_Real UResolution,
@@ -1948,7 +1964,11 @@ static Standard_Integer IsShortSegment (const ShapeFix_WireSegment &seg,
 
   Standard_Integer code = 1;
   ShapeAnalysis_Edge sae;
+<<<<<<< HEAD
   Handle(ShapeExtend_WireData) sbwd = seg.WireData();
+=======
+  const Handle(ShapeExtend_WireData)& sbwd = seg.WireData();
+>>>>>>> accb2f351 (u)
   for ( Standard_Integer i=1; i <= sbwd->NbEdges(); i++ ) {
     TopoDS_Edge edge = sbwd->Edge ( i );
     if ( ! Vf.IsSame ( sae.LastVertex ( edge ) ) ) return 0;
@@ -2065,7 +2085,11 @@ void ShapeFix_ComposeShell::CollectWires (ShapeFix_SequenceOfWireSegment &wires,
 
     // find next segment to connect (or first if sbwd is NULL)
     for ( i = 1; i <= seqw.Length(); i++ ) {
+<<<<<<< HEAD
       ShapeFix_WireSegment seg = seqw.Value(i);
+=======
+      const ShapeFix_WireSegment& seg = seqw.Value(i);
+>>>>>>> accb2f351 (u)
       if(seg.IsVertex())
         continue;
       TopAbs_Orientation anOr = seg.Orientation();
@@ -2101,7 +2125,11 @@ void ShapeFix_ComposeShell::CollectWires (ShapeFix_SequenceOfWireSegment &wires,
       // distance                  2
       // short                     auto
       // angle ->> PI              1
+<<<<<<< HEAD
       Handle(ShapeExtend_WireData) wire = seg.WireData();
+=======
+      const Handle(ShapeExtend_WireData)& wire = seg.WireData();
+>>>>>>> accb2f351 (u)
       for ( Standard_Integer j=0; j <2; j++ ) {
         if ( ! endV.IsSame ( j ? seg.LastVertex() : seg.FirstVertex() ) ) continue;
 
@@ -2341,7 +2369,11 @@ static gp_Pnt2d GetMiddlePoint (const ShapeFix_WireSegment& wire,
   Bnd_Box2d box;
   ShapeAnalysis_Edge sae;
   ShapeAnalysis_Curve sac;
+<<<<<<< HEAD
   Handle(ShapeExtend_WireData) wd = wire.WireData();
+=======
+  const Handle(ShapeExtend_WireData)& wd = wire.WireData();
+>>>>>>> accb2f351 (u)
   for(Standard_Integer i = 1; i <= wd->NbEdges(); i++) {
     TopoDS_Edge E = wd->Edge (i);
     Standard_Real cf,cl;
@@ -2374,7 +2406,11 @@ void ShapeFix_ComposeShell::MakeFacesOnPatch (TopTools_SequenceOfShape &faces,
   if ( loops.Length() == 1 ) {
     TopoDS_Face newFace;
     B.MakeFace ( newFace, surf, myLoc, ::Precision::Confusion() );
+<<<<<<< HEAD
     TopoDS_Shape aSH = loops.Value(1);
+=======
+    const TopoDS_Shape& aSH = loops.Value(1);
+>>>>>>> accb2f351 (u)
     if( aSH.ShapeType() != TopAbs_WIRE)
       return;
     TopoDS_Wire wire = TopoDS::Wire ( loops.Value(1) );
@@ -2804,7 +2840,11 @@ void ShapeFix_ComposeShell::DispatchWires (TopTools_SequenceOfShape &faces,
           loops.Append(wires(i).GetVertex());
       }
       else {
+<<<<<<< HEAD
         Handle(ShapeExtend_WireData) aWD = aSeg.WireData();
+=======
+        const Handle(ShapeExtend_WireData)& aWD = aSeg.WireData();
+>>>>>>> accb2f351 (u)
         if(!aWD.IsNull())
           loops.Append ( aWD->Wire() );
       }

@@ -966,8 +966,13 @@ static void RefEdgeInter(const TopoDS_Face&              F,
 
 static Standard_Integer evaluateMaxSegment(const Adaptor3d_CurveOnSurface& aCurveOnSurface)
 {
+<<<<<<< HEAD
   Handle(Adaptor3d_Surface) aSurf   = aCurveOnSurface.GetSurface();
   Handle(Adaptor2d_Curve2d) aCurv2d = aCurveOnSurface.GetCurve();
+=======
+  const Handle(Adaptor3d_Surface)& aSurf   = aCurveOnSurface.GetSurface();
+  const Handle(Adaptor2d_Curve2d)& aCurv2d = aCurveOnSurface.GetCurve();
+>>>>>>> accb2f351 (u)
 
   Standard_Real aNbSKnots = 0, aNbC2dKnots = 0;
   
@@ -1513,7 +1518,11 @@ Standard_Boolean BRepOffset_Inter2d::ExtentEdge(const TopoDS_Edge& E,TopoDS_Edge
 //purpose  : 
 //=======================================================================
 
+<<<<<<< HEAD
 static Standard_Boolean  UpdateVertex(TopoDS_Vertex V,
+=======
+static Standard_Boolean  UpdateVertex(const TopoDS_Vertex& V,
+>>>>>>> accb2f351 (u)
                                       TopoDS_Edge&  OE,
                                       TopoDS_Edge&  NE,
                                       Standard_Real TolConf)
@@ -1960,7 +1969,11 @@ void BRepOffset_Inter2d::ConnexIntByIntInVert
       TopExp_Explorer Exp1, Exp2;
       Standard_Boolean bCoincide;
       // intersect edges generated from vertex with the edges of the face
+<<<<<<< HEAD
       TopoDS_Shape NE3 = Build(Vref);
+=======
+      const TopoDS_Shape& NE3 = Build(Vref);
+>>>>>>> accb2f351 (u)
       //
       for (Exp2.Init(NE3, TopAbs_EDGE); Exp2.More(); Exp2.Next()) {
         const TopoDS_Edge& aE3 = *(TopoDS_Edge*)&Exp2.Current();

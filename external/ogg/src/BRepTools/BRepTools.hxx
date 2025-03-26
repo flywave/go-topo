@@ -330,7 +330,11 @@ public:
   //! Method returns actual tolerance of edge
   Standard_EXPORT static Standard_Real EvalAndUpdateTol(const TopoDS_Edge& theE, 
                                                         const Handle(Geom_Curve)& theC3d, 
+<<<<<<< HEAD
                                                         const Handle(Geom2d_Curve) theC2d, 
+=======
+                                                        const Handle(Geom2d_Curve)& theC2d, 
+>>>>>>> accb2f351 (u)
                                                         const Handle(Geom_Surface)& theS,
                                                         const Standard_Real theF,
                                                         const Standard_Real theL);

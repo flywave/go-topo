@@ -633,6 +633,7 @@ Standard_Boolean IGESData_ParamReader::ReadXYZ
 
 //=======================================================================
 //function : ReadText
+<<<<<<< HEAD
 //purpose  : 
 //=======================================================================
 
@@ -661,6 +662,57 @@ Standard_Boolean IGESData_ParamReader::ReadText
     if (hol != (lnt-lnh)) SendWarning (amsg);
   }
   val = new TCollection_HAsciiString(tval->SubString(lnh+1,lnt)->ToCString());
+=======
+//purpose  :
+//=======================================================================
+Standard_Boolean IGESData_ParamReader::ReadText(const IGESData_ParamCursor& thePC,
+                                                const Message_Msg& theMsg,
+                                                Handle(TCollection_HAsciiString)& theVal)
+{
+  if (!PrepareRead(thePC, Standard_False))
+  {
+    return Standard_False;
+  }
+  const Interface_FileParameter& aFP = theparams->Value(theindex + thebase);
+  if (aFP.ParamType() != Interface_ParamText)
+  {
+    theVal = new TCollection_HAsciiString("");
+    if (aFP.ParamType() == Interface_ParamVoid)
+    {
+      return Standard_True;
+    }
+    SendFail(theMsg);
+    return Standard_False;
+  }
+  const Handle(TCollection_HAsciiString) aBaseValue = new TCollection_HAsciiString(aFP.CValue());
+  const Standard_Integer aBaseLength = aBaseValue->Length();
+  const Standard_Integer aSymbolLocation = aBaseValue->Location(1, 'H', 1, aBaseLength);
+  if (aSymbolLocation <= 1 || aSymbolLocation > aBaseLength)
+  {
+    theVal = new TCollection_HAsciiString("");
+    SendFail(theMsg);
+    return Standard_False;
+  }
+  const TCollection_AsciiString aSpecialSubString = aBaseValue->String().SubString(1, aSymbolLocation - 1);
+  if (!aSpecialSubString.IsIntegerValue())
+  {
+    theVal = new TCollection_HAsciiString("");
+    SendFail(theMsg);
+    return Standard_False;
+  }
+  Standard_Integer aResLength = aSpecialSubString.IntegerValue();
+  if (aResLength != (aBaseLength - aSymbolLocation))
+  {
+    SendWarning(theMsg);
+    aResLength = aBaseLength - aSymbolLocation;
+  }
+  TCollection_AsciiString aResString;
+  if (aResLength > 0)
+  {
+    aResString = aBaseValue->String().SubString(aSymbolLocation + 1, aBaseLength);
+  }
+  theVal = new TCollection_HAsciiString(aResString);
+>>>>>>> accb2f351 (u)
   return Standard_True;
 }
 
@@ -1067,13 +1119,20 @@ Standard_Boolean IGESData_ParamReader::ReadEnts
   Standard_Integer indmax = index+thenbitem*thetermsz-1;
   val = new IGESData_HArray1OfIGESEntity (index , indmax);
   Standard_Integer ind = index;
+<<<<<<< HEAD
   Standard_Integer nbneg = 0, nbnul = 0;
+=======
+  Standard_Integer nbnul = 0;
+>>>>>>> accb2f351 (u)
 
   Standard_Integer i; // svv Jan11 2000 : porting on DEC
   for (i = FirstRead(); i > 0; i = NextRead()) {
     Standard_Integer nval;
     if (!ReadingEntityNumber(i,nval)) nval = 0;  //return Standard_False;
+<<<<<<< HEAD
     if (nval < 0) nbneg ++;
+=======
+>>>>>>> accb2f351 (u)
     if (nval > 0) {
       DeclareAndCast(IGESData_IGESEntity,anent,IR->BoundEntity(nval));
       if (anent.IsNull()) nbnul ++;

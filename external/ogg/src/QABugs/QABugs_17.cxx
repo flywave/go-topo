@@ -577,6 +577,10 @@ static Standard_Integer OCC570 (Draw_Interpretor& di, Standard_Integer argc,cons
 
 #include <Law_Interpol.hxx>
 
+<<<<<<< HEAD
+=======
+static Standard_Real tesp = 1.e-4;
+>>>>>>> accb2f351 (u)
 static Standard_Real t3d = 1.e-4;
 static Standard_Real t2d = 1.e-5;
 static Standard_Real ta  = 1.e-2;
@@ -606,7 +610,11 @@ static Standard_Integer MKEVOL(Draw_Interpretor& di,
   if (narg < 3) return 1;
   TopoDS_Shape V = DBRep::Get(a[2]);
   Rake = new BRepFilletAPI_MakeFillet(V);
+<<<<<<< HEAD
   Rake->SetParams(ta,t3d,t2d,t3d,t2d,fl);
+=======
+  Rake->SetParams(ta, tesp, t2d, t3d, t2d, fl);
+>>>>>>> accb2f351 (u)
   Rake->SetContinuity(blend_cont, tapp_angle);
   if (narg == 4) {
     ChFi3d_FilletShape FSh = ChFi3d_Rational;
@@ -724,7 +732,11 @@ static Standard_Integer OCC606 ( Draw_Interpretor& di, Standard_Integer n, const
       if (!result_surf1.IsNull())
       {
         BRepBuilderAPI_MakeFace b_face1(result_surf1, Precision::Confusion());
+<<<<<<< HEAD
         TopoDS_Face bsp_face1 = b_face1.Face();
+=======
+        const TopoDS_Face& bsp_face1 = b_face1.Face();
+>>>>>>> accb2f351 (u)
         DBRep::Set(a[1],bsp_face1);
       }
     }
@@ -1052,7 +1064,11 @@ static Standard_Integer OCCN1 (Draw_Interpretor& di, Standard_Integer argc, cons
   TopoDS_Wire twire = wire.Wire();
 
   BRepBuilderAPI_MakeFace face(twire);
+<<<<<<< HEAD
   TopoDS_Face tface = face.Face();
+=======
+  const TopoDS_Face& tface = face.Face();
+>>>>>>> accb2f351 (u)
   ////////Handle(AIS_Shape) face_ais = new AIS_Shape( tface );
   ////////aContext->Display(face_ais);
 

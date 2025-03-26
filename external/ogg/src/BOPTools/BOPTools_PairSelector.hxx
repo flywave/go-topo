@@ -60,7 +60,11 @@ public: //! @name public interfaces
   //! Clears the indices
   void Clear()
   {
+<<<<<<< HEAD
     myPairs.Clear();
+=======
+    myPairs.clear();
+>>>>>>> accb2f351 (u)
   }
 
   //! Sorts the indices

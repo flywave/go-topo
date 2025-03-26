@@ -61,7 +61,11 @@ protected:
                                      const Message_Gravity theGravity) const Standard_OVERRIDE;
 
   //! Send an alert with metrics active in the current report
+<<<<<<< HEAD
   Standard_EXPORT void sendMetricAlert (const TCollection_AsciiString theValue,
+=======
+  Standard_EXPORT void sendMetricAlert (const TCollection_AsciiString& theValue,
+>>>>>>> accb2f351 (u)
                                         const Message_Gravity theGravity) const;
 
 private:

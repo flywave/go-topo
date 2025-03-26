@@ -43,9 +43,8 @@ shape wire::copy(bool deep) const {
       throw std::runtime_error("Shell operation resulted in Null shape");
 
     return wire{shp};
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -156,9 +155,8 @@ wire wire::make_wire(std::vector<edge> &edges) {
     if (!ret.fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -200,9 +198,8 @@ wire wire::make_wire(std::initializer_list<edge> edges) {
     if (!ret.fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -244,9 +241,8 @@ wire wire::make_wire(std::vector<wire> &wires) {
     if (!ret.fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -288,9 +284,8 @@ wire wire::make_wire(std::initializer_list<wire> wires) {
     if (!ret.fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -353,9 +348,8 @@ int wire::project(const face &f) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -399,9 +393,8 @@ int wire::offset(double distance, int joinType) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -458,9 +451,8 @@ int wire::fillet(std::vector<vertex> &vertices, std::vector<double> radius) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -571,9 +563,8 @@ int wire::chamfer(std::vector<vertex> &vertices,
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {

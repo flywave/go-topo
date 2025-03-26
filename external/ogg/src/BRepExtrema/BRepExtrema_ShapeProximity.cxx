@@ -129,6 +129,10 @@ void BRepExtrema_ShapeProximity::Perform()
                                     myElementSet2);
     myProxValTool.LoadShapeLists (myShapeList1,
                                   myShapeList2);
+<<<<<<< HEAD
+=======
+    myProxValTool.SetNbSamplePoints (myNbSamples1, myNbSamples2);
+>>>>>>> accb2f351 (u)
 
     myProxValTool.Perform (myTolerance);
     myProxValTool.ProximityPoints(myProxPoint1, myProxPoint2);

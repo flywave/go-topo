@@ -1,10 +1,10 @@
 #ifndef __FLYWAVE_MESH_TOPO_MESH_HH__
 #define __FLYWAVE_MESH_TOPO_MESH_HH__
 
-#include <Handle_TDocStd_Document.hxx>
-#include <Handle_TopTools_HSequenceOfShape.hxx>
-#include <Handle_XCAFDoc_ColorTool.hxx>
-#include <Handle_XCAFDoc_ShapeTool.hxx>
+#include <TDocStd_Document.hxx>
+#include <TopTools_HSequenceOfShape.hxx>
+#include <XCAFDoc_ColorTool.hxx>
+#include <XCAFDoc_ShapeTool.hxx>
 #include <Quantity_Color.hxx>
 #include <TDF_Label.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>

@@ -478,7 +478,11 @@ void ChFi3d_ChBuilder::PerformThreeCorner(const Standard_Integer Jndex)
     if (!ComputeIntersection(DStr,fdpiv,coin,
 			     p3d[fin],p2d[fin],p3d[deb],p2d[deb],
 			     gcpiv,pivpc1,pivpc2,deru,derv,ptbid,
+<<<<<<< HEAD
 			     tolesp,tol2d,tolrcoinpiv))
+=======
+			     tolapp3d,tol2d,tolrcoinpiv))
+>>>>>>> accb2f351 (u)
       throw StdFail_NotDone("echec calcul intersection coin-pivot");
     gp_Vec norpiv = deru.Crossed(derv);
     
@@ -495,7 +499,11 @@ void ChFi3d_ChBuilder::PerformThreeCorner(const Standard_Integer Jndex)
     if (!ComputeIntersection(DStr,fddeb,coin,
 			     p3d[pivot],p2d1,p3d[fin],p2d2,
 			     gcdeb,debpc1,debpc2,deru,derv,ptbid,
+<<<<<<< HEAD
 			     tolesp,tol2d,tolrcoindeb))
+=======
+			     tolapp3d,tol2d,tolrcoindeb))
+>>>>>>> accb2f351 (u)
       throw StdFail_NotDone("echec calcul intersection coin-deb");
     Icf = DStr.AddCurve(TopOpeBRepDS_Curve(gcdeb,tolrcoindeb));    
 
@@ -514,7 +522,11 @@ void ChFi3d_ChBuilder::PerformThreeCorner(const Standard_Integer Jndex)
     if (!ComputeIntersection(DStr,fdfin,coin,
 			     p3dface,p2d1,p3d[deb],p2d2,
 			     gcfin,finpc1,finpc2,deru,derv,ptbid,
+<<<<<<< HEAD
 			     tolesp,tol2d,tolrcoinfin)) 
+=======
+			     tolapp3d,tol2d,tolrcoinfin)) 
+>>>>>>> accb2f351 (u)
       throw StdFail_NotDone("echec calcul intersection coin-face");
     Icl = DStr.AddCurve(TopOpeBRepDS_Curve(gcfin,tolrcoinfin));  
     
@@ -543,8 +555,13 @@ void ChFi3d_ChBuilder::PerformThreeCorner(const Standard_Integer Jndex)
 	  gaf->Initialize(face[pivot]);
 	  
 	  Standard_Real tolr;
+<<<<<<< HEAD
 	  ChFi3d_ProjectPCurv(gac,gaf,facepc1,tolesp,tolr);
 	  ChFi3d_ProjectPCurv(gac,gas,facepc2,tolesp,tolr);
+=======
+	  ChFi3d_ProjectPCurv(gac,gaf,facepc1,tolapp3d,tolr);
+	  ChFi3d_ProjectPCurv(gac,gas,facepc2,tolapp3d,tolr);
+>>>>>>> accb2f351 (u)
 	}
       }
     }
@@ -616,18 +633,30 @@ void ChFi3d_ChBuilder::PerformThreeCorner(const Standard_Integer Jndex)
       // les bords de coin sont des lignes courbes qui suivent les 
       // tangentes donnees
       Bfac = ChFi3d_mkbound(Fac,PCurveOnFace,sens[deb],p2d[pivot],Tgpiv,
+<<<<<<< HEAD
 			    sens[fin],p2d[3],Tg3,tolesp,2.e-4);
       Bpiv = ChFi3d_mkbound(Surf,PCurveOnPiv,sens[deb],p2d[fin],vpfin,
 			    sens[fin],p2d[deb],vpdeb,tolesp,2.e-4);
+=======
+			    sens[fin],p2d[3],Tg3,tolapp3d,2.e-4);
+      Bpiv = ChFi3d_mkbound(Surf,PCurveOnPiv,sens[deb],p2d[fin],vpfin,
+			    sens[fin],p2d[deb],vpdeb,tolapp3d,2.e-4);
+>>>>>>> accb2f351 (u)
     }
     else {
       // les bords de coin sont des segments
       //      Bfac = ChFi3d_mkbound(Fac,PCurveOnFace,p2d[pivot],
       //			    p2d[3],tolesp,2.e-4);
       Bfac = ChFi3d_mkbound(Fac,PCurveOnFace,p2d[pivot],
+<<<<<<< HEAD
 			    p2d[3],tolesp,2.e-4);
       Bpiv = ChFi3d_mkbound(Surf,PCurveOnPiv,p2d[fin],
 			    p2d[deb],tolesp,2.e-4);
+=======
+			    p2d[3],tolapp3d,2.e-4);
+      Bpiv = ChFi3d_mkbound(Surf,PCurveOnPiv,p2d[fin],
+			    p2d[deb],tolapp3d,2.e-4);
+>>>>>>> accb2f351 (u)
     }
     
     gp_Pnt2d pdeb1 = fddeb->Interference(jf[deb][pivot]).PCurveOnSurf()->Value(p[deb][pivot]);
@@ -637,15 +666,26 @@ void ChFi3d_ChBuilder::PerformThreeCorner(const Standard_Integer Jndex)
     
     if (issmooth) {
       // il faut homogeneiser, mettre les bords "BoundWithSurf"
+<<<<<<< HEAD
       Bdeb = ChFi3d_mkbound(DStr.Surface(fddeb->Surf()).Surface(),pdeb1,pdeb2,tolesp,2.e-4);
       Bfin = ChFi3d_mkbound(DStr.Surface(fdfin->Surf()).Surface(),pfin1,pfin2,tolesp,2.e-4);
+=======
+      Bdeb = ChFi3d_mkbound(DStr.Surface(fddeb->Surf()).Surface(),pdeb1,pdeb2,tolapp3d,2.e-4);
+      Bfin = ChFi3d_mkbound(DStr.Surface(fdfin->Surf()).Surface(),pfin1,pfin2,tolapp3d,2.e-4);
+>>>>>>> accb2f351 (u)
     }
     else {
       // ou les 4 bords de type "FreeBoundary"
       Bdeb = ChFi3d_mkbound(DStr.Surface(fddeb->Surf()).Surface(),pdeb1,pdeb2,
+<<<<<<< HEAD
 			    tolesp,2.e-4,Standard_True);
       Bfin = ChFi3d_mkbound(DStr.Surface(fdfin->Surf()).Surface(),pfin1,pfin2,
 			    tolesp,2.e-4,Standard_True);
+=======
+			    tolapp3d,2.e-4,Standard_True);
+      Bfin = ChFi3d_mkbound(DStr.Surface(fdfin->Surf()).Surface(),pfin1,pfin2,
+			    tolapp3d,2.e-4,Standard_True);
+>>>>>>> accb2f351 (u)
     }
     GeomFill_ConstrainedFilling fil(8,20);
     fil.Init(Bpiv,Bfin,Bfac,Bdeb);
@@ -704,7 +744,11 @@ void ChFi3d_ChBuilder::PerformThreeCorner(const Standard_Integer Jndex)
       ChFi3d_ComputeArete(Pf1,pp1,Pf2,pp2,
 			  DStr.Surface(coin->Surf()).Surface(),C3d,
 			  corner->ChangeFirstPCurve(),P1deb,P2deb,
+<<<<<<< HEAD
 			  tolesp,tol2d,tolreached,0);
+=======
+        tolapp3d,tol2d,tolreached,0);
+>>>>>>> accb2f351 (u)
       TopOpeBRepDS_Curve Tcurv(C3d,tolreached);
       Icf = DStr.AddCurve(Tcurv);
     }
@@ -733,7 +777,11 @@ void ChFi3d_ChBuilder::PerformThreeCorner(const Standard_Integer Jndex)
       ChFi3d_ComputeArete(Pl1,pp1,Pl2,pp2,
 			  DStr.Surface(coin->Surf()).Surface(),C3d,
 			  corner->ChangeLastPCurve(),P1fin,P2fin,
+<<<<<<< HEAD
 			  tolesp,tol2d,tolreached,0);
+=======
+        tolapp3d,tol2d,tolreached,0);
+>>>>>>> accb2f351 (u)
       TopOpeBRepDS_Curve Tcurv(C3d,tolreached);
       Icl = DStr.AddCurve(Tcurv);
     }

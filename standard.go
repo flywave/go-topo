@@ -5,11 +5,28 @@ package topo
 #include "standard_c_api.h"
 #cgo CFLAGS: -I  ./libs
 #cgo linux CXXFLAGS: -I ./libs  -std=gnu++14
-#cgo darwin CXXFLAGS: -I ./libs  -std=gnu++14
-#cgo darwin,arm CXXFLAGS: -I ./libs  -std=gnu++14
+#cgo darwin,amd64 CXXFLAGS: -I ./libs  -std=gnu++14
+#cgo darwin,arm64 CXXFLAGS: -I ./libs  -std=gnu++14
 #cgo windows CXXFLAGS: -I ./libs  -std=gnu++14
 */
 import "C"
+
+type PlaneName string
+
+const (
+	XYPlane     PlaneName = "XY"
+	YZPlane     PlaneName = "YZ"
+	ZXPlane     PlaneName = "ZX"
+	XZPlane     PlaneName = "XZ"
+	YXPlane     PlaneName = "YX"
+	ZYPlane     PlaneName = "ZY"
+	BackPlane   PlaneName = "back"
+	LeftPlane   PlaneName = "left"
+	RightPlane  PlaneName = "right"
+	TopPlane    PlaneName = "top"
+	BottomPlane PlaneName = "bottom"
+	FrontPlane  PlaneName = "front"
+)
 
 type XYZ struct {
 	val C.struct__xyz_t
@@ -181,6 +198,35 @@ func (d Axis2) DirX() Dir3 {
 
 func (d Axis2) DirY() Dir3 {
 	return Dir3{val: d.val.vy}
+}
+
+func NewxAxis2FromName(name PlaneName, origin Point3) Axis2 {
+	switch name {
+	case "XY", "front":
+		return NewAxis2FromNVX(origin, NewDir3FromXYZ([3]float64{1, 0, 0}), NewDir3FromXYZ([3]float64{0, 0, 1}))
+	case "YZ":
+		return NewAxis2FromNVX(origin, NewDir3FromXYZ([3]float64{0, 1, 0}), NewDir3FromXYZ([3]float64{1, 0, 0}))
+	case "ZX":
+		return NewAxis2FromNVX(origin, NewDir3FromXYZ([3]float64{0, 0, 1}), NewDir3FromXYZ([3]float64{0, 1, 0}))
+	case "XZ":
+		return NewAxis2FromNVX(origin, NewDir3FromXYZ([3]float64{1, 0, 0}), NewDir3FromXYZ([3]float64{0, -1, 0}))
+	case "YX":
+		return NewAxis2FromNVX(origin, NewDir3FromXYZ([3]float64{0, 1, 0}), NewDir3FromXYZ([3]float64{0, 0, -1}))
+	case "ZY":
+		return NewAxis2FromNVX(origin, NewDir3FromXYZ([3]float64{0, 0, 1}), NewDir3FromXYZ([3]float64{-1, 0, 0}))
+	case "back":
+		return NewAxis2FromNVX(origin, NewDir3FromXYZ([3]float64{-1, 0, 0}), NewDir3FromXYZ([3]float64{0, 0, -1}))
+	case "left":
+		return NewAxis2FromNVX(origin, NewDir3FromXYZ([3]float64{0, 0, 1}), NewDir3FromXYZ([3]float64{-1, 0, 0}))
+	case "right":
+		return NewAxis2FromNVX(origin, NewDir3FromXYZ([3]float64{0, 0, -1}), NewDir3FromXYZ([3]float64{1, 0, 0}))
+	case "top":
+		return NewAxis2FromNVX(origin, NewDir3FromXYZ([3]float64{1, 0, 0}), NewDir3FromXYZ([3]float64{0, 1, 0}))
+	case "bottom":
+		return NewAxis2FromNVX(origin, NewDir3FromXYZ([3]float64{1, 0, 0}), NewDir3FromXYZ([3]float64{0, -1, 0}))
+	default:
+		return NewAxis2FromNVX(origin, NewDir3FromXYZ([3]float64{1, 0, 0}), NewDir3FromXYZ([3]float64{0, 0, 1}))
+	}
 }
 
 func NewAxis2FromNVX(p Point3, n Dir3, x Dir3) Axis2 {
@@ -723,6 +769,10 @@ type Plane struct {
 
 func (d Plane) Axis() Axis3 {
 	return Axis3{val: d.val.p}
+}
+
+func NewPlaneFromName(name PlaneName, origin Point3) Plane {
+	return NewPlaneFromAxis2(NewxAxis2FromName(name, origin))
 }
 
 func NewPlaneFromAxis2(a Axis2) Plane {

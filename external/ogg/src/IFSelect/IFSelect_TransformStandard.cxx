@@ -118,7 +118,11 @@ IFSelect_TransformStandard::IFSelect_TransformStandard ()
   (const Interface_Graph& G, Interface_CopyTool& TC,
    Handle(Interface_InterfaceModel)& newmod) const
 {
+<<<<<<< HEAD
   Handle(Interface_InterfaceModel) original = G.Model();
+=======
+  const Handle(Interface_InterfaceModel)& original = G.Model();
+>>>>>>> accb2f351 (u)
   newmod  = original->NewEmptyModel();
   TC.Clear();
   Standard_Integer nb = G.Size();
@@ -150,7 +154,11 @@ IFSelect_TransformStandard::IFSelect_TransformStandard ()
   Standard_Boolean res = Standard_True;
   Standard_Boolean chg = Standard_False;
   Standard_Integer nb = NbModifiers();
+<<<<<<< HEAD
   Handle(Interface_InterfaceModel) original = G.Model();
+=======
+  const Handle(Interface_InterfaceModel)& original = G.Model();
+>>>>>>> accb2f351 (u)
 
   for (Standard_Integer i = 1; i <= nb; i ++) {
     Handle(IFSelect_Modifier) unmod = Modifier(i);

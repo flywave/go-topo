@@ -30,6 +30,7 @@
 #include <TColgp_Array1OfPnt.hxx>
 #include <TColgp_HArray1OfPnt.hxx>
 
+<<<<<<< HEAD
 static Standard_Boolean Controle(const TColgp_Array1OfPnt& P,
 			  const gp_Pln& Plan,
 			  const Standard_Real Tol) 
@@ -42,6 +43,8 @@ static Standard_Boolean Controle(const TColgp_Array1OfPnt& P,
     
   return B;
 }
+=======
+>>>>>>> accb2f351 (u)
 
 static Standard_Boolean Controle(const TColgp_Array1OfPnt& Poles,
 				 const Standard_Real Tol,
@@ -49,6 +52,7 @@ static Standard_Boolean Controle(const TColgp_Array1OfPnt& Poles,
 				 gp_Pln& Plan) 
 {
   Standard_Boolean IsPlan = Standard_False;
+<<<<<<< HEAD
   Standard_Boolean Essai = Standard_True;
   Standard_Real gx,gy,gz;
   Standard_Integer Nb = Poles.Length();
@@ -94,6 +98,38 @@ static Standard_Boolean Controle(const TColgp_Array1OfPnt& Poles,
       IsPlan = Standard_True;
     }
   }   
+=======
+  Standard_Real gx,gy,gz;
+  gp_Pnt Bary;
+  gp_Dir DX, DY;
+  Standard_Real aTolSingular = Precision::Confusion();
+
+    
+  GeomLib::Inertia(Poles, Bary, DX, DY, gx, gy, gz);
+  if (gz < Tol && gy > aTolSingular) {
+    gp_Pnt P;
+    gp_Vec DU, DV;
+    Standard_Real umin, umax, vmin, vmax;
+    S->Bounds(umin, umax, vmin, vmax);
+    S->D1((umin + umax) / 2, (vmin + vmax) / 2, P, DU, DV);
+    // On prend DX le plus proche possible de DU
+    gp_Dir du(DU);
+    Standard_Real Angle1 = du.Angle(DX);
+    Standard_Real Angle2 = du.Angle(DY);
+    if (Angle1 > M_PI / 2) Angle1 = M_PI - Angle1;
+    if (Angle2 > M_PI / 2) Angle2 = M_PI - Angle2;
+    if (Angle2 < Angle1) {
+      du = DY; DY = DX; DX = du;
+    }
+    if (DX.Angle(DU) > M_PI / 2) DX.Reverse();
+    if (DY.Angle(DV) > M_PI / 2) DY.Reverse();
+
+    gp_Ax3 axe(Bary, DX^DY, DX);
+    Plan.SetPosition(axe);
+    Plan.SetLocation(Bary);
+    IsPlan = Standard_True;
+  }
+>>>>>>> accb2f351 (u)
   return IsPlan;
 }
 
@@ -106,8 +142,11 @@ static Standard_Boolean Controle(const Handle(Geom_Curve)& C,
   GeomAbs_CurveType Type;
   GeomAdaptor_Curve AC(C);
   Type = AC.GetType();
+<<<<<<< HEAD
   Handle(TColgp_HArray1OfPnt) TabP;
   TabP.Nullify();
+=======
+>>>>>>> accb2f351 (u)
 
   switch (Type) {
   case GeomAbs_Line :
@@ -131,15 +170,19 @@ static Standard_Boolean Controle(const Handle(Geom_Curve)& C,
   case GeomAbs_BezierCurve:
     {
       Nb =  AC.NbPoles();
+<<<<<<< HEAD
       Handle (Geom_BezierCurve) BZ = AC.Bezier();
       TabP = new (TColgp_HArray1OfPnt) (1, AC.NbPoles());
       for (ii=1; ii<=Nb; ii++) 
 	TabP->SetValue(ii, BZ->Pole(ii));
+=======
+>>>>>>> accb2f351 (u)
       break; 
     }
   case GeomAbs_BSplineCurve:
     {
       Nb =  AC.NbPoles();
+<<<<<<< HEAD
       Handle (Geom_BSplineCurve) BZ = AC.BSpline();
       TabP = new (TColgp_HArray1OfPnt) (1, AC.NbPoles());
       for (ii=1; ii<=Nb; ii++) 
@@ -165,6 +208,24 @@ static Standard_Boolean Controle(const Handle(Geom_Curve)& C,
   }
   else {
     B = Controle(TabP->Array1(), Plan, Tol);
+=======
+      break; 
+    }
+  default :
+    {
+	 Nb = 8 + 3*AC.NbIntervals(GeomAbs_CN);
+    }
+  }
+ 
+  Standard_Real u, du, f, l, d;
+  f = AC.FirstParameter();
+  l = AC.LastParameter();
+  du = (l - f) / (Nb - 1);
+  for (ii = 1; ii <= Nb && B; ii++) {
+    u = (ii - 1)*du + f;
+    d = Plan.Distance(C->Value(u));
+    B = d < Tol;
+>>>>>>> accb2f351 (u)
   }
 
   return B;
@@ -196,6 +257,7 @@ GeomLib_IsPlanarSurface::GeomLib_IsPlanarSurface(const Handle(Geom_Surface)& S,
      IsPlan = Standard_False;
      break;
     }
+<<<<<<< HEAD
   case GeomAbs_BezierSurface :
   case GeomAbs_BSplineSurface :
     {
@@ -220,6 +282,8 @@ GeomLib_IsPlanarSurface::GeomLib_IsPlanarSurface(const Handle(Geom_Surface)& S,
       IsPlan =  Controle(Poles, Tol, S, myPlan);
       break;      
     }
+=======
+>>>>>>> accb2f351 (u)
 
   case GeomAbs_SurfaceOfRevolution :
     {
@@ -299,7 +363,11 @@ GeomLib_IsPlanarSurface::GeomLib_IsPlanarSurface(const Handle(Geom_Surface)& S,
       break;
     }
 
+<<<<<<< HEAD
     default :
+=======
+  default :
+>>>>>>> accb2f351 (u)
       {
 	Standard_Integer NbU,NbV, ii, jj, kk; 
 	NbU = 8 + 3*AS.NbUIntervals(GeomAbs_CN);

@@ -2,7 +2,7 @@
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRep_Tool.hxx>
 #include <TopoDS.hxx>
-
+#include <Standard_Failure.hxx>
 #include "vertex.hh"
 
 namespace flywave {
@@ -35,9 +35,8 @@ shape vertex::copy(bool deep) const {
       throw std::runtime_error("Shell operation resulted in Null shape");
 
     return vertex{shp};
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString() ;
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {

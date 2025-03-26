@@ -23,6 +23,10 @@
 #include <Interface_Macros.hxx>
 #include <Interface_Static.hxx>
 #include <Message_Msg.hxx>
+<<<<<<< HEAD
+=======
+#include <ShapeBuild_ReShape.hxx>
+>>>>>>> accb2f351 (u)
 #include <Standard_Transient.hxx>
 #include <Standard_Type.hxx>
 #include <TCollection_HAsciiString.hxx>
@@ -47,6 +51,10 @@ void IGESData_VerifyDate
 IGESData_IGESModel::IGESData_IGESModel ()
 {
   thestart = new TColStd_HSequenceOfHAsciiString();
+<<<<<<< HEAD
+=======
+  myReShape = new ShapeBuild_ReShape();
+>>>>>>> accb2f351 (u)
 //  thecheckstx = new Interface_Check;
 //  thechecksem = new Interface_Check;
 }
@@ -62,6 +70,10 @@ void IGESData_IGESModel::ClearHeader ()
   IGESData_GlobalSection newheader;  // Un peu brutal, certes
   theheader = newheader;
   thestart = new TColStd_HSequenceOfHAsciiString();
+<<<<<<< HEAD
+=======
+  myReShape = new ShapeBuild_ReShape();
+>>>>>>> accb2f351 (u)
 }
 
 
@@ -489,7 +501,11 @@ void IGESData_VerifyDate(const Handle(TCollection_HAsciiString)& str,
   if (str.IsNull())
     {  ach->SendFail(Msg57);  return;  }
 
+<<<<<<< HEAD
   Handle(TCollection_HAsciiString) stdvar = str;
+=======
+  const Handle(TCollection_HAsciiString)& stdvar = str;
+>>>>>>> accb2f351 (u)
   if (strcmp(mess,"Last Change Date")==0)
     Msg57.Arg(25);
   else

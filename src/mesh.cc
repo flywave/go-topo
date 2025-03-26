@@ -50,7 +50,7 @@
 #include <XCAFDoc_ShapeTool.hxx>
 #include <XCAFPrs.hxx>
 #include <XCAFPrs_DataMapIteratorOfDataMapOfStyleShape.hxx>
-#include <XCAFPrs_DataMapOfShapeStyle.hxx>
+#include <XCAFPrs_IndexedDataMapOfShapeStyle.hxx>
 #include <XCAFPrs_DataMapOfStyleShape.hxx>
 #include <XCAFPrs_Style.hxx>
 #include <gp_Pnt.hxx>
@@ -159,14 +159,14 @@ void mesh::triangulation(mesh_receiver &meshReceiver, double deflection,
     bool hasSeam = hasSeams[f - 1];
     gp_Trsf transform = loc.Transformation();
     gp_Quaternion quaternion = transform.GetRotation();
-    const TColgp_Array1OfPnt &nodes = mesh->Nodes();
+    Handle(TColgp_HArray1OfPnt) nodes = mesh->MapNodeArray();
     Poly::ComputeNormals(mesh);
-
+    
     if (hasSeam) {
-      TColStd_Array1OfReal norms(1, mesh->Normals().Length());
+      TColStd_Array1OfReal norms(1, mesh->MapNormalArray()->Length());
       for (Standard_Integer i = 1; i <= mesh->NbNodes() * 3; i += 3) {
-        gp_Dir dir(mesh->Normals().Value(i), mesh->Normals().Value(i + 1),
-                   mesh->Normals().Value(i + 2));
+        gp_Dir dir(mesh->MapNormalArray()->Value(i), mesh->MapNormalArray()->Value(i + 1),
+                   mesh->MapNormalArray()->Value(i + 2));
         if (faceReversed)
           dir.Reverse();
         dir = quaternion.Multiply(dir);
@@ -176,7 +176,7 @@ void mesh::triangulation(mesh_receiver &meshReceiver, double deflection,
       }
       std::unordered_map<point3d_with_tolerance, int> uniquePointsOnFace;
       for (Standard_Integer j = 1; j <= mesh->NbNodes(); j++) {
-        gp_Pnt p = nodes.Value(j);
+        gp_Pnt p = nodes->Value(j);
         point3d_with_tolerance pt(p.X(), p.Y(), p.Z(), tolerance);
         int nodeIndex;
         if (uniquePointsOnFace.find(pt) != uniquePointsOnFace.end()) {
@@ -198,7 +198,7 @@ void mesh::triangulation(mesh_receiver &meshReceiver, double deflection,
       }
 
       for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
-        gp_Pnt p = nodes.Value(j + 1);
+        gp_Pnt p = nodes->Value(j + 1);
         Standard_Real px = p.X();
         Standard_Real py = p.Y();
         Standard_Real pz = p.Z();
@@ -210,14 +210,14 @@ void mesh::triangulation(mesh_receiver &meshReceiver, double deflection,
       }
     } else {
       for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
-        gp_Pnt p = nodes.Value(j + 1);
+        gp_Pnt p = nodes->Value(j + 1);
         Standard_Real px = p.X();
         Standard_Real py = p.Y();
         Standard_Real pz = p.Z();
         transform.Transforms(px, py, pz);
-        gp_Dir dir(mesh->Normals().Value((j * 3) + 1),
-                   mesh->Normals().Value((j * 3) + 2),
-                   mesh->Normals().Value((j * 3) + 3));
+        gp_Dir dir(mesh->MapNormalArray()->Value((j * 3) + 1),
+                   mesh->MapNormalArray()->Value((j * 3) + 2),
+                   mesh->MapNormalArray()->Value((j * 3) + 3));
         if (faceReversed)
           dir.Reverse();
         dir = quaternion.Multiply(dir);
@@ -227,13 +227,13 @@ void mesh::triangulation(mesh_receiver &meshReceiver, double deflection,
     }
 
     Standard_Integer t[3];
-    const Poly_Array1OfTriangle &triangles = mesh->Triangles();
+    Handle(Poly_HArray1OfTriangle) triangles = mesh->MapTriangleArray();
 
     for (Standard_Integer j = 1; j <= mesh->NbTriangles(); j++) {
       if (faceReversed)
-        triangles(j).Get(t[2], t[1], t[0]);
+        triangles->Value(j).Get(t[2], t[1], t[0]);
       else
-        triangles(j).Get(t[0], t[1], t[2]);
+        triangles->Value(j).Get(t[0], t[1], t[2]);
       int tri[3];
       tri[0] = t[0] - 1;
       tri[1] = t[1] - 1;
@@ -327,9 +327,9 @@ void mesh::add_label_contents(const TDF_Label &label) {
       TDF_Label ref;
       XCAFDoc_ShapeTool::GetReferredShape(label, ref);
       if (XCAFDoc_ShapeTool::IsAssembly(ref)) {
-        int stackIndex = _shape_stack.size();
+        size_t stackIndex = _shape_stack.size();
         create_shape_colour_stacks(ref);
-        for (unsigned int i = stackIndex; i < _shape_stack.size(); i++) {
+        for (size_t i = stackIndex; i < _shape_stack.size(); i++) {
           _shape_stack[i].Move(XCAFDoc_ShapeTool::GetLocation(label));
         }
       } else {
@@ -463,7 +463,7 @@ static bool merge_styles(XCAFPrs_Style &style, const XCAFPrs_Style &father) {
 }
 
 static bool dispatch_styles(const TopoDS_Shape &shape,
-                            const XCAFPrs_DataMapOfShapeStyle &settings,
+                            const XCAFPrs_IndexedDataMapOfShapeStyle &settings,
                             XCAFPrs_DataMapOfStyleShape &items,
                             const XCAFPrs_Style &DefStyle,
                             const bool force = true,
@@ -472,8 +472,8 @@ static bool dispatch_styles(const TopoDS_Shape &shape,
   XCAFPrs_Style ownstyle;
 
   bool overriden = false;
-  if (settings.IsBound(shape)) {
-    ownstyle = settings.Find(shape);
+  if (settings.Contains(shape)) {
+    ownstyle = settings.FindFromKey(shape);
     if (!merge_styles(ownstyle, DefStyle)) {
       overriden = true;
       style = &ownstyle;
@@ -528,7 +528,7 @@ bool mesh::style_print(const TDF_Label &aLabel,
   TDF_Tool::Entry(aLabel, labelName);
 
   TopLoc_Location L;
-  XCAFPrs_DataMapOfShapeStyle settings;
+  XCAFPrs_IndexedDataMapOfShapeStyle settings;
   XCAFPrs::CollectStyleSettings(aLabel, L, settings);
 
   XCAFPrs_DataMapOfStyleShape items;
@@ -662,7 +662,7 @@ void mesh::heal_geometry(TopoDS_Shape shape, double tolerance,
 
         if (sfw->FixSmall(false, tolerance)) {
           TopoDS_Wire newwire = sfw->Wire();
-          rebuild->Replace(oldwire, newwire, Standard_False);
+          rebuild->Replace(oldwire, newwire);
         }
       }
     }
@@ -680,7 +680,7 @@ void mesh::heal_geometry(TopoDS_Shape shape, double tolerance,
         GProp_GProps system;
         BRepGProp::LinearProperties(edge, system);
         if (system.Mass() < tolerance) {
-          rebuild->Remove(edge, false);
+          rebuild->Remove(edge);
         }
       }
     }
@@ -743,7 +743,7 @@ void mesh::heal_geometry(TopoDS_Shape shape, double tolerance,
           TopoDS_Solid newsolid = solid;
           BRepLib::OrientClosedSolid(newsolid);
           Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
-          rebuild->Replace(solid, newsolid, Standard_False);
+          rebuild->Replace(solid, newsolid);
           TopoDS_Shape newshape = rebuild->Apply(shape, TopAbs_COMPSOLID, 1);
           shape = newshape;
         }

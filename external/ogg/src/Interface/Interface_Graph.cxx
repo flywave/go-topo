@@ -158,7 +158,11 @@ void Interface_Graph::Evaluate()
     //    Mise en forme : liste d entiers
     for (iter.Start(); iter.More(); iter.Next()) {
       //    num = 0 -> on sort du Model de depart, le noter "Error" et passer
+<<<<<<< HEAD
       Handle(Standard_Transient) entshare = iter.Value();
+=======
+      const Handle(Standard_Transient)& entshare = iter.Value();
+>>>>>>> accb2f351 (u)
       if(entshare == ent)
         continue;
 
@@ -349,7 +353,11 @@ void  Interface_Graph::GetFromIter
    if(thestats.IsNull())
     return;
   for (iter.Start(); iter.More(); iter.Next()) {
+<<<<<<< HEAD
     Handle(Standard_Transient) ent = iter.Value();
+=======
+    const Handle(Standard_Transient)& ent = iter.Value();
+>>>>>>> accb2f351 (u)
     Standard_Integer num = EntityNumber(ent);
     if (!num) 
       continue;
@@ -368,7 +376,11 @@ void  Interface_Graph::GetFromIter
   if(thestats.IsNull())
     return;
   for (iter.Start(); iter.More(); iter.Next()) {
+<<<<<<< HEAD
     Handle(Standard_Transient) ent = iter.Value();
+=======
+    const Handle(Standard_Transient)& ent = iter.Value();
+>>>>>>> accb2f351 (u)
     Standard_Integer num   = EntityNumber(ent);
     if (!num) 
       continue;

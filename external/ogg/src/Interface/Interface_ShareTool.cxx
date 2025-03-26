@@ -202,7 +202,11 @@ void  Interface_ShareTool::Print (const Interface_EntityIterator& iter, Standard
 {
   S << " Nb.Entities : " << iter.NbEntities() << " : ";
   for (iter.Start(); iter.More(); iter.Next()) {
+<<<<<<< HEAD
     Handle(Standard_Transient) ent = iter.Value();
+=======
+    const Handle(Standard_Transient)& ent = iter.Value();
+>>>>>>> accb2f351 (u)
     S << " n0/id:"; 
     Model()->Print (ent, S);
   }

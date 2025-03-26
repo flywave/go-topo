@@ -88,8 +88,16 @@ bool DE_ConfigurationNode::Save(const TCollection_AsciiString& theResourcePath) 
 // function : UpdateLoad
 // purpose  :
 //=======================================================================
+<<<<<<< HEAD
 bool DE_ConfigurationNode::UpdateLoad()
 {
+=======
+bool DE_ConfigurationNode::UpdateLoad(const Standard_Boolean theToImport,
+                                      const Standard_Boolean theToKeep)
+{
+  (void)theToImport;
+  (void)theToKeep;
+>>>>>>> accb2f351 (u)
   return true;
 }
 

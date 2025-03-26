@@ -225,6 +225,17 @@ static Resource_KindOfLine WhatKindOfLine(OSD_File& aFile,
     aToken2.Clear();
   else {
     Line.Remove(1,Pos-1);
+<<<<<<< HEAD
+=======
+    const Standard_Integer aLineLength = Line.Length();
+    if (aLineLength >= 2)
+    {
+      if (Line.Value(aLineLength - 1) == '\r')
+      {
+        Line.Remove(aLineLength - 1);
+      }
+    }
+>>>>>>> accb2f351 (u)
     Line.Remove(Line.Length());
     aToken2 = Line;
   }

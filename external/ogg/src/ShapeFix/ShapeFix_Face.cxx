@@ -691,7 +691,11 @@ Standard_Boolean ShapeFix_Face::Perform()
           TopoDS_Shape aCurW = aItW.Value();
           while(aMapReorderedWires.IsBound(aCurW))
           {
+<<<<<<< HEAD
             TopoDS_Shape aFixW = aMapReorderedWires.Find(aCurW);
+=======
+            const TopoDS_Shape& aFixW = aMapReorderedWires.Find(aCurW);
+>>>>>>> accb2f351 (u)
             Context()->Replace(aCurW, aFixW);
             aCurW = aFixW;
           }
@@ -715,7 +719,11 @@ Standard_Boolean ShapeFix_Face::Perform()
 
 // Shift all pcurves of edges in the given wire on the given face 
 // to vector <vec>
+<<<<<<< HEAD
 static void Shift2dWire(const TopoDS_Wire w, const TopoDS_Face f,
+=======
+static void Shift2dWire(const TopoDS_Wire& w, const TopoDS_Face& f,
+>>>>>>> accb2f351 (u)
 			const gp_Vec2d vec, 
                         const Handle(ShapeAnalysis_Surface)& mySurf,
                         Standard_Boolean recompute3d = Standard_False)
@@ -1168,7 +1176,10 @@ Standard_Boolean ShapeFix_Face::FixOrientation(TopTools_DataMapOfShapeListOfShap
     MW.Clear();
     SI.Clear();
     MapIntWires.Clear();
+<<<<<<< HEAD
     Standard_Integer NbOuts=0;
+=======
+>>>>>>> accb2f351 (u)
     Standard_Integer i;
 
     NCollection_Array1<Bnd_Box2d> aWireBoxes(1, nb);
@@ -1195,8 +1206,13 @@ Standard_Boolean ShapeFix_Face::FixOrientation(TopTools_DataMapOfShapeListOfShap
           //avoiding problems with segment in Bnd_Box
           gac.Load(cw);
         }
+<<<<<<< HEAD
        else
          gac.Load(cw,cf,cl);
+=======
+        else
+          gac.Load(cw,cf,cl);
+>>>>>>> accb2f351 (u)
        BndLib_Add2dCurve::Add(gac,::Precision::Confusion(),aBox);
       }
 
@@ -1345,7 +1361,10 @@ Standard_Boolean ShapeFix_Face::FixOrientation(TopTools_DataMapOfShapeListOfShap
       else {
         MW.Bind(aw,IntWires);
         if(sta==TopAbs_OUT) {
+<<<<<<< HEAD
           NbOuts++;
+=======
+>>>>>>> accb2f351 (u)
           if(staout==TopAbs_IN ) {
             // wire is OUT but InfinitePoint is IN => need to reverse
             ShapeExtend_WireData sewd (aw);
@@ -1375,7 +1394,10 @@ Standard_Boolean ShapeFix_Face::FixOrientation(TopTools_DataMapOfShapeListOfShap
       Standard_Integer tmpi = SI.Find(aw);
       if(tmpi>1) {
         if(!MapIntWires.Contains(aw)) {
+<<<<<<< HEAD
           NbOuts++;
+=======
+>>>>>>> accb2f351 (u)
           const TopTools_ListOfShape& IW = MW.Find(aw);
           if(tmpi==3) {
             // wire is OUT but InfinitePoint is IN => need to reverse
@@ -1418,7 +1440,11 @@ Standard_Boolean ShapeFix_Face::FixOrientation(TopTools_DataMapOfShapeListOfShap
     
     if(nb < nbAll) {
       for( i =1; i <= nbAll;i++) {
+<<<<<<< HEAD
         TopoDS_Shape aS2 = allSubShapes.Value(i);
+=======
+        const TopoDS_Shape& aS2 = allSubShapes.Value(i);
+>>>>>>> accb2f351 (u)
         if(aS2.ShapeType() != TopAbs_WIRE || 
            (aS2.Orientation() != TopAbs_FORWARD && aS2.Orientation() != TopAbs_REVERSED))
           B.Add ( S,aS2);

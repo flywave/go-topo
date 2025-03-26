@@ -288,8 +288,13 @@ static Standard_Integer evaluateMaxSegment(const Standard_Integer aMaxSegment,
 {
   if (aMaxSegment != 0) return aMaxSegment;
 
+<<<<<<< HEAD
   Handle(Adaptor3d_Surface) aSurf   = aCurveOnSurface.GetSurface();
   Handle(Adaptor2d_Curve2d) aCurv2d = aCurveOnSurface.GetCurve();
+=======
+  const Handle(Adaptor3d_Surface)& aSurf   = aCurveOnSurface.GetSurface();
+  const Handle(Adaptor2d_Curve2d)& aCurv2d = aCurveOnSurface.GetCurve();
+>>>>>>> accb2f351 (u)
 
   Standard_Real aNbSKnots = 0, aNbC2dKnots = 0;
 
@@ -802,7 +807,11 @@ static void GetEdgeTol(const TopoDS_Edge& theEdge,
     }
     if(temp > d2) d2 = temp;
   }
+<<<<<<< HEAD
   d2 = 1.5*sqrt(d2);
+=======
+  d2 = 1.05*sqrt(d2);
+>>>>>>> accb2f351 (u)
   theEdTol = d2;
 }
 
@@ -884,10 +893,13 @@ static void UpdShTol(const TopTools_DataMapOfShapeReal& theShToTol,
     case TopAbs_VERTEX: 
       {
         const Handle(BRep_TVertex)& aTV = *((Handle(BRep_TVertex)*)&aNsh.TShape());
+<<<<<<< HEAD
         //
         if(aTV->Locked())
           throw TopoDS_LockedShape("BRep_Builder::UpdateVertex");
         //
+=======
+>>>>>>> accb2f351 (u)
         if (theVForceUpdate)
           aTV->Tolerance(aTol);
         else
@@ -965,6 +977,12 @@ static void InternalSameParameter(const TopoDS_Shape& theSh, BRepTools_ReShape& 
     TopExp_Explorer ex2;
     for(ex2.Init(curface,TopAbs_EDGE); ex2.More(); ex2.Next()){
       const TopoDS_Edge& E = TopoDS::Edge(ex2.Current());
+<<<<<<< HEAD
+=======
+      if (BRep_Tool::Degenerated(E))
+        continue;
+
+>>>>>>> accb2f351 (u)
       TopoDS_Shape aNe = theReshaper.Value(E);
       Standard_Real aNewEtol = -1;
       GetEdgeTol(TopoDS::Edge(aNe), curface, aNewEtol);
@@ -1189,7 +1207,11 @@ static void GetCurve3d(const TopoDS_Edge& theEdge, Handle(Geom_Curve)& theC3d, S
 //function : UpdateVTol
 //purpose  : 
 //=======================================================================
+<<<<<<< HEAD
 void UpdateVTol(const TopoDS_Vertex theV1, const TopoDS_Vertex& theV2, Standard_Real theTol)
+=======
+void UpdateVTol(const TopoDS_Vertex& theV1, const TopoDS_Vertex& theV2, Standard_Real theTol)
+>>>>>>> accb2f351 (u)
 {
   BRep_Builder aB;
   if (!theV1.IsNull())
@@ -1709,8 +1731,13 @@ static void InternalUpdateTolerances(const TopoDS_Shape& theOldShape,
   for (iCur=1; iCur<=nbV; iCur++) {
     tol=0;
     const TopoDS_Vertex& V = TopoDS::Vertex(parents.FindKey(iCur));
+<<<<<<< HEAD
     Bnd_Box box;
     box.Add(BRep_Tool::Pnt(V));
+=======
+    gp_Pnt aPV = BRep_Tool::Pnt(V);
+    Standard_Real aMaxDist = 0.;
+>>>>>>> accb2f351 (u)
     gp_Pnt p3d;
     for (lConx.Initialize(parents(iCur)); lConx.More(); lConx.Next()) {
       const TopoDS_Edge& E = TopoDS::Edge(lConx.Value());
@@ -1732,8 +1759,15 @@ static void InternalUpdateTolerances(const TopoDS_Shape& theOldShape,
           if (!C.IsNull()) { // edge non degenerated
             p3d = C->Value(par);
             p3d.Transform(L.Transformation());
+<<<<<<< HEAD
             box.Add(p3d);
           }
+=======
+            Standard_Real aDist = p3d.SquareDistance(aPV);
+            if (aDist > aMaxDist)
+              aMaxDist = aDist;
+           }
+>>>>>>> accb2f351 (u)
         }
         else if (cr->IsCurveOnSurface()) {
           const Handle(Geom_Surface)& Su = cr->Surface();
@@ -1745,21 +1779,37 @@ static void InternalUpdateTolerances(const TopoDS_Shape& theOldShape,
           gp_Pnt2d p2d = PC->Value(par);
           p3d = Su->Value(p2d.X(),p2d.Y());
           p3d.Transform(L.Transformation());
+<<<<<<< HEAD
           box.Add(p3d);
+=======
+          Standard_Real aDist = p3d.SquareDistance(aPV);
+          if (aDist > aMaxDist)
+            aMaxDist = aDist;
+>>>>>>> accb2f351 (u)
           if (!PC2.IsNull()) {
             p2d = PC2->Value(par);
             p3d = Su->Value(p2d.X(),p2d.Y());
             p3d.Transform(L.Transformation());
+<<<<<<< HEAD
             box.Add(p3d);
+=======
+            aDist = p3d.SquareDistance(aPV);
+            if (aDist > aMaxDist)
+              aMaxDist = aDist;
+>>>>>>> accb2f351 (u)
           }
         }
         itcr.Next();
       }
     }
+<<<<<<< HEAD
     Standard_Real aXmin, aYmin, aZmin, aXmax, aYmax, aZmax;
     box.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
     aXmax -= aXmin; aYmax -= aYmin; aZmax -= aZmin;
     tol = Max(tol,sqrt(aXmax*aXmax+aYmax*aYmax+aZmax*aZmax));
+=======
+    tol = Max(tol, sqrt(aMaxDist));
+>>>>>>> accb2f351 (u)
     tol += 2.*Epsilon(tol);
     //
     Standard_Real aVTol = BRep_Tool::Tolerance(V);

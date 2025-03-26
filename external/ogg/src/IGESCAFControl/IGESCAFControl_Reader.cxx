@@ -95,7 +95,11 @@ static void AddCompositeShape (const Handle(XCAFDoc_ShapeTool)& theSTool,
                                TopTools_MapOfShape& theMap)
 {
   TopoDS_Shape aShape = theShape;
+<<<<<<< HEAD
   TopLoc_Location aLoc = theShape.Location();
+=======
+  const TopLoc_Location& aLoc = theShape.Location();
+>>>>>>> accb2f351 (u)
   if (!theConsiderLoc && !aLoc.IsIdentity())
     aShape.Location( TopLoc_Location() );
   if (!theMap.Add (aShape)) 
@@ -322,7 +326,12 @@ Standard_Boolean IGESCAFControl_Reader::Transfer (const Handle(TDocStd_Document)
 
     //Checks that current entity is a subfigure
     Handle(IGESBasic_SubfigureDef) aSubfigure = Handle(IGESBasic_SubfigureDef)::DownCast (ent);
+<<<<<<< HEAD
     if (GetNameMode() && !aSubfigure.IsNull() && STool->Search (S, L, Standard_True, Standard_True))
+=======
+    if (GetNameMode() && !aSubfigure.IsNull() && !aSubfigure->Name().IsNull() &&
+        STool->Search(S, L, Standard_True, Standard_True))
+>>>>>>> accb2f351 (u)
     {
       //In this case we attach subfigure name to the label, instead of default "COMPOUND"
       Handle(TCollection_HAsciiString) aName = aSubfigure->Name();

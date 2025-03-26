@@ -320,7 +320,11 @@ static Standard_Integer OCC218bug (Draw_Interpretor& di, Standard_Integer argc, 
     }
     // Construction du Geom_Plane
     GC_MakePlane MkPlane(A,B,C);
+<<<<<<< HEAD
     Handle(Geom_Plane) theGeomPlane=MkPlane.Value();
+=======
+    const Handle(Geom_Plane)& theGeomPlane=MkPlane.Value();
+>>>>>>> accb2f351 (u)
     
     // on le display & bind
     theAISPlaneTri= new AIS_PlaneTrihedron(theGeomPlane );

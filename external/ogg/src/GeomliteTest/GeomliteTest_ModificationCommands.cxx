@@ -34,7 +34,10 @@
 
 #ifdef _MSC_VER
 #include <stdio.h>
+<<<<<<< HEAD
 //#define strcasecmp strcmp Already defined
+=======
+>>>>>>> accb2f351 (u)
 #endif
 
 

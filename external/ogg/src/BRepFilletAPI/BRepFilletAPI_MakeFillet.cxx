@@ -44,6 +44,7 @@ BRepFilletAPI_MakeFillet::BRepFilletAPI_MakeFillet(const TopoDS_Shape& S,
 //=======================================================================
 
 void BRepFilletAPI_MakeFillet::SetParams(const Standard_Real Tang, 
+<<<<<<< HEAD
 					 const Standard_Real Tesp, 
 					 const Standard_Real T2d, 
 					 const Standard_Real TApp3d, 
@@ -51,6 +52,15 @@ void BRepFilletAPI_MakeFillet::SetParams(const Standard_Real Tang,
 					 const Standard_Real Fleche)
 {
   myBuilder.SetParams(Tang,Tesp, T2d, TApp3d, TolApp2d, Fleche);
+=======
+                                         const Standard_Real Tesp, 
+                                         const Standard_Real T2d, 
+                                         const Standard_Real TApp3d,
+                                         const Standard_Real TolApp2d, 
+                                         const Standard_Real Fleche)
+{
+  myBuilder.SetParams(Tang, Tesp, T2d, TApp3d, TolApp2d, Fleche);
+>>>>>>> accb2f351 (u)
 }
 
 //=======================================================================

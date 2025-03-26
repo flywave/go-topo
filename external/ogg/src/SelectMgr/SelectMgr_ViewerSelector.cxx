@@ -284,9 +284,15 @@ void SelectMgr_ViewerSelector::checkOverlap (const Handle(Select3D_SensitiveEnti
     aCriterion.NbOwnerMatches = aPrevCriterion->NbOwnerMatches;
     if (theMgr.GetActiveSelectionType() != SelectMgr_SelectionType_Box)
     {
+<<<<<<< HEAD
       if (aCriterion.IsCloserDepth (*aPrevCriterion))
       {
         updatePoint3d (aCriterion, aPickResult, theEntity, theInversedTrsf, theMgr);
+=======
+      updatePoint3d (aCriterion, aPickResult, theEntity, theInversedTrsf, theMgr);
+      if (aCriterion.IsCloserDepth (*aPrevCriterion))
+      {
+>>>>>>> accb2f351 (u)
         *aPrevCriterion = aCriterion;
       }
     }
@@ -1044,7 +1050,10 @@ void SelectMgr_ViewerSelector::MoveSelectableObject (const Handle(SelectMgr_Sele
 //=======================================================================
 void SelectMgr_ViewerSelector::RemoveSelectableObject (const Handle(SelectMgr_SelectableObject)& theObject)
 {
+<<<<<<< HEAD
   Handle(SelectMgr_SelectableObject) anObj = theObject;
+=======
+>>>>>>> accb2f351 (u)
   if (myMapOfObjectSensitives.UnBind (theObject))
   {
     RemovePicked (theObject);

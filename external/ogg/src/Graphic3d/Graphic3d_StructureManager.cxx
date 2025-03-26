@@ -137,7 +137,11 @@ Handle(Graphic3d_Structure) Graphic3d_StructureManager::Identification (const St
   Handle(Graphic3d_Structure) SGfound;
 
   for (; it.More() && notfound; it.Next()) {
+<<<<<<< HEAD
     Handle(Graphic3d_Structure) SG = it.Key();
+=======
+    const Handle(Graphic3d_Structure)& SG = it.Key();
+>>>>>>> accb2f351 (u)
     if ( SG->Identification () == AId) {
       notfound  = Standard_False;
       SGfound = SG;
@@ -165,7 +169,10 @@ void Graphic3d_StructureManager::RecomputeStructures()
   NCollection_Map<Graphic3d_Structure*> aStructNetwork;
   for (Graphic3d_MapIteratorOfMapOfStructure anIter(myDisplayedStructure); anIter.More(); anIter.Next())
   {
+<<<<<<< HEAD
     Handle(Graphic3d_Structure) aStructure = anIter.Key();
+=======
+>>>>>>> accb2f351 (u)
     anIter.Key()->Network (anIter.Key().get(), Graphic3d_TOC_DESCENDANT, aStructNetwork);
   }
 

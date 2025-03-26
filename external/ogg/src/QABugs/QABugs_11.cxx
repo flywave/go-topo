@@ -212,14 +212,20 @@ static int BUC60610(Draw_Interpretor& di, Standard_Integer argc, const char ** a
   IR.TransferRoots();
   TopoDS_Shape aTopShape = IR.OneShape();
   TopExp_Explorer ex(aTopShape, TopAbs_EDGE);
+<<<<<<< HEAD
   Standard_Integer i=0;
+=======
+>>>>>>> accb2f351 (u)
   for( ; ex.More(); ex.Next()){
     const TopoDS_Edge &E = TopoDS::Edge(ex.Current());
     BRepAdaptor_Curve aCurve(E);
     GCPnts_UniformDeflection plin(aCurve, 0.1);
     di << "Num points = " << plin.NbPoints() << "\n";
     if(argc > 2) {
+<<<<<<< HEAD
       i++;
+=======
+>>>>>>> accb2f351 (u)
       Sprintf(Ch,"%s_%i",argv[2],1);
       DBRep::Set(Ch,E);
     }
@@ -440,7 +446,11 @@ Standard_Integer  OCC157(Draw_Interpretor& di,
     Handle(Geom_Surface) aSurf = FS.Surface();
     BRepBuilderAPI_MakeFace aMakeFace(aSurf,aWire,Standard_True);
     if(aMakeFace.IsDone()) {
+<<<<<<< HEAD
       TopoDS_Face aFace = aMakeFace.Face();
+=======
+      const TopoDS_Face& aFace = aMakeFace.Face();
+>>>>>>> accb2f351 (u)
       DBRep::Set(a[1],aFace);
     }
   }
@@ -569,7 +579,11 @@ static Standard_Integer OCC297 (Draw_Interpretor& di,Standard_Integer /*argc*/, 
 
   BRepBuilderAPI_MakeWire wire_(edg1_, edg2_, edg3_, edg4_);
   BRepBuilderAPI_MakeFace face_(wire_);
+<<<<<<< HEAD
   TopoDS_Face sh_ = face_.Face();
+=======
+  const TopoDS_Face& sh_ = face_.Face();
+>>>>>>> accb2f351 (u)
 
   int up = 1;
 
@@ -585,7 +599,11 @@ static Standard_Integer OCC297 (Draw_Interpretor& di,Standard_Integer /*argc*/, 
   myAISContext->Display(AISPoint, Standard_True);
 
   BRepPrimAPI_MakeHalfSpace half_(sh_, g_pnt);
+<<<<<<< HEAD
   TopoDS_Solid sol1_ = half_.Solid();
+=======
+  const TopoDS_Solid& sol1_ = half_.Solid();
+>>>>>>> accb2f351 (u)
 
   DBRep::Set("Face", sol1_);
 
@@ -1551,8 +1569,13 @@ static Standard_Integer OCC909 (Draw_Interpretor& di, Standard_Integer argc, con
   TopExp_Explorer TE(awire, TopAbs_VERTEX);
   if ( TE.More()) {
     BRepTools_WireExplorer WE;
+<<<<<<< HEAD
     for ( WE.Init(awire,aface); WE.More(); WE.Next()) {
       TopoDS_Edge E = WE.Current();
+=======
+    for ( WE.Init(awire,aface); WE.More(); WE.Next())
+    {
+>>>>>>> accb2f351 (u)
       count++;
     }
   }
@@ -1864,6 +1887,10 @@ static Standard_Integer OCC1487 (Draw_Interpretor& di, Standard_Integer argc, co
 //=======================================================================
 TopoDS_Shape OCC1077_boolbl(BRepAlgoAPI_BooleanOperation& aBoolenaOperation,const Standard_Real aRadius)
 {
+<<<<<<< HEAD
+=======
+  Standard_Real tesp = 1.e-4;
+>>>>>>> accb2f351 (u)
   Standard_Real t3d = 1.e-4;
   Standard_Real t2d = 1.e-5;
   Standard_Real ta  = 1.e-2;
@@ -1885,7 +1912,11 @@ TopoDS_Shape OCC1077_boolbl(BRepAlgoAPI_BooleanOperation& aBoolenaOperation,cons
       const TopoDS_Shape& cutsol = ex.Current();
 
       BRepFilletAPI_MakeFillet fill(cutsol);
+<<<<<<< HEAD
       fill.SetParams(ta, t3d, t2d, t3d, t2d, fl);
+=======
+      fill.SetParams(ta, tesp, t2d, t3d, t2d, fl);
+>>>>>>> accb2f351 (u)
       fill.SetContinuity(blend_cont, tapp_angle);
       its = aBoolenaOperation.SectionEdges();
       while (its.More())
@@ -3884,9 +3915,15 @@ int TestCopyPaste(const Handle(TDocStd_Document)& doc)
   return 0;
 }
 
+<<<<<<< HEAD
 int TestOpenSave(TCollection_ExtendedString aFile1,
 		 TCollection_ExtendedString aFile2,
 		 TCollection_ExtendedString aFile3)
+=======
+int TestOpenSave(const TCollection_ExtendedString& aFile1,
+                 const TCollection_ExtendedString& aFile2,
+                 const TCollection_ExtendedString& aFile3)
+>>>>>>> accb2f351 (u)
 {
   // Std
   Handle(TDocStd_Document) doc_std, doc_std_open;
@@ -4497,7 +4534,11 @@ static Standard_Integer OCC20627 (Draw_Interpretor& di, Standard_Integer argc, c
       w.Close();
       TopoDS_Wire wireShape( w.Wire());
       BRepBuilderAPI_MakeFace faceBuilder(wireShape);
+<<<<<<< HEAD
       TopoDS_Face f( faceBuilder.Face());
+=======
+      const TopoDS_Face& f( faceBuilder.Face());
+>>>>>>> accb2f351 (u)
       BRepMesh_IncrementalMesh im(f,1);
       BRepTools::Clean(f);
     }

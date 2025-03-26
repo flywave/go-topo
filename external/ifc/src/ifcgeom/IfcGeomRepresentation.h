@@ -188,9 +188,10 @@ namespace IfcGeom {
 							// Manifold edges (i.e. edges used twice) are deemed invisible
 							std::map<std::pair<int,int>,int> edgecount;
 							std::vector<std::pair<int,int> > edges_temp;
+                            
+                            Handle(TColgp_HArray1OfPnt) nodes = tri->MapNodeArray();
+                            Handle(TColgp_HArray1OfPnt2d) uvs = tri->MapUVNodeArray();
 
-							const TColgp_Array1OfPnt& nodes = tri->Nodes();
-							const TColgp_Array1OfPnt2d& uvs = tri->UVNodes();
 							std::vector<gp_XYZ> coords;
 							BRepGProp_Face prop(face);
 							std::map<int,int> dict;
@@ -199,13 +200,13 @@ namespace IfcGeom {
                             const bool calculate_normals = !settings().get(IteratorSettings::WELD_VERTICES) &&
                                 !settings().get(IteratorSettings::NO_NORMALS);
 
-							for( int i = 1; i <= nodes.Length(); ++ i ) {
-								coords.push_back(nodes(i).Transformed(loc).XYZ());
+							for( int i = 1; i <= nodes->Length(); ++ i ) {
+								coords.push_back(nodes->Value(i).Transformed(loc).XYZ());
 								trsf.Transforms(*coords.rbegin());
 								dict[i] = addVertex(surface_style_id, *coords.rbegin());
 					
 								if ( calculate_normals ) {
-									const gp_Pnt2d& uv = uvs(i);
+									const gp_Pnt2d& uv = uvs->Value(i);
 									gp_Pnt p;
 									gp_Vec normal_direction;
 									prop.Normal(uv.X(),uv.Y(),p,normal_direction);
@@ -231,12 +232,12 @@ namespace IfcGeom {
 								}
 							}
 
-							const Poly_Array1OfTriangle& triangles = tri->Triangles();			
-							for( int i = 1; i <= triangles.Length(); ++ i ) {
+                            Handle(Poly_HArray1OfTriangle) triangles = tri->MapTriangleArray();
+							for( int i = 1; i <= triangles->Length(); ++ i ) {
 								int n1,n2,n3;
 								if ( face.Orientation() == TopAbs_REVERSED )
-									triangles(i).Get(n3,n2,n1);
-								else triangles(i).Get(n1,n2,n3);
+									triangles->Value(i).Get(n3,n2,n1);
+								else triangles->Value(i).Get(n1,n2,n3);
 
 								/* An alternative would be to calculate normals based
 									* on the coordinates of the mesh vertices */

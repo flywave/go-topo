@@ -53,8 +53,13 @@ Geom2dGcc_Circ2dTanOnRad::
     Geom2dAdaptor_Curve C1 = Qualified1.Qualified();
     GeomAbs_CurveType Type1 = C1.GetType();
     GeomAbs_CurveType Type2 = OnCurve.GetType();
+<<<<<<< HEAD
     Handle(Geom2d_Curve) CC1 = C1.Curve();
     Handle(Geom2d_Curve) Con = OnCurve.Curve();
+=======
+    const Handle(Geom2d_Curve)& CC1 = C1.Curve();
+    const Handle(Geom2d_Curve)& Con = OnCurve.Curve();
+>>>>>>> accb2f351 (u)
 
 //=============================================================================
 //                            Appel a GccAna.                                 +
@@ -163,7 +168,11 @@ Geom2dGcc_Circ2dTanOnRad::
   else {
     gp_Pnt2d point1(Point1->Pnt2d());
     GeomAbs_CurveType Type2 = OnCurve.GetType();
+<<<<<<< HEAD
     Handle(Geom2d_Curve) Con = OnCurve.Curve();
+=======
+    const Handle(Geom2d_Curve)& Con = OnCurve.Curve();
+>>>>>>> accb2f351 (u)
 
 //=============================================================================
 //                            Appel a GccAna.                                 +

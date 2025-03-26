@@ -489,7 +489,11 @@ static void Descendants(const TopoDS_Shape&,
 #endif
     theGlue.Perform();
     if (theGlue.IsDone()) {
+<<<<<<< HEAD
       TopoDS_Shape shshs = theGlue.ResultingShape();
+=======
+      const TopoDS_Shape& shshs = theGlue.ResultingShape();
+>>>>>>> accb2f351 (u)
 //      if (BRepOffsetAPI::IsTopologicallyValid(shshs)) {
       if (BRepAlgo::IsValid(shshs)) {
         UpdateDescendants(theGlue);

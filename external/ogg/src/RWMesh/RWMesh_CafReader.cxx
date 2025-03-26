@@ -125,7 +125,11 @@ Standard_Boolean RWMesh_CafReader::perform (const TCollection_AsciiString& theFi
   }
 
   TopLoc_Location aDummyLoc;
+<<<<<<< HEAD
   Standard_Integer aNbNodes = 0, aNbElems = 0, aNbFaces = 0;
+=======
+  Standard_Integer aNbNodes = 0, aNbElems = 0;
+>>>>>>> accb2f351 (u)
   for (TopTools_SequenceOfShape::Iterator aRootIter (myRootShapes); aRootIter.More(); aRootIter.Next())
   {
     for (TopExp_Explorer aFaceIter (aRootIter.Value(), TopAbs_FACE); aFaceIter.More(); aFaceIter.Next())
@@ -133,7 +137,10 @@ Standard_Boolean RWMesh_CafReader::perform (const TCollection_AsciiString& theFi
       const TopoDS_Face& aFace = TopoDS::Face (aFaceIter.Current());
       if (const Handle(Poly_Triangulation)& aPolyTri = BRep_Tool::Triangulation (aFace, aDummyLoc))
       {
+<<<<<<< HEAD
         ++aNbFaces;
+=======
+>>>>>>> accb2f351 (u)
         aNbNodes += aPolyTri->NbNodes();
         aNbElems += aPolyTri->NbTriangles();
       }

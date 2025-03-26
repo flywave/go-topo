@@ -512,7 +512,10 @@ void Path (const GeomAdaptor_Surface& aGAS,
     Standard_Integer aNbWaysInside = 0;
     BOPAlgo_EdgeInfo *pOnlyWayIn = NULL;
 
+<<<<<<< HEAD
     Standard_Integer aCurIndexE = 0;
+=======
+>>>>>>> accb2f351 (u)
     anIt.Initialize(aLEInfo);
     for (; anIt.More(); anIt.Next()) {
       BOPAlgo_EdgeInfo& anEI=anIt.ChangeValue();
@@ -521,7 +524,10 @@ void Path (const GeomAdaptor_Surface& aGAS,
       anIsNotPassed=!anEI.Passed();
       //
       if (anIsOut && anIsNotPassed) {
+<<<<<<< HEAD
         aCurIndexE++;
+=======
+>>>>>>> accb2f351 (u)
         //
         // Is there one way to go out of the vertex 
         // we have to use it only.

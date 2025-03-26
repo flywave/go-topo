@@ -10,6 +10,8 @@
 #include "vertex.hh"
 #include "wire.hh"
 
+#include <BRepGProp.hxx>
+#include <GProp_GProps.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_FindPlane.hxx>
@@ -36,8 +38,8 @@
 #include <TopoDS.hxx>
 #include <gp_Quaternion.hxx>
 
-#include <unordered_map>
 #include <limits>
+#include <unordered_map>
 
 namespace flywave {
 namespace topo {
@@ -135,9 +137,9 @@ shape shape::copy(bool deep) const {
       break;
     }
     return shape{};
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -191,7 +193,7 @@ Bnd_Box shape::bounding_box(double tolerance) const {
     BRepBndLib::Add(shape, aBox);
     aBox.SetGap(tolerance);
     return aBox;
-  } catch (Standard_Failure &err) {
+  } catch (Standard_Failure &e) {
     Bnd_Box aBox;
     aBox.Update(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     return aBox;
@@ -223,9 +225,9 @@ int shape::transform_impl(gp_Trsf &trans) {
     if (!aTrans.IsDone())
       return 0;
     _shape = aTrans.Shape();
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -251,9 +253,9 @@ int shape::translate(gp_Vec delta) {
     if (!aTrans.IsDone())
       return 0;
     _shape = aTrans.Shape();
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -280,9 +282,9 @@ int shape::rotate(double angle, gp_Pnt p1, gp_Pnt p2) {
     if (!aTrans.IsDone())
       return 0;
     _shape = aTrans.Shape();
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -307,9 +309,9 @@ int shape::rotate(double angle, gp_Ax1 a) {
     if (!aTrans.IsDone())
       return 0;
     _shape = aTrans.Shape();
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -334,9 +336,9 @@ int shape::rotate(gp_Quaternion R) {
     if (!aTrans.IsDone())
       return 0;
     _shape = aTrans.Shape();
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -361,9 +363,9 @@ int shape::scale(gp_Pnt pnt, double scale) {
     if (!aTrans.IsDone())
       return 0;
     _shape = aTrans.Shape();
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -390,9 +392,9 @@ int shape::mirror(gp_Pnt pnt, gp_Pnt nor) {
     if (!aTrans.IsDone())
       return 0;
     _shape = aTrans.Shape();
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -417,9 +419,9 @@ int shape::mirror(gp_Ax1 a) {
     if (!aTrans.IsDone())
       return 0;
     _shape = aTrans.Shape();
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -444,9 +446,9 @@ int shape::mirror(gp_Ax2 a) {
     if (!aTrans.IsDone())
       return 0;
     _shape = aTrans.Shape();
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -523,9 +525,8 @@ gp_Pln shape::find_plane(double tolerance) {
     const gp_Pnt loc = axis.Location();
     const gp_Dir dir = axis.Direction();
     return gp_Pln(loc, dir);
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -536,6 +537,24 @@ gp_Pln shape::find_plane(double tolerance) {
 
 topo_location shape::location() const {
   return topo_location(_shape.Location());
+}
+
+gp_Pnt shape::center_of_mass() const {
+  GProp_GProps system;
+  BRepGProp::VolumeProperties(_shape, system);
+  return system.CentreOfMass();
+}
+
+double shape::compute_area() const {
+  GProp_GProps system;
+  BRepGProp::SurfaceProperties(_shape, system);
+  return system.Mass();
+}
+
+double shape::compute_mass() const {
+  GProp_GProps system;
+  BRepGProp::VolumeProperties(_shape, system);
+  return system.Mass();
 }
 
 bool shape::location(double *loc) const {
@@ -667,7 +686,7 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
     }
 
     BRepMesh_IncrementalMesh incrementalMesh(*this, deflection, Standard_False,
-                                             angle,Standard_True);
+                                             angle, Standard_True);
     Quantity_Color color(1., 1., 1., Quantity_TOC_RGB);
     for (int f = 1; f <= faceMap.Extent(); f++) {
       meshReceiver.begin();
@@ -684,14 +703,14 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
       bool hasSeam = hasSeams[f - 1];
       gp_Trsf transform = loc.Transformation();
       gp_Quaternion quaternion = transform.GetRotation();
-      const TColgp_Array1OfPnt &nodes = mesh->Nodes();
+      Handle(TColgp_HArray1OfPnt) nodes = mesh->MapNodeArray();
       Poly::ComputeNormals(mesh);
 
       if (hasSeam) {
-        TColStd_Array1OfReal norms(1, mesh->Normals().Length());
+        TColStd_Array1OfReal norms(1, mesh->MapNormalArray()->Length());
         for (Standard_Integer i = 1; i <= mesh->NbNodes() * 3; i += 3) {
-          gp_Dir dir(mesh->Normals().Value(i), mesh->Normals().Value(i + 1),
-                     mesh->Normals().Value(i + 2));
+          gp_Dir dir(mesh->MapNormalArray()->Value(i), mesh->MapNormalArray()->Value(i + 1),
+                     mesh->MapNormalArray()->Value(i + 2));
           if (faceReversed)
             dir.Reverse();
           dir = quaternion.Multiply(dir);
@@ -701,7 +720,7 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
         }
         std::unordered_map<point3d_with_tolerance, int> uniquePointsOnFace;
         for (Standard_Integer j = 1; j <= mesh->NbNodes(); j++) {
-          gp_Pnt p = nodes.Value(j);
+          gp_Pnt p = nodes->Value(j);
           point3d_with_tolerance pt(p.X(), p.Y(), p.Z(), tolerance);
           int nodeIndex;
           if (uniquePointsOnFace.find(pt) != uniquePointsOnFace.end()) {
@@ -733,14 +752,14 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
               _scale_v = _auto_scale_size_on_v / dVmax;
             }
           }
-          const TColgp_Array1OfPnt2d &UVNodes = mesh->UVNodes();
-          TColgp_Array1OfPnt2d coords(1, UVNodes.Length());
-          for (int i = UVNodes.Lower(); i <= UVNodes.Upper(); i++) {
+          Handle(TColgp_HArray1OfPnt2d) UVNodes = mesh->MapUVNodeArray();
+          TColgp_Array1OfPnt2d coords(1, UVNodes->Length());
+          for (int i = UVNodes->Lower(); i <= UVNodes->Upper(); i++) {
             if (_txture_map_type == texture_cube) {
               gp_Dir dir(norms.Value((i * 3) + 1), norms.Value((i * 3) + 2),
                          norms.Value((i * 3) + 3));
               get_box_texture_coordinate(
-                  nodes(i).Transformed(loc.Transformation()),
+                  (*nodes)(i).Transformed(loc.Transformation()),
                   dir.Transformed(loc.Transformation()), _coord_p);
               d_coord.SetX(
                   (-_u_origin + (_u_repeat * _coord_p.X()) / _bnd_box_sz) /
@@ -749,7 +768,7 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
                   (-_v_origin + (_v_repeat * _coord_p.Y()) / _bnd_box_sz) /
                   _scale_v);
             } else {
-              d_coord = UVNodes(i);
+              d_coord = (*UVNodes)(i);
               d_coord.SetX(
                   (-_u_origin + (_u_repeat * (d_coord.X() - Umin)) / dUmax) /
                   _scale_u);
@@ -762,7 +781,7 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
           }
 
           for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
-            gp_Pnt p = nodes.Value(j + 1);
+            gp_Pnt p = nodes->Value(j + 1);
             Standard_Real px = p.X();
             Standard_Real py = p.Y();
             Standard_Real pz = p.Z();
@@ -775,7 +794,7 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
           }
         } else {
           for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
-            gp_Pnt p = nodes.Value(j + 1);
+            gp_Pnt p = nodes->Value(j + 1);
             Standard_Real px = p.X();
             Standard_Real py = p.Y();
             Standard_Real pz = p.Z();
@@ -798,15 +817,15 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
               _scale_v = _auto_scale_size_on_v / dVmax;
             }
           }
-          const TColgp_Array1OfPnt2d &UVNodes = mesh->UVNodes();
-          TColgp_Array1OfPnt2d coords(1, UVNodes.Length());
-          for (int i = UVNodes.Lower(); i <= UVNodes.Upper(); i++) {
+          Handle(TColgp_HArray1OfPnt2d) UVNodes = mesh->MapUVNodeArray();
+          TColgp_Array1OfPnt2d coords(1, UVNodes->Length());
+          for (int i = UVNodes->Lower(); i <= UVNodes->Upper(); i++) {
             if (_txture_map_type == texture_cube) {
-              gp_Dir dir(mesh->Normals().Value((i * 3) + 1),
-                         mesh->Normals().Value((i * 3) + 2),
-                         mesh->Normals().Value((i * 3) + 3));
+              gp_Dir dir(mesh->MapNormalArray()->Value((i * 3) + 1),
+                         mesh->MapNormalArray()->Value((i * 3) + 2),
+                         mesh->MapNormalArray()->Value((i * 3) + 3));
               get_box_texture_coordinate(
-                  nodes(i).Transformed(loc.Transformation()),
+                  (*nodes)(i).Transformed(loc.Transformation()),
                   dir.Transformed(loc.Transformation()), _coord_p);
               d_coord.SetX(
                   (-_u_origin + (_u_repeat * _coord_p.X()) / _bnd_box_sz) /
@@ -815,7 +834,7 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
                   (-_v_origin + (_v_repeat * _coord_p.Y()) / _bnd_box_sz) /
                   _scale_v);
             } else {
-              d_coord = UVNodes(i);
+              d_coord = (*UVNodes)(i);
               d_coord.SetX(
                   (-_u_origin + (_u_repeat * (d_coord.X() - Umin)) / dUmax) /
                   _scale_u);
@@ -828,14 +847,14 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
           }
 
           for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
-            gp_Pnt p = nodes.Value(j + 1);
+            gp_Pnt p = nodes->Value(j + 1);
             Standard_Real px = p.X();
             Standard_Real py = p.Y();
             Standard_Real pz = p.Z();
             transform.Transforms(px, py, pz);
-            gp_Dir dir(mesh->Normals().Value((j * 3) + 1),
-                       mesh->Normals().Value((j * 3) + 2),
-                       mesh->Normals().Value((j * 3) + 3));
+            gp_Dir dir(mesh->MapNormalArray()->Value((j * 3) + 1),
+                       mesh->MapNormalArray()->Value((j * 3) + 2),
+                       mesh->MapNormalArray()->Value((j * 3) + 3));
             if (faceReversed)
               dir.Reverse();
             dir = quaternion.Multiply(dir);
@@ -845,14 +864,14 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
           }
         } else {
           for (Standard_Integer j = 0; j < mesh->NbNodes(); j++) {
-            gp_Pnt p = nodes.Value(j + 1);
+            gp_Pnt p = nodes->Value(j + 1);
             Standard_Real px = p.X();
             Standard_Real py = p.Y();
             Standard_Real pz = p.Z();
             transform.Transforms(px, py, pz);
-            gp_Dir dir(mesh->Normals().Value((j * 3) + 1),
-                       mesh->Normals().Value((j * 3) + 2),
-                       mesh->Normals().Value((j * 3) + 3));
+            gp_Dir dir(mesh->MapNormalArray()->Value((j * 3) + 1),
+                       mesh->MapNormalArray()->Value((j * 3) + 2),
+                       mesh->MapNormalArray()->Value((j * 3) + 3));
             if (faceReversed)
               dir.Reverse();
             dir = quaternion.Multiply(dir);
@@ -863,13 +882,13 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
       }
 
       Standard_Integer t[3];
-      const Poly_Array1OfTriangle &triangles = mesh->Triangles();
+      Handle(Poly_HArray1OfTriangle) triangles = mesh->MapTriangleArray();
 
       for (Standard_Integer j = 1; j <= mesh->NbTriangles(); j++) {
         if (faceReversed)
-          triangles(j).Get(t[2], t[1], t[0]);
+          triangles->Value(j).Get(t[2], t[1], t[0]);
         else
-          triangles(j).Get(t[0], t[1], t[2]);
+          triangles->Value(j).Get(t[0], t[1], t[2]);
         int tri[3];
         tri[0] = t[0] - 1;
         tri[1] = t[1] - 1;
@@ -880,7 +899,7 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
 
     meshReceiver.end();
     return 0;
-  } catch (Standard_Failure &err) {
+  } catch (Standard_Failure &e) {
     return 1;
   } catch (...) {
     return 1;

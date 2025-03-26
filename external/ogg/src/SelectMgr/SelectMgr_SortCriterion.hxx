@@ -58,12 +58,41 @@ public:
       return ZLayerPosition > theOther.ZLayerPosition;
     }
 
+<<<<<<< HEAD
     // closest object is selected unless difference is within tolerance
     if (Abs (Depth - theOther.Depth) > (Tolerance + theOther.Tolerance))
+=======
+    // closest object is selected if their depths are not equal within tolerance
+    if (Abs (Depth - theOther.Depth) > Tolerance + theOther.Tolerance)
+>>>>>>> accb2f351 (u)
     {
       return Depth < theOther.Depth;
     }
 
+<<<<<<< HEAD
+=======
+    Standard_Real aCos = 1.0;
+    if (Normal.Modulus() > 0 && theOther.Normal.Modulus() > 0)
+    {
+      gp_Dir aNormal (Normal.x(), Normal.y(), Normal.z());
+      gp_Dir anOtherNormal (theOther.Normal.x(), theOther.Normal.y(), theOther.Normal.z());
+      aCos = Abs (Cos (aNormal.Angle (anOtherNormal)));
+    }
+
+    Standard_Real aDepth = Depth - Tolerance;
+    Standard_Real anOtherDepth = theOther.Depth - theOther.Tolerance;
+    // Comparison depths taking into account tolerances occurs when the surfaces are parallel
+    // or have the same sensitivity and the angle between them is less than 60 degrees.
+    if (Abs (aDepth - anOtherDepth) > Precision::Confusion())
+    {
+      if ((aCos > 0.5 && Abs (Tolerance - theOther.Tolerance) < Precision::Confusion())
+       || Abs (aCos - 1.0) < Precision::Confusion())
+      {
+        return aDepth < anOtherDepth;
+      }
+    }
+
+>>>>>>> accb2f351 (u)
     // if two objects have similar depth, select the one with higher priority
     if (Priority > theOther.Priority)
     {

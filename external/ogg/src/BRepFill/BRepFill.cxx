@@ -986,8 +986,13 @@ TopoDS_Wire BRepFill::InsertACR(const TopoDS_Wire& wire,
       }
     }
 
+<<<<<<< HEAD
     TopoDS_Edge E = anExp.Current();
     TopoDS_Vertex V = anExp.CurrentVertex();
+=======
+    const TopoDS_Edge& E = anExp.Current();
+    const TopoDS_Vertex& V = anExp.CurrentVertex();
+>>>>>>> accb2f351 (u)
 
     if (ndec==0 || BRep_Tool::Degenerated(E)) {
       // copy the edge

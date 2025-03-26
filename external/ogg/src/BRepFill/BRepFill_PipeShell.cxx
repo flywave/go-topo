@@ -1116,7 +1116,11 @@ void BRepFill_PipeShell::Generated(const TopoDS_Shape&   theShape,
         for (; Explo.More(); Explo.Next())
         {
           const TopoDS_Edge& anEdge = TopoDS::Edge(Explo.Current());
+<<<<<<< HEAD
           TopTools_ListOfShape aNewEdges = Georges.GeneratedShapes(anEdge);
+=======
+          const TopTools_ListOfShape& aNewEdges = Georges.GeneratedShapes(anEdge);
+>>>>>>> accb2f351 (u)
           myEdgeNewEdges.Bind(anEdge, aNewEdges);
         }
       }
@@ -1168,7 +1172,11 @@ void BRepFill_PipeShell::Place(const BRepFill_Section& Sec,
 				  Sec.Vertex(),
 				  Sec.WithContact(),
 				  Sec.WithCorrection());
+<<<<<<< HEAD
   TopoDS_Wire TmpWire =  Sec.Wire();
+=======
+  const TopoDS_Wire& TmpWire =  Sec.Wire();
+>>>>>>> accb2f351 (u)
   aTrsf = Place.Transformation();
   //Transform the copy
   W = TopoDS::Wire(BRepBuilderAPI_Transform(TmpWire, aTrsf, Standard_True));

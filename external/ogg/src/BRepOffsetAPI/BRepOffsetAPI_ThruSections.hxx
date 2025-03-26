@@ -21,6 +21,10 @@
 #include <Standard_DefineAlloc.hxx>
 #include <Standard_Handle.hxx>
 
+<<<<<<< HEAD
+=======
+#include <BRepFill_ThruSectionErrorStatus.hxx>
+>>>>>>> accb2f351 (u)
 #include <TopTools_SequenceOfShape.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopTools_DataMapOfShapeShape.hxx>
@@ -163,6 +167,14 @@ public:
   //! Returns the current mutable input state
   Standard_EXPORT Standard_Boolean IsMutableInput() const;
   
+<<<<<<< HEAD
+=======
+  //! Returns the status of thrusection operation
+  BRepFill_ThruSectionErrorStatus GetStatus() const
+  {
+    return myStatus;
+  }
+>>>>>>> accb2f351 (u)
 
 protected:
 
@@ -206,6 +218,10 @@ private:
   Standard_Boolean myUseSmoothing;
   Standard_Boolean myMutableInput;
   NCollection_Handle<BRepFill_Generator> myBFGenerator;
+<<<<<<< HEAD
+=======
+  BRepFill_ThruSectionErrorStatus myStatus;
+>>>>>>> accb2f351 (u)
 
 };
 

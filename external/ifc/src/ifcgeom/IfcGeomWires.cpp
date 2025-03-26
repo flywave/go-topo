@@ -1,4 +1,4 @@
-﻿/********************************************************************************
+/********************************************************************************
  *                                                                              *
  * This file is part of IfcOpenShell.                                           *
  *                                                                              *
@@ -92,7 +92,6 @@
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 
 #include <BRepAdaptor_CompCurve.hxx>
-#include <BRepAdaptor_HCompCurve.hxx>
 #include <Approx_Curve3d.hxx>
 
 #include "../ifcgeom/IfcGeom.h"
@@ -467,7 +466,7 @@ bool IfcGeom::Kernel_T::convert(const IFC_NAMESPACE::IfcSchema::IfcTrimmedCurve*
 		TopoDS_Wire w;
 		if (!convert_wire(basis_curve, w)) return false;
 		BRepAdaptor_CompCurve cc(w, true);
-		Handle(Adaptor3d_HCurve) hcc = Handle(Adaptor3d_HCurve)(new BRepAdaptor_HCompCurve(cc));
+		Handle(Adaptor3d_Curve) hcc = Handle(Adaptor3d_Curve)(new BRepAdaptor_CompCurve(cc));
 		// @todo, arbitrary numbers here, note they cannot be too high as contiguous memory is allocated based on them.
 		Approx_Curve3d approx(hcc, getValue(GV_PRECISION), GeomAbs_C0, 10, 10);
 		curve = approx.Curve();

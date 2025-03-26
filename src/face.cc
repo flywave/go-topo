@@ -43,9 +43,8 @@ shape face::copy(bool deep) const {
       throw std::runtime_error("Shell operation resulted in Null shape");
 
     return face{*this, shp};
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -200,9 +199,8 @@ face face::make_face(std::vector<wire> &wires) {
     if (!f.fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -238,9 +236,8 @@ face face::make_face(std::initializer_list<wire> wires) {
     if (!f.fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -268,9 +265,8 @@ face face::make_face(std::vector<edge> &edges, std::vector<gp_Pnt> points) {
     if (!f.fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -319,9 +315,8 @@ face face::make_face(std::vector<gp_Pnt> points) {
       break;
     }
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -349,9 +344,8 @@ face face::make_face(std::initializer_list<gp_Pnt> points) {
     if (!f.fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -430,9 +424,8 @@ int face::offset(double offset, double tolerance) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -461,9 +454,8 @@ int face::extrude(const shape &shp, gp_Pnt p1, gp_Pnt p2) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -496,9 +488,8 @@ int face::revolve(const shape &shp, gp_Pnt p1, gp_Pnt p2, double angle) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -539,9 +530,8 @@ int face::sweep(const wire &spine, std::vector<shape *> profiles,
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -580,9 +570,8 @@ int face::loft(std::vector<shape> profiles, bool ruled, double tolerance) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -636,9 +625,8 @@ int face::boolean(const face &tool, bool_op_type op) {
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
 
-  } catch (Standard_Failure &err) {
-    Handle_Standard_Failure e = Standard_Failure::Caught();
-    const Standard_CString msg = e->GetMessageString();
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {

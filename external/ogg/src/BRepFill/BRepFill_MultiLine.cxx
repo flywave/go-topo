@@ -655,7 +655,11 @@ static gp_Pnt2d ValueOnFace(const Standard_Real        U,
     }
 #endif    
 
+<<<<<<< HEAD
     Geom2dAdaptor_Curve Cu1 = TheV;
+=======
+    const Geom2dAdaptor_Curve& Cu1 = TheV;
+>>>>>>> accb2f351 (u)
     Geom2dAdaptor_Curve Cu2( Line);
 
     Standard_Real TolConf = 0.;

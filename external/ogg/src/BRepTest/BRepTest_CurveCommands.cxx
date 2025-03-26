@@ -281,9 +281,17 @@ static Standard_Integer mkedge(Draw_Interpretor& di, Standard_Integer n, const c
 
   Handle(Geom_Curve)   C   = DrawTrSurf::GetCurve(a[2]);
   Handle(Geom2d_Curve) C2d = DrawTrSurf::GetCurve2d(a[2]);
+<<<<<<< HEAD
   if (C.IsNull() && C2d.IsNull()) {
     //std::cout << a[2] << " is not a curve" << std::endl;
     di << a[2] << " is not a curve\n";
+=======
+  Handle(Poly_Polygon3D) P3d = DrawTrSurf::GetPolygon3D(a[2]);
+
+  if (C.IsNull() && C2d.IsNull() && P3d.IsNull()) {
+    //std::cout << a[2] << " is not a curve" << std::endl;
+    di << a[2] << " is not a curve or polygon 3d\n";
+>>>>>>> accb2f351 (u)
     return 1;
   }
 
@@ -291,7 +299,16 @@ static Standard_Integer mkedge(Draw_Interpretor& di, Standard_Integer n, const c
 
   if (n == 3) {
     if (!C.IsNull())   edge = BRepBuilderAPI_MakeEdge(C);
+<<<<<<< HEAD
     else               edge = BRepBuilderAPI_MakeEdge2d(C2d);
+=======
+    else  if (!C2d.IsNull())  edge = BRepBuilderAPI_MakeEdge2d(C2d);
+    else
+    {
+      BRep_Builder aBB;
+      aBB.MakeEdge(edge, P3d);
+    }
+>>>>>>> accb2f351 (u)
   }
   else {
     Handle(Geom_Surface) S;
@@ -1830,7 +1847,11 @@ static Standard_Integer arclinconvert (Draw_Interpretor& /*dout*/, Standard_Inte
       std::cout<<"Error: failed to find a face for the wire "<<a[2]<<std::endl;
       return 1; //TCL_ERROR
     }
+<<<<<<< HEAD
     TopoDS_Face aFace = aFaceMaker.Face();
+=======
+    const TopoDS_Face& aFace = aFaceMaker.Face();
+>>>>>>> accb2f351 (u)
     TopoDS_Iterator anIter (aFace);
     TopoDS_Wire aWire = TopoDS::Wire (anIter.Value());
     aResult = BRepAlgo::ConvertWire (aWire, aTol, aFace);

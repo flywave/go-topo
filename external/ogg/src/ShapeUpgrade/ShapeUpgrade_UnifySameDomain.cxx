@@ -753,7 +753,29 @@ static void ReconstructMissedSeam(const TopTools_SequenceOfShape& theRemovedEdge
       if ((theUperiod != 0. && aUdiff > theUperiod/2) ||
           (theVperiod != 0. && aVdiff > theVperiod/2))
       {
+<<<<<<< HEAD
         anEdge.Reverse();
+=======
+        if (aLastVertex.IsSame(theCurVertex) || (theUperiod != 0. && theVperiod != 0.))
+        {
+          anEdge.Reverse();
+        }
+        else
+        {
+          TopAbs_Orientation anOri = anEdge.Orientation();
+          anEdge.Orientation(TopAbs_FORWARD);
+          Handle(Geom2d_Curve) aPC1 = BRep_Tool::CurveOnSurface(anEdge, theFrefFace, Param1, Param2);
+          anEdge.Reverse();
+          Handle(Geom2d_Curve) aPC2 = BRep_Tool::CurveOnSurface(anEdge, theFrefFace, Param1, Param2);
+          anEdge.Reverse(); // again FORWARD
+          TopLoc_Location aLoc;
+          BRep_Builder aBB;
+          Standard_Real aTol = BRep_Tool::Tolerance(anEdge);
+          const  Handle(Geom_Surface)& aSurf = BRep_Tool::Surface(theFrefFace, aLoc);
+          aBB.UpdateEdge(anEdge, aPC2, aPC1, aSurf, aLoc, aTol);
+          anEdge.Orientation(anOri);
+        }
+>>>>>>> accb2f351 (u)
         aPC = BRep_Tool::CurveOnSurface(anEdge, theFrefFace, Param1, Param2);
         aParam = (anEdge.Orientation() == TopAbs_FORWARD)? Param1 : Param2;
         aPoint = aPC->Value(aParam);
@@ -1136,7 +1158,11 @@ static void AddPCurves(const TopTools_SequenceOfShape& theFaces,
 // seams and equal edges are dropped
 // Returns true if one of original edges dropped
 static Standard_Boolean AddOrdinaryEdges(TopTools_SequenceOfShape& edges,
+<<<<<<< HEAD
                                          const TopoDS_Shape aShape,
+=======
+                                         const TopoDS_Shape& aShape,
+>>>>>>> accb2f351 (u)
                                          Standard_Integer& anIndex,
                                          TopTools_SequenceOfShape& theRemovedEdges)
 {
@@ -1144,7 +1170,11 @@ static Standard_Boolean AddOrdinaryEdges(TopTools_SequenceOfShape& edges,
   TopTools_IndexedMapOfShape aNewEdges;
   //add edges without seams
   for(TopExp_Explorer exp(aShape,TopAbs_EDGE); exp.More(); exp.Next()) {
+<<<<<<< HEAD
     TopoDS_Shape edge = exp.Current();
+=======
+    const TopoDS_Shape& edge = exp.Current();
+>>>>>>> accb2f351 (u)
     if(aNewEdges.Contains(edge))
     {
       aNewEdges.RemoveKey(edge);
@@ -2478,7 +2508,11 @@ Standard_Boolean ShapeUpgrade_UnifySameDomain::MergeEdges(TopTools_SequenceOfSha
     // fill in the map V-E
     for (TopoDS_Iterator it(anEdge.Oriented(TopAbs_FORWARD)); it.More(); it.Next())
     {
+<<<<<<< HEAD
       TopoDS_Shape aV = it.Value();
+=======
+      const TopoDS_Shape& aV = it.Value();
+>>>>>>> accb2f351 (u)
       if (aV.Orientation() == TopAbs_FORWARD || aV.Orientation() == TopAbs_REVERSED)
       {
         if (!aMapVE.Contains(aV))
@@ -2745,6 +2779,29 @@ void ShapeUpgrade_UnifySameDomain::UnifyFaces()
   for (Standard_Integer i = 1; i <= aFaceMap.Extent(); i++)
     TopExp::MapShapesAndAncestors (aFaceMap(i), TopAbs_EDGE, TopAbs_FACE, aGMapEdgeFaces);
 
+<<<<<<< HEAD
+=======
+  // creating map of face shells for the whole shape to avoid
+  // unification of faces belonging to the different shells
+  DataMapOfShapeMapOfShape aGMapFaceShells;
+  for (TopExp_Explorer anExp (myShape, TopAbs_SHELL); anExp.More(); anExp.Next())
+  {
+    const TopoDS_Shape& aShell = anExp.Current();
+    for (TopoDS_Iterator anItF (aShell); anItF.More(); anItF.Next())
+    {
+      const TopoDS_Shape& aF = anItF.Value();
+      if (TopTools_MapOfShape* pShells = aGMapFaceShells.ChangeSeek (aF))
+      {
+        pShells->Add (aShell);
+      }
+      else
+      {
+        (aGMapFaceShells.Bound (aF, TopTools_MapOfShape()))->Add (aShell);
+      }
+    }
+  }
+
+>>>>>>> accb2f351 (u)
   // creating map of free boundaries
   TopTools_MapOfShape aFreeBoundMap;
   // look at only shells not belonging to solids
@@ -2766,7 +2823,11 @@ void ShapeUpgrade_UnifySameDomain::UnifyFaces()
   // unify faces in each shell separately
   TopExp_Explorer exps;
   for (exps.Init(myShape, TopAbs_SHELL); exps.More(); exps.Next())
+<<<<<<< HEAD
     IntUnifyFaces(exps.Current(), aGMapEdgeFaces, aFreeBoundMap);
+=======
+    IntUnifyFaces(exps.Current(), aGMapEdgeFaces, aGMapFaceShells, aFreeBoundMap);
+>>>>>>> accb2f351 (u)
 
   // gather all faces out of shells in one compound and unify them at once
   BRep_Builder aBB;
@@ -2777,7 +2838,14 @@ void ShapeUpgrade_UnifySameDomain::UnifyFaces()
     aBB.Add(aCmp, exps.Current());
 
   if (nbf > 0)
+<<<<<<< HEAD
     IntUnifyFaces(aCmp, aGMapEdgeFaces, aFreeBoundMap);
+=======
+  {
+    // No connection to shells, thus no need to pass the face-shell map
+    IntUnifyFaces(aCmp, aGMapEdgeFaces, DataMapOfShapeMapOfShape(), aFreeBoundMap);
+  }
+>>>>>>> accb2f351 (u)
   
   myShape = myContext->Apply(myShape);
 }
@@ -2801,12 +2869,58 @@ static void SetFixWireModes(ShapeFix_Face& theSff)
 }
 
 //=======================================================================
+<<<<<<< HEAD
+=======
+//function : isSameSets
+//purpose  : Compares two sets of shapes. Returns true if they are the same,
+//           false otherwise.
+//=======================================================================
+
+template<class Container>
+static Standard_Boolean isSameSets(const Container* theFShells1,
+                                   const Container* theFShells2)
+{
+  // If both are null - no problem
+  if (theFShells1 == nullptr && theFShells2 == nullptr)
+  {
+    return Standard_True;
+  }
+  // If only one is null - not the same
+  if (theFShells1 == nullptr || theFShells2 == nullptr)
+  {
+    return Standard_False;
+  }
+  // Both not null
+  if (theFShells1->Extent() != theFShells2->Extent())
+  {
+    return Standard_False;
+  }
+  // number of shells in each set should be very small in normal cases - max 2.
+  // thus just check if all objects of one are contained in the other and vice versa.
+  for (typename Container::Iterator it1(*theFShells1), it2(*theFShells2);
+       it1.More() && it2.More(); it1.Next(), it2.Next())
+  {
+    if (!theFShells1->Contains(it2.Value()) || !theFShells2->Contains(it1.Value()))
+    {
+      return Standard_False;
+    }
+  }
+  return Standard_True;
+}
+
+//=======================================================================
+>>>>>>> accb2f351 (u)
 //function : IntUnifyFaces
 //purpose  : 
 //=======================================================================
 
 void ShapeUpgrade_UnifySameDomain::IntUnifyFaces(const TopoDS_Shape& theInpShape,
+<<<<<<< HEAD
                                                  TopTools_IndexedDataMapOfShapeListOfShape& theGMapEdgeFaces,
+=======
+                                                 const TopTools_IndexedDataMapOfShapeListOfShape& theGMapEdgeFaces,
+                                                 const DataMapOfShapeMapOfShape& theGMapFaceShells,
+>>>>>>> accb2f351 (u)
                                                  const TopTools_MapOfShape& theFreeBoundMap)
 {
   // creating map of edge faces for the shape
@@ -2855,6 +2969,12 @@ void ShapeUpgrade_UnifySameDomain::IntUnifyFaces(const TopoDS_Shape& theInpShape
     Standard_Real Uperiod = (aBaseSurface->IsUPeriodic())? aBaseSurface->UPeriod() : 0.;
     Standard_Real Vperiod = (aBaseSurface->IsVPeriodic())? aBaseSurface->VPeriod() : 0.;
 
+<<<<<<< HEAD
+=======
+    // Get shells connected to the face (in normal cases should not be more than 2)
+    const TopTools_MapOfShape* pFShells1 = theGMapFaceShells.Seek (aFace);
+
+>>>>>>> accb2f351 (u)
     // find adjacent faces to union
     Standard_Integer i;
     for (i = 1; i <= edges.Length(); i++) {
@@ -2903,6 +3023,18 @@ void ShapeUpgrade_UnifySameDomain::IntUnifyFaces(const TopoDS_Shape& theInpShape
         if (aProcessed.Contains(aCheckedFace))
           continue;
 
+<<<<<<< HEAD
+=======
+        // Get shells connected to the checked face
+        const TopTools_MapOfShape* pFShells2 = theGMapFaceShells.Seek (aCheckedFace);
+        // Faces can be unified only if the shells of faces connected to
+        // these faces are the same. Otherwise, topology would be broken.
+        if (!isSameSets (pFShells1, pFShells2))
+        {
+          continue;
+        }
+
+>>>>>>> accb2f351 (u)
         if (bCheckNormals) {
           // get normal of checked face using the same parameter on edge
           gp_Dir aDN2;
@@ -2980,7 +3112,11 @@ void ShapeUpgrade_UnifySameDomain::IntUnifyFaces(const TopoDS_Shape& theInpShape
               Standard_Boolean hasConnectAnotherFaces = Standard_False;
               TopExp_Explorer ex(faces(i), TopAbs_EDGE);
               for (; ex.More() && !hasConnectAnotherFaces; ex.Next()) {
+<<<<<<< HEAD
                 TopoDS_Shape aE = ex.Current();
+=======
+                const TopoDS_Shape& aE = ex.Current();
+>>>>>>> accb2f351 (u)
                 const TopTools_ListOfShape& aLF = aMapEF.FindFromKey(aE);
                 if (aLF.Extent() > 1) {
                   for (it.Init(aLF); it.More() && !hasConnectAnotherFaces; it.Next()) {

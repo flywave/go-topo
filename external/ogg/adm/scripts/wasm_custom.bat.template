@@ -23,6 +23,10 @@ rem set "BUILD_ModelingAlgorithms=ON"
 rem set "BUILD_Visualization=ON"
 rem set "BUILD_ApplicationFramework=ON"
 rem set "BUILD_DataExchange=ON"
+<<<<<<< HEAD
+=======
+rem set "BUILD_DETools=OFF"
+>>>>>>> accb2f351 (u)
 
 rem set "USE_RAPIDJSON=ON"
 rem set "USE_DRACO=ON"

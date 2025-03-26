@@ -38,12 +38,20 @@ IFSelect_SelectRoots::IFSelect_SelectRoots ()    {  }
 //  On note dans le graphe : le cumul de chaque ensemble (Entite + Shared tous
 //  niveaux). Les Roots initiales comptees une seule fois sont bonnes
   for (input.Start(); input.More(); input.Next()) {
+<<<<<<< HEAD
     Handle(Standard_Transient) ent = input.Value();
+=======
+    const Handle(Standard_Transient)& ent = input.Value();
+>>>>>>> accb2f351 (u)
     GC.GetFromEntity(ent);
   }
 //  A present, on retient, parmi les inputs, celles comptees une seule fois
   for (input.Start(); input.More(); input.Next()) {
+<<<<<<< HEAD
     Handle(Standard_Transient) ent = input.Value();
+=======
+    const Handle(Standard_Transient)& ent = input.Value();
+>>>>>>> accb2f351 (u)
     if ((GC.NbTimes(ent) <= 1) == IsDirect()) iter.GetOneItem(ent);
   }
   return iter;

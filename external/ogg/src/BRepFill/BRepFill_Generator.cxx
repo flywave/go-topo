@@ -65,6 +65,10 @@ Standard_Integer DetectKPart(const TopoDS_Edge& Edge1,
 			     const TopoDS_Edge& Edge2)
 {
   // initializations
+<<<<<<< HEAD
+=======
+  // !Note if IType set as -1 it means that occurs error with null 3d curve for the edge
+>>>>>>> accb2f351 (u)
   Standard_Integer IType = 0;
 
   // characteristics of the first edge
@@ -89,7 +93,13 @@ Standard_Integer DetectKPart(const TopoDS_Edge& Edge1,
   else {
     curv1 = BRep_Tool::Curve(Edge1, loc, first1, last1);
     if (curv1.IsNull())
+<<<<<<< HEAD
       throw Standard_NullObject("Null 3D curve in edge");
+=======
+    {
+      return -1;
+    }
+>>>>>>> accb2f351 (u)
     curv1 = 
       Handle(Geom_Curve)::DownCast(curv1->Transformed(loc.Transformation()));
     ff = first1;
@@ -156,7 +166,13 @@ Standard_Integer DetectKPart(const TopoDS_Edge& Edge1,
     else {
       curv = BRep_Tool::Curve(Edge2, loc, first2, last2);
       if (curv.IsNull())
+<<<<<<< HEAD
         throw Standard_NullObject("Null 3D curve in edge");
+=======
+      {
+        return -1;
+      }
+>>>>>>> accb2f351 (u)
       curv = 
 	Handle(Geom_Curve)::DownCast(curv->Transformed(loc.Transformation()));
       ff = first2;
@@ -312,12 +328,21 @@ Standard_Integer DetectKPart(const TopoDS_Edge& Edge1,
 
 //=======================================================================
 //function : CreateKPart
+<<<<<<< HEAD
 //purpose  : 
 //=======================================================================
 
 void CreateKPart(const TopoDS_Edge& Edge1,const TopoDS_Edge& Edge2,
 		 const Standard_Integer IType, 
 		 Handle(Geom_Surface)& Surf)
+=======
+//purpose  : Returns true if there is no errors occur
+//=======================================================================
+
+Standard_Boolean CreateKPart (const TopoDS_Edge& Edge1,const TopoDS_Edge& Edge2,
+                              const Standard_Integer IType, 
+                              Handle(Geom_Surface)& Surf)
+>>>>>>> accb2f351 (u)
 {
   // find the dimension
   TopoDS_Vertex V1, V2;
@@ -326,6 +351,11 @@ void CreateKPart(const TopoDS_Edge& Edge1,const TopoDS_Edge& Edge2,
   Standard_Real a1, b1, aa =0., bb =0.;
   TopoDS_Vertex v1f,v1l,v2f,v2l;
 
+<<<<<<< HEAD
+=======
+  Standard_Boolean isDone = Standard_True;
+
+>>>>>>> accb2f351 (u)
   // find characteristics of the first edge
   Handle(Geom_Curve) C1;
   Standard_Boolean degen1 = BRep_Tool::Degenerated(Edge1);
@@ -336,7 +366,13 @@ void CreateKPart(const TopoDS_Edge& Edge1,const TopoDS_Edge& Edge2,
   else {
     C1 = BRep_Tool::Curve(Edge1, loc, a1, b1);
     if (C1.IsNull())
+<<<<<<< HEAD
       throw Standard_NullObject("Null 3D curve in edge");
+=======
+    {
+      return Standard_False;
+    }
+>>>>>>> accb2f351 (u)
     C1 = Handle(Geom_Curve)::DownCast(C1->Transformed(loc.Transformation()));
     aa = a1;
     bb = b1;
@@ -361,7 +397,13 @@ void CreateKPart(const TopoDS_Edge& Edge1,const TopoDS_Edge& Edge2,
   else {
     C2 = BRep_Tool::Curve(Edge2, loc, a1, b1);
     if (C2.IsNull())
+<<<<<<< HEAD
       throw Standard_NullObject("Null 3D curve in edge");
+=======
+    {
+      return Standard_False;
+    }
+>>>>>>> accb2f351 (u)
     C2 = Handle(Geom_Curve)::DownCast(C2->Transformed(loc.Transformation()));
     if (Edge2.Orientation() == TopAbs_REVERSED) {
       C2->Reverse();
@@ -496,6 +538,10 @@ void CreateKPart(const TopoDS_Edge& Edge1,const TopoDS_Edge& Edge2,
     // IType incorrect
   }
   Surf = surface;
+<<<<<<< HEAD
+=======
+  return isDone;
+>>>>>>> accb2f351 (u)
 }
 
 //=======================================================================
@@ -528,7 +574,12 @@ static TopoDS_Edge CreateNewEdge(const TopoDS_Edge& theEdge, TopTools_DataMapOfS
 //=======================================================================
 
 BRepFill_Generator::BRepFill_Generator(): 
+<<<<<<< HEAD
   myMutableInput (Standard_True)
+=======
+  myMutableInput (Standard_True),
+  myStatus (BRepFill_ThruSectionErrorStatus_NotDone)
+>>>>>>> accb2f351 (u)
 {
 }
 
@@ -551,6 +602,11 @@ void BRepFill_Generator::AddWire(const TopoDS_Wire& Wire)
 
 void BRepFill_Generator::Perform()
 {
+<<<<<<< HEAD
+=======
+  myStatus = BRepFill_ThruSectionErrorStatus_Done;
+
+>>>>>>> accb2f351 (u)
   TopoDS_Shell Shell;
   TopoDS_Face  Face;
   TopoDS_Shape S1, S2;
@@ -679,6 +735,15 @@ void BRepFill_Generator::Perform()
 
       // processing of KPart
       Standard_Integer IType = DetectKPart(Edge1,Edge2);
+<<<<<<< HEAD
+=======
+      if (IType == -1)
+      {
+        myStatus = BRepFill_ThruSectionErrorStatus_Null3DCurve;
+        return;
+      }
+
+>>>>>>> accb2f351 (u)
       if (IType==0) {
 	// no part cases
 	TopLoc_Location L,L1,L2;
@@ -694,7 +759,14 @@ void BRepFill_Generator::Perform()
 	else {
 	  C1 = BRep_Tool::Curve(Edge1,L1,f1,l1);
           if (C1.IsNull())
+<<<<<<< HEAD
             throw Standard_NullObject("Null 3D curve in edge");
+=======
+          {
+            myStatus = BRepFill_ThruSectionErrorStatus_Null3DCurve;
+            return;
+          }
+>>>>>>> accb2f351 (u)
 	}
 	if (degen2) {
 	  Extremities(1) = BRep_Tool::Pnt(V2l);
@@ -704,7 +776,14 @@ void BRepFill_Generator::Perform()
 	else {
 	  C2 = BRep_Tool::Curve(Edge2,L2,f2,l2);
           if (C2.IsNull())
+<<<<<<< HEAD
             throw Standard_NullObject("Null 3D curve in edge");
+=======
+          {
+            myStatus = BRepFill_ThruSectionErrorStatus_Null3DCurve;
+            return;
+          }
+>>>>>>> accb2f351 (u)
 	}
 	
 	// compute the location
@@ -746,7 +825,15 @@ void BRepFill_Generator::Perform()
       }
       else {
 	// particular case
+<<<<<<< HEAD
 	CreateKPart(Edge1,Edge2,IType,Surf);
+=======
+        if (!CreateKPart(Edge1, Edge2, IType, Surf))
+        {
+          myStatus = BRepFill_ThruSectionErrorStatus_Null3DCurve;
+          return;
+        }
+>>>>>>> accb2f351 (u)
 	B.MakeFace(Face,Surf,Precision::Confusion());
       }
       

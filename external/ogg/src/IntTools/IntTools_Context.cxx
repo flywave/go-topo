@@ -736,7 +736,11 @@ Standard_Boolean IntTools_Context::IsValidBlockForFace
 
   aTInterm=IntTools_Tools::IntermediatePoint(aT1, aT2);
 
+<<<<<<< HEAD
   Handle(Geom_Curve) aC3D=aC.Curve();
+=======
+  const Handle(Geom_Curve)& aC3D=aC.Curve();
+>>>>>>> accb2f351 (u)
   // point 3D
   aC3D->D0(aTInterm, aPInterm);
   //
@@ -821,7 +825,11 @@ Standard_Boolean IntTools_Context::IsVertexOnLine
   
   aPv=BRep_Tool::Pnt(aV);
 
+<<<<<<< HEAD
   Handle(Geom_Curve) aC3D=aC.Curve();
+=======
+  const Handle(Geom_Curve)& aC3D=aC.Curve();
+>>>>>>> accb2f351 (u)
   
   
   aTolSum=aTolV+aTolC;

@@ -711,7 +711,11 @@ void BRepFill_Evolved::ElementaryPerform (const TopoDS_Face&              Sp,
     for (WireExp.Init(TopoDS::Wire(FaceExp.Current())); WireExp.More(); 
       WireExp.Next()) {
 
+<<<<<<< HEAD
         TopoDS_Edge   CurrentEdge = WireExp.Current();
+=======
+        const TopoDS_Edge&   CurrentEdge = WireExp.Current();
+>>>>>>> accb2f351 (u)
         TopoDS_Vertex VFirst,VLast;
         EdgeVertices(CurrentEdge,VFirst,VLast);
 
@@ -770,9 +774,13 @@ void BRepFill_Evolved::ElementaryPerform (const TopoDS_Face&              Sp,
     TopTools_DataMapOfShapeSequenceOfShape MapSeqVer;
     BRepFill_DataMapOfShapeSequenceOfPnt   MapSeqPar;
 
+<<<<<<< HEAD
     Standard_Integer vv = 0;
     for(ProfExp.Init(myProfile); ProfExp.More(); ProfExp.Next()) {
       vv++;
+=======
+    for(ProfExp.Init(myProfile); ProfExp.More(); ProfExp.Next()) {
+>>>>>>> accb2f351 (u)
       //-----------------------------------------------
       // Return two faces separated by the bissectrice.
       //-----------------------------------------------
@@ -2139,7 +2147,11 @@ void BRepFill_Evolved::MakeSolid()
   B.MakeCompound(Res);
 
   for (; exp.More(); exp.Next()) {
+<<<<<<< HEAD
     TopoDS_Shape Sh = exp.Current();
+=======
+    const TopoDS_Shape& Sh = exp.Current();
+>>>>>>> accb2f351 (u)
     B.MakeSolid(Sol);
     B.Add(Sol,Sh);
     BRepClass3d_SolidClassifier SC(Sol);

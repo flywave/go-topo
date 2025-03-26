@@ -138,7 +138,11 @@ ShapeUpgrade_SplitSurfaceContinuity::ShapeUpgrade_SplitSurfaceContinuity()
       myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE2 );
     if ( spc.Status ( ShapeExtend_DONE3 ) ) {
       myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE3 );
+<<<<<<< HEAD
       Handle(Geom_Curve) aNewBascurve = spc.GetCurve();
+=======
+      const Handle(Geom_Curve)& aNewBascurve = spc.GetCurve();
+>>>>>>> accb2f351 (u)
       Surface->SetBasisCurve(aNewBascurve);
     }
     return;

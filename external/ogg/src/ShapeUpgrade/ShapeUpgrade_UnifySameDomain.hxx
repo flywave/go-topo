@@ -70,6 +70,10 @@ class ShapeUpgrade_UnifySameDomain : public Standard_Transient
 public:
 
   typedef NCollection_DataMap<TopoDS_Shape, Handle(Geom_Plane), TopTools_ShapeMapHasher> DataMapOfFacePlane;
+<<<<<<< HEAD
+=======
+  typedef NCollection_DataMap<TopoDS_Shape, TopTools_MapOfShape, TopTools_ShapeMapHasher> DataMapOfShapeMapOfShape;
+>>>>>>> accb2f351 (u)
   
   //! Empty constructor
   Standard_EXPORT ShapeUpgrade_UnifySameDomain();
@@ -168,7 +172,12 @@ protected:
   Standard_EXPORT void UnifyEdges();
 
   void IntUnifyFaces(const TopoDS_Shape& theInpShape,
+<<<<<<< HEAD
                      TopTools_IndexedDataMapOfShapeListOfShape& theGMapEdgeFaces,
+=======
+                     const TopTools_IndexedDataMapOfShapeListOfShape& theGMapEdgeFaces,
+                     const DataMapOfShapeMapOfShape& theGMapFaceShells,
+>>>>>>> accb2f351 (u)
                      const TopTools_MapOfShape& theFreeBoundMap);
 
   //! Splits the sequence of edges into the sequence of chains

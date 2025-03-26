@@ -498,7 +498,11 @@ void Interface_InterfaceModel::FillSemanticChecks
   for (checks.Start(); checks.More(); checks.Next())  nb ++;
   therepch.ReSize (therepch.Extent() + nb + 2);
   for (checks.Start(); checks.More(); checks.Next()) {
+<<<<<<< HEAD
     const Handle(Interface_Check) ach = checks.Value();
+=======
+    const Handle(Interface_Check)& ach = checks.Value();
+>>>>>>> accb2f351 (u)
     Standard_Integer num = checks.Number();
 //    global check : ok si MEME MODELE
     if (num == 0) thechecksem->GetMessages(ach);
@@ -756,7 +760,12 @@ void Interface_InterfaceModel::GetFromTransfer
 {
   theentities.Clear();  theentities.ReSize (aniter.NbEntities());
   for (aniter.Start(); aniter.More(); aniter.Next()) {
+<<<<<<< HEAD
     Handle(Standard_Transient) ent = aniter.Value();    AddEntity(ent);
+=======
+    const Handle(Standard_Transient)& ent = aniter.Value();
+    AddEntity(ent);
+>>>>>>> accb2f351 (u)
   }
 }
 

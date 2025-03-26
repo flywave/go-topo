@@ -56,7 +56,11 @@ void ShapeAnalysis_Shell::Clear()
   if (shape.ShapeType() == TopAbs_SHELL) myShells.Add (shape); //szv#4:S4163:12Mar99 i =
   else {
     for (TopExp_Explorer exs (shape,TopAbs_SHELL); exs.More(); exs.Next()) {
+<<<<<<< HEAD
       TopoDS_Shape sh = exs.Current();
+=======
+      const TopoDS_Shape& sh = exs.Current();
+>>>>>>> accb2f351 (u)
       myShells.Add (sh); //szv#4:S4163:12Mar99 i =
     }
   }
@@ -120,7 +124,11 @@ Standard_Boolean ShapeAnalysis_Shell::CheckOrientedShells(const TopoDS_Shape& sh
 
   TopTools_IndexedMapOfShape dirs, revs, ints;
   for (TopExp_Explorer exs(shape,TopAbs_SHELL); exs.More(); exs.Next()) {
+<<<<<<< HEAD
     TopoDS_Shape sh = exs.Current();
+=======
+    const TopoDS_Shape& sh = exs.Current();
+>>>>>>> accb2f351 (u)
     //szv#4:S4163:12Mar99 optimized
     if (CheckEdges (sh,myBad,dirs,revs,ints))
       if (myShells.Add (sh)) res = Standard_True;
@@ -134,7 +142,11 @@ Standard_Boolean ShapeAnalysis_Shell::CheckOrientedShells(const TopoDS_Shape& sh
   Standard_Integer nb = dirs.Extent();
   Standard_Integer i; // svv Jan11 2000 : porting on DEC
   for (i = 1; i <= nb; i ++) {
+<<<<<<< HEAD
     TopoDS_Shape sh = dirs.FindKey (i);
+=======
+    const TopoDS_Shape& sh = dirs.FindKey (i);
+>>>>>>> accb2f351 (u)
     if (!myBad.Contains(sh)) {
       if (!revs.Contains(sh)) {
         if(checkinternaledges) {
@@ -154,7 +166,11 @@ Standard_Boolean ShapeAnalysis_Shell::CheckOrientedShells(const TopoDS_Shape& sh
 
   nb = revs.Extent();
   for (i = 1; i <= nb; i ++) {
+<<<<<<< HEAD
     TopoDS_Shape sh = revs.FindKey (i);
+=======
+    const TopoDS_Shape& sh = revs.FindKey (i);
+>>>>>>> accb2f351 (u)
     if (!myBad.Contains(sh)) {
       if (!dirs.Contains(sh)) {
         if(checkinternaledges) {

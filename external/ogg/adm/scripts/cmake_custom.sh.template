@@ -26,6 +26,10 @@ FREETYPE_DIR="$OCCT3RDPARTY/freetype-2.7.1"
 
 #BUILD_MODULE_ApplicationFramework=ON
 #BUILD_MODULE_DataExchange=ON
+<<<<<<< HEAD
+=======
+#BUILD_MODULE_DETools=OFF
+>>>>>>> accb2f351 (u)
 #BUILD_MODULE_Draw=ON
 #BUILD_MODULE_ModelingAlgorithms=ON
 #BUILD_MODULE_ModelingData=ON

@@ -68,6 +68,11 @@
 #include <XSControl_TransferReader.hxx>
 #include <XSControl_TransferWriter.hxx>
 #include <XSControl_WorkSession.hxx>
+<<<<<<< HEAD
+=======
+#include <StepVisual_ContextDependentOverRidingStyledItem.hxx>
+#include <StepShape_ShapeRepresentation.hxx>
+>>>>>>> accb2f351 (u)
 
 //=======================================================================
 //function : STEPConstruct_Styles
@@ -124,6 +129,29 @@ Handle(StepVisual_StyledItem) STEPConstruct_Styles::Style (const Standard_Intege
   return Handle(StepVisual_StyledItem)::DownCast ( myStyles.FindKey(i) );
 }
 
+<<<<<<< HEAD
+=======
+//=======================================================================
+//function : NbRootStyles
+//purpose  : 
+//=======================================================================
+
+Standard_Integer STEPConstruct_Styles::NbRootStyles () const
+{
+  return myRootStyles.Extent();
+}
+
+//=======================================================================
+//function : RootStyle
+//purpose  : 
+//=======================================================================
+
+Handle(StepVisual_StyledItem) STEPConstruct_Styles::RootStyle (const Standard_Integer i) const
+{
+  return Handle(StepVisual_StyledItem)::DownCast ( myRootStyles.FindKey(i) );
+}
+
+>>>>>>> accb2f351 (u)
 
 //=======================================================================
 //function : ClearStyles
@@ -134,6 +162,10 @@ void STEPConstruct_Styles::ClearStyles ()
 {
   myStyles.Clear();
   myPSA.Clear();
+<<<<<<< HEAD
+=======
+  myRootStyles.Clear();
+>>>>>>> accb2f351 (u)
 }
 
 
@@ -344,13 +376,22 @@ Standard_Boolean STEPConstruct_Styles::LoadStyles ()
 {
   myStyles.Clear();
   myPSA.Clear();
+<<<<<<< HEAD
   
+=======
+  myRootStyles.Clear();
+    
+>>>>>>> accb2f351 (u)
   // find all MDGPRs and DMs and collect all defined styles in myStyles
   Handle(Interface_InterfaceModel) model = Model();
   Standard_Integer nb = model->NbEntities();
   Handle(Standard_Type) tMDGPR = STANDARD_TYPE(StepVisual_MechanicalDesignGeometricPresentationRepresentation);
   Handle(Standard_Type) tDM = STANDARD_TYPE(StepVisual_DraughtingModel);
   Handle(Standard_Type) tSI = STANDARD_TYPE(StepVisual_StyledItem);
+<<<<<<< HEAD
+=======
+  Handle(Standard_Type) tSR = STANDARD_TYPE(StepShape_ShapeRepresentation);
+>>>>>>> accb2f351 (u)
   for (Standard_Integer i = 1; i <= nb; i ++)
   {
     Handle(Standard_Transient) enti = model->Value(i);
@@ -364,6 +405,7 @@ Standard_Boolean STEPConstruct_Styles::LoadStyles ()
         Handle(StepVisual_StyledItem) style = 
           Handle(StepVisual_StyledItem)::DownCast ( container->ItemsValue(j) );
         if ( style.IsNull() ) continue;
+<<<<<<< HEAD
         myStyles.Add ( style );
       }
     }
@@ -371,6 +413,28 @@ Standard_Boolean STEPConstruct_Styles::LoadStyles ()
     {
       Handle(StepVisual_StyledItem) aStyledItem = Handle(StepVisual_StyledItem)::DownCast (enti);
       if (!myStyles.Contains (aStyledItem))
+=======
+        auto anItem = style->ItemAP242 ().Value ();
+        if (!anItem.IsNull() && anItem->IsKind(tSR))
+        {
+          myRootStyles.Add (style);
+        }
+        else
+        {
+          myStyles.Add (style);
+        }
+      }
+    }
+    else if (enti->IsKind (STANDARD_TYPE(StepVisual_StyledItem)))
+    {
+      Handle(StepVisual_StyledItem) aStyledItem = Handle(StepVisual_StyledItem)::DownCast (enti);
+      auto anItem = aStyledItem->ItemAP242 ().Value ();
+      if (!anItem.IsNull() && anItem->IsKind(tSR) && !myRootStyles.Contains (aStyledItem))
+      {
+        myRootStyles.Add (aStyledItem);
+      }
+      else if (!myStyles.Contains (aStyledItem))
+>>>>>>> accb2f351 (u)
       {
         myStyles.Add (aStyledItem);
       }

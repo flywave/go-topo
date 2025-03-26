@@ -112,18 +112,33 @@ Standard_Boolean ShapeFix_Shape::Perform(const Message_ProgressRange& theProgres
   TopLoc_Location nullLoc,L;
   L = myShape.Location();
   TopoDS_Shape aShapeNullLoc = myShape;
+<<<<<<< HEAD
   aShapeNullLoc.Location(nullLoc);
   if(myMapFixingShape.Contains(aShapeNullLoc)) {
+=======
+  const Standard_Boolean aIsRecorded = Context()->IsNewShape(myShape);
+  aShapeNullLoc.Location(nullLoc);
+  if(aIsRecorded || myMapFixingShape.Contains(aShapeNullLoc))
+  {
+>>>>>>> accb2f351 (u)
     myShape.Location(L, Standard_False);
     myResult = Context()->Apply(myShape);
     status = Standard_True;
     return status;
   }
+<<<<<<< HEAD
   else myMapFixingShape.Add(aShapeNullLoc);
   //---------------------------------------
   myShape.Location(L, Standard_False);
   TopoDS_Shape S = Context()->Apply(myShape);
   if ( NeedFix (  myFixVertexPositionMode ) )
+=======
+  myMapFixingShape.Add(aShapeNullLoc);
+  //---------------------------------------
+  myShape.Location(L, Standard_False);
+  TopoDS_Shape S = Context()->Apply(myShape);
+  if (NeedFix(myFixVertexPositionMode))
+>>>>>>> accb2f351 (u)
     ShapeFix::FixVertexPosition(S,Precision(),Context());
 
   st = S.ShapeType();

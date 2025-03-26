@@ -55,14 +55,25 @@ void AIS_Selection::Clear()
 //function : Select
 //purpose  :
 //=======================================================================
+<<<<<<< HEAD
 AIS_SelectStatus AIS_Selection::Select (const Handle(SelectMgr_EntityOwner)& theObject)
 {
   if (theObject.IsNull()
   || !theObject->HasSelectable())
+=======
+AIS_SelectStatus AIS_Selection::Select (const Handle(SelectMgr_EntityOwner)& theOwner,
+                                        const Handle(SelectMgr_Filter)& theFilter,
+                                        const AIS_SelectionScheme theSelScheme,
+                                        const Standard_Boolean theIsDetected)
+{
+  if (theOwner.IsNull()
+  || !theOwner->HasSelectable())
+>>>>>>> accb2f351 (u)
   {
     return AIS_SS_NotDone;
   }
 
+<<<<<<< HEAD
   if (!myResultMap.IsBound (theObject))
   {
     AIS_NListOfEntityOwner::Iterator aListIter;
@@ -73,6 +84,29 @@ AIS_SelectStatus AIS_Selection::Select (const Handle(SelectMgr_EntityOwner)& the
   }
 
   AIS_NListOfEntityOwner::Iterator aListIter = myResultMap.Find (theObject);
+=======
+  const Standard_Boolean isDetected = theIsDetected
+                                   && (theFilter.IsNull() || theFilter->IsOk (theOwner));
+
+  const Standard_Boolean wasSelected = theOwner->IsSelected();
+  const Standard_Boolean toSelect = theOwner->Select (theSelScheme, isDetected);
+
+  if (toSelect && !wasSelected)
+  {
+    AIS_NListOfEntityOwner::Iterator aListIter;
+    myresult.Append  (theOwner, aListIter);
+    myResultMap.Bind (theOwner, aListIter);
+    theOwner->SetSelected (Standard_True);
+    return AIS_SS_Added;
+  }
+
+  if (!toSelect && !wasSelected)
+  {
+    return AIS_SS_NotDone;
+  }
+
+  AIS_NListOfEntityOwner::Iterator aListIter = myResultMap.Find (theOwner);
+>>>>>>> accb2f351 (u)
   if (myIterator == aListIter)
   {
     if (myIterator.More())
@@ -88,14 +122,23 @@ AIS_SelectStatus AIS_Selection::Select (const Handle(SelectMgr_EntityOwner)& the
   // In the mode of advanced mesh selection only one owner is created for all selection modes.
   // It is necessary to check the current detected entity
   // and remove the owner from map only if the detected entity is the same as previous selected (IsForcedHilight call)
+<<<<<<< HEAD
   if (theObject->IsForcedHilight())
+=======
+  if (theOwner->IsForcedHilight())
+>>>>>>> accb2f351 (u)
   {
     return AIS_SS_Added;
   }
 
   myresult.Remove (aListIter);
+<<<<<<< HEAD
   myResultMap.UnBind (theObject);
   theObject->SetSelected (Standard_False);
+=======
+  myResultMap.UnBind (theOwner);
+  theOwner->SetSelected (Standard_False);
+>>>>>>> accb2f351 (u)
 
   // update list iterator for next object in <myresult> list if any
   if (aListIter.More())
@@ -142,6 +185,7 @@ void AIS_Selection::SelectOwners (const AIS_NArray1OfEntityOwner& thePickedOwner
                                   const Standard_Boolean theToAllowSelOverlap,
                                   const Handle(SelectMgr_Filter)& theFilter)
 {
+<<<<<<< HEAD
   (void )theToAllowSelOverlap;
   switch (theSelScheme)
   {
@@ -222,6 +266,41 @@ void AIS_Selection::SelectOwners (const AIS_NArray1OfEntityOwner& thePickedOwner
       Clear();
       return;
     }
+=======
+  (void)theToAllowSelOverlap;
+
+  if (theSelScheme == AIS_SelectionScheme_ReplaceExtra
+   && thePickedOwners.Size() == myresult.Size())
+  {
+    // If picked owners is equivalent to the selected then just clear selected.
+    Standard_Boolean isTheSame = Standard_True;
+    for (AIS_NArray1OfEntityOwner::Iterator aPickedIter (thePickedOwners); aPickedIter.More(); aPickedIter.Next())
+    {
+      if (!myResultMap.IsBound (aPickedIter.Value()))
+      {
+        isTheSame = Standard_False;
+        break;
+      }
+    }
+    if (isTheSame)
+    {
+       Clear();
+       return;
+    }
+  }
+
+  if (theSelScheme == AIS_SelectionScheme_Replace
+   || theSelScheme == AIS_SelectionScheme_ReplaceExtra
+   || theSelScheme == AIS_SelectionScheme_Clear)
+  {
+    Clear();
+  }
+
+  for (AIS_NArray1OfEntityOwner::Iterator aPickedIter (thePickedOwners); aPickedIter.More(); aPickedIter.Next())
+  {
+    const Handle(SelectMgr_EntityOwner)& anOwner = aPickedIter.Value();
+    Select (anOwner, theFilter, theSelScheme, true);
+>>>>>>> accb2f351 (u)
   }
 }
 

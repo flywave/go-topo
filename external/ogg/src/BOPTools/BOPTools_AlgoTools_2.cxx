@@ -112,7 +112,11 @@ void BOPTools_AlgoTools::MakeSectEdge(const IntTools_Curve& aIC,
                                       const Standard_Real  aP2,
                                       TopoDS_Edge& aNewEdge)
 {
+<<<<<<< HEAD
   Handle(Geom_Curve) aC=aIC.Curve ();
+=======
+  const Handle(Geom_Curve)& aC=aIC.Curve ();
+>>>>>>> accb2f351 (u)
   
   BRepBuilderAPI_MakeEdge aMakeEdge(aC, aV1, aV2, aP1, aP2);
   

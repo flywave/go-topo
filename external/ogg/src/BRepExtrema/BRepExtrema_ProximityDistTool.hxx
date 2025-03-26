@@ -21,6 +21,10 @@
 #include <BRepExtrema_TriangleSet.hxx>
 #include <BVH_Distance.hxx>
 #include <BVH_Tools.hxx>
+<<<<<<< HEAD
+=======
+#include <Poly_Triangulation.hxx>
+>>>>>>> accb2f351 (u)
 
 //! Tool class for computation the proximity distance from first 
 //! primitive set to second one that is the maximal from minimum 
@@ -93,6 +97,11 @@ public:
   //! Creates new tool for the given element sets.
   Standard_EXPORT BRepExtrema_ProximityDistTool (const Handle(BRepExtrema_TriangleSet)& theSet1,
                                                  const Standard_Integer theNbSamples1,
+<<<<<<< HEAD
+=======
+                                                 const BVH_Array3d& theAddVertices1,
+                                                 const NCollection_Vector<ProxPnt_Status>& theAddStatus1,
+>>>>>>> accb2f351 (u)
                                                  const Handle(BRepExtrema_TriangleSet)& theSet2,
                                                  const BRepExtrema_ShapeList& theShapeList1,
                                                  const BRepExtrema_ShapeList& theShapeList2);
@@ -107,6 +116,13 @@ public:
   Standard_EXPORT void LoadShapeLists (const BRepExtrema_ShapeList& theShapeList1,
                                        const BRepExtrema_ShapeList& theShapeList2);
 
+<<<<<<< HEAD
+=======
+  //! Loads given additional vertices and their statuses.
+  void LoadAdditionalPointsFirstSet (const BVH_Array3d& theAddVertices1,
+                                     const NCollection_Vector<ProxPnt_Status>& theAddStatus1);
+
+>>>>>>> accb2f351 (u)
   //! Performs searching of the proximity distance.
   Standard_EXPORT void Perform();
 
@@ -121,6 +137,23 @@ public: //! @name Reject/Accept implementations
   Standard_EXPORT virtual Standard_Boolean Accept (const Standard_Integer theSgmIdx,
                                                    const Standard_Real&) Standard_OVERRIDE;
 
+<<<<<<< HEAD
+=======
+public:
+
+  //! Returns true if the node is on the boarder.
+  Standard_EXPORT static Standard_Boolean IsNodeOnBorder (const Standard_Integer theNodeIdx,
+                                                          const Handle (Poly_Triangulation)& theTr);
+
+  //! Returns true if the edge is on the boarder.
+  Standard_EXPORT static Standard_Boolean IsEdgeOnBorder (const Standard_Integer theTrgIdx,
+                                                          const Standard_Integer theFirstEdgeNodeIdx,
+                                                          const Standard_Integer theSecondEdgeNodeIdx,
+                                                          const Handle (Poly_Triangulation)& theTr);
+
+public:
+
+>>>>>>> accb2f351 (u)
   //! Returns points on triangles sets, which provide the proximity distance.
   void ProximityPoints (BVH_Vec3d& thePoint1, BVH_Vec3d& thePoint2) const
   {
@@ -148,6 +181,13 @@ protected:
 
 private:
 
+<<<<<<< HEAD
+=======
+  //! Goes throught vertices from the 1st set.
+  void goThroughtSet1 (const BVH_Array3d& aVertices1,
+                       const Standard_Boolean theIsAdditionalSet);
+
+>>>>>>> accb2f351 (u)
   //! Defines the status of proximity point from 1st BVH.
   void defineStatusProxPnt1();
 
@@ -183,6 +223,14 @@ private:
 
   Standard_Integer myNbSamples1; //!< Number of samples points on the first shape
 
+<<<<<<< HEAD
+=======
+  //! Is vertex corresponding to proximity point of 1st shape from additional set
+  Standard_Integer myIsProxVtx1FromAddSet;
+  BVH_Array3d myAddVertices1; //!< Additional vertices on the 1st shape
+  NCollection_Vector<ProxPnt_Status> myAddStatus1; //!< Status of additional vertices on the 1st shape
+
+>>>>>>> accb2f351 (u)
   //! Vertex index from 1st BVH corresponding to proximity point of 1st shape
   Standard_Integer myProxVtxIdx1;
 

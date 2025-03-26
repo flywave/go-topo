@@ -669,18 +669,18 @@ IfcUtil::IfcBaseClass* IfcGeom::MAKE_TYPE_NAME(tesselate_)(const TopoDS_Shape& s
 		Handle(Poly_Triangulation) tri = BRep_Tool::Triangulation(face, loc);
 
 		if (!tri.IsNull()) {
-			const TColgp_Array1OfPnt& nodes = tri->Nodes();
+            Handle(TColgp_HArray1OfPnt) nodes = tri->MapNodeArray();
 			std::vector<IFC_NAMESPACE::IfcSchema::IfcCartesianPoint*> vertices;
-			for (int i = 1; i <= nodes.Length(); ++i) {
-				gp_Pnt pnt = nodes(i).Transformed(loc);
+			for (int i = 1; i <= nodes->Length(); ++i) {
+				gp_Pnt pnt = nodes->Value(i).Transformed(loc);
 				std::vector<double> xyz; xyz.push_back(pnt.X()); xyz.push_back(pnt.Y()); xyz.push_back(pnt.Z());
 				IFC_NAMESPACE::IfcSchema::IfcCartesianPoint* cpnt = new IFC_NAMESPACE::IfcSchema::IfcCartesianPoint(xyz);
 				vertices.push_back(cpnt);
 			}
-			const Poly_Array1OfTriangle& triangles = tri->Triangles();
-			for (int i = 1; i <= triangles.Length(); ++i) {
+            Handle(Poly_HArray1OfTriangle) triangles = tri->MapTriangleArray();
+			for (int i = 1; i <= triangles->Length(); ++i) {
 				int n1, n2, n3;
-				triangles(i).Get(n1, n2, n3);
+				triangles->Value(i).Get(n1, n2, n3);
 				IFC_NAMESPACE::IfcSchema::IfcCartesianPoint::list::ptr points(new IFC_NAMESPACE::IfcSchema::IfcCartesianPoint::list);
 				points->push(vertices[n1 - 1]);
 				points->push(vertices[n2 - 1]);

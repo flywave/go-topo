@@ -746,7 +746,11 @@ TopoDS_Shape BRepFill_Pipe::MakeShape(const TopoDS_Shape& S,
     TopExp_Explorer Explo(result, TopAbs_FACE);
     for (; Explo.More(); Explo.Next())
     {
+<<<<<<< HEAD
       TopoDS_Shape aFace = Explo.Current();
+=======
+      const TopoDS_Shape& aFace = Explo.Current();
+>>>>>>> accb2f351 (u)
       RebuildTopOrBottomFace(aFace.Reversed(), Standard_True); //top face was reversed
     }
     /////
@@ -987,7 +991,11 @@ void BRepFill_Pipe::RebuildTopOrBottomFace(const TopoDS_Shape& aFace,
     TopoDS_Iterator itw(aWire);
     for (; itw.More(); itw.Next())
     {
+<<<<<<< HEAD
       TopoDS_Shape anEdge = itw.Value();
+=======
+      const TopoDS_Shape& anEdge = itw.Value();
+>>>>>>> accb2f351 (u)
       for (ii = myCurIndexOfSectionEdge; ii <= mySections->ColLength(); ii++)
       {
         TopoDS_Shape aVisoEdge = mySections->Value(ii, IndexOfSection);

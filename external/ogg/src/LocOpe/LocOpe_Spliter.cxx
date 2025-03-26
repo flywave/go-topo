@@ -471,7 +471,11 @@ void LocOpe_Spliter::Perform(const Handle(LocOpe_WiresOnShape)& PW)
       }
     }
     if (itms.More()) {
+<<<<<<< HEAD
       TopoDS_Shape fac = itms.Key();
+=======
+      const TopoDS_Shape& fac = itms.Key();
+>>>>>>> accb2f351 (u)
       for (exp.Init(fac,TopAbs_EDGE); exp.More(); exp.Next()) {
 	if (!Mapebord.Add(exp.Current())) {
 	  Mapebord.Remove(exp.Current());

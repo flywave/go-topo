@@ -168,7 +168,11 @@ void  IGESData_GeneralModule::FillSharedCase
   if (enfr->NbAssociativities() != 0) {
     for (Interface_EntityIterator iter = enfr->Associativities();
 	 iter.More(); iter.Next()) {
+<<<<<<< HEAD
       Handle(Standard_Transient) anent = iter.Value();
+=======
+      const Handle(Standard_Transient)& anent = iter.Value();
+>>>>>>> accb2f351 (u)
       Handle(Standard_Transient) newent;
       if (TC.Search(anent,newent)) ento->AddAssociativity
 	(GetCasted(IGESData_IGESEntity,newent));
