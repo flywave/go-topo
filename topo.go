@@ -105,6 +105,7 @@ func (m *MeshReceiver) end() {
 }
 
 func (m *MeshReceiver) appendFace(c Color) int {
+	m.Faces = append(m.Faces, c)
 	return m.index
 }
 
