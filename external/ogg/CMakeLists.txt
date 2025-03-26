@@ -10,12 +10,32 @@ set (CMAKE_CONFIGURATION_TYPES Release Debug RelWithDebInfo CACHE INTERNAL "" FO
 set (BUILD_CPP_STANDARD "C++11" CACHE STRING "Select using c++ standard.")
 set_property(CACHE BUILD_CPP_STANDARD PROPERTY STRINGS "C++11" "C++14" "C++17" "C++20" "C++23")
 
-INCLUDE_DIRECTORIES(BEFORE 
-    "${CMAKE_CURRENT_SOURCE_DIR}/../freetype2/include/"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../freetype2/src/include/"
-)
+IF (WIN32)
+  INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/../libxml/win32
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../libxml/win32/include")
+ENDIF()
 
-set (CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/ogg")
+IF(APPLE)
+  INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/../libxml/mac
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../libxml/mac/include")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-enum-constexpr-conversion")
+ENDIF()
+
+IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
+INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/../libxml/linux
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/../libxml/linux/include")
+ENDIF()
+
+INCLUDE_DIRECTORIES(
+    "${CMAKE_CURRENT_SOURCE_DIR}/../libxml/src/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../zlib"
+    "${CMAKE_CURRENT_BINARY_DIR}/../zlib"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../fontconfig/src/"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../freetype2/include/"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../icu/source/common/"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../icu/source/i18n/"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../rapidjson/include/"
+)
 
 # Set desired C++ standard
 if     ("${BUILD_CPP_STANDARD}" STREQUAL "C++11")
@@ -151,6 +171,8 @@ if (BUILD_USE_PCH)
 
 endif()
 
+set (CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/" CACHE INTERNAL "" FORCE)
+
 # Get all used variables: OS_WITH_BIT, COMPILER
 OCCT_MAKE_OS_WITH_BITNESS()
 OCCT_MAKE_COMPILER_SHORT_NAME()
@@ -187,7 +209,7 @@ set (USE_FREETYPE  ON CACHE BOOL "${USE_FREETYPE_DESCR}")
 set (USE_FREEIMAGE OFF CACHE BOOL "${USE_FREEIMAGE_DESCR}")
 set (USE_FFMPEG    OFF CACHE BOOL "${USE_FFMPEG_DESCR}")
 set (USE_OPENVR    OFF CACHE BOOL "${USE_OPENVR_DESCR}")
-set (USE_RAPIDJSON OFF CACHE BOOL "${USE_RAPIDJSON_DESCR}")
+set (USE_RAPIDJSON ON CACHE BOOL "${USE_RAPIDJSON_DESCR}")
 set (USE_DRACO     OFF CACHE BOOL "${USE_DRACO_DESCR}")
 set (USE_TBB       OFF CACHE BOOL "${USE_TBB_DESCR}")
 set (USE_EIGEN     OFF CACHE BOOL "${USE_EIGEN_DESCR}")
@@ -269,6 +291,9 @@ OCCT_IS_PRODUCT_REQUIRED (CSF_EIGEN CAN_USE_EIGEN)
 if (CAN_USE_FREETYPE)
  add_definitions (-DHAVE_FREETYPE)
 endif()
+if (USE_RAPIDJSON)
+ add_definitions (-DHAVE_RAPIDJSON)
+endif()
 
 # define CSF variable
 OCCT_INCLUDE_CMAKE_FILE ("adm/cmake/occt_csf")
@@ -296,9 +321,6 @@ OCCT_CHECK_AND_UNSET ("INSTALL_GLES2")
 OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_TBB")
 OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_TBBMALLOC")
 OCCT_CHECK_AND_UNSET ("INSTALL_TBB")
-OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_RAPIDJSON")
-OCCT_CHECK_AND_UNSET ("INSTALL_RAPIDJSON")
-OCCT_CHECK_AND_UNSET ("USE_RAPIDJSON")
 OCCT_CHECK_AND_UNSET ("USE_DRACO")
 OCCT_CHECK_AND_UNSET_GROUP ("3RDPARTY_DRACO")
 OCCT_CHECK_AND_UNSET ("INSTALL_DRACO")
@@ -448,27 +470,6 @@ if (BUILD_DOC_Overview)
   OCCT_ADD_SUBDIRECTORY (dox)
 endif()
 
-message (STATUS "Info: \(${CURRENT_TIME}\) OCCT toolkits processed")
-# samples do not support patch usage
-if (BUILD_SAMPLES_MFC OR BUILD_SAMPLES_QT)
-  set (OCCT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
-endif()
-
-if (BUILD_SAMPLES_MFC)
-  set (MFC_STANDARD_SAMPLES_DIR ${OCCT_ROOT}/samples/mfc/standard)
-  set (COMMON_WINMAIN_FILE      ${MFC_STANDARD_SAMPLES_DIR}/Common/Winmain.cpp)
-
-  add_subdirectory(samples/mfc/standard/mfcsample)
-  add_subdirectory(samples/mfc/standard/01_Geometry)
-  add_subdirectory(samples/mfc/standard/02_Modeling)
-  add_subdirectory(samples/mfc/standard/03_ImportExport)
-  add_subdirectory(samples/mfc/standard/04_HLR)
-
-  message (STATUS "Info: \(${CURRENT_TIME}\) MFC Sample projects added")
-endif()
-
-OCCT_MODULES_AND_TOOLKITS (SAMPLES "SAMPLES_TOOLKITS" OCCT_SAMPLES)
-
 # Prepare variables for configuration of OpenCASCADE cmake config file
 set (OCCT_MODULES_ENABLED)
 set (OCCT_LIBRARIES)
@@ -528,15 +529,3 @@ foreach (OCCT_MODULE ${OCCT_MODULES})
 endforeach()
 set (OCCT_MODULES_ENABLED ${OCCT_MODULES_ENABLED_SORTED})
 
-# Add all targets to the build-tree export set
-export (TARGETS ${OCCT_LIBRARIES} FILE "${CMAKE_CURRENT_BINARY_DIR}/OpenCASCADETargets.cmake")
-
-# Export the package for use from the build-tree
-# (this registers the build-tree with a global CMake-registry)
-export(PACKAGE OpenCASCADE)
-
-# Update generated OpenCASCADETargets-*.cmake files
-# to have correct paths to libraries depending on the configuration
-OCCT_UPDATE_TARGET_FILE ()
-
-message (STATUS "Info: \(${CURRENT_TIME}\) OCCT configuration files prepared")
