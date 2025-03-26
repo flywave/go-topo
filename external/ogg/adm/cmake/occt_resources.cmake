@@ -3,13 +3,8 @@
 macro (OCCT_GENERATE_CONTENT_ONLY CurrentResource)
   set (RESOURCE_FILES)
   set (isResDirectory FALSE)
-<<<<<<< HEAD
-  if (IS_DIRECTORY "${CMAKE_SOURCE_DIR}/src/${CurrentResource}")
-    file (STRINGS "${CMAKE_SOURCE_DIR}/src/${CurrentResource}/FILES" RESOURCE_FILES)
-=======
   if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/${CurrentResource}")
     file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/src/${CurrentResource}/FILES" RESOURCE_FILES)
->>>>>>> accb2f351 (u)
     set (CurrentResource_Directory "${CurrentResource}")
     set (isResDirectory TRUE)
   else()
@@ -41,21 +36,13 @@ macro (OCCT_GENERATE_CONTENT_ONLY CurrentResource)
         endif()
 
         if (toProcessResFile)
-<<<<<<< HEAD
-          message(STATUS "Info. Generating header file from resource file: ${CMAKE_SOURCE_DIR}/src/${CurrentResource_Directory}/${RESOURCE_FILE}")
-=======
           message(STATUS "Info. Generating header file from resource file: ${CMAKE_CURRENT_SOURCE_DIR}/src/${CurrentResource_Directory}/${RESOURCE_FILE}")
->>>>>>> accb2f351 (u)
 
           # generate content for header file
           set (OCCT_HEADER_FILE_CONTENT "// This file has been automatically generated from resource file src/${CurrentResource_Directory}/${RESOURCE_FILE}\n\n")
 
           # read resource file
-<<<<<<< HEAD
-          file (STRINGS "${CMAKE_SOURCE_DIR}/src/${CurrentResource_Directory}/${RESOURCE_FILE}" RESOURCE_FILE_LINES_LIST)
-=======
           file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/src/${CurrentResource_Directory}/${RESOURCE_FILE}" RESOURCE_FILE_LINES_LIST)
->>>>>>> accb2f351 (u)
 
           set (OCCT_HEADER_FILE_CONTENT "${OCCT_HEADER_FILE_CONTENT}static const char ${CurrentResource_Directory}_${CurrentResource_FileName}[] =")
           foreach (line IN LISTS RESOURCE_FILE_LINES_LIST)
@@ -65,19 +52,11 @@ macro (OCCT_GENERATE_CONTENT_ONLY CurrentResource)
           set (OCCT_HEADER_FILE_CONTENT "${OCCT_HEADER_FILE_CONTENT};")
 
           # Save generated content to header file
-<<<<<<< HEAD
-          set (HEADER_FILE "${CMAKE_SOURCE_DIR}/src/${CurrentResource_Directory}/${HEADER_FILE_NAME}")
-          if (EXISTS "${HEADER_FILE}")
-            file (REMOVE "${HEADER_FILE}")
-          endif()
-          configure_file ("${CMAKE_SOURCE_DIR}/adm/templates/header.in" "${HEADER_FILE}" @ONLY NEWLINE_STYLE LF)
-=======
           set (HEADER_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/${CurrentResource_Directory}/${HEADER_FILE_NAME}")
           if (EXISTS "${HEADER_FILE}")
             file (REMOVE "${HEADER_FILE}")
           endif()
           configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/adm/templates/header.in" "${HEADER_FILE}" @ONLY NEWLINE_STYLE LF)
->>>>>>> accb2f351 (u)
         endif()
       endif()
     endforeach()

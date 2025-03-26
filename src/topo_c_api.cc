@@ -50,21 +50,13 @@ int topo_shape_type(topo_shape_t *p) {
   return static_cast<int>(p->shp->type());
 }
 
-int topo_shape_id(topo_shape_t *p) {
-  return p->id;
-}
+int topo_shape_id(topo_shape_t *p) { return p->id; }
 
-int topo_shape_parent_id(topo_shape_t *p) {
-  return p->parent_id;
-}
+int topo_shape_parent_id(topo_shape_t *p) { return p->parent_id; }
 
-const char * topo_shape_name(topo_shape_t *p) {
-  return p->name.c_str();
-}
+const char *topo_shape_name(topo_shape_t *p) { return p->name.c_str(); }
 
-const char * topo_shape_guid(topo_shape_t *p) {
-  return p->guid.c_str();
-}
+const char *topo_shape_guid(topo_shape_t *p) { return p->guid.c_str(); }
 
 bbox_t topo_shape_bounding_box(topo_shape_t *p) {
   auto b = p->shp->bounding_box();
@@ -425,6 +417,27 @@ _Bool topo_shape_surface_colour(topo_shape_t *p, double *colour) {
     return p->shp->surface_colour(colour);
   }
   return false;
+}
+
+pnt3d_t topo_shape_centre_of_mass(topo_shape_t *p) {
+  if (p) {
+    return cast_from_gp(p->shp->centre_of_mass());
+  }
+  return pnt3d_t{0, 0, 0};
+}
+
+double topo_shape_compute_mass(topo_shape_t *p) {
+  if (p) {
+    return p->shp->compute_mass();
+  }
+  return 0.;
+}
+
+double topo_shape_compute_area(topo_shape_t *p) {
+  if (p) {
+    return p->shp->compute_area();
+  }
+  return 0.;
 }
 
 topo_vertex_t topo_vertex_new(double x, double y, double z) {

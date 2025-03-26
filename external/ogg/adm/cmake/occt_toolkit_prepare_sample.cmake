@@ -7,11 +7,7 @@ if ("${TARGET_FOLDER}" STREQUAL "")
   set (TARGET_FOLDER "Samples")
   set (TOOLKITS_NAME_SUFFIX "SAMPLES_TOOLKITS")
 
-<<<<<<< HEAD
-  include_directories("${CMAKE_BINARY_DIR}/${INSTALL_DIR_INCLUDE}/${RELATIVE_DIR}")
-=======
   include_directories("${CMAKE_CURRENT_BINARY_DIR}/${INSTALL_DIR_INCLUDE}/${RELATIVE_DIR}")
->>>>>>> accb2f351 (u)
 else()
   unset (USE_QT)
   unset (RELATIVE_DIR)

@@ -14,11 +14,7 @@ endif()
 
 set (OCC_TARGET_FOLDER "${TARGET_FOLDER}")
 if ("${OCC_TARGET_FOLDER}" STREQUAL "")
-<<<<<<< HEAD
-  set (OCC_TARGET_FOLDER "Modules")
-=======
   set (OCC_TARGET_FOLDER "external/ogg")
->>>>>>> accb2f351 (u)
 endif()
 
 set (OCCT_TOOLKITS_NAME_SUFFIX "${TOOLKITS_NAME_SUFFIX}")
@@ -27,23 +23,16 @@ if ("${OCCT_TOOLKITS_NAME_SUFFIX}" STREQUAL "")
 endif()
 
 # parse PACKAGES file
-<<<<<<< HEAD
-FILE_TO_LIST ("${RELATIVE_SOURCES_DIR}/${PROJECT_NAME}/PACKAGES" USED_PACKAGES)
-=======
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/PACKAGES")
 file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/PACKAGES" USED_PACKAGES)
 endif()
 
->>>>>>> accb2f351 (u)
 if ("${USED_PACKAGES}" STREQUAL "")
   set (USED_PACKAGES ${PROJECT_NAME})
 endif()
 
-<<<<<<< HEAD
-=======
 
 
->>>>>>> accb2f351 (u)
 if (USE_QT)
   # Qt dependencies
   OCCT_INCLUDE_CMAKE_FILE (adm/cmake/qt_macro)
@@ -86,8 +75,6 @@ foreach (OCCT_PACKAGE ${USED_PACKAGES})
     OCCT_ORIGIN_AND_PATCHED_FILES ("${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}" "*[.]lex" SOURCE_FILES_FLEX)
     list (LENGTH SOURCE_FILES_FLEX SOURCE_FILES_FLEX_LEN)
 
-<<<<<<< HEAD
-=======
     # remove old general version of FlexLexer
     if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/FlexLexer/FlexLexer.h)
       message (STATUS "Info: remove old FLEX header file: ${CMAKE_CURRENT_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/FlexLexer/FlexLexer.h")
@@ -98,7 +85,6 @@ foreach (OCCT_PACKAGE ${USED_PACKAGES})
       configure_file("${FLEX_INCLUDE_DIR}/FlexLexer.h" "${CMAKE_CURRENT_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/FlexLexer/FlexLexer.h" @ONLY NEWLINE_STYLE LF)
     endif()
 
->>>>>>> accb2f351 (u)
     # bison files
     OCCT_ORIGIN_AND_PATCHED_FILES ("${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}" "*[.]yacc" SOURCE_FILES_BISON)
     list (LENGTH SOURCE_FILES_BISON SOURCE_FILES_BISON_LEN)
@@ -122,11 +108,7 @@ foreach (OCCT_PACKAGE ${USED_PACKAGES})
         if (EXISTS "${CURRENT_FLEX_FILE}" AND EXISTS "${CURRENT_BISON_FILE}" AND ${ARE_FILES_EQUAL})
 
           # Note: files are generated in original source directory (not in patch!)
-<<<<<<< HEAD
-          set (FLEX_BISON_TARGET_DIR "${CMAKE_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}")
-=======
           set (FLEX_BISON_TARGET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}")
->>>>>>> accb2f351 (u)
 
           # choose appropriate extension for generated files: "cxx" if source file contains
           # instruction to generate C++ code, "c" otherwise
@@ -140,27 +122,11 @@ foreach (OCCT_PACKAGE ${USED_PACKAGES})
             endif()
           endforeach()
 
-<<<<<<< HEAD
-          if (EXISTS ${FLEX_BISON_TARGET_DIR}/FlexLexer.h)
-            message (STATUS "Info: remove old FLEX header file: ${FLEX_BISON_TARGET_DIR}/FlexLexer.h")
-            file(REMOVE ${FLEX_BISON_TARGET_DIR}/FlexLexer.h)
-          endif()
-
-=======
->>>>>>> accb2f351 (u)
           file (STRINGS "${CURRENT_FLEX_FILE}" FILE_FLEX_CONTENT)
           foreach (FILE_FLEX_CONTENT_LINE ${FILE_FLEX_CONTENT})
             string (REGEX MATCH "%option c\\+\\+" CXX_FLEX_LANGUAGE_FOUND ${FILE_FLEX_CONTENT_LINE})
             if (CXX_FLEX_LANGUAGE_FOUND)
               set (FLEX_OUTPUT_FILE_EXT "cxx")
-<<<<<<< HEAD
-
-              # install copy of FlexLexer.h locally to allow further building without flex
-              if (FLEX_INCLUDE_DIR AND EXISTS "${FLEX_INCLUDE_DIR}/FlexLexer.h")
-                configure_file("${FLEX_INCLUDE_DIR}/FlexLexer.h" "${FLEX_BISON_TARGET_DIR}/FlexLexer.h" @ONLY NEWLINE_STYLE LF)
-              endif()
-=======
->>>>>>> accb2f351 (u)
             endif()
           endforeach()
           set (BISON_OUTPUT_FILE ${CURRENT_BISON_FILE_NAME}.tab.${BISON_OUTPUT_FILE_EXT})
@@ -180,11 +146,7 @@ foreach (OCCT_PACKAGE ${USED_PACKAGES})
           endif()
 
           BISON_TARGET (Parser_${CURRENT_BISON_FILE_NAME} ${CURRENT_BISON_FILE} "${FLEX_BISON_TARGET_DIR}/${BISON_OUTPUT_FILE}"
-<<<<<<< HEAD
-                        COMPILE_FLAGS "-p ${CURRENT_BISON_FILE_NAME} -l -M ${CMAKE_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/=")
-=======
                         COMPILE_FLAGS "-p ${CURRENT_BISON_FILE_NAME} -l -M ${CMAKE_CURRENT_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/=")
->>>>>>> accb2f351 (u)
           FLEX_TARGET  (Scanner_${CURRENT_FLEX_FILE_NAME} ${CURRENT_FLEX_FILE} "${FLEX_BISON_TARGET_DIR}/${FLEX_OUTPUT_FILE}"
                         COMPILE_FLAGS "-P${CURRENT_FLEX_FILE_NAME} -L")
           ADD_FLEX_BISON_DEPENDENCY (Scanner_${CURRENT_FLEX_FILE_NAME} Parser_${CURRENT_BISON_FILE_NAME})
@@ -206,15 +168,6 @@ foreach (OCCT_PACKAGE ${USED_PACKAGES})
       file (STRINGS "${BUILD_PATCH}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}/FILES" SOURCE_FILES_M REGEX ".+[.]mm")
     endif()
   else()
-<<<<<<< HEAD
-    file (STRINGS "${CMAKE_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}/FILES"     HEADER_FILES_M   REGEX ".+[.]h")
-    file (STRINGS "${CMAKE_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}/FILES"     HEADER_FILES_LXX REGEX ".+[.]lxx")
-    file (STRINGS "${CMAKE_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}/FILES"     HEADER_FILES_GXX REGEX ".+[.]gxx")
-
-    file (STRINGS "${CMAKE_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}/FILES"     SOURCE_FILES_C REGEX ".+[.]c")
-    if(APPLE)
-      file (STRINGS "${CMAKE_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}/FILES"   SOURCE_FILES_M REGEX ".+[.]mm")
-=======
     file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../${OCCT_PACKAGE}/FILES"     HEADER_FILES_M   REGEX ".+[.]h")
     file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../${OCCT_PACKAGE}/FILES"     HEADER_FILES_LXX REGEX ".+[.]lxx")
     file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../${OCCT_PACKAGE}/FILES"     HEADER_FILES_GXX REGEX ".+[.]gxx")
@@ -222,7 +175,6 @@ foreach (OCCT_PACKAGE ${USED_PACKAGES})
     file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../${OCCT_PACKAGE}/FILES"     SOURCE_FILES_C REGEX ".+[.]c")
     if(APPLE)
       file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../${OCCT_PACKAGE}/FILES"   SOURCE_FILES_M REGEX ".+[.]mm")
->>>>>>> accb2f351 (u)
     endif()
   endif()
     
@@ -238,13 +190,8 @@ foreach (OCCT_PACKAGE ${USED_PACKAGES})
       list (APPEND USED_INCFILES "${BUILD_PATCH}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}/${HEADER_FILE}")
       SOURCE_GROUP ("Header Files\\${OCCT_PACKAGE_NAME}" FILES "${BUILD_PATCH}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}/${HEADER_FILE}")
     else()
-<<<<<<< HEAD
-      list (APPEND USED_INCFILES "${CMAKE_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}/${HEADER_FILE}")
-      SOURCE_GROUP ("Header Files\\${OCCT_PACKAGE_NAME}" FILES "${CMAKE_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}/${HEADER_FILE}")
-=======
       list (APPEND USED_INCFILES "${CMAKE_CURRENT_SOURCE_DIR}/../${OCCT_PACKAGE}/${HEADER_FILE}")
       SOURCE_GROUP ("Header Files\\${OCCT_PACKAGE_NAME}" FILES "${CMAKE_CURRENT_SOURCE_DIR}/${HEADER_FILE}")
->>>>>>> accb2f351 (u)
     endif()
   endforeach()
 
@@ -254,13 +201,8 @@ foreach (OCCT_PACKAGE ${USED_PACKAGES})
       list (APPEND USED_SRCFILES "${BUILD_PATCH}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}/${SOURCE_FILE}")
       SOURCE_GROUP ("Source Files\\${OCCT_PACKAGE_NAME}" FILES "${BUILD_PATCH}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}/${SOURCE_FILE}")
     else()
-<<<<<<< HEAD
-      list (APPEND USED_SRCFILES "${CMAKE_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}/${SOURCE_FILE}")
-      SOURCE_GROUP ("Source Files\\${OCCT_PACKAGE_NAME}" FILES "${CMAKE_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/${OCCT_PACKAGE}/${SOURCE_FILE}")
-=======
       list (APPEND USED_SRCFILES "${CMAKE_CURRENT_SOURCE_DIR}/../${OCCT_PACKAGE}/${SOURCE_FILE}")
       SOURCE_GROUP ("Source Files\\${OCCT_PACKAGE_NAME}" FILES "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE_FILE}")
->>>>>>> accb2f351 (u)
     endif()
   endforeach()
 
@@ -278,20 +220,12 @@ string (REGEX REPLACE ";" " " PRECOMPILED_DEFS "${PRECOMPILED_DEFS}")
 
 set (USED_RCFILE "")
 if (MSVC)
-<<<<<<< HEAD
-  set (USED_RCFILE "${CMAKE_BINARY_DIR}/resources/${PROJECT_NAME}.rc")
-=======
   set (USED_RCFILE "${CMAKE_CURRENT_BINARY_DIR}/resources/${PROJECT_NAME}.rc")
->>>>>>> accb2f351 (u)
 
   if (APPLY_OCCT_PATCH_DIR AND EXISTS "${APPLY_OCCT_PATCH_DIR}/adm/templates/occt_toolkit.rc.in")
     configure_file("${APPLY_OCCT_PATCH_DIR}/adm/templates/occt_toolkit.rc.in" "${USED_RCFILE}" @ONLY)
   else()
-<<<<<<< HEAD
-    configure_file("${CMAKE_SOURCE_DIR}/adm/templates/occt_toolkit.rc.in" "${USED_RCFILE}" @ONLY)
-=======
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/adm/templates/occt_toolkit.rc.in" "${USED_RCFILE}" @ONLY)
->>>>>>> accb2f351 (u)
   endif()
 endif()
 
@@ -328,19 +262,8 @@ if (EXECUTABLE_PROJECT)
     # endif()
   endif()
 
-<<<<<<< HEAD
-  install (TARGETS ${PROJECT_NAME}
-           DESTINATION "${INSTALL_DIR_BIN}\${OCCT_INSTALL_BIN_LETTER}")
-
-  if (EMSCRIPTEN)
-    install(FILES ${CMAKE_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/bin\${OCCT_INSTALL_BIN_LETTER}/${PROJECT_NAME}.wasm DESTINATION "${INSTALL_DIR_BIN}/${OCCT_INSTALL_BIN_LETTER}")
-  endif()
-else()
-  add_library (${PROJECT_NAME} ${USED_SRCFILES} ${USED_INCFILES} ${USED_RCFILE} ${RESOURCE_FILES} ${${PROJECT_NAME}_MOC_FILES})
-=======
 else()
   add_library (${PROJECT_NAME} STATIC ${USED_SRCFILES} ${USED_INCFILES} ${USED_RCFILE} ${RESOURCE_FILES} ${${PROJECT_NAME}_MOC_FILES})
->>>>>>> accb2f351 (u)
 
   if (DEFINED ${PROJECT_NAME}_DISABLE_COTIRE AND ${PROJECT_NAME}_DISABLE_COTIRE)
     set_target_properties(${PROJECT_NAME} PROPERTIES COTIRE_ENABLE_PRECOMPILED_HEADER FALSE)
@@ -360,48 +283,17 @@ else()
     else()
       set (aReleasePdbConf)
     endif()
-<<<<<<< HEAD
-    install (FILES  ${CMAKE_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/bin\${OCCT_INSTALL_BIN_LETTER}/${PROJECT_NAME}.pdb
-             CONFIGURATIONS Debug ${aReleasePdbConf} RelWithDebInfo
-             DESTINATION "${INSTALL_DIR_BIN}\${OCCT_INSTALL_BIN_LETTER}")
-=======
->>>>>>> accb2f351 (u)
   endif()
 
   if (BUILD_SHARED_LIBS AND NOT "${BUILD_SHARED_LIBRARY_NAME_POSTFIX}" STREQUAL "")
     set (CMAKE_SHARED_LIBRARY_SUFFIX_DEFAULT ${CMAKE_SHARED_LIBRARY_SUFFIX})
     set (CMAKE_SHARED_LIBRARY_SUFFIX "${BUILD_SHARED_LIBRARY_NAME_POSTFIX}${CMAKE_SHARED_LIBRARY_SUFFIX}")
   endif()
-<<<<<<< HEAD
-
-  install (TARGETS ${PROJECT_NAME}
-           EXPORT OpenCASCADE${CURRENT_MODULE}Targets
-           RUNTIME DESTINATION "${INSTALL_DIR_BIN}\${OCCT_INSTALL_BIN_LETTER}"
-           ARCHIVE DESTINATION "${INSTALL_DIR_LIB}\${OCCT_INSTALL_BIN_LETTER}"
-           LIBRARY DESTINATION "${INSTALL_DIR_LIB}\${OCCT_INSTALL_BIN_LETTER}"
-           INCLUDES DESTINATION ${INSTALL_DIR_INCLUDE})
-
-  if (NOT WIN32)
-    if (BUILD_SHARED_LIBS AND NOT "${BUILD_SHARED_LIBRARY_NAME_POSTFIX}" STREQUAL "")
-      set (LINK_NAME    "${INSTALL_DIR}/${INSTALL_DIR_LIB}\${OCCT_INSTALL_BIN_LETTER}/lib${PROJECT_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX_DEFAULT}")
-      set (LIBRARY_NAME "${INSTALL_DIR}/${INSTALL_DIR_LIB}\${OCCT_INSTALL_BIN_LETTER}/lib${PROJECT_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-      OCCT_CREATE_SYMLINK_TO_FILE (${LIBRARY_NAME} ${LINK_NAME})
-    endif()
-  endif()
-=======
->>>>>>> accb2f351 (u)
 endif()
 
 if (CURRENT_MODULE)
   set_target_properties (${PROJECT_NAME} PROPERTIES FOLDER "${OCC_TARGET_FOLDER}/${CURRENT_MODULE}")
   set_target_properties (${PROJECT_NAME} PROPERTIES MODULE "${CURRENT_MODULE}")
-<<<<<<< HEAD
-  if (APPLE)
-    if (NOT "${INSTALL_NAME_DIR}" STREQUAL "")
-      set_target_properties (${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH 1 INSTALL_NAME_DIR "${INSTALL_NAME_DIR}")
-    endif()
-  endif()
-=======
   SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR}/../../
   ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_BINARY_DIR}/../../)
@@ -411,7 +303,6 @@ if (CURRENT_MODULE)
   SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR}/../../
   RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_BINARY_DIR}/../../)
->>>>>>> accb2f351 (u)
 endif()
 
 get_property (OCC_VERSION_MAJOR GLOBAL PROPERTY OCC_VERSION_MAJOR)

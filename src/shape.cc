@@ -539,7 +539,7 @@ topo_location shape::location() const {
   return topo_location(_shape.Location());
 }
 
-gp_Pnt shape::center_of_mass() const {
+gp_Pnt shape::centre_of_mass() const {
   GProp_GProps system;
   BRepGProp::VolumeProperties(_shape, system);
   return system.CentreOfMass();

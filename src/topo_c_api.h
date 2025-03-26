@@ -188,6 +188,10 @@ TOPOCAPICALL double topo_shape_get_auto_scale_size_on_v(topo_shape_t *p);
 TOPOCAPICALL int topo_shape_get_txture_map_type(topo_shape_t *p);
 TOPOCAPICALL double topo_shape_get_rotation_angle(topo_shape_t *p);
 
+TOPOCAPICALL pnt3d_t topo_shape_centre_of_mass(topo_shape_t *p);
+TOPOCAPICALL double topo_shape_compute_mass(topo_shape_t *p);
+TOPOCAPICALL double topo_shape_compute_area(topo_shape_t *p);
+
 TOPOCAPICALL topo_vertex_t topo_vertex_new(double x, double y, double z);
 TOPOCAPICALL void topo_vertex_free(topo_vertex_t t);
 TOPOCAPICALL pnt3d_t topo_vertex_get_point(topo_vertex_t t);
