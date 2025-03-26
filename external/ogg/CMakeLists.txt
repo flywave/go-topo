@@ -338,6 +338,8 @@ if (3RDPARTY_INCLUDE_DIRS)
   include_directories (${3RDPARTY_INCLUDE_DIRS})
 endif()
 
+set (INSTALL_DIR_INCLUDE "include/opencascade" CACHE PATH "${INSTALL_DIR_INCLUDE_DESCR}")
+
 # include <cmake binary folder>/inc
 include_directories (${CMAKE_CURRENT_BINARY_DIR}/${INSTALL_DIR_INCLUDE})
 
@@ -384,6 +386,9 @@ endif()
 string(TIMESTAMP CURRENT_TIME "%H:%M:%S")
 message (STATUS "\nInfo: \(${CURRENT_TIME}\) Start collecting all OCCT header files into ${CMAKE_CURRENT_BINARY_DIR}/inc ...")
 
+# collect all the headers to <binary dir>/inc folder
+COLLECT_AND_INSTALL_OCCT_HEADER_FILES ("${CMAKE_CURRENT_BINARY_DIR}" "${BUILD_TOOLKITS}" "${CMAKE_CURRENT_SOURCE_DIR}/src" "${INSTALL_DIR_INCLUDE}")
+
 string(TIMESTAMP CURRENT_TIME "%H:%M:%S")
 message (STATUS "Info: \(${CURRENT_TIME}\) End the collecting")
 
@@ -397,24 +402,6 @@ if (WIN32)
   set (SCRIPT_EXT bat)
 else()
   set (SCRIPT_EXT sh)
-endif()
-
-# OCCT tools
-# include the patched or original list of tools
-# list <TOOLNAME>_TOOLKITS is created foreach tool and contains its toolkits
-# list <OCCT_TOOLS> will contain all tools
-if (BUILD_Inspector)
-  add_definitions (-DHAVE_Inspector)
-
-  OCCT_MODULES_AND_TOOLKITS (TOOLS "TOOL_TOOLKITS" OCCT_TOOLS)
-  foreach (OCCT_TOOL ${OCCT_TOOLS})
-    list (APPEND BUILD_TOOL_TOOLKITS ${${OCCT_TOOL}_TOOL_TOOLKITS})
-  endforeach()
-
-  # collect all the headers to <binary dir>/inc/inspector folder
-  string(TIMESTAMP CURRENT_TIME "%H:%M:%S")
-  message (STATUS "\nInfo: \(${CURRENT_TIME}\) Start collecting all OCCT tool header files into ${CMAKE_CURRENT_BINARY_DIR}/inc/inspector ...")
-  COLLECT_AND_INSTALL_OCCT_HEADER_FILES ("${CMAKE_CURRENT_BINARY_DIR}" "${BUILD_TOOL_TOOLKITS}" "${CMAKE_CURRENT_SOURCE_DIR}/tools" "${INSTALL_DIR_INCLUDE}/inspector")
 endif()
 
 
