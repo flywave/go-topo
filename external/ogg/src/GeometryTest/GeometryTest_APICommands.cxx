@@ -363,11 +363,7 @@ static Standard_Integer surfapp(Draw_Interpretor& di, Standard_Integer n, const 
 
   if (anApprox.IsDone())
   {
-<<<<<<< HEAD
-    Handle(Geom_BSplineSurface) S = anApprox.Surface();
-=======
     const Handle(Geom_BSplineSurface)& S = anApprox.Surface();
->>>>>>> accb2f351 (u)
     DrawTrSurf::Set(a[1], S);
     di << a[1];
   }
@@ -449,11 +445,7 @@ static Standard_Integer surfint(Draw_Interpretor& di, Standard_Integer n, const 
   }
   if (anApprox.IsDone())
   {
-<<<<<<< HEAD
-    Handle(Geom_BSplineSurface) S = anApprox.Surface();
-=======
     const Handle(Geom_BSplineSurface)& S = anApprox.Surface();
->>>>>>> accb2f351 (u)
     DrawTrSurf::Set(a[1], S);
     di << a[1];
   }

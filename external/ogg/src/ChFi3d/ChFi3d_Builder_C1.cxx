@@ -725,11 +725,7 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
     ChFiDS_CommonPoint saveCPopArc = CPopArc;
     c3df = DStr.Curve(FiopArc.LineIndex()).Curve();
 
-<<<<<<< HEAD
-    inters = IntersUpdateOnSame (HGs,HBs,c3df,Fop,Fv,Arcprol,Vtx,isfirst,10*tolesp, // in
-=======
     inters = IntersUpdateOnSame (HGs,HBs,c3df,Fop,Fv,Arcprol,Vtx,isfirst,10*tolapp3d, // in
->>>>>>> accb2f351 (u)
 				 FiopArc,CPopArc,p2dbout,wop);   // out
 
     Handle(BRepAdaptor_Curve2d) pced = new BRepAdaptor_Curve2d();
@@ -767,11 +763,7 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
 
   TopoDS_Edge edgecouture;
   Standard_Boolean couture,intcouture=Standard_False;
-<<<<<<< HEAD
-  Standard_Real tolreached = tolesp;
-=======
   Standard_Real tolreached = tolapp3d;
->>>>>>> accb2f351 (u)
   Standard_Real  par1 =0.,par2 =0.;
   Standard_Integer indpt = 0,Icurv1 = 0,Icurv2 = 0;
   Handle(Geom_TrimmedCurve) curv1,curv2;
@@ -825,11 +817,7 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
 
     if (!ChFi3d_ComputeCurves(HGs,HBs,Pardeb,Parfin,Cc,
 			      Ps,
-<<<<<<< HEAD
-			      Pc,tolesp,tol2d,tolreached))
-=======
 			      Pc,tolapp3d,tol2d,tolreached))
->>>>>>> accb2f351 (u)
       throw Standard_Failure("OneCorner : echec calcul intersection");
 
     Udeb = Cc->FirstParameter();
@@ -1250,11 +1238,7 @@ void ChFi3d_Builder::PerformOneCorner(const Standard_Integer Index,
     Handle(Geom2d_Curve) zob2dop, zob2dv;
     //Standard_Real tolreached;
     if (!ChFi3d_ComputeCurves(HBop,HBs,Pardeb,Parfin,zob3d,zob2dop,
-<<<<<<< HEAD
-			      zob2dv,tolesp,tol2d,tolreached))
-=======
 			      zob2dv,tolapp3d,tol2d,tolreached))
->>>>>>> accb2f351 (u)
       throw Standard_Failure("OneCorner : echec calcul intersection");
 
     Udeb = zob3d->FirstParameter();
@@ -2159,11 +2143,7 @@ void ChFi3d_Builder::PerformIntersectionAtEnd(const Standard_Integer Index)
         const Handle(Geom_Curve)& c3df = DStr.Curve(Fi1.LineIndex()).Curve();
         Standard_Real Ufi= Fi2.Parameter(isfirst);
         ChFiDS_FaceInterference& Fi = Fd->ChangeInterferenceOnS1();
-<<<<<<< HEAD
-        if (!IntersUpdateOnSame (HGs,HBs,c3df,F1,Face[0],Edge[0],Vtx,isfirst,10*tolesp, // in
-=======
         if (!IntersUpdateOnSame (HGs,HBs,c3df,F1,Face[0],Edge[0],Vtx,isfirst,10*tolapp3d, // in
->>>>>>> accb2f351 (u)
 				 Fi,CV1,pfac1,Ufi))   // out
 	  throw Standard_Failure("IntersectionAtEnd: pb intersection Face - Fi");
         Fi1 = Fi;
@@ -2175,22 +2155,14 @@ void ChFi3d_Builder::PerformIntersectionAtEnd(const Standard_Integer Index)
 	  paredge2 = proj.LowerDistanceParameter();
         }
         // update stripe point
-<<<<<<< HEAD
-        TopOpeBRepDS_Point tpoint (CV1.Point(),tolesp);
-=======
         TopOpeBRepDS_Point tpoint (CV1.Point(),tolapp3d);
->>>>>>> accb2f351 (u)
         indpoint1=DStr.AddPoint(tpoint);
         stripe->SetIndexPoint(indpoint1,isfirst,1);
         // reset arc of CV1
         TopoDS_Vertex vert1,vert2;
         TopExp::Vertices(Edge[0],vert1,vert2);
         TopAbs_Orientation arcOri = Vtx.IsSame(vert1) ? TopAbs_FORWARD : TopAbs_REVERSED;
-<<<<<<< HEAD
-        CV1.SetArc(tolesp,Edge[0],paredge2,arcOri);
-=======
         CV1.SetArc(tolapp3d,Edge[0],paredge2,arcOri);
->>>>>>> accb2f351 (u)
       }
       else {
         if (Hc1.IsNull()) {
@@ -2417,11 +2389,7 @@ void ChFi3d_Builder::PerformIntersectionAtEnd(const Standard_Integer Index)
       const Handle(Geom_Curve)& c3df = DStr.Curve(Fi2.LineIndex()).Curve();
       Standard_Real Ufi= Fi1.Parameter(isfirst);
       ChFiDS_FaceInterference& Fi = Fd->ChangeInterferenceOnS2();
-<<<<<<< HEAD
-      if (!IntersUpdateOnSame (HGs,HBs,c3df,F2,F,Edge[nb],Vtx,isfirst,10*tolesp, // in
-=======
       if (!IntersUpdateOnSame (HGs,HBs,c3df,F2,F,Edge[nb],Vtx,isfirst,10*tolapp3d, // in
->>>>>>> accb2f351 (u)
 			       Fi,CV2,pfac2,Ufi))   // out
 	throw Standard_Failure("IntersectionAtEnd: pb intersection Face - Fi");
       Fi2 = Fi;
@@ -2435,22 +2403,14 @@ void ChFi3d_Builder::PerformIntersectionAtEnd(const Standard_Integer Index)
         paredge2 = proj.LowerDistanceParameter();
       }
       // update stripe point
-<<<<<<< HEAD
-      TopOpeBRepDS_Point tpoint (CV2.Point(),tolesp);
-=======
       TopOpeBRepDS_Point tpoint (CV2.Point(),tolapp3d);
->>>>>>> accb2f351 (u)
       indpoint2=DStr.AddPoint(tpoint);
       stripe->SetIndexPoint(indpoint2,isfirst,2);
       // reset arc of CV2
       TopoDS_Vertex vert1,vert2;
       TopExp::Vertices(Edge[nbface],vert1,vert2);
       TopAbs_Orientation arcOri = Vtx.IsSame(vert1) ? TopAbs_FORWARD : TopAbs_REVERSED;
-<<<<<<< HEAD
-      CV2.SetArc(tolesp,Edge[nbface],paredge2,arcOri);
-=======
       CV2.SetArc(tolapp3d,Edge[nbface],paredge2,arcOri);
->>>>>>> accb2f351 (u)
     }
 
 
@@ -2523,11 +2483,7 @@ void ChFi3d_Builder::PerformIntersectionAtEnd(const Standard_Integer Index)
     //////////////////////////////////////////////////////////////////////
 
     if (!ChFi3d_ComputeCurves(HGs,HBs,Pardeb,Parfin,Cc,
-<<<<<<< HEAD
-                              Ps,Pc,tolesp,tol2d,tolreached,nbface==1)) {
-=======
                               Ps,Pc,tolapp3d,tol2d,tolreached,nbface==1)) {
->>>>>>> accb2f351 (u)
       PerformMoreThreeCorner (Index,1);
       return;
     }
@@ -2843,11 +2799,7 @@ void ChFi3d_Builder::PerformIntersectionAtEnd(const Standard_Integer Index)
       Standard_Real aTolreached;
       ChFi3d_ComputePCurv(Cc,UV1,UV2,Ps,
 			  DStr.Surface(SDprev->Surf()).Surface(),
-<<<<<<< HEAD
-			  p1,p2,tolesp,aTolreached);
-=======
 			  p1,p2,tolapp3d,aTolreached);
->>>>>>> accb2f351 (u)
       TopOpeBRepDS_Curve& TCurv = DStr.ChangeCurve(indcurve[nb-1]);
       TCurv.Tolerance(Max(TCurv.Tolerance(),aTolreached));
 
@@ -2906,11 +2858,7 @@ void ChFi3d_Builder::PerformIntersectionAtEnd(const Standard_Integer Index)
     //box.Add(aSurf->Value(UV.X(), UV.Y()));
     
     ChFi3d_ComputeArete(CV1,UV1,CV2,UV2,aSurf, // in 
-<<<<<<< HEAD
-			C3d,Ps,p1,p2,tolesp,tol2d,aTolreached,0); // out except tolers
-=======
 			C3d,Ps,p1,p2,tolapp3d,tol2d,aTolreached,0); // out except tolers
->>>>>>> accb2f351 (u)
 
     indpoint1 = indpoint2 = midIpoint;
     gp_Pnt point;
@@ -2942,11 +2890,7 @@ void ChFi3d_Builder::PerformIntersectionAtEnd(const Standard_Integer Index)
     UV1.SetCoord(isUShrink ? 1 : 2, prevSDParam);
     UV2.SetCoord(isUShrink ? 1 : 2, prevSDParam);
     
-<<<<<<< HEAD
-    ChFi3d_ComputePCurv(C3d,UV1,UV2,Pc,aSurf,p1,p2,tolesp,aTolreached);
-=======
     ChFi3d_ComputePCurv(C3d,UV1,UV2,Pc,aSurf,p1,p2,tolapp3d,aTolreached);
->>>>>>> accb2f351 (u)
     
     Crv.Tolerance(Max(Crv.Tolerance(),aTolreached));
     Interfc= ChFi3d_FilCurveInDS (Icurv,IsurfPrev,Pc,TopAbs::Reverse(orcourbe));
@@ -4030,11 +3974,7 @@ void ChFi3d_Builder::IntersectMoreCorner(const Standard_Integer Index)
       Handle(Geom2dAdaptor_Curve) pcprol = new Geom2dAdaptor_Curve(gpcprol);
       Standard_Real partemp = BRep_Tool::Parameter(Vtx,Arcprol);
       inters = Update(HBs,pcprol,HGs,FiopArc,CPopArc,p2dbout,
-<<<<<<< HEAD
-		      isfirst,partemp,wop,10*tolesp);
-=======
 		      isfirst,partemp,wop,10*tolapp3d);
->>>>>>> accb2f351 (u)
     }
     Handle(BRepAdaptor_Curve2d) pced = new BRepAdaptor_Curve2d();
     pced->Initialize(CPadArc.Arc(),Fv);
@@ -4047,11 +3987,7 @@ void ChFi3d_Builder::IntersectMoreCorner(const Standard_Integer Index)
 
   TopoDS_Edge edgecouture;
   Standard_Boolean couture,intcouture=Standard_False;
-<<<<<<< HEAD
-  Standard_Real tolreached = tolesp;
-=======
   Standard_Real tolreached = tolapp3d;
->>>>>>> accb2f351 (u)
   Standard_Real par1 = 0.,par2 = 0.;
   Standard_Integer indpt =0,Icurv1 =0,Icurv2 =0;
   Handle(Geom_TrimmedCurve) curv1,curv2;
@@ -4103,11 +4039,7 @@ void ChFi3d_Builder::IntersectMoreCorner(const Standard_Integer Index)
 
     if (!ChFi3d_ComputeCurves(HGs,HBs,Pardeb,Parfin,Cc,
 			      Ps,
-<<<<<<< HEAD
-			      Pc,tolesp,tol2d,tolreached))
-=======
 			      Pc,tolapp3d,tol2d,tolreached))
->>>>>>> accb2f351 (u)
     throw Standard_Failure("OneCorner : failed calculation intersection");
 
     Udeb = Cc->FirstParameter();
@@ -4379,11 +4311,7 @@ void ChFi3d_Builder::IntersectMoreCorner(const Standard_Integer Index)
     Handle(Geom2d_Curve) zob2dop, zob2dv;
 //    Standard_Real tolreached;
     if (!ChFi3d_ComputeCurves(HBop,HBs,Pardeb,Parfin,zob3d,zob2dop,
-<<<<<<< HEAD
-			      zob2dv,tolesp,tol2d,tolreached))
-=======
 			      zob2dv,tolapp3d,tol2d,tolreached))
->>>>>>> accb2f351 (u)
       throw Standard_Failure("OneCorner : echec calcul intersection");
 
     Udeb = zob3d->FirstParameter();

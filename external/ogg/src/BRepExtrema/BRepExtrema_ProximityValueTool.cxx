@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-// Created on: 2022-08-08
-=======
 ﻿// Created on: 2022-08-08
->>>>>>> accb2f351 (u)
 // Created by: Kseniya NOSULKO
 // Copyright (c) 2022 OPEN CASCADE SAS
 //
@@ -18,8 +14,6 @@
 // commercial license or contractual agreement.
 
 #include <BRepExtrema_ProximityValueTool.hxx>
-<<<<<<< HEAD
-=======
 #include <BRepExtrema_ProximityDistTool.hxx>
 
 #include <BRep_Tool.hxx>
@@ -30,20 +24,12 @@
 #include <GProp_GProps.hxx> 
 #include <Poly_Connect.hxx>
 #include <TopoDS.hxx>
->>>>>>> accb2f351 (u)
 
 //=======================================================================
 //function : BRepExtrema_ProximityValueTool
 //purpose  : Creates new unitialized proximity tool
 //=======================================================================
 BRepExtrema_ProximityValueTool::BRepExtrema_ProximityValueTool()
-<<<<<<< HEAD
-: myDistance (std::numeric_limits<Standard_Real>::max()),
-  myIsDone (Standard_False),
-  myNbSamples1(0),
-  myNbSamples2(0)
-{}
-=======
 : myIsRefinementRequired1 (Standard_False),
   myIsRefinementRequired2 (Standard_False),
   myDistance (std::numeric_limits<Standard_Real>::max()),
@@ -54,7 +40,6 @@ BRepExtrema_ProximityValueTool::BRepExtrema_ProximityValueTool()
   // Should be initialized later
   myIsInitS1 = myIsInitS2 = Standard_False;
 }
->>>>>>> accb2f351 (u)
 
 //=======================================================================
 //function : BRepExtrema_ProximityValueTool
@@ -64,15 +49,6 @@ BRepExtrema_ProximityValueTool::BRepExtrema_ProximityValueTool (const Handle(BRe
                                                                 const Handle(BRepExtrema_TriangleSet)& theSet2,
                                                                 const BRepExtrema_ShapeList& theShapeList1,
                                                                 const BRepExtrema_ShapeList& theShapeList2)
-<<<<<<< HEAD
-: myDistance (std::numeric_limits<Standard_Real>::max()),
-  myIsDone (Standard_False),
-  myNbSamples1(0),
-  myNbSamples2(0)
-{
-  LoadTriangleSets (theSet1, theSet2);
-  LoadShapeLists (theShapeList1, theShapeList2);
-=======
 : myIsRefinementRequired1 (Standard_False),
   myIsRefinementRequired2 (Standard_False),
   myDistance (std::numeric_limits<Standard_Real>::max()),
@@ -82,7 +58,6 @@ BRepExtrema_ProximityValueTool::BRepExtrema_ProximityValueTool (const Handle(BRe
 {
   LoadShapeLists (theShapeList1, theShapeList2);
   LoadTriangleSets (theSet1, theSet2);
->>>>>>> accb2f351 (u)
 }
 
 //=======================================================================
@@ -95,9 +70,6 @@ void BRepExtrema_ProximityValueTool::LoadTriangleSets (const Handle(BRepExtrema_
   mySet1 = theSet1;
   mySet2 = theSet2;
 
-<<<<<<< HEAD
-  myIsDone = Standard_False;
-=======
   MarkDirty();
 }
 
@@ -186,7 +158,6 @@ Standard_Boolean BRepExtrema_ProximityValueTool::getInfoForRefinement (const Top
   }
 
   return Standard_True;
->>>>>>> accb2f351 (u)
 }
 
 //=======================================================================
@@ -199,9 +170,6 @@ void BRepExtrema_ProximityValueTool::LoadShapeLists (const BRepExtrema_ShapeList
   myShapeList1 = theShapeList1;
   myShapeList2 = theShapeList2;
 
-<<<<<<< HEAD
-  myIsDone = Standard_False;
-=======
   myShape1 = theShapeList1 (0);
   myIsInitS1 = getInfoForRefinement (myShape1, myShapeType1, myNbNodes1, myStep1);
 
@@ -209,7 +177,6 @@ void BRepExtrema_ProximityValueTool::LoadShapeLists (const BRepExtrema_ShapeList
   myIsInitS2 = getInfoForRefinement (myShape2, myShapeType2, myNbNodes2, myStep2);
 
   MarkDirty();
->>>>>>> accb2f351 (u)
 }
 
 //=======================================================================
@@ -222,11 +189,7 @@ void BRepExtrema_ProximityValueTool::SetNbSamplePoints(const Standard_Integer th
   myNbSamples1 = theSamples1;
   myNbSamples2 = theSamples2;
 
-<<<<<<< HEAD
-  myIsDone = Standard_False;
-=======
   MarkDirty();
->>>>>>> accb2f351 (u)
 }
 
 //=======================================================================
@@ -235,11 +198,8 @@ void BRepExtrema_ProximityValueTool::SetNbSamplePoints(const Standard_Integer th
 //=======================================================================
 Standard_Real BRepExtrema_ProximityValueTool::computeProximityDist (const Handle(BRepExtrema_TriangleSet)& theSet1,
                                                                     const Standard_Integer theNbSamples1,
-<<<<<<< HEAD
-=======
                                                                     const BVH_Array3d& theAddVertices1,
                                                                     const NCollection_Vector<ProxPnt_Status>& theAddStatus1,
->>>>>>> accb2f351 (u)
                                                                     const Handle(BRepExtrema_TriangleSet)& theSet2,
                                                                     const BRepExtrema_ShapeList& theShapeList1,
                                                                     const BRepExtrema_ShapeList& theShapeList2,
@@ -248,12 +208,8 @@ Standard_Real BRepExtrema_ProximityValueTool::computeProximityDist (const Handle
                                                                     ProxPnt_Status& thePointStatus1,
                                                                     ProxPnt_Status& thePointStatus2) const
 {
-<<<<<<< HEAD
-  BRepExtrema_ProximityDistTool aProxDistTool (theSet1, theNbSamples1, theSet2, theShapeList1, theShapeList2);
-=======
   BRepExtrema_ProximityDistTool aProxDistTool (theSet1, theNbSamples1, theAddVertices1, theAddStatus1,
                                                theSet2, theShapeList1, theShapeList2);
->>>>>>> accb2f351 (u)
   aProxDistTool.Perform();
 
   if (!aProxDistTool.IsDone())
@@ -266,8 +222,6 @@ Standard_Real BRepExtrema_ProximityValueTool::computeProximityDist (const Handle
 }
 
 //=======================================================================
-<<<<<<< HEAD
-=======
 //function : getEdgeAdditionalVertices
 //purpose  : Gets additional vertices and their statuses on the edge with the input step
 //=======================================================================
@@ -550,38 +504,28 @@ Standard_Boolean BRepExtrema_ProximityValueTool::getShapesAdditionalVertices()
 }
 
 //=======================================================================
->>>>>>> accb2f351 (u)
 //function : Perform
 //purpose  : Performs the computation of the proximity value
 //=======================================================================
 void BRepExtrema_ProximityValueTool::Perform (Standard_Real& theTolerance)
 {
-<<<<<<< HEAD
-  myIsDone = Standard_False;
-=======
   if (!myIsInitS1 || !myIsInitS2 || (myShapeType1 != myShapeType2))
     return;
 
   //get vertices on shapes with refining a coarser mesh if it's needed
   if (!getShapesAdditionalVertices())
     return;
->>>>>>> accb2f351 (u)
 
   // max(min) dist from the 1st shape to the 2nd one
   BVH_Vec3d aP1_1, aP1_2;
   ProxPnt_Status aPointStatus1_1 = ProxPnt_Status::ProxPnt_Status_UNKNOWN;
   ProxPnt_Status aPointStatus1_2 = ProxPnt_Status::ProxPnt_Status_UNKNOWN;
 
-<<<<<<< HEAD
-  Standard_Real aProximityDist1 = computeProximityDist (mySet1, myNbSamples1, mySet2, myShapeList1, myShapeList2,
-                                                        aP1_1, aP1_2, aPointStatus1_1, aPointStatus1_2);
-=======
   Standard_Real aProximityDist1 = computeProximityDist (mySet1, myNbSamples1, myAddVertices1, myAddStatus1,
                                                         mySet2,
                                                         myShapeList1, myShapeList2,
                                                         aP1_1, aP1_2,
                                                         aPointStatus1_1, aPointStatus1_2);
->>>>>>> accb2f351 (u)
 
   if (aProximityDist1 < 0.)
     return;
@@ -591,16 +535,11 @@ void BRepExtrema_ProximityValueTool::Perform (Standard_Real& theTolerance)
   ProxPnt_Status aPointStatus2_1 = ProxPnt_Status::ProxPnt_Status_UNKNOWN;
   ProxPnt_Status aPointStatus2_2 = ProxPnt_Status::ProxPnt_Status_UNKNOWN;
 
-<<<<<<< HEAD
-  Standard_Real aProximityDist2 = computeProximityDist (mySet2, myNbSamples2, mySet1, myShapeList2, myShapeList1,
-                                                        aP2_2, aP2_1, aPointStatus2_2, aPointStatus2_1);
-=======
   Standard_Real aProximityDist2 = computeProximityDist (mySet2, myNbSamples2, myAddVertices2, myAddStatus2,
                                                         mySet1,
                                                         myShapeList2, myShapeList1,
                                                         aP2_2, aP2_1,
                                                         aPointStatus2_2, aPointStatus2_1);
->>>>>>> accb2f351 (u)
 
   if (aProximityDist2 < 0.)
     return;
@@ -626,8 +565,6 @@ void BRepExtrema_ProximityValueTool::Perform (Standard_Real& theTolerance)
   myIsDone = Standard_True;
   theTolerance = myDistance;
 }
-<<<<<<< HEAD
-=======
 
 //=======================================================================
 //function : Inspect
@@ -648,4 +585,3 @@ NCollection_CellFilter_Action BRepExtrema_VertexInspector::Inspect (const Standa
 
   return CellFilter_Keep;
 }
->>>>>>> accb2f351 (u)

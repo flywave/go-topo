@@ -217,13 +217,8 @@ void Bisector_Inter::SinglePerform(const Handle(Geom2d_Curve)&    CBis1,
 				   const Standard_Real            Tol,
 				   const Standard_Boolean         ComunElement) 
 {
-<<<<<<< HEAD
-  Handle(Geom2d_Curve)   Bis1 = CBis1;
-  Handle(Geom2d_Curve)   Bis2 = CBis2;
-=======
   const Handle(Geom2d_Curve)&   Bis1 = CBis1;
   const Handle(Geom2d_Curve)&   Bis2 = CBis2;
->>>>>>> accb2f351 (u)
 
   Handle(Standard_Type)  Type1 = Bis1->DynamicType();
   Handle(Standard_Type)  Type2 = Bis2->DynamicType();

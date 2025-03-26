@@ -64,11 +64,7 @@ IFGraph_Articulations::IFGraph_Articulations
 
   for (Interface_EntityIterator iter = thegraph.Shareds(thegraph.Entity(num));
        iter.More(); iter.Next()) {
-<<<<<<< HEAD
-    Handle(Standard_Transient) ent = iter.Value();
-=======
     const Handle(Standard_Transient)& ent = iter.Value();
->>>>>>> accb2f351 (u)
     Standard_Integer nument  = thegraph.EntityNumber(ent);
     if (!thegraph.IsPresent(num)) {
       thegraph.GetFromEntity(ent,Standard_False);

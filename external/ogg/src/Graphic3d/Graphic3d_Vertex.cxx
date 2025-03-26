@@ -18,17 +18,11 @@
 #include <gp_XYZ.hxx>
 #include <Standard_Dump.hxx>
 
-<<<<<<< HEAD
-Standard_ShortReal Graphic3d_Vertex::Distance(const Graphic3d_Vertex& AOther) const
-{
-  return sqrt( (X() - AOther.X()) * (X() - AOther.X())
-=======
 #include <cmath>
 
 Standard_ShortReal Graphic3d_Vertex::Distance(const Graphic3d_Vertex& AOther) const
 {
   return std::sqrt( (X() - AOther.X()) * (X() - AOther.X())
->>>>>>> accb2f351 (u)
 		     + (Y() - AOther.Y()) * (Y() - AOther.Y())
 		     + (Z() - AOther.Z()) * (Z() - AOther.Z()) );
 }

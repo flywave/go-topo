@@ -47,11 +47,7 @@
 
 #include <stdio.h>
 
-<<<<<<< HEAD
-
-=======
 static Standard_Real tesp = 1.0e-4;
->>>>>>> accb2f351 (u)
 static Standard_Real t3d = 1.e-4;
 static Standard_Real t2d = 1.e-5;
 static Standard_Real ta  = 1.e-2;
@@ -156,11 +152,7 @@ static Standard_Integer BLEND(Draw_Interpretor& di, Standard_Integer narg, const
     }
   }
   Rakk = new BRepFilletAPI_MakeFillet(V,FSh);
-<<<<<<< HEAD
-  Rakk->SetParams(ta,t3d,t2d,t3d,t2d,fl);
-=======
   Rakk->SetParams(ta, tesp, t2d, t3d, t2d, fl);
->>>>>>> accb2f351 (u)
   Rakk->SetContinuity(blend_cont, tapp_angle);
   Standard_Real Rad;
   TopoDS_Edge E;
@@ -262,11 +254,7 @@ static Standard_Integer MKEVOL(Draw_Interpretor& di,
   if (narg < 3) return 1;
   TopoDS_Shape V = DBRep::Get(a[2]);
   Rake = new BRepFilletAPI_MakeFillet(V);
-<<<<<<< HEAD
-  Rake->SetParams(ta,t3d,t2d,t3d,t2d,fl);
-=======
   Rake->SetParams(ta, tesp, t2d, t3d, t2d, fl);
->>>>>>> accb2f351 (u)
   Rake->SetContinuity(blend_cont, tapp_angle);
   if (narg == 4) {
     ChFi3d_FilletShape FSh = ChFi3d_Rational;
@@ -422,11 +410,7 @@ Standard_Integer boptopoblend(Draw_Interpretor& di, Standard_Integer narg, const
     const TopoDS_Shape& aSolid = Explo.Current();
 
     BRepFilletAPI_MakeFillet Blender(aSolid);
-<<<<<<< HEAD
-    Blender.SetParams(ta,t3d,t2d,t3d,t2d,fl);
-=======
     Blender.SetParams(ta, tesp, t2d, t3d, t2d, fl);
->>>>>>> accb2f351 (u)
     Blender.SetContinuity( blend_cont, tapp_angle );
 
     TopExp_Explorer expsec( theSection, TopAbs_EDGE );

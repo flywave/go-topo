@@ -146,11 +146,7 @@ Standard_Boolean MeshVS_Mesh::AcceptDisplayMode (const Standard_Integer theMode)
 
   for (MeshVS_SequenceOfPrsBuilder::Iterator aBuilderIter (myBuilders); aBuilderIter.More(); aBuilderIter.Next())
   {
-<<<<<<< HEAD
-    Handle(MeshVS_PrsBuilder) aBuilder = aBuilderIter.Value();
-=======
     const Handle(MeshVS_PrsBuilder)& aBuilder = aBuilderIter.Value();
->>>>>>> accb2f351 (u)
     if (!aBuilder.IsNull()
       && aBuilder->TestFlags (theMode))
     {

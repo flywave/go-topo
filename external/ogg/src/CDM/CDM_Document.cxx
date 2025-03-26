@@ -620,11 +620,7 @@ TCollection_ExtendedString CDM_Document::Folder() const {
 
 void CDM_Document::SetRequestedFolder(const TCollection_ExtendedString& aFolder)
 {
-<<<<<<< HEAD
-  TCollection_ExtendedString f(aFolder);
-=======
   const TCollection_ExtendedString& f = aFolder;
->>>>>>> accb2f351 (u)
   if(f.Length() != 0) {
     myRequestedFolderIsDefined=Standard_True;
     myRequestedFolder=aFolder;
@@ -979,13 +975,8 @@ void CDM_Document::RemoveFromReference(const Standard_Integer aReferenceIdentifi
 //purpose  : 
 //=======================================================================
 
-<<<<<<< HEAD
-TCollection_ExtendedString GetResource (const TCollection_ExtendedString aFormat,
-                                        const TCollection_ExtendedString anItem)
-=======
 TCollection_ExtendedString GetResource (const TCollection_ExtendedString& aFormat,
                                         const TCollection_ExtendedString& anItem)
->>>>>>> accb2f351 (u)
 {
   TCollection_ExtendedString theResource;
   theResource+= aFormat;

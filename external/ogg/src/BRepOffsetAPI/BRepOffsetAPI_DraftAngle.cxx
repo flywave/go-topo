@@ -384,11 +384,7 @@ void BRepOffsetAPI_DraftAngle::CorrectWires()
     wit.Initialize( CurFace );
     for (; wit.More(); wit.Next())
     {
-<<<<<<< HEAD
-      TopoDS_Shape aWire = wit.Value();
-=======
       const TopoDS_Shape& aWire = wit.Value();
->>>>>>> accb2f351 (u)
       if (! aWire.IsSame( CurWire ))
       {
         TColgp_SequenceOfPnt pts;
@@ -810,13 +806,8 @@ void BRepOffsetAPI_DraftAngle::CorrectWires()
   TopTools_DataMapIteratorOfDataMapOfShapeShape itve (VEmap);
   for (; itve.More (); itve.Next ())
   {
-<<<<<<< HEAD
-    TopoDS_Shape V = itve.Key ();
-    TopoDS_Shape E = itve.Value ();
-=======
     const TopoDS_Shape& V = itve.Key ();
     const TopoDS_Shape& E = itve.Value ();
->>>>>>> accb2f351 (u)
     TopoDS_Shape W;
     for (i = 1; i <= Eseq.Length (); i++)
     {
@@ -924,11 +915,7 @@ void BRepOffsetAPI_DraftAngle::CorrectWires()
       eit.Initialize (aWire, Standard_False);
       for (; eit.More (); eit.Next ())
       {
-<<<<<<< HEAD
-        TopoDS_Shape anEdge = eit.Value ();
-=======
         const TopoDS_Shape& anEdge = eit.Value ();
->>>>>>> accb2f351 (u)
         BB.Add (CurWire, anEdge);
       }
       if (aSub.IsCopied (CurFace))

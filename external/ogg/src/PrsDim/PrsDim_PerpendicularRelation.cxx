@@ -218,10 +218,6 @@ void PrsDim_PerpendicularRelation::ComputeTwoEdgesPerpendicular(const Handle(Prs
 
   // current face
   BRepBuilderAPI_MakeFace makeface (myPlane->Pln());
-<<<<<<< HEAD
-  TopoDS_Face face (makeface.Face());  
-=======
->>>>>>> accb2f351 (u)
   BRepAdaptor_Surface adp (makeface.Face());
   
   // 2d lines => projection of 3d on current plane

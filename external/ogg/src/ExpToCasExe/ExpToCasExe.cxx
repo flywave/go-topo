@@ -281,11 +281,7 @@ static Standard_Boolean LoadList (const char *theFileName,
 // function : main
 // purpose  :
 //=======================================================================
-<<<<<<< HEAD
-Standard_Integer main (const Standard_Integer argc, const char* argv[])
-=======
 int main (int argc, char* argv[])
->>>>>>> accb2f351 (u)
 {
   if (argc < 2)
   {

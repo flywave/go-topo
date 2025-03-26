@@ -1590,11 +1590,7 @@ TopoDS_Shape IGESToBRep_TopoSurface::TransferPlaneParts(const Handle(IGESGeom_Pl
 	    return res;
 	  }
 	  
-<<<<<<< HEAD
-	  TopoDS_Face F = MF.Face();
-=======
 	  const TopoDS_Face& F = MF.Face();
->>>>>>> accb2f351 (u)
 	  GProp_GProps G;
 	  BRepGProp::SurfaceProperties(F,G);
 	  if (G.Mass() < 0) {

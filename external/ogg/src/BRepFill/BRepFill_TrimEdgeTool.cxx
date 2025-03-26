@@ -180,13 +180,8 @@ static void EvalParameters(const Geom2dAdaptor_Curve& Bis,
   Standard_Real Tol = Precision::Confusion();
   //  Standard_Real TolC = 1.e-9;
 
-<<<<<<< HEAD
-  Geom2dAdaptor_Curve CBis(Bis);
-  Geom2dAdaptor_Curve CAC (AC);
-=======
   const Geom2dAdaptor_Curve& CBis(Bis);
   const Geom2dAdaptor_Curve& CAC (AC);
->>>>>>> accb2f351 (u)
 
   //Intersector = Geom2dInt_GInter(CBis, CAC, TolC, Tol);
   Intersector = Geom2dInt_GInter(CAC, CBis, Tol, Tol);
@@ -250,13 +245,8 @@ static void EvalParametersBis(const Geom2dAdaptor_Curve& Bis,
   Geom2dInt_GInter Intersector;
   Standard_Real TolC = Tol;
 
-<<<<<<< HEAD
-  Geom2dAdaptor_Curve CBis(Bis);
-  Geom2dAdaptor_Curve CAC (AC);
-=======
   const Geom2dAdaptor_Curve& CBis(Bis);
   const Geom2dAdaptor_Curve& CAC (AC);
->>>>>>> accb2f351 (u)
 
   Intersector = Geom2dInt_GInter(CAC, CBis, TolC, Tol);
 

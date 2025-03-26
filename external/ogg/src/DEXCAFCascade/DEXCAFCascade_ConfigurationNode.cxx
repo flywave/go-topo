@@ -34,13 +34,7 @@ namespace
 //=======================================================================
 DEXCAFCascade_ConfigurationNode::DEXCAFCascade_ConfigurationNode() :
   DE_ConfigurationNode()
-<<<<<<< HEAD
-{
-  UpdateLoad();
-}
-=======
 {}
->>>>>>> accb2f351 (u)
 
 //=======================================================================
 // function : DEXCAFCascade_ConfigurationNode
@@ -50,10 +44,6 @@ DEXCAFCascade_ConfigurationNode::DEXCAFCascade_ConfigurationNode(const Handle(DE
   :DE_ConfigurationNode(theNode)
 {
   InternalParameters = theNode->InternalParameters;
-<<<<<<< HEAD
-  UpdateLoad();
-=======
->>>>>>> accb2f351 (u)
 }
 
 //=======================================================================

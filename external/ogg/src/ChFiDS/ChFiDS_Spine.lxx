@@ -214,8 +214,6 @@ inline ChFiDS_ChamfMode  ChFiDS_Spine::Mode() const
 
   return myMode;
 }
-<<<<<<< HEAD
-=======
 
 //=======================================================================
 //function : GetTolesp
@@ -225,4 +223,3 @@ inline Standard_Real ChFiDS_Spine::GetTolesp() const
 {
   return tolesp;
 }
->>>>>>> accb2f351 (u)

@@ -91,34 +91,18 @@ Handle(Graphic3d_ArrayOfSegments) Prs3d_Arrow::DrawSegments (const gp_Pnt& theLo
 
   Standard_Integer aNbVertices = theNbSegments + 1;
   Standard_Integer aFirstContourVertex = 2;
-<<<<<<< HEAD
-  Standard_Integer anEdgeCount = 0;
-=======
->>>>>>> accb2f351 (u)
   for (Standard_Integer aVertIter = aFirstContourVertex; aVertIter <= aNbVertices; ++aVertIter)
   {
     aSegments->AddEdge (1);
     aSegments->AddEdge (aVertIter);
-<<<<<<< HEAD
-    ++anEdgeCount;
   }
   aSegments->AddEdge (aNbVertices);
   aSegments->AddEdge (aFirstContourVertex);
-  ++anEdgeCount;
-=======
-  }
-  aSegments->AddEdge (aNbVertices);
-  aSegments->AddEdge (aFirstContourVertex);
->>>>>>> accb2f351 (u)
 
   for (Standard_Integer aVertIter = aFirstContourVertex; aVertIter <= aNbVertices - 1; ++aVertIter)
   {
     aSegments->AddEdge (aVertIter);
     aSegments->AddEdge (aVertIter + 1);
-<<<<<<< HEAD
-    ++anEdgeCount;
-=======
->>>>>>> accb2f351 (u)
   }
   return aSegments;
 }

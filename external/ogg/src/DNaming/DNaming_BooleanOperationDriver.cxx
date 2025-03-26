@@ -451,11 +451,7 @@ void FindSPErrorEdges(const TopoDS_Shape&         theShape,
     TopExp_Explorer anExpE(theShape, TopAbs_EDGE);
     
     for(; anExpE.More(); anExpE.Next()) {
-<<<<<<< HEAD
-      Handle(BRepCheck_Result) aResult = theAnalyzer.Result(anExpE.Current());
-=======
       const Handle(BRepCheck_Result)& aResult = theAnalyzer.Result(anExpE.Current());
->>>>>>> accb2f351 (u)
 
       if(aResult.IsNull() || theMap.Contains(anExpE.Current()))
 	continue;
@@ -478,11 +474,7 @@ void FindSPErrorEdges(const TopoDS_Shape&         theShape,
     }
   }
   else if(theShape.ShapeType() == TopAbs_EDGE) {
-<<<<<<< HEAD
-    Handle(BRepCheck_Result) aResult = theAnalyzer.Result(theShape);
-=======
     const Handle(BRepCheck_Result)& aResult = theAnalyzer.Result(theShape);
->>>>>>> accb2f351 (u)
     itl.Initialize(aResult->Status());
     
     for(; itl.More(); itl.Next()) {
@@ -511,11 +503,7 @@ Standard_Boolean FindOtherErrors(const TopoDS_Shape&               theShape,
     if(FindOtherErrors(anIt.Value(), theAnalyzer, theMap))
       return Standard_True;
   }
-<<<<<<< HEAD
-  Handle(BRepCheck_Result) aResult = theAnalyzer.Result(theShape);
-=======
   const Handle(BRepCheck_Result)& aResult = theAnalyzer.Result(theShape);
->>>>>>> accb2f351 (u)
   
   if (!aResult.IsNull()) {
 
@@ -530,11 +518,7 @@ Standard_Boolean FindOtherErrors(const TopoDS_Shape&               theShape,
 	  TopExp_Explorer anExpE(anExpF.Current(), TopAbs_EDGE);
 
 	  for(; anExpE.More(); anExpE.Next()) {
-<<<<<<< HEAD
-	    Handle(BRepCheck_Result) aResultE = theAnalyzer.Result(anExpE.Current());
-=======
 	    const Handle(BRepCheck_Result)& aResultE = theAnalyzer.Result(anExpE.Current());
->>>>>>> accb2f351 (u)
 
 	    if(aResultE.IsNull())
 	      continue;

@@ -169,17 +169,10 @@ MoniTool_AttrList::MoniTool_AttrList ()    {  }
 
   NCollection_DataMap<TCollection_AsciiString, Handle(Standard_Transient)>::Iterator iter(list);
   for (; iter.More(); iter.Next()) {
-<<<<<<< HEAD
-    TCollection_AsciiString name = iter.Key();
-    if (!name.StartsWith(fromname))
-      continue;
-    Handle(Standard_Transient) atr = iter.Value();
-=======
     const TCollection_AsciiString& name = iter.Key();
     if (!name.StartsWith(fromname))
       continue;
     const Handle(Standard_Transient)& atr = iter.Value();
->>>>>>> accb2f351 (u)
     Handle(Standard_Transient) newatr = atr;
 
 //    Copy ? according type

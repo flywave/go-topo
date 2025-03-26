@@ -633,36 +633,6 @@ Standard_Boolean IGESData_ParamReader::ReadXYZ
 
 //=======================================================================
 //function : ReadText
-<<<<<<< HEAD
-//purpose  : 
-//=======================================================================
-
-Standard_Boolean IGESData_ParamReader::ReadText
-  (const IGESData_ParamCursor& PC, const Message_Msg& amsg,
-   Handle(TCollection_HAsciiString)& val)
-{
-  if (!PrepareRead(PC,Standard_False)) return Standard_False;
-  const Interface_FileParameter& FP = theparams->Value(theindex+thebase);
-  if (FP.ParamType() != Interface_ParamText) {
-    if (FP.ParamType() == Interface_ParamVoid) {
-      val = new TCollection_HAsciiString("");
-      return Standard_True;
-    }
-    SendFail (amsg);
-    return Standard_False;
-  }
-  Handle(TCollection_HAsciiString) tval = new TCollection_HAsciiString (FP.CValue());
-  Standard_Integer lnt = tval->Length();
-  Standard_Integer lnh = tval->Location(1,'H',1,lnt);
-  if (lnh <= 1 || lnh >= lnt) {
-    SendFail (amsg);
-    return Standard_False;
-  } else {
-    Standard_Integer hol = atoi (tval->SubString(1,lnh-1)->ToCString());
-    if (hol != (lnt-lnh)) SendWarning (amsg);
-  }
-  val = new TCollection_HAsciiString(tval->SubString(lnh+1,lnt)->ToCString());
-=======
 //purpose  :
 //=======================================================================
 Standard_Boolean IGESData_ParamReader::ReadText(const IGESData_ParamCursor& thePC,
@@ -712,7 +682,6 @@ Standard_Boolean IGESData_ParamReader::ReadText(const IGESData_ParamCursor& theP
     aResString = aBaseValue->String().SubString(aSymbolLocation + 1, aBaseLength);
   }
   theVal = new TCollection_HAsciiString(aResString);
->>>>>>> accb2f351 (u)
   return Standard_True;
 }
 
@@ -1119,20 +1088,12 @@ Standard_Boolean IGESData_ParamReader::ReadEnts
   Standard_Integer indmax = index+thenbitem*thetermsz-1;
   val = new IGESData_HArray1OfIGESEntity (index , indmax);
   Standard_Integer ind = index;
-<<<<<<< HEAD
-  Standard_Integer nbneg = 0, nbnul = 0;
-=======
   Standard_Integer nbnul = 0;
->>>>>>> accb2f351 (u)
 
   Standard_Integer i; // svv Jan11 2000 : porting on DEC
   for (i = FirstRead(); i > 0; i = NextRead()) {
     Standard_Integer nval;
     if (!ReadingEntityNumber(i,nval)) nval = 0;  //return Standard_False;
-<<<<<<< HEAD
-    if (nval < 0) nbneg ++;
-=======
->>>>>>> accb2f351 (u)
     if (nval > 0) {
       DeclareAndCast(IGESData_IGESEntity,anent,IR->BoundEntity(nval));
       if (anent.IsNull()) nbnul ++;

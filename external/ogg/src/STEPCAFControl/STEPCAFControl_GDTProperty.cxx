@@ -1166,11 +1166,7 @@ Handle(StepDimTol_HArray1OfDatumReferenceModifier) STEPCAFControl_GDTProperty::
   GetDatumRefModifiers(const XCAFDimTolObjects_DatumModifiersSequence& theModifiers,
                        const XCAFDimTolObjects_DatumModifWithValue& theModifWithVal,
                        const Standard_Real theValue,
-<<<<<<< HEAD
-                       const StepBasic_Unit theUnit)
-=======
                        const StepBasic_Unit& theUnit)
->>>>>>> accb2f351 (u)
 {
   if ((theModifiers.Length() == 0) && (theModifWithVal == XCAFDimTolObjects_DatumModifWithValue_None))
     return NULL;
@@ -1311,11 +1307,7 @@ Handle(TCollection_HAsciiString) STEPCAFControl_GDTProperty::GetTolValueType(con
 //function : GetTessellation
 //purpose  : 
 //=======================================================================
-<<<<<<< HEAD
-Handle(StepVisual_TessellatedGeometricSet) STEPCAFControl_GDTProperty::GetTessellation(const TopoDS_Shape theShape)
-=======
 Handle(StepVisual_TessellatedGeometricSet) STEPCAFControl_GDTProperty::GetTessellation(const TopoDS_Shape& theShape)
->>>>>>> accb2f351 (u)
 {
   // Build coordinate list and curves
   NCollection_Handle<StepVisual_VectorOfHSequenceOfInteger> aCurves = new StepVisual_VectorOfHSequenceOfInteger;

@@ -151,13 +151,8 @@ static TopoDS_Edge MakeOffsetEdge(const TopoDS_Edge&         theEdge,
 {
   TopoDS_Edge OffsetEdge;
   
-<<<<<<< HEAD
-  TopoDS_Face F1 = S1.Face();
-  TopoDS_Face F2 = S2.Face();
-=======
   const TopoDS_Face& F1 = S1.Face();
   const TopoDS_Face& F2 = S2.Face();
->>>>>>> accb2f351 (u)
   Handle(Geom_Surface) GS1 = BRep_Tool::Surface(F1);
   Handle(Geom_Surface) TrGS1 =
     new Geom_RectangularTrimmedSurface(GS1,
@@ -330,11 +325,7 @@ ChFi3d_Builder::ChFi3d_Builder(const TopoDS_Shape& S,
   myEShMap.Fill(S,TopAbs_EDGE,TopAbs_SHELL);
   myVFMap.Fill(S,TopAbs_VERTEX,TopAbs_FACE);
   myVEMap.Fill(S,TopAbs_VERTEX,TopAbs_EDGE);
-<<<<<<< HEAD
-  SetParams(Ta,1.e-4,1.e-5,1.e-4,1.e-5,1.e-3);
-=======
   SetParams(Ta, 1.0e-4, 1.e-5, 1.e-4, 1.e-5, 1.e-3);
->>>>>>> accb2f351 (u)
   SetContinuity(GeomAbs_C1, Ta);
 }
 
@@ -345,11 +336,7 @@ ChFi3d_Builder::ChFi3d_Builder(const TopoDS_Shape& S,
 
 void ChFi3d_Builder::SetParams(const Standard_Real Tang, 
 			       const Standard_Real Tesp, 
-<<<<<<< HEAD
-			       const Standard_Real T2d, 
-=======
              const Standard_Real T2d, 
->>>>>>> accb2f351 (u)
 			       const Standard_Real TApp3d, 
 			       const Standard_Real TolApp2d, 
 			       const Standard_Real Fleche)
@@ -705,10 +692,6 @@ void ChFi3d_Builder::PerformExtremity (const Handle(ChFiDS_Spine)& Spine)
     else{
       sst = Spine->LastStatus(); 
       iedge = Spine->NbEdges();
-<<<<<<< HEAD
-      E[0] = Spine->Edges(iedge);
-=======
->>>>>>> accb2f351 (u)
       V = Spine->LastVertex();
     }
     //Before all it is checked if the tangency is not dead.
@@ -719,10 +702,7 @@ void ChFi3d_Builder::PerformExtremity (const Handle(ChFiDS_Spine)& Spine)
     }
 
     if(sst == ChFiDS_BreakPoint){
-<<<<<<< HEAD
-=======
       Standard_Integer aLocNbG1Connections = 0;
->>>>>>> accb2f351 (u)
       TopTools_ListIteratorOfListOfShape It;//,Jt;
       Standard_Boolean sommetpourri = Standard_False;
       TopTools_IndexedMapOfOrientedShape EdgesOfV;
@@ -740,14 +720,10 @@ void ChFi3d_Builder::PerformExtremity (const Handle(ChFiDS_Spine)& Spine)
         if (!F2.IsNull() && ChFi3d::IsTangentFaces(anEdge, F1, F2, GeomAbs_G2)) //smooth edge
         {
           if (!F1.IsSame(F2))
-<<<<<<< HEAD
-            NbG1Connections++;
-=======
           {
             NbG1Connections++;
             aLocNbG1Connections++;
           }
->>>>>>> accb2f351 (u)
           continue;
         }
         
@@ -786,11 +762,7 @@ void ChFi3d_Builder::PerformExtremity (const Handle(ChFiDS_Spine)& Spine)
       if (EdgesOfV.Extent() != 3)
         sommetpourri = Standard_True;
       
-<<<<<<< HEAD
-      if(!sommetpourri){
-=======
       if(!sommetpourri && aLocNbG1Connections < 4){
->>>>>>> accb2f351 (u)
 	sst = ChFi3d_EdgeState(E,myEFMap);
       }
       if(ii==1)Spine->SetFirstStatus(sst);

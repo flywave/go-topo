@@ -94,8 +94,6 @@ public:
   Standard_EXPORT static void TreatRLine (const Handle(IntPatch_RLine)& theRL, const Handle(GeomAdaptor_Surface)& theHS1, const Handle(GeomAdaptor_Surface)& theHS2, Handle(Geom_Curve)& theC3d, Handle(Geom2d_Curve)& theC2d1, Handle(Geom2d_Curve)& theC2d2, Standard_Real& theTolReached);
   
   //! creates 2D-curve on given surface from given 3D-curve
-<<<<<<< HEAD
-=======
   Standard_EXPORT static void BuildPCurves (const Standard_Real theFirst, const Standard_Real theLast,
                                             const Standard_Real theUmin, const Standard_Real theUmax,
                                             const Standard_Real theVmin, const Standard_Real theVmax,
@@ -105,7 +103,6 @@ public:
                                             Handle(Geom2d_Curve)& theCurve2d);
 
   //! creates 2D-curve on given surface from given 3D-curve
->>>>>>> accb2f351 (u)
   Standard_EXPORT static void BuildPCurves (const Standard_Real f, const Standard_Real l, Standard_Real& Tol, const Handle(Geom_Surface)& S, const Handle(Geom_Curve)& C, Handle(Geom2d_Curve)& C2d);
   
   //! puts into theArrayOfParameters the parameters of intersection

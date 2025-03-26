@@ -68,11 +68,7 @@ static Standard_Real HeightMax(const TopoDS_Shape& theSbase,
 			       const TopoDS_Shape& theSFrom,
 			       const TopoDS_Shape& theSUntil);
 
-<<<<<<< HEAD
-static Standard_Integer SensOfPrism(const Handle(Geom_Curve) C,
-=======
 static Standard_Integer SensOfPrism(const Handle(Geom_Curve)& C,
->>>>>>> accb2f351 (u)
 				    const TopoDS_Shape& Until);
 
 static Handle(Geom_Curve) TestCurve(const TopoDS_Shape&,
@@ -219,11 +215,7 @@ void BRepFeat_MakePrism::Perform(const Standard_Real Length)
 //construction of prism of height Length
 
   LocOpe_Prism thePrism(myPbase,V);
-<<<<<<< HEAD
-  TopoDS_Shape VraiPrism = thePrism.Shape();
-=======
   const TopoDS_Shape& VraiPrism = thePrism.Shape();
->>>>>>> accb2f351 (u)
   
 // management of descendants
   MajMap(myPbase,thePrism,myMap,myFShape,myLShape);
@@ -333,11 +325,7 @@ void BRepFeat_MakePrism::Perform(const TopoDS_Shape& Until)
 
 // construction of long prism
   LocOpe_Prism thePrism(myPbase,V);
-<<<<<<< HEAD
-  TopoDS_Shape VraiPrism = thePrism.Shape();
-=======
   const TopoDS_Shape& VraiPrism = thePrism.Shape();
->>>>>>> accb2f351 (u)
 
 // in case of support of face Until
   if(!Trf) {    
@@ -378,11 +366,7 @@ void BRepFeat_MakePrism::Perform(const TopoDS_Shape& Until)
       UpdateDescendants(trP, trP.Shape(), Standard_False);
       //
       TopExp_Explorer ex(trP.Shape(), TopAbs_SOLID);
-<<<<<<< HEAD
-      TopoDS_Shape Cutsh = ex.Current();
-=======
       const TopoDS_Shape& Cutsh = ex.Current();
->>>>>>> accb2f351 (u)
       if (myFuse == 1 && !myJustFeat) {
         BRepAlgoAPI_Fuse f(mySbase, Cutsh);
         myShape = f.Shape();
@@ -607,11 +591,7 @@ void BRepFeat_MakePrism::PerformUntilEnd()
   gp_Vec V(2*Height*myDir);
   
   LocOpe_Prism thePrism(myPbase,V);
-<<<<<<< HEAD
-  TopoDS_Shape VraiPrism = thePrism.Shape();
-=======
   const TopoDS_Shape& VraiPrism = thePrism.Shape();
->>>>>>> accb2f351 (u)
   
   MajMap(myPbase,thePrism,myMap,myFShape,myLShape);
   
@@ -671,11 +651,7 @@ void BRepFeat_MakePrism::PerformFromEnd(const TopoDS_Shape& Until)
   gp_Vec Vtra(-3*Height*sens/2.*myDir);
   gp_Vec Vect(3*sens*Height*myDir);
   LocOpe_Prism thePrism(myPbase,Vect,Vtra);
-<<<<<<< HEAD
-  TopoDS_Shape VraiPrism = thePrism.Shape();
-=======
   const TopoDS_Shape& VraiPrism = thePrism.Shape();
->>>>>>> accb2f351 (u)
   
   if(!Trf) {  // case face until 
     MajMap(myPbase,thePrism,myMap,myFShape,myLShape);
@@ -799,11 +775,7 @@ void BRepFeat_MakePrism::PerformThruAll()
   gp_Vec V(3*Height*myDir);
   gp_Vec Vtra(-3*Height/2.*myDir);
   LocOpe_Prism thePrism(myPbase,V,Vtra);
-<<<<<<< HEAD
-  TopoDS_Shape VraiPrism = thePrism.Shape();
-=======
   const TopoDS_Shape& VraiPrism = thePrism.Shape();
->>>>>>> accb2f351 (u)
   MajMap(myPbase,thePrism,myMap,myFShape,myLShape);
 
   myGShape = VraiPrism;
@@ -858,11 +830,7 @@ void BRepFeat_MakePrism::PerformUntilHeight(const TopoDS_Shape& Until,
   Standard_Integer sens = SensOfPrism(C, mySUntil);
   gp_Vec V(sens*Length*myDir);
   LocOpe_Prism thePrism(myPbase,V);
-<<<<<<< HEAD
-  TopoDS_Shape VraiPrism = thePrism.Shape();
-=======
   const TopoDS_Shape& VraiPrism = thePrism.Shape();
->>>>>>> accb2f351 (u)
 
   if(!Trf) {
     MajMap(myPbase,thePrism,myMap,myFShape,myLShape);
@@ -1010,11 +978,7 @@ static Standard_Real HeightMax(const TopoDS_Shape& theSbase,
 //function : SensOfPrism
 //purpose  : Direction of the prism depending on the shape Until
 //=======================================================================
-<<<<<<< HEAD
-Standard_Integer SensOfPrism(const Handle(Geom_Curve) C,
-=======
 Standard_Integer SensOfPrism(const Handle(Geom_Curve)& C,
->>>>>>> accb2f351 (u)
 			     const TopoDS_Shape& Until)
 {
   LocOpe_CSIntersector ASI1(Until);

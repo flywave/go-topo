@@ -34,12 +34,9 @@ namespace
     static const TCollection_AsciiString aScope ("global");
     return aScope;
   }
-<<<<<<< HEAD
-=======
 
   //! Global configuration of current DE Session
   static Handle(DE_Wrapper) THE_GLOBAL_CONFIGURATION;
->>>>>>> accb2f351 (u)
 }
 
 //=======================================================================
@@ -47,10 +44,7 @@ namespace
 // purpose  :
 //=======================================================================
 DE_Wrapper::DE_Wrapper()
-<<<<<<< HEAD
-=======
   :myKeepUpdates(Standard_False)
->>>>>>> accb2f351 (u)
 {}
 
 //=======================================================================
@@ -74,10 +68,7 @@ DE_Wrapper::DE_Wrapper(const Handle(DE_Wrapper)& theWrapper)
       Bind(aVendorIter.Value());
     }
   }
-<<<<<<< HEAD
-=======
   theWrapper->myKeepUpdates = myKeepUpdates;
->>>>>>> accb2f351 (u)
 }
 
 //=======================================================================
@@ -86,10 +77,6 @@ DE_Wrapper::DE_Wrapper(const Handle(DE_Wrapper)& theWrapper)
 //=======================================================================
 Handle(DE_Wrapper) DE_Wrapper::GlobalWrapper()
 {
-<<<<<<< HEAD
-  static const Handle(DE_Wrapper)& aConfiguration = new DE_Wrapper();
-  return aConfiguration;
-=======
   if (THE_GLOBAL_CONFIGURATION.IsNull())
   {
     THE_GLOBAL_CONFIGURATION = new DE_Wrapper();
@@ -107,7 +94,6 @@ void DE_Wrapper::SetGlobalWrapper(const Handle(DE_Wrapper)& theWrapper)
   {
     THE_GLOBAL_CONFIGURATION = theWrapper;
   }
->>>>>>> accb2f351 (u)
 }
 
 //=======================================================================
@@ -115,11 +101,7 @@ void DE_Wrapper::SetGlobalWrapper(const Handle(DE_Wrapper)& theWrapper)
 // purpose  :
 //=======================================================================
 Standard_Boolean DE_Wrapper::Read(const TCollection_AsciiString& thePath,
-<<<<<<< HEAD
-                                  Handle(TDocStd_Document)& theDocument,
-=======
                                   const Handle(TDocStd_Document)& theDocument,
->>>>>>> accb2f351 (u)
                                   Handle(XSControl_WorkSession)& theWS,
                                   const Message_ProgressRange& theProgress)
 {
@@ -132,11 +114,7 @@ Standard_Boolean DE_Wrapper::Read(const TCollection_AsciiString& thePath,
     return Read(thePath, theDocument, theProgress);
   }
   Handle(DE_Provider) aProvider;
-<<<<<<< HEAD
-  if (!findProvider(thePath, Standard_True, aProvider))
-=======
   if (!FindProvider(thePath, Standard_True, aProvider))
->>>>>>> accb2f351 (u)
   {
     return Standard_False;
   }
@@ -161,11 +139,7 @@ Standard_Boolean DE_Wrapper::Write(const TCollection_AsciiString& thePath,
     return Write(thePath, theDocument, theProgress);
   }
   Handle(DE_Provider) aProvider;
-<<<<<<< HEAD
-  if (!findProvider(thePath, Standard_False, aProvider))
-=======
   if (!FindProvider(thePath, Standard_False, aProvider))
->>>>>>> accb2f351 (u)
   {
     return Standard_False;
   }
@@ -177,11 +151,7 @@ Standard_Boolean DE_Wrapper::Write(const TCollection_AsciiString& thePath,
 // purpose  :
 //=======================================================================
 Standard_Boolean DE_Wrapper::Read(const TCollection_AsciiString& thePath,
-<<<<<<< HEAD
-                                  Handle(TDocStd_Document)& theDocument,
-=======
                                   const Handle(TDocStd_Document)& theDocument,
->>>>>>> accb2f351 (u)
                                   const Message_ProgressRange& theProgress)
 {
   if (theDocument.IsNull())
@@ -189,11 +159,7 @@ Standard_Boolean DE_Wrapper::Read(const TCollection_AsciiString& thePath,
     return Standard_False;
   }
   Handle(DE_Provider) aProvider;
-<<<<<<< HEAD
-  if (!findProvider(thePath, Standard_True, aProvider))
-=======
   if (!FindProvider(thePath, Standard_True, aProvider))
->>>>>>> accb2f351 (u)
   {
     return Standard_False;
   }
@@ -213,11 +179,7 @@ Standard_Boolean DE_Wrapper::Write(const TCollection_AsciiString& thePath,
     return Standard_False;
   }
   Handle(DE_Provider) aProvider;
-<<<<<<< HEAD
-  if (!findProvider(thePath, Standard_False, aProvider))
-=======
   if (!FindProvider(thePath, Standard_False, aProvider))
->>>>>>> accb2f351 (u)
   {
     return Standard_False;
   }
@@ -238,11 +200,7 @@ Standard_Boolean DE_Wrapper::Read(const TCollection_AsciiString& thePath,
     return Read(thePath, theShape, theProgress);
   }
   Handle(DE_Provider) aProvider;
-<<<<<<< HEAD
-  if (!findProvider(thePath, Standard_True, aProvider))
-=======
   if (!FindProvider(thePath, Standard_True, aProvider))
->>>>>>> accb2f351 (u)
   {
     return Standard_False;
   }
@@ -263,11 +221,7 @@ Standard_Boolean DE_Wrapper::Write(const TCollection_AsciiString& thePath,
     return Write(thePath, theShape, theProgress);
   }
   Handle(DE_Provider) aProvider;
-<<<<<<< HEAD
-  if (!findProvider(thePath, Standard_False, aProvider))
-=======
   if (!FindProvider(thePath, Standard_False, aProvider))
->>>>>>> accb2f351 (u)
   {
     return Standard_False;
   }
@@ -284,11 +238,7 @@ Standard_Boolean DE_Wrapper::Read(const TCollection_AsciiString& thePath,
 {
 
   Handle(DE_Provider) aProvider;
-<<<<<<< HEAD
-  if (!findProvider(thePath, Standard_True, aProvider))
-=======
   if (!FindProvider(thePath, Standard_True, aProvider))
->>>>>>> accb2f351 (u)
   {
     return Standard_False;
   }
@@ -304,11 +254,7 @@ Standard_Boolean DE_Wrapper::Write(const TCollection_AsciiString& thePath,
                                    const Message_ProgressRange& theProgress)
 {
   Handle(DE_Provider) aProvider;
-<<<<<<< HEAD
-  if (!findProvider(thePath, Standard_False, aProvider))
-=======
   if (!FindProvider(thePath, Standard_False, aProvider))
->>>>>>> accb2f351 (u)
   {
     return Standard_False;
   }
@@ -501,10 +447,6 @@ void DE_Wrapper::ChangePriority(const TCollection_AsciiString& theFormat,
     if (aVendorMap.FindFromKey(aVendorName, aNode))
     {
       aNode->SetEnabled(Standard_True);
-<<<<<<< HEAD
-      aNode->UpdateLoad();
-=======
->>>>>>> accb2f351 (u)
       aNewVendorMap.Add(aVendorName, aNode);
     }
   }
@@ -515,11 +457,7 @@ void DE_Wrapper::ChangePriority(const TCollection_AsciiString& theFormat,
     const TCollection_AsciiString& aVendorName = aVendorIter.Key();
     if (!theVendorPriority.Contains(aVendorName))
     {
-<<<<<<< HEAD
-      Handle(DE_ConfigurationNode) aNode = aVendorIter.Value();
-=======
       const Handle(DE_ConfigurationNode)& aNode = aVendorIter.Value();
->>>>>>> accb2f351 (u)
       if (theToDisable)
       {
         aNode->SetEnabled(Standard_False);
@@ -563,17 +501,10 @@ Handle(DE_Wrapper) DE_Wrapper::Copy() const
 }
 
 //=======================================================================
-<<<<<<< HEAD
-// function : findProvider
-// purpose  :
-//=======================================================================
-Standard_Boolean DE_Wrapper::findProvider(const TCollection_AsciiString& thePath,
-=======
 // function : FindProvider
 // purpose  :
 //=======================================================================
 Standard_Boolean DE_Wrapper::FindProvider(const TCollection_AsciiString& thePath,
->>>>>>> accb2f351 (u)
                                           const Standard_Boolean theToImport,
                                           Handle(DE_Provider)& theProvider) const
 {
@@ -602,12 +533,8 @@ Standard_Boolean DE_Wrapper::FindProvider(const TCollection_AsciiString& thePath
           ((theToImport && aNode->IsImportSupported()) ||
           (!theToImport && aNode->IsExportSupported())) &&
           (aNode->CheckExtension(anExtr) ||
-<<<<<<< HEAD
-          (theToImport && aNode->CheckContent(aBuffer))))
-=======
           (theToImport && aNode->CheckContent(aBuffer))) &&
           aNode->UpdateLoad(theToImport, myKeepUpdates))
->>>>>>> accb2f351 (u)
       {
         theProvider = aNode->BuildProvider();
         aNode->GlobalParameters = GlobalParameters;
@@ -620,8 +547,6 @@ Standard_Boolean DE_Wrapper::FindProvider(const TCollection_AsciiString& thePath
 }
 
 //=======================================================================
-<<<<<<< HEAD
-=======
 // function : UpdateLoad
 // purpose  :
 //=======================================================================
@@ -644,7 +569,6 @@ Standard_EXPORT void DE_Wrapper::UpdateLoad(const Standard_Boolean theToForceUpd
 }
 
 //=======================================================================
->>>>>>> accb2f351 (u)
 // function : sort
 // purpose  :
 //=======================================================================

@@ -33,10 +33,7 @@ set "BUILD_ModelingAlgorithms=ON"
 set "BUILD_Visualization=ON"
 set "BUILD_ApplicationFramework=ON"
 set "BUILD_DataExchange=ON"
-<<<<<<< HEAD
-=======
 set "BUILD_DETools=OFF"
->>>>>>> accb2f351 (u)
 
 rem Optional 3rd-party libraries to enable
 set "USE_FREETYPE=ON"
@@ -170,10 +167,7 @@ if ["%toCMake%"] == ["1"] (
  -D BUILD_MODULE_Visualization:BOOL="%BUILD_Visualization%" ^
  -D BUILD_MODULE_ApplicationFramework:BOOL="%BUILD_ApplicationFramework%" ^
  -D BUILD_MODULE_DataExchange:BOOL="%BUILD_DataExchange%" ^
-<<<<<<< HEAD
-=======
  -D BUILD_MODULE_DETools:BOOL="OFF" ^
->>>>>>> accb2f351 (u)
  -D BUILD_MODULE_Draw:BOOL="OFF" ^
  -D BUILD_DOC_Overview:BOOL="OFF" ^
  -D USE_FREETYPE:BOOL="%USE_FREETYPE%" ^

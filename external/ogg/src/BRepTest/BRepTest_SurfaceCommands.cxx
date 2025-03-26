@@ -43,13 +43,6 @@
 #include <GeomAPI_ProjectPointOnSurf.hxx>
 #include <Message.hxx>
 
-<<<<<<< HEAD
-#ifdef _WIN32
-//#define strcasecmp strcmp Already defined
-#endif
-
-=======
->>>>>>> accb2f351 (u)
 //-----------------------------------------------------------------------
 // suppressarg : suppress a[d],modifie na--
 //-----------------------------------------------------------------------

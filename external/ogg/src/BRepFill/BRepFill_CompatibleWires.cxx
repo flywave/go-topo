@@ -128,11 +128,7 @@ static void AddNewEdge(const TopoDS_Shape& theEdge,
     const TopTools_SequenceOfShape& NewEdges = theEdgeNewEdges(theEdge);
     for (Standard_Integer i = 1; i <= NewEdges.Length(); i++)
     {
-<<<<<<< HEAD
-      TopoDS_Shape anEdge = NewEdges(i);
-=======
       const TopoDS_Shape& anEdge = NewEdges(i);
->>>>>>> accb2f351 (u)
       AddNewEdge(anEdge, theEdgeNewEdges, ListNewEdges);
     }
   }
@@ -144,16 +140,9 @@ static void SeqOfVertices (const TopoDS_Wire&   W,
 			   TopTools_SequenceOfShape& S)
 {
   S.Clear();
-<<<<<<< HEAD
-  Standard_Integer jj, cpt = 0;
-  TopExp_Explorer PE;
-  for (PE.Init(W,TopAbs_VERTEX); PE.More(); PE.Next()) {
-    cpt++;
-=======
   Standard_Integer jj;
   TopExp_Explorer PE;
   for (PE.Init(W,TopAbs_VERTEX); PE.More(); PE.Next()) {
->>>>>>> accb2f351 (u)
     Standard_Boolean trouve=Standard_False;
     for (jj=1;jj<=S.Length() && (!trouve);jj++) {
       if (S.Value(jj).IsSame(PE.Current())) trouve = Standard_True; 
@@ -361,13 +350,10 @@ static void TrimEdge (const TopoDS_Edge&              CurrentEdge,
     for (j=1; j<=ndec; j++) {
       // piece of edge  
       m1 = (CutValues.Value(j)-t0)*(last-first)/(t1-t0)+first;
-<<<<<<< HEAD
-=======
       if (Abs(m0 - m1) < Precision::Confusion())
       {
         return;
       }
->>>>>>> accb2f351 (u)
       TopoDS_Edge CutE = BRepLib_MakeEdge(C,V0,Vbid,m0,m1);
       CutE.Orientation(CurrentOrient);
       S.Append(CutE);
@@ -375,13 +361,10 @@ static void TrimEdge (const TopoDS_Edge&              CurrentEdge,
       V0 = TopExp::LastVertex(CutE);
       if (j==ndec) {
 	// last piece
-<<<<<<< HEAD
-=======
         if (Abs(m0 - last) < Precision::Confusion())
         {
           return;
         }
->>>>>>> accb2f351 (u)
 	TopoDS_Edge LastE = BRepLib_MakeEdge(C,V0,Vl,m0,last);
 	LastE.Orientation(CurrentOrient);
 	S.Append(LastE);
@@ -395,13 +378,10 @@ static void TrimEdge (const TopoDS_Edge&              CurrentEdge,
     for (j=ndec; j>=1; j--) {
       // piece of edge  
       m0 = (CutValues.Value(j)-t0)*(last-first)/(t1-t0)+first;
-<<<<<<< HEAD
-=======
       if (Abs(m0 - m1) < Precision::Confusion())
       {
         return;
       }
->>>>>>> accb2f351 (u)
       TopoDS_Edge CutE = BRepLib_MakeEdge(C,Vbid,V1,m0,m1);
       CutE.Orientation(CurrentOrient);
       S.Append(CutE);
@@ -409,13 +389,10 @@ static void TrimEdge (const TopoDS_Edge&              CurrentEdge,
       V1 = TopExp::FirstVertex(CutE);
       if (j==1) {
 	// last piece
-<<<<<<< HEAD
-=======
         if (Abs(first - m1) < Precision::Confusion())
         {
           return;
         }
->>>>>>> accb2f351 (u)
 	TopoDS_Edge LastE = BRepLib_MakeEdge(C,Vf,V1,first,m1);
 	LastE.Orientation(CurrentOrient);
 	S.Append(LastE);
@@ -585,13 +562,10 @@ static Standard_Boolean EdgeIntersectOnWire (const gp_Pnt& P1,
 	  SR.Clear();
 	  SR.Append(param);
 	  TrimEdge(E,SR,first,last,SO,SE);
-<<<<<<< HEAD
-=======
           if (SE.IsEmpty())
           {
             return Standard_False;
           }
->>>>>>> accb2f351 (u)
           theEdgeNewEdges(E) = SE;
 	  TopoDS_Vertex VV1,VV2;
 	  TopExp::Vertices(TopoDS::Edge(SE.Value(1)),VV1,VV2);
@@ -701,11 +675,7 @@ static void BuildConnectedEdges(const TopoDS_Wire& aWire,
 //=======================================================================
 
 BRepFill_CompatibleWires::BRepFill_CompatibleWires() 
-<<<<<<< HEAD
-:myIsDone(Standard_False)
-=======
 :myStatus(BRepFill_ThruSectionErrorStatus_NotDone)
->>>>>>> accb2f351 (u)
 {
 }
 
@@ -730,13 +700,8 @@ void BRepFill_CompatibleWires::Init(const TopTools_SequenceOfShape& Sections)
 {
   myInit = Sections;
   myWork = Sections;
-<<<<<<< HEAD
-  myPercent = 0.01;
-  myIsDone = Standard_False;
-=======
   myPercent = 0.1;
   myStatus = BRepFill_ThruSectionErrorStatus_NotDone;
->>>>>>> accb2f351 (u)
   myMap.Clear();
 
 }
@@ -761,11 +726,7 @@ void BRepFill_CompatibleWires::SetPercent(const Standard_Real Percent)
 
 Standard_Boolean BRepFill_CompatibleWires::IsDone() const 
 {
-<<<<<<< HEAD
-  return myIsDone;
-=======
   return myStatus == BRepFill_ThruSectionErrorStatus_Done;
->>>>>>> accb2f351 (u)
 }
 
 
@@ -824,10 +785,7 @@ Standard_Boolean BRepFill_CompatibleWires::IsDegeneratedLastSection() const
 
 void BRepFill_CompatibleWires::Perform (const Standard_Boolean WithRotation)
 {
-<<<<<<< HEAD
-=======
   myStatus = BRepFill_ThruSectionErrorStatus_Done;
->>>>>>> accb2f351 (u)
   // compute origin and orientation on wires to avoid twisted results
   // and update wires to have same number of edges
 
@@ -860,10 +818,6 @@ void BRepFill_CompatibleWires::Perform (const Standard_Boolean WithRotation)
   report = (nbmax != nbmin || contS >= GeomAbs_C1 );
   
   // initialization of the map
-<<<<<<< HEAD
-  Standard_Integer nbE = 0;
-=======
->>>>>>> accb2f351 (u)
   TopTools_ListOfShape Empty;
   for (i=1; i<=nbSects; i++) {
     TopoDS_Wire W = TopoDS::Wire(myWork(i));
@@ -871,10 +825,6 @@ void BRepFill_CompatibleWires::Perform (const Standard_Boolean WithRotation)
       TopoDS_Edge E = TopoDS::Edge(anExp.Current());
       myMap.Bind(E,Empty);
       myMap(E).Append(E);
-<<<<<<< HEAD
-      nbE++;
-=======
->>>>>>> accb2f351 (u)
     }
   } 
   
@@ -906,11 +856,7 @@ void BRepFill_CompatibleWires::Perform (const Standard_Boolean WithRotation)
     allClosed = (allClosed && wClosed);
     allOpen = (allOpen && !wClosed);
   }
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> accb2f351 (u)
   if (allClosed) {
     // All sections are closed 
     if (report) {
@@ -921,43 +867,26 @@ void BRepFill_CompatibleWires::Perform (const Standard_Boolean WithRotation)
       // origin
       ComputeOrigin(Standard_False);
     }
-<<<<<<< HEAD
-    myIsDone = Standard_True;
-=======
->>>>>>> accb2f351 (u)
   }
   else if (allOpen) {
     // All sections are open
     // origin
     SearchOrigin();
-<<<<<<< HEAD
-=======
     if (myStatus != BRepFill_ThruSectionErrorStatus_Done)
     {
       return;
     }
->>>>>>> accb2f351 (u)
     // same number of elements
     if (report) {
       SameNumberByACR(report);
     }
-<<<<<<< HEAD
-    myIsDone = Standard_True;
-=======
->>>>>>> accb2f351 (u)
   }
   else {
     // There are open and closed sections :
     // not processed
-<<<<<<< HEAD
-    throw Standard_DomainError("Sections must be all closed or all open");
-  }
-  
-=======
     myStatus = BRepFill_ThruSectionErrorStatus_NotSameTopology;
     return;
   }
->>>>>>> accb2f351 (u)
 }
 
 
@@ -997,14 +926,10 @@ void BRepFill_CompatibleWires::
     //allClosed = (allClosed && myWork(i).Closed());
   }
   if (!allClosed)
-<<<<<<< HEAD
-    throw Standard_NoSuchObject("BRepFill_CompatibleWires::SameNumberByPolarMethod : the wires must be closed");
-=======
   {
     myStatus = BRepFill_ThruSectionErrorStatus_NotSameTopology;
     return;
   }
->>>>>>> accb2f351 (u)
   
   // sections ponctuelles, sections bouclantes ?
   if (myDegen1) ideb++;
@@ -1084,16 +1009,11 @@ void BRepFill_CompatibleWires::
     
     // sequence of vertices of the first wire
     SeqOfVertices(wire1,SeqV);
-<<<<<<< HEAD
-    if (SeqV.Length()>NbMaxV) 
-      throw Standard_NoSuchObject("BRepFill::SameNumberByPolarMethod failed");
-=======
     if (SeqV.Length() > NbMaxV)
     {
       myStatus = BRepFill_ThruSectionErrorStatus_Failed;
       return;
     }
->>>>>>> accb2f351 (u)
     
     // loop on vertices of wire1
     for (ii=1;ii<=SeqV.Length();ii++) {
@@ -1168,14 +1088,10 @@ void BRepFill_CompatibleWires::
     // sequence of vertices of the first wire
     SeqOfVertices(wire1,SeqV);
     if ( SeqV.Length()>NbMaxV || SeqV.Length()>SizeMap ) 
-<<<<<<< HEAD
-      throw Standard_NoSuchObject("BRepFill::SameNumberByPolarMethod failed");
-=======
     {
       myStatus = BRepFill_ThruSectionErrorStatus_Failed;
       return;
     }
->>>>>>> accb2f351 (u)
     
 
     // next wire 
@@ -1297,25 +1213,17 @@ void BRepFill_CompatibleWires::
 	}
       } //end of for(; itW.More(); itW.Next())
     if (Esol.IsNull())
-<<<<<<< HEAD
-      throw Standard_ConstructionError("BRepFill :: profiles are inconsistent");
-=======
     {
       myStatus = BRepFill_ThruSectionErrorStatus_ProfilesInconsistent;
       return;
     }
->>>>>>> accb2f351 (u)
     MW.Add(Esol);
 
     TopTools_ListOfShape ConnectedEdges;
     BuildConnectedEdges( TopoDS::Wire(myWork(i)), Esol, V2, ConnectedEdges );
 
     TopTools_ListIteratorOfListOfShape itCE(ConnectedEdges);
-<<<<<<< HEAD
-    for(; anExp.More(), itCE.More(); anExp.Next(), itCE.Next())
-=======
     for(; anExp.More() && itCE.More(); anExp.Next(), itCE.Next())
->>>>>>> accb2f351 (u)
       {
 	ECur = anExp.Current();
 	TopExp::Vertices(ECur,VF,VL,Standard_True);
@@ -1388,26 +1296,17 @@ void BRepFill_CompatibleWires::
     if (nbmax<nbEdges) nbmax = nbEdges;
     if (nbmin>nbEdges) nbmin = nbEdges;
   }
-<<<<<<< HEAD
-  if (nbmin!=nbmax) {
-    throw Standard_NoSuchObject("BRepFill_CompatibleWires::SameNumberByPolarMethod failed");
-=======
   if (nbmin!=nbmax) 
   {
     myStatus = BRepFill_ThruSectionErrorStatus_Failed;
     return;
->>>>>>> accb2f351 (u)
   }
 
   //Fill <myMap>
   TopTools_DataMapIteratorOfDataMapOfShapeListOfShape itmap(myMap);
   for (; itmap.More(); itmap.Next())
   {
-<<<<<<< HEAD
-    TopoDS_Shape anEdge = itmap.Key();
-=======
     const TopoDS_Shape& anEdge = itmap.Key();
->>>>>>> accb2f351 (u)
     TopTools_ListOfShape ListOfNewEdges;
 
     //for each edge of <myMap> find all newest edges
@@ -1572,23 +1471,11 @@ void BRepFill_CompatibleWires::SameNumberByACR(const  Standard_Boolean  report)
 	    TopTools_DataMapIteratorOfDataMapOfShapeListOfShape itmap;
 	    //TopTools_ListIteratorOfListOfShape itlist;
 	    TopoDS_Edge Ancestor;
-<<<<<<< HEAD
-	    Standard_Integer nbedge, nblist=0;
-	    Standard_Boolean found = Standard_False;
-
-	    for (itmap.Initialize(myMap);itmap.More()&&(!found);itmap.Next()) {
-	      nblist++;
-	      TopTools_ListIteratorOfListOfShape itlist(itmap.Value());
-	      nbedge = 0;
-	      while (itlist.More()&&(!found)) {
-		nbedge++;
-=======
 	    Standard_Boolean found = Standard_False;
 
 	    for (itmap.Initialize(myMap);itmap.More()&&(!found);itmap.Next()) {
 	      TopTools_ListIteratorOfListOfShape itlist(itmap.Value());
 	      while (itlist.More()&&(!found)) {
->>>>>>> accb2f351 (u)
 		TopoDS_Edge ECur = TopoDS::Edge(itlist.Value());
 		    
 		if (Ecur.IsSame(ECur)) {
@@ -1630,14 +1517,10 @@ void BRepFill_CompatibleWires::SameNumberByACR(const  Standard_Boolean  report)
     if (nbmin>nbEdges(i)) nbmin = nbEdges(i);
   }
   if (nbmax!=nbmin) 
-<<<<<<< HEAD
-    throw Standard_NoSuchObject("BRepFill_CompatibleWires::SameNumberByACR failed");
-=======
   {
     myStatus = BRepFill_ThruSectionErrorStatus_Failed;
     return;
   }
->>>>>>> accb2f351 (u)
 }
 
 //=======================================================================
@@ -1682,14 +1565,10 @@ void BRepFill_CompatibleWires::ComputeOrigin(const  Standard_Boolean /*polar*/ )
   }
 */
   if (!allClosed) 
-<<<<<<< HEAD
-    throw Standard_NoSuchObject("BRepFill_CompatibleWires::ComputeOrigin : the wires must be closed");
-=======
   {
     myStatus = BRepFill_ThruSectionErrorStatus_NotSameTopology;
     return;
   }
->>>>>>> accb2f351 (u)
 
 /*  
   // Max number of possible cuts
@@ -2026,14 +1905,10 @@ void BRepFill_CompatibleWires::ComputeOrigin(const  Standard_Boolean /*polar*/ )
       gp_Pnt Pmini,P1,P2;
       SeqOfVertices(wire,SeqV);
       if (SeqV.Length()>NbMaxV) 
-<<<<<<< HEAD
-	throw Standard_NoSuchObject("BRepFill::ComputeOrigin failed");
-=======
       {
         myStatus = BRepFill::ThruSectionsError_Failed;
         return;
       }
->>>>>>> accb2f351 (u)
       if (!polar) {
 	// choix du vertex le plus proche comme origine
 	distmini = Precision::Infinite();
@@ -2258,14 +2133,10 @@ void BRepFill_CompatibleWires::SearchOrigin()
     allOpen = (allOpen && !myWork(i).Closed());
   }
   if (!allOpen)
-<<<<<<< HEAD
-    throw Standard_NoSuchObject("BRepFill_CompatibleWires::SearchOrigin : the wires must be open");
-=======
   {
     myStatus = BRepFill_ThruSectionErrorStatus_NotSameTopology;
     return;
   }
->>>>>>> accb2f351 (u)
 
   // init
 

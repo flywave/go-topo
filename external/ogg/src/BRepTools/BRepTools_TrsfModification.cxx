@@ -394,19 +394,11 @@ Standard_Boolean BRepTools_TrsfModification::NewCurve2d
     if(l - lc > Precision::PConfusion()) l = lc;
     if(Abs(l - f) < Precision::PConfusion())
     {
-<<<<<<< HEAD
-      if(Abs(f - fc) < Precision::PConfusion())
-      {
-        l = lc;
-      }
-      else
-=======
       if(Abs(f - fc) < Precision::PConfusion() && !Precision::IsInfinite(lc))
       {
         l = lc;
       }
       else if (!Precision::IsInfinite(fc))
->>>>>>> accb2f351 (u)
       {
         f = fc;
       }

@@ -84,8 +84,6 @@ void SelectMgr_EntityOwner::HilightWithColor (const Handle(PrsMgr_PresentationMa
 }
 
 // =======================================================================
-<<<<<<< HEAD
-=======
 // function : Select
 // purpose  :
 // =======================================================================
@@ -131,7 +129,6 @@ Standard_Boolean SelectMgr_EntityOwner::Select (const AIS_SelectionScheme theSel
 }
 
 // =======================================================================
->>>>>>> accb2f351 (u)
 // function : DumpJson
 // purpose  :
 // =======================================================================

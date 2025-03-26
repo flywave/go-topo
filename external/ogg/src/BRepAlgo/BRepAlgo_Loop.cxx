@@ -42,21 +42,14 @@
 #include <TopTools_SequenceOfShape.hxx>
 
 #include <stdio.h>
-<<<<<<< HEAD
-=======
 //#define OCCT_DEBUG_ALGO
 //#define DRAW
->>>>>>> accb2f351 (u)
 #ifdef DRAW
 #include <DBRep.hxx>
 #pragma comment(lib,"TKDraw")
 #endif
 #ifdef OCCT_DEBUG_ALGO
-<<<<<<< HEAD
-Standard_Boolean AffichLoop  = Standard_False;
-=======
 Standard_Boolean AffichLoop  = Standard_True;
->>>>>>> accb2f351 (u)
 Standard_Integer NbLoops     = 0;
 Standard_Integer NbWires     = 1;
 static char* name = new char[100];
@@ -67,12 +60,8 @@ static char* name = new char[100];
 //purpose  : 
 //=======================================================================
 
-<<<<<<< HEAD
-BRepAlgo_Loop::BRepAlgo_Loop()
-=======
 BRepAlgo_Loop::BRepAlgo_Loop():
   myTolConf (0.001)
->>>>>>> accb2f351 (u)
 {
 }
 
@@ -199,10 +188,6 @@ static TopoDS_Vertex  UpdateClosedEdge(const TopoDS_Edge&         E,
   Standard_Boolean OnStart = 0, OnEnd = 0;
   //// modified by jgv, 13.04.04 for OCC5634 ////
   TopExp::Vertices (E,V1,V2);
-<<<<<<< HEAD
-  //Standard_Real    Tol = Precision::Confusion();
-=======
->>>>>>> accb2f351 (u)
   Standard_Real    Tol = BRep_Tool::Tolerance( V1 );
   ///////////////////////////////////////////////
   
@@ -299,11 +284,7 @@ static void RemovePendingEdges(TopTools_IndexedDataMapOfShapeListOfShape& MVE)
 //purpose  : 
 //=======================================================================
 
-<<<<<<< HEAD
-static Standard_Boolean  SamePnt2d(TopoDS_Vertex  V,
-=======
 static Standard_Boolean  SamePnt2d(const TopoDS_Vertex&  V,
->>>>>>> accb2f351 (u)
 				   TopoDS_Edge&   E1,
 				   TopoDS_Edge&   E2,
 				   TopoDS_Face&   F)
@@ -448,21 +429,12 @@ static void StoreInMVE (const TopoDS_Face&                  F,
 			TopoDS_Edge&                  E,
 			TopTools_IndexedDataMapOfShapeListOfShape& MVE,
 			Standard_Boolean&                   YaCouture,
-<<<<<<< HEAD
-			TopTools_DataMapOfShapeShape& VerticesForSubstitute )
-=======
 			TopTools_DataMapOfShapeShape& VerticesForSubstitute,
             const Standard_Real theTolConf)
->>>>>>> accb2f351 (u)
 {      
   TopoDS_Vertex V1, V2, V;
   TopTools_ListOfShape Empty;
   
-<<<<<<< HEAD
-  Standard_Real Tol = 0.001; //5.e-05; //5.e-07;
-//  gp_Pnt P1, P2, P;
-=======
->>>>>>> accb2f351 (u)
   gp_Pnt P1, P;
   BRep_Builder BB;
   for (Standard_Integer iV = 1; iV <= MVE.Extent(); iV++)
@@ -478,11 +450,7 @@ static void StoreInMVE (const TopoDS_Face&                  F,
 	{
 	  V1 = TopoDS::Vertex( itl.Value() );
 	  P1 = BRep_Tool::Pnt( V1 );
-<<<<<<< HEAD
-	  if (P.IsEqual( P1, Tol ) && !V.IsSame(V1))
-=======
 	  if (P.IsEqual( P1, theTolConf ) && !V.IsSame(V1))
->>>>>>> accb2f351 (u)
 	    {
 	      V.Orientation( V1.Orientation() );
 	      if (VerticesForSubstitute.IsBound( V1 ))
@@ -607,11 +575,7 @@ void BRepAlgo_Loop::Perform()
         TopoDS_Edge& E = TopoDS::Edge(itl1.Value());
         if (!Emap.Add(E))
           continue;
-<<<<<<< HEAD
-        StoreInMVE(myFace,E,MVE,YaCouture,myVerticesForSubstitute);
-=======
         StoreInMVE(myFace,E,MVE,YaCouture,myVerticesForSubstitute, myTolConf);
->>>>>>> accb2f351 (u)
       }
     }
   }
@@ -623,11 +587,7 @@ void BRepAlgo_Loop::Perform()
   for (itl.Initialize(myConstEdges); itl.More(); itl.Next()) {
     TopoDS_Edge& E = TopoDS::Edge(itl.Value());
     if (DejaVu.Add(E))
-<<<<<<< HEAD
-      StoreInMVE(myFace,E,MVE,YaCouture,myVerticesForSubstitute);
-=======
       StoreInMVE(myFace,E,MVE,YaCouture,myVerticesForSubstitute, myTolConf);
->>>>>>> accb2f351 (u)
   }
 
 #ifdef DRAW
@@ -667,33 +627,11 @@ void BRepAlgo_Loop::Perform()
     //--------------------------------
     RemovePendingEdges(MVE);
 
-<<<<<<< HEAD
-    if (MVE.Extent() == 0) break; 
-=======
     if (MVE.Extent() == 0) break;
->>>>>>> accb2f351 (u)
     //--------------------------------
     // Start edge.
     //--------------------------------
     EF = CE = TopoDS::Edge(MVE(1).First());
-<<<<<<< HEAD
-    TopExp::Vertices(CE,V1,V2);
-    //--------------------------------
-    // VF vertex start of new wire
-    //--------------------------------
-    if (CE.Orientation() == TopAbs_FORWARD) { CV = VF = V1;}
-    else                                    { CV = VF = V2;}
-    if (!MVE.Contains(CV)) continue;
-    TopTools_ListOfShape& aListEdges = MVE.ChangeFromKey(CV);
-    for ( itl.Initialize(aListEdges); itl.More(); itl.Next()) {
-      if (itl.Value().IsEqual(CE)) {
-	aListEdges.Remove(itl);
-	break;
-      }
-    }
-    End  = Standard_False;
-    
-=======
     TopExp::Vertices(CE, V1, V2);
     //--------------------------------
     // VF vertex start of new wire
@@ -710,33 +648,21 @@ void BRepAlgo_Loop::Perform()
     }
     End = Standard_False;
 
->>>>>>> accb2f351 (u)
     while (!End) {
       //-------------------------------
       // Construction of a wire.
       //-------------------------------
-<<<<<<< HEAD
-      TopExp::Vertices(CE,V1,V2);
-      if (!CV.IsSame(V1)) CV = V1; else CV = V2;
-
-      B.Add (NW,CE);
-=======
       TopExp::Vertices(CE, V1, V2);
       if (!CV.IsSame(V1)) CV = V1; else CV = V2;
 
       B.Add(NW, CE);
->>>>>>> accb2f351 (u)
       UsedEdges.Add(CE);
 
       if (!MVE.Contains(CV) || MVE.FindFromKey(CV).IsEmpty()) {
         End = Standard_True;
       }
       else {
-<<<<<<< HEAD
-        End = !SelectEdge(myFace,CE,CV,NE,MVE.ChangeFromKey(CV));
-=======
         End = !SelectEdge(myFace, CE, CV, NE, MVE.ChangeFromKey(CV));
->>>>>>> accb2f351 (u)
         if (!End) {
           CE = NE;
           if (MVE.FindFromKey(CV).IsEmpty())
@@ -747,37 +673,6 @@ void BRepAlgo_Loop::Perform()
     //--------------------------------------------------
     // Add new wire to the set of wires
     //------------------------------------------------
-<<<<<<< HEAD
-    Standard_Real Tol = 0.001; //5.e-05; //5.e-07;
-    TopExp_Explorer explo( NW, TopAbs_VERTEX );
-    for (; explo.More(); explo.Next())
-      {
-      const TopoDS_Vertex& aV = TopoDS::Vertex( explo.Current() );
-      Handle(BRep_TVertex)& TV = *((Handle(BRep_TVertex)*) &(aV).TShape());
-      TV->Tolerance( Tol );
-      TV->Modified( Standard_True );
-      }
-    for (explo.Init( NW, TopAbs_EDGE ); explo.More(); explo.Next())
-      {
-      const TopoDS_Edge& aE = TopoDS::Edge( explo.Current() );
-      Handle(BRep_TEdge)& TE = *((Handle(BRep_TEdge)*) &(aE).TShape());
-      TE->Tolerance( Tol );
-      TE->Modified( Standard_True );
-      }
-
-    if (VF.IsSame(CV) && SamePnt2d(VF,EF,CE,myFace))
-    {
-      NW.Closed (Standard_True);
-      myNewWires.Append (NW);
-    }
-#ifdef OCCT_DEBUG_ALGO
-    else {
-      std::cout <<"BRepAlgo_Loop: Open Wire"<<std::endl;
-      if (AffichLoop)
-        std::cout << "OpenWire is : NW_"<<NbLoops<<"_"<<NbWires<<std::endl;
-      }
-#endif
-=======
 
     if (VF.IsSame(CV))
     {
@@ -813,7 +708,6 @@ void BRepAlgo_Loop::Perform()
     }
 #endif
 
->>>>>>> accb2f351 (u)
 #ifdef DRAW
     if (AffichLoop) {
       sprintf(name,"NW_%d_%d",NbLoops,NbWires++);	
@@ -890,11 +784,6 @@ void BRepAlgo_Loop::CutEdge (const TopoDS_Edge&          E,
       VF = TopoDS::Vertex(aLocalV);
       aLocalV = VCEI.Oriented(TopAbs_REVERSED); 
       VL = TopoDS::Vertex(aLocalV);
-<<<<<<< HEAD
-//      VF = TopoDS::Vertex(VCEI.Oriented(TopAbs_FORWARD));
-//      VL = TopoDS::Vertex(VCEI.Oriented(TopAbs_REVERSED)); 
-=======
->>>>>>> accb2f351 (u)
     }
     SV.Prepend(VF);
     SV.Append(VL);
@@ -929,19 +818,9 @@ void BRepAlgo_Loop::CutEdge (const TopoDS_Edge&          E,
       B.Add  (NewEdge,aLocalEdge);
       aLocalEdge = V2.Oriented(TopAbs_REVERSED);
       B.Add  (TopoDS::Edge(NewEdge),aLocalEdge);
-<<<<<<< HEAD
-//      B.Add  (NewEdge,V1.Oriented(TopAbs_FORWARD));
-//      B.Add  (NewEdge,V2.Oriented(TopAbs_REVERSED));
       if (V1.IsSame(VF)) 
 	U1 = f;
       else 
-//	U1=BRep_Tool::Parameter
-//	  (TopoDS::Vertex(V1.Oriented(TopAbs_INTERNAL)),WE);
-=======
-      if (V1.IsSame(VF)) 
-	U1 = f;
-      else 
->>>>>>> accb2f351 (u)
 	{
 	  TopoDS_Shape aLocalV = V1.Oriented(TopAbs_INTERNAL);
 	  U1=BRep_Tool::Parameter(TopoDS::Vertex(aLocalV),WE);
@@ -952,11 +831,6 @@ void BRepAlgo_Loop::CutEdge (const TopoDS_Edge&          E,
 	{
 	  TopoDS_Shape aLocalV = V2.Oriented(TopAbs_INTERNAL);
 	  U2=BRep_Tool::Parameter(TopoDS::Vertex(aLocalV),WE);
-<<<<<<< HEAD
-//	U2=BRep_Tool::Parameter
-//	  (TopoDS::Vertex(V2.Oriented(TopAbs_INTERNAL)),WE);
-=======
->>>>>>> accb2f351 (u)
 	}
       B.Range (TopoDS::Edge(NewEdge),U1,U2);
 #ifdef DRAW

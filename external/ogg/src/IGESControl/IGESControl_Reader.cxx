@@ -149,11 +149,7 @@ void  IGESControl_Reader::PrintTransferInfo
       // Init for dicoCountResult for IFSelect_ResultCount
       if ( mode == IFSelect_ResultCount ) {
         char mess[300];
-<<<<<<< HEAD
-        const Handle(Transfer_Binder) aBinder = iterTrans.Value();
-=======
         const Handle(Transfer_Binder)& aBinder = iterTrans.Value();
->>>>>>> accb2f351 (u)
         sprintf(mess,"\t%s",aBinder->ResultTypeName());
         if (aMapCountResult.IsBound(mess))
           aMapCountResult.ChangeFind(mess)++;
@@ -163,11 +159,7 @@ void  IGESControl_Reader::PrintTransferInfo
       // Init for dicoCountMapping for IFSelect_Mapping
       else if ( mode == IFSelect_Mapping ) {
         char mess[300];
-<<<<<<< HEAD
-        const Handle(Transfer_Binder) aBinder = iterTrans.Value();
-=======
         const Handle(Transfer_Binder)& aBinder = iterTrans.Value();
->>>>>>> accb2f351 (u)
         DeclareAndCast(IGESData_IGESEntity,igesEnt,iterTrans.Starting());
 
         sprintf(mess,"%d\t%d\t%s\t%s", igesEnt->TypeNumber(), igesEnt->FormNumber(),
@@ -186,11 +178,7 @@ void  IGESControl_Reader::PrintTransferInfo
     // Init the dicoCount dicoList and nbWarn ,nb Fail.
     for(checkIterator.Start(); checkIterator.More(); checkIterator.Next() ) {
       char mess[300];
-<<<<<<< HEAD
-      const Handle(Interface_Check) aCheck = checkIterator.Value(); 
-=======
       const Handle(Interface_Check)& aCheck = checkIterator.Value(); 
->>>>>>> accb2f351 (u)
       Handle(Standard_Transient) ent = model->Value(checkIterator.Number());
       DeclareAndCast(IGESData_IGESEntity,igesEnt,ent);
       Standard_Integer type = igesEnt->TypeNumber(), form = igesEnt->FormNumber();
@@ -254,11 +242,7 @@ void  IGESControl_Reader::PrintTransferInfo
         Message_Messenger::StreamBuffer aSender = TF->SendInfo();
         aSender << aMapCountIter.Value() << aMapCountIter.Key() << std::endl;
         if (mode == IFSelect_ListByItem) {
-<<<<<<< HEAD
-          Handle(TColStd_HSequenceOfInteger) entityList = aMapListIter.Value();
-=======
           const Handle(TColStd_HSequenceOfInteger)& entityList = aMapListIter.Value();
->>>>>>> accb2f351 (u)
           Standard_Integer length = entityList->Length();
           Message_Msg msg3035("IGES_3035");
           TF->Send(msg3035, Message_Info);

@@ -27,8 +27,6 @@
 #undef AllValues
 #endif
 
-<<<<<<< HEAD
-=======
 // Resolve name collisions with X11 headers
 #ifdef Status
 #undef Status
@@ -38,7 +36,6 @@
 #undef Success
 #endif
 
->>>>>>> accb2f351 (u)
 #include <vtkXRenderWindowInteractor.h>
 #include <vtkXOpenGLRenderWindow.h>
 #endif

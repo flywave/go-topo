@@ -4235,8 +4235,6 @@ void BSplCLib::Resolution(      Standard_Real&        Poles,
 }
 
 //=======================================================================
-<<<<<<< HEAD
-=======
 // function : Intervals 
 // purpose  : 
 //=======================================================================
@@ -4364,7 +4362,6 @@ Standard_Integer BSplCLib::Intervals (const TColStd_Array1OfReal& theKnots,
 }
 
 //=======================================================================
->>>>>>> accb2f351 (u)
 // function: FlatBezierKnots
 // purpose :
 //=======================================================================

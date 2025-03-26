@@ -214,11 +214,7 @@ private:
                                         const gp_Vec2d&                       theRefLinkDir,
                                         const IMeshData::SequenceOfBndB2d&    theBoxes,
                                         const IMeshData::SequenceOfInteger&   thePolygon,
-<<<<<<< HEAD
-                                        const Handle(IMeshData::MapOfInteger) theSkipped,
-=======
                                         const Handle(IMeshData::MapOfInteger)& theSkipped,
->>>>>>> accb2f351 (u)
                                         const Standard_Boolean&               isSkipLeprous,
                                         IMeshData::MapOfInteger&              theLeprousLinks,
                                         IMeshData::MapOfInteger&              theDeadLinks,

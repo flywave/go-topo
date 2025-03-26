@@ -34,11 +34,7 @@ Interface_GraphContent::Interface_GraphContent ()    {  }
   Standard_Integer nb = list.NbEntities();
   if (nb == 0) return;                             // Liste redefinie a VIDE
   for( ; list.More(); list.Next()) {
-<<<<<<< HEAD
-    Handle(Standard_Transient) curent = list.Value();
-=======
     const Handle(Standard_Transient)& curent = list.Value();
->>>>>>> accb2f351 (u)
     if (agraph.IsPresent(agraph.EntityNumber(curent))) 
       GetOneItem (curent);
   }

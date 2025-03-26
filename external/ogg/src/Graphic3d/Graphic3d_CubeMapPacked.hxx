@@ -29,21 +29,13 @@ public:
   //! @theFileName - path to the cubemap image
   //! @theOrder - array containing six different indexes of cubemap sides which maps tile grid to cubemap sides
   Standard_EXPORT Graphic3d_CubeMapPacked (const TCollection_AsciiString&        theFileName,
-<<<<<<< HEAD
-                                           const Graphic3d_ValidatedCubeMapOrder theOrder = Graphic3d_CubeMapOrder::Default());
-=======
                                            const Graphic3d_ValidatedCubeMapOrder& theOrder = Graphic3d_CubeMapOrder::Default());
->>>>>>> accb2f351 (u)
 
   //! Initialization to set cubemap directly by PixMap.
   //! @thePixMap - origin PixMap
   //! @theOrder - array containing six different indexes of cubemap sides which maps tile grid to cubemap sides
   Standard_EXPORT Graphic3d_CubeMapPacked (const Handle(Image_PixMap)&           theImage,
-<<<<<<< HEAD
-                                           const Graphic3d_ValidatedCubeMapOrder theOrder = Graphic3d_CubeMapOrder::Default());
-=======
                                            const Graphic3d_ValidatedCubeMapOrder& theOrder = Graphic3d_CubeMapOrder::Default());
->>>>>>> accb2f351 (u)
 
   //! Returns current cubemap side as compressed PixMap.
   Standard_EXPORT virtual Handle(Image_CompressedPixMap) CompressedValue (const Handle(Image_SupportedFormats)& theSupported) Standard_OVERRIDE;

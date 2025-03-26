@@ -34,13 +34,7 @@ namespace
 //=======================================================================
 DEBRepCascade_ConfigurationNode::DEBRepCascade_ConfigurationNode() :
   DE_ConfigurationNode()
-<<<<<<< HEAD
-{
-  UpdateLoad();
-}
-=======
 {}
->>>>>>> accb2f351 (u)
 
 //=======================================================================
 // function : DEBRepCascade_ConfigurationNode
@@ -50,10 +44,6 @@ DEBRepCascade_ConfigurationNode::DEBRepCascade_ConfigurationNode(const Handle(DE
   :DE_ConfigurationNode(theNode)
 {
   InternalParameters = theNode->InternalParameters;
-<<<<<<< HEAD
-  UpdateLoad();
-=======
->>>>>>> accb2f351 (u)
 }
 
 //=======================================================================

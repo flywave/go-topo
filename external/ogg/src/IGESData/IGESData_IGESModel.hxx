@@ -22,17 +22,10 @@
 
 class IGESData_IGESEntity;
 class Interface_Check;
-<<<<<<< HEAD
-class Standard_Transient;
-class TCollection_HAsciiString;
-
-
-=======
 class ShapeBuild_ReShape;
 class Standard_Transient;
 class TCollection_HAsciiString;
 
->>>>>>> accb2f351 (u)
 class IGESData_IGESModel;
 DEFINE_STANDARD_HANDLE(IGESData_IGESModel, Interface_InterfaceModel)
 
@@ -158,16 +151,11 @@ public:
   //! i.e. a string "Dnn" with nn = directory entry number (2*N-1)
   Standard_EXPORT Handle(TCollection_HAsciiString) StringLabel (const Handle(Standard_Transient)& ent) const Standard_OVERRIDE;
 
-<<<<<<< HEAD
-
-
-=======
   //! Gets ReShape used to store a model's shapes changes
   const Handle(ShapeBuild_ReShape)& ReShape() const { return myReShape; }
 
   //! Sets ReShape used to store a history of changes of the model's shapes
   void SetReShape(const Handle(ShapeBuild_ReShape)& theReShape) { myReShape = theReShape; }
->>>>>>> accb2f351 (u)
 
   DEFINE_STANDARD_RTTIEXT(IGESData_IGESModel,Interface_InterfaceModel)
 
@@ -181,11 +169,7 @@ private:
 
   Handle(TColStd_HSequenceOfHAsciiString) thestart;
   IGESData_GlobalSection theheader;
-<<<<<<< HEAD
-
-=======
   Handle(ShapeBuild_ReShape) myReShape;
->>>>>>> accb2f351 (u)
 
 };
 

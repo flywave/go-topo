@@ -29,12 +29,8 @@ enum BRepOffset_Error
   BRepOffset_CannotTrimEdges,        //!< exception while trim edges
   BRepOffset_CannotFuseVertices,     //!< exception while fuse vertices
   BRepOffset_CannotExtentEdge,       //!< exception while extent edges
-<<<<<<< HEAD
-  BRepOffset_UserBreak               //!< user break
-=======
   BRepOffset_UserBreak,              //!< user break
   BRepOffset_MixedConnectivity       //!< Different connectivity of faces along edge: partially C0 and tangent
->>>>>>> accb2f351 (u)
 };
 
 #endif // _BRepOffset_Error_HeaderFile

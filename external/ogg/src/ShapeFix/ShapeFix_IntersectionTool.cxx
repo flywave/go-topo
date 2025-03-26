@@ -1974,11 +1974,7 @@ Standard_Boolean ShapeFix_IntersectionTool::FixIntersectingWires
       B.Add(newface,wire);
     }
     for(i=1 ; i<=SeqNMShapes.Length(); i++) { 
-<<<<<<< HEAD
-      TopoDS_Shape aNMS = SeqNMShapes.Value(i);
-=======
       const TopoDS_Shape& aNMS = SeqNMShapes.Value(i);
->>>>>>> accb2f351 (u)
       B.Add(newface,aNMS);
     }
     newface.Orientation(ori);

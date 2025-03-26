@@ -391,11 +391,7 @@ static Standard_Integer OCC712 (Draw_Interpretor& di, Standard_Integer argc, con
 //  performTriangulation
 //=======================================================================
 
-<<<<<<< HEAD
-Standard_Integer performTriangulation (TopoDS_Shape aShape, Draw_Interpretor& di)
-=======
 Standard_Integer performTriangulation (const TopoDS_Shape& aShape, Draw_Interpretor& di)
->>>>>>> accb2f351 (u)
 {
   int failed=0, total=0;
   TopExp_Explorer ExpFace;
@@ -685,11 +681,7 @@ static Standard_Integer OCC825 (Draw_Interpretor& di,Standard_Integer argc, cons
   Handle(Geom_BezierSurface) BezSurf = new Geom_BezierSurface(poles);
   Handle(Geom_BSplineSurface) BSpSurf = GeomConvert::SurfaceToBSplineSurface(BezSurf);
   BRepBuilderAPI_MakeFace faceMaker(BSpSurf, Precision::Confusion());
-<<<<<<< HEAD
-  TopoDS_Face face = faceMaker.Face();
-=======
   const TopoDS_Face& face = faceMaker.Face();
->>>>>>> accb2f351 (u)
 
   gp_Pnt pnt(0, size, 0);
   BRepPrimAPI_MakeHalfSpace *hSpace = new BRepPrimAPI_MakeHalfSpace(face,pnt);
@@ -901,11 +893,7 @@ static Standard_Integer OCC827 (Draw_Interpretor& di,Standard_Integer argc, cons
 //  performBlend
 //=======================================================================
 
-<<<<<<< HEAD
-int performBlend (TopoDS_Shape aShape, Standard_Real rad, TopoDS_Shape& bShape, Draw_Interpretor& di)
-=======
 int performBlend (const TopoDS_Shape& aShape, Standard_Real rad, TopoDS_Shape& bShape, Draw_Interpretor& di)
->>>>>>> accb2f351 (u)
 {
   Standard_Integer status = 0;
   TopoDS_Shape newShape;

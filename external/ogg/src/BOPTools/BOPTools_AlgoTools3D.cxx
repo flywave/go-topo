@@ -736,11 +736,7 @@ void Add(const TopoDS_Shape& aS,
     return;
   }
   //
-<<<<<<< HEAD
-  TopoDS_Shape aSx = aS;
-=======
   const TopoDS_Shape& aSx = aS;
->>>>>>> accb2f351 (u)
   //
   anIndex=myShapes.FindIndex(aSx);
   if (!anIndex) {

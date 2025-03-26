@@ -1074,33 +1074,6 @@ void GeomInt_IntSS::TreatRLine(const Handle(IntPatch_RLine)& theRL,
 //function : BuildPCurves
 //purpose  : 
 //=======================================================================
-<<<<<<< HEAD
-void GeomInt_IntSS::BuildPCurves (Standard_Real f,
-                                  Standard_Real l,
-                                  Standard_Real& Tol,
-                                  const Handle (Geom_Surface)& S,
-                                  const Handle (Geom_Curve)&   C,
-                                  Handle (Geom2d_Curve)& C2d)
-{
-  if (!C2d.IsNull()) {
-    return;
-  }
-  //
-  Standard_Real umin,umax,vmin,vmax;
-  // 
-  S->Bounds(umin, umax, vmin, vmax);
-  // in class ProjLib_Function the range of parameters is shrank by 1.e-09
-  if((l - f) > 2.e-09) {
-    C2d = GeomProjLib::Curve2d(C,f,l,S,umin,umax,vmin,vmax,Tol);
-    if (C2d.IsNull()) {
-      // proj. a circle that goes through the pole on a sphere to the sphere     
-      Tol += Precision::Confusion();
-      C2d = GeomProjLib::Curve2d(C,f,l,S,Tol);
-    }
-    const Handle(Standard_Type)& aType = C2d->DynamicType();
-    if ( aType == STANDARD_TYPE(Geom2d_BSplineCurve)) 
-    { 
-=======
 void GeomInt_IntSS::BuildPCurves (const Standard_Real theFirst, const Standard_Real theLast,
                                   const Standard_Real theUmin, const Standard_Real theUmax,
                                   const Standard_Real theVmin, const Standard_Real theVmax,
@@ -1124,20 +1097,10 @@ void GeomInt_IntSS::BuildPCurves (const Standard_Real theFirst, const Standard_R
     const Handle(Standard_Type)& aType = theCurve2d->DynamicType();
     if (aType == STANDARD_TYPE(Geom2d_BSplineCurve))
     {
->>>>>>> accb2f351 (u)
       //Check first, last knots to avoid problems with trimming
       //First, last knots can differ from f, l because of numerical error 
       //of projection and approximation
       //The same checking as in Geom2d_TrimmedCurve
-<<<<<<< HEAD
-      if((C2d->FirstParameter() - f > Precision::PConfusion()) ||
-        (l - C2d->LastParameter() > Precision::PConfusion()))   
-      {
-        Handle(Geom2d_BSplineCurve) aBspl = Handle(Geom2d_BSplineCurve)::DownCast(C2d);
-        TColStd_Array1OfReal aKnots(1, aBspl->NbKnots());
-        aBspl->Knots(aKnots);
-        BSplCLib::Reparametrize(f, l, aKnots);
-=======
       if ((theCurve2d->FirstParameter() - theFirst > Precision::PConfusion()) ||
         (theLast - theCurve2d->LastParameter() > Precision::PConfusion()))
       {
@@ -1145,37 +1108,17 @@ void GeomInt_IntSS::BuildPCurves (const Standard_Real theFirst, const Standard_R
         TColStd_Array1OfReal aKnots(1, aBspl->NbKnots());
         aBspl->Knots(aKnots);
         BSplCLib::Reparametrize(theFirst, theLast, aKnots);
->>>>>>> accb2f351 (u)
         aBspl->SetKnots(aKnots);
       }
     }
   }
   else {
-<<<<<<< HEAD
-    if((l - f) > Epsilon(Abs(f)))
-=======
     if ((theLast - theFirst) > Epsilon(Abs(theFirst)))
->>>>>>> accb2f351 (u)
     {
       //The domain of C2d is [Epsilon(Abs(f)), 2.e-09]
       //On this small range C2d can be considered as segment 
       //of line.
 
-<<<<<<< HEAD
-      Standard_Real aU=0., aV=0.;
-      GeomAdaptor_Surface anAS;
-      anAS.Load(S);
-      Extrema_ExtPS anExtr;
-      const gp_Pnt aP3d1 = C->Value(f);
-      const gp_Pnt aP3d2 = C->Value(l);
-
-      anExtr.SetAlgo(Extrema_ExtAlgo_Grad);
-      anExtr.Initialize(anAS, umin, umax, vmin, vmax,
-                                Precision::Confusion(), Precision::Confusion());
-      anExtr.Perform(aP3d1);
-
-      if(ParametersOfNearestPointOnSurface(anExtr, aU, aV))
-=======
       Standard_Real aU = 0., aV = 0.;
       GeomAdaptor_Surface anAS;
       anAS.Load(theSurface);
@@ -1189,37 +1132,11 @@ void GeomInt_IntSS::BuildPCurves (const Standard_Real theFirst, const Standard_R
       anExtr.Perform(aP3d1);
 
       if (ParametersOfNearestPointOnSurface(anExtr, aU, aV))
->>>>>>> accb2f351 (u)
       {
         const gp_Pnt2d aP2d1(aU, aV);
 
         anExtr.Perform(aP3d2);
 
-<<<<<<< HEAD
-        if(ParametersOfNearestPointOnSurface(anExtr, aU, aV))
-        {
-          const gp_Pnt2d aP2d2(aU, aV);
-
-          if(aP2d1.Distance(aP2d2) > gp::Resolution())
-          {
-            TColgp_Array1OfPnt2d poles(1,2);
-            TColStd_Array1OfReal knots(1,2);
-            TColStd_Array1OfInteger mults(1,2);
-            poles(1) = aP2d1;
-            poles(2) = aP2d2;
-            knots(1) = f;
-            knots(2) = l;
-            mults(1) = mults(2) = 2;
-
-            C2d = new Geom2d_BSplineCurve(poles,knots,mults,1);
-
-            //Check same parameter in middle point .begin
-            const gp_Pnt PMid(C->Value(0.5*(f+l)));
-            const gp_Pnt2d pmidcurve2d(0.5*(aP2d1.XY() + aP2d2.XY()));
-            const gp_Pnt aPC(anAS.Value(pmidcurve2d.X(), pmidcurve2d.Y()));
-            const Standard_Real aDist = PMid.Distance(aPC);
-            Tol = Max(aDist, Tol);
-=======
         if (ParametersOfNearestPointOnSurface(anExtr, aU, aV))
         {
           const gp_Pnt2d aP2d2(aU, aV);
@@ -1243,7 +1160,6 @@ void GeomInt_IntSS::BuildPCurves (const Standard_Real theFirst, const Standard_R
             const gp_Pnt aPC(anAS.Value(pmidcurve2d.X(), pmidcurve2d.Y()));
             const Standard_Real aDist = PMid.Distance(aPC);
             theTol = Max(aDist, theTol);
->>>>>>> accb2f351 (u)
             //Check same parameter in middle point .end
           }
         }
@@ -1251,29 +1167,12 @@ void GeomInt_IntSS::BuildPCurves (const Standard_Real theFirst, const Standard_R
     }
   }
   //
-<<<<<<< HEAD
-  if (S->IsUPeriodic() && !C2d.IsNull()) {
-=======
   if (theSurface->IsUPeriodic() && !theCurve2d.IsNull()) {
->>>>>>> accb2f351 (u)
     // Recadre dans le domaine UV de la face
     Standard_Real aTm, U0, aEps, period, du, U0x;
     Standard_Boolean bAdjust;
     //
     aEps = Precision::PConfusion();
-<<<<<<< HEAD
-    period = S->UPeriod();
-    //
-    aTm = .5*(f + l);
-    gp_Pnt2d pm = C2d->Value(aTm);
-    U0 = pm.X();
-    //
-    bAdjust = 
-      GeomInt::AdjustPeriodic(U0, umin, umax, period, U0x, du, aEps);
-    if (bAdjust) {
-      gp_Vec2d T1(du, 0.);
-      C2d->Translate(T1);
-=======
     period = theSurface->UPeriod();
     //
     aTm = .5 * (theFirst + theLast);
@@ -1285,13 +1184,10 @@ void GeomInt_IntSS::BuildPCurves (const Standard_Real theFirst, const Standard_R
     if (bAdjust) {
       gp_Vec2d T1(du, 0.);
       theCurve2d->Translate(T1);
->>>>>>> accb2f351 (u)
     }
   }
 }
 
-<<<<<<< HEAD
-=======
 
 
 //=======================================================================
@@ -1316,7 +1212,6 @@ void GeomInt_IntSS::BuildPCurves (const Standard_Real f,
   BuildPCurves(f, l, umin, umax, vmin, vmax, Tol, S, C, C2d);
 }
 
->>>>>>> accb2f351 (u)
 //=======================================================================
 //function : TrimILineOnSurfBoundaries
 //purpose  : This function finds intersection points of given curves with

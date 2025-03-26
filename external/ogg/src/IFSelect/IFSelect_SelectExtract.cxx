@@ -37,16 +37,9 @@ IFSelect_SelectExtract::IFSelect_SelectExtract ()
 {
   Interface_EntityIterator iter;
   Interface_EntityIterator inputer = InputResult(G);  // tient compte de tout
-<<<<<<< HEAD
-  Handle(Interface_InterfaceModel) model = G.Model();
-  Standard_Integer rank = 0;
-  for (inputer.Start(); inputer.More(); inputer.Next()) {
-    Handle(Standard_Transient) ent = inputer.Value();
-=======
   Standard_Integer rank = 0;
   for (inputer.Start(); inputer.More(); inputer.Next()) {
     const Handle(Standard_Transient)& ent = inputer.Value();
->>>>>>> accb2f351 (u)
     rank ++;
     if (SortInGraph(rank,ent,G) == thesort) iter.GetOneItem(ent);
   }

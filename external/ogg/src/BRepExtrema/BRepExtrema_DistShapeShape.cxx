@@ -65,13 +65,8 @@ namespace
     }
   }
 
-<<<<<<< HEAD
-  inline Standard_Real DistanceInitiale(const TopoDS_Vertex V1,
-                                        const TopoDS_Vertex V2)
-=======
   inline Standard_Real DistanceInitiale(const TopoDS_Vertex& V1,
                                         const TopoDS_Vertex& V2)
->>>>>>> accb2f351 (u)
   {
     return (BRep_Tool::Pnt(V1).Distance(BRep_Tool::Pnt(V2)));
   }

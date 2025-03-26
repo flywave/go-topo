@@ -345,21 +345,6 @@ Standard_Boolean
   if(!done) return Standard_False;
   if(lin->StartPointOnFirst().NbPointOnRst() !=0){
     ChFi3d_FilCommonPoint(lin->StartPointOnFirst(),lin->TransitionOnS1(),
-<<<<<<< HEAD
-			  Standard_True, Data->ChangeVertexFirstOnS1(), tolesp);
-  }
-  if(lin->EndPointOnFirst().NbPointOnRst() !=0){
-    ChFi3d_FilCommonPoint(lin->EndPointOnFirst(),lin->TransitionOnS1(),
-			  Standard_False,Data->ChangeVertexLastOnS1(), tolesp);
-  }
-  if(lin->StartPointOnSecond().NbPointOnRst() !=0){
-    ChFi3d_FilCommonPoint(lin->StartPointOnSecond(),lin->TransitionOnS2(),
-			  Standard_True, Data->ChangeVertexFirstOnS2(), tolesp);
-  }
-  if(lin->EndPointOnSecond().NbPointOnRst() !=0){
-    ChFi3d_FilCommonPoint(lin->EndPointOnSecond(),lin->TransitionOnS2(),
-			  Standard_False, Data->ChangeVertexLastOnS2(), tolesp);
-=======
 			  Standard_True, Data->ChangeVertexFirstOnS1(), tolapp3d);
   }
   if(lin->EndPointOnFirst().NbPointOnRst() !=0){
@@ -373,7 +358,6 @@ Standard_Boolean
   if(lin->EndPointOnSecond().NbPointOnRst() !=0){
     ChFi3d_FilCommonPoint(lin->EndPointOnSecond(),lin->TransitionOnS2(),
 			  Standard_False, Data->ChangeVertexLastOnS2(), tolapp3d);
->>>>>>> accb2f351 (u)
   }
   done = CompleteData(Data,Func,lin,S1,S2,Or,0,0,0,0);
   if(!done)  throw Standard_Failure("PerformSurf : Failed approximation!");
@@ -570,11 +554,7 @@ Standard_Real FilletSurf_InternalBuilder::FirstParameter() const
   Standard_Integer ind = 1;
   if(sp->IsPeriodic()) ind = sp->Index(p);
   Standard_Real ep;
-<<<<<<< HEAD
-  if(ComputeEdgeParameter(sp,ind,p,ep,tolesp)) return ep;
-=======
   if(ComputeEdgeParameter(sp,ind,p,ep,tolapp3d)) return ep;
->>>>>>> accb2f351 (u)
   return 0.0;
 }
 //=======================================================================
@@ -590,11 +570,7 @@ Standard_Real FilletSurf_InternalBuilder::LastParameter() const
   Standard_Integer ind = sp->NbEdges();
   if(sp->IsPeriodic()) ind = sp->Index(p);
   Standard_Real ep;
-<<<<<<< HEAD
-  if(ComputeEdgeParameter(sp,ind,p,ep,tolesp)) return ep;
-=======
   if(ComputeEdgeParameter(sp,ind,p,ep,tolapp3d)) return ep;
->>>>>>> accb2f351 (u)
   return 0.0;
 }
 

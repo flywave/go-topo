@@ -945,11 +945,7 @@ void AIS_InteractiveContext::Redisplay (const AIS_KindOfInteractive theKOI,
   Standard_Boolean isRedisplayed = Standard_False;
   for (AIS_DataMapIteratorOfDataMapOfIOStatus anObjIter (myObjects); anObjIter.More(); anObjIter.Next())
   {
-<<<<<<< HEAD
-    Handle(AIS_InteractiveObject) anObj = anObjIter.Key();
-=======
     const Handle(AIS_InteractiveObject)& anObj = anObjIter.Key();
->>>>>>> accb2f351 (u)
     if (anObj->Type() != theKOI)
     {
       continue;
@@ -1159,11 +1155,7 @@ void AIS_InteractiveContext::SetDisplayMode(const Standard_Integer theMode,
       continue;
     }
 
-<<<<<<< HEAD
-    Handle(AIS_GlobalStatus) aStatus = anObjIter.Value();
-=======
     const Handle(AIS_GlobalStatus)& aStatus = anObjIter.Value();
->>>>>>> accb2f351 (u)
     aStatus->SetDisplayMode (theMode);
 
     if (anObj->DisplayStatus() == PrsMgr_DisplayStatus_Displayed)
@@ -2259,11 +2251,7 @@ Bnd_Box AIS_InteractiveContext::BoundingBoxOfSelection (const Handle(V3d_View)& 
 
   for (AIS_MapIteratorOfMapOfObjectOwners anIter (anObjectOwnerMap); anIter.More(); anIter.Next())
   {
-<<<<<<< HEAD
-    const Handle(SelectMgr_SelectableObject) anObject = anIter.Key();
-=======
     const Handle(SelectMgr_SelectableObject)& anObject = anIter.Key();
->>>>>>> accb2f351 (u)
     Bnd_Box aTmpBox = anObject->BndBoxOfSelected (anIter.ChangeValue());
     aBndSelected.Add (aTmpBox);
   }
@@ -3241,8 +3229,6 @@ void AIS_InteractiveContext::ClearSelected (const Standard_Boolean theToUpdateVi
 }
 
 //=======================================================================
-<<<<<<< HEAD
-=======
 //function : isDetected
 //purpose  :
 //=======================================================================
@@ -3267,7 +3253,6 @@ Standard_Boolean AIS_InteractiveContext::isDetected (const Handle(AIS_Interactiv
 }
 
 //=======================================================================
->>>>>>> accb2f351 (u)
 //function : SetSelected
 //purpose  : Sets the whole object as selected and highlights it with selection color
 //=======================================================================
@@ -3327,12 +3312,8 @@ void AIS_InteractiveContext::SetSelected (const Handle(AIS_InteractiveObject)& t
   }
 
   // added to avoid untimely viewer update...
-<<<<<<< HEAD
-  mySelection->ClearAndSelect (anOwner);
-=======
   const Handle(AIS_InteractiveObject) anObj = Handle(AIS_InteractiveObject)::DownCast (anOwner->Selectable());
   mySelection->ClearAndSelect (anOwner, myFilters, isDetected (anObj));
->>>>>>> accb2f351 (u)
 
   if (myAutoHilight)
   {
@@ -3394,11 +3375,7 @@ void AIS_InteractiveContext::SetSelected (const Handle(SelectMgr_EntityOwner)& t
     unhighlightSelected();
   }
 
-<<<<<<< HEAD
-  mySelection->ClearAndSelect (theOwner);
-=======
   mySelection->ClearAndSelect (theOwner, myFilters, isDetected (anObject));
->>>>>>> accb2f351 (u)
   if (myAutoHilight)
   {
     Handle(Prs3d_Drawer) aCustomStyle;
@@ -3449,29 +3426,17 @@ void AIS_InteractiveContext::AddOrRemoveSelected (const Handle(SelectMgr_EntityO
     return;
   }
 
-<<<<<<< HEAD
-  if (!myFilters->IsOk(theOwner) && !theOwner->IsSelected())
-=======
   if (!myFilters->IsOk (theOwner) && !theOwner->IsSelected())
->>>>>>> accb2f351 (u)
   {
     return;
   }
 
-<<<<<<< HEAD
-  mySelection->Select (theOwner);
-
-  if (myAutoHilight)
-  {
-    const Handle(AIS_InteractiveObject) anObj = Handle(AIS_InteractiveObject)::DownCast (theOwner->Selectable());
-=======
   AIS_SelectionScheme aSelScheme = theOwner->IsSelected() ? AIS_SelectionScheme_Remove : AIS_SelectionScheme_Add;
   const Handle(AIS_InteractiveObject) anObj = Handle(AIS_InteractiveObject)::DownCast (theOwner->Selectable());
   mySelection->Select (theOwner, myFilters, aSelScheme, isDetected (anObj));
 
   if (myAutoHilight)
   {
->>>>>>> accb2f351 (u)
     Handle(AIS_GlobalStatus)* aStatusPtr = myObjects.ChangeSeek (anObj);
     if (!aStatusPtr)
     {
@@ -3530,12 +3495,8 @@ Standard_Boolean AIS_InteractiveContext::SetSelectedState (const Handle(SelectMg
   }
   else
   {
-<<<<<<< HEAD
-    const AIS_SelectStatus aSelStatus = mySelection->Select (theEntity);
-=======
     const Handle(AIS_InteractiveObject) anObj = Handle(AIS_InteractiveObject)::DownCast(theEntity->Selectable());
     const AIS_SelectStatus aSelStatus = mySelection->Select (theEntity, myFilters, AIS_SelectionScheme_Remove, isDetected (anObj));
->>>>>>> accb2f351 (u)
     theEntity->SetSelected (false);
     return aSelStatus == AIS_SS_Removed;
   }

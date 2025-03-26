@@ -20,10 +20,7 @@ export BUILD_ModelingAlgorithms=ON
 export BUILD_Visualization=ON
 export BUILD_ApplicationFramework=ON
 export BUILD_DataExchange=ON
-<<<<<<< HEAD
-=======
 export BUILD_DETools=OFF
->>>>>>> accb2f351 (u)
 
 if [ -f "${aScriptDir}/wasm_custom.sh" ] ; then
   . "${aScriptDir}/wasm_custom.sh"
@@ -78,10 +75,7 @@ echo cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE:FILEPATH="${aToolchain}" \
 -DBUILD_MODULE_Visualization:BOOL="${BUILD_Visualization}" \
 -DBUILD_MODULE_ApplicationFramework:BOOL="${BUILD_ApplicationFramework}" \
 -DBUILD_MODULE_DataExchange:BOOL="${BUILD_DataExchange}" \
-<<<<<<< HEAD
-=======
 -DBUILD_MODULE_DETools:BOOL="${BUILD_DETools}" \
->>>>>>> accb2f351 (u)
 -DBUILD_MODULE_Draw:BOOL="OFF" \
 -DBUILD_DOC_Overview:BOOL="OFF" "${aSrcRoot}"
 
@@ -100,10 +94,7 @@ cmake -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE:FILEPATH="${aToolchain}" \
 -DBUILD_MODULE_Visualization:BOOL="${BUILD_Visualization}" \
 -DBUILD_MODULE_ApplicationFramework:BOOL="${BUILD_ApplicationFramework}" \
 -DBUILD_MODULE_DataExchange:BOOL="${BUILD_DataExchange}" \
-<<<<<<< HEAD
-=======
 -DBUILD_MODULE_DETools:BOOL="${BUILD_DETools}" \
->>>>>>> accb2f351 (u)
 -DBUILD_MODULE_Draw:BOOL="OFF" \
 -DBUILD_DOC_Overview:BOOL="OFF" "${aSrcRoot}"
 

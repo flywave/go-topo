@@ -1157,84 +1157,6 @@ void BSplCLib::MergeBSplineKnots
   index,
   num_knots ;
   if (StartValue < EndValue - Tolerance) {
-<<<<<<< HEAD
-    TColStd_Array1OfReal knots1(1,Knots1.Length()) ;
-    TColStd_Array1OfReal knots2(1,Knots2.Length()) ;
-    degree = Degree1 + Degree2 ;
-    index = 1 ;
-
-    for (ii = Knots1.Lower() ; ii <= Knots1.Upper() ; ii++) {
-      knots1(index) = Knots1(ii) ;
-      index += 1 ;
-    }
-    index = 1 ;
-
-    for (ii = Knots2.Lower() ; ii <= Knots2.Upper() ; ii++) {
-      knots2(index) = Knots2(ii) ;
-      index += 1 ;
-    }
-    BSplCLib::Reparametrize(StartValue,
-			    EndValue,
-			    knots1) ;
-    
-    BSplCLib::Reparametrize(StartValue,
-			    EndValue,
-			    knots2) ;
-    num_knots = 0 ;
-    jj =  1 ;
-
-    for (ii = 1 ; ii <= knots1.Length() ; ii++) {
-
-      while (jj <= knots2.Length() && knots2(jj) <= knots1(ii) - Tolerance) {
-	jj += 1 ;
-	num_knots += 1 ;
-      }
-
-      while (jj <= knots2.Length() && knots2(jj) <= knots1(ii) + Tolerance) {
-	jj += 1 ;
-      }
-      num_knots += 1 ;
-    }
-    NewKnots = 
-      new TColStd_HArray1OfReal(1,num_knots) ;
-    NewMults =
-      new TColStd_HArray1OfInteger(1,num_knots) ;
-    num_knots = 1 ;
-    jj = 1 ;
-
-    for (ii = 1 ; ii <= knots1.Length() ; ii++) {
-
-      while (jj <= knots2.Length() && knots2(jj) <= knots1(ii) - Tolerance) {
-	NewKnots->ChangeArray1()(num_knots) = knots2(jj) ;
-        NewMults->ChangeArray1()(num_knots) = Mults2(jj) + Degree1 ;
-	jj += 1 ;
-	num_knots += 1 ;
-      }
-      set_mults_flag = 0 ;
-
-      while (jj <= knots2.Length() && knots2(jj) <= knots1(ii) + Tolerance) {
-	continuity = Min(Degree1 - Mults1(ii), Degree2 - Mults2(jj)) ;
-        set_mults_flag = 1 ;
-	NewMults->ChangeArray1()(num_knots) = degree - continuity ;
-	jj += 1 ;
-      }
-
-      NewKnots->ChangeArray1()(num_knots) = knots1(ii) ;
-      if (! set_mults_flag) {
-	NewMults->ChangeArray1()(num_knots) = Mults1(ii) + Degree2 ;
-      }
-      num_knots += 1 ;
-    }
-    num_knots -= 1 ;
-    NewMults->ChangeArray1()(1) = degree + 1 ;
-    NewMults->ChangeArray1()(num_knots) = degree + 1 ;
-    index = 0 ;
-
-    for (ii = 1 ; ii <= num_knots ; ii++) {
-      index += NewMults->Value(ii) ;
-    }
-    NumPoles = index  - degree - 1  ;
-=======
     TColStd_Array1OfReal knots1(1, Knots1.Length());
     TColStd_Array1OfReal knots2(1, Knots2.Length());
     degree = Degree1 + Degree2;
@@ -1326,7 +1248,6 @@ void BSplCLib::MergeBSplineKnots
     NewMults->ChangeArray1()(1) = degree + 1;
     NewMults->ChangeArray1()(num_knots) = degree + 1;
     NumPoles = BSplCLib::NbPoles(degree, Standard_False, NewMults->Array1());
->>>>>>> accb2f351 (u)
   }
 }
       

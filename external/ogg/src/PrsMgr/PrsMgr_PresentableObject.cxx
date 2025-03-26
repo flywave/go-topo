@@ -346,11 +346,7 @@ void PrsMgr_PresentableObject::SetTransformPersistence (const Handle(Graphic3d_T
 //=======================================================================
 void PrsMgr_PresentableObject::AddChild (const Handle(PrsMgr_PresentableObject)& theObject)
 {
-<<<<<<< HEAD
-  Handle(PrsMgr_PresentableObject) aHandleGuard = theObject;
-=======
   const Handle(PrsMgr_PresentableObject)& aHandleGuard = theObject;
->>>>>>> accb2f351 (u)
   if (theObject->myParent != NULL)
   {
     theObject->myParent->RemoveChild (aHandleGuard);

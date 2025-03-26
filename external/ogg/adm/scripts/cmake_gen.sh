@@ -31,10 +31,7 @@ BUILD_ENABLE_FPE_SIGNAL_HANDLER=ON
 
 BUILD_MODULE_ApplicationFramework=ON
 BUILD_MODULE_DataExchange=ON
-<<<<<<< HEAD
-=======
 BUILD_MODULE_DETools=OFF
->>>>>>> accb2f351 (u)
 BUILD_MODULE_Draw=ON
 BUILD_MODULE_ModelingAlgorithms=ON
 BUILD_MODULE_ModelingData=ON
@@ -67,10 +64,7 @@ cmake -G "Unix Makefiles" \
   -D BUILD_LIBRARY_TYPE:STRING=$BUILD_LIBRARY_TYPE \
   -D BUILD_MODULE_ApplicationFramework:BOOL=$BUILD_MODULE_ApplicationFramework \
   -D BUILD_MODULE_DataExchange:BOOL=$BUILD_MODULE_DataExchange \
-<<<<<<< HEAD
-=======
   -D BUILD_MODULE_DETools:BOOL=$BUILD_MODULE_DETools \
->>>>>>> accb2f351 (u)
   -D BUILD_MODULE_Draw:BOOL=$BUILD_MODULE_Draw \
   -D BUILD_MODULE_FoundationClasses:BOOL=ON \
   -D BUILD_MODULE_ModelingAlgorithms:BOOL=$BUILD_MODULE_ModelingAlgorithms \

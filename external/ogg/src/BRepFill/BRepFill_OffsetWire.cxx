@@ -570,11 +570,7 @@ void BRepFill_OffsetWire::Perform (const Standard_Real Offset,
       TopoDS_Iterator itws( myWorkSpine );
       for (; itws.More(); itws.Next())
       {
-<<<<<<< HEAD
-        TopoDS_Shape aWire = itws.Value();
-=======
         const TopoDS_Shape& aWire = itws.Value();
->>>>>>> accb2f351 (u)
         aSubst.Build( aWire );
         if (aSubst.IsCopied(aWire))
         {

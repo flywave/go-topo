@@ -1550,10 +1550,6 @@ static Standard_Integer compBsplSur (Draw_Interpretor& , Standard_Integer n, con
   Standard_Integer nbP = 100;
   Standard_Real aStepU = (aUmax - aUmin)/nbP;
   Standard_Real aStepV = (aVmax - aVmin)/nbP;
-<<<<<<< HEAD
-  Standard_Integer nbErr =0;
-=======
->>>>>>> accb2f351 (u)
   Standard_Integer i =1;
   for( ; i <= nbP +1; i++)
   {
@@ -1567,10 +1563,6 @@ static Standard_Integer compBsplSur (Draw_Interpretor& , Standard_Integer n, con
       Standard_Real aDist = aP1.SquareDistance(aP2);
       if(aDist > Precision::SquareConfusion())
       {
-<<<<<<< HEAD
-        nbErr++;
-=======
->>>>>>> accb2f351 (u)
         Standard_Real aD = sqrt(aDist);
         std::cout<<"Surfaces differ for U,V,Dist: "<<aU<<" "<<aV<<" "<<aD<<std::endl;
       }

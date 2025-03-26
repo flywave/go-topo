@@ -34,11 +34,8 @@ public:
 
   DEFINE_STANDARD_ALLOC
 
-<<<<<<< HEAD
-=======
   //! Returns a shape built by the shape construction algorithm.
   //! Does not check if the shape is built.
->>>>>>> accb2f351 (u)
   Standard_EXPORT virtual const TopoDS_Shape& Shape() Standard_OVERRIDE;
 
   // Provide access to methods of protected base class BOPAlgo_Options

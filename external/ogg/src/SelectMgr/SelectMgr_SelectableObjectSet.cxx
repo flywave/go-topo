@@ -88,11 +88,7 @@ namespace
     }
 
   private:
-<<<<<<< HEAD
-    BVHBuilderAdaptorRegular& operator=(BVHBuilderAdaptorRegular) { return *this; }
-=======
     BVHBuilderAdaptorRegular& operator=(const BVHBuilderAdaptorRegular&) { return *this; }
->>>>>>> accb2f351 (u)
 
   private:
     ObjectsMap& myObjects;
@@ -227,11 +223,7 @@ namespace
     }
 
   private:
-<<<<<<< HEAD
-    BVHBuilderAdaptorPersistent& operator=(BVHBuilderAdaptorPersistent) { return *this; }
-=======
     BVHBuilderAdaptorPersistent& operator=(const BVHBuilderAdaptorPersistent&) { return *this; }
->>>>>>> accb2f351 (u)
 
   private:
     ObjectsMap& myObjects;

@@ -27,11 +27,7 @@
 // intended for use from debugger prompt (Command Window in Visual Studio)
 
 //! Save geometric object identified by pointer to handle
-<<<<<<< HEAD
-const char* DrawTrSurf_Set (const char* theNameStr, void* theHandlePtr)
-=======
 Standard_EXPORT const char* DrawTrSurf_Set (const char* theNameStr, void* theHandlePtr)
->>>>>>> accb2f351 (u)
 {
   if (theNameStr == 0 || theHandlePtr == 0)
   {
@@ -61,11 +57,7 @@ Standard_EXPORT const char* DrawTrSurf_Set (const char* theNameStr, void* theHan
 }
 
 //! Set point to DRAW variable
-<<<<<<< HEAD
-const char* DrawTrSurf_SetPnt (const char* theNameStr, void* thePntPtr)
-=======
 Standard_EXPORT const char* DrawTrSurf_SetPnt (const char* theNameStr, void* thePntPtr)
->>>>>>> accb2f351 (u)
 {
   if (theNameStr == 0 || thePntPtr == 0)
   {
@@ -85,11 +77,7 @@ Standard_EXPORT const char* DrawTrSurf_SetPnt (const char* theNameStr, void* the
 }
 
 //! Set 2d point to DRAW variable
-<<<<<<< HEAD
-const char* DrawTrSurf_SetPnt2d (const char* theNameStr, void* thePnt2dPtr)
-=======
 Standard_EXPORT const char* DrawTrSurf_SetPnt2d (const char* theNameStr, void* thePnt2dPtr)
->>>>>>> accb2f351 (u)
 {
   if (theNameStr == 0 || thePnt2dPtr == 0)
   {
@@ -114,29 +102,17 @@ Standard_EXPORT const char* DrawTrSurf_SetPnt2d (const char* theNameStr, void* t
 // work with them (DBX could, on SUN Solaris).
 #ifndef _MSC_VER
 
-<<<<<<< HEAD
-const char* DrawTrSurf_Set (const char* name, const Handle(Standard_Transient)& G)
-=======
 Standard_EXPORT const char* DrawTrSurf_Set (const char* name, const Handle(Standard_Transient)& G)
->>>>>>> accb2f351 (u)
 {
   return DrawTrSurf_Set (name, (void*)&G);
 }
 
-<<<<<<< HEAD
-const char* DrawTrSurf_Set (const char* theName, const gp_Pnt& thePnt)
-=======
 Standard_EXPORT const char* DrawTrSurf_Set (const char* theName, const gp_Pnt& thePnt)
->>>>>>> accb2f351 (u)
 {
   return DrawTrSurf_SetPnt (theName, (void*)&thePnt);
 }
 
-<<<<<<< HEAD
-const char* DrawTrSurf_Set (const char* theName, const gp_Pnt2d& thePnt2d)
-=======
 Standard_EXPORT const char* DrawTrSurf_Set (const char* theName, const gp_Pnt2d& thePnt2d)
->>>>>>> accb2f351 (u)
 {
   return DrawTrSurf_SetPnt2d (theName, (void*)&thePnt2d);
 }

@@ -256,11 +256,7 @@ BRepLib_MakeFace::BRepLib_MakeFace(const TopoDS_Wire& W,
     myError = BRepLib_NotPlanar;
     return;
   }
-<<<<<<< HEAD
- 
-=======
 
->>>>>>> accb2f351 (u)
   // build the face and add the wire
   BRep_Builder B;
   myError = BRepLib_FaceDone;
@@ -268,9 +264,6 @@ BRepLib_MakeFace::BRepLib_MakeFace(const TopoDS_Wire& W,
   Standard_Real tol = Max(1.2*FS.ToleranceReached(), FS.Tolerance());
 
   B.MakeFace(TopoDS::Face(myShape),FS.Surface(),FS.Location(),tol);
-<<<<<<< HEAD
-  Add(W);
-=======
 
   TopoDS_Wire aW;
   if (OnlyPlane)
@@ -299,17 +292,12 @@ BRepLib_MakeFace::BRepLib_MakeFace(const TopoDS_Wire& W,
   }
 
   Add (aW);
->>>>>>> accb2f351 (u)
   //
   BRepLib::UpdateTolerances(myShape);
   //
   BRepLib::SameParameter(myShape, tol, Standard_True);
   //
-<<<<<<< HEAD
-  if (BRep_Tool::IsClosed(W))
-=======
   if (BRep_Tool::IsClosed(aW))
->>>>>>> accb2f351 (u)
     CheckInside();
 }
 

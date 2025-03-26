@@ -59,11 +59,7 @@ TopoDS_Shape ShapeBuild_ReShape::Apply (const TopoDS_Shape& shape,
     TopoDS_Compound C;
     B.MakeCompound (C);
     for (TopoDS_Iterator it (shape); it.More(); it.Next()) {
-<<<<<<< HEAD
-      TopoDS_Shape sh = it.Value();
-=======
       const TopoDS_Shape& sh = it.Value();
->>>>>>> accb2f351 (u)
       Standard_Integer stat = Status (sh,newsh,Standard_False);
       if (stat != 0) modif = 1;
       if (stat >= 0) B.Add (C,newsh);
@@ -79,11 +75,7 @@ TopoDS_Shape ShapeBuild_ReShape::Apply (const TopoDS_Shape& shape,
     TopoDS_Solid S;
     B.MakeSolid (S);
     for (TopoDS_Iterator it (shape); it.More(); it.Next()) {
-<<<<<<< HEAD
-      TopoDS_Shape sh = it.Value();
-=======
       const TopoDS_Shape& sh = it.Value();
->>>>>>> accb2f351 (u)
       newsh = Apply (sh,until,buildmode);
       if (newsh.IsNull()) {
 	modif = -1;
@@ -91,11 +83,7 @@ TopoDS_Shape ShapeBuild_ReShape::Apply (const TopoDS_Shape& shape,
       else if (newsh.ShapeType() != TopAbs_SHELL) {
 	Standard_Integer nbsub = 0;
 	for (TopExp_Explorer exh(newsh,TopAbs_SHELL); exh.More(); exh.Next()) {
-<<<<<<< HEAD
-	  TopoDS_Shape onesh = exh.Current ();
-=======
 	  const TopoDS_Shape& onesh = exh.Current ();
->>>>>>> accb2f351 (u)
 	  B.Add (S,onesh);
 	  nbsub ++;
 	}
@@ -122,11 +110,7 @@ TopoDS_Shape ShapeBuild_ReShape::Apply (const TopoDS_Shape& shape,
     TopoDS_Shell S;
     B.MakeShell (S);
     for (TopoDS_Iterator it (shape); it.More(); it.Next()) {
-<<<<<<< HEAD
-      TopoDS_Shape sh = it.Value();
-=======
       const TopoDS_Shape& sh = it.Value();
->>>>>>> accb2f351 (u)
       newsh = Apply (sh,until,buildmode);
       if (newsh.IsNull()) {
 	modif = -1;
@@ -134,11 +118,7 @@ TopoDS_Shape ShapeBuild_ReShape::Apply (const TopoDS_Shape& shape,
       else if (newsh.ShapeType() != TopAbs_FACE) {
 	Standard_Integer nbsub = 0;
 	for (TopExp_Explorer exf(newsh,TopAbs_FACE); exf.More(); exf.Next()) {
-<<<<<<< HEAD
-	  TopoDS_Shape onesh = exf.Current ();
-=======
 	  const TopoDS_Shape& onesh = exf.Current ();
->>>>>>> accb2f351 (u)
 	  B.Add (S,onesh);
 	  nbsub ++;
 	}
@@ -209,11 +189,7 @@ TopoDS_Shape ShapeBuild_ReShape::Apply (const TopoDS_Shape& shape,
   
   // apply recorded modifications to subshapes
   for ( TopoDS_Iterator it(shape,Standard_False); it.More(); it.Next() ) {
-<<<<<<< HEAD
-    TopoDS_Shape sh = it.Value();
-=======
     const TopoDS_Shape& sh = it.Value();
->>>>>>> accb2f351 (u)
     newsh = Apply ( sh, until );
     if ( newsh != sh ) {
       if ( ShapeExtend::DecodeStatus ( myStatus, ShapeExtend_DONE4 ) )
@@ -231,11 +207,7 @@ TopoDS_Shape ShapeBuild_ReShape::Apply (const TopoDS_Shape& shape,
     }
     Standard_Integer nitems = 0;
     for ( TopoDS_Iterator subit(newsh); subit.More(); subit.Next(), nitems++ ) {
-<<<<<<< HEAD
-      TopoDS_Shape subsh = subit.Value();
-=======
       const TopoDS_Shape& subsh = subit.Value();
->>>>>>> accb2f351 (u)
       if ( subsh.ShapeType() == sh.ShapeType() ) B.Add ( result, subsh );
       else locStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_FAIL1 );
     }

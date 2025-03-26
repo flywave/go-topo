@@ -1300,11 +1300,7 @@ void BRepTools::DetectClosedness(const TopoDS_Face& theFace,
 
 Standard_Real BRepTools::EvalAndUpdateTol(const TopoDS_Edge& theE, 
                                  const Handle(Geom_Curve)& C3d, 
-<<<<<<< HEAD
-                                 const Handle(Geom2d_Curve) C2d, 
-=======
                                  const Handle(Geom2d_Curve)& C2d, 
->>>>>>> accb2f351 (u)
                                  const Handle(Geom_Surface)& S,
                                  const Standard_Real f,
                                  const Standard_Real l)

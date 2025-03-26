@@ -56,10 +56,7 @@
 #include <TopTools_MapOfShape.hxx>
 #include <TopTools_SequenceOfShape.hxx>
 #include <BRepExtrema_ExtCC.hxx>
-<<<<<<< HEAD
-=======
 #include <ShapeFix_Edge.hxx>
->>>>>>> accb2f351 (u)
 
 static TopoDS_Edge FindEdgeCloseToBisectorPlane(const TopoDS_Vertex& theVertex,
                                                 TopoDS_Compound&     theComp,
@@ -538,8 +535,6 @@ BRepFill_TrimShellCorner::MakeFacesNonSec(const Standard_Integer                
 
     if(bHasNewEdge) {
       aNewEdge.Orientation(TopAbs_FORWARD);
-<<<<<<< HEAD
-=======
 
       // Refer to BrepFill_Sweep.cxx BuildEdge Construct an edge via an iso
       gp_Pnt P1, P2;
@@ -560,7 +555,6 @@ BRepFill_TrimShellCorner::MakeFacesNonSec(const Standard_Integer                
       // for nonPlane surface, we should add pCurve
       Handle(ShapeFix_Edge) sfe = new ShapeFix_Edge();
       sfe->FixAddPCurve(aNewEdge, TopoDS::Face(aFace), Standard_False);
->>>>>>> accb2f351 (u)
     }
 
     TopTools_ListOfShape aOrderedList;
@@ -577,11 +571,7 @@ BRepFill_TrimShellCorner::MakeFacesNonSec(const Standard_Integer                
       aIt.Initialize(aLP);
       for ( ; aIt.More(); aIt.Next()) {
         const BOPDS_Pave& aPave = aIt.Value();
-<<<<<<< HEAD
-        TopoDS_Shape aV = theDS->Shape(aPave.Index());
-=======
         const TopoDS_Shape& aV = theDS->Shape(aPave.Index());
->>>>>>> accb2f351 (u)
         
         if(aV.IsSame(alonevertices.First())) {
           if(!bfound1) {

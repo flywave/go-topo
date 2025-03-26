@@ -198,12 +198,8 @@ void  ChFi3d_Builder::Compute()
   ChFi3d_InitChron(cl_total);
   ChFi3d_InitChron(cl_extent);
 #endif 
-<<<<<<< HEAD
-  
-=======
   UpdateTolesp();
 
->>>>>>> accb2f351 (u)
   if (myListStripe.IsEmpty())
     throw Standard_Failure("There are no suitable edges for chamfer or fillet");
   
@@ -340,11 +336,7 @@ void  ChFi3d_Builder::Compute()
       }
       // 05/02/02 akm ^^^
       Standard_Integer solidindex = st->SolidIndex();
-<<<<<<< HEAD
-      ChFi3d_FilDS(solidindex,st,DStr,myRegul,tolesp,tol2d);
-=======
       ChFi3d_FilDS(solidindex,st,DStr,myRegul,tolapp3d,tol2d);
->>>>>>> accb2f351 (u)
       if (!done) break;
     }
     
@@ -434,10 +426,6 @@ void  ChFi3d_Builder::Compute()
 	    if (letype == TopAbs_SHELL){
 	      TopExp_Explorer expsh2(its.Value(),TopAbs_SHELL);
 	      const TopoDS_Shape& cursh = expsh2.Current();
-<<<<<<< HEAD
-	      TopoDS_Shape tt = cursh;
-=======
->>>>>>> accb2f351 (u)
 	      B1.Add(myShapeResult,cursh);
 	      its.Next();
 	    }

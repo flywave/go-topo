@@ -154,10 +154,7 @@ Standard_Integer Poly_MakeLoops::Perform()
 #ifdef OCCT_DEBUG
   if (doDebug)
     showBoundaryBreaks();
-<<<<<<< HEAD
-=======
   Standard_Integer aNbLoopsOnPass2 = 0;
->>>>>>> accb2f351 (u)
 #endif
 
   Standard_Integer aResult = 0;
@@ -166,12 +163,7 @@ Standard_Integer Poly_MakeLoops::Perform()
   Handle(NCollection_IncAllocator) aTempAlloc1 = new NCollection_IncAllocator(4000);
 
   // two pass loop
-<<<<<<< HEAD
-  Standard_Integer aPassNum, nbLoopsOnPass2 = 0;
-  for (aPassNum=0; aPassNum < 2; aPassNum++)
-=======
   for (Standard_Integer aPassNum=0; aPassNum < 2; aPassNum++)
->>>>>>> accb2f351 (u)
   {
     myHangIndices.Clear();
     // main loop
@@ -200,15 +192,10 @@ Standard_Integer Poly_MakeLoops::Perform()
       if (aStartNumber <= aContour.Extent())
       {
         // there is a closed loop in the contour
-<<<<<<< HEAD
-        if (aPassNum == 1)
-          nbLoopsOnPass2++;
-=======
 #ifdef OCCT_DEBUG
         if (aPassNum == 1)
           aNbLoopsOnPass2++;
 #endif
->>>>>>> accb2f351 (u)
         acceptContour (aContour, aStartNumber);
       }
       if (aStartNumber > 1)
@@ -237,13 +224,8 @@ Standard_Integer Poly_MakeLoops::Perform()
     }
   }
 #ifdef OCCT_DEBUG
-<<<<<<< HEAD
-  if (doDebug && nbLoopsOnPass2)
-    std::cout << "MakeLoops: " << nbLoopsOnPass2
-=======
   if (doDebug && aNbLoopsOnPass2)
     std::cout << "MakeLoops: " << aNbLoopsOnPass2
->>>>>>> accb2f351 (u)
       << " contours accepted on the second pass" << std::endl;
 #endif
 

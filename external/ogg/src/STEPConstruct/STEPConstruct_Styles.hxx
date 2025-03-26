@@ -69,15 +69,12 @@ public:
   
   //! Returns style with given index
   Standard_EXPORT Handle(StepVisual_StyledItem) Style (const Standard_Integer i) const;
-<<<<<<< HEAD
-=======
 
   //! Returns number of override styles
   Standard_EXPORT Standard_Integer NbRootStyles() const;
   
   //! Returns override style with given index
   Standard_EXPORT Handle(StepVisual_StyledItem) RootStyle (const Standard_Integer i) const;
->>>>>>> accb2f351 (u)
   
   //! Clears all defined styles and PSA sequence
   Standard_EXPORT void ClearStyles();
@@ -168,10 +165,7 @@ private:
 
   TColStd_IndexedDataMapOfTransientTransient myMapOfStyles;
   TColStd_IndexedMapOfTransient myStyles;
-<<<<<<< HEAD
-=======
   TColStd_IndexedMapOfTransient myRootStyles;
->>>>>>> accb2f351 (u)
   TColStd_SequenceOfTransient myPSA;
 
 

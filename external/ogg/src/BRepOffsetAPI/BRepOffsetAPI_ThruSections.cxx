@@ -262,10 +262,7 @@ BRepOffsetAPI_ThruSections::BRepOffsetAPI_ThruSections(const Standard_Boolean is
   myCritWeights[1] = .2; 
   myCritWeights[2] = .4; 
   myUseSmoothing = Standard_False;
-<<<<<<< HEAD
-=======
   myStatus = BRepFill_ThruSectionErrorStatus_NotDone;
->>>>>>> accb2f351 (u)
 }
 
 
@@ -290,11 +287,7 @@ void BRepOffsetAPI_ThruSections::Init(const Standard_Boolean isSolid, const Stan
   myCritWeights[1] = .2; 
   myCritWeights[2] = .4; 
   myUseSmoothing = Standard_False;
-<<<<<<< HEAD
-
-=======
   myStatus = BRepFill_ThruSectionErrorStatus_NotDone;
->>>>>>> accb2f351 (u)
 }
 
 
@@ -351,10 +344,7 @@ void BRepOffsetAPI_ThruSections::CheckCompatibility(const Standard_Boolean check
 
 void BRepOffsetAPI_ThruSections::Build(const Message_ProgressRange& /*theRange*/)
 {
-<<<<<<< HEAD
-=======
   myStatus = BRepFill_ThruSectionErrorStatus_Done;
->>>>>>> accb2f351 (u)
   myBFGenerator.Nullify();
   //Check set of section for right configuration of punctual sections
   Standard_Integer i;
@@ -368,14 +358,10 @@ void BRepOffsetAPI_ThruSections::Build(const Message_ProgressRange& /*theRange*/
       wdeg = wdeg && (BRep_Tool::Degenerated(anEdge));
     }
     if (wdeg)
-<<<<<<< HEAD
-      throw Standard_Failure("Wrong usage of punctual sections");
-=======
     {
       myStatus = BRepFill_ThruSectionErrorStatus_WrongUsage;
       return;
     }
->>>>>>> accb2f351 (u)
   }
   if (myWires.Length() <= 2)
   {
@@ -390,12 +376,8 @@ void BRepOffsetAPI_ThruSections::Build(const Message_ProgressRange& /*theRange*/
     }
     if (wdeg)
     {
-<<<<<<< HEAD
-      throw Standard_Failure("Wrong usage of punctual sections");
-=======
       myStatus = BRepFill_ThruSectionErrorStatus_WrongUsage;
       return;
->>>>>>> accb2f351 (u)
     }
   }
 
@@ -435,11 +417,7 @@ void BRepOffsetAPI_ThruSections::Build(const Message_ProgressRange& /*theRange*/
           Standard_Integer aSign = 1;
           TopoDS_Vertex Vfirst, Vlast;
           TopExp::Vertices(anEdge, Vfirst, Vlast);
-<<<<<<< HEAD
-          TopTools_ListOfShape aNewEdges = Georges.GeneratedShapes(anEdge);
-=======
           const TopTools_ListOfShape& aNewEdges = Georges.GeneratedShapes(anEdge);
->>>>>>> accb2f351 (u)
           TColStd_ListOfInteger IList;
           aWorkingSection = TopoDS::Wire(WorkingSections(ii));
           Standard_Integer NbNewEdges = aNewEdges.Extent();
@@ -475,8 +453,6 @@ void BRepOffsetAPI_ThruSections::Build(const Message_ProgressRange& /*theRange*/
         }
       }
     }
-<<<<<<< HEAD
-=======
     else
     {
       myStatus = Georges.GetStatus();
@@ -484,7 +460,6 @@ void BRepOffsetAPI_ThruSections::Build(const Message_ProgressRange& /*theRange*/
       return;
     }
 
->>>>>>> accb2f351 (u)
     myWires = WorkingSections;
   } //if (myWCheck)
   else //no check
@@ -536,15 +511,12 @@ void BRepOffsetAPI_ThruSections::Build(const Message_ProgressRange& /*theRange*/
     NotDone();
     return;
   }
-<<<<<<< HEAD
-=======
 
   if (myStatus != BRepFill_ThruSectionErrorStatus_Done)
   {
     NotDone();
     return;
   }
->>>>>>> accb2f351 (u)
   // Encode the Regularities
   BRepLib::EncodeRegularity(myShape);
 }
@@ -567,15 +539,12 @@ void BRepOffsetAPI_ThruSections::CreateRuled()
     myBFGenerator->AddWire(TopoDS::Wire(myWires(i)));
   }
   myBFGenerator->Perform();
-<<<<<<< HEAD
-=======
   BRepFill_ThruSectionErrorStatus aStatus = myBFGenerator->GetStatus();
   if (aStatus != BRepFill_ThruSectionErrorStatus_Done)
   {
     myStatus = aStatus;
     return;
   }
->>>>>>> accb2f351 (u)
   TopoDS_Shell shell = myBFGenerator->Shell();
 
   if (myIsSolid) {
@@ -795,10 +764,7 @@ void BRepOffsetAPI_ThruSections::CreateSmoothed()
   TS = TotalSurf(shapes,nbSects,nbEdges,w1Point,w2Point,vClosed);
 
   if(TS.IsNull()) {
-<<<<<<< HEAD
-=======
     myStatus = BRepFill_ThruSectionErrorStatus_Failed;
->>>>>>> accb2f351 (u)
     return;
   }
 
@@ -994,22 +960,12 @@ void BRepOffsetAPI_ThruSections::CreateSmoothed()
     else {
       myShape = MakeSolid(shell, newW1, newW2, myPres3d, myFirst, myLast);
     }
-<<<<<<< HEAD
-
-    Done();
-=======
->>>>>>> accb2f351 (u)
   }
 
   else {
     myShape = shell;
-<<<<<<< HEAD
-    Done();
-  }
-=======
   }
   Done();
->>>>>>> accb2f351 (u)
 
   TopTools_DataMapOfShapeReal aVertexToleranceMap;
   TopExp_Explorer aTopExplorer(myShape,TopAbs_EDGE);
@@ -1108,13 +1064,9 @@ static Handle(Geom_BSplineCurve) EdgeToBSpline (const TopoDS_Edge& theEdge)
     Standard_Real aFirst, aLast;
     Handle(Geom_Curve) aCurve = BRep_Tool::Curve (theEdge, aLoc, aFirst, aLast);
     if (aCurve.IsNull())
-<<<<<<< HEAD
-      throw Standard_NullObject("Null 3D curve in edge");
-=======
     {
       return nullptr;
     }
->>>>>>> accb2f351 (u)
 
     // convert its part used by edge to bspline; note that if edge curve is bspline,
     // conversion made via trimmed curve is still needed -- it will copy it, segment 
@@ -1206,13 +1158,10 @@ Handle(Geom_BSplineSurface) BRepOffsetAPI_ThruSections::
       // read the first edge to initialise CompBS;
       TopoDS_Edge aPrevEdge = TopoDS::Edge (shapes((j-1)*NbEdges+1));
       Handle(Geom_BSplineCurve) curvBS = EdgeToBSpline (aPrevEdge);
-<<<<<<< HEAD
-=======
       if (curvBS.IsNull())
       {
         return nullptr;
       }
->>>>>>> accb2f351 (u)
 
       // initialization
       GeomConvert_CompCurveToBSplineCurve CompBS(curvBS);
@@ -1226,13 +1175,10 @@ Handle(Geom_BSplineSurface) BRepOffsetAPI_ThruSections::
         aTolV = Max(aTolV, BRep_Tool::Tolerance(vl));
         aTolV = Min(aTolV, 1.e-3);
         curvBS = EdgeToBSpline (aNextEdge);
-<<<<<<< HEAD
-=======
         if (curvBS.IsNull())
         {
           return nullptr;
         }
->>>>>>> accb2f351 (u)
 
         // concatenation
         CompBS.Add(curvBS, aTolV, Standard_True, Standard_False, 1);
@@ -1591,15 +1537,11 @@ void BRepOffsetAPI_ThruSections::CriteriumWeight(Standard_Real& W1, Standard_Rea
 
 void BRepOffsetAPI_ThruSections::SetCriteriumWeight(const Standard_Real W1, const Standard_Real W2, const Standard_Real W3)
 {
-<<<<<<< HEAD
-  if (W1 < 0 || W2 < 0 || W3 < 0 ) throw Standard_DomainError();
-=======
   if (W1 < 0 || W2 < 0 || W3 < 0)
   {
     myStatus = BRepFill_ThruSectionErrorStatus_Failed;
     return;
   }
->>>>>>> accb2f351 (u)
   myCritWeights[0] = W1;
   myCritWeights[1] = W2;
   myCritWeights[2] = W3;

@@ -849,13 +849,10 @@ private:
                                    Handle(BRepAdaptor_Surface)& HS1,
                                    Handle(BRepAdaptor_Surface)& HS2) const;
 
-<<<<<<< HEAD
-=======
   //! Assign to tolesp parameter minimal value of spine's tolesp if it is less
   //! than default initial value.
   Standard_EXPORT void UpdateTolesp();
 
->>>>>>> accb2f351 (u)
 
   TopoDS_Shape myShape;
   Standard_Real angular;

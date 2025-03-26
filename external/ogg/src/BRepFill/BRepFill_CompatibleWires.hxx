@@ -20,10 +20,7 @@
 #include <Standard.hxx>
 #include <Standard_DefineAlloc.hxx>
 
-<<<<<<< HEAD
-=======
 #include <BRepFill_ThruSectionErrorStatus.hxx>
->>>>>>> accb2f351 (u)
 #include <TopTools_SequenceOfShape.hxx>
 #include <TopTools_DataMapOfShapeListOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
@@ -53,14 +50,11 @@ public:
   Standard_EXPORT void Perform (const Standard_Boolean WithRotation = Standard_True);
   
   Standard_EXPORT Standard_Boolean IsDone() const;
-<<<<<<< HEAD
-=======
 
   BRepFill_ThruSectionErrorStatus GetStatus() const
   {
     return myStatus;
   }
->>>>>>> accb2f351 (u)
   
   //! returns the generated sequence.
   Standard_EXPORT const TopTools_SequenceOfShape& Shape() const;
@@ -113,11 +107,7 @@ private:
   Standard_Real myPercent;
   Standard_Boolean myDegen1;
   Standard_Boolean myDegen2;
-<<<<<<< HEAD
-  Standard_Boolean myIsDone;
-=======
   BRepFill_ThruSectionErrorStatus myStatus;
->>>>>>> accb2f351 (u)
   TopTools_DataMapOfShapeListOfShape myMap;
 
 

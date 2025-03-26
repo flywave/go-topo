@@ -1456,10 +1456,6 @@ public:
   //! we have |f (u1) - f (u0)| < Tolerance3D
   Standard_EXPORT static void Resolution (const TColgp_Array1OfPnt2d& Poles, const TColStd_Array1OfReal* Weights, const Standard_Integer NumPoles, const TColStd_Array1OfReal& FlatKnots, const Standard_Integer Degree, const Standard_Real Tolerance3D, Standard_Real& UTolerance);
 
-<<<<<<< HEAD
-
-
-=======
   //! Splits the given range to BSpline intervals of given continuity
   //! @param[in] theKnots the knots of BSpline
   //! @param[in] theMults the knots' multiplicities
@@ -1480,7 +1476,6 @@ public:
                                                      Standard_Real theLast,
                                                      Standard_Real theTolerance,
                                                      TColStd_Array1OfReal* theIntervals);
->>>>>>> accb2f351 (u)
 
 protected:
 

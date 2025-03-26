@@ -42,11 +42,7 @@ Geom2dGcc_Circ2dTanCen::
   pararg1(1,2)  
 {
   Geom2dAdaptor_Curve C1 = Qualified1.Qualified();
-<<<<<<< HEAD
-  Handle(Geom2d_Curve) CC1 = C1.Curve();
-=======
   const Handle(Geom2d_Curve)& CC1 = C1.Curve();
->>>>>>> accb2f351 (u)
   GeomAbs_CurveType Type1 = C1.GetType();
 
 //=============================================================================

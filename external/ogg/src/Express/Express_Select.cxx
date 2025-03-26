@@ -130,10 +130,6 @@ Standard_Boolean Express_Select::GenerateClass() const
     if (!aSeqMember->IsEmpty())
       anOS << "class StepData_SelectMember;\n";
 
-<<<<<<< HEAD
-    Standard_Integer jj = 1;
-=======
->>>>>>> accb2f351 (u)
     for (Standard_Integer i = 1; i <= myItems->Length(); i++)
     {
       Handle(Express_Item) anItem = myItems->Value (i);
@@ -147,10 +143,6 @@ Standard_Boolean Express_Select::GenerateClass() const
         }
       }
       anOS << "class " << anItem->CPPName() << ";\n";
-<<<<<<< HEAD
-      jj++;
-=======
->>>>>>> accb2f351 (u)
     }
     anOS << "\n";
 

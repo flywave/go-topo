@@ -339,11 +339,7 @@ static Standard_Boolean AddMultiConexityFaces(TopTools_SequenceOfShape& Lface,
   TopTools_SequenceOfShape AddShapes; 
   for(Standard_Integer i1 = 1 ; i1<=Lface.Length();i1++ )  {
    
-<<<<<<< HEAD
-    TopoDS_Shape aShape = Lface.Value(i1);
-=======
     const TopoDS_Shape& aShape = Lface.Value(i1);
->>>>>>> accb2f351 (u)
     
     Standard_Integer aNbMultEdges =0;
     
@@ -351,11 +347,7 @@ static Standard_Boolean AddMultiConexityFaces(TopTools_SequenceOfShape& Lface,
     for(TopoDS_Iterator aItWires(aShape,Standard_False);  aItWires.More();  aItWires.Next()) {
       Standard_Integer aNbEdges =0;
       for(TopoDS_Iterator aItEdges(aItWires.Value(),Standard_False);  aItEdges.More();  aItEdges.Next(),aNbEdges++) {
-<<<<<<< HEAD
-        TopoDS_Shape edge = aItEdges.Value();
-=======
         const TopoDS_Shape& edge = aItEdges.Value();
->>>>>>> accb2f351 (u)
         if(!aMapMultiConnectEdges.Contains(edge)) continue;
         aNbMultEdges++;
       }
@@ -375,11 +367,7 @@ static Standard_Boolean AddMultiConexityFaces(TopTools_SequenceOfShape& Lface,
     TopTools_DataMapOfShapeShape aTmpFaceShell;
     if(GetShells(llPosibleShells,aMap,aTmpShells,aTmpFaceShell,aTmp)) {
       for(Standard_Integer kk =1; kk <= aTmpShells.Length(); kk++) {
-<<<<<<< HEAD
-        TopoDS_Shape aSh = aTmpShells.Value(kk);
-=======
         const TopoDS_Shape& aSh = aTmpShells.Value(kk);
->>>>>>> accb2f351 (u)
         TopTools_MapOfShape mapEdges;
         if(GetFreeEdges(aSh,mapEdges)) {
           Standard_Integer nbedge =0;
@@ -398,11 +386,7 @@ static Standard_Boolean AddMultiConexityFaces(TopTools_SequenceOfShape& Lface,
   for(Standard_Integer k1 =1; k1 <= AddShapes.Length(); k1++) {
     TopTools_DataMapOfShapeInteger MapOtherShells;
     TopTools_MapOfShape dire,reve;
-<<<<<<< HEAD
-    TopoDS_Shape aSh = AddShapes.Value(k1);
-=======
     const TopoDS_Shape& aSh = AddShapes.Value(k1);
->>>>>>> accb2f351 (u)
     TopTools_MapOfShape mapEdges;
     if(!GetFreeEdges(aSh,mapEdges)) continue;
     TopTools_ListOfShape lfaces;
@@ -587,14 +571,8 @@ static void GlueClosedCandidate(TopTools_SequenceOfShape& OpenShells,
     for(Standard_Integer j = i+1 ; j <= OpenShells.Length();j++ )  {
       Standard_Boolean isAddShell = Standard_True;
       Standard_Boolean isReversed = Standard_False;
-<<<<<<< HEAD
-      Standard_Integer nbedge =0;
-      TopTools_MapOfShape mapEdges2;
-      TopoDS_Shape aShell2 = OpenShells.Value(j);
-=======
       TopTools_MapOfShape mapEdges2;
       const TopoDS_Shape& aShell2 = OpenShells.Value(j);
->>>>>>> accb2f351 (u)
       if(!GetFreeEdges(aShell2,mapEdges2)) continue;
       for(TopTools_MapIteratorOfMapOfShape aIte2( mapEdges2);aIte2.More() && isAddShell;aIte2.Next()) {
         TopoDS_Edge edge2 = TopoDS::Edge(aIte2.Key());
@@ -607,10 +585,6 @@ static void GlueClosedCandidate(TopTools_SequenceOfShape& OpenShells,
         if((edge2.Orientation() == TopAbs_FORWARD && dire.Contains(edge2))
            || (edge2.Orientation() == TopAbs_REVERSED && reve.Contains(edge2)))
           isReversed = Standard_True;
-<<<<<<< HEAD
-        nbedge++;
-=======
->>>>>>> accb2f351 (u)
       }
 
       if(!isAddShell) continue;
@@ -699,21 +673,13 @@ static void CreateNonManifoldShells(TopTools_SequenceOfShape& SeqShells,
 {
   TopTools_IndexedDataMapOfShapeListOfShape aMap;
   for(Standard_Integer i =1 ; i <= SeqShells.Length(); i++) {
-<<<<<<< HEAD
-    TopoDS_Shape aShell = SeqShells.Value(i);
-=======
     const TopoDS_Shape& aShell = SeqShells.Value(i);
->>>>>>> accb2f351 (u)
     TopTools_IndexedMapOfShape medeg;
     TopExp::MapShapes(aShell,TopAbs_EDGE,medeg);
     for(TopTools_MapIteratorOfMapOfShape mit(aMapMultiConnectEdges); mit.More(); mit.Next()) {
     //for(TopExp_Explorer aExp(aShell,TopAbs_EDGE); aExp.More(); aExp.Next(),nbe++) {
       //TopoDS_Shape ae = aExp.Current();
-<<<<<<< HEAD
-      TopoDS_Shape ae =mit.Key();
-=======
       const TopoDS_Shape& ae =mit.Key();
->>>>>>> accb2f351 (u)
       //if( aMapMultiConnectEdges.Contains(aExp.Current())) {
       if(medeg.Contains(ae)) {
         if(aMap.Contains(ae))
@@ -746,11 +712,7 @@ static void CreateNonManifoldShells(TopTools_SequenceOfShape& SeqShells,
       else if(ismerged) {
         TopoDS_Shape arshell = aMapShells.FindFromKey(alit.Value());
         while(aMapShells.Contains(arshell)){
-<<<<<<< HEAD
-          TopoDS_Shape ss = aMapShells.FindFromKey(arshell);
-=======
           const TopoDS_Shape& ss = aMapShells.FindFromKey(arshell);
->>>>>>> accb2f351 (u)
           if(ss.IsSame(arshell)) break;
           arshell = ss;
         }
@@ -765,11 +727,7 @@ static void CreateNonManifoldShells(TopTools_SequenceOfShape& SeqShells,
       else {
         TopoDS_Shape arshell = aMapShells.FindFromKey(alit.Value());
          while(aMapShells.Contains(arshell)) {
-<<<<<<< HEAD
-          TopoDS_Shape ss = aMapShells.FindFromKey(arshell);
-=======
           const TopoDS_Shape& ss = aMapShells.FindFromKey(arshell);
->>>>>>> accb2f351 (u)
           if(ss.IsSame(arshell)) break;
           arshell = ss;
         }
@@ -789,11 +747,7 @@ static void CreateNonManifoldShells(TopTools_SequenceOfShape& SeqShells,
     }
     if(mapmerge.Extent() >1 || ismerged) {
       for(TopTools_MapIteratorOfMapOfShape alit1(mapmerge); alit1.More();alit1.Next()) {
-<<<<<<< HEAD
-        TopoDS_Shape oldShell = alit1.Key();
-=======
         const TopoDS_Shape& oldShell = alit1.Key();
->>>>>>> accb2f351 (u)
          //while(aMapShells.Contains(oldShell)) {
          //  TopoDS_Shape ss = aMapShells.FindFromKey(oldShell);
          //  if(ss.IsSame(oldShell)) break;
@@ -808,11 +762,7 @@ static void CreateNonManifoldShells(TopTools_SequenceOfShape& SeqShells,
     if(aMapShells.Contains(SeqShells.Value(nn))) {
       TopoDS_Shape aNewShell = aMapShells.FindFromKey(SeqShells.Value(nn));
       while(aMapShells.Contains(aNewShell)) {
-<<<<<<< HEAD
-        TopoDS_Shape ss = aMapShells.FindFromKey(aNewShell);
-=======
         const TopoDS_Shape& ss = aMapShells.FindFromKey(aNewShell);
->>>>>>> accb2f351 (u)
         if(ss.IsSame(aNewShell)) break;
         aNewShell = ss;
       }

@@ -17,10 +17,7 @@
 #ifndef _SelectMgr_EntityOwner_HeaderFile
 #define _SelectMgr_EntityOwner_HeaderFile
 
-<<<<<<< HEAD
-=======
 #include <AIS_SelectionScheme.hxx>
->>>>>>> accb2f351 (u)
 #include <Aspect_VKey.hxx>
 #include <PrsMgr_PresentationManager.hxx>
 #include <SelectMgr_SelectableObject.hxx>
@@ -143,15 +140,12 @@ public:
   //! @param theIsSelected [in] shows if owner is selected.
   void SetSelected (const Standard_Boolean theIsSelected) { myIsSelected = theIsSelected; }
 
-<<<<<<< HEAD
-=======
   //! If the object needs to be selected, it returns true.
   //! @param[in] theSelScheme  selection scheme
   //! @param[in] theIsDetected flag of object detection
   Standard_EXPORT Standard_Boolean Select (const AIS_SelectionScheme theSelScheme,
                                            const Standard_Boolean theIsDetected) const;
 
->>>>>>> accb2f351 (u)
   //! Returns selection state.
   Standard_DEPRECATED ("Deprecated method - IsSelected() should be used instead")
   Standard_Integer State() const { return myIsSelected ? 1 : 0; }

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-// Created on: 2022-08-08
-=======
 ﻿// Created on: 2022-08-08
->>>>>>> accb2f351 (u)
 // Created by: Kseniya NOSULKO
 // Copyright (c) 2022 OPEN CASCADE SAS
 //
@@ -22,11 +18,6 @@
 
 #include <BRepExtrema_ProximityDistTool.hxx>
 #include <BRepExtrema_TriangleSet.hxx>
-<<<<<<< HEAD
-
-//! Tool class for computation of the proximity value from one BVH
-//! primitive set to another, solving max(min) problem.
-=======
 #include <NCollection_CellFilter.hxx>
 #include <Precision.hxx>
 
@@ -88,7 +79,6 @@ typedef typename BRepExtrema_ProximityDistTool::ProxPnt_Status ProxPnt_Status;
 //! Tool class for computation of the proximity value from one BVH
 //! primitive set to another, solving max(min) problem.
 //! Handles only edge/edge or face/face cases.
->>>>>>> accb2f351 (u)
 //! This tool is not intended to be used independently, and is integrated
 //! in other classes, implementing algorithms based on shape tessellation
 //! (BRepExtrema_ShapeProximity and BRepExtrema_SelfIntersection).
@@ -97,11 +87,6 @@ typedef typename BRepExtrema_ProximityDistTool::ProxPnt_Status ProxPnt_Status;
 //! on the quality of input tessellation(s).
 class BRepExtrema_ProximityValueTool
 {
-<<<<<<< HEAD
-public:
-  typedef typename BRepExtrema_ProximityDistTool::ProxPnt_Status ProxPnt_Status;
-=======
->>>>>>> accb2f351 (u)
 
 public:
 
@@ -157,11 +142,6 @@ public:
 
 private:
 
-<<<<<<< HEAD
-  //! Returns the computed proximity value from first BVH to another one.
-  Standard_Real computeProximityDist (const Handle(BRepExtrema_TriangleSet)& theSet1,
-                                      const Standard_Integer theNbSamples1,
-=======
   //! Gets shape data for further refinement.
   Standard_Boolean getInfoForRefinement (const TopoDS_Shape& theShapes,
                                          TopAbs_ShapeEnum& theShapeType,
@@ -173,7 +153,6 @@ private:
                                       const Standard_Integer theNbSamples1,
                                       const BVH_Array3d& theAddVertices1,
                                       const NCollection_Vector<ProxPnt_Status>& theAddStatus1,
->>>>>>> accb2f351 (u)
                                       const Handle(BRepExtrema_TriangleSet)& theSet2,
                                       const BRepExtrema_ShapeList& theShapeList1,
                                       const BRepExtrema_ShapeList& theShapeList2,
@@ -182,8 +161,6 @@ private:
                                       ProxPnt_Status& thePointStatus1,
                                       ProxPnt_Status& thePointStatus2) const;
 
-<<<<<<< HEAD
-=======
   //! Gets additional vertices on shapes with refining a coarser one if it's needed.
   Standard_Boolean getShapesAdditionalVertices();
 
@@ -207,7 +184,6 @@ private:
                         const Standard_Real theStep,
                         BVH_Array3d& theAddVertices,
                         NCollection_Vector<ProxPnt_Status>& theAddStatuses);
->>>>>>> accb2f351 (u)
 private:
 
   //! Set of all mesh primitives of the 1st shape.
@@ -220,8 +196,6 @@ private:
   //! List of subshapes of the 2nd shape.
   BRepExtrema_ShapeList myShapeList2;
 
-<<<<<<< HEAD
-=======
   //! The 1st shape.
   TopoDS_Shape myShape1;
   //! The 2nd shape.
@@ -251,7 +225,6 @@ private:
   TopAbs_ShapeEnum myShapeType1; //!< 1st shape type.
   TopAbs_ShapeEnum myShapeType2; //!< 2nd shape type.
 
->>>>>>> accb2f351 (u)
   Standard_Real myDistance;  //!< Distance
   Standard_Boolean myIsDone; //!< State of the algorithm
 

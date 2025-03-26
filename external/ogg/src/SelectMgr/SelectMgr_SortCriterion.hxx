@@ -58,19 +58,12 @@ public:
       return ZLayerPosition > theOther.ZLayerPosition;
     }
 
-<<<<<<< HEAD
-    // closest object is selected unless difference is within tolerance
-    if (Abs (Depth - theOther.Depth) > (Tolerance + theOther.Tolerance))
-=======
     // closest object is selected if their depths are not equal within tolerance
     if (Abs (Depth - theOther.Depth) > Tolerance + theOther.Tolerance)
->>>>>>> accb2f351 (u)
     {
       return Depth < theOther.Depth;
     }
 
-<<<<<<< HEAD
-=======
     Standard_Real aCos = 1.0;
     if (Normal.Modulus() > 0 && theOther.Normal.Modulus() > 0)
     {
@@ -92,7 +85,6 @@ public:
       }
     }
 
->>>>>>> accb2f351 (u)
     // if two objects have similar depth, select the one with higher priority
     if (Priority > theOther.Priority)
     {

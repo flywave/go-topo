@@ -523,11 +523,7 @@ void Interface_CheckIterator::Print(Standard_OStream& S,
     Standard_CString mesnum0 = ":";
     Standard_CString mesnum1 = " (original):";
     Standard_CString mesnum2 = " (computed):";    */
-<<<<<<< HEAD
-  Standard_Integer i, nbch = 0, nb = thelist->Length();//,j; svv #2
-=======
   Standard_Integer i, nb = thelist->Length();//,j; svv #2
->>>>>>> accb2f351 (u)
   Standard_Boolean yamod = !model.IsNull();
   for (i = 1; i <= nb; i ++) {
     const Handle(Interface_Check) ach = thelist->Value(i);
@@ -561,10 +557,6 @@ void Interface_CheckIterator::Print(Standard_OStream& S,
       else       S <<"   Type:"<<ent->DynamicType()->Name()<<std::endl;
     }
 
-<<<<<<< HEAD
-    nbch ++;
-=======
->>>>>>> accb2f351 (u)
     ach->Print (S, (failsonly ? 1 : 3));
   }
 //  if (nbch > 0)  S<<" ----  Checks : "<<nbch<<"  ----"<<std::endl;

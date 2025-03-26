@@ -30,11 +30,7 @@ void QABugs_PresentableObject::Compute(const Handle(PrsMgr_PresentationManager)&
 				const Handle(Prs3d_Presentation)& thePrs,
 				const Standard_Integer theMode)
 {
-<<<<<<< HEAD
-  Handle(Graphic3d_Structure) aStructure (thePrs);
-=======
   const Handle(Graphic3d_Structure)& aStructure = thePrs;
->>>>>>> accb2f351 (u)
   Handle(Graphic3d_Group)     aGroup     = aStructure->NewGroup();
   Handle(Prs3d_ShadingAspect) anAspect = myDrawer->ShadingAspect();
   Graphic3d_MaterialAspect aMat = anAspect->Aspect()->FrontMaterial();

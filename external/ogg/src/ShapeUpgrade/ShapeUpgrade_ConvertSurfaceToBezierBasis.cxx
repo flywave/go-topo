@@ -406,11 +406,7 @@ void ShapeUpgrade_ConvertSurfaceToBezierBasis::Compute(const Standard_Boolean Se
 //purpose  : 
 //=======================================================================
 
-<<<<<<< HEAD
-static Handle(Geom_Surface) GetSegment(const Handle(Geom_Surface) surf,
-=======
 static Handle(Geom_Surface) GetSegment(const Handle(Geom_Surface)& surf,
->>>>>>> accb2f351 (u)
 				       const Standard_Real U1,
 				       const Standard_Real U2,
 				       const Standard_Real V1,

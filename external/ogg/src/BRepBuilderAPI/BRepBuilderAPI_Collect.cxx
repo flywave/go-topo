@@ -58,11 +58,7 @@ static void BuildBack (const TopTools_DataMapOfShapeListOfShape& M1,
 //=======================================================================
 
 static void  Replace (      TopTools_ListOfShape& L,
-<<<<<<< HEAD
-		      const TopoDS_Shape          Old,
-=======
 		      const TopoDS_Shape&          Old,
->>>>>>> accb2f351 (u)
 		      const TopTools_ListOfShape& New)
 {
   //-----------------------------------
@@ -154,11 +150,7 @@ static void Update (   TopTools_DataMapOfShapeListOfShape& Mod,
     if (!LIG.IsEmpty()) {
       if (ModBack.IsBound(S)) {
 	// Generation de modif  => generation du shape initial
-<<<<<<< HEAD
-	TopoDS_Shape IS = ModBack(S);
-=======
 	const TopoDS_Shape& IS = ModBack(S);
->>>>>>> accb2f351 (u)
 	StoreImage (Gen,IS,GenBack,LIG);
       }
       else {

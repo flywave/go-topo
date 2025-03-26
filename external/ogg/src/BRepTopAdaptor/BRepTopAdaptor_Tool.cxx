@@ -95,14 +95,5 @@ void BRepTopAdaptor_Tool::SetTopolTool(const Handle(BRepTopAdaptor_TopolTool)& T
   myTopolTool=TT;
 }
 
-<<<<<<< HEAD
-void BRepTopAdaptor_Tool::Destroy() { 
-  int i;
-  i=0;
-  i++;
-  
-}
-=======
 void BRepTopAdaptor_Tool::Destroy() {}
->>>>>>> accb2f351 (u)
 

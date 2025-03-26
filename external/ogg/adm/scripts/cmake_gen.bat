@@ -28,10 +28,7 @@ set BUILD_FORCE_RelWithDebInfo=OFF
 
 set BUILD_MODULE_ApplicationFramework=ON
 set BUILD_MODULE_DataExchange=ON
-<<<<<<< HEAD
-=======
 set BUILD_MODULE_DETools=OFF
->>>>>>> accb2f351 (u)
 set BUILD_MODULE_Draw=ON
 set BUILD_MODULE_ModelingAlgorithms=ON
 set BUILD_MODULE_ModelingData=ON
@@ -66,10 +63,7 @@ cmake -G "%arch_compile%" ^
   -D BUILD_LIBRARY_TYPE:STRING=%BUILD_LIBRARY_TYPE% ^
   -D BUILD_MODULE_ApplicationFramework:BOOL=%BUILD_MODULE_ApplicationFramework% ^
   -D BUILD_MODULE_DataExchange:BOOL=%BUILD_MODULE_DataExchange% ^
-<<<<<<< HEAD
-=======
   -D BUILD_MODULE_DETools:BOOL=%BUILD_MODULE_DETools% ^
->>>>>>> accb2f351 (u)
   -D BUILD_MODULE_Draw:BOOL=%BUILD_MODULE_Draw% ^
   -D BUILD_MODULE_FoundationClasses:BOOL=ON ^
   -D BUILD_MODULE_ModelingAlgorithms:BOOL=%BUILD_MODULE_ModelingAlgorithms% ^

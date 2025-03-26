@@ -72,11 +72,7 @@ void  IFSelect_CheckCounter::Analyse(const Interface_CheckIterator& list,
   for (list.Start(); list.More(); list.Next()) {
     num = list.Number();
     Handle(Standard_Transient) ent;
-<<<<<<< HEAD
-    const Handle(Interface_Check) check = list.Value();
-=======
     const Handle(Interface_Check)& check = list.Value();
->>>>>>> accb2f351 (u)
     ent = check->Entity();
     if (ent.IsNull() && num > 0 && num <= nbe) ent = model->Value(num);
     nb = check->NbFails();

@@ -46,11 +46,7 @@ static
 
 //gets transition of line <L> passing through/near the edge <e> of faces <f1>, <f2>. <param> is
 // a parameter on the edge where the minimum distance between <l> and <e> was found
-<<<<<<< HEAD
-static Standard_Integer GetTransi(const TopoDS_Face& f1, const TopoDS_Face& f2, const TopoDS_Edge e,
-=======
 static Standard_Integer GetTransi(const TopoDS_Face& f1, const TopoDS_Face& f2, const TopoDS_Edge& e,
->>>>>>> accb2f351 (u)
                      Standard_Real param, const gp_Lin& L, IntCurveSurface_TransitionOnCurve& trans);
 
 static Standard_Boolean GetNormalOnFaceBound(const TopoDS_Edge& E, const TopoDS_Face& F, Standard_Real param, gp_Dir& OutDir);
@@ -611,11 +607,7 @@ static Standard_Boolean GetNormalOnFaceBound(const TopoDS_Edge& E,
 //=======================================================================
 static Standard_Integer GetTransi(const TopoDS_Face& f1,
                                   const TopoDS_Face& f2,
-<<<<<<< HEAD
-                                  const TopoDS_Edge e,
-=======
                                   const TopoDS_Edge& e,
->>>>>>> accb2f351 (u)
                                   const Standard_Real param,
                                   const gp_Lin& L,
                                   IntCurveSurface_TransitionOnCurve& trans)

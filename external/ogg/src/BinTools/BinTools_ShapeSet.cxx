@@ -479,12 +479,7 @@ void BinTools_ShapeSet::ReadFlagsAndSubs(TopoDS_Shape& S, const TopAbs_ShapeEnum
 
   S.Free(aFree);
   S.Modified(aMod);
-<<<<<<< HEAD
-  if (FormatNb() != BinTools_FormatVersion_VERSION_2 &&
-      FormatNb() != BinTools_FormatVersion_VERSION_3)
-=======
   if (FormatNb() == BinTools_FormatVersion_VERSION_1)
->>>>>>> accb2f351 (u)
   {
     aChecked = false; // force check at reading
   }

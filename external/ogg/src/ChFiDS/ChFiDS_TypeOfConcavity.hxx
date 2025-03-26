@@ -24,12 +24,8 @@ ChFiDS_Concave,
 ChFiDS_Convex,
 ChFiDS_Tangential,
 ChFiDS_FreeBound,
-<<<<<<< HEAD
-ChFiDS_Other
-=======
 ChFiDS_Other,
 ChFiDS_Mixed
->>>>>>> accb2f351 (u)
 };
 
 #endif // _ChFiDS_TypeOfConcavity_HeaderFile

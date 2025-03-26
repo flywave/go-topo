@@ -558,8 +558,6 @@ void  ChFiDS_Spine::Load()
   }
   indexofcurve =1;
   myCurve.Initialize(TopoDS::Edge(spine.Value(1)));
-<<<<<<< HEAD
-=======
 
   // Here, we should update tolesp according to curve parameter range
   // if tolesp candidate less than default initial value.
@@ -571,7 +569,6 @@ void  ChFiDS_Spine::Load()
   {
     tolesp = new_tolesp;
   }
->>>>>>> accb2f351 (u)
 }
 
 

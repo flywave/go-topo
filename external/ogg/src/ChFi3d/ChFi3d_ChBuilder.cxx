@@ -822,15 +822,6 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
     Data->SetSimul(sec);
     Data->Set2dPoints(pf1,pl1,pf2,pl2);
     ChFi3d_FilCommonPoint(lin->StartPointOnFirst(),lin->TransitionOnS1(),
-<<<<<<< HEAD
-			  Standard_True, Data->ChangeVertexFirstOnS1(),tolesp);
-    ChFi3d_FilCommonPoint(lin->EndPointOnFirst(),lin->TransitionOnS1(),
-			  Standard_False,Data->ChangeVertexLastOnS1(),tolesp);
-    ChFi3d_FilCommonPoint(lin->StartPointOnSecond(),lin->TransitionOnS2(),
-			  Standard_True, Data->ChangeVertexFirstOnS2(),tolesp);
-    ChFi3d_FilCommonPoint(lin->EndPointOnSecond(),lin->TransitionOnS2(),
-			  Standard_False, Data->ChangeVertexLastOnS2(),tolesp);
-=======
 			  Standard_True, Data->ChangeVertexFirstOnS1(),tolapp3d);
     ChFi3d_FilCommonPoint(lin->EndPointOnFirst(),lin->TransitionOnS1(),
 			  Standard_False,Data->ChangeVertexLastOnS1(),tolapp3d);
@@ -838,7 +829,6 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
 			  Standard_True, Data->ChangeVertexFirstOnS2(),tolapp3d);
     ChFi3d_FilCommonPoint(lin->EndPointOnSecond(),lin->TransitionOnS2(),
 			  Standard_False, Data->ChangeVertexLastOnS2(),tolapp3d);
->>>>>>> accb2f351 (u)
     
     Standard_Boolean reverse = (!Forward || Inside);
     if(intf && reverse){
@@ -942,15 +932,6 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
     Data->SetSimul(sec);
     Data->Set2dPoints(pf1,pl1,pf2,pl2);
     ChFi3d_FilCommonPoint(lin->StartPointOnFirst(),lin->TransitionOnS1(),
-<<<<<<< HEAD
-			Standard_True, Data->ChangeVertexFirstOnS1(),tolesp);
-    ChFi3d_FilCommonPoint(lin->EndPointOnFirst(),lin->TransitionOnS1(),
-			  Standard_False,Data->ChangeVertexLastOnS1(),tolesp);
-    ChFi3d_FilCommonPoint(lin->StartPointOnSecond(),lin->TransitionOnS2(),
-			  Standard_True, Data->ChangeVertexFirstOnS2(),tolesp);
-    ChFi3d_FilCommonPoint(lin->EndPointOnSecond(),lin->TransitionOnS2(),
-			  Standard_False, Data->ChangeVertexLastOnS2(),tolesp);
-=======
 			Standard_True, Data->ChangeVertexFirstOnS1(),tolapp3d);
     ChFi3d_FilCommonPoint(lin->EndPointOnFirst(),lin->TransitionOnS1(),
 			  Standard_False,Data->ChangeVertexLastOnS1(),tolapp3d);
@@ -958,7 +939,6 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
 			  Standard_True, Data->ChangeVertexFirstOnS2(),tolapp3d);
     ChFi3d_FilCommonPoint(lin->EndPointOnSecond(),lin->TransitionOnS2(),
 			  Standard_False, Data->ChangeVertexLastOnS2(),tolapp3d);
->>>>>>> accb2f351 (u)
     
     Standard_Boolean reverse = (!Forward || Inside);
     if(intf && reverse){
@@ -1037,15 +1017,6 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
     Data->SetSimul(sec);
     Data->Set2dPoints(pf1,pl1,pf2,pl2);
     ChFi3d_FilCommonPoint(lin->StartPointOnFirst(),lin->TransitionOnS1(),
-<<<<<<< HEAD
-                          Standard_True, Data->ChangeVertexFirstOnS1(),tolesp);
-    ChFi3d_FilCommonPoint(lin->EndPointOnFirst(),lin->TransitionOnS1(),
-                          Standard_False,Data->ChangeVertexLastOnS1(),tolesp);
-    ChFi3d_FilCommonPoint(lin->StartPointOnSecond(),lin->TransitionOnS2(),
-                          Standard_True, Data->ChangeVertexFirstOnS2(),tolesp);
-    ChFi3d_FilCommonPoint(lin->EndPointOnSecond(),lin->TransitionOnS2(),
-                          Standard_False, Data->ChangeVertexLastOnS2(),tolesp);
-=======
                           Standard_True, Data->ChangeVertexFirstOnS1(),tolapp3d);
     ChFi3d_FilCommonPoint(lin->EndPointOnFirst(),lin->TransitionOnS1(),
                           Standard_False,Data->ChangeVertexLastOnS1(),tolapp3d);
@@ -1053,7 +1024,6 @@ ChFi3d_ChBuilder::SimulSurf(Handle(ChFiDS_SurfData)&            Data,
                           Standard_True, Data->ChangeVertexFirstOnS2(),tolapp3d);
     ChFi3d_FilCommonPoint(lin->EndPointOnSecond(),lin->TransitionOnS2(),
                           Standard_False, Data->ChangeVertexLastOnS2(),tolapp3d);
->>>>>>> accb2f351 (u)
     
     Standard_Boolean reverse = (!Forward || Inside);
     if(intf && reverse){
@@ -1205,11 +1175,7 @@ Standard_Boolean ChFi3d_ChBuilder::PerformFirstSection
   if (chsp.IsNull()) 
     throw Standard_ConstructionError("PerformSurf : this is not the spine of a chamfer");
 
-<<<<<<< HEAD
-  Standard_Real TolGuide = HGuide->Resolution(tolesp) ;
-=======
   Standard_Real TolGuide = HGuide->Resolution(tolapp3d);
->>>>>>> accb2f351 (u)
 
 
   if (chsp->IsChamfer() == ChFiDS_Sym) {
@@ -1278,11 +1244,7 @@ Standard_Boolean ChFi3d_ChBuilder::PerformFirstSection
     }
     
     return TheWalk.PerformFirstSection(*pFunc,Par,SolDep,
-<<<<<<< HEAD
-				       tolesp,TolGuide,Pos1,Pos2);
-=======
 				       tolapp3d,TolGuide,Pos1,Pos2);
->>>>>>> accb2f351 (u)
   }
   else if (chsp->IsChamfer() == ChFiDS_TwoDist)  {
     Standard_Real dis1, dis2;
@@ -1385,11 +1347,7 @@ Standard_Boolean ChFi3d_ChBuilder::PerformFirstSection
     }
     
     return TheWalk.PerformFirstSection(*pFunc,Par,SolDep,
-<<<<<<< HEAD
-				       tolesp,TolGuide,Pos1,Pos2);
-=======
 				       tolapp3d,TolGuide,Pos1,Pos2);
->>>>>>> accb2f351 (u)
   }
   else { //distance and angle
     Standard_Real dis1, angle;
@@ -1457,11 +1415,7 @@ Standard_Boolean ChFi3d_ChBuilder::PerformFirstSection
     }
     
     return TheWalk.PerformFirstSection(Func,Par,SolDep,
-<<<<<<< HEAD
-                                       tolesp,TolGuide,Pos1,Pos2);
-=======
                                        tolapp3d,TolGuide,Pos1,Pos2);
->>>>>>> accb2f351 (u)
   } //distance and angle
 }
 

@@ -243,11 +243,7 @@ static Standard_Integer OCC10bug (Draw_Interpretor& di, Standard_Integer argc, c
     }
     // Construction du Geom_Plane
     GC_MakePlane MkPlane(A,B,C);
-<<<<<<< HEAD
-    Handle(Geom_Plane) theGeomPlane=MkPlane.Value();
-=======
     const Handle(Geom_Plane)& theGeomPlane=MkPlane.Value();
->>>>>>> accb2f351 (u)
     
     // on le display & bind
     theAISPlaneTri= new AIS_PlaneTrihedron(theGeomPlane );
@@ -391,19 +387,11 @@ static Standard_Integer OCC361bug (Draw_Interpretor& di, Standard_Integer nb, co
 //function : OCC30182
 //purpose  : Testing different interfaces of Image_AlienPixMap::Load()
 //=======================================================================
-<<<<<<< HEAD
-static Standard_Integer OCC30182 (Draw_Interpretor& , Standard_Integer theNbArgs, const char** theArgVec)
-{
-  if (ViewerTest::CurrentView().IsNull())
-  {
-    std::cout << "Error: no active view\n";
-=======
 static Standard_Integer OCC30182 (Draw_Interpretor& di, Standard_Integer theNbArgs, const char** theArgVec)
 {
   if (ViewerTest::CurrentView().IsNull())
   {
     di << "Error: no active view\n";
->>>>>>> accb2f351 (u)
     return 1;
   }
 
@@ -442,21 +430,13 @@ static Standard_Integer OCC30182 (Draw_Interpretor& di, Standard_Integer theNbAr
     }
     else
     {
-<<<<<<< HEAD
-      std::cout << "Syntax error at '" << anArg << "'\n";
-=======
       di << "Syntax error at '" << anArg << "'\n";
->>>>>>> accb2f351 (u)
       return 1;
     }
   }
   if (anImgPath.IsEmpty())
   {
-<<<<<<< HEAD
-    std::cout << "Syntax error: wrong number of arguments\n";
-=======
     di << "Syntax error: wrong number of arguments\n";
->>>>>>> accb2f351 (u)
     return 1;
   }
 
@@ -474,11 +454,7 @@ static Standard_Integer OCC30182 (Draw_Interpretor& di, Standard_Integer theNbAr
     std::shared_ptr<std::istream> aFile = aFileSystem->OpenIStream (anImgPath, std::ios::in | std::ios::binary);
     if (aFile.get() == NULL)
     {
-<<<<<<< HEAD
-      std::cout << "Syntax error: image file '" << anImgPath << "' cannot be found\n";
-=======
       di << "Syntax error: image file '" << anImgPath << "' cannot be found\n";
->>>>>>> accb2f351 (u)
       return 1;
     }
     if (anOffset != 0)
@@ -493,21 +469,13 @@ static Standard_Integer OCC30182 (Draw_Interpretor& di, Standard_Integer theNbAr
       aFile->seekg (anOffset);
       if (aLen <= 0)
       {
-<<<<<<< HEAD
-        std::cout << "Syntax error: wrong offset\n";
-=======
         di << "Syntax error: wrong offset\n";
->>>>>>> accb2f351 (u)
         return 1;
       }
       NCollection_Array1<Standard_Byte> aBuff (1, aLen);
       if (!aFile->read ((char* )&aBuff.ChangeFirst(), aBuff.Size()))
       {
-<<<<<<< HEAD
-        std::cout << "Error: unable to read file\n";
-=======
         di << "Error: unable to read file\n";
->>>>>>> accb2f351 (u)
         return 1;
       }
       if (!anImage->Load (&aBuff.ChangeFirst(), aBuff.Size(), anImgPath))
@@ -542,8 +510,6 @@ static Standard_Integer OCC30182 (Draw_Interpretor& di, Standard_Integer theNbAr
   return 0;
 }
 
-<<<<<<< HEAD
-=======
 //=======================================================================
 //function : OCC31956
 //purpose  : Testing Image_AlienPixMap::Save() overload for saving into a memory buffer or stream
@@ -645,7 +611,6 @@ static Standard_Integer OCC31956 (Draw_Interpretor& di, Standard_Integer theNbAr
   return 0;
 }
 
->>>>>>> accb2f351 (u)
 void QABugs::Commands_1(Draw_Interpretor& theCommands) {
   const char *group = "QABugs";
 
@@ -663,10 +628,7 @@ void QABugs::Commands_1(Draw_Interpretor& theCommands) {
   theCommands.Add ("OCC30182",
                    "OCC30182 name image [-offset Start] [-fileName] [-stream] [-memory]\n"
                    "Decodes image either by passing file name, file stream or memory stream", __FILE__, OCC30182, group);
-<<<<<<< HEAD
-=======
   theCommands.Add ("OCC31956", "OCC31956 name image [-stream tempImage]\n"
                    "Loads image and saves it into memory buffer or stream then loads it back", __FILE__, OCC31956, group);
->>>>>>> accb2f351 (u)
   return;
 }

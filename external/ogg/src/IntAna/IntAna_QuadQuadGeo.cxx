@@ -50,8 +50,6 @@
 #include <Standard_DomainError.hxx>
 #include <Standard_OutOfRange.hxx>
 #include <StdFail_NotDone.hxx>
-<<<<<<< HEAD
-=======
 #include <gce_MakePln.hxx>
 #include <ProjLib.hxx>
 #include <IntAna2d_AnaIntersection.hxx>
@@ -60,17 +58,13 @@
 #ifdef DEBUGLINES
 #include <Geom2d_Line.hxx>
 #endif
->>>>>>> accb2f351 (u)
 
 static
   gp_Ax2 DirToAx2(const gp_Pnt& P,const gp_Dir& D);
 static
   void RefineDir(gp_Dir& aDir);
-<<<<<<< HEAD
-=======
 static
   Standard_Real EstimDist(const gp_Cone& theCon1, const gp_Cone& theCon2);
->>>>>>> accb2f351 (u)
 
 //=======================================================================
 //class :  AxeOperator
@@ -265,8 +259,6 @@ gp_Ax2 DirToAx2(const gp_Pnt& P,const gp_Dir& D)
     return(gp_Ax2(P,D,gp_Dir(gp_Vec(-y,x,0.0))));
   }
 }
-<<<<<<< HEAD
-=======
 
 //=======================================================================
 //function : EstimDist
@@ -333,7 +325,6 @@ Standard_Real EstimDist(const gp_Cone& theCon1, const gp_Cone& theCon2)
   Standard_Real aDist = Max(aMinDist[0], aMinDist[1]);
   return aDist;
 }
->>>>>>> accb2f351 (u)
 //=======================================================================
 //function : IntAna_QuadQuadGeo
 //purpose  : Empty constructor
@@ -1441,38 +1432,14 @@ IntAna_QuadQuadGeo::IntAna_QuadQuadGeo(const gp_Cylinder& Cyl,
 //=======================================================================
   void IntAna_QuadQuadGeo::Perform(const gp_Cone& Con1,
                                    const gp_Cone& Con2,
-<<<<<<< HEAD
-                                   const Standard_Real Tol) 
-{
-  done=Standard_True;
-=======
                                    const Standard_Real Tol)
 {
   done = Standard_True;
->>>>>>> accb2f351 (u)
   //
   Standard_Real tg1, tg2, aDA1A2, aTol2;
   gp_Pnt aPApex1, aPApex2;
 
   Standard_Real TOL_APEX_CONF = 1.e-10;
-<<<<<<< HEAD
-  
-  //
-  tg1=Tan(Con1.SemiAngle());
-  tg2=Tan(Con2.SemiAngle());
-
-  if((tg1 * tg2) < 0.) {
-    tg2 = -tg2;
-  }
-  //
-  aTol2=Tol*Tol;
-  aPApex1=Con1.Apex();
-  aPApex2=Con2.Apex();
-  aDA1A2=aPApex1.SquareDistance(aPApex2);
-  //
-  AxeOperator A1A2(Con1.Axis(),Con2.Axis());
-  //
-=======
 
   //
   tg1 = Tan(Con1.SemiAngle());
@@ -1508,7 +1475,6 @@ IntAna_QuadQuadGeo::IntAna_QuadQuadGeo(const gp_Cylinder& Cyl,
     }
   }
 
->>>>>>> accb2f351 (u)
   // 1
   if(A1A2.Same()) {
     //-- two circles 
@@ -1556,13 +1522,8 @@ IntAna_QuadQuadGeo::IntAna_QuadQuadGeo(const gp_Cylinder& Cyl,
     }
   } //-- fin A1A2.Same
   // 2
-<<<<<<< HEAD
-  else if((Abs(tg1-tg2)<myEPSILON_ANGLE_CONE) && (A1A2.Parallel())) {
-    //-- voir AnVer12mai98
-=======
   else if((Abs(tg1-tg2) < aTolAng ) && (A1A2.Parallel())) {
 
->>>>>>> accb2f351 (u)
     Standard_Real DistA1A2=A1A2.Distance();
     gp_Dir DA1=Con1.Position().Direction();
     gp_Vec O1O2(Con1.Apex(),Con2.Apex());

@@ -1513,11 +1513,7 @@ Handle(Geom2d_Curve) ShapeConstruct_ProjectCurveOnSurface::ApproximatePCurve(con
     }
     
     GeomAPI_PointsToBSpline appr(points3d, params->Array1(), 1, 10, GeomAbs_C1, theTolerance2d);
-<<<<<<< HEAD
-    Handle(Geom_BSplineCurve) crv3d = appr.Curve();
-=======
     const Handle(Geom_BSplineCurve)& crv3d = appr.Curve();
->>>>>>> accb2f351 (u)
     Standard_Integer NbPoles = crv3d->NbPoles();
     TColgp_Array1OfPnt poles3d (1, NbPoles);
     TColgp_Array1OfPnt2d poles2d (1, NbPoles);

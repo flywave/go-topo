@@ -468,9 +468,6 @@ static void PERFORM_C0(const TopoDS_Edge& S1, const TopoDS_Edge& S2,
               if (fabs(Dstmin - sqrt(Ext.SquareDistance(ii))) < Eps)
               {
                 Pt = Ext.Point(ii);
-<<<<<<< HEAD
-                if (TRI_SOLUTION(SeqSol2, Pt))
-=======
                 // Pt - point on the curve pCurvOther/Eother, but
                 // if iE == 0 -> Eother correspond to edge S2
                 // and to edge S1 in the opposite case.
@@ -479,7 +476,6 @@ static void PERFORM_C0(const TopoDS_Edge& S1, const TopoDS_Edge& S2,
                 // else       - on edge S1, namely through SeqSol1.
                 const bool triSolutionResult = (iE == 0) ? TRI_SOLUTION(SeqSol2, Pt) : TRI_SOLUTION(SeqSol1, Pt);
                 if (triSolutionResult)
->>>>>>> accb2f351 (u)
                 {
                   // Check if the parameter does not correspond to a vertex
                   const Standard_Real t = Ext.Parameter(ii);
@@ -880,11 +876,6 @@ void BRepExtrema_DistanceSS::Perform (const TopoDS_Edge& theS1,
 
   if (!seqSol1.IsEmpty() && !seqSol2.IsEmpty())
   {
-<<<<<<< HEAD
-    theSeqSolShape1.Append(seqSol1);
-    theSeqSolShape2.Append(seqSol2);
-    myModif = Standard_True;
-=======
     BRepExtrema_SeqOfSolution::iterator anIt1 = seqSol1.begin();
     BRepExtrema_SeqOfSolution::iterator anIt2 = seqSol2.begin();
     for (; anIt1 != seqSol1.end() && anIt2 != seqSol2.end(); anIt1++, anIt2++)
@@ -898,7 +889,6 @@ void BRepExtrema_DistanceSS::Perform (const TopoDS_Edge& theS1,
         myModif = Standard_True;
       }
     }
->>>>>>> accb2f351 (u)
   }
 }
 

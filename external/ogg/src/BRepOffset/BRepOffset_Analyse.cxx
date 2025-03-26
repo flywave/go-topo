@@ -41,10 +41,7 @@
 #include <TopoDS_Vertex.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <ChFi3d.hxx>
-<<<<<<< HEAD
-=======
 #include <LocalAnalysis_SurfaceContinuity.hxx>
->>>>>>> accb2f351 (u)
 
 static void CorrectOrientationOfTangent(gp_Vec& TangVec,
                                         const TopoDS_Vertex& aVertex,
@@ -54,15 +51,12 @@ static void CorrectOrientationOfTangent(gp_Vec& TangVec,
   if (aVertex.IsSame(Vlast))
     TangVec.Reverse();
 }
-<<<<<<< HEAD
-=======
 
 static Standard_Boolean CheckMixedContinuity (const TopoDS_Edge&  theEdge,
                                               const TopoDS_Face&  theFace1,
                                               const TopoDS_Face&  theFace2,
                                               const Standard_Real theAngTol);
 
->>>>>>> accb2f351 (u)
 //=======================================================================
 //function : BRepOffset_Analyse
 //purpose  : 
@@ -118,12 +112,6 @@ static void EdgeAnalyse(const TopoDS_Edge&         E,
   }
   else
   {
-<<<<<<< HEAD
-    if (ChFi3d::IsTangentFaces(E, F1, F2)) //weak condition
-      ConnectType = ChFiDS_Tangential;
-    else
-      ConnectType = ChFi3d::DefineConnectType(E, F1, F2, SinTol, Standard_False);
-=======
     Standard_Boolean isTwoSplines = (aSurfType1 == GeomAbs_BSplineSurface || aSurfType1 == GeomAbs_BezierSurface) &&
                                     (aSurfType2 == GeomAbs_BSplineSurface || aSurfType2 == GeomAbs_BezierSurface);
     Standard_Boolean isMixedConcavity = Standard_False;
@@ -148,14 +136,11 @@ static void EdgeAnalyse(const TopoDS_Edge&         E,
     {
       ConnectType = ChFiDS_Mixed;
     }
->>>>>>> accb2f351 (u)
   }
    
   I.Type(ConnectType);
   LI.Append(I);
 }
-<<<<<<< HEAD
-=======
 //=======================================================================
 //function : CheckMixedConcavity
 //purpose  : 
@@ -289,7 +274,6 @@ Standard_Boolean CheckMixedContinuity (const TopoDS_Edge&  theEdge,
   return aMixedCont;
 
 }
->>>>>>> accb2f351 (u)
 
 //=======================================================================
 //function : BuildAncestors

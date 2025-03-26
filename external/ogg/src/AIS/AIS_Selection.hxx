@@ -34,16 +34,6 @@ public:
 
   //! creates a new selection.
   Standard_EXPORT AIS_Selection();
-<<<<<<< HEAD
-  
-  //! removes all the object of the selection.
-  Standard_EXPORT virtual void Clear();
-  
-  //! if the object is not yet in the selection, it will be added.
-  //! if the object is already in the selection, it will be removed.
-  Standard_EXPORT virtual AIS_SelectStatus Select (const Handle(SelectMgr_EntityOwner)& theObject);
-  
-=======
 
   //! removes all the object of the selection.
   Standard_EXPORT virtual void Clear();
@@ -60,18 +50,11 @@ public:
                                                    const AIS_SelectionScheme theSelScheme,
                                                    const Standard_Boolean theIsDetected);
 
->>>>>>> accb2f351 (u)
   //! the object is always add int the selection.
   //! faster when the number of objects selected is great.
   Standard_EXPORT virtual AIS_SelectStatus AddSelect (const Handle(SelectMgr_EntityOwner)& theObject);
 
   //! clears the selection and adds the object in the selection.
-<<<<<<< HEAD
-  virtual void ClearAndSelect (const Handle(SelectMgr_EntityOwner)& theObject)
-  {
-    Clear();
-    Select (theObject);
-=======
   //! @param[in] theObject element to change selection state
   //! @param[in] theFilter context filter
   //! @param[in] theIsDetected flag of object detection
@@ -81,7 +64,6 @@ public:
   {
     Clear();
     Select (theObject, theFilter, AIS_SelectionScheme_Add, theIsDetected);
->>>>>>> accb2f351 (u)
   }
 
   //! checks if the object is in the selection.

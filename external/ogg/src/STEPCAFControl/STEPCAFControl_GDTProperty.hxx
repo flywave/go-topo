@@ -99,15 +99,9 @@ public:
   Standard_EXPORT static Handle(StepDimTol_HArray1OfDatumReferenceModifier) GetDatumRefModifiers(const XCAFDimTolObjects_DatumModifiersSequence& theModifiers,
                                                                                                  const XCAFDimTolObjects_DatumModifWithValue& theModifWithVal,
                                                                                                  const Standard_Real theValue,
-<<<<<<< HEAD
-                                                                                                 const StepBasic_Unit theUnit);
-
-  Standard_EXPORT static Handle(StepVisual_TessellatedGeometricSet) GetTessellation(const TopoDS_Shape theShape);
-=======
                                                                                                  const StepBasic_Unit& theUnit);
 
   Standard_EXPORT static Handle(StepVisual_TessellatedGeometricSet) GetTessellation(const TopoDS_Shape& theShape);
->>>>>>> accb2f351 (u)
 
 };
 

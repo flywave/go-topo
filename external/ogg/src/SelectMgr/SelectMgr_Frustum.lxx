@@ -869,52 +869,27 @@ Standard_Boolean SelectMgr_Frustum<N>::hasCircleOverlap (const Standard_Real the
   const gp_Pnt aCenterProject (aCoefA * aTCenter,
                                aCoefB * aTCenter,
                                aCoefC * aTCenter);
-<<<<<<< HEAD
-  if (isDotInside (aCenterProject, aVertices))
-  {
-    return true;
-  }
-
-  Standard_Boolean isInside = true;
-=======
 
   const Standard_Boolean isCenterInside = isDotInside (aCenterProject, aVertices);
 
   Standard_Boolean isInside = false;
->>>>>>> accb2f351 (u)
   for (Standard_Integer anIdx = aVertices.Lower(); anIdx <= aVertices.Upper(); anIdx++)
   {
     if (aVertices.Value (anIdx).Distance (aCenterProject) > theRadius)
     {
-<<<<<<< HEAD
-      isInside = false;
-=======
       isInside = true;
->>>>>>> accb2f351 (u)
       break;
     }
   }
 
   if (theInside != NULL)
   {
-<<<<<<< HEAD
-    *theInside = false;
-  }
-
-  if (!theIsFilled && isInside)
-  {
-    return false;
-  }
-
-  return isInside;
-=======
     *theInside = isInside && isCenterInside;
   }
 
   return theIsFilled
        ? !isInside || (isCenterInside && isInside)
        : isInside && isCenterInside;
->>>>>>> accb2f351 (u)
 }
 
 //=======================================================================

@@ -39,11 +39,7 @@
 
 #define NbControl 23
 
-<<<<<<< HEAD
-static void ContourProperties(TopoDS_Wire wire,
-=======
 static void ContourProperties(const TopoDS_Wire& wire,
->>>>>>> accb2f351 (u)
 			      Standard_Real& countourArea,
 			      Standard_Real& countourLength)
 {
@@ -53,14 +49,9 @@ static void ContourProperties(const TopoDS_Wire& wire,
   gp_XYZ prev, cont;
   
   for (BRepTools_WireExplorer exp(wire); exp.More(); exp.Next()) {
-<<<<<<< HEAD
-    TopoDS_Edge Edge = exp.Current();  nbe++;
-      
-=======
     const TopoDS_Edge& Edge = exp.Current();
     nbe++;
 
->>>>>>> accb2f351 (u)
     Standard_Real First, Last;
     Handle(Geom_Curve) c3d;
     ShapeAnalysis_Edge sae;

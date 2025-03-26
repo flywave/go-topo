@@ -1992,11 +1992,7 @@ static Standard_Integer OCC26270(Draw_Interpretor& theDI,
       if (!aRes.IsNull())
       {
         BRepBuilderAPI_MakeFace b_face1(aRes, Precision::Confusion());
-<<<<<<< HEAD
-        TopoDS_Face bsp_face1 = b_face1.Face();
-=======
         const TopoDS_Face& bsp_face1 = b_face1.Face();
->>>>>>> accb2f351 (u)
         DBRep::Set(theArgVal[2], bsp_face1);
       }
     }
@@ -4363,8 +4359,6 @@ static Standard_Integer QACheckBends(Draw_Interpretor& theDI,
   return 0;
 }
 
-<<<<<<< HEAD
-=======
 static Standard_Integer OCC26441(Draw_Interpretor& theDi, Standard_Integer theNbArgs, const char** theArgVec)
 {
   if (theNbArgs < 3)
@@ -4479,7 +4473,6 @@ static Standard_Integer OCC26441(Draw_Interpretor& theDi, Standard_Integer theNb
 
   return 0;
 }
->>>>>>> accb2f351 (u)
 
 
 void QABugs::Commands_20(Draw_Interpretor& theCommands) {
@@ -4587,13 +4580,10 @@ void QABugs::Commands_20(Draw_Interpretor& theCommands) {
     "QACheckBends curve [CosMaxAngle [theNbPoints]]",
     __FILE__,
     QACheckBends, group);
-<<<<<<< HEAD
-=======
   theCommands.Add("OCC26441",
     "OCC26441 shape ref_shape [tol [all_diff 0/1]] \nif all_diff = 0, only icreasing tolerances is considered" ,
     __FILE__,
     OCC26441, group);
->>>>>>> accb2f351 (u)
 
   return;
 }

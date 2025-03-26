@@ -131,11 +131,6 @@ static void TrimTolerances (const TopoDS_Shape& shape,
   }
 }
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> accb2f351 (u)
 //=======================================================================
 //function : Transfer
 //purpose  : 
@@ -199,18 +194,11 @@ Handle(Transfer_Binder) IGESToBRep_Actor::Transfer
     
     // fixing shape
     Handle(Standard_Transient) info;
-<<<<<<< HEAD
-    shape = XSAlgo::AlgoContainer()->ProcessShape( shape, theeps, CAS.GetMaxTol(), 
-                                                   "read.iges.resource.name", 
-                                                   "read.iges.sequence", info,
-                                                   aPS.Next());
-=======
     shape = XSAlgo::AlgoContainer()->ProcessShape(shape, theeps, CAS.GetMaxTol(),
                                                   "read.iges.resource.name",
                                                   "read.iges.sequence",
                                                   info, mymodel->ReShape(),
                                                   aPS.Next());
->>>>>>> accb2f351 (u)
     XSAlgo::AlgoContainer()->MergeTransferInfo(TP, info, nbTPitems);
   }
 

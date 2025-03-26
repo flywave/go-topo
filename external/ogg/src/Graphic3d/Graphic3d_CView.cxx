@@ -349,11 +349,7 @@ void Graphic3d_CView::SetComputedMode (const Standard_Boolean theMode)
 
   for (Graphic3d_MapOfStructure::Iterator aDispStructIter (myStructsDisplayed); aDispStructIter.More(); aDispStructIter.Next())
   {
-<<<<<<< HEAD
-    Handle(Graphic3d_Structure) aStruct  = aDispStructIter.Key();
-=======
     const Handle(Graphic3d_Structure)& aStruct  = aDispStructIter.Key();
->>>>>>> accb2f351 (u)
     const Graphic3d_TypeOfAnswer anAnswer = acceptDisplay (aStruct->Visual());
     if (anAnswer != Graphic3d_TOA_COMPUTE)
     {

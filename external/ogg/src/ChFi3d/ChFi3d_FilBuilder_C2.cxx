@@ -321,11 +321,7 @@ void ChFi3d_FilBuilder::PerformTwoCorner(const Standard_Integer Index)
     parCP2 = CP2.ParameterOnArc();
     gp_Pnt tst1 = Hpivot->Value(parCP1);
     gp_Pnt tst2 = Hpivot->Value(parCP2);
-<<<<<<< HEAD
-    sameparam = tst1.Distance(tst2) <= tolesp;
-=======
     sameparam = tst1.Distance(tst2) <= tolapp3d;
->>>>>>> accb2f351 (u)
   }
   Handle(BRepAdaptor_Surface) HFaCo = new BRepAdaptor_Surface();
   Handle(BRepAdaptor_Surface) HFaPiv;
@@ -481,30 +477,18 @@ void ChFi3d_FilBuilder::PerformTwoCorner(const Standard_Integer Index)
 #ifdef OCCT_DEBUG
 	ChFi3d_InitChron(ch ); // init perf filling
 #endif 
-<<<<<<< HEAD
-	B1 = ChFi3d_mkbound(surf1,p2df1,p2da1,tolesp,2.e-4);
-	B2 = ChFi3d_mkbound(surf2,p2df2,p2da2,tolesp,2.e-4);
-	Handle(Geom2d_Curve) PCurveOnFace;
-	Bfac = ChFi3d_mkbound(HFaCo,PCurveOnFace,Sens1,p2dfac1,v2dfac1,
-			      Sens2,p2dfac2,v2dfac2,tolesp,2.e-4);
-=======
 	B1 = ChFi3d_mkbound(surf1,p2df1,p2da1,tolapp3d,2.e-4);
 	B2 = ChFi3d_mkbound(surf2,p2df2,p2da2,tolapp3d,2.e-4);
 	Handle(Geom2d_Curve) PCurveOnFace;
 	Bfac = ChFi3d_mkbound(HFaCo,PCurveOnFace,Sens1,p2dfac1,v2dfac1,
 			      Sens2,p2dfac2,v2dfac2,tolapp3d,2.e-4);
->>>>>>> accb2f351 (u)
 	GeomFill_ConstrainedFilling fil(8,20);
 	if(sameparam) {
 	  fil.Init(Bfac,B2,B1,1);
 	}
 	else {
 	  Handle(Adaptor3d_Curve) HPivTrim = Hpivot->Trim(Min(parCP1,parCP2),Max(parCP1,parCP2),tolesp);
-<<<<<<< HEAD
-	  Bpiv = new GeomFill_SimpleBound(HPivTrim,tolesp,2.e-4);
-=======
 	  Bpiv = new GeomFill_SimpleBound(HPivTrim,tolapp3d,2.e-4);
->>>>>>> accb2f351 (u)
 	  fil.Init(Bfac,B2,Bpiv,B1,1);
 	  BRepAdaptor_Curve2d pcpivot;
 	  gp_Vec dArc,dcf;
@@ -613,22 +597,14 @@ void ChFi3d_FilBuilder::PerformTwoCorner(const Standard_Integer Index)
 	ChFi3d_ComputeArete(Pf1,pp1,Pf2,pp2,
 			    DStr.Surface(coin->Surf()).Surface(),C3d,
 			    corner->ChangeFirstPCurve(),P1deb,P2deb,
-<<<<<<< HEAD
-			    tolesp,tol2d,tolreached,0);
-=======
 			    tolapp3d,tol2d,tolreached,0);
->>>>>>> accb2f351 (u)
 	Standard_Real par1 = sd1->Interference(IFaArc1).Parameter(isfirst1);
 	pp1 = sd1->Interference(IFaCo1).PCurveOnSurf()->Value(par1);
 	pp2 = sd1->Interference(IFaArc1).PCurveOnSurf()->Value(par1);
 	Standard_Real tolr1;
 	ChFi3d_ComputePCurv(C3d,pp1,pp2,st1->ChangePCurve(isfirst1),
 			    DStr.Surface(sd1->Surf()).Surface(),
-<<<<<<< HEAD
-			    P1deb,P2deb,tolesp,tolr1);
-=======
 			    P1deb,P2deb,tolapp3d,tolr1);
->>>>>>> accb2f351 (u)
 	tolreached = Max(tolreached,tolr1);
 	TopOpeBRepDS_Curve Tcurv1(C3d,tolreached);
 	Icf = DStr.AddCurve(Tcurv1);
@@ -648,22 +624,14 @@ void ChFi3d_FilBuilder::PerformTwoCorner(const Standard_Integer Index)
 	ChFi3d_ComputeArete(Pl1,pp1,Pl2,pp2,
 			    DStr.Surface(coin->Surf()).Surface(),C3d,
 			    corner->ChangeLastPCurve(),P1fin,P2fin,
-<<<<<<< HEAD
-			    tolesp,tol2d,tolreached,0);
-=======
 			    tolapp3d,tol2d,tolreached,0);
->>>>>>> accb2f351 (u)
 	Standard_Real par2 = sd2->Interference(IFaArc2).Parameter(isfirst2);
 	pp1 = sd2->Interference(IFaCo2).PCurveOnSurf()->Value(par2);
 	pp2 = sd2->Interference(IFaArc2).PCurveOnSurf()->Value(par2);
 	Standard_Real tolr2;
 	ChFi3d_ComputePCurv(C3d,pp1,pp2,st2->ChangePCurve(isfirst2),
 			    DStr.Surface(sd2->Surf()).Surface(),
-<<<<<<< HEAD
-			    P1deb,P2deb,tolesp,tolr2);
-=======
 			    P1deb,P2deb,tolapp3d,tolr2);
->>>>>>> accb2f351 (u)
 	tolreached = Max(tolreached,tolr2);
 	TopOpeBRepDS_Curve Tcurv2(C3d,tolreached);
 	Icl = DStr.AddCurve(Tcurv2);
@@ -764,11 +732,7 @@ void ChFi3d_FilBuilder::PerformTwoCorner(const Standard_Integer Index)
       Handle(Geom_Surface) surfsam = DStr.Surface(sdsam->Surf()).Surface();
       Handle(GeomAdaptor_Surface) Hsurfsam = new GeomAdaptor_Surface(surfsam);
       Handle(Geom2d_Curve) pcsurfsam;
-<<<<<<< HEAD
-      Bsam = ChFi3d_mkbound(Hsurfsam,pcsurfsam,ppopsam,ppcosam,tolesp,2.e-4);
-=======
       Bsam = ChFi3d_mkbound(Hsurfsam,pcsurfsam,ppopsam,ppcosam,tolapp3d,2.e-4);
->>>>>>> accb2f351 (u)
       Standard_Real upcopdif = sddif->Interference(ifaopdif).Parameter(isfirstdif);
       gp_Pnt2d ppopdif = 
 	sddif->Interference(ifaopdif).PCurveOnSurf()->Value(upcopdif);
@@ -777,11 +741,7 @@ void ChFi3d_FilBuilder::PerformTwoCorner(const Standard_Integer Index)
       Handle(Geom_Surface) surfdif = DStr.Surface(sddif->Surf()).Surface();
       Handle(GeomAdaptor_Surface) Hsurfdif = new GeomAdaptor_Surface(surfdif);
       Handle(Geom2d_Curve) pcsurfdif;
-<<<<<<< HEAD
-      Bdif = ChFi3d_mkbound(Hsurfdif,pcsurfdif,ppcodif,ppopdif,tolesp,2.e-4);
-=======
       Bdif = ChFi3d_mkbound(Hsurfdif,pcsurfdif,ppcodif,ppopdif,tolapp3d,2.e-4);
->>>>>>> accb2f351 (u)
       gp_Pnt2d ppfacsam,ppfacdif;
       gp_Pnt PPfacsam,PPfacdif;
       gp_Vec VVfacsam,VVfacdif;
@@ -813,11 +773,7 @@ void ChFi3d_FilBuilder::PerformTwoCorner(const Standard_Integer Index)
       Handle(Geom2d_Curve) pcFopsam = ChFi3d_BuildPCurve(HBRFopsam,
 							 ppfacsam,VVfacsam,
 							 ppfacdif,VVfacdif,1);
-<<<<<<< HEAD
-      Bfac = ChFi3d_mkbound(HBRFopsam,pcFopsam,tolesp,2.e-4);
-=======
       Bfac = ChFi3d_mkbound(HBRFopsam,pcFopsam,tolapp3d,2.e-4);
->>>>>>> accb2f351 (u)
       GeomFill_ConstrainedFilling fil(8,20);
       fil.Init(Bsam,Bdif,Bfac,1);
 #if 0
@@ -871,17 +827,10 @@ void ChFi3d_FilBuilder::PerformTwoCorner(const Standard_Integer Index)
       ChFi3d_ComputeArete(Pf1,pp1,Pf2,pp2,
 			  DStr.Surface(coin->Surf()).Surface(),C3d,
 			  corner->ChangeFirstPCurve(),P1deb,P2deb,
-<<<<<<< HEAD
-			  tolesp,tol2d,tolreached,0);
-      Standard_Real tolr1;
-      Handle(GeomAdaptor_Curve) HC3d = new GeomAdaptor_Curve(C3d);
-      ChFi3d_SameParameter(HC3d,pcFopsam,HBRFopsam,tolesp,tolr1);
-=======
 			  tolapp3d,tol2d,tolreached,0);
       Standard_Real tolr1;
       Handle(GeomAdaptor_Curve) HC3d = new GeomAdaptor_Curve(C3d);
       ChFi3d_SameParameter(HC3d,pcFopsam,HBRFopsam,tolapp3d,tolr1);
->>>>>>> accb2f351 (u)
       tolreached = Max(tolreached,tolr1);
       TopOpeBRepDS_Curve Tcurv1(C3d,tolreached);
       Icf = DStr.AddCurve(Tcurv1);
@@ -909,17 +858,10 @@ void ChFi3d_FilBuilder::PerformTwoCorner(const Standard_Integer Index)
       ChFi3d_ComputeArete(Pl1,pp1,Pl2,pp2,
 			  DStr.Surface(coin->Surf()).Surface(),C3d,
 			  corner->ChangeLastPCurve(),P1fin,P2fin,
-<<<<<<< HEAD
-			  tolesp,tol2d,tolreached,0);
-      Standard_Real tolr2;
-      HC3d->Load(C3d);
-      ChFi3d_SameParameter(HC3d,pcsurfdif,Hsurfdif,tolesp,tolr2);
-=======
         tolapp3d,tol2d,tolreached,0);
       Standard_Real tolr2;
       HC3d->Load(C3d);
       ChFi3d_SameParameter(HC3d,pcsurfdif,Hsurfdif,tolapp3d,tolr2);
->>>>>>> accb2f351 (u)
       tolreached = Max(tolreached,tolr2);
       TopOpeBRepDS_Curve Tcurv2(C3d,tolreached);
       Icl = DStr.AddCurve(Tcurv2);

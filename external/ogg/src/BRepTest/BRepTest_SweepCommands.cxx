@@ -443,11 +443,7 @@ Standard_Integer gener(Draw_Interpretor&, Standard_Integer n, const char** a)
 //purpose  : 
 //=======================================================================
 
-<<<<<<< HEAD
-Standard_Integer thrusections(Draw_Interpretor&, Standard_Integer n, const char** a)
-=======
 Standard_Integer thrusections(Draw_Interpretor& di, Standard_Integer n, const char** a)
->>>>>>> accb2f351 (u)
 {
   if (n < 6) return 1;
 
@@ -529,9 +525,6 @@ Standard_Integer thrusections(Draw_Interpretor& di, Standard_Integer n, const ch
       BRepTest_Objects::SetHistory(Generator->Wires(), *Generator);
   }
   else {
-<<<<<<< HEAD
-    std::cout << "Algorithm is not done" << std::endl;
-=======
     BRepFill_ThruSectionErrorStatus aStatus = Generator->GetStatus();
     switch (aStatus)
     {
@@ -556,7 +549,6 @@ Standard_Integer thrusections(Draw_Interpretor& di, Standard_Integer n, const ch
     default:
       break;
     }
->>>>>>> accb2f351 (u)
   }
 
   return 0;

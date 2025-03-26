@@ -148,11 +148,7 @@ void Message_Report::ActivateInMessenger (const Standard_Boolean toActivate,
     Message_SequenceOfPrinters aPrintersToRemove;
     for (Message_SequenceOfPrinters::Iterator anIterator (aMessenger->Printers()); anIterator.More(); anIterator.Next())
     {
-<<<<<<< HEAD
-      const Handle(Message_Printer) aPrinter = anIterator.Value();
-=======
       const Handle(Message_Printer)& aPrinter = anIterator.Value();
->>>>>>> accb2f351 (u)
       if (aPrinter->IsKind(STANDARD_TYPE (Message_PrinterToReport)) &&
           Handle(Message_PrinterToReport)::DownCast (aPrinter)->Report() == this)
         aPrintersToRemove.Append (aPrinter);

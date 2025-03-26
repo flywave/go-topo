@@ -667,11 +667,7 @@ Standard_Integer bopcurves (Draw_Interpretor& di,
     for (Standard_Integer i=1; i<=aNbCurves; i++) {
       const IntTools_Curve& anIC=aSCs(i);
 
-<<<<<<< HEAD
-      Handle (Geom_Curve)  aC3D = anIC.Curve();
-=======
       const Handle (Geom_Curve)&  aC3D = anIC.Curve();
->>>>>>> accb2f351 (u)
 
       if (aC3D.IsNull()) {
         di << " has Null 3d curve# " << i << "\n";
@@ -686,13 +682,8 @@ Standard_Integer bopcurves (Draw_Interpretor& di,
       DrawTrSurf::Set(nameC, aC3D);
       di << nameC << " ";
       //
-<<<<<<< HEAD
-      Handle(Geom2d_Curve) aPC1 = anIC.FirstCurve2d();
-      Handle(Geom2d_Curve) aPC2 = anIC.SecondCurve2d();
-=======
       const Handle(Geom2d_Curve)& aPC1 = anIC.FirstCurve2d();
       const Handle(Geom2d_Curve)& aPC2 = anIC.SecondCurve2d();
->>>>>>> accb2f351 (u)
       //
       if (!aPC1.IsNull() || !aPC2.IsNull()) {
         di << "(";

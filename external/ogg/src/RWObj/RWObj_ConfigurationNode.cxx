@@ -33,13 +33,7 @@ namespace
 //=======================================================================
 RWObj_ConfigurationNode::RWObj_ConfigurationNode() :
   DE_ConfigurationNode()
-<<<<<<< HEAD
-{
-  UpdateLoad();
-}
-=======
 {}
->>>>>>> accb2f351 (u)
 
 //=======================================================================
 // function : RWObj_ConfigurationNode
@@ -49,10 +43,6 @@ RWObj_ConfigurationNode::RWObj_ConfigurationNode(const Handle(RWObj_Configuratio
   :DE_ConfigurationNode(theNode)
 {
   InternalParameters = theNode->InternalParameters;
-<<<<<<< HEAD
-  UpdateLoad();
-=======
->>>>>>> accb2f351 (u)
 }
 
 //=======================================================================
