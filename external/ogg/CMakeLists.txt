@@ -227,8 +227,6 @@ endforeach()
 list (REMOVE_DUPLICATES RAW_BUILD_TOOLKITS)
 set (BUILD_TOOLKITS ${RAW_BUILD_TOOLKITS})
 
-list (APPEND BUILD_TOOLKITS TKOffset TKFillet TKFeat TKXMesh)
-
 message (STATUS "Info. ${BUILD_TOOLKITS}")
 
 # include the patched or original list of definitions and flags
