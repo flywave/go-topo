@@ -1,3 +1,3 @@
 module github.com/flywave/go-topo
 
-go 1.12
+go 1.17
