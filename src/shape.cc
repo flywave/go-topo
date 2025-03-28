@@ -10,29 +10,40 @@
 #include "vertex.hh"
 #include "wire.hh"
 
-#include <BRepGProp.hxx>
-#include <GProp_GProps.hxx>
+#include <BRepAdaptor_Curve.hxx>
+#include <BRepAdaptor_Surface.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_FindPlane.hxx>
 #include <BRepBuilderAPI_GTransform.hxx>
+#include <BRepBuilderAPI_NurbsConvert.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepCheck_Analyzer.hxx>
+#include <BRepExtrema_DistShapeShape.hxx>
+#include <BRepGProp.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <BRepTools.hxx>
 #include <BRepTools_WireExplorer.hxx>
 #include <BRep_Tool.hxx>
 #include <Bnd_Box.hxx>
+#include <GProp_GProps.hxx>
+#include <GeomAbs_CurveType.hxx>
+#include <GeomAbs_SurfaceType.hxx>
 #include <Geom_Line.hxx>
 #include <Geom_Plane.hxx>
 #include <Geom_TrimmedCurve.hxx>
 #include <Poly.hxx>
 #include <Poly_Triangulation.hxx>
+#include <ShapeCustom.hxx>
+#include <ShapeCustom_BSplineRestriction.hxx>
+#include <ShapeCustom_RestrictionParameters.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <ShapeFix_ShapeTolerance.hxx>
+#include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <TColStd_Array1OfReal.hxx>
 #include <TColgp_Array1OfPnt2d.hxx>
 #include <TShort_Array1OfShortReal.hxx>
+#include <TopAbs.hxx>
 #include <TopExp.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopoDS.hxx>
@@ -40,9 +51,112 @@
 
 #include <limits>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace flywave {
 namespace topo {
+
+namespace {
+std::pair<double, std::pair<gp_Pnt, gp_Pnt>>
+distance_with_points(const TopoDS_Shape &shape1, const TopoDS_Shape &shape2) {
+  if (shape1.IsNull() || shape2.IsNull()) {
+    throw std::invalid_argument("Cannot compute distance for null shapes");
+  }
+
+  BRepExtrema_DistShapeShape distTool(shape1, shape2);
+
+  if (!distTool.IsDone() || distTool.NbSolution() == 0) {
+    throw std::runtime_error("Distance computation failed");
+  }
+
+  return {distTool.Value(),
+          {distTool.PointOnShape1(1), distTool.PointOnShape2(1)}};
+}
+
+void compute_properties(const TopoDS_Shape &shape, GProp_GProps &props) {
+  switch (shape.ShapeType()) {
+  case TopAbs_SOLID:
+  case TopAbs_COMPSOLID:
+    BRepGProp::VolumeProperties(shape, props);
+    break;
+  case TopAbs_FACE:
+  case TopAbs_SHELL:
+    BRepGProp::SurfaceProperties(shape, props);
+    break;
+  case TopAbs_EDGE:
+  case TopAbs_WIRE:
+    BRepGProp::LinearProperties(shape, props);
+    break;
+  default:
+    throw std::runtime_error("Unsupported shape type for mass calculation");
+  }
+}
+
+const std::string &get_geom_type(const TopoDS_Shape &shape) {
+  static const std::unordered_map<TopAbs_ShapeEnum, std::string> geomLUT = {
+      {TopAbs_VERTEX, "Vertex"},       {TopAbs_WIRE, "Wire"},
+      {TopAbs_SHELL, "Shell"},         {TopAbs_SOLID, "Solid"},
+      {TopAbs_COMPSOLID, "CompSolid"}, {TopAbs_COMPOUND, "Compound"}};
+
+  static const std::unordered_map<GeomAbs_CurveType, std::string> edgeGeomLUT =
+      {{GeomAbs_Line, "LINE"},
+       {GeomAbs_Circle, "CIRCLE"},
+       {GeomAbs_Ellipse, "ELLIPSE"},
+       {GeomAbs_Hyperbola, "HYPERBOLA"},
+       {GeomAbs_Parabola, "PARABOLA"},
+       {GeomAbs_BezierCurve, "BEZIER"},
+       {GeomAbs_BSplineCurve, "BSPLINE"},
+       {GeomAbs_OffsetCurve, "OFFSET"},
+       {GeomAbs_OtherCurve, "OTHER"}};
+
+  static const std::unordered_map<GeomAbs_SurfaceType, std::string>
+      faceGeomLUT = {{GeomAbs_Plane, "PLANE"},
+                     {GeomAbs_Cylinder, "CYLINDER"},
+                     {GeomAbs_Cone, "CONE"},
+                     {GeomAbs_Sphere, "SPHERE"},
+                     {GeomAbs_Torus, "TORUS"},
+                     {GeomAbs_BezierSurface, "BEZIER"},
+                     {GeomAbs_BSplineSurface, "BSPLINE"},
+                     {GeomAbs_SurfaceOfRevolution, "REVOLUTION"},
+                     {GeomAbs_SurfaceOfExtrusion, "EXTRUSION"},
+                     {GeomAbs_OffsetSurface, "OFFSET"},
+                     {GeomAbs_OtherSurface, "OTHER"}};
+
+  TopAbs_ShapeEnum shapeType = shape.ShapeType();
+
+  // 简单形状类型直接返回
+  auto it = geomLUT.find(shapeType);
+  if (it != geomLUT.end()) {
+    return it->second;
+  }
+
+  // 处理边类型
+  if (shapeType == TopAbs_EDGE) {
+    BRepAdaptor_Curve curve(TopoDS::Edge(shape));
+    auto curveType = curve.GetType();
+    return edgeGeomLUT.at(curveType);
+  }
+
+  // 处理面类型
+  if (shapeType == TopAbs_FACE) {
+    BRepAdaptor_Surface surface(TopoDS::Face(shape));
+    auto surfaceType = surface.GetType();
+    return faceGeomLUT.at(surfaceType);
+  }
+
+  throw std::runtime_error("Unknown shape type");
+}
+} // namespace
+
+struct TopoDS_ShapeHasher {
+  std::size_t operator()(const TopoDS_Shape &shape) const {
+    if (shape.IsNull()) {
+      return 0;
+    }
+    // 基于底层 TShape 的地址计算哈希
+    return std::hash<const void *>{}(shape.TShape().get());
+  }
+};
 
 shape::shape()
     : _shape(), _surface_colour(Quantity_NOC_WHITE),
@@ -138,7 +252,7 @@ shape shape::copy(bool deep) const {
     }
     return shape{};
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -226,7 +340,7 @@ int shape::transform_impl(gp_Trsf &trans) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -254,7 +368,7 @@ int shape::translate(gp_Vec delta) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -265,6 +379,8 @@ int shape::translate(gp_Vec delta) {
   }
   return 1;
 }
+
+bool shape::is_same(const shape &o) const { return _shape.IsSame(o._shape); }
 
 int shape::rotate(double angle, gp_Pnt p1, gp_Pnt p2) {
   try {
@@ -283,7 +399,7 @@ int shape::rotate(double angle, gp_Pnt p1, gp_Pnt p2) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -310,7 +426,7 @@ int shape::rotate(double angle, gp_Ax1 a) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -337,7 +453,7 @@ int shape::rotate(gp_Quaternion R) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -364,7 +480,7 @@ int shape::scale(gp_Pnt pnt, double scale) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -393,7 +509,7 @@ int shape::mirror(gp_Pnt pnt, gp_Pnt nor) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -420,7 +536,7 @@ int shape::mirror(gp_Ax1 a) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -447,7 +563,7 @@ int shape::mirror(gp_Ax2 a) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -644,6 +760,97 @@ bool shape::fix_shape() {
   return aChecker.IsValid();
 }
 
+boost::optional<compound> shape::ancestors(const shape &self,
+                                           const shape &shape,
+                                           TopAbs_ShapeEnum kind) const {
+  if (self.is_null() || shape.is_null()) {
+    return boost::none;
+  }
+
+  TopTools_IndexedDataMapOfShapeListOfShape shapeMap;
+  TopExp::MapShapesAndAncestors(shape, self.value().ShapeType(), kind,
+                                shapeMap);
+
+  if (!shapeMap.Contains(self)) {
+    return boost::none;
+  }
+
+  BRep_Builder builder;
+  TopoDS_Compound result;
+  builder.MakeCompound(result);
+  const TopTools_ListOfShape &ancestors = shapeMap.FindFromKey(self);
+
+  TopTools_ListIteratorOfListOfShape it(ancestors);
+  for (; it.More(); it.Next()) {
+    builder.Add(result, it.Value());
+  }
+
+  return boost::make_optional<compound>(result);
+}
+
+boost::optional<compound> shape::siblings(const shape &self, const shape &shape,
+                                          TopAbs_ShapeEnum kind,
+                                          int level) const {
+  TopTools_IndexedDataMapOfShapeListOfShape shapeMap;
+  TopTools_MapOfShape exclude;
+  BRep_Builder builder;
+  TopoDS_Compound result;
+  builder.MakeCompound(result);
+
+  TopExp::MapShapesAndAncestors(shape, kind, self.value().ShapeType(),
+                                shapeMap);
+
+  std::function<std::vector<TopoDS_Shape>(const std::vector<TopoDS_Shape> &,
+                                          int)>
+      findSiblings;
+  findSiblings = [&](const std::vector<TopoDS_Shape> &shapes,
+                     int currentLevel) {
+    std::unordered_set<TopoDS_Shape, TopoDS_ShapeHasher> siblingsSet;
+
+    for (const auto &s : shapes) {
+      exclude.Add(s);
+    }
+
+    for (const auto &s : shapes) {
+      TopTools_IndexedMapOfShape entities;
+      TopExp::MapShapes(s, kind, entities);
+
+      for (int i = 1; i <= entities.Extent(); ++i) {
+        const TopoDS_Shape &entity = entities(i);
+        if (shapeMap.Contains(entity)) {
+          const TopTools_ListOfShape &sharingShapes =
+              shapeMap.FindFromKey(entity);
+          TopTools_ListIteratorOfListOfShape sit(sharingShapes);
+          for (; sit.More(); sit.Next()) {
+            const TopoDS_Shape &sibling = sit.Value();
+            if (!exclude.Contains(sibling)) {
+              siblingsSet.insert(sibling);
+            }
+          }
+        }
+      }
+    }
+
+    std::vector<TopoDS_Shape> siblingsVec(siblingsSet.begin(),
+                                          siblingsSet.end());
+
+    if (currentLevel > 1 && !siblingsVec.empty()) {
+      return findSiblings(siblingsVec, currentLevel - 1);
+    }
+
+    return siblingsVec;
+  };
+
+  std::vector<TopoDS_Shape> initialShapes = {self};
+  auto siblings = findSiblings(initialShapes, level);
+
+  for (const auto &s : siblings) {
+    builder.Add(result, s);
+  }
+
+  return boost::make_optional<compound>(result);
+}
+
 void shape::set_txture_map_type(texture_mapping_rule t) {
   _txture_map_type = t;
   if (_txture_map_type == texture_cube) {
@@ -709,7 +916,8 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
       if (hasSeam) {
         TColStd_Array1OfReal norms(1, mesh->MapNormalArray()->Length());
         for (Standard_Integer i = 1; i <= mesh->NbNodes() * 3; i += 3) {
-          gp_Dir dir(mesh->MapNormalArray()->Value(i), mesh->MapNormalArray()->Value(i + 1),
+          gp_Dir dir(mesh->MapNormalArray()->Value(i),
+                     mesh->MapNormalArray()->Value(i + 1),
                      mesh->MapNormalArray()->Value(i + 2));
           if (faceReversed)
             dir.Reverse();
@@ -1064,6 +1272,13 @@ std::string shape::shape_type() const {
   return type;
 }
 
+std::string shape::geom_type() const {
+  if (_shape.IsNull()) {
+    return "";
+  }
+  return get_geom_type(_shape);
+}
+
 void shape::build_maps() {
   TopExp::MapShapes(_shape, TopAbs_VERTEX, _vmap);
   TopExp::MapShapes(_shape, TopAbs_EDGE, _emap);
@@ -1146,5 +1361,181 @@ void shape::get_box_texture_coordinate(const gp_Pnt &p, const gp_Dir &N1,
   }
 }
 
+shape shape::clean() {
+  Handle(ShapeUpgrade_UnifySameDomain) upgrader =
+      new ShapeUpgrade_UnifySameDomain(_shape, Standard_True, Standard_True,
+                                       Standard_True);
+  upgrader->AllowInternalEdges(Standard_False);
+  upgrader->Build();
+  return upgrader->Shape();
+}
+
+bool shape::export_step(const std::string &fileName, bool write_pcurves,
+                        int precision_mode) {}
+
+bool shape::export_brep(const std::string &fileName) {
+  return BRepTools::Write(_shape, fileName.c_str());
+}
+
+boost::optional<shape> shape::import_from_brep(const std::string &fileName) {
+  TopoDS_Shape s;
+  BRep_Builder builder;
+
+  if (!BRepTools::Read(s, fileName.c_str(), builder)) {
+    return boost::none;
+  }
+
+  if (s.IsNull()) {
+    return boost::none;
+  }
+
+  return boost::make_optional<shape>(s);
+}
+
+gp_Pnt shape::combined_center(const std::vector<shape> &shapes) {
+  if (shapes.empty()) {
+    throw std::invalid_argument("Empty shape list");
+  }
+
+  double totalMass = 0.0;
+  gp_Pnt weightedSum(0, 0, 0);
+
+  for (const auto &s : shapes) {
+    GProp_GProps props;
+    compute_properties(s, props);
+    double mass = props.Mass();
+    gp_Pnt com = props.CentreOfMass();
+
+    totalMass += mass;
+    weightedSum.ChangeCoord().Add(com.XYZ().Multiplied(mass));
+  }
+
+  if (totalMass <= 0.0) {
+    throw std::runtime_error("Total mass must be positive");
+  }
+
+  return gp_Pnt(weightedSum.XYZ().Divided(totalMass));
+}
+
+gp_Pnt
+shape::combined_center_of_bounding_box(const std::vector<shape> &shapes) {
+  if (shapes.empty()) {
+    throw std::invalid_argument("Empty shape list");
+  }
+
+  Bnd_Box combinedBox;
+  for (const auto &s : shapes) {
+    Bnd_Box shapeBox;
+    BRepBndLib::Add(s, shapeBox);
+    combinedBox.Add(shapeBox);
+  }
+
+  double xMin, yMin, zMin, xMax, yMax, zMax;
+  combinedBox.Get(xMin, yMin, zMin, xMax, yMax, zMax);
+
+  return gp_Pnt((xMin + xMax) / 2.0, (yMin + yMax) / 2.0, (zMin + zMax) / 2.0);
+}
+
+boost::optional<shape> shape::to_splines(int degree, double tolerance,
+                                         bool nurbs) const {
+
+  if (this->is_null()) {
+    return boost::none;
+  }
+
+  TopoDS_Shape result =
+      ShapeCustom::BSplineRestriction(_shape,
+                                      tolerance, // 3D容差
+                                      tolerance, // 2D容差
+                                      degree,
+                                      1,             // 段数 (被degree参数主导)
+                                      GeomAbs_C0,    // 连续性
+                                      GeomAbs_C0,    // 连续性
+                                      Standard_True, // degree参数主导
+                                      !nurbs,        // 是否禁用有理样条
+                                      nullptr);
+
+  if (result.IsNull()) {
+    return boost::none;
+  }
+
+  return boost::make_optional<shape>(result);
+}
+
+boost::optional<shape> shape::to_nurbs() const {
+  if (this->is_null()) {
+    return boost::none;
+  }
+
+  BRepBuilderAPI_NurbsConvert converter(_shape,
+                                        Standard_True); // Standard_True = Copy
+  converter.Perform(_shape);
+
+  if (!converter.IsDone()) {
+    return boost::none;
+  }
+
+  const TopoDS_Shape &result = converter.Shape();
+  if (result.IsNull()) {
+    throw std::runtime_error("Resulting shape is null");
+  }
+
+  return boost::make_optional<shape>(result);
+}
+
+double shape::distance(const shape &o) const {
+  return distance_with_points(_shape, o.value()).first;
+}
+
+std::unordered_map<shape, std::vector<shape>>
+shape::get_entities(TopAbs_ShapeEnum childType,
+                    TopAbs_ShapeEnum parentType) const {
+  TopTools_IndexedDataMapOfShapeListOfShape resultMap;
+
+  // Map shapes and their ancestors
+  TopExp::MapShapesAndAncestors(this->value(), childType, parentType,
+                                resultMap);
+
+  // Convert to more convenient std::map
+  std::unordered_map<shape, std::vector<shape>> outputMap;
+
+  for (int i = 1; i <= resultMap.Extent(); i++) {
+    const TopoDS_Shape &keyShape = resultMap.FindKey(i);
+    const TopTools_ListOfShape &valueList = resultMap.FindFromIndex(i);
+
+    // Convert TopTools_ListOfShape to std::vector<Shape>
+    std::vector<shape> valueVector;
+    TopTools_ListIteratorOfListOfShape it(valueList);
+    for (; it.More(); it.Next()) {
+      valueVector.push_back(shape(it.Value()));
+    }
+
+    outputMap[shape(keyShape)] = valueVector;
+  }
+
+  return outputMap;
+}
+
+std::vector<shape> shape::children() const {
+  std::vector<shape> result;
+
+  TopExp_Explorer exp(this->value(), TopAbs_SHAPE);
+  for (; exp.More(); exp.Next()) {
+    result.emplace_back(exp.Current());
+  }
+
+  return result;
+}
+
+std::vector<shape> shape::get_shapes(TopAbs_ShapeEnum kind) const {
+  std::vector<shape> result;
+
+  TopExp_Explorer exp(this->value(), kind);
+  for (; exp.More(); exp.Next()) {
+    result.emplace_back(exp.Current());
+  }
+
+  return result;
+}
 } // namespace topo
 } // namespace flywave

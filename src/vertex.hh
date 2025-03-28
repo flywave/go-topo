@@ -60,4 +60,15 @@ public:
 } // namespace topo
 } // namespace flywave
 
+
+namespace std {
+
+  template<>
+  struct hash<flywave::topo::vertex> {
+      size_t operator()(const flywave::topo::vertex& v) const {
+          return v.hash_code();
+      }
+  };
+  
+  } // namespace std
 #endif // __FLYWAVE_MESH_TOPO_VERTEX_HH__

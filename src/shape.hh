@@ -16,10 +16,13 @@
 #include <Standard_Macro.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 
+#include <unordered_map>
 #include <vector>
 
 namespace flywave {
 namespace topo {
+
+class compound;
 
 enum texture_mapping_rule {
   texture_cube,
@@ -48,6 +51,8 @@ public:
 
   int hash_code() const;
   virtual bool equals(const geometry_object &) const override;
+
+  bool is_same(const shape &) const;
 
   explicit operator bool() const;
 
@@ -95,6 +100,7 @@ public:
   gp_Pnt centre_of_mass() const;
   double compute_mass() const;
   double compute_area() const;
+  double distance(const shape &o) const;
 
   shape transformed(gp_Trsf mat) const;
 
@@ -106,6 +112,14 @@ public:
   shape mirrored(gp_Pnt pnt, gp_Pnt nor) const;
   shape mirrored(gp_Ax1 a) const;
   shape mirrored(gp_Ax2 a) const;
+
+  shape clean();
+
+  boost::optional<compound> ancestors(const shape &self, const shape &shape,
+                                      TopAbs_ShapeEnum kind) const;
+  boost::optional<compound> siblings(const shape &self, const shape &shape,
+                                     TopAbs_ShapeEnum kind,
+                                     int level = 1) const;
 
   gp_Pln find_plane(double tolerance = 1e-6);
 
@@ -134,6 +148,7 @@ public:
   boost::optional<shape> auto_cast() const;
 
   std::string shape_type() const;
+  std::string geom_type() const;
 
   virtual int write_triangulation(mesh_receiver &mesh, double tolerance,
                                   double deflection, double angle,
@@ -153,10 +168,30 @@ public:
   shape(TopoDS_Shape shp);
   shape(const shape &s, TopoDS_Shape shp);
 
+  bool export_step(const std::string &fileName, bool write_pcurves = true,
+                   int precision_mode = 0);
+  bool export_brep(const std::string &fileName);
+
+  static boost::optional<shape> import_from_brep(const std::string &fileName);
+
+  static gp_Pnt combined_center(const std::vector<shape> &shapes);
+  static gp_Pnt
+  combined_center_of_bounding_box(const std::vector<shape> &shapes);
+
+  boost::optional<shape> to_splines(int degree = 3, double tolerance = 1e-3,
+                                    bool nurbs = false) const;
+  boost::optional<shape> to_nurbs() const;
+  
+  std::vector<shape> children() const;
+  std::vector<shape> get_shapes(TopAbs_ShapeEnum kind) const;
+
 protected:
   void prepare_box_texture_coordinates(const TopoDS_Shape &aShape);
   void get_box_texture_coordinate(const gp_Pnt &p, const gp_Dir &N1,
                                   gp_Vec2d &theCoord_p);
+
+  std::unordered_map<shape, std::vector<shape>>
+  get_entities(TopAbs_ShapeEnum childType, TopAbs_ShapeEnum parentType) const;
 
   void clear_maps();
   void build_maps();

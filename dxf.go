@@ -117,6 +117,24 @@ func (t *DxfShapeLayer) GetShapeEntity(index int) *DxfShapeEntity {
 	return entity
 }
 
+func (t *DxfShapeLayer) GetShapeEntities() []*DxfShapeEntity {
+	count := t.GetShapeEntityCount()
+	sp := make([]*DxfShapeEntity, 0, count)
+	for i := 0; i < count; i++ {
+		sp = append(sp, t.GetShapeEntity(i))
+	}
+	return sp
+}
+
+func (t *DxfShapeLayer) GetShapes() []*Shape {
+	count := t.GetShapeEntityCount()
+	sp := make([]*Shape, 0, count)
+	for i := 0; i < count; i++ {
+		sp = append(sp, t.GetShapeEntity(i).GetShape())
+	}
+	return sp
+}
+
 func (t *DxfShapeEntity) GetColor() Color {
 	return Color{val: C.dxf_shape_entity_get_color(t.inner.val)}
 }
@@ -161,6 +179,15 @@ func (t *DxfTextLayer) GetEntity(index int) *DxfTextEntity {
 	}
 	runtime.SetFinalizer(entity.inner, (*innerDxfTextEntity).free)
 	return entity
+}
+
+func (t *DxfTextLayer) GetEntities() []*DxfTextEntity {
+	count := t.GetCount()
+	sp := make([]*DxfTextEntity, 0, count)
+	for i := 0; i < count; i++ {
+		sp = append(sp, t.GetEntity(i))
+	}
+	return sp
 }
 
 type DxfTextEntity struct {
