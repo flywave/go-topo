@@ -329,12 +329,11 @@ public:
 
 namespace std {
 
-  template<>
-  struct hash<flywave::topo::edge> {
-      size_t operator()(const flywave::topo::edge& v) const {
-          return v.hash_code();
-      }
-  };
-  
-  } // namespace std
+template <> struct hash<flywave::topo::edge> {
+  size_t operator()(const flywave::topo::edge &v) const {
+    return v.hash_code();
+  }
+};
+
+} // namespace std
 #endif // __FLYWAVE_MESH_TOPO_EDGE_HH__

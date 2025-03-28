@@ -18,7 +18,7 @@ namespace topo {
 
 boost::optional<shape> fuse(const std::vector<shape> &shapes, double tol = 0.0,
                             bool glue = false);
-                            
+
 boost::optional<shape> cut(const shape &shp, const shape &tool,
                            double tol = 0.0, bool glue = false);
 

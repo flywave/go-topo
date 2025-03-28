@@ -26,7 +26,6 @@ public:
   shape1d(TopoDS_Shape shp) : shape(shp) {}
   shape1d(const shape &v, TopoDS_Shape shp) : shape(v, shp) {}
 
-
   Handle(Geom_Curve) get_curve() const;
 
   virtual Handle(Adaptor3d_Curve) get_geom() const = 0;

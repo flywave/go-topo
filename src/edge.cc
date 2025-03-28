@@ -578,7 +578,8 @@ edge edge::make_spline_approx(
   // Build the spline
   Handle(Geom_BSplineCurve) spline;
   if (smoothing) {
-    auto [weight1, weight2, weight3] = *smoothing;
+    double weight1, weight2, weight3;
+    std::tie(weight1, weight2, weight3) = *smoothing;
     GeomAPI_PointsToBSpline splineBuilder(pointArray, weight1, weight2, weight3,
                                           maxDegree,
                                           GeomAbs_C2, // Default continuity

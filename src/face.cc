@@ -32,6 +32,7 @@
 #include <GeomAPI_PointsToBSplineSurface.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
 #include <GeomAdaptor_Surface.hxx>
+#include <Geom_BSplineSurface.hxx>
 #include <ShapeAnalysis_Surface.hxx>
 #include <ShapeFix_Face.hxx>
 #include <ShapeFix_Shape.hxx>
@@ -39,7 +40,6 @@
 #include <TopExp.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopoDS.hxx>
-#include <Geom_BSplineSurface.hxx>
 
 namespace flywave {
 namespace topo {
@@ -320,22 +320,6 @@ face face::make_face(std::vector<gp_Pnt> points) {
     switch (MF.Error()) {
     case BRepBuilderAPI_FaceDone:
       f = face{MF.Face()};
-      break;
-    case BRepLib_NoFace:
-      throw std::runtime_error(
-          "Error. mkplane has been finished with \"No Face\" status.\n");
-      break;
-    case BRepLib_NotPlanar:
-      throw std::runtime_error(
-          "Error. mkplane has been finished with \"Not Planar\" status.\n");
-      break;
-    case BRepLib_CurveProjectionFailed:
-      throw std::runtime_error("Error. mkplane has been finished with \"Fail "
-                               "in projection curve\" status.\n");
-      break;
-    case BRepLib_ParametersOutOfRange:
-      throw std::runtime_error("Error. mkplane has been finished with "
-                               "\"Parameters are out of range\" status.\n");
       break;
     default:
       throw std::runtime_error(
@@ -1023,7 +1007,8 @@ gp_Vec face::normal_at(const gp_Pnt *locationVector) const {
   double u, v;
 
   if (locationVector == nullptr) {
-    auto [u0, u1, v0, v1] = this->uv_bounds();
+    double u0, u1, v0, v1;
+    std::tie(u0, u1, v0, v1) = this->uv_bounds();
     u = 0.5 * (u0 + u1);
     v = 0.5 * (v0 + v1);
   } else {
@@ -1109,25 +1094,24 @@ solid face::thicken(double thickness) const {
 }
 
 struct WireExtractor : public boost::static_visitor<wire> {
-  wire operator()(const wire& w) const { return w; }
-  template <typename T>
-  wire operator()(const T&) const { 
+  wire operator()(const wire &w) const { return w; }
+  template <typename T> wire operator()(const T &) const {
     throw std::runtime_error("Projection did not produce a wire");
   }
 };
 
 face face::project(const face &other, const gp_Vec &direction) const {
   WireExtractor extractor;
-  
+
   // 处理外轮廓线
-  wire outerP = boost::apply_visitor(extractor, 
-                   this->outer_wire().projected(other, direction));
+  wire outerP = boost::apply_visitor(
+      extractor, this->outer_wire().projected(other, direction));
 
   // 处理内轮廓线
   std::vector<wire> innerP;
   for (const wire &w : this->inner_wires()) {
-    innerP.push_back(boost::apply_visitor(extractor, 
-                     w.projected(other, direction)));
+    innerP.push_back(
+        boost::apply_visitor(extractor, w.projected(other, direction)));
   }
 
   return face::make_face(other, outerP, innerP);

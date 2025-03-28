@@ -77,7 +77,8 @@ public:
                          const gp_Dir &dir = gp_Dir(0, 0, 1),
                          double angle = 360.0, bool lefthand = false);
 
-  static std::vector<wire> combine(std::vector<shape> &wires, double tol = 1e-9);
+  static std::vector<wire> combine(std::vector<shape> &wires,
+                                   double tol = 1e-9);
 
   wire stitch(const wire &other) const;
 
@@ -127,7 +128,6 @@ public:
   wire close() const;
 
 protected:
-
   friend class wire_iterator;
   friend class shape;
 };
@@ -152,12 +152,11 @@ public:
 
 namespace std {
 
-  template<>
-  struct hash<flywave::topo::wire> {
-      size_t operator()(const flywave::topo::wire& v) const {
-          return v.hash_code();
-      }
-  };
-  
-  } // namespace std
+template <> struct hash<flywave::topo::wire> {
+  size_t operator()(const flywave::topo::wire &v) const {
+    return v.hash_code();
+  }
+};
+
+} // namespace std
 #endif // __FLYWAVE_MESH_TOPO_WIRE_HH__

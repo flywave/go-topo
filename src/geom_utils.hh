@@ -7,7 +7,7 @@
 class Adaptor3d_Curve;
 class gp_Trsf;
 
-namespace flywave::geom_utils {
+namespace flywave {
 namespace geom_utils {
 
 double normalized_curve(const Adaptor3d_Curve &curve, double u);
@@ -19,4 +19,4 @@ std::pair<gp_Pnt, gp_Vec> d0d1(const Adaptor3d_Curve &curve, double u);
 bool has_scaling(const gp_Trsf &trsf);
 
 } // namespace geom_utils
-} // namespace flywave::geom_utils
+} // namespace flywave

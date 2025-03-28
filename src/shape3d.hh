@@ -6,8 +6,8 @@
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Wire.hxx>
-#include <boost/variant.hpp>
 #include <boost/optional.hpp>
+#include <boost/variant.hpp>
 #include <memory>
 
 #include "shape.hh"

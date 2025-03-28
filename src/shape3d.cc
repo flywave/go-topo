@@ -189,10 +189,9 @@ solid shape3d::dprism(const std::shared_ptr<face> &basis,
 
 solid shape3d::dprism(const std::shared_ptr<face> &basis,
                       const std::vector<face> &faces,
-                      const boost::optional<double> &depth,
-                      double taper ,
-                      const std::shared_ptr<face> &upToFace ,
-                      bool thruAll, bool additive) const {
+                      const boost::optional<double> &depth, double taper,
+                      const std::shared_ptr<face> &upToFace, bool thruAll,
+                      bool additive) const {
   TopoDS_Shape shape = this->value();
   const TopoDS_Face basisFace = basis ? basis->value() : TopoDS_Face();
   const double taperRad = taper * M_PI / 180.0;

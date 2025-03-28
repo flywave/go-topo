@@ -181,7 +181,7 @@ public:
   boost::optional<shape> to_splines(int degree = 3, double tolerance = 1e-3,
                                     bool nurbs = false) const;
   boost::optional<shape> to_nurbs() const;
-  
+
   std::vector<shape> children() const;
   std::vector<shape> get_shapes(TopAbs_ShapeEnum kind) const;
 

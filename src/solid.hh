@@ -394,12 +394,11 @@ public:
 
 namespace std {
 
-  template<>
-  struct hash<flywave::topo::solid> {
-      size_t operator()(const flywave::topo::solid& v) const {
-          return v.hash_code();
-      }
-  };
-  
-  } // namespace std
+template <> struct hash<flywave::topo::solid> {
+  size_t operator()(const flywave::topo::solid &v) const {
+    return v.hash_code();
+  }
+};
+
+} // namespace std
 #endif // __FLYWAVE_MESH_TOPO_SOLID_HH__

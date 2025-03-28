@@ -25,11 +25,11 @@
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
+#include <cmath> // for M_PI
 #include <gp_Ax1.hxx>
 #include <gp_Vec.hxx>
 #include <stdexcept>
 #include <vector>
-#include <cmath> // for M_PI
 
 #include "shape_ops.hh"
 

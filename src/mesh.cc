@@ -50,8 +50,8 @@
 #include <XCAFDoc_ShapeTool.hxx>
 #include <XCAFPrs.hxx>
 #include <XCAFPrs_DataMapIteratorOfDataMapOfStyleShape.hxx>
-#include <XCAFPrs_IndexedDataMapOfShapeStyle.hxx>
 #include <XCAFPrs_DataMapOfStyleShape.hxx>
+#include <XCAFPrs_IndexedDataMapOfShapeStyle.hxx>
 #include <XCAFPrs_Style.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Quaternion.hxx>
@@ -161,11 +161,12 @@ void mesh::triangulation(mesh_receiver &meshReceiver, double deflection,
     gp_Quaternion quaternion = transform.GetRotation();
     Handle(TColgp_HArray1OfPnt) nodes = mesh->MapNodeArray();
     Poly::ComputeNormals(mesh);
-    
+
     if (hasSeam) {
       TColStd_Array1OfReal norms(1, mesh->MapNormalArray()->Length());
       for (Standard_Integer i = 1; i <= mesh->NbNodes() * 3; i += 3) {
-        gp_Dir dir(mesh->MapNormalArray()->Value(i), mesh->MapNormalArray()->Value(i + 1),
+        gp_Dir dir(mesh->MapNormalArray()->Value(i),
+                   mesh->MapNormalArray()->Value(i + 1),
                    mesh->MapNormalArray()->Value(i + 2));
         if (faceReversed)
           dir.Reverse();

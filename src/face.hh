@@ -247,12 +247,11 @@ public:
 
 namespace std {
 
-  template<>
-  struct hash<flywave::topo::face> {
-      size_t operator()(const flywave::topo::face& v) const {
-          return v.hash_code();
-      }
-  };
-  
-  } // namespace std
+template <> struct hash<flywave::topo::face> {
+  size_t operator()(const flywave::topo::face &v) const {
+    return v.hash_code();
+  }
+};
+
+} // namespace std
 #endif // __FLYWAVE_MESH_TOPO_FACE_HH__
