@@ -8,6 +8,7 @@
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
+#include <BRepIntCurveSurface_Inter.hxx>
 #include <BRepOffsetAPI_MakeFilling.hxx>
 #include <BRepOffsetAPI_MakePipeShell.hxx>
 #include <BRepOffsetAPI_ThruSections.hxx>
@@ -22,11 +23,18 @@
 #include <TopTools_ListOfShape.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
+#include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
+#include <algorithm>
 #include <cmath> // for M_PI
+#include <gce_MakeDir.hxx>
+#include <gce_MakeLin.hxx>
 #include <gp_Ax1.hxx>
+#include <gp_Dir.hxx>
+#include <gp_Lin.hxx>
+#include <gp_Pnt.hxx>
 #include <gp_Vec.hxx>
 #include <stdexcept>
 #include <vector>
@@ -75,7 +83,7 @@ boost::optional<shape> fuse(const std::vector<shape> &shapes, double tol,
   }
 }
 
-boost::optional<shape> cut(const shape &shp, const shape &tool, double tol,
+boost::optional<shape> cut(const shape &shp, const shape &toCut, double tol,
                            bool glue) {
   if (shp.is_null()) {
     std::cerr << "Input shape is null " << std::endl;
@@ -87,7 +95,7 @@ boost::optional<shape> cut(const shape &shp, const shape &tool, double tol,
     set_builder_options(builder, tol, glue);
 
     builder.AddArgument(shp.value());
-    builder.AddTool(tool);
+    builder.AddTool(toCut);
 
     builder.Perform();
 
@@ -98,9 +106,9 @@ boost::optional<shape> cut(const shape &shp, const shape &tool, double tol,
   }
 }
 
-boost::optional<shape> intersect(const shape &shape1, const shape &shape2,
+boost::optional<shape> intersect(const shape &shp, const shape &toIntersect,
                                  double tol, bool glue) {
-  if (shape1.is_null()) {
+  if (shp.is_null()) {
     std::cerr << "Input shape is null " << std::endl;
     return boost::none;
   }
@@ -109,8 +117,8 @@ boost::optional<shape> intersect(const shape &shape1, const shape &shape2,
     builder.SetOperation(BOPAlgo_Operation::BOPAlgo_COMMON);
     set_builder_options(builder, tol, glue);
 
-    builder.AddArgument(shape1);
-    builder.AddTool(shape2);
+    builder.AddArgument(shp);
+    builder.AddTool(toIntersect);
 
     builder.Perform();
 
@@ -121,7 +129,8 @@ boost::optional<shape> intersect(const shape &shape1, const shape &shape2,
   }
 }
 
-boost::optional<shape> split(const shape &shp, const shape &tool, double tol) {
+boost::optional<shape> split(const shape &shp, const shape &splitters,
+                             double tol) {
   if (shp.is_null()) {
     std::cerr << "Input shape is null " << std::endl;
     return boost::none;
@@ -140,7 +149,7 @@ boost::optional<shape> split(const shape &shp, const shape &tool, double tol) {
     builder.SetArguments(args);
 
     TopTools_ListOfShape tools;
-    tools.Append(tool);
+    tools.Append(splitters);
     builder.SetTools(tools);
 
     builder.Build();
@@ -153,6 +162,61 @@ boost::optional<shape> split(const shape &shp, const shape &tool, double tol) {
     std::cerr << "Error in fuse operation: " << e.what() << std::endl;
     return boost::none;
   }
+}
+
+std::vector<face> faces_intersected_by_line(const shape &shp,
+                                            const gp_Pnt &point,
+                                            const gp_Dir &axis,
+                                            double tolerance,
+                                            intersection_direction direction) {
+  gp_Lin line = gce_MakeLin(point, axis).Value();
+
+  BRepIntCurveSurface_Inter intersectMaker;
+  intersectMaker.Init(shp, line, tolerance);
+
+  std::vector<std::pair<TopoDS_Face, double>> facesDist;
+
+  while (intersectMaker.More()) {
+    const gp_Pnt &interPt = intersectMaker.Pnt();
+    double distance = point.SquareDistance(interPt);
+
+    bool includeFace = true;
+
+    if (direction != intersection_direction::None) {
+      gce_MakeDir interDirMaker(point, interPt);
+
+      if (interDirMaker.IsDone()) {
+        gp_Dir interDir = interDirMaker.Value();
+
+        if (direction == intersection_direction::AlongAxis) {
+          includeFace =
+              !interDir.IsOpposite(axis, tolerance) && (distance > tolerance);
+        } else if (direction == intersection_direction::Opposite) {
+          includeFace =
+              interDir.IsOpposite(axis, tolerance) && (distance > tolerance);
+        }
+      } else {
+        includeFace = false;
+      }
+    }
+
+    if (includeFace) {
+      facesDist.emplace_back(intersectMaker.Face(), distance);
+    }
+
+    intersectMaker.Next();
+  }
+
+  std::sort(facesDist.begin(), facesDist.end(),
+            [](const auto &a, const auto &b) { return a.second < b.second; });
+
+  std::vector<face> result;
+  result.reserve(facesDist.size());
+  for (const auto &pair : facesDist) {
+    result.push_back(pair.first);
+  }
+
+  return result;
 }
 
 boost::optional<shape> fill(const shape &shp,
@@ -255,7 +319,6 @@ boost::optional<shape> extrude(const shape &shp, const gp_Vec &direction) {
   try {
     std::vector<TopoDS_Shape> results;
 
-    // 遍历所有可拉伸的子形状（顶点、边、线框、面）
     for (TopExp_Explorer exp(shp.value(), TopAbs_VERTEX); exp.More();
          exp.Next()) {
       BRepPrimAPI_MakePrism builder(exp.Current(), direction);
@@ -821,6 +884,7 @@ std::pair<gp_Pnt, gp_Pnt> closest(const shape &shape1, const shape &shape2) {
 
   return {distCalculator.PointOnShape1(1), distCalculator.PointOnShape2(1)};
 }
+
 
 } // namespace topo
 } // namespace flywave

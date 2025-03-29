@@ -9,6 +9,7 @@
 #include <BRepCheck.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Shape.hxx>
+#include <BOPAlgo_CheckStatus.hxx>
 #include <map>
 #include <utility> // for std::pair
 #include <vector>
@@ -22,11 +23,18 @@ boost::optional<shape> fuse(const std::vector<shape> &shapes, double tol = 0.0,
 boost::optional<shape> cut(const shape &shp, const shape &tool,
                            double tol = 0.0, bool glue = false);
 
-boost::optional<shape> intersect(const shape &shape1, const shape &shape2,
+boost::optional<shape> intersect(const shape &shp, const shape &toIntersect,
                                  double tol = 0.0, bool glue = false);
 
-boost::optional<shape> split(const shape &shp, const shape &tool,
+boost::optional<shape> split(const shape &shp, const shape &splitters,
                              double tol = 0.0);
+
+enum class intersection_direction { None, AlongAxis, Opposite };
+
+std::vector<face> faces_intersected_by_line(
+    const shape &shp, const gp_Pnt &point, const gp_Dir &axis,
+    double tolerance = 1e-4,
+    intersection_direction direction = intersection_direction::None);
 
 boost::optional<shape> fill(const shape &shp,
                             const std::vector<shape> &constraints = {});

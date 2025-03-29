@@ -63,6 +63,8 @@ public:
 
   static wire make_wire(std::initializer_list<wire> wires);
 
+  static wire make_rect(double width, double height);
+
   static wire make_circle(double radius, const gp_Pnt &center,
                           const gp_Dir &normal);
 
@@ -82,13 +84,9 @@ public:
 
   wire stitch(const wire &other) const;
 
-  int num_vertices() const;
+  int num_edges() const override;
 
-  std::vector<vertex> vertices() const;
-
-  int num_edges() const;
-
-  std::vector<edge> edges() const;
+  std::vector<vertex> vertices() const override;
 
   double length() const;
 
@@ -101,8 +99,6 @@ public:
   int fillet(std::vector<vertex> &vertices, std::vector<double> radius);
 
   int chamfer(std::vector<vertex> &vertices, std::vector<double> distances);
-
-  wire fillet(std::vector<vertex> &vertices, double radius) const;
 
   std::vector<wire> offset2d(double distances,
                              const std::string &kind = "arc") const;

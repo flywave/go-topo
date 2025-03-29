@@ -12,6 +12,7 @@
 #include <BRep_Tool.hxx>
 #include <GCPnts_TangentialDeflection.hxx>
 #include <GC_MakeArcOfCircle.hxx>
+#include <GC_MakeArcOfEllipse.hxx>
 #include <GProp_GProps.hxx>
 #include <GeomAPI_Interpolate.hxx>
 #include <GeomAPI_PointsToBSpline.hxx>
@@ -119,6 +120,20 @@ edge edge::make_polygon(const vertex &V1, const vertex &V2, const vertex &V3,
   BRepBuilderAPI_MakePolygon me(V1.value(), V2.value(), V3.value(), V4.value(),
                                 Close);
   return edge{me.Edge()};
+}
+
+edge edge::make_rect(double width, double height) {
+  double halfW = width / 2.0;
+  double halfH = height / 2.0;
+
+  BRepBuilderAPI_MakePolygon polyBuilder;
+  polyBuilder.Add(gp_Pnt(-halfW, -halfH, 0));
+  polyBuilder.Add(gp_Pnt(halfW, -halfH, 0));
+  polyBuilder.Add(gp_Pnt(halfW, halfH, 0));
+  polyBuilder.Add(gp_Pnt(-halfW, halfH, 0));
+  polyBuilder.Close();
+
+  return edge{polyBuilder.Edge()};
 }
 
 edge edge::make_polygon(std::vector<vertex *> &vertexs, const bool Close) {
@@ -561,7 +576,6 @@ edge edge::make_spline_approx(
     const std::vector<gp_Pnt> &points, double tolerance,
     const boost::optional<std::tuple<double, double, double>> &smoothing,
     int minDegree, int maxDegree) {
-  // Validate input
   if (points.empty()) {
     throw std::invalid_argument("Point list cannot be empty");
   }
@@ -569,35 +583,28 @@ edge edge::make_spline_approx(
     throw std::invalid_argument("Invalid degree parameters");
   }
 
-  // Create point array
   TColgp_Array1OfPnt pointArray = TColgp_Array1OfPnt(1, points.size());
   for (int i = 0; i < points.size(); i++) {
     pointArray.SetValue(i + 1, points[i]);
   }
 
-  // Build the spline
   Handle(Geom_BSplineCurve) spline;
   if (smoothing) {
     double weight1, weight2, weight3;
     std::tie(weight1, weight2, weight3) = *smoothing;
     GeomAPI_PointsToBSpline splineBuilder(pointArray, weight1, weight2, weight3,
-                                          maxDegree,
-                                          GeomAbs_C2, // Default continuity
-                                          tolerance);
+                                          maxDegree, GeomAbs_C2, tolerance);
     spline = splineBuilder.Curve();
   } else {
     GeomAPI_PointsToBSpline splineBuilder(pointArray, minDegree, maxDegree,
-                                          GeomAbs_C2, // Default continuity
-                                          tolerance);
+                                          GeomAbs_C2, tolerance);
     spline = splineBuilder.Curve();
   }
 
-  // Check if construction was successful
   if (spline.IsNull()) {
     throw std::runtime_error("B-spline approximation failed");
   }
 
-  // Create edge from spline
   BRepBuilderAPI_MakeEdge edgeMaker(spline);
   if (!edgeMaker.IsDone()) {
     throw std::runtime_error("Edge creation from spline failed");
@@ -607,28 +614,63 @@ edge edge::make_spline_approx(
 }
 
 edge edge::make_circle(double radius, const gp_Pnt &center,
-                       const gp_Dir &normal) {
+                       const gp_Dir &normal, double angle1, double angle2,
+                       bool orientation) {
   if (radius <= 0) {
     throw std::invalid_argument("Radius must be positive");
   }
 
   gp_Ax2 axis(center, normal);
+
   gp_Circ circle(axis, radius);
-  return BRepBuilderAPI_MakeEdge(circle).Edge();
+
+  if (angle1 == angle2) {
+    return BRepBuilderAPI_MakeEdge(circle).Edge();
+  } else {
+    double rad1 = angle1 * M_PI / 180.0;
+    double rad2 = angle2 * M_PI / 180.0;
+
+    Handle(Geom_TrimmedCurve) arc =
+        GC_MakeArcOfCircle(circle, rad1, rad2, orientation).Value();
+
+    return BRepBuilderAPI_MakeEdge(arc).Edge();
+  }
 }
 
 edge edge::make_ellipse(double majorRadius, double minorRadius,
-                        const gp_Pnt &center, const gp_Dir &normal) {
+                        const gp_Pnt &center, const gp_Dir &normal,
+                        const gp_Dir &xnormal, double angle1, double angle2,
+                        int sense) {
   if (majorRadius <= 0 || minorRadius <= 0) {
     throw std::invalid_argument("Radii must be positive");
   }
-  if (majorRadius < minorRadius) {
-    throw std::invalid_argument("Major radius must be >= minor radius");
+
+  gp_Ax1 axis1(center, normal);
+  gp_Ax2 axis2(center, normal, xnormal);
+
+  double correction_angle = 0.0;
+  gp_Elips ellipse_gp;
+
+  if (minorRadius > majorRadius) {
+    correction_angle = M_PI_2;
+    ellipse_gp = gp_Elips(axis2, minorRadius, majorRadius)
+                     .Rotated(axis1, correction_angle);
+  } else {
+    ellipse_gp = gp_Elips(axis2, majorRadius, minorRadius);
   }
 
-  gp_Ax2 axis(center, normal);
-  gp_Elips ellipse(axis, majorRadius, minorRadius);
-  return BRepBuilderAPI_MakeEdge(ellipse).Edge();
+  if (angle1 == angle2) {
+    return BRepBuilderAPI_MakeEdge(ellipse_gp).Edge();
+  } else {
+    double rad1 = angle1 * M_PI / 180.0 - correction_angle;
+    double rad2 = angle2 * M_PI / 180.0 - correction_angle;
+    bool isSense = (sense == 1);
+
+    Handle(Geom_TrimmedCurve) arc =
+        GC_MakeArcOfEllipse(ellipse_gp, rad1, rad2, isSense).Value();
+
+    return BRepBuilderAPI_MakeEdge(arc).Edge();
+  }
 }
 
 edge edge::make_three_point_arc(const gp_Pnt &v1, const gp_Pnt &v2,
@@ -683,12 +725,6 @@ bool edge::is_inifinite() const { return value().Infinite(); }
 
 bool edge::is_curve3d() const { return BRep_Tool::IsGeometric(value()); }
 
-int edge::num_vertices() const {
-  TopTools_IndexedMapOfShape anIndices;
-  TopExp::MapShapes(value(), TopAbs_VERTEX, anIndices);
-  return anIndices.Extent();
-}
-
 double edge::length() const {
   GProp_GProps prop;
   BRepGProp::LinearProperties(value(), prop);
@@ -733,15 +769,6 @@ edge edge::trim(double u0, double u1) const {
   Handle(Geom_Curve) curve = this->get_curve();
   BRepBuilderAPI_MakeEdge bldr(curve, u0, u1);
   return edge(bldr.Shape());
-}
-
-std::vector<vertex> edge::vertices() const {
-  std::vector<vertex> ret;
-  TopoDS_Vertex aV1, aV2;
-  TopExp::Vertices(value(), aV1, aV2);
-  ret.push_back(vertex(aV1));
-  ret.push_back(vertex(aV2));
-  return ret;
 }
 
 } // namespace topo

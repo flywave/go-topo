@@ -233,6 +233,8 @@ public:
   static edge make_polygon(std::initializer_list<gp_Pnt> vertexs,
                            const bool Close = false);
 
+  static edge make_rect(double width, double height);
+
   static edge make_spline(const std::vector<gp_Pnt> &points, double tol = 1e-6,
                           bool periodic = false);
 
@@ -249,11 +251,16 @@ public:
       int minDegree = 1, int maxDegree = 6);
 
   static edge make_circle(double radius, const gp_Pnt &center = gp_Pnt(0, 0, 0),
-                          const gp_Dir &normal = gp_Dir(0, 0, 1));
+                          const gp_Dir &normal = gp_Dir(0, 0, 1),
+                          double angle1 = 360.0, double angle2 = 360.0,
+                          bool orientation = true);
 
   static edge make_ellipse(double majorRadius, double minorRadius,
                            const gp_Pnt &center = gp_Pnt(0, 0, 0),
-                           const gp_Dir &normal = gp_Dir(0, 0, 1));
+                           const gp_Dir &normal = gp_Dir(0, 0, 1),
+                           const gp_Dir &xnormal = gp_Dir(1, 0, 0),
+                           double angle1 = 360.0, double angle2 = 360.0,
+                           int sense = 1);
 
   static edge make_three_point_arc(const gp_Pnt &v1, const gp_Pnt &v2,
                                    const gp_Pnt &v3);
@@ -266,8 +273,6 @@ public:
   TopoDS_Edge &value();
   const TopoDS_Edge &value() const;
 
-  std::vector<vertex> vertices() const;
-
   bool is_seam(const face &f) const;
 
   bool is_degenerated() const;
@@ -275,8 +280,6 @@ public:
   bool is_closed() const;
 
   bool is_inifinite() const;
-
-  int num_vertices() const;
 
   double length() const;
 

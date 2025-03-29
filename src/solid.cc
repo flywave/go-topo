@@ -873,27 +873,6 @@ solid solid::make_solid_from_loft(const std::vector<wire> &wires, bool ruled) {
   return solid(loftBuilder.Shape());
 }
 
-int solid::num_solids() const {
-  const TopoDS_Shape &shp = value();
-  if (shp.ShapeType() == TopAbs_SOLID) {
-    return 1;
-  } else {
-    TopTools_IndexedMapOfShape compsolids;
-    TopExp::MapShapes(shp, TopAbs_COMPSOLID, compsolids);
-
-    TopTools_IndexedMapOfShape solids;
-    TopExp::MapShapes(shp, TopAbs_SOLID, solids);
-
-    return solids.Extent() + compsolids.Extent();
-  }
-}
-
-int solid::num_faces() const {
-  TopTools_IndexedMapOfShape anIndices;
-  TopExp::MapShapes(value(), TopAbs_FACE, anIndices);
-  return anIndices.Extent();
-}
-
 double solid::area() const {
   GProp_GProps prop;
   BRepGProp::SurfaceProperties(value(), prop);
@@ -1020,7 +999,7 @@ int solid::extrude(const face &f, gp_Pnt p1, gp_Pnt p2) {
 }
 
 int solid::extrude(const wire &outerWire, const std::vector<wire> &innerWires,
-                   const gp_Vec &vecNormal, double taper ) {
+                   const gp_Vec &vecNormal, double taper) {
   face f;
   if (taper == 0) {
     f = face::make_face(outerWire, innerWires);
@@ -2258,17 +2237,6 @@ std::vector<shell> solid::inner_shells() const {
   }
 
   return innerShells;
-}
-
-std::vector<shell> solid::shells() const {
-  std::vector<shell> result;
-  TopExp_Explorer exp(this->value(), TopAbs_SHELL);
-
-  for (; exp.More(); exp.Next()) {
-    result.emplace_back(TopoDS::Shell(exp.Current()));
-  }
-
-  return result;
 }
 
 } // namespace topo

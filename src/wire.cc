@@ -34,6 +34,7 @@
 #include <LProp3d_CLProps.hxx>
 #include <Precision.hxx>
 #include <ShapeAnalysis_FreeBounds.hxx>
+#include <ShapeAnalysis_Wire.hxx>
 #include <TopExp.hxx>
 #include <TopLoc_Location.hxx>
 #include <TopTools_HSequenceOfShape.hxx>
@@ -163,6 +164,8 @@ wire wire::make_wire(std::vector<edge> &edges) {
       MW.Add(e->value());
     }
 
+    MW.Build();
+
     BRepBuilderAPI_WireError error = MW.Error();
     switch (error) {
     case BRepBuilderAPI_EmptyWire: {
@@ -205,6 +208,8 @@ wire wire::make_wire(std::initializer_list<edge> edges) {
       edge *e = &e_;
       MW.Add(e->value());
     }
+
+    MW.Build();
 
     BRepBuilderAPI_WireError error = MW.Error();
     switch (error) {
@@ -249,6 +254,8 @@ wire wire::make_wire(std::vector<wire> &wires) {
       MW.Add(e->value());
     }
 
+    MW.Build();
+
     BRepBuilderAPI_WireError error = MW.Error();
     switch (error) {
     case BRepBuilderAPI_EmptyWire: {
@@ -292,6 +299,8 @@ wire wire::make_wire(std::initializer_list<wire> wires) {
       MW.Add(e->value());
     }
 
+    MW.Build();
+
     BRepBuilderAPI_WireError error = MW.Error();
     switch (error) {
     case BRepBuilderAPI_EmptyWire: {
@@ -324,6 +333,20 @@ wire wire::make_wire(std::initializer_list<wire> wires) {
     }
   }
   return ret;
+}
+
+wire wire::make_rect(double width, double height) {
+  double halfW = width / 2.0;
+  double halfH = height / 2.0;
+
+  BRepBuilderAPI_MakePolygon polyBuilder;
+  polyBuilder.Add(gp_Pnt(-halfW, -halfH, 0));
+  polyBuilder.Add(gp_Pnt(halfW, -halfH, 0));
+  polyBuilder.Add(gp_Pnt(halfW, halfH, 0));
+  polyBuilder.Add(gp_Pnt(-halfW, halfH, 0));
+  polyBuilder.Close();
+
+  return wire{polyBuilder.Wire()};
 }
 
 wire wire::make_circle(double radius, const gp_Pnt &center,
@@ -383,8 +406,7 @@ wire wire::make_ellipse(double x_radius, double y_radius, const gp_Pnt &center,
   return result;
 }
 
-wire wire::make_polygon(const std::vector<gp_Pnt> &vertices,
-                        bool close) {
+wire wire::make_polygon(const std::vector<gp_Pnt> &vertices, bool close) {
   if (vertices.size() < 2) {
     throw std::invalid_argument("At least two vertices required");
   }
@@ -406,8 +428,7 @@ wire wire::make_polygon(const std::vector<gp_Pnt> &vertices,
 }
 
 wire wire::make_helix(double pitch, double height, double radius,
-                      const gp_Pnt &center ,
-                      const gp_Dir &dir , double angle,
+                      const gp_Pnt &center, const gp_Dir &dir, double angle,
                       bool lefthand) {
   Handle(Geom_Surface) geom_surf;
   gp_Ax3 axis(center, dir);
@@ -454,61 +475,6 @@ wire wire::make_helix(double pitch, double height, double radius,
   return wire(w);
 }
 
-int wire::num_vertices() const {
-  TopTools_IndexedMapOfShape anIndices;
-  TopExp::MapShapes(value(), TopAbs_VERTEX, anIndices);
-  return anIndices.Extent();
-}
-
-std::vector<vertex> wire::vertices() const {
-  std::vector<vertex> vertices;
-
-  // Use wire explorer to traverse vertices in order
-  BRepTools_WireExplorer exp;
-  exp.Init(TopoDS::Wire(this->value()));
-
-  if (exp.More()) {
-    vertices.emplace_back(exp.CurrentVertex());
-
-    while (exp.More()) {
-      exp.Next();
-      if (exp.More()) { // Check again after Next() to avoid adding invalid
-                        // vertex
-        vertices.emplace_back(exp.CurrentVertex());
-      }
-    }
-  }
-
-  // Handle closed wires by removing duplicate last vertex
-  if (this->is_closed() && !vertices.empty()) {
-    vertices.pop_back();
-  }
-
-  return vertices;
-}
-
-int wire::num_edges() const {
-  TopTools_IndexedMapOfShape anIndices;
-  TopExp::MapShapes(value(), TopAbs_EDGE, anIndices);
-  return anIndices.Extent();
-}
-
-std::vector<edge> wire::edges() const {
-  std::vector<edge> edgeList;
-  BRepTools_WireExplorer exp;
-
-  // Initialize the explorer with this wire
-  exp.Init(TopoDS::Wire(this->value()));
-
-  // Collect all edges in order
-  while (exp.More()) {
-    edgeList.emplace_back(exp.Current());
-    exp.Next();
-  }
-
-  return edgeList;
-}
-
 int wire::project(const face &f) {
   Handle(TopTools_HSequenceOfShape) wires = new TopTools_HSequenceOfShape;
   Handle(TopTools_HSequenceOfShape) edges = new TopTools_HSequenceOfShape;
@@ -548,9 +514,14 @@ int wire::project(const face &f) {
   return 1;
 }
 
+int wire::num_edges() const {
+  ShapeAnalysis_Wire analyzer;
+  analyzer.Load(this->value());
+  return analyzer.NbEdges();
+}
+
 std::vector<wire> wire::offset2d(double distance,
                                  const std::string &kind) const {
-  // Map join types
   GeomAbs_JoinType joinType;
   if (kind == "arc") {
     joinType = GeomAbs_Arc;
@@ -572,7 +543,6 @@ std::vector<wire> wire::offset2d(double distance,
 
   if (result.ShapeType() == TopAbs_COMPOUND) {
     TopoDS_Compound compound = TopoDS::Compound(result);
-    // Iterate through compound elements
     TopExp_Explorer exp(compound, TopAbs_WIRE);
     for (; exp.More(); exp.Next()) {
       resultWires.emplace_back(TopoDS::Wire(exp.Current()));
@@ -589,7 +559,6 @@ wire wire::fillet2d(double radius, const std::vector<vertex> &vertices) const {
   return f.fillet2d(radius, vertices).outer_wire();
 }
 
-// 2D Chamfer operation
 wire wire::chamfer2d(double d, const std::vector<vertex> &vertices) const {
   face f = face::make_face({*this});
   return f.chamfer2d(d, vertices).outer_wire();
@@ -641,74 +610,9 @@ int wire::offset(double distance, const std::string &kind) {
   return 1;
 }
 
-wire wire::fillet(std::vector<vertex> &vertices, double radius) const {
-  std::vector<edge> edges = this->edges();
-  std::vector<vertex> allVertices = this->vertices();
-  size_t nEdges = edges.size();
-  size_t nVertices = allVertices.size();
-
-  std::vector<edge> newEdges;
-  edge &currentEdge = edges[0];
-
-  std::unordered_set<vertex> verticesSet(vertices.begin(), vertices.end());
-
-  for (size_t i = 0; i < nEdges; i++) {
-    if (i == nEdges - 1 && !this->is_closed()) {
-      break;
-    }
-
-    edge &nextEdge = edges[(i + 1) % nEdges];
-
-    // Get tangent directions
-    gp_Vec currentDir = currentEdge.tangent_at(1);
-    gp_Vec nextDir = nextEdge.tangent_at(0);
-    gp_Vec normalDir = currentDir.Crossed(nextDir);
-
-    // Check conditions for skipping fillet
-    if (normalDir.Magnitude() == 0 ||
-        (verticesSet.find(allVertices[(i + 1) % nVertices]) ==
-             verticesSet.end() &&
-         !verticesSet.empty())) {
-      newEdges.push_back(currentEdge);
-      currentEdge = nextEdge;
-      continue;
-    }
-
-    // Create fillet plane
-    gp_Pnt pointInPlane = currentEdge.center().XYZ();
-    gp_Pln cornerPlane(pointInPlane, normalDir);
-
-    // Perform fillet operation
-    ChFi2d_FilletAPI filletMaker(currentEdge.value(), nextEdge.value(),
-                                 cornerPlane);
-    bool ok = filletMaker.Perform(radius);
-    if (!ok) {
-      throw std::runtime_error("Failed fillet at vertex " +
-                               std::to_string(i + 1));
-    }
-
-    // Get fillet result
-    gp_Pnt thePoint = nextEdge.vertices()[0];
-    TopoDS_Edge resArc =
-        filletMaker.Result(thePoint, currentEdge.value(), nextEdge.value());
-
-    newEdges.push_back(currentEdge);
-    newEdges.push_back(edge(resArc));
-
-    currentEdge = nextEdge;
-  }
-
-  // Add last edge for open wires
-  if (!this->is_closed()) {
-    newEdges.push_back(currentEdge);
-  }
-
-  return wire::make_wire(newEdges);
-}
-
 int wire::fillet(std::vector<vertex> &vertices, std::vector<double> radius) {
-    size_t vertices_size = vertices.size();
-    size_t radius_size = radius.size();
+  size_t vertices_size = vertices.size();
+  size_t radius_size = radius.size();
 
   BRepFilletAPI_MakeFillet2d MF;
   try {
@@ -767,7 +671,7 @@ int wire::fillet(std::vector<vertex> &vertices, std::vector<double> radius) {
 int wire::chamfer(std::vector<vertex> &vertices,
                   std::vector<double> distances) {
   size_t vertices_size = vertices.size();
-    size_t distances_size = distances.size();
+  size_t distances_size = distances.size();
 
   BRepFilletAPI_MakeFillet2d MF;
   try {
@@ -910,9 +814,8 @@ wire wire::close() const {
     gp_Pnt end = this->end_point();
     edge e = edge::make_edge(end, start);
 
-    std::vector<shape> wires{*this};
-    std::vector<wire> combined = wire::combine(wires);
-    return combined[0];
+    std::vector<shape> wires{*this, e};
+    return wire::combine(wires)[0];
   } else {
     return *this;
   }
@@ -953,13 +856,9 @@ std::vector<wire> wire::combine(std::vector<shape> &wires, double tol) {
 wire wire::stitch(const wire &other) const {
   BRepBuilderAPI_MakeWire wireBuilder;
 
-  // Add the first wire
   wireBuilder.Add(TopoDS::Wire(this->value()));
-
-  // Add the second wire
   wireBuilder.Add(TopoDS::Wire(other.value()));
 
-  // Perform the stitching operation
   wireBuilder.Build();
 
   if (!wireBuilder.IsDone()) {
@@ -967,6 +866,31 @@ wire wire::stitch(const wire &other) const {
   }
 
   return wire(wireBuilder.Wire());
+}
+
+std::vector<vertex> wire::vertices() const {
+  std::vector<vertex> vertices;
+
+  BRepTools_WireExplorer exp(this->value());
+
+  vertices.push_back(exp.CurrentVertex());
+
+  while (exp.More()) {
+    exp.Next();
+    vertices.push_back(exp.CurrentVertex());
+  }
+
+  if (this->is_closed()) {
+    vertices.pop_back();
+  }
+
+  return vertices;
+}
+
+double wire::length() const {
+  GProp_GProps props;
+  BRepGProp::LinearProperties(_shape, props);
+  return props.Mass();
 }
 
 } // namespace topo

@@ -1,0 +1,50 @@
+cmake_minimum_required(VERSION 2.8.12)
+
+IF(APPLE)
+set(CMAKE_Fortran_COMPILER
+    "gfortran"
+    CACHE STRING "" FORCE)
+ENDIF(APPLE)
+
+enable_language(Fortran)
+
+project(MA27 C Fortran)
+
+SET(MA27_LIBRARY ma27)
+
+# 定义要单独编译的 Fortran 文件
+set(FORTRAN_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ma27d.f
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ma27s.f
+)
+
+# 自定义编译命令：将每个 .f 编译为 .o
+foreach(src ${FORTRAN_SOURCES})
+    get_filename_component(obj ${src} NAME_WE)
+    set(obj_file ${CMAKE_CURRENT_BINARY_DIR}/${obj}.o)
+
+    add_custom_command(
+        OUTPUT ${obj_file}
+        COMMAND ${CMAKE_Fortran_COMPILER}
+            -c ${src}
+            -o ${obj_file}
+        DEPENDS ${src}
+        COMMENT "Compiling Fortran: ${src}"
+    )
+
+    list(APPEND FORTRAN_OBJECTS ${obj_file})
+endforeach()
+
+
+SET( MA27_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/src")
+ADD_LIBRARY( ma27 STATIC src/ma27.c ${FORTRAN_OBJECTS})
+
+SET_TARGET_PROPERTIES(ma27 PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR}
+    ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_BINARY_DIR})
+SET_TARGET_PROPERTIES(ma27 PROPERTIES 
+    LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR}
+    LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_BINARY_DIR})
+SET_TARGET_PROPERTIES(ma27 PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR}
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_BINARY_DIR})

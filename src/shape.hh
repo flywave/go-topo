@@ -5,9 +5,11 @@
 #include "location.hh"
 #include "mesh_receiver.hh"
 #include "orientation.hh"
+#include "selector.hh"
 
 #include <BRepBuilderAPI_Copy.hxx>
 #include <OSD_Timer.hxx>
+#include <TopExp_Explorer.hxx>
 #include <TopoDS_Shape.hxx>
 
 #include <Message_ProgressIndicator.hxx>
@@ -23,6 +25,13 @@ namespace flywave {
 namespace topo {
 
 class compound;
+class vertex;
+class wire;
+class edge;
+class face;
+class shell;
+class solid;
+class comp_solid;
 
 enum texture_mapping_rule {
   texture_cube,
@@ -44,6 +53,8 @@ public:
 
   virtual bool is_null() const override;
   virtual bool is_valid() const override;
+  
+  bool is_solid() const;
 
   virtual geometry_object_type type() const override;
 
@@ -101,6 +112,7 @@ public:
   double compute_mass() const;
   double compute_area() const;
   double distance(const shape &o) const;
+  std::vector<double> distances(const std::vector<shape> &others) const;
 
   shape transformed(gp_Trsf mat) const;
 
@@ -169,8 +181,8 @@ public:
   shape(const shape &s, TopoDS_Shape shp);
 
   bool export_step(const std::string &fileName, bool write_pcurves = true,
-                   int precision_mode = 0);
-  bool export_brep(const std::string &fileName);
+                   int precision_mode = 0) const;
+  bool export_brep(const std::string &fileName) const;
 
   static boost::optional<shape> import_from_brep(const std::string &fileName);
 
@@ -184,6 +196,52 @@ public:
 
   std::vector<shape> children() const;
   std::vector<shape> get_shapes(TopAbs_ShapeEnum kind) const;
+  virtual std::vector<vertex> vertices() const;
+  std::vector<edge> edges() const;
+  std::vector<compound> compounds() const;
+  std::vector<wire> wires() const;
+  std::vector<face> faces() const;
+  std::vector<shell> shells() const;
+  std::vector<solid> solids() const;
+  std::vector<comp_solid> comp_solids() const;
+
+  inline int num_vertices() const { return num_entities(TopAbs_VERTEX); }
+  virtual int num_edges() const { return num_entities(TopAbs_EDGE); }
+  inline int num_wires() const { return num_entities(TopAbs_WIRE); }
+  inline int num_faces() const { return num_entities(TopAbs_FACE); }
+  inline int num_shells() const { return num_entities(TopAbs_SHELL); }
+  inline int num_solids() const { return num_entities(TopAbs_SOLID); }
+  inline int num_compounds() const { return num_entities(TopAbs_COMPOUND); }
+  inline int num_comp_solids() const { return num_entities(TopAbs_COMPSOLID); }
+
+  std::string to_string(double tolerance = 1e-3,
+                        double angularTolerance = 0.1) const;
+
+  shape filter(selector *sel, const std::vector<shape> &shapes) const;
+
+  inline shape vertices(selector *sel) const {
+    return filter(sel, get_shapes(TopAbs_VERTEX));
+  }
+
+  inline shape edges(selector *sel) const {
+    return filter(sel, get_shapes(TopAbs_EDGE));
+  }
+
+  inline shape wires(selector *sel) const {
+    return filter(sel, get_shapes(TopAbs_WIRE));
+  }
+
+  inline shape faces(selector *sel) const {
+    return filter(sel, get_shapes(TopAbs_FACE));
+  }
+
+  inline shape shells(selector *sel) const {
+    return filter(sel, get_shapes(TopAbs_SHELL));
+  }
+
+  inline shape solids(selector *sel) const {
+    return filter(sel, get_shapes(TopAbs_SOLID));
+  }
 
 protected:
   void prepare_box_texture_coordinates(const TopoDS_Shape &aShape);
@@ -191,7 +249,19 @@ protected:
                                   gp_Vec2d &theCoord_p);
 
   std::unordered_map<shape, std::vector<shape>>
-  get_entities(TopAbs_ShapeEnum childType, TopAbs_ShapeEnum parentType) const;
+  get_entities_from(TopAbs_ShapeEnum childType,
+                    TopAbs_ShapeEnum parentType) const;
+
+  template <typename T>
+  std::vector<T> extract_entities(TopAbs_ShapeEnum type) const {
+    std::vector<T> entities;
+    for (TopExp_Explorer exp(_shape, type); exp.More(); exp.Next()) {
+      entities.push_back(T(exp.Current()));
+    }
+    return entities;
+  }
+
+  int num_entities(TopAbs_ShapeEnum type) const;
 
   void clear_maps();
   void build_maps();

@@ -62,11 +62,11 @@ std::array<std::string, 4> filter_settings::supported_args{
         auto ele2 = iter.get();                                                \
         for (auto &sp : ele->geometry()) {                                     \
           shps.emplace_back(ifc_element_info{                                  \
-            shp : sp.Shape(),                                                  \
-            id : ele2->id(),                                                   \
-            parent_id : ele2->parent_id(),                                     \
-            name : ele2->name(),                                               \
-            guid : ele2->guid(),                                               \
+              .shp = sp.Shape(),                                               \
+              .id = ele2->id(),                                                \
+              .parent_id = ele2->parent_id(),                                  \
+              .name = ele2->name(),                                            \
+              .guid = ele2->guid(),                                            \
           });                                                                  \
         }                                                                      \
       } while (iter.next());                                                   \

@@ -1,16 +1,130 @@
 #include "compound.hh"
+#include "face.hh"
+#include "shape_ops.hh"
+#include "wire.hh"
 
+#include <BRepAdaptor_Curve.hxx>
+#include <BRepAdaptor_Surface.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
+#include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
+#include <BRepBuilderAPI_MakeWire.hxx>
+#include <BRepGProp.hxx>
+#include <BRepPrimAPI_MakePrism.hxx>
+#include <BRepProj_Projection.hxx>
+#include <BRep_Tool.hxx>
+#include <Font_BRepTextBuilder.hxx>
+#include <Font_FontMgr.hxx>
+#include <Font_SystemFont.hxx>
+#include <GCPnts_AbscissaPoint.hxx>
+#include <GProp_GProps.hxx>
+#include <Graphic3d_HorizontalTextAlignment.hxx>
+#include <Graphic3d_VerticalTextAlignment.hxx>
+#include <StdPrs_BRepFont.hxx>
+#include <TCollection_AsciiString.hxx>
 #include <TopExp.hxx>
+#include <TopExp_Explorer.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <TopoDS.hxx>
+#include <TopoDS_Shape.hxx>
 #include <boost/variant.hpp>
+#include <gp_Ax1.hxx>
+#include <gp_Trsf.hxx>
+#include <vector>
+
 namespace flywave {
 namespace topo {
+namespace {
+
+static Font_FontAspect ConvertFontKind(compound::FontKind kind) {
+  switch (kind) {
+  case compound::FontKind::BOLD:
+    return Font_FA_Bold;
+  case compound::FontKind::ITALIC:
+    return Font_FA_Italic;
+  default:
+    return Font_FA_Regular;
+  }
+}
+
+static Graphic3d_HorizontalTextAlignment ConvertHAlign(compound::HAlign align) {
+  switch (align) {
+  case compound::HAlign::LEFT:
+    return Graphic3d_HTA_LEFT;
+  case compound::HAlign::RIGHT:
+    return Graphic3d_HTA_RIGHT;
+  default:
+    return Graphic3d_HTA_CENTER;
+  }
+}
+
+static Graphic3d_VerticalTextAlignment ConvertVAlign(compound::VAlign align) {
+  switch (align) {
+  case compound::VAlign::TOP:
+    return Graphic3d_VTA_TOP;
+  case compound::VAlign::BOTTOM:
+    return Graphic3d_VTA_BOTTOM;
+  default:
+    return Graphic3d_VTA_CENTER;
+  }
+}
+
+static Handle(Font_SystemFont)
+    LoadFont(const Handle(Font_FontMgr) & mgr, const std::string &fontName,
+             const std::string &path, Font_FontAspect aspect) {
+  if (!path.empty() && mgr->CheckFont(path.c_str())) {
+    Handle(Font_SystemFont) font =
+        new Font_SystemFont(TCollection_AsciiString(path.c_str()));
+    font->SetFontPath(aspect, TCollection_AsciiString(path.c_str()));
+    mgr->RegisterFont(font, true);
+    return font;
+  }
+  return mgr->FindFont(TCollection_AsciiString(fontName.c_str()), aspect);
+}
+
+static TopoDS_Shape CleanAndFuse(const TopoDS_Shape &shp) {
+  BRepAlgoAPI_Fuse fuser;
+  TopTools_ListOfShape shapesToFuse;
+
+  for (TopExp_Explorer exp(shp, TopAbs_FACE); exp.More(); exp.Next()) {
+    shapesToFuse.Append(exp.Current());
+  }
+
+  fuser.SetArguments(shapesToFuse);
+  fuser.Build();
+
+  if (fuser.IsDone()) {
+    return fuser.Shape();
+  }
+  return shp;
+}
+
+TopoDS_Shape normalize_shape(const TopoDS_Shape &shape) {
+  if (shape.IsNull()) {
+    return shape;
+  }
+
+  const TopAbs_ShapeEnum shapeType = shape.ShapeType();
+  TopoDS_Shape result = shape;
+
+  if (shapeType == TopAbs_COMPOUND) {
+    // Check if compound has only one element
+    TopExp_Explorer compExp(shape, TopAbs_SHAPE);
+    if (compExp.More()) {
+      compExp.Next();
+      if (!compExp.More()) { // Only one element
+        result = TopExp_Explorer(shape, TopAbs_SHAPE).Current();
+      }
+    }
+  }
+
+  return result;
+}
+} // namespace
 
 compound compound::make_compound(std::vector<shape> &shapes) {
   BRep_Builder B;
@@ -47,7 +161,6 @@ void compound::remove(const shape &shapeToRemove) {
   TopoDS_Builder builder;
   builder.MakeCompound(result);
 
-  // 复制除了要移除的形状外的所有子形状
   bool found = false;
   for (TopoDS_Iterator it(_shape); it.More(); it.Next()) {
     const TopoDS_Shape &current = it.Value();
@@ -129,7 +242,6 @@ compound compound::cut(const std::vector<shape> &toCut, double tol) const {
   return bool_op({shape(*this)}, toCut, cutOp);
 }
 
-// Boolean fuse operation
 compound compound::fuse(const std::vector<shape> &toFuse, bool glue,
                         double tol) const {
   BRepAlgoAPI_Fuse fuseOp;
@@ -163,22 +275,18 @@ compound compound::intersect(const std::vector<shape> &toIntersect,
   return bool_op({shape(*this)}, toIntersect, intersectOp);
 }
 
-// Find ancestor shapes
 compound compound::ancestors(const shape &s, TopAbs_ShapeEnum kind) const {
   TopTools_IndexedDataMapOfShapeListOfShape shapeMap;
 
-  // Get unique shape types in this shape
   std::set<TopAbs_ShapeEnum> shapeTypes;
   for (const auto &child : this->children()) {
     shapeTypes.insert(child.value().ShapeType());
   }
 
-  // Map shapes and ancestors
   for (TopAbs_ShapeEnum t : shapeTypes) {
     TopExp::MapShapesAndAncestors(s.value(), t, kind, shapeMap);
   }
 
-  // Collect results
   std::vector<shape> results;
   for (const auto &s : this->children()) {
     const TopTools_ListOfShape &ancestors = shapeMap.FindFromKey(s.value());
@@ -199,7 +307,6 @@ void _collectSiblings(const shape &shp,
     exclude.Add(s.value());
   }
 
-  // Collect
   for (const auto &s : shp.children()) {
     for (const auto &child : s.get_shapes(kind)) {
       const TopTools_ListOfShape &siblings =
@@ -213,35 +320,144 @@ void _collectSiblings(const shape &shp,
     }
   }
 
-  // Recurse if needed
   if (level > 1) {
     shape nextLevel = compound::make_compound(results);
     _collectSiblings(nextLevel, shapeMap, exclude, kind, level - 1, results);
   }
 }
 
-// Find sibling shapes
 compound compound::siblings(const shape &s, TopAbs_ShapeEnum kind,
                             int level) const {
   TopTools_IndexedDataMapOfShapeListOfShape shapeMap;
   TopTools_MapOfShape exclude;
 
-  // Get unique shape types in this shape
   std::set<TopAbs_ShapeEnum> shapeTypes;
   for (const auto &child : this->children()) {
     shapeTypes.insert(child.value().ShapeType());
   }
 
-  // Map shapes and ancestors
   for (TopAbs_ShapeEnum t : shapeTypes) {
     TopExp::MapShapesAndAncestors(s.value(), kind, t, shapeMap);
   }
 
-  // Recursive sibling collection
   std::vector<shape> results;
   _collectSiblings(*this, shapeMap, exclude, kind, level, results);
 
   return compound::make_compound(results);
+}
+
+compound compound::make_text(const std::string &text, double size,
+                             const std::string &font,
+                             const std::string &fontPath, FontKind kind,
+                             HAlign halign, VAlign valign,
+                             const gp_Ax3 &position // Default XY plane
+) {
+  // Convert font kind
+  Font_FontAspect fontAspect = ConvertFontKind(kind);
+
+  // Get font manager and load font
+  Handle(Font_FontMgr) fontMgr = Font_FontMgr::GetInstance();
+  Handle(Font_SystemFont) systemFont =
+      LoadFont(fontMgr, font, fontPath, fontAspect);
+
+  // Convert alignments
+  Graphic3d_HorizontalTextAlignment hAlignment = ConvertHAlign(halign);
+  Graphic3d_VerticalTextAlignment vAlignment = ConvertVAlign(valign);
+
+  // Create BRep font and builder
+  StdPrs_BRepFont brepFont(
+      NCollection_Utf8String(systemFont->FontName().ToCString()), fontAspect,
+      size);
+
+  Font_BRepTextBuilder builder;
+  TopoDS_Shape textShape =
+      builder.Perform(brepFont, NCollection_Utf8String(text.c_str()), gp_Ax3(),
+                      hAlignment, vAlignment);
+
+  // Clean and fuse the result
+  return CleanAndFuse(textShape);
+}
+
+compound compound::make_text(const std::string &text, double size,
+                             const wire &spine, bool planar,
+                             const std::string &font, const std::string &path,
+                             FontKind kind, HAlign halign, VAlign valign) {
+  // Get the wire from spine
+  TopoDS_Wire wire = spine.value();
+  double length = spine.length();
+
+  // Create flat text first
+  compound flatText =
+      compound::make_text(text, size, font, path, kind, halign, valign);
+
+  // Process each face of the text
+  BRep_Builder builder;
+  TopoDS_Compound result;
+  builder.MakeCompound(result);
+
+  for (TopExp_Explorer exp(flatText, TopAbs_FACE); exp.More(); exp.Next()) {
+    TopoDS_Face face = TopoDS::Face(exp.Current());
+
+    // Get position and transform
+    Bnd_Box bbox;
+    BRepBndLib::Add(face, bbox);
+    double xPos = (bbox.CornerMin().X() + bbox.CornerMax().X()) / 2.0;
+
+    // Create transformations
+    gp_Trsf moveToOrigin;
+    moveToOrigin.SetTranslation(gp_Vec(-xPos, 0, 0));
+
+    gp_Trsf rotate;
+    if (planar) {
+      rotate.SetRotation(gp_Ax1(gp_Pnt(), gp_Dir(1, 0, 0)), -M_PI_2);
+    }
+    gp_Trsf rotateY;
+    rotateY.SetRotation(gp_Ax1(gp_Pnt(), gp_Dir(0, 1, 0)), -M_PI_2);
+
+    // Get position along spine
+    gp_Pnt spinePoint = spine.position_at(xPos / length);
+    gp_Trsf moveToSpine;
+    moveToSpine.SetTranslation(gp_Vec(spinePoint.XYZ()));
+
+    // Combine transformations
+    gp_Trsf finalTransform = moveToOrigin * rotate * rotateY * moveToSpine;
+
+    // Apply transformation and add to result
+    TopoDS_Shape movedFace = face.Moved(finalTransform);
+    builder.Add(result, movedFace);
+  }
+
+  return normalize_shape(result);
+}
+
+// Text projected on a base surface
+compound compound::make_text(const std::string &text, double size,
+                             const wire &spine, const face &base,
+                             const std::string &font, const std::string &path,
+                             FontKind kind, HAlign halign, VAlign valign) {
+  // Get single face from base
+  TopoDS_Face baseFace = base.value();
+
+  // Create text along spine first
+  compound spineText = compound::make_text(text, size, spine, false, font, path,
+                                           kind, halign, valign);
+
+  // Project each face
+  BRep_Builder builder;
+  TopoDS_Compound result;
+  builder.MakeCompound(result);
+
+  for (TopExp_Explorer exp(spineText, TopAbs_FACE); exp.More(); exp.Next()) {
+    TopoDS_Face face = TopoDS::Face(exp.Current());
+    gp_Dir normal = base.normal_at();
+
+    BRepProj_Projection projection(face, baseFace, normal);
+    if (projection.IsDone()) {
+      builder.Add(result, projection.Shape());
+    }
+  }
+
+  return normalize_shape(result);
 }
 
 } // namespace topo

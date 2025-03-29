@@ -1,4 +1,3 @@
-
 #include "brep_utils.hh"
 
 #include "tkernel_utils.hh"

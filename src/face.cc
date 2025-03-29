@@ -1,7 +1,7 @@
 #include "face.hh"
 #include "compound.hh"
-#include "curve_utils.hh"
 #include "edge.hh"
+#include "geom_utils.hh"
 #include "solid.hh"
 #include "vertex.hh"
 #include "wire.hh"
@@ -572,23 +572,6 @@ face face::make_spline_approx(
   return face(faceBuilder.Face());
 }
 
-int face::num_wires() const {
-  TopTools_IndexedMapOfShape anIndices;
-  TopExp::MapShapes(value(), TopAbs_WIRE, anIndices);
-  return anIndices.Extent();
-}
-
-int face::num_faces() const {
-  TopTools_IndexedMapOfShape anIndices;
-  const TopoDS_Shape &shp = value();
-  if (shp.ShapeType() == TopAbs_FACE) {
-    return 1;
-  } else {
-    TopExp::MapShapes(shp, TopAbs_FACE, anIndices);
-    return anIndices.Extent();
-  }
-}
-
 double face::area() const {
   GProp_GProps prop;
   BRepGProp::SurfaceProperties(value(), prop);
@@ -876,7 +859,7 @@ face face::fillet2d(double radius, const std::vector<vertex> &vertices) const {
 face face::chamfer2d(double distances,
                      const std::vector<vertex> &vertices) const {
   BRepFilletAPI_MakeFillet2d chamferBuilder(this->value());
-  auto edgeMap = this->get_entities(TopAbs_VERTEX, TopAbs_EDGE);
+  auto edgeMap = this->get_entities_from(TopAbs_VERTEX, TopAbs_EDGE);
 
   for (const vertex &v : vertices) {
     auto edges = edgeMap[v];
@@ -904,15 +887,6 @@ wire face::outer_wire() const {
   return wire(BRepTools::OuterWire(this->value()));
 }
 
-std::vector<wire> face::wires() const {
-  std::vector<wire> wires;
-  TopExp_Explorer ex(value(), TopAbs_WIRE);
-  for (; ex.More(); ex.Next()) {
-    wires.push_back(wire(ex.Current()));
-  }
-  return wires;
-}
-
 std::vector<wire> face::inner_wires() const {
   wire outer = this->outer_wire();
   std::vector<wire> innerWires;
@@ -924,15 +898,6 @@ std::vector<wire> face::inner_wires() const {
   }
 
   return innerWires;
-}
-
-std::vector<face> face::faces() const {
-  std::vector<face> faces;
-  TopExp_Explorer ex(value(), TopAbs_FACE);
-  for (; ex.More(); ex.Next()) {
-    faces.push_back(face(ex.Current()));
-  }
-  return faces;
 }
 
 std::tuple<double, double, double, double> face::uv_bounds() const {
@@ -1158,7 +1123,7 @@ edge face::isoline(double param, const std::string &direction) const {
   Handle(Adaptor3d_Surface) hanle = new GeomAdaptor_Surface(surface);
   Adaptor3d_IsoCurve adaptor(hanle, isoType, param);
 
-  return edge(curve_utils::adaptor_curve_to_edge(adaptor, p1, p2));
+  return edge(geom_utils::adaptor_curve_to_edge(adaptor, p1, p2));
 }
 
 std::vector<edge> face::isolines(const std::vector<double> &params,
@@ -1173,19 +1138,16 @@ std::vector<edge> face::isolines(const std::vector<double> &params,
   return result;
 }
 
-std::vector<face> make_from_wires(const wire &outer,
-                                  const std::vector<wire> &inners) {
+std::vector<face> face::make_from_wires(const wire &outer,
+                                        const std::vector<wire> &inners) {
   BRepBuilderAPI_MakeFace faceBuilder;
 
-  // Add outer wire
   faceBuilder.Add(TopoDS::Wire(outer.value()));
 
-  // Add inner wires
   for (const wire &w : inners) {
     faceBuilder.Add(TopoDS::Wire(w.value()));
   }
 
-  // Handle possible multiple faces in compound
   TopoDS_Shape result = faceBuilder.Shape();
   if (result.ShapeType() == TopAbs_COMPOUND) {
     std::vector<face> faces;

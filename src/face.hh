@@ -132,14 +132,6 @@ public:
       const std::tuple<double, double, double> *smoothing = nullptr,
       int minDeg = 1, int maxDeg = 3);
 
-  int num_wires() const;
-
-  std::vector<wire> wires() const;
-
-  int num_faces() const;
-
-  std::vector<face> faces() const;
-
   double area() const;
 
   float tolerance() const;

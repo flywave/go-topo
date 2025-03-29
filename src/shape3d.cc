@@ -108,7 +108,7 @@ std::vector<flywave::topo::shell> shape3d::shells() const {
   return ret;
 }
 
-shape shape3d::make_shell(const std::vector<face> &faceList, double thickness,
+shape shape3d::shelling(const std::vector<face> &faceList, double thickness,
                           double tolerance, const std::string &kind) const {
   if (tolerance <= 0) {
     throw std::invalid_argument("Tolerance must be positive");

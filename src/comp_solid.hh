@@ -21,8 +21,7 @@ public:
   static comp_solid make_comp_solid(std::initializer_list<solid> &shapes);
 
   template <typename TShp1, typename TShp2, typename... TShp>
-  static comp_solid make_comp_solid(TShp1 &&shp1, TShp2 &&shp2,
-                                    TShp &&... shps);
+  static comp_solid make_comp_solid(TShp1 &&shp1, TShp2 &&shp2, TShp &&...shps);
 
   TopoDS_CompSolid &value();
   const TopoDS_CompSolid &value() const;
@@ -47,7 +46,7 @@ inline void make_compound_helper(BRep_Builder &aBuilder,
 
 template <typename TShp1, typename... TShp>
 void make_compound_helper(BRep_Builder &aBuilder, TopoDS_CompSolid &aRes,
-                          TShp1 &&shp1, TShp &&... shps) {
+                          TShp1 &&shp1, TShp &&...shps) {
   aBuilder.Add(aRes, shp1);
   make_compound_helper(aBuilder, aRes, std::forward<TShp>(shps)...);
 }
@@ -55,7 +54,7 @@ void make_compound_helper(BRep_Builder &aBuilder, TopoDS_CompSolid &aRes,
 
 template <typename TShp1, typename TShp2, typename... TShp>
 comp_solid comp_solid::make_comp_solid(TShp1 &&shp1, TShp2 &&shp2,
-                                       TShp &&... shps) {
+                                       TShp &&...shps) {
   TopoDS_CompSolid aRes;
   BRep_Builder aBuilder;
   aBuilder.MakeCompSolid(aRes);

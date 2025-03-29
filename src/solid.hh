@@ -232,12 +232,6 @@ public:
   static solid make_solid_from_loft(const std::vector<wire> &wires,
                                     bool ruled = false);
 
-  int num_solids() const;
-
-  int num_faces() const;
-
-  std::vector<shell> shells() const;
-
   shell outer_shell() const;
 
   std::vector<shell> inner_shells() const;

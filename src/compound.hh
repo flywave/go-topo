@@ -11,15 +11,40 @@ namespace flywave {
 namespace topo {
 
 class compound_iterator;
+class wire;
 
 class compound : public shape3d {
 public:
   compound() = default;
   virtual ~compound() = default;
 
+  enum class FontKind { REGULAR, BOLD, ITALIC };
+  enum class HAlign { LEFT, CENTER, RIGHT };
+  enum class VAlign { BOTTOM, CENTER, TOP };
+
   static compound make_compound(std::vector<shape> &shapes);
 
   static compound make_compound(std::initializer_list<shape> &shapes);
+
+  static compound
+  make_text(const std::string &text, double size,
+            const std::string &font = "Arial", const std::string &fontPath = "",
+            FontKind kind = FontKind::REGULAR, HAlign halign = HAlign::CENTER,
+            VAlign valign = VAlign::CENTER,
+            const gp_Ax3 &position = gp_Ax3() // Default XY plane
+  );
+
+  static compound
+  make_text(const std::string &text, double size, const wire &spine,
+            bool planar = false, const std::string &font = "Arial",
+            const std::string &path = "", FontKind kind = FontKind::REGULAR,
+            HAlign halign = HAlign::CENTER, VAlign valign = VAlign::CENTER);
+
+  static compound
+  make_text(const std::string &text, double size, const wire &spine,
+            const face &base, const std::string &font = "Arial",
+            const std::string &path = "", FontKind kind = FontKind::REGULAR,
+            HAlign halign = HAlign::CENTER, VAlign valign = VAlign::CENTER);
 
   template <typename TShp1, typename TShp2, typename... TShp>
   static compound make_compound(TShp1 &&shp1, TShp2 &&shp2, TShp &&...shps);

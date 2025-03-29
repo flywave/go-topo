@@ -32,8 +32,10 @@
 #include <Geom_Line.hxx>
 #include <Geom_Plane.hxx>
 #include <Geom_TrimmedCurve.hxx>
+#include <Interface_Static.hxx>
 #include <Poly.hxx>
 #include <Poly_Triangulation.hxx>
+#include <STEPControl_Writer.hxx>
 #include <ShapeCustom.hxx>
 #include <ShapeCustom_BSplineRestriction.hxx>
 #include <ShapeCustom_RestrictionParameters.hxx>
@@ -124,20 +126,17 @@ const std::string &get_geom_type(const TopoDS_Shape &shape) {
 
   TopAbs_ShapeEnum shapeType = shape.ShapeType();
 
-  // 简单形状类型直接返回
   auto it = geomLUT.find(shapeType);
   if (it != geomLUT.end()) {
     return it->second;
   }
 
-  // 处理边类型
   if (shapeType == TopAbs_EDGE) {
     BRepAdaptor_Curve curve(TopoDS::Edge(shape));
     auto curveType = curve.GetType();
     return edgeGeomLUT.at(curveType);
   }
 
-  // 处理面类型
   if (shapeType == TopAbs_FACE) {
     BRepAdaptor_Surface surface(TopoDS::Face(shape));
     auto surfaceType = surface.GetType();
@@ -153,7 +152,6 @@ struct TopoDS_ShapeHasher {
     if (shape.IsNull()) {
       return 0;
     }
-    // 基于底层 TShape 的地址计算哈希
     return std::hash<const void *>{}(shape.TShape().get());
   }
 };
@@ -1371,25 +1369,32 @@ shape shape::clean() {
 }
 
 bool shape::export_step(const std::string &fileName, bool write_pcurves,
-                        int precision_mode) {}
+                        int precision_mode) const {
+  Interface_Static::SetIVal("write.surfacecurve.mode", write_pcurves ? 1 : 0);
+  Interface_Static::SetIVal("write.precision.mode", precision_mode);
 
-bool shape::export_brep(const std::string &fileName) {
+  STEPControl_Writer writer;
+  writer.Transfer(_shape, STEPControl_AsIs);
+  return writer.Write(fileName.c_str());
+}
+
+bool shape::export_brep(const std::string &fileName) const {
   return BRepTools::Write(_shape, fileName.c_str());
 }
 
 boost::optional<shape> shape::import_from_brep(const std::string &fileName) {
-  TopoDS_Shape s;
+  TopoDS_Shape shp;
   BRep_Builder builder;
 
-  if (!BRepTools::Read(s, fileName.c_str(), builder)) {
+  if (!BRepTools::Read(shp, fileName.c_str(), builder)) {
     return boost::none;
   }
 
-  if (s.IsNull()) {
+  if (shp.IsNull()) {
     return boost::none;
   }
 
-  return boost::make_optional<shape>(s);
+  return boost::make_optional<shape>(shp);
 }
 
 gp_Pnt shape::combined_center(const std::vector<shape> &shapes) {
@@ -1488,22 +1493,19 @@ double shape::distance(const shape &o) const {
 }
 
 std::unordered_map<shape, std::vector<shape>>
-shape::get_entities(TopAbs_ShapeEnum childType,
-                    TopAbs_ShapeEnum parentType) const {
+shape::get_entities_from(TopAbs_ShapeEnum childType,
+                         TopAbs_ShapeEnum parentType) const {
   TopTools_IndexedDataMapOfShapeListOfShape resultMap;
 
-  // Map shapes and their ancestors
   TopExp::MapShapesAndAncestors(this->value(), childType, parentType,
                                 resultMap);
 
-  // Convert to more convenient std::map
   std::unordered_map<shape, std::vector<shape>> outputMap;
 
   for (int i = 1; i <= resultMap.Extent(); i++) {
     const TopoDS_Shape &keyShape = resultMap.FindKey(i);
     const TopTools_ListOfShape &valueList = resultMap.FindFromIndex(i);
 
-    // Convert TopTools_ListOfShape to std::vector<Shape>
     std::vector<shape> valueVector;
     TopTools_ListIteratorOfListOfShape it(valueList);
     for (; it.More(); it.Next()) {
@@ -1537,5 +1539,111 @@ std::vector<shape> shape::get_shapes(TopAbs_ShapeEnum kind) const {
 
   return result;
 }
+
+std::string shape::to_string(double tolerance, double angularTolerance) const {
+  STEPControl_Writer stepWriter;
+  stepWriter.Transfer(this->value(), STEPControl_AsIs);
+
+  std::ostringstream stepStream;
+  if (stepWriter.WriteStream(stepStream)) {
+    return stepStream.str();
+  }
+  return "";
+}
+
+std::vector<vertex> shape::vertices() const {
+  return extract_entities<vertex>(TopAbs_VERTEX);
+}
+
+std::vector<edge> shape::edges() const {
+  return extract_entities<edge>(TopAbs_EDGE);
+}
+
+std::vector<compound> shape::compounds() const {
+  return extract_entities<compound>(TopAbs_COMPOUND);
+}
+
+std::vector<wire> shape::wires() const {
+  return extract_entities<wire>(TopAbs_WIRE);
+}
+
+std::vector<face> shape::faces() const {
+  return extract_entities<face>(TopAbs_FACE);
+}
+
+std::vector<shell> shape::shells() const {
+  return extract_entities<shell>(TopAbs_SHELL);
+}
+
+std::vector<solid> shape::solids() const {
+  return extract_entities<solid>(TopAbs_SOLID);
+}
+
+std::vector<comp_solid> shape::comp_solids() const {
+  return extract_entities<comp_solid>(TopAbs_COMPSOLID);
+}
+
+int shape::num_entities(TopAbs_ShapeEnum type) const {
+  TopTools_IndexedMapOfShape anIndices;
+  TopExp::MapShapes(_shape, type, anIndices);
+  return anIndices.Extent();
+}
+
+shape shape::filter(selector *sel, const std::vector<shape> &shapes) const {
+  std::vector<shape> selected;
+
+  if (sel) {
+    selected = sel->filter(shapes);
+  } else {
+    selected = shapes;
+  }
+
+  if (selected.size() == 1) {
+    return selected[0];
+  } else {
+    return compound::make_compound(selected);
+  }
+}
+
+bool shape::is_solid() const {
+  if (_shape.IsNull()) {
+    return false;
+  }
+
+  const TopAbs_ShapeEnum shapeType = _shape.ShapeType();
+
+  if (shapeType == TopAbs_SOLID) {
+    return true;
+  }
+
+  if (shapeType == TopAbs_COMPOUND) {
+    TopExp_Explorer exp(_shape, TopAbs_SOLID);
+    return exp.More();
+  }
+
+  return false;
+}
+
+std::vector<double> shape::distances(const std::vector<shape> &others) const {
+  std::vector<double> results;
+  results.reserve(others.size());
+
+  BRepExtrema_DistShapeShape distCalc;
+  distCalc.LoadS1(_shape);
+
+  for (const auto &other : others) {
+    distCalc.LoadS2(other);
+    distCalc.Perform();
+
+    if (distCalc.IsDone()) {
+      results.push_back(distCalc.Value());
+    } else {
+      results.push_back(-1.0); // Using -1.0 as error indicator
+    }
+  }
+
+  return results;
+}
+
 } // namespace topo
 } // namespace flywave

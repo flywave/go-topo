@@ -39,7 +39,7 @@ public:
   shape chamfer(double length, const boost::optional<double> &length2,
                 const std::vector<edge> &edgeList) const;
 
-  shape make_shell(const std::vector<face> &faceList, double thickness,
+  shape shelling(const std::vector<face> &faceList, double thickness,
                    double tolerance = 0.0001,
                    const std::string &kind = "arc") const;
 

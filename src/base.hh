@@ -16,20 +16,25 @@ public:
 
   vector3d() = default;
   vector3d(double ax, double ay, double az) : x(ax), y(ay), z(az) {}
+
   vector3d operator-(const vector3d &other) const {
     return vector3d(this->x - other.x, this->y - other.y, this->z - other.z);
   }
+
   vector3d operator+(const vector3d &other) const {
     return vector3d(this->x + other.x, this->y + other.y, this->z + other.z);
   }
+
   vector3d operator*(double k) const {
     return vector3d(this->x * k, this->y * k, this->z * k);
   }
+
   double operator*(const vector3d &other) const {
     return this->x * other.x + this->y * other.y + this->z * other.z;
   }
 
   inline vector3d &normalize();
+  
   inline double length() const {
     return std::sqrt((x * x) + (y * y) + (z * z));
   }
