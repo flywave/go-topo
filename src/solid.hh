@@ -59,9 +59,6 @@ public:
                                    const Standard_Real dz);
 
   static solid make_solid_from_cylinder(const Standard_Real R,
-                                        const Standard_Real H);
-
-  static solid make_solid_from_cylinder(const Standard_Real R,
                                         const Standard_Real H,
                                         const Standard_Real Angle);
 
@@ -74,9 +71,17 @@ public:
                                         const Standard_Real H,
                                         const Standard_Real Angle);
 
-  static solid make_solid_from_cone(const Standard_Real R1,
-                                    const Standard_Real R2,
-                                    const Standard_Real H);
+  static solid make_solid_from_cylinder(Standard_Real radius,
+                                        Standard_Real height,
+                                        const gp_Pnt &pnt = gp_Pnt(0, 0, 0),
+                                        const gp_Dir &dir = gp_Dir(0, 0, 1),
+                                        double angleDegrees = 360.0);
+
+  static solid make_solid_from_cone(Standard_Real radius1,
+                                    Standard_Real radius2, Standard_Real height,
+                                    const gp_Pnt &pnt = gp_Pnt(0, 0, 0),
+                                    const gp_Dir &dir = gp_Dir(0, 0, 1),
+                                    double angleDegrees = 360.0);
 
   static solid make_solid_from_cone(const Standard_Real R1,
                                     const Standard_Real R2,

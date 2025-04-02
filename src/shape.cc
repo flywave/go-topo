@@ -5,6 +5,7 @@
 #include "compound.hh"
 #include "edge.hh"
 #include "face.hh"
+#include "matrix.hh"
 #include "shell.hh"
 #include "solid.hh"
 #include "vertex.hh"
@@ -12,6 +13,10 @@
 
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
+#include <BRepAlgoAPI_Common.hxx>
+#include <BRepAlgoAPI_Cut.hxx>
+#include <BRepAlgoAPI_Fuse.hxx>
+#include <BRepAlgoAPI_Splitter.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_FindPlane.hxx>
@@ -312,6 +317,10 @@ Bnd_Box shape::bounding_box(double tolerance) const {
   }
 }
 
+topo_bbox shape::bbox(double tolerance) const {
+  return topo_bbox(bounding_box(tolerance));
+}
+
 int shape::hash_code() const {
   return _shape.HashCode(std::numeric_limits<int>::max());
 }
@@ -325,6 +334,31 @@ bool shape::equals(const geometry_object &other) const {
 }
 
 int shape::transform(gp_Trsf mat) { return transform_impl(mat); }
+
+int shape::transform(const topo_matrix &mat) {
+  try {
+    TopoDS_Shape &shape = _shape;
+    BRepBuilderAPI_Transform transformer(shape, mat.getWrapped().Trsf(),
+                                         true // Make copy of the shape
+    );
+
+    transformer.Build();
+    if (!transformer.IsDone())
+      return 0;
+    _shape = transformer.Shape();
+    return 1;
+  } catch (Standard_Failure &e) {
+
+    const Standard_CString msg = e.GetMessageString();
+    if (msg != NULL && strlen(msg) > 1) {
+      throw std::runtime_error(msg);
+    } else {
+      throw std::runtime_error("Failed to transform object");
+    }
+    return 0;
+  }
+  return 1;
+}
 
 int shape::transform_impl(gp_Trsf &trans) {
   try {
@@ -379,6 +413,8 @@ int shape::translate(gp_Vec delta) {
 }
 
 bool shape::is_same(const shape &o) const { return _shape.IsSame(o._shape); }
+
+bool shape::for_construction() const { return false; }
 
 int shape::rotate(double angle, gp_Pnt p1, gp_Pnt p2) {
   try {
@@ -490,6 +526,10 @@ int shape::scale(gp_Pnt pnt, double scale) {
   return 1;
 }
 
+int shape::mirror(gp_Pnt pnt, gp_Vec nor) {
+  return mirror(pnt, gp_Pnt(nor.X(), nor.Y(), nor.Z()));
+}
+
 int shape::mirror(gp_Pnt pnt, gp_Pnt nor) {
   try {
     TopoDS_Shape &shape = _shape;
@@ -579,6 +619,12 @@ shape shape::transformed(gp_Trsf mat) const {
   return shp;
 }
 
+shape shape::transformed(const topo_matrix &mat) const {
+  auto shp = copy();
+  shp.transform(mat);
+  return shp;
+}
+
 shape shape::translated(gp_Vec delta) const {
   auto shp = copy();
   shp.translate(delta);
@@ -610,6 +656,12 @@ shape shape::scaled(gp_Pnt pnt, double scale) const {
 }
 
 shape shape::mirrored(gp_Pnt pnt, gp_Pnt nor) const {
+  auto shp = copy();
+  shp.mirror(pnt, nor);
+  return shp;
+}
+
+shape shape::mirrored(gp_Pnt pnt, gp_Vec nor) const {
   auto shp = copy();
   shp.mirror(pnt, nor);
   return shp;
@@ -659,6 +711,8 @@ gp_Pnt shape::centre_of_mass() const {
   return system.CentreOfMass();
 }
 
+gp_Pnt shape::center_of_bound_box() const { return this->bbox().Center(); }
+
 double shape::compute_area() const {
   GProp_GProps system;
   BRepGProp::SurfaceProperties(_shape, system);
@@ -693,6 +747,106 @@ bool shape::surface_colour(double *colour) const {
 }
 
 void shape::set_location(const topo_location &loc) { _shape.Location(loc); }
+
+shape shape::located(const topo_location &loc) const {
+  shape result(value().Located(loc));
+  // result.forConstruction_ = forConstruction_;
+  return result;
+}
+
+int shape::move(const topo_location &loc) {
+  gp_Trsf trsf = loc;
+  value().Move(trsf);
+  return 1;
+}
+
+// Apply translation and rotation in relative sense to self
+int shape::move(double x, double y, double z, double rx, double ry, double rz) {
+  topo_location loc(gp_Vec(x, y, z), rx, ry, rz);
+  gp_Trsf trsf = loc;
+  value().Move(trsf);
+  return 1;
+}
+
+// Apply a vector in relative sense to self
+int shape::move(const gp_Vec &vec) {
+  gp_Trsf trsf;
+  trsf.SetTranslation(vec);
+  value().Move(trsf);
+  return 1;
+}
+
+// Moved methods (create new transformed shapes)
+
+// Apply a location in relative sense to a copy
+shape shape::moved(const topo_location &loc) const {
+  gp_Trsf trsf = loc;
+  TopoDS_Shape movedShape =
+      BRepBuilderAPI_Transform(value(), trsf, true).Shape();
+  shape result(movedShape);
+  // result.forConstruction_ = forConstruction_;
+  return result;
+}
+
+// Apply multiple locations
+shape shape::moved(std::initializer_list<topo_location> locs) const {
+  return moved(std::vector<topo_location>(locs));
+}
+
+shape shape::moved(const std::vector<topo_location> &locs) const {
+  TopTools_ListOfShape shapeList;
+
+  for (const auto &loc : locs) {
+    shapeList.Append(moved(loc).value());
+  }
+
+  if (shapeList.Size() == 1) {
+    return shape(shapeList.First());
+  }
+
+  // Combine multiple results into a compound
+  TopoDS_Compound compound;
+  BRep_Builder builder;
+  builder.MakeCompound(compound);
+
+  for (auto &shape : shapeList) {
+    builder.Add(compound, shape);
+  }
+
+  return shape(compound);
+}
+
+// Apply translation and rotation in relative sense to a copy
+shape shape::moved(double x, double y, double z, double rx, double ry,
+                   double rz) const {
+  topo_location loc(gp_Vec(x, y, z), rx, ry, rz);
+  gp_Trsf trsf = loc;
+  return moved(topo_location(trsf));
+}
+
+// Apply a vector in relative sense to a copy
+shape shape::moved(const gp_Vec &vec) const {
+  gp_Trsf trsf;
+  trsf.SetTranslation(vec);
+  return moved(topo_location(trsf));
+}
+
+// Apply multiple vectors in relative sense to a copy
+shape shape::moved(std::initializer_list<gp_Vec> vecs) const {
+  std::vector<topo_location> locs;
+  for (const auto &vec : vecs) {
+    locs.emplace_back(topo_location(vec));
+  }
+  return moved(locs);
+}
+
+shape shape::moved(const std::vector<gp_Vec> &vecs) const {
+  std::vector<topo_location> locs;
+  for (const auto &vec : vecs) {
+    locs.emplace_back(topo_location(vec));
+  }
+  return moved(locs);
+}
 
 orientation shape::get_orientation() const {
   switch (_shape.Orientation()) {
@@ -758,25 +912,23 @@ bool shape::fix_shape() {
   return aChecker.IsValid();
 }
 
-boost::optional<compound> shape::ancestors(const shape &self,
-                                           const shape &shape,
+boost::optional<compound> shape::ancestors(const shape &shape,
                                            TopAbs_ShapeEnum kind) const {
-  if (self.is_null() || shape.is_null()) {
+  if (is_null() || shape.is_null()) {
     return boost::none;
   }
 
   TopTools_IndexedDataMapOfShapeListOfShape shapeMap;
-  TopExp::MapShapesAndAncestors(shape, self.value().ShapeType(), kind,
-                                shapeMap);
+  TopExp::MapShapesAndAncestors(shape, value().ShapeType(), kind, shapeMap);
 
-  if (!shapeMap.Contains(self)) {
+  if (!shapeMap.Contains(*this)) {
     return boost::none;
   }
 
   BRep_Builder builder;
   TopoDS_Compound result;
   builder.MakeCompound(result);
-  const TopTools_ListOfShape &ancestors = shapeMap.FindFromKey(self);
+  const TopTools_ListOfShape &ancestors = shapeMap.FindFromKey(*this);
 
   TopTools_ListIteratorOfListOfShape it(ancestors);
   for (; it.More(); it.Next()) {
@@ -786,17 +938,15 @@ boost::optional<compound> shape::ancestors(const shape &self,
   return boost::make_optional<compound>(result);
 }
 
-boost::optional<compound> shape::siblings(const shape &self, const shape &shape,
-                                          TopAbs_ShapeEnum kind,
-                                          int level) const {
+boost::optional<compound>
+shape::siblings(const shape &shape, TopAbs_ShapeEnum kind, int level) const {
   TopTools_IndexedDataMapOfShapeListOfShape shapeMap;
   TopTools_MapOfShape exclude;
   BRep_Builder builder;
   TopoDS_Compound result;
   builder.MakeCompound(result);
 
-  TopExp::MapShapesAndAncestors(shape, kind, self.value().ShapeType(),
-                                shapeMap);
+  TopExp::MapShapesAndAncestors(shape, kind, value().ShapeType(), shapeMap);
 
   std::function<std::vector<TopoDS_Shape>(const std::vector<TopoDS_Shape> &,
                                           int)>
@@ -839,7 +989,7 @@ boost::optional<compound> shape::siblings(const shape &self, const shape &shape,
     return siblingsVec;
   };
 
-  std::vector<TopoDS_Shape> initialShapes = {self};
+  std::vector<TopoDS_Shape> initialShapes = {*this};
   auto siblings = findSiblings(initialShapes, level);
 
   for (const auto &s : siblings) {
@@ -1204,6 +1354,8 @@ boost::optional<shape> shape::auto_cast() const {
       return shell(_shape);
     case TopAbs_SOLID:
       return solid(_shape);
+    case TopAbs_COMPOUND:
+      return compound(_shape);
     default:
       break;
     }
@@ -1226,6 +1378,8 @@ boost::optional<shape> shape::make_shape(TopoDS_Shape shp) {
       return shell(shp);
     case TopAbs_SOLID:
       return solid(shp);
+    case TopAbs_COMPOUND:
+      return compound(shp);
     default:
       break;
     }
@@ -1532,9 +1686,19 @@ std::vector<shape> shape::children() const {
 std::vector<shape> shape::get_shapes(TopAbs_ShapeEnum kind) const {
   std::vector<shape> result;
 
-  TopExp_Explorer exp(this->value(), kind);
-  for (; exp.More(); exp.Next()) {
-    result.emplace_back(exp.Current());
+  if (kind == TopAbs_SHAPE) {
+    TopoDS_Iterator it(this->value());
+
+    for (; it.More(); it.Next()) {
+      result.push_back(shape(it.Value()));
+    }
+  } else {
+
+    TopExp_Explorer exp(this->value(), kind);
+
+    for (; exp.More(); exp.Next()) {
+      result.emplace_back(exp.Current());
+    }
   }
 
   return result;
@@ -1643,6 +1807,71 @@ std::vector<double> shape::distances(const std::vector<shape> &others) const {
   }
 
   return results;
+}
+
+// Generic boolean operation
+template <typename OpType>
+shape shape::bool_op(const std::vector<shape> &args,
+                     const std::vector<shape> &tools, OpType &op,
+                     bool parallel) const {
+  TopTools_ListOfShape argList;
+  for (const auto &obj : args) {
+    argList.Append(obj);
+  }
+
+  TopTools_ListOfShape toolList;
+  for (const auto &obj : tools) {
+    toolList.Append(obj);
+  }
+
+  op.SetArguments(argList);
+  op.SetTools(toolList);
+  op.SetRunParallel(parallel);
+  op.Build();
+
+  if (!op.IsDone()) {
+    throw std::runtime_error("Boolean operation failed");
+  }
+
+  return shape(op.Shape());
+}
+
+// Cut operation
+shape shape::cuted(const std::vector<shape> &toCut, double tol) const {
+  BRepAlgoAPI_Cut cut_op;
+  if (tol > 0.0) {
+    cut_op.SetFuzzyValue(tol);
+  }
+  return bool_op({*this}, toCut, cut_op);
+}
+
+// Fuse operation
+shape shape::fused(const std::vector<shape> &toFuse, bool glue,
+                   double tol) const {
+  BRepAlgoAPI_Fuse fuse_op;
+  if (glue) {
+    fuse_op.SetGlue(BOPAlgo_GlueShift);
+  }
+  if (tol > 0.0) {
+    fuse_op.SetFuzzyValue(tol);
+  }
+  return bool_op({*this}, toFuse, fuse_op);
+}
+
+// Intersect operation
+shape shape::intersected(const std::vector<shape> &toIntersect,
+                         double tol) const {
+  BRepAlgoAPI_Common intersect_op;
+  if (tol > 0.0) {
+    intersect_op.SetFuzzyValue(tol);
+  }
+  return bool_op({*this}, toIntersect, intersect_op);
+}
+
+// Split operation
+shape shape::splited(const std::vector<shape> &splitters) const {
+  BRepAlgoAPI_Splitter split_op;
+  return bool_op({*this}, splitters, split_op);
 }
 
 } // namespace topo

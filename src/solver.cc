@@ -40,7 +40,7 @@ private:
   constraint_solver &solver_;
   std::vector<gp_Trsf> initial_transforms_;
   std::vector<Constraint> constraints_;
-  std::vector<bool> lockedEntities_;
+  std::vector<size_t> lockedEntities_;
   double scale_;
   size_t ne_;
   std::vector<gp_Trsf> final_transforms_;
@@ -931,7 +931,7 @@ private:
 
 constraint_solver::constraint_solver(const std::vector<gp_Trsf> &entities,
                                      const std::vector<Constraint> &constraints,
-                                     const std::vector<bool> &locked,
+                                     const std::vector<size_t> &locked,
                                      double scale)
     : scale_(scale), locked_(locked), constraints_(constraints) {
 

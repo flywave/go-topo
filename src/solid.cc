@@ -288,16 +288,6 @@ solid solid::make_solid_from_box(const gp_Ax2 &Axes, const Standard_Real dx,
 }
 
 solid solid::make_solid_from_cylinder(const Standard_Real R,
-                                      const Standard_Real H) {
-  try {
-    BRepPrimAPI_MakeCylinder mw(R, H);
-    return solid{mw.Solid()};
-  } catch (...) {
-    return solid{};
-  }
-}
-
-solid solid::make_solid_from_cylinder(const Standard_Real R,
                                       const Standard_Real H,
                                       const Standard_Real Angle) {
   try {
@@ -329,16 +319,55 @@ solid solid::make_solid_from_cylinder(const gp_Ax2 &Axes, const Standard_Real R,
   }
 }
 
-solid solid::make_solid_from_cone(const Standard_Real R1,
-                                  const Standard_Real R2,
-                                  const Standard_Real H) {
+// Make a cylinder with given radius and height
+solid solid::make_solid_from_cylinder(double radius, double height,
+                                      const gp_Pnt &pnt,
+                                      const gp_Dir &dir ,
+                                      double angleDegrees ) {
   try {
-    BRepPrimAPI_MakeCone mw(R1, R2, H);
-    return solid{mw.Solid()};
+    // Convert angle to radians
+    double angleRadians = angleDegrees * M_PI / 180.0;
+
+    // Create axis system
+    gp_Ax2 axis(pnt, dir);
+
+    // Build the cylinder
+    BRepPrimAPI_MakeCylinder cylinderMaker(axis, radius, height, angleRadians);
+
+    if (!cylinderMaker.IsDone()) {
+      throw std::runtime_error("Cylinder creation failed");
+    }
+
+    return solid(cylinderMaker.Shape());
   } catch (...) {
     return solid{};
   }
-} // namespace topo
+}
+
+solid solid::make_solid_from_cone(double radius1, double radius2, double height,
+                                  const gp_Pnt &pnt,
+                                  const gp_Dir &dir ,
+                                  double angleDegrees) {
+  try {
+    // Convert angle to radians
+    double angleRadians = angleDegrees * M_PI / 180.0;
+
+    // Create axis system
+    gp_Ax2 axis(pnt, dir);
+
+    // Build the cone
+    BRepPrimAPI_MakeCone coneMaker(axis, radius1, radius2, height,
+                                   angleRadians);
+
+    if (!coneMaker.IsDone()) {
+      throw std::runtime_error("Cone creation failed");
+    }
+
+    return solid(coneMaker.Shape());
+  } catch (...) {
+    return solid{};
+  }
+}
 
 solid solid::make_solid_from_cone(const Standard_Real R1,
                                   const Standard_Real R2, const Standard_Real H,

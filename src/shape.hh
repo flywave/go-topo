@@ -21,6 +21,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "bbox.hh"
+
 namespace flywave {
 namespace topo {
 
@@ -32,6 +34,7 @@ class face;
 class shell;
 class solid;
 class comp_solid;
+class topo_matrix;
 
 enum texture_mapping_rule {
   texture_cube,
@@ -53,10 +56,12 @@ public:
 
   virtual bool is_null() const override;
   virtual bool is_valid() const override;
-  
+
   bool is_solid() const;
 
   virtual geometry_object_type type() const override;
+
+  topo_bbox bbox(double tolerance = 1e-12) const;
 
   virtual Bnd_Box bounding_box(double tolerance = 1e-12) const override;
 
@@ -64,6 +69,8 @@ public:
   virtual bool equals(const geometry_object &) const override;
 
   bool is_same(const shape &) const;
+
+  bool for_construction() const;
 
   explicit operator bool() const;
 
@@ -98,6 +105,7 @@ public:
   bool surface_colour(double *colour) const;
 
   int transform(gp_Trsf mat);
+  int transform(const topo_matrix &mat);
 
   int translate(gp_Vec delta);
   int rotate(double angle, gp_Pnt p1, gp_Pnt p2);
@@ -105,16 +113,19 @@ public:
   int rotate(gp_Quaternion R);
   int scale(gp_Pnt pnt, double scale);
   int mirror(gp_Pnt pnt, gp_Pnt nor);
+  int mirror(gp_Pnt pnt, gp_Vec nor);
   int mirror(gp_Ax1 a);
   int mirror(gp_Ax2 a);
 
   gp_Pnt centre_of_mass() const;
+  gp_Pnt center_of_bound_box() const;
   double compute_mass() const;
   double compute_area() const;
   double distance(const shape &o) const;
   std::vector<double> distances(const std::vector<shape> &others) const;
 
   shape transformed(gp_Trsf mat) const;
+  shape transformed(const topo_matrix &mat) const;
 
   shape translated(gp_Vec delta) const;
   shape rotated(double angle, gp_Pnt p1, gp_Pnt p2) const;
@@ -122,15 +133,15 @@ public:
   shape rotated(gp_Quaternion R) const;
   shape scaled(gp_Pnt pnt, double scale) const;
   shape mirrored(gp_Pnt pnt, gp_Pnt nor) const;
+  shape mirrored(gp_Pnt pnt, gp_Vec nor) const;
   shape mirrored(gp_Ax1 a) const;
   shape mirrored(gp_Ax2 a) const;
 
   shape clean();
 
-  boost::optional<compound> ancestors(const shape &self, const shape &shape,
+  boost::optional<compound> ancestors(const shape &shape,
                                       TopAbs_ShapeEnum kind) const;
-  boost::optional<compound> siblings(const shape &self, const shape &shape,
-                                     TopAbs_ShapeEnum kind,
+  boost::optional<compound> siblings(const shape &shape, TopAbs_ShapeEnum kind,
                                      int level = 1) const;
 
   gp_Pln find_plane(double tolerance = 1e-6);
@@ -146,6 +157,40 @@ public:
   bool location(double *loc) const;
 
   void set_location(const topo_location &loc);
+
+  shape located(const topo_location &loc) const;
+
+  int move(const topo_location &loc);
+
+  int move(double x = 0, double y = 0, double z = 0, double rx = 0,
+           double ry = 0, double rz = 0);
+
+  int move(const gp_Vec &vec);
+
+  shape moved(const topo_location &loc) const;
+
+  shape moved(std::initializer_list<topo_location> locs) const;
+
+  shape moved(const std::vector<topo_location> &locs) const;
+
+  shape moved(double x = 0, double y = 0, double z = 0, double rx = 0,
+              double ry = 0, double rz = 0) const;
+
+  shape moved(const gp_Vec &vec) const;
+
+  shape moved(std::initializer_list<gp_Vec> vecs) const;
+
+  shape moved(const std::vector<gp_Vec> &vecs) const;
+
+  shape cuted(const std::vector<shape> &toCut, double tol = 0.0) const;
+
+  shape fused(const std::vector<shape> &toFuse, bool glue = false,
+              double tol = 0.0) const;
+
+  shape intersected(const std::vector<shape> &toIntersect,
+                    double tol = 0.0) const;
+
+  shape splited(const std::vector<shape> &splitters) const;
 
   orientation get_orientation() const;
 
@@ -195,7 +240,7 @@ public:
   boost::optional<shape> to_nurbs() const;
 
   std::vector<shape> children() const;
-  std::vector<shape> get_shapes(TopAbs_ShapeEnum kind) const;
+  std::vector<shape> get_shapes(TopAbs_ShapeEnum kind = TopAbs_SHAPE) const;
   virtual std::vector<vertex> vertices() const;
   std::vector<edge> edges() const;
   std::vector<compound> compounds() const;
@@ -244,6 +289,9 @@ public:
   }
 
 protected:
+  template <typename OpType>
+  shape bool_op(const std::vector<shape> &args, const std::vector<shape> &tools,
+                OpType &op, bool parallel = true) const;
   void prepare_box_texture_coordinates(const TopoDS_Shape &aShape);
   void get_box_texture_coordinate(const gp_Pnt &p, const gp_Dir &N1,
                                   gp_Vec2d &theCoord_p);

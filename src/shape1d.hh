@@ -11,7 +11,6 @@
 #include "shape.hh"
 
 namespace flywave {
-
 namespace topo {
 
 class face;
@@ -30,6 +29,8 @@ public:
 
   virtual Handle(Adaptor3d_Curve) get_geom() const = 0;
 
+  std::pair<double, double> bounds() const;
+
   double length() const;
 
   bool is_closed() const;
@@ -46,7 +47,7 @@ public:
 
   std::vector<double> params_length(const std::vector<double> &locations) const;
 
-  gp_Dir tangent_at(double param) const;
+  gp_Dir tangent_at(double param = 0.5) const;
 
   std::vector<gp_Dir> tangents(const std::vector<double> &parameters) const;
 

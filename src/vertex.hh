@@ -20,6 +20,7 @@ public:
   virtual ~vertex() = default;
 
   static vertex make_vertex(const gp_Pnt &P);
+  static vertex make_vertex(const gp_Vec &P);
 
   TopoDS_Vertex &value();
   const TopoDS_Vertex &value() const;

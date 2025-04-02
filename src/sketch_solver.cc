@@ -4,46 +4,40 @@ namespace flywave {
 namespace topo {
 
 // Helper functions implementation
-gp_Pnt2d sketch_solver::arc_first(const ArcDOF &x) {
-  return gp_Pnt2d(x.data[0] + x.data[2] * std::sin(x.data[3]),
-                  x.data[1] + x.data[2] * std::cos(x.data[3]));
+gp_Pnt2d arc_first(const arc_dof &x) {
+  return gp_Pnt2d(x[0] + x[2] * std::sin(x[3]), x[1] + x[2] * std::cos(x[3]));
 }
 
-gp_Pnt2d sketch_solver::arc_last(const ArcDOF &x) {
-  return gp_Pnt2d(x.data[0] + x.data[2] * std::sin(x.data[3] + x.data[4]),
-                  x.data[1] + x.data[2] * std::cos(x.data[3] + x.data[4]));
+gp_Pnt2d arc_last(const arc_dof &x) {
+  return gp_Pnt2d(x[0] + x[2] * std::sin(x[3] + x[4]),
+                  x[1] + x[2] * std::cos(x[3] + x[4]));
 }
 
-gp_Pnt2d sketch_solver::arc_point(const ArcDOF &x,
-                                  const boost::optional<double> &val) {
+gp_Pnt2d arc_point(const arc_dof &x, const boost::optional<double> &val) {
   if (!val) {
-    return gp_Pnt2d(x.data[0], x.data[1]);
+    return gp_Pnt2d(x[0], x[1]);
   }
-  double a = x.data[3] + *val * x.data[4];
-  return gp_Pnt2d(x.data[0] + x.data[2] * std::sin(a),
-                  x.data[1] + x.data[2] * std::cos(a));
+  double a = x[3] + *val * x[4];
+  return gp_Pnt2d(x[0] + x[2] * std::sin(a), x[1] + x[2] * std::cos(a));
 }
 
-gp_Pnt2d sketch_solver::line_point(const SegmentDOF &x,
-                                   const boost::optional<double> &val) {
+gp_Pnt2d line_point(const segment_dof &x, const boost::optional<double> &val) {
   if (!val) {
-    return gp_Pnt2d(x.data[0], x.data[1]);
+    return gp_Pnt2d(x[0], x[1]);
   }
   double t = *val;
-  return gp_Pnt2d(x.data[0] + t * (x.data[2] - x.data[0]),
-                  x.data[1] + t * (x.data[3] - x.data[1]));
+  return gp_Pnt2d(x[0] + t * (x[2] - x[0]), x[1] + t * (x[3] - x[1]));
 }
 
-gp_Vec2d sketch_solver::arc_first_tangent(const ArcDOF &x) {
-  double sign_da = x.data[4] > 0 ? 1.0 : -1.0;
-  return gp_Vec2d(sign_da * std::cos(x.data[3]),
-                  -sign_da * std::sin(x.data[3]));
+gp_Vec2d arc_first_tangent(const arc_dof &x) {
+  double sign_da = x[4] > 0 ? 1.0 : -1.0;
+  return gp_Vec2d(sign_da * std::cos(x[3]), -sign_da * std::sin(x[3]));
 }
 
-gp_Vec2d sketch_solver::arc_last_tangent(const ArcDOF &x) {
-  double sign_da = x.data[4] > 0 ? 1.0 : -1.0;
-  return gp_Vec2d(sign_da * std::cos(x.data[3] + x.data[4]),
-                  -sign_da * std::sin(x.data[3] + x.data[4]));
+gp_Vec2d arc_last_tangent(const arc_dof &x) {
+  double sign_da = x[4] > 0 ? 1.0 : -1.0;
+  return gp_Vec2d(sign_da * std::cos(x[3] + x[4]),
+                  -sign_da * std::sin(x[3] + x[4]));
 }
 
 // Cost functions implementation
@@ -57,19 +51,19 @@ double sketch_solver::fixed_cost(const std::vector<double> &x,
   return std::sqrt(sum);
 }
 
-double sketch_solver::fixed_point_cost(const std::vector<double> &x, GeomType t,
+double sketch_solver::fixed_point_cost(const std::vector<double> &x, geom_type t,
                                        const std::vector<double> &x0,
                                        const boost::optional<double> &val) {
   gp_Pnt2d p, p0;
 
-  if (t == GeomType::LINE) {
-    SegmentDOF seg{{x[0], x[1], x[2], x[3]}};
-    SegmentDOF seg0{{x0[0], x0[1], x0[2], x0[3]}};
+  if (t == geom_type::LINE) {
+    segment_dof seg{{x[0], x[1], x[2], x[3]}};
+    segment_dof seg0{{x0[0], x0[1], x0[2], x0[3]}};
     p = line_point(seg, val);
     p0 = line_point(seg0, val);
-  } else if (t == GeomType::CIRCLE) {
-    ArcDOF arc{{x[0], x[1], x[2], x[3], x[4]}};
-    ArcDOF arc0{{x0[0], x0[1], x0[2], x0[3], x0[4]}};
+  } else if (t == geom_type::CIRCLE) {
+    arc_dof arc{{x[0], x[1], x[2], x[3], x[4]}};
+    arc_dof arc0{{x0[0], x0[1], x0[2], x0[3], x0[4]}};
     p = arc_point(arc, val);
     p0 = arc_point(arc0, val);
   } else {
@@ -305,18 +299,18 @@ double sketch_solver::compute_cost(const std::vector<double> &x,
 }
 
 // Constructor implementation
-sketch_solver::sketch_solver(const std::vector<DOF> &entities,
+sketch_solver::sketch_solver(const std::vector<sketch_dof> &entities,
                              const std::vector<sketch_constraint> &constraints,
-                             const std::vector<GeomType> &geoms)
+                             const std::vector<geom_type> &geoms)
     : entities(entities), constraints(constraints), geoms(geoms) {
 
   // Initialize index offsets
   ixs.push_back(0);
   for (const auto &e : entities) {
     size_t size = 0;
-    if (e.type() == typeid(SegmentDOF)) {
+    if (e.type() == typeid(segment_dof)) {
       size = 4;
-    } else if (e.type() == typeid(ArcDOF)) {
+    } else if (e.type() == typeid(arc_dof)) {
       size = 5;
     }
     ixs.push_back(ixs.back() + size);
@@ -325,12 +319,12 @@ sketch_solver::sketch_solver(const std::vector<DOF> &entities,
   // Flatten initial solution
   x0.reserve(ixs.back());
   for (const auto &e : entities) {
-    if (e.type() == typeid(SegmentDOF)) {
-      const SegmentDOF &seg = boost::get<SegmentDOF>(e);
-      x0.insert(x0.end(), seg.data.begin(), seg.data.end());
-    } else if (e.type() == typeid(ArcDOF)) {
-      const ArcDOF &arc = boost::get<ArcDOF>(e);
-      x0.insert(x0.end(), arc.data.begin(), arc.data.end());
+    if (e.type() == typeid(segment_dof)) {
+      const segment_dof &seg = boost::get<segment_dof>(e);
+      x0.insert(x0.end(), seg.begin(), seg.end());
+    } else if (e.type() == typeid(arc_dof)) {
+      const arc_dof &arc = boost::get<arc_dof>(e);
+      x0.insert(x0.end(), arc.begin(), arc.end());
     }
   }
 }
@@ -350,7 +344,7 @@ sketch_solver::solve() {
 
   // Set radius lower bound to 0 for circles
   for (size_t i = 0; i < geoms.size(); ++i) {
-    if (geoms[i] == GeomType::CIRCLE) {
+    if (geoms[i] == geom_type::CIRCLE) {
       lb[ixs[i] + 2] = 0.0;
     }
   }

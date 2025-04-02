@@ -244,6 +244,12 @@ public:
                           double tol = 1e-6, bool periodic = false,
                           bool scale = true);
 
+  static edge make_spline(const std::vector<gp_Pnt> &points,
+                          const std::vector<gp_Vec> *tangents = nullptr,
+                          bool periodic = false,
+                          const std::vector<double> *parameters = nullptr,
+                          bool scale = true, double tol = 1e-6);
+
   static edge make_spline_approx(
       const std::vector<gp_Pnt> &points, double tolerance = 1e-3,
       const boost::optional<std::tuple<double, double, double>> &smoothing =

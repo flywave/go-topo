@@ -1,9 +1,9 @@
+#include "vertex.hh"
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRep_Tool.hxx>
-#include <TopoDS.hxx>
 #include <Standard_Failure.hxx>
-#include "vertex.hh"
+#include <TopoDS.hxx>
 
 namespace flywave {
 namespace topo {
@@ -36,7 +36,7 @@ shape vertex::copy(bool deep) const {
 
     return vertex{shp};
   } catch (Standard_Failure &e) {
-    const Standard_CString msg = e.GetMessageString() ;
+    const Standard_CString msg = e.GetMessageString();
     if (msg != nullptr && strlen(msg) > 1) {
       throw std::runtime_error(msg);
     } else {
@@ -48,6 +48,10 @@ shape vertex::copy(bool deep) const {
 
 vertex vertex::make_vertex(const gp_Pnt &P) {
   BRepBuilderAPI_MakeVertex mkVertex(P);
+  return vertex{mkVertex.Vertex()};
+}
+vertex vertex::make_vertex(const gp_Vec &P) {
+  BRepBuilderAPI_MakeVertex mkVertex(gp_Pnt(P.X(), P.Y(), P.Z()));
   return vertex{mkVertex.Vertex()};
 }
 

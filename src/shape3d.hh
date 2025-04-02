@@ -13,7 +13,6 @@
 #include "shape.hh"
 
 namespace flywave {
-
 namespace topo {
 
 class shell;
@@ -34,30 +33,7 @@ public:
 
   std::vector<shell> shells() const;
 
-  shape fillet(double radius, const std::vector<edge> &edgeList) const;
-
-  shape chamfer(double length, const boost::optional<double> &length2,
-                const std::vector<edge> &edgeList) const;
-
-  shape shelling(const std::vector<face> &faceList, double thickness,
-                   double tolerance = 0.0001,
-                   const std::string &kind = "arc") const;
-
   bool is_inside(const gp_Pnt &point, double tolerance = 1.0e-6) const;
-
-  solid dprism(const std::shared_ptr<face> &basis,
-               const std::vector<wire> &profiles,
-               const boost::optional<double> &depth = boost::none,
-               double taper = 0,
-               const std::shared_ptr<face> &upToFace = nullptr,
-               bool thruAll = true, bool additive = true) const;
-
-  solid dprism(const std::shared_ptr<face> &basis,
-               const std::vector<face> &faces,
-               const boost::optional<double> &depth = boost::none,
-               double taper = 0,
-               const std::shared_ptr<face> &upToFace = nullptr,
-               bool thruAll = true, bool additive = true) const;
 
 protected:
   friend class shape;

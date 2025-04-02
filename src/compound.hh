@@ -5,6 +5,7 @@
 #include <BRep_Builder.hxx>
 #include <TopoDS_Compound.hxx>
 
+#include "plane.hh"
 #include "shape3d.hh"
 
 namespace flywave {
@@ -22,7 +23,7 @@ public:
   enum class HAlign { LEFT, CENTER, RIGHT };
   enum class VAlign { BOTTOM, CENTER, TOP };
 
-  static compound make_compound(std::vector<shape> &shapes);
+  static compound make_compound(const std::vector<shape> &shapes);
 
   static compound make_compound(std::initializer_list<shape> &shapes);
 
@@ -31,8 +32,7 @@ public:
             const std::string &font = "Arial", const std::string &fontPath = "",
             FontKind kind = FontKind::REGULAR, HAlign halign = HAlign::CENTER,
             VAlign valign = VAlign::CENTER,
-            const gp_Ax3 &position = gp_Ax3() // Default XY plane
-  );
+            const topo_plane &position = topo_plane::named("XY"));
 
   static compound
   make_text(const std::string &text, double size, const wire &spine,
@@ -45,6 +45,13 @@ public:
             const face &base, const std::string &font = "Arial",
             const std::string &path = "", FontKind kind = FontKind::REGULAR,
             HAlign halign = HAlign::CENTER, VAlign valign = VAlign::CENTER);
+
+  static compound
+  make_text(const std::string &text, double size, double height,
+            const std::string &font = "Arial", const std::string &fontPath = "",
+            FontKind kind = FontKind::REGULAR, HAlign halign = HAlign::CENTER,
+            VAlign valign = VAlign::CENTER,
+            const topo_plane &position = topo_plane::named("XY"));
 
   template <typename TShp1, typename TShp2, typename... TShp>
   static compound make_compound(TShp1 &&shp1, TShp2 &&shp2, TShp &&...shps);

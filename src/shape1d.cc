@@ -280,6 +280,13 @@ gp_Pnt shape1d::center() const {
   return props.CentreOfMass();
 }
 
+std::pair<double, double> shape1d::bounds() const {
+  auto adapter = this->get_geom();
+  double umin = adapter->FirstParameter();
+  double umax = adapter->LastParameter();
+  return {umin, umax};
+}
+
 double shape1d::length() const {
   auto adapter = this->get_geom();
   return GCPnts_AbscissaPoint::Length(*adapter);

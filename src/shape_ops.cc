@@ -1,23 +1,29 @@
+#include "shape_ops.hh"
 #include <BOPAlgo_BOP.hxx>
 #include <BOPAlgo_Builder.hxx>
 #include <BOPAlgo_GlueEnum.hxx>
 #include <BRepAlgoAPI_Check.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Splitter.hxx>
+#include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
+#include <BRepFeat_MakeDPrism.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepIntCurveSurface_Inter.hxx>
 #include <BRepOffsetAPI_MakeFilling.hxx>
 #include <BRepOffsetAPI_MakePipeShell.hxx>
+#include <BRepOffsetAPI_MakeThickSolid.hxx>
 #include <BRepOffsetAPI_ThruSections.hxx>
 #include <BRepOffset_MakeOffset.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepPrimAPI_MakeRevol.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Builder.hxx>
+#include <GeomAbs_JoinType.hxx>
 #include <GeomAbs_Shape.hxx>
+#include <LocOpe_DPrism.hxx>
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_ListOfShape.hxx>
@@ -25,6 +31,8 @@
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
+#include <TopoDS_Shell.hxx>
+#include <TopoDS_Solid.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
 #include <algorithm>
@@ -39,10 +47,81 @@
 #include <stdexcept>
 #include <vector>
 
-#include "shape_ops.hh"
-
 namespace flywave {
 namespace topo {
+namespace {
+
+boost::optional<wire> _toWire(const shape &shp) {
+  if (shp.shape_type() == "Wire") {
+    return shp.cast<wire>();
+  } else if (shp.shape_type() == "Face") {
+    return wire::make_wire({*shp.cast<edge>()});
+  }
+  throw std::invalid_argument("Path must be either Wire or Edge");
+}
+
+static bool _setSweepMode(BRepOffsetAPI_MakePipeShell &builder,
+                          const shape &path, const shape *mode) {
+  if (mode == nullptr) {
+    builder.SetMode(false);
+    return false;
+  }
+  if (mode->shape_type() == "Vertex") {
+    gp_Pnt pnt = *mode->cast<vertex>();
+    builder.SetMode(mode->cast<vertex>()->value());
+    return false;
+  } else if (mode->shape_type() == "Wire") {
+    builder.SetMode(mode->cast<wire>()->value());
+    return true;
+  } else if (mode->shape_type() == "Edge") {
+    builder.SetMode(mode->cast<edge>()->value());
+    return true;
+  }
+  throw std::invalid_argument("Invalid mode type");
+}
+
+std::vector<std::vector<wire>>
+sort_wires_by_build_order(const std::vector<wire> &wireList) {
+  if (wireList.size() < 2) {
+    return {wireList};
+  }
+
+  wire outerWire = wireList[0];
+  std::vector<wire> innerWires(wireList.begin() + 1, wireList.end());
+
+  std::vector<face> faces = face::make_from_wires(outerWire, innerWires);
+
+  std::vector<std::vector<wire>> result;
+  for (const face &face : faces) {
+    std::vector<wire> faceWires;
+    faceWires.push_back(face.outer_wire());
+
+    auto inners = face.inner_wires();
+    faceWires.insert(faceWires.end(), inners.begin(), inners.end());
+
+    result.push_back(faceWires);
+  }
+
+  return result;
+}
+
+// Helper method for auxiliary spine extrusion
+TopoDS_Shape _extrudeAuxSpine(const TopoDS_Wire &profile,
+                              const TopoDS_Wire &spine,
+                              const TopoDS_Wire &auxSpine) {
+  BRepOffsetAPI_MakePipeShell pipeMaker(spine);
+  pipeMaker.SetMode(auxSpine);
+  pipeMaker.Add(profile);
+  pipeMaker.Build();
+
+  if (!pipeMaker.IsDone()) {
+    throw std::runtime_error("Auxiliary spine extrusion failed");
+  }
+
+  return pipeMaker.Shape();
+}
+
+} // namespace
 
 void set_builder_options(BOPAlgo_Builder &builder, double tol = 0.0,
                          bool glue = false) {
@@ -106,6 +185,34 @@ boost::optional<shape> cut(const shape &shp, const shape &toCut, double tol,
   }
 }
 
+boost::optional<shape> cut(const shape &shp, const std::vector<shape> &toCuts,
+                           double tol, bool glue) {
+  if (shp.is_null()) {
+    std::cerr << "Input shape is null " << std::endl;
+    return boost::none;
+  }
+  try {
+    BOPAlgo_BOP builder;
+    builder.SetOperation(BOPAlgo_Operation::BOPAlgo_CUT);
+    set_builder_options(builder, tol, glue);
+
+    builder.AddArgument(shp.value());
+
+    TopTools_ListOfShape theShapes;
+    for (const auto &toCut : toCuts) {
+      theShapes.Append(toCut.value());
+    }
+    builder.SetTools(theShapes);
+
+    builder.Perform();
+
+    return boost::make_optional<shape>(builder.Shape());
+  } catch (const std::exception &e) {
+    std::cerr << "Error in fuse operation: " << e.what() << std::endl;
+    return boost::none;
+  }
+}
+
 boost::optional<shape> intersect(const shape &shp, const shape &toIntersect,
                                  double tol, bool glue) {
   if (shp.is_null()) {
@@ -120,6 +227,34 @@ boost::optional<shape> intersect(const shape &shp, const shape &toIntersect,
     builder.AddArgument(shp);
     builder.AddTool(toIntersect);
 
+    builder.Perform();
+
+    return boost::make_optional<shape>(builder.Shape());
+  } catch (const std::exception &e) {
+    std::cerr << "Error in fuse operation: " << e.what() << std::endl;
+    return boost::none;
+  }
+}
+
+boost::optional<shape> intersect(const shape &shp,
+                                 const std::vector<shape> &toIntersects,
+                                 double tol, bool glue) {
+  if (shp.is_null()) {
+    std::cerr << "Input shape is null " << std::endl;
+    return boost::none;
+  }
+  try {
+    BOPAlgo_BOP builder;
+    builder.SetOperation(BOPAlgo_Operation::BOPAlgo_COMMON);
+    set_builder_options(builder, tol, glue);
+
+    builder.AddArgument(shp);
+
+    TopTools_ListOfShape theShapes;
+    for (const auto &toIntersect : toIntersects) {
+      theShapes.Append(toIntersect.value());
+    }
+    builder.SetTools(theShapes);
     builder.Perform();
 
     return boost::make_optional<shape>(builder.Shape());
@@ -250,6 +385,75 @@ boost::optional<shape> fill(const shape &shp,
   }
 }
 
+boost::optional<shape>
+shelling(const shape &shp, const std::vector<face> &faceList, double thickness,
+         double tolerance ,
+         GeomAbs_JoinType joinType) {
+  try {
+
+    TopTools_ListOfShape occ_faces_list;
+    BRepOffsetAPI_MakeThickSolid shell_builder;
+
+    // Convert face list to OCCT list
+    for (const auto &face : faceList) {
+      occ_faces_list.Append(face.value());
+    }
+
+    // Create the thick solid
+    shell_builder.MakeThickSolidByJoin(shp, occ_faces_list, thickness,
+                                       tolerance, BRepOffset_Skin,
+                                       Standard_True,  // Intersection
+                                       Standard_False, // SelfInter
+                                       joinType);
+    shell_builder.Build();
+
+    if (!shell_builder.IsDone()) {
+      throw std::runtime_error("Shell operation failed");
+    }
+
+    if (!faceList.empty()) {
+      // Case 1: Faces were provided - return the result directly
+      shape shp(shell_builder.Shape());
+      if (shp.fix_shape()) {
+        return shp;
+      } else {
+        throw std::runtime_error("Shape orientation fix failed");
+      }
+    } else {
+      // Case 2: No faces provided - create watertight solid
+      auto shells = shp.shells();
+      if (shells.size() < 1) {
+        throw std::runtime_error("Input shape has no shells");
+      }
+
+      TopoDS_Shell s1 = TopoDS::Shell(shell_builder.Shape());
+      TopoDS_Shell s2 = shells[0].value();
+
+      BRepBuilderAPI_MakeSolid solidMaker;
+      if (thickness > 0) {
+        solidMaker = BRepBuilderAPI_MakeSolid(s1, s2);
+      } else {
+        solidMaker = BRepBuilderAPI_MakeSolid(s2, s1);
+      }
+
+      if (!solidMaker.IsDone()) {
+        throw std::runtime_error("Solid creation failed");
+      }
+
+      // Fix orientation and return
+      shape shp(solidMaker.Shape());
+      if (shp.fix_shape()) {
+        return shp;
+      } else {
+        throw std::runtime_error("Shape orientation fix failed");
+      }
+    }
+  } catch (const std::exception &e) {
+    std::cerr << "Error in shelling operation: " << e.what() << std::endl;
+    return boost::none;
+  }
+}
+
 boost::optional<shape> fillet(const shape &shp, const std::vector<edge> &edges,
                               double radius) {
   if (shp.is_null()) {
@@ -275,39 +479,110 @@ boost::optional<shape> fillet(const shape &shp, const std::vector<edge> &edges,
 }
 
 boost::optional<shape> chamfer(const shape &baseShape,
-                               const std::vector<edge> &edges,
-                               double distance) {
+                               const std::vector<edge> &edges, double distance,
+                               boost::optional<double> distance2) {
   if (baseShape.value().ShapeType() != TopAbs_SOLID &&
       baseShape.value().ShapeType() != TopAbs_SHELL) {
     std::cerr << "Base shape must be a Solid or Shell " << std::endl;
     return boost::none;
   }
-
+  // Validate input parameters
   if (distance <= 0) {
+    std::cerr << "Chamfer distance must be positive " << std::endl;
+    return boost::none;
+  }
+  if (distance2 && *distance2 <= 0) {
     std::cerr << "Chamfer distance must be positive " << std::endl;
     return boost::none;
   }
 
   try {
+    // Create edge to faces mapping
+    TopTools_IndexedDataMapOfShapeListOfShape edgeFaceMap;
+    TopExp::MapShapesAndAncestors(baseShape, TopAbs_EDGE, TopAbs_FACE,
+                                  edgeFaceMap);
 
-    BRepFilletAPI_MakeChamfer builder(baseShape.value());
+    // Initialize chamfer builder
+    BRepFilletAPI_MakeChamfer chamferBuilder(baseShape);
 
-    for (const auto &e : edges) {
-      if (e.is_null()) {
-        throw std::invalid_argument("Invalid edge in chamfer list");
+    // Set chamfer distances
+    const double d1 = distance;
+    const double d2 = distance2.value_or(distance);
+
+    // Apply chamfer to each edge
+    for (const auto &edge : edges) {
+      const TopoDS_Edge &occEdge = edge.value();
+
+      // Find adjacent face for this edge
+      if (!edgeFaceMap.Contains(occEdge)) {
+        throw std::runtime_error("Edge not found in shape");
       }
-      builder.Add(distance, e.value());
+
+      const TopoDS_Shape &faceShape = edgeFaceMap.FindFromKey(occEdge).First();
+      if (faceShape.IsNull()) {
+        throw std::runtime_error("No adjacent face found for edge");
+      }
+
+      // Add chamfer to this edge-face pair
+      chamferBuilder.Add(d1, d2, occEdge, TopoDS::Face(faceShape));
     }
 
-    builder.Build();
-    if (!builder.IsDone()) {
+    // Build the chamfered shape
+    chamferBuilder.Build();
+    if (!chamferBuilder.IsDone()) {
       throw std::runtime_error("Chamfer operation failed");
     }
 
-    return boost::make_optional<shape>(builder.Shape());
+    return boost::make_optional<shape>(chamferBuilder.Shape());
   } catch (const std::exception &e) {
     std::cerr << "Error in fuse operation: " << e.what() << std::endl;
     return boost::none;
+  }
+}
+
+boost::optional<shape> extrude_linear(const topo::wire &outerWire,
+                                      const std::vector<topo::wire> &innerWires,
+                                      const gp_Vec &vecNormal, double taper) {
+  face f;
+  if (taper == 0.0) {
+    f = face::make_face(outerWire, innerWires);
+  } else {
+    f = face::make_face(outerWire);
+  }
+
+  return extrude_linear(f, vecNormal, taper);
+}
+
+boost::optional<shape> extrude_linear(const topo::face &f,
+                                      const gp_Vec &vecNormal, double taper) {
+  if (taper == 0.0) {
+    // Straight extrusion
+    BRepPrimAPI_MakePrism prismBuilder(f.value(), vecNormal,
+                                       true // Copy the face
+    );
+
+    prismBuilder.Build();
+
+    if (!prismBuilder.IsDone()) {
+      throw std::runtime_error("Prism creation failed");
+    }
+
+    return boost::make_optional<shape>(prismBuilder.Shape());
+  } else {
+    // Tapered extrusion
+    gp_Dir faceNormal = f.normal_at();
+    double angle = vecNormal.Angle(faceNormal);
+    int d = (angle < M_PI / 2) ? 1 : -1; // M_PI/2 = 90 degrees
+
+    // Calculate adjusted height respecting taper angle
+    double height =
+        (d * vecNormal.Magnitude()) / std::cos(taper * M_PI / 180.0);
+
+    LocOpe_DPrism prismBuilder(f.value(), height,
+                               d * taper * M_PI / 180.0 // Convert to radians
+    );
+
+    return boost::make_optional<shape>(prismBuilder.Shape());
   }
 }
 
@@ -443,6 +718,41 @@ boost::optional<shape> revolve(const shape &shp, const gp_Pnt &axisPoint,
   }
 }
 
+// Revolve wires into a solid
+boost::optional<shape> revolve(const wire &outerWire,
+                               const std::vector<wire> &innerWires,
+                               double angleDegrees, const gp_Pnt &axisStart,
+                               const gp_Pnt &axisEnd) {
+  face f = face::make_face(outerWire, innerWires);
+  return revolve(f, angleDegrees, axisStart, axisEnd);
+}
+
+// Revolve a face into a solid (overloaded version)
+boost::optional<shape> revolve(const face &f, double angleDegrees,
+                               const gp_Pnt &axisStart, const gp_Pnt &axisEnd) {
+  // Calculate axis direction
+  gp_Vec axisVec(axisStart, axisEnd);
+  if (axisVec.Magnitude() < Precision::Confusion()) {
+    throw std::invalid_argument("Axis start and end points are coincident");
+  }
+
+  gp_Ax1 revolutionAxis(axisStart, axisVec);
+
+  // Convert angle to radians
+  double angleRadians = angleDegrees * M_PI / 180.0;
+
+  // Create the revolution
+  BRepPrimAPI_MakeRevol revolBuilder(f.value(), revolutionAxis, angleRadians,
+                                     true // Copy the shape
+  );
+
+  if (!revolBuilder.IsDone()) {
+    throw std::runtime_error("Revolution operation failed");
+  }
+
+  return boost::make_optional<shape>(revolBuilder.Shape());
+}
+
 boost::optional<shape> offset(const shape &shp, double offset, bool cap,
                               bool both, double tol) {
   if (shp.is_null()) {
@@ -526,83 +836,118 @@ boost::optional<shape> offset(const shape &shp, double offset, bool cap,
   }
 }
 
-boost::optional<shape> sweep(const shape &profile, const wire &path,
-                             const wire *auxiliaryPath, bool makeSolid) {
-  if (profile.is_null() || path.is_null()) {
-    std::cerr << "Profile and path cannot be null: " << std::endl;
-    return boost::none;
+// Sweep wires along a path
+boost::optional<shape> sweep(const wire &outerWire,
+                             const std::vector<wire> &innerWires,
+                             const shape &path, bool makeSolid, bool isFrenet,
+                             const shape *mode,
+                             transition_mode transitionMode) {
+  auto pathWire = _toWire(path);
+
+  if (!pathWire) {
+    throw std::invalid_argument("Path must be either Edge or Wire");
   }
-  try {
-    BRepOffsetAPI_MakePipeShell builder(path.value());
 
-    if (auxiliaryPath) {
-      builder.SetMode(auxiliaryPath->value(), true);
+  std::vector<shape> shapes;
+  std::vector<wire> allWires = {outerWire};
+  allWires.insert(allWires.end(), innerWires.begin(), innerWires.end());
+
+  for (const auto &wire : allWires) {
+    BRepOffsetAPI_MakePipeShell builder(pathWire->value());
+
+    bool translate = false;
+    bool rotate = false;
+
+    // Handle sweep mode
+    if (mode) {
+      rotate = _setSweepMode(builder, path, mode);
     } else {
-      builder.SetMode(false);
+      builder.SetMode(isFrenet);
     }
 
-    if (profile.value().ShapeType() == TopAbs_FACE) {
-      TopoDS_Wire outerWire = BRepTools::OuterWire(TopoDS::Face(profile));
-      builder.Add(outerWire, false, false);
-    } else {
-      builder.Add(profile, false, false);
+    // Set transition mode
+    switch (transitionMode) {
+    case transition_mode::TRANSFORMED:
+      builder.SetTransitionMode(BRepBuilderAPI_Transformed);
+      break;
+    case transition_mode::ROUND:
+      builder.SetTransitionMode(BRepBuilderAPI_RoundCorner);
+      break;
+    case transition_mode::RIGHT:
+    default:
+      builder.SetTransitionMode(BRepBuilderAPI_RightCorner);
+      break;
     }
 
+    builder.Add(wire.value(), translate, rotate);
     builder.Build();
-    if (!builder.IsDone()) {
-      throw std::runtime_error("Sweep operation failed");
-    }
 
     if (makeSolid) {
       builder.MakeSolid();
     }
 
-    return boost::make_optional<shape>(builder.Shape());
-  } catch (const std::exception &e) {
-    std::cerr << "Error in sweep operation: " << e.what() << std::endl;
-    return boost::none;
+    shapes.push_back(shape(builder.Shape()));
   }
+
+  auto result = shapes[0];
+  if (shapes.size() > 1) {
+    std::vector<shape> innerShapes(shapes.begin() + 1, shapes.end());
+    result = *cut(result, innerShapes);
+  }
+
+  return result;
 }
 
-boost::optional<shape> sweep(const std::vector<shape> &profiles,
-                             const wire &path, const wire *auxiliaryPath,
-                             bool makeSolid) {
-  if (profiles.empty() || path.is_null()) {
-    std::cerr << "Invalid input parameters: " << std::endl;
-    return boost::none;
-  }
-  try {
-    BRepOffsetAPI_MakePipeShell builder(path.value());
+// Sweep a face along a path
+boost::optional<shape> sweep(const face &face, const shape &path,
+                             bool makeSolid, bool isFrenet, const shape *mode,
+                             transition_mode transitionMode) {
+  return sweep(face.outer_wire(), face.inner_wires(), path, makeSolid, isFrenet,
+               mode, transitionMode);
+}
 
-    if (auxiliaryPath) {
-      builder.SetMode(auxiliaryPath->value(), true);
+// Multi-section sweep
+boost::optional<shape> sweep_multi(const std::vector<shape> &profiles,
+                                   const shape &path, bool makeSolid,
+                                   bool isFrenet, const shape *mode) {
+  TopoDS_Wire pathWire;
+  if (path.shape_type() == "Edge") {
+    pathWire = topo::wire::make_wire({*path.cast<edge>()}).value();
+  } else {
+    pathWire = path.cast<wire>()->value();
+  }
+
+  BRepOffsetAPI_MakePipeShell builder(pathWire);
+
+  bool translate = false;
+  bool rotate = false;
+
+  if (mode) {
+    rotate = _setSweepMode(builder, path, mode);
+  } else {
+    builder.SetMode(isFrenet);
+  }
+
+  for (const auto &profile : profiles) {
+    TopoDS_Wire profileWire;
+    if (profile.shape_type() == "Wire") {
+      profileWire = profile.cast<wire>()->value();
+    } else if (profile.shape_type() == "Face") {
+      profileWire = profile.cast<face>()->outer_wire().value();
     } else {
-      builder.SetMode(false);
+      throw std::invalid_argument("Profile must be either Wire or Face");
     }
 
-    for (const auto &profile : profiles) {
-      if (profile.value().ShapeType() == TopAbs_FACE) {
-        TopoDS_Wire outerWire = BRepTools::OuterWire(TopoDS::Face(profile));
-        builder.Add(outerWire, false, false);
-      } else {
-        builder.Add(profile, false, false);
-      }
-    }
-
-    builder.Build();
-    if (!builder.IsDone()) {
-      throw std::runtime_error("Multi-section sweep failed");
-    }
-
-    if (makeSolid) {
-      builder.MakeSolid();
-    }
-
-    return boost::make_optional<shape>(builder.Shape());
-  } catch (const std::exception &e) {
-    std::cerr << "Error in sweep operation: " << e.what() << std::endl;
-    return boost::none;
+    builder.Add(profileWire, translate, rotate);
   }
+
+  builder.Build();
+
+  if (makeSolid) {
+    builder.MakeSolid();
+  }
+
+  return boost::make_optional<shape>(builder.Shape());
 }
 
 GeomAbs_Shape to_continuity(const std::string &continuity) {
@@ -885,6 +1230,149 @@ std::pair<gp_Pnt, gp_Pnt> closest(const shape &shape1, const shape &shape2) {
   return {distCalculator.PointOnShape1(1), distCalculator.PointOnShape2(1)};
 }
 
+boost::optional<shape>
+dprism(const shape &shp, const std::shared_ptr<face> &basis,
+       const std::vector<wire> &profiles, const boost::optional<double> &depth,
+       double taper, const face *upToFace, bool thruAll, bool additive) {
+  auto sortedProfiles = sort_wires_by_build_order(profiles);
+  std::vector<face> faces;
+
+  for (const auto &profileGroup : sortedProfiles) {
+    if (profileGroup.empty())
+      continue;
+
+    wire outerWire = profileGroup[0];
+    std::vector<wire> innerWires(profileGroup.begin() + 1, profileGroup.end());
+    faces.push_back(face::make_face(outerWire, innerWires));
+  }
+
+  return dprism(shp, basis, faces, depth, taper, upToFace, thruAll, additive);
+}
+
+boost::optional<shape>
+dprism(const shape &shp, const std::shared_ptr<face> &basis,
+       const std::vector<face> &faces, const boost::optional<double> &depth,
+       double taper, const face *upToFace, bool thruAll, bool additive) {
+  TopoDS_Shape shape_ = shp.value();
+  const TopoDS_Face basisFace = basis ? basis->value() : TopoDS_Face();
+  const double taperRad = taper * M_PI / 180.0;
+
+  for (const face &f : faces) {
+    BRepFeat_MakeDPrism prismBuilder(shape_, f.value(), basisFace, taperRad,
+                                     additive, false);
+
+    if (upToFace) {
+      prismBuilder.Perform(upToFace->value());
+    } else if (thruAll || !depth) {
+      prismBuilder.PerformThruAll();
+    } else {
+      prismBuilder.Perform(*depth);
+    }
+
+    if (!prismBuilder.IsDone()) {
+      throw std::runtime_error("Failed to create prismatic feature");
+    }
+
+    shape_ = prismBuilder.Shape();
+  }
+
+  return boost::make_optional<shape>(shape_);
+}
+
+// Extrude with rotation for wires
+boost::optional<shape> extrude_linear_with_rotation(
+    const wire &outerWire, const std::vector<wire> &innerWires,
+    const gp_Pnt &center, const gp_Vec &normal, double angleDegrees) {
+  // Create straight spine
+  gp_Pnt endPoint = center.Translated(normal);
+  edge straightSpine = edge::make_polygon(center, endPoint);
+  std::vector<shape> spines({straightSpine});
+  TopoDS_Wire straightSpineWire = wire::combine(spines)[0].value();
+
+  // Create auxiliary helical spine
+  double pitch = (360.0 / angleDegrees) * normal.Magnitude();
+  double radius = 1.0;
+  wire auxSpine =
+      wire::make_helix(pitch, normal.Magnitude(), radius, center, normal);
+  TopoDS_Wire auxSpineWire = auxSpine.value();
+
+  // Extrude outer wire
+  TopoDS_Shape outerSolid =
+      _extrudeAuxSpine(outerWire.value(), straightSpineWire, auxSpineWire);
+
+  // Extrude inner wires
+  std::vector<shape> innerSolids;
+  for (const auto &wire : innerWires) {
+    innerSolids.push_back(
+        _extrudeAuxSpine(wire.value(), straightSpineWire, auxSpineWire));
+  }
+
+  // Combine inner solids
+  topo::compound innerCompound = topo::compound::make_compound(innerSolids);
+
+  // Subtract inner from outer
+  BRepAlgoAPI_Cut cutter(outerSolid, innerCompound);
+  if (!cutter.IsDone()) {
+    throw std::runtime_error(
+        "Cut operation failed in extrudeLinearWithRotation");
+  }
+
+  return boost::make_optional<shape>(cutter.Shape());
+}
+
+// Extrude with rotation for face (overloaded version)
+boost::optional<shape> extrude_linear_with_rotation(const face &face,
+                                                    const gp_Pnt &center,
+                                                    const gp_Vec &normal,
+                                                    double angleDegrees) {
+  return extrude_linear_with_rotation(face.outer_wire(), face.inner_wires(),
+                                      center, normal, angleDegrees);
+}
+
+// Calculates the center of mass of multiple objects
+gp_Pnt combined_center(const std::vector<shape> &objects) {
+  if (objects.empty()) {
+    throw std::invalid_argument("Objects list cannot be empty");
+  }
+
+  // Calculate total mass
+  double totalMass = 0.0;
+  for (const auto &obj : objects) {
+    totalMass += obj.compute_mass();
+  }
+
+  // Calculate weighted centers
+  gp_Vec sumWeightedCenters(0, 0, 0);
+  for (const auto &obj : objects) {
+    double mass = obj.compute_mass();
+    gp_Pnt com = obj.centre_of_mass();
+    sumWeightedCenters += gp_Vec(com.X(), com.Y(), com.Z()) * mass;
+  }
+
+  // Calculate final center
+  gp_Vec result = sumWeightedCenters / totalMass;
+  return gp_Pnt(result.X(), result.Y(), result.Z());
+}
+
+// Calculates the center of a bounding box of multiple objects
+gp_Pnt combined_center_of_bound_box(const std::vector<shape> &objects) {
+  if (objects.empty()) {
+    throw std::invalid_argument("Objects list cannot be empty");
+  }
+
+  // Calculate combined bounding box
+  Bnd_Box combinedBox;
+  for (const auto &obj : objects) {
+    Bnd_Box objBox;
+    BRepBndLib::Add(obj, objBox);
+    combinedBox.Add(objBox);
+  }
+
+  // Get center of combined bounding box
+  double xMin, yMin, zMin, xMax, yMax, zMax;
+  combinedBox.Get(xMin, yMin, zMin, xMax, yMax, zMax);
+  return gp_Pnt((xMin + xMax) / 2.0, (yMin + yMax) / 2.0, (zMin + zMax) / 2.0);
+}
 
 } // namespace topo
 } // namespace flywave

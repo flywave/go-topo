@@ -454,7 +454,6 @@ face face::make_face(
   ret.fix_shape();
   return ret;
 }
-
 face face::make_plane(const gp_Pnt &basePnt, const gp_Dir &dir,
                       boost::optional<double> length,
                       boost::optional<double> width) {

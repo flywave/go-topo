@@ -19,18 +19,12 @@
 namespace flywave {
 namespace topo {
 
-struct SegmentDOF {
-  std::array<double, 4> data; // p1x, p1y, p2x, p2y
-};
+typedef std::array<double, 4> segment_dof;
+typedef std::array<double, 5> arc_dof;
 
-struct ArcDOF {
-  std::array<double, 5>
-      data; // centerx, centery, radius, start_angle, delta_angle
-};
+typedef boost::variant<segment_dof, arc_dof> sketch_dof;
 
-typedef boost::variant<SegmentDOF, ArcDOF> DOF;
-
-enum class GeomType { LINE, CIRCLE };
+enum class geom_type { LINE, CIRCLE };
 
 enum class sketch_constraint_kind {
   FIXED,
@@ -53,54 +47,53 @@ struct sketch_constraint {
       std::pair<double, double>>
       value;
 };
+// Helper functions
+gp_Pnt2d arc_first(const arc_dof &x);
+gp_Pnt2d arc_last(const arc_dof &x);
+gp_Pnt2d arc_point(const arc_dof &x, const boost::optional<double> &val);
+gp_Pnt2d line_point(const segment_dof &x, const boost::optional<double> &val);
+gp_Vec2d arc_first_tangent(const arc_dof &x);
+gp_Vec2d arc_last_tangent(const arc_dof &x);
 
 class sketch_solver {
 public:
-  sketch_solver(const std::vector<DOF> &entities,
+  sketch_solver(const std::vector<sketch_dof> &entities,
                 const std::vector<sketch_constraint> &constraints,
-                const std::vector<GeomType> &geoms);
+                const std::vector<geom_type> &geoms);
 
   std::pair<std::vector<std::vector<double>>,
             std::map<std::string, boost::variant<double, int, std::string>>>
   solve();
 
 private:
-  // Helper functions
-  gp_Pnt2d arc_first(const ArcDOF &x);
-  gp_Pnt2d arc_last(const ArcDOF &x);
-  gp_Pnt2d arc_point(const ArcDOF &x, const boost::optional<double> &val);
-  gp_Pnt2d line_point(const SegmentDOF &x, const boost::optional<double> &val);
-  gp_Vec2d arc_first_tangent(const ArcDOF &x);
-  gp_Vec2d arc_last_tangent(const ArcDOF &x);
-
   // Cost functions
   double fixed_cost(const std::vector<double> &x,
                     const std::vector<double> &x0);
-  double fixed_point_cost(const std::vector<double> &x, GeomType t,
+  double fixed_point_cost(const std::vector<double> &x, geom_type t,
                           const std::vector<double> &x0,
                           const boost::optional<double> &val);
-  double coincident_cost(const std::vector<double> &x1, GeomType t1,
+  double coincident_cost(const std::vector<double> &x1, geom_type t1,
                          const std::vector<double> &x10,
-                         const std::vector<double> &x2, GeomType t2,
+                         const std::vector<double> &x2, geom_type t2,
                          const std::vector<double> &x20);
-  double angle_cost(const std::vector<double> &x1, GeomType t1,
+  double angle_cost(const std::vector<double> &x1, geom_type t1,
                     const std::vector<double> &x10,
-                    const std::vector<double> &x2, GeomType t2,
+                    const std::vector<double> &x2, geom_type t2,
                     const std::vector<double> &x20, double val);
-  double length_cost(const std::vector<double> &x, GeomType t,
+  double length_cost(const std::vector<double> &x, geom_type t,
                      const std::vector<double> &x0, double val);
-  double distance_cost(const std::vector<double> &x1, GeomType t1,
+  double distance_cost(const std::vector<double> &x1, geom_type t1,
                        const std::vector<double> &x10,
-                       const std::vector<double> &x2, GeomType t2,
+                       const std::vector<double> &x2, geom_type t2,
                        const std::vector<double> &x20,
                        const boost::optional<double> &val1,
                        const boost::optional<double> &val2, double d);
-  double radius_cost(const std::vector<double> &x, GeomType t,
+  double radius_cost(const std::vector<double> &x, geom_type t,
                      const std::vector<double> &x0, double val);
-  double orientation_cost(const std::vector<double> &x, GeomType t,
+  double orientation_cost(const std::vector<double> &x, geom_type t,
                           const std::vector<double> &x0,
                           const std::pair<double, double> &val);
-  double arc_angle_cost(const std::vector<double> &x, GeomType t,
+  double arc_angle_cost(const std::vector<double> &x, geom_type t,
                         const std::vector<double> &x0, double val);
 
   // NLopt objective function
@@ -108,9 +101,9 @@ private:
                                    std::vector<double> &grad, void *f_data);
   double compute_cost(const std::vector<double> &x, std::vector<double> &grad);
 
-  std::vector<DOF> entities;
+  std::vector<sketch_dof> entities;
   std::vector<sketch_constraint> constraints;
-  std::vector<GeomType> geoms;
+  std::vector<geom_type> geoms;
   std::vector<size_t> ixs;
   std::vector<double> x0; // Initial solution
 

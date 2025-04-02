@@ -12,6 +12,7 @@
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
+#include <BRepBuilderAPI_Transform.hxx>
 #include <BRepGProp.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepProj_Projection.hxx>
@@ -126,7 +127,7 @@ TopoDS_Shape normalize_shape(const TopoDS_Shape &shape) {
 }
 } // namespace
 
-compound compound::make_compound(std::vector<shape> &shapes) {
+compound compound::make_compound(const std::vector<shape> &shapes) {
   BRep_Builder B;
   TopoDS_Compound C;
   B.MakeCompound(C);
@@ -350,8 +351,7 @@ compound compound::make_text(const std::string &text, double size,
                              const std::string &font,
                              const std::string &fontPath, FontKind kind,
                              HAlign halign, VAlign valign,
-                             const gp_Ax3 &position // Default XY plane
-) {
+                             const topo_plane &position) {
   // Convert font kind
   Font_FontAspect fontAspect = ConvertFontKind(kind);
 
@@ -374,8 +374,8 @@ compound compound::make_text(const std::string &text, double size,
       builder.Perform(brepFont, NCollection_Utf8String(text.c_str()), gp_Ax3(),
                       hAlignment, vAlignment);
 
-  // Clean and fuse the result
-  return CleanAndFuse(textShape);
+  auto shp = CleanAndFuse(textShape);
+  return *position.toWorldCoords(shp).cast<compound>();
 }
 
 compound compound::make_text(const std::string &text, double size,
@@ -460,5 +460,102 @@ compound compound::make_text(const std::string &text, double size,
   return normalize_shape(result);
 }
 
+compound compound::make_text(const std::string &text, double size,
+                             double height, const std::string &font,
+                             const std::string &fontPath, FontKind kind,
+                             HAlign halign, VAlign valign,
+                             const topo_plane &position) {
+  // Convert font style
+  Font_FontAspect fontAspect;
+  switch (kind) {
+  case FontKind::BOLD:
+    fontAspect = Font_FontAspect_Bold;
+    break;
+  case FontKind::ITALIC:
+    fontAspect = Font_FontAspect_Italic;
+    break;
+  default:
+    fontAspect = Font_FontAspect_Regular;
+    break;
+  }
+
+  // Get font manager instance
+  Handle(Font_FontMgr) fontMgr = Font_FontMgr::GetInstance();
+
+  // Load font
+  Handle(Font_SystemFont) systemFont;
+  if (!fontPath.empty() && fontMgr->CheckFont(fontPath.c_str())) {
+    systemFont = new Font_SystemFont(TCollection_AsciiString(fontPath.c_str()));
+    systemFont->SetFontPath(fontAspect,
+                            TCollection_AsciiString(fontPath.c_str()));
+    fontMgr->RegisterFont(systemFont, true);
+  } else {
+    systemFont =
+        fontMgr->FindFont(TCollection_AsciiString(font.c_str()), fontAspect);
+    if (systemFont.IsNull()) {
+      throw std::runtime_error("Font not found: " + font);
+    }
+  }
+
+  // Convert alignment
+  Graphic3d_HorizontalTextAlignment hAlignment;
+  switch (halign) {
+  case HAlign::LEFT:
+    hAlignment = Graphic3d_HTA_LEFT;
+    break;
+  case HAlign::RIGHT:
+    hAlignment = Graphic3d_HTA_RIGHT;
+    break;
+  default:
+    hAlignment = Graphic3d_HTA_CENTER;
+    break;
+  }
+
+  Graphic3d_VerticalTextAlignment vAlignment;
+  switch (valign) {
+  case VAlign::TOP:
+    vAlignment = Graphic3d_VTA_TOP;
+    break;
+  case VAlign::BOTTOM:
+    vAlignment = Graphic3d_VTA_BOTTOM;
+    break;
+  default:
+    vAlignment = Graphic3d_VTA_CENTER;
+    break;
+  }
+
+  // Create font and build text
+  StdPrs_BRepFont brepFont(
+      NCollection_Utf8String(systemFont->FontName().ToCString()), fontAspect,
+      size);
+
+  Font_BRepTextBuilder textBuilder;
+  TopoDS_Shape textShape =
+      textBuilder.Perform(brepFont, NCollection_Utf8String(text.c_str()),
+                          gp_Ax3(), hAlignment, vAlignment);
+
+  // Extrude if height is specified
+  if (std::abs(height) > Precision::Confusion()) {
+    // Get normal from first face
+    TopExp_Explorer faceExplorer(textShape, TopAbs_FACE);
+    if (!faceExplorer.More()) {
+      throw std::runtime_error("Text shape has no faces");
+    }
+
+    TopoDS_Face firstFace = TopoDS::Face(faceExplorer.Current());
+    BRepAdaptor_Surface surface(firstFace);
+    gp_Dir normal = surface.Plane().Axis().Direction();
+
+    // Create prism
+    BRepPrimAPI_MakePrism prismMaker(textShape, gp_Vec(normal) * height,
+                                     false // Don't copy the shape
+    );
+
+    textShape = prismMaker.Shape();
+  }
+
+  auto shp = normalize_shape(textShape);
+  return *position.toWorldCoords(shp).cast<compound>();
+}
 } // namespace topo
 } // namespace flywave

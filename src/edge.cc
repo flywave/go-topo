@@ -572,6 +572,86 @@ edge edge::make_spline(const std::vector<gp_Pnt> &points,
   return BRepBuilderAPI_MakeEdge(interpolator.Curve()).Edge();
 }
 
+edge edge::make_spline(const std::vector<gp_Pnt> &points,
+                       const std::vector<gp_Vec> *tangents, bool periodic,
+                       const std::vector<double> *parameters, bool scale,
+                       double tol) {
+  // Validate input
+  if (points.empty()) {
+    throw std::invalid_argument("At least one point is required");
+  }
+
+  // Create array of points
+  Handle(TColgp_HArray1OfPnt) pointArray =
+      new TColgp_HArray1OfPnt(1, points.size());
+  for (int i = 0; i < points.size(); ++i) {
+    pointArray->SetValue(i + 1, points[i]);
+  }
+
+  // Create the interpolator
+  std::unique_ptr<GeomAPI_Interpolate> interpolator;
+
+  if (parameters) {
+    // Check parameter count matches point count
+    if (parameters->size() != (points.size() + (periodic ? 1 : 0))) {
+      throw std::invalid_argument(
+          "Parameter count must match point count (plus one if periodic)");
+    }
+
+    Handle(TColStd_HArray1OfReal) paramArray =
+        new TColStd_HArray1OfReal(1, parameters->size());
+    for (int i = 0; i < parameters->size(); ++i) {
+      paramArray->SetValue(i + 1, (*parameters)[i]);
+    }
+
+    interpolator.reset(
+        new GeomAPI_Interpolate(pointArray, paramArray, periodic, tol));
+  } else {
+    interpolator.reset(new GeomAPI_Interpolate(pointArray, periodic, tol));
+  }
+
+  // Handle tangents if provided
+  if (tangents && !tangents->empty()) {
+    if (tangents->size() == 2 && points.size() != 2) {
+      // Start and end tangents only
+      interpolator->Load((*tangents)[0], (*tangents)[1], scale);
+    } else {
+      // Tangent for each point
+      if (tangents->size() != points.size()) {
+        throw std::invalid_argument(
+            "Tangent count must match point count or be exactly 2");
+      }
+
+      TColgp_Array1OfVec tangentArray(1, tangents->size());
+      Handle(TColStd_HArray1OfBoolean) tangentEnabled =
+          new TColStd_HArray1OfBoolean(1, tangents->size());
+
+      for (int i = 0; i < tangents->size(); ++i) {
+        tangentEnabled->SetValue(i + 1,
+                                 true); // Assuming all tangents are valid
+        tangentArray.SetValue(i + 1, (*tangents)[i]);
+      }
+
+      interpolator->Load(tangentArray, tangentEnabled, scale);
+    }
+  }
+
+  // Perform the interpolation
+  interpolator->Perform();
+  if (!interpolator->IsDone()) {
+    throw std::runtime_error("B-spline interpolation failed");
+  }
+
+  // Create the edge
+  Handle(Geom_BSplineCurve) spline = interpolator->Curve();
+  BRepBuilderAPI_MakeEdge edgeMaker(spline);
+  if (!edgeMaker.IsDone()) {
+    throw std::runtime_error("Edge creation failed");
+  }
+
+  return edge(edgeMaker.Edge());
+}
+
 edge edge::make_spline_approx(
     const std::vector<gp_Pnt> &points, double tolerance,
     const boost::optional<std::tuple<double, double, double>> &smoothing,
