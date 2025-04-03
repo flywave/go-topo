@@ -515,7 +515,7 @@ protected:
   // Properties
   std::vector<shape_object> _objects;
   std::shared_ptr<context> _ctx;
-  std::weak_ptr<workplane> _parent;
+  std::shared_ptr<workplane> _parent;
   std::shared_ptr<topo_plane> _plane;
   boost::optional<std::string> _tag;
 

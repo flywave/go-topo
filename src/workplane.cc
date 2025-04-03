@@ -298,7 +298,7 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
           center_ = shp->center_of_bound_box();
         }
 
-        shape_object parentVal = _parent.lock() ? _parent.lock()->val() : shape_object();
+        shape_object parentVal = _parent ? _parent->val() : shape_object();
         if (auto parentFace = boost::get<shape>(&parentVal)) {
           if (parentFace->shape_type() == "Face") {
             normal = parentFace->cast<topo::face>()->normal_at(&center_);
@@ -316,7 +316,7 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
         center_ = *vec;
       }
 
-      shape_object parentVal = _parent.lock() ? _parent.lock()->val() : shape_object();
+      shape_object parentVal = _parent ? _parent->val() : shape_object();
       if (auto parentFace = boost::get<shape>(&parentVal)) {
         if (parentFace->shape_type() == "Face") {
           normal = parentFace->cast<topo::face>()->normal_at(&center_);
@@ -427,8 +427,8 @@ std::shared_ptr<workplane> workplane::last() {
 std::shared_ptr<workplane> workplane::end(int n) {
   std::shared_ptr<workplane> rv = this->shared_from_this();
   for (int i = 0; i < n; ++i) {
-    if (rv->_parent.lock()) {
-      rv = rv->_parent.lock();
+    if (rv->_parent) {
+      rv = rv->_parent;
     } else {
       throw std::runtime_error("Cannot End the chain-- no parents!");
     }
@@ -509,8 +509,8 @@ shape workplane::find_type(const std::vector<std::string> &types,
     }
   }
 
-  if (searchParents && _parent.lock() != nullptr) {
-    return _parent.lock()->find_type(types, true, true);
+  if (searchParents && _parent) {
+    return _parent->find_type(types, true, true);
   }
 
   return shape{}; // return empty variant
