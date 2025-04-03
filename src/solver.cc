@@ -39,7 +39,7 @@ class constraint_problem : public TNLP {
 private:
   constraint_solver &solver_;
   std::vector<gp_Trsf> initial_transforms_;
-  std::vector<Constraint> constraints_;
+  std::vector<assembly_constraint> constraints_;
   std::vector<size_t> lockedEntities_;
   double scale_;
   size_t ne_;
@@ -168,7 +168,7 @@ public:
     // 计算每个约束对梯度的贡献
     for (const auto &constraint : constraints_) {
       const auto &markers = std::get<0>(constraint);
-      ConstraintKind kind = std::get<1>(constraint);
+      constraint_kind kind = std::get<1>(constraint);
       const auto &param = std::get<2>(constraint);
       const auto &entityIndices = std::get<3>(constraint);
 
@@ -217,7 +217,7 @@ public:
     // 计算所有约束值
     for (Index i = 0; i < m; i++) {
       const auto &markers = std::get<0>(constraints_[i]);
-      ConstraintKind kind = std::get<1>(constraints_[i]);
+      constraint_kind kind = std::get<1>(constraints_[i]);
       const auto &param = std::get<2>(constraints_[i]);
       const auto &entityIndices = std::get<3>(constraints_[i]);
 
@@ -265,7 +265,7 @@ public:
     Index index = 0;
     for (Index i = 0; i < m; i++) {
       const auto &markers = std::get<0>(constraints_[i]);
-      ConstraintKind kind = std::get<1>(constraints_[i]);
+      constraint_kind kind = std::get<1>(constraints_[i]);
       const auto &param = std::get<2>(constraints_[i]);
       const auto &entityIndices = std::get<3>(constraints_[i]);
 
@@ -324,13 +324,13 @@ public:
 
   // 辅助函数：计算约束值
   static double compute_constraint_value(
-      ConstraintKind kind, const std::vector<double> &inits,
+      constraint_kind kind, const std::vector<double> &inits,
       const std::vector<double> &vars,
       const boost::variant<boost::blank, double, std::array<double, 3>,
                            std::array<double, 2>> &param,
       double scale) {
     switch (kind) {
-    case ConstraintKind::Point: {
+    case constraint_kind::Point: {
       // 点约束：需要2个实体，每个实体有6个变量(3平移+3旋转)
       if (vars.size() != 12 || inits.size() != 12)
         throw std::runtime_error(
@@ -357,7 +357,7 @@ public:
                         tolerance, scale);
     }
 
-    case ConstraintKind::Axis: {
+    case constraint_kind::Axis: {
       // 轴约束：需要2个实体，每个实体有6个变量
       if (vars.size() != 12 || inits.size() != 12)
         throw std::runtime_error(
@@ -380,7 +380,7 @@ public:
                        gp_Vec(), R2, angle, scale);
     }
 
-    case ConstraintKind::PointInPlane: {
+    case constraint_kind::PointInPlane: {
       // 点在平面内约束：需要2个实体
       if (vars.size() != 12 || inits.size() != 12)
         throw std::runtime_error(
@@ -408,7 +408,7 @@ public:
                                  offset, scale);
     }
 
-    case ConstraintKind::PointOnLine: {
+    case constraint_kind::PointOnLine: {
       // 点在线上约束：需要2个实体
       if (vars.size() != 12 || inits.size() != 12)
         throw std::runtime_error(
@@ -436,7 +436,7 @@ public:
                                 tolerance, scale);
     }
 
-    case ConstraintKind::FixedPoint: {
+    case constraint_kind::FixedPoint: {
       // 固定点约束：需要1个实体
       if (vars.size() != 6 || inits.size() != 6)
         throw std::runtime_error(
@@ -461,7 +461,7 @@ public:
       return fixed_point_cost(p, T1_0, R1_0, T1, R1, target, scale);
     }
 
-    case ConstraintKind::FixedAxis: {
+    case constraint_kind::FixedAxis: {
       // 固定轴约束：需要1个实体
       if (vars.size() != 6 || inits.size() != 6)
         throw std::runtime_error(
@@ -484,7 +484,7 @@ public:
       return fixed_axis_cost(d, gp_Vec(), R1_0, gp_Vec(), R1, target, scale);
     }
 
-    case ConstraintKind::FixedRotation: {
+    case constraint_kind::FixedRotation: {
       // 固定旋转约束：需要1个实体
       if (vars.size() != 6 || inits.size() != 6)
         throw std::runtime_error(
@@ -505,7 +505,7 @@ public:
                                  scale);
     }
 
-    case ConstraintKind::Plane: {
+    case constraint_kind::Plane: {
       // 平面约束：复合约束，需要2个实体
       if (vars.size() != 12 || inits.size() != 12)
         throw std::runtime_error(
@@ -539,7 +539,7 @@ public:
       return axisCost + pointCost;
     }
 
-    case ConstraintKind::Fixed: {
+    case constraint_kind::Fixed: {
       // 固定约束已在变量边界中处理，这里返回0
       return 0.0;
     }
@@ -552,7 +552,7 @@ public:
 
   // 辅助函数：计算约束梯度
   static void compute_constraint_gradient(
-      ConstraintKind kind, const std::vector<double> &inits,
+      constraint_kind kind, const std::vector<double> &inits,
       const std::vector<double> &vars,
       const boost::variant<boost::blank, double, std::array<double, 3>,
                            std::array<double, 2>> &param,
@@ -575,7 +575,7 @@ public:
 
   // 辅助函数：计算约束雅可比
   static void compute_constraint_jacobian(
-      ConstraintKind kind, const std::vector<double> &inits,
+      constraint_kind kind, const std::vector<double> &inits,
       const std::vector<double> &vars,
       const boost::variant<boost::blank, double, std::array<double, 3>,
                            std::array<double, 2>> &param,
@@ -585,9 +585,10 @@ public:
   }
 
 private:
-  double evaluate_constraint(const Constraint &c, const Number *x) const {
+  double evaluate_constraint(const assembly_constraint &c,
+                             const Number *x) const {
     const auto &markers = std::get<0>(c);
-    ConstraintKind kind = std::get<1>(c);
+    constraint_kind kind = std::get<1>(c);
     const auto &param = std::get<2>(c);
     const auto &entityIndices = std::get<3>(c);
 
@@ -606,7 +607,7 @@ private:
     gp_Vec zero_vec(0, 0, 0);
 
     switch (kind) {
-    case ConstraintKind::Point: {
+    case constraint_kind::Point: {
       auto p1 = boost::get<gp_Pnt>(markers[0]);
       auto p2 = boost::get<gp_Pnt>(markers[1]);
       double tolerance =
@@ -618,7 +619,7 @@ private:
                         make_vec(Ts[1]), make_vec(Rs[1]), // T2, R2
                         tolerance, scale_);
     }
-    case ConstraintKind::Axis: {
+    case constraint_kind::Axis: {
       auto d1 = boost::get<gp_Dir>(markers[0]);
       auto d2 = boost::get<gp_Dir>(markers[1]);
       double angle =
@@ -630,7 +631,7 @@ private:
                        make_vec(Ts[1]), make_vec(Rs[1]), // T2, R2
                        angle, scale_);
     }
-    case ConstraintKind::PointInPlane: {
+    case constraint_kind::PointInPlane: {
       auto p = boost::get<gp_Pnt>(markers[0]);
       auto plane = boost::get<gp_Pln>(markers[1]);
       double offset =
@@ -642,7 +643,7 @@ private:
                                  make_vec(Ts[1]), make_vec(Rs[1]), // T2, R2
                                  offset, scale_);
     }
-    case ConstraintKind::PointOnLine: {
+    case constraint_kind::PointOnLine: {
       auto p = boost::get<gp_Pnt>(markers[0]);
       auto line = boost::get<gp_Lin>(markers[1]);
       double tolerance =
@@ -654,7 +655,7 @@ private:
                                 make_vec(Ts[1]), make_vec(Rs[1]), // T2, R2
                                 tolerance, scale_);
     }
-    case ConstraintKind::FixedPoint: {
+    case constraint_kind::FixedPoint: {
       auto p = boost::get<gp_Pnt>(markers[0]);
       gp_Vec target;
       if (param.type() == typeid(std::array<double, 3>)) {
@@ -666,7 +667,7 @@ private:
                               make_vec(Ts[0]), make_vec(Rs[0]), // T1, R1
                               target, scale_);
     }
-    case ConstraintKind::FixedAxis: {
+    case constraint_kind::FixedAxis: {
       auto d = boost::get<gp_Dir>(markers[0]);
       gp_Vec target;
       if (param.type() == typeid(std::array<double, 3>)) {
@@ -678,7 +679,7 @@ private:
                              make_vec(Ts[0]), make_vec(Rs[0]), // T1, R1
                              target, scale_);
     }
-    case ConstraintKind::FixedRotation: {
+    case constraint_kind::FixedRotation: {
       std::array<double, 3> eulerAngles{0, 0, 0};
       if (param.type() == typeid(std::array<double, 3>)) {
         eulerAngles = boost::get<std::array<double, 3>>(param);
@@ -688,7 +689,7 @@ private:
                                  make_vec(Ts[0]), make_vec(Rs[0]), // T1, R1
                                  eulerAngles, scale_);
     }
-    case ConstraintKind::Plane: {
+    case constraint_kind::Plane: {
       auto d1 = boost::get<gp_Dir>(markers[0]);
       auto d2 = boost::get<gp_Dir>(markers[1]);
       auto p1 = boost::get<gp_Pnt>(markers[2]);
@@ -711,7 +712,7 @@ private:
 
       return axisCost + pointCost;
     }
-    case ConstraintKind::Fixed: {
+    case constraint_kind::Fixed: {
       return 0.0; // 固定约束已在变量边界处理
     }
     default:
@@ -929,10 +930,10 @@ private:
   }
 };
 
-constraint_solver::constraint_solver(const std::vector<gp_Trsf> &entities,
-                                     const std::vector<Constraint> &constraints,
-                                     const std::vector<size_t> &locked,
-                                     double scale)
+constraint_solver::constraint_solver(
+    const std::vector<gp_Trsf> &entities,
+    const std::vector<assembly_constraint> &constraints,
+    const std::vector<size_t> &locked, double scale)
     : scale_(scale), locked_(locked), constraints_(constraints) {
 
   ne_ = entities.size();

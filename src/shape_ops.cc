@@ -385,10 +385,10 @@ boost::optional<shape> fill(const shape &shp,
   }
 }
 
-boost::optional<shape>
-shelling(const shape &shp, const std::vector<face> &faceList, double thickness,
-         double tolerance ,
-         GeomAbs_JoinType joinType) {
+boost::optional<shape> shelling(const shape &shp,
+                                const std::vector<face> &faceList,
+                                double thickness, double tolerance,
+                                GeomAbs_JoinType joinType) {
   try {
 
     TopTools_ListOfShape occ_faces_list;

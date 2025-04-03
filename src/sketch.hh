@@ -51,13 +51,26 @@ public:
   sketch(const std::vector<topo_location> &locs,
          boost::optional<compound> obj = boost::none);
 
+  sketch(const sketch &) = delete;
+  sketch &operator=(const sketch &) = delete;
+
+  ~sketch() = default;
+
+  sketch(sketch &&) noexcept;
+  sketch &operator=(sketch &&) noexcept;
+
   std::vector<face> get_faces() const;
 
-  sketch &face(
-      boost::variant<wire, std::vector<edge>, shape, std::shared_ptr<sketch>> b,
-      double angle = 0, Mode mode = Mode::ADD,
-      const boost::optional<std::string> &tag = boost::none,
-      bool ignore_selection = false);
+  sketch &face(const wire &w, double angle = 0, Mode mode = Mode::ADD,
+               const std::string &tag = "", bool ignore_selection = false);
+  sketch &face(const std::vector<topo::edge> &edges, double angle = 0,
+               Mode mode = Mode::ADD, const std::string &tag = "",
+               bool ignore_selection = false);
+  sketch &face(const shape &sh, double angle = 0, Mode mode = Mode::ADD,
+               const std::string &tag = "", bool ignore_selection = false);
+  sketch &face(const std::shared_ptr<sketch> &sk, double angle = 0,
+               Mode mode = Mode::ADD, const std::string &tag = "",
+               bool ignore_selection = false);
 
   sketch &rect(double w, double h, double angle = 0, Mode mode = Mode::ADD,
                const boost::optional<std::string> &tag = boost::none);
@@ -86,12 +99,17 @@ public:
   sketch &push(const std::vector<topo_location> &locs,
                const boost::optional<std::string> &tag = boost::none);
 
-  sketch &each(std::function<boost::variant<topo::face, std::shared_ptr<sketch>,
-                                            compound>(const topo_location &)>
-                   callback,
-               Mode mode = Mode::ADD,
-               const boost::optional<std::string> &tag = boost::none,
+  sketch &each(std::function<topo::face(const topo_location &)> callback,
+               Mode mode = Mode::ADD, const std::string &tag = "",
                bool ignore_selection = false);
+  sketch &
+  each(std::function<std::shared_ptr<sketch>(const topo_location &)> callback,
+       Mode mode = Mode::ADD, const std::string &tag = "",
+       bool ignore_selection = false);
+  sketch &each(std::function<compound(const topo_location &)> callback,
+               Mode mode = Mode::ADD, const std::string &tag = "",
+               bool ignore_selection = false);
+
   sketch &hull(Mode mode,
                const boost::optional<std::string> &tag = boost::none);
   sketch &offset(double d, Mode mode,
@@ -104,16 +122,14 @@ public:
   // Selection methods
   sketch &tag(const std::string &tag);
   sketch &select(const std::vector<std::string> &tags);
-  sketch &faces(const boost::optional<boost::variant<std::string, selector>>
-                    &s = boost::none,
-                const boost::optional<std::string> &tag = boost::none);
-  sketch &wires(const boost::optional<boost::variant<std::string, selector>> &s,
-                const boost::optional<std::string> &tag = boost::none);
-  sketch &edges(const boost::optional<boost::variant<std::string, selector>> &s,
-                const boost::optional<std::string> &tag = boost::none);
-  sketch &
-  vertices(const boost::optional<boost::variant<std::string, selector>> &s,
-           const boost::optional<std::string> &tag = boost::none);
+  sketch &faces(const std::string &selector, const std::string &tag = "");
+  sketch &faces(const selector_ptr &sel, const std::string &tag = "");
+  sketch &wires(const std::string &selector, const std::string &tag = "");
+  sketch &wires(const selector_ptr &sel, const std::string &tag = "");
+  sketch &edges(const std::string &selector, const std::string &tag = "");
+  sketch &edges(const selector_ptr &sel, const std::string &tag = "");
+  sketch &vertices(const std::string &selector, const std::string &tag = "");
+  sketch &vertices(const selector_ptr &sel, const std::string &tag = "");
 
   sketch &reset();
 
@@ -157,19 +173,11 @@ public:
   sketch &assemble(Mode mode, const boost::optional<std::string> &tag);
 
   // Constraint methods
-  sketch &constrain(
-      const std::string &tag, sketch_constraint_kind constraint,
-      const boost::variant<
-          boost::blank, double,
-          std::tuple<boost::optional<double>, boost::optional<double>, double>,
-          std::pair<double, double>> &arg);
-  sketch &constrain(
-      const std::string &tag1, const std::string &tag2,
-      sketch_constraint_kind constraint,
-      const boost::variant<
-          boost::blank, double,
-          std::tuple<boost::optional<double>, boost::optional<double>, double>,
-          std::pair<double, double>> &arg);
+  sketch &constrain(const std::string &tag, sketch_constraint_kind constraint,
+                    const sketch_constraint_value &arg);
+  sketch &constrain(const std::string &tag1, const std::string &tag2,
+                    sketch_constraint_kind constraint,
+                    const sketch_constraint_value &arg);
   sketch &solve();
 
   // Utility methods
@@ -205,13 +213,41 @@ public:
   sketch &invoke(std::function<sketch &(sketch &)> f);
 
 protected:
+  sketch &
+  _each(std::function<boost::variant<topo::face, std::shared_ptr<sketch>,
+                                     compound>(const topo_location &)>
+            callback,
+        Mode mode = Mode::ADD,
+        const boost::optional<std::string> &tag = boost::none,
+        bool ignore_selection = false);
+  sketch &_face(boost::variant<wire, std::vector<topo::edge>, shape,
+                               std::shared_ptr<sketch>>
+                    b,
+                double angle = 0, Mode mode = Mode::ADD,
+                const boost::optional<std::string> &tag = boost::none,
+                bool ignore_selection = false);
+
+  sketch &
+  _faces(const boost::optional<boost::variant<std::string, selector_ptr>> &s =
+             boost::none,
+         const boost::optional<std::string> &tag = boost::none);
+  sketch &
+  _wires(const boost::optional<boost::variant<std::string, selector_ptr>> &s,
+         const boost::optional<std::string> &tag = boost::none);
+  sketch &
+  _edges(const boost::optional<boost::variant<std::string, selector_ptr>> &s,
+         const boost::optional<std::string> &tag = boost::none);
+  sketch &
+  _vertices(const boost::optional<boost::variant<std::string, selector_ptr>> &s,
+            const boost::optional<std::string> &tag = boost::none);
+
   void _tag(const std::vector<sketch_val> &val, const std::string &tag);
   void _tag(const std::vector<shape> &val, const std::string &tag);
   std::unordered_map<topo::face, std::vector<vertex>>
   _match_faces_to_vertices();
   std::vector<sketch_val> _unique(const std::vector<sketch_val> &vals);
   sketch &
-  select(const boost::optional<boost::variant<std::string, selector>> &s,
+  select(const boost::optional<boost::variant<std::string, selector_ptr>> &s,
          const std::string &kind, const boost::optional<std::string> &tag);
   topo_vector start_point();
   topo_vector end_point();
@@ -225,33 +261,19 @@ private:
 
   class constraint_ {
   public:
-    constraint_(const std::string &tags, const topo::edge &args,
-                sketch_constraint_kind kind,
-                boost::variant<boost::blank, double,
-                               std::tuple<boost::optional<double>,
-                                          boost::optional<double>, double>,
-                               std::pair<double, double>>
-                    param)
+    constraint_(const std::string &tags,  topo::edge &&args,
+                sketch_constraint_kind kind, sketch_constraint_value param)
         : tags({tags}), args({args}), kind(kind), param(param) {}
 
     constraint_(const std::vector<std::string> &tags,
                 const std::vector<topo::edge> &args,
-                sketch_constraint_kind kind,
-                boost::variant<boost::blank, double,
-                               std::tuple<boost::optional<double>,
-                                          boost::optional<double>, double>,
-                               std::pair<double, double>>
-                    param)
+                sketch_constraint_kind kind, sketch_constraint_value param)
         : tags(tags), args(args), kind(kind), param(param) {}
 
     std::vector<std::string> tags;
     std::vector<topo::edge> args;
     sketch_constraint_kind kind;
-    boost::variant<
-        boost::blank, double,
-        std::tuple<boost::optional<double>, boost::optional<double>, double>,
-        std::pair<double, double>>
-        param;
+    sketch_constraint_value param;
   };
 
   std::shared_ptr<workplane> parent_;

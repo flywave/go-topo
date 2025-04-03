@@ -111,7 +111,7 @@ compound compound::make_compound(TShp1 &&shp1, TShp2 &&shp2, TShp &&...shps) {
   aBuilder.MakeCompound(aRes);
   _helper::make_compound_helper(aBuilder, aRes, shp1, shp2,
                                 std::forward<TShp>(shps)...);
-  return compound{aRes};
+  return {aRes};
 }
 
 class compound_iterator {

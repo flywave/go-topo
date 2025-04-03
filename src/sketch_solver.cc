@@ -51,7 +51,8 @@ double sketch_solver::fixed_cost(const std::vector<double> &x,
   return std::sqrt(sum);
 }
 
-double sketch_solver::fixed_point_cost(const std::vector<double> &x, geom_type t,
+double sketch_solver::fixed_point_cost(const std::vector<double> &x,
+                                       geom_type t,
                                        const std::vector<double> &x0,
                                        const boost::optional<double> &val) {
   gp_Pnt2d p, p0;

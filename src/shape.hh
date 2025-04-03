@@ -46,6 +46,7 @@ class shape : public geometry_object {
 public:
   shape();
   virtual ~shape() = default;
+
   shape(const shape &) = default;
   shape &operator=(const shape &) = default;
 
@@ -191,6 +192,8 @@ public:
                     double tol = 0.0) const;
 
   shape splited(const std::vector<shape> &splitters) const;
+
+  int mesh(double tolerance, double angularTolerance = 0.1);
 
   orientation get_orientation() const;
 

@@ -34,7 +34,7 @@ public:
   }
 
   inline vector3d &normalize();
-  
+
   inline double length() const {
     return std::sqrt((x * x) + (y * y) + (z * z));
   }

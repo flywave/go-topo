@@ -394,8 +394,9 @@ void dxf_shape_reader::on_read_spline(const dxf_spline &spline) {
 
 void dxf_shape_reader::on_read_insert(const dxf_insert &ins) {
   const std::string prefix = "BLOCKS " + ins.block_name + " ";
-  for (const auto &[k, vecEntity] : _layers) {
-    if (!startsWith(k, prefix))
+  for (const auto &pair : _layers) {
+    auto &vecEntity = pair.second;
+    if (!startsWith(pair.first, prefix))
       continue; // Skip
 
     TopoDS_Shape comp = brep_utils::make_empty_compound();

@@ -22,10 +22,10 @@ namespace topo {
 using DOF6 = std::tuple<std::array<double, 3>, std::array<double, 3>>;
 
 // 类型定义
-using ConstraintMarker =
+using constraint_marker =
     boost::variant<gp_Pnt, gp_Dir, gp_Pln, gp_Lin, boost::blank>;
 
-enum class ConstraintKind {
+enum class constraint_kind {
   Point,
   Axis,
   PointInPlane,
@@ -37,41 +37,50 @@ enum class ConstraintKind {
   FixedRotation
 };
 
-template <ConstraintKind> struct is_unary_constraint : std::false_type {};
-template <ConstraintKind> struct is_binary_constraint : std::false_type {};
+template <constraint_kind> struct is_unary_constraint : std::false_type {};
+template <constraint_kind> struct is_binary_constraint : std::false_type {};
 
 // Then provide specializations
-template <> struct is_unary_constraint<ConstraintKind::Fixed> : std::true_type {};
-template <> struct is_unary_constraint<ConstraintKind::FixedPoint> : std::true_type {};
-template <> struct is_unary_constraint<ConstraintKind::FixedAxis> : std::true_type {};
-template <> struct is_unary_constraint<ConstraintKind::FixedRotation> : std::true_type {};
+template <>
+struct is_unary_constraint<constraint_kind::Fixed> : std::true_type {};
+template <>
+struct is_unary_constraint<constraint_kind::FixedPoint> : std::true_type {};
+template <>
+struct is_unary_constraint<constraint_kind::FixedAxis> : std::true_type {};
+template <>
+struct is_unary_constraint<constraint_kind::FixedRotation> : std::true_type {};
 
-template <> struct is_binary_constraint<ConstraintKind::Point> : std::true_type {};
-template <> struct is_binary_constraint<ConstraintKind::Axis> : std::true_type {};
-template <> struct is_binary_constraint<ConstraintKind::PointInPlane> : std::true_type {};
-template <> struct is_binary_constraint<ConstraintKind::PointOnLine> : std::true_type {};
-template <> struct is_binary_constraint<ConstraintKind::Plane> : std::true_type {};
+template <>
+struct is_binary_constraint<constraint_kind::Point> : std::true_type {};
+template <>
+struct is_binary_constraint<constraint_kind::Axis> : std::true_type {};
+template <>
+struct is_binary_constraint<constraint_kind::PointInPlane> : std::true_type {};
+template <>
+struct is_binary_constraint<constraint_kind::PointOnLine> : std::true_type {};
+template <>
+struct is_binary_constraint<constraint_kind::Plane> : std::true_type {};
 
 // 约束检查函数
-constexpr bool is_unary(ConstraintKind kind) {
+constexpr bool is_unary(constraint_kind kind) {
   switch (kind) {
-  case ConstraintKind::Fixed:
-  case ConstraintKind::FixedPoint:
-  case ConstraintKind::FixedAxis:
-  case ConstraintKind::FixedRotation:
+  case constraint_kind::Fixed:
+  case constraint_kind::FixedPoint:
+  case constraint_kind::FixedAxis:
+  case constraint_kind::FixedRotation:
     return true;
   default:
     return false;
   }
 }
 
-constexpr bool is_binary(ConstraintKind kind) {
+constexpr bool is_binary(constraint_kind kind) {
   switch (kind) {
-  case ConstraintKind::Point:
-  case ConstraintKind::Axis:
-  case ConstraintKind::PointInPlane:
-  case ConstraintKind::PointOnLine:
-  case ConstraintKind::Plane:
+  case constraint_kind::Point:
+  case constraint_kind::Axis:
+  case constraint_kind::PointInPlane:
+  case constraint_kind::PointOnLine:
+  case constraint_kind::Plane:
     return true;
   default:
     return false;
@@ -80,37 +89,37 @@ constexpr bool is_binary(ConstraintKind kind) {
 
 class constraint_problem;
 
-using Constraint =
-    std::tuple<std::vector<ConstraintMarker>, ConstraintKind,
+using assembly_constraint =
+    std::tuple<std::vector<constraint_marker>, constraint_kind,
                boost::variant<boost::blank, double, std::array<double, 3>,
                               std::array<double, 2>>,
                std::vector<int>>;
-using ConstraintParam =
+using constraint_param =
     boost::variant<boost::blank, double, std::array<double, 3>,
                    std::array<double, 2>>;
 using CostFunction = std::function<double(const std::vector<double> &,
                                           const std::vector<double> &,
-                                          const ConstraintParam &, double)>;
+                                          const constraint_param &, double)>;
 
 class constraint_spec {
 public:
   std::vector<std::string> objects;
   std::vector<shape> args;
   std::vector<topo_location> sublocs;
-  ConstraintKind kind;
-  ConstraintParam param;
+  constraint_kind kind;
+  constraint_param param;
 
   constraint_spec(const std::vector<std::string> &objects,
                   const std::vector<shape> &args,
                   const std::vector<topo_location> &sublocs,
-                  ConstraintKind kind,
-                  const ConstraintParam &param = boost::blank{})
+                  constraint_kind kind,
+                  const constraint_param &param = boost::blank{})
       : objects(objects), args(args), sublocs(sublocs), kind(kind),
         param(param) {
     _validate(args, kind, param);
   }
 
-  std::vector<Constraint> to_pods() const {
+  std::vector<assembly_constraint> to_pods() const {
     // Apply sublocation
     std::vector<shape> located_args;
     located_args.reserve(args.size());
@@ -118,41 +127,41 @@ public:
       located_args.push_back(args[i].located(sublocs[i] * args[i].location()));
     }
 
-    std::vector<std::vector<ConstraintMarker>> markers;
+    std::vector<std::vector<constraint_marker>> markers;
 
     switch (kind) {
-    case ConstraintKind::Axis:
+    case constraint_kind::Axis:
       markers.push_back(
           {_get_axis(located_args[0]), _get_axis(located_args[1])});
       break;
-    case ConstraintKind::Point:
+    case constraint_kind::Point:
       markers.push_back({_get_pnt(located_args[0]), _get_pnt(located_args[1])});
       break;
-    case ConstraintKind::Plane:
+    case constraint_kind::Plane:
       markers.push_back(
           {_get_axis(located_args[0]), _get_axis(located_args[1])});
       markers.push_back({_get_pnt(located_args[0]), _get_pnt(located_args[1])});
       break;
-    case ConstraintKind::PointInPlane:
+    case constraint_kind::PointInPlane:
       markers.push_back({_get_pnt(located_args[0]), _get_pln(located_args[1])});
       break;
-    case ConstraintKind::PointOnLine:
+    case constraint_kind::PointOnLine:
       markers.push_back({_get_pnt(located_args[0]), _get_lin(located_args[1])});
       break;
-    case ConstraintKind::Fixed:
+    case constraint_kind::Fixed:
       markers.push_back({boost::blank{}, boost::blank{}});
       break;
-    case ConstraintKind::FixedPoint:
+    case constraint_kind::FixedPoint:
       markers.push_back({_get_pnt(located_args[0]), boost::blank{}});
       break;
-    case ConstraintKind::FixedAxis:
+    case constraint_kind::FixedAxis:
       markers.push_back({_get_axis(located_args[0]), boost::blank{}});
       break;
     default:
       throw std::runtime_error("Unknown constraint kind");
     }
 
-    std::vector<Constraint> constraints;
+    std::vector<assembly_constraint> constraints;
     for (auto &marker : markers) {
       constraints.emplace_back(marker, kind, param, std::vector<int>{});
     }
@@ -161,8 +170,8 @@ public:
   }
 
 private:
-  void _validate(const std::vector<shape> &args, ConstraintKind kind,
-                 const ConstraintParam &param) {
+  void _validate(const std::vector<shape> &args, constraint_kind kind,
+                 const constraint_param &param) {
     if (is_binary(kind) && args[0].is_null() && args[1].is_null()) {
       throw std::runtime_error("Invalid number of entities for constraint");
     }
@@ -221,7 +230,7 @@ private:
       variables_;
   std::vector<std::pair<std::array<double, 3>, std::array<double, 3>>>
       start_points_;
-  std::vector<Constraint> constraints_;
+  std::vector<assembly_constraint> constraints_;
   std::vector<size_t> locked_;
   std::vector<gp_Trsf> initial_transforms_;
   size_t ne_;
@@ -230,7 +239,7 @@ private:
 
 public:
   constraint_solver(const std::vector<gp_Trsf> &entities,
-                    const std::vector<Constraint> &constraints,
+                    const std::vector<assembly_constraint> &constraints,
                     const std::vector<size_t> &locked = {}, double scale = 1.0);
 
   std::pair<std::vector<gp_Trsf>, std::map<std::string, double>>

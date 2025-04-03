@@ -75,6 +75,43 @@ sketch::sketch(const std::vector<topo_location> &locs,
       faces_(obj ? *obj : topo::compound::make_compound({})), edges_(),
       selection_(boost::none), constraints_(), tags_() {}
 
+sketch::sketch(sketch &&o) noexcept {
+  parent_ = o.parent_;
+  locs_ = o.locs_;
+  faces_ = o.faces_;
+  edges_ = o.edges_;
+  selection_ = o.selection_;
+  constraints_ = o.constraints_;
+  tags_ = o.tags_;
+  o.parent_.reset();
+  o.locs_.clear();
+  o.faces_ = boost::none;
+  o.edges_.clear();
+  o.selection_ = boost::none;
+  o.constraints_.clear();
+  o.tags_.clear();
+}
+
+sketch &sketch::operator=(sketch &&o) noexcept {
+  if (this != &o) {
+    parent_ = o.parent_;
+    locs_ = o.locs_;
+    faces_ = o.faces_;
+    edges_ = o.edges_;
+    selection_ = o.selection_;
+    constraints_ = o.constraints_;
+    tags_ = o.tags_;
+    o.parent_.reset();
+    o.locs_.clear();
+    o.faces_ = boost::none;
+    o.edges_.clear();
+    o.selection_ = boost::none;
+    o.constraints_.clear();
+    o.tags_.clear();
+  }
+  return *this;
+}
+
 std::vector<face> sketch::get_faces() const {
   std::vector<topo::face> result;
   for (auto &loc : locs_) {
@@ -97,12 +134,40 @@ void sketch::_tag(const std::vector<shape> &val, const std::string &tag) {
   tags_[tag] = vals;
 }
 
-sketch &sketch::face(boost::variant<wire, std::vector<topo::edge>, shape,
-                                    std::shared_ptr<sketch>>
-                         b,
-                     double angle, Mode mode,
-                     const boost::optional<std::string> &tag,
-                     bool ignore_selection) {
+sketch &sketch::face(const wire &w, double angle, Mode mode,
+                     const std::string &tag, bool ignore_selection) {
+  return _face(w, angle, mode,
+               tag.empty() ? boost::none : boost::optional<std::string>(tag),
+               ignore_selection);
+}
+
+sketch &sketch::face(const std::vector<topo::edge> &edges, double angle,
+                     Mode mode, const std::string &tag, bool ignore_selection) {
+  return _face(edges, angle, mode,
+               tag.empty() ? boost::none : boost::optional<std::string>(tag),
+               ignore_selection);
+}
+
+sketch &sketch::face(const shape &sh, double angle, Mode mode,
+                     const std::string &tag, bool ignore_selection) {
+  return _face(sh, angle, mode,
+               tag.empty() ? boost::none : boost::optional<std::string>(tag),
+               ignore_selection);
+}
+
+sketch &sketch::face(const std::shared_ptr<sketch> &sk, double angle, Mode mode,
+                     const std::string &tag, bool ignore_selection) {
+  return _face(sk, angle, mode,
+               tag.empty() ? boost::none : boost::optional<std::string>(tag),
+               ignore_selection);
+}
+
+sketch &sketch::_face(boost::variant<wire, std::vector<topo::edge>, shape,
+                                     std::shared_ptr<sketch>>
+                          b,
+                      double angle, Mode mode,
+                      const boost::optional<std::string> &tag,
+                      bool ignore_selection) {
   boost::variant<topo::face, std::shared_ptr<sketch>, compound> res;
 
   if (auto w = boost::get<wire>(&b)) {
@@ -136,7 +201,7 @@ sketch &sketch::face(boost::variant<wire, std::vector<topo::edge>, shape,
     }
   }
 
-  return each(
+  return _each(
       [res](const topo_location &loc)
           -> boost::variant<topo::face, std::shared_ptr<sketch>, compound> {
         if (auto f = boost::get<topo::face>(&res)) {
@@ -155,7 +220,7 @@ sketch &sketch::rect(double w, double h, double angle, Mode mode,
                      const boost::optional<std::string> &tag) {
   auto res = face::make_plane(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 0), h, w)
                  .rotated(angle, gp_Pnt(0, 0, 0), gp_Pnt(0, 0, 0));
-  return each(
+  return _each(
       [res](const topo_location &loc) {
         return *res.located(loc).cast<topo::face>();
       },
@@ -167,7 +232,7 @@ sketch &sketch::circle(double r, Mode mode,
   auto wire = wire::make_circle(r, topo_vector(), topo_vector(0, 0, 1));
   auto res = face::make_face(wire);
 
-  return each(
+  return _each(
       [res](const topo_location &loc) {
         return *res.located(loc).cast<topo::face>();
       },
@@ -180,7 +245,7 @@ sketch &sketch::ellipse(double a1, double a2, double angle, Mode mode,
                                  topo_vector(1, 0, 0), angle);
   auto res = face::make_face(wire);
 
-  return each(
+  return _each(
       [res](const topo_location &loc) {
         return *res.located(loc).cast<topo::face>();
       },
@@ -219,7 +284,7 @@ sketch &sketch::slot(double w, double h, double angle, Mode mode,
   auto e4 = edge::make_three_point_arc(p3, p5, p1);
 
   auto wire = wire::make_wire({e1, e2, e3, e4});
-  return face(wire, angle, mode, tag);
+  return _face(wire, angle, mode, tag);
 }
 
 sketch &sketch::regular_polygon(double r, int n, double angle, Mode mode,
@@ -244,7 +309,7 @@ sketch &sketch::polygon(const std::vector<topo_vector> &pts, double angle,
     vertices.push_back(gp_Pnt(pt.x(), pt.y(), pt.z()));
   }
   auto wire = wire::make_polygon(vertices, false);
-  return face(wire, angle, mode, tag);
+  return _face(wire, angle, mode, tag);
 }
 
 sketch &sketch::rarray(double xs, double ys, int nx, int ny) {
@@ -424,7 +489,44 @@ sketch &sketch::push(const std::vector<topo_location> &locs,
   return *this;
 }
 
+sketch &sketch::each(std::function<topo::face(const topo_location &)> callback,
+                     Mode mode, const std::string &tag, bool ignore_selection) {
+  auto wrapped = [callback](const topo_location &loc)
+      -> boost::variant<topo::face, std::shared_ptr<sketch>, compound> {
+    return boost::variant<topo::face, std::shared_ptr<sketch>, compound>(
+        callback(loc));
+  };
+  return _each(wrapped, mode,
+               tag.empty() ? boost::none : boost::optional<std::string>(tag),
+               ignore_selection);
+}
+
 sketch &sketch::each(
+    std::function<std::shared_ptr<sketch>(const topo_location &)> callback,
+    Mode mode, const std::string &tag, bool ignore_selection) {
+  auto wrapped = [callback](const topo_location &loc)
+      -> boost::variant<topo::face, std::shared_ptr<sketch>, compound> {
+    return boost::variant<topo::face, std::shared_ptr<sketch>, compound>(
+        callback(loc));
+  };
+  return _each(wrapped, mode,
+               tag.empty() ? boost::none : boost::optional<std::string>(tag),
+               ignore_selection);
+}
+
+sketch &sketch::each(std::function<compound(const topo_location &)> callback,
+                     Mode mode, const std::string &tag, bool ignore_selection) {
+  auto wrapped = [callback](const topo_location &loc)
+      -> boost::variant<topo::face, std::shared_ptr<sketch>, compound> {
+    return boost::variant<topo::face, std::shared_ptr<sketch>, compound>(
+        callback(loc));
+  };
+  return _each(wrapped, mode,
+               tag.empty() ? boost::none : boost::optional<std::string>(tag),
+               ignore_selection);
+}
+
+sketch &sketch::_each(
     std::function<boost::variant<topo::face, std::shared_ptr<sketch>, compound>(
         const topo_location &)>
         callback,
@@ -508,7 +610,7 @@ sketch &sketch::hull(Mode mode, const boost::optional<std::string> &tag) {
   }
 
   auto hull_edges = find_hull(edges);
-  return face(hull_edges, 0.0, mode, tag, (bool)(selection_));
+  return _face(hull_edges, 0.0, mode, tag, (bool)(selection_));
 }
 
 sketch &sketch::offset(double d, Mode mode,
@@ -523,7 +625,7 @@ sketch &sketch::offset(double d, Mode mode,
         auto wire = shp->cast<topo::wire>();
         auto offset_wires = wire->offset2d(d);
         for (auto &ow : offset_wires) {
-          face(ow, 0.0, mode, tag, true);
+          _face(ow, 0.0, mode, tag, true);
         }
       }
     }
@@ -568,11 +670,11 @@ sketch &sketch::fillet(double d) {
   auto f2v = _match_faces_to_vertices();
 
   std::vector<shape> new_faces;
-  for (auto &[f, vertices] : f2v) {
-    if (!vertices.empty()) {
-      new_faces.push_back(f.fillet2d(d, vertices));
+  for (auto &pair : f2v) {
+    if (!pair.second.empty()) {
+      new_faces.push_back(pair.first.fillet2d(d, pair.second));
     } else {
-      new_faces.push_back(f);
+      new_faces.push_back(pair.first);
     }
   }
 
@@ -584,11 +686,11 @@ sketch &sketch::chamfer(double d) {
   auto f2v = _match_faces_to_vertices();
 
   std::vector<shape> new_faces;
-  for (auto &[face, vertices] : f2v) {
-    if (!vertices.empty()) {
-      new_faces.push_back(face.chamfer2d(d, vertices));
+  for (auto &pair : f2v) {
+    if (!pair.second.empty()) {
+      new_faces.push_back(pair.first.chamfer2d(d, pair.second));
     } else {
-      new_faces.push_back(face);
+      new_faces.push_back(pair.first);
     }
   }
 
@@ -616,16 +718,15 @@ std::vector<sketch_val> sketch::_unique(const std::vector<sketch_val> &vals) {
 
   std::vector<sketch_val> result;
   result.reserve(tmp.size());
-  for (auto &[hash, val] : tmp) {
-    result.push_back(val);
+  for (auto &pair : tmp) {
+    result.push_back(pair.second);
   }
   return result;
 }
 
-sketch &
-sketch::select(const boost::optional<boost::variant<std::string, selector>> &s,
-               const std::string &kind,
-               const boost::optional<std::string> &tag) {
+sketch &sketch::select(
+    const boost::optional<boost::variant<std::string, selector_ptr>> &s,
+    const std::string &kind, const boost::optional<std::string> &tag) {
   std::vector<sketch_val> rv;
 
   if (tag) {
@@ -708,7 +809,7 @@ sketch::select(const boost::optional<boost::variant<std::string, selector>> &s,
       for (auto &sh : shapes) {
         filtered.push_back(sh);
       }
-    } else if (auto sel = boost::get<selector>(&*s)) {
+    } else if (auto sel = boost::get<selector_ptr>(&*s)) {
       std::vector<shape> shapes;
       for (auto &val : rv) {
         if (auto sh = boost::get<shape>(&val)) {
@@ -716,7 +817,7 @@ sketch::select(const boost::optional<boost::variant<std::string, selector>> &s,
         }
       }
 
-      shapes = sel->filter(shapes);
+      shapes = (*sel)->filter(shapes);
       for (auto &sh : shapes) {
         filtered.push_back(sh);
       }
@@ -751,26 +852,82 @@ sketch &sketch::select(const std::vector<std::string> &tags) {
   return *this;
 }
 
-sketch &
-sketch::faces(const boost::optional<boost::variant<std::string, selector>> &s,
-              const boost::optional<std::string> &tag) {
+sketch &sketch::faces(const std::string &sel, const std::string &tag) {
+  return _faces(
+      sel.empty()
+          ? boost::none
+          : boost::optional<boost::variant<std::string, selector_ptr>>(sel),
+      tag.empty() ? boost::none : boost::optional<std::string>(tag));
+}
+
+sketch &sketch::faces(const selector_ptr &sel, const std::string &tag) {
+  return _faces(boost::variant<std::string, selector_ptr>(sel),
+                tag.empty() ? boost::none : boost::optional<std::string>(tag));
+}
+
+// wires方法的公共接口实现
+sketch &sketch::wires(const std::string &sel, const std::string &tag) {
+  return _wires(
+      sel.empty()
+          ? boost::none
+          : boost::optional<boost::variant<std::string, selector_ptr>>(sel),
+      tag.empty() ? boost::none : boost::optional<std::string>(tag));
+}
+
+sketch &sketch::wires(const selector_ptr &sel, const std::string &tag) {
+  return _wires(boost::variant<std::string, selector_ptr>(sel),
+                tag.empty() ? boost::none : boost::optional<std::string>(tag));
+}
+
+// edges方法的公共接口实现
+sketch &sketch::edges(const std::string &sel, const std::string &tag) {
+  return _edges(
+      sel.empty()
+          ? boost::none
+          : boost::optional<boost::variant<std::string, selector_ptr>>(sel),
+      tag.empty() ? boost::none : boost::optional<std::string>(tag));
+}
+
+sketch &sketch::edges(const selector_ptr &sel, const std::string &tag) {
+  return _edges(boost::variant<std::string, selector_ptr>(sel),
+                tag.empty() ? boost::none : boost::optional<std::string>(tag));
+}
+
+// vertices方法的公共接口实现
+sketch &sketch::vertices(const std::string &sel, const std::string &tag) {
+  return _vertices(
+      sel.empty()
+          ? boost::none
+          : boost::optional<boost::variant<std::string, selector_ptr>>(sel),
+      tag.empty() ? boost::none : boost::optional<std::string>(tag));
+}
+
+sketch &sketch::vertices(const selector_ptr &sel, const std::string &tag) {
+  return _vertices(boost::variant<std::string, selector_ptr>(sel),
+                   tag.empty() ? boost::none
+                               : boost::optional<std::string>(tag));
+}
+
+sketch &sketch::_faces(
+    const boost::optional<boost::variant<std::string, selector_ptr>> &s,
+    const boost::optional<std::string> &tag) {
   return select(s, "Faces", tag);
 }
 
-sketch &
-sketch::wires(const boost::optional<boost::variant<std::string, selector>> &s,
-              const boost::optional<std::string> &tag) {
+sketch &sketch::_wires(
+    const boost::optional<boost::variant<std::string, selector_ptr>> &s,
+    const boost::optional<std::string> &tag) {
   return select(s, "Wires", tag);
 }
 
-sketch &
-sketch::edges(const boost::optional<boost::variant<std::string, selector>> &s,
-              const boost::optional<std::string> &tag) {
+sketch &sketch::_edges(
+    const boost::optional<boost::variant<std::string, selector_ptr>> &s,
+    const boost::optional<std::string> &tag) {
   return select(s, "Edges", tag);
 }
 
-sketch &sketch::vertices(
-    const boost::optional<boost::variant<std::string, selector>> &s,
+sketch &sketch::_vertices(
+    const boost::optional<boost::variant<std::string, selector_ptr>> &s,
     const boost::optional<std::string> &tag) {
   return select(s, "Vertices", tag);
 }
@@ -948,16 +1105,13 @@ sketch &sketch::assemble(Mode mode, const boost::optional<std::string> &tag) {
       construction_edges.push_back(e);
     }
   }
-  return face(construction_edges, 0.0, mode, tag);
+  return _face(construction_edges, 0.0, mode, tag);
 }
 
 // Constraint methods
-sketch &sketch::constrain(
-    const std::string &tag, sketch_constraint_kind constraint,
-    const boost::variant<
-        boost::blank, double,
-        std::tuple<boost::optional<double>, boost::optional<double>, double>,
-        std::pair<double, double>> &arg) {
+sketch &sketch::constrain(const std::string &tag,
+                          sketch_constraint_kind constraint,
+                          const sketch_constraint_value &arg) {
   auto it = tags_.find(tag);
   if (it == tags_.end() || it->second.empty()) {
     throw std::invalid_argument("Invalid tag specified");
@@ -974,13 +1128,9 @@ sketch &sketch::constrain(
   return *this;
 }
 
-sketch &sketch::constrain(
-    const std::string &tag1, const std::string &tag2,
-    sketch_constraint_kind constraint,
-    const boost::variant<
-        boost::blank, double,
-        std::tuple<boost::optional<double>, boost::optional<double>, double>,
-        std::pair<double, double>> &arg) {
+sketch &sketch::constrain(const std::string &tag1, const std::string &tag2,
+                          sketch_constraint_kind constraint,
+                          const sketch_constraint_value &arg) {
   auto it1 = tags_.find(tag1);
   auto it2 = tags_.find(tag2);
   if (it1 == tags_.end() || it1->second.empty() || it2 == tags_.end() ||
@@ -1007,11 +1157,11 @@ sketch &sketch::solve() {
   std::vector<geom_type> geoms;
 
   // Prepare entities and mapping
-  for (const auto &[tag, vals] : tags_) {
-    if (vals.empty())
+  for (const auto &pair : tags_) {
+    if (pair.second.empty())
       continue;
 
-    if (auto shp = boost::get<topo::shape>(vals[0])) {
+    if (auto shp = boost::get<topo::shape>(pair.second[0])) {
       if (shp.shape_type() == "Edge") {
         auto edge = shp.cast<topo::edge>();
         auto geom_type = edge->geom_type();
@@ -1020,7 +1170,7 @@ sketch &sketch::solve() {
           auto p1 = edge->start_point();
           auto p2 = edge->end_point();
           entities.push_back(segment_dof{p1.X(), p1.Y(), p2.X(), p2.Y()});
-          e2i[tag] = entities.size() - 1;
+          e2i[pair.first] = entities.size() - 1;
           geoms.push_back(geom_type::LINE);
         } else if (geom_type == "CIRCLE") {
           auto center = edge->arc_center();
@@ -1039,7 +1189,7 @@ sketch &sketch::solve() {
 
           entities.push_back(
               arc_dof{center.X(), center.Y(), edge->radius(), a1, a2});
-          e2i[tag] = entities.size() - 1;
+          e2i[pair.first] = entities.size() - 1;
           geoms.push_back(geom_type::CIRCLE);
         }
       }
@@ -1069,15 +1219,17 @@ sketch &sketch::solve() {
   // Solve constraints
   sketch_solver solver(entities, constraint_list, geoms);
   auto result = solver.solve();
-  for (const auto &[name, value] : result.second) {
-    solve_status_[name] = value;
+  for (const auto &pair : result.second) {
+    solve_status_[pair.first] = pair.second;
   }
   solve_status_["x"] = result.first;
 
   // Update geometry
-  for (const auto &[geom_type, kv] : boost::combine(geoms, e2i)) {
-    const auto tag = boost::get<0>(kv).first;
-    const auto idx = boost::get<0>(kv).second;
+  for (const auto &combined : boost::combine(geoms, e2i)) {
+    const auto &geom_type = boost::get<0>(combined);
+    const auto &kv = boost::get<1>(combined);
+    const auto tag = kv.first;  // or boost::get<0>(kv) if kv is a tuple
+    const auto idx = kv.second; // or boost::get<1>(kv) if kv is a tuple
     const auto &sol = result.first[idx];
 
     if (geom_type == geom_type::LINE) {

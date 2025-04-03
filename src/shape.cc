@@ -1874,5 +1874,28 @@ shape shape::splited(const std::vector<shape> &splitters) const {
   return bool_op({*this}, splitters, split_op);
 }
 
+int shape::mesh(double tolerance, double angularTolerance) {
+  try {
+    if (!BRepTools::Triangulation(value(), tolerance)) {
+      BRepMesh_IncrementalMesh mesher(
+          value(),         // shape to mesh
+          tolerance,       // linear deflection
+          true,            // relative deflection flag
+          angularTolerance // angular deflection (in radians)
+      );
+    }
+  } catch (Standard_Failure &e) {
+
+    const Standard_CString msg = e.GetMessageString();
+    if (msg != NULL && strlen(msg) > 1) {
+      throw std::runtime_error(msg);
+    } else {
+      throw std::runtime_error("Failed to mirror object");
+    }
+    return 0;
+  }
+  return 1;
+}
+
 } // namespace topo
 } // namespace flywave

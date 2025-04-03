@@ -321,8 +321,8 @@ getCurveAndParam(Handle_Adaptor3d_Curve adapter, double d,
 
 gp_Pnt shape1d::position_at(double d, ParamMode mode) const {
   auto adapter = this->get_geom();
-  auto [curve, param] = getCurveAndParam(adapter, d, mode);
-  return curve->Value(param);
+  auto pair = getCurveAndParam(adapter, d, mode);
+  return pair.first->Value(pair.second);
 }
 
 std::vector<gp_Pnt> shape1d::positions(const std::vector<double> &ds,

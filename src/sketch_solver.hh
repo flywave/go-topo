@@ -38,14 +38,16 @@ enum class sketch_constraint_kind {
   ARC_ANGLE
 };
 
+typedef boost::variant<
+    boost::blank, double,
+    std::tuple<boost::optional<double>, boost::optional<double>, double>,
+    std::pair<double, double>>
+    sketch_constraint_value;
+
 struct sketch_constraint {
   std::pair<size_t, boost::optional<size_t>> entities;
   sketch_constraint_kind kind;
-  boost::variant<
-      boost::blank, double,
-      std::tuple<boost::optional<double>, boost::optional<double>, double>,
-      std::pair<double, double>>
-      value;
+  sketch_constraint_value value;
 };
 // Helper functions
 gp_Pnt2d arc_first(const arc_dof &x);

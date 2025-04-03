@@ -14,6 +14,7 @@
 #include <GeomAbs_JoinType.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Shape.hxx>
+
 #include <map>
 #include <utility> // for std::pair
 #include <vector>

@@ -56,13 +56,21 @@ public:
   workplane(const std::string &planeName, topo_vector *origin = nullptr,
             shape_object obj = {});
 
+  workplane(const workplane &) = delete;
+  workplane &operator=(const workplane &) = delete;
+
+  ~workplane() = default;
+
+  workplane(workplane &&) noexcept;
+  workplane &operator=(workplane &&) noexcept;
+
   shape value() const;
 
   // Core methods
   template <typename T>
-  std::shared_ptr<workplane> newShapeObject(const std::vector<T> &objlist);
+  std::shared_ptr<workplane> new_shape_object(const std::vector<T> &objlist);
   std::shared_ptr<workplane>
-  newObject(const std::vector<shape_object> &objlist);
+  new_object(const std::vector<shape_object> &objlist);
   std::shared_ptr<workplane>
   create(double offset = 0.0, bool invert = false,
          const std::string &centerOption = "ProjectedOrigin",
@@ -85,47 +93,42 @@ public:
   std::shared_ptr<workplane> clean();
   workplane &tag(const std::string &name);
 
-  shape find_solid(bool searchStack, bool searchParents);
+  solid find_solid(bool searchStack = true, bool searchParents = true);
 
-  std::shared_ptr<workplane> vertices(
-      const boost::optional<
-          boost::variant<std::shared_ptr<selector>, std::string>> &selector =
-          boost::none,
-      const boost::optional<std::string> &tag = boost::none);
-  std::shared_ptr<workplane>
-  faces(const boost::optional<
-            boost::variant<std::shared_ptr<selector>, std::string>> &selector =
-            boost::none,
-        const boost::optional<std::string> &tag = boost::none);
-  std::shared_ptr<workplane>
-  edges(const boost::optional<
-            boost::variant<std::shared_ptr<selector>, std::string>> &selector =
-            boost::none,
-        const boost::optional<std::string> &tag = boost::none);
+  std::shared_ptr<workplane> vertices(const std::string &selector = "",
+                                      const std::string &tag = "");
+  std::shared_ptr<workplane> vertices(const selector_ptr &sel,
+                                      const std::string &tag = "");
 
-  std::shared_ptr<workplane>
-  wires(const boost::optional<
-            boost::variant<std::shared_ptr<selector>, std::string>> &selector =
-            boost::none,
-        const boost::optional<std::string> &tag = boost::none);
+  std::shared_ptr<workplane> faces(const std::string &selector = "",
+                                   const std::string &tag = "");
+  std::shared_ptr<workplane> faces(const selector_ptr &sel,
+                                   const std::string &tag = "");
 
-  std::shared_ptr<workplane>
-  solids(const boost::optional<
-             boost::variant<std::shared_ptr<selector>, std::string>> &selector =
-             boost::none,
-         const boost::optional<std::string> &tag = boost::none);
+  std::shared_ptr<workplane> edges(const std::string &selector = "",
+                                   const std::string &tag = "");
+  std::shared_ptr<workplane> edges(const selector_ptr &sel,
+                                   const std::string &tag = "");
 
-  std::shared_ptr<workplane>
-  shells(const boost::optional<
-             boost::variant<std::shared_ptr<selector>, std::string>> &selector =
-             boost::none,
-         const boost::optional<std::string> &tag = boost::none);
+  std::shared_ptr<workplane> wires(const std::string &selector = "",
+                                   const std::string &tag = "");
+  std::shared_ptr<workplane> wires(const selector_ptr &sel,
+                                   const std::string &tag = "");
 
-  std::shared_ptr<workplane> compounds(
-      const boost::optional<
-          boost::variant<std::shared_ptr<selector>, std::string>> &selector =
-          boost::none,
-      const boost::optional<std::string> &tag = boost::none);
+  std::shared_ptr<workplane> solids(const std::string &selector = "",
+                                    const std::string &tag = "");
+  std::shared_ptr<workplane> solids(const selector_ptr &sel,
+                                    const std::string &tag = "");
+
+  std::shared_ptr<workplane> shells(const std::string &selector = "",
+                                    const std::string &tag = "");
+  std::shared_ptr<workplane> shells(const selector_ptr &sel,
+                                    const std::string &tag = "");
+
+  std::shared_ptr<workplane> compounds(const std::string &selector = "",
+                                       const std::string &tag = "");
+  std::shared_ptr<workplane> compounds(const selector_ptr &sel,
+                                       const std::string &tag = "");
 
   std::shared_ptr<workplane>
   ancestors(TopAbs_ShapeEnum kind,
@@ -140,9 +143,19 @@ public:
   std::shared_ptr<workplane> rotate(const gp_Pnt &axisStartPoint,
                                     const gp_Pnt &axisEndPoint,
                                     double angleDegrees);
-  std::shared_ptr<workplane> mirror(
-      const boost::variant<std::string, gp_Vec, face, workplane> &mirrorPlane,
-      const boost::optional<gp_Pnt> &basePointVector, bool unionResult);
+
+  std::shared_ptr<workplane> mirror(const std::string &planeName,
+                                    const gp_Pnt &basePoint = gp_Pnt(),
+                                    bool unionResult = false);
+  std::shared_ptr<workplane> mirror(const gp_Vec &normal,
+                                    const gp_Pnt &basePoint = gp_Pnt(),
+                                    bool unionResult = false);
+  std::shared_ptr<workplane> mirror(const face &mirrorFace,
+                                    const gp_Pnt &basePoint = gp_Pnt(),
+                                    bool unionResult = false);
+  std::shared_ptr<workplane>
+  mirror(const std::shared_ptr<workplane> &mirrorPlane,
+         const gp_Pnt &basePoint = gp_Pnt(), bool unionResult = false);
 
   std::shared_ptr<workplane> translate(const gp_Vec &vec);
 
@@ -156,9 +169,13 @@ public:
   std::shared_ptr<workplane> transformed(const gp_Vec &rotate,
                                          const gp_Vec &offset);
 
-  std::shared_ptr<workplane>
-  rarray(double xSpacing, double ySpacing, int xCount, int yCount,
-         const boost::variant<bool, std::tuple<bool, bool>> &center);
+  std::shared_ptr<workplane> rarray(double xSpacing, double ySpacing,
+                                    int xCount, int yCount,
+                                    bool centerX = false, bool centerY = false);
+
+  std::shared_ptr<workplane> rarray(double xSpacing, double ySpacing,
+                                    int xCount, int yCount,
+                                    bool centerAll = false);
 
   std::shared_ptr<workplane> polar_array(double radius, double startAngle,
                                          double angle, int count, bool fill,
@@ -171,25 +188,25 @@ public:
 
   std::shared_ptr<workplane> center(double x, double y);
 
-  std::shared_ptr<workplane> lineTo(double x, double y,
-                                    bool forConstruction = false);
+  std::shared_ptr<workplane> line_to(double x, double y,
+                                     bool forConstruction = false);
   std::shared_ptr<workplane> bezier(const std::vector<gp_Pnt> &listOfPoints,
                                     bool forConstruction, bool includeCurrent,
                                     bool makeWire);
   std::shared_ptr<workplane> line(double xDist, double yDist,
                                   bool forConstruction);
-  std::shared_ptr<workplane> vLine(double distance, bool forConstruction);
-  std::shared_ptr<workplane> hLine(double distance, bool forConstruction);
-  std::shared_ptr<workplane> vLineTo(double yCoord, bool forConstruction);
-  std::shared_ptr<workplane> hLineTo(double xCoord, bool forConstruction);
-  std::shared_ptr<workplane> polarLine(double distance, double angle,
-                                       bool forConstruction);
-  std::shared_ptr<workplane> polarLineTo(double distance, double angle,
-                                         bool forConstruction);
+  std::shared_ptr<workplane> vline(double distance, bool forConstruction);
+  std::shared_ptr<workplane> hline(double distance, bool forConstruction);
+  std::shared_ptr<workplane> vline_to(double yCoord, bool forConstruction);
+  std::shared_ptr<workplane> hline_to(double xCoord, bool forConstruction);
+  std::shared_ptr<workplane> polar_line(double distance, double angle,
+                                        bool forConstruction);
+  std::shared_ptr<workplane> polar_line_to(double distance, double angle,
+                                           bool forConstruction);
 
-  std::shared_ptr<workplane> moveTo(double x, double y);
+  std::shared_ptr<workplane> move_to(double x, double y);
   std::shared_ptr<workplane> move(double xDist, double yDist);
-  std::shared_ptr<workplane> slot2D(double length, double diameter,
+  std::shared_ptr<workplane> slot2d(double length, double diameter,
                                     double angle);
   std::shared_ptr<workplane>
   spline(const std::vector<gp_Pnt> &points,
@@ -197,53 +214,63 @@ public:
          const boost::optional<std::vector<double>> &parameters, bool scale,
          boost::optional<double> tol, bool forConstruction, bool includeCurrent,
          bool makeWire);
-  std::shared_ptr<workplane> splineApprox(
+  std::shared_ptr<workplane> spline_approx(
       const std::vector<gp_Pnt> &points, boost::optional<double> tol,
       int minDeg, int maxDeg,
       const boost::optional<std::tuple<double, double, double>> &smoothing,
       bool forConstruction, bool includeCurrent, bool makeWire);
   std::shared_ptr<workplane>
-  parametricCurve(std::function<gp_Pnt(double)> func, int N, double start,
-                  double stop, double tol, int minDeg, int maxDeg,
-                  const std::tuple<double, double, double> &smoothing,
-                  bool makeWire);
+  parametric_curve(std::function<gp_Pnt(double)> func, int N, double start,
+                   double stop, double tol, int minDeg, int maxDeg,
+                   const std::tuple<double, double, double> &smoothing,
+                   bool makeWire);
   std::shared_ptr<workplane>
-  parametricSurface(std::function<gp_Pnt(double, double)> func, int N,
-                    double start, double stop, double tol, int minDeg,
-                    int maxDeg,
-                    const std::tuple<double, double, double> &smoothing);
-  std::shared_ptr<workplane> ellipseArc(double x_radius, double y_radius,
-                                        double angle1, double angle2,
-                                        double rotation_angle, int sense,
-                                        bool forConstruction,
-                                        bool startAtCurrent, bool makeWire);
-  std::shared_ptr<workplane> threePointArc(const gp_Pnt &point1,
-                                           const gp_Pnt &point2,
-                                           bool forConstruction = false);
+  parametric_surface(std::function<gp_Pnt(double, double)> func, int N,
+                     double start, double stop, double tol, int minDeg,
+                     int maxDeg,
+                     const std::tuple<double, double, double> &smoothing);
+  std::shared_ptr<workplane> ellipse_arc(double x_radius, double y_radius,
+                                         double angle1, double angle2,
+                                         double rotation_angle, int sense,
+                                         bool forConstruction,
+                                         bool startAtCurrent, bool makeWire);
+  std::shared_ptr<workplane> three_point_arc(const gp_Pnt &point1,
+                                             const gp_Pnt &point2,
+                                             bool forConstruction = false);
 
-  std::shared_ptr<workplane> sagittaArc(const gp_Pnt &endPoint, double sag,
+  std::shared_ptr<workplane> sagitta_arc(const gp_Pnt &endPoint, double sag,
+                                         bool forConstruction);
+  std::shared_ptr<workplane> radius_arc(const gp_Pnt &endPoint, double radius,
                                         bool forConstruction);
-  std::shared_ptr<workplane> radiusArc(const gp_Pnt &endPoint, double radius,
-                                       bool forConstruction);
-  std::shared_ptr<workplane>
-  tangentArcPoint(const gp_Pnt &endpoint, bool forConstruction, bool relative);
-  std::shared_ptr<workplane> mirrorY();
-  std::shared_ptr<workplane> mirrorX();
-  std::shared_ptr<workplane> consolidateWires();
+  std::shared_ptr<workplane> tangent_arc_point(const gp_Pnt &endpoint,
+                                               bool forConstruction,
+                                               bool relative);
+  std::shared_ptr<workplane> mirrory();
+  std::shared_ptr<workplane> mirrorx();
+  std::shared_ptr<workplane> consolidate_wires();
 
   std::shared_ptr<workplane>
   each(std::function<shape_object(shape_object &)> callback,
        bool useLocalCoordinates = false, bool combine = true,
        bool clean = true);
-  std::shared_ptr<workplane>
-  eachpoint(const boost::variant<shape, workplane,
-                                 std::function<shape(topo_location)>> &arg,
-            bool useLocalCoordinates = false, bool combine = false,
-            bool clean = true);
-  std::shared_ptr<workplane>
-  rect(double xLen, double yLen,
-       const boost::variant<bool, std::tuple<bool, bool>> &centered = {},
-       bool forConstruction = false);
+
+  std::shared_ptr<workplane> eachpoint(const shape &shapeObj,
+                                       bool useLocalCoordinates = false,
+                                       bool combine = true, bool clean = true);
+  std::shared_ptr<workplane> eachpoint(std::function<shape(topo_location)> func,
+                                       bool useLocalCoordinates = false,
+                                       bool combine = true, bool clean = true);
+  std::shared_ptr<workplane> eachpoint(const std::shared_ptr<workplane> &wp,
+                                       bool useLocalCoordinates = false,
+                                       bool combine = true, bool clean = true);
+
+  std::shared_ptr<workplane> rect(double xLen, double yLen,
+                                  bool centerX = false, bool centerY = false,
+                                  bool forConstruction = false);
+  std::shared_ptr<workplane> rect(double xLen, double yLen,
+                                  bool centerAll = false,
+                                  bool forConstruction = false);
+
   std::shared_ptr<workplane> circle(double radius,
                                     bool forConstruction = false);
   std::shared_ptr<workplane> ellipse(double x_radius, double y_radius,
@@ -258,89 +285,179 @@ public:
 
   std::shared_ptr<workplane> wire(bool forConstruction = false);
 
-  double largestDimension();
+  double largest_dimension();
 
-  std::shared_ptr<workplane> cutEach(std::function<shape(topo_location)> fcn,
-                                     bool useLocalCoords, bool clean);
-  std::shared_ptr<workplane> cboreHole(double diameter, double cboreDiameter,
-                                       double cboreDepth,
-                                       boost::optional<double> depth,
-                                       bool clean);
-  std::shared_ptr<workplane> cskHole(double diameter, double cskDiameter,
-                                     double cskAngle,
-                                     boost::optional<double> depth, bool clean);
+  std::shared_ptr<workplane> cut_each(std::function<shape(topo_location)> fcn,
+                                      bool useLocalCoords, bool clean);
+  std::shared_ptr<workplane> cbore_hole(double diameter, double cboreDiameter,
+                                        double cboreDepth,
+                                        boost::optional<double> depth,
+                                        bool clean);
+  std::shared_ptr<workplane> csk_hole(double diameter, double cskDiameter,
+                                      double cskAngle,
+                                      boost::optional<double> depth,
+                                      bool clean);
   std::shared_ptr<workplane> hole(double diameter,
                                   boost::optional<double> depth, bool clean);
-  std::shared_ptr<workplane> twistExtrude(double distance, double angleDegrees,
-                                          bool combine, bool clean);
+  std::shared_ptr<workplane> twist_extrude(double distance, double angleDegrees,
+                                           bool combine, bool clean);
+
+  // 公共接口 - extrude
   std::shared_ptr<workplane>
-  extrude(boost::variant<double, std::string, face> &until,
-          const boost::variant<bool, std::string> &combine, bool clean,
-          bool both, boost::optional<double> taper);
+  extrude(double distance,
+          const boost::variant<bool, std::string> &combine = true,
+          bool clean = true, bool both = false,
+          boost::optional<double> taper = boost::none);
+  std::shared_ptr<workplane>
+  extrude(const std::string &untilFace,
+          const boost::variant<bool, std::string> &combine = true,
+          bool clean = true, bool both = false,
+          boost::optional<double> taper = boost::none);
+  std::shared_ptr<workplane>
+  extrude(const face &untilFace,
+          const boost::variant<bool, std::string> &combine = true,
+          bool clean = true, bool both = false,
+          boost::optional<double> taper = boost::none);
+
+  // 公共接口 - sweep
+  std::shared_ptr<workplane>
+  sweep(const std::shared_ptr<workplane> &path, bool multisection = false,
+        bool makeSolid = true, bool isFrenet = false, bool combine = true,
+        bool clean = true,
+        const transition_mode &transition = transition_mode::RIGHT,
+        const boost::optional<gp_Vec> &normal = boost::none,
+        const boost::optional<workplane> &auxSpine = boost::none);
+  std::shared_ptr<workplane>
+  sweep(const topo::wire &path, bool multisection = false,
+        bool makeSolid = true, bool isFrenet = false, bool combine = true,
+        bool clean = true,
+        const transition_mode &transition = transition_mode::RIGHT,
+        const boost::optional<gp_Vec> &normal = boost::none,
+        const boost::optional<workplane> &auxSpine = boost::none);
+  std::shared_ptr<workplane>
+  sweep(const edge &path, bool multisection = false, bool makeSolid = true,
+        bool isFrenet = false, bool combine = true, bool clean = true,
+        const transition_mode &transition = transition_mode::RIGHT,
+        const boost::optional<gp_Vec> &normal = boost::none,
+        const boost::optional<workplane> &auxSpine = boost::none);
+
+  // 公共接口 - union_
+  std::shared_ptr<workplane> union_(const std::shared_ptr<workplane> &other,
+                                    bool clean = true, bool glue = false,
+                                    double tol = 1e-6);
+  std::shared_ptr<workplane> union_(const solid &other, bool clean = true,
+                                    bool glue = false, double tol = 1e-6);
+  std::shared_ptr<workplane> union_(const compound &other, bool clean = true,
+                                    bool glue = false, double tol = 1e-6);
+
+  // 公共接口 - cut
+  std::shared_ptr<workplane> cut(const std::shared_ptr<workplane> &other,
+                                 bool clean = true, double tol = 1e-6);
+  std::shared_ptr<workplane> cut(const solid &other, bool clean = true,
+                                 double tol = 1e-6);
+  std::shared_ptr<workplane> cut(const compound &other, bool clean = true,
+                                 double tol = 1e-6);
+
+  // 公共接口 - intersect
+  std::shared_ptr<workplane> intersect(const std::shared_ptr<workplane> &other,
+                                       bool clean = true, double tol = 1e-6);
+  std::shared_ptr<workplane> intersect(const solid &other, bool clean = true,
+                                       double tol = 1e-6);
+  std::shared_ptr<workplane> intersect(const compound &other, bool clean = true,
+                                       double tol = 1e-6);
+
+  // 公共接口 - cut_blind
+  std::shared_ptr<workplane>
+  cut_blind(double distance, bool clean = true, bool both = false,
+            const boost::optional<double> &taper = boost::none);
+  std::shared_ptr<workplane>
+  cut_blind(const std::string &untilFace, bool clean = true, bool both = false,
+            const boost::optional<double> &taper = boost::none);
+  std::shared_ptr<workplane>
+  cut_blind(const face &untilFace, bool clean = true, bool both = false,
+            const boost::optional<double> &taper = boost::none);
+
   std::shared_ptr<workplane> revolve(double angleDegrees,
                                      const boost::optional<gp_Pnt> &axisStart,
                                      const boost::optional<gp_Pnt> &axisEnd,
                                      bool combine, bool clean);
+
+  // 公共接口 - interp_plate
   std::shared_ptr<workplane>
-  sweep(boost::variant<std::shared_ptr<workplane>, topo::wire, edge> path,
-        bool multisection, bool makeSolid, bool isFrenet, bool combine,
-        bool clean, const transition_mode &transition,
-        const boost::optional<gp_Vec> &normal,
-        const boost::optional<workplane> &auxSpine);
+  interp_plate(const std::vector<gp_Pnt> &points, double thickness,
+               bool combine = true, bool clean = true, int degree = 3,
+               int nbPtsOnCur = 15, int nbIter = 2, bool anisotropy = false,
+               double tol2d = 1e-6, double tol3d = 1e-4, double tolAng = 1e-2,
+               double tolCurv = 1e-1, int maxDeg = 8, int maxSegments = 9);
+  std::shared_ptr<workplane>
+  interp_plate(const std::vector<edge> &edges,
+               const std::vector<gp_Pnt> &points, double thickness,
+               bool combine = true, bool clean = true, int degree = 3,
+               int nbPtsOnCur = 15, int nbIter = 2, bool anisotropy = false,
+               double tol2d = 1e-6, double tol3d = 1e-4, double tolAng = 1e-2,
+               double tolCurv = 1e-1, int maxDeg = 8, int maxSegments = 9);
+  std::shared_ptr<workplane>
+  interp_plate(const std::shared_ptr<workplane> &wp,
+               const std::vector<gp_Pnt> &points, double thickness,
+               bool combine = true, bool clean = true, int degree = 3,
+               int nbPtsOnCur = 15, int nbIter = 2, bool anisotropy = false,
+               double tol2d = 1e-6, double tol3d = 1e-4, double tolAng = 1e-2,
+               double tolCurv = 1e-1, int maxDeg = 8, int maxSegments = 9);
+
+  // 公共接口 - box
+  std::shared_ptr<workplane> box(double length, double width, double height,
+                                 bool centerX = true, bool centerY = true,
+                                 bool centerZ = true, bool combine = true,
+                                 bool clean = true);
+  std::shared_ptr<workplane> box(double length, double width, double height,
+                                 bool centerAll = true, bool combine = true,
+                                 bool clean = true);
+
+  // 公共接口 - sphere
+  std::shared_ptr<workplane> sphere(double radius,
+                                    const gp_Vec &direct = gp_Vec(0, 0, 1),
+                                    double angle1 = -90, double angle2 = 90,
+                                    double angle3 = 360, bool centerX = true,
+                                    bool centerY = true, bool centerZ = true,
+                                    bool combine = true, bool clean = true);
+  std::shared_ptr<workplane> sphere(double radius,
+                                    const gp_Vec &direct = gp_Vec(0, 0, 1),
+                                    double angle1 = -90, double angle2 = 90,
+                                    double angle3 = 360, bool centerAll = true,
+                                    bool combine = true, bool clean = true);
+
+  // 公共接口 - cylinder
+  std::shared_ptr<workplane> cylinder(double height, double radius,
+                                      const gp_Vec &direct = gp_Vec(0, 0, 1),
+                                      double angle = 360, bool centerX = true,
+                                      bool centerY = true, bool centerZ = true,
+                                      bool combine = true, bool clean = true);
+  std::shared_ptr<workplane> cylinder(double height, double radius,
+                                      const gp_Vec &direct = gp_Vec(0, 0, 1),
+                                      double angle = 360, bool centerAll = true,
+                                      bool combine = true, bool clean = true);
+
+  // 公共接口 - wedge
+  std::shared_ptr<workplane> wedge(double dx, double dy, double dz, double xmin,
+                                   double zmin, double xmax, double zmax,
+                                   const gp_Pnt &pnt = gp_Pnt(0, 0, 0),
+                                   const gp_Vec &dir = gp_Vec(0, 0, 1),
+                                   bool centerX = true, bool centerY = true,
+                                   bool centerZ = true, bool combine = true,
+                                   bool clean = true);
+  std::shared_ptr<workplane> wedge(double dx, double dy, double dz, double xmin,
+                                   double zmin, double xmax, double zmax,
+                                   const gp_Pnt &pnt = gp_Pnt(0, 0, 0),
+                                   const gp_Vec &dir = gp_Vec(0, 0, 1),
+                                   bool centerAll = true, bool combine = true,
+                                   bool clean = true);
+
   std::shared_ptr<workplane> combine(bool clean, bool glue,
                                      const boost::optional<double> &tol);
-  std::shared_ptr<workplane>
-  union_(boost::variant<std::shared_ptr<workplane>, solid, compound> toUnion,
-         bool clean = true, bool glue = false,
-         const boost::optional<double> &tol = boost::none);
 
-  std::shared_ptr<workplane>
-  cut(boost::variant<std::shared_ptr<workplane>, solid, compound> toCut,
-      bool clean, const boost::optional<double> &tol);
-
-  std::shared_ptr<workplane> intersect(
-      boost::variant<std::shared_ptr<workplane>, solid, compound> toIntersect,
-      bool clean, const boost::optional<double> &tol);
-
-  std::shared_ptr<workplane>
-  cutBlind(boost::variant<double, std::string, face> &until, bool clean,
-           bool both, const boost::optional<double> &taper);
-
-  std::shared_ptr<workplane> cutThruAll(bool clean, double taper);
+  std::shared_ptr<workplane> cut_thru_all(bool clean, double taper);
 
   std::shared_ptr<workplane> loft(bool ruled, bool combine, bool clean);
-
-  std::shared_ptr<workplane>
-  interpPlate(boost::variant<std::vector<gp_Pnt>, std::vector<edge>, workplane>
-                  &surf_edges,
-              const std::vector<gp_Pnt> &surf_pts, double thickness,
-              bool combine, bool clean, int degree, int nbPtsOnCur, int nbIter,
-              bool anisotropy, double tol2d, double tol3d, double tolAng,
-              double tolCurv, int maxDeg, int maxSegments);
-
-  std::shared_ptr<workplane>
-  box(double length, double width, double height,
-      const boost::variant<bool, std::tuple<bool, bool, bool>> &centered = true,
-      bool combine = true, bool clean = true);
-
-  std::shared_ptr<workplane> sphere(
-      double radius, const gp_Vec &direct = gp_Vec(0, 0, 1),
-      double angle1 = -90, double angle2 = 90, double angle3 = 360,
-      const boost::variant<bool, std::tuple<bool, bool, bool>> &centered = true,
-      bool combine = true, bool clean = true);
-
-  std::shared_ptr<workplane> cylinder(
-      double height, double radius, const gp_Vec &direct = gp_Vec(0, 0, 1),
-      double angle = 360,
-      const boost::variant<bool, std::tuple<bool, bool, bool>> &centered = true,
-      bool combine = true, bool clean = true);
-
-  std::shared_ptr<workplane> wedge(
-      double dx, double dy, double dz, double xmin, double zmin, double xmax,
-      double zmax, const gp_Pnt &pnt = gp_Pnt(0, 0, 0),
-      const gp_Vec &dir = gp_Vec(0, 0, 1),
-      const boost::variant<bool, std::tuple<bool, bool, bool>> &centered = true,
-      bool combine = true, bool clean = true);
 
   std::shared_ptr<workplane>
   text(const std::string &txt, double fontsize, double distance,
@@ -353,40 +470,18 @@ public:
 
   std::shared_ptr<workplane> section(double height = 0.0);
 
-  workplane &toPending();
+  workplane &to_pending();
 
-  std::shared_ptr<workplane> offset2D(double d, const std::string &kind = "arc",
+  std::shared_ptr<workplane> offset2d(double d, const std::string &kind = "arc",
                                       bool forConstruction = false);
 
   std::shared_ptr<topo::sketch> sketch();
 
   std::shared_ptr<workplane>
-  placeSketch(const std::vector<topo::sketch> &sketches);
+  place_sketch(const std::vector<topo::sketch> &sketches);
 
   std::shared_ptr<workplane> operator[](
       const boost::variant<int, std::vector<int>, std::pair<int, int>> &item);
-
-  // Iterator support
-  class iterator {
-  public:
-    iterator(std::vector<shape_object>::iterator it) : _it(it) {}
-
-    shape &operator*();
-
-    iterator &operator++() {
-      ++_it;
-      return *this;
-    }
-
-    bool operator!=(const iterator &other) const { return _it != other._it; }
-
-  private:
-    std::vector<shape_object>::iterator _it;
-  };
-
-  iterator begin() { return iterator(_objects.begin()); }
-
-  iterator end() { return iterator(_objects.end()); }
 
   std::shared_ptr<workplane>
   filter(const std::function<bool(const shape_object &)> &predicate);
@@ -402,13 +497,16 @@ public:
   sort(const std::function<bool(const shape_object &, const shape_object &)>
            &comparator);
 
-  workplane &
-  invoke(const boost::variant<std::function<workplane &(workplane &)>,
-                              std::function<void(workplane &)>,
-                              std::function<void()>> &func);
+  std::shared_ptr<workplane>
+  invoke(const boost::variant<
+         std::function<std::shared_ptr<workplane>(workplane &)>,
+         std::function<void(workplane &)>, std::function<void()>> &func);
+
+  workplane &export_to(const std::string &path);
 
   // Accessors
   std::vector<std::shared_ptr<workplane>> all();
+  std::vector<shape> shapes() const;
   std::vector<shape_object> vals() const;
   shape_object val() const;
   size_t size() const;
@@ -417,7 +515,7 @@ protected:
   // Properties
   std::vector<shape_object> _objects;
   std::shared_ptr<context> _ctx;
-  std::shared_ptr<workplane> _parent = nullptr;
+  std::weak_ptr<workplane> _parent;
   std::shared_ptr<topo_plane> _plane;
   boost::optional<std::string> _tag;
 
@@ -426,9 +524,124 @@ private:
 
   static constexpr double TOL = 1e-6;
 
+  std::shared_ptr<workplane>
+  _extrude(boost::variant<double, std::string, face> until,
+           const boost::variant<bool, std::string> &combine, bool clean,
+           bool both, boost::optional<double> taper);
+
+  std::shared_ptr<workplane>
+  _sweep(boost::variant<std::shared_ptr<workplane>, topo::wire, edge> path,
+         bool multisection, bool makeSolid, bool isFrenet, bool combine,
+         bool clean, const transition_mode &transition,
+         const boost::optional<gp_Vec> &normal,
+         const boost::optional<workplane> &auxSpine);
+
+  std::shared_ptr<workplane>
+  _union_(boost::variant<std::shared_ptr<workplane>, solid, compound> toUnion,
+          bool clean = true, bool glue = false,
+          const boost::optional<double> &tol = boost::none);
+
+  std::shared_ptr<workplane>
+  _cut(boost::variant<std::shared_ptr<workplane>, solid, compound> toCut,
+       bool clean, const boost::optional<double> &tol);
+
+  std::shared_ptr<workplane> _intersect(
+      boost::variant<std::shared_ptr<workplane>, solid, compound> toIntersect,
+      bool clean, const boost::optional<double> &tol);
+
+  std::shared_ptr<workplane>
+  _cut_blind(boost::variant<double, std::string, face> until, bool clean,
+             bool both, const boost::optional<double> &taper);
+
+  std::shared_ptr<workplane>
+  _interp_plate(boost::variant<std::vector<gp_Pnt>, std::vector<edge>,
+                               std::shared_ptr<workplane>>
+                    surf_edges,
+                const std::vector<gp_Pnt> &surf_pts, double thickness,
+                bool combine, bool clean, int degree, int nbPtsOnCur,
+                int nbIter, bool anisotropy, double tol2d, double tol3d,
+                double tolAng, double tolCurv, int maxDeg, int maxSegments);
+
+  std::shared_ptr<workplane> _box(
+      double length, double width, double height,
+      const boost::variant<bool, std::tuple<bool, bool, bool>> &centered = true,
+      bool combine = true, bool clean = true);
+
+  std::shared_ptr<workplane> _sphere(
+      double radius, const gp_Vec &direct = gp_Vec(0, 0, 1),
+      double angle1 = -90, double angle2 = 90, double angle3 = 360,
+      const boost::variant<bool, std::tuple<bool, bool, bool>> &centered = true,
+      bool combine = true, bool clean = true);
+
+  std::shared_ptr<workplane> _cylinder(
+      double height, double radius, const gp_Vec &direct = gp_Vec(0, 0, 1),
+      double angle = 360,
+      const boost::variant<bool, std::tuple<bool, bool, bool>> &centered = true,
+      bool combine = true, bool clean = true);
+
+  std::shared_ptr<workplane> _wedge(
+      double dx, double dy, double dz, double xmin, double zmin, double xmax,
+      double zmax, const gp_Pnt &pnt = gp_Pnt(0, 0, 0),
+      const gp_Vec &dir = gp_Vec(0, 0, 1),
+      const boost::variant<bool, std::tuple<bool, bool, bool>> &centered = true,
+      bool combine = true, bool clean = true);
+
+  std::shared_ptr<workplane>
+  _rect(double xLen, double yLen,
+        const boost::variant<bool, std::tuple<bool, bool>> &centered = {},
+        bool forConstruction = false);
+
+  std::shared_ptr<workplane>
+  _eachpoint(const boost::variant<shape, std::shared_ptr<workplane>,
+                                  std::function<shape(topo_location)>> &arg,
+             bool useLocalCoordinates = false, bool combine = false,
+             bool clean = true);
+
+  std::shared_ptr<workplane>
+  _mirror(const boost::variant<std::string, gp_Vec, face,
+                               std::shared_ptr<workplane>> &mirrorPlane,
+          const boost::optional<gp_Pnt> &basePointVector, bool unionResult);
+
+  std::shared_ptr<workplane>
+  _rarray(double xSpacing, double ySpacing, int xCount, int yCount,
+          const boost::variant<bool, std::tuple<bool, bool>> &center);
+
+  std::shared_ptr<workplane>
+  _vertices(const boost::optional<boost::variant<selector_ptr, std::string>>
+                &selector = boost::none,
+            const boost::optional<std::string> &tag = boost::none);
+  std::shared_ptr<workplane>
+  _faces(const boost::optional<boost::variant<selector_ptr, std::string>>
+             &selector = boost::none,
+         const boost::optional<std::string> &tag = boost::none);
+  std::shared_ptr<workplane>
+  _edges(const boost::optional<boost::variant<selector_ptr, std::string>>
+             &selector = boost::none,
+         const boost::optional<std::string> &tag = boost::none);
+
+  std::shared_ptr<workplane>
+  _wires(const boost::optional<boost::variant<selector_ptr, std::string>>
+             &selector = boost::none,
+         const boost::optional<std::string> &tag = boost::none);
+
+  std::shared_ptr<workplane>
+  _solids(const boost::optional<boost::variant<selector_ptr, std::string>>
+              &selector = boost::none,
+          const boost::optional<std::string> &tag = boost::none);
+
+  std::shared_ptr<workplane>
+  _shells(const boost::optional<boost::variant<selector_ptr, std::string>>
+              &selector = boost::none,
+          const boost::optional<std::string> &tag = boost::none);
+
+  std::shared_ptr<workplane>
+  _compounds(const boost::optional<boost::variant<selector_ptr, std::string>>
+                 &selector = boost::none,
+             const boost::optional<std::string> &tag = boost::none);
+
   gp_Vec plane_string_to_normal(const std::string &planeStr);
-  shape_object find_type(const std::vector<std::string> &types,
-                         bool searchStack, bool searchParents);
+  shape find_type(const std::vector<std::string> &types, bool searchStack,
+                  bool searchParents);
   std::shared_ptr<workplane> select_objects(
       const std::string &objType,
       const boost::optional<
@@ -442,41 +655,38 @@ private:
   edge find_from_edge(bool useLocalCoords = false);
 
   // Internal helper methods
-  std::vector<face> getFaces();
-  std::vector<shape> getFacesVertices();
-  bool areFacesCoplanar(const std::vector<face> &faces) const;
+  std::vector<face> get_faces();
+  std::vector<shape> get_faces_vertices();
+  bool are_faces_coplanar(const std::vector<face> &faces) const;
   shape
   _extrude(const boost::optional<double> &distance, bool both = false,
            const boost::optional<double> &taper = boost::none,
            boost::optional<boost::variant<int, face>> upToFace = boost::none,
            bool additive = true);
   std::vector<face>
-  _getIntersectedFaces(const face &face, const gp_Vec &eDir,
-                       const flywave::topo::intersection_direction &direction,
-                       bool both);
+  _get_intersected_faces(const face &face, const gp_Vec &eDir,
+                         const flywave::topo::intersection_direction &direction,
+                         bool both);
   shape _revolve(double angleDegrees, const gp_Pnt &axisStart,
                  const gp_Pnt &axisEnd);
-  shape _sweep(boost::variant<std::shared_ptr<workplane>, topo::wire, topo::edge> &path,
-               bool multisection, bool makeSolid, bool isFrenet,
-               const transition_mode &transition,
-               const boost::optional<gp_Vec> &normal,
-               const boost::optional<workplane> &auxSpine);
-  gp_Vec computeXDir(const gp_Vec &normal) const;
-  std::vector<shape> collectProperty(const std::string &propName);
+  shape _sweep(
+      boost::variant<std::shared_ptr<workplane>, topo::wire, topo::edge> &path,
+      bool multisection, bool makeSolid, bool isFrenet,
+      const transition_mode &transition, const boost::optional<gp_Vec> &normal,
+      const boost::optional<workplane> &auxSpine);
+  gp_Vec compute_x_dir(const gp_Vec &normal) const;
+  std::vector<shape> collect_property(const std::string &propName);
   std::shared_ptr<workplane>
-  combineWithBase(const boost::variant<shape, std::vector<shape>> &obj,
-                  const boost::variant<bool, std::string> &mode = true,
-                  bool clean = false);
-  shape fuseWithBase(const shape &obj);
-  shape cutFromBase(const shape &obj);
-  shape &findType(const std::vector<std::string> &types, bool searchStack,
-                  bool searchParents);
-  solid &findSolid(bool searchStack = true, bool searchParents = true);
-  std::shared_ptr<workplane> getTagged(const std::string &name);
-  workplane &mergeTags(const workplane &other);
-  void addPendingEdge(const edge &e);
-  void addPendingWire(const topo::wire &w);
-  std::vector<topo::wire> _consolidateWires();
+  combine_with_base(const boost::variant<shape, std::vector<shape>> &obj,
+                    const boost::variant<bool, std::string> &mode = true,
+                    bool clean = false);
+  shape fuse_with_base(const shape &obj);
+  shape cut_from_base(const shape &obj);
+  std::shared_ptr<workplane> get_tagged(const std::string &name);
+  workplane &merge_tags(const workplane &other);
+  void add_pending_edge(const edge &e);
+  void add_pending_wire(const topo::wire &w);
+  std::vector<topo::wire> _consolidate_wires();
   std::vector<topo_location> locs();
 };
 
