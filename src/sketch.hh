@@ -31,6 +31,7 @@ class wire;
 class compound;
 class vertex;
 class topo_location;
+class workplane;
 
 // Sketch value types
 using sketch_val = boost::variant<shape, topo_location>;
@@ -44,7 +45,7 @@ class sketch {
 public:
   // Constructors
   sketch();
-  sketch(std::shared_ptr<sketch> inPlane,
+  sketch(std::shared_ptr<workplane> inPlane,
          const std::vector<topo_location> &locs = {topo_location()},
          boost::optional<compound> obj = boost::none);
   sketch(const std::vector<topo_location> &locs,
@@ -175,7 +176,7 @@ public:
   std::shared_ptr<sketch> copy() const;
   std::shared_ptr<sketch> moved(const std::vector<topo_location> &locs) const;
   std::shared_ptr<sketch> located(const topo_location &loc) const;
-  std::shared_ptr<sketch> finalize();
+  std::shared_ptr<workplane> finalize();
 
   sketch_val val() const;
   std::vector<sketch_val> vals() const;
@@ -253,7 +254,7 @@ private:
         param;
   };
 
-  std::shared_ptr<sketch> parent_;
+  std::shared_ptr<workplane> parent_;
   std::vector<topo_location> locs_;
   boost::optional<compound> faces_;
   std::vector<topo::edge> edges_;

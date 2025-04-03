@@ -222,6 +222,10 @@ public:
   inline bool operator==(const shape &s) const { return this->equals(s); }
   inline bool operator!=(const shape &s) const { return !(*this == s); }
 
+  bool operator<(const shape &other) const {
+    return this->hash_code() < other.hash_code();
+  }
+
   shape(TopoDS_Shape shp);
   shape(const shape &s, TopoDS_Shape shp);
 

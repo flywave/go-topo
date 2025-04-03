@@ -668,7 +668,7 @@ std::shared_ptr<workplane> workplane::mirror(
     const boost::optional<gp_Pnt> &basePointVector, bool unionResult) {
   gp_Vec mp;
   gp_Pnt bp;
-  boost::optional<face> mirrorFace;
+  boost::optional<topo::face> mirrorFace;
 
   // Handle mirrorPlane parameter
   if (auto wp = boost::get<workplane>(&mirrorPlane)) {
@@ -676,7 +676,7 @@ std::shared_ptr<workplane> workplane::mirror(
     if (auto f = boost::get<shape>(&val)) {
       if (f->shape_type() == "Face") {
         mp = f->cast<topo::face>()->normal_at();
-        mirrorFace = *f;
+        mirrorFace = *f->cast<topo::face>();
       }
     } else {
       throw std::runtime_error("Face required for mirror plane");
@@ -1032,8 +1032,8 @@ workplane::push_points(const std::vector<topo_vector> &pntList) {
 }
 
 std::shared_ptr<workplane> workplane::center(double x, double y) {
-  gp_Pnt new_origin = _plane->toWorldCoords(gp_Pnt(x, y, 0));
-  auto n = newObject({new_origin});
+  topo_vector new_origin = _plane->toWorldCoords(gp_Pnt(x, y, 0));
+  auto n = newObject({shape_object(new_origin)});
   n->_plane->setOrigin2d(x, y);
   return n;
 }

@@ -11,7 +11,7 @@ class selector;
 
 using selector_ptr = std::shared_ptr<selector>;
 
-class selector {
+class selector : public std::enable_shared_from_this<selector> {
 public:
   virtual ~selector() = default;
   virtual std::vector<shape> filter(const std::vector<shape> &shapes) const = 0;
@@ -177,7 +177,7 @@ class type_selector : public selector {
   std::string type_;
 
 public:
-  explicit type_selector(const std::string &type) : type_(type) {
+  type_selector(const std::string &type) : type_(type) {
     std::transform(type_.begin(), type_.end(), type_.begin(), ::toupper);
   }
 

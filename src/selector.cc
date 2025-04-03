@@ -1,10 +1,24 @@
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#pragma clang diagnostic ignored "-Wdocumentation"
+
 #include "selector.hh"
+
 #include <boost/fusion/adapted/std_tuple.hpp>
+#include <boost/phoenix/object/construct.hpp> // for phx::construct
+#include <boost/phoenix/object/new.hpp>       // for phx::new_
 #include <boost/spirit/include/phoenix.hpp>
+#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_fusion.hpp>
+#include <boost/spirit/include/phoenix_object.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
+#include <boost/spirit/include/phoenix_stl.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/variant.hpp>
+
 #include <functional>
 #include <map>
+#include <memory> // for std::shared_ptr
 #include <string>
 #include <vector>
 
@@ -20,22 +34,23 @@ namespace topo {
 
 // 实现基础选择器的运算符重载
 selector_ptr selector::operator&&(const selector_ptr &other) const {
-  return std::make_shared<and_selector>(std::make_shared<selector>(*this),
-                                        other);
+  return std::make_shared<and_selector>(
+      std::const_pointer_cast<selector>(this->shared_from_this()), other);
 }
 
 selector_ptr selector::operator||(const selector_ptr &other) const {
-  return std::make_shared<or_selector>(std::make_shared<selector>(*this),
-                                       other);
+  return std::make_shared<or_selector>(
+      std::const_pointer_cast<selector>(this->shared_from_this()), other);
 }
 
 selector_ptr selector::operator-(const selector_ptr &other) const {
-  return std::make_shared<subtract_selector>(std::make_shared<selector>(*this),
-                                             other);
+  return std::make_shared<subtract_selector>(
+      std::const_pointer_cast<selector>(this->shared_from_this()), other);
 }
 
 selector_ptr selector::operator!() const {
-  return std::make_shared<not_selector>(std::make_shared<selector>(*this));
+  return std::make_shared<not_selector>(
+      std::const_pointer_cast<selector>(this->shared_from_this()));
 }
 
 // nearest_to_point_selector 实现
@@ -237,8 +252,6 @@ or_selector::filter_results(const std::vector<shape> &left,
                             const std::vector<shape> &right) const {
   std::vector<shape> result = left;
   result.insert(result.end(), right.begin(), right.end());
-  // 去重
-  std::sort(result.begin(), result.end());
   result.erase(std::unique(result.begin(), result.end()), result.end());
   return result;
 }
@@ -261,196 +274,208 @@ not_selector::filter(const std::vector<shape> &objects) const {
   return result;
 }
 
-// 基础解析器类型
 template <typename Iterator>
 struct selector_grammar
     : qi::grammar<Iterator, selector_ptr(), qi::space_type> {
-  struct parse_result {
-    std::string type;
-    std::string op;
-    boost::variant<std::vector<double>, std::string> dir;
-    boost::optional<int> index;
-  };
+  typedef selector_ptr (selector_grammar::*dir_sel_func)(
+      const std::string &,
+      const boost::variant<std::vector<double>, std::string> &,
+      const boost::optional<int> &);
+
+  typedef selector_ptr (selector_grammar::*other_sel_func)(
+      const std::string &,
+      const boost::variant<std::vector<double>, std::string> &);
 
   selector_grammar() : selector_grammar::base_type(expression) {
     using qi::_1;
+    using qi::_2;
+    using qi::_3;
     using qi::_val;
     using qi::char_;
     using qi::double_;
     using qi::int_;
     using qi::lexeme;
     using qi::lit;
+    using qi::no_case;
+    namespace phx = boost::phoenix;
 
-    // 基本元素
-    identifier = lexeme[(char_("a-zA-Z") >> *char_("a-zA-Z0-9"))];
+    // 1. 定义基本元素
+    identifier = lexeme[(char_("a-zA-Z") >> *char_("a-zA-Z0-9_"))];
     vector = '(' >> double_ >> ',' >> double_ >> ',' >> double_ >> ')';
-
-    // 方向定义
-    simple_dir = qi::no_case[lit("x") | "y" | "z" | "xy" | "xz" | "yz"];
+    simple_dir = no_case[lit("x") | "y" | "z" | "xy" | "xz" | "yz"];
     direction = simple_dir | vector;
-
-    // 类型定义
-    cqtype =
-        qi::no_case[lit("plane") | "cylinder" | "cone" | "sphere" | "torus"];
-
-    // 操作符
-    type_op = '%';
-    dir_op = '>' | '<';
-    center_nth_op = ">>" | "<<";
-    other_op = '|' | '#' | '+' | '-';
-
-    // 索引
+    cqtype = no_case[lit("plane") | "cylinder" | "cone" | "sphere" | "torus" |
+                     "line" | "circle" | "ellipse" | "hyperbola" | "parabola"];
     index = '[' >> -int_ >> ']';
+    named_view =
+        no_case[lit("front") | "back" | "left" | "right" | "top" | "bottom"];
 
-    // 命名视图
-    named_view = qi::no_case[lit("front") | "back" | "left" | "right" | "top" |
-                             "bottom"];
+    // 2. 定义操作符 - 使用简单匹配
+    type_op = lexeme[lit('%')];
+    dir_op = lexeme[lit('>')] | lexeme[lit('<')];
+    center_nth_op = lexeme[lit(">>")] | lexeme[lit("<<")];
+    other_op = lexeme[lit('|')] | lexeme[lit('#')] | lexeme[lit('+')] |
+               lexeme[lit('-')];
 
-    // 原子选择器
-    only_dir = direction[_val = phx::construct<parse_result>(
-                             phx::val("only_dir"), "", _1, boost::none)];
-    type_sel =
-        (type_op >> cqtype)[_val = phx::construct<parse_result>(
-                                phx::val("type_op"), "", _1, boost::none)];
+    // 3. 定义原子选择器规则
+    only_dir = direction[_val = phx::bind(
+                             &selector_grammar::create_dir_selector, this, _1)];
+    type_sel = (type_op >>
+                cqtype)[_val = phx::bind(
+                            &selector_grammar::create_type_selector, this, _2)];
+
     dir_sel =
-        (dir_op >> direction >> -index)[_val = phx::construct<parse_result>(
-                                            phx::val("dir_op"), _1, _2, _3)];
-    center_sel = (center_nth_op >> direction >>
-                  -index)[_val = phx::construct<parse_result>(
-                              phx::val("center_nth_op"), _1, _2, _3)];
-    other_sel =
-        (other_op >> direction)[_val = phx::construct<parse_result>(
-                                    phx::val("other_op"), _1, _2, boost::none)];
-    named_sel = named_view[_val = phx::construct<parse_result>(
-                               phx::val("named_view"), "", _1, boost::none)];
+        (dir_op >> direction >>
+         -index)[_val = phx::bind(static_cast<dir_sel_func>(
+                                      &selector_grammar::build_dir_selector),
+                                  this, _1, _2, _3)];
 
-    atom = only_dir | type_sel | dir_sel | center_sel | other_sel | named_sel;
+    other_sel = (other_op >>
+                 direction)[_val = phx::bind(
+                                static_cast<other_sel_func>(
+                                    &selector_grammar::build_other_selector),
+                                this, _1, _2)];
 
-    // 表达式语法
+    named_sel =
+        named_view[_val = phx::bind(&selector_grammar::build_named_selector,
+                                    this, _1)];
+
+    // 4. 定义组合规则
+    atom = only_dir | type_sel | dir_sel | other_sel | named_sel;
+
     factor = atom[_val = _1] | '(' >> expression[_val = _1] >> ')';
-    term = factor[_val = _1] >>
-           *((lit("and") >> factor)[_val = phx::new_<and_selector>(_val, _1)] |
-             (lit("or") >> factor)[_val = phx::new_<or_selector>(_val, _1)] |
-             (lit("exc") >>
-              factor)[_val = phx::new_<subtract_selector>(_val, _1)]);
+
+    term =
+        factor[_val = _1] >>
+        *((lit("and") >> factor)[_val = phx::construct<selector_ptr>(
+                                     phx::new_<and_selector>(_val, _1))] |
+          (lit("or") >> factor)[_val = phx::construct<selector_ptr>(
+                                    phx::new_<or_selector>(_val, _1))] |
+          (lit("exc") >> factor)[_val = phx::construct<selector_ptr>(
+                                     phx::new_<subtract_selector>(_val, _1))]);
+
     expression =
         term[_val = _1] >>
-        *((lit("and") >> term)[_val = phx::new_<and_selector>(_val, _1)] |
-          (lit("or") >> term)[_val = phx::new_<or_selector>(_val, _1)] |
-          (lit("exc") >> term)[_val = phx::new_<subtract_selector>(_val, _1)]);
+        *((lit("and") >> term)[_val = phx::construct<selector_ptr>(
+                                   phx::new_<and_selector>(_val, _1))] |
+          (lit("or") >> term)[_val = phx::construct<selector_ptr>(
+                                  phx::new_<or_selector>(_val, _1))] |
+          (lit("exc") >> term)[_val = phx::construct<selector_ptr>(
+                                   phx::new_<subtract_selector>(_val, _1))]);
 
+    // 5. 错误处理
     qi::on_error<qi::fail>(
-        expression, std::cout << phx::val("Error! Expecting ") << qi::_4
-                              << phx::val(" here: \"")
-                              << phx::construct<std::string>(qi::_3, qi::_2)
-                              << phx::val("\"") << std::endl);
+        expression,
+        std::cout << phx::val("Error! Expecting ") << qi::_4 << " here: \""
+                  << phx::construct<std::string>(qi::_3, qi::_2) << "\"\n");
   }
 
-  qi::rule<Iterator, selector_ptr(), qi::space_type> expression, term, factor;
-  qi::rule<Iterator, parse_result(), qi::space_type> atom, only_dir, type_sel,
-      dir_sel, center_sel, other_sel, named_sel;
-  qi::rule<Iterator, std::string(), qi::space_type> identifier, simple_dir,
-      cqtype, named_view;
-  qi::rule<Iterator, std::vector<double>(), qi::space_type> vector;
-  qi::rule<Iterator, boost::optional<int>(), qi::space_type> index;
-  qi::rule<Iterator, std::string(), qi::space_type> direction;
-};
+private:
+  // 辅助函数
+  topo_vector
+  get_vector(const boost::variant<std::vector<double>, std::string> &dir) {
+    struct visitor : boost::static_visitor<topo_vector> {
+      topo_vector operator()(const std::vector<double> &v) const {
+        return {v[0], v[1], v[2]};
+      }
+      topo_vector operator()(const std::string &s) const {
+        static std::unordered_map<std::string, topo_vector> axes = {
+            {"x", {1, 0, 0}},  {"y", {0, 1, 0}},  {"z", {0, 0, 1}},
+            {"xy", {1, 1, 0}}, {"xz", {1, 0, 1}}, {"yz", {0, 1, 1}}};
+        return axes.at(s);
+      }
+    };
+    return boost::apply_visitor(visitor(), dir);
+  }
 
-// 简单字符串语法选择器
-class simple_string_selector : public selector {
-  struct selector_builder {
-    std::unordered_map<std::string, topo_vector> axes = {
-        {"X", {1, 0, 0}},  {"Y", {0, 1, 0}},  {"Z", {0, 0, 1}},
-        {"XY", {1, 1, 0}}, {"XZ", {1, 0, 1}}, {"YZ", {0, 1, 1}}};
+  selector_ptr create_dir_selector(
+      const boost::variant<std::vector<double>, std::string> &dir) {
+    return std::make_shared<dir_selector>(get_vector(dir), 1e-4);
+  }
 
-    std::unordered_map<std::string, std::pair<topo_vector, bool>> named_views =
+  selector_ptr create_type_selector(const std::string &type) {
+    return std::make_shared<type_selector>(type);
+  }
+
+  selector_ptr build_dir_selector(
+      const std::string &op,
+      const boost::variant<std::vector<double>, std::string> &dir,
+      const boost::optional<int> &index) {
+    auto vec = get_vector(dir);
+    bool minmax = (op == ">");
+
+    if (index) {
+      return std::make_shared<direction_nth_selector>(vec, *index, minmax);
+    }
+    return std::make_shared<direction_minmax_selector>(vec, minmax);
+  }
+
+  selector_ptr build_other_selector(
+      const std::string &op,
+      const boost::variant<std::vector<double>, std::string> &dir) {
+    auto vec = get_vector(dir);
+    if (op == "+")
+      return std::make_shared<dir_selector>(vec);
+    if (op == "-")
+      return std::make_shared<dir_selector>(-vec);
+    if (op == "#")
+      return std::make_shared<perpendicular_dir_selector>(vec);
+    if (op == "|")
+      return std::make_shared<parallel_dir_selector>(vec);
+    throw std::runtime_error("Unknown operator: " + op);
+  }
+
+  selector_ptr build_named_selector(const std::string &view) {
+    static std::unordered_map<std::string, std::pair<topo_vector, bool>> views =
         {{"front", {{0, 0, 1}, true}}, {"back", {{0, 0, 1}, false}},
          {"left", {{1, 0, 0}, false}}, {"right", {{1, 0, 0}, true}},
          {"top", {{0, 1, 0}, true}},   {"bottom", {{0, 1, 0}, false}}};
+    auto &args = views.at(view);
+    return std::make_shared<direction_minmax_selector>(args.first, args.second);
+  }
 
-    std::unordered_map<std::string, std::function<selector_ptr(topo_vector)>>
-        operators = {
-            {"+",
-             [](topo_vector v) { return std::make_shared<dir_selector>(v); }},
-            {"-",
-             [](topo_vector v) { return std::make_shared<dir_selector>(-v); }},
-            {"#",
-             [](topo_vector v) {
-               return std::make_shared<perpendicular_dir_selector>(v);
-             }},
-            {"|", [](topo_vector v) {
-               return std::make_shared<parallel_dir_selector>(v);
-             }}};
+  // 规则声明
+  qi::rule<Iterator, selector_ptr(), qi::space_type> expression, term, factor,
+      atom;
+  qi::rule<Iterator, selector_ptr(), qi::space_type> only_dir, type_sel,
+      dir_sel, other_sel, named_sel;
+  qi::rule<Iterator, boost::variant<std::vector<double>, std::string>(),
+           qi::space_type>
+      direction, simple_dir;
+  qi::rule<Iterator, std::string(), qi::space_type> identifier, cqtype,
+      named_view;
+  qi::rule<Iterator, std::vector<double>(), qi::space_type> vector;
+  qi::rule<Iterator, boost::optional<int>(), qi::space_type> index;
+  qi::rule<Iterator, std::string(), qi::space_type> type_op;
+  qi::rule<Iterator, std::string(), qi::space_type> dir_op;
+  qi::rule<Iterator, std::string(), qi::space_type> center_nth_op;
+  qi::rule<Iterator, std::string(), qi::space_type> other_op;
+};
 
-    std::unordered_map<std::string, bool> operator_minmax = {
-        {">", true}, {">>", true}, {"<", false}, {"<<", false}};
-
-    selector_ptr build(
-        const selector_grammar<std::string::const_iterator>::parse_result &pr) {
-      if (pr.type == "only_dir") {
-        return std::make_shared<dir_selector>(get_vector(pr.dir));
-      } else if (pr.type == "type_op") {
-        return std::make_shared<type_selector>(boost::get<std::string>(pr.dir));
-      } else if (pr.type == "dir_op") {
-        auto vec = get_vector(pr.dir);
-        bool minmax = operator_minmax[pr.op];
-        if (pr.index) {
-          return std::make_shared<direction_nth_selector>(vec, *pr.index,
-                                                          minmax);
-        }
-        return std::make_shared<direction_minmax_selector>(vec, minmax);
-      } else if (pr.type == "center_nth_op") {
-        auto vec = get_vector(pr.dir);
-        bool minmax = operator_minmax[pr.op];
-        if (pr.index) {
-          return std::make_shared<center_nth_selector>(vec, *pr.index, minmax);
-        }
-        return std::make_shared<center_nth_selector>(vec, -1, minmax);
-      } else if (pr.type == "other_op") {
-        auto vec = get_vector(pr.dir);
-        return operators[pr.op](vec);
-      } else if (pr.type == "named_view") {
-        auto view = named_views[boost::get<std::string>(pr.dir)];
-        return std::make_shared<direction_minmax_selector>(view.first,
-                                                           view.second);
-      }
-      throw std::runtime_error("Unknown selector type: " + pr.type);
-    }
-
-    topo_vector
-    get_vector(const boost::variant<std::vector<double>, std::string> &pr) {
-      if (pr.which() == 0) { // vector<double>
-        auto v = boost::get<std::vector<double>>(pr);
-        return {v[0], v[1], v[2]};
-      }
-      return axes[boost::get<std::string>(pr)];
-    }
-  };
-
+// 简单字符串选择器实现
+class simple_string_selector : public selector {
   selector_ptr selector_;
 
 public:
   simple_string_selector(const std::string &expr) {
     selector_grammar<std::string::const_iterator> grammar;
-    selector_builder builder;
     std::string::const_iterator iter = expr.begin();
     std::string::const_iterator end = expr.end();
 
-    selector_grammar<std::string::const_iterator>::parse_result pr;
-    bool success = qi::phrase_parse(iter, end, grammar, qi::space, pr);
+    selector_ptr result;
+    bool success = qi::phrase_parse(iter, end, grammar, qi::space, result);
 
     if (!success || iter != end) {
       throw std::runtime_error("Invalid selector syntax");
     }
 
-    selector_ = builder.build(pr);
+    selector_ = result;
   }
 
   std::vector<shape> filter(const std::vector<shape> &objects) const override {
     return selector_->filter(objects);
   }
 };
-
 string_syntax_selector::string_syntax_selector(
     const std::string &selector_str) {
   selector_ = std::make_shared<simple_string_selector>(selector_str);
@@ -458,3 +483,6 @@ string_syntax_selector::string_syntax_selector(
 
 } // namespace topo
 } // namespace flywave
+
+// Restore warning settings at the end of the file
+#pragma clang diagnostic pop

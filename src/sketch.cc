@@ -7,6 +7,7 @@
 #include "shape_ops.hh"
 #include "vertex.hh"
 #include "wire.hh"
+#include "workplane.hh"
 
 #include <ShapeAnalysis_FreeBounds.hxx>
 #include <TopTools_HSequenceOfShape.hxx>
@@ -59,7 +60,7 @@ sketch::sketch()
       faces_({topo::compound::make_compound({})}), edges_(),
       selection_(boost::none), constraints_(), tags_() {}
 
-sketch::sketch(std::shared_ptr<sketch> parent,
+sketch::sketch(std::shared_ptr<workplane> parent,
                const std::vector<topo_location> &locs,
                boost::optional<compound> obj)
     : parent_(parent),
@@ -1121,7 +1122,7 @@ std::shared_ptr<sketch> sketch::located(const topo_location &loc) const {
 }
 
 // Finalize and value access
-std::shared_ptr<sketch> sketch::finalize() { return parent_; }
+std::shared_ptr<workplane> sketch::finalize() { return parent_; }
 
 sketch_val sketch::val() const {
   if (selection_ && !selection_->empty()) {
