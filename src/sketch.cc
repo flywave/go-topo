@@ -1451,7 +1451,7 @@ shape sketch::sanitize_for_bool(const sketch_val &val) const {
 
 boost::optional<flywave::topo::compound>
 sketch::to_compound(const shape &sh) const {
-  if (sh.shape_type() == "COMPOUND") {
+  if (sh.shape_type() == "Compound") {
     return sh.cast<flywave::topo::compound>();
   }
   return compound::make_compound({sh});

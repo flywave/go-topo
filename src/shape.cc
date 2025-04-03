@@ -1391,28 +1391,28 @@ std::string shape::shape_type() const {
   std::string type = "clue";
   switch (_shape.ShapeType()) {
   case TopAbs_COMPOUND:
-    type = "compound";
+    type = "Compounds";
     break;
   case TopAbs_COMPSOLID:
-    type = "compound solid";
+    type = "CompSolids";
     break;
   case TopAbs_SOLID:
-    type = "solid";
+    type = "Solids";
     break;
   case TopAbs_SHELL:
-    type = "shell";
+    type = "Shells";
     break;
   case TopAbs_FACE:
-    type = "face";
+    type = "Faces";
     break;
   case TopAbs_WIRE:
-    type = "wire";
+    type = "Wires";
     break;
   case TopAbs_EDGE:
-    type = "edge";
+    type = "Edges";
     break;
   case TopAbs_VERTEX:
-    type = "vertex";
+    type = "Vertices";
     break;
   case TopAbs_SHAPE:
     type = "shape";

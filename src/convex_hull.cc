@@ -94,10 +94,10 @@ std::pair<point, arc> select_lowest_arc(const std::vector<arc> &arcs) {
       x.push_back(a.c.x);
       y.push_back(a.c.y - a.r);
     } else {
-      auto [p, _] =
+      auto pair =
           select_lowest_point({point(a.s.x, a.s.y), point(a.e.x, a.e.y)});
-      x.push_back(p.x);
-      y.push_back(p.y);
+      x.push_back(pair.first.x);
+      y.push_back(pair.first.y);
     }
   }
 
@@ -123,8 +123,9 @@ entity select_lowest(const std::vector<arc> &arcs,
   } else if (p_lowest && !a_lowest) {
     return p_lowest->first;
   } else if (p_lowest && a_lowest) {
-    auto [_, ix] = select_lowest_point({p_lowest->first, a_lowest->first});
-    return ix == 0 ? entity(p_lowest->first) : entity(a_lowest->second);
+    auto pair = select_lowest_point({p_lowest->first, a_lowest->first});
+    return pair.second == 0 ? entity(p_lowest->first)
+                            : entity(a_lowest->second);
   } else {
     throw std::runtime_error("No entities specified");
   }
@@ -163,7 +164,8 @@ std::tuple<double, double, double, double> _pt_arc(const point &p,
 }
 
 std::pair<double, segment> pt_arc(const point &p, const arc &a) {
-  auto [x1, y1, x2, y2] = _pt_arc(p, a);
+  double x1, y1, x2, y2;
+  std::tie(x1, y1, x2, y2) = _pt_arc(p, a);
 
   double angle1 = atan2p(x1 - p.x, y1 - p.y);
   double angle2 = atan2p(x2 - p.x, y2 - p.y);
@@ -178,7 +180,8 @@ std::pair<double, segment> pt_arc(const point &p, const arc &a) {
 }
 
 std::pair<double, segment> arc_pt(const arc &a, const point &p) {
-  auto [x1, y1, x2, y2] = _pt_arc(p, a);
+  double x1, y1, x2, y2;
+  std::tie(x1, y1, x2, y2) = _pt_arc(p, a);
 
   double angle1 = atan2p(p.x - x1, p.y - y1);
   double angle2 = atan2p(p.x - x2, p.y - y2);
@@ -203,7 +206,9 @@ std::pair<double, segment> arc_arc(const arc &a1, const arc &a2) {
 
   if (r1 > r2) {
     auto arc_tmp = arc(a1.c, r1 - r2, a1.a1, a1.a2);
-    auto [xtmp1, ytmp1, xtmp2, ytmp2] = _pt_arc(a2.c, arc_tmp);
+    double xtmp1, ytmp1, xtmp2, ytmp2;
+
+    std::tie(xtmp1, ytmp1, xtmp2, ytmp2) = _pt_arc(a2.c, arc_tmp);
 
     double delta_r = r1 - r2;
 
@@ -214,7 +219,8 @@ std::pair<double, segment> arc_arc(const arc &a1, const arc &a2) {
     dy2 = (ytmp2 - yc1) / delta_r;
   } else if (r1 < r2) {
     auto arc_tmp = arc(a2.c, r2 - r1, a2.a1, a2.a2);
-    auto [xtmp1, ytmp1, xtmp2, ytmp2] = _pt_arc(a1.c, arc_tmp);
+    double xtmp1, ytmp1, xtmp2, ytmp2;
+    std::tie(xtmp1, ytmp1, xtmp2, ytmp2) = _pt_arc(a1.c, arc_tmp);
 
     double delta_r = r2 - r1;
 
@@ -378,8 +384,9 @@ wire finalize_hull(const hull &h) {
 wire find_hull(const std::vector<edge> &edges) {
   hull rv;
 
-  auto [arcs, points] = convert_and_validate(edges);
-
+  auto pair = convert_and_validate(edges);
+  auto arcs = pair.first;
+  auto points = pair.second;
   auto start = select_lowest(arcs, points);
   rv.push_back(start);
 
@@ -396,7 +403,9 @@ wire find_hull(const std::vector<edge> &edges) {
     std::vector<segment> segments;
 
     for (const auto &e : entities) {
-      auto [angle, segment] = get_angle(current_e, e);
+      auto pair = get_angle(current_e, e);
+      auto angle = pair.first;
+      auto segment = pair.second;
       angles.push_back(angle >= current_angle
                            ? angle
                            : std::numeric_limits<double>::infinity());

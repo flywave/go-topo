@@ -87,7 +87,7 @@ std::vector<shape> workplane::collect_property(const std::string &propName) {
   for (auto &obj : _objects) {
     if (propName == "Solids") {
       if (auto s = boost::get<shape>(&obj)) {
-        if (s->shape_type() == "Compound") {
+        if (s->shape_type() == "Compounds") {
           for (auto &k : s->compounds()) {
             if (seen.find(k) == seen.end()) {
               seen[k] = true;

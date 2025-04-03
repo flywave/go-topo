@@ -6,7 +6,6 @@ namespace flywave {
 namespace topo {
 
 context::context() : tolerance_(0.0001) {
-  // 成员默认初始化
 }
 
 std::vector<edge> context::pop_pending_edges(bool errorOnEmpty) {
@@ -29,7 +28,6 @@ std::vector<wire> context::pop_pending_wires(bool errorOnEmpty) {
   return result;
 }
 
-// 成员访问实现
 std::vector<wire> &context::pending_wires() { return pending_wires_; }
 
 void context::set_pending_edges(const std::vector<edge> &edges) {
