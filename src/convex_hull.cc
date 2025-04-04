@@ -6,7 +6,15 @@ namespace topo {
 point::point(double x, double y) : x(x), y(y) {}
 
 bool point::operator==(const point &other) const {
-  return x == other.x && y == other.y;
+  return equals(other, kTolerance);
+}
+
+bool point::operator<(const point &other) const {
+  return x < other.x || (x == other.x && y < other.y);
+}
+
+bool point::equals(const point &other, double tol) const {
+  return std::abs(x - other.x) < tol && std::abs(y - other.y) < tol;
 }
 
 size_t point::hash::operator()(const point &p) const {
@@ -22,8 +30,13 @@ arc::arc(const point &c, double r, double a1, double a2)
   ac = 2 * M_PI - (a1 - a2);
 }
 
+bool arc::equals(const arc &other, double tol) const {
+  return c.equals(other.c, tol) && std::abs(r - other.r) < tol &&
+         std::abs(a1 - other.a1) < tol && std::abs(a2 - other.a2) < tol;
+}
+
 bool arc::operator==(const arc &other) const {
-  return c == other.c && r == other.r && a1 == other.a1 && a2 == other.a2;
+  return equals(other, kTolerance);
 }
 
 size_t arc::hash::operator()(const arc &a) const {
@@ -42,31 +55,26 @@ double atan2p(double x, double y) {
 
 std::pair<std::vector<arc>, std::vector<point>>
 convert_and_validate(const std::vector<edge> &edges) {
-  std::unordered_set<arc, arc::hash> arcs;
-  std::unordered_set<point, point::hash> points;
+  std::vector<arc> arcs;
+  std::vector<point> points;
+  arcs.reserve(edges.size());
+  points.reserve(edges.size() * 2); // 预估容量
 
   for (const auto &e : edges) {
     auto gt = e.geom_type();
-
     if (gt == "LINE") {
-      auto p1 = e.start_point();
-      auto p2 = e.end_point();
-
-      points.insert(point(p1.X(), p1.Y()));
-      points.insert(point(p2.X(), p2.Y()));
+      points.emplace_back(e.start_point().X(), e.start_point().Y());
+      points.emplace_back(e.end_point().X(), e.end_point().Y());
     } else if (gt == "CIRCLE") {
-      auto c = e.arc_center();
-      auto r = e.radius();
-      auto bounds = e.bounds();
-
-      arcs.insert(arc{point(c.X(), c.Y()), r, bounds.first, bounds.second});
-    } else {
-      throw std::runtime_error("Unsupported geometry " + gt);
+      arcs.emplace_back(/* 构造参数 */);
     }
   }
 
-  return {std::vector<arc>(arcs.begin(), arcs.end()),
-          std::vector<point>(points.begin(), points.end())};
+  // 去重
+  std::sort(points.begin(), points.end());
+  points.erase(std::unique(points.begin(), points.end()), points.end());
+
+  return {std::move(arcs), std::move(points)};
 }
 
 std::pair<point, size_t> select_lowest_point(const std::vector<point> &points) {
@@ -113,6 +121,9 @@ std::pair<point, arc> select_lowest_arc(const std::vector<arc> &arcs) {
 
 entity select_lowest(const std::vector<arc> &arcs,
                      const std::vector<point> &points) {
+  if (arcs.empty() && points.empty()) {
+    throw std::invalid_argument("At least one arc or point must be provided");
+  }
   auto p_lowest = points.empty() ? boost::optional<std::pair<point, size_t>>()
                                  : select_lowest_point(points);
   auto a_lowest = arcs.empty() ? boost::optional<std::pair<point, arc>>()

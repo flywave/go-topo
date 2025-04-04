@@ -261,7 +261,7 @@ private:
 
   class constraint_ {
   public:
-    constraint_(const std::string &tags,  topo::edge &&args,
+    constraint_(const std::string &tags, topo::edge &&args,
                 sketch_constraint_kind kind, sketch_constraint_value param)
         : tags({tags}), args({args}), kind(kind), param(param) {}
 

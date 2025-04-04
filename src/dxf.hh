@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "base.hh"
+#include "math_utils.hh"
 
 namespace flywave {
 namespace dxf {
@@ -49,6 +50,18 @@ struct dxf_coords {
   double x;
   double y;
   double z;
+
+  dxf_coords() = default;
+  dxf_coords(double x, double y, double z = 0.) : x(x), y(y), z(z) {}
+  
+  // Add equality operator
+  bool operator==(const dxf_coords &other) const {
+    return math_utils::fuzzy_equal(x, other.x) &&
+           math_utils::fuzzy_equal(y, other.y) &&
+           math_utils::fuzzy_equal(z, other.z);
+  }
+
+  bool operator!=(const dxf_coords &other) const { return !(*this == other); }
 };
 
 struct dxf_scale {
@@ -448,6 +461,8 @@ protected:
   std::string get_layer_handle();
   std::string get_block_handle();
   std::string get_blk_record_handle();
+
+  std::ostringstream &get_entity_stream() { return _ss_entity; }
 
   std::string _option_source;
   int _version;

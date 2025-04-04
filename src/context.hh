@@ -22,6 +22,10 @@ public:
   // 构造函数
   context();
 
+  // Copy control
+  context(const context &) = delete;
+  context &operator=(const context &) = delete;
+
   // 边操作
   std::vector<edge> pop_pending_edges(bool errorOnEmpty = true);
 

@@ -5,11 +5,15 @@
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
+#include <TopoDS_Vertex.hxx>
+#include <TopoDS_Wire.hxx>
+#include <gp_Circ.hxx>
+#include <gp_Elips.hxx>
 
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <cstdint>
 
 #include "dxf.hh"
 #include "ogg_handle.hh"
@@ -91,6 +95,89 @@ public:
   void add_text(const dxf_shape_reader::text_entity &text);
 
   TopoDS_Face make_face(const dxf_quad_base &quad) const;
+};
+
+class dxf_shape_writer : public dxf_write {
+public:
+  struct shape_entity {
+    color_index_t color = 0;
+    TopoDS_Shape shape;
+  };
+
+  struct parameters {
+    double scaling = 1.0;
+    bool write_3d_face = false;
+  };
+
+  struct text_entity {
+    std::string text;
+    gp_Pnt position;
+    double height = 1.0;
+    double rotation = 0.0;
+    color_index_t color = 256;
+  };
+
+private:
+  std::unordered_map<std::string, std::vector<shape_entity>> _layers;
+  std::unordered_map<std::string, std::vector<text_entity>> _texts;
+
+  parameters _params;
+
+public:
+  dxf_shape_writer(const std::string &filepath);
+
+  void set_parameters(const parameters &params) { _params = params; }
+
+  void add_text(const std::string &layer_name, const text_entity &text);
+
+  void add_shape(const std::string &layer_name, const TopoDS_Shape &shape,
+                 color_index_t color = 256);
+
+  void add_shape_layer(
+      const std::string &layer_name,
+      const std::vector<std::pair<TopoDS_Shape, color_index_t>> &shapes);
+
+  void add_text_layer(const std::string &layer_name,
+                      const std::vector<text_entity> &texts);
+
+  bool write();
+
+protected:
+  void put_arc(const dxf_coords &center, const dxf_coords &start,
+               const dxf_coords &end, std::ostringstream &outStream,
+               const std::string &handle, const std::string &ownerHandle);
+  void put_ellipse(const dxf_coords &center, const dxf_coords &majorPoint,
+                   double ratio, std::ostringstream &outStream,
+                   const std::string &handle, const std::string &ownerHandle);
+  void put_point(const dxf_coords &point, std::ostringstream &outStream,
+                 const std::string &handle, const std::string &ownerHandle);
+  void put_line(const gp_Pnt &start, const gp_Pnt &end,
+                std::ostringstream &outStream, const std::string &handle,
+                const std::string &ownerHandle);
+  void put_circle(const gp_Circ &circle, std::ostringstream &outStream,
+                  const std::string &handle, const std::string &ownerHandle);
+  void put_text(const text_entity &text, std::ostringstream &outStream,
+                const std::string &handle, const std::string &ownerHandle);
+  void put_3d_face(const std::array<dxf_coords, 4> &corners,
+                   std::ostringstream &outStream, const std::string &handle,
+                   const std::string &ownerHandle);
+  void put_spline(const dxf_spline &spline, std::ostringstream &outStream,
+                  const std::string &handle, const std::string &ownerHandle);
+
+  void write_shape(const TopoDS_Shape &shape, color_index_t color);
+  void write_edge(const TopoDS_Edge &edge, color_index_t color);
+  void write_wire(const TopoDS_Wire &wire, color_index_t color);
+  void write_face(const TopoDS_Face &face, color_index_t color);
+  void write_vertex(const TopoDS_Vertex &vertex, color_index_t color);
+  void write_spline(const Handle(Geom_BSplineCurve) & spline,
+                    color_index_t color);
+  void write_3d_face(const TopoDS_Face &face, color_index_t color);
+
+  void write_line(const gp_Pnt &start, const gp_Pnt &end);
+  void write_circle(const gp_Circ &circle);
+  void write_arc(const gp_Circ &circle, double start_angle, double end_angle);
+  void write_ellipse(const gp_Elips &ellipse);
+  void write_point(const gp_Pnt &point);
 };
 
 } // namespace dxf

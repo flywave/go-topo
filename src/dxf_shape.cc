@@ -8,17 +8,23 @@
 #include "ogg_handle.hh"
 #include "string_conv.hh"
 
+#include <BRepAdaptor_Curve.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
+#include <BRepMesh_IncrementalMesh.hxx>
 #include <BRep_Builder.hxx>
+#include <BRep_Tool.hxx>
 #include <BSplCLib.hxx>
 #include <Font_BRepTextBuilder.hxx>
 #include <Font_FontMgr.hxx>
 #include <GeomAPI_Interpolate.hxx>
 #include <Geom_BSplineCurve.hxx>
+#include <Geom_Circle.hxx>
+#include <Geom_Ellipse.hxx>
+#include <Geom_Line.hxx>
 #include <Graphic3d_HorizontalTextAlignment.hxx>
 #include <Graphic3d_VerticalTextAlignment.hxx>
 #include <Poly_Triangulation.hxx>
@@ -30,14 +36,15 @@
 #include <XCAFDoc_ShapeTool.hxx>
 #include <gp_Circ.hxx>
 #include <gp_Elips.hxx>
+#include <gp_Pnt.hxx>
 #include <gp_Trsf.hxx>
 
 #include <algorithm>
+#include <array>
 #include <functional>
 #include <iostream>
 #include <optional>
 #include <sstream>
-#include <string_view>
 
 #ifndef OCC_VERSION_CHECK
 #define OCC_VERSION_CHECK(major, minor, patch)                                 \
@@ -602,5 +609,530 @@ dxf_shape_reader::create_interpolation_spline(const dxf_spline &spline) {
   return interp.Curve();
 }
 
+dxf_shape_writer::dxf_shape_writer(const std::string &filepath)
+    : dxf_write(filepath.c_str()) {}
+
+void dxf_shape_writer::add_text(const std::string &layer_name,
+                                const dxf_shape_writer::text_entity &text) {
+  auto &layer_texts = _texts[layer_name];
+  layer_texts.push_back(text);
+}
+
+void dxf_shape_writer::add_shape(const std::string &layer_name,
+                                 const TopoDS_Shape &shape,
+                                 color_index_t color) {
+  _layers[layer_name].push_back({color, shape});
+}
+
+void dxf_shape_writer::add_shape_layer(
+    const std::string &layer_name,
+    const std::vector<std::pair<TopoDS_Shape, color_index_t>> &shapes) {
+  auto &layer_shapes = _layers[layer_name];
+  layer_shapes.reserve(layer_shapes.size() + shapes.size());
+
+  for (const auto &shape_pair : shapes) {
+    layer_shapes.emplace_back(
+        shape_entity{.color = shape_pair.second, .shape = shape_pair.first});
+  }
+}
+
+void dxf_shape_writer::add_text_layer(
+    const std::string &layer_name,
+    const std::vector<dxf_shape_writer::text_entity> &texts) {
+  auto &layer_texts = _texts[layer_name];
+  layer_texts.insert(layer_texts.end(), texts.begin(), texts.end());
+}
+
+bool dxf_shape_writer::write() {
+  try {
+    init();
+
+    for (const auto &layer : _layers) {
+      set_layer_name(layer.first);
+      for (const auto &entity : layer.second) {
+        write_shape(entity.shape, entity.color);
+      }
+    }
+
+    for (const auto &layer_pair : _texts) {
+      set_layer_name(layer_pair.first);
+      for (const text_entity &text : layer_pair.second) {
+        put_text(text, get_entity_stream(), get_entity_handle(),
+                 get_layer_handle());
+      }
+    }
+
+    end_run();
+    return !failed();
+  } catch (...) {
+    return false;
+  }
+}
+
+void dxf_shape_writer::write_shape(const TopoDS_Shape &shape,
+                                   color_index_t color) {
+  switch (shape.ShapeType()) {
+  case TopAbs_COMPOUND:
+  case TopAbs_COMPSOLID:
+    for (TopoDS_Iterator it(shape); it.More(); it.Next()) {
+      write_shape(it.Value(), color);
+    }
+    break;
+  case TopAbs_SOLID:
+  case TopAbs_SHELL:
+    for (TopoDS_Iterator it(shape); it.More(); it.Next()) {
+      write_face(TopoDS::Face(it.Value()), color);
+    }
+    break;
+  case TopAbs_FACE:
+    write_face(TopoDS::Face(shape), color);
+    break;
+  case TopAbs_WIRE:
+    write_wire(TopoDS::Wire(shape), color);
+    break;
+  case TopAbs_EDGE:
+    write_edge(TopoDS::Edge(shape), color);
+    break;
+  case TopAbs_VERTEX:
+    write_vertex(TopoDS::Vertex(shape), color);
+    break;
+  default:
+    break;
+  }
+}
+
+void dxf_shape_writer::write_edge(const TopoDS_Edge &edge,
+                                  color_index_t color) {
+  Standard_Real first, last;
+  Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, first, last);
+
+  if (curve.IsNull())
+    return;
+
+  if (curve->DynamicType() == STANDARD_TYPE(Geom_Line)) {
+    Handle(Geom_Line) line = Handle(Geom_Line)::DownCast(curve);
+    write_line(line->Value(first), line->Value(last));
+  } else if (curve->DynamicType() == STANDARD_TYPE(Geom_Ellipse)) {
+    Handle(Geom_Ellipse) ellipse = Handle(Geom_Ellipse)::DownCast(curve);
+    write_ellipse(ellipse->Elips());
+  } else if (curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve)) {
+    Handle(Geom_BSplineCurve) spline =
+        Handle(Geom_BSplineCurve)::DownCast(curve);
+    write_spline(spline, color);
+  } else if (curve->DynamicType() == STANDARD_TYPE(Geom_Circle)) {
+    Handle(Geom_Circle) circle = Handle(Geom_Circle)::DownCast(curve);
+    const double angle_tolerance = Precision::Angular();
+    if (Abs(last - first - 2 * M_PI) > angle_tolerance) {
+      write_arc(circle->Circ(), first, last);
+    } else {
+      write_circle(circle->Circ());
+    }
+  }
+}
+
+void dxf_shape_writer::write_wire(const TopoDS_Wire &wire,
+                                  color_index_t color) {
+  for (TopExp_Explorer exp(wire, TopAbs_EDGE); exp.More(); exp.Next()) {
+    write_edge(TopoDS::Edge(exp.Current()), color);
+  }
+}
+
+void dxf_shape_writer::write_face(const TopoDS_Face &face,
+                                  color_index_t color) {
+  if (_params.write_3d_face) {
+    write_3d_face(face, color);
+  }
+  for (TopExp_Explorer exp(face, TopAbs_WIRE); exp.More(); exp.Next()) {
+    write_wire(TopoDS::Wire(exp.Current()), color);
+  }
+}
+
+void dxf_shape_writer::write_vertex(const TopoDS_Vertex &vertex,
+                                    color_index_t color) {
+  gp_Pnt p = BRep_Tool::Pnt(vertex);
+  write_point(p);
+}
+
+void dxf_shape_writer::write_line(const gp_Pnt &start, const gp_Pnt &end) {
+  put_line(start, end, get_entity_stream(), get_entity_handle(),
+           get_layer_handle());
+}
+
+void dxf_shape_writer::write_circle(const gp_Circ &circle) {
+  put_circle(circle, get_entity_stream(), get_entity_handle(),
+             get_layer_handle());
+}
+
+void dxf_shape_writer::write_arc(const gp_Circ &circle, double start_angle,
+                                 double end_angle) {
+  const gp_Pnt center = circle.Location();
+  const double radius = circle.Radius();
+  dxf_coords c{center.X(), center.Y(), center.Z()};
+  dxf_coords s{center.X() + radius * cos(start_angle),
+               center.Y() + radius * sin(start_angle), center.Z()};
+  dxf_coords e{center.X() + radius * cos(end_angle),
+               center.Y() + radius * sin(end_angle), center.Z()};
+  put_arc(c, s, e, get_entity_stream(), get_entity_handle(),
+          get_layer_handle());
+}
+
+void dxf_shape_writer::write_ellipse(const gp_Elips &ellipse) {
+  const gp_Pnt center = ellipse.Location();
+  const double majorRadius = ellipse.MajorRadius();
+  const double minorRadius = ellipse.MinorRadius();
+  const double rotationAngle = ellipse.XAxis().Direction().Angle(gp::DX());
+
+  dxf_coords c{center.X(), center.Y(), center.Z()};
+  dxf_coords majorPoint{center.X() + majorRadius * cos(rotationAngle),
+                        center.Y() + majorRadius * sin(rotationAngle),
+                        center.Z()};
+  put_ellipse(c, majorPoint, minorRadius / majorRadius, get_entity_stream(),
+              get_entity_handle(), get_layer_handle());
+}
+
+void dxf_shape_writer::write_spline(const Handle(Geom_BSplineCurve) & spline,
+                                    color_index_t color) {
+  dxf_spline dxfSpline;
+  dxfSpline.degree = spline->Degree();
+
+  for (int i = 1; i <= spline->NbPoles(); ++i) {
+    gp_Pnt p = spline->Pole(i);
+    dxfSpline.control_points.push_back(dxf_coords{p.X(), p.Y(), p.Z()});
+  }
+
+  for (int i = 1; i <= spline->NbKnots(); ++i) {
+    dxfSpline.knots.push_back(spline->Knot(i));
+  }
+
+  if (spline->IsRational()) {
+    for (int i = 1; i <= spline->NbPoles(); ++i) {
+      dxfSpline.weights.push_back(spline->Weight(i));
+    }
+  }
+
+  dxfSpline.flags = 0;
+  if (spline->IsPeriodic()) {
+    dxfSpline.flags |= dxf_spline::Periodic;
+  }
+  if (spline->IsRational()) {
+    dxfSpline.flags |= dxf_spline::Rational;
+  }
+
+  put_spline(dxfSpline, get_entity_stream(), get_entity_handle(),
+             get_layer_handle());
+}
+
+void dxf_shape_writer::write_point(const gp_Pnt &point) {
+  dxf_coords p{point.X(), point.Y(), point.Z()};
+  put_point(p, get_entity_stream(), get_entity_handle(), get_layer_handle());
+}
+
+void dxf_shape_writer::put_line(const gp_Pnt &start, const gp_Pnt &end,
+                                std::ostringstream &outStream,
+                                const std::string &handle,
+                                const std::string &ownerHandle) {
+  vector3d s{start.X(), start.Y(), start.Z()};
+  vector3d e{end.X(), end.Y(), end.Z()};
+  dxf_write::put_line(s, e, outStream, handle, ownerHandle);
+}
+void dxf_shape_writer::write_3d_face(const TopoDS_Face &face,
+                                     color_index_t color) {
+  TopLoc_Location loc;
+  Handle(Poly_Triangulation) triangulation =
+      BRep_Tool::Triangulation(face, loc);
+  if (!triangulation.IsNull()) {
+    const Poly_ArrayOfNodes &nodes = triangulation->InternalNodes();
+    for (int i = 1; i <= nodes.Length(); i += 3) {
+      gp_Pnt p1 = nodes.Value(i).Transformed(loc);
+      gp_Pnt p2 = nodes.Value(i + 1).Transformed(loc);
+      gp_Pnt p3 = nodes.Value(i + 2).Transformed(loc);
+      gp_Pnt p4 = p3;
+
+      std::array<dxf_coords, 4> corners = {dxf_coords{p1.X(), p1.Y(), p1.Z()},
+                                           dxf_coords{p2.X(), p2.Y(), p2.Z()},
+                                           dxf_coords{p3.X(), p3.Y(), p3.Z()},
+                                           dxf_coords{p4.X(), p4.Y(), p4.Z()}};
+      put_3d_face(corners, get_entity_stream(), get_entity_handle(),
+                  get_layer_handle());
+    }
+  }
+}
+
+void dxf_shape_writer::put_3d_face(const std::array<dxf_coords, 4> &corners,
+                                   std::ostringstream &outStream,
+                                   const std::string &handle,
+                                   const std::string &ownerHandle) {
+  outStream << "  0" << std::endl;
+  outStream << "3DFACE" << std::endl;
+  outStream << "  5" << std::endl;
+  outStream << handle << std::endl;
+  outStream << "  8" << std::endl;
+  outStream << ownerHandle << std::endl;
+
+  for (int i = 0; i < 4; i++) {
+    outStream << " 1" << (i + 1) << std::endl;
+    outStream << corners[i].x << std::endl;
+    outStream << " 2" << (i + 1) << std::endl;
+    outStream << corners[i].y << std::endl;
+    outStream << " 3" << (i + 1) << std::endl;
+    outStream << corners[i].z << std::endl;
+  }
+
+  if (corners[2] == corners[3]) {
+    outStream << " 70" << std::endl;
+    outStream << "1" << std::endl;
+  }
+}
+
+void dxf_shape_writer::put_circle(const gp_Circ &circle,
+                                  std::ostringstream &outStream,
+                                  const std::string &handle,
+                                  const std::string &ownerHandle) {
+  outStream << "  0" << std::endl;
+  outStream << "CIRCLE" << std::endl;
+  outStream << "  5" << std::endl;
+  outStream << handle << std::endl;
+  outStream << "  8" << std::endl;
+  outStream << ownerHandle << std::endl;
+
+  const gp_Pnt center = circle.Location();
+  outStream << " 10" << std::endl;
+  outStream << center.X() << std::endl;
+  outStream << " 20" << std::endl;
+  outStream << center.Y() << std::endl;
+  outStream << " 30" << std::endl;
+  outStream << center.Z() << std::endl;
+
+  outStream << " 40" << std::endl;
+  outStream << circle.Radius() << std::endl;
+
+  const gp_Dir normal = circle.Axis().Direction();
+  if (!normal.IsEqual(gp::DZ(), Precision::Angular())) {
+    outStream << "210" << std::endl;
+    outStream << normal.X() << std::endl;
+    outStream << "220" << std::endl;
+    outStream << normal.Y() << std::endl;
+    outStream << "230" << std::endl;
+    outStream << normal.Z() << std::endl;
+  }
+}
+
+void dxf_shape_writer::put_arc(const dxf_coords &center,
+                               const dxf_coords &start, const dxf_coords &end,
+                               std::ostringstream &outStream,
+                               const std::string &handle,
+                               const std::string &ownerHandle) {
+  outStream << "  0" << std::endl;
+  outStream << "ARC" << std::endl;
+  outStream << "  5" << std::endl;
+  outStream << handle << std::endl;
+  outStream << "  8" << std::endl;
+  outStream << ownerHandle << std::endl;
+
+  outStream << " 10" << std::endl;
+  outStream << center.x << std::endl;
+  outStream << " 20" << std::endl;
+  outStream << center.y << std::endl;
+  outStream << " 30" << std::endl;
+  outStream << center.z << std::endl;
+
+  double radius = sqrt(pow(start.x - center.x, 2) + pow(start.y - center.y, 2));
+  outStream << " 40" << std::endl;
+  outStream << radius << std::endl;
+
+  double start_angle =
+      atan2(start.y - center.y, start.x - center.x) * 180.0 / M_PI;
+  double end_angle = atan2(end.y - center.y, end.x - center.x) * 180.0 / M_PI;
+
+  if (start_angle < 0)
+    start_angle += 360.0;
+  if (end_angle < 0)
+    end_angle += 360.0;
+
+  if (start_angle > end_angle) {
+    end_angle += 360.0;
+  }
+
+  outStream << " 50" << std::endl;
+  outStream << start_angle << std::endl;
+  outStream << " 51" << std::endl;
+  outStream << end_angle << std::endl;
+}
+
+void dxf_shape_writer::put_ellipse(const dxf_coords &center,
+                                   const dxf_coords &majorPoint, double ratio,
+                                   std::ostringstream &outStream,
+                                   const std::string &handle,
+                                   const std::string &ownerHandle) {
+  outStream << "  0" << std::endl;
+  outStream << "ELLIPSE" << std::endl;
+  outStream << "  5" << std::endl;
+  outStream << handle << std::endl;
+  outStream << "  8" << std::endl;
+  outStream << ownerHandle << std::endl;
+
+  outStream << " 10" << std::endl;
+  outStream << center.x << std::endl;
+  outStream << " 20" << std::endl;
+  outStream << center.y << std::endl;
+  outStream << " 30" << std::endl;
+  outStream << center.z << std::endl;
+
+  outStream << " 11" << std::endl;
+  outStream << majorPoint.x - center.x << std::endl;
+  outStream << " 21" << std::endl;
+  outStream << majorPoint.y - center.y << std::endl;
+  outStream << " 31" << std::endl;
+  outStream << majorPoint.z - center.z << std::endl;
+
+  outStream << " 40" << std::endl;
+  outStream << ratio << std::endl;
+
+  outStream << " 41" << std::endl;
+  outStream << "0.0" << std::endl;
+  outStream << " 42" << std::endl;
+  outStream << "6.283185307179586" << std::endl;
+
+  const gp_Dir normal = gp::DZ();
+  outStream << "210" << std::endl;
+  outStream << normal.X() << std::endl;
+  outStream << "220" << std::endl;
+  outStream << normal.Y() << std::endl;
+  outStream << "230" << std::endl;
+  outStream << normal.Z() << std::endl;
+}
+
+void dxf_shape_writer::put_point(const dxf_coords &point,
+                                 std::ostringstream &outStream,
+                                 const std::string &handle,
+                                 const std::string &ownerHandle) {
+  outStream << std::setprecision(15);
+
+  outStream << "  0" << std::endl;
+  outStream << "POINT" << std::endl;
+  outStream << "  5" << std::endl;
+  outStream << handle << std::endl;
+  outStream << "  8" << std::endl;
+  outStream << ownerHandle << std::endl;
+
+  outStream << " 10" << std::endl;
+  outStream << point.x << std::endl;
+  outStream << " 20" << std::endl;
+  outStream << point.y << std::endl;
+  outStream << " 30" << std::endl;
+  outStream << point.z << std::endl;
+}
+
+void dxf_shape_writer::put_text(const dxf_shape_writer::text_entity &text,
+                                std::ostringstream &outStream,
+                                const std::string &handle,
+                                const std::string &ownerHandle) {
+  outStream << "  0" << std::endl;
+  outStream << "TEXT" << std::endl;
+  outStream << "  5" << std::endl;
+  outStream << handle << std::endl;
+  outStream << "  8" << std::endl;
+  outStream << ownerHandle << std::endl;
+
+  outStream << " 10" << std::endl;
+  outStream << text.position.X() << std::endl;
+  outStream << " 20" << std::endl;
+  outStream << text.position.Y() << std::endl;
+  outStream << " 30" << std::endl;
+  outStream << text.position.Z() << std::endl;
+
+  outStream << "  1" << std::endl;
+  outStream << text.text << std::endl;
+
+  outStream << " 40" << std::endl;
+  outStream << text.height << std::endl;
+
+  outStream << " 50" << std::endl;
+  outStream << text.rotation << std::endl;
+
+  outStream << " 62" << std::endl;
+  outStream << text.color << std::endl;
+}
+
+void dxf_shape_writer::put_spline(const dxf_spline &spline,
+                                  std::ostringstream &outStream,
+                                  const std::string &handle,
+                                  const std::string &ownerHandle) {
+  outStream << "  0" << std::endl;
+  outStream << "SPLINE" << std::endl;
+  outStream << "  5" << std::endl;
+  outStream << handle << std::endl;
+  outStream << "  8" << std::endl;
+  outStream << ownerHandle << std::endl;
+
+  outStream << " 70" << std::endl;
+  outStream << spline.flags << std::endl;
+
+  outStream << " 71" << std::endl;
+  outStream << spline.degree << std::endl;
+
+  outStream << " 72" << std::endl;
+  outStream << spline.knots.size() << std::endl;
+
+  outStream << " 73" << std::endl;
+  outStream << spline.control_points.size() << std::endl;
+
+  for (const auto &knot : spline.knots) {
+    outStream << " 40" << std::endl;
+    outStream << knot << std::endl;
+  }
+
+  for (const auto &point : spline.control_points) {
+    outStream << " 10" << std::endl;
+    outStream << point.x << std::endl;
+    outStream << " 20" << std::endl;
+    outStream << point.y << std::endl;
+    outStream << " 30" << std::endl;
+    outStream << point.z << std::endl;
+  }
+
+  if (!spline.weights.empty()) {
+    for (const auto &weight : spline.weights) {
+      outStream << " 41" << std::endl;
+      outStream << weight << std::endl;
+    }
+  }
+
+  if (!spline.fit_points.empty()) {
+    outStream << " 11" << std::endl;
+    outStream << spline.fit_points.size() << std::endl;
+
+    for (const auto &point : spline.fit_points) {
+      outStream << " 11" << std::endl;
+      outStream << point.x << std::endl;
+      outStream << " 21" << std::endl;
+      outStream << point.y << std::endl;
+      outStream << " 31" << std::endl;
+      outStream << point.z << std::endl;
+    }
+  }
+
+  if (!spline.start_tangents.empty()) {
+    for (const auto &t : spline.start_tangents) {
+      outStream << " 12" << std::endl;
+      outStream << t.x << std::endl;
+      outStream << " 22" << std::endl;
+      outStream << t.y << std::endl;
+      outStream << " 32" << std::endl;
+      outStream << t.z << std::endl;
+    }
+  }
+
+  if (!spline.end_tangents.empty()) {
+    for (const auto &t : spline.end_tangents) {
+      outStream << " 13" << std::endl;
+      outStream << t.x << std::endl;
+      outStream << " 23" << std::endl;
+      outStream << t.y << std::endl;
+      outStream << " 33" << std::endl;
+      outStream << t.z << std::endl;
+    }
+  }
+}
 } // namespace dxf
 } // namespace flywave

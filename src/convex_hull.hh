@@ -22,9 +22,14 @@ class point {
 public:
   double x;
   double y;
+  static constexpr double kTolerance = 1e-6;
 
   point(double x = 0, double y = 0);
   bool operator==(const point &other) const;
+
+  bool operator<(const point &other) const;
+
+  bool equals(const point &other, double tol = kTolerance) const;
 
   struct hash {
     size_t operator()(const point &p) const;
@@ -48,9 +53,13 @@ public:
   double a1;
   double a2;
   double ac;
+  static constexpr double kTolerance = 1e-6;
 
+  arc() = default; // Add default constructor
   arc(const point &c, double r, double a1, double a2);
   bool operator==(const arc &other) const;
+
+  bool equals(const arc &other, double tol = kTolerance) const;
 
   struct hash {
     size_t operator()(const arc &a) const;

@@ -230,7 +230,8 @@ shape shape::copy(bool deep) const {
     _copy.Build();
 
     if (!_copy.IsDone())
-      throw std::runtime_error("Section operation failed");
+      _copy.Shape().Free();
+    throw std::runtime_error("Section operation failed");
 
     auto shp = _copy.Shape();
 
@@ -254,14 +255,8 @@ shape shape::copy(bool deep) const {
       break;
     }
     return shape{};
-  } catch (Standard_Failure &e) {
-
-    const Standard_CString msg = e.GetMessageString();
-    if (msg != nullptr && strlen(msg) > 1) {
-      throw std::runtime_error(msg);
-    } else {
-      throw std::runtime_error("Failed to offset face");
-    }
+  } catch (...) {
+    throw;
   }
   return shape{};
 }
@@ -1607,7 +1602,7 @@ boost::optional<shape> shape::to_splines(int degree, double tolerance,
                                       tolerance, // 3D容差
                                       tolerance, // 2D容差
                                       degree,
-                                      1,             // 段数 (被degree参数主导)
+                                      1, // 段数 (被degree参数主导)
                                       GeomAbs_C0,    // 连续性
                                       GeomAbs_C0,    // 连续性
                                       Standard_True, // degree参数主导

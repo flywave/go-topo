@@ -30,6 +30,7 @@
 #include <iomanip>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <random>
 #include <sstream>
 #include <string>
@@ -61,10 +62,11 @@ BOOST_FUSION_ADAPT_STRUCT(parse_result,
 namespace flywave {
 namespace topo {
 namespace detail {
+std::mutex uuid_mutex;
 
 std::string generate_uuid() {
-  std::random_device rd;
-  std::mt19937 gen(rd());
+  std::lock_guard<std::mutex> lock(uuid_mutex);
+  static thread_local std::mt19937 gen(std::random_device{}());
   std::uniform_int_distribution<> dis(0, 255);
 
   std::stringstream ss;
@@ -127,11 +129,16 @@ toFusedCAF(const std::shared_ptr<assembly> &assy, bool glue = false,
     throw std::runtime_error("Error: Assembly " + assy->name() +
                              " has no shapes.");
   } else if (shape_color_pairs.size() == 1) {
-    // There is only one shape
     const auto &pair = shape_color_pairs[0];
     if (pair.first.shape_type() != "Compound") {
-      top_level_shape = compound::make_compound({pair.first}).value();
-    } else if (pair.first.shape_type() == "Compound") {
+      if (glue) {
+        auto fused = pair.first.fused({}, glue, tol ? *tol : 0.0f);
+        top_level_shape = compound::make_compound({fused}).value();
+        shape_color_pairs = {{fused, pair.second}};
+      } else {
+        top_level_shape = compound::make_compound({pair.first}).value();
+      }
+    } else {
       auto fused = pair.first.fused({}, glue, tol ? *tol : 0.0f);
       top_level_shape = compound::make_compound({fused}).value();
       shape_color_pairs = {{fused, pair.second}};
@@ -202,20 +209,34 @@ toFusedCAF(const std::shared_ptr<assembly> &assy, bool glue = false,
   return {top_level_lbl, doc};
 }
 
+struct document_raii {
+  Handle(TDocStd_Document) doc;
+  Handle(XCAFApp_Application) app;
+
+  document_raii() : app(XCAFApp_Application::GetApplication()) {
+    doc = new TDocStd_Document(TCollection_ExtendedString("XmlOcaf"));
+    app->InitDocument(doc);
+  }
+
+  ~document_raii() {
+    if (app && doc) {
+      app->Close(doc);
+    }
+  }
+};
+
 std::pair<TDF_Label, Handle(TDocStd_Document)>
 toCAF(const std::shared_ptr<assembly> &assy, bool coloredSTEP = false,
       bool mesh = false, float tolerance = 1e-3f,
       float angularTolerance = 0.1f) {
   // Prepare document
-  Handle(XCAFApp_Application) app = XCAFApp_Application::GetApplication();
-  Handle(TDocStd_Document) doc =
-      new TDocStd_Document(TCollection_ExtendedString("XmlOcaf"));
-  app->InitDocument(doc);
+  document_raii wrapper;
 
-  Handle(XCAFDoc_ShapeTool) tool = XCAFDoc_DocumentTool::ShapeTool(doc->Main());
+  Handle(XCAFDoc_ShapeTool) tool =
+      XCAFDoc_DocumentTool::ShapeTool(wrapper.doc->Main());
   tool->SetAutoNaming(Standard_False);
   Handle(XCAFDoc_ColorTool) ctool =
-      XCAFDoc_DocumentTool::ColorTool(doc->Main());
+      XCAFDoc_DocumentTool::ColorTool(wrapper.doc->Main());
 
   struct ColorAssemblyKey {
     Quantity_Color color;
@@ -316,50 +337,55 @@ toCAF(const std::shared_ptr<assembly> &assy, bool coloredSTEP = false,
   TDF_Label top = _to_caf_func(assy, TDF_Label(), nullptr);
   tool->UpdateAssemblies();
 
-  return {top, doc};
+  return {top, wrapper.doc};
 }
 
 bool export_assembly(const std::shared_ptr<assembly> &assy,
                      const std::string &path,
-                     const std::string &mode = "default") {
-  // Handle the extra settings for the STEP export
-  int pcurves = 1;
-  int precision_mode = 0;
-  boost::optional<float> fuzzy_tol;
-  bool glue = false;
+                     const std::string &mode = "default",
+                     boost::optional<float> fuzzy_tol = boost::none) {
+  try {
+    // Handle the extra settings for the STEP export
+    int pcurves = 1;
+    int precision_mode = 0;
+    boost::optional<float> fuzzy_tol;
+    bool glue = false;
 
-  // Use the assembly name if the user set it
-  std::string assembly_name =
-      assy->name().empty() ? generate_uuid() : assy->name();
+    // Use the assembly name if the user set it
+    std::string assembly_name =
+        assy->name().empty() ? generate_uuid() : assy->name();
 
-  // Handle the doc differently based on which mode we are using
-  Handle(TDocStd_Document) doc;
-  if (mode == "fused") {
-    if (fuzzy_tol) {
-      std::tie(std::ignore, doc) = toFusedCAF(assy, glue, *fuzzy_tol);
-    } else {
-      std::tie(std::ignore, doc) = toFusedCAF(assy, glue);
+    // Handle the doc differently based on which mode we are using
+    Handle(TDocStd_Document) doc;
+    if (mode == "fused") {
+      if (fuzzy_tol) {
+        std::tie(std::ignore, doc) = toFusedCAF(assy, glue, *fuzzy_tol);
+      } else {
+        std::tie(std::ignore, doc) = toFusedCAF(assy, glue);
+      }
+    } else { // Includes "default"
+      std::tie(std::ignore, doc) = toCAF(assy, true);
     }
-  } else { // Includes "default"
-    std::tie(std::ignore, doc) = toCAF(assy, true);
-  }
 
-  Handle(XSControl_WorkSession) session = new XSControl_WorkSession();
-  STEPCAFControl_Writer writer(session, Standard_False);
-  writer.SetColorMode(Standard_True);
-  writer.SetLayerMode(Standard_True);
-  writer.SetNameMode(Standard_True);
+    Handle(XSControl_WorkSession) session = new XSControl_WorkSession();
+    STEPCAFControl_Writer writer(session, Standard_False);
+    writer.SetColorMode(Standard_True);
+    writer.SetLayerMode(Standard_True);
+    writer.SetNameMode(Standard_True);
 
-  Interface_Static::SetIVal("write.surfacecurve.mode", pcurves);
-  Interface_Static::SetIVal("write.precision.mode", precision_mode);
+    Interface_Static::SetIVal("write.surfacecurve.mode", pcurves);
+    Interface_Static::SetIVal("write.precision.mode", precision_mode);
 
-  if (!writer.Transfer(doc, STEPControl_AsIs)) {
+    if (!writer.Transfer(doc, STEPControl_AsIs)) {
+      return false;
+    }
+
+    IFSelect_ReturnStatus status = writer.Write(path.c_str());
+
+    return status == IFSelect_RetDone;
+  } catch (const std::exception &e) {
     return false;
   }
-
-  IFSelect_ReturnStatus status = writer.Write(path.c_str());
-
-  return status == IFSelect_RetDone;
 }
 
 // 基本字符集定义
@@ -425,6 +451,16 @@ bool parse(const std::string &input, parse_result &result) {
   return x3::parse(iter, end, detail::grammar_def, result) && iter == end;
 }
 
+std::shared_ptr<assembly>
+assembly::create(assembly_object obj, std::shared_ptr<topo_location> loc,
+                 const std::string &name, std::shared_ptr<Quantity_Color> color,
+                 const std::unordered_map<std::string, boost::any> &metadata) {
+  auto ptr =
+      std::shared_ptr<assembly>(new assembly(obj, loc, name, color, metadata));
+  ptr->objects_[ptr->name_] = ptr;
+  return ptr;
+}
+
 assembly::assembly(assembly_object obj, std::shared_ptr<topo_location> loc,
                    const std::string &name,
                    std::shared_ptr<Quantity_Color> color,
@@ -474,7 +510,7 @@ assembly::assembly(assembly &&o) noexcept {
   constraints_ = std::move(o.constraints_);
   solveResult_ = std::move(o.solveResult_);
   // 重置原对象的状态
-  o.loc_ = nullptr;
+  o.loc_.reset();
   o.name_.clear();
   o.color_.reset();
   o.metadata_.clear();
@@ -499,7 +535,7 @@ assembly &assembly::operator=(assembly &&o) noexcept {
     constraints_ = std::move(o.constraints_);
     solveResult_ = std::move(o.solveResult_);
     // 重置原对象的状态
-    o.loc_ = nullptr;
+    o.loc_.reset();
     o.name_.clear();
     o.color_.reset();
     o.metadata_.clear();
@@ -515,7 +551,7 @@ assembly &assembly::operator=(assembly &&o) noexcept {
 
 std::shared_ptr<assembly> assembly::copy() const {
   // Create new assembly with copied basic properties
-  auto new_assembly = std::make_shared<assembly>(
+  auto new_assembly = assembly::create(
       obj_, loc_ ? std::make_shared<topo_location>(*loc_) : nullptr, name_,
       color_ ? std::make_shared<Quantity_Color>(*color_) : nullptr, metadata_);
 
@@ -552,6 +588,13 @@ assembly &assembly::add(std::shared_ptr<assembly> subAssembly,
                         std::shared_ptr<topo_location> loc,
                         const std::string &name,
                         std::shared_ptr<Quantity_Color> color) {
+  auto current = shared_from_this();
+  while (current) {
+    if (current == subAssembly) {
+      throw std::invalid_argument("Circular dependency detected");
+    }
+    current = current->parent_.lock();
+  }
   // Validate input
   if (!subAssembly) {
     throw std::invalid_argument("Cannot add null assembly");
@@ -590,7 +633,7 @@ assembly::add(assembly_object obj, std::shared_ptr<topo_location> loc,
               const std::string &name, std::shared_ptr<Quantity_Color> color,
               const std::unordered_map<std::string, boost::any> &metadata) {
   // Create new assembly from object
-  auto newAssembly = std::make_shared<assembly>(
+  auto newAssembly = assembly::create(
       std::move(obj), loc ? loc : std::make_shared<topo_location>(),
       name.empty() ? detail::generate_uuid() : name, color, metadata);
 
@@ -643,7 +686,7 @@ std::pair<std::string, shape> assembly::query(const std::string &q) const {
   }
 
   auto obj = obj_it->second->obj_;
-  std::shared_ptr<workplane> tmp_wp;
+  std::shared_ptr<workplane> tmp_wp = nullptr;
   shape_object result;
 
   // 使用 boost::get 替代 std::get_if
@@ -661,6 +704,10 @@ std::pair<std::string, shape> assembly::query(const std::string &q) const {
     throw std::invalid_argument("Invalid object type in assembly");
   } else {
     throw std::invalid_argument("Workplane or Shape required for query");
+  }
+
+  if (!tmp_wp) {
+    throw std::invalid_argument("Workplane not found");
   }
 
   // Apply selector if specified
@@ -756,7 +803,7 @@ assembly &assembly::add_constraint_impl(const std::string &id1, const shape *s1,
     topo_location loc1, loc2;
     std::string topId1, topId2;
     std::tie(loc1, topId1) = sub_location(id1);
-    std::tie(loc2, topId2) = sub_location(id1);
+    std::tie(loc2, topId2) = sub_location(id2);
 
     constraints_.push_back(constraint_spec(
         std::vector<std::string>{topId1, topId2}, std::vector<shape>{*s1, *s2},
@@ -767,6 +814,7 @@ assembly &assembly::add_constraint_impl(const std::string &id1, const shape *s1,
 }
 
 assembly &assembly::solve(int verbosity) {
+  std::lock_guard<std::mutex> lock(solve_mutex_);
   // Step 1: Collect and index entities with early exit
   if (constraints_.empty()) {
     throw std::runtime_error("At least one constraint required");
@@ -811,7 +859,7 @@ assembly &assembly::solve(int verbosity) {
   }
 
   // Step 4: Solve constraints
-  double scale = to_compound().bbox().GetDiagonalLength();
+  double scale = to_compound().bbox().DiagonalLength();
   constraint_solver solver(locs, constraint_pods, locked, scale);
 
   auto solve_result = solver.solve(verbosity);
@@ -841,6 +889,7 @@ assembly &assembly::solve(int verbosity) {
 
 assembly &assembly::export_to(const std::string &path,
                               const std::string &mode) {
+
   // Validate STEP export mode
   const std::vector<std::string> validStepModes = {"default", "fused",
                                                    "per_part"};

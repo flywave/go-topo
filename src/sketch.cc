@@ -18,33 +18,51 @@
 #include <boost/range/combine.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <cmath>
+#include <mutex>
 
 namespace flywave {
 namespace topo {
 namespace detail {
+std::mutex occt_mutex;
+
+struct occt_handle_raii {
+  Handle(TopTools_HSequenceOfShape) handle;
+
+  occt_handle_raii() : handle(new TopTools_HSequenceOfShape()) {}
+
+  ~occt_handle_raii() { handle.Nullify(); }
+};
 
 std::vector<wire> edges_to_wires(const std::vector<edge> &edges,
                                  double tolerance = 1e-6) {
-  Handle(TopTools_HSequenceOfShape) edges_in = new TopTools_HSequenceOfShape();
-  Handle(TopTools_HSequenceOfShape) wires_out = new TopTools_HSequenceOfShape();
+  // 检查输入的边是否有效
+  for (const auto &edge : edges) {
+    if (!edge.is_valid()) {
+      throw std::invalid_argument("Invalid edge in input");
+    }
+  }
+  std::lock_guard<std::mutex> lock(occt_mutex);
+
+  occt_handle_raii edges_in;
+  occt_handle_raii wires_out;
 
   // Add edges to input sequence
   for (const auto &edge : edges) {
-    edges_in->Append(edge.value());
+    edges_in.handle->Append(edge.value());
   }
 
   // Connect edges into wires
   ShapeAnalysis_FreeBounds::ConnectEdgesToWires(
-      edges_in, tolerance,
+      edges_in.handle, tolerance,
       false, // do not allow sharing of vertices
-      wires_out);
+      wires_out.handle);
 
   // Convert result to wire objects
   std::vector<wire> result;
-  result.reserve(wires_out->Length());
+  result.reserve(wires_out.handle->Length());
 
-  for (int i = 1; i <= wires_out->Length(); ++i) {
-    const TopoDS_Shape &wire_shape = wires_out->Value(i);
+  for (int i = 1; i <= wires_out.handle->Length(); ++i) {
+    const TopoDS_Shape &wire_shape = wires_out.handle->Value(i);
     if (wire_shape.ShapeType() != TopAbs_WIRE) {
       continue; // Skip non-wire results (shouldn't happen)
     }
@@ -78,7 +96,7 @@ sketch::sketch(const std::vector<topo_location> &locs,
 sketch::sketch(sketch &&o) noexcept {
   parent_ = o.parent_;
   locs_ = o.locs_;
-  faces_ = o.faces_;
+  faces_ = std::move(o.faces_);
   edges_ = o.edges_;
   selection_ = o.selection_;
   constraints_ = o.constraints_;
@@ -96,7 +114,7 @@ sketch &sketch::operator=(sketch &&o) noexcept {
   if (this != &o) {
     parent_ = o.parent_;
     locs_ = o.locs_;
-    faces_ = o.faces_;
+    faces_ = std::move(o.faces_);
     edges_ = o.edges_;
     selection_ = o.selection_;
     constraints_ = o.constraints_;
@@ -169,7 +187,9 @@ sketch &sketch::_face(boost::variant<wire, std::vector<topo::edge>, shape,
                       const boost::optional<std::string> &tag,
                       bool ignore_selection) {
   boost::variant<topo::face, std::shared_ptr<sketch>, compound> res;
-
+  if (b.which() == -1) {
+    throw std::invalid_argument("Invalid variant state");
+  }
   if (auto w = boost::get<wire>(&b)) {
     res = face::make_face(*w);
   } else if (auto s = boost::get<std::shared_ptr<sketch>>(&b)) {
@@ -256,7 +276,17 @@ sketch &sketch::trapezoid(double w, double h, double a1,
                           boost::optional<double> a2, double angle, Mode mode,
                           const boost::optional<std::string> &tag) {
   using namespace boost::math::constants;
+  if (w <= 0 || h <= 0) {
+    throw std::invalid_argument("Width and height must be positive");
+  }
 
+  if (a1 <= -90 || a1 >= 90) {
+    throw std::invalid_argument("Angle a1 must be between -90 and 90 degrees");
+  }
+
+  if (a2 && (*a2 <= -90 || *a2 >= 90)) {
+    throw std::invalid_argument("Angle a2 must be between -90 and 90 degrees");
+  }
   auto tan_a1 = std::tan(a1 * pi<double>() / 180.0);
   auto tan_a2 = a2 ? std::tan(*a2 * pi<double>() / 180.0) : tan_a1;
 
@@ -408,6 +438,24 @@ sketch &sketch::parray(double r, double a1, double da, int n, bool rotate) {
 sketch &sketch::distribute(int n, double start, double stop, bool rotate) {
   if (n < 1) {
     throw std::invalid_argument("At least 1 element required");
+  }
+
+  if (stop < start) {
+    throw std::invalid_argument("Stop value must be greater than start");
+  }
+
+  if (!selection_ || selection_->empty()) {
+    throw std::invalid_argument("Selection is empty - nothing to distribute");
+  }
+
+  // 验证选择集中的类型
+  for (const auto &sel : *selection_) {
+    if (auto sh = boost::get<shape>(&sel)) {
+      if (sh->shape_type() != "Edge" && sh->shape_type() != "Wire") {
+        throw std::invalid_argument(
+            "Only edges and wires are supported for distribution");
+      }
+    }
   }
 
   if (!selection_ || selection_->empty()) {
@@ -578,10 +626,9 @@ sketch &sketch::_each(
     faces_ = compound::make_compound(res);
     break;
   case Mode::CONSTRUCT:
-    if (!tag) {
+    if (!tag)
       throw std::invalid_argument(
           "No tag specified - the geometry will be unreachable");
-    }
     break;
   default:
     throw std::invalid_argument("Invalid mode");

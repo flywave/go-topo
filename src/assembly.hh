@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include <string>
 
 #include <boost/any.hpp>
@@ -30,12 +31,12 @@ struct assembly_element {
 
 class assembly : public std::enable_shared_from_this<assembly> {
 public:
-  // Construction
-  assembly(assembly_object obj = nullptr,
-           std::shared_ptr<topo_location> loc = nullptr,
-           const std::string &name = "",
-           std::shared_ptr<Quantity_Color> color = nullptr,
-           const std::unordered_map<std::string, boost::any> &metadata = {});
+  static std::shared_ptr<assembly>
+  create(assembly_object obj = boost::blank{},
+         std::shared_ptr<topo_location> loc = nullptr,
+         const std::string &name = "",
+         std::shared_ptr<Quantity_Color> color = nullptr,
+         const std::unordered_map<std::string, boost::any> &metadata = {});
 
   // Copy control
   assembly(const assembly &) = delete;
@@ -96,19 +97,34 @@ public:
 
   const std::string &name() const { return name_; }
 
-  const topo_location &location() const { return *loc_; }
+  const topo_location &location() const {
+    if (!loc_)
+      throw std::runtime_error("Null location");
+    return *loc_;
+  }
 
   bool has_color() const { return color_ != nullptr; }
 
-  const Quantity_Color &color() const { return *color_; }
+  const Quantity_Color &color() const {
+    if (!color_)
+      throw std::runtime_error("Null color");
+    return *color_;
+  }
 
-  bool has_obj() const { return boost::get<boost::blank>(&obj_) != nullptr; }
+  bool has_obj() const { return !boost::get<boost::blank>(&obj_); }
 
   const assembly_object &obj() const { return obj_; }
 
   std::vector<std::shared_ptr<assembly>> children() const { return children_; }
 
 protected:
+  // Construction
+  assembly(assembly_object obj = boost::blank{},
+           std::shared_ptr<topo_location> loc = nullptr,
+           const std::string &name = "",
+           std::shared_ptr<Quantity_Color> color = nullptr,
+           const std::unordered_map<std::string, boost::any> &metadata = {});
+
   // Internal methods
   std::pair<std::string, shape> query(const std::string &q) const;
   std::pair<topo_location, std::string>
@@ -126,6 +142,7 @@ protected:
 
 private:
   // Data members
+  mutable std::mutex solve_mutex_;
   std::shared_ptr<topo_location> loc_;
   std::string name_;
   std::shared_ptr<Quantity_Color> color_;

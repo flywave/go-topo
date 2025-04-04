@@ -122,7 +122,7 @@ std::shared_ptr<workplane> workplane::split(bool keepTop, bool keepBottom) {
   }
 
   solid s = find_solid();
-  double maxDim = s.bbox().GetDiagonalLength() * 10.0;
+  double maxDim = s.bbox().DiagonalLength() * 10.0;
 
   // Create cutting boxes
   auto topCutBox = this->_rect(maxDim, maxDim)->_extrude(maxDim);
@@ -1946,7 +1946,7 @@ std::shared_ptr<workplane> workplane::close() {
 
 double workplane::largest_dimension() {
   solid s = find_solid();
-  return s.bbox().GetDiagonalLength();
+  return s.bbox().DiagonalLength();
 }
 
 std::shared_ptr<workplane>
