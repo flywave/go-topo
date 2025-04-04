@@ -5,7 +5,9 @@
 #include <TopoDS_Edge.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Vec.hxx>
+
 #include <utility>
+#include <vector>
 
 class Adaptor3d_Curve;
 class gp_Trsf;

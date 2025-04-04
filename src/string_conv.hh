@@ -7,7 +7,6 @@
 #include <TCollection_HAsciiString.hxx>
 #include <locale>
 #include <string>
-#include <string_view>
 
 namespace flywave {
 
@@ -31,12 +30,6 @@ OutputStringType string_conv(const InputStringType &str) {
 template <typename StringType>
 std::string to_std_string(const StringType &str) {
   return string_conv<std::string>(str);
-}
-
-// X -> std::string_view
-template <typename StringType>
-std::string_view to_std_string_view(const StringType &str) {
-  return string_conv<std::string_view>(str);
 }
 
 // X -> TCollection_AsciiString
@@ -106,42 +99,6 @@ template <size_t N> struct string_conv_t<char[N], TCollection_ExtendedString> {
   }
 };
 
-#if 0
-// std::string_view -> TCollection_ExtendedString
-template<> struct string_conv_t<std::string_view, TCollection_ExtendedString> {
-    static auto to(std::string_view str) {
-        return TCollection_ExtendedString(str.data(), true/*multi-byte*/);
-    }
-};
-#endif
-
-// --
-// -- std::string_view -> X
-// --
-
-// std::string_view -> TCollection_AsciiString
-template <> struct string_conv_t<std::string_view, TCollection_AsciiString> {
-  static auto to(std::string_view str) {
-    return TCollection_AsciiString(str.data(), int(str.size()));
-  }
-};
-
-// std::string_view -> Handle(TCollection_HAsciiString)
-template <>
-struct string_conv_t<std::string_view, ogg_handle<TCollection_HAsciiString>> {
-  static auto to(std::string_view str) {
-    return make_ogg_handle<TCollection_HAsciiString>(
-        to_ogg_ascii_string_handle(str));
-  }
-};
-
-// std::string_view -> NCollection_Utf8String
-template <> struct string_conv_t<std::string_view, NCollection_Utf8String> {
-  static auto to(std::string_view str) {
-    return NCollection_Utf8String(str.data(), static_cast<int>(str.size()));
-  }
-};
-
 // --
 // -- Handle(TCollection_HAsciiString) -> X
 // --
@@ -152,15 +109,6 @@ struct string_conv_t<ogg_handle<TCollection_HAsciiString>, std::string> {
   static auto to(const ogg_handle<TCollection_HAsciiString> &str) {
     return string_conv<std::string>(str ? str->String()
                                         : TCollection_AsciiString());
-  }
-};
-
-// Handle(TCollection_HAsciiString) -> std::string_view
-template <>
-struct string_conv_t<ogg_handle<TCollection_HAsciiString>, std::string_view> {
-  static auto to(const ogg_handle<TCollection_HAsciiString> &str) {
-    return string_conv<std::string_view>(str ? str->String()
-                                             : TCollection_AsciiString());
   }
 };
 
@@ -208,12 +156,6 @@ template <> struct string_conv_t<TCollection_AsciiString, std::string> {
   }
 };
 
-// TCollection_AsciiString -> std::string_view
-template <> struct string_conv_t<TCollection_AsciiString, std::string_view> {
-  static auto to(const TCollection_AsciiString &str) {
-    return std::string_view(str.ToCString(), str.Length());
-  }
-};
 
 // --
 // -- TCollection_ExtendedString -> X
@@ -237,12 +179,5 @@ template <> struct string_conv_t<TCollection_ExtendedString, std::u16string> {
   }
 };
 
-// TCollection_ExtendedString -> std::u16string_view
-template <>
-struct string_conv_t<TCollection_ExtendedString, std::u16string_view> {
-  static auto to(const TCollection_ExtendedString &str) {
-    return std::u16string_view(str.ToExtString(), str.Length());
-  }
-};
 
 } // namespace flywave

@@ -2047,7 +2047,7 @@ bool dxf_read::read_mtext() {
 
     get_line();
 
-    auto fnMatchExtensionBegin = [=](std::string_view extName, bool &tag) {
+    auto fnMatchExtensionBegin = [=](const std::string &extName, bool &tag) {
       if (!tag && _str == extName) {
         tag = true;
         return true;
@@ -2055,7 +2055,7 @@ bool dxf_read::read_mtext() {
       return false;
     };
 
-    auto fnMatchExtensionEnd = [=](std::string_view extName, bool &tag) {
+    auto fnMatchExtensionEnd = [=](const std::string &extName, bool &tag) {
       if (tag && _str == extName) {
         tag = false;
         return true;

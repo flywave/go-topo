@@ -83,8 +83,8 @@ public:
       throw std::runtime_error("Unsupported plane name");
     }
 
-    auto [xDir, normal] = it->second;
-    return topo_plane(origin, xDir, normal);
+    auto tp = it->second;
+    return topo_plane(origin, std::get<0>(tp), std::get<1>(tp));
   }
 
   topo_plane(const topo_vector &origin, const topo_vector &xDir,

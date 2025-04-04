@@ -170,7 +170,7 @@ public:
 };
 
 // Helper function to multiply matrix with vector
-topo_vector operator*(const topo_matrix &m, const topo_vector &v) {
+inline topo_vector operator*(const topo_matrix &m, const topo_vector &v) {
   // Convert vector to point (to include translation)
   gp_Pnt p = v.toPnt();
   p.Transform(m.getWrapped().Trsf());

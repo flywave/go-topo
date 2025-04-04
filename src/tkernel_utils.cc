@@ -40,7 +40,7 @@ std::string kernel_utils::color_to_hex(const Quantity_Color &color) {
   return strHex;
 }
 
-bool kernel_utils::color_from_hex(std::string_view strHex,
+bool kernel_utils::color_from_hex(const std::string &strHex,
                                   Quantity_Color *color) {
   if (!color)
     return true;
@@ -65,7 +65,7 @@ bool kernel_utils::color_from_hex(std::string_view strHex,
       return -1;
   };
 
-  auto fnHex2Int = [&](std::string_view str) {
+  auto fnHex2Int = [&](const std::string &str) {
     int result = 0;
     for (char c : str) {
       result = result * 16;

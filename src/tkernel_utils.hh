@@ -39,7 +39,7 @@ public:
 
   static std::string color_to_hex(const Quantity_Color &color);
 
-  static bool color_from_hex(std::string_view strHex, Quantity_Color *color);
+  static bool color_from_hex(const std::string &strHex, Quantity_Color *color);
 
   static Quantity_TypeOfColor preferred_rgb_color_type();
 

@@ -59,7 +59,7 @@ public:
   sketch(sketch &&) noexcept;
   sketch &operator=(sketch &&) noexcept;
 
-  std::vector<face> get_faces() const;
+  std::vector<topo::face> get_faces() const;
 
   sketch &face(const wire &w, double angle = 0, Mode mode = Mode::ADD,
                const std::string &tag = "", bool ignore_selection = false);

@@ -54,7 +54,7 @@ std::streampos fileSize(const std::string &path) {
   return in.tellg();
 }
 
-bool startsWith(std::string_view str, std::string_view prefix) {
+bool startsWith(const std::string &str, const std::string &prefix) {
   return str.substr(0, prefix.size()) == prefix;
 }
 

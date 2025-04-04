@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 namespace flywave {
 namespace geom_utils {

@@ -1839,6 +1839,7 @@ int topo_face_sweep(topo_face_t f, topo_wire_t spine, topo_shape_t **profiles,
   } catch (...) {
     return -1;
   }
+  return -1;
 }
 
 int topo_face_sweep_wire(topo_face_t f, topo_wire_t spine,
@@ -1856,6 +1857,7 @@ int topo_face_sweep_wire(topo_face_t f, topo_wire_t spine,
   } catch (...) {
     return -1;
   }
+  return -1;
 }
 
 int topo_face_loft(topo_face_t f, topo_shape_t **profiles, int profilesCount,
@@ -2225,6 +2227,7 @@ int topo_shell_sweep(topo_shell_t ss, topo_wire_t spine,
   } catch (...) {
     return -1;
   }
+  return -1;
 }
 
 int topo_shell_sweep_wire(topo_shell_t ss, topo_wire_t spine,
@@ -2241,6 +2244,7 @@ int topo_shell_sweep_wire(topo_shell_t ss, topo_wire_t spine,
   } catch (...) {
     return -1;
   }
+  return -1;
 }
 
 void topo_solid_free(topo_solid_t t) {
@@ -2717,6 +2721,7 @@ int topo_solid_sweep(topo_solid_t s, topo_wire_t spine, topo_shape_t **profiles,
   } catch (...) {
     return -1;
   }
+  return -1;
 }
 
 int topo_solid_sweep_wire(topo_solid_t s, topo_wire_t spine,
@@ -2733,6 +2738,7 @@ int topo_solid_sweep_wire(topo_solid_t s, topo_wire_t spine,
   } catch (...) {
     return -1;
   }
+  return -1;
 }
 
 int topo_solid_boolean(topo_solid_t s, topo_solid_t tool, int op) {
