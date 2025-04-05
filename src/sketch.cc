@@ -130,6 +130,14 @@ sketch &sketch::operator=(sketch &&o) noexcept {
   return *this;
 }
 
+
+int sketch::hash_code() const {
+  if (!faces_) {
+    return 0;
+  }
+  return faces_->hash_code();
+}
+
 std::vector<face> sketch::get_faces() const {
   std::vector<topo::face> result;
   for (auto &loc : locs_) {
@@ -1022,7 +1030,7 @@ topo_vector sketch::end_point() {
 
 sketch &sketch::edge(topo::edge &val, const boost::optional<std::string> &tag,
                      bool for_construction) {
-  // val.set_for_construction(for_construction);
+  val.set_for_construction(for_construction);
   edges_.push_back(val);
 
   if (tag) {
@@ -1225,9 +1233,9 @@ sketch &sketch::solve() {
           auto p2 = topo_vector(edge->end_point()) - center;
           auto pm = topo_vector(edge->position_at(0.5)) - center;
 
-          auto a1 = topo_vector(0, 1).getSignedAngle(p1);
-          auto a2 = p1.getSignedAngle(p2);
-          auto a3 = p1.getSignedAngle(pm);
+          auto a1 = topo_vector(0, 1).get_signed_angle(p1);
+          auto a2 = p1.get_signed_angle(p2);
+          auto a3 = p1.get_signed_angle(pm);
 
           if (a3 > 0 && a2 < 0)
             a2 += 2 * M_PI;

@@ -81,7 +81,7 @@ box_selector::filter(const std::vector<shape> &objects) const {
   for (const auto &obj : objects) {
     if (use_bounding_box_) {
       auto bb = obj.bbox();
-      if (is_inside(bb.Min()) && is_inside(bb.Max())) {
+      if (is_inside(bb.min()) && is_inside(bb.max())) {
         result.push_back(obj);
       }
     } else if (is_inside(obj.centre_of_mass())) {

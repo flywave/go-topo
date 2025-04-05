@@ -33,7 +33,8 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
-  vertex(TopoDS_Shape shp) : shape(shp) {}
+  vertex(TopoDS_Shape shp, bool forConstruction = false)
+      : shape(shp, forConstruction) {}
   vertex(const shape &v, TopoDS_Shape shp) : shape(v, shp) {}
 
 protected:

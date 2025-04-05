@@ -388,12 +388,10 @@ bool export_assembly(const std::shared_ptr<assembly> &assy,
   }
 }
 
-// 基本字符集定义
 const std::string PATH_DELIM = "/";
 const auto name_char = x3::alnum | x3::char_('_');
 const auto tag_char = x3::alnum | x3::char_('_');
 
-// 组合式路径名解析规则
 struct name_rule : x3::parser<name_rule> {
   using attribute_type = std::string;
 
@@ -416,7 +414,7 @@ struct name_rule : x3::parser<name_rule> {
 
       if (first == last || *first != PATH_DELIM[0])
         break;
-      ++first; // 跳过分隔符
+      ++first;
     }
 
     if (result.empty())
@@ -426,17 +424,14 @@ struct name_rule : x3::parser<name_rule> {
   }
 };
 
-// 定义各解析规则
 const name_rule name = {};
 const auto tag = x3::rule<class tag_rule, std::string>{} = +tag_char;
 
 const auto selector_type = x3::rule<class stype_rule, std::string>{} =
     x3::lit("solids") | "faces" | "edges" | "vertices";
 
-const auto selector = x3::rule<class sel_rule, std::string>{} =
-    +x3::char_; // 简化处理，实际需按_selector_grammar实现
+const auto selector = x3::rule<class sel_rule, std::string>{} = +x3::char_;
 
-// 组合完整语法规则
 const auto grammar_def = name >> -('?' >> tag) >>
                          -('@' >> selector_type >> '@' >> selector);
 } // namespace detail
@@ -859,7 +854,7 @@ assembly &assembly::solve(int verbosity) {
   }
 
   // Step 4: Solve constraints
-  double scale = to_compound().bbox().DiagonalLength();
+  double scale = to_compound().bbox().diagonal_length();
   constraint_solver solver(locs, constraint_pods, locked, scale);
 
   auto solve_result = solver.solve(verbosity);

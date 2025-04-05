@@ -365,7 +365,7 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
-  solid(TopoDS_Shape shp);
+  solid(TopoDS_Shape shp, bool forConstruction = false);
   solid(const shape &s, TopoDS_Shape shp);
 
 protected:

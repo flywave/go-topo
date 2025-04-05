@@ -229,7 +229,7 @@ public:
     return this->hash_code() < other.hash_code();
   }
 
-  shape(TopoDS_Shape shp);
+  shape(TopoDS_Shape shp, bool forConstruction = false);
   shape(const shape &s, TopoDS_Shape shp);
 
   bool export_step(const std::string &fileName, bool write_pcurves = true,
@@ -256,6 +256,10 @@ public:
   std::vector<shell> shells() const;
   std::vector<solid> solids() const;
   std::vector<comp_solid> comp_solids() const;
+
+  inline bool for_construction() const { return _for_construction; }
+
+  void set_for_construction(bool for_construction);
 
   inline int num_vertices() const { return num_entities(TopAbs_VERTEX); }
   virtual int num_edges() const { return num_entities(TopAbs_EDGE); }
@@ -326,6 +330,8 @@ protected:
   std::string _label;
   Quantity_Color _surface_colour;
   Quantity_Color _curve_colour;
+
+  bool _for_construction;
 
   TopoDS_Shape _shape;
 

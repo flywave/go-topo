@@ -15,6 +15,7 @@ boost::optional<shape> select_shape(const shape_object &object) {
 
 std::vector<shape> select_shapes(const std::vector<shape_object> &objects) {
   std::vector<shape> result;
+  result.reserve(objects.size());
   for (const auto &obj : objects) {
     if (auto s = boost::get<shape>(&obj)) {
       result.push_back(*s);
@@ -29,17 +30,16 @@ workplane::workplane()
 
 workplane::workplane(topo_plane plane, topo_vector *origin, shape_object obj)
     : _plane(std::make_shared<topo_plane>(plane)), _parent(),
-      _ctx(std::make_shared<context>()) {
-  if (!obj.empty()) {
-    _objects.push_back(obj);
-  }
-}
+      _ctx(std::make_shared<context>()),
+      _objects(obj.empty() ? std::vector<shape_object>{}
+                           : std::vector<shape_object>{obj}) {}
 
 workplane::workplane(const std::string &planeName, topo_vector *origin,
                      shape_object obj)
     : _parent(), _ctx(std::make_shared<context>()) {
-  _plane = std::make_shared<topo_plane>(
-      topo_plane::named(planeName, origin ? *origin : topo_vector(0, 0, 0)));
+  auto plane =
+      topo_plane::named(planeName, origin ? *origin : topo_vector(0, 0, 0));
+  _plane = std::make_shared<topo_plane>(std::move(plane));
   if (!obj.empty()) {
     _objects.push_back(obj);
   }
@@ -80,37 +80,73 @@ workplane &workplane::tag(const std::string &name) {
   return *this;
 }
 
-std::vector<shape> workplane::collect_property(const std::string &propName) {
+std::vector<shape>
+workplane::collect_property(const std::string &propName) const {
   std::vector<shape> result;
   std::unordered_map<shape, bool> seen; // used as an ordered set
 
   for (auto &obj : _objects) {
-    if (propName == "Solids") {
-      if (auto s = boost::get<shape>(&obj)) {
-        if (s->shape_type() == "Compounds") {
-          for (auto &k : s->compounds()) {
+    if (auto shp = boost::get<shape>(&obj)) {
+      if (propName == "Solids") {
+        if (shp->shape_type() == "Compounds") {
+          for (auto &k : shp->compounds()) {
             if (seen.find(k) == seen.end()) {
               seen[k] = true;
               result.push_back(k);
             }
           }
         }
+      } else if (propName == "Compounds") {
+        for (auto &k : shp->compounds()) {
+          if (seen.find(k) == seen.end()) {
+            seen[k] = true;
+            result.push_back(k);
+          }
+        }
+      } else if (propName == "Faces") {
+        for (auto &k : shp->faces()) {
+          if (seen.find(k) == seen.end()) {
+            seen[k] = true;
+            result.push_back(k);
+          }
+        }
+      } else if (propName == "Edges") {
+        for (auto &k : shp->edges()) {
+          if (seen.find(k) == seen.end()) {
+            seen[k] = true;
+            result.push_back(k);
+          }
+        }
+      } else if (propName == "Vertices") {
+        for (auto &k : shp->vertices()) {
+          if (seen.find(k) == seen.end()) {
+            seen[k] = true;
+            result.push_back(k);
+          }
+        }
+      } else if (propName == "Wires") {
+        for (auto &k : shp->wires()) {
+          if (seen.find(k) == seen.end()) {
+            seen[k] = true;
+            result.push_back(k);
+          }
+        }
+      } else if (propName == "Solids") {
+        for (auto &k : shp->solids()) {
+          if (seen.find(k) == seen.end()) {
+            seen[k] = true;
+            result.push_back(k);
+          }
+        }
+      } else if (propName == "CompSolids") {
+        for (auto &k : shp->comp_solids()) {
+          if (seen.find(k) == seen.end()) {
+            seen[k] = true;
+            result.push_back(k);
+          }
+        }
       }
     }
-    /**
-        // Check if object has the property
-        // This is a simplified version - in real code you'd need proper type
-        // checking and property access based on the actual shape types
-        if (auto shp = boost::get<shape>(&obj)) {
-          if (shp->has_property(propName)) {
-            for (auto &k : shp->get_property(propName)) {
-              if (seen.find(k) == seen.end()) {
-                seen[k] = true;
-                result.push_back(k);
-              }
-            }
-          }
-        } */
   }
 
   return result;
@@ -122,13 +158,11 @@ std::shared_ptr<workplane> workplane::split(bool keepTop, bool keepBottom) {
   }
 
   solid s = find_solid();
-  double maxDim = s.bbox().DiagonalLength() * 10.0;
+  double maxDim = s.bbox().diagonal_length() * 10.0;
 
-  // Create cutting boxes
   auto topCutBox = this->_rect(maxDim, maxDim)->_extrude(maxDim);
   auto bottomCutBox = this->_rect(maxDim, maxDim)->_extrude(-maxDim);
 
-  // Perform cuts
   auto top = s.cuted({bottomCutBox});
   auto bottom = s.cuted({topCutBox});
 
@@ -177,22 +211,23 @@ std::vector<std::shared_ptr<workplane>> workplane::all() {
 
 size_t workplane::size() const { return _objects.size(); }
 
+bool workplane::has_parent() const { return !_parent.expired(); }
+
+std::shared_ptr<workplane> workplane::parent() const { return _parent.lock(); }
+
 std::vector<shape_object> workplane::vals() const { return _objects; }
 
-// Overload for adding another workplane
 workplane &workplane::add(const workplane &other) {
   _objects.insert(_objects.end(), other._objects.begin(), other._objects.end());
   merge_tags(other);
   return *this;
 }
 
-// Overload for adding a single shape object
 workplane &workplane::add(const shape_object &obj) {
   _objects.push_back(obj);
   return *this;
 }
 
-// Overload for adding a vector of shape objects
 workplane &workplane::add(const std::vector<shape_object> &objs) {
   _objects.insert(_objects.end(), objs.begin(), objs.end());
   return *this;
@@ -205,7 +240,8 @@ shape_object workplane::val() const {
   return _plane ? _plane->origin : topo_vector(0, 0, 0);
 }
 
-std::shared_ptr<workplane> workplane::get_tagged(const std::string &name) {
+std::shared_ptr<workplane>
+workplane::get_tagged(const std::string &name) const {
   auto it = _ctx->tags().find(name);
   if (it == _ctx->tags().end()) {
     throw std::runtime_error("No Workplane object named " + name + " in chain");
@@ -215,7 +251,6 @@ std::shared_ptr<workplane> workplane::get_tagged(const std::string &name) {
 
 workplane &workplane::merge_tags(const workplane &other) {
   if (_ctx != other._ctx) {
-    // Merge tags from other context into this one
     _ctx->tags().insert(other._ctx->tags().begin(), other._ctx->tags().end());
   }
   return *this;
@@ -225,10 +260,9 @@ shape workplane::value() const {
   shape_object v = val();
 
   if (const auto *sk = boost::get<std::shared_ptr<topo::sketch>>(&v)) {
-    return *(*sk)->faces_; // Assuming sketch has a faces() method returning
-                           // TopoDS_Shape
+    return *(*sk)->faces_;
   } else if (const shape *sh = boost::get<shape>(&v)) {
-    return sh->value(); // Assuming shape has a wrapped() method
+    return sh->value();
   } else {
     throw std::runtime_error("Unsupported object type for toOCC conversion");
   }
@@ -237,7 +271,6 @@ shape workplane::value() const {
 std::shared_ptr<workplane> workplane::create(double offset, bool invert,
                                              const std::string &centerOption,
                                              topo_vector *origin) {
-  // Validate center option
   static const std::unordered_set<std::string> validOptions = {
       "CenterOfMass", "ProjectedOrigin", "CenterOfBoundBox"};
   if (validOptions.find(centerOption) == validOptions.end()) {
@@ -247,7 +280,6 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
   gp_Dir xDir;
   gp_Vec normal;
 
-  // Check for multiple objects
   if (_objects.size() > 1) {
     std::vector<face> faces;
     for (auto &obj : _objects) {
@@ -263,7 +295,6 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
           "If multiple objects selected, they all must be planar faces.");
     }
 
-    // Check if all faces are coplanar
     if (!are_faces_coplanar(faces)) {
       throw std::runtime_error("Selected faces must be co-planar.");
     }
@@ -297,16 +328,16 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
         } else if (centerOption == "CenterOfBoundBox") {
           center_ = shp->center_of_bound_box();
         }
-
-        shape_object parentVal = _parent ? _parent->val() : shape_object();
+        shape_object parentVal =
+            has_parent() ? parent()->val() : shape_object();
         if (auto parentFace = boost::get<shape>(&parentVal)) {
           if (parentFace->shape_type() == "Face") {
             normal = parentFace->cast<topo::face>()->normal_at(&center_);
             xDir = compute_x_dir(normal);
           }
         } else {
-          normal = _plane->getZDir();
-          xDir = _plane->getXDir();
+          normal = _plane->get_z_dir();
+          xDir = _plane->get_x_dir();
         }
       }
     } else if (auto vec = boost::get<topo_vector>(&obj)) {
@@ -315,16 +346,15 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
       } else if (centerOption == "CenterOfBoundBox") {
         center_ = *vec;
       }
-
-      shape_object parentVal = _parent ? _parent->val() : shape_object();
+      shape_object parentVal = has_parent() ? parent()->val() : shape_object();
       if (auto parentFace = boost::get<shape>(&parentVal)) {
         if (parentFace->shape_type() == "Face") {
           normal = parentFace->cast<topo::face>()->normal_at(&center_);
           xDir = compute_x_dir(normal);
         }
       } else {
-        normal = _plane->getZDir();
-        xDir = _plane->getXDir();
+        normal = _plane->get_z_dir();
+        xDir = _plane->get_x_dir();
       }
     } else {
       throw std::runtime_error(
@@ -332,22 +362,18 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
     }
   }
 
-  // Handle ProjectedOrigin case
   if (centerOption == "ProjectedOrigin") {
-    topo_vector orig = origin ? *origin : _plane->getOrigin();
-    center_ = orig.projectToPlane(topo_plane(center_, xDir, normal));
+    topo_vector orig = origin ? *origin : _plane->get_origin();
+    center_ = orig.project_to_plane(topo_plane(center_, xDir, normal));
   }
 
-  // Invert if requested
   if (invert) {
     normal = normal.Multiplied(-1.0);
   }
 
-  // Apply offset
   gp_Vec offsetVector = normal.Normalized().Multiplied(offset);
   gp_Pnt offsetCenter = center_.Translated(offsetVector);
 
-  // Create new workplane
   topo_plane newPlane(offsetCenter, xDir, normal);
   auto s = std::make_shared<workplane>(newPlane);
   s->_parent = shared_from_this();
@@ -356,7 +382,6 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
   return s;
 }
 
-// Helper methods
 bool workplane::are_faces_coplanar(const std::vector<face> &faces) const {
   if (faces.empty())
     return true;
@@ -368,12 +393,10 @@ bool workplane::are_faces_coplanar(const std::vector<face> &faces) const {
     gp_Pnt p1 = faces[i].center();
     gp_Vec n1 = faces[i].normal_at();
 
-    // Test normals (direction of planes)
     if (!n0.is_equal(n1, _ctx->tolerance())) {
       return false;
     }
 
-    // Test if p1 is on the plane of f0 (offset of planes)
     if (std::abs(n0.dot(p0 - p1)) > _ctx->tolerance()) {
       return false;
     }
@@ -384,7 +407,6 @@ bool workplane::are_faces_coplanar(const std::vector<face> &faces) const {
 gp_Vec workplane::compute_x_dir(const gp_Vec &normal) const {
   gp_Vec xd = gp_Vec(0, 0, 1).Crossed(normal);
   if (xd.Magnitude() < _ctx->tolerance()) {
-    // Face is parallel with x-y plane, use global x direction
     xd = gp_Vec(1, 0, 0);
   }
   return xd;
@@ -425,13 +447,16 @@ std::shared_ptr<workplane> workplane::last() {
 }
 
 std::shared_ptr<workplane> workplane::end(int n) {
-  std::shared_ptr<workplane> rv = this->shared_from_this();
+  std::shared_ptr<workplane> rv = nullptr;
   for (int i = 0; i < n; ++i) {
-    if (rv->_parent) {
-      rv = rv->_parent;
+    if (rv->has_parent()) {
+      rv = rv->parent();
     } else {
       throw std::runtime_error("Cannot End the chain-- no parents!");
     }
+  }
+  if (!rv) {
+    return this->shared_from_this();
   }
   return rv;
 }
@@ -450,7 +475,7 @@ struct shape_type_visitor : public boost::static_visitor<std::string> {
 };
 
 shape workplane::find_type(const std::vector<std::string> &types,
-                           bool searchStack, bool searchParents) {
+                           bool searchStack, bool searchParents) const {
   std::vector<shape> rv;
 
   if (searchStack) {
@@ -471,19 +496,15 @@ shape workplane::find_type(const std::vector<std::string> &types,
         } else if (auto shp = boost::get<std::shared_ptr<topo::sketch>>(&obj)) {
           rv.push_back(*(*shp)->faces_);
         }
-      }
-      // Special handling for Compounds when looking for Solids
-      else if (objType == "Compound" &&
-               std::find(types.begin(), types.end(), "Solid") != types.end()) {
+      } else if (objType == "Compound" && std::find(types.begin(), types.end(),
+                                                    "Solid") != types.end()) {
         if (auto c = boost::get<shape>(&obj)) {
           if (c->shape_type() == "Compound") {
             auto solids = c->get_shapes(TopAbs_SOLID);
             rv.insert(rv.end(), solids.begin(), solids.end());
           }
         }
-      }
-      // Normal unpacking of Compounds
-      else if (objType == "Compound") {
+      } else if (objType == "Compound") {
         if (auto cs = boost::get<shape>(&obj)) {
           if (cs->shape_type() == "Compound") {
             for (auto &el : cs->children()) {
@@ -509,14 +530,14 @@ shape workplane::find_type(const std::vector<std::string> &types,
     }
   }
 
-  if (searchParents && _parent) {
-    return _parent->find_type(types, true, true);
+  if (searchParents && has_parent()) {
+    return parent()->find_type(types, true, true);
   }
 
   return shape{}; // return empty variant
 }
 
-solid workplane::find_solid(bool searchStack, bool searchParents) {
+solid workplane::find_solid(bool searchStack, bool searchParents) const {
   auto s = find_type({"Solid"}, searchStack, searchParents);
 
   if (!s) {
@@ -540,15 +561,15 @@ solid workplane::find_solid(bool searchStack, bool searchParents) {
 std::shared_ptr<workplane> workplane::select_objects(
     const std::string &objType,
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
-    const boost::optional<std::string> &tag) {
-  workplane &cq_obj = tag ? *get_tagged(*tag) : *this;
+    const boost::optional<std::string> &tag) const {
+  const workplane &cq_obj = tag ? *get_tagged(*tag) : *this;
   auto toReturn = cq_obj.collect_property(objType);
   return new_shape_object(filter(toReturn, selector));
 }
 
 std::vector<shape> workplane::filter(
     const std::vector<shape> &objs,
-    const boost::optional<boost::variant<selector_ptr, std::string>> &s) {
+    const boost::optional<boost::variant<selector_ptr, std::string>> &s) const {
   if (s) {
     std::shared_ptr<flywave::topo::selector> selectorObj;
     if (auto str = boost::get<std::string>(&*s)) {
@@ -562,7 +583,7 @@ std::vector<shape> workplane::filter(
 }
 
 std::shared_ptr<workplane> workplane::vertices(const std::string &selector,
-                                               const std::string &tag) {
+                                               const std::string &tag) const {
   return _vertices(
       selector.empty()
           ? boost::none
@@ -572,14 +593,14 @@ std::shared_ptr<workplane> workplane::vertices(const std::string &selector,
 }
 
 std::shared_ptr<workplane> workplane::vertices(const selector_ptr &sel,
-                                               const std::string &tag) {
+                                               const std::string &tag) const {
   return _vertices(boost::variant<selector_ptr, std::string>(sel),
                    tag.empty() ? boost::none
                                : boost::optional<std::string>(tag));
 }
 
 std::shared_ptr<workplane> workplane::faces(const std::string &selector,
-                                            const std::string &tag) {
+                                            const std::string &tag) const {
   return _faces(
       selector.empty()
           ? boost::none
@@ -589,13 +610,13 @@ std::shared_ptr<workplane> workplane::faces(const std::string &selector,
 }
 
 std::shared_ptr<workplane> workplane::faces(const selector_ptr &sel,
-                                            const std::string &tag) {
+                                            const std::string &tag) const {
   return _faces(boost::variant<selector_ptr, std::string>(sel),
                 tag.empty() ? boost::none : boost::optional<std::string>(tag));
 }
 
 std::shared_ptr<workplane> workplane::edges(const std::string &selector,
-                                            const std::string &tag) {
+                                            const std::string &tag) const {
   return _edges(
       selector.empty()
           ? boost::none
@@ -605,13 +626,13 @@ std::shared_ptr<workplane> workplane::edges(const std::string &selector,
 }
 
 std::shared_ptr<workplane> workplane::edges(const selector_ptr &sel,
-                                            const std::string &tag) {
+                                            const std::string &tag) const {
   return _edges(boost::variant<selector_ptr, std::string>(sel),
                 tag.empty() ? boost::none : boost::optional<std::string>(tag));
 }
 
 std::shared_ptr<workplane> workplane::wires(const std::string &selector,
-                                            const std::string &tag) {
+                                            const std::string &tag) const {
   return _wires(
       selector.empty()
           ? boost::none
@@ -621,13 +642,13 @@ std::shared_ptr<workplane> workplane::wires(const std::string &selector,
 }
 
 std::shared_ptr<workplane> workplane::wires(const selector_ptr &sel,
-                                            const std::string &tag) {
+                                            const std::string &tag) const {
   return _wires(boost::variant<selector_ptr, std::string>(sel),
                 tag.empty() ? boost::none : boost::optional<std::string>(tag));
 }
 
 std::shared_ptr<workplane> workplane::solids(const std::string &selector,
-                                             const std::string &tag) {
+                                             const std::string &tag) const {
   return _solids(
       selector.empty()
           ? boost::none
@@ -637,13 +658,13 @@ std::shared_ptr<workplane> workplane::solids(const std::string &selector,
 }
 
 std::shared_ptr<workplane> workplane::solids(const selector_ptr &sel,
-                                             const std::string &tag) {
+                                             const std::string &tag) const {
   return _solids(boost::variant<selector_ptr, std::string>(sel),
                  tag.empty() ? boost::none : boost::optional<std::string>(tag));
 }
 
 std::shared_ptr<workplane> workplane::shells(const std::string &selector,
-                                             const std::string &tag) {
+                                             const std::string &tag) const {
   return _shells(
       selector.empty()
           ? boost::none
@@ -653,13 +674,13 @@ std::shared_ptr<workplane> workplane::shells(const std::string &selector,
 }
 
 std::shared_ptr<workplane> workplane::shells(const selector_ptr &sel,
-                                             const std::string &tag) {
+                                             const std::string &tag) const {
   return _shells(boost::variant<selector_ptr, std::string>(sel),
                  tag.empty() ? boost::none : boost::optional<std::string>(tag));
 }
 
 std::shared_ptr<workplane> workplane::compounds(const std::string &selector,
-                                                const std::string &tag) {
+                                                const std::string &tag) const {
   return _compounds(
       selector.empty()
           ? boost::none
@@ -669,7 +690,7 @@ std::shared_ptr<workplane> workplane::compounds(const std::string &selector,
 }
 
 std::shared_ptr<workplane> workplane::compounds(const selector_ptr &sel,
-                                                const std::string &tag) {
+                                                const std::string &tag) const {
   return _compounds(boost::variant<selector_ptr, std::string>(sel),
                     tag.empty() ? boost::none
                                 : boost::optional<std::string>(tag));
@@ -677,49 +698,49 @@ std::shared_ptr<workplane> workplane::compounds(const selector_ptr &sel,
 
 std::shared_ptr<workplane> workplane::_vertices(
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
-    const boost::optional<std::string> &tag) {
+    const boost::optional<std::string> &tag) const {
   return select_objects("Vertices", selector, tag);
 }
 
 std::shared_ptr<workplane> workplane::_faces(
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
-    const boost::optional<std::string> &tag) {
+    const boost::optional<std::string> &tag) const {
   return select_objects("Faces", selector, tag);
 }
 
 std::shared_ptr<workplane> workplane::_edges(
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
-    const boost::optional<std::string> &tag) {
+    const boost::optional<std::string> &tag) const {
   return select_objects("Edges", selector, tag);
 }
 
 std::shared_ptr<workplane> workplane::_wires(
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
-    const boost::optional<std::string> &tag) {
+    const boost::optional<std::string> &tag) const {
   return select_objects("Wires", selector, tag);
 }
 
 std::shared_ptr<workplane> workplane::_solids(
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
-    const boost::optional<std::string> &tag) {
+    const boost::optional<std::string> &tag) const {
   return select_objects("Solids", selector, tag);
 }
 
 std::shared_ptr<workplane> workplane::_shells(
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
-    const boost::optional<std::string> &tag) {
+    const boost::optional<std::string> &tag) const {
   return select_objects("Shells", selector, tag);
 }
 
 std::shared_ptr<workplane> workplane::_compounds(
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
-    const boost::optional<std::string> &tag) {
+    const boost::optional<std::string> &tag) const {
   return select_objects("Compounds", selector, tag);
 }
 
 std::shared_ptr<workplane>
 workplane::ancestors(TopAbs_ShapeEnum kind,
-                     const boost::optional<std::string> &tag) {
+                     const boost::optional<std::string> &tag) const {
   solid ctx_solid = find_solid();
   std::vector<shape_object> objects =
       tag ? get_tagged(*tag)->_objects : _objects;
@@ -731,16 +752,15 @@ workplane::ancestors(TopAbs_ShapeEnum kind,
       results.insert(results.end(), ancestors.begin(), ancestors.end());
     }
   }
-  /**
-    // Remove duplicates
-    std::unordered_set<shape_object> unique_results(results.begin(),
-                                                    results.end()); */
-  return new_shape_object(results);
+  std::unordered_set<shape> unique_results(results.begin(), results.end());
+  std::vector<shape> newResults(unique_results.begin(), unique_results.end());
+
+  return new_shape_object(newResults);
 }
 
 std::shared_ptr<workplane>
 workplane::siblings(TopAbs_ShapeEnum kind, int level,
-                    const boost::optional<std::string> &tag) {
+                    const boost::optional<std::string> &tag) const {
   solid ctx_solid = find_solid();
   std::vector<shape_object> objects =
       tag ? get_tagged(*tag)->_objects : _objects;
@@ -759,11 +779,9 @@ workplane::siblings(TopAbs_ShapeEnum kind, int level,
   }
 
   std::unordered_set<shape> unique_results(results.begin(), results.end());
-  for (auto &shp : shapes) {
-    unique_results.erase(shp);
-  }
-  return new_object(
-      std::vector<shape_object>(unique_results.begin(), unique_results.end()));
+  std::vector<shape> newResults(unique_results.begin(), unique_results.end());
+
+  return new_shape_object(newResults);
 }
 
 std::shared_ptr<workplane>
@@ -815,23 +833,23 @@ std::shared_ptr<workplane> workplane::mirror(const face &mirrorFace,
   return _mirror(mirrorFace, basePoint, unionResult);
 }
 
-std::shared_ptr<workplane>
-workplane::mirror(const std::shared_ptr<workplane> &mirrorPlane,
-                  const gp_Pnt &basePoint, bool unionResult) {
+std::shared_ptr<workplane> workplane::mirror(const workplane &mirrorPlane,
+                                             const gp_Pnt &basePoint,
+                                             bool unionResult) {
   return _mirror(mirrorPlane, basePoint, unionResult);
 }
 
 std::shared_ptr<workplane> workplane::_mirror(
-    const boost::variant<std::string, gp_Vec, face, std::shared_ptr<workplane>>
-        &mirrorPlane,
+    const boost::variant<std::string, gp_Vec, face,
+                         std::reference_wrapper<const workplane>> &mirrorPlane,
     const boost::optional<gp_Pnt> &basePointVector, bool unionResult) {
   gp_Vec mp;
   gp_Pnt bp;
   boost::optional<topo::face> mirrorFace;
 
-  // Handle mirrorPlane parameter
-  if (auto wp = boost::get<std::shared_ptr<workplane>>(&mirrorPlane)) {
-    shape_object val = (*wp)->val();
+  if (auto wp =
+          boost::get<std::reference_wrapper<const workplane>>(&mirrorPlane)) {
+    shape_object val = wp->get().val();
     if (auto f = boost::get<shape>(&val)) {
       if (f->shape_type() == "Face") {
         mp = f->cast<topo::face>()->normal_at();
@@ -849,7 +867,6 @@ std::shared_ptr<workplane> workplane::_mirror(
     mp = plane_string_to_normal(*planeStr);
   }
 
-  // Handle base point
   if (mirrorFace && !basePointVector) {
     bp = mirrorFace->center();
   } else if (!basePointVector) {
@@ -858,7 +875,6 @@ std::shared_ptr<workplane> workplane::_mirror(
     bp = *basePointVector;
   }
 
-  // Create mirrored objects
   std::vector<shape_object> mirrored;
   for (auto &obj : vals()) {
     if (auto sh = boost::get<shape>(&obj)) {
@@ -868,7 +884,7 @@ std::shared_ptr<workplane> workplane::_mirror(
   auto newS = new_object(mirrored);
 
   if (unionResult) {
-    return this->union_(newS);
+    return this->union_(*newS);
   }
   return newS;
 }
@@ -974,10 +990,10 @@ std::shared_ptr<workplane> workplane::chamfer(double length,
 std::shared_ptr<workplane> workplane::transformed(const gp_Vec &rotate,
                                                   const gp_Vec &offset) {
   auto p = _plane->rotated(rotate);
-  p.setOrigin(_plane->toWorldCoords(offset));
+  p.set_origin(_plane->to_world_coords(offset));
 
   auto ns = std::make_shared<workplane>();
-  ns->_objects.push_back(p.getOrigin());
+  ns->_objects.push_back(p.get_origin());
   ns->_plane = std::make_shared<topo_plane>(p);
   ns->_parent = shared_from_this();
   ns->_ctx = _ctx;
@@ -987,20 +1003,16 @@ std::shared_ptr<workplane> workplane::transformed(const gp_Vec &rotate,
 
 template <typename T>
 std::shared_ptr<workplane>
-workplane::new_shape_object(const std::vector<T> &objlist) {
-  // Create new workplane instance
+workplane::new_shape_object(const std::vector<T> &objlist) const {
   auto ns = std::make_shared<workplane>();
 
-  // Copy plane if it exists
   if (_plane) {
     ns->_plane = std::make_shared<topo_plane>(*_plane);
   }
 
-  // Set parent and context
-  ns->_parent = shared_from_this();
+  ns->_parent = std::const_pointer_cast<workplane>(shared_from_this());
   ns->_ctx = _ctx;
 
-  // Copy objects
   ns->_objects.clear();
   for (const auto &obj : objlist) {
     ns->_objects.push_back(obj);
@@ -1010,54 +1022,50 @@ workplane::new_shape_object(const std::vector<T> &objlist) {
 }
 
 template std::shared_ptr<workplane>
-workplane::new_shape_object(const std::vector<shape> &objlist);
+workplane::new_shape_object(const std::vector<shape> &objlist) const;
 
 template std::shared_ptr<workplane>
-workplane::new_shape_object(const std::vector<compound> &objlist);
+workplane::new_shape_object(const std::vector<compound> &objlist) const;
 
 template std::shared_ptr<workplane>
-workplane::new_shape_object(const std::vector<vertex> &objlist);
+workplane::new_shape_object(const std::vector<vertex> &objlist) const;
 
 template std::shared_ptr<workplane>
-workplane::new_shape_object(const std::vector<topo::wire> &objlist);
+workplane::new_shape_object(const std::vector<topo::wire> &objlist) const;
 
 template std::shared_ptr<workplane>
-workplane::new_shape_object(const std::vector<edge> &objlist);
+workplane::new_shape_object(const std::vector<edge> &objlist) const;
 
 template std::shared_ptr<workplane>
-workplane::new_shape_object(const std::vector<face> &objlist);
+workplane::new_shape_object(const std::vector<face> &objlist) const;
 
 template std::shared_ptr<workplane>
-workplane::new_shape_object(const std::vector<topo::shell> &objlist);
+workplane::new_shape_object(const std::vector<topo::shell> &objlist) const;
 
 template std::shared_ptr<workplane>
-workplane::new_shape_object(const std::vector<solid> &objlist);
+workplane::new_shape_object(const std::vector<solid> &objlist) const;
 
 template std::shared_ptr<workplane>
-workplane::new_shape_object(const std::vector<comp_solid> &objlist);
+workplane::new_shape_object(const std::vector<comp_solid> &objlist) const;
 
 std::shared_ptr<workplane>
-workplane::new_object(const std::vector<shape_object> &objlist) {
-  // Create new workplane instance
+workplane::new_object(const std::vector<shape_object> &objlist) const {
   auto ns = std::make_shared<workplane>();
 
-  // Copy plane if it exists
   if (_plane) {
     ns->_plane = std::make_shared<topo_plane>(*_plane);
   }
 
-  // Set parent and context
-  ns->_parent = shared_from_this();
+  ns->_parent = std::const_pointer_cast<workplane>(shared_from_this());
   ns->_ctx = _ctx;
 
-  // Copy objects
   ns->_objects = objlist;
 
   return ns;
 }
 
 gp_Pnt workplane::find_from_point(bool useLocalCoords) {
-  shape_object obj = _objects.empty() ? _plane->getOrigin() : _objects.back();
+  shape_object obj = _objects.empty() ? _plane->get_origin() : _objects.back();
 
   topo_vector p;
   if (auto shp = boost::get<shape>(&obj)) {
@@ -1070,7 +1078,7 @@ gp_Pnt workplane::find_from_point(bool useLocalCoords) {
     throw std::runtime_error("Cannot convert object type to point");
   }
 
-  return useLocalCoords ? _plane->toLocalCoords(p) : p;
+  return useLocalCoords ? _plane->to_local_coords(p) : p;
 }
 
 edge workplane::find_from_edge(bool useLocalCoords) {
@@ -1081,7 +1089,7 @@ edge workplane::find_from_edge(bool useLocalCoords) {
   shape_object obj = _objects.back();
   if (auto e = boost::get<shape>(&obj)) {
     if (e->shape_type() == "Edge") {
-      return useLocalCoords ? *_plane->toLocalCoords(*e).cast<edge>()
+      return useLocalCoords ? *_plane->to_local_coords(*e).cast<edge>()
                             : *e->cast<edge>();
     }
   } else {
@@ -1150,7 +1158,6 @@ std::shared_ptr<workplane> workplane::polar_array(double radius,
     throw std::runtime_error("At least 1 element required");
   }
 
-  // Calculate angle between elements
   if (fill) {
     if (std::abs(std::fmod(angle, 360.0)) < TOL) {
       angle = angle / count;
@@ -1195,16 +1202,16 @@ workplane::push_points(const std::vector<topo_vector> &pntList) {
 }
 
 std::shared_ptr<workplane> workplane::center(double x, double y) {
-  topo_vector new_origin = _plane->toWorldCoords(gp_Pnt(x, y, 0));
+  topo_vector new_origin = _plane->to_world_coords(gp_Pnt(x, y, 0));
   auto n = new_object({shape_object(new_origin)});
-  n->_plane->setOrigin2d(x, y);
+  n->_plane->set_origin2d(x, y);
   return n;
 }
 
 std::shared_ptr<workplane> workplane::line_to(double x, double y,
                                               bool forConstruction) {
   gp_Pnt startPoint = find_from_point(false);
-  gp_Pnt endPoint = _plane->toWorldCoords(gp_Pnt(x, y, 0));
+  gp_Pnt endPoint = _plane->to_world_coords(gp_Pnt(x, y, 0));
 
   edge p = edge::make_edge(startPoint, endPoint);
 
@@ -1287,13 +1294,13 @@ workplane::polar_line_to(double distance, double angle, bool forConstruction) {
 
 std::shared_ptr<workplane> workplane::move_to(double x, double y) {
   gp_Pnt newCenter(x, y, 0);
-  return new_object({_plane->toWorldCoords(newCenter)});
+  return new_object({_plane->to_world_coords(newCenter)});
 }
 
 std::shared_ptr<workplane> workplane::move(double xDist, double yDist) {
   gp_Pnt p = find_from_point(true);
   gp_Pnt newCenter(p.X() + xDist, p.Y() + yDist, 0);
-  return new_object({_plane->toWorldCoords(newCenter)});
+  return new_object({_plane->to_world_coords(newCenter)});
 }
 
 std::shared_ptr<workplane> workplane::slot2d(double length, double diameter,
@@ -1332,14 +1339,14 @@ workplane::spline(const std::vector<gp_Pnt> &points,
     allPoints.push_back(find_from_point(false));
   }
   for (const auto &p : points) {
-    allPoints.push_back(_plane->toWorldCoords(p));
+    allPoints.push_back(_plane->to_world_coords(p));
   }
 
   std::vector<gp_Vec> worldTangents;
   if (tangents) {
     std::vector<gp_Vec> tans;
     for (const auto &t : *tangents) {
-      tans.push_back(_plane->toWorldCoords(t) - _plane->getOrigin());
+      tans.push_back(_plane->to_world_coords(t) - _plane->get_origin());
     }
     worldTangents = tans;
   }
@@ -1372,7 +1379,7 @@ std::shared_ptr<workplane> workplane::spline_approx(
     allPoints.push_back(find_from_point(false));
   }
   for (const auto &p : points) {
-    allPoints.push_back(_plane->toWorldCoords(p));
+    allPoints.push_back(_plane->to_world_coords(p));
   }
 
   edge e = edge::make_spline_approx(allPoints, tol ? *tol : 1e-6, smoothing,
@@ -1399,7 +1406,7 @@ std::shared_ptr<workplane> workplane::parametric_curve(
   double diff = stop - start;
   std::vector<gp_Pnt> allPoints;
   for (int t = 0; t <= N; t++) {
-    allPoints.push_back(_plane->toWorldCoords(func(start + diff * t / N)));
+    allPoints.push_back(_plane->to_world_coords(func(start + diff * t / N)));
   }
 
   edge e = edge::make_spline_approx(allPoints, tol, smoothing, minDeg, maxDeg);
@@ -1423,7 +1430,7 @@ std::shared_ptr<workplane> workplane::parametric_surface(
   for (int i = 0; i <= N; i++) {
     std::vector<gp_Pnt> row;
     for (int j = 0; j <= N; j++) {
-      row.push_back(_plane->toWorldCoords(
+      row.push_back(_plane->to_world_coords(
           func(start + diff * i / N, start + diff * j / N)));
     }
     allPoints.push_back(row);
@@ -1470,8 +1477,8 @@ std::shared_ptr<workplane> workplane::three_point_arc(const gp_Pnt &point1,
                                                       const gp_Pnt &point2,
                                                       bool forConstruction) {
   gp_Pnt gstartPoint = find_from_point(false);
-  gp_Pnt gpoint1 = _plane->toWorldCoords(point1);
-  gp_Pnt gpoint2 = _plane->toWorldCoords(point2);
+  gp_Pnt gpoint1 = _plane->to_world_coords(point1);
+  gp_Pnt gpoint2 = _plane->to_world_coords(point2);
 
   edge arc = edge::make_three_point_arc(gstartPoint, gpoint1, gpoint2);
 
@@ -1542,7 +1549,7 @@ std::shared_ptr<workplane> workplane::tangent_arc_point(const gp_Pnt &endpoint,
     endpointVec =
         gp_Pnt(endpointVec.X() + current.X(), endpointVec.Y() + current.Y(), 0);
   }
-  endpointVec = _plane->toWorldCoords(endpointVec);
+  endpointVec = _plane->to_world_coords(endpointVec);
 
   edge previousEdge = find_from_edge();
   gp_Pnt edgeEnd = previousEdge.end_point();
@@ -1558,23 +1565,18 @@ std::shared_ptr<workplane> workplane::tangent_arc_point(const gp_Pnt &endpoint,
 }
 
 std::shared_ptr<workplane> workplane::wire(bool forConstruction) {
-  // Check if there are no pending edges
   if (_ctx->pending_edges().empty()) {
     return this->shared_from_this();
   }
 
-  // Get pending edges from context
   std::vector<topo::edge> edges = _ctx->pop_pending_edges();
 
-  // Assemble edges into a wire
   topo::wire w = topo::wire::make_wire(edges);
 
-  // Add to pending wires if not for construction
   if (!forConstruction) {
     add_pending_wire(w);
   }
 
-  // Filter out edges from objects and add the new wire
   std::vector<shape> new_objects;
   for (const auto &obj : _objects) {
     if (auto edge = boost::get<shape>(&obj)) {
@@ -1601,7 +1603,7 @@ std::shared_ptr<workplane> workplane::mirrory() {
     }
   }
 
-  std::vector<shape> mirroredWires = _plane->mirrorInPlane(shapes, "Y");
+  std::vector<shape> mirroredWires = _plane->mirror_in_plane(shapes, "Y");
   for (auto &w : mirroredWires) {
     consolidated->_objects.push_back(w);
     consolidated->add_pending_wire(*w.cast<topo::wire>());
@@ -1623,7 +1625,7 @@ std::shared_ptr<workplane> workplane::mirrorx() {
     }
   }
 
-  std::vector<shape> mirroredWires = _plane->mirrorInPlane(shapes, "X");
+  std::vector<shape> mirroredWires = _plane->mirror_in_plane(shapes, "X");
   for (auto &w : mirroredWires) {
     consolidated->_objects.push_back(w);
     consolidated->add_pending_wire(*w.cast<topo::wire>());
@@ -1636,7 +1638,7 @@ void workplane::add_pending_edge(const edge &e) {
   _ctx->pending_edges().push_back(e);
 
   if (!_ctx->first_point()) {
-    _ctx->set_first_point(_plane->toLocalCoords(e.start_point()));
+    _ctx->set_first_point(_plane->to_local_coords(e.start_point()));
   }
 }
 
@@ -1683,7 +1685,7 @@ workplane::each(std::function<shape_object(shape_object &)> callback,
     if (useLocalCoordinates) {
       auto shape = select_shape(obj);
       if (shape) {
-        shape_object so(_plane->toLocalCoords(*shape));
+        shape_object so(_plane->to_local_coords(*shape));
         r = callback(so);
 
         auto shape = select_shape(r);
@@ -1698,9 +1700,9 @@ workplane::each(std::function<shape_object(shape_object &)> callback,
 
     if (auto w = boost::get<shape>(&r)) {
       if (w->shape_type() == "Wire") {
-        // if (!w->forConstruction()) {
-        add_pending_wire(*w->cast<topo::wire>());
-        //}
+        if (!w->for_construction()) {
+          add_pending_wire(*w->cast<topo::wire>());
+        }
       }
     }
 
@@ -1726,14 +1728,14 @@ workplane::eachpoint(std::function<shape(topo_location)> func,
   return _eachpoint(func, useLocalCoordinates, combine, clean);
 }
 
-std::shared_ptr<workplane>
-workplane::eachpoint(const std::shared_ptr<workplane> &wp,
-                     bool useLocalCoordinates, bool combine, bool clean) {
+std::shared_ptr<workplane> workplane::eachpoint(const workplane &wp,
+                                                bool useLocalCoordinates,
+                                                bool combine, bool clean) {
   return _eachpoint(wp, useLocalCoordinates, combine, clean);
 }
 
 std::shared_ptr<workplane> workplane::_eachpoint(
-    const boost::variant<shape, std::shared_ptr<workplane>,
+    const boost::variant<shape, std::reference_wrapper<const workplane>,
                          std::function<shape(topo_location)>> &arg,
     bool useLocalCoordinates, bool combine, bool clean) {
   std::vector<topo_location> pnts;
@@ -1758,9 +1760,9 @@ std::shared_ptr<workplane> workplane::_eachpoint(
   }
 
   std::vector<shape> res;
-  if (auto wp = boost::get<std::shared_ptr<workplane>>(&arg)) {
+  if (auto wp = boost::get<std::reference_wrapper<const workplane>>(&arg)) {
     if (useLocalCoordinates) {
-      for (auto &v : (*wp)->vals()) {
+      for (auto &v : wp->get().vals()) {
         if (auto s = boost::get<shape>(&v)) {
           for (auto &p : pnts) {
             res.push_back(s->moved(p).moved(loc));
@@ -1768,7 +1770,7 @@ std::shared_ptr<workplane> workplane::_eachpoint(
         }
       }
     } else {
-      for (auto &v : (*wp)->vals()) {
+      for (auto &v : wp->get().vals()) {
         if (auto s = boost::get<shape>(&v)) {
           for (auto &p : pnts) {
             res.push_back(s->moved(p * loc));
@@ -1802,9 +1804,9 @@ std::shared_ptr<workplane> workplane::_eachpoint(
 
   for (auto &r : res) {
     if (auto w = r.cast<topo::wire>()) {
-      // if (!w->forConstruction()) {
-      add_pending_wire(*w);
-      //}
+      if (!w->for_construction()) {
+        add_pending_wire(*w);
+      }
     }
   }
 
@@ -1860,7 +1862,7 @@ workplane::_rect(double xLen, double yLen,
 std::shared_ptr<workplane> workplane::circle(double radius,
                                              bool forConstruction) {
   topo::wire c = topo::wire::make_circle(radius, gp_Pnt(), gp_Vec(0, 0, 1));
-  // c.setForConstruction(forConstruction);
+  c.set_for_construction(forConstruction);
   return _eachpoint([c](const topo_location &loc) { return c.moved(loc); },
                     true);
 }
@@ -1871,7 +1873,7 @@ std::shared_ptr<workplane> workplane::ellipse(double x_radius, double y_radius,
   topo::wire e =
       topo::wire::make_ellipse(x_radius, y_radius, gp_Pnt(), gp_Vec(0, 0, 1),
                                gp_Vec(1, 0, 0), rotation_angle);
-  // e.setForConstruction(forConstruction);
+  e.set_for_construction(forConstruction);
   return _eachpoint([e](const topo_location &loc) { return e.moved(loc); },
                     true);
 }
@@ -1898,7 +1900,7 @@ std::shared_ptr<workplane> workplane::polygon(int nSides, double diameter,
     pnts.emplace_back(radius * std::cos(o), radius * std::sin(o), 0);
   }
 
-  topo::wire p = topo::wire::make_polygon(pnts, forConstruction);
+  topo::wire p = topo::wire::make_polygon(pnts, false, forConstruction);
   return _eachpoint([p](const topo_location &loc) { return p.moved(loc); },
                     true);
 }
@@ -1912,12 +1914,12 @@ workplane::polyline(const std::vector<gp_Pnt> &points, bool forConstruction,
   if (includeCurrent) {
     startPoint = find_from_point(false);
   } else {
-    startPoint = _plane->toWorldCoords(points[0]);
+    startPoint = _plane->to_world_coords(points[0]);
   }
 
   size_t startIdx = includeCurrent ? 0 : 1;
   for (size_t i = startIdx; i < points.size(); i++) {
-    gp_Pnt endPoint = _plane->toWorldCoords(points[i]);
+    gp_Pnt endPoint = _plane->to_world_coords(points[i]);
     edges.push_back(edge::make_edge(startPoint, endPoint));
     if (!forConstruction) {
       add_pending_edge(edges.back());
@@ -1944,9 +1946,9 @@ std::shared_ptr<workplane> workplane::close() {
   return wire();
 }
 
-double workplane::largest_dimension() {
+double workplane::largest_dimension() const {
   solid s = find_solid();
-  return s.bbox().DiagonalLength();
+  return s.bbox().diagonal_length();
 }
 
 std::shared_ptr<workplane>
@@ -2033,8 +2035,8 @@ std::shared_ptr<workplane> workplane::twist_extrude(double distance,
 
   std::vector<shape> shapes;
   for (auto &f : faces) {
-    shapes.push_back(*topo::extrude_linear_with_rotation(f, _plane->getOrigin(),
-                                                         eDir, angleDegrees));
+    shapes.push_back(*topo::extrude_linear_with_rotation(
+        f, _plane->get_origin(), eDir, angleDegrees));
   }
 
   shape r = compound::make_compound(shapes).fuse({});
@@ -2095,23 +2097,21 @@ workplane::_extrude(boost::variant<double, std::string, face> until,
 std::shared_ptr<workplane> workplane::revolve(
     double angleDegrees, const boost::optional<gp_Pnt> &axisStart,
     const boost::optional<gp_Pnt> &axisEnd, bool combine, bool clean) {
-  // Normalize angle
   angleDegrees = std::fmod(angleDegrees, 360.0);
   if (angleDegrees == 0)
     angleDegrees = 360.0;
 
-  // Calculate axis points
-  gp_Pnt startPoint = axisStart ? _plane->toWorldCoords(*axisStart)
-                                : _plane->toWorldCoords(gp_Pnt(0, 0, 0));
+  gp_Pnt startPoint = axisStart ? _plane->to_world_coords(*axisStart)
+                                : _plane->to_world_coords(gp_Pnt(0, 0, 0));
 
   gp_Pnt endPoint;
   if (axisEnd) {
-    endPoint = _plane->toWorldCoords(*axisEnd);
+    endPoint = _plane->to_world_coords(*axisEnd);
   } else {
     if (startPoint.Y() != 0) {
-      endPoint = _plane->toWorldCoords(gp_Pnt(0, startPoint.Y(), 0));
+      endPoint = _plane->to_world_coords(gp_Pnt(0, startPoint.Y(), 0));
     } else {
-      endPoint = _plane->toWorldCoords(gp_Pnt(0, 1, 0));
+      endPoint = _plane->to_world_coords(gp_Pnt(0, 1, 0));
     }
   }
 
@@ -2120,8 +2120,8 @@ std::shared_ptr<workplane> workplane::revolve(
 }
 
 std::shared_ptr<workplane>
-workplane::sweep(const std::shared_ptr<workplane> &path, bool multisection,
-                 bool makeSolid, bool isFrenet, bool combine, bool clean,
+workplane::sweep(workplane &path, bool multisection, bool makeSolid,
+                 bool isFrenet, bool combine, bool clean,
                  const transition_mode &transition,
                  const boost::optional<gp_Vec> &normal,
                  const boost::optional<workplane> &auxSpine) {
@@ -2150,13 +2150,13 @@ workplane::sweep(const edge &path, bool multisection, bool makeSolid,
 }
 
 std::shared_ptr<workplane> workplane::_sweep(
-    boost::variant<std::shared_ptr<workplane>, topo::wire, edge> path,
+    boost::variant<std::reference_wrapper<workplane>, topo::wire, edge> path,
     bool multisection, bool makeSolid, bool isFrenet, bool combine, bool clean,
     const transition_mode &transition, const boost::optional<gp_Vec> &normal,
     const boost::optional<workplane> &auxSpine) {
   boost::variant<std::shared_ptr<workplane>, topo::wire, topo::edge> pathWire;
-  if (auto wp = boost::get<std::shared_ptr<workplane>>(&path)) {
-    pathWire = (*wp)->wire();
+  if (auto wp = boost::get<std::reference_wrapper<workplane>>(&path)) {
+    pathWire = wp->get().wire();
   } else if (auto w = boost::get<topo::wire>(&path)) {
     pathWire = *w;
   } else if (auto e = boost::get<edge>(&path)) {
@@ -2247,9 +2247,8 @@ workplane::combine(bool clean, bool glue, const boost::optional<double> &tol) {
   return new_object({s});
 }
 
-std::shared_ptr<workplane>
-workplane::union_(const std::shared_ptr<workplane> &other, bool clean,
-                  bool glue, double tol) {
+std::shared_ptr<workplane> workplane::union_(const workplane &other, bool clean,
+                                             bool glue, double tol) {
   return _union_(other, clean, glue, tol);
 }
 
@@ -2264,11 +2263,12 @@ std::shared_ptr<workplane> workplane::union_(const compound &other, bool clean,
 }
 
 std::shared_ptr<workplane> workplane::_union_(
-    boost::variant<std::shared_ptr<workplane>, solid, compound> toUnion,
+    boost::variant<std::reference_wrapper<const workplane>, solid, compound>
+        toUnion,
     bool clean, bool glue, const boost::optional<double> &tol) {
   std::vector<shape> newS;
-  if (auto wp = boost::get<std::shared_ptr<workplane>>(&toUnion)) {
-    auto solids = (*wp)->solids()->vals();
+  if (auto wp = boost::get<std::reference_wrapper<const workplane>>(&toUnion)) {
+    auto solids = wp->get().solids()->vals();
     if (solids.empty()) {
       throw std::runtime_error(
           "Workplane must have at least one solid to union");
@@ -2278,7 +2278,7 @@ std::shared_ptr<workplane> workplane::_union_(
         newS.push_back(*s);
       }
     }
-    merge_tags(**wp);
+    merge_tags(*wp);
   } else if (auto s = boost::get<solid>(&toUnion)) {
     newS = {*s};
   } else if (auto c = boost::get<compound>(&toUnion)) {
@@ -2305,9 +2305,8 @@ std::shared_ptr<workplane> workplane::_union_(
   return new_object({r});
 }
 
-std::shared_ptr<workplane>
-workplane::cut(const std::shared_ptr<workplane> &other, bool clean,
-               double tol) {
+std::shared_ptr<workplane> workplane::cut(const workplane &other, bool clean,
+                                          double tol) {
   return _cut(other, clean, tol);
 }
 
@@ -2322,14 +2321,15 @@ std::shared_ptr<workplane> workplane::cut(const compound &other, bool clean,
 }
 
 std::shared_ptr<workplane> workplane::_cut(
-    boost::variant<std::shared_ptr<workplane>, solid, compound> toCut,
+    boost::variant<std::reference_wrapper<const workplane>, solid, compound>
+        toCut,
     bool clean, const boost::optional<double> &tol) {
   solid solidRef = find_solid(true, true);
 
   std::vector<shape> solidToCut;
-  if (auto wp = boost::get<std::shared_ptr<workplane>>(&toCut)) {
-    solidToCut = select_shapes((*wp)->vals());
-    merge_tags(**wp);
+  if (auto wp = boost::get<std::reference_wrapper<const workplane>>(&toCut)) {
+    solidToCut = select_shapes(wp->get().vals());
+    merge_tags(*wp);
   } else if (auto s = boost::get<solid>(&toCut)) {
     solidToCut = {*s};
   } else if (auto c = boost::get<compound>(&toCut)) {
@@ -2346,9 +2346,8 @@ std::shared_ptr<workplane> workplane::_cut(
   return new_object({newS});
 }
 
-std::shared_ptr<workplane>
-workplane::intersect(const std::shared_ptr<workplane> &other, bool clean,
-                     double tol) {
+std::shared_ptr<workplane> workplane::intersect(const workplane &other,
+                                                bool clean, double tol) {
   return _intersect(other, clean, tol);
 }
 
@@ -2363,14 +2362,16 @@ std::shared_ptr<workplane> workplane::intersect(const compound &other,
 }
 
 std::shared_ptr<workplane> workplane::_intersect(
-    boost::variant<std::shared_ptr<workplane>, solid, compound> toIntersect,
+    boost::variant<std::reference_wrapper<const workplane>, solid, compound>
+        toIntersect,
     bool clean, const boost::optional<double> &tol) {
   solid solidRef = find_solid(true, true);
 
   std::vector<shape> solidToIntersect;
-  if (auto wp = boost::get<std::shared_ptr<workplane>>(&toIntersect)) {
-    solidToIntersect = select_shapes((*wp)->vals());
-    merge_tags(**wp);
+  if (auto wp =
+          boost::get<std::reference_wrapper<const workplane>>(&toIntersect)) {
+    solidToIntersect = select_shapes(wp->get().vals());
+    merge_tags(*wp);
   } else if (auto s = boost::get<solid>(&toIntersect)) {
     solidToIntersect = {*s};
   } else if (auto c = boost::get<compound>(&toIntersect)) {
@@ -2548,7 +2549,6 @@ shape workplane::_extrude(const boost::optional<double> &distance, bool both,
                           bool additive) {
   auto faces = get_faces();
 
-  // Check for nested geometry with tapered extrusion
   if (taper) {
     for (auto &face : faces) {
       if (!face.inner_wires().empty()) {
@@ -2578,7 +2578,7 @@ shape workplane::_extrude(const boost::optional<double> &distance, bool both,
         auto facesList = _get_intersected_faces(face, eDir, direction, both);
         if (res.cast<topo::solid>()->is_inside(face.outer_wire().center()) &&
             additive && *idx == 0) {
-          *idx = 1; // extrude until next face outside the solid
+          *idx = 1;
         }
         limitFace = facesList[*idx];
       } else {
@@ -2625,7 +2625,6 @@ std::vector<face> workplane::_get_intersected_faces(
   }
 
   if (facesList.empty()) {
-    // Try opposite direction
     facesList = topo::faces_intersected_by_line(
         find_solid(), face.center(), eDir.Multiplied(-1.0), 1.0E-4, direction);
     if (facesList.empty()) {
@@ -2729,18 +2728,19 @@ std::shared_ptr<workplane> workplane::interp_plate(
                        tolCurv, maxDeg, maxSegments);
 }
 
-std::shared_ptr<workplane> workplane::interp_plate(
-    const std::shared_ptr<workplane> &wp, const std::vector<gp_Pnt> &points,
-    double thickness, bool combine, bool clean, int degree, int nbPtsOnCur,
-    int nbIter, bool anisotropy, double tol2d, double tol3d, double tolAng,
-    double tolCurv, int maxDeg, int maxSegments) {
+std::shared_ptr<workplane>
+workplane::interp_plate(const workplane &wp, const std::vector<gp_Pnt> &points,
+                        double thickness, bool combine, bool clean, int degree,
+                        int nbPtsOnCur, int nbIter, bool anisotropy,
+                        double tol2d, double tol3d, double tolAng,
+                        double tolCurv, int maxDeg, int maxSegments) {
   return _interp_plate(wp, points, thickness, combine, clean, degree,
                        nbPtsOnCur, nbIter, anisotropy, tol2d, tol3d, tolAng,
                        tolCurv, maxDeg, maxSegments);
 }
 std::shared_ptr<workplane>
 workplane::_interp_plate(boost::variant<std::vector<gp_Pnt>, std::vector<edge>,
-                                        std::shared_ptr<workplane>>
+                                        std::reference_wrapper<const workplane>>
                              surf_edges,
                          const std::vector<gp_Pnt> &surf_pts, double thickness,
                          bool combine, bool clean, int degree, int nbPtsOnCur,
@@ -2750,8 +2750,9 @@ workplane::_interp_plate(boost::variant<std::vector<gp_Pnt>, std::vector<edge>,
   std::vector<boost::variant<edge, topo::wire>> edges;
   std::vector<gp_Pnt> points;
 
-  if (auto wp = boost::get<std::shared_ptr<workplane>>(&surf_edges)) {
-    for (auto &obj : (*wp)->edges()->_objects) {
+  if (auto wp =
+          boost::get<std::reference_wrapper<const workplane>>(&surf_edges)) {
+    for (auto &obj : wp->get().edges()->_objects) {
       if (auto shp = boost::get<shape>(&obj)) {
         if (shp->shape_type() == "Edge") {
           edges.push_back(*shp->cast<edge>());
@@ -3071,7 +3072,7 @@ workplane::offset2d(double d, const std::string &kind, bool forConstruction) {
   _ctx->pending_edges().clear();
   if (forConstruction) {
     for (auto &wire : rv) {
-      // wire.forConstruction = true;
+      wire.set_for_construction(true);
     }
     _ctx->pending_wires().clear();
   } else {
@@ -3145,7 +3146,6 @@ std::shared_ptr<workplane> workplane::operator[](
   }
 }
 
-// Filter method
 std::shared_ptr<workplane>
 workplane::filter(const std::function<bool(const shape_object &)> &predicate) {
   std::vector<shape_object> filtered;
@@ -3154,7 +3154,6 @@ workplane::filter(const std::function<bool(const shape_object &)> &predicate) {
   return new_object(filtered);
 }
 
-// Map method
 std::shared_ptr<workplane> workplane::map(
     const std::function<shape_object(const shape_object &)> &mapper) {
   std::vector<shape_object> mapped;
@@ -3163,14 +3162,12 @@ std::shared_ptr<workplane> workplane::map(
   return new_object(mapped);
 }
 
-// Apply method
 std::shared_ptr<workplane>
 workplane::apply(const std::function<std::vector<shape_object>(
                      const std::vector<shape_object> &)> &applier) {
   return new_object(applier(_objects));
 }
 
-// Sort method
 std::shared_ptr<workplane> workplane::sort(
     const std::function<bool(const shape_object &, const shape_object &)>
         &comparator) {
@@ -3179,7 +3176,6 @@ std::shared_ptr<workplane> workplane::sort(
   return new_object(sorted);
 }
 
-// Invoke method
 std::shared_ptr<workplane> workplane::invoke(
     const boost::variant<std::function<std::shared_ptr<workplane>(workplane &)>,
                          std::function<void(workplane &)>,

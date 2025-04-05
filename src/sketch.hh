@@ -59,6 +59,8 @@ public:
   sketch(sketch &&) noexcept;
   sketch &operator=(sketch &&) noexcept;
 
+  int hash_code() const;
+
   std::vector<topo::face> get_faces() const;
 
   sketch &face(const wire &w, double angle = 0, Mode mode = Mode::ADD,
@@ -292,3 +294,11 @@ private:
 
 } // namespace topo
 } // namespace flywave
+
+namespace std {
+template <> struct hash<flywave::topo::sketch> {
+  size_t operator()(const flywave::topo::sketch &obj) const {
+    return obj.hash_code();
+  }
+};
+} // namespace std

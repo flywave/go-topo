@@ -58,7 +58,8 @@
 namespace flywave {
 namespace topo {
 
-solid::solid(TopoDS_Shape shp) : shape3d(shp) {
+solid::solid(TopoDS_Shape shp, bool forConstruction)
+    : shape3d(shp, forConstruction) {
   TopAbs_ShapeEnum type = shp.ShapeType();
   if (type == TopAbs_SOLID || type == TopAbs_COMPSOLID) {
     _shape = shp;
@@ -321,9 +322,8 @@ solid solid::make_solid_from_cylinder(const gp_Ax2 &Axes, const Standard_Real R,
 
 // Make a cylinder with given radius and height
 solid solid::make_solid_from_cylinder(double radius, double height,
-                                      const gp_Pnt &pnt,
-                                      const gp_Dir &dir ,
-                                      double angleDegrees ) {
+                                      const gp_Pnt &pnt, const gp_Dir &dir,
+                                      double angleDegrees) {
   try {
     // Convert angle to radians
     double angleRadians = angleDegrees * M_PI / 180.0;
@@ -345,8 +345,7 @@ solid solid::make_solid_from_cylinder(double radius, double height,
 }
 
 solid solid::make_solid_from_cone(double radius1, double radius2, double height,
-                                  const gp_Pnt &pnt,
-                                  const gp_Dir &dir ,
+                                  const gp_Pnt &pnt, const gp_Dir &dir,
                                   double angleDegrees) {
   try {
     // Convert angle to radians

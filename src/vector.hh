@@ -31,32 +31,35 @@ public:
 
   topo_vector(const gp_XYZ &xyz) : wrapped(xyz) {}
 
-  topo_vector(const topo_vector &other) : wrapped(other.wrapped) {}
+  topo_vector(const topo_vector &) = default;
+  topo_vector(topo_vector &&) noexcept = default;
+  topo_vector &operator=(const topo_vector &) = default;
+  topo_vector &operator=(topo_vector &&) noexcept = default;
 
   // Properties
   double x() const { return wrapped.X(); }
-  void setX(double value) { wrapped.SetX(value); }
+  void set_x(double value) { wrapped.SetX(value); }
 
   double y() const { return wrapped.Y(); }
-  void setY(double value) { wrapped.SetY(value); }
+  void set_y(double value) { wrapped.SetY(value); }
 
   double z() const { return wrapped.Z(); }
-  void setZ(double value) { wrapped.SetZ(value); }
+  void set_z(double value) { wrapped.SetZ(value); }
 
   // Length properties
-  double Length() const { return wrapped.Magnitude(); }
-  double Magnitude() const { return wrapped.Magnitude(); }
+  double length() const { return wrapped.Magnitude(); }
+  double magnitude() const { return std::abs(wrapped.Magnitude()); }
 
-  double Angle(const topo_vector &v) const { return wrapped.Angle(v.wrapped); }
+  double angle(const topo_vector &v) const { return wrapped.Angle(v.wrapped); }
 
   // Conversion methods
-  std::tuple<double, double, double> toTuple() const {
+  std::tuple<double, double, double> to_tuple() const {
     return std::make_tuple(x(), y(), z());
   }
 
-  gp_Pnt toPnt() const { return gp_Pnt(wrapped.XYZ()); }
-  gp_Dir toDir() const { return gp_Dir(wrapped.XYZ()); }
-  gp_Vec toVec() const { return wrapped; }
+  gp_Pnt to_pnt() const { return gp_Pnt(wrapped.XYZ()); }
+  gp_Dir to_dir() const { return gp_Dir(wrapped.XYZ()); }
+  gp_Vec to_vec() const { return wrapped; }
 
   // topo_vector operations
   topo_vector cross(const topo_vector &v) const {
@@ -82,31 +85,31 @@ public:
   }
 
   topo_vector normalized() const {
-    if (Length() == 0.0) {
+    if (length() == 0.0) {
       throw std::runtime_error("Cannot normalize zero vector");
     }
     return topo_vector(wrapped.Normalized());
   }
 
   // Geometric operations
-  double getAngle(const topo_vector &v) const {
+  double get_angle(const topo_vector &v) const {
     return wrapped.Angle(v.wrapped);
   }
 
-  double getSignedAngle(const topo_vector &v) const {
+  double get_signed_angle(const topo_vector &v) const {
     gp_Vec ref(0, 0, -1);
     return wrapped.AngleWithRef(v.wrapped, ref);
   }
 
-  topo_vector projectToLine(const topo_vector &line) const {
-    double lineLength = line.Length();
+  topo_vector project_to_line(const topo_vector &line) const {
+    double lineLength = line.length();
     if (lineLength == 0.0) {
       throw std::runtime_error("Cannot project to zero-length line");
     }
     return line * (this->dot(line) / (lineLength * lineLength));
   }
 
-  topo_vector projectToPlane(const class topo_plane &plane) const;
+  topo_vector project_to_plane(const class topo_plane &plane) const;
 
   // Operator overloads
   topo_vector operator-() const { return multiply(-1.0); }
@@ -127,19 +130,19 @@ public:
   }
 
   // String representation
-  std::string toString() const {
+  std::string to_string() const {
     std::ostringstream oss;
     oss << "topo_vector: (" << x() << ", " << y() << ", " << z() << ")";
     return oss.str();
   }
 
   friend std::ostream &operator<<(std::ostream &os, const topo_vector &v) {
-    os << v.toString();
+    os << v.to_string();
     return os;
   }
 
   // Serialization
-  std::tuple<double, double, double> __getstate__() const { return toTuple(); }
+  std::tuple<double, double, double> __getstate__() const { return to_tuple(); }
 
   void __setstate__(const std::tuple<double, double, double> &state) {
     wrapped.SetX(std::get<0>(state));

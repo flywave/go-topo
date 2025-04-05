@@ -220,7 +220,8 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
-  shell(TopoDS_Shape shp) : shape(shp) {}
+  shell(TopoDS_Shape shp, bool forConstruction = false)
+      : shape(shp, forConstruction) {}
   shell(const shape &s, TopoDS_Shape shp) : shape(s, shp) {}
 
 protected:

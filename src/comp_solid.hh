@@ -32,7 +32,8 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
-  comp_solid(TopoDS_Shape shp) : solid(shp) {}
+  comp_solid(TopoDS_Shape shp, bool forConstruction = false)
+      : solid(shp, forConstruction) {}
   comp_solid(const shape &s, TopoDS_Shape shp) : solid(s, shp) {}
 
 protected:

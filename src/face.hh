@@ -210,7 +210,8 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
-  face(TopoDS_Shape shp) : shape(shp) {}
+  face(TopoDS_Shape shp, bool forConstruction = false)
+      : shape(shp, forConstruction) {}
   face(const shape &v, TopoDS_Shape shp) : shape(v, shp) {}
 
 protected:

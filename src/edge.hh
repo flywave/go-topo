@@ -303,7 +303,8 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
-  edge(TopoDS_Shape shp) : shape1d(shp) {}
+  edge(TopoDS_Shape shp, bool forConstruction = false)
+      : shape1d(shp, forConstruction) {}
   edge(const shape &e, TopoDS_Shape shp) : shape1d(e, shp) {}
 
   boost::variant<wire, edge> close() const;

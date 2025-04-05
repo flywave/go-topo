@@ -1,9 +1,9 @@
 #pragma once
 
 #include "vector.hh"
-#include <vector>
-#include <memory>
 #include <algorithm>
+#include <memory>
+#include <vector>
 
 namespace flywave {
 namespace topo {
@@ -127,7 +127,7 @@ public:
   using direction_selector::direction_selector;
 
   bool test(const topo_vector &vec) const override {
-    return direction_.cross(vec).Length() < tolerance_;
+    return direction_.cross(vec).length() < tolerance_;
   }
 };
 
@@ -137,7 +137,7 @@ public:
   using direction_selector::direction_selector;
 
   bool test(const topo_vector &vec) const override {
-    return std::abs(direction_.Angle(vec)) < tolerance_;
+    return std::abs(direction_.angle(vec)) < tolerance_;
   }
 };
 
@@ -147,7 +147,7 @@ public:
   using direction_selector::direction_selector;
 
   bool test(const topo_vector &vec) const override {
-    return std::abs(direction_.Angle(vec) - M_PI_2) < tolerance_;
+    return std::abs(direction_.angle(vec) - M_PI_2) < tolerance_;
   }
 };
 

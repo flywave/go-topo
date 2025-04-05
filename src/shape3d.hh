@@ -28,7 +28,8 @@ public:
   shape3d(const shape3d &) = default;
   shape3d &operator=(const shape3d &) = default;
 
-  shape3d(TopoDS_Shape shp) : shape(shp) {}
+  shape3d(TopoDS_Shape shp, bool forConstruction = false)
+      : shape(shp, forConstruction) {}
   shape3d(const shape &v, TopoDS_Shape shp) : shape(v, shp) {}
 
   std::vector<shell> shells() const;

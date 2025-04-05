@@ -22,7 +22,8 @@ public:
   shape1d(const shape1d &) = default;
   shape1d &operator=(const shape1d &) = default;
 
-  shape1d(TopoDS_Shape shp) : shape(shp) {}
+  shape1d(TopoDS_Shape shp, bool forConstruction = false)
+      : shape(shp, forConstruction) {}
   shape1d(const shape &v, TopoDS_Shape shp) : shape(v, shp) {}
 
   Handle(Geom_Curve) get_curve() const;

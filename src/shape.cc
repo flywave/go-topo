@@ -166,14 +166,16 @@ shape::shape()
       _curve_colour(Quantity_NOC_WHITE), _u_origin(0.), _v_origin(0.),
       _u_repeat(1.), _v_repeat(1.), _scale_u(1.), _scale_v(1.),
       _auto_scale_size_on_u(1.), _auto_scale_size_on_v(1.),
-      _txture_map_type(texture_normal), _rotation_angle(0.) {}
+      _txture_map_type(texture_normal), _rotation_angle(0.),
+      _for_construction(false) {}
 
-shape::shape(TopoDS_Shape shp)
+shape::shape(TopoDS_Shape shp, bool forConstruction)
     : _shape(shp), _surface_colour(Quantity_NOC_WHITE),
       _curve_colour(Quantity_NOC_WHITE), _u_origin(0.), _v_origin(0.),
       _u_repeat(1.), _v_repeat(1.), _scale_u(1.), _scale_v(1.),
       _auto_scale_size_on_u(1.), _auto_scale_size_on_v(1.),
-      _txture_map_type(texture_normal), _rotation_angle(0.) {}
+      _txture_map_type(texture_normal), _rotation_angle(0.),
+      _for_construction(forConstruction) {}
 
 shape::shape(const shape &s, TopoDS_Shape shp)
     : _shape(shp), _surface_colour(s._surface_colour),
@@ -182,8 +184,8 @@ shape::shape(const shape &s, TopoDS_Shape shp)
       _scale_u(s._scale_u), _scale_v(s._scale_v),
       _auto_scale_size_on_u(s._auto_scale_size_on_u),
       _auto_scale_size_on_v(s._auto_scale_size_on_v),
-      _txture_map_type(s._txture_map_type), _rotation_angle(s._rotation_angle) {
-}
+      _txture_map_type(s._txture_map_type), _rotation_angle(s._rotation_angle),
+      _for_construction(s._for_construction) {}
 
 TopoDS_Shape &shape::value() { return _shape; }
 
@@ -200,7 +202,8 @@ shape::shape(shape &&o) noexcept
       _scale_u(o._scale_u), _scale_v(o._scale_v),
       _auto_scale_size_on_u(o._auto_scale_size_on_u),
       _auto_scale_size_on_v(o._auto_scale_size_on_v),
-      _txture_map_type(o._txture_map_type), _rotation_angle(o._rotation_angle) {
+      _txture_map_type(o._txture_map_type), _rotation_angle(o._rotation_angle),
+      _for_construction(o._for_construction) {
   if (!o._shape.IsNull())
     o._shape.Free();
 }
@@ -219,6 +222,7 @@ shape &shape::operator=(shape &&o) noexcept {
   _auto_scale_size_on_v = o._auto_scale_size_on_v;
   _txture_map_type = o._txture_map_type;
   _rotation_angle = o._rotation_angle;
+  _for_construction = o._for_construction;
   if (!o._shape.IsNull())
     o._shape.Free();
   return *this;
@@ -229,9 +233,10 @@ shape shape::copy(bool deep) const {
     BRepBuilderAPI_Copy _copy(_shape, deep);
     _copy.Build();
 
-    if (!_copy.IsDone())
+    if (!_copy.IsDone()) {
       _copy.Shape().Free();
-    throw std::runtime_error("Section operation failed");
+      throw std::runtime_error("Section operation failed");
+    }
 
     auto shp = _copy.Shape();
 
@@ -333,7 +338,7 @@ int shape::transform(gp_Trsf mat) { return transform_impl(mat); }
 int shape::transform(const topo_matrix &mat) {
   try {
     TopoDS_Shape &shape = _shape;
-    BRepBuilderAPI_Transform transformer(shape, mat.getWrapped().Trsf(),
+    BRepBuilderAPI_Transform transformer(shape, mat.get_value().Trsf(),
                                          true // Make copy of the shape
     );
 
@@ -343,7 +348,6 @@ int shape::transform(const topo_matrix &mat) {
     _shape = transformer.Shape();
     return 1;
   } catch (Standard_Failure &e) {
-
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -706,7 +710,7 @@ gp_Pnt shape::centre_of_mass() const {
   return system.CentreOfMass();
 }
 
-gp_Pnt shape::center_of_bound_box() const { return this->bbox().Center(); }
+gp_Pnt shape::center_of_bound_box() const { return this->bbox().center(); }
 
 double shape::compute_area() const {
   GProp_GProps system;
@@ -1338,19 +1342,19 @@ boost::optional<shape> shape::auto_cast() const {
   if (!_shape.IsNull()) {
     switch (_shape.ShapeType()) {
     case TopAbs_VERTEX:
-      return vertex(_shape);
+      return vertex(*this, _shape);
     case TopAbs_EDGE:
-      return edge(_shape);
+      return edge(*this, _shape);
     case TopAbs_WIRE:
-      return wire(_shape);
+      return wire(*this, _shape);
     case TopAbs_FACE:
-      return face(_shape);
+      return face(*this, _shape);
     case TopAbs_SHELL:
-      return shell(_shape);
+      return shell(*this, _shape);
     case TopAbs_SOLID:
-      return solid(_shape);
+      return solid(*this, _shape);
     case TopAbs_COMPOUND:
-      return compound(_shape);
+      return compound(*this, _shape);
     default:
       break;
     }
@@ -1410,7 +1414,7 @@ std::string shape::shape_type() const {
     type = "Vertices";
     break;
   case TopAbs_SHAPE:
-    type = "shape";
+    type = "Shape";
     break;
   default:
     break;
@@ -1697,6 +1701,10 @@ std::vector<shape> shape::get_shapes(TopAbs_ShapeEnum kind) const {
   }
 
   return result;
+}
+
+void shape::set_for_construction(bool for_construction) {
+  _for_construction = for_construction;
 }
 
 std::string shape::to_string(double tolerance, double angularTolerance) const {

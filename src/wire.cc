@@ -406,7 +406,8 @@ wire wire::make_ellipse(double x_radius, double y_radius, const gp_Pnt &center,
   return result;
 }
 
-wire wire::make_polygon(const std::vector<gp_Pnt> &vertices, bool close) {
+wire wire::make_polygon(const std::vector<gp_Pnt> &vertices, bool close,
+                        bool forConstruction) {
   if (vertices.size() < 2) {
     throw std::invalid_argument("At least two vertices required");
   }
@@ -424,7 +425,7 @@ wire wire::make_polygon(const std::vector<gp_Pnt> &vertices, bool close) {
     throw std::runtime_error("Failed to create polygon wire");
   }
 
-  return wire(polyBuilder.Wire());
+  return wire(polyBuilder.Wire(), forConstruction);
 }
 
 wire wire::make_helix(double pitch, double height, double radius,

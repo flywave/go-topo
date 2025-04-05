@@ -391,22 +391,21 @@ boost::optional<shape> shelling(const shape &shp,
                                 GeomAbs_JoinType joinType) {
   try {
 
-    TopTools_ListOfShape occ_faces_list;
+    TopTools_ListOfShape facesToRemove;
     BRepOffsetAPI_MakeThickSolid shell_builder;
 
     // Convert face list to OCCT list
     for (const auto &face : faceList) {
-      occ_faces_list.Append(face.value());
+      facesToRemove.Append(face.value());
     }
 
     // Create the thick solid
-    shell_builder.MakeThickSolidByJoin(shp, occ_faces_list, thickness,
-                                       tolerance, BRepOffset_Skin,
+    shell_builder.MakeThickSolidByJoin(shp, facesToRemove, thickness, tolerance,
+                                       BRepOffset_Skin,
                                        Standard_True,  // Intersection
                                        Standard_False, // SelfInter
                                        joinType);
-    shell_builder.Build();
-
+    shell_builder.Build(); 
     if (!shell_builder.IsDone()) {
       throw std::runtime_error("Shell operation failed");
     }

@@ -42,7 +42,7 @@ public:
                            const vertex &V4, const bool close = false);
 
   static wire make_polygon(const std::vector<gp_Pnt> &vertices,
-                           bool close = false);
+                           bool close = false, bool forConstruction = false);
 
   static wire make_wire(const edge &E);
   static wire make_wire(const edge &E1, const edge &E2);
@@ -116,7 +116,7 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
-  wire(TopoDS_Shape shp) : shape1d(shp) {}
+  wire(TopoDS_Shape shp, bool forConstruction = false) : shape1d(shp, forConstruction) {}
   wire(const shape &v, TopoDS_Shape shp) : shape1d(v, shp) {}
 
   virtual Handle(Adaptor3d_Curve) get_geom() const override;

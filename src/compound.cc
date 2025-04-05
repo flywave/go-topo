@@ -375,7 +375,7 @@ compound compound::make_text(const std::string &text, double size,
                       hAlignment, vAlignment);
 
   auto shp = CleanAndFuse(textShape);
-  return *position.toWorldCoords(shp).cast<compound>();
+  return *position.to_world_coords(shp).cast<compound>();
 }
 
 compound compound::make_text(const std::string &text, double size,
@@ -555,7 +555,7 @@ compound compound::make_text(const std::string &text, double size,
   }
 
   auto shp = normalize_shape(textShape);
-  return *position.toWorldCoords(shp).cast<compound>();
+  return *position.to_world_coords(shp).cast<compound>();
 }
 } // namespace topo
 } // namespace flywave
