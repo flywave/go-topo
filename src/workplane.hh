@@ -23,9 +23,6 @@
 #include <variant>
 #include <vector>
 
-#include <TopoDS_Shape.hxx>
-#include <gp_Pnt.hxx>
-
 namespace flywave {
 namespace topo {
 
@@ -466,8 +463,11 @@ public:
   std::shared_ptr<workplane>
   place_sketch(const std::vector<topo::sketch> &sketches);
 
-  std::shared_ptr<workplane> operator[](
-      const boost::variant<int, std::vector<int>, std::pair<int, int>> &item);
+  std::shared_ptr<workplane> operator[](int index);
+
+  std::shared_ptr<workplane> operator[](const std::vector<int> &indices);
+
+  std::shared_ptr<workplane> operator[](const std::pair<int, int> &range);
 
   std::shared_ptr<workplane>
   filter(const std::function<bool(const shape_object &)> &predicate);

@@ -3125,25 +3125,37 @@ workplane::place_sketch(const std::vector<topo::sketch> &sketches) {
   return new_object(rv);
 }
 
-// Indexing operator
-std::shared_ptr<workplane> workplane::operator[](
-    const boost::variant<int, std::vector<int>, std::pair<int, int>> &item) {
-  if (item.type() == typeid(int)) {
-    int idx = boost::get<int>(item);
-    return new_object({_objects[idx]});
-  } else if (item.type() == typeid(std::vector<int>)) {
-    std::vector<int> indices = boost::get<std::vector<int>>(item);
-    std::vector<shape_object> selected;
-    for (int i : indices) {
-      selected.push_back(_objects[i]);
-    }
-    return new_object(selected);
-  } else {
-    std::pair<int, int> slice = boost::get<std::pair<int, int>>(item);
-    std::vector<shape_object> sliced(_objects.begin() + slice.first,
-                                     _objects.begin() + slice.second);
-    return new_object(sliced);
+std::shared_ptr<workplane> workplane::operator[](int index) {
+  if (index < 0 || static_cast<size_t>(index) >= _objects.size()) {
+    throw std::out_of_range("Index out of range");
   }
+  return new_object({_objects[index]});
+}
+
+std::shared_ptr<workplane>
+workplane::operator[](const std::vector<int> &indices) {
+  std::vector<shape_object> selected;
+  for (int idx : indices) {
+    if (idx < 0 || static_cast<size_t>(idx) >= _objects.size()) {
+      throw std::out_of_range("Index out of range");
+    }
+    selected.push_back(_objects[idx]);
+  }
+  return new_object(selected);
+}
+
+std::shared_ptr<workplane>
+workplane::operator[](const std::pair<int, int> &range) {
+  auto [start, end] = range;
+  if (start < 0 || static_cast<size_t>(end) > _objects.size() || start > end) {
+    throw std::out_of_range("Invalid range");
+  }
+
+  std::vector<shape_object> selected;
+  for (int i = start; i < end; ++i) {
+    selected.push_back(_objects[i]);
+  }
+  return new_object(selected);
 }
 
 std::shared_ptr<workplane>
