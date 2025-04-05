@@ -1590,7 +1590,7 @@ std::shared_ptr<workplane> workplane::wire(bool forConstruction) {
   return new_shape_object(new_objects);
 }
 
-std::shared_ptr<workplane> workplane::mirrory() {
+std::shared_ptr<workplane> workplane::mirror_y() {
   std::shared_ptr<workplane> n = this->wire(false);
   std::shared_ptr<workplane> consolidated = n->consolidate_wires();
 
@@ -1612,7 +1612,7 @@ std::shared_ptr<workplane> workplane::mirrory() {
   return consolidated->consolidate_wires();
 }
 
-std::shared_ptr<workplane> workplane::mirrorx() {
+std::shared_ptr<workplane> workplane::mirror_x() {
   std::shared_ptr<workplane> n = this->wire(false);
   std::shared_ptr<workplane> consolidated = n->consolidate_wires();
 

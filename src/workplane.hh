@@ -241,8 +241,8 @@ public:
   std::shared_ptr<workplane> tangent_arc_point(const gp_Pnt &endpoint,
                                                bool forConstruction,
                                                bool relative);
-  std::shared_ptr<workplane> mirrory();
-  std::shared_ptr<workplane> mirrorx();
+  std::shared_ptr<workplane> mirror_y();
+  std::shared_ptr<workplane> mirror_x();
   std::shared_ptr<workplane> consolidate_wires();
 
   std::shared_ptr<workplane>
