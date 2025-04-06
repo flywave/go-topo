@@ -405,7 +405,7 @@ boost::optional<shape> shelling(const shape &shp,
                                        Standard_True,  // Intersection
                                        Standard_False, // SelfInter
                                        joinType);
-    shell_builder.Build(); 
+    shell_builder.Build();
     if (!shell_builder.IsDone()) {
       throw std::runtime_error("Shell operation failed");
     }

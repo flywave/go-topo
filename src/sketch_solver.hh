@@ -68,7 +68,6 @@ public:
   solve();
 
 private:
-  // Cost functions
   double fixed_cost(const std::vector<double> &x,
                     const std::vector<double> &x0);
   double fixed_point_cost(const std::vector<double> &x, geom_type t,
@@ -98,7 +97,6 @@ private:
   double arc_angle_cost(const std::vector<double> &x, geom_type t,
                         const std::vector<double> &x0, double val);
 
-  // NLopt objective function
   static double objective_function(const std::vector<double> &x,
                                    std::vector<double> &grad, void *f_data);
   double compute_cost(const std::vector<double> &x, std::vector<double> &grad);

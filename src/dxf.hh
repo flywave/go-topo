@@ -53,7 +53,7 @@ struct dxf_coords {
 
   dxf_coords() = default;
   dxf_coords(double x, double y, double z = 0.) : x(x), y(y), z(z) {}
-  
+
   // Add equality operator
   bool operator==(const dxf_coords &other) const {
     return math_utils::fuzzy_equal(x, other.x) &&

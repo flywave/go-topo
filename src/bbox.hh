@@ -101,6 +101,8 @@ public:
 
   bool is_inside(const topo_bbox &other, double tol = 1e-6) const;
 
+  topo_bbox enlarge(double tol = 1e-6) const;
+
   static boost::optional<topo_bbox> find_outside_box2d(const topo_bbox &bb1,
                                                        const topo_bbox &bb2,
                                                        double tol = 1e-6);

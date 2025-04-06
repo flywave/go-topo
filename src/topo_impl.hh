@@ -10,6 +10,7 @@
 #include "topo_c_api.h"
 #include "vertex.hh"
 #include "wire.hh"
+#include "vector.hh"
 #include <StlAPI_Writer.hxx>
 #include <string>
 
@@ -27,6 +28,14 @@ struct _topo_shape_t {
 
 struct _topo_location_t {
   flywave::topo::topo_location loc;
+};
+
+struct _topo_vector_t {
+  flywave::topo::topo_vector vec;
+};
+
+struct _topo_plane_t {
+  flywave::topo::topo_plane plane;
 };
 
 struct _topo_mesh_receiver_t {

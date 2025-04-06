@@ -1027,9 +1027,10 @@ topo_vector sketch::end_point() {
   return edges_.back().end_point();
 }
 
-sketch &sketch::edge(topo::edge &val, const boost::optional<std::string> &tag,
+sketch &sketch::edge(const topo::edge &val,
+                     const boost::optional<std::string> &tag,
                      bool for_construction) {
-  val.set_for_construction(for_construction);
+  const_cast<topo::edge &>(val).set_for_construction(for_construction);
   edges_.push_back(val);
 
   if (tag) {

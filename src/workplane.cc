@@ -238,7 +238,7 @@ shape_object workplane::val() const {
   if (!_objects.empty()) {
     return _objects[0];
   }
-  return _plane ? _plane->origin : topo_vector(0, 0, 0);
+  return _plane ? _plane->origin() : topo_vector(0, 0, 0);
 }
 
 std::shared_ptr<workplane>
@@ -339,8 +339,8 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
             xDir = compute_x_dir(normal);
           }
         } else {
-          normal = _plane->get_z_dir();
-          xDir = _plane->get_x_dir();
+          normal = _plane->z_dir();
+          xDir = _plane->x_dir();
         }
       }
     } else if (auto vec = boost::get<topo_vector>(&obj)) {
@@ -357,8 +357,8 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
           xDir = compute_x_dir(normal);
         }
       } else {
-        normal = _plane->get_z_dir();
-        xDir = _plane->get_x_dir();
+        normal = _plane->z_dir();
+        xDir = _plane->x_dir();
       }
     } else {
       throw std::runtime_error(
@@ -367,7 +367,7 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
   }
 
   if (centerOption == center_option::ProjectedOrigin) {
-    topo_vector orig = origin ? *origin : _plane->get_origin();
+    topo_vector orig = origin ? *origin : _plane->origin();
     center_ = orig.project_to_plane(topo_plane(center_, xDir, normal));
   }
 
@@ -1006,7 +1006,7 @@ std::shared_ptr<workplane> workplane::transformed(const gp_Vec &rotate,
   p.set_origin(_plane->to_world_coords(offset));
 
   auto ns = std::make_shared<workplane>();
-  ns->_objects.push_back(p.get_origin());
+  ns->_objects.push_back(p.origin());
   ns->_plane = std::make_shared<topo_plane>(p);
   ns->_parent = shared_from_this();
   ns->_ctx = _ctx;
@@ -1078,7 +1078,7 @@ workplane::new_object(const std::vector<shape_object> &objlist) const {
 }
 
 gp_Pnt workplane::find_from_point(bool useLocalCoords) {
-  shape_object obj = _objects.empty() ? _plane->get_origin() : _objects.back();
+  shape_object obj = _objects.empty() ? _plane->origin() : _objects.back();
 
   topo_vector p;
   if (auto shp = boost::get<shape>(&obj)) {
@@ -1113,9 +1113,9 @@ edge workplane::find_from_edge(bool useLocalCoords) {
 
 std::shared_ptr<workplane> workplane::rarray(double xSpacing, double ySpacing,
                                              int xCount, int yCount,
-                                             bool centerX, bool centerY) {
+                                             std::pair<bool, bool> center) {
   return _rarray(xSpacing, ySpacing, xCount, yCount,
-                 std::make_tuple(centerX, centerY));
+                 std::make_tuple(center.first, center.second));
 }
 
 std::shared_ptr<workplane> workplane::rarray(double xSpacing, double ySpacing,
@@ -1236,14 +1236,16 @@ std::shared_ptr<workplane> workplane::line_to(double x, double y,
 }
 
 std::shared_ptr<workplane>
-workplane::bezier(const std::vector<gp_Pnt> &listOfPoints, bool forConstruction,
-                  bool includeCurrent, bool makeWire) {
+workplane::bezier(const std::vector<topo_vector> &listOfPoints,
+                  bool forConstruction, bool includeCurrent, bool makeWire) {
   std::vector<gp_Pnt> allPoints;
 
   if (includeCurrent) {
     allPoints.push_back(find_from_point(false));
   }
-  allPoints.insert(allPoints.end(), listOfPoints.begin(), listOfPoints.end());
+  for (auto &pt : listOfPoints) {
+    allPoints.push_back(pt.to_pnt());
+  }
 
   edge e = edge::make_bezier(allPoints);
 
@@ -1359,7 +1361,7 @@ workplane::spline(const std::vector<gp_Pnt> &points,
   if (tangents) {
     std::vector<gp_Vec> tans;
     for (const auto &t : *tangents) {
-      tans.push_back(_plane->to_world_coords(t) - _plane->get_origin());
+      tans.push_back(_plane->to_world_coords(t) - _plane->origin());
     }
     worldTangents = tans;
   }
@@ -1460,11 +1462,11 @@ workplane::ellipse_arc(double x_radius, double y_radius, double angle1,
                        bool forConstruction, bool startAtCurrent,
                        bool makeWire) {
   gp_Pnt center = find_from_point(false);
-  edge e = edge::make_ellipse(x_radius, y_radius, center, _plane->zDir,
-                              _plane->xDir, angle1, angle2, sense);
+  edge e = edge::make_ellipse(x_radius, y_radius, center, _plane->z_dir(),
+                              _plane->x_dir(), angle1, angle2, sense);
 
   if (rotation_angle != 0.0) {
-    e.rotate(rotation_angle, center, center.Translated(_plane->zDir));
+    e.rotate(rotation_angle, center, center.Translated(_plane->z_dir()));
   }
 
   if (startAtCurrent) {
@@ -1702,7 +1704,7 @@ workplane::each(std::function<shape_object(shape_object &)> callback,
         r = callback(so);
 
         auto shape = select_shape(r);
-        shape->transform(_plane->rG);
+        shape->transform(_plane->_rG);
 
         r = *shape;
       }
@@ -2044,12 +2046,12 @@ std::shared_ptr<workplane> workplane::twist_extrude(double distance,
                                                     double angleDegrees,
                                                     bool combine, bool clean) {
   auto faces = get_faces();
-  gp_Vec eDir = _plane->zDir.multiply(distance);
+  gp_Vec eDir = _plane->z_dir().multiply(distance);
 
   std::vector<shape> shapes;
   for (auto &f : faces) {
-    shapes.push_back(*topo::extrude_linear_with_rotation(
-        f, _plane->get_origin(), eDir, angleDegrees));
+    shapes.push_back(*topo::extrude_linear_with_rotation(f, _plane->origin(),
+                                                         eDir, angleDegrees));
   }
 
   shape r = compound::make_compound(shapes).fuse({});
@@ -2575,9 +2577,9 @@ shape workplane::_extrude(const boost::optional<double> &distance, bool both,
 
   gp_Vec eDir;
   if (upToFace) {
-    eDir = _plane->zDir;
+    eDir = _plane->z_dir();
   } else if (distance) {
-    eDir = _plane->zDir.multiply(*distance);
+    eDir = _plane->z_dir().multiply(*distance);
   }
 
   double taperAngle = taper ? *taper : 0.0;
@@ -3031,8 +3033,8 @@ std::shared_ptr<workplane> workplane::section(double height) {
     throw std::runtime_error("No solid found to section");
   }
 
-  gp_Pnt basePnt = _plane->origin + _plane->zDir * height;
-  face plane = face::make_plane(basePnt, _plane->zDir);
+  gp_Pnt basePnt = _plane->origin() + _plane->z_dir() * height;
+  face plane = face::make_plane(basePnt, _plane->z_dir());
 
   shape r = *topo::intersect(solidRef, plane);
 

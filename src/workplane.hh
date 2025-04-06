@@ -191,9 +191,9 @@ public:
   std::shared_ptr<workplane> transformed(const gp_Vec &rotate,
                                          const gp_Vec &offset);
 
-  std::shared_ptr<workplane> rarray(double xSpacing, double ySpacing,
-                                    int xCount, int yCount,
-                                    bool centerX = false, bool centerY = false);
+  std::shared_ptr<workplane>
+  rarray(double xSpacing, double ySpacing, int xCount, int yCount,
+         std::pair<bool, bool> center = {false, false});
 
   std::shared_ptr<workplane> rarray(double xSpacing, double ySpacing,
                                     int xCount, int yCount,
@@ -212,9 +212,9 @@ public:
 
   std::shared_ptr<workplane> line_to(double x, double y,
                                      bool forConstruction = false);
-  std::shared_ptr<workplane> bezier(const std::vector<gp_Pnt> &listOfPoints,
-                                    bool forConstruction, bool includeCurrent,
-                                    bool makeWire);
+  std::shared_ptr<workplane>
+  bezier(const std::vector<topo_vector> &listOfPoints, bool forConstruction,
+         bool includeCurrent, bool makeWire);
   std::shared_ptr<workplane> line(double xDist, double yDist,
                                   bool forConstruction);
   std::shared_ptr<workplane> vline(double distance, bool forConstruction);

@@ -57,6 +57,16 @@ public:
     return topo_location{_loc.Powered(exponent)};
   }
 
+  std::vector<std::vector<double>> to_vector() const {
+    std::vector<std::vector<double>> result(3, std::vector<double>(4));
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 4; ++j) {
+        result[i][j] = _loc.Transformation().Value(i + 1, j + 1);
+      }
+    }
+    return result;
+  }
+
   std::tuple<std::tuple<double, double, double>,
              std::tuple<double, double, double>>
   to_tuple() const {

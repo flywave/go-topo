@@ -3,17 +3,15 @@
 #include "math_utils.hh"
 
 #include <Adaptor3d_Curve.hxx>
-#include <Standard_Version.hxx>
-#include <TopLoc_Location.hxx>
-#include <gp_Trsf.hxx>
-#include <Adaptor3d_Curve.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <GeomAbs_CurveType.hxx>
 #include <Geom_BSplineCurve.hxx>
-#include <stdexcept>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_OffsetCurve.hxx>
-#include <Geom_BSplineCurve.hxx>
+#include <Standard_Version.hxx>
+#include <TopLoc_Location.hxx>
+#include <gp_Trsf.hxx>
+#include <stdexcept>
 
 #include <algorithm>
 #include <cmath>

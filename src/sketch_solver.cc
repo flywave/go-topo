@@ -74,7 +74,6 @@ double sketch_solver::fixed_point_cost(const std::vector<double> &x,
   return p.Distance(p0);
 }
 
-// NLopt objective function implementation
 double sketch_solver::objective_function(const std::vector<double> &x,
                                          std::vector<double> &grad,
                                          void *f_data) {
@@ -96,7 +95,6 @@ double sketch_solver::compute_cost(const std::vector<double> &x,
     size_t e1 = entities.first;
     boost::optional<size_t> e2 = entities.second;
 
-    // Extract current and initial values
     std::vector<double> x1(x.begin() + ixs[e1], x.begin() + ixs[e1 + 1]);
     std::vector<double> x10(x0.begin() + ixs[e1], x0.begin() + ixs[e1 + 1]);
 
@@ -107,7 +105,6 @@ double sketch_solver::compute_cost(const std::vector<double> &x,
           std::vector<double>(x0.begin() + ixs[*e2], x0.begin() + ixs[*e2 + 1]);
     }
 
-    // Calculate current constraint cost
     double constraint_cost = 0.0;
 
     try {
@@ -179,22 +176,17 @@ double sketch_solver::compute_cost(const std::vector<double> &x,
 
     cost += constraint_cost * constraint_cost;
 
-    // Compute gradient if needed
     if (!grad.empty()) {
-      // Numerical gradient computation
       std::vector<double> x_perturbed = x;
       double original_cost = constraint_cost;
 
-      // Gradient for first entity
       for (size_t j = ixs[e1]; j < ixs[e1 + 1]; ++j) {
         x_perturbed[j] += DIFF_EPS;
 
-        // Recompute cost with perturbed x1
         std::vector<double> x1_perturbed(x_perturbed.begin() + ixs[e1],
                                          x_perturbed.begin() + ixs[e1 + 1]);
         double perturbed_cost = 0.0;
 
-        // Rebuild arguments for each constraint type
         switch (kind) {
         case sketch_constraint_kind::FIXED:
           perturbed_cost = fixed_cost(x1_perturbed, x10);
@@ -251,15 +243,13 @@ double sketch_solver::compute_cost(const std::vector<double> &x,
 
         grad[j] +=
             2 * original_cost * (perturbed_cost - original_cost) / DIFF_EPS;
-        x_perturbed[j] = x[j]; // Reset the perturbation
+        x_perturbed[j] = x[j];
       }
 
-      // Gradient for second entity if present
       if (e2) {
         for (size_t j = ixs[*e2]; j < ixs[*e2 + 1]; ++j) {
           x_perturbed[j] += DIFF_EPS;
 
-          // Recompute cost with perturbed x2
           std::vector<double> x2_perturbed(x_perturbed.begin() + ixs[*e2],
                                            x_perturbed.begin() + ixs[*e2 + 1]);
           double perturbed_cost = 0.0;
@@ -290,7 +280,7 @@ double sketch_solver::compute_cost(const std::vector<double> &x,
 
           grad[j] +=
               2 * original_cost * (perturbed_cost - original_cost) / DIFF_EPS;
-          x_perturbed[j] = x[j]; // Reset the perturbation
+          x_perturbed[j] = x[j];
         }
       }
     }
@@ -299,13 +289,11 @@ double sketch_solver::compute_cost(const std::vector<double> &x,
   return cost;
 }
 
-// Constructor implementation
 sketch_solver::sketch_solver(const std::vector<sketch_dof> &entities,
                              const std::vector<sketch_constraint> &constraints,
                              const std::vector<geom_type> &geoms)
     : entities(entities), constraints(constraints), geoms(geoms) {
 
-  // Initialize index offsets
   ixs.push_back(0);
   for (const auto &e : entities) {
     size_t size = 0;
@@ -317,7 +305,6 @@ sketch_solver::sketch_solver(const std::vector<sketch_dof> &entities,
     ixs.push_back(ixs.back() + size);
   }
 
-  // Flatten initial solution
   x0.reserve(ixs.back());
   for (const auto &e : entities) {
     if (e.type() == typeid(segment_dof)) {
@@ -330,20 +317,16 @@ sketch_solver::sketch_solver(const std::vector<sketch_dof> &entities,
   }
 }
 
-// Solve method implementation
 std::pair<std::vector<std::vector<double>>,
           std::map<std::string, boost::variant<double, int, std::string>>>
 sketch_solver::solve() {
   nlopt::opt opt(nlopt::LD_SLSQP, static_cast<int>(x0.size()));
 
-  // Set objective function
   opt.set_min_objective(objective_function, this);
 
-  // Set bounds
   std::vector<double> lb(x0.size(), -std::numeric_limits<double>::infinity());
   std::vector<double> ub(x0.size(), std::numeric_limits<double>::infinity());
 
-  // Set radius lower bound to 0 for circles
   for (size_t i = 0; i < geoms.size(); ++i) {
     if (geoms[i] == geom_type::CIRCLE) {
       lb[ixs[i] + 2] = 0.0;
@@ -353,19 +336,16 @@ sketch_solver::solve() {
   opt.set_lower_bounds(lb);
   opt.set_upper_bounds(ub);
 
-  // Set optimization parameters
   opt.set_ftol_abs(0.0);
   opt.set_ftol_rel(0.0);
   opt.set_xtol_rel(TOL);
   opt.set_xtol_abs(TOL * 1e-3);
   opt.set_maxeval(MAXITER);
 
-  // Run optimization
   std::vector<double> x = x0;
   double min_cost;
   nlopt::result result = opt.optimize(x, min_cost);
 
-  // Prepare results
   std::vector<std::vector<double>> solution;
   for (size_t i = 0; i < ixs.size() - 1; ++i) {
     size_t start = ixs[i];

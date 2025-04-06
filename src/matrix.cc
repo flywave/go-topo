@@ -6,7 +6,7 @@ namespace topo {
 void topo_matrix::_rotate(const gp_Ax1 &direction, double angle) {
   gp_Trsf newTrsf;
   newTrsf.SetRotation(direction, angle);
-  wrapped.Multiply(gp_GTrsf(newTrsf));
+  _value.Multiply(gp_GTrsf(newTrsf));
 }
 
 topo_matrix::topo_matrix(const std::vector<std::vector<double>> &matrix) {
@@ -31,12 +31,12 @@ topo_matrix::topo_matrix(const std::vector<std::vector<double>> &matrix) {
   }
 
   // Initialize as identity first
-  wrapped = gp_GTrsf();
+  _value = gp_GTrsf();
 
   // Set values from input matrix
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 4; ++j) {
-      wrapped.SetValue(i + 1, j + 1, matrix[i][j]);
+      _value.SetValue(i + 1, j + 1, matrix[i][j]);
     }
   }
 }
@@ -47,7 +47,7 @@ double topo_matrix::get(int row, int col) const {
   }
 
   if (row < 3) {
-    return wrapped.Value(row + 1, col + 1);
+    return _value.Value(row + 1, col + 1);
   } else {
     // Handle implied last row
     return (col == 3) ? 1.0 : 0.0;
@@ -61,7 +61,7 @@ std::vector<double> topo_matrix::transposed_list() const {
   // First 3 rows from the matrix
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 4; ++j) {
-      result[j * 4 + i] = wrapped.Value(i + 1, j + 1);
+      result[j * 4 + i] = _value.Value(i + 1, j + 1);
     }
   }
 

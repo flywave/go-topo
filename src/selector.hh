@@ -27,6 +27,21 @@ public:
   selector_ptr operator!() const;
 };
 
+class custom_selector : public selector {
+public:
+  using func_t = std::function<std::vector<shape>(const std::vector<shape> &)>;
+
+private:
+  func_t func_;
+
+public:
+  explicit custom_selector(func_t func) : func_(func) {}
+
+  std::vector<shape> filter(const std::vector<shape> &shapes) const override {
+    return func_(shapes);
+  }
+};
+
 // 最近点选择器
 class nearest_to_point_selector : public selector {
   topo_vector point_;
@@ -80,6 +95,9 @@ protected:
   double get_key(const shape &obj) const override;
 
 public:
+  radius_nth_selector(int n, bool direction_max = true, double tolerance = 1e-4)
+      : nth_selector(n, direction_max, tolerance) {}
+
   using nth_selector::nth_selector;
 };
 

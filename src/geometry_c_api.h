@@ -1,5 +1,6 @@
 #ifndef GO_GEOMETRY_C_API_H
 #define GO_GEOMETRY_C_API_H
+
 #include "standard_c_api.h"
 #include <stdbool.h>
 

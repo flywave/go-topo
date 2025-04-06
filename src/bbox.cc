@@ -171,5 +171,13 @@ topo_bbox topo_bbox::from_shape(const TopoDS_Shape &shape, double tol,
   return topo_bbox(bbox);
 }
 
+topo_bbox topo_bbox::enlarge(double tol) const {
+  Bnd_Box tmp;
+  tmp.SetGap(wrapped_.GetGap());
+  tmp.Add(wrapped_);
+  tmp.Enlarge(tol);
+  return topo_bbox(tmp);
+}
+
 } // namespace topo
 } // namespace flywave

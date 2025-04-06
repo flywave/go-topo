@@ -27,13 +27,13 @@ class shape;
 
 class topo_plane {
 private:
-  topo_vector xDir;
-  topo_vector yDir;
-  topo_vector zDir;
-  topo_vector origin;
-  gp_Ax3 lcs;
-  topo_matrix rG;
-  topo_matrix fG;
+  topo_vector _x_dir;
+  topo_vector _y_dir;
+  topo_vector _z_dir;
+  topo_vector _origin;
+  gp_Ax3 _lcs;
+  topo_matrix _rG;
+  topo_matrix _fG;
 
   static constexpr double _eq_tolerance_origin = 1e-6;
   static constexpr double _eq_tolerance_dot = 1e-6;
@@ -48,27 +48,63 @@ public:
 
   topo_plane(const topo_vector &origin, const topo_vector &xDir,
              const topo_vector &normal = topo_vector(0, 0, 1));
-             
+
   topo_plane(const topo_plane &) = default;
   topo_plane(topo_plane &&) noexcept = default;
   topo_plane &operator=(const topo_plane &) = default;
   topo_plane &operator=(topo_plane &&) noexcept = default;
 
-  operator gp_Pln() const { return gp_Pln(lcs); }
+  static topo_plane XY(const topo_vector &origin = topo_vector(0, 0, 0),
+                       const topo_vector &xDir = topo_vector(1, 0, 0));
 
-  topo_vector get_origin() const { return origin; }
-  topo_vector get_x_dir() const { return xDir; }
-  topo_vector get_y_dir() const { return yDir; }
-  topo_vector get_z_dir() const { return zDir; }
+  static topo_plane YZ(const topo_vector &origin = topo_vector(0, 0, 0),
+                       const topo_vector &xDir = topo_vector(0, 1, 0));
+
+  static topo_plane ZX(const topo_vector &origin = topo_vector(0, 0, 0),
+                       const topo_vector &xDir = topo_vector(0, 0, 1));
+
+  static topo_plane XZ(const topo_vector &origin = topo_vector(0, 0, 0),
+                       const topo_vector &xDir = topo_vector(1, 0, 0));
+
+  static topo_plane YX(const topo_vector &origin = topo_vector(0, 0, 0),
+                       const topo_vector &xDir = topo_vector(0, 1, 0));
+
+  static topo_plane ZY(const topo_vector &origin = topo_vector(0, 0, 0),
+                       const topo_vector &xDir = topo_vector(0, 0, 1));
+
+  static topo_plane front(const topo_vector &origin = topo_vector(0, 0, 0),
+                          const topo_vector &xDir = topo_vector(1, 0, 0));
+
+  static topo_plane back(const topo_vector &origin = topo_vector(0, 0, 0),
+                         const topo_vector &xDir = topo_vector(-1, 0, 0));
+
+  static topo_plane left(const topo_vector &origin = topo_vector(0, 0, 0),
+                         const topo_vector &xDir = topo_vector(0, 0, 1));
+
+  static topo_plane right(const topo_vector &origin = topo_vector(0, 0, 0),
+                          const topo_vector &xDir = topo_vector(0, 0, -1));
+
+  static topo_plane top(const topo_vector &origin = topo_vector(0, 0, 0),
+                        const topo_vector &xDir = topo_vector(1, 0, 0));
+
+  static topo_plane bottom(const topo_vector &origin = topo_vector(0, 0, 0),
+                           const topo_vector &xDir = topo_vector(1, 0, 0));
+
+  operator gp_Pln() const { return gp_Pln(_lcs); }
+
+  topo_vector origin() const { return _origin; }
+  topo_vector x_dir() const { return _x_dir; }
+  topo_vector y_dir() const { return _y_dir; }
+  topo_vector z_dir() const { return _z_dir; }
 
   topo_vector to_world_coords(const topo_vector &v) const {
-    return v.transform(rG);
+    return v.transform(_rG);
   }
 
   shape to_world_coords(const shape &v) const;
 
   topo_vector to_local_coords(const topo_vector &v) const {
-    return v.transform(fG);
+    return v.transform(_fG);
   }
 
   topo_location location() const { return topo_location(*this); }
@@ -76,12 +112,12 @@ public:
   shape to_local_coords(const shape &v) const;
 
   void set_origin(const topo_vector &newOrigin) {
-    origin = newOrigin;
+    _origin = newOrigin;
     calc_transforms();
   }
 
   void set_origin2d(double x, double y) {
-    origin = to_world_coords(topo_vector(x, y, 0));
+    _origin = to_world_coords(topo_vector(x, y, 0));
   }
 
   topo_plane rotated(const topo_vector &rotate = topo_vector(0, 0, 0)) const;

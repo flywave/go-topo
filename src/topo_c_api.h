@@ -34,6 +34,8 @@ enum {
 enum { ORI_FORWARD, ORI_REVERSED, ORI_INTERNAL, ORI_EXTERNAL, ORI_UNKNOW };
 
 typedef struct _topo_shape_t topo_shape_t;
+typedef struct _topo_vector_t topo_vector_t;
+typedef struct _topo_plane_t topo_plane_t;
 typedef struct _topo_location_t topo_location_t;
 typedef struct _topo_mesh_receiver_t topo_mesh_receiver_t;
 typedef struct _topo_comp_solid_iterator_t topo_comp_solid_iterator_t;
@@ -108,8 +110,8 @@ TOPOCAPICALL int topo_shape_type(topo_shape_t *p);
 
 TOPOCAPICALL int topo_shape_id(topo_shape_t *p);
 TOPOCAPICALL int topo_shape_parent_id(topo_shape_t *p);
-TOPOCAPICALL const char * topo_shape_name(topo_shape_t *p);
-TOPOCAPICALL const char * topo_shape_guid(topo_shape_t *p);
+TOPOCAPICALL const char *topo_shape_name(topo_shape_t *p);
+TOPOCAPICALL const char *topo_shape_guid(topo_shape_t *p);
 
 TOPOCAPICALL bbox_t topo_shape_bounding_box(topo_shape_t *p);
 TOPOCAPICALL int topo_shape_hash_code(topo_shape_t *p);
@@ -1083,8 +1085,7 @@ TOPOCAPICALL void topo_shape_to_stl(topo_shape_t *p, char *);
 
 TOPOCAPICALL topo_comp_solid_iterator_t *
 topo_comp_solid_iterator_make(topo_shape_t *shp);
-TOPOCAPICALL void
-topo_comp_solid_iterator_free(topo_comp_solid_iterator_t *it);
+TOPOCAPICALL void topo_comp_solid_iterator_free(topo_comp_solid_iterator_t *it);
 TOPOCAPICALL void
 topo_comp_solid_iterator_reset(topo_comp_solid_iterator_t *it);
 TOPOCAPICALL topo_shape_t *

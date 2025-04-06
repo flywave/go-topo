@@ -3,10 +3,10 @@
 
 #include <BRepAdaptor_CompCurve.hxx>
 #include <BRepAdaptor_Curve.hxx>
+#include <GeomAbs_JoinType.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Wire.hxx>
-#include <GeomAbs_JoinType.hxx>
 
 #include <boost/variant.hpp>
 

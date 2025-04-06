@@ -138,7 +138,7 @@ public:
   sketch &delete_selected();
 
   // Edge construction methods
-  sketch &edge(topo::edge &val,
+  sketch &edge(const topo::edge &val,
                const boost::optional<std::string> &tag = boost::none,
                bool forConstruction = false);
 
