@@ -139,7 +139,7 @@ SKETCHCAPICALL void sketch_arc3(sketch_t *sk, topo_vector_t *center,
 SKETCHCAPICALL void sketch_spline(sketch_t *sk, topo_vector_t **points,
                                   int size, const char *tag,
                                   bool forConstruction);
-// const boost::optional<std::pair<topo_vector, topo_vector>> &tangents
+
 SKETCHCAPICALL void sketch_spline2(sketch_t *sk, topo_vector_t **points,
                                    int size, topo_vector_t *tangents1,
                                    topo_vector_t *tangents2, bool periodic,

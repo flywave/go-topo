@@ -9,6 +9,7 @@
 #include <gp_Vec.hxx>
 
 #include "vector.hh"
+#include <vector>
 
 namespace flywave {
 namespace topo {

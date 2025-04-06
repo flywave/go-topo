@@ -70,6 +70,11 @@ typedef boost::variant<bool, combine_mode_type> combine_mode;
 
 enum class center_option { CenterOfMass, ProjectedOrigin, CenterOfBoundBox };
 
+enum class face_index_type {
+  curent = 0,
+  next = -1,
+};
+
 class workplane : public std::enable_shared_from_this<workplane> {
 public:
   workplane();
@@ -107,13 +112,13 @@ public:
   workplane &add(const std::vector<shape_object> &objs);
 
   std::shared_ptr<workplane> copy_workplane(const workplane &obj);
-  std::shared_ptr<workplane> workplane_from_tagged(const std::string &name);
+  std::shared_ptr<workplane> from_tagged(const std::string &name);
   std::shared_ptr<workplane> first();
   std::shared_ptr<workplane> item(size_t i);
   std::shared_ptr<workplane> last();
   std::shared_ptr<workplane> end(int n = 1);
   std::shared_ptr<workplane> clean();
-  
+
   workplane &tag(const std::string &name);
 
   solid find_solid(bool searchStack = true, bool searchParents = true) const;
@@ -287,7 +292,7 @@ public:
                                        bool combine = true, bool clean = true);
 
   std::shared_ptr<workplane> rect(double xLen, double yLen,
-                                  bool centerX = false, bool centerY = false,
+                                  std::pair<bool, bool> center = {false, false},
                                   bool forConstruction = false);
   std::shared_ptr<workplane> rect(double xLen, double yLen,
                                   bool centerAll = false,
@@ -329,7 +334,7 @@ public:
           bool clean = true, bool both = false,
           boost::optional<double> taper = boost::none);
   std::shared_ptr<workplane>
-  extrude(const std::string &untilFace, const combine_mode &combine = true,
+  extrude(face_index_type untilFace, const combine_mode &combine = true,
           bool clean = true, bool both = false,
           boost::optional<double> taper = boost::none);
   std::shared_ptr<workplane>
@@ -341,20 +346,20 @@ public:
   sweep(workplane &path, bool multisection = false, bool makeSolid = true,
         bool isFrenet = false, bool combine = true, bool clean = true,
         const transition_mode &transition = transition_mode::RIGHT,
-        const boost::optional<gp_Vec> &normal = boost::none,
+        const boost::optional<topo_vector> &normal = boost::none,
         const boost::optional<workplane> &auxSpine = boost::none);
   std::shared_ptr<workplane>
   sweep(const topo::wire &path, bool multisection = false,
         bool makeSolid = true, bool isFrenet = false, bool combine = true,
         bool clean = true,
         const transition_mode &transition = transition_mode::RIGHT,
-        const boost::optional<gp_Vec> &normal = boost::none,
+        const boost::optional<topo_vector> &normal = boost::none,
         const boost::optional<workplane> &auxSpine = boost::none);
   std::shared_ptr<workplane>
   sweep(const edge &path, bool multisection = false, bool makeSolid = true,
         bool isFrenet = false, bool combine = true, bool clean = true,
         const transition_mode &transition = transition_mode::RIGHT,
-        const boost::optional<gp_Vec> &normal = boost::none,
+        const boost::optional<topo_vector> &normal = boost::none,
         const boost::optional<workplane> &auxSpine = boost::none);
 
   std::shared_ptr<workplane> union_(const workplane &other, bool clean = true,
@@ -382,7 +387,7 @@ public:
   cut_blind(double distance, bool clean = true, bool both = false,
             const boost::optional<double> &taper = boost::none);
   std::shared_ptr<workplane>
-  cut_blind(const std::string &untilFace, bool clean = true, bool both = false,
+  cut_blind(face_index_type untilFace, bool clean = true, bool both = false,
             const boost::optional<double> &taper = boost::none);
   std::shared_ptr<workplane>
   cut_blind(const face &untilFace, bool clean = true, bool both = false,
@@ -414,43 +419,41 @@ public:
                double tol3d = 1e-4, double tolAng = 1e-2, double tolCurv = 1e-1,
                int maxDeg = 8, int maxSegments = 9);
 
-  std::shared_ptr<workplane> box(double length, double width, double height,
-                                 bool centerX = true, bool centerY = true,
-                                 bool centerZ = true, bool combine = true,
-                                 bool clean = true);
+  std::shared_ptr<workplane>
+  box(double length, double width, double height,
+      const std::array<bool, 3> &center = {false, false, false},
+      bool combine = true, bool clean = true);
   std::shared_ptr<workplane> box(double length, double width, double height,
                                  bool centerAll = true, bool combine = true,
                                  bool clean = true);
 
-  std::shared_ptr<workplane> sphere(double radius,
-                                    const gp_Vec &direct = gp_Vec(0, 0, 1),
-                                    double angle1 = -90, double angle2 = 90,
-                                    double angle3 = 360, bool centerX = true,
-                                    bool centerY = true, bool centerZ = true,
-                                    bool combine = true, bool clean = true);
+  std::shared_ptr<workplane>
+  sphere(double radius, const gp_Vec &direct = gp_Vec(0, 0, 1),
+         double angle1 = -90, double angle2 = 90, double angle3 = 360,
+         const std::array<bool, 3> &center = {false, false, false},
+         bool combine = true, bool clean = true);
   std::shared_ptr<workplane> sphere(double radius,
                                     const gp_Vec &direct = gp_Vec(0, 0, 1),
                                     double angle1 = -90, double angle2 = 90,
                                     double angle3 = 360, bool centerAll = true,
                                     bool combine = true, bool clean = true);
 
-  std::shared_ptr<workplane> cylinder(double height, double radius,
-                                      const gp_Vec &direct = gp_Vec(0, 0, 1),
-                                      double angle = 360, bool centerX = true,
-                                      bool centerY = true, bool centerZ = true,
-                                      bool combine = true, bool clean = true);
+  std::shared_ptr<workplane>
+  cylinder(double height, double radius, const gp_Vec &direct = gp_Vec(0, 0, 1),
+           double angle = 360,
+           const std::array<bool, 3> &center = {false, false, false},
+           bool combine = true, bool clean = true);
   std::shared_ptr<workplane> cylinder(double height, double radius,
                                       const gp_Vec &direct = gp_Vec(0, 0, 1),
                                       double angle = 360, bool centerAll = true,
                                       bool combine = true, bool clean = true);
 
-  std::shared_ptr<workplane> wedge(double dx, double dy, double dz, double xmin,
-                                   double zmin, double xmax, double zmax,
-                                   const gp_Pnt &pnt = gp_Pnt(0, 0, 0),
-                                   const gp_Vec &dir = gp_Vec(0, 0, 1),
-                                   bool centerX = true, bool centerY = true,
-                                   bool centerZ = true, bool combine = true,
-                                   bool clean = true);
+  std::shared_ptr<workplane>
+  wedge(double dx, double dy, double dz, double xmin, double zmin, double xmax,
+        double zmax, const gp_Pnt &pnt = gp_Pnt(0, 0, 0),
+        const gp_Vec &dir = gp_Vec(0, 0, 1),
+        const std::array<bool, 3> &center = {false, false, false},
+        bool combine = true, bool clean = true);
   std::shared_ptr<workplane> wedge(double dx, double dy, double dz, double xmin,
                                    double zmin, double xmax, double zmax,
                                    const gp_Pnt &pnt = gp_Pnt(0, 0, 0),
@@ -485,7 +488,7 @@ public:
   std::shared_ptr<topo::sketch> sketch();
 
   std::shared_ptr<workplane>
-  place_sketch(const std::vector<topo::sketch> &sketches);
+  place_sketch(const std::vector<std::shared_ptr<topo::sketch>> &sketches);
 
   std::shared_ptr<workplane> operator[](int index);
 
@@ -535,7 +538,7 @@ private:
   static constexpr double TOL = 1e-6;
 
   std::shared_ptr<workplane>
-  _extrude(boost::variant<double, std::string, face> until,
+  _extrude(boost::variant<double, face_index_type, face> until,
            const combine_mode &combine, bool clean, bool both,
            boost::optional<double> taper);
 
@@ -543,7 +546,7 @@ private:
       boost::variant<std::reference_wrapper<workplane>, topo::wire, edge> path,
       bool multisection, bool makeSolid, bool isFrenet, bool combine,
       bool clean, const transition_mode &transition,
-      const boost::optional<gp_Vec> &normal,
+      const boost::optional<topo_vector> &normal,
       const boost::optional<workplane> &auxSpine);
 
   std::shared_ptr<workplane> _union_(
@@ -563,7 +566,7 @@ private:
       bool clean, const boost::optional<double> &tol);
 
   std::shared_ptr<workplane>
-  _cut_blind(boost::variant<double, std::string, face> until, bool clean,
+  _cut_blind(boost::variant<double, face_index_type, face> until, bool clean,
              bool both, const boost::optional<double> &taper);
 
   std::shared_ptr<workplane>
@@ -685,7 +688,8 @@ private:
   shape _sweep(
       boost::variant<std::shared_ptr<workplane>, topo::wire, topo::edge> &path,
       bool multisection, bool makeSolid, bool isFrenet,
-      const transition_mode &transition, const boost::optional<gp_Vec> &normal,
+      const transition_mode &transition,
+      const boost::optional<topo_vector> &normal,
       const boost::optional<workplane> &auxSpine);
   gp_Vec compute_x_dir(const gp_Vec &normal) const;
   std::vector<shape> collect_property(const shape_object_type &propName) const;

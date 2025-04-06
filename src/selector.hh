@@ -4,6 +4,7 @@
 #include "vector.hh"
 
 #include <algorithm>
+#include <functional>
 #include <memory>
 #include <vector>
 

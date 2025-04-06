@@ -423,8 +423,7 @@ std::shared_ptr<workplane> workplane::copy_workplane(const workplane &obj) {
   return out;
 }
 
-std::shared_ptr<workplane>
-workplane::workplane_from_tagged(const std::string &name) {
+std::shared_ptr<workplane> workplane::from_tagged(const std::string &name) {
   auto tagged = get_tagged(name);
   return copy_workplane(*tagged);
 }
@@ -1829,9 +1828,10 @@ std::shared_ptr<workplane> workplane::_eachpoint(
 }
 
 std::shared_ptr<workplane> workplane::rect(double xLen, double yLen,
-                                           bool centerX, bool centerY,
+                                           std::pair<bool, bool> center,
                                            bool forConstruction) {
-  return _rect(xLen, yLen, std::make_tuple(centerX, centerY), forConstruction);
+  return _rect(xLen, yLen, std::make_tuple(center.first, center.second),
+               forConstruction);
 }
 
 std::shared_ptr<workplane> workplane::rect(double xLen, double yLen,
@@ -2065,7 +2065,7 @@ std::shared_ptr<workplane> workplane::extrude(double distance,
   return _extrude(distance, combine, clean, both, taper);
 }
 
-std::shared_ptr<workplane> workplane::extrude(const std::string &untilFace,
+std::shared_ptr<workplane> workplane::extrude(face_index_type untilFace,
                                               const combine_mode &combine,
                                               bool clean, bool both,
                                               boost::optional<double> taper) {
@@ -2080,7 +2080,7 @@ std::shared_ptr<workplane> workplane::extrude(const face &untilFace,
 }
 
 std::shared_ptr<workplane>
-workplane::_extrude(boost::variant<double, std::string, face> until,
+workplane::_extrude(boost::variant<double, face_index_type, face> until,
                     const combine_mode &combine, bool clean, bool both,
                     boost::optional<double> taper) {
   auto combineStr = boost::get<combine_mode_type>(&combine);
@@ -2092,8 +2092,8 @@ workplane::_extrude(boost::variant<double, std::string, face> until,
   shape r;
   if (auto dist = boost::get<double>(&until)) {
     r = _extrude(*dist, both, taper);
-  } else if (auto str = boost::get<std::string>(&until)) {
-    int faceIndex = (*str == "next") ? 0 : -1;
+  } else if (auto str = boost::get<face_index_type>(&until)) {
+    int faceIndex = static_cast<int>(*str);
     r = _extrude(boost::none, both, taper,
                  boost::make_optional<boost::variant<int, face>>(faceIndex));
   } else if (auto f = boost::get<face>(&until)) {
@@ -2139,7 +2139,7 @@ std::shared_ptr<workplane>
 workplane::sweep(workplane &path, bool multisection, bool makeSolid,
                  bool isFrenet, bool combine, bool clean,
                  const transition_mode &transition,
-                 const boost::optional<gp_Vec> &normal,
+                 const boost::optional<topo_vector> &normal,
                  const boost::optional<workplane> &auxSpine) {
   return _sweep(path, multisection, makeSolid, isFrenet, combine, clean,
                 transition, normal, auxSpine);
@@ -2149,7 +2149,7 @@ std::shared_ptr<workplane>
 workplane::sweep(const topo::wire &path, bool multisection, bool makeSolid,
                  bool isFrenet, bool combine, bool clean,
                  const transition_mode &transition,
-                 const boost::optional<gp_Vec> &normal,
+                 const boost::optional<topo_vector> &normal,
                  const boost::optional<workplane> &auxSpine) {
   return _sweep(path, multisection, makeSolid, isFrenet, combine, clean,
                 transition, normal, auxSpine);
@@ -2159,7 +2159,7 @@ std::shared_ptr<workplane>
 workplane::sweep(const edge &path, bool multisection, bool makeSolid,
                  bool isFrenet, bool combine, bool clean,
                  const transition_mode &transition,
-                 const boost::optional<gp_Vec> &normal,
+                 const boost::optional<topo_vector> &normal,
                  const boost::optional<workplane> &auxSpine) {
   return _sweep(path, multisection, makeSolid, isFrenet, combine, clean,
                 transition, normal, auxSpine);
@@ -2168,7 +2168,8 @@ workplane::sweep(const edge &path, bool multisection, bool makeSolid,
 std::shared_ptr<workplane> workplane::_sweep(
     boost::variant<std::reference_wrapper<workplane>, topo::wire, edge> path,
     bool multisection, bool makeSolid, bool isFrenet, bool combine, bool clean,
-    const transition_mode &transition, const boost::optional<gp_Vec> &normal,
+    const transition_mode &transition,
+    const boost::optional<topo_vector> &normal,
     const boost::optional<workplane> &auxSpine) {
   boost::variant<std::shared_ptr<workplane>, topo::wire, topo::edge> pathWire;
   if (auto wp = boost::get<std::reference_wrapper<workplane>>(&path)) {
@@ -2413,7 +2414,7 @@ workplane::cut_blind(double distance, bool clean, bool both,
 }
 
 std::shared_ptr<workplane>
-workplane::cut_blind(const std::string &untilFace, bool clean, bool both,
+workplane::cut_blind(face_index_type untilFace, bool clean, bool both,
                      const boost::optional<double> &taper) {
   return _cut_blind(untilFace, clean, both, taper);
 }
@@ -2425,7 +2426,7 @@ workplane::cut_blind(const face &untilFace, bool clean, bool both,
 }
 
 std::shared_ptr<workplane>
-workplane::_cut_blind(boost::variant<double, std::string, face> until,
+workplane::_cut_blind(boost::variant<double, face_index_type, face> until,
                       bool clean, bool both,
                       const boost::optional<double> &taper) {
   shape s;
@@ -2433,8 +2434,8 @@ workplane::_cut_blind(boost::variant<double, std::string, face> until,
     shape toCut = _extrude(*dist, both, taper, {}, false);
     solid solidRef = find_solid();
     s = *topo::cut(solidRef, toCut);
-  } else if (auto str = boost::get<std::string>(&until)) {
-    int faceIndex = (*str == "next") ? 0 : -1;
+  } else if (auto tp = boost::get<face_index_type>(&until)) {
+    int faceIndex = static_cast<int>(*tp);
     s = _extrude(boost::none, both, taper,
                  boost::make_optional<boost::variant<int, face>>(faceIndex),
                  false);
@@ -2664,7 +2665,8 @@ shape workplane::_revolve(double angleDegrees, const gp_Pnt &axisStart,
 shape workplane::_sweep(
     boost::variant<std::shared_ptr<workplane>, topo::wire, topo::edge> &path,
     bool multisection, bool makeSolid, bool isFrenet,
-    const transition_mode &transition, const boost::optional<gp_Vec> &normal,
+    const transition_mode &transition,
+    const boost::optional<topo_vector> &normal,
     const boost::optional<workplane> &auxSpine) {
   topo::shape pathWire;
   if (auto wp = boost::get<std::shared_ptr<workplane>>(&path)) {
@@ -2684,7 +2686,7 @@ shape workplane::_sweep(
 
   shape mode;
   if (normal) {
-    mode = vertex::make_vertex(*normal);
+    mode = vertex::make_vertex(normal->to_vec());
   } else if (auxSpine) {
     auto val = auxSpine->val();
 
@@ -2807,11 +2809,11 @@ workplane::_interp_plate(boost::variant<std::vector<gp_Pnt>, std::vector<edge>,
 }
 
 std::shared_ptr<workplane> workplane::box(double length, double width,
-                                          double height, bool centerX,
-                                          bool centerY, bool centerZ,
+                                          double height,
+                                          const std::array<bool, 3> &center,
                                           bool combine, bool clean) {
-  return _box(length, width, height, std::make_tuple(centerX, centerY, centerZ),
-              combine, clean);
+  return _box(length, width, height,
+              std::make_tuple(center[0], center[1], center[2]), combine, clean);
 }
 
 std::shared_ptr<workplane> workplane::box(double length, double width,
@@ -2852,10 +2854,11 @@ std::shared_ptr<workplane> workplane::_box(
 
 std::shared_ptr<workplane>
 workplane::sphere(double radius, const gp_Vec &direct, double angle1,
-                  double angle2, double angle3, bool centerX, bool centerY,
-                  bool centerZ, bool combine, bool clean) {
+                  double angle2, double angle3,
+                  const std::array<bool, 3> &center, bool combine, bool clean) {
   return _sphere(radius, direct, angle1, angle2, angle3,
-                 std::make_tuple(centerX, centerY, centerZ), combine, clean);
+                 std::make_tuple(center[0], center[1], center[2]), combine,
+                 clean);
 }
 
 std::shared_ptr<workplane> workplane::sphere(double radius,
@@ -2899,13 +2902,13 @@ std::shared_ptr<workplane> workplane::_sphere(
                     true, combine, clean);
 }
 
-std::shared_ptr<workplane> workplane::cylinder(double height, double radius,
-                                               const gp_Vec &direct,
-                                               double angle, bool centerX,
-                                               bool centerY, bool centerZ,
-                                               bool combine, bool clean) {
+std::shared_ptr<workplane>
+workplane::cylinder(double height, double radius, const gp_Vec &direct,
+                    double angle, const std::array<bool, 3> &center,
+                    bool combine, bool clean) {
   return _cylinder(height, radius, direct, angle,
-                   std::make_tuple(centerX, centerY, centerZ), combine, clean);
+                   std::make_tuple(center[0], center[1], center[2]), combine,
+                   clean);
 }
 
 std::shared_ptr<workplane> workplane::cylinder(double height, double radius,
@@ -2951,10 +2954,10 @@ std::shared_ptr<workplane> workplane::_cylinder(
 std::shared_ptr<workplane>
 workplane::wedge(double dx, double dy, double dz, double xmin, double zmin,
                  double xmax, double zmax, const gp_Pnt &pnt, const gp_Vec &dir,
-                 bool centerX, bool centerY, bool centerZ, bool combine,
-                 bool clean) {
+                 const std::array<bool, 3> &center, bool combine, bool clean) {
   return _wedge(dx, dy, dz, xmin, zmin, xmax, zmax, pnt, dir,
-                std::make_tuple(centerX, centerY, centerZ), combine, clean);
+                std::make_tuple(center[0], center[1], center[2]), combine,
+                clean);
 }
 
 std::shared_ptr<workplane>
@@ -3108,12 +3111,12 @@ std::shared_ptr<topo::sketch> workplane::sketch() {
   return rv;
 }
 
-std::shared_ptr<workplane>
-workplane::place_sketch(const std::vector<topo::sketch> &sketches) {
+std::shared_ptr<workplane> workplane::place_sketch(
+    const std::vector<std::shared_ptr<topo::sketch>> &sketches) {
   std::vector<topo::shape_object> rv;
 
   for (auto &s : sketches) {
-    auto s_new = s.copy();
+    auto s_new = s->copy();
     s_new->locs_ = locs();
     rv.push_back(s_new);
   }

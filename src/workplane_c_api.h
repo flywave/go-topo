@@ -18,17 +18,14 @@ extern "C" {
 typedef struct _shape_objectt_t shape_object_t;
 typedef struct _workplane_t workplane_t;
 
-// 构造函数
 WORKPLANECAPICALL workplane_t *workplane_create();
 WORKPLANECAPICALL workplane_t *
 workplane_create_from_plane(topo_plane_t *plane, topo_vector_t *origin);
 WORKPLANECAPICALL workplane_t *
 workplane_create_from_name(const char *planeName, topo_vector_t *origin);
 
-// 析构函数
 WORKPLANECAPICALL void workplane_free(workplane_t *wp);
 
-// 基本操作
 WORKPLANECAPICALL topo_shape_t *workplane_value(workplane_t *wp);
 WORKPLANECAPICALL workplane_t *workplane_clean(workplane_t *wp);
 
@@ -39,7 +36,6 @@ WORKPLANECAPICALL workplane_t *workplane_workplane(workplane_t *wp,
 
 WORKPLANECAPICALL void workplane_tag(workplane_t *wp, const char *name);
 
-// 几何操作
 WORKPLANECAPICALL workplane_t *workplane_split(workplane_t *wp, bool keepTop,
                                                bool keepBottom);
 WORKPLANECAPICALL workplane_t *
@@ -47,21 +43,18 @@ workplane_split_with_shape(workplane_t *wp, topo_shape_t *splitter);
 WORKPLANECAPICALL workplane_t *
 workplane_split_with_workplane(workplane_t *wp, workplane_t *splitter);
 
-// 布尔运算
 WORKPLANECAPICALL void workplane_add(workplane_t *wp, workplane_t *other);
 WORKPLANECAPICALL void workplane_add_shape(workplane_t *wp,
                                            shape_object_t *obj);
 WORKPLANECAPICALL void workplane_add_shapes(workplane_t *wp,
                                             shape_object_t **objs, int size);
 
-// workplane_from_tagged
 WORKPLANECAPICALL workplane_t *workplane_from_tagged(workplane_t *wp,
                                                      const char *tag);
 
 WORKPLANECAPICALL topo_solid_t *
 workplane_find_solid(workplane_t *wp, bool searchStack, bool searchParents);
 
-// 选择器操作
 WORKPLANECAPICALL workplane_t *
 workplane_vertices(workplane_t *wp, const char *selector, const char *tag);
 WORKPLANECAPICALL workplane_t *
@@ -109,7 +102,6 @@ WORKPLANECAPICALL workplane_t *workplane_ancestors(workplane_t *wp, int kind,
 WORKPLANECAPICALL workplane_t *workplane_siblings(workplane_t *wp, int kind,
                                                   int level, const char *tag);
 
-// 变换操作
 WORKPLANECAPICALL workplane_t *
 workplane_rotate_about_center(workplane_t *wp, topo_vector_t *axisEndPoint,
                               double angle);
@@ -133,19 +125,16 @@ workplane_mirror_with_face(workplane_t *wp, topo_face_t *mirrorFace,
 WORKPLANECAPICALL workplane_t *workplane_translate(workplane_t *wp,
                                                    topo_vector_t *vec);
 
-// 特征操作
 WORKPLANECAPICALL workplane_t *
 workplane_shell(workplane_t *wp, double thickness, const char *kind);
 WORKPLANECAPICALL workplane_t *workplane_fillet(workplane_t *wp, double radius);
 WORKPLANECAPICALL workplane_t *workplane_chamfer(workplane_t *wp, double length,
                                                  double length2);
 
-// transformed
 WORKPLANECAPICALL workplane_t *workplane_transformed(workplane_t *wp,
                                                      topo_vector_t *rotate,
                                                      topo_vector_t *offset);
 
-// 阵列操作
 WORKPLANECAPICALL workplane_t *
 workplane_rarray(workplane_t *wp, double xSpacing, double ySpacing, int xCount,
                  int yCount, bool centerX, bool centerY);
@@ -153,7 +142,6 @@ WORKPLANECAPICALL workplane_t *
 workplane_polar_array(workplane_t *wp, double radius, double startAngle,
                       double angle, int count, bool fill, bool rotate);
 
-// 点操作
 WORKPLANECAPICALL workplane_t *
 workplane_push_points(workplane_t *wp, topo_location_t **locs, int size);
 WORKPLANECAPICALL workplane_t *
@@ -163,7 +151,6 @@ workplane_push_points_with_vector(workplane_t *wp, topo_vector_t **vecs,
 WORKPLANECAPICALL workplane_t *workplane_center(workplane_t *wp, double x,
                                                 double y);
 
-// 线段操作
 WORKPLANECAPICALL workplane_t *
 workplane_line_to(workplane_t *wp, double x, double y, bool forConstruction);
 WORKPLANECAPICALL workplane_t *
@@ -275,11 +262,10 @@ WORKPLANECAPICALL workplane_t *
 workplane_polyline(workplane_t *wp, topo_vector_t **points, int size,
                    bool forConstruction, bool includeCurrent);
 WORKPLANECAPICALL workplane_t *workplane_close(workplane_t *wp);
-WORKPLANECAPICALL workplane_t *workplane_largest_dimension(workplane_t *wp);
-WORKPLANECAPICALL workplane_t *workplane_cut_each(workplane_t *wp,
-                                                  shape_object_t *(*fcn)(),
-                                                  bool useLocalCoordinates,
-                                                  bool clean);
+WORKPLANECAPICALL double workplane_largest_dimension(workplane_t *wp);
+WORKPLANECAPICALL workplane_t *
+workplane_cut_each(workplane_t *wp, topo_shape_t *(*fcn)(topo_location_t *loc),
+                   bool useLocalCoordinates, bool clean);
 WORKPLANECAPICALL workplane_t *
 workplane_cbore_hole(workplane_t *wp, double diameter, double cboreDiameter,
                      double cboreDepth, double depth, bool clean);
@@ -292,58 +278,32 @@ WORKPLANECAPICALL workplane_t *
 workplane_twist_extrude(workplane_t *wp, double distance, double angleDegrees,
                         bool combine, bool clean);
 
+WORKPLANECAPICALL workplane_t *workplane_extrude(workplane_t *wp,
+                                                 double distance, bool combine,
+                                                 bool clean, bool both,
+                                                 double *taper);
 WORKPLANECAPICALL workplane_t *
-workplane_extrude(workplane_t *wp, double distance, bool combine, bool clean);
-WORKPLANECAPICALL workplane_t *workplane_extrude_with_wire(workplane_t *wp,
-                                                           topo_wire_t *wire,
-                                                           bool combine,
-                                                           bool clean);
-WORKPLANECAPICALL workplane_t *workplane_extrude_with_edge(workplane_t *wp,
-                                                           topo_edge_t *edge,
-                                                           bool combine,
-                                                           bool clean);
-WORKPLANECAPICALL workplane_t *workplane_extrude_with_face(workplane_t *wp,
-                                                           topo_face_t *face,
-                                                           bool combine,
-                                                           bool clean);
-WORKPLANECAPICALL workplane_t *workplane_extrude_with_selector(workplane_t *wp,
-                                                               selector_t *sel,
-                                                               bool combine,
-                                                               bool clean);
-WORKPLANECAPICALL workplane_t *workplane_extrude_with_shape(workplane_t *wp,
-                                                            topo_shape_t *shape,
-                                                            bool combine,
-                                                            bool clean);
+workplane_extrude_with_face_type(workplane_t *wp, int index_type, bool combine,
+                                 bool clean, bool both, double *taper);
+WORKPLANECAPICALL workplane_t *
+workplane_extrude_with_face(workplane_t *wp, topo_face_t *face, bool combine,
+                            bool clean, bool both, double *taper);
+
 WORKPLANECAPICALL workplane_t *
 workplane_sweep(workplane_t *wp, workplane_t *path, bool multisection,
                 bool makeSolid, bool isFrenet, bool combine, bool clean,
-                const char *transition, topo_vector_t *normal,
-                workplane_t *auxSpine);
+                int transition, topo_vector_t *normal, workplane_t *auxSpine);
 WORKPLANECAPICALL workplane_t *
 workplane_sweep_with_wire(workplane_t *wp, topo_wire_t *path, bool multisection,
                           bool makeSolid, bool isFrenet, bool combine,
-                          bool clean, const char *transition,
-                          topo_vector_t *normal, workplane_t *auxSpine);
+                          bool clean, int transition, topo_vector_t *normal,
+                          workplane_t *auxSpine);
 WORKPLANECAPICALL workplane_t *
 workplane_sweep_with_edge(workplane_t *wp, topo_edge_t *path, bool multisection,
                           bool makeSolid, bool isFrenet, bool combine,
-                          bool clean, const char *transition,
-                          topo_vector_t *normal, workplane_t *auxSpine);
-WORKPLANECAPICALL workplane_t *
-workplane_sweep_with_face(workplane_t *wp, topo_face_t *path, bool multisection,
-                          bool makeSolid, bool isFrenet, bool combine,
-                          bool clean, const char *transition,
-                          topo_vector_t *normal, workplane_t *auxSpine);
-WORKPLANECAPICALL workplane_t *
-workplane_sweep_with_selector(workplane_t *wp, selector_t *path,
-                              bool multisection, bool makeSolid, bool isFrenet,
-                              bool combine, bool clean, const char *transition,
-                              topo_vector_t *normal, workplane_t *auxSpine);
-WORKPLANECAPICALL workplane_t *
-workplane_sweep_with_shape(workplane_t *wp, topo_shape_t *path,
-                           bool multisection, bool makeSolid, bool isFrenet,
-                           bool combine, bool clean, const char *transition,
-                           topo_vector_t *normal, workplane_t *auxSpine);
+                          bool clean, int transition, topo_vector_t *normal,
+                          workplane_t *auxSpine);
+
 WORKPLANECAPICALL workplane_t *workplane_union(workplane_t *wp,
                                                workplane_t *other, bool clean,
                                                bool glue, double tol);

@@ -9,6 +9,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <array>
 
 namespace flywave {
 namespace topo {
