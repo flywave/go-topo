@@ -979,7 +979,6 @@ constraint_solver::solve(int verbosity) {
   app->Options()->SetIntegerValue("print_level", verbosity);
   app->Options()->SetStringValue("sb", verbosity == 0 ? "yes" : "no");
   app->Options()->SetStringValue("print_timing_statistics", "no");
-  app->Options()->SetStringValue("linear_solver", "mumps");
 
   // Create and solve the NLP
   Ipopt::SmartPtr<constraint_problem> nlp = new constraint_problem(*this);

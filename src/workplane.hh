@@ -60,6 +60,14 @@ enum class shape_object_type {
   blank = 103
 };
 
+enum class combine_mode_type {
+  cut,
+  additive,
+  subtractive,
+};
+
+typedef boost::variant<bool, combine_mode_type> combine_mode;
+
 enum class center_option { CenterOfMass, ProjectedOrigin, CenterOfBoundBox };
 
 class workplane : public std::enable_shared_from_this<workplane> {
@@ -317,18 +325,15 @@ public:
                                            bool combine, bool clean);
 
   std::shared_ptr<workplane>
-  extrude(double distance,
-          const boost::variant<bool, std::string> &combine = true,
+  extrude(double distance, const combine_mode &combine = true,
           bool clean = true, bool both = false,
           boost::optional<double> taper = boost::none);
   std::shared_ptr<workplane>
-  extrude(const std::string &untilFace,
-          const boost::variant<bool, std::string> &combine = true,
+  extrude(const std::string &untilFace, const combine_mode &combine = true,
           bool clean = true, bool both = false,
           boost::optional<double> taper = boost::none);
   std::shared_ptr<workplane>
-  extrude(const face &untilFace,
-          const boost::variant<bool, std::string> &combine = true,
+  extrude(const face &untilFace, const combine_mode &combine = true,
           bool clean = true, bool both = false,
           boost::optional<double> taper = boost::none);
 
@@ -531,8 +536,8 @@ private:
 
   std::shared_ptr<workplane>
   _extrude(boost::variant<double, std::string, face> until,
-           const boost::variant<bool, std::string> &combine, bool clean,
-           bool both, boost::optional<double> taper);
+           const combine_mode &combine, bool clean, bool both,
+           boost::optional<double> taper);
 
   std::shared_ptr<workplane> _sweep(
       boost::variant<std::reference_wrapper<workplane>, topo::wire, edge> path,
@@ -686,8 +691,7 @@ private:
   std::vector<shape> collect_property(const shape_object_type &propName) const;
   std::shared_ptr<workplane>
   combine_with_base(const boost::variant<shape, std::vector<shape>> &obj,
-                    const boost::variant<bool, std::string> &mode = true,
-                    bool clean = false);
+                    const combine_mode &mode = true, bool clean = false);
   shape fuse_with_base(const shape &obj);
   shape cut_from_base(const shape &obj);
   std::shared_ptr<workplane> get_tagged(const std::string &name) const;

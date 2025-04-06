@@ -2056,33 +2056,34 @@ std::shared_ptr<workplane> workplane::twist_extrude(double distance,
   return combine_with_base(r, combine, clean);
 }
 
-std::shared_ptr<workplane>
-workplane::extrude(double distance,
-                   const boost::variant<bool, std::string> &combine, bool clean,
-                   bool both, boost::optional<double> taper) {
+std::shared_ptr<workplane> workplane::extrude(double distance,
+                                              const combine_mode &combine,
+                                              bool clean, bool both,
+                                              boost::optional<double> taper) {
   return _extrude(distance, combine, clean, both, taper);
 }
 
-std::shared_ptr<workplane>
-workplane::extrude(const std::string &untilFace,
-                   const boost::variant<bool, std::string> &combine, bool clean,
-                   bool both, boost::optional<double> taper) {
+std::shared_ptr<workplane> workplane::extrude(const std::string &untilFace,
+                                              const combine_mode &combine,
+                                              bool clean, bool both,
+                                              boost::optional<double> taper) {
   return _extrude(untilFace, combine, clean, both, taper);
 }
 
-std::shared_ptr<workplane>
-workplane::extrude(const face &untilFace,
-                   const boost::variant<bool, std::string> &combine, bool clean,
-                   bool both, boost::optional<double> taper) {
+std::shared_ptr<workplane> workplane::extrude(const face &untilFace,
+                                              const combine_mode &combine,
+                                              bool clean, bool both,
+                                              boost::optional<double> taper) {
   return _extrude(untilFace, combine, clean, both, taper);
 }
 
 std::shared_ptr<workplane>
 workplane::_extrude(boost::variant<double, std::string, face> until,
-                    const boost::variant<bool, std::string> &combine,
-                    bool clean, bool both, boost::optional<double> taper) {
-  auto combineStr = boost::get<std::string>(&combine);
-  if (combineStr && (*combineStr == "cut" || *combineStr == "s")) {
+                    const combine_mode &combine, bool clean, bool both,
+                    boost::optional<double> taper) {
+  auto combineStr = boost::get<combine_mode_type>(&combine);
+  if (combineStr && (*combineStr == combine_mode_type::cut ||
+                     *combineStr == combine_mode_type::subtractive)) {
     return _cut_blind(until, clean, both, taper);
   }
 
@@ -2184,9 +2185,9 @@ std::shared_ptr<workplane> workplane::_sweep(
 
 std::shared_ptr<workplane> workplane::combine_with_base(
     const boost::variant<shape, std::vector<shape>> &obj,
-    const boost::variant<bool, std::string> &mode, bool clean) {
+    const combine_mode &mode, bool clean) {
   shape newS;
-  auto smode = boost::get<std::string>(&mode);
+  auto smode = boost::get<combine_mode_type>(&mode);
   auto bmode = boost::get<bool>(&mode);
 
   if (smode || (bmode && *bmode)) {
@@ -2195,9 +2196,10 @@ std::shared_ptr<workplane> workplane::combine_with_base(
     if (shapes) {
       shp = compound::make_compound(*shapes);
     }
-    if (*smode == "cut" || *smode == "s") {
+    if (*smode == combine_mode_type::cut ||
+        *smode == combine_mode_type::subtractive) {
       newS = cut_from_base(shp);
-    } else if ((smode && *smode == "a") || *bmode) {
+    } else if ((smode && *smode == combine_mode_type::additive) || *bmode) {
       newS = fuse_with_base(shp);
     }
   } else {
@@ -3050,8 +3052,9 @@ workplane &workplane::to_pending() {
   return *this;
 }
 
-std::shared_ptr<workplane>
-workplane::offset2d(double d, const GeomAbs_JoinType &kind, bool forConstruction) {
+std::shared_ptr<workplane> workplane::offset2d(double d,
+                                               const GeomAbs_JoinType &kind,
+                                               bool forConstruction) {
   std::vector<topo::wire> ws = _consolidate_wires();
   std::vector<topo::wire> rv;
 
@@ -3137,7 +3140,8 @@ workplane::operator[](const std::vector<int> &indices) {
 
 std::shared_ptr<workplane>
 workplane::operator[](const std::pair<int, int> &range) {
-  auto [start, end] = range;
+  auto start = range.first;
+  auto end = range.second;
   if (start < 0 || static_cast<size_t>(end) > _objects.size() || start > end) {
     throw std::out_of_range("Invalid range");
   }
