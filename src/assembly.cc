@@ -130,7 +130,7 @@ toFusedCAF(const std::shared_ptr<assembly> &assy, bool glue = false,
                              " has no shapes.");
   } else if (shape_color_pairs.size() == 1) {
     const auto &pair = shape_color_pairs[0];
-    if (pair.first.shape_type() != "Compound") {
+    if (pair.first.shape_type() != TopAbs_COMPOUND) {
       if (glue) {
         auto fused = pair.first.fused({}, glue, tol ? *tol : 0.0f);
         top_level_shape = compound::make_compound({fused}).value();
@@ -340,10 +340,10 @@ toCAF(const std::shared_ptr<assembly> &assy, bool coloredSTEP = false,
   return {top, wrapper.doc};
 }
 
-bool export_assembly(const std::shared_ptr<assembly> &assy,
-                     const std::string &path,
-                     const std::string &mode = "default",
-                     boost::optional<float> fuzzy_tol = boost::none) {
+bool export_assembly(
+    const std::shared_ptr<assembly> &assy, const std::string &path,
+    const assembly_export_mode &mode = assembly_export_mode::defalut_,
+    boost::optional<float> fuzzy_tol = boost::none) {
   try {
     // Handle the extra settings for the STEP export
     int pcurves = 1;
@@ -357,7 +357,7 @@ bool export_assembly(const std::shared_ptr<assembly> &assy,
 
     // Handle the doc differently based on which mode we are using
     Handle(TDocStd_Document) doc;
-    if (mode == "fused") {
+    if (mode == assembly_export_mode::fuse) {
       if (fuzzy_tol) {
         std::tie(std::ignore, doc) = toFusedCAF(assy, glue, *fuzzy_tol);
       } else {
@@ -465,7 +465,7 @@ assembly::assembly(assembly_object obj, std::shared_ptr<topo_location> loc,
       name_(name.empty() ? detail::generate_uuid() : name),
       color_(std::move(color)), metadata_(metadata), parent_(), children_(),
       objects_(), // 注意：需要在enable_shared_from_this派生类中使用
-      constraints_(), solveResult_(boost::none) {
+      constraints_(), solve_result_(boost::none) {
 
   objects_[name_] = shared_from_this();
   // 使用boost::variant的静态访问器进行类型安全检查
@@ -503,7 +503,7 @@ assembly::assembly(assembly &&o) noexcept {
   children_ = std::move(o.children_);
   objects_ = std::move(o.objects_);
   constraints_ = std::move(o.constraints_);
-  solveResult_ = std::move(o.solveResult_);
+  solve_result_ = std::move(o.solve_result_);
   // 重置原对象的状态
   o.loc_.reset();
   o.name_.clear();
@@ -514,7 +514,7 @@ assembly::assembly(assembly &&o) noexcept {
   o.children_.clear();
   o.objects_.clear();
   o.constraints_.clear();
-  o.solveResult_.reset();
+  o.solve_result_.reset();
 }
 
 assembly &assembly::operator=(assembly &&o) noexcept {
@@ -528,7 +528,7 @@ assembly &assembly::operator=(assembly &&o) noexcept {
     children_ = std::move(o.children_);
     objects_ = std::move(o.objects_);
     constraints_ = std::move(o.constraints_);
-    solveResult_ = std::move(o.solveResult_);
+    solve_result_ = std::move(o.solve_result_);
     // 重置原对象的状态
     o.loc_.reset();
     o.name_.clear();
@@ -539,7 +539,7 @@ assembly &assembly::operator=(assembly &&o) noexcept {
     o.children_.clear();
     o.objects_.clear();
     o.constraints_.clear();
-    o.solveResult_.reset();
+    o.solve_result_.reset();
   }
   return *this;
 }
@@ -572,8 +572,8 @@ std::shared_ptr<assembly> assembly::copy() const {
   }
 
   // Copy solve result if exists
-  if (solveResult_) {
-    new_assembly->solveResult_ = *solveResult_;
+  if (solve_result_) {
+    new_assembly->solve_result_ = *solve_result_;
   }
 
   return new_assembly;
@@ -858,7 +858,7 @@ assembly &assembly::solve(int verbosity) {
   constraint_solver solver(locs, constraint_pods, locked, scale);
 
   auto solve_result = solver.solve(verbosity);
-  solveResult_ = solve_result.second;
+  solve_result_ = solve_result.second;
 
   // Step 5: Update positions
   auto root_loc_inv = std::make_shared<topo_location>();
@@ -883,18 +883,8 @@ assembly &assembly::solve(int verbosity) {
 }
 
 assembly &assembly::export_to(const std::string &path,
-                              const std::string &mode) {
-
-  // Validate STEP export mode
-  const std::vector<std::string> validStepModes = {"default", "fused",
-                                                   "per_part"};
-  if (std::find(validStepModes.begin(), validStepModes.end(), mode) ==
-      validStepModes.end()) {
-    throw std::invalid_argument("Invalid STEP export mode: " + mode);
-  }
-
+                              const assembly_export_mode &mode) {
   detail::export_assembly(this->shared_from_this(), path, mode);
-
   return *this;
 }
 

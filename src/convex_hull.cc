@@ -62,15 +62,25 @@ convert_and_validate(const std::vector<edge> &edges) {
 
   for (const auto &e : edges) {
     auto gt = e.geom_type();
-    if (gt == "LINE") {
+    if (gt == shape_geom_line) {
       points.emplace_back(e.start_point().X(), e.start_point().Y());
       points.emplace_back(e.end_point().X(), e.end_point().Y());
-    } else if (gt == "CIRCLE") {
-      arcs.emplace_back(/* 构造参数 */);
+    } else if (gt == shape_geom_circle) {
+      auto c = e.center();
+      auto r = e.radius();
+      auto a1 =
+          atan2p(c.X() - e.start_point().X(), c.Y() - e.start_point().Y());
+      auto a2 = atan2p(c.X() - e.end_point().X(), c.Y() - e.end_point().Y());
+      if (a1 > a2) {
+        std::swap(a1, a2);
+      }
+      if (a2 - a1 > M_PI) {
+        a2 -= 2 * M_PI;
+      }
+      arcs.emplace_back(arc(point(c.X(), c.Y()), r, a1, a2));
     }
   }
 
-  // 去重
   std::sort(points.begin(), points.end());
   points.erase(std::unique(points.begin(), points.end()), points.end());
 

@@ -55,7 +55,7 @@ public:
   double ac;
   static constexpr double kTolerance = 1e-6;
 
-  arc() = default; // Add default constructor
+  arc() = default;
   arc(const point &c, double r, double a1, double a2);
   bool operator==(const arc &other) const;
 

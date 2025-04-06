@@ -1,6 +1,8 @@
 #pragma once
 
+#include "shape_geom_type.hh"
 #include "vector.hh"
+
 #include <algorithm>
 #include <memory>
 #include <vector>
@@ -176,12 +178,10 @@ public:
 
 // 类型选择器
 class type_selector : public selector {
-  std::string type_;
+  shape_geom_type type_;
 
 public:
-  type_selector(const std::string &type) : type_(type) {
-    std::transform(type_.begin(), type_.end(), type_.begin(), ::toupper);
-  }
+  type_selector(const shape_geom_type &type) : type_(type) {}
 
   std::vector<shape> filter(const std::vector<shape> &objects) const override;
 };

@@ -41,33 +41,33 @@ namespace flywave {
 namespace topo {
 namespace {
 
-static Font_FontAspect ConvertFontKind(compound::FontKind kind) {
+static Font_FontAspect ConvertFontKind(font_kind kind) {
   switch (kind) {
-  case compound::FontKind::BOLD:
+  case font_kind::BOLD:
     return Font_FA_Bold;
-  case compound::FontKind::ITALIC:
+  case font_kind::ITALIC:
     return Font_FA_Italic;
   default:
     return Font_FA_Regular;
   }
 }
 
-static Graphic3d_HorizontalTextAlignment ConvertHAlign(compound::HAlign align) {
+static Graphic3d_HorizontalTextAlignment ConvertHAlign(horizontal_align align) {
   switch (align) {
-  case compound::HAlign::LEFT:
+  case horizontal_align::LEFT:
     return Graphic3d_HTA_LEFT;
-  case compound::HAlign::RIGHT:
+  case horizontal_align::RIGHT:
     return Graphic3d_HTA_RIGHT;
   default:
     return Graphic3d_HTA_CENTER;
   }
 }
 
-static Graphic3d_VerticalTextAlignment ConvertVAlign(compound::VAlign align) {
+static Graphic3d_VerticalTextAlignment ConvertVAlign(vertical_align align) {
   switch (align) {
-  case compound::VAlign::TOP:
+  case vertical_align::TOP:
     return Graphic3d_VTA_TOP;
-  case compound::VAlign::BOTTOM:
+  case vertical_align::BOTTOM:
     return Graphic3d_VTA_BOTTOM;
   default:
     return Graphic3d_VTA_CENTER;
@@ -349,8 +349,8 @@ compound compound::siblings(const shape &s, TopAbs_ShapeEnum kind,
 
 compound compound::make_text(const std::string &text, double size,
                              const std::string &font,
-                             const std::string &fontPath, FontKind kind,
-                             HAlign halign, VAlign valign,
+                             const std::string &fontPath, font_kind kind,
+                             horizontal_align halign, vertical_align valign,
                              const topo_plane &position) {
   // Convert font kind
   Font_FontAspect fontAspect = ConvertFontKind(kind);
@@ -381,7 +381,8 @@ compound compound::make_text(const std::string &text, double size,
 compound compound::make_text(const std::string &text, double size,
                              const wire &spine, bool planar,
                              const std::string &font, const std::string &path,
-                             FontKind kind, HAlign halign, VAlign valign) {
+                             font_kind kind, horizontal_align halign,
+                             vertical_align valign) {
   // Get the wire from spine
   TopoDS_Wire wire = spine.value();
   double length = spine.length();
@@ -434,7 +435,8 @@ compound compound::make_text(const std::string &text, double size,
 compound compound::make_text(const std::string &text, double size,
                              const wire &spine, const face &base,
                              const std::string &font, const std::string &path,
-                             FontKind kind, HAlign halign, VAlign valign) {
+                             font_kind kind, horizontal_align halign,
+                             vertical_align valign) {
   // Get single face from base
   TopoDS_Face baseFace = base.value();
 
@@ -462,16 +464,16 @@ compound compound::make_text(const std::string &text, double size,
 
 compound compound::make_text(const std::string &text, double size,
                              double height, const std::string &font,
-                             const std::string &fontPath, FontKind kind,
-                             HAlign halign, VAlign valign,
+                             const std::string &fontPath, font_kind kind,
+                             horizontal_align halign, vertical_align valign,
                              const topo_plane &position) {
   // Convert font style
   Font_FontAspect fontAspect;
   switch (kind) {
-  case FontKind::BOLD:
+  case font_kind::BOLD:
     fontAspect = Font_FontAspect_Bold;
     break;
-  case FontKind::ITALIC:
+  case font_kind::ITALIC:
     fontAspect = Font_FontAspect_Italic;
     break;
   default:
@@ -500,10 +502,10 @@ compound compound::make_text(const std::string &text, double size,
   // Convert alignment
   Graphic3d_HorizontalTextAlignment hAlignment;
   switch (halign) {
-  case HAlign::LEFT:
+  case horizontal_align::LEFT:
     hAlignment = Graphic3d_HTA_LEFT;
     break;
-  case HAlign::RIGHT:
+  case horizontal_align::RIGHT:
     hAlignment = Graphic3d_HTA_RIGHT;
     break;
   default:
@@ -513,10 +515,10 @@ compound compound::make_text(const std::string &text, double size,
 
   Graphic3d_VerticalTextAlignment vAlignment;
   switch (valign) {
-  case VAlign::TOP:
+  case vertical_align::TOP:
     vAlignment = Graphic3d_VTA_TOP;
     break;
-  case VAlign::BOTTOM:
+  case vertical_align::BOTTOM:
     vAlignment = Graphic3d_VTA_BOTTOM;
     break;
   default:

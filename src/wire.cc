@@ -522,18 +522,7 @@ int wire::num_edges() const {
 }
 
 std::vector<wire> wire::offset2d(double distance,
-                                 const std::string &kind) const {
-  GeomAbs_JoinType joinType;
-  if (kind == "arc") {
-    joinType = GeomAbs_Arc;
-  } else if (kind == "intersection") {
-    joinType = GeomAbs_Intersection;
-  } else if (kind == "tangent") {
-    joinType = GeomAbs_Tangent;
-  } else {
-    throw std::invalid_argument("Invalid offset kind: " + kind);
-  }
-
+                                 const GeomAbs_JoinType &joinType) const {
   BRepOffsetAPI_MakeOffset offset;
   offset.Init(joinType);
   offset.AddWire(TopoDS::Wire(this->value()));
@@ -565,22 +554,12 @@ wire wire::chamfer2d(double d, const std::vector<vertex> &vertices) const {
   return f.chamfer2d(d, vertices).outer_wire();
 }
 
-int wire::offset(double distance, const std::string &kind) {
+int wire::offset(double distance, const GeomAbs_JoinType &joinType) {
   Handle(TopTools_HSequenceOfShape) wires = new TopTools_HSequenceOfShape;
   Handle(TopTools_HSequenceOfShape) edges = new TopTools_HSequenceOfShape;
   TopExp_Explorer ex;
 
   try {
-    GeomAbs_JoinType joinType;
-    if (kind == "arc") {
-      joinType = GeomAbs_Arc;
-    } else if (kind == "intersection") {
-      joinType = GeomAbs_Intersection;
-    } else if (kind == "tangent") {
-      joinType = GeomAbs_Tangent;
-    } else {
-      throw std::invalid_argument("Invalid offset kind: " + kind);
-    }
     BRepOffsetAPI_MakeOffset MO(value(), joinType);
     MO.Perform(distance);
 

@@ -655,22 +655,7 @@ int topo_wire_offset(topo_wire_t w, double distance, int joinType) {
   try {
     auto opt = cast_to_topo(w);
     if (opt) {
-      std::string join;
-      switch (joinType) {
-      case GeomAbs_Arc:
-        join = "arc";
-        break;
-      case GeomAbs_Tangent:
-        join = "tangent";
-        break;
-
-      case GeomAbs_Intersection:
-        join = "intersection";
-        break;
-      default:
-        break;
-      }
-      return opt->offset(distance, join);
+      return opt->offset(distance, static_cast<GeomAbs_JoinType>(joinType));
     }
     return -1;
   } catch (...) {

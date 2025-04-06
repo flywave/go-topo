@@ -130,7 +130,6 @@ sketch &sketch::operator=(sketch &&o) noexcept {
   return *this;
 }
 
-
 int sketch::hash_code() const {
   if (!faces_) {
     return 0;
@@ -459,7 +458,7 @@ sketch &sketch::distribute(int n, double start, double stop, bool rotate) {
   // 验证选择集中的类型
   for (const auto &sel : *selection_) {
     if (auto sh = boost::get<shape>(&sel)) {
-      if (sh->shape_type() != "Edge" && sh->shape_type() != "Wire") {
+      if (sh->shape_type() != TopAbs_EDGE && sh->shape_type() != TopAbs_WIRE) {
         throw std::invalid_argument(
             "Only edges and wires are supported for distribution");
       }
@@ -492,7 +491,7 @@ sketch &sketch::distribute(int n, double start, double stop, bool rotate) {
   std::vector<topo_location> locs;
   for (auto &sel : *selection_) {
     if (auto sh = boost::get<shape>(&sel)) {
-      if (sh->shape_type() == "Edge") {
+      if (sh->shape_type() == TopAbs_EDGE) {
         auto edge = sh->cast<topo::edge>();
         auto params =
             (!trimmed && edge->is_closed()) ? params_closed : params_open;
@@ -507,7 +506,7 @@ sketch &sketch::distribute(int n, double start, double stop, bool rotate) {
             locs.push_back(topo_location(p));
           }
         }
-      } else if (sh->shape_type() == "Wire") {
+      } else if (sh->shape_type() == TopAbs_WIRE) {
         auto wire = sh->cast<topo::wire>();
         auto params =
             (!trimmed && wire->is_closed()) ? params_closed : params_open;
@@ -651,7 +650,7 @@ sketch &sketch::hull(Mode mode, const boost::optional<std::string> &tag) {
   if (selection_) {
     for (auto &sel : *selection_) {
       if (auto shp = boost::get<shape>(&sel)) {
-        if (shp->shape_type() == "Edge") {
+        if (shp->shape_type() == TopAbs_EDGE) {
           edges.push_back(*shp->cast<topo::edge>());
         }
       }
@@ -676,7 +675,7 @@ sketch &sketch::offset(double d, Mode mode,
 
   for (auto &sel : *selection_) {
     if (auto shp = boost::get<shape>(&sel)) {
-      if (shp->shape_type() == "Wire") {
+      if (shp->shape_type() == TopAbs_WIRE) {
         auto wire = shp->cast<topo::wire>();
         auto offset_wires = wire->offset2d(d);
         for (auto &ow : offset_wires) {
@@ -705,7 +704,7 @@ sketch::_match_faces_to_vertices() {
 
     for (auto &sel : *selection_) {
       if (auto shp = boost::get<shape>(&sel)) {
-        if (shp->shape_type() == "Vertex") {
+        if (shp->shape_type() == TopAbs_VERTEX) {
           auto v = shp->cast<topo::vertex>();
           if (std::find(f_vertices.begin(), f_vertices.end(), *v) !=
               f_vertices.end()) {
@@ -999,9 +998,9 @@ sketch &sketch::delete_selected() {
 
   for (auto &sel : *selection_) {
     if (auto sh = boost::get<shape>(&sel)) {
-      if (sh->shape_type() == "Face") {
+      if (sh->shape_type() == TopAbs_FACE) {
         faces_->cast<topo::compound>()->remove(*sh->cast<topo::face>());
-      } else if (sh->shape_type() == "Edge") {
+      } else if (sh->shape_type() == TopAbs_EDGE) {
         auto edge = sh->cast<topo::edge>();
         edges_.erase(std::remove(edges_.begin(), edges_.end(), *edge),
                      edges_.end());
@@ -1173,7 +1172,7 @@ sketch &sketch::constrain(const std::string &tag,
   }
 
   auto edge = boost::get<shape>(&it->second[0]);
-  if (!edge || edge->shape_type() != "Edge") {
+  if (!edge || edge->shape_type() != TopAbs_EDGE) {
     throw std::invalid_argument("Tag does not reference an edge");
   }
 
@@ -1195,8 +1194,8 @@ sketch &sketch::constrain(const std::string &tag1, const std::string &tag2,
 
   auto edge1 = boost::get<shape>(it1->second[0]);
   auto edge2 = boost::get<shape>(it2->second[0]);
-  if (!edge1 || !edge2 || edge1.shape_type() != "Edge" ||
-      edge2.shape_type() != "Edge") {
+  if (!edge1 || !edge2 || edge1.shape_type() != TopAbs_EDGE ||
+      edge2.shape_type() != TopAbs_EDGE) {
     throw std::invalid_argument("Tags must reference edges");
   }
 
@@ -1217,17 +1216,17 @@ sketch &sketch::solve() {
       continue;
 
     if (auto shp = boost::get<topo::shape>(pair.second[0])) {
-      if (shp.shape_type() == "Edge") {
+      if (shp.shape_type() == TopAbs_EDGE) {
         auto edge = shp.cast<topo::edge>();
         auto geom_type = edge->geom_type();
 
-        if (geom_type == "LINE") {
+        if (geom_type == shape_geom_line) {
           auto p1 = edge->start_point();
           auto p2 = edge->end_point();
           entities.push_back(segment_dof{p1.X(), p1.Y(), p2.X(), p2.Y()});
           e2i[pair.first] = entities.size() - 1;
           geoms.push_back(geom_type::LINE);
-        } else if (geom_type == "CIRCLE") {
+        } else if (geom_type == shape_geom_circle) {
           auto center = edge->arc_center();
           auto p1 = topo_vector(edge->start_point()) - center;
           auto p2 = topo_vector(edge->end_point()) - center;
@@ -1506,7 +1505,7 @@ shape sketch::sanitize_for_bool(const sketch_val &val) const {
 
 boost::optional<flywave::topo::compound>
 sketch::to_compound(const shape &sh) const {
-  if (sh.shape_type() == "Compound") {
+  if (sh.shape_type() == TopAbs_COMPOUND) {
     return sh.cast<flywave::topo::compound>();
   }
   return compound::make_compound({sh});

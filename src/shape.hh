@@ -6,6 +6,7 @@
 #include "mesh_receiver.hh"
 #include "orientation.hh"
 #include "selector.hh"
+#include "shape_geom_type.hh"
 
 #include <BRepBuilderAPI_Copy.hxx>
 #include <OSD_Timer.hxx>
@@ -41,6 +42,7 @@ enum texture_mapping_rule {
   texture_normal,
   texture_normal_auto_scale
 };
+
 
 class shape : public geometry_object {
 public:
@@ -207,8 +209,8 @@ public:
 
   boost::optional<shape> auto_cast() const;
 
-  std::string shape_type() const;
-  std::string geom_type() const;
+  TopAbs_ShapeEnum shape_type() const;
+  shape_geom_type geom_type() const;
 
   virtual int write_triangulation(mesh_receiver &mesh, double tolerance,
                                   double deflection, double angle,
@@ -256,8 +258,6 @@ public:
   std::vector<shell> shells() const;
   std::vector<solid> solids() const;
   std::vector<comp_solid> comp_solids() const;
-
-  inline bool for_construction() const { return _for_construction; }
 
   void set_for_construction(bool for_construction);
 

@@ -6,6 +6,8 @@
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Wire.hxx>
+#include <GeomAbs_JoinType.hxx>
+
 #include <boost/variant.hpp>
 
 #include "shape1d.hh"
@@ -94,14 +96,14 @@ public:
 
   int project(const face &f);
 
-  int offset(double distance, const std::string &kind = "arc");
+  int offset(double distance, const GeomAbs_JoinType &kind = GeomAbs_Arc);
 
   int fillet(std::vector<vertex> &vertices, std::vector<double> radius);
 
   int chamfer(std::vector<vertex> &vertices, std::vector<double> distances);
 
   std::vector<wire> offset2d(double distances,
-                             const std::string &kind = "arc") const;
+                             const GeomAbs_JoinType &kind = GeomAbs_Arc) const;
 
   wire fillet2d(double radius, const std::vector<vertex> &vertices) const;
 
@@ -116,7 +118,8 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
-  wire(TopoDS_Shape shp, bool forConstruction = false) : shape1d(shp, forConstruction) {}
+  wire(TopoDS_Shape shp, bool forConstruction = false)
+      : shape1d(shp, forConstruction) {}
   wire(const shape &v, TopoDS_Shape shp) : shape1d(v, shp) {}
 
   virtual Handle(Adaptor3d_Curve) get_geom() const override;

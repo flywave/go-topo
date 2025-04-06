@@ -5,8 +5,7 @@
 namespace flywave {
 namespace topo {
 
-context::context() : tolerance_(0.0001) {
-}
+context::context() : tolerance_(0.0001) {}
 
 std::vector<edge> context::pop_pending_edges(bool errorOnEmpty) {
   if (errorOnEmpty && pending_edges_.empty()) {

@@ -99,35 +99,38 @@ void compute_properties(const TopoDS_Shape &shape, GProp_GProps &props) {
   }
 }
 
-const std::string &get_geom_type(const TopoDS_Shape &shape) {
-  static const std::unordered_map<TopAbs_ShapeEnum, std::string> geomLUT = {
-      {TopAbs_VERTEX, "Vertex"},       {TopAbs_WIRE, "Wire"},
-      {TopAbs_SHELL, "Shell"},         {TopAbs_SOLID, "Solid"},
-      {TopAbs_COMPSOLID, "CompSolid"}, {TopAbs_COMPOUND, "Compound"}};
+const shape_geom_type &get_geom_type(const TopoDS_Shape &shape) {
+  static const std::unordered_map<TopAbs_ShapeEnum, shape_geom_type> geomLUT = {
+      {TopAbs_VERTEX, shape_geom_vertex},
+      {TopAbs_WIRE, shape_geom_wire},
+      {TopAbs_SHELL, shape_geom_shell},
+      {TopAbs_SOLID, shape_geom_solid},
+      {TopAbs_COMPSOLID, shape_geom_compsolid},
+      {TopAbs_COMPOUND, shape_geom_compound}};
 
-  static const std::unordered_map<GeomAbs_CurveType, std::string> edgeGeomLUT =
-      {{GeomAbs_Line, "LINE"},
-       {GeomAbs_Circle, "CIRCLE"},
-       {GeomAbs_Ellipse, "ELLIPSE"},
-       {GeomAbs_Hyperbola, "HYPERBOLA"},
-       {GeomAbs_Parabola, "PARABOLA"},
-       {GeomAbs_BezierCurve, "BEZIER"},
-       {GeomAbs_BSplineCurve, "BSPLINE"},
-       {GeomAbs_OffsetCurve, "OFFSET"},
-       {GeomAbs_OtherCurve, "OTHER"}};
+  static const std::unordered_map<GeomAbs_CurveType, shape_geom_type>
+      edgeGeomLUT = {{GeomAbs_Line, shape_geom_line},
+                     {GeomAbs_Circle, shape_geom_circle},
+                     {GeomAbs_Ellipse, shape_geom_ellipse},
+                     {GeomAbs_Hyperbola, shape_geom_hyperbola},
+                     {GeomAbs_Parabola, shape_geom_parabola},
+                     {GeomAbs_BezierCurve, shape_geom_bezier_curve},
+                     {GeomAbs_BSplineCurve, shape_geom_bspline_curve},
+                     {GeomAbs_OffsetCurve, shape_geom_offset_curve},
+                     {GeomAbs_OtherCurve, shape_geom_other_curve}};
 
-  static const std::unordered_map<GeomAbs_SurfaceType, std::string>
-      faceGeomLUT = {{GeomAbs_Plane, "PLANE"},
-                     {GeomAbs_Cylinder, "CYLINDER"},
-                     {GeomAbs_Cone, "CONE"},
-                     {GeomAbs_Sphere, "SPHERE"},
-                     {GeomAbs_Torus, "TORUS"},
-                     {GeomAbs_BezierSurface, "BEZIER"},
-                     {GeomAbs_BSplineSurface, "BSPLINE"},
-                     {GeomAbs_SurfaceOfRevolution, "REVOLUTION"},
-                     {GeomAbs_SurfaceOfExtrusion, "EXTRUSION"},
-                     {GeomAbs_OffsetSurface, "OFFSET"},
-                     {GeomAbs_OtherSurface, "OTHER"}};
+  static const std::unordered_map<GeomAbs_SurfaceType, shape_geom_type>
+      faceGeomLUT = {{GeomAbs_Plane, shape_geom_plane},
+                     {GeomAbs_Cylinder, shape_geom_cylinder},
+                     {GeomAbs_Cone, shape_geom_cone},
+                     {GeomAbs_Sphere, shape_geom_sphere},
+                     {GeomAbs_Torus, shape_geom_torus},
+                     {GeomAbs_BezierSurface, shape_geom_bezier_surface},
+                     {GeomAbs_BSplineSurface, shape_geom_bspline_surface},
+                     {GeomAbs_SurfaceOfRevolution, shape_geom_revolved_surface},
+                     {GeomAbs_SurfaceOfExtrusion, shape_geom_extruded_surface},
+                     {GeomAbs_OffsetSurface, shape_geom_offset_surface},
+                     {GeomAbs_OtherSurface, shape_geom_other_surface}};
 
   TopAbs_ShapeEnum shapeType = shape.ShapeType();
 
@@ -1386,46 +1389,11 @@ boost::optional<shape> shape::make_shape(TopoDS_Shape shp) {
   return boost::none;
 }
 
-std::string shape::shape_type() const {
-  std::string type = "clue";
-  switch (_shape.ShapeType()) {
-  case TopAbs_COMPOUND:
-    type = "Compounds";
-    break;
-  case TopAbs_COMPSOLID:
-    type = "CompSolids";
-    break;
-  case TopAbs_SOLID:
-    type = "Solids";
-    break;
-  case TopAbs_SHELL:
-    type = "Shells";
-    break;
-  case TopAbs_FACE:
-    type = "Faces";
-    break;
-  case TopAbs_WIRE:
-    type = "Wires";
-    break;
-  case TopAbs_EDGE:
-    type = "Edges";
-    break;
-  case TopAbs_VERTEX:
-    type = "Vertices";
-    break;
-  case TopAbs_SHAPE:
-    type = "Shape";
-    break;
-  default:
-    break;
-  }
+TopAbs_ShapeEnum shape::shape_type() const { return _shape.ShapeType(); }
 
-  return type;
-}
-
-std::string shape::geom_type() const {
+shape_geom_type shape::geom_type() const {
   if (_shape.IsNull()) {
-    return "";
+    return shape_geom_null;
   }
   return get_geom_type(_shape);
 }
@@ -1606,7 +1574,7 @@ boost::optional<shape> shape::to_splines(int degree, double tolerance,
                                       tolerance, // 3D容差
                                       tolerance, // 2D容差
                                       degree,
-                                      1, // 段数 (被degree参数主导)
+                                      1,             // 段数 (被degree参数主导)
                                       GeomAbs_C0,    // 连续性
                                       GeomAbs_C0,    // 连续性
                                       Standard_True, // degree参数主导

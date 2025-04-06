@@ -29,6 +29,12 @@ struct assembly_element {
   std::shared_ptr<Quantity_Color> color;
 };
 
+enum class assembly_export_mode {
+  defalut_,
+  fuse,
+  per_part,
+};
+
 class assembly : public std::enable_shared_from_this<assembly> {
 public:
   static std::shared_ptr<assembly>
@@ -38,7 +44,6 @@ public:
          std::shared_ptr<Quantity_Color> color = nullptr,
          const std::unordered_map<std::string, boost::any> &metadata = {});
 
-  // Copy control
   assembly(const assembly &) = delete;
   assembly &operator=(const assembly &) = delete;
 
@@ -51,7 +56,6 @@ public:
 
   bool operator<(const assembly &other) const { return name_ < other.name_; }
 
-  // Tree operations
   assembly &
   add(assembly_object obj, std::shared_ptr<topo_location> loc = nullptr,
       const std::string &name = "",
@@ -80,10 +84,10 @@ public:
 
   assembly &solve(int verbosity = 0);
 
-  assembly &export_to(const std::string &path,
-                      const std::string &mode = "default");
+  assembly &
+  export_to(const std::string &path,
+            const assembly_export_mode &mode = assembly_export_mode::defalut_);
 
-  // Accessors
   std::vector<shape> shapes() const;
 
   void traverse(std::function<void(const std::string &, const assembly &)>
@@ -118,14 +122,12 @@ public:
   std::vector<std::shared_ptr<assembly>> children() const { return children_; }
 
 protected:
-  // Construction
   assembly(assembly_object obj = boost::blank{},
            std::shared_ptr<topo_location> loc = nullptr,
            const std::string &name = "",
            std::shared_ptr<Quantity_Color> color = nullptr,
            const std::unordered_map<std::string, boost::any> &metadata = {});
 
-  // Internal methods
   std::pair<std::string, shape> query(const std::string &q) const;
   std::pair<topo_location, std::string>
   sub_location(const std::string &name) const;
@@ -141,7 +143,6 @@ protected:
                 std::shared_ptr<Quantity_Color> color = nullptr) const;
 
 private:
-  // Data members
   mutable std::mutex solve_mutex_;
   std::shared_ptr<topo_location> loc_;
   std::string name_;
@@ -155,7 +156,7 @@ private:
   std::unordered_map<std::string, std::shared_ptr<assembly>> objects_;
   std::vector<constraint_spec> constraints_;
 
-  boost::optional<std::map<std::string, double>> solveResult_;
+  boost::optional<std::map<std::string, double>> solve_result_;
 };
 
 } // namespace topo

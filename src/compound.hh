@@ -5,6 +5,7 @@
 #include <BRep_Builder.hxx>
 #include <TopoDS_Compound.hxx>
 
+#include "font_type.hh"
 #include "plane.hh"
 #include "shape3d.hh"
 
@@ -19,10 +20,6 @@ public:
   compound() = default;
   virtual ~compound() = default;
 
-  enum class FontKind { REGULAR, BOLD, ITALIC };
-  enum class HAlign { LEFT, CENTER, RIGHT };
-  enum class VAlign { BOTTOM, CENTER, TOP };
-
   static compound make_compound(const std::vector<shape> &shapes);
 
   static compound make_compound(std::initializer_list<shape> &shapes);
@@ -30,27 +27,33 @@ public:
   static compound
   make_text(const std::string &text, double size,
             const std::string &font = "Arial", const std::string &fontPath = "",
-            FontKind kind = FontKind::REGULAR, HAlign halign = HAlign::CENTER,
-            VAlign valign = VAlign::CENTER,
+            font_kind kind = font_kind::REGULAR,
+            horizontal_align halign = horizontal_align::CENTER,
+            vertical_align valign = vertical_align::CENTER,
             const topo_plane &position = topo_plane::named("XY"));
 
-  static compound
-  make_text(const std::string &text, double size, const wire &spine,
-            bool planar = false, const std::string &font = "Arial",
-            const std::string &path = "", FontKind kind = FontKind::REGULAR,
-            HAlign halign = HAlign::CENTER, VAlign valign = VAlign::CENTER);
+  static compound make_text(const std::string &text, double size,
+                            const wire &spine, bool planar = false,
+                            const std::string &font = "Arial",
+                            const std::string &path = "",
+                            font_kind kind = font_kind::REGULAR,
+                            horizontal_align halign = horizontal_align::CENTER,
+                            vertical_align valign = vertical_align::CENTER);
 
-  static compound
-  make_text(const std::string &text, double size, const wire &spine,
-            const face &base, const std::string &font = "Arial",
-            const std::string &path = "", FontKind kind = FontKind::REGULAR,
-            HAlign halign = HAlign::CENTER, VAlign valign = VAlign::CENTER);
+  static compound make_text(const std::string &text, double size,
+                            const wire &spine, const face &base,
+                            const std::string &font = "Arial",
+                            const std::string &path = "",
+                            font_kind kind = font_kind::REGULAR,
+                            horizontal_align halign = horizontal_align::CENTER,
+                            vertical_align valign = vertical_align::CENTER);
 
   static compound
   make_text(const std::string &text, double size, double height,
             const std::string &font = "Arial", const std::string &fontPath = "",
-            FontKind kind = FontKind::REGULAR, HAlign halign = HAlign::CENTER,
-            VAlign valign = VAlign::CENTER,
+            font_kind kind = font_kind::REGULAR,
+            horizontal_align halign = horizontal_align::CENTER,
+            vertical_align valign = vertical_align::CENTER,
             const topo_plane &position = topo_plane::named("XY"));
 
   template <typename TShp1, typename TShp2, typename... TShp>

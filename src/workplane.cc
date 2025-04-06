@@ -1,4 +1,5 @@
 #include "workplane.hh"
+#include "shape_geom_type.hh"
 
 #include <unordered_set>
 
@@ -81,14 +82,14 @@ workplane &workplane::tag(const std::string &name) {
 }
 
 std::vector<shape>
-workplane::collect_property(const std::string &propName) const {
+workplane::collect_property(const shape_object_type &propName) const {
   std::vector<shape> result;
   std::unordered_map<shape, bool> seen; // used as an ordered set
 
   for (auto &obj : _objects) {
     if (auto shp = boost::get<shape>(&obj)) {
-      if (propName == "Solids") {
-        if (shp->shape_type() == "Compounds") {
+      if (propName == shape_object_type::solid) {
+        if (shp->shape_type() == TopAbs_COMPOUND) {
           for (auto &k : shp->compounds()) {
             if (seen.find(k) == seen.end()) {
               seen[k] = true;
@@ -96,49 +97,49 @@ workplane::collect_property(const std::string &propName) const {
             }
           }
         }
-      } else if (propName == "Compounds") {
+      } else if (propName == shape_object_type::compound) {
         for (auto &k : shp->compounds()) {
           if (seen.find(k) == seen.end()) {
             seen[k] = true;
             result.push_back(k);
           }
         }
-      } else if (propName == "Faces") {
+      } else if (propName == shape_object_type::face) {
         for (auto &k : shp->faces()) {
           if (seen.find(k) == seen.end()) {
             seen[k] = true;
             result.push_back(k);
           }
         }
-      } else if (propName == "Edges") {
+      } else if (propName == shape_object_type::edge) {
         for (auto &k : shp->edges()) {
           if (seen.find(k) == seen.end()) {
             seen[k] = true;
             result.push_back(k);
           }
         }
-      } else if (propName == "Vertices") {
+      } else if (propName == shape_object_type::vertex) {
         for (auto &k : shp->vertices()) {
           if (seen.find(k) == seen.end()) {
             seen[k] = true;
             result.push_back(k);
           }
         }
-      } else if (propName == "Wires") {
+      } else if (propName == shape_object_type::wire) {
         for (auto &k : shp->wires()) {
           if (seen.find(k) == seen.end()) {
             seen[k] = true;
             result.push_back(k);
           }
         }
-      } else if (propName == "Solids") {
+      } else if (propName == shape_object_type::solid) {
         for (auto &k : shp->solids()) {
           if (seen.find(k) == seen.end()) {
             seen[k] = true;
             result.push_back(k);
           }
         }
-      } else if (propName == "CompSolids") {
+      } else if (propName == shape_object_type::comp_solid) {
         for (auto &k : shp->comp_solids()) {
           if (seen.find(k) == seen.end()) {
             seen[k] = true;
@@ -269,10 +270,11 @@ shape workplane::value() const {
 }
 
 std::shared_ptr<workplane> workplane::create(double offset, bool invert,
-                                             const std::string &centerOption,
+                                             const center_option &centerOption,
                                              topo_vector *origin) {
-  static const std::unordered_set<std::string> validOptions = {
-      "CenterOfMass", "ProjectedOrigin", "CenterOfBoundBox"};
+  static const std::unordered_set<center_option> validOptions = {
+      center_option::CenterOfMass, center_option::ProjectedOrigin,
+      center_option::CenterOfBoundBox};
   if (validOptions.find(centerOption) == validOptions.end()) {
     throw std::runtime_error("Undefined centerOption value provided.");
   }
@@ -284,7 +286,7 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
     std::vector<face> faces;
     for (auto &obj : _objects) {
       if (auto f = boost::get<shape>(&obj)) {
-        if (f->shape_type() == "Face") {
+        if (f->shape_type() == TopAbs_FACE) {
           faces.push_back(*f->cast<topo::face>());
         }
       }
@@ -299,9 +301,10 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
       throw std::runtime_error("Selected faces must be co-planar.");
     }
 
-    if (centerOption == "CenterOfMass" || centerOption == "ProjectedOrigin") {
+    if (centerOption == center_option::CenterOfMass ||
+        centerOption == center_option::ProjectedOrigin) {
       center_ = topo::combined_center(select_shapes(_objects));
-    } else if (centerOption == "CenterOfBoundBox") {
+    } else if (centerOption == center_option::CenterOfBoundBox) {
       center_ = topo::combined_center_of_bound_box(select_shapes(_objects));
     }
 
@@ -311,27 +314,27 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
     shape_object obj = val();
 
     if (auto shp = boost::get<shape>(&obj)) {
-      if (shp->shape_type() == "Face") {
+      if (shp->shape_type() == TopAbs_FACE) {
         auto f = *shp->cast<topo::face>();
-        if (centerOption == "CenterOfMass" ||
-            centerOption == "ProjectedOrigin") {
+        if (centerOption == center_option::CenterOfMass ||
+            centerOption == center_option::ProjectedOrigin) {
           center_ = f.center();
-        } else if (centerOption == "CenterOfBoundBox") {
+        } else if (centerOption == center_option::CenterOfBoundBox) {
           center_ = f.centre_of_mass();
         }
         normal = f.normal_at(&center_);
         xDir = compute_x_dir(normal);
       } else {
-        if (centerOption == "CenterOfMass" ||
-            centerOption == "ProjectedOrigin") {
+        if (centerOption == center_option::CenterOfMass ||
+            centerOption == center_option::ProjectedOrigin) {
           center_ = shp->centre_of_mass();
-        } else if (centerOption == "CenterOfBoundBox") {
+        } else if (centerOption == center_option::CenterOfBoundBox) {
           center_ = shp->center_of_bound_box();
         }
         shape_object parentVal =
             has_parent() ? parent()->val() : shape_object();
         if (auto parentFace = boost::get<shape>(&parentVal)) {
-          if (parentFace->shape_type() == "Face") {
+          if (parentFace->shape_type() == TopAbs_FACE) {
             normal = parentFace->cast<topo::face>()->normal_at(&center_);
             xDir = compute_x_dir(normal);
           }
@@ -341,14 +344,15 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
         }
       }
     } else if (auto vec = boost::get<topo_vector>(&obj)) {
-      if (centerOption == "CenterOfMass" || centerOption == "ProjectedOrigin") {
+      if (centerOption == center_option::CenterOfMass ||
+          centerOption == center_option::ProjectedOrigin) {
         center_ = *vec;
-      } else if (centerOption == "CenterOfBoundBox") {
+      } else if (centerOption == center_option::CenterOfBoundBox) {
         center_ = *vec;
       }
       shape_object parentVal = has_parent() ? parent()->val() : shape_object();
       if (auto parentFace = boost::get<shape>(&parentVal)) {
-        if (parentFace->shape_type() == "Face") {
+        if (parentFace->shape_type() == TopAbs_FACE) {
           normal = parentFace->cast<topo::face>()->normal_at(&center_);
           xDir = compute_x_dir(normal);
         }
@@ -362,7 +366,7 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
     }
   }
 
-  if (centerOption == "ProjectedOrigin") {
+  if (centerOption == center_option::ProjectedOrigin) {
     topo_vector orig = origin ? *origin : _plane->get_origin();
     center_ = orig.project_to_plane(topo_plane(center_, xDir, normal));
   }
@@ -461,27 +465,34 @@ std::shared_ptr<workplane> workplane::end(int n) {
   return rv;
 }
 
-struct shape_type_visitor : public boost::static_visitor<std::string> {
-  template <typename T> std::string operator()(const T &arg) const {
-    return arg.shape_type();
+struct shape_type_visitor : public boost::static_visitor<shape_object_type> {
+  template <typename T> shape_object_type operator()(const T &arg) const {
+    return static_cast<shape_object_type>(arg.shape_type());
   }
 
-  std::string operator()(const std::shared_ptr<sketch> &) const {
-    return "Sketch";
+  shape_object_type operator()(const std::shared_ptr<sketch> &) const {
+    return shape_object_type::sketch;
   }
-  std::string operator()(const topo_vector &) const { return "Vector"; }
-  std::string operator()(const topo_location &) const { return "Location"; }
-  std::string operator()(const boost::blank &) const { return "Blank"; }
+  shape_object_type operator()(const topo_vector &) const {
+    return shape_object_type::vector;
+  }
+  shape_object_type operator()(const topo_location &) const {
+    return shape_object_type::location;
+  }
+  shape_object_type operator()(const boost::blank &) const {
+    return shape_object_type::blank;
+  }
 };
 
-shape workplane::find_type(const std::vector<std::string> &types,
+shape workplane::find_type(const std::vector<shape_object_type> &types,
                            bool searchStack, bool searchParents) const {
   std::vector<shape> rv;
 
   if (searchStack) {
     for (auto &obj : _objects) {
       bool matchesType = false;
-      std::string objType = boost::apply_visitor(shape_type_visitor(), obj);
+      shape_object_type objType =
+          boost::apply_visitor(shape_type_visitor(), obj);
 
       for (const auto &type : types) {
         if (objType == type) {
@@ -496,21 +507,22 @@ shape workplane::find_type(const std::vector<std::string> &types,
         } else if (auto shp = boost::get<std::shared_ptr<topo::sketch>>(&obj)) {
           rv.push_back(*(*shp)->faces_);
         }
-      } else if (objType == "Compound" && std::find(types.begin(), types.end(),
-                                                    "Solid") != types.end()) {
+      } else if (objType == shape_object_type::compound &&
+                 std::find(types.begin(), types.end(),
+                           shape_object_type::solid) != types.end()) {
         if (auto c = boost::get<shape>(&obj)) {
-          if (c->shape_type() == "Compound") {
+          if (c->shape_type() == TopAbs_COMPOUND) {
             auto solids = c->get_shapes(TopAbs_SOLID);
             rv.insert(rv.end(), solids.begin(), solids.end());
           }
         }
-      } else if (objType == "Compound") {
+      } else if (objType == shape_object_type::compound) {
         if (auto cs = boost::get<shape>(&obj)) {
-          if (cs->shape_type() == "Compound") {
+          if (cs->shape_type() == TopAbs_COMPOUND) {
             for (auto &el : cs->children()) {
-              std::string elType = el.shape_type();
+              TopAbs_ShapeEnum elType = el.shape_type();
               for (const auto &type : types) {
-                if (elType == type) {
+                if (static_cast<shape_object_type>(elType) == type) {
                   rv.push_back(el);
                   break;
                 }
@@ -522,7 +534,8 @@ shape workplane::find_type(const std::vector<std::string> &types,
     }
 
     if (!rv.empty()) {
-      if (std::find(types.begin(), types.end(), "Solid") != types.end()) {
+      if (std::find(types.begin(), types.end(), shape_object_type::solid) !=
+          types.end()) {
         return compound::make_compound(rv);
       } else {
         return rv.front();
@@ -538,7 +551,7 @@ shape workplane::find_type(const std::vector<std::string> &types,
 }
 
 solid workplane::find_solid(bool searchStack, bool searchParents) const {
-  auto s = find_type({"Solid"}, searchStack, searchParents);
+  auto s = find_type({shape_object_type::solid}, searchStack, searchParents);
 
   if (!s) {
     std::string message = searchStack ? "on the stack or " : "";
@@ -546,9 +559,9 @@ solid workplane::find_solid(bool searchStack, bool searchParents) const {
                              "in the parent chain");
   }
 
-  if (s.shape_type() == "Solid") {
+  if (s.shape_type() == TopAbs_SOLID) {
     return *s.cast<solid>();
-  } else if (s.shape_type() == "Compound") {
+  } else if (s.shape_type() == TopAbs_COMPOUND) {
     auto solids = s.get_shapes(TopAbs_SOLID);
     if (!solids.empty()) {
       return *solids.front().cast<solid>();
@@ -559,7 +572,7 @@ solid workplane::find_solid(bool searchStack, bool searchParents) const {
 }
 
 std::shared_ptr<workplane> workplane::select_objects(
-    const std::string &objType,
+    const shape_object_type &objType,
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
     const boost::optional<std::string> &tag) const {
   const workplane &cq_obj = tag ? *get_tagged(*tag) : *this;
@@ -699,43 +712,43 @@ std::shared_ptr<workplane> workplane::compounds(const selector_ptr &sel,
 std::shared_ptr<workplane> workplane::_vertices(
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
     const boost::optional<std::string> &tag) const {
-  return select_objects("Vertices", selector, tag);
+  return select_objects(shape_object_type::vertex, selector, tag);
 }
 
 std::shared_ptr<workplane> workplane::_faces(
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
     const boost::optional<std::string> &tag) const {
-  return select_objects("Faces", selector, tag);
+  return select_objects(shape_object_type::face, selector, tag);
 }
 
 std::shared_ptr<workplane> workplane::_edges(
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
     const boost::optional<std::string> &tag) const {
-  return select_objects("Edges", selector, tag);
+  return select_objects(shape_object_type::edge, selector, tag);
 }
 
 std::shared_ptr<workplane> workplane::_wires(
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
     const boost::optional<std::string> &tag) const {
-  return select_objects("Wires", selector, tag);
+  return select_objects(shape_object_type::wire, selector, tag);
 }
 
 std::shared_ptr<workplane> workplane::_solids(
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
     const boost::optional<std::string> &tag) const {
-  return select_objects("Solids", selector, tag);
+  return select_objects(shape_object_type::solid, selector, tag);
 }
 
 std::shared_ptr<workplane> workplane::_shells(
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
     const boost::optional<std::string> &tag) const {
-  return select_objects("Shells", selector, tag);
+  return select_objects(shape_object_type::shell, selector, tag);
 }
 
 std::shared_ptr<workplane> workplane::_compounds(
     const boost::optional<boost::variant<selector_ptr, std::string>> &selector,
     const boost::optional<std::string> &tag) const {
-  return select_objects("Compounds", selector, tag);
+  return select_objects(shape_object_type::compound, selector, tag);
 }
 
 std::shared_ptr<workplane>
@@ -851,7 +864,7 @@ std::shared_ptr<workplane> workplane::_mirror(
           boost::get<std::reference_wrapper<const workplane>>(&mirrorPlane)) {
     shape_object val = wp->get().val();
     if (auto f = boost::get<shape>(&val)) {
-      if (f->shape_type() == "Face") {
+      if (f->shape_type() == TopAbs_FACE) {
         mp = f->cast<topo::face>()->normal_at();
         mirrorFace = *f->cast<topo::face>();
       }
@@ -919,7 +932,7 @@ std::shared_ptr<workplane> workplane::shell(double thickness,
   std::vector<face> faces;
   for (auto &obj : _objects) {
     if (auto f = boost::get<shape>(&obj)) {
-      if (f->shape_type() == "Face") {
+      if (f->shape_type() == TopAbs_FACE) {
         faces.push_back(*f->cast<topo::face>());
       }
     }
@@ -946,7 +959,7 @@ std::shared_ptr<workplane> workplane::fillet(double radius) {
   std::vector<edge> edgeList;
   for (auto &obj : edges()->vals()) {
     if (auto e = boost::get<shape>(&obj)) {
-      if (e->shape_type() == "Edge") {
+      if (e->shape_type() == TopAbs_EDGE) {
         edgeList.push_back(*e->cast<topo::edge>());
       }
     }
@@ -967,7 +980,7 @@ std::shared_ptr<workplane> workplane::chamfer(double length,
   std::vector<edge> edgeList;
   for (auto &obj : edges()->vals()) {
     if (auto e = boost::get<shape>(&obj)) {
-      if (e->shape_type() == "Edge") {
+      if (e->shape_type() == TopAbs_EDGE) {
         edgeList.push_back(*e->cast<topo::edge>());
       }
     }
@@ -1069,7 +1082,7 @@ gp_Pnt workplane::find_from_point(bool useLocalCoords) {
 
   topo_vector p;
   if (auto shp = boost::get<shape>(&obj)) {
-    if (shp->shape_type() == "Edge") {
+    if (shp->shape_type() == TopAbs_EDGE) {
       p = shp->cast<topo::edge>()->end_point();
     }
   } else if (auto vec = boost::get<topo_vector>(&obj)) {
@@ -1088,7 +1101,7 @@ edge workplane::find_from_edge(bool useLocalCoords) {
 
   shape_object obj = _objects.back();
   if (auto e = boost::get<shape>(&obj)) {
-    if (e->shape_type() == "Edge") {
+    if (e->shape_type() == TopAbs_EDGE) {
       return useLocalCoords ? *_plane->to_local_coords(*e).cast<edge>()
                             : *e->cast<edge>();
     }
@@ -1580,7 +1593,7 @@ std::shared_ptr<workplane> workplane::wire(bool forConstruction) {
   std::vector<shape> new_objects;
   for (const auto &obj : _objects) {
     if (auto edge = boost::get<shape>(&obj)) {
-      if (edge->shape_type() == "Edge") {
+      if (edge->shape_type() == TopAbs_EDGE) {
         new_objects.push_back(*edge);
       }
     }
@@ -1699,7 +1712,7 @@ workplane::each(std::function<shape_object(shape_object &)> callback,
     }
 
     if (auto w = boost::get<shape>(&r)) {
-      if (w->shape_type() == "Wire") {
+      if (w->shape_type() == TopAbs_WIRE) {
         if (!w->for_construction()) {
           add_pending_wire(*w->cast<topo::wire>());
         }
@@ -2203,17 +2216,17 @@ std::shared_ptr<workplane> workplane::combine_with_base(
 }
 
 shape workplane::fuse_with_base(const shape &obj) {
-  shape baseSolid = find_type({"Solid"}, true, true);
+  shape baseSolid = find_type({shape_object_type::solid}, true, true);
   if (baseSolid) {
     return *topo::fuse({baseSolid, obj});
-  } else if (obj.shape_type() == "Compound") {
+  } else if (obj.shape_type() == TopAbs_COMPOUND) {
     return obj.cast<compound>()->fuse({});
   }
   return obj;
 }
 
 shape workplane::cut_from_base(const shape &obj) {
-  shape baseSolid = find_type({"Solid"}, true, true);
+  shape baseSolid = find_type({shape_object_type::solid}, true, true);
   if (baseSolid) {
     return *topo::cut(baseSolid, obj);
   }
@@ -2286,7 +2299,7 @@ std::shared_ptr<workplane> workplane::_union_(
   }
 
   shape r;
-  shape solidRef = find_type({"Solid"}, true, true);
+  shape solidRef = find_type({shape_object_type::solid}, true, true);
   if (solidRef) {
     newS.push_back(solidRef);
     r = *topo::fuse(newS, tol ? *tol : 0.0001, glue);
@@ -2488,9 +2501,9 @@ std::vector<face> workplane::get_faces() {
       auto faces = (*sk)->get_faces();
       rv.insert(rv.end(), faces.begin(), faces.end());
     } else if (auto shp = boost::get<shape>(&obj)) {
-      if (shp->shape_type() == "Face") {
+      if (shp->shape_type() == TopAbs_FACE) {
         rv.push_back(*shp->cast<face>());
-      } else if (shp->shape_type() == "Compound") {
+      } else if (shp->shape_type() == TopAbs_COMPOUND) {
         auto comp = shp->cast<compound>();
         for (auto &subel : comp->children()) {
           if (auto f = subel.cast<topo::face>()) {
@@ -2524,9 +2537,9 @@ std::vector<shape> workplane::get_faces_vertices() {
       auto faces = (*sk)->get_faces();
       rv.insert(rv.end(), faces.begin(), faces.end());
     } else if (auto shp = boost::get<shape>(&obj)) {
-      if (shp->shape_type() == "Face") {
+      if (shp->shape_type() == TopAbs_FACE) {
         rv.push_back(*shp->cast<face>());
-      } else if (shp->shape_type() == "Compound") {
+      } else if (shp->shape_type() == TopAbs_COMPOUND) {
         auto comp = shp->cast<compound>();
         for (auto &subel : comp->children()) {
           if (auto f = subel.cast<topo::face>()) {
@@ -2535,7 +2548,7 @@ std::vector<shape> workplane::get_faces_vertices() {
             rv.push_back(*v);
           }
         }
-      } else if (shp->shape_type() == "Vertex") {
+      } else if (shp->shape_type() == TopAbs_VERTEX) {
         rv.push_back(*shp->cast<vertex>());
       }
     }
@@ -2653,9 +2666,9 @@ shape workplane::_sweep(
   if (auto wp = boost::get<std::shared_ptr<workplane>>(&path)) {
     auto val = (*wp)->val();
     if (auto shp = boost::get<shape>(&val)) {
-      if (shp->shape_type() == "Wire") {
+      if (shp->shape_type() == TopAbs_WIRE) {
         pathWire = *shp->cast<topo::wire>();
-      } else if (shp->shape_type() == "Edge") {
+      } else if (shp->shape_type() == TopAbs_EDGE) {
         pathWire = wire::make_wire({*shp->cast<topo::edge>()});
       }
     }
@@ -2672,9 +2685,9 @@ shape workplane::_sweep(
     auto val = auxSpine->val();
 
     if (auto shp = boost::get<topo::shape>(&val)) {
-      if (shp->shape_type() == "Wire") {
+      if (shp->shape_type() == TopAbs_WIRE) {
         mode = *shp->cast<topo::wire>();
-      } else if (shp->shape_type() == "Edge") {
+      } else if (shp->shape_type() == TopAbs_EDGE) {
         mode = *shp->cast<topo::edge>();
       }
     } else {
@@ -2754,7 +2767,7 @@ workplane::_interp_plate(boost::variant<std::vector<gp_Pnt>, std::vector<edge>,
           boost::get<std::reference_wrapper<const workplane>>(&surf_edges)) {
     for (auto &obj : wp->get().edges()->_objects) {
       if (auto shp = boost::get<shape>(&obj)) {
-        if (shp->shape_type() == "Edge") {
+        if (shp->shape_type() == TopAbs_EDGE) {
           edges.push_back(*shp->cast<edge>());
         }
       }
@@ -2996,33 +3009,11 @@ std::shared_ptr<workplane>
 workplane::text(const std::string &txt, double fontsize, double distance,
                 bool cut, bool combine, bool clean, const std::string &font,
                 const boost::optional<std::string> &fontPath,
-                const std::string &kind_, const std::string &halign_,
-                const std::string &valign_) {
+                const font_kind &kind, const horizontal_align &halign,
+                const vertical_align &valign) {
 
   if (cut) {
     combine = true; // "cut" mode
-  }
-
-  compound::FontKind kind = compound::FontKind::REGULAR;
-  compound::HAlign halign = compound::HAlign::CENTER;
-  compound::VAlign valign = compound::VAlign::CENTER;
-  if (kind_ == "bold") {
-    kind = compound::FontKind::BOLD;
-  } else if (kind_ == "italic") {
-    kind = compound::FontKind::ITALIC;
-  } else if (kind_ == "bold") {
-    kind = compound::FontKind::BOLD;
-  }
-
-  if (halign_ == "left") {
-    halign = compound::HAlign::LEFT;
-  } else if (halign_ == "right") {
-    halign = compound::HAlign::RIGHT;
-  }
-  if (valign_ == "top") {
-    valign = compound::VAlign::TOP;
-  } else if (valign_ == "bottom") {
-    valign = compound::VAlign::BOTTOM;
   }
 
   shape r = topo::compound::make_text(txt, fontsize, distance, font, *fontPath,
@@ -3049,9 +3040,9 @@ std::shared_ptr<workplane> workplane::section(double height) {
 workplane &workplane::to_pending() {
   for (auto &obj : _objects) {
     if (auto shp = boost::get<shape>(&obj)) {
-      if (shp->shape_type() == "Wire") {
+      if (shp->shape_type() == TopAbs_WIRE) {
         _ctx->pending_wires().push_back(*shp->cast<topo::wire>());
-      } else if (shp->shape_type() == "Edge") {
+      } else if (shp->shape_type() == TopAbs_EDGE) {
         _ctx->pending_edges().push_back(*shp->cast<topo::edge>());
       }
     }
@@ -3060,7 +3051,7 @@ workplane &workplane::to_pending() {
 }
 
 std::shared_ptr<workplane>
-workplane::offset2d(double d, const std::string &kind, bool forConstruction) {
+workplane::offset2d(double d, const GeomAbs_JoinType &kind, bool forConstruction) {
   std::vector<topo::wire> ws = _consolidate_wires();
   std::vector<topo::wire> rv;
 

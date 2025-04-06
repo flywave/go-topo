@@ -52,9 +52,9 @@ namespace topo {
 namespace {
 
 boost::optional<wire> _toWire(const shape &shp) {
-  if (shp.shape_type() == "Wire") {
+  if (shp.shape_type() == TopAbs_WIRE) {
     return shp.cast<wire>();
-  } else if (shp.shape_type() == "Face") {
+  } else if (shp.shape_type() == TopAbs_FACE) {
     return wire::make_wire({*shp.cast<edge>()});
   }
   throw std::invalid_argument("Path must be either Wire or Edge");
@@ -66,14 +66,14 @@ static bool _setSweepMode(BRepOffsetAPI_MakePipeShell &builder,
     builder.SetMode(false);
     return false;
   }
-  if (mode->shape_type() == "Vertex") {
+  if (mode->shape_type() == TopAbs_VERTEX) {
     gp_Pnt pnt = *mode->cast<vertex>();
     builder.SetMode(mode->cast<vertex>()->value());
     return false;
-  } else if (mode->shape_type() == "Wire") {
+  } else if (mode->shape_type() == TopAbs_WIRE) {
     builder.SetMode(mode->cast<wire>()->value());
     return true;
-  } else if (mode->shape_type() == "Edge") {
+  } else if (mode->shape_type() == TopAbs_EDGE) {
     builder.SetMode(mode->cast<edge>()->value());
     return true;
   }
@@ -910,7 +910,7 @@ boost::optional<shape> sweep_multi(const std::vector<shape> &profiles,
                                    const shape &path, bool makeSolid,
                                    bool isFrenet, const shape *mode) {
   TopoDS_Wire pathWire;
-  if (path.shape_type() == "Edge") {
+  if (path.shape_type() == TopAbs_EDGE) {
     pathWire = topo::wire::make_wire({*path.cast<edge>()}).value();
   } else {
     pathWire = path.cast<wire>()->value();
@@ -929,9 +929,9 @@ boost::optional<shape> sweep_multi(const std::vector<shape> &profiles,
 
   for (const auto &profile : profiles) {
     TopoDS_Wire profileWire;
-    if (profile.shape_type() == "Wire") {
+    if (profile.shape_type() == TopAbs_WIRE) {
       profileWire = profile.cast<wire>()->value();
-    } else if (profile.shape_type() == "Face") {
+    } else if (profile.shape_type() == TopAbs_FACE) {
       profileWire = profile.cast<face>()->outer_wire().value();
     } else {
       throw std::invalid_argument("Profile must be either Wire or Face");

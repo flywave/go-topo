@@ -56,7 +56,7 @@ inline double distance_p2(const vector3d &v1, const vector3d &v2) {
 
 vector3d &vector3d::normalize() {
   double fLen = length();
-  if (fLen != 0.0 && fLen != 1.0) { // Suspicious
+  if (fLen != 0.0 && fLen != 1.0) {
     x /= fLen;
     y /= fLen;
     z /= fLen;
@@ -69,7 +69,7 @@ double vector3d::get_angle(const vector3d &rcVect) const {
   double len1 = length();
   double len2 = rcVect.length();
   if (len1 <= DBL_EPSILON || len2 <= DBL_EPSILON)
-    return std::numeric_limits<double>::quiet_NaN(); // division by zero
+    return std::numeric_limits<double>::quiet_NaN();
 
   double dot = (*this) * rcVect;
   dot /= len1;

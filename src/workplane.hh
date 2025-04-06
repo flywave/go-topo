@@ -44,6 +44,24 @@ class topo_vector;
 using shape_object = boost::variant<shape, topo_vector, topo_location,
                                     std::shared_ptr<sketch>, boost::blank>;
 
+enum class shape_object_type {
+  compound = TopAbs_COMPOUND,
+  comp_solid = TopAbs_COMPSOLID,
+  solid = TopAbs_SOLID,
+  shell = TopAbs_SHELL,
+  face = TopAbs_FACE,
+  wire = TopAbs_WIRE,
+  edge = TopAbs_EDGE,
+  vertex = TopAbs_VERTEX,
+  shape = TopAbs_SHAPE,
+  vector = 100,
+  location = 101,
+  sketch = 102,
+  blank = 103
+};
+
+enum class center_option { CenterOfMass, ProjectedOrigin, CenterOfBoundBox };
+
 class workplane : public std::enable_shared_from_this<workplane> {
 public:
   workplane();
@@ -69,7 +87,7 @@ public:
   new_object(const std::vector<shape_object> &objlist) const;
   std::shared_ptr<workplane>
   create(double offset = 0.0, bool invert = false,
-         const std::string &centerOption = "ProjectedOrigin",
+         const center_option &centerOption = center_option::ProjectedOrigin,
          topo_vector *origin = nullptr);
 
   std::shared_ptr<workplane> split(bool keepTop, bool keepBottom);
@@ -447,16 +465,17 @@ public:
        bool cut = true, bool combine = false, bool clean = true,
        const std::string &font = "Arial",
        const boost::optional<std::string> &fontPath = boost::none,
-       const std::string &kind = "regular",
-       const std::string &halign = "center",
-       const std::string &valign = "center");
+       const font_kind &kind = font_kind::REGULAR,
+       const horizontal_align &halign = horizontal_align::CENTER,
+       const vertical_align &valign = vertical_align::CENTER);
 
   std::shared_ptr<workplane> section(double height = 0.0);
 
   workplane &to_pending();
 
-  std::shared_ptr<workplane> offset2d(double d, const std::string &kind = "arc",
-                                      bool forConstruction = false);
+  std::shared_ptr<workplane>
+  offset2d(double d, const GeomAbs_JoinType &kind = GeomAbs_Arc,
+           bool forConstruction = false);
 
   std::shared_ptr<topo::sketch> sketch();
 
@@ -630,10 +649,10 @@ private:
              const boost::optional<std::string> &tag = boost::none) const;
 
   gp_Vec plane_string_to_normal(const std::string &planeStr);
-  shape find_type(const std::vector<std::string> &types, bool searchStack,
+  shape find_type(const std::vector<shape_object_type> &types, bool searchStack,
                   bool searchParents) const;
   std::shared_ptr<workplane> select_objects(
-      const std::string &objType,
+      const shape_object_type &objType,
       const boost::optional<
           boost::variant<std::shared_ptr<selector>, std::string>> &selector,
       const boost::optional<std::string> &tag) const;
@@ -664,7 +683,7 @@ private:
       const transition_mode &transition, const boost::optional<gp_Vec> &normal,
       const boost::optional<workplane> &auxSpine);
   gp_Vec compute_x_dir(const gp_Vec &normal) const;
-  std::vector<shape> collect_property(const std::string &propName) const;
+  std::vector<shape> collect_property(const shape_object_type &propName) const;
   std::shared_ptr<workplane>
   combine_with_base(const boost::variant<shape, std::vector<shape>> &obj,
                     const boost::variant<bool, std::string> &mode = true,

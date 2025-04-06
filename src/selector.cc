@@ -151,17 +151,15 @@ nth_selector::filter(const std::vector<shape> &objects) const {
   return clustered[n_];
 }
 
-// 半径第N选择器实现
 double radius_nth_selector::get_key(const shape &obj) const {
-  if (obj.shape_type() == "Edge") {
+  if (obj.shape_type() == TopAbs_EDGE) {
     return obj.cast<edge>()->radius();
-  } else if (obj.shape_type() == "Wire") {
+  } else if (obj.shape_type() == TopAbs_WIRE) {
     return obj.cast<wire>()->radius();
   }
   throw std::runtime_error("Cannot get a radius from this object");
 }
 
-// 中心第N选择器实现
 double center_nth_selector::get_key(const shape &obj) const {
   return topo_vector(obj.centre_of_mass()).dot(direction_);
 }
@@ -172,15 +170,13 @@ direction_nth_selector::filter(const std::vector<shape> &objects) const {
   return _nth_selector.filter(filtered);
 }
 
-// 长度第N选择器实现
 double length_nth_selector::get_key(const shape &obj) const {
-  if (obj.shape_type() == "Edge" || obj.shape_type() == "Wire") {
+  if (obj.shape_type() == TopAbs_EDGE || obj.shape_type() == TopAbs_WIRE) {
     return obj.cast<edge>()->length();
   }
   throw std::runtime_error("LengthNthSelector supports only Edges and Wires");
 }
 
-// 类型选择器实现
 std::vector<shape>
 type_selector::filter(const std::vector<shape> &objects) const {
   std::vector<shape> result;
@@ -198,9 +194,11 @@ direction_selector::filter(const std::vector<shape> &objects) const {
   for (const auto &obj : objects) {
     topo_vector test_vec;
 
-    if (obj.shape_type() == "Face" && obj.geom_type() == "PLANE") {
+    if (obj.shape_type() == TopAbs_FACE &&
+        obj.geom_type() == shape_geom_plane) {
       test_vec = obj.cast<face>()->normal_at();
-    } else if (obj.shape_type() == "Edge" && obj.geom_type() == "LINE") {
+    } else if (obj.shape_type() == TopAbs_EDGE &&
+               obj.geom_type() == shape_geom_line) {
       test_vec = obj.cast<edge>()->tangent_at();
     } else {
       continue;
@@ -213,12 +211,11 @@ direction_selector::filter(const std::vector<shape> &objects) const {
   return result;
 }
 
-// 面积第N选择器实现
 double area_nth_selector::get_key(const shape &obj) const {
-  if (obj.shape_type() == "Face" || obj.shape_type() == "Shell" ||
-      obj.shape_type() == "Solid") {
+  if (obj.shape_type() == TopAbs_FACE || obj.shape_type() == TopAbs_SHELL ||
+      obj.shape_type() == TopAbs_SOLID) {
     return obj.compute_mass();
-  } else if (obj.shape_type() == "Wire") {
+  } else if (obj.shape_type() == TopAbs_WIRE) {
     try {
       auto face = face::make_face(obj.cast<wire>().get());
       return std::abs(face.area());
@@ -394,7 +391,14 @@ private:
   }
 
   selector_ptr create_type_selector(const std::string &type) {
-    return std::make_shared<type_selector>(type);
+    static std::unordered_map<std::string, shape_geom_type> types = {
+        {"plane", shape_geom_plane},         {"cylinder", shape_geom_cylinder},
+        {"cone", shape_geom_cone},           {"sphere", shape_geom_sphere},
+        {"torus", shape_geom_torus},         {"line", shape_geom_line},
+        {"circle", shape_geom_circle},       {"ellipse", shape_geom_ellipse},
+        {"hyperbola", shape_geom_hyperbola}, {"parabola", shape_geom_parabola}};
+    auto &type_ = types.at(type);
+    return std::make_shared<type_selector>(type_);
   }
 
   selector_ptr build_dir_selector(

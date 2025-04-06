@@ -176,30 +176,34 @@ private:
       throw std::runtime_error("Invalid number of entities for constraint");
     }
 
-    // Additional validation logic here...
+    if (is_unary(kind) && (args.size() != 1 || args[0].is_null())) {
+      throw std::runtime_error("Invalid number of entities for constraint");
+    }
   }
 
   gp_Dir _to_dir(gp_Vec pnt) const { return gp_Dir(pnt.X(), pnt.Y(), pnt.Z()); }
 
   gp_Dir _get_axis(const shape &arg) const {
-    if (arg.shape_type() == "Face") {
+    if (arg.shape_type() == TopAbs_FACE) {
       return _to_dir(arg.cast<face>()->normal_at());
-    } else if (arg.shape_type() == "Edge" && arg.geom_type() != "CIRCLE") {
+    } else if (arg.shape_type() == TopAbs_EDGE &&
+               arg.geom_type() != shape_geom_circle) {
       return _to_dir(arg.cast<edge>()->tangent_at());
-    } else if (arg.shape_type() == "Edge" && arg.geom_type() == "CIRCLE") {
+    } else if (arg.shape_type() == TopAbs_EDGE &&
+               arg.geom_type() == shape_geom_circle) {
       return _to_dir(arg.cast<edge>()->normal());
     }
     throw std::runtime_error("Cannot construct Axis");
   }
 
   gp_Pln _get_pln(const shape &arg) const {
-    if (arg.shape_type() == "Face") {
+    if (arg.shape_type() == TopAbs_FACE) {
       return gp_Pln(_get_pnt(arg), _to_dir(arg.cast<face>()->normal_at()));
-    } else if (arg.shape_type() == "Edge") {
+    } else if (arg.shape_type() == TopAbs_EDGE) {
       auto normal = arg.cast<edge>()->normal();
       auto origin = arg.cast<edge>()->center();
       return gp_Pln(origin, _to_dir(normal));
-    } else if (arg.shape_type() == "Wire") {
+    } else if (arg.shape_type() == TopAbs_WIRE) {
       auto normal = arg.cast<wire>()->normal();
       auto origin = arg.cast<wire>()->center();
       return gp_Pln(origin, _to_dir(normal));
@@ -210,11 +214,11 @@ private:
   gp_Pnt _get_pnt(const shape &arg) const { return arg.centre_of_mass(); }
 
   gp_Lin _get_lin(const shape &arg) const {
-    if (arg.shape_type() == "Edge") {
+    if (arg.shape_type() == TopAbs_EDGE) {
       auto center = arg.cast<edge>()->center();
       auto tangent = arg.cast<edge>()->tangent_at();
       return gp_Lin(center, _to_dir(tangent));
-    } else if (arg.shape_type() == "Wire") {
+    } else if (arg.shape_type() == TopAbs_WIRE) {
       auto center = arg.cast<wire>()->center();
       auto tangent = arg.cast<wire>()->tangent_at();
       return gp_Lin(center, _to_dir(tangent));

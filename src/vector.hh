@@ -36,7 +36,6 @@ public:
   topo_vector &operator=(const topo_vector &) = default;
   topo_vector &operator=(topo_vector &&) noexcept = default;
 
-  // Properties
   double x() const { return wrapped.X(); }
   void set_x(double value) { wrapped.SetX(value); }
 
@@ -46,13 +45,11 @@ public:
   double z() const { return wrapped.Z(); }
   void set_z(double value) { wrapped.SetZ(value); }
 
-  // Length properties
   double length() const { return wrapped.Magnitude(); }
   double magnitude() const { return std::abs(wrapped.Magnitude()); }
 
   double angle(const topo_vector &v) const { return wrapped.Angle(v.wrapped); }
 
-  // Conversion methods
   std::tuple<double, double, double> to_tuple() const {
     return std::make_tuple(x(), y(), z());
   }
@@ -61,7 +58,6 @@ public:
   gp_Dir to_dir() const { return gp_Dir(wrapped.XYZ()); }
   gp_Vec to_vec() const { return wrapped; }
 
-  // topo_vector operations
   topo_vector cross(const topo_vector &v) const {
     return topo_vector(wrapped.Crossed(v.wrapped));
   }
@@ -91,7 +87,6 @@ public:
     return topo_vector(wrapped.Normalized());
   }
 
-  // Geometric operations
   double get_angle(const topo_vector &v) const {
     return wrapped.Angle(v.wrapped);
   }
@@ -111,7 +106,6 @@ public:
 
   topo_vector project_to_plane(const class topo_plane &plane) const;
 
-  // Operator overloads
   topo_vector operator-() const { return multiply(-1.0); }
 
   topo_vector operator+(const topo_vector &v) const { return add(v); }
@@ -129,7 +123,6 @@ public:
     return wrapped.IsEqual(other.wrapped, tolerance, tolerance);
   }
 
-  // String representation
   std::string to_string() const {
     std::ostringstream oss;
     oss << "topo_vector: (" << x() << ", " << y() << ", " << z() << ")";
@@ -141,7 +134,6 @@ public:
     return os;
   }
 
-  // Serialization
   std::tuple<double, double, double> __getstate__() const { return to_tuple(); }
 
   void __setstate__(const std::tuple<double, double, double> &state) {
@@ -150,11 +142,9 @@ public:
     wrapped.SetZ(std::get<2>(state));
   }
 
-  // Transformation
   topo_vector transform(const class topo_matrix &T) const;
 };
 
-// Non-member operator for scalar multiplication
 inline topo_vector operator*(double scale, const topo_vector &v) {
   return v.multiply(scale);
 }
