@@ -22,8 +22,7 @@ private:
   void _rotate(const gp_Ax1 &direction, double angle);
 
 public:
-  // Constructors
-  topo_matrix() : _value() {} // Default identity matrix
+  topo_matrix() : _value() {}
 
   topo_matrix(const gp_GTrsf &trsf) : _value(trsf) {}
 
@@ -36,14 +35,12 @@ public:
 
   topo_matrix(const std::vector<std::vector<double>> &matrix);
 
-  // Rotation methods
   void rotate_x(double angle) { _rotate(gp::OX(), angle); }
 
   void rotate_y(double angle) { _rotate(gp::OY(), angle); }
 
   void rotate_z(double angle) { _rotate(gp::OZ(), angle); }
 
-  // topo_matrix operations
   topo_matrix inverse() const { return topo_matrix(_value.Inverted()); }
 
   topo_matrix multiply(const topo_matrix &other) const {
@@ -52,16 +49,12 @@ public:
 
   operator gp_GTrsf() const { return gp_GTrsf(_value); }
 
-  // Accessors
   double get(int row, int col) const;
 
-  // Transposed list for export
   std::vector<double> transposed_list() const;
 
-  // String representation
   std::string to_string() const;
 
-  // Serialization
   std::vector<std::vector<double>> to_vector() const {
     std::vector<std::vector<double>> result(3, std::vector<double>(4));
 
@@ -74,12 +67,10 @@ public:
     return result;
   }
 
-  // Operator overload for matrix multiplication
   topo_matrix operator*(const topo_matrix &other) const {
     return multiply(other);
   }
 
-  // Access to wrapped OCCT object
   const gp_GTrsf &get_value() const { return _value; }
   gp_GTrsf &get_value() { return _value; }
 };

@@ -17,12 +17,12 @@ public:
   virtual ~shell() = default;
 
   static shell make_shell(const Handle(Geom_Surface) & S,
-                          const bool Segment = false);
+                          const bool segment = false);
 
   static shell make_shell(const Handle(Geom_Surface) & S,
                           const Standard_Real UMin, const Standard_Real UMax,
                           const Standard_Real VMin, const Standard_Real VMax,
-                          const bool Segment = false);
+                          const bool segment = false);
 
   static shell make_shell_from_box(const Standard_Real dx,
                                    const Standard_Real dy,

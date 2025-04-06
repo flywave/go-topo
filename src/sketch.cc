@@ -14,9 +14,11 @@
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Wire.hxx>
+
 #include <boost/math/constants/constants.hpp>
 #include <boost/range/combine.hpp>
 #include <boost/tuple/tuple.hpp>
+
 #include <cmath>
 #include <mutex>
 
@@ -35,7 +37,6 @@ struct occt_handle_raii {
 
 std::vector<wire> edges_to_wires(const std::vector<edge> &edges,
                                  double tolerance = 1e-6) {
-  // 检查输入的边是否有效
   for (const auto &edge : edges) {
     if (!edge.is_valid()) {
       throw std::invalid_argument("Invalid edge in input");
@@ -46,25 +47,20 @@ std::vector<wire> edges_to_wires(const std::vector<edge> &edges,
   occt_handle_raii edges_in;
   occt_handle_raii wires_out;
 
-  // Add edges to input sequence
   for (const auto &edge : edges) {
     edges_in.handle->Append(edge.value());
   }
 
-  // Connect edges into wires
-  ShapeAnalysis_FreeBounds::ConnectEdgesToWires(
-      edges_in.handle, tolerance,
-      false, // do not allow sharing of vertices
-      wires_out.handle);
+  ShapeAnalysis_FreeBounds::ConnectEdgesToWires(edges_in.handle, tolerance,
+                                                false, wires_out.handle);
 
-  // Convert result to wire objects
   std::vector<wire> result;
   result.reserve(wires_out.handle->Length());
 
   for (int i = 1; i <= wires_out.handle->Length(); ++i) {
     const TopoDS_Shape &wire_shape = wires_out.handle->Value(i);
     if (wire_shape.ShapeType() != TopAbs_WIRE) {
-      continue; // Skip non-wire results (shouldn't happen)
+      continue;
     }
     result.push_back(wire(TopoDS::Wire(wire_shape)));
   }
@@ -919,7 +915,6 @@ sketch &sketch::faces(const selector_ptr &sel, const std::string &tag) {
                 tag.empty() ? boost::none : boost::optional<std::string>(tag));
 }
 
-// wires方法的公共接口实现
 sketch &sketch::wires(const std::string &sel, const std::string &tag) {
   return _wires(
       sel.empty()
@@ -933,7 +928,6 @@ sketch &sketch::wires(const selector_ptr &sel, const std::string &tag) {
                 tag.empty() ? boost::none : boost::optional<std::string>(tag));
 }
 
-// edges方法的公共接口实现
 sketch &sketch::edges(const std::string &sel, const std::string &tag) {
   return _edges(
       sel.empty()
@@ -947,7 +941,6 @@ sketch &sketch::edges(const selector_ptr &sel, const std::string &tag) {
                 tag.empty() ? boost::none : boost::optional<std::string>(tag));
 }
 
-// vertices方法的公共接口实现
 sketch &sketch::vertices(const std::string &sel, const std::string &tag) {
   return _vertices(
       sel.empty()
@@ -1040,7 +1033,6 @@ sketch &sketch::edge(const topo::edge &val,
   return *this;
 }
 
-// Segment implementations
 sketch &sketch::segment(const topo_vector &p1, const topo_vector &p2,
                         const boost::optional<std::string> &tag,
                         bool for_construction) {
@@ -1068,7 +1060,6 @@ sketch &sketch::segment(double length, double angle,
   return segment(p1, p2, tag, for_construction);
 }
 
-// Arc implementations
 sketch &sketch::arc(const topo_vector &p1, const topo_vector &p2,
                     const topo_vector &p3,
                     const boost::optional<std::string> &tag,
@@ -1108,7 +1099,6 @@ sketch &sketch::arc(const topo_vector &center, double radius,
   }
 }
 
-// Spline implementations
 sketch &sketch::spline(
     const std::vector<topo_vector> &points,
     const boost::optional<std::pair<topo_vector, topo_vector>> &tangents,
@@ -1133,7 +1123,6 @@ sketch &sketch::spline(const std::vector<topo_vector> &points,
   return spline(points, boost::none, false, tag, for_construction);
 }
 
-// Bezier implementation
 sketch &sketch::bezier(const std::vector<topo_vector> &points,
                        const boost::optional<std::string> &tag,
                        bool for_construction) {
@@ -1145,14 +1134,12 @@ sketch &sketch::bezier(const std::vector<topo_vector> &points,
   return edge(val, tag, for_construction);
 }
 
-// Close implementation
 sketch &sketch::close(const boost::optional<std::string> &tag) {
   auto p1 = end_point();
   auto p2 = start_point();
   return segment(p1, p2, tag);
 }
 
-// Assemble edges into faces
 sketch &sketch::assemble(Mode mode, const boost::optional<std::string> &tag) {
   std::vector<topo::edge> construction_edges;
   for (const auto &e : edges_) {
@@ -1163,7 +1150,6 @@ sketch &sketch::assemble(Mode mode, const boost::optional<std::string> &tag) {
   return _face(construction_edges, 0.0, mode, tag);
 }
 
-// Constraint methods
 sketch &sketch::constrain(const std::string &tag,
                           sketch_constraint_kind constraint,
                           const sketch_constraint_value &arg) {
@@ -1211,7 +1197,6 @@ sketch &sketch::solve() {
   std::unordered_map<std::string, size_t> e2i;
   std::vector<geom_type> geoms;
 
-  // Prepare entities and mapping
   for (const auto &pair : tags_) {
     if (pair.second.empty())
       continue;
@@ -1251,7 +1236,6 @@ sketch &sketch::solve() {
     }
   }
 
-  // Prepare constraints
   std::vector<sketch_constraint> constraint_list;
   for (const auto &c : constraints_) {
     auto tag1 = c.tags[0];
@@ -1271,7 +1255,6 @@ sketch &sketch::solve() {
     }
   }
 
-  // Solve constraints
   sketch_solver solver(entities, constraint_list, geoms);
   auto result = solver.solve();
   for (const auto &pair : result.second) {
@@ -1279,12 +1262,11 @@ sketch &sketch::solve() {
   }
   solve_status_["x"] = result.first;
 
-  // Update geometry
   for (const auto &combined : boost::combine(geoms, e2i)) {
     const auto &geom_type = boost::get<0>(combined);
     const auto &kv = boost::get<1>(combined);
-    const auto tag = kv.first;  // or boost::get<0>(kv) if kv is a tuple
-    const auto idx = kv.second; // or boost::get<1>(kv) if kv is a tuple
+    const auto tag = kv.first;
+    const auto idx = kv.second;
     const auto &sol = result.first[idx];
 
     if (geom_type == geom_type::LINE) {
@@ -1307,7 +1289,6 @@ sketch &sketch::solve() {
   return *this;
 }
 
-// Copy and transform operations
 std::shared_ptr<sketch> sketch::copy() const {
   std::shared_ptr<sketch> result = std::make_shared<sketch>();
   result->faces_ = *faces_->copy().cast<compound>();
@@ -1328,7 +1309,6 @@ std::shared_ptr<sketch> sketch::located(const topo_location &loc) const {
   return result;
 }
 
-// Finalize and value access
 std::shared_ptr<workplane> sketch::finalize() { return parent_; }
 
 sketch_val sketch::val() const {
@@ -1355,7 +1335,6 @@ std::vector<sketch_val> sketch::vals() const {
   return {};
 }
 
-// Boolean operations
 sketch &sketch::add() {
   if (!selection_ || selection_->empty()) {
     throw std::invalid_argument("Nothing selected to add");
@@ -1407,7 +1386,6 @@ sketch &sketch::replace() {
   return *this;
 }
 
-// Operator overloads
 sketch sketch::operator+(const sketch &other) const {
   auto this_val = sanitize_for_bool(val());
   auto other_val = sanitize_for_bool(other.val());

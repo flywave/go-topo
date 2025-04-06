@@ -100,12 +100,10 @@ void topo_plane::calc_transforms() {
 
 std::vector<shape> topo_plane::mirror_in_plane(const std::vector<shape> &shapes,
                                                const std::string &axis) const {
-  // Create local coordinate system
   gp_Ax3 localCoordSystem(_origin.to_pnt(), _z_dir, _x_dir);
 
   gp_Trsf transformation;
 
-  // Set up the mirror transformation based on the specified axis
   if (axis == "X") {
     transformation.SetMirror(
         gp_Ax1(_origin.to_pnt(), localCoordSystem.XDirection()));
@@ -117,7 +115,6 @@ std::vector<shape> topo_plane::mirror_in_plane(const std::vector<shape> &shapes,
         "Unsupported mirror axis. Only 'X' and 'Y' are supported.");
   }
 
-  // Mirror each shape and collect results
   std::vector<shape> mirroredShapes;
   for (const auto &s : shapes) {
     shape mirrored = s.transformed(topo_matrix(transformation));

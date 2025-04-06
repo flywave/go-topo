@@ -53,7 +53,6 @@ gp_Dir find_plane_normal(const TopoDS_Shape &shape) {
     throw std::invalid_argument("Input shape is null");
   }
 
-  // 查找支撑平面（仅查找平面）
   BRepLib_FindSurface finder(shape, true, true);
   if (!finder.Found()) {
     throw std::runtime_error("No supporting plane found");
@@ -100,7 +99,7 @@ Handle(Geom_Curve) shape1d::approx_curve(double tolerance,
   if (this->is_null()) {
     throw std::invalid_argument("Input shape is null");
   }
-  GeomConvert_ApproxCurve approx(this->get_geom(), // 获取适配器中的几何曲线
+  GeomConvert_ApproxCurve approx(this->get_geom(), 
                                  tolerance, continuity, maxSegments, maxDegree);
   return approx.Curve();
 }

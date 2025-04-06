@@ -43,7 +43,6 @@ enum texture_mapping_rule {
   texture_normal_auto_scale
 };
 
-
 class shape : public geometry_object {
 public:
   shape();

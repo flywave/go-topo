@@ -23,7 +23,6 @@
 namespace flywave {
 namespace topo {
 
-// Forward declarations
 class shape;
 class face;
 class edge;
@@ -33,17 +32,14 @@ class vertex;
 class topo_location;
 class workplane;
 
-// Sketch value types
 using sketch_val = boost::variant<shape, topo_location>;
 
-// Sketch modes
 enum class Mode { ADD, SUBTRACT, INTERSECT, CONSTRUCT, REPLACE };
 
 class sketch;
 
 class sketch {
 public:
-  // Constructors
   sketch();
   sketch(std::shared_ptr<workplane> inPlane,
          const std::vector<topo_location> &locs = {topo_location()},
@@ -92,7 +88,6 @@ public:
                   Mode mode = Mode::ADD,
                   const boost::optional<std::string> &tag = boost::none);
 
-  // Location distribution methods
   sketch &rarray(double xs, double ys, int nx, int ny);
   sketch &parray(double r, double a1, double da, int n, bool rotate = true);
   sketch &distribute(int n, double start = 0, double stop = 1,
@@ -121,7 +116,6 @@ public:
 
   sketch &clean();
 
-  // Selection methods
   sketch &tag(const std::string &tag);
   sketch &select(const std::vector<std::string> &tags);
   sketch &faces(const std::string &selector, const std::string &tag = "");
@@ -137,12 +131,10 @@ public:
 
   sketch &delete_selected();
 
-  // Edge construction methods
   sketch &edge(const topo::edge &val,
                const boost::optional<std::string> &tag = boost::none,
                bool forConstruction = false);
 
-  // Overloaded segment methods
   sketch &segment(const topo_vector &p1, const topo_vector &p2,
                   const boost::optional<std::string> &tag = boost::none,
                   bool forConstruction = false);
@@ -174,7 +166,6 @@ public:
   sketch &close(const boost::optional<std::string> &tag);
   sketch &assemble(Mode mode, const boost::optional<std::string> &tag);
 
-  // Constraint methods
   sketch &constrain(const std::string &tag, sketch_constraint_kind constraint,
                     const sketch_constraint_value &arg);
   sketch &constrain(const std::string &tag1, const std::string &tag2,
@@ -182,7 +173,6 @@ public:
                     const sketch_constraint_value &arg);
   sketch &solve();
 
-  // Utility methods
   std::shared_ptr<sketch> copy() const;
   std::shared_ptr<sketch> moved(const std::vector<topo_location> &locs) const;
   std::shared_ptr<sketch> located(const topo_location &loc) const;

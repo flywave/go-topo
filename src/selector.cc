@@ -5,8 +5,8 @@
 #include "selector.hh"
 
 #include <boost/fusion/adapted/std_tuple.hpp>
-#include <boost/phoenix/object/construct.hpp> // for phx::construct
-#include <boost/phoenix/object/new.hpp>       // for phx::new_
+#include <boost/phoenix/object/construct.hpp>
+#include <boost/phoenix/object/new.hpp>
 #include <boost/spirit/include/phoenix.hpp>
 #include <boost/spirit/include/phoenix_core.hpp>
 #include <boost/spirit/include/phoenix_fusion.hpp>
@@ -18,7 +18,7 @@
 
 #include <functional>
 #include <map>
-#include <memory> // for std::shared_ptr
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -32,7 +32,6 @@ namespace phx = boost::phoenix;
 namespace flywave {
 namespace topo {
 
-// 实现基础选择器的运算符重载
 selector_ptr selector::operator&&(const selector_ptr &other) const {
   return std::make_shared<and_selector>(
       std::const_pointer_cast<selector>(this->shared_from_this()), other);
@@ -53,7 +52,6 @@ selector_ptr selector::operator!() const {
       std::const_pointer_cast<selector>(this->shared_from_this()));
 }
 
-// nearest_to_point_selector 实现
 nearest_to_point_selector::nearest_to_point_selector(const topo_vector &p)
     : point_(p) {}
 
@@ -70,7 +68,6 @@ nearest_to_point_selector::filter(const std::vector<shape> &objects) const {
   return {closest};
 }
 
-// box_selector 实现
 box_selector::box_selector(const topo_vector &p0, const topo_vector &p1,
                            bool use_bb)
     : p0_(p0), p1_(p1), use_bounding_box_(use_bb) {}
@@ -91,7 +88,6 @@ box_selector::filter(const std::vector<shape> &objects) const {
   return result;
 }
 
-// nth_selector 实现
 nth_selector::nth_selector(int n, bool direction_max, double tolerance)
     : n_(n), direction_max_(direction_max), tolerance_(tolerance) {}
 
@@ -296,7 +292,6 @@ struct selector_grammar
     using qi::no_case;
     namespace phx = boost::phoenix;
 
-    // 1. 定义基本元素
     identifier = lexeme[(char_("a-zA-Z") >> *char_("a-zA-Z0-9_"))];
     vector = '(' >> double_ >> ',' >> double_ >> ',' >> double_ >> ')';
     simple_dir = no_case[lit("x") | "y" | "z" | "xy" | "xz" | "yz"];
@@ -307,14 +302,12 @@ struct selector_grammar
     named_view =
         no_case[lit("front") | "back" | "left" | "right" | "top" | "bottom"];
 
-    // 2. 定义操作符 - 使用简单匹配
     type_op = lexeme[lit('%')];
     dir_op = lexeme[lit('>')] | lexeme[lit('<')];
     center_nth_op = lexeme[lit(">>")] | lexeme[lit("<<")];
     other_op = lexeme[lit('|')] | lexeme[lit('#')] | lexeme[lit('+')] |
                lexeme[lit('-')];
 
-    // 3. 定义原子选择器规则
     only_dir = direction[_val = phx::bind(
                              &selector_grammar::create_dir_selector, this, _1)];
     type_sel = (type_op >>
@@ -337,7 +330,6 @@ struct selector_grammar
         named_view[_val = phx::bind(&selector_grammar::build_named_selector,
                                     this, _1)];
 
-    // 4. 定义组合规则
     atom = only_dir | type_sel | dir_sel | other_sel | named_sel;
 
     factor = atom[_val = _1] | '(' >> expression[_val = _1] >> ')';
@@ -360,7 +352,6 @@ struct selector_grammar
           (lit("exc") >> term)[_val = phx::construct<selector_ptr>(
                                    phx::new_<subtract_selector>(_val, _1))]);
 
-    // 5. 错误处理
     qi::on_error<qi::fail>(
         expression,
         std::cout << phx::val("Error! Expecting ") << qi::_4 << " here: \""
@@ -368,7 +359,6 @@ struct selector_grammar
   }
 
 private:
-  // 辅助函数
   topo_vector
   get_vector(const boost::variant<std::vector<double>, std::string> &dir) {
     struct visitor : boost::static_visitor<topo_vector> {
@@ -438,7 +428,6 @@ private:
     return std::make_shared<direction_minmax_selector>(args.first, args.second);
   }
 
-  // 规则声明
   qi::rule<Iterator, selector_ptr(), qi::space_type> expression, term, factor,
       atom;
   qi::rule<Iterator, selector_ptr(), qi::space_type> only_dir, type_sel,
@@ -456,7 +445,6 @@ private:
   qi::rule<Iterator, std::string(), qi::space_type> other_op;
 };
 
-// 简单字符串选择器实现
 class simple_string_selector : public selector {
   selector_ptr selector_;
 
@@ -488,5 +476,4 @@ string_syntax_selector::string_syntax_selector(
 } // namespace topo
 } // namespace flywave
 
-// Restore warning settings at the end of the file
 #pragma clang diagnostic pop

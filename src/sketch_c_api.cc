@@ -8,7 +8,6 @@
 extern "C" {
 #endif
 
-// Sketch value functions
 sketch_val_t *sketch_val_create_from_shape(topo_shape_t *shape) {
   auto val = new sketch_val_t{flywave::topo::shape(*shape->shp)};
   return val;
@@ -38,7 +37,6 @@ topo_location_t *sketch_val_get_location(sketch_val_t *obj) {
   return nullptr;
 }
 
-// Sketch creation functions
 sketch_t *sketch_create_from_workplane(workplane_t *inPlane,
                                        topo_location_t *location,
                                        topo_compound_t *comp) {
@@ -85,7 +83,6 @@ topo_face_t *sketch_get_faces(sketch_t *obj, int *size) {
   return result;
 }
 
-// Face creation functions
 void sketch_face_from_wire(sketch_t *sk, topo_wire_t *wire, double angle,
                            const char *tag) {
   sk->ptr->face(*wire->shp->shp, angle, flywave::topo::Mode::ADD,
@@ -114,7 +111,6 @@ void sketch_face_from_sketch(sketch_t *sk, sketch_t *other, double angle,
                 false);
 }
 
-// Primitive shape creation functions
 void sketch_rect(sketch_t *sk, double w, double h, double angle,
                  const char *tag) {
   sk->ptr->rect(w, h, angle, flywave::topo::Mode::ADD,
@@ -161,7 +157,6 @@ void sketch_polygon(sketch_t *sk, topo_vector_t **pts, int size, double angle,
                    tag ? boost::optional<std::string>(tag) : boost::none);
 }
 
-// Array and distribution functions
 void sketch_rarray(sketch_t *sk, double xs, double ys, int nx, int ny,
                    double angle, const char *tag) {
   sk->ptr->rarray(xs, ys, nx, ny);
@@ -177,7 +172,6 @@ void sketch_distribute(sketch_t *sk, int n, double start, double stop,
   sk->ptr->distribute(n, start, stop, rotate);
 }
 
-// Location manipulation functions
 void sketch_push(sketch_t *sk, topo_location_t **locs, int size,
                  const char *tag) {
   std::vector<flywave::topo::topo_location> locations;
@@ -188,7 +182,6 @@ void sketch_push(sketch_t *sk, topo_location_t **locs, int size,
                 tag ? boost::optional<std::string>(tag) : boost::none);
 }
 
-// Geometric operations
 void sketch_hull(sketch_t *sk, int mode, const char *tag) {
   sk->ptr->hull(static_cast<flywave::topo::Mode>(mode),
                 tag ? boost::optional<std::string>(tag) : boost::none);
@@ -205,7 +198,6 @@ void sketch_chamfer(sketch_t *sk, double d) { sk->ptr->chamfer(d); }
 
 void sketch_clean(sketch_t *sk) { sk->ptr->clean(); }
 
-// Tagging and selection
 void sketch_tag(sketch_t *sk, const char *tag) { sk->ptr->tag(tag ? tag : ""); }
 
 void sketch_select(sketch_t *sk, const char **tags, int size) {
@@ -216,7 +208,6 @@ void sketch_select(sketch_t *sk, const char **tags, int size) {
   sk->ptr->select(tagVec);
 }
 
-// Selection functions
 void sketch_faces(sketch_t *sk, const char *selector, const char *tag) {
   sk->ptr->faces(selector ? selector : "", tag ? tag : "");
 }
@@ -244,12 +235,10 @@ void sketch_vertices_for_selector(sketch_t *sk, selector_t *selector,
   sk->ptr->vertices(selector->ptr, tag ? tag : "");
 }
 
-// Reset and delete
 void sketch_reset(sketch_t *sk) { sk->ptr->reset(); }
 
 void sketch_delete_selected(sketch_t *sk) { sk->ptr->delete_selected(); }
 
-// Edge construction
 void sketch_edge(sketch_t *sk, topo_edge_t *edge, const char *tag,
                  bool forConstruction) {
   sk->ptr->edge(*edge->shp->shp->cast<flywave::topo::edge>(),
@@ -344,7 +333,6 @@ void sketch_assemble(sketch_t *sk, int mode, const char *tag) {
                     tag ? boost::optional<std::string>(tag) : boost::none);
 }
 
-// Constraint solving
 void sketch_constrain(sketch_t *sk, const char *tag, int constraint,
                       sketch_constraint_value_t *arg) {
   sk->ptr->constrain(
@@ -363,7 +351,6 @@ void sketch_constrain2(sketch_t *sk, const char *tag1, const char *tag2,
 
 void sketch_solve(sketch_t *sk) { sk->ptr->solve(); }
 
-// Copy and transform
 sketch_t *sketch_copy(sketch_t *sk) { return new sketch_t{sk->ptr->copy()}; }
 
 sketch_t *sketch_moved(sketch_t *sk, topo_location_t **locs, int size) {
@@ -382,7 +369,6 @@ workplane_t *sketch_finalize(sketch_t *sk) {
   return new workplane_t{sk->ptr->finalize()};
 }
 
-// Value access
 sketch_val_t *sketch_val(sketch_t *sk) {
   return new sketch_val_t{sk->ptr->val()};
 }
@@ -397,14 +383,11 @@ sketch_val_t **sketch_vals(sketch_t *sk, int *size) {
   return result;
 }
 
-// Boolean operations
 void sketch_add(sketch_t *sk) { sk->ptr->add(); }
 
 void sketch_subtract(sketch_t *sk) { sk->ptr->subtract(); }
 
 void sketch_replace(sketch_t *sk) { sk->ptr->replace(); }
-
-// Functional operations
 
 void sketch_val_filter(sketch_t *sk, bool (*pred)(sketch_val_t *)) {
   sk->ptr->filter([&](const flywave::topo::sketch_val &val) {
@@ -412,7 +395,6 @@ void sketch_val_filter(sketch_t *sk, bool (*pred)(sketch_val_t *)) {
   });
 }
 
-SKETCHCAPICALL
 void sketch_val_map(sketch_t *sk, sketch_val_t *(*f)(sketch_val_t *)) {
   sk->ptr->map([&](const flywave::topo::sketch_val &val) {
     auto v = f(new sketch_val_t{val});
@@ -420,7 +402,6 @@ void sketch_val_map(sketch_t *sk, sketch_val_t *(*f)(sketch_val_t *)) {
   });
 }
 
-SKETCHCAPICALL
 void sketch_val_apply(sketch_t *sk, sketch_val_t **(*f)(sketch_val_t **, int)) {
   sk->ptr->apply([&](const std::vector<flywave::topo::sketch_val> &val) {
     int count = val.size();
@@ -442,7 +423,6 @@ void sketch_val_apply(sketch_t *sk, sketch_val_t **(*f)(sketch_val_t **, int)) {
   });
 }
 
-SKETCHCAPICALL
 void sketch_val_sort(sketch_t *sk,
                      bool (*comp)(sketch_val_t *, sketch_val_t *)) {
   sk->ptr->sort([&](const flywave::topo::sketch_val &a,

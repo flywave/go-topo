@@ -26,7 +26,6 @@
 namespace flywave {
 namespace topo {
 
-// Forward declarations
 class compound;
 class vertex;
 class wire;

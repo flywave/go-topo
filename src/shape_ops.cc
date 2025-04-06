@@ -1278,38 +1278,31 @@ dprism(const shape &shp, const std::shared_ptr<face> &basis,
   return boost::make_optional<shape>(shape_);
 }
 
-// Extrude with rotation for wires
 boost::optional<shape> extrude_linear_with_rotation(
     const wire &outerWire, const std::vector<wire> &innerWires,
     const gp_Pnt &center, const gp_Vec &normal, double angleDegrees) {
-  // Create straight spine
   gp_Pnt endPoint = center.Translated(normal);
   edge straightSpine = edge::make_polygon(center, endPoint);
   std::vector<shape> spines({straightSpine});
   TopoDS_Wire straightSpineWire = wire::combine(spines)[0].value();
 
-  // Create auxiliary helical spine
   double pitch = (360.0 / angleDegrees) * normal.Magnitude();
   double radius = 1.0;
   wire auxSpine =
       wire::make_helix(pitch, normal.Magnitude(), radius, center, normal);
   TopoDS_Wire auxSpineWire = auxSpine.value();
 
-  // Extrude outer wire
   TopoDS_Shape outerSolid =
       _extrudeAuxSpine(outerWire.value(), straightSpineWire, auxSpineWire);
 
-  // Extrude inner wires
   std::vector<shape> innerSolids;
   for (const auto &wire : innerWires) {
     innerSolids.push_back(
         _extrudeAuxSpine(wire.value(), straightSpineWire, auxSpineWire));
   }
 
-  // Combine inner solids
   topo::compound innerCompound = topo::compound::make_compound(innerSolids);
 
-  // Subtract inner from outer
   BRepAlgoAPI_Cut cutter(outerSolid, innerCompound);
   if (!cutter.IsDone()) {
     throw std::runtime_error(
@@ -1319,7 +1312,6 @@ boost::optional<shape> extrude_linear_with_rotation(
   return boost::make_optional<shape>(cutter.Shape());
 }
 
-// Extrude with rotation for face (overloaded version)
 boost::optional<shape> extrude_linear_with_rotation(const face &face,
                                                     const gp_Pnt &center,
                                                     const gp_Vec &normal,
@@ -1328,19 +1320,16 @@ boost::optional<shape> extrude_linear_with_rotation(const face &face,
                                       center, normal, angleDegrees);
 }
 
-// Calculates the center of mass of multiple objects
 gp_Pnt combined_center(const std::vector<shape> &objects) {
   if (objects.empty()) {
     throw std::invalid_argument("Objects list cannot be empty");
   }
 
-  // Calculate total mass
   double totalMass = 0.0;
   for (const auto &obj : objects) {
     totalMass += obj.compute_mass();
   }
 
-  // Calculate weighted centers
   gp_Vec sumWeightedCenters(0, 0, 0);
   for (const auto &obj : objects) {
     double mass = obj.compute_mass();
@@ -1348,18 +1337,15 @@ gp_Pnt combined_center(const std::vector<shape> &objects) {
     sumWeightedCenters += gp_Vec(com.X(), com.Y(), com.Z()) * mass;
   }
 
-  // Calculate final center
   gp_Vec result = sumWeightedCenters / totalMass;
   return gp_Pnt(result.X(), result.Y(), result.Z());
 }
 
-// Calculates the center of a bounding box of multiple objects
 gp_Pnt combined_center_of_bound_box(const std::vector<shape> &objects) {
   if (objects.empty()) {
     throw std::invalid_argument("Objects list cannot be empty");
   }
 
-  // Calculate combined bounding box
   Bnd_Box combinedBox;
   for (const auto &obj : objects) {
     Bnd_Box objBox;
@@ -1367,7 +1353,6 @@ gp_Pnt combined_center_of_bound_box(const std::vector<shape> &objects) {
     combinedBox.Add(objBox);
   }
 
-  // Get center of combined bounding box
   double xMin, yMin, zMin, xMax, yMax, zMax;
   combinedBox.Get(xMin, yMin, zMin, xMax, yMax, zMax);
   return gp_Pnt((xMin + xMax) / 2.0, (yMin + yMax) / 2.0, (zMin + zMax) / 2.0);

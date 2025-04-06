@@ -62,7 +62,6 @@ public:
         constraints_(solver.constraints_), lockedEntities_(solver.locked_),
         scale_(solver.scale_), ne_(solver.ne_) {}
 
-  // 转换位置到优化参数
   static void transform_to_variables(const gp_Trsf &trsf, double *T,
                                      double *R) {
     gp_Vec translation = trsf.TranslationPart();
@@ -77,7 +76,6 @@ public:
     R[2] = (alpha_2 + 1) * quat.Z() / 2;
   }
 
-  // 转换优化参数到位置
   static gp_Trsf variables_to_transform(const double *T, const double *R) {
     gp_Trsf transform;
     double a = R[0], b = R[1], c = R[2];
@@ -91,26 +89,23 @@ public:
     return transform;
   }
 
-  // Ipopt接口实现
   bool get_nlp_info(Index &n, Index &m, Index &nnz_jac_g, Index &nnz_h_lag,
                     IndexStyleEnum &index_style) override {
-    n = static_cast<Index>(ne_ * 6); // 每个实体6个自由度(3平移+3旋转)
+    n = static_cast<Index>(ne_ * 6);
     m = static_cast<Index>(constraints_.size());
-    nnz_jac_g = m * n; // 稠密雅可比矩阵
-    nnz_h_lag = 0;     // 不使用二阶导数
+    nnz_jac_g = m * n;
+    nnz_h_lag = 0;
     index_style = TNLP::C_STYLE;
     return true;
   }
 
   bool get_bounds_info(Index n, Number *x_l, Number *x_u, Index m, Number *g_l,
                        Number *g_u) override {
-    // 设置变量边界
     for (Index i = 0; i < n; i++) {
-      x_l[i] = -1e20; // 无下界
-      x_u[i] = 1e20;  // 无上界
+      x_l[i] = -1e20;
+      x_u[i] = 1e20;
     }
 
-    // 锁定实体的变量固定为0
     for (Index i = 0; i < ne_; i++) {
       if (lockedEntities_[i]) {
         x_l[i * 6] = x_u[i * 6] = 0;
@@ -122,7 +117,6 @@ public:
       }
     }
 
-    // 设置约束边界(等式约束)
     for (Index i = 0; i < m; i++) {
       g_l[i] = g_u[i] = 0;
     }
@@ -133,7 +127,6 @@ public:
   bool get_starting_point(Index n, bool init_x, Number *x, bool init_z,
                           Number *z_L, Number *z_U, Index m, bool init_lambda,
                           Number *lambda) override {
-    // 设置初始点为0(相对于初始变换的偏移)
     for (Index i = 0; i < n; i++) {
       x[i] = 0;
     }
@@ -144,13 +137,11 @@ public:
               Number &obj_value) override {
     obj_value = 0.0;
 
-    // 计算目标函数(所有约束成本之和)
     for (const auto &c : constraints_) {
       double cost = evaluate_constraint(c, x);
       obj_value += cost;
     }
 
-    // 添加小的正则化项
     for (Index i = 0; i < n; i++) {
       if (!lockedEntities_[i / 6]) {
         obj_value += 1e-16 * x[i] * x[i];
@@ -162,22 +153,19 @@ public:
 
   bool eval_grad_f(Index n, const Number *x, bool new_x,
                    Number *grad_f) override {
-    // 初始化梯度为0
     std::fill(grad_f, grad_f + n, 0.0);
 
-    // 计算每个约束对梯度的贡献
     for (const auto &constraint : constraints_) {
       const auto &markers = std::get<0>(constraint);
       constraint_kind kind = std::get<1>(constraint);
       const auto &param = std::get<2>(constraint);
       const auto &entityIndices = std::get<3>(constraint);
 
-      // 收集相关变量和初始状态
       std::vector<double> vars;
       std::vector<double> inits;
       std::vector<Index> var_indices;
 
-      for (int entityIdx : entityIndices) { // 使用entityIndices而不是indices
+      for (int entityIdx : entityIndices) {
         auto dof = location_to_dof6(initial_transforms_[entityIdx]);
         auto T0 = std::get<0>(dof);
         auto R0 = std::get<1>(dof);
@@ -191,18 +179,15 @@ public:
         }
       }
 
-      // 计算当前约束的梯度
       std::vector<double> constraint_grad(vars.size(), 0.0);
       compute_constraint_gradient(kind, inits, vars, param, scale_,
                                   constraint_grad);
 
-      // 累加到全局梯度
       for (size_t i = 0; i < var_indices.size(); i++) {
         grad_f[var_indices[i]] += constraint_grad[i];
       }
     }
 
-    // 添加正则化项的梯度
     for (Index i = 0; i < n; i++) {
       if (!lockedEntities_[i / 6]) {
         grad_f[i] += 2.0 * 1e-16 * x[i];
@@ -214,7 +199,6 @@ public:
 
   bool eval_g(Index n, const Number *x, bool new_x, Index m,
               Number *g) override {
-    // 计算所有约束值
     for (Index i = 0; i < m; i++) {
       const auto &markers = std::get<0>(constraints_[i]);
       constraint_kind kind = std::get<1>(constraints_[i]);
@@ -224,7 +208,7 @@ public:
       std::vector<double> vars;
       std::vector<double> inits;
 
-      for (int entityIdx : entityIndices) { // 使用entityIndices
+      for (int entityIdx : entityIndices) {
         auto dof = location_to_dof6(initial_transforms_[entityIdx]);
         auto T0 = std::get<0>(dof);
         auto R0 = std::get<1>(dof);
@@ -244,12 +228,10 @@ public:
 
   bool eval_jac_g(Index n, const Number *x, bool new_x, Index m, Index nele_jac,
                   Index *iRow, Index *jCol, Number *values) override {
-    // 计算雅可比矩阵结构
     if (values == nullptr) {
       Index index = 0;
       for (Index i = 0; i < m; i++) {
-        const auto &entityIndices =
-            std::get<3>(constraints_[i]); // 获取entityIndices
+        const auto &entityIndices = std::get<3>(constraints_[i]);
         for (int entityIdx : entityIndices) {
           for (Index j = 0; j < 6; j++) {
             iRow[index] = i;
@@ -261,7 +243,6 @@ public:
       return true;
     }
 
-    // 计算雅可比矩阵值
     Index index = 0;
     for (Index i = 0; i < m; i++) {
       const auto &markers = std::get<0>(constraints_[i]);
@@ -286,12 +267,10 @@ public:
         }
       }
 
-      // 计算当前约束的雅可比行
       std::vector<double> constraint_jac(vars.size(), 0.0);
       compute_constraint_jacobian(kind, inits, vars, param, scale_,
                                   constraint_jac);
 
-      // 填充雅可比矩阵
       for (double val : constraint_jac) {
         values[index++] = val;
       }
@@ -299,7 +278,7 @@ public:
 
     return true;
   }
-  // 获取最终变换结果
+
   const std::vector<gp_Trsf> &final_transforms() const {
     return final_transforms_;
   }
@@ -316,13 +295,11 @@ public:
       const double *T = &x[i * 6];
       const double *R = &x[i * 6 + 3];
 
-      // 组合初始变换和优化增量
       gp_Trsf delta = build_transform(T, R);
       final_transforms_.push_back(initial_transforms_[i] * delta);
     }
   }
 
-  // 辅助函数：计算约束值
   static double compute_constraint_value(
       constraint_kind kind, const std::vector<double> &inits,
       const std::vector<double> &vars,
@@ -331,7 +308,6 @@ public:
       double scale) {
     switch (kind) {
     case constraint_kind::Point: {
-      // 点约束：需要2个实体，每个实体有6个变量(3平移+3旋转)
       if (vars.size() != 12 || inits.size() != 12)
         throw std::runtime_error(
             "Invalid number of variables for Point constraint");
@@ -351,14 +327,12 @@ public:
         tolerance = boost::get<double>(param);
       }
 
-      // 使用虚拟点，因为实际点标记在调用函数中处理
       gp_Pnt p1(0, 0, 0), p2(0, 0, 0);
       return point_cost(p1, p2, T1_0, R1_0, T2_0, R2_0, T1, R1, T2, R2,
                         tolerance, scale);
     }
 
     case constraint_kind::Axis: {
-      // 轴约束：需要2个实体，每个实体有6个变量
       if (vars.size() != 12 || inits.size() != 12)
         throw std::runtime_error(
             "Invalid number of variables for Axis constraint");
@@ -369,19 +343,17 @@ public:
       gp_Vec R2_0(inits[9], inits[10], inits[11]);
       gp_Vec R2(vars[9], vars[10], vars[11]);
 
-      double angle = M_PI; // 默认平行
+      double angle = M_PI;
       if (param.type() == typeid(double)) {
         angle = boost::get<double>(param);
       }
 
-      // 使用虚拟方向
       gp_Dir d1(0, 0, 1), d2(0, 0, 1);
       return axis_cost(d1, d2, gp_Vec(), R1_0, gp_Vec(), R2_0, gp_Vec(), R1,
                        gp_Vec(), R2, angle, scale);
     }
 
     case constraint_kind::PointInPlane: {
-      // 点在平面内约束：需要2个实体
       if (vars.size() != 12 || inits.size() != 12)
         throw std::runtime_error(
             "Invalid number of variables for PointInPlane constraint");
@@ -401,7 +373,6 @@ public:
         offset = boost::get<double>(param);
       }
 
-      // 使用虚拟点和平面
       gp_Pnt p(0, 0, 0);
       gp_Pln pln(gp_Ax3(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)));
       return point_in_plane_cost(p, pln, T1_0, R1_0, T2_0, R2_0, T1, R1, T2, R2,
@@ -409,7 +380,6 @@ public:
     }
 
     case constraint_kind::PointOnLine: {
-      // 点在线上约束：需要2个实体
       if (vars.size() != 12 || inits.size() != 12)
         throw std::runtime_error(
             "Invalid number of variables for PointOnLine constraint");
@@ -429,7 +399,6 @@ public:
         tolerance = boost::get<double>(param);
       }
 
-      // 使用虚拟点和线
       gp_Pnt p(0, 0, 0);
       gp_Lin line(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)));
       return point_on_line_cost(p, line, T1_0, R1_0, T2_0, R2_0, T1, R1, T2, R2,
@@ -437,7 +406,6 @@ public:
     }
 
     case constraint_kind::FixedPoint: {
-      // 固定点约束：需要1个实体
       if (vars.size() != 6 || inits.size() != 6)
         throw std::runtime_error(
             "Invalid number of variables for FixedPoint constraint");
@@ -456,13 +424,11 @@ public:
             "FixedPoint constraint requires target position");
       }
 
-      // 使用虚拟点
       gp_Pnt p(0, 0, 0);
       return fixed_point_cost(p, T1_0, R1_0, T1, R1, target, scale);
     }
 
     case constraint_kind::FixedAxis: {
-      // 固定轴约束：需要1个实体
       if (vars.size() != 6 || inits.size() != 6)
         throw std::runtime_error(
             "Invalid number of variables for FixedAxis constraint");
@@ -479,13 +445,11 @@ public:
             "FixedAxis constraint requires target direction");
       }
 
-      // 使用虚拟方向
       gp_Dir d(0, 0, 1);
       return fixed_axis_cost(d, gp_Vec(), R1_0, gp_Vec(), R1, target, scale);
     }
 
     case constraint_kind::FixedRotation: {
-      // 固定旋转约束：需要1个实体
       if (vars.size() != 6 || inits.size() != 6)
         throw std::runtime_error(
             "Invalid number of variables for FixedRotation constraint");
@@ -506,7 +470,6 @@ public:
     }
 
     case constraint_kind::Plane: {
-      // 平面约束：复合约束，需要2个实体
       if (vars.size() != 12 || inits.size() != 12)
         throw std::runtime_error(
             "Invalid number of variables for Plane constraint");
@@ -518,7 +481,6 @@ public:
         distTol = std::get<1>(p);
       }
 
-      // 计算轴约束部分
       gp_Vec R1_0(inits[3], inits[4], inits[5]);
       gp_Vec R1(vars[3], vars[4], vars[5]);
       gp_Vec R2_0(inits[9], inits[10], inits[11]);
@@ -527,7 +489,6 @@ public:
       double axisCost = axis_cost(d1, d2, gp_Vec(), R1_0, gp_Vec(), R2_0,
                                   gp_Vec(), R1, gp_Vec(), R2, angleTol, scale);
 
-      // 计算点约束部分
       gp_Vec T1_0(inits[0], inits[1], inits[2]);
       gp_Vec T1(vars[0], vars[1], vars[2]);
       gp_Vec T2_0(inits[6], inits[7], inits[8]);
@@ -540,7 +501,6 @@ public:
     }
 
     case constraint_kind::Fixed: {
-      // 固定约束已在变量边界中处理，这里返回0
       return 0.0;
     }
 
@@ -550,14 +510,12 @@ public:
     }
   }
 
-  // 辅助函数：计算约束梯度
   static void compute_constraint_gradient(
       constraint_kind kind, const std::vector<double> &inits,
       const std::vector<double> &vars,
       const boost::variant<boost::blank, double, std::array<double, 3>,
                            std::array<double, 2>> &param,
       double scale, std::vector<double> &grad) {
-    // 实现数值梯度计算 (或解析梯度)
     const double eps = 1e-8;
     std::vector<double> vars_perturbed = vars;
 
@@ -573,14 +531,12 @@ public:
     }
   }
 
-  // 辅助函数：计算约束雅可比
   static void compute_constraint_jacobian(
       constraint_kind kind, const std::vector<double> &inits,
       const std::vector<double> &vars,
       const boost::variant<boost::blank, double, std::array<double, 3>,
                            std::array<double, 2>> &param,
       double scale, std::vector<double> &jac) {
-    // 对于简单实现可以直接调用梯度计算
     compute_constraint_gradient(kind, inits, vars, param, scale, jac);
   }
 
@@ -598,12 +554,10 @@ private:
       Rs.push_back(&x[entityIdx * 6 + 3]);
     }
 
-    // 辅助函数：从double数组创建gp_Vec
     auto make_vec = [](const double *data) {
       return gp_Vec(data[0], data[1], data[2]);
     };
 
-    // 初始变换设为0（根据实际情况可能需要从initialTransforms_获取）
     gp_Vec zero_vec(0, 0, 0);
 
     switch (kind) {
@@ -713,14 +667,13 @@ private:
       return axisCost + pointCost;
     }
     case constraint_kind::Fixed: {
-      return 0.0; // 固定约束已在变量边界处理
+      return 0.0;
     }
     default:
       throw std::runtime_error("Unsupported constraint type");
     }
   }
 
-  // 四元数辅助函数
   static std::pair<double, gp_Vec> quaternion(const gp_Vec &R) {
     double m = R.SquareMagnitude();
     double denominator = 1.0 + m;
@@ -731,7 +684,6 @@ private:
     return {s, u};
   }
 
-  // 旋转向量
   static gp_Vec rotate(const gp_Vec &v, const gp_Vec &R) {
     auto su = quaternion(R);
     auto s = std::get<0>(su);
@@ -745,12 +697,10 @@ private:
         .Added(u.Crossed(v).Multiplied(2.0 * s));
   }
 
-  // 变换向量
   static gp_Vec transform(const gp_Vec &v, const gp_Vec &T, const gp_Vec &R) {
     return rotate(v, R).Added(T);
   }
 
-  // 点约束成本
   static double point_cost(const gp_Pnt &m1, const gp_Pnt &m2,
                            const gp_Vec &T1_0, const gp_Vec &R1_0,
                            const gp_Vec &T2_0, const gp_Vec &R2_0,
@@ -779,7 +729,6 @@ private:
     }
   }
 
-  // 轴约束成本
   static double axis_cost(const gp_Dir &m1, const gp_Dir &m2,
                           const gp_Vec &T1_0, const gp_Vec &R1_0,
                           const gp_Vec &T2_0, const gp_Vec &R2_0,
@@ -808,7 +757,6 @@ private:
     }
   }
 
-  // 点在平面内约束成本
   static double point_in_plane_cost(const gp_Pnt &m1, const gp_Pln &m2,
                                     const gp_Vec &T1_0, const gp_Vec &R1_0,
                                     const gp_Vec &T2_0, const gp_Vec &R2_0,
@@ -840,7 +788,6 @@ private:
     return dot * dot;
   }
 
-  // 点在线上约束成本
   static double point_on_line_cost(const gp_Pnt &m1, const gp_Lin &m2,
                                    const gp_Vec &T1_0, const gp_Vec &R1_0,
                                    const gp_Vec &T2_0, const gp_Vec &R2_0,
@@ -879,7 +826,6 @@ private:
     }
   }
 
-  // 固定点约束成本
   static double fixed_point_cost(const gp_Pnt &m1, const gp_Vec &T1_0,
                                  const gp_Vec &R1_0, const gp_Vec &T1,
                                  const gp_Vec &R1, const gp_Vec &target,
@@ -894,7 +840,6 @@ private:
     return diff.SquareMagnitude();
   }
 
-  // 固定轴约束成本
   static double fixed_axis_cost(const gp_Dir &m1, const gp_Vec &T1_0,
                                 const gp_Vec &R1_0, const gp_Vec &T1,
                                 const gp_Vec &R1, const gp_Vec &target,
@@ -909,7 +854,6 @@ private:
     return diff.SquareMagnitude();
   }
 
-  // 固定旋转约束成本
   static double fixed_rotation_cost(const gp_Vec &T1_0, const gp_Vec &R1_0,
                                     const gp_Vec &T1, const gp_Vec &R1,
                                     const std::array<double, 3> &eulerAngles,
@@ -940,7 +884,6 @@ constraint_solver::constraint_solver(
   nc_ = constraints.size();
   initial_transforms_ = entities;
 
-  // Initialize variables and starting points
   for (size_t i = 0; i < entities.size(); ++i) {
     auto dof = location_to_dof6(entities[i]);
     auto T0 = std::get<0>(dof);
@@ -950,11 +893,9 @@ constraint_solver::constraint_solver(
     std::array<double, 3> R_init = R0;
 
     if (std::find(locked.begin(), locked.end(), i) != locked.end()) {
-      // Locked entities get zero variables
       T = {0.0, 0.0, 0.0};
       R = {0.0, 0.0, 0.0};
     } else {
-      // Small initial rotation for free entities
       R = {1e-2, 1e-2, 1e-2};
     }
 
@@ -965,10 +906,8 @@ constraint_solver::constraint_solver(
 
 std::pair<std::vector<gp_Trsf>, std::map<std::string, double>>
 constraint_solver::solve(int verbosity) {
-  // Create Ipopt problem and solver
   Ipopt::SmartPtr<Ipopt::IpoptApplication> app = IpoptApplicationFactory();
 
-  // Set Ipopt options
   app->Options()->SetNumericValue("tol", 1e-14);
   app->Options()->SetNumericValue("acceptable_obj_change_tol", 1e-12);
   app->Options()->SetIntegerValue("acceptable_iter", 1);
@@ -980,19 +919,16 @@ constraint_solver::solve(int verbosity) {
   app->Options()->SetStringValue("sb", verbosity == 0 ? "yes" : "no");
   app->Options()->SetStringValue("print_timing_statistics", "no");
 
-  // Create and solve the NLP
   Ipopt::SmartPtr<constraint_problem> nlp = new constraint_problem(*this);
   app->Initialize();
   Ipopt::ApplicationReturnStatus status = app->OptimizeTNLP(nlp);
 
-  // Process results
   std::vector<gp_Trsf> trans;
   std::map<std::string, double> stats;
 
   if (status == Ipopt::Solve_Succeeded ||
       status == Ipopt::Solved_To_Acceptable_Level) {
     trans = nlp->final_transforms();
-    // Collect statistics
     stats["iter_count"] = app->Statistics()->IterationCount();
     stats["solve_time"] = app->Statistics()->TotalWallclockTime();
     stats["final_obj"] = app->Statistics()->FinalObjective();

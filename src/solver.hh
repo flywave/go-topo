@@ -21,7 +21,6 @@ namespace topo {
 // 6自由度类型 (平移XYZ + 旋转XYZ)
 using DOF6 = std::tuple<std::array<double, 3>, std::array<double, 3>>;
 
-// 类型定义
 using constraint_marker =
     boost::variant<gp_Pnt, gp_Dir, gp_Pln, gp_Lin, boost::blank>;
 
@@ -40,7 +39,6 @@ enum class constraint_kind {
 template <constraint_kind> struct is_unary_constraint : std::false_type {};
 template <constraint_kind> struct is_binary_constraint : std::false_type {};
 
-// Then provide specializations
 template <>
 struct is_unary_constraint<constraint_kind::Fixed> : std::true_type {};
 template <>
@@ -61,7 +59,6 @@ struct is_binary_constraint<constraint_kind::PointOnLine> : std::true_type {};
 template <>
 struct is_binary_constraint<constraint_kind::Plane> : std::true_type {};
 
-// 约束检查函数
 constexpr bool is_unary(constraint_kind kind) {
   switch (kind) {
   case constraint_kind::Fixed:
@@ -120,7 +117,6 @@ public:
   }
 
   std::vector<assembly_constraint> to_pods() const {
-    // Apply sublocation
     std::vector<shape> located_args;
     located_args.reserve(args.size());
     for (size_t i = 0; i < args.size(); ++i) {
@@ -229,7 +225,6 @@ private:
 
 class constraint_solver {
 private:
-  // Problem data
   std::vector<std::pair<std::array<double, 3>, std::array<double, 3>>>
       variables_;
   std::vector<std::pair<std::array<double, 3>, std::array<double, 3>>>

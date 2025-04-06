@@ -21,7 +21,6 @@ public:
   virtual ~selector() = default;
   virtual std::vector<shape> filter(const std::vector<shape> &shapes) const = 0;
 
-  // 运算符重载
   selector_ptr operator&&(const selector_ptr &other) const;
   selector_ptr operator||(const selector_ptr &other) const;
   selector_ptr operator-(const selector_ptr &other) const;
@@ -43,7 +42,6 @@ public:
   }
 };
 
-// 最近点选择器
 class nearest_to_point_selector : public selector {
   topo_vector point_;
 
@@ -53,7 +51,6 @@ public:
   std::vector<shape> filter(const std::vector<shape> &objects) const override;
 };
 
-// 包围盒选择器
 class box_selector : public selector {
   topo_vector p0_, p1_;
   bool use_bounding_box_;
@@ -73,7 +70,6 @@ public:
 
 using clustered_shapes = std::vector<std::vector<shape>>;
 
-// 抽象基类：第N个选择器
 class nth_selector : public selector {
 protected:
   int n_;
@@ -90,7 +86,6 @@ public:
   std::vector<shape> filter(const std::vector<shape> &objects) const override;
 };
 
-// 半径第N选择器
 class radius_nth_selector : public nth_selector {
 protected:
   double get_key(const shape &obj) const override;
@@ -102,7 +97,6 @@ public:
   using nth_selector::nth_selector;
 };
 
-// 中心第N选择器
 class center_nth_selector : public nth_selector {
   topo_vector direction_;
 
@@ -116,7 +110,6 @@ public:
         direction_(dir.normalized()) {}
 };
 
-// 方向极值选择器
 class direction_minmax_selector : public center_nth_selector {
 public:
   direction_minmax_selector(const topo_vector &dir, bool direction_max = true,
@@ -124,7 +117,6 @@ public:
       : center_nth_selector(dir, -1, direction_max, tolerance) {}
 };
 
-// 方向基类选择器
 class direction_selector : public selector {
 private:
   friend class string_syntax_selector;
@@ -142,7 +134,6 @@ public:
   std::vector<shape> filter(const std::vector<shape> &objects) const override;
 };
 
-// 平行方向选择器
 class parallel_dir_selector : public direction_selector {
 public:
   using direction_selector::direction_selector;
@@ -152,7 +143,6 @@ public:
   }
 };
 
-// 方向选择器
 class dir_selector : public direction_selector {
 public:
   using direction_selector::direction_selector;
@@ -162,7 +152,6 @@ public:
   }
 };
 
-// 垂直方向选择器
 class perpendicular_dir_selector : public direction_selector {
 public:
   using direction_selector::direction_selector;
@@ -172,7 +161,6 @@ public:
   }
 };
 
-// 方向第N选择器
 class direction_nth_selector : public selector {
   parallel_dir_selector _dir_selector;
   center_nth_selector _nth_selector;
@@ -186,7 +174,6 @@ public:
   std::vector<shape> filter(const std::vector<shape> &objects) const override;
 };
 
-// 长度第N选择器
 class length_nth_selector : public nth_selector {
 protected:
   double get_key(const shape &obj) const override;
@@ -195,7 +182,6 @@ public:
   using nth_selector::nth_selector;
 };
 
-// 类型选择器
 class type_selector : public selector {
   shape_geom_type type_;
 
@@ -205,7 +191,6 @@ public:
   std::vector<shape> filter(const std::vector<shape> &objects) const override;
 };
 
-// 面积第N选择器
 class area_nth_selector : public nth_selector {
 protected:
   double get_key(const shape &obj) const override;
@@ -214,7 +199,6 @@ public:
   using nth_selector::nth_selector;
 };
 
-// 二元选择器基类
 class binary_selector : public selector {
 protected:
   selector_ptr left_;
@@ -231,7 +215,6 @@ public:
   std::vector<shape> filter(const std::vector<shape> &objects) const override;
 };
 
-// 与选择器
 class and_selector : public binary_selector {
 public:
   using binary_selector::binary_selector;
@@ -241,7 +224,6 @@ public:
                  const std::vector<shape> &right) const override;
 };
 
-// 或选择器
 class or_selector : public binary_selector {
 public:
   using binary_selector::binary_selector;
@@ -251,7 +233,6 @@ public:
                  const std::vector<shape> &right) const override;
 };
 
-// 差选择器
 class subtract_selector : public binary_selector {
 public:
   using binary_selector::binary_selector;
@@ -261,7 +242,6 @@ public:
                  const std::vector<shape> &right) const override;
 };
 
-// 非选择器
 class not_selector : public selector {
   selector_ptr selector_;
 
@@ -271,7 +251,6 @@ public:
   std::vector<shape> filter(const std::vector<shape> &objects) const override;
 };
 
-// 字符串语法选择器工厂
 class string_syntax_selector : public selector {
   selector_ptr selector_;
 

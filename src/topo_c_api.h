@@ -36,6 +36,8 @@ enum { ORI_FORWARD, ORI_REVERSED, ORI_INTERNAL, ORI_EXTERNAL, ORI_UNKNOW };
 typedef struct _topo_shape_t topo_shape_t;
 typedef struct _topo_vector_t topo_vector_t;
 typedef struct _topo_plane_t topo_plane_t;
+typedef struct _topo_bbox_t topo_bbox_t;
+typedef struct _topo_matrix_t topo_matrix_t;
 typedef struct _topo_location_t topo_location_t;
 typedef struct _topo_mesh_receiver_t topo_mesh_receiver_t;
 typedef struct _topo_comp_solid_iterator_t topo_comp_solid_iterator_t;

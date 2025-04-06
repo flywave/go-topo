@@ -437,11 +437,10 @@ wire wire::make_helix(double pitch, double height, double radius,
   if (angle == 360.0) {
     geom_surf = new Geom_CylindricalSurface(axis, radius);
   } else {
-    double angle_rad = angle * M_PI / 180.0; // Convert degrees to radians
+    double angle_rad = angle * M_PI / 180.0; 
     geom_surf = new Geom_ConicalSurface(axis, angle_rad, radius);
   }
 
-  // 2. Construct a segment in the u,v domain
   gp_Pnt2d origin(0.0, 0.0);
   gp_Dir2d line_dir;
 
@@ -453,7 +452,6 @@ wire wire::make_helix(double pitch, double height, double radius,
 
   Handle(Geom2d_Line) geom_line = new Geom2d_Line(origin, line_dir);
 
-  // 3. Create the edge on surface
   double n_turns = height / pitch;
   double param_length = n_turns * sqrt(pow(2 * M_PI, 2) + pow(pitch, 2));
 
@@ -466,11 +464,9 @@ wire wire::make_helix(double pitch, double height, double radius,
   BRepBuilderAPI_MakeEdge edgeMaker(geom_seg, geom_surf);
   TopoDS_Edge e = edgeMaker.Edge();
 
-  // 4. Convert to wire and build 3D curves
   BRepBuilderAPI_MakeWire wireMaker(e);
   TopoDS_Shape w = wireMaker.Wire();
 
-  // Build 3D curves with specified tolerance and maximum segments
   BRepLib::BuildCurves3d(w, 1e-6, GeomAbs_C1, 14, 2000);
 
   return wire(w);

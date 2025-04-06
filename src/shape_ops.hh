@@ -16,7 +16,7 @@
 #include <TopoDS_Shape.hxx>
 
 #include <map>
-#include <utility> // for std::pair
+#include <utility>
 #include <vector>
 
 namespace flywave {

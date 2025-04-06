@@ -19,7 +19,6 @@ private:
   gp_Vec _value;
 
 public:
-  // Constructors
   topo_vector() : _value(0, 0, 0) {}
 
   topo_vector(double x, double y, double z = 0.0) : _value(x, y, z) {}

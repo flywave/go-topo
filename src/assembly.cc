@@ -42,7 +42,6 @@
 
 namespace x3 = boost::spirit::x3;
 
-// 定义解析结果数据结构
 struct parse_result {
   std::string name;
   std::string tag;
@@ -82,7 +81,6 @@ std::string generate_uuid() {
   return ss.str();
 }
 
-// Helper functions (implementation depends on your specific classes)
 inline void set_doc_name(const TDF_Label &label, const std::string &name,
                          const Handle(XCAFDoc_ShapeTool) & tool) {
   TDataStd_Name::Set(label, TCollection_ExtendedString(name.c_str()));
@@ -96,28 +94,23 @@ inline void set_doc_color(const TDF_Label &label, const Quantity_Color &color,
 std::pair<TDF_Label, Handle(TDocStd_Document)>
 toFusedCAF(const std::shared_ptr<assembly> &assy, bool glue = false,
            boost::optional<float> tol = boost::none) {
-  // Prepare the document
   Handle(XCAFApp_Application) app = XCAFApp_Application::GetApplication();
   Handle(TDocStd_Document) doc =
       new TDocStd_Document(TCollection_ExtendedString("XmlOcaf"));
   app->InitDocument(doc);
 
-  // Shape and color tools
   Handle(XCAFDoc_ShapeTool) shape_tool =
       XCAFDoc_DocumentTool::ShapeTool(doc->Main());
   Handle(XCAFDoc_ColorTool) color_tool =
       XCAFDoc_DocumentTool::ColorTool(doc->Main());
 
-  // To fuse the parts of the assembly together
   BRepAlgoAPI_Fuse fuse_op;
   TopTools_ListOfShape args;
   TopTools_ListOfShape tools;
 
-  // Walk the entire assembly, collecting the located shapes and colors
   std::vector<std::pair<shape, std::shared_ptr<Quantity_Color>>>
       shape_color_pairs;
 
-  // Assuming assy has an iterator that returns (shape, _, location, color)
   auto elements = assy->get_elements();
   for (const auto &el : elements) {
     shape_color_pairs.emplace_back(el.shp.moved(el.location).copy(), el.color);
@@ -144,13 +137,11 @@ toFusedCAF(const std::shared_ptr<assembly> &assy, bool glue = false,
       shape_color_pairs = {{fused, pair.second}};
     }
   } else {
-    // Set the shape lists up for fuse operation
     args.Append(shape_color_pairs[0].first.value());
     for (size_t i = 1; i < shape_color_pairs.size(); ++i) {
       tools.Append(shape_color_pairs[i].first.value());
     }
 
-    // Configure fuse operation
     if (tol) {
       fuse_op.SetFuzzyValue(*tol);
     }
@@ -165,24 +156,20 @@ toFusedCAF(const std::shared_ptr<assembly> &assy, bool glue = false,
     top_level_shape = fuse_op.Shape();
   }
 
-  // Add the fused shape as the top level object
   TDF_Label top_level_lbl =
       shape_tool->AddShape(top_level_shape, Standard_False);
   TDataStd_Name::Set(top_level_lbl,
                      TCollection_ExtendedString(assy->name().c_str()));
 
-  // Process faces and colors
   for (const auto &pair : shape_color_pairs) {
     const auto &shape = pair.first;
     const auto &color = pair.second;
     for (const auto &face : shape.faces()) {
-      // Add original face
       TDF_Label cur_lbl = shape_tool->AddSubShape(top_level_lbl, face.value());
       if (color && !cur_lbl.IsNull() && !fuse_op.IsDeleted(face.value())) {
         color_tool->SetColor(cur_lbl, *color, XCAFDoc_ColorGen);
       }
 
-      // Handle modified faces
       const TopTools_ListOfShape &modded_list = fuse_op.Modified(face.value());
       for (TopTools_ListIteratorOfListOfShape it(modded_list); it.More();
            it.Next()) {
@@ -193,7 +180,6 @@ toFusedCAF(const std::shared_ptr<assembly> &assy, bool glue = false,
         }
       }
 
-      // Handle generated faces
       const TopTools_ListOfShape &gen_list = fuse_op.Generated(face.value());
       for (TopTools_ListIteratorOfListOfShape it(gen_list); it.More();
            it.Next()) {
@@ -229,7 +215,6 @@ std::pair<TDF_Label, Handle(TDocStd_Document)>
 toCAF(const std::shared_ptr<assembly> &assy, bool coloredSTEP = false,
       bool mesh = false, float tolerance = 1e-3f,
       float angularTolerance = 0.1f) {
-  // Prepare document
   document_raii wrapper;
 
   Handle(XCAFDoc_ShapeTool) tool =
@@ -250,14 +235,11 @@ toCAF(const std::shared_ptr<assembly> &assy, bool coloredSTEP = false,
       if (color.Blue() != other.color.Blue())
         return color.Blue() < other.color.Blue();
 
-      // 比较assembly
       return obj < other.obj;
     }
   };
 
-  // Cache for unique part-color combinations
   std::map<ColorAssemblyKey, TDF_Label> unique_objs;
-  // Cache for unique compounds
   std::map<flywave::topo::assembly_object, topo::shape> compounds;
 
   std::function<TDF_Label(const std::shared_ptr<assembly> &, TDF_Label,
@@ -266,17 +248,13 @@ toCAF(const std::shared_ptr<assembly> &assy, bool coloredSTEP = false,
 
   _to_caf_func = [&](const std::shared_ptr<assembly> &el, TDF_Label ancestor,
                      std::shared_ptr<Quantity_Color> color) -> TDF_Label {
-    // Create a subassembly
     TDF_Label subassy = tool->NewShape();
     set_doc_name(subassy, el->name(), tool);
 
-    // Define current color
     std::shared_ptr<Quantity_Color> current_color =
         el->has_color() ? std::make_shared<Quantity_Color>(el->color()) : color;
 
-    // Add leaf with actual part if needed
     if (el->has_obj()) {
-      // Get/register unique parts
       auto key0 = ColorAssemblyKey{.color = *current_color, .obj = el->obj()};
       auto key1 = el->obj();
 
@@ -300,7 +278,6 @@ toCAF(const std::shared_ptr<assembly> &assy, bool coloredSTEP = false,
         set_doc_name(lab, el->name() + "_part", tool);
         unique_objs[key0] = lab;
 
-        // Handle colors for STEP export
         if (coloredSTEP && current_color) {
           set_doc_color(lab, *current_color, ctool);
         }
@@ -309,12 +286,10 @@ toCAF(const std::shared_ptr<assembly> &assy, bool coloredSTEP = false,
       tool->AddComponent(subassy, lab, TopLoc_Location());
     }
 
-    // Handle colors for non-STEP export
     if (!coloredSTEP && current_color) {
       set_doc_color(subassy, *current_color, ctool);
     }
 
-    // Add children recursively
     for (const auto &child : el->children()) {
       _to_caf_func(child, subassy, current_color);
     }
@@ -324,8 +299,7 @@ toCAF(const std::shared_ptr<assembly> &assy, bool coloredSTEP = false,
       tool->AddComponent(ancestor, subassy, el->location());
       rv = subassy;
     } else {
-      // Update top level location
-      rv = TDF_Label(); // Additional label needed for location
+      rv = TDF_Label();
       tool->SetLocation(subassy, assy->location(), rv);
       set_doc_name(rv, assy->name(), tool);
     }
@@ -333,7 +307,6 @@ toCAF(const std::shared_ptr<assembly> &assy, bool coloredSTEP = false,
     return rv;
   };
 
-  // Process the whole assembly recursively
   TDF_Label top = _to_caf_func(assy, TDF_Label(), nullptr);
   tool->UpdateAssemblies();
 
@@ -345,17 +318,14 @@ bool export_assembly(
     const assembly_export_mode &mode = assembly_export_mode::defalut_,
     boost::optional<float> fuzzy_tol = boost::none) {
   try {
-    // Handle the extra settings for the STEP export
     int pcurves = 1;
     int precision_mode = 0;
     boost::optional<float> fuzzy_tol;
     bool glue = false;
 
-    // Use the assembly name if the user set it
     std::string assembly_name =
         assy->name().empty() ? generate_uuid() : assy->name();
 
-    // Handle the doc differently based on which mode we are using
     Handle(TDocStd_Document) doc;
     if (mode == assembly_export_mode::fuse) {
       if (fuzzy_tol) {
@@ -363,7 +333,7 @@ bool export_assembly(
       } else {
         std::tie(std::ignore, doc) = toFusedCAF(assy, glue);
       }
-    } else { // Includes "default"
+    } else {
       std::tie(std::ignore, doc) = toCAF(assy, true);
     }
 
@@ -436,7 +406,6 @@ const auto grammar_def = name >> -('?' >> tag) >>
                          -('@' >> selector_type >> '@' >> selector);
 } // namespace detail
 
-// 对外暴露的解析接口
 bool parse(const std::string &input, parse_result &result) {
   using iterator_type = std::string::const_iterator;
 
@@ -464,11 +433,9 @@ assembly::assembly(assembly_object obj, std::shared_ptr<topo_location> loc,
       loc_(loc ? std::move(loc) : std::make_shared<topo_location>()),
       name_(name.empty() ? detail::generate_uuid() : name),
       color_(std::move(color)), metadata_(metadata), parent_(), children_(),
-      objects_(), // 注意：需要在enable_shared_from_this派生类中使用
-      constraints_(), solve_result_(boost::none) {
+      objects_(), constraints_(), solve_result_(boost::none) {
 
   objects_[name_] = shared_from_this();
-  // 使用boost::variant的静态访问器进行类型安全检查
   struct validator : public boost::static_visitor<void> {
     void operator()(const std::shared_ptr<workplane> &wp) const {
       if (!wp)
@@ -483,12 +450,9 @@ assembly::assembly(assembly_object obj, std::shared_ptr<topo_location> loc,
     void operator()(boost::blank) const {}
   };
 
-  // 应用验证器
   boost::apply_visitor(validator(), obj_);
 
-  // 使用boost::variant的which()替代index()
-  if (obj_.which() != -1) { // 确保variant已初始化
-    // 预分配子节点空间（优化）
+  if (obj_.which() != -1) {
     children_.reserve(4);
   }
 }
@@ -504,7 +468,6 @@ assembly::assembly(assembly &&o) noexcept {
   objects_ = std::move(o.objects_);
   constraints_ = std::move(o.constraints_);
   solve_result_ = std::move(o.solve_result_);
-  // 重置原对象的状态
   o.loc_.reset();
   o.name_.clear();
   o.color_.reset();
@@ -529,7 +492,6 @@ assembly &assembly::operator=(assembly &&o) noexcept {
     objects_ = std::move(o.objects_);
     constraints_ = std::move(o.constraints_);
     solve_result_ = std::move(o.solve_result_);
-    // 重置原对象的状态
     o.loc_.reset();
     o.name_.clear();
     o.color_.reset();
@@ -545,12 +507,10 @@ assembly &assembly::operator=(assembly &&o) noexcept {
 }
 
 std::shared_ptr<assembly> assembly::copy() const {
-  // Create new assembly with copied basic properties
   auto new_assembly = assembly::create(
       obj_, loc_ ? std::make_shared<topo_location>(*loc_) : nullptr, name_,
       color_ ? std::make_shared<Quantity_Color>(*color_) : nullptr, metadata_);
 
-  // Deep copy children
   for (const auto &child : children_) {
     auto child_copy = child->copy();
     child_copy->parent_ = new_assembly;
@@ -558,7 +518,6 @@ std::shared_ptr<assembly> assembly::copy() const {
     new_assembly->children_.push_back(child_copy);
     new_assembly->objects_[child_copy->name_] = child_copy;
 
-    // Merge child's objects into the new assembly
     auto child_objects = child_copy->flatten();
 
     for (const auto &pair : child_objects) {
@@ -566,12 +525,10 @@ std::shared_ptr<assembly> assembly::copy() const {
     }
   }
 
-  // Copy constraints
   for (const auto &constraint : constraints_) {
     new_assembly->constraints_.push_back(constraint);
   }
 
-  // Copy solve result if exists
   if (solve_result_) {
     new_assembly->solve_result_ = *solve_result_;
   }
@@ -590,31 +547,25 @@ assembly &assembly::add(std::shared_ptr<assembly> subAssembly,
     }
     current = current->parent_.lock();
   }
-  // Validate input
   if (!subAssembly) {
     throw std::invalid_argument("Cannot add null assembly");
   }
 
-  // Determine final properties
   const std::string &finalName = name.empty() ? subAssembly->name_ : name;
   if (objects_.find(finalName) != objects_.end()) {
     throw std::invalid_argument("Duplicate assembly name: " + finalName);
   }
 
-  // Create deep copy
   auto newAssembly = subAssembly->copy();
 
-  // Apply overrides
   newAssembly->loc_ = loc ? loc : subAssembly->loc_;
   newAssembly->name_ = finalName;
   newAssembly->color_ = color ? color : subAssembly->color_;
   newAssembly->parent_ = shared_from_this();
 
-  // Add to hierarchy
   children_.push_back(newAssembly);
   objects_[finalName] = newAssembly;
 
-  // Merge child objects
   auto childObjects = newAssembly->flatten();
   for (const auto &pair : childObjects) {
     objects_[pair.first] = pair.second;
@@ -627,45 +578,36 @@ assembly &
 assembly::add(assembly_object obj, std::shared_ptr<topo_location> loc,
               const std::string &name, std::shared_ptr<Quantity_Color> color,
               const std::unordered_map<std::string, boost::any> &metadata) {
-  // Create new assembly from object
   auto newAssembly = assembly::create(
       std::move(obj), loc ? loc : std::make_shared<topo_location>(),
       name.empty() ? detail::generate_uuid() : name, color, metadata);
 
-  // Add using the assembly version
   return add(newAssembly);
 }
 
 assembly &assembly::remove(const std::string &name) {
-  // Check if object exists
   auto it = objects_.find(name);
   if (it == objects_.end()) {
     throw std::invalid_argument("No object with name '" + name +
                                 "' found in the assembly");
   }
 
-  // Get the assembly to remove
   auto toRemove = it->second;
 
-  // Remove from parent's children list
   if (auto parent = toRemove->parent_.lock()) {
     auto &children = parent->children_;
     children.erase(std::remove(children.begin(), children.end(), toRemove),
                    children.end());
   }
 
-  // Remove from objects dictionary
   objects_.erase(it);
 
-  // Remove all descendants
   auto descendants = toRemove->flatten();
 
-  // 修改为 C++14 兼容版本
   for (const auto &pair : descendants) {
     objects_.erase(pair.first);
   }
 
-  // Reset parent reference
   toRemove->parent_.reset();
 
   return *this;
@@ -765,14 +707,11 @@ assembly &assembly::constrain(const std::string &id1, const shape &s1,
                              static_cast<constraint_kind>(kind), param, false);
 }
 
-// 统一实现方法
 assembly &assembly::add_constraint_impl(const std::string &id1, const shape *s1,
                                         const std::string &id2, const shape *s2,
                                         constraint_kind kind,
                                         const constraint_param &param,
                                         bool isBinary) {
-
-  // 运行时类型检查
   if (isBinary != is_binary(kind)) {
     throw std::invalid_argument(isBinary ? "Expected binary constraint type"
                                          : "Expected unary constraint type");
@@ -782,14 +721,14 @@ assembly &assembly::add_constraint_impl(const std::string &id1, const shape *s1,
     throw std::invalid_argument("First shape cannot be null");
   }
 
-  if (!isBinary) { // 一元约束处理
+  if (!isBinary) {
     topo_location loc1;
     std::string topId1;
     std::tie(loc1, topId1) = sub_location(id1);
     constraints_.push_back(constraint_spec(
         std::vector<std::string>{topId1}, std::vector<shape>{*s1},
         std::vector<topo_location>{loc1}, kind, param));
-  } else { // 二元约束处理
+  } else {
     if (!s2) {
       throw std::invalid_argument(
           "Second shape cannot be null for binary constraint");
@@ -810,7 +749,6 @@ assembly &assembly::add_constraint_impl(const std::string &id1, const shape *s1,
 
 assembly &assembly::solve(int verbosity) {
   std::lock_guard<std::mutex> lock(solve_mutex_);
-  // Step 1: Collect and index entities with early exit
   if (constraints_.empty()) {
     throw std::runtime_error("At least one constraint required");
   }
@@ -819,13 +757,11 @@ assembly &assembly::solve(int verbosity) {
   std::vector<size_t> locked;
   size_t index = 0;
 
-  // First pass: index entities and identify locked ones
   for (const auto &c : constraints_) {
     for (const auto &name : c.objects) {
       if (ents.find(name) == ents.end()) {
         ents[name] = index++;
       }
-      // Lock fixed constraints or root assembly
       if ((c.kind == constraint_kind::Fixed || name == name_) &&
           std::find(locked.begin(), locked.end(), ents[name]) == locked.end()) {
         locked.push_back(ents[name]);
@@ -833,12 +769,10 @@ assembly &assembly::solve(int verbosity) {
     }
   }
 
-  // Step 2: Ensure at least one locked entity
   if (locked.empty()) {
-    locked.push_back(0); // Lock first entity as fallback
+    locked.push_back(0);
   }
 
-  // Step 3: Prepare data for solver
   std::vector<gp_Trsf> locs(ents.size());
   for (const auto &entry : ents) {
     locs[entry.second] = *objects_.find(entry.first)->second->loc_;
@@ -853,16 +787,14 @@ assembly &assembly::solve(int verbosity) {
     }
   }
 
-  // Step 4: Solve constraints
   double scale = to_compound().bbox().diagonal_length();
   constraint_solver solver(locs, constraint_pods, locked, scale);
 
   auto solve_result = solver.solve(verbosity);
   solve_result_ = solve_result.second;
 
-  // Step 5: Update positions
   auto root_loc_inv = std::make_shared<topo_location>();
-  if (obj_.which() != 2) { // Not nullptr
+  if (obj_.which() != 2) {
     for (const auto &entry : ents) {
       if (entry.first == name_) {
         *root_loc_inv = solve_result.first[entry.second].Inverted();
@@ -949,7 +881,6 @@ assembly::_get_elements(std::shared_ptr<topo_location> loc,
                         std::shared_ptr<Quantity_Color> color) const {
   std::vector<assembly_element> elements;
 
-  // 内部递归函数
   std::function<void(const std::shared_ptr<assembly> &,
                      std::shared_ptr<topo_location>, const std::string &,
                      std::shared_ptr<Quantity_Color>)>
@@ -959,21 +890,17 @@ assembly::_get_elements(std::shared_ptr<topo_location> loc,
                          std::shared_ptr<topo_location> current_loc,
                          const std::string &current_name,
                          std::shared_ptr<Quantity_Color> current_color) {
-    // 构建当前元素的完整名称
     std::string full_name =
         current_name.empty() ? assy->name_ : current_name + "/" + assy->name_;
 
-    // 计算当前位置
     auto new_loc =
         current_loc
             ? std::make_shared<topo_location>(*current_loc * *assy->loc_)
             : assy->loc_;
 
-    // 确定当前颜色
     auto new_color = assy->color_ ? assy->color_ : current_color;
 
-    // 处理当前assembly的对象
-    if (assy->obj_.which() != 2) { // Not nullptr
+    if (assy->obj_.which() != 2) {
       compound shape_obj;
 
       if (auto sh = boost::get<shape>(&assy->obj_)) {
@@ -997,13 +924,11 @@ assembly::_get_elements(std::shared_ptr<topo_location> loc,
       }
     }
 
-    // 递归处理子assembly
     for (const auto &child : assy->children_) {
       collect_elements(child, new_loc, full_name, new_color);
     }
   };
 
-  // 开始收集元素
   collect_elements(std::const_pointer_cast<assembly>(this->shared_from_this()),
                    loc, name, color);
 
@@ -1027,24 +952,21 @@ compound assembly::to_compound() const {
 
 std::pair<topo_location, std::string>
 assembly::sub_location(const std::string &name) const {
-  // 1. Find target object
   auto it = objects_.find(name);
   if (it == objects_.end()) {
     throw std::invalid_argument("Object not found: " + name);
   }
 
   auto obj = it->second;
-  topo_location result_loc; // Identity by default
+  topo_location result_loc;
   std::string top_name = name;
 
-  // 2. Check if needs location calculation
   bool is_child =
       std::find(children_.begin(), children_.end(), obj) != children_.end();
   if (!is_child && obj.get() != this) {
     std::vector<topo_location> loc_chain;
     auto current = obj;
 
-    // 3. Walk up the parent chain
     while (auto parent = current->parent_.lock()) {
       if (parent.get() == this)
         break;
@@ -1054,9 +976,8 @@ assembly::sub_location(const std::string &name) const {
       top_name = current->name_;
     }
 
-    // 4. Combine locations in parent-to-child order
     for (auto it = loc_chain.rbegin(); it != loc_chain.rend(); ++it) {
-      result_loc = (*it) * result_loc; // l2 * l1 composition
+      result_loc = (*it) * result_loc;
     }
   }
 

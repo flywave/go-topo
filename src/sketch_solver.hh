@@ -49,7 +49,7 @@ struct sketch_constraint {
   sketch_constraint_kind kind;
   sketch_constraint_value value;
 };
-// Helper functions
+
 gp_Pnt2d arc_first(const arc_dof &x);
 gp_Pnt2d arc_last(const arc_dof &x);
 gp_Pnt2d arc_point(const arc_dof &x, const boost::optional<double> &val);
@@ -105,7 +105,7 @@ private:
   std::vector<sketch_constraint> constraints;
   std::vector<geom_type> geoms;
   std::vector<size_t> ixs;
-  std::vector<double> x0; // Initial solution
+  std::vector<double> x0; 
 
   const double DIFF_EPS = 1e-10;
   const double TOL = 1e-9;

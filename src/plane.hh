@@ -1,5 +1,5 @@
-// ShapeOperations.h
 #pragma once
+
 #include <BRepBndLib.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <Bnd_Box.hxx>

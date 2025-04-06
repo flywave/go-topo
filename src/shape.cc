@@ -1574,7 +1574,7 @@ boost::optional<shape> shape::to_splines(int degree, double tolerance,
                                       tolerance, // 3D容差
                                       tolerance, // 2D容差
                                       degree,
-                                      1,             // 段数 (被degree参数主导)
+                                      1, // 段数 (被degree参数主导)
                                       GeomAbs_C0,    // 连续性
                                       GeomAbs_C0,    // 连续性
                                       Standard_True, // degree参数主导

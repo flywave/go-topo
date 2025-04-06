@@ -3,7 +3,6 @@
 namespace flywave {
 namespace topo {
 
-// Helper functions implementation
 gp_Pnt2d arc_first(const arc_dof &x) {
   return gp_Pnt2d(x[0] + x[2] * std::sin(x[3]), x[1] + x[2] * std::cos(x[3]));
 }
@@ -40,7 +39,6 @@ gp_Vec2d arc_last_tangent(const arc_dof &x) {
                   -sign_da * std::sin(x[3] + x[4]));
 }
 
-// Cost functions implementation
 double sketch_solver::fixed_cost(const std::vector<double> &x,
                                  const std::vector<double> &x0) {
   double sum = 0.0;
