@@ -113,6 +113,7 @@ public:
   std::shared_ptr<workplane> last();
   std::shared_ptr<workplane> end(int n = 1);
   std::shared_ptr<workplane> clean();
+  
   workplane &tag(const std::string &name);
 
   solid find_solid(bool searchStack = true, bool searchParents = true) const;
@@ -155,7 +156,6 @@ public:
   std::shared_ptr<workplane>
   ancestors(TopAbs_ShapeEnum kind,
             const boost::optional<std::string> &tag = boost::none) const;
-
   std::shared_ptr<workplane>
   siblings(TopAbs_ShapeEnum kind, int level,
            const boost::optional<std::string> &tag = boost::none) const;

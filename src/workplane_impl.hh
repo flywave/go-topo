@@ -7,8 +7,8 @@
 extern "C" {
 #endif
 
-struct _shape_objectt_t {   
-    flywave::topo::shape_object obj;
+struct _shape_objectt_t {
+  flywave::topo::shape_object obj;
 };
 
 struct _workplane_t {
