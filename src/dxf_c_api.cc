@@ -139,9 +139,10 @@ dxf_shape_entity_layer_get_entity(dxf_shape_entity_layer_t *p, int index) {
 }
 
 dxf_shape_entity_t *dxf_shape_entity_new(topo_shape_t *shape, int color) {
-  return new dxf_shape_entity_t{
-      .entity = flywave::dxf::dxf_shape_entity{.shape = shape->shp->value(),
-                                               .color = color}};
+  return new dxf_shape_entity_t{.entity = flywave::dxf::dxf_shape_entity{
+                                    .color = color,
+                                    .shape = shape->shp->value(),
+                                }};
 }
 
 void dxf_shape_entity_free(dxf_shape_entity_t *p) {

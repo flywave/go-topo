@@ -291,10 +291,10 @@ void dxf_shape_reader::on_read_text(const dxf_text &text) {
   this->add_text(dxf_text_entity{
       .text = text.str,
       .position = pt,
-      .height = text.height,
-      .rotation = text.rotation_angle,
       .normal = extDir,
       .x_axis_dir = xAxisDir,
+      .height = text.height,
+      .rotation = text.rotation_angle,
   });
 }
 
@@ -337,10 +337,10 @@ void dxf_shape_reader::on_read_mtext(const dxf_mtext &text) {
   this->add_text(dxf_text_entity{
       .text = text.str,
       .position = pt,
-      .height = text.height,
-      .rotation = text.rotation_angle,
       .normal = extDir,
       .x_axis_dir = xAxisDir,
+      .height = text.height,
+      .rotation = text.rotation_angle,
   });
 }
 
