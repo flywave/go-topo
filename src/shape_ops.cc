@@ -105,7 +105,6 @@ sort_wires_by_build_order(const std::vector<wire> &wireList) {
   return result;
 }
 
-// Helper method for auxiliary spine extrusion
 TopoDS_Shape _extrudeAuxSpine(const TopoDS_Wire &profile,
                               const TopoDS_Wire &spine,
                               const TopoDS_Wire &auxSpine) {
@@ -492,7 +491,6 @@ boost::optional<shape> chamfer(const shape &baseShape,
     std::cerr << "Base shape must be a Solid or Shell " << std::endl;
     return boost::none;
   }
-  // Validate input parameters
   if (distance <= 0) {
     std::cerr << "Chamfer distance must be positive " << std::endl;
     return boost::none;
@@ -503,23 +501,18 @@ boost::optional<shape> chamfer(const shape &baseShape,
   }
 
   try {
-    // Create edge to faces mapping
     TopTools_IndexedDataMapOfShapeListOfShape edgeFaceMap;
     TopExp::MapShapesAndAncestors(baseShape, TopAbs_EDGE, TopAbs_FACE,
                                   edgeFaceMap);
 
-    // Initialize chamfer builder
     BRepFilletAPI_MakeChamfer chamferBuilder(baseShape);
 
-    // Set chamfer distances
     const double d1 = distance;
     const double d2 = distance2.value_or(distance);
 
-    // Apply chamfer to each edge
     for (const auto &edge : edges) {
       const TopoDS_Edge &occEdge = edge.value();
 
-      // Find adjacent face for this edge
       if (!edgeFaceMap.Contains(occEdge)) {
         throw std::runtime_error("Edge not found in shape");
       }
@@ -529,11 +522,9 @@ boost::optional<shape> chamfer(const shape &baseShape,
         throw std::runtime_error("No adjacent face found for edge");
       }
 
-      // Add chamfer to this edge-face pair
       chamferBuilder.Add(d1, d2, occEdge, TopoDS::Face(faceShape));
     }
 
-    // Build the chamfered shape
     chamferBuilder.Build();
     if (!chamferBuilder.IsDone()) {
       throw std::runtime_error("Chamfer operation failed");
@@ -562,7 +553,6 @@ boost::optional<shape> extrude_linear(const topo::wire &outerWire,
 boost::optional<shape> extrude_linear(const topo::face &f,
                                       const gp_Vec &vecNormal, double taper) {
   if (taper == 0.0) {
-    // Straight extrusion
     BRepPrimAPI_MakePrism prismBuilder(f.value(), vecNormal,
                                        true // Copy the face
     );
@@ -575,17 +565,15 @@ boost::optional<shape> extrude_linear(const topo::face &f,
 
     return boost::make_optional<shape>(prismBuilder.Shape());
   } else {
-    // Tapered extrusion
     gp_Dir faceNormal = f.normal_at();
     double angle = vecNormal.Angle(faceNormal);
     int d = (angle < M_PI / 2) ? 1 : -1; // M_PI/2 = 90 degrees
 
-    // Calculate adjusted height respecting taper angle
     double height =
         (d * vecNormal.Magnitude()) / std::cos(taper * M_PI / 180.0);
 
     LocOpe_DPrism prismBuilder(f.value(), height,
-                               d * taper * M_PI / 180.0 // Convert to radians
+                               d * taper * M_PI / 180.0
     );
 
     return boost::make_optional<shape>(prismBuilder.Shape());
@@ -724,7 +712,6 @@ boost::optional<shape> revolve(const shape &shp, const gp_Pnt &axisPoint,
   }
 }
 
-// Revolve wires into a solid
 boost::optional<shape> revolve(const wire &outerWire,
                                const std::vector<wire> &innerWires,
                                double angleDegrees, const gp_Pnt &axisStart,
@@ -733,10 +720,8 @@ boost::optional<shape> revolve(const wire &outerWire,
   return revolve(f, angleDegrees, axisStart, axisEnd);
 }
 
-// Revolve a face into a solid (overloaded version)
 boost::optional<shape> revolve(const face &f, double angleDegrees,
                                const gp_Pnt &axisStart, const gp_Pnt &axisEnd) {
-  // Calculate axis direction
   gp_Vec axisVec(axisStart, axisEnd);
   if (axisVec.Magnitude() < Precision::Confusion()) {
     throw std::invalid_argument("Axis start and end points are coincident");
@@ -744,10 +729,8 @@ boost::optional<shape> revolve(const face &f, double angleDegrees,
 
   gp_Ax1 revolutionAxis(axisStart, axisVec);
 
-  // Convert angle to radians
   double angleRadians = angleDegrees * M_PI / 180.0;
 
-  // Create the revolution
   BRepPrimAPI_MakeRevol revolBuilder(f.value(), revolutionAxis, angleRadians,
                                      true // Copy the shape
   );
@@ -842,7 +825,6 @@ boost::optional<shape> offset(const shape &shp, double offset, bool cap,
   }
 }
 
-// Sweep wires along a path
 boost::optional<shape> sweep(const wire &outerWire,
                              const std::vector<wire> &innerWires,
                              const shape &path, bool makeSolid, bool isFrenet,
@@ -864,14 +846,12 @@ boost::optional<shape> sweep(const wire &outerWire,
     bool translate = false;
     bool rotate = false;
 
-    // Handle sweep mode
     if (mode) {
       rotate = _setSweepMode(builder, path, mode);
     } else {
       builder.SetMode(isFrenet);
     }
 
-    // Set transition mode
     switch (transitionMode) {
     case transition_mode::TRANSFORMED:
       builder.SetTransitionMode(BRepBuilderAPI_Transformed);
@@ -904,7 +884,6 @@ boost::optional<shape> sweep(const wire &outerWire,
   return result;
 }
 
-// Sweep a face along a path
 boost::optional<shape> sweep(const face &face, const shape &path,
                              bool makeSolid, bool isFrenet, const shape *mode,
                              transition_mode transitionMode) {
@@ -912,7 +891,6 @@ boost::optional<shape> sweep(const face &face, const shape &path,
                mode, transitionMode);
 }
 
-// Multi-section sweep
 boost::optional<shape> sweep_multi(const std::vector<shape> &profiles,
                                    const shape &path, bool makeSolid,
                                    bool isFrenet, const shape *mode) {

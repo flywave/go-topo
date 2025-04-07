@@ -1,4 +1,3 @@
-
 #include "selector_c_api.h"
 #include "selector.hh"
 #include "selector_impl.hh"
