@@ -106,7 +106,7 @@ shell shell::make_shell_from_box(const gp_Ax2 &Axes, const Standard_Real dx,
   } catch (...) {
     return shell{};
   }
-} // namespace topo
+}
 
 shell shell::make_shell_from_cylinder(const Standard_Real R,
                                       const Standard_Real H) {
@@ -127,7 +127,7 @@ shell shell::make_shell_from_cylinder(const Standard_Real R,
   } catch (...) {
     return shell{};
   }
-} // namespace flywave
+} 
 
 shell shell::make_shell_from_cylinder(const gp_Ax2 &Axes, const Standard_Real R,
                                       const Standard_Real H) {

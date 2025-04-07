@@ -101,6 +101,31 @@ TOPOCAPICALL topo_location_t *topo_location_new(trsf_t t);
 TOPOCAPICALL void topo_location_free(topo_location_t *p);
 TOPOCAPICALL trsf_t topo_location_get_trsf(topo_location_t *p);
 
+TOPOCAPICALL topo_vector_t *topo_vector_new(double x, double y, double z);
+TOPOCAPICALL void topo_vector_free(topo_vector_t *p);
+TOPOCAPICALL double topo_vector_get_x(topo_vector_t *p);
+TOPOCAPICALL double topo_vector_get_y(topo_vector_t *p);
+TOPOCAPICALL double topo_vector_get_z(topo_vector_t *p);
+
+TOPOCAPICALL topo_plane_t *topo_plane_new(pnt3d_t *origin, dir3d_t *xDir,
+                                          vec3d_t *normal);
+TOPOCAPICALL topo_plane_t *topo_plane_new_from_named(const char *name,
+                                                     pnt3d_t *origin);
+TOPOCAPICALL void topo_plane_free(topo_plane_t *p);
+TOPOCAPICALL pnt3d_t topo_plane_get_origin(topo_plane_t *p);
+TOPOCAPICALL dir3d_t topo_plane_get_x_dir(topo_plane_t *p);
+TOPOCAPICALL dir3d_t topo_plane_get_y_dir(topo_plane_t *p);
+TOPOCAPICALL dir3d_t topo_plane_get_z_dir(topo_plane_t *p);
+
+TOPOCAPICALL topo_bbox_t *topo_bbox_new(bbox_t bbox);
+TOPOCAPICALL topo_bbox_t *topo_bbox_new_from_shape(topo_shape_t *p);
+TOPOCAPICALL void topo_bbox_free(topo_bbox_t *p);
+TOPOCAPICALL bbox_t topo_bbox_get_bbox(topo_bbox_t *p);
+
+TOPOCAPICALL topo_matrix_t *topo_matrix_new(trsf_t t);
+TOPOCAPICALL void topo_matrix_free(topo_matrix_t *p);
+TOPOCAPICALL double topo_matrix_get_value(topo_matrix_t *p, int row, int col);
+
 TOPOCAPICALL void topo_shape_free(topo_shape_t *p);
 TOPOCAPICALL topo_shape_t *topo_shape_share(topo_shape_t *p);
 
@@ -245,11 +270,37 @@ TOPOCAPICALL topo_wire_t topo_make_wire_from_edges(topo_edge_t *edges,
 TOPOCAPICALL topo_wire_t topo_make_wire_from_wries(topo_wire_t *wires,
                                                    int count);
 
+TOPOCAPICALL topo_wire_t topo_make_wire_from_rect(double width, double height);
+TOPOCAPICALL topo_wire_t topo_make_wire_from_circle(double radius,
+                                                    pnt3d_t center,
+                                                    dir3d_t normal);
+TOPOCAPICALL topo_wire_t
+topo_make_wire_from_ellipse(double x_radius, double y_radius, pnt3d_t center,
+                            dir3d_t normal, dir3d_t xDir, double angle1,
+                            double angle2, double rotation_angle, _Bool closed);
+TOPOCAPICALL topo_wire_t topo_make_wire_from_helix(double pitch, double height,
+                                                   double radius,
+                                                   pnt3d_t center, dir3d_t dir,
+                                                   double angle,
+                                                   _Bool lefthand);
+TOPOCAPICALL topo_wire_t *topo_make_wire_from_combine(topo_wire_t *wires,
+                                                      int count, double tol);
+
+TOPOCAPICALL topo_wire_t topo_wire_stitch(topo_wire_t w1, topo_wire_t w2);
 TOPOCAPICALL int topo_wire_num_vertices(topo_wire_t w);
 TOPOCAPICALL int topo_wire_num_edges(topo_wire_t w);
 TOPOCAPICALL bool topo_wire_is_closed(topo_wire_t w);
 TOPOCAPICALL double topo_wire_length(topo_wire_t w);
 TOPOCAPICALL void topo_wire_convert_to_curves3d(topo_wire_t w);
+
+TOPOCAPICALL topo_wire_t *topo_wire_offset2d(topo_wire_t w, double distance,
+                                             int joinType, int *retCount);
+TOPOCAPICALL topo_wire_t topo_wire_fillet2d(topo_wire_t w,
+                                            topo_vertex_t *vertices,
+                                            int vertcount, double radius);
+TOPOCAPICALL topo_wire_t topo_wire_chamfer2d(topo_wire_t w,
+                                             topo_vertex_t *vertices,
+                                             int vertcount, double distance);
 
 TOPOCAPICALL int topo_wire_project(topo_wire_t w, topo_face_t f);
 
@@ -260,6 +311,43 @@ TOPOCAPICALL int topo_wire_fillet(topo_wire_t w, topo_vertex_t *vertices,
 TOPOCAPICALL int topo_wire_chamfer(topo_wire_t w, topo_vertex_t *vertices,
                                    int vertcount, double *distances,
                                    int distcount);
+
+TOPOCAPICALL void topo_wire_bounds(topo_wire_t w, double *min, double *max);
+TOPOCAPICALL pnt3d_t topo_wire_start_point(topo_wire_t w);
+TOPOCAPICALL pnt3d_t topo_wire_end_point(topo_wire_t w);
+TOPOCAPICALL double topo_wire_param_at(topo_wire_t w, double d);
+TOPOCAPICALL double topo_wire_param_at_point(topo_wire_t w, pnt3d_t pt);
+TOPOCAPICALL void topo_wire_params(topo_wire_t w, pnt3d_t *pts, int count,
+                                   double *params, double tol);
+TOPOCAPICALL void topo_wire_params_length(topo_wire_t w, double *locations,
+                                          int count, double *params);
+TOPOCAPICALL dir3d_t topo_wire_tangent_at(topo_wire_t w, double param);
+TOPOCAPICALL void topo_wire_tangents(topo_wire_t w, double *params, int count,
+                                     dir3d_t *tangents);
+TOPOCAPICALL dir3d_t topo_wire_normal(topo_wire_t w);
+TOPOCAPICALL pnt3d_t topo_wire_center(topo_wire_t w);
+TOPOCAPICALL double topo_wire_radius(topo_wire_t w);
+TOPOCAPICALL pnt3d_t topo_wire_position_at(topo_wire_t w, double d, int mode);
+TOPOCAPICALL void topo_wire_positions(topo_wire_t w, double *ds, int count,
+                                      pnt3d_t *points, int mode);
+TOPOCAPICALL void topo_wire_sample_uniform(topo_wire_t w, double n,
+                                           pnt3d_t **points, int *point_count,
+                                           double **params, int *param_count);
+TOPOCAPICALL topo_location_t *topo_wire_location_at(topo_wire_t w, double d,
+                                                    int mode, int frame,
+                                                    bool planar);
+TOPOCAPICALL topo_location_t **topo_wire_locations(topo_wire_t w, double *ds,
+                                                   int count, int mode,
+                                                   int frame, bool planar,
+                                                   int *result_count);
+TOPOCAPICALL int topo_wire_projected(topo_wire_t w, topo_face_t f,
+                                     vec3d_t direction, bool closest,
+                                     topo_shape_t **result, int *result_count);
+TOPOCAPICALL double topo_wire_curvature_at(topo_wire_t w, double d, int mode,
+                                           double resolution);
+TOPOCAPICALL void topo_wire_curvatures(topo_wire_t w, double *ds, int count,
+                                       double *curvatures, int mode,
+                                       double resolution);
 
 TOPOCAPICALL topo_edge_t topo_make_edge();
 
@@ -492,6 +580,28 @@ TOPOCAPICALL topo_edge_t topo_edge_make_polygon_from_vertices(
 TOPOCAPICALL topo_edge_t topo_edge_make_polygonn_from_points(pnt3d_t *vertexs,
                                                              int vertcount,
                                                              _Bool Close);
+TOPOCAPICALL topo_edge_t topo_edge_make_rect(double width, double height);
+TOPOCAPICALL topo_edge_t topo_edge_make_spline(pnt3d_t *vertexs, int vertcount,
+                                               double tol, bool periodic);
+TOPOCAPICALL topo_edge_t topo_edge_make_spline_from_tangents_and_parameters(
+    pnt3d_t *points, int pntcount, vec3d_t *tangents, int tancount,
+    double *parameters, int paramcount, double tol, bool periodic, bool scale);
+TOPOCAPICALL topo_edge_t
+topo_edge_make_spline_approx(pnt3d_t *points, int pntcount, double tolerance,
+                             double *smoothing, int minDegree, int maxDegree);
+TOPOCAPICALL topo_edge_t topo_edge_make_circle(double radius, pnt3d_t center,
+                                               vec3d_t normal, double angle1,
+                                               double angle2, bool orientation);
+TOPOCAPICALL topo_edge_t topo_edge_make_ellipse(double majorRadius,
+                                                double minorRadius,
+                                                pnt3d_t center, vec3d_t normal,
+                                                vec3d_t xnormal, double angle1,
+                                                double angle2, int sense);
+TOPOCAPICALL topo_edge_t topo_edge_make_bezier(pnt3d_t *points, int pntcount);
+TOPOCAPICALL topo_edge_t topo_edge_make_three_point_arc(pnt3d_t v1, pnt3d_t v2,
+                                                        pnt3d_t v3);
+TOPOCAPICALL topo_edge_t topo_edge_make_tangent_arc(pnt3d_t v1, vec3d_t tangent,
+                                                    pnt3d_t v3);
 TOPOCAPICALL bool topo_edge_is_seam(topo_edge_t e, topo_face_t f);
 TOPOCAPICALL bool topo_edge_is_degenerated(topo_edge_t e);
 TOPOCAPICALL bool topo_edge_is_closed(topo_edge_t e);
@@ -501,6 +611,45 @@ TOPOCAPICALL double topo_edge_length(topo_edge_t e);
 TOPOCAPICALL float topo_edge_tolerance(topo_edge_t e);
 TOPOCAPICALL bool topo_edge_is_curve3d(topo_edge_t e);
 TOPOCAPICALL void topo_edge_convert_to_curve3d(topo_edge_t e);
+
+TOPOCAPICALL void topo_edge_bounds(topo_edge_t e, double *min, double *max);
+TOPOCAPICALL double topo_edge_length(topo_edge_t e);
+TOPOCAPICALL bool topo_edge_is_closed(topo_edge_t e);
+TOPOCAPICALL pnt3d_t topo_edge_start_point(topo_edge_t e);
+TOPOCAPICALL pnt3d_t topo_edge_end_point(topo_edge_t e);
+TOPOCAPICALL double topo_edge_param_at(topo_edge_t e, double d);
+TOPOCAPICALL double topo_edge_param_at_point(topo_edge_t e, pnt3d_t pt);
+TOPOCAPICALL void topo_edge_params(topo_edge_t e, pnt3d_t *pts, int count,
+                                   double *params, double tol);
+TOPOCAPICALL void topo_edge_params_length(topo_edge_t e, double *locations,
+                                          int count, double *params);
+TOPOCAPICALL dir3d_t topo_edge_tangent_at(topo_edge_t e, double param);
+TOPOCAPICALL void topo_edge_tangents(topo_edge_t e, double *params, int count,
+                                     dir3d_t *tangents);
+TOPOCAPICALL dir3d_t topo_edge_normal(topo_edge_t e);
+TOPOCAPICALL pnt3d_t topo_edge_center(topo_edge_t e);
+TOPOCAPICALL double topo_edge_radius(topo_edge_t e);
+TOPOCAPICALL pnt3d_t topo_edge_position_at(topo_edge_t e, double d, int mode);
+TOPOCAPICALL void topo_edge_positions(topo_edge_t e, double *ds, int count,
+                                      pnt3d_t *points, int mode);
+TOPOCAPICALL void topo_edge_sample_uniform(topo_edge_t e, double n,
+                                           pnt3d_t **points, int *point_count,
+                                           double **params, int *param_count);
+TOPOCAPICALL topo_location_t *topo_edge_location_at(topo_edge_t e, double d,
+                                                    int mode, int frame,
+                                                    bool planar);
+TOPOCAPICALL topo_location_t **topo_edge_locations(topo_edge_t e, double *ds,
+                                                   int count, int mode,
+                                                   int frame, bool planar,
+                                                   int *result_count);
+TOPOCAPICALL int topo_edge_projected(topo_edge_t e, topo_face_t f,
+                                     vec3d_t direction, bool closest,
+                                     topo_shape_t **result, int *result_count);
+TOPOCAPICALL double topo_edge_curvature_at(topo_edge_t e, double d, int mode,
+                                           double resolution);
+TOPOCAPICALL void topo_edge_curvatures(topo_edge_t e, double *ds, int count,
+                                       double *curvatures, int mode,
+                                       double resolution);
 
 TOPOCAPICALL void topo_face_free(topo_face_t t);
 
@@ -582,6 +731,25 @@ TOPOCAPICALL topo_face_t topo_face_make_face_from_egdes(topo_edge_t *edges,
 TOPOCAPICALL topo_face_t topo_face_make_face_from_points(pnt3d_t *points,
                                                          int count);
 
+TOPOCAPICALL topo_face_t *topo_face_make_from_wires(topo_wire_t outer,
+                                                    topo_wire_t *inners,
+                                                    int inner_count);
+
+TOPOCAPICALL topo_face_t *topo_face_make_complex(
+    topo_shape_t **edges, int edge_count, topo_shape_t **constraints,
+    int constraint_count, int continuity, int degree, int nb_pts_on_curve,
+    int nb_iter, bool anisotropy, double tol2d, double tol3d, double tol_angle,
+    double tol_curv, int max_degree, int max_segments);
+
+TOPOCAPICALL topo_face_t *topo_face_make_plane(pnt3d_t base_point,
+                                               dir3d_t direction,
+                                               double *length, double *width);
+
+TOPOCAPICALL topo_face_t *
+topo_face_make_spline_approx(pnt3d_t *points, int *point_counts,
+                             int point_array_size, double tol,
+                             double *smoothing, int min_degree, int max_degree);
+
 TOPOCAPICALL int topo_face_num_wires(topo_face_t f);
 
 TOPOCAPICALL int topo_face_num_faces(topo_face_t f);
@@ -593,6 +761,8 @@ TOPOCAPICALL float topo_face_tolerance(topo_face_t f);
 TOPOCAPICALL bbox_t topo_face_inertia(topo_face_t f);
 
 TOPOCAPICALL pnt3d_t topo_face_centre_of_mass(topo_face_t f);
+
+TOPOCAPICALL topo_plane_t *topo_face_to_plane(topo_face_t f);
 
 TOPOCAPICALL int topo_face_offset(topo_face_t f, double offset,
                                   double tolerance);
@@ -615,6 +785,41 @@ TOPOCAPICALL int topo_face_loft(topo_face_t f, topo_shape_t **profiles,
                                 double tolerance);
 
 TOPOCAPICALL int topo_face_boolean(topo_face_t f, topo_face_t tool, int op);
+TOPOCAPICALL void topo_face_uv_bounds(topo_face_t f, double *u_min,
+                                      double *u_max, double *v_min,
+                                      double *v_max);
+TOPOCAPICALL void topo_face_param_at(topo_face_t f, pnt3d_t pt, double *u,
+                                     double *v);
+TOPOCAPICALL void topo_face_params(topo_face_t f, pnt3d_t *pts, int count,
+                                   double *us, double *vs, double tol);
+TOPOCAPICALL pnt3d_t topo_face_position_at(topo_face_t f, double u, double v);
+TOPOCAPICALL void topo_face_positions(topo_face_t f, double *us, double *vs,
+                                      int count, pnt3d_t *points);
+TOPOCAPICALL vec3d_t topo_face_normal_at(topo_face_t f, pnt3d_t *location);
+TOPOCAPICALL void topo_face_normal_at_uv(topo_face_t f, double u, double v,
+                                         vec3d_t *normal, pnt3d_t *point);
+TOPOCAPICALL void topo_face_normals(topo_face_t f, double *us, double *vs,
+                                    int count, vec3d_t *normals,
+                                    pnt3d_t *points);
+
+TOPOCAPICALL topo_face_t topo_face_fillet2d(topo_face_t f, double radius,
+                                            topo_vertex_t *vertices, int count);
+TOPOCAPICALL topo_face_t topo_face_chamfer2d(topo_face_t f, double distance,
+                                             topo_vertex_t *vertices,
+                                             int count);
+TOPOCAPICALL topo_solid_t topo_face_thicken(topo_face_t f, double thickness);
+TOPOCAPICALL topo_face_t topo_face_project(topo_face_t f, topo_face_t other,
+                                           vec3d_t direction);
+TOPOCAPICALL topo_face_t topo_face_to_arcs(topo_face_t f, double tolerance);
+TOPOCAPICALL topo_face_t topo_face_trim(topo_face_t f, double u0, double u1,
+                                        double v0, double v1, double tol);
+TOPOCAPICALL topo_edge_t topo_face_isoline(topo_face_t f, double param,
+                                           const char *direction);
+TOPOCAPICALL topo_edge_t *topo_face_isolines(topo_face_t f, double *params,
+                                             int count, const char *direction,
+                                             int *result_count);
+TOPOCAPICALL topo_wire_t topo_face_outer_wire(topo_face_t f);
+TOPOCAPICALL topo_wire_t *topo_face_inner_wires(topo_face_t f, int *count);
 
 TOPOCAPICALL void topo_shell_free(topo_shell_t t);
 
@@ -958,6 +1163,12 @@ TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_wedge_axis2_limit(
     axis2_t Axes, double dx, double dy, double dz, double xmin, double zmin,
     double xmax, double zmax);
 
+TOPOCAPICALL topo_solid_t topo_solid_make_solid_from_loft(topo_wire_t *wires,
+                                                          int count,
+                                                          _Bool ruled);
+
+TOPOCAPICALL _Bool topo_solid_is_inside(topo_solid_t s, pnt3d_t p, double tol);
+
 TOPOCAPICALL int topo_solid_num_solids(topo_solid_t s);
 
 TOPOCAPICALL int topo_solid_num_faces(topo_solid_t s);
@@ -970,11 +1181,29 @@ TOPOCAPICALL bbox_t topo_solid_inertia(topo_solid_t s);
 
 TOPOCAPICALL pnt3d_t topo_solid_centre_of_mass(topo_solid_t s);
 
+TOPOCAPICALL int topo_solid_extrude_with_rotation(
+    topo_solid_t s, topo_wire_t outerWire, topo_wire_t *innerWires,
+    int innerCount, pnt3d_t vecCenter, vec3d_t vecNormal, double angleDegrees);
+
+TOPOCAPICALL int
+topo_solid_extrude_with_rotation_from_face(topo_solid_t s, topo_face_t face,
+                                           pnt3d_t vecCenter, vec3d_t vecNormal,
+                                           double angleDegrees);
+
 TOPOCAPICALL int topo_solid_extrude(topo_solid_t s, topo_face_t f, pnt3d_t p1,
                                     pnt3d_t p2);
 
 TOPOCAPICALL int topo_solid_extrude_from_dir(topo_solid_t s, topo_face_t f,
                                              vec3d_t dir);
+
+TOPOCAPICALL int topo_solid_extrude_with_rotation_from_wire(
+    topo_solid_t s, topo_wire_t outerWire, topo_wire_t *innerWires,
+    int innerCount, pnt3d_t vecCenter, vec3d_t vecNormal, double angleDegrees);
+
+TOPOCAPICALL int
+topo_solid_extrude_with_rotation_from_face(topo_solid_t s, topo_face_t face,
+                                           pnt3d_t vecCenter, vec3d_t vecNormal,
+                                           double angleDegrees);
 
 TOPOCAPICALL int topo_solid_revolve(topo_solid_t s, topo_face_t f, pnt3d_t p1,
                                     pnt3d_t p2, double angle);
@@ -991,7 +1220,24 @@ TOPOCAPICALL int topo_solid_sweep_wire(topo_solid_t s, topo_wire_t spine,
                                        topo_wire_t *profiles, int count,
                                        int cornerMode);
 
+TOPOCAPICALL int topo_solid_sweep_multi_from_vector(
+    topo_solid_t s, topo_shape_t **profiles, int count, topo_shape_t *path,
+    _Bool makeSolid, _Bool isFrenet, topo_vector_t *vec);
+
+TOPOCAPICALL int
+topo_solid_sweep_multi_from_wire(topo_solid_t s, topo_shape_t **profiles,
+                                 int count, topo_shape_t *path, _Bool makeSolid,
+                                 _Bool isFrenet, topo_wire_t *wire);
+
+TOPOCAPICALL int
+topo_solid_sweep_multi_from_edge(topo_solid_t s, topo_shape_t **profiles,
+                                 int count, topo_shape_t *path, _Bool makeSolid,
+                                 _Bool isFrenet, topo_edge_t *edge);
+
 TOPOCAPICALL int topo_solid_boolean(topo_solid_t s, topo_solid_t tool, int op);
+
+TOPOCAPICALL int topo_solid_split(topo_solid_t s, topo_shape_t **splitters,
+                                  int count);
 
 TOPOCAPICALL int topo_solid_fillet(topo_solid_t s, topo_edge_t *edges,
                                    int count, double *radius, int rcount);
@@ -1067,14 +1313,56 @@ TOPOCAPICALL int topo_solid_revolution_form(topo_solid_t s, topo_wire_t w,
 TOPOCAPICALL topo_face_t topo_solid_section_face(topo_solid_t s, pnt3d_t pnt,
                                                  pnt3d_t nor);
 
+TOPOCAPICALL topo_wire_t topo_solid_section_wire(topo_solid_t s, pnt3d_t pnt,
+                                                 pnt3d_t nor);
+
 TOPOCAPICALL int topo_solid_convert_to_nurbs(topo_solid_t s);
 
+TOPOCAPICALL topo_shell_t topo_shell_outer_shell(topo_solid_t s);
+TOPOCAPICALL topo_shell_t *topo_shell_inner_shells(topo_solid_t s, int *count);
+
 TOPOCAPICALL topo_compound_t topo_make_compound();
+
+TOPOCAPICALL topo_compound_t *topo_make_text(const char *text, double size,
+                                             const char *font,
+                                             const char *fontPath, int kind,
+                                             int halign, int valign,
+                                             topo_plane_t *position);
+
+TOPOCAPICALL topo_compound_t *
+topo_make_text_with_spine(const char *text, double size, topo_wire_t *spine,
+                          bool planar, const char *font, const char *path,
+                          int kind, int halign, int valign);
+
+TOPOCAPICALL topo_compound_t *topo_make_text_with_spine_and_base(
+    const char *text, double size, topo_wire_t *spine, topo_face_t *base,
+    const char *font, const char *path, int kind, int halign, int valign);
+
+TOPOCAPICALL topo_compound_t *
+topo_make_text_with_height(const char *text, double size, double height,
+                           const char *font, const char *fontPath, int kind,
+                           int halign, int valign, topo_plane_t *position);
 
 TOPOCAPICALL void topo_compound_free(topo_compound_t t);
 
 TOPOCAPICALL topo_compound_t topo_compound_make_compound(topo_shape_t **S,
                                                          int count);
+TOPOCAPICALL void topo_compound_remove(topo_compound_t t, topo_shape_t *s);
+TOPOCAPICALL topo_compound_t topo_compound_cut(topo_compound_t t,
+                                               topo_shape_t **toCut, int count,
+                                               double tol);
+TOPOCAPICALL topo_compound_t topo_compound_fuse(topo_compound_t t,
+                                                topo_shape_t **toFuse,
+                                                int count, bool glue,
+                                                double tol);
+TOPOCAPICALL topo_compound_t topo_compound_intersect(topo_compound_t t,
+                                                     topo_shape_t **toIntersect,
+                                                     int count, double tol);
+TOPOCAPICALL topo_compound_t topo_compound_ancestors(topo_compound_t t,
+                                                     topo_shape_t *s, int kind);
+TOPOCAPICALL topo_compound_t topo_compound_siblings(topo_compound_t t,
+                                                    topo_shape_t *shape,
+                                                    int kind, int level);
 
 TOPOCAPICALL topo_comp_solid_t topo_make_comp_solid();
 

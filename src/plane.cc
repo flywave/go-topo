@@ -76,6 +76,18 @@ topo_plane topo_plane::bottom(const topo_vector &origin,
   return plane;
 }
 
+topo_plane::topo_plane(gp_Pln pln) {
+  _origin =
+      topo_vector(pln.Location().X(), pln.Location().Y(), pln.Location().Z());
+  _x_dir = topo_vector(pln.XAxis().Direction().X(), pln.XAxis().Direction().Y(),
+                       pln.XAxis().Direction().Z());
+  _y_dir = topo_vector(pln.YAxis().Direction().X(), pln.YAxis().Direction().Y(),
+                       pln.YAxis().Direction().Z());
+  _z_dir = topo_vector(pln.Axis().Direction().X(), pln.Axis().Direction().Y(),
+                       pln.Axis().Direction().Z());
+  calc_transforms();
+}
+
 void topo_plane::set_plane_dir(const topo_vector &xDir) {
   this->_x_dir = xDir.normalized();
   this->_y_dir = _z_dir.cross(this->_x_dir).normalized();

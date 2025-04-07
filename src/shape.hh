@@ -184,18 +184,6 @@ public:
 
   shape moved(const std::vector<gp_Vec> &vecs) const;
 
-  shape cuted(const std::vector<shape> &toCut, double tol = 0.0) const;
-
-  shape fused(const std::vector<shape> &toFuse, bool glue = false,
-              double tol = 0.0) const;
-
-  shape intersected(const std::vector<shape> &toIntersect,
-                    double tol = 0.0) const;
-
-  shape splited(const std::vector<shape> &splitters) const;
-
-  int mesh(double tolerance, double angularTolerance = 0.1);
-
   orientation get_orientation() const;
 
   void set_orientation(orientation ori);
@@ -249,53 +237,54 @@ public:
 
   std::vector<shape> children() const;
   std::vector<shape> get_shapes(TopAbs_ShapeEnum kind = TopAbs_SHAPE) const;
+
   virtual std::vector<vertex> vertices() const;
-  std::vector<edge> edges() const;
-  std::vector<compound> compounds() const;
-  std::vector<wire> wires() const;
-  std::vector<face> faces() const;
-  std::vector<shell> shells() const;
-  std::vector<solid> solids() const;
-  std::vector<comp_solid> comp_solids() const;
+  virtual std::vector<edge> edges() const;
+  virtual std::vector<compound> compounds() const;
+  virtual std::vector<wire> wires() const;
+  virtual std::vector<face> faces() const;
+  virtual std::vector<shell> shells() const;
+  virtual std::vector<solid> solids() const;
+  virtual std::vector<comp_solid> comp_solids() const;
 
   void set_for_construction(bool for_construction);
 
-  inline int num_vertices() const { return num_entities(TopAbs_VERTEX); }
+  virtual int num_vertices() const { return num_entities(TopAbs_VERTEX); }
   virtual int num_edges() const { return num_entities(TopAbs_EDGE); }
-  inline int num_wires() const { return num_entities(TopAbs_WIRE); }
-  inline int num_faces() const { return num_entities(TopAbs_FACE); }
-  inline int num_shells() const { return num_entities(TopAbs_SHELL); }
-  inline int num_solids() const { return num_entities(TopAbs_SOLID); }
-  inline int num_compounds() const { return num_entities(TopAbs_COMPOUND); }
-  inline int num_comp_solids() const { return num_entities(TopAbs_COMPSOLID); }
+  virtual int num_wires() const { return num_entities(TopAbs_WIRE); }
+  virtual int num_faces() const { return num_entities(TopAbs_FACE); }
+  virtual int num_shells() const { return num_entities(TopAbs_SHELL); }
+  virtual int num_solids() const { return num_entities(TopAbs_SOLID); }
+  virtual int num_compounds() const { return num_entities(TopAbs_COMPOUND); }
+  virtual int num_comp_solids() const { return num_entities(TopAbs_COMPSOLID); }
 
   std::string to_string(double tolerance = 1e-3,
                         double angularTolerance = 0.1) const;
 
-  shape filter(selector *sel, const std::vector<shape> &shapes) const;
+  static shape filter(selector *sel, const std::vector<shape> &shapes);
 
   inline shape vertices(selector *sel) const {
-    return filter(sel, get_shapes(TopAbs_VERTEX));
+    return shape::filter(sel, get_shapes(TopAbs_VERTEX));
   }
 
   inline shape edges(selector *sel) const {
-    return filter(sel, get_shapes(TopAbs_EDGE));
+    return shape::filter(sel, get_shapes(TopAbs_EDGE));
   }
 
   inline shape wires(selector *sel) const {
-    return filter(sel, get_shapes(TopAbs_WIRE));
+    return shape::filter(sel, get_shapes(TopAbs_WIRE));
   }
 
   inline shape faces(selector *sel) const {
-    return filter(sel, get_shapes(TopAbs_FACE));
+    return shape::filter(sel, get_shapes(TopAbs_FACE));
   }
 
   inline shape shells(selector *sel) const {
-    return filter(sel, get_shapes(TopAbs_SHELL));
+    return shape::filter(sel, get_shapes(TopAbs_SHELL));
   }
 
   inline shape solids(selector *sel) const {
-    return filter(sel, get_shapes(TopAbs_SOLID));
+    return shape::filter(sel, get_shapes(TopAbs_SOLID));
   }
 
 protected:
@@ -314,7 +303,8 @@ protected:
   std::vector<T> extract_entities(TopAbs_ShapeEnum type) const {
     std::vector<T> entities;
     for (TopExp_Explorer exp(_shape, type); exp.More(); exp.Next()) {
-      entities.push_back(T(exp.Current()));
+      if (!exp.Current().IsNull())
+        entities.push_back(T(exp.Current()));
     }
     return entities;
   }

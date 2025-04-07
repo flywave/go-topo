@@ -27,6 +27,8 @@ public:
 
   operator const gp_Pnt() const;
 
+  gp_Pnt point() const;
+
   virtual geometry_object_type type() const override {
     return geometry_object_type::VertexType;
   }

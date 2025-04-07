@@ -72,6 +72,7 @@ public:
 
   compound(TopoDS_Shape shp, bool forConstruction = false)
       : shape3d(shp, forConstruction) {}
+      
   compound(const shape &c, TopoDS_Shape shp) : shape3d(c, shp) {}
 
   compound cut(const std::vector<shape> &toCut, double tol = 0.0) const;

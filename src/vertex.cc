@@ -60,5 +60,10 @@ vertex::operator const gp_Pnt() const {
   return {pnt.X(), pnt.Y(), pnt.Z()};
 }
 
+gp_Pnt vertex::point() const {
+  gp_Pnt pnt = BRep_Tool::Pnt(value()); 
+  return {pnt.X(), pnt.Y(), pnt.Z()};
+}
+
 } // namespace topo
 } // namespace flywave

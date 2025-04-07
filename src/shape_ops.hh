@@ -38,6 +38,9 @@ boost::optional<shape> intersect(const shape &shp,
                                  const std::vector<shape> &toIntersects,
                                  double tol = 0.0, bool glue = false);
 
+boost::optional<shape> split(const shape &shp, const std::vector<shape> &splitters,
+                             double tol = 0.0);
+
 boost::optional<shape> split(const shape &shp, const shape &splitters,
                              double tol = 0.0);
 

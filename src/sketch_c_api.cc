@@ -74,7 +74,7 @@ void sketch_free(sketch_t *obj) {
 
 topo_face_t *sketch_get_faces(sketch_t *obj, int *size) {
   auto faces = obj->ptr->get_faces();
-  *size = faces.size();
+  *size = static_cast<int>(faces.size());
   auto result = new topo_face_t[faces.size()];
   for (size_t i = 0; i < faces.size(); i++) {
     result[i] = topo_face_t{new topo_shape_t{
@@ -165,6 +165,43 @@ void sketch_rarray(sketch_t *sk, double xs, double ys, int nx, int ny,
 void sketch_parray(sketch_t *sk, double r, double a1, double da, int n,
                    bool rotate, double angle, const char *tag) {
   sk->ptr->parray(r, a1, da, n, rotate);
+}
+
+void sketch_each_for_face(sketch_t *sk,
+                          topo_face_t (*func)(const topo_location_t *location),
+                          int mode, const char *tag, bool ignore_selection) {
+  auto _func =
+      [&](const flywave::topo::topo_location &loc) -> flywave::topo::face {
+    auto f = func(new topo_location_t{loc});
+    return *f.shp->shp->cast<flywave::topo::face>();
+  };
+
+  sk->ptr->each(_func, static_cast<flywave::topo::Mode>(mode), tag ? tag : "",
+                ignore_selection);
+}
+
+void sketch_each_for_sketch(sketch_t *sk,
+                            sketch_t *(*func)(const topo_location_t *location),
+                            int mode, const char *tag, bool ignore_selection) {
+  auto _func = [&](const flywave::topo::topo_location &loc)
+      -> std::shared_ptr<flywave::topo::sketch> {
+    auto s = func(new topo_location_t{loc});
+    return s->ptr;
+  };
+  sk->ptr->each(_func, static_cast<flywave::topo::Mode>(mode), tag ? tag : "",
+                ignore_selection);
+}
+
+void sketch_each_for_compound(
+    sketch_t *sk, topo_compound_t (*func)(const topo_location_t *location),
+    int mode, const char *tag, bool ignore_selection) {
+  auto _func =
+      [&](const flywave::topo::topo_location &loc) -> flywave::topo::compound {
+    auto c = func(new topo_location_t{loc});
+    return *c.shp->shp->cast<flywave::topo::compound>();
+  };
+  sk->ptr->each(_func, static_cast<flywave::topo::Mode>(mode), tag ? tag : "",
+                ignore_selection);
 }
 
 void sketch_distribute(sketch_t *sk, int n, double start, double stop,
@@ -294,6 +331,7 @@ void sketch_spline(sketch_t *sk, topo_vector_t **points, int size,
   sk->ptr->spline(pts, tag ? boost::optional<std::string>(tag) : boost::none,
                   forConstruction);
 }
+
 void sketch_spline2(sketch_t *sk, topo_vector_t **points, int size,
                     topo_vector_t *tangents1, topo_vector_t *tangents2,
                     bool periodic, const char *tag, bool forConstruction) {
@@ -375,7 +413,7 @@ sketch_val_t *sketch_val(sketch_t *sk) {
 
 sketch_val_t **sketch_vals(sketch_t *sk, int *size) {
   auto vals = sk->ptr->vals();
-  *size = vals.size();
+  *size = static_cast<int>(vals.size());
   auto result = new sketch_val_t *[vals.size()];
   for (size_t i = 0; i < vals.size(); i++) {
     result[i] = new sketch_val_t{vals[i]};
@@ -404,7 +442,7 @@ void sketch_val_map(sketch_t *sk, sketch_val_t *(*f)(sketch_val_t *)) {
 
 void sketch_val_apply(sketch_t *sk, sketch_val_t **(*f)(sketch_val_t **, int)) {
   sk->ptr->apply([&](const std::vector<flywave::topo::sketch_val> &val) {
-    int count = val.size();
+    int count = static_cast<int>(val.size());
     auto vals = new sketch_val_t *[count];
     for (int i = 0; i < count; i++) {
       vals[i] = new sketch_val_t{val[i]};

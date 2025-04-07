@@ -35,7 +35,7 @@ private:
   func_t func_;
 
 public:
-  explicit custom_selector(func_t func) : func_(func) {}
+  explicit custom_selector(func_t &&func) : func_(std::move(func)) {}
 
   std::vector<shape> filter(const std::vector<shape> &shapes) const override {
     return func_(shapes);

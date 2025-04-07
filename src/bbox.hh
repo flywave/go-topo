@@ -32,6 +32,10 @@ public:
   topo_bbox() = default;
   explicit topo_bbox(const Bnd_Box &bb) : wrapped_(bb) {}
 
+  topo_bbox(double minx, double miny, double minz, double maxx, double maxy,
+            double maxz)
+      : wrapped_({minx, miny, minz}, {maxx, maxy, maxz}) {}
+
   topo_bbox(const topo_bbox &other);
   topo_bbox &operator=(const topo_bbox &other);
 

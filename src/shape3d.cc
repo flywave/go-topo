@@ -22,17 +22,6 @@
 namespace flywave {
 namespace topo {
 
-std::vector<flywave::topo::shell> shape3d::shells() const {
-  std::vector<flywave::topo::shell> ret;
-  TopExp_Explorer ex;
-  for (ex.Init(_shape, TopAbs_SHELL); ex.More(); ex.Next()) {
-    if (!ex.Current().IsNull()) {
-      ret.push_back(flywave::topo::shell(ex.Current()));
-    }
-  }
-  return ret;
-}
-
 bool shape3d::is_inside(const gp_Pnt &point, double tolerance) const {
   if (tolerance <= 0) {
     throw std::invalid_argument("Tolerance must be positive");

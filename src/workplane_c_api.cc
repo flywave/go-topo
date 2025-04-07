@@ -664,8 +664,7 @@ workplane_t *workplane_sweep(workplane_t *wp, workplane_t *path,
   auto result = wp->ptr->sweep(
       *path->ptr, multisection, makeSolid, isFrenet, combine, clean,
       static_cast<flywave::topo::transition_mode>(transition),
-      normal ? boost::make_optional(normal->vec) : boost::none,
-      auxSpine ? boost::make_optional(*auxSpine->ptr) : boost::none);
+      normal ? boost::make_optional(normal->vec) : boost::none, auxSpine->ptr);
   return new workplane_t{result};
 }
 
@@ -678,8 +677,7 @@ workplane_t *workplane_sweep_with_wire(workplane_t *wp, topo_wire_t *path,
       *path->shp->shp->cast<flywave::topo::wire>(), multisection, makeSolid,
       isFrenet, combine, clean,
       static_cast<flywave::topo::transition_mode>(transition),
-      normal ? boost::make_optional(normal->vec) : boost::none,
-      auxSpine ? boost::make_optional(*auxSpine->ptr) : boost::none);
+      normal ? boost::make_optional(normal->vec) : boost::none, auxSpine->ptr);
   return new workplane_t{result};
 }
 
@@ -692,8 +690,7 @@ workplane_t *workplane_sweep_with_edge(workplane_t *wp, topo_edge_t *path,
       *path->shp->shp->cast<flywave::topo::edge>(), multisection, makeSolid,
       isFrenet, combine, clean,
       static_cast<flywave::topo::transition_mode>(transition),
-      normal ? boost::make_optional(normal->vec) : boost::none,
-      auxSpine ? boost::make_optional(*auxSpine->ptr) : boost::none);
+      normal ? boost::make_optional(normal->vec) : boost::none, auxSpine->ptr);
   return new workplane_t{result};
 }
 
@@ -934,7 +931,7 @@ workplane_t *workplane_combine(workplane_t *wp, bool clean, bool glue,
 }
 
 workplane_t *workplane_cut_thru_all(workplane_t *wp, double taper, bool clean) {
-  auto result = wp->ptr->cut_thru_all(taper, clean);
+  auto result = wp->ptr->cut_thru_all(clean, taper);
   return new workplane_t{result};
 }
 
@@ -1026,7 +1023,8 @@ workplane_t *workplane_apply(workplane_t *wp,
         for (auto &obj : objs) {
           wrappers.push_back(new shape_object_t{obj});
         }
-        auto applied = applier(wrappers.data(), wrappers.size());
+        auto applied =
+            applier(wrappers.data(), static_cast<int>(wrappers.size()));
         std::vector<flywave::topo::shape_object> result;
         for (int i = 0; i < wrappers.size(); i++) {
           result.push_back(applied[i]->obj);
@@ -1087,7 +1085,7 @@ workplane_t *workplane_end(workplane_t *wp, int n) {
 
 workplane_t **workplane_all(workplane_t *wp, int *count) {
   auto results = wp->ptr->all();
-  *count = results.size();
+  *count = static_cast<int>(results.size());
   auto arr = new workplane_t *[*count];
   for (int i = 0; i < *count; i++) {
     arr[i] = new workplane_t{results[i]};
@@ -1097,7 +1095,7 @@ workplane_t **workplane_all(workplane_t *wp, int *count) {
 
 shape_object_t **workplane_shapes(workplane_t *wp, int *count) {
   auto shapes = wp->ptr->shapes();
-  *count = shapes.size();
+  *count = static_cast<int>(shapes.size());
   auto arr = new shape_object_t *[*count];
   for (int i = 0; i < *count; i++) {
     arr[i] = new shape_object_t{shapes[i]};
@@ -1107,7 +1105,7 @@ shape_object_t **workplane_shapes(workplane_t *wp, int *count) {
 
 shape_object_t **workplane_vals(workplane_t *wp, int *count) {
   auto vals = wp->ptr->vals();
-  *count = vals.size();
+  *count = static_cast<int>(vals.size());
   auto arr = new shape_object_t *[*count];
   for (int i = 0; i < *count; i++) {
     arr[i] = new shape_object_t{vals[i]};
@@ -1120,7 +1118,9 @@ shape_object_t *workplane_val(workplane_t *wp) {
   return new shape_object_t{val};
 }
 
-int workplane_size(workplane_t *wp) { return wp->ptr->size(); }
+int workplane_size(workplane_t *wp) {
+  return static_cast<int>(wp->ptr->size());
+}
 
 bool workplane_has_parent(workplane_t *wp) { return wp->ptr->has_parent(); }
 

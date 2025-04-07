@@ -288,9 +288,11 @@ void dxf_shape_reader::on_read_text(const dxf_text &text) {
     xAxisDir = gp::DX().Transformed(rotTrsf);
   }
 
-  this->add_text(text_entity{
+  this->add_text(dxf_text_entity{
       .text = text.str,
-      .point = pt,
+      .position = pt,
+      .height = text.height,
+      .rotation = text.rotation_angle,
       .normal = extDir,
       .x_axis_dir = xAxisDir,
   });
@@ -332,9 +334,11 @@ void dxf_shape_reader::on_read_mtext(const dxf_mtext &text) {
     xAxisDir = gp::DX().Transformed(rotTrsf);
   }
 
-  this->add_text(text_entity{
+  this->add_text(dxf_text_entity{
       .text = text.str,
-      .point = pt,
+      .position = pt,
+      .height = text.height,
+      .rotation = text.rotation_angle,
       .normal = extDir,
       .x_axis_dir = xAxisDir,
   });
@@ -407,7 +411,7 @@ void dxf_shape_reader::on_read_insert(const dxf_insert &ins) {
       continue; // Skip
 
     TopoDS_Shape comp = brep_utils::make_empty_compound();
-    for (const dxf_shape_reader::shape_entity &entity : vecEntity) {
+    for (const dxf_shape_entity &entity : vecEntity) {
       if (!entity.shape.IsNull())
         brep_utils::add_shape(&comp, entity.shape);
     }
@@ -497,14 +501,14 @@ gp_Pnt dxf_shape_reader::to_pnt(const dxf_coords &coords) const {
   return gp_Pnt(sp1, sp2, sp3);
 }
 
-void dxf_shape_reader::add_text(const dxf_shape_reader::text_entity &text) {
+void dxf_shape_reader::add_text(const dxf_text_entity &text) {
   const std::string layerName = this->layer_name();
   if (this->_layer_names.find(layerName) == this->_layer_names.end()) {
     this->_layer_names.insert(layerName);
   }
   auto itFound = _texts.find(layerName);
   if (itFound != _texts.end()) {
-    std::vector<dxf_shape_reader::text_entity> &vecEntity = itFound->second;
+    std::vector<dxf_text_entity> &vecEntity = itFound->second;
     vecEntity.push_back(text);
   } else {
     decltype(_texts)::value_type pair(std::move(layerName), {text});
@@ -513,14 +517,14 @@ void dxf_shape_reader::add_text(const dxf_shape_reader::text_entity &text) {
 }
 
 void dxf_shape_reader::add_shape(const TopoDS_Shape &shape) {
-  const shape_entity newEntity{_color_index, shape};
+  const dxf_shape_entity newEntity{_color_index, shape};
   const std::string layerName = this->layer_name();
   if (this->_layer_names.find(layerName) == this->_layer_names.end()) {
     this->_layer_names.insert(layerName);
   }
   auto itFound = _layers.find(layerName);
   if (itFound != _layers.end()) {
-    std::vector<dxf_shape_reader::shape_entity> &vecEntity = itFound->second;
+    std::vector<dxf_shape_entity> &vecEntity = itFound->second;
     vecEntity.push_back(newEntity);
   } else {
     decltype(_layers)::value_type pair(std::move(layerName), {newEntity});
@@ -613,7 +617,7 @@ dxf_shape_writer::dxf_shape_writer(const std::string &filepath)
     : dxf_write(filepath.c_str()) {}
 
 void dxf_shape_writer::add_text(const std::string &layer_name,
-                                const dxf_shape_writer::text_entity &text) {
+                                const dxf_text_entity &text) {
   auto &layer_texts = _texts[layer_name];
   layer_texts.push_back(text);
 }
@@ -631,14 +635,13 @@ void dxf_shape_writer::add_shape_layer(
   layer_shapes.reserve(layer_shapes.size() + shapes.size());
 
   for (const auto &shape_pair : shapes) {
-    layer_shapes.emplace_back(
-        shape_entity{.color = shape_pair.second, .shape = shape_pair.first});
+    layer_shapes.emplace_back(dxf_shape_entity{.color = shape_pair.second,
+                                               .shape = shape_pair.first});
   }
 }
 
 void dxf_shape_writer::add_text_layer(
-    const std::string &layer_name,
-    const std::vector<dxf_shape_writer::text_entity> &texts) {
+    const std::string &layer_name, const std::vector<dxf_text_entity> &texts) {
   auto &layer_texts = _texts[layer_name];
   layer_texts.insert(layer_texts.end(), texts.begin(), texts.end());
 }
@@ -656,7 +659,7 @@ bool dxf_shape_writer::write() {
 
     for (const auto &layer_pair : _texts) {
       set_layer_name(layer_pair.first);
-      for (const text_entity &text : layer_pair.second) {
+      for (const dxf_text_entity &text : layer_pair.second) {
         put_text(text, get_entity_stream(), get_entity_handle(),
                  get_layer_handle());
       }
@@ -1023,7 +1026,7 @@ void dxf_shape_writer::put_point(const dxf_coords &point,
   outStream << point.z << std::endl;
 }
 
-void dxf_shape_writer::put_text(const dxf_shape_writer::text_entity &text,
+void dxf_shape_writer::put_text(const dxf_text_entity &text,
                                 std::ostringstream &outStream,
                                 const std::string &handle,
                                 const std::string &ownerHandle) {

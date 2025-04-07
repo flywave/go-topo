@@ -346,20 +346,20 @@ public:
         bool isFrenet = false, bool combine = true, bool clean = true,
         const transition_mode &transition = transition_mode::RIGHT,
         const boost::optional<topo_vector> &normal = boost::none,
-        const boost::optional<workplane> &auxSpine = boost::none);
+        const std::shared_ptr<workplane> &auxSpine = nullptr);
   std::shared_ptr<workplane>
   sweep(const topo::wire &path, bool multisection = false,
         bool makeSolid = true, bool isFrenet = false, bool combine = true,
         bool clean = true,
         const transition_mode &transition = transition_mode::RIGHT,
         const boost::optional<topo_vector> &normal = boost::none,
-        const boost::optional<workplane> &auxSpine = boost::none);
+        const std::shared_ptr<workplane> &auxSpine = nullptr);
   std::shared_ptr<workplane>
   sweep(const edge &path, bool multisection = false, bool makeSolid = true,
         bool isFrenet = false, bool combine = true, bool clean = true,
         const transition_mode &transition = transition_mode::RIGHT,
         const boost::optional<topo_vector> &normal = boost::none,
-        const boost::optional<workplane> &auxSpine = boost::none);
+        const std::shared_ptr<workplane> &auxSpine = nullptr);
 
   std::shared_ptr<workplane> union_(const workplane &other, bool clean = true,
                                     bool glue = false, double tol = 1e-6);
@@ -523,6 +523,9 @@ public:
   size_t size() const;
   bool has_parent() const;
   std::shared_ptr<workplane> parent() const;
+  bool has_error() const;
+  const std::string &error() const;
+  std::shared_ptr<context> ctx() const;
 
 protected:
   std::vector<shape_object> _objects;
@@ -546,7 +549,7 @@ private:
       bool multisection, bool makeSolid, bool isFrenet, bool combine,
       bool clean, const transition_mode &transition,
       const boost::optional<topo_vector> &normal,
-      const boost::optional<workplane> &auxSpine);
+      const std::shared_ptr<workplane> &auxSpine);
 
   std::shared_ptr<workplane> _union_(
       boost::variant<std::reference_wrapper<const workplane>, solid, compound>
@@ -689,7 +692,7 @@ private:
       bool multisection, bool makeSolid, bool isFrenet,
       const transition_mode &transition,
       const boost::optional<topo_vector> &normal,
-      const boost::optional<workplane> &auxSpine);
+      const std::shared_ptr<workplane> &auxSpine);
   gp_Vec compute_x_dir(const gp_Vec &normal) const;
   std::vector<shape> collect_property(const shape_object_type &propName) const;
   std::shared_ptr<workplane>
@@ -703,6 +706,7 @@ private:
   void add_pending_wire(const topo::wire &w);
   std::vector<topo::wire> _consolidate_wires();
   std::vector<topo_location> locs();
+  void add_error(const std::string &error);
 };
 
 } // namespace topo

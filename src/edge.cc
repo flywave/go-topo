@@ -34,7 +34,8 @@ Handle(TColgp_HArray1OfPnt) points_to_array(const std::vector<gp_Pnt> &points) {
     throw std::invalid_argument("Point list cannot be empty");
   }
 
-  Handle(TColgp_HArray1OfPnt) array = new TColgp_HArray1OfPnt(1, points.size());
+  Handle(TColgp_HArray1OfPnt) array =
+      new TColgp_HArray1OfPnt(1, static_cast<int>(points.size()));
   for (int i = 0; i < points.size(); ++i) {
     array->SetValue(i + 1, points[i]);
   }
@@ -44,7 +45,7 @@ Handle(TColgp_HArray1OfPnt) points_to_array(const std::vector<gp_Pnt> &points) {
 Handle(TColStd_HArray1OfReal)
     floats_to_array(const std::vector<double> &values) {
   Handle(TColStd_HArray1OfReal) array =
-      new TColStd_HArray1OfReal(1, values.size());
+      new TColStd_HArray1OfReal(1, static_cast<int>(values.size()));
   for (int i = 0; i < values.size(); ++i) {
     array->SetValue(i + 1, values[i]);
   }
@@ -576,30 +577,26 @@ edge edge::make_spline(const std::vector<gp_Pnt> &points,
                        const std::vector<gp_Vec> *tangents, bool periodic,
                        const std::vector<double> *parameters, bool scale,
                        double tol) {
-  // Validate input
   if (points.empty()) {
     throw std::invalid_argument("At least one point is required");
   }
 
-  // Create array of points
   Handle(TColgp_HArray1OfPnt) pointArray =
-      new TColgp_HArray1OfPnt(1, points.size());
+      new TColgp_HArray1OfPnt(1, static_cast<int>(points.size()));
   for (int i = 0; i < points.size(); ++i) {
     pointArray->SetValue(i + 1, points[i]);
   }
 
-  // Create the interpolator
   std::unique_ptr<GeomAPI_Interpolate> interpolator;
 
   if (parameters) {
-    // Check parameter count matches point count
     if (parameters->size() != (points.size() + (periodic ? 1 : 0))) {
       throw std::invalid_argument(
           "Parameter count must match point count (plus one if periodic)");
     }
 
     Handle(TColStd_HArray1OfReal) paramArray =
-        new TColStd_HArray1OfReal(1, parameters->size());
+        new TColStd_HArray1OfReal(1, static_cast<int>(parameters->size()));
     for (int i = 0; i < parameters->size(); ++i) {
       paramArray->SetValue(i + 1, (*parameters)[i]);
     }
@@ -610,25 +607,21 @@ edge edge::make_spline(const std::vector<gp_Pnt> &points,
     interpolator.reset(new GeomAPI_Interpolate(pointArray, periodic, tol));
   }
 
-  // Handle tangents if provided
   if (tangents && !tangents->empty()) {
     if (tangents->size() == 2 && points.size() != 2) {
-      // Start and end tangents only
       interpolator->Load((*tangents)[0], (*tangents)[1], scale);
     } else {
-      // Tangent for each point
       if (tangents->size() != points.size()) {
         throw std::invalid_argument(
             "Tangent count must match point count or be exactly 2");
       }
 
-      TColgp_Array1OfVec tangentArray(1, tangents->size());
+      TColgp_Array1OfVec tangentArray(1, static_cast<int>(tangents->size()));
       Handle(TColStd_HArray1OfBoolean) tangentEnabled =
-          new TColStd_HArray1OfBoolean(1, tangents->size());
+          new TColStd_HArray1OfBoolean(1, static_cast<int>(tangents->size()));
 
       for (int i = 0; i < tangents->size(); ++i) {
-        tangentEnabled->SetValue(i + 1,
-                                 true); // Assuming all tangents are valid
+        tangentEnabled->SetValue(i + 1, true);
         tangentArray.SetValue(i + 1, (*tangents)[i]);
       }
 
@@ -636,13 +629,11 @@ edge edge::make_spline(const std::vector<gp_Pnt> &points,
     }
   }
 
-  // Perform the interpolation
   interpolator->Perform();
   if (!interpolator->IsDone()) {
     throw std::runtime_error("B-spline interpolation failed");
   }
 
-  // Create the edge
   Handle(Geom_BSplineCurve) spline = interpolator->Curve();
   BRepBuilderAPI_MakeEdge edgeMaker(spline);
   if (!edgeMaker.IsDone()) {
@@ -663,7 +654,8 @@ edge edge::make_spline_approx(
     throw std::invalid_argument("Invalid degree parameters");
   }
 
-  TColgp_Array1OfPnt pointArray = TColgp_Array1OfPnt(1, points.size());
+  TColgp_Array1OfPnt pointArray =
+      TColgp_Array1OfPnt(1, static_cast<int>(points.size()));
   for (int i = 0; i < points.size(); i++) {
     pointArray.SetValue(i + 1, points[i]);
   }
@@ -772,7 +764,7 @@ edge edge::make_bezier(const std::vector<gp_Pnt> &points) {
         "At least two points required for Bézier curve");
   }
 
-  TColgp_Array1OfPnt arr(1, points.size());
+  TColgp_Array1OfPnt arr(1, static_cast<int>(points.size()));
   for (int i = 0; i < points.size(); i++) {
     arr.SetValue(i + 1, points[i]);
   }

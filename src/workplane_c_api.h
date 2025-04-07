@@ -336,8 +336,8 @@ WORKPLANECAPICALL workplane_t *workplane_cut_blind(workplane_t *wp,
                                                    double distance, bool clean,
                                                    bool both, double taper);
 WORKPLANECAPICALL workplane_t *
-workplane_cut_blind_with_until_face(workplane_t *wp, const char *untilFace,
-                                    bool clean, bool both, double taper);
+workplane_cut_blind_with_until_face(workplane_t *wp, int untilFace, bool clean,
+                                    bool both, double taper);
 WORKPLANECAPICALL workplane_t *
 workplane_cut_blind_with_face(workplane_t *wp, topo_face_t *face, bool clean,
                               bool both, double taper);

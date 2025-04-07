@@ -19,7 +19,7 @@ topo_shape_t **ifc_get_topo_shapes(const char *filename, int *count) {
     return nullptr;
   }
   auto shps = ct->get_shape();
-  *count = shps.size();
+  *count = static_cast<int>(shps.size());
   auto sp = new topo_shape_t *[shps.size()];
   for (int i = 0; i < shps.size(); i++) {
     auto s = shps[i];

@@ -55,16 +55,8 @@ public:
 
   std::string to_string() const;
 
-  std::vector<std::vector<double>> to_vector() const {
-    std::vector<std::vector<double>> result(3, std::vector<double>(4));
-
-    for (int i = 0; i < 3; ++i) {
-      for (int j = 0; j < 4; ++j) {
-        result[i][j] = _value.Value(i + 1, j + 1);
-      }
-    }
-
-    return result;
+  double operator[](std::pair<int, int> index) const {
+    return get(index.first, index.second);
   }
 
   topo_matrix operator*(const topo_matrix &other) const {

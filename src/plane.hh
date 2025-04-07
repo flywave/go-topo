@@ -48,6 +48,7 @@ public:
 
   topo_plane(const topo_vector &origin, const topo_vector &xDir,
              const topo_vector &normal = topo_vector(0, 0, 1));
+  topo_plane(gp_Pln pln);
 
   topo_plane(const topo_plane &) = default;
   topo_plane(topo_plane &&) noexcept = default;

@@ -437,7 +437,7 @@ wire wire::make_helix(double pitch, double height, double radius,
   if (angle == 360.0) {
     geom_surf = new Geom_CylindricalSurface(axis, radius);
   } else {
-    double angle_rad = angle * M_PI / 180.0; 
+    double angle_rad = angle * M_PI / 180.0;
     geom_surf = new Geom_ConicalSurface(axis, angle_rad, radius);
   }
 

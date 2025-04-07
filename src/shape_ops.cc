@@ -266,6 +266,11 @@ boost::optional<shape> intersect(const shape &shp,
 
 boost::optional<shape> split(const shape &shp, const shape &splitters,
                              double tol) {
+  return split(shp, {splitters}, tol);
+}
+
+boost::optional<shape> split(const shape &shp,
+                             const std::vector<shape> &splitters, double tol) {
   if (shp.is_null()) {
     std::cerr << "Input shape is null " << std::endl;
     return boost::none;
@@ -284,7 +289,9 @@ boost::optional<shape> split(const shape &shp, const shape &splitters,
     builder.SetArguments(args);
 
     TopTools_ListOfShape tools;
-    tools.Append(splitters);
+    for (const auto &splitter : splitters) {
+      tools.Append(splitter.value());
+    }
     builder.SetTools(tools);
 
     builder.Build();

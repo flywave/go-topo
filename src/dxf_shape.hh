@@ -21,28 +21,31 @@
 namespace flywave {
 namespace dxf {
 
+struct dxf_text_entity {
+  std::string text;
+  gp_Pnt position;
+  gp_Vec normal;
+  gp_Vec x_axis_dir;
+  double height = 1.0;
+  double rotation = 0.0;
+  color_index_t color = 256;
+};
+
+struct dxf_shape_entity {
+  color_index_t color = 0;
+  TopoDS_Shape shape;
+};
+
 class dxf_shape_reader : public dxf_read {
 public:
-  struct shape_entity {
-    color_index_t color = 0;
-    TopoDS_Shape shape;
-  };
   struct parameters {
     double scaling = 1.;
-  };
-  struct text_entity {
-    std::string text;
-    gp_Pnt point;
-    gp_Vec normal;
-    gp_Vec x_axis_dir;
   };
 
 private:
   std::set<std::string> _layer_names;
-  std::unordered_map<std::string, std::vector<dxf_shape_reader::shape_entity>>
-      _layers;
-  std::unordered_map<std::string, std::vector<dxf_shape_reader::text_entity>>
-      _texts;
+  std::unordered_map<std::string, std::vector<dxf_shape_entity>> _layers;
+  std::unordered_map<std::string, std::vector<dxf_text_entity>> _texts;
   std::uintmax_t _file_size = 0;
   std::uintmax_t _file_read_size = 0;
   Resource_FormatType _src_encoding = Resource_ANSI;
@@ -92,34 +95,21 @@ public:
 
   gp_Pnt to_pnt(const dxf_coords &coords) const;
   void add_shape(const TopoDS_Shape &shape);
-  void add_text(const dxf_shape_reader::text_entity &text);
+  void add_text(const dxf_text_entity &text);
 
   TopoDS_Face make_face(const dxf_quad_base &quad) const;
 };
 
 class dxf_shape_writer : public dxf_write {
 public:
-  struct shape_entity {
-    color_index_t color = 0;
-    TopoDS_Shape shape;
-  };
-
   struct parameters {
     double scaling = 1.0;
     bool write_3d_face = false;
   };
 
-  struct text_entity {
-    std::string text;
-    gp_Pnt position;
-    double height = 1.0;
-    double rotation = 0.0;
-    color_index_t color = 256;
-  };
-
 private:
-  std::unordered_map<std::string, std::vector<shape_entity>> _layers;
-  std::unordered_map<std::string, std::vector<text_entity>> _texts;
+  std::unordered_map<std::string, std::vector<dxf_shape_entity>> _layers;
+  std::unordered_map<std::string, std::vector<dxf_text_entity>> _texts;
 
   parameters _params;
 
@@ -128,7 +118,7 @@ public:
 
   void set_parameters(const parameters &params) { _params = params; }
 
-  void add_text(const std::string &layer_name, const text_entity &text);
+  void add_text(const std::string &layer_name, const dxf_text_entity &text);
 
   void add_shape(const std::string &layer_name, const TopoDS_Shape &shape,
                  color_index_t color = 256);
@@ -138,7 +128,7 @@ public:
       const std::vector<std::pair<TopoDS_Shape, color_index_t>> &shapes);
 
   void add_text_layer(const std::string &layer_name,
-                      const std::vector<text_entity> &texts);
+                      const std::vector<dxf_text_entity> &texts);
 
   bool write();
 
@@ -156,7 +146,7 @@ protected:
                 const std::string &ownerHandle);
   void put_circle(const gp_Circ &circle, std::ostringstream &outStream,
                   const std::string &handle, const std::string &ownerHandle);
-  void put_text(const text_entity &text, std::ostringstream &outStream,
+  void put_text(const dxf_text_entity &text, std::ostringstream &outStream,
                 const std::string &handle, const std::string &ownerHandle);
   void put_3d_face(const std::array<dxf_coords, 4> &corners,
                    std::ostringstream &outStream, const std::string &handle,

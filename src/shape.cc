@@ -1724,7 +1724,7 @@ int shape::num_entities(TopAbs_ShapeEnum type) const {
   return anIndices.Extent();
 }
 
-shape shape::filter(selector *sel, const std::vector<shape> &shapes) const {
+shape shape::filter(selector *sel, const std::vector<shape> &shapes)  {
   std::vector<shape> selected;
 
   if (sel) {
@@ -1780,7 +1780,6 @@ std::vector<double> shape::distances(const std::vector<shape> &others) const {
   return results;
 }
 
-// Generic boolean operation
 template <typename OpType>
 shape shape::bool_op(const std::vector<shape> &args,
                      const std::vector<shape> &tools, OpType &op,
@@ -1805,67 +1804,6 @@ shape shape::bool_op(const std::vector<shape> &args,
   }
 
   return shape(op.Shape());
-}
-
-// Cut operation
-shape shape::cuted(const std::vector<shape> &toCut, double tol) const {
-  BRepAlgoAPI_Cut cut_op;
-  if (tol > 0.0) {
-    cut_op.SetFuzzyValue(tol);
-  }
-  return bool_op({*this}, toCut, cut_op);
-}
-
-// Fuse operation
-shape shape::fused(const std::vector<shape> &toFuse, bool glue,
-                   double tol) const {
-  BRepAlgoAPI_Fuse fuse_op;
-  if (glue) {
-    fuse_op.SetGlue(BOPAlgo_GlueShift);
-  }
-  if (tol > 0.0) {
-    fuse_op.SetFuzzyValue(tol);
-  }
-  return bool_op({*this}, toFuse, fuse_op);
-}
-
-// Intersect operation
-shape shape::intersected(const std::vector<shape> &toIntersect,
-                         double tol) const {
-  BRepAlgoAPI_Common intersect_op;
-  if (tol > 0.0) {
-    intersect_op.SetFuzzyValue(tol);
-  }
-  return bool_op({*this}, toIntersect, intersect_op);
-}
-
-// Split operation
-shape shape::splited(const std::vector<shape> &splitters) const {
-  BRepAlgoAPI_Splitter split_op;
-  return bool_op({*this}, splitters, split_op);
-}
-
-int shape::mesh(double tolerance, double angularTolerance) {
-  try {
-    if (!BRepTools::Triangulation(value(), tolerance)) {
-      BRepMesh_IncrementalMesh mesher(
-          value(),         // shape to mesh
-          tolerance,       // linear deflection
-          true,            // relative deflection flag
-          angularTolerance // angular deflection (in radians)
-      );
-    }
-  } catch (Standard_Failure &e) {
-
-    const Standard_CString msg = e.GetMessageString();
-    if (msg != NULL && strlen(msg) > 1) {
-      throw std::runtime_error(msg);
-    } else {
-      throw std::runtime_error("Failed to mirror object");
-    }
-    return 0;
-  }
-  return 1;
 }
 
 } // namespace topo

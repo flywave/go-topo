@@ -16,20 +16,24 @@ typedef struct _dxf_reader_t {
   std::unique_ptr<flywave::dxf::dxf_shape_reader> reader;
 } dxf_reader_t;
 
+struct _dxf_writer_t {
+  std::unique_ptr<flywave::dxf::dxf_shape_writer> writer;
+};
+
 typedef struct _dxf_shape_entity_layer_t {
-  const std::vector<flywave::dxf::dxf_shape_reader::shape_entity> &entities;
+  std::vector<flywave::dxf::dxf_shape_entity> entities;
 } dxf_shape_entity_layer_t;
 
 typedef struct _dxf_shape_entity_t {
-  const flywave::dxf::dxf_shape_reader::shape_entity &entity;
+  flywave::dxf::dxf_shape_entity entity;
 } dxf_shape_entity_t;
 
 typedef struct _dxf_text_entity_layer_t {
-  const std::vector<flywave::dxf::dxf_shape_reader::text_entity> &entities;
+  std::vector<flywave::dxf::dxf_text_entity> entities;
 } dxf_text_entity_layer_t;
 
 typedef struct _dxf_text_entity_t {
-  const flywave::dxf::dxf_shape_reader::text_entity &entity;
+  flywave::dxf::dxf_text_entity entity;
 } dxf_text_entity_t;
 
 dxf_reader_t *dxf_open_reader(const char *filename) {
@@ -91,6 +95,10 @@ void dxf_layer_names_free(const char **names) {
   }
 }
 
+dxf_shape_entity_layer_t *dxf_shape_entity_layer_new() {
+  return new dxf_shape_entity_layer_t;
+}
+
 dxf_shape_entity_layer_t *dxf_reader_get_shape_entity_layer(dxf_reader_t *p,
                                                             const char *name) {
   if (p) {
@@ -101,6 +109,13 @@ dxf_shape_entity_layer_t *dxf_reader_get_shape_entity_layer(dxf_reader_t *p,
     }
   }
   return nullptr;
+}
+
+void dxf_shape_entity_layer_add(dxf_shape_entity_layer_t *p,
+                                dxf_shape_entity_t *entity) {
+  if (p) {
+    p->entities.push_back(entity->entity);
+  }
 }
 
 void dxf_shape_entity_layer_free(dxf_shape_entity_layer_t *p) {
@@ -122,6 +137,13 @@ dxf_shape_entity_layer_get_entity(dxf_shape_entity_layer_t *p, int index) {
   }
   return nullptr;
 }
+
+dxf_shape_entity_t *dxf_shape_entity_new(topo_shape_t *shape, int color) {
+  return new dxf_shape_entity_t{
+      .entity = flywave::dxf::dxf_shape_entity{.shape = shape->shp->value(),
+                                               .color = color}};
+}
+
 void dxf_shape_entity_free(dxf_shape_entity_t *p) {
   if (p) {
     delete p;
@@ -146,6 +168,10 @@ topo_shape_t *dxf_shape_entity_get_shape(dxf_shape_entity_t *p) {
   return nullptr;
 }
 
+dxf_text_entity_layer_t *dxf_text_entity_layer_new() {
+  return new dxf_text_entity_layer_t;
+}
+
 dxf_text_entity_layer_t *dxf_reader_get_text_entity_layer(dxf_reader_t *p,
                                                           const char *name) {
   if (p) {
@@ -156,6 +182,13 @@ dxf_text_entity_layer_t *dxf_reader_get_text_entity_layer(dxf_reader_t *p,
     }
   }
   return nullptr;
+}
+
+void dxf_text_entity_layer_add_entity(dxf_text_entity_layer_t *p,
+                                      dxf_text_entity_t *entity) {
+  if (p) {
+    p->entities.push_back(entity->entity);
+  }
 }
 
 void dxf_text_entity_layer_free(dxf_text_entity_layer_t *p) {
@@ -179,6 +212,15 @@ dxf_text_entity_t *dxf_text_entity_layer_get_entity(dxf_text_entity_layer_t *p,
   return nullptr;
 }
 
+dxf_text_entity_t *dxf_text_entity_new(const char *text, pnt3d_t position,
+                                       double height, double rotation,
+                                       int color) {
+  return new dxf_text_entity_t{
+      .entity = flywave::dxf::dxf_text_entity{
+          text, gp_Pnt(position.x, position.y, position.z), gp_Vec(0, 0, 1),
+          gp_Vec(1, 0, 0), height, rotation, color}};
+}
+
 void dxf_text_entity_free(dxf_text_entity_t *p) {
   if (p) {
     delete p;
@@ -194,8 +236,8 @@ const char *dxf_text_entity_get_text(dxf_text_entity_t *p) {
 
 pnt3d_t dxf_text_entity_get_position(dxf_text_entity_t *p) {
   if (p) {
-    return pnt3d_t{p->entity.point.X(), p->entity.point.Y(),
-                   p->entity.point.Z()};
+    return pnt3d_t{p->entity.position.X(), p->entity.position.Y(),
+                   p->entity.position.Z()};
   }
   return pnt3d_t{0, 0, 0};
 }
@@ -214,6 +256,67 @@ vec3d_t dxf_text_entity_get_x_axis_dir(dxf_text_entity_t *p) {
                    p->entity.x_axis_dir.Z()};
   }
   return vec3d_t{0, 0, 0};
+}
+
+dxf_writer_t *dxf_open_writer(const char *filename) {
+  auto writer = std::make_unique<flywave::dxf::dxf_shape_writer>(filename);
+  return new dxf_writer_t{std::move(writer)};
+}
+
+void dxf_writer_free(dxf_writer_t *p) {
+  if (p) {
+    delete p;
+  }
+}
+
+void dxf_writer_add_shape(dxf_writer_t *p, const char *layerName,
+                          topo_shape_t *shape, int index) {
+  if (p) {
+    p->writer->add_shape(layerName, *shape->shp, index);
+  }
+}
+
+void dxf_writer_add_text(dxf_writer_t *p, const char *layerName,
+                         const char *text, pnt3d_t position, double height,
+                         double rotation, int index) {
+  if (p) {
+    p->writer->add_text(layerName,
+                        flywave::dxf::dxf_text_entity{
+                            text, gp_Pnt(position.x, position.y, position.z),
+                            gp_Vec(0, 0, 1), gp_Vec(1, 0, 0), height, rotation,
+                            index});
+  }
+}
+
+void dxf_writer_add_shape_layer(dxf_writer_t *p, const char *name,
+                                dxf_shape_entity_layer_t *layer) {
+  if (p) {
+    std::vector<std::pair<TopoDS_Shape, flywave::dxf::color_index_t>> shapes;
+    for (int i = 0; i < dxf_shape_entity_layer_get_count(layer); ++i) {
+      auto entity = dxf_shape_entity_layer_get_entity(layer, i);
+      shapes.emplace_back(entity->entity.shape, entity->entity.color);
+    }
+    p->writer->add_shape_layer(name, shapes);
+  }
+}
+
+void dxf_writer_add_text_layer(dxf_writer_t *p, const char *name,
+                               dxf_text_entity_layer_t *layer) {
+  if (p) {
+    std::vector<flywave::dxf::dxf_text_entity> texts;
+    for (int i = 0; i < dxf_text_entity_layer_get_count(layer); ++i) {
+      auto entity = dxf_text_entity_layer_get_entity(layer, i);
+      texts.push_back(entity->entity);
+    }
+    p->writer->add_text_layer(name, texts);
+  }
+}
+
+_Bool dxf_writer_write(dxf_writer_t *p) {
+  if (p) {
+    return p->writer->write();
+  }
+  return false;
 }
 
 #ifdef __cplusplus

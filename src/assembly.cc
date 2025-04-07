@@ -125,14 +125,14 @@ toFusedCAF(const std::shared_ptr<assembly> &assy, bool glue = false,
     const auto &pair = shape_color_pairs[0];
     if (pair.first.shape_type() != TopAbs_COMPOUND) {
       if (glue) {
-        auto fused = pair.first.fused({}, glue, tol ? *tol : 0.0f);
+        auto fused = *topo::fuse({pair.first}, tol ? *tol : 0.0f, glue);
         top_level_shape = compound::make_compound({fused}).value();
         shape_color_pairs = {{fused, pair.second}};
       } else {
         top_level_shape = compound::make_compound({pair.first}).value();
       }
     } else {
-      auto fused = pair.first.fused({}, glue, tol ? *tol : 0.0f);
+      auto fused = *topo::fuse({pair.first}, tol ? *tol : 0.0f, glue);
       top_level_shape = compound::make_compound({fused}).value();
       shape_color_pairs = {{fused, pair.second}};
     }
@@ -213,7 +213,7 @@ struct document_raii {
 
 std::pair<TDF_Label, Handle(TDocStd_Document)>
 toCAF(const std::shared_ptr<assembly> &assy, bool coloredSTEP = false,
-      bool mesh = false, float tolerance = 1e-3f,
+      float tolerance = 1e-3f,
       float angularTolerance = 0.1f) {
   document_raii wrapper;
 
@@ -265,12 +265,9 @@ toCAF(const std::shared_ptr<assembly> &assy, bool coloredSTEP = false,
         lab = tool->NewShape();
         shape c;
         if (compounds.find(key1) != compounds.end()) {
-          c = compounds[key1].copy(mesh);
+          c = compounds[key1].copy(true);
         } else {
           c = compound::make_compound(el->shapes());
-          if (mesh) {
-            c.mesh(tolerance, angularTolerance);
-          }
           compounds[key1] = c;
         }
 

@@ -164,8 +164,8 @@ std::shared_ptr<workplane> workplane::split(bool keepTop, bool keepBottom) {
   auto topCutBox = this->_rect(maxDim, maxDim)->_extrude(maxDim);
   auto bottomCutBox = this->_rect(maxDim, maxDim)->_extrude(-maxDim);
 
-  auto top = s.cuted({bottomCutBox});
-  auto bottom = s.cuted({topCutBox});
+  auto top = *topo::cut(s, {bottomCutBox});
+  auto bottom = *topo::cut(s, {topCutBox});
 
   std::vector<shape_object> rv;
   if (keepTop && keepBottom) {
@@ -183,8 +183,7 @@ std::shared_ptr<workplane> workplane::split(bool keepTop, bool keepBottom) {
 
 std::shared_ptr<workplane> workplane::split(const shape &splitter) {
   solid s = find_solid();
-  std::vector<shape> tools = {splitter};
-  std::vector<shape_object> rv = {s.splited(tools)};
+  std::vector<shape_object> rv = {*topo::split(s, splitter)};
   return this->new_object(rv);
 }
 
@@ -197,7 +196,7 @@ std::shared_ptr<workplane> workplane::split(const workplane &splitter) {
     }
   }
 
-  std::vector<shape_object> rv = {s.splited(tools)};
+  std::vector<shape_object> rv = {*topo::split(s, tools)};
   this->merge_tags(splitter);
   return this->new_object(rv);
 }
@@ -217,6 +216,12 @@ bool workplane::has_parent() const { return !_parent.expired(); }
 std::shared_ptr<workplane> workplane::parent() const { return _parent.lock(); }
 
 std::vector<shape_object> workplane::vals() const { return _objects; }
+
+bool workplane::has_error() const { return _ctx->has_error(); }
+
+const std::string &workplane::error() const { return _ctx->error(); }
+
+std::shared_ptr<context> workplane::ctx() const { return _ctx; }
 
 workplane &workplane::add(const workplane &other) {
   _objects.insert(_objects.end(), other._objects.begin(), other._objects.end());
@@ -2140,7 +2145,7 @@ workplane::sweep(workplane &path, bool multisection, bool makeSolid,
                  bool isFrenet, bool combine, bool clean,
                  const transition_mode &transition,
                  const boost::optional<topo_vector> &normal,
-                 const boost::optional<workplane> &auxSpine) {
+                 const std::shared_ptr<workplane> &auxSpine) {
   return _sweep(path, multisection, makeSolid, isFrenet, combine, clean,
                 transition, normal, auxSpine);
 }
@@ -2150,7 +2155,7 @@ workplane::sweep(const topo::wire &path, bool multisection, bool makeSolid,
                  bool isFrenet, bool combine, bool clean,
                  const transition_mode &transition,
                  const boost::optional<topo_vector> &normal,
-                 const boost::optional<workplane> &auxSpine) {
+                 const std::shared_ptr<workplane> &auxSpine) {
   return _sweep(path, multisection, makeSolid, isFrenet, combine, clean,
                 transition, normal, auxSpine);
 }
@@ -2160,7 +2165,7 @@ workplane::sweep(const edge &path, bool multisection, bool makeSolid,
                  bool isFrenet, bool combine, bool clean,
                  const transition_mode &transition,
                  const boost::optional<topo_vector> &normal,
-                 const boost::optional<workplane> &auxSpine) {
+                 const std::shared_ptr<workplane> &auxSpine) {
   return _sweep(path, multisection, makeSolid, isFrenet, combine, clean,
                 transition, normal, auxSpine);
 }
@@ -2170,7 +2175,7 @@ std::shared_ptr<workplane> workplane::_sweep(
     bool multisection, bool makeSolid, bool isFrenet, bool combine, bool clean,
     const transition_mode &transition,
     const boost::optional<topo_vector> &normal,
-    const boost::optional<workplane> &auxSpine) {
+    const std::shared_ptr<workplane> &auxSpine) {
   boost::variant<std::shared_ptr<workplane>, topo::wire, topo::edge> pathWire;
   if (auto wp = boost::get<std::reference_wrapper<workplane>>(&path)) {
     pathWire = wp->get().wire();
@@ -2667,7 +2672,7 @@ shape workplane::_sweep(
     bool multisection, bool makeSolid, bool isFrenet,
     const transition_mode &transition,
     const boost::optional<topo_vector> &normal,
-    const boost::optional<workplane> &auxSpine) {
+    const std::shared_ptr<workplane> &auxSpine) {
   topo::shape pathWire;
   if (auto wp = boost::get<std::shared_ptr<workplane>>(&path)) {
     auto val = (*wp)->val();
@@ -3100,6 +3105,8 @@ std::vector<topo_location> workplane::locs() {
 
   return locs;
 }
+
+void workplane::add_error(const std::string &error) { _ctx->set_error(error); }
 
 std::shared_ptr<topo::sketch> workplane::sketch() {
   std::shared_ptr<workplane> parent = new_object({});

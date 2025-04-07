@@ -44,7 +44,6 @@ void selector_custom_selector_free(selector_t *sel) {
   }
 }
 
-// Nearest to point selector
 selector_t *selector_nearest_to_point_selector_create(topo_vector_t *p) {
   auto sel = new selector_t{
       std::make_shared<flywave::topo::nearest_to_point_selector>(p->vec)};
@@ -56,7 +55,6 @@ void selector_nearest_to_point_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// Box selector
 selector_t *selector_box_selector_create(topo_vector_t *p0, topo_vector_t *p1,
                                          bool use_bb) {
   auto sel = new selector_t{
@@ -69,7 +67,6 @@ void selector_box_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// Radius nth selector
 selector_t *selector_radius_nth_selector_create(int n, bool direction_max,
                                                 double tolerance) {
   auto sel =
@@ -83,7 +80,6 @@ void selector_radius_nth_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// Center nth selector
 selector_t *selector_center_nth_selector_create(topo_vector_t *dir, int n,
                                                 bool direction_max,
                                                 double tolerance) {
@@ -98,7 +94,6 @@ void selector_center_nth_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// Direction minmax selector
 selector_t *selector_direction_minmax_selector_create(topo_vector_t *dir,
                                                       bool direction_max,
                                                       double tolerance) {
@@ -113,7 +108,6 @@ void selector_direction_minmax_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// Parallel direction selector
 selector_t *selector_parallel_dir_selector_create(topo_vector_t *dir,
                                                   double tol) {
   auto sel = new selector_t{
@@ -126,7 +120,6 @@ void selector_parallel_dir_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// Direction selector (alias)
 selector_t *selector_dir_selector_create(topo_vector_t *dir, double tol) {
   auto sel = new selector_t{
       std::make_shared<flywave::topo::dir_selector>(dir->vec, tol)};
@@ -138,7 +131,6 @@ void selector_dir_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// Perpendicular direction selector
 selector_t *selector_perpendicular_dir_selector_create(topo_vector_t *dir,
                                                        double tol) {
   auto sel = new selector_t{
@@ -152,7 +144,6 @@ void selector_perpendicular_dir_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// Direction nth selector
 selector_t *selector_direction_nth_selector_create(topo_vector_t *dir, int n,
                                                    bool direction_max,
                                                    double tolerance) {
@@ -167,7 +158,6 @@ void selector_direction_nth_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// Length nth selector
 selector_t *selector_length_nth_selector_create(int n, bool direction_max,
                                                 double tolerance) {
   auto sel =
@@ -181,7 +171,6 @@ void selector_length_nth_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// Type selector
 selector_t *selector_type_selector_create(int type) {
   auto sel = new selector_t{std::make_shared<flywave::topo::type_selector>(
       static_cast<flywave::topo::shape_geom_type>(type))};
@@ -193,7 +182,6 @@ void selector_type_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// Area nth selector
 selector_t *selector_area_nth_selector_create(int n, bool direction_max,
                                               double tolerance) {
   auto sel = new selector_t{std::make_shared<flywave::topo::area_nth_selector>(
@@ -206,7 +194,6 @@ void selector_area_nth_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// Logical AND selector
 selector_t *selector_and_selector_create(selector_t *left, selector_t *right) {
   auto sel = new selector_t{
       std::make_shared<flywave::topo::and_selector>(left->ptr, right->ptr)};
@@ -218,7 +205,6 @@ void selector_and_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// Logical OR selector
 selector_t *selector_or_selector_create(selector_t *left, selector_t *right) {
   auto sel = new selector_t{
       std::make_shared<flywave::topo::or_selector>(left->ptr, right->ptr)};
@@ -230,7 +216,6 @@ void selector_or_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// Subtract selector
 selector_t *selector_subtract_selector_create(selector_t *left,
                                               selector_t *right) {
   auto sel = new selector_t{std::make_shared<flywave::topo::subtract_selector>(
@@ -243,7 +228,6 @@ void selector_subtract_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// NOT selector
 selector_t *selector_not_selector_create(selector_t *sel) {
   auto new_sel =
       new selector_t{std::make_shared<flywave::topo::not_selector>(sel->ptr)};
@@ -255,7 +239,6 @@ void selector_not_selector_free(selector_t *sel) {
     delete sel;
 }
 
-// String syntax selector
 selector_t *selector_string_syntax_selector_create(const char *selector_str) {
   auto sel =
       new selector_t{std::make_shared<flywave::topo::string_syntax_selector>(

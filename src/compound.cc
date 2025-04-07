@@ -352,19 +352,15 @@ compound compound::make_text(const std::string &text, double size,
                              const std::string &fontPath, font_kind kind,
                              horizontal_align halign, vertical_align valign,
                              const topo_plane &position) {
-  // Convert font kind
   Font_FontAspect fontAspect = ConvertFontKind(kind);
 
-  // Get font manager and load font
   Handle(Font_FontMgr) fontMgr = Font_FontMgr::GetInstance();
   Handle(Font_SystemFont) systemFont =
       LoadFont(fontMgr, font, fontPath, fontAspect);
 
-  // Convert alignments
   Graphic3d_HorizontalTextAlignment hAlignment = ConvertHAlign(halign);
   Graphic3d_VerticalTextAlignment vAlignment = ConvertVAlign(valign);
 
-  // Create BRep font and builder
   StdPrs_BRepFont brepFont(
       NCollection_Utf8String(systemFont->FontName().ToCString()), fontAspect,
       size);
@@ -383,15 +379,12 @@ compound compound::make_text(const std::string &text, double size,
                              const std::string &font, const std::string &path,
                              font_kind kind, horizontal_align halign,
                              vertical_align valign) {
-  // Get the wire from spine
   TopoDS_Wire wire = spine.value();
   double length = spine.length();
 
-  // Create flat text first
   compound flatText =
       compound::make_text(text, size, font, path, kind, halign, valign);
 
-  // Process each face of the text
   BRep_Builder builder;
   TopoDS_Compound result;
   builder.MakeCompound(result);
@@ -399,12 +392,10 @@ compound compound::make_text(const std::string &text, double size,
   for (TopExp_Explorer exp(flatText, TopAbs_FACE); exp.More(); exp.Next()) {
     TopoDS_Face face = TopoDS::Face(exp.Current());
 
-    // Get position and transform
     Bnd_Box bbox;
     BRepBndLib::Add(face, bbox);
     double xPos = (bbox.CornerMin().X() + bbox.CornerMax().X()) / 2.0;
 
-    // Create transformations
     gp_Trsf moveToOrigin;
     moveToOrigin.SetTranslation(gp_Vec(-xPos, 0, 0));
 
@@ -415,15 +406,12 @@ compound compound::make_text(const std::string &text, double size,
     gp_Trsf rotateY;
     rotateY.SetRotation(gp_Ax1(gp_Pnt(), gp_Dir(0, 1, 0)), -M_PI_2);
 
-    // Get position along spine
     gp_Pnt spinePoint = spine.position_at(xPos / length);
     gp_Trsf moveToSpine;
     moveToSpine.SetTranslation(gp_Vec(spinePoint.XYZ()));
 
-    // Combine transformations
     gp_Trsf finalTransform = moveToOrigin * rotate * rotateY * moveToSpine;
 
-    // Apply transformation and add to result
     TopoDS_Shape movedFace = face.Moved(finalTransform);
     builder.Add(result, movedFace);
   }
@@ -431,20 +419,16 @@ compound compound::make_text(const std::string &text, double size,
   return normalize_shape(result);
 }
 
-// Text projected on a base surface
 compound compound::make_text(const std::string &text, double size,
                              const wire &spine, const face &base,
                              const std::string &font, const std::string &path,
                              font_kind kind, horizontal_align halign,
                              vertical_align valign) {
-  // Get single face from base
   TopoDS_Face baseFace = base.value();
 
-  // Create text along spine first
   compound spineText = compound::make_text(text, size, spine, false, font, path,
                                            kind, halign, valign);
 
-  // Project each face
   BRep_Builder builder;
   TopoDS_Compound result;
   builder.MakeCompound(result);
@@ -467,7 +451,6 @@ compound compound::make_text(const std::string &text, double size,
                              const std::string &fontPath, font_kind kind,
                              horizontal_align halign, vertical_align valign,
                              const topo_plane &position) {
-  // Convert font style
   Font_FontAspect fontAspect;
   switch (kind) {
   case font_kind::BOLD:
@@ -481,10 +464,8 @@ compound compound::make_text(const std::string &text, double size,
     break;
   }
 
-  // Get font manager instance
   Handle(Font_FontMgr) fontMgr = Font_FontMgr::GetInstance();
 
-  // Load font
   Handle(Font_SystemFont) systemFont;
   if (!fontPath.empty() && fontMgr->CheckFont(fontPath.c_str())) {
     systemFont = new Font_SystemFont(TCollection_AsciiString(fontPath.c_str()));
@@ -499,7 +480,6 @@ compound compound::make_text(const std::string &text, double size,
     }
   }
 
-  // Convert alignment
   Graphic3d_HorizontalTextAlignment hAlignment;
   switch (halign) {
   case horizontal_align::LEFT:
@@ -526,7 +506,6 @@ compound compound::make_text(const std::string &text, double size,
     break;
   }
 
-  // Create font and build text
   StdPrs_BRepFont brepFont(
       NCollection_Utf8String(systemFont->FontName().ToCString()), fontAspect,
       size);
@@ -536,9 +515,7 @@ compound compound::make_text(const std::string &text, double size,
       textBuilder.Perform(brepFont, NCollection_Utf8String(text.c_str()),
                           gp_Ax3(), hAlignment, vAlignment);
 
-  // Extrude if height is specified
   if (std::abs(height) > Precision::Confusion()) {
-    // Get normal from first face
     TopExp_Explorer faceExplorer(textShape, TopAbs_FACE);
     if (!faceExplorer.More()) {
       throw std::runtime_error("Text shape has no faces");
@@ -548,7 +525,6 @@ compound compound::make_text(const std::string &text, double size,
     BRepAdaptor_Surface surface(firstFace);
     gp_Dir normal = surface.Plane().Axis().Direction();
 
-    // Create prism
     BRepPrimAPI_MakePrism prismMaker(textShape, gp_Vec(normal) * height,
                                      false // Don't copy the shape
     );

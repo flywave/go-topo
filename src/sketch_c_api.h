@@ -64,22 +64,24 @@ SKETCHCAPICALL void sketch_rarray(sketch_t *sk, double xs, double ys, int nx,
 SKETCHCAPICALL void sketch_parray(sketch_t *sk, double r, double a1, double da,
                                   int n, bool rotate, double angle,
                                   const char *tag);
+
+SKETCHCAPICALL void
+sketch_each_for_face(sketch_t *sk,
+                     topo_face_t (*func)(const topo_location_t *location),
+                     int mode, const char *tag, bool ignore_selection);
+SKETCHCAPICALL void
+sketch_each_for_sketch(sketch_t *sk,
+                       sketch_t *(*func)(const topo_location_t *location),
+                       int mode, const char *tag, bool ignore_selection);
+SKETCHCAPICALL void sketch_each_for_compound(
+    sketch_t *sk, topo_compound_t (*func)(const topo_location_t *location),
+    int mode, const char *tag, bool ignore_selection);
+
 SKETCHCAPICALL void sketch_distribute(sketch_t *sk, int n, double start,
                                       double stop, bool rotate, double angle,
                                       const char *tag);
 SKETCHCAPICALL void sketch_push(sketch_t *sk, topo_location_t **locs, int size,
                                 const char *tag);
-
-// s
-SKETCHCAPICALL void sketch_each(sketch_t *sk, topo_location_t **locs, int size,
-                                const char *tag);
-SKETCHCAPICALL void sketch_each_face(sketch_t *sk, topo_location_t **locs,
-                                     int size, const char *tag);
-SKETCHCAPICALL void sketch_each_sketch(sketch_t *sk, topo_location_t **locs,
-                                       int size, const char *tag);
-SKETCHCAPICALL void sketch_each_compound(sketch_t *sk, topo_location_t **locs,
-                                         int size, const char *tag);
-// s
 
 SKETCHCAPICALL void sketch_hull(sketch_t *sk, int mode, const char *tag);
 SKETCHCAPICALL void sketch_offset(sketch_t *sk, double d, int mode,
@@ -87,34 +89,27 @@ SKETCHCAPICALL void sketch_offset(sketch_t *sk, double d, int mode,
 SKETCHCAPICALL void sketch_fillet(sketch_t *sk, double d);
 SKETCHCAPICALL void sketch_chamfer(sketch_t *sk, double d);
 SKETCHCAPICALL void sketch_clean(sketch_t *sk);
-// tag
 SKETCHCAPICALL void sketch_tag(sketch_t *sk, const char *tag);
-// select
 SKETCHCAPICALL void sketch_select(sketch_t *sk, const char **tags, int size);
-// faces
 SKETCHCAPICALL void sketch_faces(sketch_t *sk, const char *selector,
                                  const char *tag);
 SKETCHCAPICALL void
 sketch_faces_for_selector(sketch_t *sk, selector_t *selector, const char *tag);
-// wires
 SKETCHCAPICALL void sketch_wires(sketch_t *sk, const char *selector,
                                  const char *tag);
 SKETCHCAPICALL void
 sketch_wires_for_selector(sketch_t *sk, selector_t *selector, const char *tag);
-// edges
+
 SKETCHCAPICALL void sketch_edges(sketch_t *sk, const char *selector,
                                  const char *tag);
 SKETCHCAPICALL void
 sketch_edges_for_selector(sketch_t *sk, selector_t *selector, const char *tag);
-// vertices
 SKETCHCAPICALL void sketch_vertices(sketch_t *sk, const char *selector,
                                     const char *tag);
 SKETCHCAPICALL void sketch_vertices_for_selector(sketch_t *sk,
                                                  selector_t *selector,
                                                  const char *tag);
-// reset
 SKETCHCAPICALL void sketch_reset(sketch_t *sk);
-// delete_selected
 SKETCHCAPICALL void sketch_delete_selected(sketch_t *sk);
 
 SKETCHCAPICALL void sketch_edge(sketch_t *sk, topo_edge_t *edge,

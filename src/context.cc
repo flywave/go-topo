@@ -47,6 +47,19 @@ void context::set_first_point(boost::optional<topo_vector> point) {
   first_point_ = point;
 }
 
+bool context::has_error() const { return (bool)(error_); }
+
+void context::set_error(const std::string &error) { error_ = error; }
+
+const std::string &context::error() const {
+  if (error_) {
+    return *error_;
+  }
+  return "";
+}
+
+void context::clear_error() { error_.reset(); }
+
 double context::tolerance() const { return tolerance_; }
 
 void context::set_tolerance(double tol) { tolerance_ = tol; }

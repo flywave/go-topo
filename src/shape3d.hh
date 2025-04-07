@@ -32,8 +32,6 @@ public:
       : shape(shp, forConstruction) {}
   shape3d(const shape &v, TopoDS_Shape shp) : shape(v, shp) {}
 
-  std::vector<shell> shells() const;
-
   bool is_inside(const gp_Pnt &point, double tolerance = 1.0e-6) const;
 
 protected:
