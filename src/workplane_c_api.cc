@@ -8,6 +8,65 @@
 extern "C" {
 #endif
 
+void shape_object_free(shape_object_t *obj) {
+  if (obj) {
+    delete obj;
+  }
+}
+
+shape_object_t *shape_object_create_from_shape(topo_shape_t *shape) {
+  return new shape_object_t{*shape->shp};
+}
+
+shape_object_t *shape_object_create_from_vector(topo_vector_t *vector) {
+  return new shape_object_t{vector->vec};
+}
+
+shape_object_t *shape_object_create_from_location(topo_location_t *location) {
+  return new shape_object_t{location->loc};
+}
+
+shape_object_t *shape_object_create_from_sketch(sketch_t *sketch) {
+  return new shape_object_t{sketch->ptr};
+}
+
+shape_object_t *shape_object_create() {
+  return new shape_object_t{boost::blank{}};
+}
+
+int shape_object_type(shape_object_t *obj) {
+  return static_cast<int>(
+      flywave::topo::workplane::get_shape_object_type(obj->obj));
+}
+
+topo_shape_t *shape_object_get_shape(shape_object_t *obj) {
+  if (auto shp = boost::get<flywave::topo::shape>(&obj->obj)) {
+    return new topo_shape_t{std::make_shared<flywave::topo::shape>(*shp)};
+  }
+  return nullptr;
+}
+
+topo_vector_t *shape_object_get_vector(shape_object_t *obj) {
+  if (auto vec = boost::get<flywave::topo::topo_vector>(&obj->obj)) {
+    return new topo_vector_t{*vec};
+  }
+  return nullptr;
+}
+
+topo_location_t *shape_object_get_location(shape_object_t *obj) {
+  if (auto loc = boost::get<flywave::topo::topo_location>(&obj->obj)) {
+    return new topo_location_t{*loc};
+  }
+  return nullptr;
+}
+
+sketch_t *shape_object_get_sketch(shape_object_t *obj) {
+  if (auto sk = boost::get<std::shared_ptr<flywave::topo::sketch>>(&obj->obj)) {
+    return new sketch_t{*sk};
+  }
+  return nullptr;
+}
+
 workplane_t *workplane_create() {
   return new workplane_t{std::make_shared<flywave::topo::workplane>()};
 }
@@ -82,11 +141,10 @@ workplane_t *workplane_from_tagged(workplane_t *wp, const char *tag) {
   return new workplane_t{wp->ptr->from_tagged(tag)};
 }
 
-topo_solid_t *workplane_find_solid(workplane_t *wp, bool searchStack,
-                                   bool searchParents) {
-  return new topo_solid_t{
-      new topo_shape_t{std::make_shared<flywave::topo::shape>(
-          wp->ptr->find_solid(searchStack, searchParents))}};
+topo_solid_t workplane_find_solid(workplane_t *wp, bool searchStack,
+                                  bool searchParents) {
+  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::shape>(
+      wp->ptr->find_solid(searchStack, searchParents))}};
 }
 
 workplane_t *workplane_vertices(workplane_t *wp, const char *selector,
@@ -380,14 +438,14 @@ workplane_t *workplane_spline_approx(workplane_t *wp, topo_vector_t **points,
   return new workplane_t{result};
 }
 
-workplane_t *workplane_parametric_curve(workplane_t *wp,
-                                        pnt3d_t (*func)(double), int N,
-                                        double start, double stop, double tol,
-                                        int minDeg, int maxDeg,
+workplane_t *workplane_parametric_curve(workplane_t *wp, void *userdata,
+                                        pnt3d_t (*func)(void *userdata, double),
+                                        int N, double start, double stop,
+                                        double tol, int minDeg, int maxDeg,
                                         topo_vector_t *smoothing,
                                         bool makeWire) {
-  auto wrapper = [func](double t) {
-    pnt3d_t p = func(t);
+  auto wrapper = [func, userdata](double t) {
+    pnt3d_t p = func(userdata, t);
     return gp_Pnt(p.x, p.y, p.z);
   };
 
@@ -399,13 +457,13 @@ workplane_t *workplane_parametric_curve(workplane_t *wp,
   return new workplane_t{result};
 }
 
-workplane_t *workplane_parametric_surface(workplane_t *wp,
-                                          pnt3d_t (*func)(double, double),
-                                          int N, double start, double stop,
-                                          double tol, int minDeg, int maxDeg,
-                                          topo_vector_t *smoothing) {
-  auto wrapper = [func](double u, double v) {
-    pnt3d_t p = func(u, v);
+workplane_t *
+workplane_parametric_surface(workplane_t *wp, void *userdata,
+                             pnt3d_t (*func)(void *userdata, double, double),
+                             int N, double start, double stop, double tol,
+                             int minDeg, int maxDeg, topo_vector_t *smoothing) {
+  auto wrapper = [func, userdata](double u, double v) {
+    pnt3d_t p = func(userdata, u, v);
     return gp_Pnt(p.x, p.y, p.z);
   };
 
@@ -475,13 +533,15 @@ workplane_t *workplane_consolidate_wires(workplane_t *wp) {
   return new workplane_t{result};
 }
 
-workplane_t *workplane_each(workplane_t *wp, void (*func)(shape_object_t *),
+workplane_t *workplane_each(workplane_t *wp, void *userdata,
+                            void (*func)(void *userdata, shape_object_t *),
                             bool useLocalCoordinates, bool combine,
                             bool clean) {
   auto wrapper =
-      [func](flywave::topo::shape_object &obj) -> flywave::topo::shape_object {
+      [func, userdata](
+          flywave::topo::shape_object &obj) -> flywave::topo::shape_object {
     shape_object_t sobj{obj};
-    func(&sobj);
+    func(userdata, &sobj);
     return sobj.obj;
   };
 
@@ -489,14 +549,14 @@ workplane_t *workplane_each(workplane_t *wp, void (*func)(shape_object_t *),
   return new workplane_t{result};
 }
 
-workplane_t *workplane_eachpoint(workplane_t *wp,
-                                 void (*func)(shape_object_t *),
+workplane_t *workplane_eachpoint(workplane_t *wp, void *userdata,
+                                 void (*func)(void *userdata, shape_object_t *),
                                  bool useLocalCoordinates, bool combine,
                                  bool clean) {
-  auto wrapper =
-      [func](flywave::topo::topo_location loc) -> flywave::topo::shape {
+  auto wrapper = [func, userdata](
+                     flywave::topo::topo_location loc) -> flywave::topo::shape {
     shape_object_t sobj{loc};
-    func(&sobj);
+    func(userdata, &sobj);
     return boost::get<flywave::topo::shape>(sobj.obj);
   };
 
@@ -524,11 +584,12 @@ workplane_t *workplane_eachpoint_with_workplane(workplane_t *wp,
 }
 
 workplane_t *workplane_eachpoint_with_location(
-    workplane_t *wp, topo_shape_t *(*func)(topo_location_t *loc),
+    workplane_t *wp, void *userdata,
+    topo_shape_t *(*func)(void *userdata, topo_location_t *loc),
     bool useLocalCoordinates, bool combine, bool clean) {
-  auto wrapper = [func](const flywave::topo::topo_location &p) {
+  auto wrapper = [func, userdata](const flywave::topo::topo_location &p) {
     topo_location_t loc{.loc = p};
-    return *func(&loc)->shp;
+    return *func(userdata, &loc)->shp;
   };
   auto result =
       wp->ptr->eachpoint(wrapper, useLocalCoordinates, combine, clean);
@@ -591,12 +652,13 @@ double workplane_largest_dimension(workplane_t *wp) {
   return result;
 }
 
-workplane_t *workplane_cut_each(workplane_t *wp,
-                                topo_shape_t *(*fcn)(topo_location_t *loc),
+workplane_t *workplane_cut_each(workplane_t *wp, void *userdata,
+                                topo_shape_t *(*fcn)(void *userdata,
+                                                     topo_location_t *loc),
                                 bool useLocalCoordinates, bool clean) {
-  auto wrapper = [fcn](flywave::topo::topo_location loc) {
+  auto wrapper = [fcn, userdata](flywave::topo::topo_location loc) {
     topo_location_t loc_ = {.loc = loc};
-    return *fcn(&loc_)->shp;
+    return *fcn(userdata, &loc_)->shp;
   };
   auto result = wp->ptr->cut_each(wrapper, useLocalCoordinates, clean);
   return new workplane_t{result};
@@ -994,37 +1056,42 @@ workplane_t *workplane_get_indices(workplane_t *wp, int *indices, int size) {
   return new workplane_t{result};
 }
 
-workplane_t *workplane_filter(workplane_t *wp,
-                              bool (*predicate)(shape_object_t *)) {
-  auto result =
-      wp->ptr->filter([predicate](const flywave::topo::shape_object &obj) {
+workplane_t *workplane_filter(workplane_t *wp, void *userdate,
+                              bool (*predicate)(void *userdate,
+                                                shape_object_t *)) {
+  auto result = wp->ptr->filter(
+      [predicate, userdate](const flywave::topo::shape_object &obj) {
         shape_object_t wrapper{obj};
-        return predicate(&wrapper);
+        return predicate(userdate, &wrapper);
       });
   return new workplane_t{result};
 }
 
-workplane_t *workplane_map(workplane_t *wp,
-                           shape_object_t *(*mapper)(shape_object_t *)) {
-  auto result = wp->ptr->map([mapper](const flywave::topo::shape_object &obj) {
-    shape_object_t wrapper{obj};
-    auto mapped = mapper(&wrapper);
-    return mapped->obj;
-  });
+workplane_t *workplane_map(workplane_t *wp, void *userdate,
+                           shape_object_t *(*mapper)(void *userdate,
+                                                     shape_object_t *)) {
+  auto result =
+      wp->ptr->map([mapper, userdate](const flywave::topo::shape_object &obj) {
+        shape_object_t wrapper{obj};
+        auto mapped = mapper(userdate, &wrapper);
+        return mapped->obj;
+      });
   return new workplane_t{result};
 }
 
-workplane_t *workplane_apply(workplane_t *wp,
-                             shape_object_t **(*applier)(shape_object_t **,
+workplane_t *workplane_apply(workplane_t *wp, void *userdate,
+                             shape_object_t **(*applier)(void *userdate,
+                                                         shape_object_t **,
                                                          int)) {
-  auto result = wp->ptr->apply(
-      [applier](const std::vector<flywave::topo::shape_object> &objs) {
+  auto result =
+      wp->ptr->apply([applier, userdate](
+                         const std::vector<flywave::topo::shape_object> &objs) {
         std::vector<shape_object_t *> wrappers;
         for (auto &obj : objs) {
           wrappers.push_back(new shape_object_t{obj});
         }
-        auto applied =
-            applier(wrappers.data(), static_cast<int>(wrappers.size()));
+        auto applied = applier(userdate, wrappers.data(),
+                               static_cast<int>(wrappers.size()));
         std::vector<flywave::topo::shape_object> result;
         for (int i = 0; i < wrappers.size(); i++) {
           result.push_back(applied[i]->obj);
@@ -1035,21 +1102,22 @@ workplane_t *workplane_apply(workplane_t *wp,
   return new workplane_t{result};
 }
 
-workplane_t *workplane_sort(workplane_t *wp,
-                            bool (*comparator)(shape_object_t *,
+workplane_t *workplane_sort(workplane_t *wp, void *userdate,
+                            bool (*comparator)(void *userdate, shape_object_t *,
                                                shape_object_t *)) {
-  auto result =
-      wp->ptr->sort([comparator](const flywave::topo::shape_object &a,
-                                 const flywave::topo::shape_object &b) {
+  auto result = wp->ptr->sort(
+      [comparator, userdate](const flywave::topo::shape_object &a,
+                             const flywave::topo::shape_object &b) {
         shape_object_t *wrapperA = new shape_object_t{a};
         shape_object_t *wrapperB = new shape_object_t{b};
-        return comparator(wrapperA, wrapperB);
+        return comparator(userdate, wrapperA, wrapperB);
       });
   return new workplane_t{result};
 }
 
-void workplane_invoke(workplane_t *wp, workplane_t *(*fcn)()) {
-  auto result = fcn();
+void workplane_invoke(workplane_t *wp, void *userdate,
+                      workplane_t *(*fcn)(void *userdate)) {
+  auto result = fcn(userdate);
   *wp = *result;
   delete result;
 }
@@ -1093,15 +1161,22 @@ workplane_t **workplane_all(workplane_t *wp, int *count) {
   return arr;
 }
 
-shape_object_t **workplane_shapes(workplane_t *wp, int *count) {
+void workplane_list_free(workplane_t **list, int count) { delete[] list; }
+
+topo_shape_t **workplane_shapes(workplane_t *wp, int *count) {
   auto shapes = wp->ptr->shapes();
   *count = static_cast<int>(shapes.size());
-  auto arr = new shape_object_t *[*count];
+  auto arr = new topo_shape_t *[*count];
   for (int i = 0; i < *count; i++) {
-    arr[i] = new shape_object_t{shapes[i]};
+    arr[i] = new topo_shape_t{
+        .shp = std::make_shared<flywave::topo::shape>(shapes[i])};
   }
   return arr;
 }
+
+void shape_list_free(topo_shape_t **list, int count) { delete[] list; }
+
+void shape_objects_free(shape_object_t **list, int count) { delete[] list; }
 
 shape_object_t **workplane_vals(workplane_t *wp, int *count) {
   auto vals = wp->ptr->vals();

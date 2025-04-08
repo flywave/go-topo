@@ -90,6 +90,8 @@ public:
   workplane(workplane &&) noexcept;
   workplane &operator=(workplane &&) noexcept;
 
+  static shape_object_type get_shape_object_type(const shape_object &obj);
+
   shape value() const;
 
   template <typename T>

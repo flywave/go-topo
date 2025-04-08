@@ -23,6 +23,20 @@ void sketch_val_free(sketch_val_t *obj) {
     delete obj;
 }
 
+bool sketch_val_is_shape(sketch_val_t *obj) {
+  if (auto shape = boost::get<flywave::topo::shape>(&obj->val)) {
+    return true;
+  }
+  return false;
+}
+
+bool sketch_val_is_location(sketch_val_t *obj) {
+  if (auto loc = boost::get<flywave::topo::topo_location>(&obj->val)) {
+    return true;
+  }
+  return false;
+}
+
 topo_shape_t *sketch_val_get_shape(sketch_val_t *obj) {
   if (auto shape = boost::get<flywave::topo::shape>(&obj->val)) {
     return new topo_shape_t{std::make_shared<flywave::topo::shape>(*shape)};
@@ -35,6 +49,35 @@ topo_location_t *sketch_val_get_location(sketch_val_t *obj) {
     return new topo_location_t{*loc};
   }
   return nullptr;
+}
+
+sketch_constraint_value_t *sketch_constraint_value_create_blank() {
+  return new sketch_constraint_value_t{
+      flywave::topo::sketch_constraint_value{boost::blank()}};
+}
+
+sketch_constraint_value_t *sketch_constraint_value_create_double(double val) {
+  return new sketch_constraint_value_t{
+      flywave::topo::sketch_constraint_value{val}};
+}
+
+sketch_constraint_value_t *
+sketch_constraint_value_create_double3(double val1, double val2, double val3) {
+  return new sketch_constraint_value_t{
+      flywave::topo::sketch_constraint_value{std::make_tuple(
+          boost::optional<double>(val1), boost::optional<double>(val2), val3)}};
+}
+
+sketch_constraint_value_t *sketch_constraint_value_create_double2(double val1,
+                                                                  double val2) {
+  return new sketch_constraint_value_t{
+      flywave::topo::sketch_constraint_value{std::make_pair(val1, val2)}};
+}
+
+void sketch_constraint_value_free(sketch_constraint_value_t *obj) {
+  if (obj) {
+    delete obj;
+  }
 }
 
 sketch_t *sketch_create_from_workplane(workplane_t *inPlane,
@@ -167,12 +210,12 @@ void sketch_parray(sketch_t *sk, double r, double a1, double da, int n,
   sk->ptr->parray(r, a1, da, n, rotate);
 }
 
-void sketch_each_for_face(sketch_t *sk,
-                          topo_face_t (*func)(const topo_location_t *location),
+void sketch_each_for_face(sketch_t *sk,void *userdata, 
+                          topo_face_t (*func)(void *userdata, const topo_location_t *location),
                           int mode, const char *tag, bool ignore_selection) {
   auto _func =
       [&](const flywave::topo::topo_location &loc) -> flywave::topo::face {
-    auto f = func(new topo_location_t{loc});
+    auto f = func(userdata, new topo_location_t{loc});
     return *f.shp->shp->cast<flywave::topo::face>();
   };
 
@@ -180,12 +223,12 @@ void sketch_each_for_face(sketch_t *sk,
                 ignore_selection);
 }
 
-void sketch_each_for_sketch(sketch_t *sk,
-                            sketch_t *(*func)(const topo_location_t *location),
+void sketch_each_for_sketch(sketch_t *sk,void *userdata,
+                            sketch_t *(*func)(void *userdata, const topo_location_t *location),
                             int mode, const char *tag, bool ignore_selection) {
   auto _func = [&](const flywave::topo::topo_location &loc)
       -> std::shared_ptr<flywave::topo::sketch> {
-    auto s = func(new topo_location_t{loc});
+    auto s = func(userdata, new topo_location_t{loc});
     return s->ptr;
   };
   sk->ptr->each(_func, static_cast<flywave::topo::Mode>(mode), tag ? tag : "",
@@ -193,11 +236,11 @@ void sketch_each_for_sketch(sketch_t *sk,
 }
 
 void sketch_each_for_compound(
-    sketch_t *sk, topo_compound_t (*func)(const topo_location_t *location),
+    sketch_t *sk,void *userdata,  topo_compound_t (*func)(void *userdata, const topo_location_t *location),
     int mode, const char *tag, bool ignore_selection) {
   auto _func =
       [&](const flywave::topo::topo_location &loc) -> flywave::topo::compound {
-    auto c = func(new topo_location_t{loc});
+    auto c = func(userdata, new topo_location_t{loc});
     return *c.shp->shp->cast<flywave::topo::compound>();
   };
   sk->ptr->each(_func, static_cast<flywave::topo::Mode>(mode), tag ? tag : "",
@@ -427,27 +470,27 @@ void sketch_subtract(sketch_t *sk) { sk->ptr->subtract(); }
 
 void sketch_replace(sketch_t *sk) { sk->ptr->replace(); }
 
-void sketch_val_filter(sketch_t *sk, bool (*pred)(sketch_val_t *)) {
+void sketch_filter(sketch_t *sk,void *userdata, bool (*pred)(void *userdata,sketch_val_t *)) {
   sk->ptr->filter([&](const flywave::topo::sketch_val &val) {
-    return pred(new sketch_val_t{val});
+    return pred(userdata, new sketch_val_t{val});
   });
 }
 
-void sketch_val_map(sketch_t *sk, sketch_val_t *(*f)(sketch_val_t *)) {
+void sketch_map(sketch_t *sk,void *userdata, sketch_val_t *(*f)(void *userdata,sketch_val_t *)) {
   sk->ptr->map([&](const flywave::topo::sketch_val &val) {
-    auto v = f(new sketch_val_t{val});
+    auto v = f(userdata, new sketch_val_t{val});
     return v->val;
   });
 }
 
-void sketch_val_apply(sketch_t *sk, sketch_val_t **(*f)(sketch_val_t **, int)) {
+void sketch_apply(sketch_t *sk, void *userdata,sketch_val_t **(*f)(void *userdata,sketch_val_t **, int)) {
   sk->ptr->apply([&](const std::vector<flywave::topo::sketch_val> &val) {
     int count = static_cast<int>(val.size());
     auto vals = new sketch_val_t *[count];
     for (int i = 0; i < count; i++) {
       vals[i] = new sketch_val_t{val[i]};
     }
-    auto vecs = f(vals, count);
+    auto vecs = f(userdata, vals, count);
     for (int i = 0; i < count; i++) {
       delete vals[i];
     }
@@ -461,11 +504,11 @@ void sketch_val_apply(sketch_t *sk, sketch_val_t **(*f)(sketch_val_t **, int)) {
   });
 }
 
-void sketch_val_sort(sketch_t *sk,
-                     bool (*comp)(sketch_val_t *, sketch_val_t *)) {
+void sketch_sort(sketch_t *sk,void *userdata,
+                     bool (*comp)(void *userdata,sketch_val_t *, sketch_val_t *)) {
   sk->ptr->sort([&](const flywave::topo::sketch_val &a,
                     const flywave::topo::sketch_val &b) {
-    return comp(new sketch_val_t{a}, new sketch_val_t{b});
+    return comp(userdata, new sketch_val_t{a}, new sketch_val_t{b});
   });
 }
 

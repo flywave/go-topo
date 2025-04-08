@@ -81,11 +81,10 @@ topo_shape_t *assembly_element_get_shape(assembly_element_t *el) {
   return shape;
 }
 
-color_t *assembly_element_get_color(assembly_element_t *el) {
-  auto color = new color_t{.r = el->el.color->Red(),
-                           .g = el->el.color->Green(),
-                           .b = el->el.color->Blue()};
-  return color;
+color_t assembly_element_get_color(assembly_element_t *el) {
+  return color_t{.r = el->el.color->Red(),
+                 .g = el->el.color->Green(),
+                 .b = el->el.color->Blue()};
 }
 
 topo_location_t *assembly_element_get_location(assembly_element_t *el) {
@@ -231,11 +230,10 @@ void topo_shape_list_free(topo_shape_t **list, int size) {
   }
 }
 
-topo_compound_t *assembly_to_compound(assembly_t *as) {
-  auto comp = new topo_compound_t{
+topo_compound_t assembly_to_compound(assembly_t *as) {
+  return topo_compound_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::compound>(
                                   as->ptr->to_compound())}};
-  return comp;
 }
 
 assembly_element_t **assembly_get_elements(assembly_t *as, int *size) {
@@ -263,10 +261,9 @@ topo_location_t *assembly_get_location(assembly_t *as) {
   return loc;
 }
 
-color_t *assembly_get_color(assembly_t *as) {
+color_t assembly_get_color(assembly_t *as) {
   auto c = as->ptr->color();
-  auto color = new color_t{.r = c.Red(), .g = c.Green(), .b = c.Blue()};
-  return color;
+  return color_t{.r = c.Red(), .g = c.Green(), .b = c.Blue()};
 }
 
 assembly_object_t *assembly_get_object(assembly_t *as) {

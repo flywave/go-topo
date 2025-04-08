@@ -32,7 +32,7 @@ ASAPICALL _Bool assembly_object_is_workplane(assembly_object_t *obj);
 
 ASAPICALL const char *assembly_element_get_name(assembly_element_t *el);
 ASAPICALL topo_shape_t *assembly_element_get_shape(assembly_element_t *el);
-ASAPICALL color_t *assembly_element_get_color(assembly_element_t *el);
+ASAPICALL color_t assembly_element_get_color(assembly_element_t *el);
 ASAPICALL topo_location_t *
 assembly_element_get_location(assembly_element_t *el);
 ASAPICALL void assembly_element_free(assembly_element_t *el);
@@ -73,12 +73,12 @@ ASAPICALL void assembly_solve(assembly_t *as, int verbosity);
 ASAPICALL void assembly_export_to(assembly_t *as, const char *path, int mode);
 ASAPICALL topo_shape_t **assembly_shapes(assembly_t *as, int *size);
 ASAPICALL void topo_shape_list_free(topo_shape_t **list, int size);
-ASAPICALL topo_compound_t *assembly_to_compound(assembly_t *as);
+ASAPICALL topo_compound_t assembly_to_compound(assembly_t *as);
 ASAPICALL assembly_element_t **assembly_get_elements(assembly_t *as, int *size);
 ASAPICALL void assembly_element_list_free(assembly_element_t **list, int size);
 ASAPICALL const char *assembly_get_name(assembly_t *as);
 ASAPICALL topo_location_t *assembly_get_location(assembly_t *as);
-ASAPICALL color_t *assembly_get_color(assembly_t *as);
+ASAPICALL color_t assembly_get_color(assembly_t *as);
 ASAPICALL assembly_object_t *assembly_get_object(assembly_t *as);
 ASAPICALL assembly_t **assembly_children(assembly_t *as, int *size);
 ASAPICALL void assembly_list_free(assembly_t **list, int size);

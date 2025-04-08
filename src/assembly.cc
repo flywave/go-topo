@@ -213,8 +213,7 @@ struct document_raii {
 
 std::pair<TDF_Label, Handle(TDocStd_Document)>
 toCAF(const std::shared_ptr<assembly> &assy, bool coloredSTEP = false,
-      float tolerance = 1e-3f,
-      float angularTolerance = 0.1f) {
+      float tolerance = 1e-3f, float angularTolerance = 0.1f) {
   document_raii wrapper;
 
   Handle(XCAFDoc_ShapeTool) tool =
@@ -980,5 +979,20 @@ assembly::sub_location(const std::string &name) const {
 
   return {result_loc, top_name};
 }
+
+bool assembly::has_error() const { return (bool)(error_); }
+
+void assembly::set_error(const std::string &error) { error_ = error; }
+
+const std::string &assembly::error() const {
+  if (error_) {
+    return *error_;
+  }
+  static std::string empty;
+  return empty;
+}
+
+void assembly::clear_error() { error_.reset(); }
+
 } // namespace topo
 } // namespace flywave

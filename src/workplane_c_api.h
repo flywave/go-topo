@@ -15,8 +15,25 @@
 extern "C" {
 #endif
 
-typedef struct _shape_objectt_t shape_object_t;
+typedef struct _shape_object_t shape_object_t;
 typedef struct _workplane_t workplane_t;
+
+WORKPLANECAPICALL void shape_object_free(shape_object_t *obj);
+WORKPLANECAPICALL shape_object_t *
+shape_object_create_from_shape(topo_shape_t *shape);
+WORKPLANECAPICALL shape_object_t *
+shape_object_create_from_vector(topo_vector_t *vector);
+WORKPLANECAPICALL shape_object_t *
+shape_object_create_from_location(topo_location_t *location);
+WORKPLANECAPICALL shape_object_t *
+shape_object_create_from_sketch(sketch_t *sketch);
+WORKPLANECAPICALL shape_object_t *shape_object_create();
+WORKPLANECAPICALL int shape_object_type(shape_object_t *obj);
+WORKPLANECAPICALL topo_shape_t *shape_object_get_shape(shape_object_t *obj);
+WORKPLANECAPICALL topo_vector_t *shape_object_get_vector(shape_object_t *obj);
+WORKPLANECAPICALL topo_location_t *
+shape_object_get_location(shape_object_t *obj);
+WORKPLANECAPICALL sketch_t *shape_object_get_sketch(shape_object_t *obj);
 
 WORKPLANECAPICALL workplane_t *workplane_create();
 WORKPLANECAPICALL workplane_t *
@@ -52,8 +69,9 @@ WORKPLANECAPICALL void workplane_add_shapes(workplane_t *wp,
 WORKPLANECAPICALL workplane_t *workplane_from_tagged(workplane_t *wp,
                                                      const char *tag);
 
-WORKPLANECAPICALL topo_solid_t *
-workplane_find_solid(workplane_t *wp, bool searchStack, bool searchParents);
+WORKPLANECAPICALL topo_solid_t workplane_find_solid(workplane_t *wp,
+                                                    bool searchStack,
+                                                    bool searchParents);
 
 WORKPLANECAPICALL workplane_t *
 workplane_vertices(workplane_t *wp, const char *selector, const char *tag);
@@ -193,11 +211,13 @@ workplane_spline_approx(workplane_t *wp, topo_vector_t **points, int size,
                         topo_vector_t *smoothing, bool forConstruction,
                         bool includeCurrent, bool makeWire);
 WORKPLANECAPICALL workplane_t *
-workplane_parametric_curve(workplane_t *wp, pnt3d_t (*func)(double), int N,
+workplane_parametric_curve(workplane_t *wp, void *userdata,
+                           pnt3d_t (*func)(void *userdata, double), int N,
                            double start, double stop, double tol, int minDeg,
                            int maxDeg, topo_vector_t *smoothing, bool makeWire);
 WORKPLANECAPICALL workplane_t *
-workplane_parametric_surface(workplane_t *wp, pnt3d_t (*func)(double, double),
+workplane_parametric_surface(workplane_t *wp, void *userdata,
+                             pnt3d_t (*func)(void *userdata, double, double),
                              int N, double start, double stop, double tol,
                              int minDeg, int maxDeg, topo_vector_t *smoothing);
 WORKPLANECAPICALL workplane_t *
@@ -224,12 +244,13 @@ WORKPLANECAPICALL workplane_t *workplane_mirror_y(workplane_t *wp);
 WORKPLANECAPICALL workplane_t *workplane_mirror_x(workplane_t *wp);
 WORKPLANECAPICALL workplane_t *workplane_consolidate_wires(workplane_t *wp);
 
-WORKPLANECAPICALL workplane_t *workplane_each(workplane_t *wp,
-                                              void (*func)(shape_object_t *),
-                                              bool useLocalCoordinates,
-                                              bool combine, bool clean);
 WORKPLANECAPICALL workplane_t *
-workplane_eachpoint(workplane_t *wp, void (*func)(shape_object_t *),
+workplane_each(workplane_t *wp, void *userdata,
+               void (*func)(void *userdata, shape_object_t *),
+               bool useLocalCoordinates, bool combine, bool clean);
+WORKPLANECAPICALL workplane_t *
+workplane_eachpoint(workplane_t *wp, void *userdata,
+                    void (*func)(void *userdata, shape_object_t *),
                     bool useLocalCoordinates, bool combine, bool clean);
 WORKPLANECAPICALL workplane_t *
 workplane_eachpoint_with_shape(workplane_t *wp, topo_shape_t *shapeObj,
@@ -240,7 +261,8 @@ workplane_eachpoint_with_workplane(workplane_t *wp, workplane_t *wp2,
                                    bool useLocalCoordinates, bool combine,
                                    bool clean);
 WORKPLANECAPICALL workplane_t *workplane_eachpoint_with_location(
-    workplane_t *wp, topo_shape_t *(*func)(topo_location_t *loc),
+    workplane_t *wp, void *userdata,
+    topo_shape_t *(*func)(void *userdata, topo_location_t *loc),
     bool useLocalCoordinates, bool combine, bool clean);
 WORKPLANECAPICALL workplane_t *workplane_rect(workplane_t *wp, double xLen,
                                               double yLen, bool centerX,
@@ -264,7 +286,8 @@ workplane_polyline(workplane_t *wp, topo_vector_t **points, int size,
 WORKPLANECAPICALL workplane_t *workplane_close(workplane_t *wp);
 WORKPLANECAPICALL double workplane_largest_dimension(workplane_t *wp);
 WORKPLANECAPICALL workplane_t *
-workplane_cut_each(workplane_t *wp, topo_shape_t *(*fcn)(topo_location_t *loc),
+workplane_cut_each(workplane_t *wp, void *userdata,
+                   topo_shape_t *(*fcn)(void *userdata, topo_location_t *loc),
                    bool useLocalCoordinates, bool clean);
 WORKPLANECAPICALL workplane_t *
 workplane_cbore_hole(workplane_t *wp, double diameter, double cboreDiameter,
@@ -425,17 +448,22 @@ WORKPLANECAPICALL workplane_t *workplane_get_indices(workplane_t *wp,
                                                      int *indices, int size);
 
 WORKPLANECAPICALL workplane_t *
-workplane_filter(workplane_t *wp, bool (*predicate)(shape_object_t *obj));
+workplane_filter(workplane_t *wp, void *userdate,
+                 bool (*predicate)(void *userdate, shape_object_t *obj));
 WORKPLANECAPICALL workplane_t *
-workplane_map(workplane_t *wp, shape_object_t *(*mapper)(shape_object_t *obj));
+workplane_map(workplane_t *wp, void *userdate,
+              shape_object_t *(*mapper)(void *userdate, shape_object_t *obj));
 WORKPLANECAPICALL workplane_t *
-workplane_apply(workplane_t *wp,
-                shape_object_t **(*applier)(shape_object_t **objs, int count));
+workplane_apply(workplane_t *wp, void *userdate,
+                shape_object_t **(*applier)(void *userdate,
+                                            shape_object_t **objs, int count));
 WORKPLANECAPICALL workplane_t *
-workplane_sort(workplane_t *wp,
-               bool (*comparator)(shape_object_t *obj1, shape_object_t *obj2));
+workplane_sort(workplane_t *wp, void *userdate,
+               bool (*comparator)(void *userdate, shape_object_t *obj1,
+                                  shape_object_t *obj2));
+WORKPLANECAPICALL void workplane_invoke(workplane_t *wp, void *userdate,
+                                        workplane_t *(*fcn)(void *userdate));
 
-WORKPLANECAPICALL void workplane_invoke(workplane_t *wp, workplane_t *(*fcn)());
 WORKPLANECAPICALL void workplane_export_to(workplane_t *wp, const char *path);
 WORKPLANECAPICALL sketch_t *workplane_sketck(workplane_t *wp);
 
@@ -445,9 +473,12 @@ WORKPLANECAPICALL workplane_t *workplane_last(workplane_t *wp);
 WORKPLANECAPICALL workplane_t *workplane_end(workplane_t *wp, int n);
 
 WORKPLANECAPICALL workplane_t **workplane_all(workplane_t *wp, int *count);
-WORKPLANECAPICALL shape_object_t **workplane_shapes(workplane_t *wp,
+WORKPLANECAPICALL void workplane_list_free(workplane_t **list, int count);
+WORKPLANECAPICALL topo_shape_t **workplane_shapes(workplane_t *wp,
                                                     int *count);
+WORKPLANECAPICALL void shape_list_free(topo_shape_t **list, int count);
 WORKPLANECAPICALL shape_object_t **workplane_vals(workplane_t *wp, int *count);
+WORKPLANECAPICALL void shape_objects_free(shape_object_t **list, int count);
 WORKPLANECAPICALL shape_object_t *workplane_val(workplane_t *wp);
 WORKPLANECAPICALL int workplane_size(workplane_t *wp);
 WORKPLANECAPICALL bool workplane_has_parent(workplane_t *wp);

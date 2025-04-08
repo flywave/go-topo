@@ -151,13 +151,13 @@ func (s *CompSolid) SetOrientation(t int) {
 	C.topo_shape_set_orientation(s.inner.val.shp, C.int(t))
 }
 
-func (s *CompSolid) GetLocation() *Location {
-	p := &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
-	runtime.SetFinalizer(p.inner, (*innerLocation).free)
+func (s *CompSolid) GetLocation() *TopoLocation {
+	p := &TopoLocation{inner: &innerTopoLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	runtime.SetFinalizer(p.inner, (*innerTopoLocation).free)
 	return p
 }
 
-func (s *CompSolid) SetLocation(t *Location) {
+func (s *CompSolid) SetLocation(t *TopoLocation) {
 	C.topo_shape_set_location(s.inner.val.shp, t.inner.val)
 }
 
@@ -450,7 +450,7 @@ func (s *CompSolid) RevolutionForm(w *Wire, p *GeomPlane, a Axis1, h1, h2 float6
 
 func (s *CompSolid) SectionFace(pnt, nor Point3) *Face {
 	p := &Face{inner: &innerFace{val: C.topo_solid_section_face(s.solid(), pnt.val, nor.val)}}
-	runtime.SetFinalizer(p.inner, (*innerLocation).free)
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
 	return p
 }
 

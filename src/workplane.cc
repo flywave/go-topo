@@ -488,6 +488,10 @@ struct shape_type_visitor : public boost::static_visitor<shape_object_type> {
   }
 };
 
+shape_object_type workplane::get_shape_object_type(const shape_object &obj) {
+  return boost::apply_visitor(shape_type_visitor(), obj);
+}
+
 shape workplane::find_type(const std::vector<shape_object_type> &types,
                            bool searchStack, bool searchParents) const {
   std::vector<shape> rv;

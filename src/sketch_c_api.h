@@ -24,8 +24,20 @@ SKETCHCAPICALL sketch_val_t *sketch_val_create_from_shape(topo_shape_t *shape);
 SKETCHCAPICALL sketch_val_t *
 sketch_val_create_from_location(topo_location_t *location);
 SKETCHCAPICALL void sketch_val_free(sketch_val_t *obj);
+SKETCHCAPICALL bool sketch_val_is_shape(sketch_val_t *obj);
+SKETCHCAPICALL bool sketch_val_is_location(sketch_val_t *obj);
 SKETCHCAPICALL topo_shape_t *sketch_val_get_shape(sketch_val_t *obj);
 SKETCHCAPICALL topo_location_t *sketch_val_get_location(sketch_val_t *obj);
+
+SKETCHCAPICALL sketch_constraint_value_t *
+sketch_constraint_value_create_blank();
+SKETCHCAPICALL sketch_constraint_value_t *
+sketch_constraint_value_create_double(double val);
+SKETCHCAPICALL sketch_constraint_value_t *
+sketch_constraint_value_create_double3(double val1, double val2, double val3);
+SKETCHCAPICALL sketch_constraint_value_t *
+sketch_constraint_value_create_double2(double val1, double val2);
+SKETCHCAPICALL void sketch_constraint_value_free(sketch_constraint_value_t *obj);
 
 SKETCHCAPICALL sketch_t *sketch_create_from_workplane(workplane_t *inPlane,
                                                       topo_location_t *location,
@@ -66,15 +78,15 @@ SKETCHCAPICALL void sketch_parray(sketch_t *sk, double r, double a1, double da,
                                   const char *tag);
 
 SKETCHCAPICALL void
-sketch_each_for_face(sketch_t *sk,
-                     topo_face_t (*func)(const topo_location_t *location),
+sketch_each_for_face(sketch_t *sk,void *userdata, 
+                     topo_face_t (*func)(void *userdata, const topo_location_t *location),
                      int mode, const char *tag, bool ignore_selection);
 SKETCHCAPICALL void
-sketch_each_for_sketch(sketch_t *sk,
-                       sketch_t *(*func)(const topo_location_t *location),
+sketch_each_for_sketch(sketch_t *sk,void *userdata,
+                       sketch_t *(*func)(void *userdata, const topo_location_t *location),
                        int mode, const char *tag, bool ignore_selection);
 SKETCHCAPICALL void sketch_each_for_compound(
-    sketch_t *sk, topo_compound_t (*func)(const topo_location_t *location),
+    sketch_t *sk, void *userdata, topo_compound_t (*func)(void *userdata, const topo_location_t *location),
     int mode, const char *tag, bool ignore_selection);
 
 SKETCHCAPICALL void sketch_distribute(sketch_t *sk, int n, double start,
@@ -163,13 +175,14 @@ SKETCHCAPICALL void sketch_add(sketch_t *sk);
 SKETCHCAPICALL void sketch_subtract(sketch_t *sk);
 SKETCHCAPICALL void sketch_replace(sketch_t *sk);
 
-SKETCHCAPICALL void sketch_val_filter(sketch_t *sk,
-                                      bool (*pred)(sketch_val_t *));
-SKETCHCAPICALL void sketch_val_map(sketch_t *sk,
-                                   sketch_val_t *(*f)(sketch_val_t *));
-SKETCHCAPICALL void sketch_val_apply(sketch_t *sk,
-                                     sketch_val_t **(*f)(sketch_val_t **, int));
-SKETCHCAPICALL void sketch_val_sort(sketch_t *sk, bool (*comp)(sketch_val_t *,
+
+SKETCHCAPICALL void sketch_filter(sketch_t *sk,void *userdata,
+                                      bool (*pred)(void *userdata, sketch_val_t *));
+SKETCHCAPICALL void sketch_map(sketch_t *sk,void *userdata,
+                                   sketch_val_t *(*f)(void *userdata, sketch_val_t *));
+SKETCHCAPICALL void sketch_apply(sketch_t *sk,void *userdata,
+                                     sketch_val_t **(*f)(void *userdata, sketch_val_t **, int));
+SKETCHCAPICALL void sketch_sort(sketch_t *sk, void *userdata, bool (*comp)(void *userdata, sketch_val_t *,
                                                                sketch_val_t *));
 
 #ifdef __cplusplus

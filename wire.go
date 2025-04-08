@@ -169,13 +169,13 @@ func (s *Wire) SetOrientation(t int) {
 	C.topo_shape_set_orientation(s.inner.val.shp, C.int(t))
 }
 
-func (s *Wire) GetLocation() *Location {
-	sp := &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+func (s *Wire) GetLocation() *TopoLocation {
+	sp := &TopoLocation{inner: &innerTopoLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
 	runtime.SetFinalizer(sp.inner, (*innerShape).free)
 	return sp
 }
 
-func (s *Wire) SetLocation(t *Location) {
+func (s *Wire) SetLocation(t *TopoLocation) {
 	C.topo_shape_set_location(s.inner.val.shp, t.inner.val)
 }
 

@@ -55,7 +55,8 @@ const std::string &context::error() const {
   if (error_) {
     return *error_;
   }
-  return "";
+  static std::string empty;
+  return empty;
 }
 
 void context::clear_error() { error_.reset(); }

@@ -169,13 +169,13 @@ func (s *Face) SetOrientation(t int) {
 	C.topo_shape_set_orientation(s.inner.val.shp, C.int(t))
 }
 
-func (s *Face) GetLocation() *Location {
-	p := &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
-	runtime.SetFinalizer(p.inner, (*innerLocation).free)
+func (s *Face) GetLocation() *TopoLocation {
+	p := &TopoLocation{inner: &innerTopoLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	runtime.SetFinalizer(p.inner, (*innerTopoLocation).free)
 	return p
 }
 
-func (s *Face) SetLocation(t *Location) {
+func (s *Face) SetLocation(t *TopoLocation) {
 	C.topo_shape_set_location(s.inner.val.shp, t.inner.val)
 }
 

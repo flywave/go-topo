@@ -121,6 +121,14 @@ public:
 
   std::vector<std::shared_ptr<assembly>> children() const { return children_; }
 
+  bool has_error() const;
+
+  void set_error(const std::string &error);
+
+  const std::string &error() const;
+
+  void clear_error();
+
 protected:
   assembly(assembly_object obj = boost::blank{},
            std::shared_ptr<topo_location> loc = nullptr,
@@ -155,6 +163,7 @@ private:
 
   std::unordered_map<std::string, std::shared_ptr<assembly>> objects_;
   std::vector<constraint_spec> constraints_;
+  boost::optional<std::string> error_;
 
   boost::optional<std::map<std::string, double>> solve_result_;
 };

@@ -169,13 +169,13 @@ func (s *Solid) SetOrientation(t int) {
 	C.topo_shape_set_orientation(s.inner.val.shp, C.int(t))
 }
 
-func (s *Solid) GetLocation() *Location {
-	p := &Location{inner: &innerLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
-	runtime.SetFinalizer(p.inner, (*innerLocation).free)
+func (s *Solid) GetLocation() *TopoLocation {
+	p := &TopoLocation{inner: &innerTopoLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
+	runtime.SetFinalizer(p.inner, (*innerTopoLocation).free)
 	return p
 }
 
-func (s *Solid) SetLocation(t *Location) {
+func (s *Solid) SetLocation(t *TopoLocation) {
 	C.topo_shape_set_location(s.inner.val.shp, t.inner.val)
 }
 
@@ -522,7 +522,7 @@ func TopoMakeSolidFromFaces(S []Face, tolerance float64) *Solid {
 
 func TopoMakeSolidFromBox(dx, dy, dz float64) *Solid {
 	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_box(C.double(dx), C.double(dy), C.double(dz))}}
-	runtime.SetFinalizer(sld.inner, (*innerLocation).free)
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
 	return sld
 }
 
@@ -552,7 +552,7 @@ func TopoMakeSolidFromCylinder(R, H float64) *Solid {
 
 func TopoMakeSolidFromCylinderAngle(R, H, Angle float64) *Solid {
 	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_cylinder_angle(C.double(R), C.double(H), C.double(Angle))}}
-	runtime.SetFinalizer(sld.inner, (*innerLocation).free)
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
 	return sld
 }
 
