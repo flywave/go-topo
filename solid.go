@@ -292,6 +292,10 @@ func (s *Solid) GetRotationAngle() float64 {
 	return float64(C.topo_shape_get_rotation_angle(s.inner.val.shp))
 }
 
+func (s *Solid) IsInside(p Point3, tol float64) bool {
+	return bool(C.topo_solid_is_inside(s.inner.val, p.val, C.double(tol)))
+}
+
 func (s *Solid) NumSolids() int {
 	return int(C.topo_solid_num_solids(s.inner.val))
 }
@@ -322,6 +326,115 @@ func (s *Solid) Extrude(f *Face, p1, p2 Point3) int {
 
 func (s *Solid) ExtrudeFromDir(f *Face, d Vector3) int {
 	return int(C.topo_solid_extrude_from_dir(s.inner.val, f.inner.val, d.val))
+}
+
+func (s *Solid) OuterShell() *Shell {
+	sh := &Shell{inner: &innerShell{val: C.topo_solid_outer_shell(s.inner.val)}}
+	runtime.SetFinalizer(sh.inner, (*innerShell).free)
+	return sh
+}
+
+func (s *Solid) InnerShells() []*Shell {
+	var count C.int
+	cShells := C.topo_solid_inner_shells(s.inner.val, &count)
+	ccShellsSlice := (*[1 << 30]C.struct__topo_shell_t)(unsafe.Pointer(cShells))[:count:count]
+	shells := make([]*Shell, int(count))
+	for i := 0; i < int(count); i++ {
+		sh := &Shell{inner: &innerShell{val: ccShellsSlice[i]}}
+		runtime.SetFinalizer(sh.inner, (*innerShell).free)
+		shells[i] = sh
+	}
+	return shells
+}
+
+func (s *Solid) ExtrudeWithRotationFromWire(outerWire *Wire, innerWires []*Wire, vecCenter Point3, vecNormal Vector3, angleDegrees float64) int {
+	innerCount := len(innerWires)
+	cWires := make([]C.struct__topo_wire_t, innerCount)
+	for i, w := range innerWires {
+		cWires[i] = w.inner.val
+	}
+
+	var cWiresPtr *C.struct__topo_wire_t
+	if innerCount > 0 {
+		cWiresPtr = &cWires[0]
+	}
+
+	return int(C.topo_solid_extrude_with_rotation_from_wire(
+		s.inner.val, outerWire.inner.val, cWiresPtr, C.int(innerCount),
+		vecCenter.val, vecNormal.val, C.double(angleDegrees)))
+}
+
+func (s *Solid) ExtrudeWithRotationFromFace(face *Face, vecCenter Point3, vecNormal Vector3, angleDegrees float64) int {
+	return int(C.topo_solid_extrude_with_rotation_from_face(
+		s.inner.val, face.inner.val, vecCenter.val, vecNormal.val,
+		C.double(angleDegrees)))
+}
+
+func (s *Solid) SweepWire(spine *Wire, profiles []*Wire, cornerMode int) int {
+	count := len(profiles)
+	cProfiles := make([]C.struct__topo_wire_t, count)
+	for i, w := range profiles {
+		cProfiles[i] = w.inner.val
+	}
+
+	var cProfilesPtr *C.struct__topo_wire_t
+	if count > 0 {
+		cProfilesPtr = &cProfiles[0]
+	}
+
+	return int(C.topo_solid_sweep_wire(
+		s.inner.val, spine.inner.val, cProfilesPtr, C.int(count), C.int(cornerMode)))
+}
+
+func (s *Solid) SweepMultiFromVector(profiles []*Shape, path *Shape, makeSolid, isFrenet bool, vec *TopoVector) int {
+	count := len(profiles)
+	cProfiles := make([]*C.struct__topo_shape_t, count)
+	for i, p := range profiles {
+		cProfiles[i] = p.inner.val
+	}
+
+	var cProfilesPtr **C.struct__topo_shape_t
+	if count > 0 {
+		cProfilesPtr = &cProfiles[0]
+	}
+
+	return int(C.topo_solid_sweep_multi_from_vector(
+		s.inner.val, cProfilesPtr, C.int(count), path.inner.val,
+		C.bool(makeSolid), C.bool(isFrenet), vec.inner.val))
+}
+
+func (s *Solid) SweepMultiFromWire(profiles []*Shape, path *Shape, makeSolid, isFrenet bool, wire *Wire) int {
+	count := len(profiles)
+	cProfiles := make([]*C.struct__topo_shape_t, count)
+	for i, p := range profiles {
+		cProfiles[i] = p.inner.val
+	}
+
+	var cProfilesPtr **C.struct__topo_shape_t
+	if count > 0 {
+		cProfilesPtr = &cProfiles[0]
+	}
+
+	return int(C.topo_solid_sweep_multi_from_wire(
+		s.inner.val, cProfilesPtr, C.int(count), path.inner.val,
+		C.bool(makeSolid), C.bool(isFrenet), &wire.inner.val))
+}
+
+func (s *Solid) SweepMultiFromEdge(profiles []*Shape, path *Shape, makeSolid, isFrenet bool, edge *Edge) int {
+	count := len(profiles)
+	cProfiles := make([]*C.struct__topo_shape_t, count)
+	for i, p := range profiles {
+		cProfiles[i] = p.inner.val
+	}
+
+	var cProfilesPtr **C.struct__topo_shape_t
+	if count > 0 {
+		cProfilesPtr = &cProfiles[0]
+	}
+
+	return int(C.topo_solid_sweep_multi_from_edge(
+		s.inner.val, cProfilesPtr, C.int(count), path.inner.val,
+		C.bool(makeSolid), C.bool(isFrenet), &edge.inner.val))
 }
 
 func (s *Solid) Revolve(f *Face, p1, p2 Point3, angle float64) int {
@@ -774,6 +887,16 @@ func TopoMakeSolidFromSphereWedgeLimit(dx, dy, dz, xmin, zmin, xmax, zmax float6
 
 func TopoMakeSolidFromSphereWedgeAxis2Limit(a Axis2, dx, dy, dz, xmin, zmin, xmax, zmax float64) *Solid {
 	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_wedge_axis2_limit(a.val, C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax))}}
+	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
+	return sld
+}
+
+func TopoMakeSolidFromLoft(wires []Wire, ruled bool) *Solid {
+	cshp := make([]C.struct__topo_wire_t, len(wires))
+	for i := range wires {
+		cshp[i] = wires[i].inner.val
+	}
+	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_loft(&cshp[0], C.int(len(wires)), C.bool(ruled))}}
 	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
 	return sld
 }

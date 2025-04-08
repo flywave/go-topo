@@ -316,6 +316,12 @@ func (t *Face) CentreOfMass() Point3 {
 	return Point3{val: C.topo_face_centre_of_mass(t.inner.val)}
 }
 
+func (t *Face) ToPlane() *TopoPlane {
+	p := &TopoPlane{inner: &innerTopoPlane{val: C.topo_face_to_plane(t.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerTopoPlane).free)
+	return p
+}
+
 func (t *Face) Offset(offset, tolerance float64) int {
 	return int(C.topo_face_offset(t.inner.val, C.double(offset), C.double(tolerance)))
 }
@@ -336,6 +342,14 @@ func (s *Face) Sweep(spine *Wire, profiles []Shape, cornerMode int) int {
 	return int(C.topo_face_sweep(s.inner.val, spine.inner.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
 }
 
+func (s *Face) SweepWire(spine *Wire, profiles []Wire, cornerMode int) int {
+	cshp := make([]C.struct__topo_wire_t, len(profiles))
+	for i := range profiles {
+		cshp[i] = profiles[i].inner.val
+	}
+	return int(C.topo_face_sweep_wire(s.inner.val, spine.inner.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
+}
+
 func (t *Face) Loft(profiles []Shape, ruled bool, tolerance float64) int {
 	prs := make([]*C.struct__topo_shape_t, len(profiles))
 	for i := range profiles {
@@ -346,6 +360,196 @@ func (t *Face) Loft(profiles []Shape, ruled bool, tolerance float64) int {
 
 func (t *Face) Boolean(tool *Face, op int) int {
 	return int(C.topo_face_boolean(t.inner.val, tool.inner.val, C.int(op)))
+}
+
+func (f *Face) UVBounds() (uMin, uMax, vMin, vMax float64) {
+	C.topo_face_uv_bounds(f.inner.val, (*C.double)(&uMin), (*C.double)(&uMax),
+		(*C.double)(&vMin), (*C.double)(&vMax))
+	return
+}
+
+func (f *Face) ParamAt(pt Point3) (u, v float64) {
+	C.topo_face_param_at(f.inner.val, pt.val, (*C.double)(&u), (*C.double)(&v))
+	return
+}
+
+func (f *Face) Params(pts []Point3, tol float64) ([]float64, []float64) {
+	count := len(pts)
+	cPoints := make([]C.pnt3d_t, count)
+	us := make([]float64, count)
+	vs := make([]float64, count)
+
+	for i := range pts {
+		cPoints[i] = pts[i].val
+	}
+
+	C.topo_face_params(f.inner.val, &cPoints[0], C.int(count),
+		(*C.double)(&us[0]), (*C.double)(&vs[0]), C.double(tol))
+	return us, vs
+}
+
+func (f *Face) PositionAt(u, v float64) Point3 {
+	return Point3{val: C.topo_face_position_at(f.inner.val, C.double(u), C.double(v))}
+}
+
+func (f *Face) Positions(us, vs []float64) []Point3 {
+	count := len(us)
+	points := make([]Point3, count)
+	cPoints := make([]C.pnt3d_t, count)
+	cUs := make([]float64, count)
+	cVs := make([]float64, count)
+	copy(cUs, us)
+	copy(cVs, vs)
+
+	C.topo_face_positions(f.inner.val, (*C.double)(&cUs[0]), (*C.double)(&cVs[0]),
+		C.int(count), &cPoints[0])
+
+	for i := range cPoints {
+		points[i] = Point3{val: cPoints[i]}
+	}
+	return points
+}
+
+func (f *Face) NormalAt(location Point3) Vector3 {
+	return Vector3{val: C.topo_face_normal_at(f.inner.val, &location.val)}
+}
+
+func (f *Face) NormalAtUV(u, v float64) (Vector3, Point3) {
+	var normal C.vec3d_t
+	var point C.pnt3d_t
+	C.topo_face_normal_at_uv(f.inner.val, C.double(u), C.double(v), &normal, &point)
+	return Vector3{val: normal}, Point3{val: point}
+}
+
+func (f *Face) Normals(us, vs []float64) ([]Vector3, []Point3) {
+	count := len(us)
+	normals := make([]Vector3, count)
+	points := make([]Point3, count)
+	cNormals := make([]C.vec3d_t, count)
+	cPoints := make([]C.pnt3d_t, count)
+	cUs := make([]float64, count)
+	cVs := make([]float64, count)
+	copy(cUs, us)
+	copy(cVs, vs)
+
+	C.topo_face_normals(f.inner.val, (*C.double)(&cUs[0]), (*C.double)(&cVs[0]),
+		C.int(count), &cNormals[0], &cPoints[0])
+
+	for i := range cNormals {
+		normals[i] = Vector3{val: cNormals[i]}
+		points[i] = Point3{val: cPoints[i]}
+	}
+	return normals, points
+}
+
+func (f *Face) Fillet2D(radius float64, vertices []*Vertex) *Face {
+	count := len(vertices)
+	cVertices := make([]C.struct__topo_vertex_t, count)
+	for i, v := range vertices {
+		cVertices[i] = v.inner.val
+	}
+	p := &Face{inner: &innerFace{val: C.topo_face_fillet2d(f.inner.val,
+		C.double(radius), &cVertices[0], C.int(count))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
+}
+
+func (f *Face) Chamfer2D(distance float64, vertices []*Vertex) *Face {
+	count := len(vertices)
+	cVertices := make([]C.struct__topo_vertex_t, count)
+	for i, v := range vertices {
+		cVertices[i] = v.inner.val
+	}
+	p := &Face{inner: &innerFace{val: C.topo_face_chamfer2d(f.inner.val,
+		C.double(distance), &cVertices[0], C.int(count))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
+}
+
+func (f *Face) Thicken(thickness float64) *Solid {
+	p := &Solid{inner: &innerSolid{val: C.topo_face_thicken(f.inner.val, C.double(thickness))}}
+	runtime.SetFinalizer(p.inner, (*innerSolid).free)
+	return p
+}
+
+func (f *Face) Project(other *Face, direction Vector3) *Face {
+	p := &Face{inner: &innerFace{val: C.topo_face_project(f.inner.val,
+		other.inner.val, direction.val)}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
+}
+
+func (f *Face) ToArcs(tolerance float64) *Face {
+	p := &Face{inner: &innerFace{val: C.topo_face_to_arcs(f.inner.val, C.double(tolerance))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
+}
+
+func (f *Face) Trim(u0, u1, v0, v1, tol float64) *Face {
+	p := &Face{inner: &innerFace{val: C.topo_face_trim(f.inner.val,
+		C.double(u0), C.double(u1), C.double(v0), C.double(v1), C.double(tol))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
+}
+
+func (f *Face) Isoline(param float64, direction string) *Edge {
+	cDir := C.CString(direction)
+	defer C.free(unsafe.Pointer(cDir))
+	p := &Edge{inner: &innerEdge{val: C.topo_face_isoline(f.inner.val,
+		C.double(param), cDir)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
+func (f *Face) Isolines(params []float64, direction string) []*Edge {
+	count := len(params)
+	cParams := make([]float64, count)
+	copy(cParams, params)
+	cDir := C.CString(direction)
+	defer C.free(unsafe.Pointer(cDir))
+
+	var resultCount C.int
+	edges := C.topo_face_isolines(f.inner.val, (*C.double)(&cParams[0]),
+		C.int(count), cDir, &resultCount)
+	if edges == nil {
+		return nil
+	}
+	defer C.free(unsafe.Pointer(edges))
+
+	edgeSlice := (*[1 << 30]C.struct__topo_edge_t)(unsafe.Pointer(edges))[:resultCount:resultCount]
+	result := make([]*Edge, resultCount)
+
+	for i := range edgeSlice {
+		result[i] = &Edge{inner: &innerEdge{val: edgeSlice[i]}}
+		runtime.SetFinalizer(result[i].inner, (*innerEdge).free)
+	}
+
+	return result
+}
+
+func (f *Face) OuterWire() *Wire {
+	p := &Wire{inner: &innerWire{val: C.topo_face_outer_wire(f.inner.val)}}
+	runtime.SetFinalizer(p.inner, (*innerWire).free)
+	return p
+}
+
+func (f *Face) InnerWires() []*Wire {
+	var count C.int
+	wires := C.topo_face_inner_wires(f.inner.val, &count)
+	if wires == nil {
+		return nil
+	}
+	defer C.free(unsafe.Pointer(wires))
+
+	wireSlice := (*[1 << 30]C.struct__topo_wire_t)(unsafe.Pointer(wires))[:count:count]
+	result := make([]*Wire, count)
+
+	for i := range wireSlice {
+		result[i] = &Wire{inner: &innerWire{val: wireSlice[i]}}
+		runtime.SetFinalizer(result[i].inner, (*innerWire).free)
+	}
+
+	return result
 }
 
 func (t *Face) ToShape() *Shape {
@@ -507,6 +711,103 @@ func TopoMakeFaceFromPoints(pts []Point3) *Face {
 		cpts[i] = pts[i].val
 	}
 	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_points(&cpts[0], C.int(len(pts)))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
+}
+
+func TopoMakeFaceFromOuterAndInners(outer *Wire, inners []*Wire) []*Face {
+	innerCount := len(inners)
+	cInners := make([]C.struct__topo_wire_t, innerCount)
+	for i, w := range inners {
+		cInners[i] = w.inner.val
+	}
+
+	var cInnersPtr *C.struct__topo_wire_t
+	if innerCount > 0 {
+		cInnersPtr = &cInners[0]
+	}
+
+	var resultCount C.int
+	cFace := C.topo_face_make_from_wires(outer.inner.val, cInnersPtr, C.int(innerCount), &resultCount)
+	defer C.topo_face_list_free(cFace, resultCount)
+	cfaceSlice := (*[1 << 30]C.struct__topo_face_t)(unsafe.Pointer(cFace))[:resultCount:resultCount]
+	faces := make([]*Face, int(resultCount))
+	for i := 0; i < int(resultCount); i++ {
+		faces[i] = &Face{inner: &innerFace{val: cfaceSlice[i]}}
+		runtime.SetFinalizer(faces[i].inner, (*innerFace).free)
+	}
+	return faces
+}
+
+func TopoMakeComplexFace(edges []*Shape, constraints []*Shape, continuity, degree int,
+	nbPtsOnCurve, nbIter int, anisotropy bool, tol2d, tol3d, tolAngle, tolCurv float64,
+	maxDegree, maxSegments int) *Face {
+
+	edgeCount := len(edges)
+	cEdges := make([]*C.struct__topo_shape_t, edgeCount)
+	for i, e := range edges {
+		cEdges[i] = e.inner.val
+	}
+
+	constraintCount := len(constraints)
+	cConstraints := make([]*C.struct__topo_shape_t, constraintCount)
+	for i, c := range constraints {
+		cConstraints[i] = c.inner.val
+	}
+
+	var cEdgesPtr **C.struct__topo_shape_t
+	if edgeCount > 0 {
+		cEdgesPtr = &cEdges[0]
+	}
+
+	var cConstraintsPtr **C.struct__topo_shape_t
+	if constraintCount > 0 {
+		cConstraintsPtr = &cConstraints[0]
+	}
+
+	p := &Face{inner: &innerFace{val: C.topo_face_make_complex(
+		cEdgesPtr, C.int(edgeCount), cConstraintsPtr, C.int(constraintCount),
+		C.int(continuity), C.int(degree), C.int(nbPtsOnCurve), C.int(nbIter),
+		C.bool(anisotropy), C.double(tol2d), C.double(tol3d),
+		C.double(tolAngle), C.double(tolCurv), C.int(maxDegree),
+		C.int(maxSegments))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
+}
+
+func TopoMakePlaneFace(basePoint Point3, direction Dir3, length, width float64) *Face {
+	p := &Face{inner: &innerFace{val: C.topo_face_make_plane(
+		basePoint.val, direction.val, (*C.double)(&length), (*C.double)(&width))}}
+	runtime.SetFinalizer(p.inner, (*innerFace).free)
+	return p
+}
+
+func TopoMakeSplineApproxFace(points [][]Point3, tol float64, smoothing []float64,
+	minDegree, maxDegree int) *Face {
+
+	pointArraySize := len(points)
+	pointCounts := make([]C.int, pointArraySize)
+	totalPoints := 0
+
+	// 计算总点数并填充pointCounts数组
+	for i, pts := range points {
+		pointCounts[i] = C.int(len(pts))
+		totalPoints += len(pts)
+	}
+
+	// 创建连续的点数组
+	cPoints := make([]C.pnt3d_t, totalPoints)
+	index := 0
+	for _, pts := range points {
+		for _, pt := range pts {
+			cPoints[index] = pt.val
+			index++
+		}
+	}
+
+	p := &Face{inner: &innerFace{val: C.topo_face_make_spline_approx(
+		&cPoints[0], &pointCounts[0], C.int(pointArraySize), C.double(tol),
+		(*C.double)(&smoothing[0]), C.int(minDegree), C.int(maxDegree))}}
 	runtime.SetFinalizer(p.inner, (*innerFace).free)
 	return p
 }

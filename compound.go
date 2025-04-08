@@ -282,6 +282,10 @@ func (t *Compound) solid() C.struct__topo_solid_t {
 	return val
 }
 
+func (s *Compound) IsInside(p Point3, tol float64) bool {
+	return bool(C.topo_solid_is_inside(s.solid(), p.val, C.double(tol)))
+}
+
 func (t *Compound) ToShape() *Shape {
 	sp := &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
 	runtime.SetFinalizer(sp.inner, (*innerShape).free)
@@ -312,6 +316,10 @@ func (s *Compound) Volume() float64 {
 	return float64(C.topo_solid_volume(s.solid()))
 }
 
+func (s *Compound) Remove(shp *Shape) {
+	C.topo_compound_remove(s.inner.val, shp.inner.val)
+}
+
 func (s *Compound) Inertia() BBox {
 	return BBox{val: C.topo_solid_inertia(s.solid())}
 }
@@ -326,6 +334,96 @@ func (s *Compound) Extrude(f *Face, p1, p2 Point3) int {
 
 func (s *Compound) ExtrudeFromDir(f *Face, d Vector3) int {
 	return int(C.topo_solid_extrude_from_dir(s.solid(), f.inner.val, d.val))
+}
+
+func (s *Compound) ExtrudeWithRotationFromWire(outerWire *Wire, innerWires []*Wire, vecCenter Point3, vecNormal Vector3, angleDegrees float64) int {
+	innerCount := len(innerWires)
+	cWires := make([]C.struct__topo_wire_t, innerCount)
+	for i, w := range innerWires {
+		cWires[i] = w.inner.val
+	}
+
+	var cWiresPtr *C.struct__topo_wire_t
+	if innerCount > 0 {
+		cWiresPtr = &cWires[0]
+	}
+
+	return int(C.topo_solid_extrude_with_rotation_from_wire(
+		s.solid(), outerWire.inner.val, cWiresPtr, C.int(innerCount),
+		vecCenter.val, vecNormal.val, C.double(angleDegrees)))
+}
+
+func (s *Compound) ExtrudeWithRotationFromFace(face *Face, vecCenter Point3, vecNormal Vector3, angleDegrees float64) int {
+	return int(C.topo_solid_extrude_with_rotation_from_face(
+		s.solid(), face.inner.val, vecCenter.val, vecNormal.val,
+		C.double(angleDegrees)))
+}
+
+func (s *Compound) SweepWire(spine *Wire, profiles []*Wire, cornerMode int) int {
+	count := len(profiles)
+	cProfiles := make([]C.struct__topo_wire_t, count)
+	for i, w := range profiles {
+		cProfiles[i] = w.inner.val
+	}
+
+	var cProfilesPtr *C.struct__topo_wire_t
+	if count > 0 {
+		cProfilesPtr = &cProfiles[0]
+	}
+
+	return int(C.topo_solid_sweep_wire(
+		s.solid(), spine.inner.val, cProfilesPtr, C.int(count), C.int(cornerMode)))
+}
+
+func (s *Compound) SweepMultiFromVector(profiles []*Shape, path *Shape, makeSolid, isFrenet bool, vec *TopoVector) int {
+	count := len(profiles)
+	cProfiles := make([]*C.struct__topo_shape_t, count)
+	for i, p := range profiles {
+		cProfiles[i] = p.inner.val
+	}
+
+	var cProfilesPtr **C.struct__topo_shape_t
+	if count > 0 {
+		cProfilesPtr = &cProfiles[0]
+	}
+
+	return int(C.topo_solid_sweep_multi_from_vector(
+		s.solid(), cProfilesPtr, C.int(count), path.inner.val,
+		C.bool(makeSolid), C.bool(isFrenet), vec.inner.val))
+}
+
+func (s *Compound) SweepMultiFromWire(profiles []*Shape, path *Shape, makeSolid, isFrenet bool, wire *Wire) int {
+	count := len(profiles)
+	cProfiles := make([]*C.struct__topo_shape_t, count)
+	for i, p := range profiles {
+		cProfiles[i] = p.inner.val
+	}
+
+	var cProfilesPtr **C.struct__topo_shape_t
+	if count > 0 {
+		cProfilesPtr = &cProfiles[0]
+	}
+
+	return int(C.topo_solid_sweep_multi_from_wire(
+		s.solid(), cProfilesPtr, C.int(count), path.inner.val,
+		C.bool(makeSolid), C.bool(isFrenet), &wire.inner.val))
+}
+
+func (s *Compound) SweepMultiFromEdge(profiles []*Shape, path *Shape, makeSolid, isFrenet bool, edge *Edge) int {
+	count := len(profiles)
+	cProfiles := make([]*C.struct__topo_shape_t, count)
+	for i, p := range profiles {
+		cProfiles[i] = p.inner.val
+	}
+
+	var cProfilesPtr **C.struct__topo_shape_t
+	if count > 0 {
+		cProfilesPtr = &cProfiles[0]
+	}
+
+	return int(C.topo_solid_sweep_multi_from_edge(
+		s.solid(), cProfilesPtr, C.int(count), path.inner.val,
+		C.bool(makeSolid), C.bool(isFrenet), &edge.inner.val))
 }
 
 func (s *Compound) Revolve(f *Face, p1, p2 Point3, angle float64) int {
@@ -454,6 +552,80 @@ func (s *Compound) SectionFace(pnt, nor Point3) *Face {
 	return p
 }
 
+func (s *Compound) SectionWire(pnt, nor Point3) *Wire {
+	p := &Wire{inner: &innerWire{val: C.topo_solid_section_wire(s.solid(), pnt.val, nor.val)}}
+	runtime.SetFinalizer(p.inner, (*innerWire).free)
+	return p
+}
+
+func (c *Compound) Cut(toCut []*Shape, tol float64) *Compound {
+	count := len(toCut)
+	cShapes := make([]*C.struct__topo_shape_t, count)
+	for i, s := range toCut {
+		cShapes[i] = s.inner.val
+	}
+
+	var cShapesPtr **C.struct__topo_shape_t
+	if count > 0 {
+		cShapesPtr = &cShapes[0]
+	}
+
+	p := &Compound{inner: &innerCompound{val: C.topo_compound_cut(
+		c.inner.val, cShapesPtr, C.int(count), C.double(tol))}}
+	runtime.SetFinalizer(p.inner, (*innerCompound).free)
+	return p
+}
+
+func (c *Compound) Fuse(toFuse []*Shape, glue bool, tol float64) *Compound {
+	count := len(toFuse)
+	cShapes := make([]*C.struct__topo_shape_t, count)
+	for i, s := range toFuse {
+		cShapes[i] = s.inner.val
+	}
+
+	var cShapesPtr **C.struct__topo_shape_t
+	if count > 0 {
+		cShapesPtr = &cShapes[0]
+	}
+
+	p := &Compound{inner: &innerCompound{val: C.topo_compound_fuse(
+		c.inner.val, cShapesPtr, C.int(count), C.bool(glue), C.double(tol))}}
+	runtime.SetFinalizer(p.inner, (*innerCompound).free)
+	return p
+}
+
+func (c *Compound) Intersect(toIntersect []*Shape, tol float64) *Compound {
+	count := len(toIntersect)
+	cShapes := make([]*C.struct__topo_shape_t, count)
+	for i, s := range toIntersect {
+		cShapes[i] = s.inner.val
+	}
+
+	var cShapesPtr **C.struct__topo_shape_t
+	if count > 0 {
+		cShapesPtr = &cShapes[0]
+	}
+
+	p := &Compound{inner: &innerCompound{val: C.topo_compound_intersect(
+		c.inner.val, cShapesPtr, C.int(count), C.double(tol))}}
+	runtime.SetFinalizer(p.inner, (*innerCompound).free)
+	return p
+}
+
+func (c *Compound) Ancestors(s *Shape, kind int) *Compound {
+	p := &Compound{inner: &innerCompound{val: C.topo_compound_ancestors(
+		c.inner.val, s.inner.val, C.int(kind))}}
+	runtime.SetFinalizer(p.inner, (*innerCompound).free)
+	return p
+}
+
+func (c *Compound) Siblings(shape *Shape, kind int, level int) *Compound {
+	p := &Compound{inner: &innerCompound{val: C.topo_compound_siblings(
+		c.inner.val, shape.inner.val, C.int(kind), C.int(level))}}
+	runtime.SetFinalizer(p.inner, (*innerCompound).free)
+	return p
+}
+
 func (s *Compound) ConvertToNurbs() int {
 	return int(C.topo_solid_convert_to_nurbs(s.solid()))
 }
@@ -464,6 +636,112 @@ func TopoCompoundMake(s []Shape) *Compound {
 		sos[i] = s[i].inner.val
 	}
 	return &Compound{inner: &innerCompound{val: C.topo_compound_make_compound(&sos[0], C.int(len(s)))}}
+}
+
+func TopoCompoundMakeText(text string, size float64, font, fontPath string, kind, halign, valign int, position *TopoPlane) *Compound {
+	cText := C.CString(text)
+	defer C.free(unsafe.Pointer(cText))
+
+	var cFont *C.char
+	if font != "" {
+		cFont = C.CString(font)
+		defer C.free(unsafe.Pointer(cFont))
+	}
+
+	var cFontPath *C.char
+	if fontPath != "" {
+		cFontPath = C.CString(fontPath)
+		defer C.free(unsafe.Pointer(cFontPath))
+	}
+	c := &Compound{inner: &innerCompound{val: C.topo_make_text(
+		cText, C.double(size), cFont, cFontPath, C.int(kind),
+		C.int(halign), C.int(valign), position.inner.val)}}
+	runtime.SetFinalizer(c.inner, (*innerCompound).free)
+	return c
+}
+
+func TopoCompoundMakeTextWithSpine(text string, size float64, spine *Wire, planar bool, font, path string, kind, halign, valign int) *Compound {
+	cText := C.CString(text)
+	defer C.free(unsafe.Pointer(cText))
+
+	var cFont *C.char
+	if font != "" {
+		cFont = C.CString(font)
+		defer C.free(unsafe.Pointer(cFont))
+	}
+
+	var cPath *C.char
+	if path != "" {
+		cPath = C.CString(path)
+		defer C.free(unsafe.Pointer(cPath))
+	}
+
+	var cSpine *C.struct__topo_wire_t
+	if spine != nil {
+		cSpine = &spine.inner.val
+	}
+
+	c := &Compound{inner: &innerCompound{val: C.topo_make_text_with_spine(
+		cText, C.double(size), cSpine, C.bool(planar), cFont, cPath,
+		C.int(kind), C.int(halign), C.int(valign))}}
+	runtime.SetFinalizer(c.inner, (*innerCompound).free)
+	return c
+}
+
+func TopoCompoundMakeTextWithSpineAndBase(text string, size float64, spine *Wire, base *Face, font, path string, kind, halign, valign int) *Compound {
+	cText := C.CString(text)
+	defer C.free(unsafe.Pointer(cText))
+
+	var cFont *C.char
+	if font != "" {
+		cFont = C.CString(font)
+		defer C.free(unsafe.Pointer(cFont))
+	}
+
+	var cPath *C.char
+	if path != "" {
+		cPath = C.CString(path)
+		defer C.free(unsafe.Pointer(cPath))
+	}
+
+	var cSpine *C.struct__topo_wire_t
+	if spine != nil {
+		cSpine = &spine.inner.val
+	}
+
+	var cBase *C.struct__topo_face_t
+	if base != nil {
+		cBase = &base.inner.val
+	}
+
+	c := &Compound{inner: &innerCompound{val: C.topo_make_text_with_spine_and_base(
+		cText, C.double(size), cSpine, cBase, cFont, cPath,
+		C.int(kind), C.int(halign), C.int(valign))}}
+	runtime.SetFinalizer(c.inner, (*innerCompound).free)
+	return c
+}
+
+func TopoCompoundMakeTextWithHeight(text string, size, height float64, font, fontPath string, kind, halign, valign int, position *TopoPlane) *Compound {
+	cText := C.CString(text)
+	defer C.free(unsafe.Pointer(cText))
+
+	var cFont *C.char
+	if font != "" {
+		cFont = C.CString(font)
+		defer C.free(unsafe.Pointer(cFont))
+	}
+
+	var cFontPath *C.char
+	if fontPath != "" {
+		cFontPath = C.CString(fontPath)
+		defer C.free(unsafe.Pointer(cFontPath))
+	}
+
+	c := &Compound{inner: &innerCompound{val: C.topo_make_text_with_height(
+		cText, C.double(size), C.double(height), cFont, cFontPath,
+		C.int(kind), C.int(halign), C.int(valign), position.inner.val)}}
+	runtime.SetFinalizer(c.inner, (*innerCompound).free)
+	return c
 }
 
 type CompoundIterator struct {

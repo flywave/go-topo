@@ -328,6 +328,201 @@ func (t *Edge) ToCurve3d() {
 	C.topo_edge_convert_to_curve3d(t.inner.val)
 }
 
+func (e *Edge) Bounds() (min, max float64) {
+	C.topo_edge_bounds(e.inner.val, (*C.double)(&min), (*C.double)(&max))
+	return
+}
+
+func (e *Edge) StartPoint() Point3 {
+	return Point3{val: C.topo_edge_start_point(e.inner.val)}
+}
+
+func (e *Edge) EndPoint() Point3 {
+	return Point3{val: C.topo_edge_end_point(e.inner.val)}
+}
+
+func (e *Edge) ParamAt(d float64) float64 {
+	return float64(C.topo_edge_param_at(e.inner.val, C.double(d)))
+}
+
+func (e *Edge) ParamAtPoint(pt Point3) float64 {
+	return float64(C.topo_edge_param_at_point(e.inner.val, pt.val))
+}
+
+func (e *Edge) Params(pts []Point3, tol float64) []float64 {
+	count := len(pts)
+	cPoints := make([]C.pnt3d_t, count)
+	params := make([]float64, count)
+
+	for i := range pts {
+		cPoints[i] = pts[i].val
+	}
+
+	C.topo_edge_params(e.inner.val, &cPoints[0], C.int(count),
+		(*C.double)(&params[0]), C.double(tol))
+	return params
+}
+
+func (e *Edge) ParamsLength(locations []float64) []float64 {
+	count := len(locations)
+	params := make([]float64, count)
+	C.topo_edge_params_length(e.inner.val, (*C.double)(&locations[0]),
+		C.int(count), (*C.double)(&params[0]))
+	return params
+}
+
+func (e *Edge) TangentAt(param float64) Dir3 {
+	return Dir3{val: C.topo_edge_tangent_at(e.inner.val, C.double(param))}
+}
+
+func (e *Edge) Tangents(params []float64) []Dir3 {
+	count := len(params)
+	tangents := make([]Dir3, count)
+	cParams := make([]float64, count)
+	copy(cParams, params)
+
+	cTangents := make([]C.dir3d_t, count)
+	C.topo_edge_tangents(e.inner.val, (*C.double)(&cParams[0]), C.int(count),
+		&cTangents[0])
+
+	for i := range cTangents {
+		tangents[i] = Dir3{val: cTangents[i]}
+	}
+	return tangents
+}
+
+func (e *Edge) Normal() Dir3 {
+	return Dir3{val: C.topo_edge_normal(e.inner.val)}
+}
+
+func (e *Edge) Center() Point3 {
+	return Point3{val: C.topo_edge_center(e.inner.val)}
+}
+
+func (e *Edge) Radius() float64 {
+	return float64(C.topo_edge_radius(e.inner.val))
+}
+
+func (e *Edge) PositionAt(d float64, mode int) Point3 {
+	return Point3{val: C.topo_edge_position_at(e.inner.val, C.double(d), C.int(mode))}
+}
+
+func (e *Edge) Positions(ds []float64, mode int) []Point3 {
+	count := len(ds)
+	points := make([]Point3, count)
+	cPoints := make([]C.pnt3d_t, count)
+	cDs := make([]float64, count)
+	copy(cDs, ds)
+
+	C.topo_edge_positions(e.inner.val, (*C.double)(&cDs[0]), C.int(count),
+		&cPoints[0], C.int(mode))
+
+	for i := range cPoints {
+		points[i] = Point3{val: cPoints[i]}
+	}
+	return points
+}
+
+func (e *Edge) SampleUniform(n float64) ([]Point3, []float64) {
+	var (
+		cPoints    *C.pnt3d_t
+		cParams    *C.double
+		pointCount C.int
+		paramCount C.int
+	)
+
+	C.topo_edge_sample_uniform(e.inner.val, C.double(n), &cPoints, &pointCount,
+		&cParams, &paramCount)
+	defer func() {
+		C.free(unsafe.Pointer(cPoints))
+		C.free(unsafe.Pointer(cParams))
+	}()
+
+	points := make([]Point3, pointCount)
+	params := make([]float64, paramCount)
+
+	pointSlice := (*[1 << 30]C.pnt3d_t)(unsafe.Pointer(cPoints))[:pointCount:pointCount]
+	paramSlice := (*[1 << 30]C.double)(unsafe.Pointer(cParams))[:paramCount:paramCount]
+
+	for i := range pointSlice {
+		points[i] = Point3{val: pointSlice[i]}
+	}
+	for i := range paramSlice {
+		params[i] = float64(paramSlice[i])
+	}
+
+	return points, params
+}
+
+func (e *Edge) LocationAt(d float64, mode, frame int, planar bool) *TopoLocation {
+	loc := C.topo_edge_location_at(e.inner.val, C.double(d), C.int(mode),
+		C.int(frame), C.bool(planar))
+	if loc == nil {
+		return nil
+	}
+	return &TopoLocation{inner: &innerTopoLocation{val: loc}}
+}
+
+func (e *Edge) Locations(ds []float64, mode, frame int, planar bool) []*TopoLocation {
+	count := len(ds)
+	cDs := make([]float64, count)
+	copy(cDs, ds)
+
+	var resultCount C.int
+	locs := C.topo_edge_locations(e.inner.val, (*C.double)(&cDs[0]), C.int(count),
+		C.int(mode), C.int(frame), C.bool(planar), &resultCount)
+	if locs == nil {
+		return nil
+	}
+	defer C.topo_location_list_free(locs, resultCount)
+
+	locSlice := (*[1 << 30]*C.struct__topo_location_t)(unsafe.Pointer(locs))[:resultCount:resultCount]
+	locations := make([]*TopoLocation, resultCount)
+
+	for i := range locSlice {
+		locations[i] = &TopoLocation{inner: &innerTopoLocation{val: locSlice[i]}}
+	}
+
+	return locations
+}
+
+func (e *Edge) Projected(f *Face, direction Vector3, closest bool) ([]*Shape, int) {
+	var resultCount C.int
+	var cResult **C.struct__topo_shape_t
+
+	ret := C.topo_edge_projected(e.inner.val, f.inner.val, direction.val,
+		C.bool(closest), &cResult, &resultCount)
+	if ret != 0 || cResult == nil {
+		return nil, 0
+	}
+	defer C.topo_shape_list_free(cResult, resultCount)
+
+	resultSlice := (*[1 << 30]*C.struct__topo_shape_t)(unsafe.Pointer(cResult))[:resultCount:resultCount]
+	shapes := make([]*Shape, resultCount)
+
+	for i := range resultSlice {
+		shapes[i] = &Shape{inner: &innerShape{val: resultSlice[i]}}
+	}
+
+	return shapes, int(ret)
+}
+
+func (e *Edge) CurvatureAt(d float64, mode int, resolution float64) float64 {
+	return float64(C.topo_edge_curvature_at(e.inner.val, C.double(d),
+		C.int(mode), C.double(resolution)))
+}
+
+func (e *Edge) Curvatures(ds []float64, mode int, resolution float64) []float64 {
+	count := len(ds)
+	curvatures := make([]float64, count)
+	cDs := make([]float64, count)
+	copy(cDs, ds)
+
+	C.topo_edge_curvatures(e.inner.val, (*C.double)(&cDs[0]), C.int(count),
+		(*C.double)(&curvatures[0]), C.int(mode), C.double(resolution))
+	return curvatures
+}
+
 func (t *Edge) ToShape() *Shape {
 	sp := &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
 	runtime.SetFinalizer(sp.inner, (*innerShape).free)
@@ -769,6 +964,107 @@ func TopoEdgeMakePolygonFromPoints(points []Point3, Close bool) *Edge {
 		cvs[i] = points[i].val
 	}
 	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_polygonn_from_points(&cvs[0], C.int(len(points)), C.bool(Close))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
+func TopoMakeRect(width, height float64) *Edge {
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_rect(C.double(width), C.double(height))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
+func TopoMakeSpline(vertices []Point3, tol float64, periodic bool) *Edge {
+	count := len(vertices)
+	cVertices := make([]C.pnt3d_t, count)
+	for i, v := range vertices {
+		cVertices[i] = v.val
+	}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_spline(&cVertices[0], C.int(count),
+		C.double(tol), C.bool(periodic))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
+func TopoMakeSplineFromTangentsAndParameters(points []Point3, tangents []Vector3,
+	parameters []float64, tol float64, periodic, scale bool) *Edge {
+	pntCount := len(points)
+	tanCount := len(tangents)
+	paramCount := len(parameters)
+
+	cPoints := make([]C.pnt3d_t, pntCount)
+	for i, p := range points {
+		cPoints[i] = p.val
+	}
+
+	cTangents := make([]C.vec3d_t, tanCount)
+	for i, t := range tangents {
+		cTangents[i] = t.val
+	}
+
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_spline_from_tangents_and_parameters(
+		&cPoints[0], C.int(pntCount), &cTangents[0], C.int(tanCount),
+		(*C.double)(&parameters[0]), C.int(paramCount), C.double(tol),
+		C.bool(periodic), C.bool(scale))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
+func TopoMakeSplineApprox(points []Point3, tolerance float64, smoothing []float64,
+	minDegree, maxDegree int) *Edge {
+	count := len(points)
+	cPoints := make([]C.pnt3d_t, count)
+	for i, p := range points {
+		cPoints[i] = p.val
+	}
+
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_spline_approx(
+		&cPoints[0], C.int(count), C.double(tolerance),
+		(*C.double)(&smoothing[0]), C.int(minDegree), C.int(maxDegree))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
+func TopoMakeCircle(radius float64, center Point3, normal Vector3,
+	angle1, angle2 float64, orientation bool) *Edge {
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_circle(
+		C.double(radius), center.val, normal.val,
+		C.double(angle1), C.double(angle2), C.bool(orientation))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
+func TopoMakeEllipse(majorRadius, minorRadius float64, center Point3,
+	normal, xnormal Vector3, angle1, angle2 float64, sense int) *Edge {
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_ellipse(
+		C.double(majorRadius), C.double(minorRadius), center.val, normal.val,
+		xnormal.val, C.double(angle1), C.double(angle2), C.int(sense))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
+func TopoMakeBezier(points []Point3) *Edge {
+	count := len(points)
+	cPoints := make([]C.pnt3d_t, count)
+	for i, p := range points {
+		cPoints[i] = p.val
+	}
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_bezier(
+		&cPoints[0], C.int(count))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
+func TopoMakeThreePointArc(v1, v2, v3 Point3) *Edge {
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_three_point_arc(
+		v1.val, v2.val, v3.val)}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
+func TopoMakeTangentArc(v1 Point3, tangent Vector3, v3 Point3) *Edge {
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_tangent_arc(
+		v1.val, tangent.val, v3.val)}}
 	runtime.SetFinalizer(p.inner, (*innerEdge).free)
 	return p
 }

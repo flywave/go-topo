@@ -90,109 +90,13 @@ func (c *ShapeObject) Type() ShapeObjectType {
 	return ShapeObjectType(C.shape_object_type(c.inner.val))
 }
 
-func (c *ShapeObject) GetShape() *Shape {
+func (c *ShapeObject) GetShape() interface{} {
 	if c.Type() == ShapeVector || c.Type() == ShapeLocation || c.Type() == ShapeSketch || c.Type() == ShapeBlank {
 		return nil
 	}
 	shp := &Shape{inner: &innerShape{C.shape_object_get_shape(c.inner.val)}}
 	runtime.SetFinalizer(shp.inner, (*innerShape).free)
-	return shp
-}
-
-func (c *ShapeObject) GetCompound() *Compound {
-	if c.Type() != ShapeCompound {
-		return nil
-	}
-	shp := c.GetShape()
-	var val C.struct__topo_compound_t
-	val.shp = C.topo_shape_share(shp.inner.val)
-	p := &Compound{inner: &innerCompound{val: val}}
-	runtime.SetFinalizer(p.inner, (*innerCompound).free)
-	return p
-}
-
-func (c *ShapeObject) GetCompSolid() *CompSolid {
-	if c.Type() != ShapeCompSolid {
-		return nil
-	}
-	shp := c.GetShape()
-	var val C.struct__topo_comp_solid_t
-	val.shp = C.topo_shape_share(shp.inner.val)
-	p := &CompSolid{inner: &innerCompSolid{val: val}}
-	runtime.SetFinalizer(p.inner, (*innerCompSolid).free)
-	return p
-}
-
-func (c *ShapeObject) GetSolid() *Solid {
-	if c.Type() != ShapeSolid {
-		return nil
-	}
-	shp := c.GetShape()
-	var val C.struct__topo_solid_t
-	val.shp = C.topo_shape_share(shp.inner.val)
-	p := &Solid{inner: &innerSolid{val: val}}
-	runtime.SetFinalizer(p.inner, (*innerSolid).free)
-	return p
-}
-
-func (c *ShapeObject) GetShell() *Shell {
-	if c.Type() != ShapeShell {
-		return nil
-	}
-	shp := c.GetShape()
-	var val C.struct__topo_shell_t
-	val.shp = C.topo_shape_share(shp.inner.val)
-	p := &Shell{inner: &innerShell{val: val}}
-	runtime.SetFinalizer(p.inner, (*innerShell).free)
-	return p
-}
-
-func (c *ShapeObject) GetFace() *Face {
-	if c.Type() != ShapeFace {
-		return nil
-	}
-	shp := c.GetShape()
-	var val C.struct__topo_face_t
-	val.shp = C.topo_shape_share(shp.inner.val)
-	p := &Face{inner: &innerFace{val: val}}
-	runtime.SetFinalizer(p.inner, (*innerFace).free)
-	return p
-}
-
-func (c *ShapeObject) GetWire() *Wire {
-	if c.Type() != ShapeWire {
-		return nil
-	}
-	shp := c.GetShape()
-	var val C.struct__topo_wire_t
-	val.shp = C.topo_shape_share(shp.inner.val)
-	p := &Wire{inner: &innerWire{val: val}}
-	runtime.SetFinalizer(p.inner, (*innerWire).free)
-	return p
-}
-
-func (c *ShapeObject) GetEdge() *Edge {
-	if c.Type() != ShapeEdge {
-		return nil
-	}
-	shp := c.GetShape()
-	var val C.struct__topo_edge_t
-	val.shp = C.topo_shape_share(shp.inner.val)
-	p := &Edge{inner: &innerEdge{val: val}}
-	runtime.SetFinalizer(p.inner, (*innerEdge).free)
-	return p
-}
-
-func (c *ShapeObject) GetVertex() *Vertex {
-	if c.Type() != ShapeVertex {
-		return nil
-	}
-	shp := c.GetShape()
-	var val C.struct__topo_vertex_t
-	val.shp = C.topo_shape_share(shp.inner.val)
-	p := &Vertex{inner: &innerVertex{val: val}}
-	runtime.SetFinalizer(p.inner, (*innerVertex).free)
-	return p
+	return shp.AutoCast()
 }
 
 func (c *ShapeObject) GetVector() *TopoVector {

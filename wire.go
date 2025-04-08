@@ -346,6 +346,202 @@ func (t *Wire) Chamfer(vertices []Vertex, radius []float64) int {
 	return int(C.topo_wire_chamfer(t.inner.val, &vers[0], C.int(len(vertices)), (*C.double)(unsafe.Pointer(&radius[0])), C.int(len(radius))))
 }
 
+func (w *Wire) Bounds() (min, max float64) {
+	C.topo_wire_bounds(w.inner.val, (*C.double)(&min), (*C.double)(&max))
+	return
+}
+
+func (w *Wire) StartPoint() Point3 {
+	return Point3{val: C.topo_wire_start_point(w.inner.val)}
+}
+
+func (w *Wire) EndPoint() Point3 {
+	return Point3{val: C.topo_wire_end_point(w.inner.val)}
+}
+
+func (w *Wire) ParamAt(d float64) float64 {
+	return float64(C.topo_wire_param_at(w.inner.val, C.double(d)))
+}
+
+func (w *Wire) ParamAtPoint(pt Point3) float64 {
+	return float64(C.topo_wire_param_at_point(w.inner.val, pt.val))
+}
+
+func (w *Wire) Params(pts []Point3, tol float64) []float64 {
+	count := len(pts)
+	cPoints := make([]C.pnt3d_t, count)
+	params := make([]float64, count)
+
+	for i := range pts {
+		cPoints[i] = pts[i].val
+	}
+
+	C.topo_wire_params(w.inner.val, &cPoints[0], C.int(count),
+		(*C.double)(&params[0]), C.double(tol))
+	return params
+}
+
+func (w *Wire) ParamsLength(locations []float64) []float64 {
+	count := len(locations)
+	params := make([]float64, count)
+	C.topo_wire_params_length(w.inner.val, (*C.double)(&locations[0]),
+		C.int(count), (*C.double)(&params[0]))
+	return params
+}
+
+func (w *Wire) TangentAt(param float64) Dir3 {
+	return Dir3{val: C.topo_wire_tangent_at(w.inner.val, C.double(param))}
+}
+
+func (w *Wire) Tangents(params []float64) []Dir3 {
+	count := len(params)
+	tangents := make([]Dir3, count)
+	cParams := make([]float64, count)
+	copy(cParams, params)
+
+	cTangents := make([]C.dir3d_t, count)
+	C.topo_wire_tangents(w.inner.val, (*C.double)(&cParams[0]), C.int(count),
+		&cTangents[0])
+
+	for i := range cTangents {
+		tangents[i] = Dir3{val: cTangents[i]}
+	}
+	return tangents
+}
+
+func (w *Wire) Normal() Dir3 {
+	return Dir3{val: C.topo_wire_normal(w.inner.val)}
+}
+
+func (w *Wire) Center() Point3 {
+	return Point3{val: C.topo_wire_center(w.inner.val)}
+}
+
+func (w *Wire) Radius() float64 {
+	return float64(C.topo_wire_radius(w.inner.val))
+}
+
+func (w *Wire) PositionAt(d float64, mode int) Point3 {
+	return Point3{val: C.topo_wire_position_at(w.inner.val, C.double(d), C.int(mode))}
+}
+
+func (w *Wire) Positions(ds []float64, mode int) []Point3 {
+	count := len(ds)
+	points := make([]Point3, count)
+	cPoints := make([]C.pnt3d_t, count)
+	cDs := make([]float64, count)
+	copy(cDs, ds)
+
+	C.topo_wire_positions(w.inner.val, (*C.double)(&cDs[0]), C.int(count),
+		&cPoints[0], C.int(mode))
+
+	for i := range cPoints {
+		points[i] = Point3{val: cPoints[i]}
+	}
+	return points
+}
+
+func (w *Wire) SampleUniform(n float64) ([]Point3, []float64) {
+	var (
+		cPoints    *C.pnt3d_t
+		cParams    *C.double
+		pointCount C.int
+		paramCount C.int
+	)
+
+	C.topo_wire_sample_uniform(w.inner.val, C.double(n), &cPoints, &pointCount,
+		&cParams, &paramCount)
+	defer func() {
+		C.free(unsafe.Pointer(cPoints))
+		C.free(unsafe.Pointer(cParams))
+	}()
+
+	points := make([]Point3, pointCount)
+	params := make([]float64, paramCount)
+
+	pointSlice := (*[1 << 30]C.pnt3d_t)(unsafe.Pointer(cPoints))[:pointCount:pointCount]
+	paramSlice := (*[1 << 30]C.double)(unsafe.Pointer(cParams))[:paramCount:paramCount]
+
+	for i := range pointSlice {
+		points[i] = Point3{val: pointSlice[i]}
+	}
+	for i := range paramSlice {
+		params[i] = float64(paramSlice[i])
+	}
+
+	return points, params
+}
+
+func (w *Wire) LocationAt(d float64, mode, frame int, planar bool) *TopoLocation {
+	loc := C.topo_wire_location_at(w.inner.val, C.double(d), C.int(mode),
+		C.int(frame), C.bool(planar))
+	if loc == nil {
+		return nil
+	}
+	return &TopoLocation{inner: &innerTopoLocation{val: loc}}
+}
+
+func (w *Wire) Locations(ds []float64, mode, frame int, planar bool) []*TopoLocation {
+	count := len(ds)
+	cDs := make([]float64, count)
+	copy(cDs, ds)
+
+	var resultCount C.int
+	locs := C.topo_wire_locations(w.inner.val, (*C.double)(&cDs[0]), C.int(count),
+		C.int(mode), C.int(frame), C.bool(planar), &resultCount)
+	if locs == nil {
+		return nil
+	}
+	defer C.topo_location_list_free(locs, resultCount)
+
+	locSlice := (*[1 << 30]*C.struct__topo_location_t)(unsafe.Pointer(locs))[:resultCount:resultCount]
+	locations := make([]*TopoLocation, resultCount)
+
+	for i := range locSlice {
+		locations[i] = &TopoLocation{inner: &innerTopoLocation{val: locSlice[i]}}
+		runtime.SetFinalizer(locations[i].inner, (*innerTopoLocation).free)
+	}
+
+	return locations
+}
+
+func (w *Wire) Projected(f *Face, direction Vector3, closest bool) ([]*Shape, int) {
+	var resultCount C.int
+	var cResult **C.struct__topo_shape_t
+
+	ret := C.topo_wire_projected(w.inner.val, f.inner.val, direction.val,
+		C.bool(closest), &cResult, &resultCount)
+	if ret != 0 || cResult == nil {
+		return nil, 0
+	}
+	defer C.topo_shape_list_free(cResult, resultCount)
+
+	resultSlice := (*[1 << 30]*C.struct__topo_shape_t)(unsafe.Pointer(cResult))[:resultCount:resultCount]
+	shapes := make([]*Shape, resultCount)
+
+	for i := range resultSlice {
+		shapes[i] = &Shape{inner: &innerShape{val: resultSlice[i]}}
+	}
+
+	return shapes, int(ret)
+}
+
+func (w *Wire) CurvatureAt(d float64, mode int, resolution float64) float64 {
+	return float64(C.topo_wire_curvature_at(w.inner.val, C.double(d),
+		C.int(mode), C.double(resolution)))
+}
+
+func (w *Wire) Curvatures(ds []float64, mode int, resolution float64) []float64 {
+	count := len(ds)
+	curvatures := make([]float64, count)
+	cDs := make([]float64, count)
+	copy(cDs, ds)
+
+	C.topo_wire_curvatures(w.inner.val, (*C.double)(&cDs[0]), C.int(count),
+		(*C.double)(&curvatures[0]), C.int(mode), C.double(resolution))
+	return curvatures
+}
+
 func TopoMakePolygon() *Wire {
 	wr := &Wire{inner: &innerWire{val: C.topo_make_polygon()}}
 	runtime.SetFinalizer(wr.inner, (*innerWire).free)
@@ -442,6 +638,50 @@ func TopoMakeWireFromWires(wires []Wire) *Wire {
 	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_wries(&es[0], C.int(len(wires)))}}
 	runtime.SetFinalizer(wr.inner, (*innerWire).free)
 	return wr
+}
+
+func TopoMakeWireFromRect(width, height float64) *Wire {
+	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_rect(C.double(width), C.double(height))}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
+}
+
+func TopoMakeWireFromCircle(radius float64, center Point3, normal Dir3) *Wire {
+	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_circle(C.double(radius), center.val, normal.val)}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
+}
+
+func TopoMakeWireFromEllipse(xRadius, yRadius float64, center Point3, normal, xDir Dir3, angle1, angle2, rotationAngle float64, closed bool) *Wire {
+	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_ellipse(C.double(xRadius), C.double(yRadius), center.val, normal.val, xDir.val, C.double(angle1), C.double(angle2), C.double(rotationAngle), C.bool(closed))}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
+}
+
+func TopoMakeWireFromHelix(pitch, height, radius float64, center Point3, dir Dir3, angle float64, lefthand bool) *Wire {
+	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_helix(C.double(pitch), C.double(height), C.double(radius), center.val, dir.val, C.double(angle), C.bool(lefthand))}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
+}
+
+func TopoMakeWireFromCombine(wires []Wire, tol float64) []*Wire {
+	es := make([]C.struct__topo_wire_t, len(wires))
+	for i := range wires {
+		es[i] = wires[i].inner.val
+	}
+	var count C.int
+	val := C.topo_make_wire_from_combine(&es[0], C.int(len(wires)), C.double(tol), &count)
+	if val == nil {
+		return nil
+	}
+	defer C.topo_wire_list_free(val, count)
+	valSlice := (*[1 << 30]C.struct__topo_wire_t)(unsafe.Pointer(val))[:count:count]
+	ws := make([]*Wire, count)
+	for i := 0; i < int(count); i++ {
+		ws[i] = &Wire{inner: &innerWire{val: valSlice[i]}}
+		runtime.SetFinalizer(ws[i].inner, (*innerWire).free)
+	}
+	return ws
 }
 
 type WireIterator struct {

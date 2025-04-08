@@ -296,6 +296,10 @@ func (t *CompSolid) ToSolid() *Solid {
 	return sld
 }
 
+func (s *CompSolid) IsInside(p Point3, tol float64) bool {
+	return bool(C.topo_solid_is_inside(s.solid(), p.val, C.double(tol)))
+}
+
 func (s *CompSolid) NumSolids() int {
 	return int(C.topo_solid_num_solids(s.solid()))
 }
@@ -330,6 +334,96 @@ func (s *CompSolid) ExtrudeFromDir(f *Face, d Vector3) int {
 
 func (s *CompSolid) Revolve(f *Face, p1, p2 Point3, angle float64) int {
 	return int(C.topo_solid_revolve(s.solid(), f.inner.val, p1.val, p2.val, C.double(angle)))
+}
+
+func (s *CompSolid) ExtrudeWithRotationFromWire(outerWire *Wire, innerWires []*Wire, vecCenter Point3, vecNormal Vector3, angleDegrees float64) int {
+	innerCount := len(innerWires)
+	cWires := make([]C.struct__topo_wire_t, innerCount)
+	for i, w := range innerWires {
+		cWires[i] = w.inner.val
+	}
+
+	var cWiresPtr *C.struct__topo_wire_t
+	if innerCount > 0 {
+		cWiresPtr = &cWires[0]
+	}
+
+	return int(C.topo_solid_extrude_with_rotation_from_wire(
+		s.solid(), outerWire.inner.val, cWiresPtr, C.int(innerCount),
+		vecCenter.val, vecNormal.val, C.double(angleDegrees)))
+}
+
+func (s *CompSolid) ExtrudeWithRotationFromFace(face *Face, vecCenter Point3, vecNormal Vector3, angleDegrees float64) int {
+	return int(C.topo_solid_extrude_with_rotation_from_face(
+		s.solid(), face.inner.val, vecCenter.val, vecNormal.val,
+		C.double(angleDegrees)))
+}
+
+func (s *CompSolid) SweepWire(spine *Wire, profiles []*Wire, cornerMode int) int {
+	count := len(profiles)
+	cProfiles := make([]C.struct__topo_wire_t, count)
+	for i, w := range profiles {
+		cProfiles[i] = w.inner.val
+	}
+
+	var cProfilesPtr *C.struct__topo_wire_t
+	if count > 0 {
+		cProfilesPtr = &cProfiles[0]
+	}
+
+	return int(C.topo_solid_sweep_wire(
+		s.solid(), spine.inner.val, cProfilesPtr, C.int(count), C.int(cornerMode)))
+}
+
+func (s *CompSolid) SweepMultiFromVector(profiles []*Shape, path *Shape, makeSolid, isFrenet bool, vec *TopoVector) int {
+	count := len(profiles)
+	cProfiles := make([]*C.struct__topo_shape_t, count)
+	for i, p := range profiles {
+		cProfiles[i] = p.inner.val
+	}
+
+	var cProfilesPtr **C.struct__topo_shape_t
+	if count > 0 {
+		cProfilesPtr = &cProfiles[0]
+	}
+
+	return int(C.topo_solid_sweep_multi_from_vector(
+		s.solid(), cProfilesPtr, C.int(count), path.inner.val,
+		C.bool(makeSolid), C.bool(isFrenet), vec.inner.val))
+}
+
+func (s *CompSolid) SweepMultiFromWire(profiles []*Shape, path *Shape, makeSolid, isFrenet bool, wire *Wire) int {
+	count := len(profiles)
+	cProfiles := make([]*C.struct__topo_shape_t, count)
+	for i, p := range profiles {
+		cProfiles[i] = p.inner.val
+	}
+
+	var cProfilesPtr **C.struct__topo_shape_t
+	if count > 0 {
+		cProfilesPtr = &cProfiles[0]
+	}
+
+	return int(C.topo_solid_sweep_multi_from_wire(
+		s.solid(), cProfilesPtr, C.int(count), path.inner.val,
+		C.bool(makeSolid), C.bool(isFrenet), &wire.inner.val))
+}
+
+func (s *CompSolid) SweepMultiFromEdge(profiles []*Shape, path *Shape, makeSolid, isFrenet bool, edge *Edge) int {
+	count := len(profiles)
+	cProfiles := make([]*C.struct__topo_shape_t, count)
+	for i, p := range profiles {
+		cProfiles[i] = p.inner.val
+	}
+
+	var cProfilesPtr **C.struct__topo_shape_t
+	if count > 0 {
+		cProfilesPtr = &cProfiles[0]
+	}
+
+	return int(C.topo_solid_sweep_multi_from_edge(
+		s.solid(), cProfilesPtr, C.int(count), path.inner.val,
+		C.bool(makeSolid), C.bool(isFrenet), &edge.inner.val))
 }
 
 func (s *CompSolid) Loft(profiles []Shape, ruled bool, tolerance float64) int {
