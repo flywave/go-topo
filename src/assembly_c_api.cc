@@ -24,7 +24,7 @@ struct _constraint_param_t {
 };
 
 // Assembly object functions
-assembly_object_t *aassembly_object_create_from_shape(topo_shape_t *shape) {
+assembly_object_t *assembly_object_create_from_shape(topo_shape_t *shape) {
   auto obj = new assembly_object_t{flywave::topo::assembly_object(*shape->shp)};
   return obj;
 }
@@ -222,12 +222,6 @@ topo_shape_t **assembly_shapes(assembly_t *as, int *size) {
         new topo_shape_t{std::make_shared<flywave::topo::shape>(shapes[i])};
   }
   return result;
-}
-
-void topo_shape_list_free(topo_shape_t **list, int size) {
-  if (list) {
-    delete[] list;
-  }
 }
 
 topo_compound_t assembly_to_compound(assembly_t *as) {

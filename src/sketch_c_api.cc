@@ -210,8 +210,9 @@ void sketch_parray(sketch_t *sk, double r, double a1, double da, int n,
   sk->ptr->parray(r, a1, da, n, rotate);
 }
 
-void sketch_each_for_face(sketch_t *sk,void *userdata, 
-                          topo_face_t (*func)(void *userdata, const topo_location_t *location),
+void sketch_each_for_face(sketch_t *sk, void *userdata,
+                          topo_face_t (*func)(void *userdata,
+                                              const topo_location_t *location),
                           int mode, const char *tag, bool ignore_selection) {
   auto _func =
       [&](const flywave::topo::topo_location &loc) -> flywave::topo::face {
@@ -223,8 +224,9 @@ void sketch_each_for_face(sketch_t *sk,void *userdata,
                 ignore_selection);
 }
 
-void sketch_each_for_sketch(sketch_t *sk,void *userdata,
-                            sketch_t *(*func)(void *userdata, const topo_location_t *location),
+void sketch_each_for_sketch(sketch_t *sk, void *userdata,
+                            sketch_t *(*func)(void *userdata,
+                                              const topo_location_t *location),
                             int mode, const char *tag, bool ignore_selection) {
   auto _func = [&](const flywave::topo::topo_location &loc)
       -> std::shared_ptr<flywave::topo::sketch> {
@@ -236,7 +238,8 @@ void sketch_each_for_sketch(sketch_t *sk,void *userdata,
 }
 
 void sketch_each_for_compound(
-    sketch_t *sk,void *userdata,  topo_compound_t (*func)(void *userdata, const topo_location_t *location),
+    sketch_t *sk, void *userdata,
+    topo_compound_t (*func)(void *userdata, const topo_location_t *location),
     int mode, const char *tag, bool ignore_selection) {
   auto _func =
       [&](const flywave::topo::topo_location &loc) -> flywave::topo::compound {
@@ -295,6 +298,15 @@ void sketch_faces(sketch_t *sk, const char *selector, const char *tag) {
 void sketch_faces_for_selector(sketch_t *sk, selector_t *selector,
                                const char *tag) {
   sk->ptr->faces(selector->ptr, tag ? tag : "");
+}
+
+void sketch_wires(sketch_t *sk, const char *selector, const char *tag) {
+  sk->ptr->wires(selector ? selector : "", tag ? tag : "");
+}
+
+void sketch_wires_for_selector(sketch_t *sk, selector_t *selector,
+                               const char *tag) {
+  sk->ptr->wires(selector->ptr, tag ? tag : "");
 }
 
 void sketch_edges(sketch_t *sk, const char *selector, const char *tag) {
@@ -470,20 +482,23 @@ void sketch_subtract(sketch_t *sk) { sk->ptr->subtract(); }
 
 void sketch_replace(sketch_t *sk) { sk->ptr->replace(); }
 
-void sketch_filter(sketch_t *sk,void *userdata, bool (*pred)(void *userdata,sketch_val_t *)) {
+void sketch_filter(sketch_t *sk, void *userdata,
+                   bool (*pred)(void *userdata, sketch_val_t *)) {
   sk->ptr->filter([&](const flywave::topo::sketch_val &val) {
     return pred(userdata, new sketch_val_t{val});
   });
 }
 
-void sketch_map(sketch_t *sk,void *userdata, sketch_val_t *(*f)(void *userdata,sketch_val_t *)) {
+void sketch_map(sketch_t *sk, void *userdata,
+                sketch_val_t *(*f)(void *userdata, sketch_val_t *)) {
   sk->ptr->map([&](const flywave::topo::sketch_val &val) {
     auto v = f(userdata, new sketch_val_t{val});
     return v->val;
   });
 }
 
-void sketch_apply(sketch_t *sk, void *userdata,sketch_val_t **(*f)(void *userdata,sketch_val_t **, int)) {
+void sketch_apply(sketch_t *sk, void *userdata,
+                  sketch_val_t **(*f)(void *userdata, sketch_val_t **, int)) {
   sk->ptr->apply([&](const std::vector<flywave::topo::sketch_val> &val) {
     int count = static_cast<int>(val.size());
     auto vals = new sketch_val_t *[count];
@@ -504,8 +519,8 @@ void sketch_apply(sketch_t *sk, void *userdata,sketch_val_t **(*f)(void *userdat
   });
 }
 
-void sketch_sort(sketch_t *sk,void *userdata,
-                     bool (*comp)(void *userdata,sketch_val_t *, sketch_val_t *)) {
+void sketch_sort(sketch_t *sk, void *userdata,
+                 bool (*comp)(void *userdata, sketch_val_t *, sketch_val_t *)) {
   sk->ptr->sort([&](const flywave::topo::sketch_val &a,
                     const flywave::topo::sketch_val &b) {
     return comp(userdata, new sketch_val_t{a}, new sketch_val_t{b});

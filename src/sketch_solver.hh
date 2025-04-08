@@ -76,7 +76,8 @@ private:
   double coincident_cost(const std::vector<double> &x1, geom_type t1,
                          const std::vector<double> &x10,
                          const std::vector<double> &x2, geom_type t2,
-                         const std::vector<double> &x20);
+                         const std::vector<double> &x20,
+                         const boost::optional<double> &val = boost::none);
   double angle_cost(const std::vector<double> &x1, geom_type t1,
                     const std::vector<double> &x10,
                     const std::vector<double> &x2, geom_type t2,
@@ -105,7 +106,7 @@ private:
   std::vector<sketch_constraint> constraints;
   std::vector<geom_type> geoms;
   std::vector<size_t> ixs;
-  std::vector<double> x0; 
+  std::vector<double> x0;
 
   const double DIFF_EPS = 1e-10;
   const double TOL = 1e-9;

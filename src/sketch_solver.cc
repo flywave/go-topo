@@ -72,6 +72,146 @@ double sketch_solver::fixed_point_cost(const std::vector<double> &x,
   return p.Distance(p0);
 }
 
+double sketch_solver::coincident_cost(
+    const std::vector<double> &x1, geom_type t1, const std::vector<double> &x10,
+    const std::vector<double> &x2, geom_type t2, const std::vector<double> &x20,
+    const boost::optional<double> &val) {
+  gp_Pnt2d p1, p2;
+
+  if (t1 == geom_type::LINE) {
+    segment_dof seg1{{x1[0], x1[1], x1[2], x1[3]}};
+    p1 = line_point(seg1, val); // 使用val参数
+  } else if (t1 == geom_type::CIRCLE) {
+    arc_dof arc1{{x1[0], x1[1], x1[2], x1[3], x1[4]}};
+    p1 = arc_point(arc1, val); // 使用val参数
+  }
+
+  if (t2 == geom_type::LINE) {
+    segment_dof seg2{{x2[0], x2[1], x2[2], x2[3]}};
+    p2 = line_point(seg2, val); // 使用val参数
+  } else if (t2 == geom_type::CIRCLE) {
+    arc_dof arc2{{x2[0], x2[1], x2[2], x2[3], x2[4]}};
+    p2 = arc_point(arc2, val); // 使用val参数
+  }
+
+  return p1.Distance(p2);
+}
+double sketch_solver::angle_cost(const std::vector<double> &x1, geom_type t1,
+                                 const std::vector<double> &x10,
+                                 const std::vector<double> &x2, geom_type t2,
+                                 const std::vector<double> &x20, double val) {
+  gp_Vec2d v1, v2;
+
+  if (t1 == geom_type::LINE) {
+    segment_dof seg1{{x1[0], x1[1], x1[2], x1[3]}};
+    gp_Pnt2d p1 = line_point(seg1, 0);
+    gp_Pnt2d p2 = line_point(seg1, 1);
+    v1 = gp_Vec2d(p2.X() - p1.X(), p2.Y() - p1.Y());
+  } else if (t1 == geom_type::CIRCLE) {
+    arc_dof arc1{{x1[0], x1[1], x1[2], x1[3], x1[4]}};
+    v1 = arc_first_tangent(arc1);
+  }
+
+  if (t2 == geom_type::LINE) {
+    segment_dof seg2{{x2[0], x2[1], x2[2], x2[3]}};
+    gp_Pnt2d p1 = line_point(seg2, 0);
+    gp_Pnt2d p2 = line_point(seg2, 1);
+    v2 = gp_Vec2d(p2.X() - p1.X(), p2.Y() - p1.Y());
+  } else if (t2 == geom_type::CIRCLE) {
+    arc_dof arc2{{x2[0], x2[1], x2[2], x2[3], x2[4]}};
+    v2 = arc_first_tangent(arc2);
+  }
+
+  double angle = v1.Angle(v2);
+  return std::abs(angle - val);
+}
+
+double sketch_solver::length_cost(const std::vector<double> &x, geom_type t,
+                                  const std::vector<double> &x0, double val) {
+  if (t == geom_type::LINE) {
+    segment_dof seg{{x[0], x[1], x[2], x[3]}};
+    gp_Pnt2d p1 = line_point(seg, 0);
+    gp_Pnt2d p2 = line_point(seg, 1);
+    double len = p1.Distance(p2);
+    return std::abs(len - val);
+  } else if (t == geom_type::CIRCLE) {
+    arc_dof arc{{x[0], x[1], x[2], x[3], x[4]}};
+    double circumference = 2 * M_PI * arc[2];
+    double arc_len = circumference * std::abs(arc[4]) / (2 * M_PI);
+    return std::abs(arc_len - val);
+  }
+  return 0.0;
+}
+
+double sketch_solver::distance_cost(const std::vector<double> &x1, geom_type t1,
+                                    const std::vector<double> &x10,
+                                    const std::vector<double> &x2, geom_type t2,
+                                    const std::vector<double> &x20,
+                                    const boost::optional<double> &val1,
+                                    const boost::optional<double> &val2,
+                                    double d) {
+  gp_Pnt2d p1, p2;
+
+  if (t1 == geom_type::LINE) {
+    segment_dof seg1{{x1[0], x1[1], x1[2], x1[3]}};
+    p1 = line_point(seg1, val1);
+  } else if (t1 == geom_type::CIRCLE) {
+    arc_dof arc1{{x1[0], x1[1], x1[2], x1[3], x1[4]}};
+    p1 = arc_point(arc1, val1);
+  }
+
+  if (t2 == geom_type::LINE) {
+    segment_dof seg2{{x2[0], x2[1], x2[2], x2[3]}};
+    p2 = line_point(seg2, val2);
+  } else if (t2 == geom_type::CIRCLE) {
+    arc_dof arc2{{x2[0], x2[1], x2[2], x2[3], x2[4]}};
+    p2 = arc_point(arc2, val2);
+  }
+
+  return std::abs(p1.Distance(p2) - d);
+}
+
+double sketch_solver::orientation_cost(const std::vector<double> &x,
+                                       geom_type t,
+                                       const std::vector<double> &x0,
+                                       const std::pair<double, double> &val) {
+  gp_Vec2d v;
+
+  if (t == geom_type::LINE) {
+    segment_dof seg{{x[0], x[1], x[2], x[3]}};
+    gp_Pnt2d p1 = line_point(seg, 0);
+    gp_Pnt2d p2 = line_point(seg, 1);
+    v = gp_Vec2d(p2.X() - p1.X(), p2.Y() - p1.Y());
+  } else if (t == geom_type::CIRCLE) {
+    arc_dof arc{{x[0], x[1], x[2], x[3], x[4]}};
+    v = arc_first_tangent(arc);
+  }
+
+  double angle = v.Angle(gp_Vec2d(val.first, val.second));
+  return std::abs(angle);
+}
+
+double sketch_solver::arc_angle_cost(const std::vector<double> &x, geom_type t,
+                                     const std::vector<double> &x0,
+                                     double val) {
+  if (t != geom_type::CIRCLE) {
+    return 0.0;
+  }
+
+  arc_dof arc{{x[0], x[1], x[2], x[3], x[4]}};
+  return std::abs(arc[4] - val);
+}
+
+double sketch_solver::radius_cost(const std::vector<double> &x, geom_type t,
+                                  const std::vector<double> &x0, double val) {
+  if (t != geom_type::CIRCLE) {
+    throw std::invalid_argument("radius constraint only applies to circles");
+  }
+
+  arc_dof arc{{x[0], x[1], x[2], x[3], x[4]}};
+  return std::abs(arc[2] - val);
+}
+
 double sketch_solver::objective_function(const std::vector<double> &x,
                                          std::vector<double> &grad,
                                          void *f_data) {

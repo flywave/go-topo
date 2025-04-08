@@ -72,7 +72,6 @@ ASAPICALL void assembly_constrain3(assembly_t *as, const char *id1,
 ASAPICALL void assembly_solve(assembly_t *as, int verbosity);
 ASAPICALL void assembly_export_to(assembly_t *as, const char *path, int mode);
 ASAPICALL topo_shape_t **assembly_shapes(assembly_t *as, int *size);
-ASAPICALL void topo_shape_list_free(topo_shape_t **list, int size);
 ASAPICALL topo_compound_t assembly_to_compound(assembly_t *as);
 ASAPICALL assembly_element_t **assembly_get_elements(assembly_t *as, int *size);
 ASAPICALL void assembly_element_list_free(assembly_element_t **list, int size);
