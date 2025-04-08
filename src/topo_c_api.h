@@ -1420,6 +1420,95 @@ TOPOCAPICALL void topo_wire_iterator_free(topo_wire_iterator_t *it);
 TOPOCAPICALL void topo_wire_iterator_reset(topo_wire_iterator_t *it);
 TOPOCAPICALL topo_shape_t *topo_wire_iterator_next(topo_wire_iterator_t *it);
 
+// Boolean operations
+TOPOCAPICALL topo_shape_t *topo_fuse(topo_shape_t **shapes, int count,
+                                     double tol, bool glue);
+TOPOCAPICALL topo_shape_t *topo_cut(topo_shape_t *shp, topo_shape_t *tool,
+                                    double tol, bool glue);
+TOPOCAPICALL topo_shape_t *topo_cut_multi(topo_shape_t *shp,
+                                          topo_shape_t **toCuts, int count,
+                                          double tol, bool glue);
+TOPOCAPICALL topo_shape_t *topo_intersect(topo_shape_t *shp,
+                                          topo_shape_t *toIntersect, double tol,
+                                          bool glue);
+TOPOCAPICALL topo_shape_t *topo_intersect_multi(topo_shape_t *shp,
+                                                topo_shape_t **toIntersects,
+                                                int count, double tol,
+                                                bool glue);
+TOPOCAPICALL topo_shape_t *
+topo_split(topo_shape_t *shp, topo_shape_t **splitters, int count, double tol);
+
+typedef enum {
+  INTERSECTION_NONE,
+  INTERSECTION_ALONG_AXIS,
+  INTERSECTION_OPPOSITE
+} intersection_direction_t;
+
+TOPOCAPICALL topo_face_t *
+topo_faces_intersected_by_line(topo_shape_t *shp, pnt3d_t point, dir3d_t axis,
+                               double tolerance,
+                               intersection_direction_t direction, int *count);
+
+TOPOCAPICALL topo_shape_t *topo_fill(topo_shape_t *shp,
+                                     topo_shape_t **constraints, int count);
+TOPOCAPICALL topo_shape_t *topo_shelling(topo_shape_t *shp,
+                                         topo_face_t *faceList, int faceCount,
+                                         double thickness, double tolerance,
+                                         int joinType);
+TOPOCAPICALL topo_shape_t *topo_fillet(topo_shape_t *shp, topo_edge_t *edges,
+                                       int edgeCount, double radius);
+TOPOCAPICALL topo_shape_t *topo_chamfer(topo_shape_t *baseShape,
+                                        topo_edge_t *edges, int edgeCount,
+                                        double distance1, double distance2,
+                                        bool hasDistance2);
+
+TOPOCAPICALL topo_shape_t *topo_extrude(topo_shape_t *shape, vec3d_t direction);
+TOPOCAPICALL topo_shape_t *topo_extrude_linear(topo_wire_t outerWire,
+                                               topo_wire_t *innerWires,
+                                               int innerCount,
+                                               vec3d_t vecNormal, double taper);
+TOPOCAPICALL topo_shape_t *topo_extrude_linear_with_rotation(
+    topo_wire_t outerWire, topo_wire_t *innerWires, int innerCount,
+    pnt3d_t center, vec3d_t normal, double angleDegrees);
+
+TOPOCAPICALL topo_shape_t *topo_revolve(topo_shape_t *shape, pnt3d_t axisPoint,
+                                        dir3d_t axisDirection,
+                                        double angleDegrees);
+TOPOCAPICALL topo_shape_t *
+topo_revolve_wire(topo_wire_t outerWire, topo_wire_t *innerWires,
+                  int innerCount, double angleDegrees, pnt3d_t axisStart,
+                  pnt3d_t axisEnd);
+
+typedef enum {
+  TRANSITION_TRANSFORMED,
+  TRANSITION_ROUND,
+  TRANSITION_RIGHT
+} transition_mode_t;
+
+TOPOCAPICALL topo_shape_t *topo_sweep(topo_wire_t outerWire,
+                                      topo_wire_t *innerWires, int innerCount,
+                                      topo_shape_t *path, bool makeSolid,
+                                      bool isFrenet, topo_shape_t *mode,
+                                      transition_mode_t transitionMode);
+TOPOCAPICALL topo_shape_t *topo_sweep_multi(topo_shape_t **profiles, int count,
+                                            topo_shape_t *path, bool makeSolid,
+                                            bool isFrenet, topo_shape_t *mode);
+
+TOPOCAPICALL topo_shape_t *
+topo_loft(topo_shape_t **profiles, int count, bool cap, bool ruled,
+          const char *continuity, const char *parametrization, int degree,
+          bool compat, bool smoothing, double *weights);
+
+TOPOCAPICALL topo_shape_t *topo_offset(topo_shape_t *shape, double offset,
+                                       bool cap, bool both, double tol);
+TOPOCAPICALL topo_shape_t *topo_clean(topo_shape_t *shape);
+
+TOPOCAPICALL void topo_closest(topo_shape_t *shape1, topo_shape_t *shape2,
+                               pnt3d_t *p1, pnt3d_t *p2);
+TOPOCAPICALL pnt3d_t topo_combined_center(topo_shape_t **objects, int count);
+TOPOCAPICALL pnt3d_t topo_combined_center_of_bound_box(topo_shape_t **objects,
+                                                       int count);
+
 #ifdef __cplusplus
 }
 #endif
