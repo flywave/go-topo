@@ -78,6 +78,20 @@ type innerDxfShapeLayer struct {
 func (t *innerDxfShapeLayer) free() {
 	C.dxf_shape_entity_layer_free(t.val)
 }
+func NewDxfShapeLayer() *DxfShapeLayer {
+	layer := &DxfShapeLayer{
+		inner: &innerDxfShapeLayer{
+			val: C.dxf_shape_entity_layer_new(),
+		},
+	}
+	runtime.SetFinalizer(layer.inner, (*innerDxfShapeLayer).free)
+	return layer
+}
+
+// 向形状图层添加实体
+func (l *DxfShapeLayer) AddEntity(entity *DxfShapeEntity) {
+	C.dxf_shape_entity_layer_add(l.inner.val, entity.inner.val)
+}
 
 func (t *DxfReader) GetLayer(name string) *DxfShapeLayer {
 	cName := C.CString(name)
@@ -105,6 +119,16 @@ type innerDxfShapeEntity struct {
 
 func (t *innerDxfShapeEntity) free() {
 	C.dxf_shape_entity_free(t.val)
+}
+
+func NewDxfShapeEntity(shape *Shape, color int) *DxfShapeEntity {
+	entity := &DxfShapeEntity{
+		inner: &innerDxfShapeEntity{
+			val: C.dxf_shape_entity_new(shape.inner.val, C.int(color)),
+		},
+	}
+	runtime.SetFinalizer(entity.inner, (*innerDxfShapeEntity).free)
+	return entity
 }
 
 func (t *DxfShapeLayer) GetShapeEntity(index int) *DxfShapeEntity {
@@ -167,6 +191,20 @@ func (t *innerDxfTextLayer) free() {
 	C.dxf_text_entity_layer_free(t.val)
 }
 
+func NewDxfTextLayer() *DxfTextLayer {
+	layer := &DxfTextLayer{
+		inner: &innerDxfTextLayer{
+			val: C.dxf_text_entity_layer_new(),
+		},
+	}
+	runtime.SetFinalizer(layer.inner, (*innerDxfTextLayer).free)
+	return layer
+}
+
+func (l *DxfTextLayer) AddEntity(entity *DxfTextEntity) {
+	C.dxf_text_entity_layer_add_entity(l.inner.val, entity.inner.val)
+}
+
 func (t *DxfTextLayer) GetCount() int {
 	return int(C.dxf_text_entity_layer_get_count(t.inner.val))
 }
@@ -198,6 +236,24 @@ type innerDxfTextEntity struct {
 	val *C.struct__dxf_text_entity_t
 }
 
+func NewDxfTextEntity(text string, position Point3, height, rotation float64, color int) *DxfTextEntity {
+	cText := C.CString(text)
+	defer C.free(unsafe.Pointer(cText))
+
+	entity := &DxfTextEntity{
+		inner: &innerDxfTextEntity{
+			val: C.dxf_text_entity_new(
+				cText,
+				position.val,
+				C.double(height),
+				C.double(rotation),
+				C.int(color)),
+		},
+	}
+	runtime.SetFinalizer(entity.inner, (*innerDxfTextEntity).free)
+	return entity
+}
+
 func (t *innerDxfTextEntity) free() {
 	C.dxf_text_entity_free(t.val)
 }
@@ -220,4 +276,65 @@ func (t *DxfTextEntity) GetXAxisDir() Vector3 {
 
 func (t *DxfTextEntity) GetAxis3() Axis3 {
 	return NewAxis3FromNVX(t.GetPosition(), NewDir3FromVector(t.GetNormal()), NewDir3FromVector(t.GetXAxisDir()))
+}
+
+type DxfWriter struct {
+	inner *innerDxfWriter
+}
+
+type innerDxfWriter struct {
+	val *C.struct__dxf_writer_t
+}
+
+func (t *innerDxfWriter) free() {
+	C.dxf_writer_free(t.val)
+}
+
+func NewDxfWriter(filename string) *DxfWriter {
+	cFilename := C.CString(filename)
+	defer C.free(unsafe.Pointer(cFilename))
+
+	writer := &DxfWriter{
+		inner: &innerDxfWriter{
+			val: C.dxf_open_writer(cFilename),
+		},
+	}
+	runtime.SetFinalizer(writer.inner, (*innerDxfWriter).free)
+	return writer
+}
+
+func (w *DxfWriter) AddShape(layerName string, shape *Shape, index int) {
+	cLayerName := C.CString(layerName)
+	defer C.free(unsafe.Pointer(cLayerName))
+
+	C.dxf_writer_add_shape(w.inner.val, cLayerName, shape.inner.val, C.int(index))
+}
+
+func (w *DxfWriter) AddText(layerName, text string, position Point3, height, rotation float64, index int) {
+	cLayerName := C.CString(layerName)
+	defer C.free(unsafe.Pointer(cLayerName))
+
+	cText := C.CString(text)
+	defer C.free(unsafe.Pointer(cText))
+
+	C.dxf_writer_add_text(w.inner.val, cLayerName, cText, position.val,
+		C.double(height), C.double(rotation), C.int(index))
+}
+
+func (w *DxfWriter) AddShapeLayer(name string, layer *DxfShapeLayer) {
+	cName := C.CString(name)
+	defer C.free(unsafe.Pointer(cName))
+
+	C.dxf_writer_add_shape_layer(w.inner.val, cName, layer.inner.val)
+}
+
+func (w *DxfWriter) AddTextLayer(name string, layer *DxfTextLayer) {
+	cName := C.CString(name)
+	defer C.free(unsafe.Pointer(cName))
+
+	C.dxf_writer_add_text_layer(w.inner.val, cName, layer.inner.val)
+}
+
+func (w *DxfWriter) Write() bool {
+	return bool(C.dxf_writer_write(w.inner.val))
 }

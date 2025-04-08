@@ -23,7 +23,6 @@ struct _constraint_param_t {
   flywave::topo::constraint_param param;
 };
 
-// Assembly object functions
 assembly_object_t *assembly_object_create_from_shape(topo_shape_t *shape) {
   auto obj = new assembly_object_t{flywave::topo::assembly_object(*shape->shp)};
   return obj;
@@ -70,7 +69,6 @@ _Bool assembly_object_is_workplane(assembly_object_t *obj) {
   return false;
 }
 
-// Assembly element functions
 const char *assembly_element_get_name(assembly_element_t *el) {
   return el->el.name.c_str();
 }
@@ -97,7 +95,6 @@ void assembly_element_free(assembly_element_t *el) {
     delete el;
 }
 
-// Constraint param functions
 constraint_param_t *constraint_param_create_from_double(double value) {
   auto param = new constraint_param_t{flywave::topo::constraint_param(value)};
   return param;
@@ -121,7 +118,6 @@ void constraint_param_free(constraint_param_t *param) {
     delete param;
 }
 
-// Assembly functions
 assembly_t *assembly_create(assembly_object_t *obj, topo_location_t *loc,
                             const char *name, color_t *color) {
   auto as = new assembly_t{flywave::topo::assembly::create(
@@ -172,7 +168,6 @@ void assembly_remove(assembly_t *as, const char *name) {
   as->ptr->remove(name ? name : "");
 }
 
-// Constraint functions
 void assembly_constrain(assembly_t *as, const char *q1, const char *q2,
                         int kind, constraint_param_t *param) {
   as->ptr->constrain(q1 ? q1 : "", q2 ? q2 : "",
@@ -203,7 +198,6 @@ void assembly_constrain3(assembly_t *as, const char *id1, topo_shape_t *s1,
                      param ? param->param : flywave::topo::constraint_param());
 }
 
-// Other assembly operations
 void assembly_solve(assembly_t *as, int verbosity) {
   as->ptr->solve(verbosity);
 }

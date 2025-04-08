@@ -409,14 +409,14 @@ func (c *Sketch) Segment(p1, p2 *TopoVector, tag string, forConstruction bool) *
 	return c
 }
 
-func (c *Sketch) Segment2(p2 *TopoVector, tag string, forConstruction bool) *Sketch {
+func (c *Sketch) SegmentFromPoint(p2 *TopoVector, tag string, forConstruction bool) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
 	C.sketch_segment2(c.inner.val, p2.inner.val, cstr, C.bool(forConstruction))
 	return c
 }
 
-func (c *Sketch) Segment3(l, a float64, tag string, forConstruction bool) *Sketch {
+func (c *Sketch) SegmentFromLengthAngle(l, a float64, tag string, forConstruction bool) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
 	C.sketch_segment3(c.inner.val, C.double(l), C.double(a), cstr, C.bool(forConstruction))
@@ -430,14 +430,14 @@ func (c *Sketch) Arc(p1, p2, p3 *TopoVector, tag string, forConstruction bool) *
 	return c
 }
 
-func (c *Sketch) Arc2(p2, p3 *TopoVector, tag string, forConstruction bool) *Sketch {
+func (c *Sketch) ArcFromPoints(p2, p3 *TopoVector, tag string, forConstruction bool) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
 	C.sketch_arc2(c.inner.val, p2.inner.val, p3.inner.val, cstr, C.bool(forConstruction))
 	return c
 }
 
-func (c *Sketch) Arc3(center *TopoVector, radius, startAngle, deltaAngle float64, tag string, forConstruction bool) *Sketch {
+func (c *Sketch) ArcFromCenter(center *TopoVector, radius, startAngle, deltaAngle float64, tag string, forConstruction bool) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
 	C.sketch_arc3(c.inner.val, center.inner.val, C.double(radius), C.double(startAngle), C.double(deltaAngle), cstr, C.bool(forConstruction))
@@ -455,7 +455,7 @@ func (c *Sketch) Spline(points []*TopoVector, tag string, forConstruction bool) 
 	return c
 }
 
-func (c *Sketch) Spline2(points []*TopoVector, tangents1, tangents2 *TopoVector, periodic bool, tag string, forConstruction bool) *Sketch {
+func (c *Sketch) SplineWithTangents(points []*TopoVector, tangents1, tangents2 *TopoVector, periodic bool, tag string, forConstruction bool) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
 	cpoints := make([]*C.struct__topo_vector_t, len(points))
@@ -506,7 +506,7 @@ func (c *Sketch) Constrain(tag string, constraint int, arg *SketchConstraintValu
 	return c
 }
 
-func (c *Sketch) Constrain2(tag1, tag2 string, constraint int, arg *SketchConstraintValue) *Sketch {
+func (c *Sketch) ConstraintBetween(tag1, tag2 string, constraint int, arg *SketchConstraintValue) *Sketch {
 	cstr := C.CString(tag1)
 	defer C.free(unsafe.Pointer(cstr))
 	cstr2 := C.CString(tag2)

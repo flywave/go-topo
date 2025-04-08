@@ -80,22 +80,23 @@ double sketch_solver::coincident_cost(
 
   if (t1 == geom_type::LINE) {
     segment_dof seg1{{x1[0], x1[1], x1[2], x1[3]}};
-    p1 = line_point(seg1, val); // 使用val参数
+    p1 = line_point(seg1, val);
   } else if (t1 == geom_type::CIRCLE) {
     arc_dof arc1{{x1[0], x1[1], x1[2], x1[3], x1[4]}};
-    p1 = arc_point(arc1, val); // 使用val参数
+    p1 = arc_point(arc1, val);
   }
 
   if (t2 == geom_type::LINE) {
     segment_dof seg2{{x2[0], x2[1], x2[2], x2[3]}};
-    p2 = line_point(seg2, val); // 使用val参数
+    p2 = line_point(seg2, val);
   } else if (t2 == geom_type::CIRCLE) {
     arc_dof arc2{{x2[0], x2[1], x2[2], x2[3], x2[4]}};
-    p2 = arc_point(arc2, val); // 使用val参数
+    p2 = arc_point(arc2, val);
   }
 
   return p1.Distance(p2);
 }
+
 double sketch_solver::angle_cost(const std::vector<double> &x1, geom_type t1,
                                  const std::vector<double> &x10,
                                  const std::vector<double> &x2, geom_type t2,
@@ -431,7 +432,6 @@ sketch_solver::sketch_solver(const std::vector<sketch_dof> &entities,
                              const std::vector<sketch_constraint> &constraints,
                              const std::vector<geom_type> &geoms)
     : entities(entities), constraints(constraints), geoms(geoms) {
-
   ixs.push_back(0);
   for (const auto &e : entities) {
     size_t size = 0;
