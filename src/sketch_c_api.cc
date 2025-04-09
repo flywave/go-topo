@@ -10,7 +10,7 @@ namespace topo {
 template <typename T>
 void safe_call(std::shared_ptr<sketch> sk, const T &func) {
   if (sk->has_error()) {
-    return *sk;
+    return;
   }
   try {
     func();
