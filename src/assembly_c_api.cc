@@ -275,6 +275,10 @@ void assembly_list_free(assembly_t **list, int size) {
   }
 }
 
+bool assembly_has_error(assembly_t *as) { return as->ptr->has_error(); }
+
+const char *assembly_error(assembly_t *as) { return as->ptr->error().c_str(); }
+
 #ifdef __cplusplus
 }
 #endif

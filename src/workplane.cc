@@ -3118,7 +3118,6 @@ std::shared_ptr<topo::sketch> workplane::sketch() {
   std::shared_ptr<topo::sketch> rv =
       std::make_shared<topo::sketch>(parent, locs());
   parent->_objects.push_back(rv);
-
   return rv;
 }
 

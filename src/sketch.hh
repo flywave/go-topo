@@ -204,6 +204,10 @@ public:
   sketch &invoke(std::function<void(sketch &)> f);
   sketch &invoke(std::function<sketch &(sketch &)> f);
 
+  void set_error(const std::string &msg);
+  bool has_error() const;
+  std::string error() const;
+
 protected:
   sketch &
   _each(std::function<boost::variant<topo::face, std::shared_ptr<sketch>,

@@ -82,6 +82,9 @@ ASAPICALL assembly_object_t *assembly_get_object(assembly_t *as);
 ASAPICALL assembly_t **assembly_children(assembly_t *as, int *size);
 ASAPICALL void assembly_list_free(assembly_t **list, int size);
 
+SKETCHCAPICALL bool assembly_has_error(assembly_t *as);
+SKETCHCAPICALL const char *assembly_error(assembly_t *as);
+
 #ifdef __cplusplus
 }
 #endif

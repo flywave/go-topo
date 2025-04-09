@@ -529,6 +529,21 @@ public:
   const std::string &error() const;
   std::shared_ptr<context> ctx() const;
 
+  template <typename T> std::shared_ptr<workplane> safe_call(const T &func) {
+    if (this->has_error()) {
+      return this->shared_from_this();
+    }
+    std::shared_ptr<workplane> ret;
+    try {
+      ret = func();
+    } catch (const std::exception &e) {
+      this->ctx()->set_error(e.what());
+    } catch (...) {
+      this->ctx()->set_error("Unknown error occurred");
+    }
+    return ret;
+  }
+
 protected:
   std::vector<shape_object> _objects;
   std::shared_ptr<context> _ctx;

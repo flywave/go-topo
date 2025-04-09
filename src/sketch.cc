@@ -1489,5 +1489,16 @@ sketch::to_compound(const shape &sh) const {
   }
   return compound::make_compound({sh});
 }
+
+void sketch::set_error(const std::string &msg) {
+  return this->parent_->ctx()->set_error(msg);
+}
+
+bool sketch::has_error() const { return this->parent_->has_error(); }
+
+std::string sketch::error() const {
+  return this->parent_->error();
+}
+
 } // namespace topo
 } // namespace flywave
