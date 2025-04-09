@@ -206,7 +206,7 @@ public:
 
   void set_error(const std::string &msg);
   bool has_error() const;
-  std::string error() const;
+  const std::string &error() const;
 
 protected:
   sketch &

@@ -536,35 +536,41 @@ assembly &assembly::add(std::shared_ptr<assembly> subAssembly,
                         std::shared_ptr<topo_location> loc,
                         const std::string &name,
                         std::shared_ptr<Quantity_Color> color) {
-  auto current = shared_from_this();
-  while (current) {
-    if (current == subAssembly) {
-      throw std::invalid_argument("Circular dependency detected");
+  try {
+    auto current = shared_from_this();
+    while (current) {
+      if (current == subAssembly) {
+        throw std::invalid_argument("Circular dependency detected");
+      }
+      current = current->parent_.lock();
     }
-    current = current->parent_.lock();
-  }
-  if (!subAssembly) {
-    throw std::invalid_argument("Cannot add null assembly");
-  }
+    if (!subAssembly) {
+      throw std::invalid_argument("Cannot add null assembly");
+    }
 
-  const std::string &finalName = name.empty() ? subAssembly->name_ : name;
-  if (objects_.find(finalName) != objects_.end()) {
-    throw std::invalid_argument("Duplicate assembly name: " + finalName);
-  }
+    const std::string &finalName = name.empty() ? subAssembly->name_ : name;
+    if (objects_.find(finalName) != objects_.end()) {
+      throw std::invalid_argument("Duplicate assembly name: " + finalName);
+    }
 
-  auto newAssembly = subAssembly->copy();
+    auto newAssembly = subAssembly->copy();
 
-  newAssembly->loc_ = loc ? loc : subAssembly->loc_;
-  newAssembly->name_ = finalName;
-  newAssembly->color_ = color ? color : subAssembly->color_;
-  newAssembly->parent_ = shared_from_this();
+    newAssembly->loc_ = loc ? loc : subAssembly->loc_;
+    newAssembly->name_ = finalName;
+    newAssembly->color_ = color ? color : subAssembly->color_;
+    newAssembly->parent_ = shared_from_this();
 
-  children_.push_back(newAssembly);
-  objects_[finalName] = newAssembly;
+    children_.push_back(newAssembly);
+    objects_[finalName] = newAssembly;
 
-  auto childObjects = newAssembly->flatten();
-  for (const auto &pair : childObjects) {
-    objects_[pair.first] = pair.second;
+    auto childObjects = newAssembly->flatten();
+    for (const auto &pair : childObjects) {
+      objects_[pair.first] = pair.second;
+    }
+  } catch (const std::exception &e) {
+    set_error(e.what());
+  } catch (...) {
+    set_error("Unknown error occurred");
   }
 
   return *this;
@@ -582,92 +588,100 @@ assembly::add(assembly_object obj, std::shared_ptr<topo_location> loc,
 }
 
 assembly &assembly::remove(const std::string &name) {
-  auto it = objects_.find(name);
-  if (it == objects_.end()) {
-    throw std::invalid_argument("No object with name '" + name +
-                                "' found in the assembly");
+  try {
+    auto it = objects_.find(name);
+    if (it == objects_.end()) {
+      throw std::invalid_argument("No object with name '" + name +
+                                  "' found in the assembly");
+    }
+
+    auto toRemove = it->second;
+
+    if (auto parent = toRemove->parent_.lock()) {
+      auto &children = parent->children_;
+      children.erase(std::remove(children.begin(), children.end(), toRemove),
+                     children.end());
+    }
+
+    objects_.erase(it);
+
+    auto descendants = toRemove->flatten();
+
+    for (const auto &pair : descendants) {
+      objects_.erase(pair.first);
+    }
+
+    toRemove->parent_.reset();
+  } catch (const std::exception &e) {
+    set_error(e.what());
+  } catch (...) {
+    set_error("Unknown error occurred");
   }
-
-  auto toRemove = it->second;
-
-  if (auto parent = toRemove->parent_.lock()) {
-    auto &children = parent->children_;
-    children.erase(std::remove(children.begin(), children.end(), toRemove),
-                   children.end());
-  }
-
-  objects_.erase(it);
-
-  auto descendants = toRemove->flatten();
-
-  for (const auto &pair : descendants) {
-    objects_.erase(pair.first);
-  }
-
-  toRemove->parent_.reset();
-
   return *this;
 }
 
 std::pair<std::string, shape> assembly::query(const std::string &q) const {
   parse_result rs;
-  bool ok = parse(q, rs);
+  try {
+    bool ok = parse(q, rs);
 
-  auto obj_it = objects_.find(rs.name);
-  if (obj_it == objects_.end()) {
-    throw std::invalid_argument("Object not found: " + rs.name);
-  }
+    auto obj_it = objects_.find(rs.name);
+    if (obj_it == objects_.end()) {
+      throw std::invalid_argument("Object not found: " + rs.name);
+    }
 
-  auto obj = obj_it->second->obj_;
-  std::shared_ptr<workplane> tmp_wp = nullptr;
-  shape_object result;
+    auto obj = obj_it->second->obj_;
+    std::shared_ptr<workplane> tmp_wp = nullptr;
+    shape_object result;
 
-  // 使用 boost::get 替代 std::get_if
-  if (auto *wp = boost::get<std::shared_ptr<workplane>>(&obj)) {
-    if (!rs.tag.empty()) {
-      tmp_wp = (*wp)->get_tagged(rs.tag);
-    } else {
+    if (auto *wp = boost::get<std::shared_ptr<workplane>>(&obj)) {
+      if (!rs.tag.empty()) {
+        tmp_wp = (*wp)->get_tagged(rs.tag);
+      } else {
+        tmp_wp = std::make_shared<workplane>();
+        tmp_wp->add(**wp);
+      }
+    } else if (auto *sh = boost::get<shape>(&obj)) {
       tmp_wp = std::make_shared<workplane>();
-      tmp_wp->add(**wp);
-    }
-  } else if (auto *sh = boost::get<shape>(&obj)) {
-    tmp_wp = std::make_shared<workplane>();
-    tmp_wp->add(*sh);
-  } else if (!boost::get<boost::blank>(&obj)) {
-    throw std::invalid_argument("Invalid object type in assembly");
-  } else {
-    throw std::invalid_argument("Workplane or Shape required for query");
-  }
-
-  if (!tmp_wp) {
-    throw std::invalid_argument("Workplane not found");
-  }
-
-  // Apply selector if specified
-  if (!rs.selector_kind.empty()) {
-    if (rs.selector_kind == "faces") {
-      result = tmp_wp->faces(rs.selector)->val();
-    } else if (rs.selector_kind == "edges") {
-      result = tmp_wp->edges(rs.selector)->val();
-    } else if (rs.selector_kind == "vertices") {
-      result = tmp_wp->vertices(rs.selector)->val();
-    } else if (rs.selector_kind == "solids") {
-      result = tmp_wp->solids(rs.selector)->val();
+      tmp_wp->add(*sh);
+    } else if (!boost::get<boost::blank>(&obj)) {
+      throw std::invalid_argument("Invalid object type in assembly");
     } else {
-      throw std::invalid_argument("Invalid selector kind: " + rs.selector_kind);
+      throw std::invalid_argument("Workplane or Shape required for query");
     }
-  } else {
-    result = tmp_wp->val();
-  }
 
-  if (auto *sh = boost::get<shape>(&result)) {
-    return {rs.name, *sh};
-  }
+    if (!tmp_wp) {
+      throw std::invalid_argument("Workplane not found");
+    }
 
+    if (!rs.selector_kind.empty()) {
+      if (rs.selector_kind == "faces") {
+        result = tmp_wp->faces(rs.selector)->val();
+      } else if (rs.selector_kind == "edges") {
+        result = tmp_wp->edges(rs.selector)->val();
+      } else if (rs.selector_kind == "vertices") {
+        result = tmp_wp->vertices(rs.selector)->val();
+      } else if (rs.selector_kind == "solids") {
+        result = tmp_wp->solids(rs.selector)->val();
+      } else {
+        throw std::invalid_argument("Invalid selector kind: " +
+                                    rs.selector_kind);
+      }
+    } else {
+      result = tmp_wp->val();
+    }
+
+    if (auto *sh = boost::get<shape>(&result)) {
+      return {rs.name, *sh};
+    }
+  } catch (const std::exception &e) {
+    set_error(e.what());
+  } catch (...) {
+    set_error("Unknown error occurred");
+  }
   return {rs.name, shape()};
 }
 
-// 公共重载方法实现
 assembly &assembly::constrain(const std::string &q1, const std::string &q2,
                               constraint_kind kind,
                               const constraint_param &param) {
@@ -708,111 +722,129 @@ assembly &assembly::add_constraint_impl(const std::string &id1, const shape *s1,
                                         constraint_kind kind,
                                         const constraint_param &param,
                                         bool isBinary) {
-  if (isBinary != is_binary(kind)) {
-    throw std::invalid_argument(isBinary ? "Expected binary constraint type"
-                                         : "Expected unary constraint type");
-  }
-
-  if (!s1) {
-    throw std::invalid_argument("First shape cannot be null");
-  }
-
-  if (!isBinary) {
-    topo_location loc1;
-    std::string topId1;
-    std::tie(loc1, topId1) = sub_location(id1);
-    constraints_.push_back(constraint_spec(
-        std::vector<std::string>{topId1}, std::vector<shape>{*s1},
-        std::vector<topo_location>{loc1}, kind, param));
-  } else {
-    if (!s2) {
-      throw std::invalid_argument(
-          "Second shape cannot be null for binary constraint");
+  try {
+    if (isBinary != is_binary(kind)) {
+      throw std::invalid_argument(isBinary ? "Expected binary constraint type"
+                                           : "Expected unary constraint type");
     }
 
-    topo_location loc1, loc2;
-    std::string topId1, topId2;
-    std::tie(loc1, topId1) = sub_location(id1);
-    std::tie(loc2, topId2) = sub_location(id2);
+    if (!s1) {
+      throw std::invalid_argument("First shape cannot be null");
+    }
 
-    constraints_.push_back(constraint_spec(
-        std::vector<std::string>{topId1, topId2}, std::vector<shape>{*s1, *s2},
-        std::vector<topo_location>{loc1, loc2}, kind, param));
+    if (!isBinary) {
+      topo_location loc1;
+      std::string topId1;
+      std::tie(loc1, topId1) = sub_location(id1);
+      constraints_.push_back(constraint_spec(
+          std::vector<std::string>{topId1}, std::vector<shape>{*s1},
+          std::vector<topo_location>{loc1}, kind, param));
+    } else {
+      if (!s2) {
+        throw std::invalid_argument(
+            "Second shape cannot be null for binary constraint");
+      }
+
+      topo_location loc1, loc2;
+      std::string topId1, topId2;
+      std::tie(loc1, topId1) = sub_location(id1);
+      std::tie(loc2, topId2) = sub_location(id2);
+
+      constraints_.push_back(
+          constraint_spec(std::vector<std::string>{topId1, topId2},
+                          std::vector<shape>{*s1, *s2},
+                          std::vector<topo_location>{loc1, loc2}, kind, param));
+    }
+  } catch (const std::exception &e) {
+    set_error(e.what());
+  } catch (...) {
+    set_error("Unknown error occurred");
   }
-
   return *this;
 }
 
 assembly &assembly::solve(int verbosity) {
-  std::lock_guard<std::mutex> lock(solve_mutex_);
-  if (constraints_.empty()) {
-    throw std::runtime_error("At least one constraint required");
-  }
+  try {
+    std::lock_guard<std::mutex> lock(solve_mutex_);
+    if (constraints_.empty()) {
+      throw std::runtime_error("At least one constraint required");
+    }
 
-  std::unordered_map<std::string, size_t> ents;
-  std::vector<size_t> locked;
-  size_t index = 0;
+    std::unordered_map<std::string, size_t> ents;
+    std::vector<size_t> locked;
+    size_t index = 0;
 
-  for (const auto &c : constraints_) {
-    for (const auto &name : c.objects) {
-      if (ents.find(name) == ents.end()) {
-        ents[name] = index++;
-      }
-      if ((c.kind == constraint_kind::Fixed || name == name_) &&
-          std::find(locked.begin(), locked.end(), ents[name]) == locked.end()) {
-        locked.push_back(ents[name]);
+    for (const auto &c : constraints_) {
+      for (const auto &name : c.objects) {
+        if (ents.find(name) == ents.end()) {
+          ents[name] = index++;
+        }
+        if ((c.kind == constraint_kind::Fixed || name == name_) &&
+            std::find(locked.begin(), locked.end(), ents[name]) ==
+                locked.end()) {
+          locked.push_back(ents[name]);
+        }
       }
     }
-  }
 
-  if (locked.empty()) {
-    locked.push_back(0);
-  }
-
-  std::vector<gp_Trsf> locs(ents.size());
-  for (const auto &entry : ents) {
-    locs[entry.second] = *objects_.find(entry.first)->second->loc_;
-  }
-
-  std::vector<assembly_constraint> constraint_pods;
-  constraint_pods.reserve(constraints_.size());
-  for (const auto &c : constraints_) {
-    auto pods = c.to_pods();
-    for (const auto &pod : pods) {
-      constraint_pods.push_back(pod);
+    if (locked.empty()) {
+      locked.push_back(0);
     }
-  }
 
-  double scale = to_compound().bbox().diagonal_length();
-  constraint_solver solver(locs, constraint_pods, locked, scale);
-
-  auto solve_result = solver.solve(verbosity);
-  solve_result_ = solve_result.second;
-
-  auto root_loc_inv = std::make_shared<topo_location>();
-  if (obj_.which() != 2) {
+    std::vector<gp_Trsf> locs(ents.size());
     for (const auto &entry : ents) {
-      if (entry.first == name_) {
-        *root_loc_inv = solve_result.first[entry.second].Inverted();
-        break;
+      locs[entry.second] = *objects_.find(entry.first)->second->loc_;
+    }
+
+    std::vector<assembly_constraint> constraint_pods;
+    constraint_pods.reserve(constraints_.size());
+    for (const auto &c : constraints_) {
+      auto pods = c.to_pods();
+      for (const auto &pod : pods) {
+        constraint_pods.push_back(pod);
       }
     }
-  }
 
-  for (const auto &entry : ents) {
-    if (entry.first != name_) {
-      objects_.find(entry.first)->second->loc_ =
-          std::make_shared<topo_location>(*root_loc_inv *
-                                          solve_result.first[entry.second]);
+    double scale = to_compound().bbox().diagonal_length();
+    constraint_solver solver(locs, constraint_pods, locked, scale);
+
+    auto solve_result = solver.solve(verbosity);
+    solve_result_ = solve_result.second;
+
+    auto root_loc_inv = std::make_shared<topo_location>();
+    if (obj_.which() != 2) {
+      for (const auto &entry : ents) {
+        if (entry.first == name_) {
+          *root_loc_inv = solve_result.first[entry.second].Inverted();
+          break;
+        }
+      }
     }
-  }
 
+    for (const auto &entry : ents) {
+      if (entry.first != name_) {
+        objects_.find(entry.first)->second->loc_ =
+            std::make_shared<topo_location>(*root_loc_inv *
+                                            solve_result.first[entry.second]);
+      }
+    }
+  } catch (const std::exception &e) {
+    set_error(e.what());
+  } catch (...) {
+    set_error("Unknown error occurred");
+  }
   return *this;
 }
 
 assembly &assembly::export_to(const std::string &path,
                               const assembly_export_mode &mode) {
-  detail::export_assembly(this->shared_from_this(), path, mode);
+  try {
+    detail::export_assembly(this->shared_from_this(), path, mode);
+  } catch (const std::exception &e) {
+    set_error(e.what());
+  } catch (...) {
+    set_error("Unknown error occurred");
+  }
   return *this;
 }
 
@@ -982,7 +1014,7 @@ assembly::sub_location(const std::string &name) const {
 
 bool assembly::has_error() const { return (bool)(error_); }
 
-void assembly::set_error(const std::string &error) { error_ = error; }
+void assembly::set_error(const std::string &error) const { error_ = error; }
 
 const std::string &assembly::error() const {
   if (error_) {

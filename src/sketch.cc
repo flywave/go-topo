@@ -1496,7 +1496,7 @@ void sketch::set_error(const std::string &msg) {
 
 bool sketch::has_error() const { return this->parent_->has_error(); }
 
-std::string sketch::error() const {
+const std::string &sketch::error() const {
   return this->parent_->error();
 }
 

@@ -103,7 +103,7 @@ public:
 
   const topo_location &location() const {
     if (!loc_)
-      throw std::runtime_error("Null location");
+      return topo_location{};
     return *loc_;
   }
 
@@ -111,7 +111,7 @@ public:
 
   const Quantity_Color &color() const {
     if (!color_)
-      throw std::runtime_error("Null color");
+      return Quantity_Color();
     return *color_;
   }
 
@@ -123,7 +123,7 @@ public:
 
   bool has_error() const;
 
-  void set_error(const std::string &error);
+  void set_error(const std::string &error) const;
 
   const std::string &error() const;
 
@@ -163,7 +163,7 @@ private:
 
   std::unordered_map<std::string, std::shared_ptr<assembly>> objects_;
   std::vector<constraint_spec> constraints_;
-  boost::optional<std::string> error_;
+  mutable boost::optional<std::string> error_;
 
   boost::optional<std::map<std::string, double>> solve_result_;
 };

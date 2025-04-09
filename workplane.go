@@ -1254,3 +1254,11 @@ func workplaneInvokeFunc(userdata unsafe.Pointer) *C.struct__workplane_t {
 func (wp *Workplane) Invoke(func_ func() *Workplane) {
 	C.workplane_invoke(wp.inner.val, unsafe.Pointer(&func_), (*[0]byte)(C.workplaneInvokeFunc))
 }
+
+func (wp *Workplane) HasError() bool {
+	return bool(C.workplane_has_error(wp.inner.val))
+}
+
+func (wp *Workplane) Error() string {
+	return C.GoString(C.workplane_error(wp.inner.val))
+}

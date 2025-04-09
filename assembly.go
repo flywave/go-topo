@@ -286,3 +286,11 @@ func (c *Assembly) Children() []*Assembly {
 	}
 	return result
 }
+
+func (c *Assembly) HasError() bool {
+	return bool(C.assembly_has_error(c.inner.val))
+}
+
+func (c *Assembly) Error() string {
+	return C.GoString(C.assembly_error(c.inner.val))
+}

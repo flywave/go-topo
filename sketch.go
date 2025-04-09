@@ -705,3 +705,11 @@ func (c *Sketch) Sort(fn func(*SketchObject, *SketchObject) bool) *Sketch {
 	C.sketch_sort(c.inner.val, unsafe.Pointer(&fn), (*[0]byte)(C.sketchSortFunc))
 	return c
 }
+
+func (c *Sketch) HasError() bool {
+	return bool(C.sketch_has_error(c.inner.val))
+}
+
+func (c *Sketch) Error() string {
+	return C.GoString(C.sketch_error(c.inner.val))
+}
