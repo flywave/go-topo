@@ -7237,10 +7237,10 @@ TopoDS_Shape create_wire(const wire_params &params, const gp_Pnt &startPoint,
  * @return TopoDS_Shape 生成的螺栓形状
  * @throws Standard_ConstructionError 如果参数不合法
  */
-TopoDS_Shape create_anchor_bolt(const char *boltType) {
+TopoDS_Shape create_anchor_bolt(const std::string &boltType) {
   // 解析螺栓直径
   double diameter = 0;
-  if (sscanf(boltType, "M%lf", &diameter) != 1 || diameter <= 0) {
+  if (sscanf(boltType.c_str(), "M%lf", &diameter) != 1 || diameter <= 0) {
     throw Standard_ConstructionError(
         "Invalid bolt type format (should be like M22)");
   }
@@ -7317,7 +7317,8 @@ TopoDS_Shape create_anchor_bolt(const char *boltType) {
  * @param direction 螺栓方向(默认Z轴向上)
  * @return TopoDS_Shape
  */
-TopoDS_Shape create_anchor_bolt(const char *boltType, const gp_Pnt &position,
+TopoDS_Shape create_anchor_bolt(const std::string &boltType,
+                                const gp_Pnt &position,
                                 const gp_Dir &direction = gp_Dir(0, 0, 1)) {
   // 首先创建标准方向的螺栓
   TopoDS_Shape bolt = create_anchor_bolt(boltType);
