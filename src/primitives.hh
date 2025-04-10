@@ -1174,39 +1174,39 @@ struct fitting_params {
 };
 
 // 绝缘子材质
-enum class InsulatorMaterial {
+enum class insulator_material {
   CERAMIC = 1,  // 陶瓷
   GLASS = 2,    // 玻璃
   COMPOSITE = 3 // 复合
 };
 
 // 排列方式
-enum class ArrangementType {
+enum class arrangement_type {
   HORIZONTAL = 1, // 水平
   VERTICAL = 2    // 垂直
 };
 
 // 串用途
-enum class ApplicationType {
+enum class application_type {
   CONDUCTOR = 1,  // 导线
   GROUND_WIRE = 2 // 地线
 };
 
 // 串类型
-enum class StringType {
+enum class string_type {
   SUSPENSION = 1, // 悬垂
   TENSION = 2     // 耐张
 };
 
 // 复合绝缘子参数子结构
-struct CompositeInsulatorParams {
+struct composite_insulator_params {
   double majorRadius; // 大半径(mm)
   double minorRadius; // 小半径(mm)
   double gap;         // 间隙(mm)
 };
 
 // 主参数结构体
-struct PowerTowerComponent {
+struct insulator_params {
   // 基础标识
   std::string type; // 型号
   int subNum;       // 分裂数(1/2/4/6/8)
@@ -1231,18 +1231,18 @@ struct PowerTowerComponent {
 
   // 多联配置
   struct {
-    int count;                   // 联数
-    double spacing;              // 联间距(mm)
-    ArrangementType arrangement; // 排列方式
+    int count;                    // 联数
+    double spacing;               // 联间距(mm)
+    arrangement_type arrangement; // 排列方式
   } multiLink;
 
   // 绝缘子参数
   struct {
-    boost::variant<double, CompositeInsulatorParams> radius; // 半径或复合参数
-    double height;                                           // 结构高度(mm)
-    int leftCount;                                           // 左侧片数
-    int rightCount;                                          // 右侧片数
-    InsulatorMaterial material;                              // 材质
+    boost::variant<double, composite_insulator_params> radius; // 半径或复合参数
+    double height;                                             // 结构高度(mm)
+    int leftCount;                                             // 左侧片数
+    int rightCount;                                            // 右侧片数
+    insulator_material material;                               // 材质
   } insulator;
 
   // 均压环配置
@@ -1254,8 +1254,8 @@ struct PowerTowerComponent {
   } gradingRing;
 
   // 用途类型
-  ApplicationType application;
-  StringType stringType;
+  application_type application;
+  string_type stringType;
 };
 
 } // namespace topo
