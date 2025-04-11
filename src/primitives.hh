@@ -1097,44 +1097,6 @@ TopoDS_Shape create_precast_concrete_support_foundation(
     const precast_concrete_support_foundation_params &params,
     const gp_Pnt &position, const gp_Dir &direction = gp::DZ());
 
-struct disk_insulator_params {
-  double diskDiameter;     // 盘直径
-  double diskThickness;    // 盘厚度
-  int diskCount;           // 盘数量
-  double rodDiameter;      // 芯棒直径
-  double rodLength;        // 芯棒长度
-  bool hasThread;          // 是否包含端部螺纹
-  double threadLength;     // 螺纹长度
-  double threadPitch;      // 螺纹间距
-  double angleL;           // 左侧V串夹角(度)，与angleR同时为0表示I串
-  double angleR;           // 右侧V串夹角(度)，与angleL同时为0表示I串
-  double horizontalLength; // U串连接长度(mm)，非U串为0
-};
-
-TopoDS_Shape create_disk_insulator(const disk_insulator_params &params);
-TopoDS_Shape create_disk_insulator(double diskDiameter, double diskHeight,
-                                   int diskCount, const gp_Pnt &position,
-                                   const gp_Dir &axisDirection = gp::DZ());
-
-struct rod_insulator_params {
-  double rodDiameter;      // 芯棒直径
-  double rodLength;        // 芯棒长度
-  double shedDiameter;     // 伞裙直径
-  double shedThickness;    // 伞裙厚度
-  int shedCount;           // 伞裙数量
-  bool hasThread;          // 是否包含端部螺纹
-  double threadLength;     // 螺纹长度
-  double threadPitch;      // 螺纹间距
-  double angleL;           // 左侧V串夹角(度)，与angleR同时为0表示I串
-  double angleR;           // 右侧V串夹角(度)，与angleL同时为0表示I串
-  double horizontalLength; // U串连接长度(mm)，非U串为0
-};
-
-TopoDS_Shape create_rod_insulator(const rod_insulator_params &params);
-TopoDS_Shape create_rod_insulator(double rodDiameter, double rodLength,
-                                  double shedDiameter, double shedHeight,
-                                  double shedSpacing, const gp_Pnt &position,
-                                  const gp_Dir &axisDirection = gp::DZ());
 struct transmission_line_params {
   std::string type;               // 型号
   double sectionalArea;           // 截面积(mm²)
@@ -1257,6 +1219,19 @@ struct insulator_params {
   application_type application;
   string_type stringType;
 };
+
+/**
+ * @brief 创建带定位的绝缘子串
+ * @param params 绝缘子参数结构体
+ * @param position 绝缘子串与杆塔连接点位置
+ * @param direction 绝缘子串方向（默认Z轴向上）
+ * @return TopoDS_Shape 生成的绝缘子串形状
+ * @throws Standard_ConstructionError 如果参数不合法
+ */
+TopoDS_Shape create_insulator_string(const insulator_params &params);
+TopoDS_Shape create_insulator_string(const insulator_params &params,
+                                     const gp_Pnt &position,
+                                     const gp_Dir &direction = gp_Dir(0, 0, 1));
 
 } // namespace topo
 } // namespace flywave
