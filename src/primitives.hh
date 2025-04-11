@@ -606,8 +606,8 @@ TopoDS_Shape create_square_steel_tube(const square_steel_tube_params &params,
 /**
  * @brief 双槽钢参数结构体
  */
-struct double_channel_steel_params : public beam_channel_params {
-  double spacing; // 间距 (S >= 0)
+struct double_channel_steel_params : beam_channel_params {
+  double spacing;         // 间距 (S >= 0)
 };
 
 TopoDS_Shape
@@ -616,8 +616,7 @@ TopoDS_Shape create_double_channel_steel(
     const double_channel_steel_params &params, const gp_Pnt &position,
     const gp_Dir &xDirection = gp::DX(), const gp_Dir &zDirection = gp::DZ());
 
-struct equilateral_double_angle_steel_params
-    : public equilateral_angle_steel_params {
+struct equilateral_double_angle_steel_params : equilateral_angle_steel_params {
   double spacing; // 间距 (S >= 0)
 };
 
@@ -627,7 +626,7 @@ TopoDS_Shape create_equilateral_double_angle_steel(
     const equilateral_double_angle_steel_params &params, const gp_Pnt &position,
     const gp_Dir &xDirection = gp::DX(), const gp_Dir &zDirection = gp::DZ());
 
-struct unequal_angle_steel_params : public scalene_angle_steel_params {
+struct unequal_angle_steel_params : scalene_angle_steel_params{
   double spacing; // 间距 (S >= 0)
 };
 
@@ -1110,30 +1109,7 @@ struct transmission_line_params {
 TopoDS_Shape create_transmission_line(const transmission_line_params &params,
                                       const gp_Pnt &startPoint,
                                       const gp_Pnt &endPoint);
-TopoDS_Shape create_transmission_line(double conductorRadius,
-                                      double bundleSpacing, int bundleCount,
-                                      double spanLength, double sag,
-                                      const gp_Pnt &position,
-                                      const gp_Dir &direction = gp::DX(),
-                                      const gp_Dir &normal = gp::DZ());
 
-/**
- * 双分裂时：垂直排列-1 水平排列-2；三分裂时： 正三角排列-1
-倒三角排列-2。其他分裂时取0。 四分裂、六分裂、八分裂为正多边形
- */
-// 线夹基础参数
-struct fitting_params {
-  double subNum;            // 分裂数量
-  double conductorDiameter; // 子导线直径(mm)
-  double splitDistance;     // 分裂间距(mm)
-  int subType; // 排列方式(1/2) 双分裂时：  1: 垂直排列，2: 水平排列 三分裂时：
-               // 1: 正三角排列，2: 倒三角排列
-  double fittingLength;   // 金具长度(mm)
-  int gradingRingCount;   // 均压环个数
-  double gradingRingPos;  // 安装位置(mm)
-  double gradingRingHigh; // 高度(mm)
-  double gradingRingRad;  // 半径(mm)
-};
 
 // 绝缘子材质
 enum class insulator_material {
@@ -1201,10 +1177,10 @@ struct insulator_params {
   // 绝缘子参数
   struct {
     boost::variant<double, composite_insulator_params> radius; // 半径或复合参数
-    double height;                                             // 结构高度(mm)
-    int leftCount;                                             // 左侧片数
-    int rightCount;                                            // 右侧片数
-    insulator_material material;                               // 材质
+    double height;               // 结构高度(mm)
+    int leftCount;               // 左侧片数
+    int rightCount;              // 右侧片数
+    insulator_material material; // 材质
   } insulator;
 
   // 均压环配置
