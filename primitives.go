@@ -2094,18 +2094,15 @@ func (p *InsulatorCompositeParams) to_struct() C.insulator_composite_params_t {
 	c.uLinkLength = C.double(p.ULinkLength)
 	c.weight = C.double(p.Weight)
 
-	// Convert FittingLengths
 	c.fittingLengths.leftUpper = C.double(p.FittingLengths.LeftUpper)
 	c.fittingLengths.rightUpper = C.double(p.FittingLengths.RightUpper)
 	c.fittingLengths.leftLower = C.double(p.FittingLengths.LeftLower)
 	c.fittingLengths.rightLower = C.double(p.FittingLengths.RightLower)
 
-	// Convert MultiLink
 	c.multiLink.count = C.int(p.MultiLink.Count)
 	c.multiLink.spacing = C.double(p.MultiLink.Spacing)
 	c.multiLink.arrangement = C.int(p.MultiLink.Arrangement)
 
-	// Convert Insulator
 	switch v := p.Insulator.RadiusData.(type) {
 	case float32:
 		c.insulator.isComposite = C.bool(false)
@@ -2122,7 +2119,6 @@ func (p *InsulatorCompositeParams) to_struct() C.insulator_composite_params_t {
 	c.insulator.rightCount = C.int(p.Insulator.RightCount)
 	c.insulator.material = C.int(p.Insulator.Material)
 
-	// Convert GradingRing
 	c.gradingRing.count = C.int(p.GradingRing.Count)
 	c.gradingRing.position = C.double(p.GradingRing.Position)
 	c.gradingRing.height = C.double(p.GradingRing.Height)
