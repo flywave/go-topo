@@ -373,6 +373,29 @@ PRIMCAPICALL topo_shape_t *create_cable_with_place(cable_params_t params,
                                                    dir3d_t direction,
                                                    dir3d_t upDirection);
 
+typedef enum {
+  CURVE_TYPE_LINE = 0,
+  CURVE_TYPE_ARC = 1,
+  CURVE_TYPE_SPLINE = 2
+} curve_type_t;
+
+typedef struct {
+  pnt3d_t *controlPoints;
+  int numPoints;
+} curve_segment_t;
+
+typedef struct {
+  curve_segment_t *segments;
+  curve_type_t *curveTypes;
+  int numSegments;
+  double diameter;
+} curve_cable_params_t;
+
+PRIMCAPICALL topo_shape_t *create_curve_cable(curve_cable_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_curve_cable_with_place(curve_cable_params_t params, pnt3d_t position,
+                              dir3d_t direction, dir3d_t upDirection);
+
 typedef struct {
   double L;
   double X;
@@ -1044,6 +1067,180 @@ create_composite_insulator(insulator_composite_params_t params);
 PRIMCAPICALL topo_shape_t *
 create_composite_insulator_with_place(insulator_composite_params_t params,
                                       pnt3d_t position, dir3d_t direction);
+
+// 单钩锚固参数结构体
+typedef struct {
+  double boltDiameter;
+  double exposedLength;
+  int nutCount;
+  double nutHeight;
+  double nutOD;
+  int washerCount;
+  int washerShape;
+  double washerSize;
+  double washerThickness;
+  double anchorLength;
+  double hookStraightLength;
+  double hookDiameter;
+} single_hook_anchor_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_single_hook_anchor(single_hook_anchor_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_single_hook_anchor_with_place(single_hook_anchor_params_t params,
+                                     pnt3d_t position, dir3d_t normal,
+                                     dir3d_t xDir);
+
+// 三钩锚固参数结构体
+typedef struct {
+  double boltDiameter;
+  double exposedLength;
+  int nutCount;
+  double nutHeight;
+  double nutOD;
+  int washerCount;
+  int washerShape;
+  double washerSize;
+  double washerThickness;
+  double anchorLength;
+  double hookStraightLengthA;
+  double hookStraightLengthB;
+  double hookDiameter;
+  double anchorBarDiameter;
+} triple_hook_anchor_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_triple_hook_anchor(triple_hook_anchor_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_triple_hook_anchor_with_place(triple_hook_anchor_params_t params,
+                                     pnt3d_t position, dir3d_t normal,
+                                     dir3d_t xDir);
+
+// 肋板锚固参数结构体
+typedef struct {
+  double boltDiameter;
+  double exposedLength;
+  int nutCount;
+  double nutHeight;
+  double nutOD;
+  int washerCount;
+  int washerShape;
+  double washerSize;
+  double washerThickness;
+  double anchorLength;
+  double basePlateSize;
+  double ribTopWidth;
+  double ribBottomWidth;
+  double basePlateThickness;
+  double ribHeight;
+  double ribThickness;
+} ribbed_anchor_params_t;
+
+PRIMCAPICALL topo_shape_t *create_ribbed_anchor(ribbed_anchor_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_ribbed_anchor_with_place(ribbed_anchor_params_t params, pnt3d_t position,
+                                dir3d_t normal, dir3d_t xDir);
+
+// 螺帽锚固参数结构体
+typedef struct {
+  double boltDiameter;
+  double exposedLength;
+  int nutCount;
+  double nutHeight;
+  double nutOD;
+  int washerCount;
+  int washerShape;
+  double washerSize;
+  double washerThickness;
+  double anchorLength;
+  double basePlateSize;
+  double basePlateThickness;
+  double boltToPlateDistance;
+} nut_anchor_params_t;
+
+PRIMCAPICALL topo_shape_t *create_nut_anchor(nut_anchor_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_nut_anchor_with_place(nut_anchor_params_t params, pnt3d_t position,
+                             dir3d_t normal, dir3d_t xDir);
+
+// 三支锚固参数结构体
+typedef struct {
+  double boltDiameter;
+  double exposedLength;
+  int nutCount;
+  double nutHeight;
+  double nutOD;
+  int washerCount;
+  int washerShape;
+  double washerSize;
+  double washerThickness;
+  double anchorLength;
+  double armDiameter;
+  double armStraightLength;
+  double armBendLength;
+  double armBendAngle;
+} triple_arm_anchor_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_triple_arm_anchor(triple_arm_anchor_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_triple_arm_anchor_with_place(triple_arm_anchor_params_t params,
+                                    pnt3d_t position, dir3d_t normal,
+                                    dir3d_t xDir);
+
+// 定位板锚固参数结构体
+typedef struct {
+  double boltDiameter;
+  double exposedLength;
+  int nutCount;
+  double nutHeight;
+  double nutOD;
+  int washerCount;
+  int washerShape;
+  double washerSize;
+  double washerThickness;
+  double anchorLength;
+  double plateLength;
+  double plateThickness;
+  double toBaseDistance;
+  double toBottomDistance;
+  double groutHoleDiameter;
+} positioning_plate_anchor_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_positioning_plate_anchor(positioning_plate_anchor_params_t params);
+PRIMCAPICALL topo_shape_t *create_positioning_plate_anchor_with_place(
+    positioning_plate_anchor_params_t params, pnt3d_t position, dir3d_t normal,
+    dir3d_t xDir);
+
+// 插入角钢参数结构体
+typedef struct {
+  double legWidth;
+  double thickness;
+  double slope;
+  double exposedLength;
+  double anchorLength;
+} stub_angle_params_t;
+
+PRIMCAPICALL topo_shape_t *create_stub_angle(stub_angle_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_stub_angle_with_place(stub_angle_params_t params, pnt3d_t position,
+                             dir3d_t normal, dir3d_t xDir);
+
+// 插入钢管参数结构体
+typedef struct {
+  double diameter;
+  double thickness;
+  double slope;
+  double exposedLength;
+  double anchorLength;
+} stub_tube_params_t;
+
+PRIMCAPICALL topo_shape_t *create_stub_tube(stub_tube_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_stub_tube_with_place(stub_tube_params_t params, pnt3d_t position,
+                            dir3d_t normal, dir3d_t xDir);
+
 #ifdef __cplusplus
 }
 #endif

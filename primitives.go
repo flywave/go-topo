@@ -579,6 +579,208 @@ func CreateCircularFixedPlateWithPlace(params CircularFixedPlateParams, position
 	return s
 }
 
+type WireParams struct {
+	StartPoint Point3
+	EndPoint   Point3
+	StartDir   Dir3
+	EndDir     Dir3
+	Sag        float32
+	Diameter   float32
+	FitPoints  []Point3
+}
+
+func (p *WireParams) to_struct() C.wire_params_t {
+	var c C.wire_params_t
+	c.startPoint = p.StartPoint.val
+	c.endPoint = p.EndPoint.val
+	c.startDir = p.StartDir.val
+	c.endDir = p.EndDir.val
+	c.sag = C.double(p.Sag)
+	c.diameter = C.double(p.Diameter)
+	c.numFitPoints = C.int(len(p.FitPoints))
+
+	if len(p.FitPoints) > 0 {
+		c.fitPoints = (*C.pnt3d_t)(C.malloc(C.size_t(len(p.FitPoints)) * C.sizeof_pnt3d_t))
+		for i, pt := range p.FitPoints {
+			*(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.fitPoints)) + uintptr(i)*C.sizeof_pnt3d_t)) = pt.val
+		}
+	}
+
+	return c
+}
+
+func freeWireParams(c C.wire_params_t) {
+	if c.fitPoints != nil {
+		C.free(unsafe.Pointer(c.fitPoints))
+	}
+}
+
+func CreateWire(params WireParams) *Shape {
+	cParams := params.to_struct()
+	defer freeWireParams(cParams)
+
+	shp := C.create_wire(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateWireWithPlace(params WireParams, position Point3, direction Dir3, upDirection Dir3) *Shape {
+	cParams := params.to_struct()
+	defer freeWireParams(cParams)
+
+	shp := C.create_wire_with_place(cParams, position.val, direction.val, upDirection.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type CableParams struct {
+	StartPoint       Point3
+	EndPoint         Point3
+	InflectionPoints []Point3
+	Radii            []float32
+	Diameter         float32
+}
+
+func (p *CableParams) to_struct() C.cable_params_t {
+	var c C.cable_params_t
+	c.startPoint = p.StartPoint.val
+	c.endPoint = p.EndPoint.val
+	c.numInflectionPoints = C.int(len(p.InflectionPoints))
+	c.numRadii = C.int(len(p.Radii))
+	c.diameter = C.double(p.Diameter)
+
+	if len(p.InflectionPoints) > 0 {
+		c.inflectionPoints = (*C.pnt3d_t)(C.malloc(C.size_t(len(p.InflectionPoints)) * C.sizeof_pnt3d_t))
+		for i, pt := range p.InflectionPoints {
+			*(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.inflectionPoints)) + uintptr(i)*C.sizeof_pnt3d_t)) = pt.val
+		}
+	}
+
+	if len(p.Radii) > 0 {
+		c.radii = (*C.double)(C.malloc(C.size_t(len(p.Radii)) * C.sizeof_double))
+		for i, r := range p.Radii {
+			*(*C.double)(unsafe.Pointer(uintptr(unsafe.Pointer(c.radii)) + uintptr(i)*C.sizeof_double)) = C.double(r)
+		}
+	}
+
+	return c
+}
+
+func freeCableParams(c C.cable_params_t) {
+	if c.inflectionPoints != nil {
+		C.free(unsafe.Pointer(c.inflectionPoints))
+	}
+	if c.radii != nil {
+		C.free(unsafe.Pointer(c.radii))
+	}
+}
+
+func CreateCable(params CableParams) *Shape {
+	cParams := params.to_struct()
+	defer freeCableParams(cParams)
+
+	shp := C.create_cable(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCableWithPlace(params CableParams, position Point3, direction Dir3, upDirection Dir3) *Shape {
+	cParams := params.to_struct()
+	defer freeCableParams(cParams)
+
+	shp := C.create_cable_with_place(cParams, position.val, direction.val, upDirection.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type CurveType int
+
+const (
+	CurveTypeLine   CurveType = 0
+	CurveTypeArc    CurveType = 1
+	CurveTypeSpline CurveType = 2
+)
+
+type CurveSegment struct {
+	ControlPoints []Point3
+}
+
+type CurveCableParams struct {
+	Segments   []CurveSegment
+	CurveTypes []CurveType
+	Diameter   float32
+}
+
+func (p *CurveCableParams) to_struct() C.curve_cable_params_t {
+	var c C.curve_cable_params_t
+	c.numSegments = C.int(len(p.Segments))
+	c.diameter = C.double(p.Diameter)
+
+	if len(p.Segments) > 0 {
+		// Allocate memory for segments
+		c.segments = (*C.curve_segment_t)(C.malloc(C.size_t(len(p.Segments)) * C.sizeof_curve_segment_t))
+		c.curveTypes = (*C.curve_type_t)(C.malloc(C.size_t(len(p.CurveTypes)) * C.sizeof_curve_type_t))
+
+		for i, seg := range p.Segments {
+			// Set curve type
+			*(*C.curve_type_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.curveTypes)) + uintptr(i)*C.sizeof_curve_type_t)) =
+				C.curve_type_t(p.CurveTypes[i])
+
+			// Set segment data
+			segmentPtr := (*C.curve_segment_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.segments)) + uintptr(i)*C.sizeof_curve_segment_t))
+			segmentPtr.numPoints = C.int(len(seg.ControlPoints))
+
+			if len(seg.ControlPoints) > 0 {
+				segmentPtr.controlPoints = (*C.pnt3d_t)(C.malloc(C.size_t(len(seg.ControlPoints)) * C.sizeof_pnt3d_t))
+				for j, pt := range seg.ControlPoints {
+					*(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(segmentPtr.controlPoints)) + uintptr(j)*C.sizeof_pnt3d_t)) = pt.val
+				}
+			}
+		}
+	}
+
+	return c
+}
+
+func freeCurveCableParams(c C.curve_cable_params_t) {
+	if c.segments != nil {
+		for i := 0; i < int(c.numSegments); i++ {
+			seg := (*C.curve_segment_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.segments)) + uintptr(i)*C.sizeof_curve_segment_t))
+			if seg.controlPoints != nil {
+				C.free(unsafe.Pointer(seg.controlPoints))
+			}
+		}
+		C.free(unsafe.Pointer(c.segments))
+	}
+	if c.curveTypes != nil {
+		C.free(unsafe.Pointer(c.curveTypes))
+	}
+}
+
+func CreateCurveCable(params CurveCableParams) *Shape {
+	cParams := params.to_struct()
+	defer freeCurveCableParams(cParams)
+
+	shp := C.create_curve_cable(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCurveCableWithPlace(params CurveCableParams, position Point3, direction Dir3, upDirection Dir3) *Shape {
+	cParams := params.to_struct()
+	defer freeCurveCableParams(cParams)
+
+	shp := C.create_curve_cable_with_place(cParams, position.val, direction.val, upDirection.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
 type EquilateralAngleSteelParams struct {
 	L      float32
 	X      float32
@@ -2145,6 +2347,374 @@ func CreateCompositeInsulatorWithPlace(params InsulatorCompositeParams, position
 	defer C.free(unsafe.Pointer(cParams.ctype))
 
 	shp := C.create_composite_insulator_with_place(cParams, position.val, direction.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type SingleHookAnchorParams struct {
+	BoltDiameter       float32
+	ExposedLength      float32
+	NutCount           int32
+	NutHeight          float32
+	NutOD              float32
+	WasherCount        int32
+	WasherShape        int32
+	WasherSize         float32
+	WasherThickness    float32
+	AnchorLength       float32
+	HookStraightLength float32
+	HookDiameter       float32
+}
+
+func (p *SingleHookAnchorParams) to_struct() C.single_hook_anchor_params_t {
+	var c C.single_hook_anchor_params_t
+	c.boltDiameter = C.double(p.BoltDiameter)
+	c.exposedLength = C.double(p.ExposedLength)
+	c.nutCount = C.int(p.NutCount)
+	c.nutHeight = C.double(p.NutHeight)
+	c.nutOD = C.double(p.NutOD)
+	c.washerCount = C.int(p.WasherCount)
+	c.washerShape = C.int(p.WasherShape)
+	c.washerSize = C.double(p.WasherSize)
+	c.washerThickness = C.double(p.WasherThickness)
+	c.anchorLength = C.double(p.AnchorLength)
+	c.hookStraightLength = C.double(p.HookStraightLength)
+	c.hookDiameter = C.double(p.HookDiameter)
+	return c
+}
+
+func CreateSingleHookAnchor(params SingleHookAnchorParams) *Shape {
+	shp := C.create_single_hook_anchor(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateSingleHookAnchorWithPlace(params SingleHookAnchorParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_single_hook_anchor_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type TripleHookAnchorParams struct {
+	BoltDiameter        float32
+	ExposedLength       float32
+	NutCount            int32
+	NutHeight           float32
+	NutOD               float32
+	WasherCount         int32
+	WasherShape         int32
+	WasherSize          float32
+	WasherThickness     float32
+	AnchorLength        float32
+	HookStraightLengthA float32
+	HookStraightLengthB float32
+	HookDiameter        float32
+	AnchorBarDiameter   float32
+}
+
+func (p *TripleHookAnchorParams) to_struct() C.triple_hook_anchor_params_t {
+	var c C.triple_hook_anchor_params_t
+	c.boltDiameter = C.double(p.BoltDiameter)
+	c.exposedLength = C.double(p.ExposedLength)
+	c.nutCount = C.int(p.NutCount)
+	c.nutHeight = C.double(p.NutHeight)
+	c.nutOD = C.double(p.NutOD)
+	c.washerCount = C.int(p.WasherCount)
+	c.washerShape = C.int(p.WasherShape)
+	c.washerSize = C.double(p.WasherSize)
+	c.washerThickness = C.double(p.WasherThickness)
+	c.anchorLength = C.double(p.AnchorLength)
+	c.hookStraightLengthA = C.double(p.HookStraightLengthA)
+	c.hookStraightLengthB = C.double(p.HookStraightLengthB)
+	c.hookDiameter = C.double(p.HookDiameter)
+	c.anchorBarDiameter = C.double(p.AnchorBarDiameter)
+	return c
+}
+
+func CreateTripleHookAnchor(params TripleHookAnchorParams) *Shape {
+	shp := C.create_triple_hook_anchor(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateTripleHookAnchorWithPlace(params TripleHookAnchorParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_triple_hook_anchor_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type RibbedAnchorParams struct {
+	BoltDiameter       float32
+	ExposedLength      float32
+	NutCount           int32
+	NutHeight          float32
+	NutOD              float32
+	WasherCount        int32
+	WasherShape        int32
+	WasherSize         float32
+	WasherThickness    float32
+	AnchorLength       float32
+	BasePlateSize      float32
+	RibTopWidth        float32
+	RibBottomWidth     float32
+	BasePlateThickness float32
+	RibHeight          float32
+	RibThickness       float32
+}
+
+func (p *RibbedAnchorParams) to_struct() C.ribbed_anchor_params_t {
+	var c C.ribbed_anchor_params_t
+	c.boltDiameter = C.double(p.BoltDiameter)
+	c.exposedLength = C.double(p.ExposedLength)
+	c.nutCount = C.int(p.NutCount)
+	c.nutHeight = C.double(p.NutHeight)
+	c.nutOD = C.double(p.NutOD)
+	c.washerCount = C.int(p.WasherCount)
+	c.washerShape = C.int(p.WasherShape)
+	c.washerSize = C.double(p.WasherSize)
+	c.washerThickness = C.double(p.WasherThickness)
+	c.anchorLength = C.double(p.AnchorLength)
+	c.basePlateSize = C.double(p.BasePlateSize)
+	c.ribTopWidth = C.double(p.RibTopWidth)
+	c.ribBottomWidth = C.double(p.RibBottomWidth)
+	c.basePlateThickness = C.double(p.BasePlateThickness)
+	c.ribHeight = C.double(p.RibHeight)
+	c.ribThickness = C.double(p.RibThickness)
+	return c
+}
+
+func CreateRibbedAnchor(params RibbedAnchorParams) *Shape {
+	shp := C.create_ribbed_anchor(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateRibbedAnchorWithPlace(params RibbedAnchorParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_ribbed_anchor_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type NutAnchorParams struct {
+	BoltDiameter        float32
+	ExposedLength       float32
+	NutCount            int32
+	NutHeight           float32
+	NutOD               float32
+	WasherCount         int32
+	WasherShape         int32
+	WasherSize          float32
+	WasherThickness     float32
+	AnchorLength        float32
+	BasePlateSize       float32
+	BasePlateThickness  float32
+	BoltToPlateDistance float32
+}
+
+func (p *NutAnchorParams) to_struct() C.nut_anchor_params_t {
+	var c C.nut_anchor_params_t
+	c.boltDiameter = C.double(p.BoltDiameter)
+	c.exposedLength = C.double(p.ExposedLength)
+	c.nutCount = C.int(p.NutCount)
+	c.nutHeight = C.double(p.NutHeight)
+	c.nutOD = C.double(p.NutOD)
+	c.washerCount = C.int(p.WasherCount)
+	c.washerShape = C.int(p.WasherShape)
+	c.washerSize = C.double(p.WasherSize)
+	c.washerThickness = C.double(p.WasherThickness)
+	c.anchorLength = C.double(p.AnchorLength)
+	c.basePlateSize = C.double(p.BasePlateSize)
+	c.basePlateThickness = C.double(p.BasePlateThickness)
+	c.boltToPlateDistance = C.double(p.BoltToPlateDistance)
+	return c
+}
+
+func CreateNutAnchor(params NutAnchorParams) *Shape {
+	shp := C.create_nut_anchor(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateNutAnchorWithPlace(params NutAnchorParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_nut_anchor_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type TripleArmAnchorParams struct {
+	BoltDiameter      float32
+	ExposedLength     float32
+	NutCount          int32
+	NutHeight         float32
+	NutOD             float32
+	WasherCount       int32
+	WasherShape       int32
+	WasherSize        float32
+	WasherThickness   float32
+	AnchorLength      float32
+	ArmDiameter       float32
+	ArmStraightLength float32
+	ArmBendLength     float32
+	ArmBendAngle      float32
+}
+
+func (p *TripleArmAnchorParams) to_struct() C.triple_arm_anchor_params_t {
+	var c C.triple_arm_anchor_params_t
+	c.boltDiameter = C.double(p.BoltDiameter)
+	c.exposedLength = C.double(p.ExposedLength)
+	c.nutCount = C.int(p.NutCount)
+	c.nutHeight = C.double(p.NutHeight)
+	c.nutOD = C.double(p.NutOD)
+	c.washerCount = C.int(p.WasherCount)
+	c.washerShape = C.int(p.WasherShape)
+	c.washerSize = C.double(p.WasherSize)
+	c.washerThickness = C.double(p.WasherThickness)
+	c.anchorLength = C.double(p.AnchorLength)
+	c.armDiameter = C.double(p.ArmDiameter)
+	c.armStraightLength = C.double(p.ArmStraightLength)
+	c.armBendLength = C.double(p.ArmBendLength)
+	c.armBendAngle = C.double(p.ArmBendAngle)
+	return c
+}
+
+func CreateTripleArmAnchor(params TripleArmAnchorParams) *Shape {
+	shp := C.create_triple_arm_anchor(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateTripleArmAnchorWithPlace(params TripleArmAnchorParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_triple_arm_anchor_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type PositioningPlateAnchorParams struct {
+	BoltDiameter      float32
+	ExposedLength     float32
+	NutCount          int32
+	NutHeight         float32
+	NutOD             float32
+	WasherCount       int32
+	WasherShape       int32
+	WasherSize        float32
+	WasherThickness   float32
+	AnchorLength      float32
+	PlateLength       float32
+	PlateThickness    float32
+	ToBaseDistance    float32
+	ToBottomDistance  float32
+	GroutHoleDiameter float32
+}
+
+func (p *PositioningPlateAnchorParams) to_struct() C.positioning_plate_anchor_params_t {
+	var c C.positioning_plate_anchor_params_t
+	c.boltDiameter = C.double(p.BoltDiameter)
+	c.exposedLength = C.double(p.ExposedLength)
+	c.nutCount = C.int(p.NutCount)
+	c.nutHeight = C.double(p.NutHeight)
+	c.nutOD = C.double(p.NutOD)
+	c.washerCount = C.int(p.WasherCount)
+	c.washerShape = C.int(p.WasherShape)
+	c.washerSize = C.double(p.WasherSize)
+	c.washerThickness = C.double(p.WasherThickness)
+	c.anchorLength = C.double(p.AnchorLength)
+	c.plateLength = C.double(p.PlateLength)
+	c.plateThickness = C.double(p.PlateThickness)
+	c.toBaseDistance = C.double(p.ToBaseDistance)
+	c.toBottomDistance = C.double(p.ToBottomDistance)
+	c.groutHoleDiameter = C.double(p.GroutHoleDiameter)
+	return c
+}
+
+func CreatePositioningPlateAnchor(params PositioningPlateAnchorParams) *Shape {
+	shp := C.create_positioning_plate_anchor(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreatePositioningPlateAnchorWithPlace(params PositioningPlateAnchorParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_positioning_plate_anchor_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type StubAngleParams struct {
+	LegWidth      float32
+	Thickness     float32
+	Slope         float32
+	ExposedLength float32
+	AnchorLength  float32
+}
+
+func (p *StubAngleParams) to_struct() C.stub_angle_params_t {
+	var c C.stub_angle_params_t
+	c.legWidth = C.double(p.LegWidth)
+	c.thickness = C.double(p.Thickness)
+	c.slope = C.double(p.Slope)
+	c.exposedLength = C.double(p.ExposedLength)
+	c.anchorLength = C.double(p.AnchorLength)
+	return c
+}
+
+func CreateStubAngle(params StubAngleParams) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_stub_angle(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateStubAngleWithPlace(params StubAngleParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_stub_angle_with_place(cParams, position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type StubTubeParams struct {
+	Diameter      float32
+	Thickness     float32
+	Slope         float32
+	ExposedLength float32
+	AnchorLength  float32
+}
+
+func (p *StubTubeParams) to_struct() C.stub_tube_params_t {
+	var c C.stub_tube_params_t
+	c.diameter = C.double(p.Diameter)
+	c.thickness = C.double(p.Thickness)
+	c.slope = C.double(p.Slope)
+	c.exposedLength = C.double(p.ExposedLength)
+	c.anchorLength = C.double(p.AnchorLength)
+	return c
+}
+
+func CreateStubTube(params StubTubeParams) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_stub_tube(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateStubTubeWithPlace(params StubTubeParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_stub_tube_with_place(cParams, position.val, normal.val, xDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s

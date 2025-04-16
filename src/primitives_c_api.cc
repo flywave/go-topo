@@ -598,6 +598,82 @@ PRIMCAPICALL topo_shape_t *create_cable_with_place(cable_params_t params,
       create_cable(cpp_params, cpp_position, cpp_direction, cpp_upDirection))};
 }
 
+PRIMCAPICALL topo_shape_t *create_curve_cable(curve_cable_params_t params) {
+  try {
+    std::vector<std::vector<gp_Pnt>> cpp_controlPoints;
+    std::vector<curve_type> cpp_curveTypes;
+
+    for (int i = 0; i < params.numSegments; ++i) {
+      std::vector<gp_Pnt> segmentPoints;
+      for (int j = 0; j < params.segments[i].numPoints; ++j) {
+        pnt3d_t point = params.segments[i].controlPoints[j];
+        segmentPoints.push_back(gp_Pnt(point.x, point.y, point.z));
+      }
+      cpp_controlPoints.push_back(segmentPoints);
+
+      switch (params.curveTypes[i]) {
+      case CURVE_TYPE_LINE:
+        cpp_curveTypes.push_back(curve_type::LINE);
+        break;
+      case CURVE_TYPE_ARC:
+        cpp_curveTypes.push_back(curve_type::ARC);
+        break;
+      case CURVE_TYPE_SPLINE:
+        cpp_curveTypes.push_back(curve_type::SPLINE);
+        break;
+      }
+    }
+
+    curve_cable_params cpp_params{cpp_controlPoints, cpp_curveTypes,
+                                  params.diameter};
+    return new topo_shape_t{
+        std::make_shared<shape>(create_curve_cable(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_curve_cable_with_place(curve_cable_params_t params, pnt3d_t position,
+                              dir3d_t direction, dir3d_t upDirection) {
+  try {
+    std::vector<std::vector<gp_Pnt>> cpp_controlPoints;
+    std::vector<curve_type> cpp_curveTypes;
+
+    for (int i = 0; i < params.numSegments; ++i) {
+      std::vector<gp_Pnt> segmentPoints;
+      for (int j = 0; j < params.segments[i].numPoints; ++j) {
+        pnt3d_t point = params.segments[i].controlPoints[j];
+        segmentPoints.push_back(gp_Pnt(point.x, point.y, point.z));
+      }
+      cpp_controlPoints.push_back(segmentPoints);
+
+      switch (params.curveTypes[i]) {
+      case CURVE_TYPE_LINE:
+        cpp_curveTypes.push_back(curve_type::LINE);
+        break;
+      case CURVE_TYPE_ARC:
+        cpp_curveTypes.push_back(curve_type::ARC);
+        break;
+      case CURVE_TYPE_SPLINE:
+        cpp_curveTypes.push_back(curve_type::SPLINE);
+        break;
+      }
+    }
+
+    curve_cable_params cpp_params{cpp_controlPoints, cpp_curveTypes,
+                                  params.diameter};
+    gp_Pnt cpp_position(position.x, position.y, position.z);
+    gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+    gp_Dir cpp_upDirection(upDirection.x, upDirection.y, upDirection.z);
+
+    return new topo_shape_t{std::make_shared<shape>(create_curve_cable(
+        cpp_params, cpp_position, cpp_direction, cpp_upDirection))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
 PRIMCAPICALL topo_shape_t *
 create_equilateral_angle_steel(equilateral_angle_steel_params_t params) {
   equilateral_angle_steel_params cpp_params{params.L, params.X, params.length};
@@ -1539,6 +1615,280 @@ create_composite_insulator_with_place(insulator_composite_params_t params,
 
   return new topo_shape_t{std::make_shared<shape>(
       create_insulator_string(cpp_params, cpp_position, cpp_direction))};
+}
+
+PRIMCAPICALL topo_shape_t *
+create_single_hook_anchor(single_hook_anchor_params_t params) {
+  single_hook_anchor_params cpp_params{params.boltDiameter,
+                                       params.exposedLength,
+                                       params.nutCount,
+                                       params.nutHeight,
+                                       params.nutOD,
+                                       params.washerCount,
+                                       params.washerShape,
+                                       params.washerSize,
+                                       params.washerThickness,
+                                       params.anchorLength,
+                                       params.hookStraightLength,
+                                       params.hookDiameter};
+  return new topo_shape_t{
+      std::make_shared<shape>(create_single_hook_anchor(cpp_params))};
+}
+
+PRIMCAPICALL topo_shape_t *
+create_single_hook_anchor_with_place(single_hook_anchor_params_t params,
+                                     pnt3d_t position, dir3d_t normal,
+                                     dir3d_t xDir) {
+  single_hook_anchor_params cpp_params{params.boltDiameter,
+                                       params.exposedLength,
+                                       params.nutCount,
+                                       params.nutHeight,
+                                       params.nutOD,
+                                       params.washerCount,
+                                       params.washerShape,
+                                       params.washerSize,
+                                       params.washerThickness,
+                                       params.anchorLength,
+                                       params.hookStraightLength,
+                                       params.hookDiameter};
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_normal(normal.x, normal.y, normal.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+  return new topo_shape_t{std::make_shared<shape>(create_single_hook_anchor(
+      cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+}
+
+PRIMCAPICALL topo_shape_t *
+create_triple_hook_anchor(triple_hook_anchor_params_t params) {
+  triple_hook_anchor_params cpp_params{params.boltDiameter,
+                                       params.exposedLength,
+                                       params.nutCount,
+                                       params.nutHeight,
+                                       params.nutOD,
+                                       params.washerCount,
+                                       params.washerShape,
+                                       params.washerSize,
+                                       params.washerThickness,
+                                       params.anchorLength,
+                                       params.hookStraightLengthA,
+                                       params.hookStraightLengthB,
+                                       params.hookDiameter,
+                                       params.anchorBarDiameter};
+  return new topo_shape_t{
+      std::make_shared<shape>(create_triple_hook_anchor(cpp_params))};
+}
+
+PRIMCAPICALL topo_shape_t *
+create_triple_hook_anchor_with_place(triple_hook_anchor_params_t params,
+                                     pnt3d_t position, dir3d_t normal,
+                                     dir3d_t xDir) {
+  triple_hook_anchor_params cpp_params{params.boltDiameter,
+                                       params.exposedLength,
+                                       params.nutCount,
+                                       params.nutHeight,
+                                       params.nutOD,
+                                       params.washerCount,
+                                       params.washerShape,
+                                       params.washerSize,
+                                       params.washerThickness,
+                                       params.anchorLength,
+                                       params.hookStraightLengthA,
+                                       params.hookStraightLengthB,
+                                       params.hookDiameter,
+                                       params.anchorBarDiameter};
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_normal(normal.x, normal.y, normal.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+  return new topo_shape_t{std::make_shared<shape>(create_triple_hook_anchor(
+      cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+}
+
+PRIMCAPICALL topo_shape_t *create_ribbed_anchor(ribbed_anchor_params_t params) {
+  ribbed_anchor_params cpp_params{
+      params.boltDiameter,    params.exposedLength,
+      params.nutCount,        params.nutHeight,
+      params.nutOD,           params.washerCount,
+      params.washerShape,     params.washerSize,
+      params.washerThickness, params.anchorLength,
+      params.basePlateSize,   params.ribTopWidth,
+      params.ribBottomWidth,  params.basePlateThickness,
+      params.ribHeight,       params.ribThickness};
+  return new topo_shape_t{
+      std::make_shared<shape>(create_ribbed_anchor(cpp_params))};
+}
+
+PRIMCAPICALL topo_shape_t *
+create_ribbed_anchor_with_place(ribbed_anchor_params_t params, pnt3d_t position,
+                                dir3d_t normal, dir3d_t xDir) {
+  ribbed_anchor_params cpp_params{
+      params.boltDiameter,    params.exposedLength,
+      params.nutCount,        params.nutHeight,
+      params.nutOD,           params.washerCount,
+      params.washerShape,     params.washerSize,
+      params.washerThickness, params.anchorLength,
+      params.basePlateSize,   params.ribTopWidth,
+      params.ribBottomWidth,  params.basePlateThickness,
+      params.ribHeight,       params.ribThickness};
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_normal(normal.x, normal.y, normal.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+  return new topo_shape_t{std::make_shared<shape>(
+      create_ribbed_anchor(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+}
+
+PRIMCAPICALL topo_shape_t *create_nut_anchor(nut_anchor_params_t params) {
+  nut_anchor_params cpp_params{params.boltDiameter,
+                               params.exposedLength,
+                               params.nutCount,
+                               params.nutHeight,
+                               params.nutOD,
+                               params.washerCount,
+                               params.washerShape,
+                               params.washerSize,
+                               params.washerThickness,
+                               params.anchorLength,
+                               params.basePlateSize,
+                               params.basePlateThickness,
+                               params.boltToPlateDistance};
+  return new topo_shape_t{
+      std::make_shared<shape>(create_nut_anchor(cpp_params))};
+}
+
+PRIMCAPICALL topo_shape_t *
+create_nut_anchor_with_place(nut_anchor_params_t params, pnt3d_t position,
+                             dir3d_t normal, dir3d_t xDir) {
+  nut_anchor_params cpp_params{params.boltDiameter,
+                               params.exposedLength,
+                               params.nutCount,
+                               params.nutHeight,
+                               params.nutOD,
+                               params.washerCount,
+                               params.washerShape,
+                               params.washerSize,
+                               params.washerThickness,
+                               params.anchorLength,
+                               params.basePlateSize,
+                               params.basePlateThickness,
+                               params.boltToPlateDistance};
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_normal(normal.x, normal.y, normal.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+  return new topo_shape_t{std::make_shared<shape>(
+      create_nut_anchor(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+}
+
+PRIMCAPICALL topo_shape_t *
+create_triple_arm_anchor(triple_arm_anchor_params_t params) {
+  triple_arm_anchor_params cpp_params{
+      params.boltDiameter,  params.exposedLength, params.nutCount,
+      params.nutHeight,     params.nutOD,         params.washerCount,
+      params.washerShape,   params.washerSize,    params.washerThickness,
+      params.anchorLength,  params.armDiameter,   params.armStraightLength,
+      params.armBendLength, params.armBendAngle};
+  return new topo_shape_t{
+      std::make_shared<shape>(create_triple_arm_anchor(cpp_params))};
+}
+
+PRIMCAPICALL topo_shape_t *
+create_triple_arm_anchor_with_place(triple_arm_anchor_params_t params,
+                                    pnt3d_t position, dir3d_t normal,
+                                    dir3d_t xDir) {
+  triple_arm_anchor_params cpp_params{
+      params.boltDiameter,  params.exposedLength, params.nutCount,
+      params.nutHeight,     params.nutOD,         params.washerCount,
+      params.washerShape,   params.washerSize,    params.washerThickness,
+      params.anchorLength,  params.armDiameter,   params.armStraightLength,
+      params.armBendLength, params.armBendAngle};
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_normal(normal.x, normal.y, normal.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+  return new topo_shape_t{std::make_shared<shape>(create_triple_arm_anchor(
+      cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+}
+
+PRIMCAPICALL topo_shape_t *
+create_positioning_plate_anchor(positioning_plate_anchor_params_t params) {
+  positioning_plate_anchor_params cpp_params{params.boltDiameter,
+                                             params.exposedLength,
+                                             params.nutCount,
+                                             params.nutHeight,
+                                             params.nutOD,
+                                             params.washerCount,
+                                             params.washerShape,
+                                             params.washerSize,
+                                             params.washerThickness,
+                                             params.anchorLength,
+                                             params.plateLength,
+                                             params.plateThickness,
+                                             params.toBaseDistance,
+                                             params.toBottomDistance,
+                                             params.groutHoleDiameter};
+  return new topo_shape_t{
+      std::make_shared<shape>(create_positioning_plate_anchor(cpp_params))};
+}
+
+PRIMCAPICALL topo_shape_t *create_positioning_plate_anchor_with_place(
+    positioning_plate_anchor_params_t params, pnt3d_t position, dir3d_t normal,
+    dir3d_t xDir) {
+  positioning_plate_anchor_params cpp_params{params.boltDiameter,
+                                             params.exposedLength,
+                                             params.nutCount,
+                                             params.nutHeight,
+                                             params.nutOD,
+                                             params.washerCount,
+                                             params.washerShape,
+                                             params.washerSize,
+                                             params.washerThickness,
+                                             params.anchorLength,
+                                             params.plateLength,
+                                             params.plateThickness,
+                                             params.toBaseDistance,
+                                             params.toBottomDistance,
+                                             params.groutHoleDiameter};
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_normal(normal.x, normal.y, normal.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+  return new topo_shape_t{
+      std::make_shared<shape>(create_positioning_plate_anchor(
+          cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+}
+
+PRIMCAPICALL topo_shape_t *create_stub_angle(stub_angle_params_t params) {
+  stub_angle_params cpp_params{params.legWidth, params.thickness, params.slope,
+                               params.exposedLength, params.anchorLength};
+  return new topo_shape_t{
+      std::make_shared<shape>(create_stub_angle(cpp_params))};
+}
+
+PRIMCAPICALL topo_shape_t *
+create_stub_angle_with_place(stub_angle_params_t params, pnt3d_t position,
+                             dir3d_t normal, dir3d_t xDir) {
+  stub_angle_params cpp_params{params.legWidth, params.thickness, params.slope,
+                               params.exposedLength, params.anchorLength};
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_normal(normal.x, normal.y, normal.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+  return new topo_shape_t{std::make_shared<shape>(
+      create_stub_angle(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+}
+
+PRIMCAPICALL topo_shape_t *create_stub_tube(stub_tube_params_t params) {
+  stub_tube_params cpp_params{params.diameter, params.thickness, params.slope,
+                              params.exposedLength, params.anchorLength};
+  return new topo_shape_t{
+      std::make_shared<shape>(create_stub_tube(cpp_params))};
+}
+
+PRIMCAPICALL topo_shape_t *
+create_stub_tube_with_place(stub_tube_params_t params, pnt3d_t position,
+                            dir3d_t normal, dir3d_t xDir) {
+  stub_tube_params cpp_params{params.diameter, params.thickness, params.slope,
+                              params.exposedLength, params.anchorLength};
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_normal(normal.x, normal.y, normal.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+  return new topo_shape_t{std::make_shared<shape>(
+      create_stub_tube(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 #ifdef __cplusplus
