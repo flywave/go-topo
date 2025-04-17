@@ -1349,15 +1349,15 @@ func (p *BoredPileParams) to_struct() C.bored_pile_params_t {
 	return c
 }
 
-func CreateBoredPileFoundation(params BoredPileParams) *Shape {
-	shp := C.create_bored_pile_foundation(params.to_struct())
+func CreateBoredPileBase(params BoredPileParams) *Shape {
+	shp := C.create_bored_pile_base(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateBoredPileFoundationWithPlace(params BoredPileParams, position Point3, direction Dir3) *Shape {
-	shp := C.create_bored_pile_foundation_with_place(params.to_struct(), position.val, direction.val)
+func CreateBoredPileBaseWithPlace(params BoredPileParams, position Point3, direction Dir3) *Shape {
+	shp := C.create_bored_pile_base_with_place(params.to_struct(), position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
@@ -1401,7 +1401,7 @@ func (p *RockPileCapParams) to_struct() C.rock_pile_cap_params_t {
 	return c
 }
 
-func CreateRockPileCapFoundation(params RockPileCapParams) *Shape {
+func CreateRockPileCapBase(params RockPileCapParams) *Shape {
 	cParams := params.to_struct()
 	defer func() {
 		if cParams.ZPOSTARRAY != nil {
@@ -1409,13 +1409,13 @@ func CreateRockPileCapFoundation(params RockPileCapParams) *Shape {
 		}
 	}()
 
-	shp := C.create_rock_pile_cap_foundation(cParams)
+	shp := C.create_rock_pile_cap_base(cParams)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateRockPileCapFoundationWithPlace(params RockPileCapParams, position Point3, direction Dir3) *Shape {
+func CreateRockPileCapBaseWithPlace(params RockPileCapParams, position Point3, direction Dir3) *Shape {
 	cParams := params.to_struct()
 	defer func() {
 		if cParams.ZPOSTARRAY != nil {
@@ -1423,7 +1423,7 @@ func CreateRockPileCapFoundationWithPlace(params RockPileCapParams, position Poi
 		}
 	}()
 
-	shp := C.create_rock_pile_cap_foundation_with_place(cParams, position.val, direction.val)
+	shp := C.create_rock_pile_cap_base_with_place(cParams, position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
@@ -1477,7 +1477,7 @@ func (p *PileCapParams) to_struct() C.pile_cap_params_t {
 	return c
 }
 
-func CreatePileCapFoundation(params PileCapParams) *Shape {
+func CreatePileCapBase(params PileCapParams) *Shape {
 	cParams := params.to_struct()
 	defer func() {
 		if cParams.ZPOSTARRAY != nil {
@@ -1485,13 +1485,13 @@ func CreatePileCapFoundation(params PileCapParams) *Shape {
 		}
 	}()
 
-	shp := C.create_pile_cap_foundation(cParams)
+	shp := C.create_pile_cap_base(cParams)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreatePileCapFoundationWithPlace(params PileCapParams, position Point3, direction Dir3) *Shape {
+func CreatePileCapBaseWithPlace(params PileCapParams, position Point3, direction Dir3) *Shape {
 	cParams := params.to_struct()
 	defer func() {
 		if cParams.ZPOSTARRAY != nil {
@@ -1499,7 +1499,7 @@ func CreatePileCapFoundationWithPlace(params PileCapParams, position Point3, dir
 		}
 	}()
 
-	shp := C.create_pile_cap_foundation_with_place(cParams, position.val, direction.val)
+	shp := C.create_pile_cap_base_with_place(cParams, position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
@@ -1533,7 +1533,7 @@ func (p *RockAnchorParams) to_struct() C.rock_anchor_params_t {
 	return c
 }
 
-func CreateRockAnchorFoundation(params RockAnchorParams) *Shape {
+func CreateRockAnchorBase(params RockAnchorParams) *Shape {
 	cParams := params.to_struct()
 	defer func() {
 		if cParams.ZPOSTARRAY != nil {
@@ -1541,13 +1541,13 @@ func CreateRockAnchorFoundation(params RockAnchorParams) *Shape {
 		}
 	}()
 
-	shp := C.create_rock_anchor_foundation(cParams)
+	shp := C.create_rock_anchor_base(cParams)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateRockAnchorFoundationWithPlace(params RockAnchorParams, position Point3, direction Dir3) *Shape {
+func CreateRockAnchorBaseWithPlace(params RockAnchorParams, position Point3, direction Dir3) *Shape {
 	cParams := params.to_struct()
 	defer func() {
 		if cParams.ZPOSTARRAY != nil {
@@ -1555,7 +1555,7 @@ func CreateRockAnchorFoundationWithPlace(params RockAnchorParams, position Point
 		}
 	}()
 
-	shp := C.create_rock_anchor_foundation_with_place(cParams, position.val, direction.val)
+	shp := C.create_rock_anchor_base_with_place(cParams, position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
@@ -1579,15 +1579,15 @@ func (p *EmbeddedRockAnchorParams) to_struct() C.embedded_rock_anchor_params_t {
 	return c
 }
 
-func CreateEmbeddedRockAnchorFoundation(params EmbeddedRockAnchorParams) *Shape {
-	shp := C.create_embedded_rock_anchor_foundation(params.to_struct())
+func CreateEmbeddedRockAnchorBase(params EmbeddedRockAnchorParams) *Shape {
+	shp := C.create_embedded_rock_anchor_base(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateEmbeddedRockAnchorFoundationWithPlace(params EmbeddedRockAnchorParams, position Point3, direction Dir3) *Shape {
-	shp := C.create_embedded_rock_anchor_foundation_with_place(params.to_struct(), position.val, direction.val)
+func CreateEmbeddedRockAnchorBaseWithPlace(params EmbeddedRockAnchorParams, position Point3, direction Dir3) *Shape {
+	shp := C.create_embedded_rock_anchor_base_with_place(params.to_struct(), position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
@@ -1621,21 +1621,21 @@ func (p *InclinedRockAnchorParams) to_struct() C.inclined_rock_anchor_params_t {
 	return c
 }
 
-func CreateInclinedRockAnchorFoundation(params InclinedRockAnchorParams) *Shape {
-	shp := C.create_inclined_rock_anchor_foundation(params.to_struct())
+func CreateInclinedRockAnchorBase(params InclinedRockAnchorParams) *Shape {
+	shp := C.create_inclined_rock_anchor_base(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateInclinedRockAnchorFoundationWithPlace(params InclinedRockAnchorParams, position Point3, direction Dir3) *Shape {
-	shp := C.create_inclined_rock_anchor_foundation_with_place(params.to_struct(), position.val, direction.val)
+func CreateInclinedRockAnchorBaseWithPlace(params InclinedRockAnchorParams, position Point3, direction Dir3) *Shape {
+	shp := C.create_inclined_rock_anchor_base_with_place(params.to_struct(), position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-type ExcavatedFoundationParams struct {
+type ExcavatedBaseParams struct {
 	H1       float32
 	H2       float32
 	H3       float32
@@ -1645,8 +1645,8 @@ type ExcavatedFoundationParams struct {
 	Alpha2   float32
 }
 
-func (p *ExcavatedFoundationParams) to_struct() C.excavated_foundation_params_t {
-	var c C.excavated_foundation_params_t
+func (p *ExcavatedBaseParams) to_struct() C.excavated_base_params_t {
+	var c C.excavated_base_params_t
 	c.H1 = C.double(p.H1)
 	c.H2 = C.double(p.H2)
 	c.H3 = C.double(p.H3)
@@ -1657,21 +1657,21 @@ func (p *ExcavatedFoundationParams) to_struct() C.excavated_foundation_params_t 
 	return c
 }
 
-func CreateExcavatedFoundation(params ExcavatedFoundationParams) *Shape {
-	shp := C.create_excavated_foundation(params.to_struct())
+func CreateExcavatedBase(params ExcavatedBaseParams) *Shape {
+	shp := C.create_excavated_base(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateExcavatedFoundationWithPlace(params ExcavatedFoundationParams, position Point3, direction Dir3) *Shape {
-	shp := C.create_excavated_foundation_with_place(params.to_struct(), position.val, direction.val)
+func CreateExcavatedBaseWithPlace(params ExcavatedBaseParams, position Point3, direction Dir3) *Shape {
+	shp := C.create_excavated_base_with_place(params.to_struct(), position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-type StepFoundationParams struct {
+type StepBaseParams struct {
 	H  float32
 	H1 float32
 	H2 float32
@@ -1686,8 +1686,8 @@ type StepFoundationParams struct {
 	N  int32
 }
 
-func (p *StepFoundationParams) to_struct() C.step_foundation_params_t {
-	var c C.step_foundation_params_t
+func (p *StepBaseParams) to_struct() C.step_base_params_t {
+	var c C.step_base_params_t
 	c.H = C.double(p.H)
 	c.H1 = C.double(p.H1)
 	c.H2 = C.double(p.H2)
@@ -1703,21 +1703,21 @@ func (p *StepFoundationParams) to_struct() C.step_foundation_params_t {
 	return c
 }
 
-func CreateStepFoundation(params StepFoundationParams) *Shape {
-	shp := C.create_step_foundation(params.to_struct())
+func CreateStepBase(params StepBaseParams) *Shape {
+	shp := C.create_step_base(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateStepFoundationWithPlace(params StepFoundationParams, position Point3, direction Dir3) *Shape {
-	shp := C.create_step_foundation_with_place(params.to_struct(), position.val, direction.val)
+func CreateStepBaseWithPlace(params StepBaseParams, position Point3, direction Dir3) *Shape {
+	shp := C.create_step_base_with_place(params.to_struct(), position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-type StepPlateFoundationParams struct {
+type StepPlateBaseParams struct {
 	H      float32
 	H1     float32
 	H2     float32
@@ -1732,8 +1732,8 @@ type StepPlateFoundationParams struct {
 	N      int32
 }
 
-func (p *StepPlateFoundationParams) to_struct() C.step_plate_foundation_params_t {
-	var c C.step_plate_foundation_params_t
+func (p *StepPlateBaseParams) to_struct() C.step_plate_base_params_t {
+	var c C.step_plate_base_params_t
 	c.H = C.double(p.H)
 	c.H1 = C.double(p.H1)
 	c.H2 = C.double(p.H2)
@@ -1749,21 +1749,21 @@ func (p *StepPlateFoundationParams) to_struct() C.step_plate_foundation_params_t
 	return c
 }
 
-func CreateStepPlateFoundation(params StepPlateFoundationParams) *Shape {
-	shp := C.create_step_plate_foundation(params.to_struct())
+func CreateStepPlateBase(params StepPlateBaseParams) *Shape {
+	shp := C.create_step_plate_base(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateStepPlateFoundationWithPlace(params StepPlateFoundationParams, position Point3, direction Dir3) *Shape {
-	shp := C.create_step_plate_foundation_with_place(params.to_struct(), position.val, direction.val)
+func CreateStepPlateBaseWithPlace(params StepPlateBaseParams, position Point3, direction Dir3) *Shape {
+	shp := C.create_step_plate_base_with_place(params.to_struct(), position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-type SlopedBaseFoundationParams struct {
+type SlopedBaseBaseParams struct {
 	H1     float32
 	H2     float32
 	H3     float32
@@ -1776,8 +1776,8 @@ type SlopedBaseFoundationParams struct {
 	Alpha2 float32
 }
 
-func (p *SlopedBaseFoundationParams) to_struct() C.sloped_base_foundation_params_t {
-	var c C.sloped_base_foundation_params_t
+func (p *SlopedBaseBaseParams) to_struct() C.sloped_base_base_params_t {
+	var c C.sloped_base_base_params_t
 	c.H1 = C.double(p.H1)
 	c.H2 = C.double(p.H2)
 	c.H3 = C.double(p.H3)
@@ -1791,21 +1791,21 @@ func (p *SlopedBaseFoundationParams) to_struct() C.sloped_base_foundation_params
 	return c
 }
 
-func CreateSlopedBaseFoundation(params SlopedBaseFoundationParams) *Shape {
-	shp := C.create_sloped_base_foundation(params.to_struct())
+func CreateSlopedBaseBase(params SlopedBaseBaseParams) *Shape {
+	shp := C.create_sloped_base_base(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateSlopedBaseFoundationWithPlace(params SlopedBaseFoundationParams, position Point3, direction Dir3) *Shape {
-	shp := C.create_sloped_base_foundation_with_place(params.to_struct(), position.val, direction.val)
+func CreateSlopedBaseBaseWithPlace(params SlopedBaseBaseParams, position Point3, direction Dir3) *Shape {
+	shp := C.create_sloped_base_base_with_place(params.to_struct(), position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-type CompositeCaissonFoundationParams struct {
+type CompositeCaissonBaseParams struct {
 	H1 float32
 	H2 float32
 	H3 float32
@@ -1819,8 +1819,8 @@ type CompositeCaissonFoundationParams struct {
 	L2 float32
 }
 
-func (p *CompositeCaissonFoundationParams) to_struct() C.composite_caisson_foundation_params_t {
-	var c C.composite_caisson_foundation_params_t
+func (p *CompositeCaissonBaseParams) to_struct() C.composite_caisson_base_params_t {
+	var c C.composite_caisson_base_params_t
 	c.H1 = C.double(p.H1)
 	c.H2 = C.double(p.H2)
 	c.H3 = C.double(p.H3)
@@ -1835,21 +1835,21 @@ func (p *CompositeCaissonFoundationParams) to_struct() C.composite_caisson_found
 	return c
 }
 
-func CreateCompositeCaissonFoundation(params CompositeCaissonFoundationParams) *Shape {
-	shp := C.create_composite_caisson_foundation(params.to_struct())
+func CreateCompositeCaissonBase(params CompositeCaissonBaseParams) *Shape {
+	shp := C.create_composite_caisson_base(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateCompositeCaissonFoundationWithPlace(params CompositeCaissonFoundationParams, position Point3, direction Dir3) *Shape {
-	shp := C.create_composite_caisson_foundation_with_place(params.to_struct(), position.val, direction.val)
+func CreateCompositeCaissonBaseWithPlace(params CompositeCaissonBaseParams, position Point3, direction Dir3) *Shape {
+	shp := C.create_composite_caisson_base_with_place(params.to_struct(), position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-type RaftFoundationParams struct {
+type RaftBaseParams struct {
 	H1 float32
 	H2 float32
 	H3 float32
@@ -1860,8 +1860,8 @@ type RaftFoundationParams struct {
 	L2 float32
 }
 
-func (p *RaftFoundationParams) to_struct() C.raft_foundation_params_t {
-	var c C.raft_foundation_params_t
+func (p *RaftBaseParams) to_struct() C.raft_base_params_t {
+	var c C.raft_base_params_t
 	c.H1 = C.double(p.H1)
 	c.H2 = C.double(p.H2)
 	c.H3 = C.double(p.H3)
@@ -1874,21 +1874,21 @@ func (p *RaftFoundationParams) to_struct() C.raft_foundation_params_t {
 	return c
 }
 
-func CreateRaftFoundation(params RaftFoundationParams) *Shape {
-	shp := C.create_raft_foundation(params.to_struct())
+func CreateRaftBase(params RaftBaseParams) *Shape {
+	shp := C.create_raft_base(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateRaftFoundationWithPlace(params RaftFoundationParams, position Point3, direction Dir3) *Shape {
-	shp := C.create_raft_foundation_with_place(params.to_struct(), position.val, direction.val)
+func CreateRaftBaseWithPlace(params RaftBaseParams, position Point3, direction Dir3) *Shape {
+	shp := C.create_raft_base_with_place(params.to_struct(), position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-type DirectBuriedFoundationParams struct {
+type DirectBuriedBaseParams struct {
 	H1              float32
 	H2              float32
 	D               float32
@@ -1899,8 +1899,8 @@ type DirectBuriedFoundationParams struct {
 	IsCircularPlate bool
 }
 
-func (p *DirectBuriedFoundationParams) to_struct() C.direct_buried_foundation_params_t {
-	var c C.direct_buried_foundation_params_t
+func (p *DirectBuriedBaseParams) to_struct() C.direct_buried_base_params_t {
+	var c C.direct_buried_base_params_t
 	c.H1 = C.double(p.H1)
 	c.H2 = C.double(p.H2)
 	c.d = C.double(p.Diameter)
@@ -1912,21 +1912,21 @@ func (p *DirectBuriedFoundationParams) to_struct() C.direct_buried_foundation_pa
 	return c
 }
 
-func CreateDirectBuriedFoundation(params DirectBuriedFoundationParams) *Shape {
-	shp := C.create_direct_buried_foundation(params.to_struct())
+func CreateDirectBuriedBase(params DirectBuriedBaseParams) *Shape {
+	shp := C.create_direct_buried_base(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateDirectBuriedFoundationWithPlace(params DirectBuriedFoundationParams, position Point3, direction Dir3) *Shape {
-	shp := C.create_direct_buried_foundation_with_place(params.to_struct(), position.val, direction.val)
+func CreateDirectBuriedBaseWithPlace(params DirectBuriedBaseParams, position Point3, direction Dir3) *Shape {
+	shp := C.create_direct_buried_base_with_place(params.to_struct(), position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-type SteelSleeveFoundationParams struct {
+type SteelSleeveBaseParams struct {
 	H1 float32
 	H2 float32
 	H3 float32
@@ -1939,8 +1939,8 @@ type SteelSleeveFoundationParams struct {
 	B2 float32
 }
 
-func (p *SteelSleeveFoundationParams) to_struct() C.steel_sleeve_foundation_params_t {
-	var c C.steel_sleeve_foundation_params_t
+func (p *SteelSleeveBaseParams) to_struct() C.steel_sleeve_base_params_t {
+	var c C.steel_sleeve_base_params_t
 	c.H1 = C.double(p.H1)
 	c.H2 = C.double(p.H2)
 	c.H3 = C.double(p.H3)
@@ -1954,21 +1954,21 @@ func (p *SteelSleeveFoundationParams) to_struct() C.steel_sleeve_foundation_para
 	return c
 }
 
-func CreateSteelSleeveFoundation(params SteelSleeveFoundationParams) *Shape {
-	shp := C.create_steel_sleeve_foundation(params.to_struct())
+func CreateSteelSleeveBase(params SteelSleeveBaseParams) *Shape {
+	shp := C.create_steel_sleeve_base(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateSteelSleeveFoundationWithPlace(params SteelSleeveFoundationParams, position Point3, direction Dir3) *Shape {
-	shp := C.create_steel_sleeve_foundation_with_place(params.to_struct(), position.val, direction.val)
+func CreateSteelSleeveBaseWithPlace(params SteelSleeveBaseParams, position Point3, direction Dir3) *Shape {
+	shp := C.create_steel_sleeve_base_with_place(params.to_struct(), position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-type PrecastColumnFoundationParams struct {
+type PrecastColumnBaseParams struct {
 	H1 float32
 	H2 float32
 	H3 float32
@@ -1979,8 +1979,8 @@ type PrecastColumnFoundationParams struct {
 	L2 float32
 }
 
-func (p *PrecastColumnFoundationParams) to_struct() C.precast_column_foundation_params_t {
-	var c C.precast_column_foundation_params_t
+func (p *PrecastColumnBaseParams) to_struct() C.precast_column_base_params_t {
+	var c C.precast_column_base_params_t
 	c.H1 = C.double(p.H1)
 	c.H2 = C.double(p.H2)
 	c.H3 = C.double(p.H3)
@@ -1992,21 +1992,21 @@ func (p *PrecastColumnFoundationParams) to_struct() C.precast_column_foundation_
 	return c
 }
 
-func CreatePrecastColumnFoundation(params PrecastColumnFoundationParams) *Shape {
-	shp := C.create_precast_column_foundation(params.to_struct())
+func CreatePrecastColumnBase(params PrecastColumnBaseParams) *Shape {
+	shp := C.create_precast_column_base(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreatePrecastColumnFoundationWithPlace(params PrecastColumnFoundationParams, position Point3, direction Dir3) *Shape {
-	shp := C.create_precast_column_foundation_with_place(params.to_struct(), position.val, direction.val)
+func CreatePrecastColumnBaseWithPlace(params PrecastColumnBaseParams, position Point3, direction Dir3) *Shape {
+	shp := C.create_precast_column_base_with_place(params.to_struct(), position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-type PrecastPinnedFoundationParams struct {
+type PrecastPinnedBaseParams struct {
 	H1 float32
 	H2 float32
 	H3 float32
@@ -2020,8 +2020,8 @@ type PrecastPinnedFoundationParams struct {
 	L  float32
 }
 
-func (p *PrecastPinnedFoundationParams) to_struct() C.precast_pinned_foundation_params_t {
-	var c C.precast_pinned_foundation_params_t
+func (p *PrecastPinnedBaseParams) to_struct() C.precast_pinned_base_params_t {
+	var c C.precast_pinned_base_params_t
 	c.H1 = C.double(p.H1)
 	c.H2 = C.double(p.H2)
 	c.H3 = C.double(p.H3)
@@ -2036,21 +2036,21 @@ func (p *PrecastPinnedFoundationParams) to_struct() C.precast_pinned_foundation_
 	return c
 }
 
-func CreatePrecastPinnedFoundation(params PrecastPinnedFoundationParams) *Shape {
-	shp := C.create_precast_pinned_foundation(params.to_struct())
+func CreatePrecastPinnedBase(params PrecastPinnedBaseParams) *Shape {
+	shp := C.create_precast_pinned_base(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreatePrecastPinnedFoundationWithPlace(params PrecastPinnedFoundationParams, position Point3, direction Dir3) *Shape {
-	shp := C.create_precast_pinned_foundation_with_place(params.to_struct(), position.val, direction.val)
+func CreatePrecastPinnedBaseWithPlace(params PrecastPinnedBaseParams, position Point3, direction Dir3) *Shape {
+	shp := C.create_precast_pinned_base_with_place(params.to_struct(), position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-type PrecastMetalSupportFoundationParams struct {
+type PrecastMetalSupportBaseParams struct {
 	H1 float32
 	H2 float32
 	H3 float32
@@ -2067,8 +2067,8 @@ type PrecastMetalSupportFoundationParams struct {
 	HX []float32
 }
 
-func (p *PrecastMetalSupportFoundationParams) to_struct() C.precast_metal_support_foundation_params_t {
-	var c C.precast_metal_support_foundation_params_t
+func (p *PrecastMetalSupportBaseParams) to_struct() C.precast_metal_support_base_params_t {
+	var c C.precast_metal_support_base_params_t
 	c.H1 = C.double(p.H1)
 	c.H2 = C.double(p.H2)
 	c.H3 = C.double(p.H3)
@@ -2094,7 +2094,7 @@ func (p *PrecastMetalSupportFoundationParams) to_struct() C.precast_metal_suppor
 	return c
 }
 
-func CreatePrecastMetalSupportFoundation(params PrecastMetalSupportFoundationParams) *Shape {
+func CreatePrecastMetalSupportBase(params PrecastMetalSupportBaseParams) *Shape {
 	cParams := params.to_struct()
 	defer func() {
 		if cParams.HX != nil {
@@ -2102,13 +2102,13 @@ func CreatePrecastMetalSupportFoundation(params PrecastMetalSupportFoundationPar
 		}
 	}()
 
-	shp := C.create_precast_metal_support_foundation(cParams)
+	shp := C.create_precast_metal_support_base(cParams)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreatePrecastMetalSupportFoundationWithPlace(params PrecastMetalSupportFoundationParams, position Point3, direction Dir3) *Shape {
+func CreatePrecastMetalSupportBaseWithPlace(params PrecastMetalSupportBaseParams, position Point3, direction Dir3) *Shape {
 	cParams := params.to_struct()
 	defer func() {
 		if cParams.HX != nil {
@@ -2116,13 +2116,13 @@ func CreatePrecastMetalSupportFoundationWithPlace(params PrecastMetalSupportFoun
 		}
 	}()
 
-	shp := C.create_precast_metal_support_foundation_with_place(cParams, position.val, direction.val)
+	shp := C.create_precast_metal_support_base_with_place(cParams, position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-type PrecastConcreteSupportFoundationParams struct {
+type PrecastConcreteSupportBaseParams struct {
 	H1 float32
 	H2 float32
 	H3 float32
@@ -2139,8 +2139,8 @@ type PrecastConcreteSupportFoundationParams struct {
 	N1 int32
 }
 
-func (p *PrecastConcreteSupportFoundationParams) to_struct() C.precast_concrete_support_foundation_params_t {
-	var c C.precast_concrete_support_foundation_params_t
+func (p *PrecastConcreteSupportBaseParams) to_struct() C.precast_concrete_support_base_params_t {
+	var c C.precast_concrete_support_base_params_t
 	c.H1 = C.double(p.H1)
 	c.H2 = C.double(p.H2)
 	c.H3 = C.double(p.H3)
@@ -2158,15 +2158,15 @@ func (p *PrecastConcreteSupportFoundationParams) to_struct() C.precast_concrete_
 	return c
 }
 
-func CreatePrecastConcreteSupportFoundation(params PrecastConcreteSupportFoundationParams) *Shape {
-	shp := C.create_precast_concrete_support_foundation(params.to_struct())
+func CreatePrecastConcreteSupportBase(params PrecastConcreteSupportBaseParams) *Shape {
+	shp := C.create_precast_concrete_support_base(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreatePrecastConcreteSupportFoundationWithPlace(params PrecastConcreteSupportFoundationParams, position Point3, direction Dir3) *Shape {
-	shp := C.create_precast_concrete_support_foundation_with_place(params.to_struct(), position.val, direction.val)
+func CreatePrecastConcreteSupportBaseWithPlace(params PrecastConcreteSupportBaseParams, position Point3, direction Dir3) *Shape {
+	shp := C.create_precast_concrete_support_base_with_place(params.to_struct(), position.val, direction.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
@@ -2715,6 +2715,1989 @@ func CreateStubTube(params StubTubeParams) *Shape {
 func CreateStubTubeWithPlace(params StubTubeParams, position Point3, normal Dir3, xDir Dir3) *Shape {
 	cParams := params.to_struct()
 	shp := C.create_stub_tube_with_place(cParams, position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type PoleTowerNode struct {
+	ID       string
+	Position Point3
+}
+
+type PoleTowerMember struct {
+	ID            string
+	StartNodeID   string
+	EndNodeID     string
+	Type          int32
+	Specification string
+	Material      string
+	XDirection    Dir3
+	YDirection    Dir3
+	End1Diameter  float32
+	End2Diameter  float32
+	Thickness     float32
+	Sides         int32
+}
+
+type PoleTowerAttachment struct {
+	Name     string
+	Type     int32
+	Position Point3
+}
+
+type PoleTowerLeg struct {
+	ID             string
+	CommonHeight   float32
+	SpecificHeight float32
+	Nodes          []PoleTowerNode
+}
+
+type PoleTowerBody struct {
+	ID     string
+	Height float32
+	Nodes  []PoleTowerNode
+	Legs   []PoleTowerLeg
+}
+
+type PoleTowerHeight struct {
+	Value  float32
+	BodyID string
+	LegID  string
+}
+
+type PoleTowerParams struct {
+	Heights     []PoleTowerHeight
+	Bodies      []PoleTowerBody
+	Members     []PoleTowerMember
+	Attachments []PoleTowerAttachment
+}
+
+func (p *PoleTowerNode) to_struct() C.pole_tower_node_t {
+	var c C.pole_tower_node_t
+	c.id = C.CString(p.ID)
+	c.position = p.Position.val
+	return c
+}
+
+func (p *PoleTowerMember) to_struct() C.pole_tower_member_t {
+	var c C.pole_tower_member_t
+	c.id = C.CString(p.ID)
+	c.startNodeId = C.CString(p.StartNodeID)
+	c.endNodeId = C.CString(p.EndNodeID)
+	c.ctype = C.int(p.Type)
+	c.specification = C.CString(p.Specification)
+	c.material = C.CString(p.Material)
+	c.xDirection = p.XDirection.val
+	c.yDirection = p.YDirection.val
+	c.end1Diameter = C.double(p.End1Diameter)
+	c.end2Diameter = C.double(p.End2Diameter)
+	c.thickness = C.double(p.Thickness)
+	c.sides = C.int(p.Sides)
+	return c
+}
+
+func (p *PoleTowerAttachment) to_struct() C.pole_tower_attachment_t {
+	var c C.pole_tower_attachment_t
+	c.name = C.CString(p.Name)
+	c.ctype = C.int(p.Type)
+	c.position = p.Position.val
+	return c
+}
+
+func (p *PoleTowerLeg) to_struct() C.pole_tower_leg_t {
+	var c C.pole_tower_leg_t
+	c.id = C.CString(p.ID)
+	c.commonHeight = C.double(p.CommonHeight)
+	c.specificHeight = C.double(p.SpecificHeight)
+
+	if len(p.Nodes) > 0 {
+		c.nodes = (*C.pole_tower_node_t)(C.malloc(C.size_t(len(p.Nodes)) * C.sizeof_pole_tower_node_t))
+		for i, node := range p.Nodes {
+			*(*C.pole_tower_node_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.nodes)) + uintptr(i)*C.sizeof_pole_tower_node_t)) = node.to_struct()
+		}
+	}
+	c.nodeCount = C.int(len(p.Nodes))
+	return c
+}
+
+func (p *PoleTowerBody) to_struct() C.pole_tower_body_t {
+	var c C.pole_tower_body_t
+	c.id = C.CString(p.ID)
+	c.height = C.double(p.Height)
+
+	if len(p.Nodes) > 0 {
+		c.nodes = (*C.pole_tower_node_t)(C.malloc(C.size_t(len(p.Nodes)) * C.sizeof_pole_tower_node_t))
+		for i, node := range p.Nodes {
+			*(*C.pole_tower_node_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.nodes)) + uintptr(i)*C.sizeof_pole_tower_node_t)) = node.to_struct()
+		}
+	}
+	c.nodeCount = C.int(len(p.Nodes))
+
+	if len(p.Legs) > 0 {
+		c.legs = (*C.pole_tower_leg_t)(C.malloc(C.size_t(len(p.Legs)) * C.sizeof_pole_tower_leg_t))
+		for i, leg := range p.Legs {
+			*(*C.pole_tower_leg_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.legs)) + uintptr(i)*C.sizeof_pole_tower_leg_t)) = leg.to_struct()
+		}
+	}
+	c.legCount = C.int(len(p.Legs))
+	return c
+}
+
+func (p *PoleTowerHeight) to_struct() C.pole_tower_height_t {
+	var c C.pole_tower_height_t
+	c.value = C.double(p.Value)
+	c.bodyId = C.CString(p.BodyID)
+	c.legId = C.CString(p.LegID)
+	return c
+}
+
+func (p *PoleTowerParams) to_struct() C.pole_tower_params_t {
+	var c C.pole_tower_params_t
+
+	if len(p.Heights) > 0 {
+		c.heights = (*C.pole_tower_height_t)(C.malloc(C.size_t(len(p.Heights)) * C.sizeof_pole_tower_height_t))
+		for i, height := range p.Heights {
+			*(*C.pole_tower_height_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.heights)) + uintptr(i)*C.sizeof_pole_tower_height_t)) = height.to_struct()
+		}
+	}
+	c.heightCount = C.int(len(p.Heights))
+
+	if len(p.Bodies) > 0 {
+		c.bodies = (*C.pole_tower_body_t)(C.malloc(C.size_t(len(p.Bodies)) * C.sizeof_pole_tower_body_t))
+		for i, body := range p.Bodies {
+			*(*C.pole_tower_body_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.bodies)) + uintptr(i)*C.sizeof_pole_tower_body_t)) = body.to_struct()
+		}
+	}
+	c.bodyCount = C.int(len(p.Bodies))
+
+	if len(p.Members) > 0 {
+		c.members = (*C.pole_tower_member_t)(C.malloc(C.size_t(len(p.Members)) * C.sizeof_pole_tower_member_t))
+		for i, member := range p.Members {
+			*(*C.pole_tower_member_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.members)) + uintptr(i)*C.sizeof_pole_tower_member_t)) = member.to_struct()
+		}
+	}
+	c.memberCount = C.int(len(p.Members))
+
+	if len(p.Attachments) > 0 {
+		c.attachments = (*C.pole_tower_attachment_t)(C.malloc(C.size_t(len(p.Attachments)) * C.sizeof_pole_tower_attachment_t))
+		for i, attachment := range p.Attachments {
+			*(*C.pole_tower_attachment_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.attachments)) + uintptr(i)*C.sizeof_pole_tower_attachment_t)) = attachment.to_struct()
+		}
+	}
+	c.attachmentCount = C.int(len(p.Attachments))
+
+	return c
+}
+
+func CreatePoleTower(params PoleTowerParams) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.heights != nil {
+			for i := 0; i < int(cParams.heightCount); i++ {
+				height := *(*C.pole_tower_height_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cParams.heights)) + uintptr(i)*C.sizeof_pole_tower_height_t))
+				C.free(unsafe.Pointer(height.bodyId))
+				C.free(unsafe.Pointer(height.legId))
+			}
+			C.free(unsafe.Pointer(cParams.heights))
+		}
+		if cParams.bodies != nil {
+			for i := 0; i < int(cParams.bodyCount); i++ {
+				body := *(*C.pole_tower_body_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cParams.bodies)) + uintptr(i)*C.sizeof_pole_tower_body_t))
+				C.free(unsafe.Pointer(body.id))
+				if body.nodes != nil {
+					for j := 0; j < int(body.nodeCount); j++ {
+						node := *(*C.pole_tower_node_t)(unsafe.Pointer(uintptr(unsafe.Pointer(body.nodes)) + uintptr(j)*C.sizeof_pole_tower_node_t))
+						C.free(unsafe.Pointer(node.id))
+					}
+					C.free(unsafe.Pointer(body.nodes))
+				}
+				if body.legs != nil {
+					for j := 0; j < int(body.legCount); j++ {
+						leg := *(*C.pole_tower_leg_t)(unsafe.Pointer(uintptr(unsafe.Pointer(body.legs)) + uintptr(j)*C.sizeof_pole_tower_leg_t))
+						C.free(unsafe.Pointer(leg.id))
+						if leg.nodes != nil {
+							for k := 0; k < int(leg.nodeCount); k++ {
+								node := *(*C.pole_tower_node_t)(unsafe.Pointer(uintptr(unsafe.Pointer(leg.nodes)) + uintptr(k)*C.sizeof_pole_tower_node_t))
+								C.free(unsafe.Pointer(node.id))
+							}
+							C.free(unsafe.Pointer(leg.nodes))
+						}
+					}
+					C.free(unsafe.Pointer(body.legs))
+				}
+			}
+			C.free(unsafe.Pointer(cParams.bodies))
+		}
+		if cParams.members != nil {
+			for i := 0; i < int(cParams.memberCount); i++ {
+				member := *(*C.pole_tower_member_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cParams.members)) + uintptr(i)*C.sizeof_pole_tower_member_t))
+				C.free(unsafe.Pointer(member.id))
+				C.free(unsafe.Pointer(member.startNodeId))
+				C.free(unsafe.Pointer(member.endNodeId))
+				C.free(unsafe.Pointer(member.specification))
+				C.free(unsafe.Pointer(member.material))
+			}
+			C.free(unsafe.Pointer(cParams.members))
+		}
+		if cParams.attachments != nil {
+			for i := 0; i < int(cParams.attachmentCount); i++ {
+				attachment := *(*C.pole_tower_attachment_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cParams.attachments)) + uintptr(i)*C.sizeof_pole_tower_attachment_t))
+				C.free(unsafe.Pointer(attachment.name))
+			}
+			C.free(unsafe.Pointer(cParams.attachments))
+		}
+	}()
+
+	shp := C.create_pole_tower(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreatePoleTowerWithPlace(params PoleTowerParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.heights != nil {
+			for i := 0; i < int(cParams.heightCount); i++ {
+				height := *(*C.pole_tower_height_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cParams.heights)) + uintptr(i)*C.sizeof_pole_tower_height_t))
+				C.free(unsafe.Pointer(height.bodyId))
+				C.free(unsafe.Pointer(height.legId))
+			}
+			C.free(unsafe.Pointer(cParams.heights))
+		}
+		if cParams.bodies != nil {
+			for i := 0; i < int(cParams.bodyCount); i++ {
+				body := *(*C.pole_tower_body_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cParams.bodies)) + uintptr(i)*C.sizeof_pole_tower_body_t))
+				C.free(unsafe.Pointer(body.id))
+				if body.nodes != nil {
+					for j := 0; j < int(body.nodeCount); j++ {
+						node := *(*C.pole_tower_node_t)(unsafe.Pointer(uintptr(unsafe.Pointer(body.nodes)) + uintptr(j)*C.sizeof_pole_tower_node_t))
+						C.free(unsafe.Pointer(node.id))
+					}
+					C.free(unsafe.Pointer(body.nodes))
+				}
+				if body.legs != nil {
+					for j := 0; j < int(body.legCount); j++ {
+						leg := *(*C.pole_tower_leg_t)(unsafe.Pointer(uintptr(unsafe.Pointer(body.legs)) + uintptr(j)*C.sizeof_pole_tower_leg_t))
+						C.free(unsafe.Pointer(leg.id))
+						if leg.nodes != nil {
+							for k := 0; k < int(leg.nodeCount); k++ {
+								node := *(*C.pole_tower_node_t)(unsafe.Pointer(uintptr(unsafe.Pointer(leg.nodes)) + uintptr(k)*C.sizeof_pole_tower_node_t))
+								C.free(unsafe.Pointer(node.id))
+							}
+							C.free(unsafe.Pointer(leg.nodes))
+						}
+					}
+					C.free(unsafe.Pointer(body.legs))
+				}
+			}
+			C.free(unsafe.Pointer(cParams.bodies))
+		}
+		if cParams.members != nil {
+			for i := 0; i < int(cParams.memberCount); i++ {
+				member := *(*C.pole_tower_member_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cParams.members)) + uintptr(i)*C.sizeof_pole_tower_member_t))
+				C.free(unsafe.Pointer(member.id))
+				C.free(unsafe.Pointer(member.startNodeId))
+				C.free(unsafe.Pointer(member.endNodeId))
+				C.free(unsafe.Pointer(member.specification))
+				C.free(unsafe.Pointer(member.material))
+			}
+			C.free(unsafe.Pointer(cParams.members))
+		}
+		if cParams.attachments != nil {
+			for i := 0; i < int(cParams.attachmentCount); i++ {
+				attachment := *(*C.pole_tower_attachment_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cParams.attachments)) + uintptr(i)*C.sizeof_pole_tower_attachment_t))
+				C.free(unsafe.Pointer(attachment.name))
+			}
+			C.free(unsafe.Pointer(cParams.attachments))
+		}
+	}()
+
+	shp := C.create_pole_tower_with_place(cParams, position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type CableJointParams struct {
+	Length         float32
+	OuterDiameter  float32
+	TerminalLength float32
+	InnerDiameter  float32
+}
+
+func (p *CableJointParams) to_struct() C.cable_joint_params_t {
+	var c C.cable_joint_params_t
+	c.length = C.double(p.Length)
+	c.outerDiameter = C.double(p.OuterDiameter)
+	c.terminalLength = C.double(p.TerminalLength)
+	c.innerDiameter = C.double(p.InnerDiameter)
+	return c
+}
+
+func CreateCableJoint(params CableJointParams) *Shape {
+	shp := C.create_cable_joint(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCableJointWithPlace(params CableJointParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	shp := C.create_cable_joint_with_place(params.to_struct(), position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type OpticalFiberBoxParams struct {
+	Length float32
+	Height float32
+	Width  float32
+}
+
+func (p *OpticalFiberBoxParams) to_struct() C.optical_fiber_box_params_t {
+	var c C.optical_fiber_box_params_t
+	c.length = C.double(p.Length)
+	c.height = C.double(p.Height)
+	c.width = C.double(p.Width)
+	return c
+}
+
+func CreateOpticalFiberBox(params OpticalFiberBoxParams) *Shape {
+	shp := C.create_optical_fiber_box(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateOpticalFiberBoxWithPlace(params OpticalFiberBoxParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	shp := C.create_optical_fiber_box_with_place(params.to_struct(), position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+const (
+	CableBoxDirectGround      = 1
+	CableBoxProtectiveGround  = 2
+	CableBoxCrossInterconnect = 3
+)
+
+type CableTerminalParams struct {
+	Sort                   int32
+	Height                 float32
+	TopDiameter            float32
+	BottomDiameter         float32
+	TailDiameter           float32
+	TailHeight             float32
+	UpperTerminalDiameter  float32
+	LowerTerminalLength    float32
+	LowerTerminalDiameter  float32
+	Hole1Diameter          float32
+	Hole2Diameter          float32
+	Hole1Distance          float32
+	HoleSpacing            float32
+	FlangeHoleDiameter     float32
+	FlangeHoleSpacing      float32
+	FlangeWidth            float32
+	FlangeCenterHoleRadius float32
+	FlangeChamferRadius    float32
+	FlangeOpeningWidth     float32
+	FlangeBoltHeight       float32
+}
+
+func (p *CableTerminalParams) to_struct() C.cable_terminal_params_t {
+	var c C.cable_terminal_params_t
+	c.sort = C.int(p.Sort)
+	c.height = C.double(p.Height)
+	c.topDiameter = C.double(p.TopDiameter)
+	c.bottomDiameter = C.double(p.BottomDiameter)
+	c.tailDiameter = C.double(p.TailDiameter)
+	c.tailHeight = C.double(p.TailHeight)
+	c.upperTerminalDiameter = C.double(p.UpperTerminalDiameter)
+	c.lowerTerminalLength = C.double(p.LowerTerminalLength)
+	c.lowerTerminalDiameter = C.double(p.LowerTerminalDiameter)
+	c.hole1Diameter = C.double(p.Hole1Diameter)
+	c.hole2Diameter = C.double(p.Hole2Diameter)
+	c.hole1Distance = C.double(p.Hole1Distance)
+	c.holeSpacing = C.double(p.HoleSpacing)
+	c.flangeHoleDiameter = C.double(p.FlangeHoleDiameter)
+	c.flangeHoleSpacing = C.double(p.FlangeHoleSpacing)
+	c.flangeWidth = C.double(p.FlangeWidth)
+	c.flangeCenterHoleRadius = C.double(p.FlangeCenterHoleRadius)
+	c.flangeChamferRadius = C.double(p.FlangeChamferRadius)
+	c.flangeOpeningWidth = C.double(p.FlangeOpeningWidth)
+	c.flangeBoltHeight = C.double(p.FlangeBoltHeight)
+	return c
+}
+
+func CreateCableTerminal(params CableTerminalParams) *Shape {
+	shp := C.create_cable_terminal(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCableTerminalWithPlace(params CableTerminalParams, position Point3, direction Dir3) *Shape {
+	shp := C.create_cable_terminal_with_place(params.to_struct(), position.val, direction.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type CableAccessoryType int
+
+const (
+	CableAccessoryTypeSingle         CableAccessoryType = 1
+	CableAccessoryTypeLinear         CableAccessoryType = 2
+	CableAccessoryTypeContactTriple  CableAccessoryType = 3
+	CableAccessoryTypeSeparateTriple CableAccessoryType = 4
+)
+
+type CableAccessoryParams struct {
+	Type              CableAccessoryType
+	Length            float32
+	Width             float32
+	Height            float32
+	PortCount         int32
+	PortDiameter      float32
+	BackPanelDistance float32
+	SidePanelDistance float32
+}
+
+func (p *CableAccessoryParams) to_struct() C.cable_accessory_params_t {
+	var c C.cable_accessory_params_t
+	c.ctype = C.int(p.Type)
+	c.length = C.double(p.Length)
+	c.width = C.double(p.Width)
+	c.height = C.double(p.Height)
+	c.portCount = C.int(p.PortCount)
+	c.portDiameter = C.double(p.PortDiameter)
+	c.backPanelDistance = C.double(p.BackPanelDistance)
+	c.sidePanelDistance = C.double(p.SidePanelDistance)
+	return c
+}
+
+func CreateCableAccessory(params CableAccessoryParams) *Shape {
+	shp := C.create_cable_accessory(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCableAccessoryWithPlace(params CableAccessoryParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_cable_accessory_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type CableBracketParams struct {
+	Length            float32
+	RootHeight        float32
+	RootWidth         float32
+	Width             float32
+	TopThickness      float32
+	RootThickness     float32
+	ColumnMountPoints []Point3
+	ClampMountPoints  []Point3
+}
+
+func (p *CableBracketParams) to_struct() C.cable_bracket_params_t {
+	var c C.cable_bracket_params_t
+	c.length = C.double(p.Length)
+	c.rootHeight = C.double(p.RootHeight)
+	c.rootWidth = C.double(p.RootWidth)
+	c.width = C.double(p.Width)
+	c.topThickness = C.double(p.TopThickness)
+	c.rootThickness = C.double(p.RootThickness)
+
+	if len(p.ColumnMountPoints) > 0 {
+		c.columnMountPoints = (*C.pnt3d_t)(C.malloc(C.size_t(len(p.ColumnMountPoints)) * C.sizeof_pnt3d_t))
+		for i, pos := range p.ColumnMountPoints {
+			*(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.columnMountPoints)) + uintptr(i)*C.sizeof_pnt3d_t)) = pos.val
+		}
+		c.columnMountCount = C.int(len(p.ColumnMountPoints))
+	}
+
+	if len(p.ClampMountPoints) > 0 {
+		c.clampMountPoints = (*C.pnt3d_t)(C.malloc(C.size_t(len(p.ClampMountPoints)) * C.sizeof_pnt3d_t))
+		for i, pos := range p.ClampMountPoints {
+			*(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.clampMountPoints)) + uintptr(i)*C.sizeof_pnt3d_t)) = pos.val
+		}
+		c.clampMountCount = C.int(len(p.ClampMountPoints))
+	}
+	return c
+}
+
+func CreateCableBracket(params CableBracketParams) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.columnMountPoints != nil {
+			C.free(unsafe.Pointer(cParams.columnMountPoints))
+		}
+		if cParams.clampMountPoints != nil {
+			C.free(unsafe.Pointer(cParams.clampMountPoints))
+		}
+	}()
+
+	shp := C.create_cable_bracket(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCableBracketWithPlace(params CableBracketParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.columnMountPoints != nil {
+			C.free(unsafe.Pointer(cParams.columnMountPoints))
+		}
+		if cParams.clampMountPoints != nil {
+			C.free(unsafe.Pointer(cParams.clampMountPoints))
+		}
+	}()
+
+	shp := C.create_cable_bracket_with_place(cParams, position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type CableClampType int
+
+const (
+	CableClampSingle         CableClampType = 1
+	CableClampLinear         CableClampType = 2
+	CableClampContactTriple  CableClampType = 3
+	CableClampSeparateTriple CableClampType = 4
+)
+
+type CableClampParams struct {
+	Type      CableClampType
+	Diameter  float32
+	Thickness float32
+	Width     float32
+}
+
+func (p *CableClampParams) to_struct() C.cable_clamp_params_t {
+	var c C.cable_clamp_params_t
+	c.ctype = C.int(p.Type)
+	c.diameter = C.double(p.Diameter)
+	c.thickness = C.double(p.Thickness)
+	c.width = C.double(p.Width)
+	return c
+}
+
+func CreateCableClamp(params CableClampParams) *Shape {
+	shp := C.create_cable_clamp(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCableClampWithPlace(params CableClampParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_cable_clamp_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type CablePoleParams struct {
+	Specification  string
+	Length         float64
+	Radius         float64
+	ArcAngle       float64
+	Width          float64
+	FixedLegLength float64
+	FixedLegWidth  float64
+	Thickness      float64
+	MountPoints    []Point3
+}
+
+func (p *CablePoleParams) to_struct() C.cable_pole_params_t {
+	var c C.cable_pole_params_t
+	c.specification = C.CString(p.Specification)
+	c.length = C.double(p.Length)
+	c.radius = C.double(p.Radius)
+	c.arcAngle = C.double(p.ArcAngle)
+	c.width = C.double(p.Width)
+	c.fixedLegLength = C.double(p.FixedLegLength)
+	c.fixedLegWidth = C.double(p.FixedLegWidth)
+	c.thickness = C.double(p.Thickness)
+	if len(p.MountPoints) > 0 {
+		c.mountPoints = (*C.pnt3d_t)(C.malloc(C.size_t(len(p.MountPoints)) * C.sizeof_pnt3d_t))
+		for i, pt := range p.MountPoints {
+			*(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.mountPoints)) + uintptr(i)*C.sizeof_pnt3d_t)) = pt.val
+		}
+		c.mountCount = C.int(len(p.MountPoints))
+	}
+	return c
+}
+
+func CreateCablePole(params CablePoleParams) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		C.free(unsafe.Pointer(cParams.specification))
+		if cParams.mountPoints != nil {
+			C.free(unsafe.Pointer(cParams.mountPoints))
+		}
+	}()
+
+	shp := C.create_cable_pole(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCablePoleWithPlace(params CablePoleParams, position Point3, direction Dir3) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		C.free(unsafe.Pointer(cParams.specification))
+		if cParams.mountPoints != nil {
+			C.free(unsafe.Pointer(cParams.mountPoints))
+		}
+	}()
+
+	shp := C.create_cable_pole_with_place(cParams, position.val, direction.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type GroundFlatIronParams struct {
+	Length    float64
+	Height    float64
+	Thickness float64
+}
+
+func (p *GroundFlatIronParams) to_struct() C.ground_flat_iron_params_t {
+	var c C.ground_flat_iron_params_t
+	c.length = C.double(p.Length)
+	c.height = C.double(p.Height)
+	c.thickness = C.double(p.Thickness)
+	return c
+}
+
+func CreateGroundFlatIron(params GroundFlatIronParams) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_ground_flat_iron(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateGroundFlatIronWithPlace(params GroundFlatIronParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_ground_flat_iron_with_place(cParams, position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type EmbeddedPartParams struct {
+	Length         float64
+	Radius         float64
+	Height         float64
+	MaterialRadius float64
+	LowerLength    float64
+}
+
+func (p *EmbeddedPartParams) to_struct() C.embedded_part_params_t {
+	var c C.embedded_part_params_t
+	c.length = C.double(p.Length)
+	c.radius = C.double(p.Radius)
+	c.height = C.double(p.Height)
+	c.materialRadius = C.double(p.MaterialRadius)
+	c.lowerLength = C.double(p.LowerLength)
+	return c
+}
+
+func CreateEmbeddedPart(params EmbeddedPartParams) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_embedded_part(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateEmbeddedPartWithPlace(params EmbeddedPartParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_embedded_part_with_place(cParams, position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type UShapedRingParams struct {
+	Thickness float64
+	Height    float64
+	Radius    float64
+	Length    float64
+}
+
+func (p *UShapedRingParams) to_struct() C.u_shaped_ring_params_t {
+	var c C.u_shaped_ring_params_t
+	c.thickness = C.double(p.Thickness)
+	c.height = C.double(p.Height)
+	c.radius = C.double(p.Radius)
+	c.length = C.double(p.Length)
+	return c
+}
+
+func CreateUShapedRing(params UShapedRingParams) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_u_shaped_ring(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateUShapedRingWithPlace(params UShapedRingParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_u_shaped_ring_with_place(cParams, position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+const (
+	ConnectionSectionRectangular = C.CONNECTION_SECTION_RECTANGULAR
+	ConnectionSectionHorseshoe   = C.CONNECTION_SECTION_HORSESHOE
+	ConnectionSectionCircular    = C.CONNECTION_SECTION_CIRCULAR
+)
+
+const (
+	TunnelWellStraight       = C.TUNNEL_WELL_STRAIGHT
+	TunnelWellStraightTunnel = C.TUNNEL_WELL_STRAIGHT_TUNNEL
+)
+
+const (
+	ThreeWayWellWorking     = C.THREE_WAY_WELL_WORKING
+	ThreeWayWellOpenCut     = C.THREE_WAY_WELL_OPEN_CUT
+	ThreeWayWellUnderground = C.THREE_WAY_WELL_UNDERGROUND
+)
+
+const (
+	CornerStyleRounded = C.CORNER_STYLE_ROUNDED
+	CornerStyleAngled  = C.CORNER_STYLE_ANGLED
+)
+
+const (
+	ShaftStyleCircular    = C.SHAFT_STYLE_CIRCULAR
+	ShaftStyleRectangular = C.SHAFT_STYLE_RECTANGULAR
+)
+
+type LiftingEyeParams struct {
+	Height          float64
+	RingRadius      float64
+	PipeDiameter    float64
+	ConnectionPoint Point3
+}
+
+func (p *LiftingEyeParams) to_struct() C.lifting_eye_params_t {
+	var c C.lifting_eye_params_t
+	c.height = C.double(p.Height)
+	c.ringRadius = C.double(p.RingRadius)
+	c.pipeDiameter = C.double(p.PipeDiameter)
+	c.connectionPoint = p.ConnectionPoint.val
+	return c
+}
+
+func CreateLiftingEye(params LiftingEyeParams) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_lifting_eye(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateLiftingEyeWithPlace(params LiftingEyeParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_lifting_eye_with_place(cParams, position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type CornerWellParams struct {
+	LeftLength       float64
+	RightLength      float64
+	Width            float64
+	Height           float64
+	TopThickness     float64
+	BottomThickness  float64
+	WallThickness    float64
+	Angle            float64
+	CornerRadius     float64
+	CushionExtension float64
+	CushionThickness float64
+}
+
+func (p *CornerWellParams) to_struct() C.corner_well_params_t {
+	var c C.corner_well_params_t
+	c.leftLength = C.double(p.LeftLength)
+	c.rightLength = C.double(p.RightLength)
+	c.width = C.double(p.Width)
+	c.height = C.double(p.Height)
+	c.topThickness = C.double(p.TopThickness)
+	c.bottomThickness = C.double(p.BottomThickness)
+	c.wallThickness = C.double(p.WallThickness)
+	c.angle = C.double(p.Angle)
+	c.cornerRadius = C.double(p.CornerRadius)
+	c.cushionExtension = C.double(p.CushionExtension)
+	c.cushionThickness = C.double(p.CushionThickness)
+	return c
+}
+
+func CreateCornerWell(params CornerWellParams) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_corner_well(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCornerWellWithPlace(params CornerWellParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_corner_well_with_place(cParams, position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type TunnelWellParams struct {
+	Type               int
+	Length             float64
+	Width              float64
+	Height             float64
+	Radius             float64
+	TopThickness       float64
+	BottomThickness    float64
+	LeftSectionType    int
+	LeftLength         float64
+	LeftWidth          float64
+	LeftHeight         float64
+	LeftArchHeight     float64
+	RightSectionType   int
+	RightLength        float64
+	RightWidth         float64
+	RightHeight        float64
+	RightArchHeight    float64
+	OuterWallThickness float64
+	InnerWallThickness float64
+	CushionExtension   float64
+	CushionThickness   float64
+}
+
+func (p *TunnelWellParams) to_struct() C.tunnel_well_params_t {
+	var c C.tunnel_well_params_t
+	c.ctype = C.int(p.Type)
+	c.length = C.double(p.Length)
+	c.width = C.double(p.Width)
+	c.height = C.double(p.Height)
+	c.radius = C.double(p.Radius)
+	c.topThickness = C.double(p.TopThickness)
+	c.bottomThickness = C.double(p.BottomThickness)
+	c.leftSectionType = C.int(p.LeftSectionType)
+	c.leftLength = C.double(p.LeftLength)
+	c.leftWidth = C.double(p.LeftWidth)
+	c.leftHeight = C.double(p.LeftHeight)
+	c.leftArchHeight = C.double(p.LeftArchHeight)
+	c.rightSectionType = C.int(p.RightSectionType)
+	c.rightLength = C.double(p.RightLength)
+	c.rightWidth = C.double(p.RightWidth)
+	c.rightHeight = C.double(p.RightHeight)
+	c.rightArchHeight = C.double(p.RightArchHeight)
+	c.outerWallThickness = C.double(p.OuterWallThickness)
+	c.innerWallThickness = C.double(p.InnerWallThickness)
+	c.cushionExtension = C.double(p.CushionExtension)
+	c.cushionThickness = C.double(p.CushionThickness)
+	return c
+}
+
+func CreateTunnelWell(params TunnelWellParams) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_tunnel_well(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateTunnelWellWithPlace(params TunnelWellParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_tunnel_well_with_place(cParams, position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type ThreeWayWellParams struct {
+	Ctype                   int
+	CornerType              int
+	ShaftType               int
+	Length                  float32
+	Width                   float32
+	Height                  float32
+	ShaftRadius             float32
+	CornerRadius            float32
+	CornerLength            float32
+	CornerWidth             float32
+	Angle                   float32
+	BranchLength            float32
+	BranchWidth             float32
+	TopThickness            float32
+	BottomThickness         float32
+	LeftSectionStyle        int
+	LeftSectionLength       float32
+	LeftSectionWidth        float32
+	LeftSectionHeight       float32
+	LeftSectionArchHeight   float32
+	RightSectionStyle       int
+	RightSectionLength      float32
+	RightSectionWidth       float32
+	RightSectionHeight      float32
+	RightSectionArchHeight  float32
+	BranchSectionStyle      int
+	BranchSectionLength     float32
+	BranchSectionWidth      float32
+	BranchSectionHeight     float32
+	BranchSectionArchHeight float32
+	OuterWallThickness      float32
+	InnerWallThickness      float32
+	IsDoubleShaft           bool
+	DoubleShaftSpacing      float32
+	OuterWallExtension      float32
+	InnerWallExtension      float32
+	CushionExtension        float32
+	CushionThickness        float32
+	InnerBottomThickness    float32
+	OuterBottomThickness    float32
+}
+
+func (p *ThreeWayWellParams) to_struct() C.three_way_well_params_t {
+	var c C.three_way_well_params_t
+	c.ctype = C.int(p.Ctype)
+	c.cornerType = C.int(p.CornerType)
+	c.shaftType = C.int(p.ShaftType)
+	c.length = C.double(p.Length)
+	c.width = C.double(p.Width)
+	c.height = C.double(p.Height)
+	c.shaftRadius = C.double(p.ShaftRadius)
+	c.cornerRadius = C.double(p.CornerRadius)
+	c.cornerLength = C.double(p.CornerLength)
+	c.cornerWidth = C.double(p.CornerWidth)
+	c.angle = C.double(p.Angle)
+	c.branchLength = C.double(p.BranchLength)
+	c.branchWidth = C.double(p.BranchWidth)
+	c.topThickness = C.double(p.TopThickness)
+	c.bottomThickness = C.double(p.BottomThickness)
+	c.leftSectionStyle = C.int(p.LeftSectionStyle)
+	c.leftSectionLength = C.double(p.LeftSectionLength)
+	c.leftSectionWidth = C.double(p.LeftSectionWidth)
+	c.leftSectionHeight = C.double(p.LeftSectionHeight)
+	c.leftSectionArchHeight = C.double(p.LeftSectionArchHeight)
+	c.rightSectionStyle = C.int(p.RightSectionStyle)
+	c.rightSectionLength = C.double(p.RightSectionLength)
+	c.rightSectionWidth = C.double(p.RightSectionWidth)
+	c.rightSectionHeight = C.double(p.RightSectionHeight)
+	c.rightSectionArchHeight = C.double(p.RightSectionArchHeight)
+	c.branchSectionStyle = C.int(p.BranchSectionStyle)
+	c.branchSectionLength = C.double(p.BranchSectionLength)
+	c.branchSectionWidth = C.double(p.BranchSectionWidth)
+	c.branchSectionHeight = C.double(p.BranchSectionHeight)
+	c.branchSectionArchHeight = C.double(p.BranchSectionArchHeight)
+	c.outerWallThickness = C.double(p.OuterWallThickness)
+	c.innerWallThickness = C.double(p.InnerWallThickness)
+	c.isDoubleShaft = C.bool(p.IsDoubleShaft)
+	c.doubleShaftSpacing = C.double(p.DoubleShaftSpacing)
+	c.outerWallExtension = C.double(p.OuterWallExtension)
+	c.innerWallExtension = C.double(p.InnerWallExtension)
+	c.cushionExtension = C.double(p.CushionExtension)
+	c.cushionThickness = C.double(p.CushionThickness)
+	c.innerBottomThickness = C.double(p.InnerBottomThickness)
+	c.outerBottomThickness = C.double(p.OuterBottomThickness)
+	return c
+}
+
+func CreateThreeWayWell(params ThreeWayWellParams) *Shape {
+	shp := C.create_three_way_well(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateThreeWayWellWithPlace(params ThreeWayWellParams, position Point3, mainDirection Dir3, branchDirection Dir3) *Shape {
+	shp := C.create_three_way_well_with_place(params.to_struct(), position.val, mainDirection.val, branchDirection.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type FourWayWellParams struct {
+	Length         float32
+	Width          float32
+	Height         float32
+	CornerStyle    int
+	CornerRadius   float32
+	CornerLength   float32
+	CornerWidth    float32
+	BranchLength   float32
+	BranchWidth    float32
+	RoofThickness  float32
+	FloorThickness float32
+	LeftSection    struct {
+		SectionType int
+		Length      float32
+		Width       float32
+		Height      float32
+		ArchHeight  float32
+	}
+	RightSection struct {
+		SectionType int
+		Length      float32
+		Width       float32
+		Height      float32
+		ArchHeight  float32
+	}
+	BranchSection1 struct {
+		SectionType int
+		Length      float32
+		Width       float32
+		Height      float32
+		ArchHeight  float32
+	}
+	BranchSection2 struct {
+		SectionType int
+		Length      float32
+		Width       float32
+		Height      float32
+		ArchHeight  float32
+	}
+	OuterWallThickness float32
+	InnerWallThickness float32
+	CushionExtension   float32
+	CushionThickness   float32
+}
+
+func (p *FourWayWellParams) to_struct() C.four_way_well_params_t {
+	var c C.four_way_well_params_t
+	c.length = C.double(p.Length)
+	c.width = C.double(p.Width)
+	c.height = C.double(p.Height)
+	c.cornerStyle = C.int(p.CornerStyle)
+	c.cornerRadius = C.double(p.CornerRadius)
+	c.cornerLength = C.double(p.CornerLength)
+	c.cornerWidth = C.double(p.CornerWidth)
+	c.branchLength = C.double(p.BranchLength)
+	c.branchWidth = C.double(p.BranchWidth)
+	c.roofThickness = C.double(p.RoofThickness)
+	c.floorThickness = C.double(p.FloorThickness)
+
+	c.leftSection.sectionType = C.int(p.LeftSection.SectionType)
+	c.leftSection.length = C.double(p.LeftSection.Length)
+	c.leftSection.width = C.double(p.LeftSection.Width)
+	c.leftSection.height = C.double(p.LeftSection.Height)
+	c.leftSection.archHeight = C.double(p.LeftSection.ArchHeight)
+
+	c.rightSection.sectionType = C.int(p.RightSection.SectionType)
+	c.rightSection.length = C.double(p.RightSection.Length)
+	c.rightSection.width = C.double(p.RightSection.Width)
+	c.rightSection.height = C.double(p.RightSection.Height)
+	c.rightSection.archHeight = C.double(p.RightSection.ArchHeight)
+
+	c.branchSection1.sectionType = C.int(p.BranchSection1.SectionType)
+	c.branchSection1.length = C.double(p.BranchSection1.Length)
+	c.branchSection1.width = C.double(p.BranchSection1.Width)
+	c.branchSection1.height = C.double(p.BranchSection1.Height)
+	c.branchSection1.archHeight = C.double(p.BranchSection1.ArchHeight)
+
+	c.branchSection2.sectionType = C.int(p.BranchSection2.SectionType)
+	c.branchSection2.length = C.double(p.BranchSection2.Length)
+	c.branchSection2.width = C.double(p.BranchSection2.Width)
+	c.branchSection2.height = C.double(p.BranchSection2.Height)
+	c.branchSection2.archHeight = C.double(p.BranchSection2.ArchHeight)
+
+	c.outerWallThickness = C.double(p.OuterWallThickness)
+	c.innerWallThickness = C.double(p.InnerWallThickness)
+	c.cushionExtension = C.double(p.CushionExtension)
+	c.cushionThickness = C.double(p.CushionThickness)
+	return c
+}
+
+func CreateFourWayWell(params FourWayWellParams) *Shape {
+	shp := C.create_four_way_well(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateFourWayWellWithPlace(params FourWayWellParams, position Point3, direction Dir3, xDirection Dir3) *Shape {
+	shp := C.create_four_way_well_with_place(params.to_struct(), position.val, direction.val, xDirection.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+const (
+	TunnelSectionRectangular = 1
+	TunnelSectionHorseshoe   = 2
+	TunnelSectionCircular    = 3
+)
+
+type ChannelPoint struct {
+	Position Point3
+	Ctype    int
+}
+
+type PipeRowParams struct {
+	PipeType              int
+	HasEnclosure          bool
+	EnclosureWidth        float32
+	EnclosureHeight       float32
+	BaseExtension         float32
+	BaseThickness         float32
+	CushionExtension      float32
+	CushionThickness      float32
+	PipePositions         []Point2
+	PipeInnerDiameters    []float32
+	PipeWallThicknesses   []float32
+	PipeCount             int
+	PullPipeInnerDiameter float32
+	PullPipeThickness     float32
+	Points                []ChannelPoint
+	PointCount            int
+}
+
+func (p *PipeRowParams) to_struct() C.pipe_row_params_t {
+	var c C.pipe_row_params_t
+	c.pipeType = C.int(p.PipeType)
+	c.hasEnclosure = C.bool(p.HasEnclosure)
+	c.enclosureWidth = C.double(p.EnclosureWidth)
+	c.enclosureHeight = C.double(p.EnclosureHeight)
+	c.baseExtension = C.double(p.BaseExtension)
+	c.baseThickness = C.double(p.BaseThickness)
+	c.cushionExtension = C.double(p.CushionExtension)
+	c.cushionThickness = C.double(p.CushionThickness)
+
+	if len(p.PipePositions) > 0 {
+		c.pipePositions = (*C.pnt2d_t)(C.malloc(C.size_t(len(p.PipePositions)) * C.sizeof_pnt2d_t))
+		for i, pos := range p.PipePositions {
+			*(*C.pnt2d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.pipePositions)) + uintptr(i)*C.sizeof_pnt2d_t)) = pos.val
+		}
+	}
+
+	if len(p.PipeInnerDiameters) > 0 {
+		c.pipeInnerDiameters = (*C.double)(C.malloc(C.size_t(len(p.PipeInnerDiameters)) * C.sizeof_double))
+		for i, dia := range p.PipeInnerDiameters {
+			*(*C.double)(unsafe.Pointer(uintptr(unsafe.Pointer(c.pipeInnerDiameters)) + uintptr(i)*C.sizeof_double)) = C.double(dia)
+		}
+	}
+
+	if len(p.PipeWallThicknesses) > 0 {
+		c.pipeWallThicknesses = (*C.double)(C.malloc(C.size_t(len(p.PipeWallThicknesses)) * C.sizeof_double))
+		for i, thick := range p.PipeWallThicknesses {
+			*(*C.double)(unsafe.Pointer(uintptr(unsafe.Pointer(c.pipeWallThicknesses)) + uintptr(i)*C.sizeof_double)) = C.double(thick)
+		}
+	}
+
+	c.pipeCount = C.int(p.PipeCount)
+	c.pullPipeInnerDiameter = C.double(p.PullPipeInnerDiameter)
+	c.pullPipeThickness = C.double(p.PullPipeThickness)
+
+	if len(p.Points) > 0 {
+		c.points = (*C.channel_point_t)(C.malloc(C.size_t(len(p.Points)) * C.sizeof_channel_point_t))
+		for i, point := range p.Points {
+			cp := C.channel_point_t{
+				position: point.Position.val,
+				ctype:    C.int(point.Ctype),
+			}
+			*(*C.channel_point_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.points)) + uintptr(i)*C.sizeof_channel_point_t)) = cp
+		}
+	}
+
+	c.pointCount = C.int(p.PointCount)
+	return c
+}
+
+func CreatePipeRow(params PipeRowParams) *Shape {
+	shp := C.create_pipe_row(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreatePipeRowWithPlace(params PipeRowParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_pipe_row_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type CableTrenchParams struct {
+	Width            float32
+	Height           float32
+	CoverWidth       float32
+	CoverThickness   float32
+	BaseExtension    float32
+	BaseThickness    float32
+	CushionExtension float32
+	CushionThickness float32
+	WallThickness    float32
+	WallThickness2   float32
+	Points           []ChannelPoint
+}
+
+func (p *CableTrenchParams) to_struct() C.cable_trench_params_t {
+	var c C.cable_trench_params_t
+	c.width = C.double(p.Width)
+	c.height = C.double(p.Height)
+	c.coverWidth = C.double(p.CoverWidth)
+	c.coverThickness = C.double(p.CoverThickness)
+	c.baseExtension = C.double(p.BaseExtension)
+	c.baseThickness = C.double(p.BaseThickness)
+	c.cushionExtension = C.double(p.CushionExtension)
+	c.cushionThickness = C.double(p.CushionThickness)
+	c.wallThickness = C.double(p.WallThickness)
+	c.wallThickness2 = C.double(p.WallThickness2)
+
+	if len(p.Points) > 0 {
+		c.points = (*C.channel_point_t)(unsafe.Pointer(&p.Points[0]))
+		c.pointCount = C.int(len(p.Points))
+	}
+	return c
+}
+
+func CreateCableTrench(params CableTrenchParams) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.points != nil {
+			C.free(unsafe.Pointer(cParams.points))
+		}
+	}()
+
+	shp := C.create_cable_trench(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCableTrenchWithPlace(params CableTrenchParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.points != nil {
+			C.free(unsafe.Pointer(cParams.points))
+		}
+	}()
+
+	shp := C.create_cable_trench_with_place(cParams, position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type CableTunnelParams struct {
+	Style                int32
+	Width                float32
+	Height               float32
+	RoofThickness        float32
+	FloorThickness       float32
+	OuterWallThickness   float32
+	InnerWallThickness   float32
+	ArchHeight           float32
+	BottomPlatformHeight float32
+	CushionExtension     float32
+	CushionThickness     float32
+	Points               []ChannelPoint
+}
+
+func (p *CableTunnelParams) to_struct() C.cable_tunnel_params_t {
+	var c C.cable_tunnel_params_t
+	c.style = C.int(p.Style)
+	c.width = C.double(p.Width)
+	c.height = C.double(p.Height)
+	c.roofThickness = C.double(p.RoofThickness)
+	c.floorThickness = C.double(p.FloorThickness)
+	c.outerWallThickness = C.double(p.OuterWallThickness)
+	c.innerWallThickness = C.double(p.InnerWallThickness)
+	c.archHeight = C.double(p.ArchHeight)
+	c.bottomPlatformHeight = C.double(p.BottomPlatformHeight)
+	c.cushionExtension = C.double(p.CushionExtension)
+	c.cushionThickness = C.double(p.CushionThickness)
+
+	if len(p.Points) > 0 {
+		c.points = (*C.channel_point_t)(unsafe.Pointer(&p.Points[0]))
+		c.pointCount = C.int(len(p.Points))
+	}
+	return c
+}
+
+func CreateCableTunnel(params CableTunnelParams) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.points != nil {
+			C.free(unsafe.Pointer(cParams.points))
+		}
+	}()
+
+	shp := C.create_cable_tunnel(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCableTunnelWithPlace(params CableTunnelParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.points != nil {
+			C.free(unsafe.Pointer(cParams.points))
+		}
+	}()
+
+	shp := C.create_cable_tunnel_with_place(cParams, position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type CableTrayParams struct {
+	Style               int32
+	ColumnDiameter      float32
+	ColumnHeight        float32
+	Span                float32
+	Width               float32
+	Height              float32
+	TopPlateHeight      float32
+	ArchHeight          float32
+	WallThickness       float32
+	PipeCount           int32
+	PipePositions       []Point3
+	PipeInnerDiameters  []float32
+	PipeWallThicknesses []float32
+	HasProtectionPlate  bool
+	Points              []ChannelPoint
+}
+
+func (p *CableTrayParams) to_struct() C.cable_tray_params_t {
+	var c C.cable_tray_params_t
+	c.style = C.int(p.Style)
+	c.columnDiameter = C.double(p.ColumnDiameter)
+	c.columnHeight = C.double(p.ColumnHeight)
+	c.span = C.double(p.Span)
+	c.width = C.double(p.Width)
+	c.height = C.double(p.Height)
+	c.topPlateHeight = C.double(p.TopPlateHeight)
+	c.archHeight = C.double(p.ArchHeight)
+	c.wallThickness = C.double(p.WallThickness)
+	c.pipeCount = C.int(p.PipeCount)
+
+	if len(p.PipePositions) > 0 {
+		c.pipePositions = (*C.pnt3d_t)(unsafe.Pointer(&p.PipePositions[0]))
+	}
+	if len(p.PipeInnerDiameters) > 0 {
+		c.pipeInnerDiameters = (*C.double)(unsafe.Pointer(&p.PipeInnerDiameters[0]))
+	}
+	if len(p.PipeWallThicknesses) > 0 {
+		c.pipeWallThicknesses = (*C.double)(unsafe.Pointer(&p.PipeWallThicknesses[0]))
+	}
+
+	if C.bool(p.HasProtectionPlate) {
+		c.hasProtectionPlate = C.int(1)
+	} else {
+		c.hasProtectionPlate = C.int(0)
+	}
+
+	if len(p.Points) > 0 {
+		c.points = (*C.channel_point_t)(unsafe.Pointer(&p.Points[0]))
+		c.pointCount = C.int(len(p.Points))
+	}
+	return c
+}
+
+func CreateCableTray(params CableTrayParams) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.pipePositions != nil {
+			C.free(unsafe.Pointer(cParams.pipePositions))
+		}
+		if cParams.pipeInnerDiameters != nil {
+			C.free(unsafe.Pointer(cParams.pipeInnerDiameters))
+		}
+		if cParams.pipeWallThicknesses != nil {
+			C.free(unsafe.Pointer(cParams.pipeWallThicknesses))
+		}
+		if cParams.points != nil {
+			C.free(unsafe.Pointer(cParams.points))
+		}
+	}()
+
+	shp := C.create_cable_tray(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCableTrayWithPlace(params CableTrayParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.pipePositions != nil {
+			C.free(unsafe.Pointer(cParams.pipePositions))
+		}
+		if cParams.pipeInnerDiameters != nil {
+			C.free(unsafe.Pointer(cParams.pipeInnerDiameters))
+		}
+		if cParams.pipeWallThicknesses != nil {
+			C.free(unsafe.Pointer(cParams.pipeWallThicknesses))
+		}
+		if cParams.points != nil {
+			C.free(unsafe.Pointer(cParams.points))
+		}
+	}()
+
+	shp := C.create_cable_tray_with_place(cParams, position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type CableLBeamParams struct {
+	Length float32
+	Width  float32
+	Height float32
+}
+
+func (p *CableLBeamParams) to_struct() C.cable_L_beam_params_t {
+	var c C.cable_L_beam_params_t
+	c.length = C.double(p.Length)
+	c.width = C.double(p.Width)
+	c.height = C.double(p.Height)
+	return c
+}
+
+func CreateCableLBeam(params CableLBeamParams) *Shape {
+	shp := C.create_cable_L_beam(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCableLBeamWithPlace(params CableLBeamParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
+	shp := C.create_cable_L_beam_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type ManholeParams struct {
+	Style         int32
+	Length        float32
+	Width         float32
+	Height        float32
+	WallThickness float32
+}
+
+func (p *ManholeParams) to_struct() C.manhole_params_t {
+	var c C.manhole_params_t
+	c.style = C.int(p.Style)
+	c.length = C.double(p.Length)
+	c.width = C.double(p.Width)
+	c.height = C.double(p.Height)
+	c.wallThickness = C.double(p.WallThickness)
+	return c
+}
+
+func CreateManhole(params ManholeParams) *Shape {
+	shp := C.create_manhole(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateManholeWithPlace(params ManholeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	shp := C.create_manhole_with_place(params.to_struct(), position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type ManholeCoverParams struct {
+	Style     int32
+	Length    float32
+	Width     float32
+	Thickness float32
+}
+
+func (p *ManholeCoverParams) to_struct() C.manhole_cover_params_t {
+	var c C.manhole_cover_params_t
+	c.style = C.int(p.Style)
+	c.length = C.double(p.Length)
+	c.width = C.double(p.Width)
+	c.thickness = C.double(p.Thickness)
+	return c
+}
+
+func CreateManholeCover(params ManholeCoverParams) *Shape {
+	shp := C.create_manhole_cover(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateManholeCoverWithPlace(params ManholeCoverParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	shp := C.create_manhole_cover_with_place(params.to_struct(), position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type LadderParams struct {
+	Length    float32
+	Width     float32
+	Thickness float32
+}
+
+func (p *LadderParams) to_struct() C.ladder_params_t {
+	var c C.ladder_params_t
+	c.length = C.double(p.Length)
+	c.width = C.double(p.Width)
+	c.thickness = C.double(p.Thickness)
+	return c
+}
+
+func CreateLadder(params LadderParams) *Shape {
+	shp := C.create_ladder(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateLadderWithPlace(params LadderParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	shp := C.create_ladder_with_place(params.to_struct(), position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type SumpParams struct {
+	Length         float32
+	Width          float32
+	Depth          float32
+	FloorThickness float32
+}
+
+func (p *SumpParams) to_struct() C.sump_params_t {
+	var c C.sump_params_t
+	c.length = C.double(p.Length)
+	c.width = C.double(p.Width)
+	c.depth = C.double(p.Depth)
+	c.floorThickness = C.double(p.FloorThickness)
+	return c
+}
+
+func CreateSump(params SumpParams) *Shape {
+	shp := C.create_sump(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateSumpWithPlace(params SumpParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_sump_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type FootpathParams struct {
+	Height float32
+	Width  float32
+}
+
+func (p *FootpathParams) to_struct() C.footpath_params_t {
+	var c C.footpath_params_t
+	c.height = C.double(p.Height)
+	c.width = C.double(p.Width)
+	return c
+}
+
+func CreateFootpath(params FootpathParams) *Shape {
+	shp := C.create_footpath(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateFootpathWithPlace(params FootpathParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	shp := C.create_footpath_with_place(params.to_struct(), position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type ShaftChamberParams struct {
+	SupportWallThickness float32
+	SupportDiameter      float32
+	SupportHeight        float32
+	RoofThickness        float32
+	InnerDiameter        float32
+	WorkingHeight        float32
+	OuterWallThickness   float32
+	InnerWallThickness   float32
+}
+
+func (p *ShaftChamberParams) to_struct() C.shaft_chamber_params_t {
+	var c C.shaft_chamber_params_t
+	c.supportWallThickness = C.double(p.SupportWallThickness)
+	c.supportDiameter = C.double(p.SupportDiameter)
+	c.supportHeight = C.double(p.SupportHeight)
+	c.roofThickness = C.double(p.RoofThickness)
+	c.innerDiameter = C.double(p.InnerDiameter)
+	c.workingHeight = C.double(p.WorkingHeight)
+	c.outerWallThickness = C.double(p.OuterWallThickness)
+	c.innerWallThickness = C.double(p.InnerWallThickness)
+	return c
+}
+
+func CreateShaftChamber(params ShaftChamberParams) *Shape {
+	shp := C.create_shaft_chamber(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateShaftChamberWithPlace(params ShaftChamberParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	shp := C.create_shaft_chamber_with_place(params.to_struct(), position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type TunnelPartitionBoardParams struct {
+	Style         int32
+	Length        float32
+	Width         float32
+	Thickness     float32
+	HoleCount     int32
+	HolePositions []Point2
+	HoleStyles    []int32
+	HoleDiameters []float32
+	HoleWidths    []float32
+}
+
+func (p *TunnelPartitionBoardParams) to_struct() C.tunnel_partition_board_params_t {
+	var c C.tunnel_partition_board_params_t
+	c.style = C.int(p.Style)
+	c.length = C.double(p.Length)
+	c.width = C.double(p.Width)
+	c.thickness = C.double(p.Thickness)
+	c.holeCount = C.int(p.HoleCount)
+
+	if len(p.HolePositions) > 0 {
+		c.holePositions = (*C.pnt2d_t)(unsafe.Pointer(&p.HolePositions[0]))
+	}
+	if len(p.HoleStyles) > 0 {
+		c.holeStyles = (*C.int)(unsafe.Pointer(&p.HoleStyles[0]))
+	}
+	if len(p.HoleDiameters) > 0 {
+		c.holeDiameters = (*C.double)(unsafe.Pointer(&p.HoleDiameters[0]))
+	}
+	if len(p.HoleWidths) > 0 {
+		c.holeWidths = (*C.double)(unsafe.Pointer(&p.HoleWidths[0]))
+	}
+	return c
+}
+
+func CreateTunnelPartitionBoard(params TunnelPartitionBoardParams) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.holePositions != nil {
+			C.free(unsafe.Pointer(cParams.holePositions))
+		}
+		if cParams.holeStyles != nil {
+			C.free(unsafe.Pointer(cParams.holeStyles))
+		}
+		if cParams.holeDiameters != nil {
+			C.free(unsafe.Pointer(cParams.holeDiameters))
+		}
+		if cParams.holeWidths != nil {
+			C.free(unsafe.Pointer(cParams.holeWidths))
+		}
+	}()
+
+	shp := C.create_tunnel_partition_board(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateTunnelPartitionBoardWithPlace(params TunnelPartitionBoardParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.holePositions != nil {
+			C.free(unsafe.Pointer(cParams.holePositions))
+		}
+		if cParams.holeStyles != nil {
+			C.free(unsafe.Pointer(cParams.holeStyles))
+		}
+		if cParams.holeDiameters != nil {
+			C.free(unsafe.Pointer(cParams.holeDiameters))
+		}
+		if cParams.holeWidths != nil {
+			C.free(unsafe.Pointer(cParams.holeWidths))
+		}
+	}()
+
+	shp := C.create_tunnel_partition_board_with_place(cParams, position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type VentilationPavilionParams struct {
+	TopLength    float32
+	MiddleLength float32
+	BottomLength float32
+	TopWidth     float32
+	MiddleWidth  float32
+	BottomWidth  float32
+	TopHeight    float32
+	Height       float32
+	BaseHeight   float32
+}
+
+func (p *VentilationPavilionParams) to_struct() C.ventilation_pavilion_params_t {
+	var c C.ventilation_pavilion_params_t
+	c.topLength = C.double(p.TopLength)
+	c.middleLength = C.double(p.MiddleLength)
+	c.bottomLength = C.double(p.BottomLength)
+	c.topWidth = C.double(p.TopWidth)
+	c.middleWidth = C.double(p.MiddleWidth)
+	c.bottomWidth = C.double(p.BottomWidth)
+	c.topHeight = C.double(p.TopHeight)
+	c.height = C.double(p.Height)
+	c.baseHeight = C.double(p.BaseHeight)
+	return c
+}
+
+func CreateVentilationPavilion(params VentilationPavilionParams) *Shape {
+	shp := C.create_ventilation_pavilion(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateVentilationPavilionWithPlace(params VentilationPavilionParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	shp := C.create_ventilation_pavilion_with_place(params.to_struct(), position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type StraightVentilationDuctParams struct {
+	Diameter      float32
+	WallThickness float32
+	Height        float32
+}
+
+func (p *StraightVentilationDuctParams) to_struct() C.straight_ventilation_duct_params_t {
+	var c C.straight_ventilation_duct_params_t
+	c.diameter = C.double(p.Diameter)
+	c.wallThickness = C.double(p.WallThickness)
+	c.height = C.double(p.Height)
+	return c
+}
+
+func CreateStraightVentilationDuct(params StraightVentilationDuctParams) *Shape {
+	shp := C.create_straight_ventilation_duct(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateStraightVentilationDuctWithPlace(params StraightVentilationDuctParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	shp := C.create_straight_ventilation_duct_with_place(params.to_struct(), position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type DrainageWellParams struct {
+	Length           float32
+	Width            float32
+	Height           float32
+	NeckDiameter     float32
+	NeckHeight       float32
+	CushionExtension float32
+	FloorThickness   float32
+	WallThickness    float32
+}
+
+func (p *DrainageWellParams) to_struct() C.drainage_well_params_t {
+	var c C.drainage_well_params_t
+	c.length = C.double(p.Length)
+	c.width = C.double(p.Width)
+	c.height = C.double(p.Height)
+	c.neckDiameter = C.double(p.NeckDiameter)
+	c.neckHeight = C.double(p.NeckHeight)
+	c.cushionExtension = C.double(p.CushionExtension)
+	c.floorThickness = C.double(p.FloorThickness)
+	c.wallThickness = C.double(p.WallThickness)
+	return c
+}
+
+func CreateDrainageWell(params DrainageWellParams) *Shape {
+	shp := C.create_drainage_well(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateDrainageWellWithPlace(params DrainageWellParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	shp := C.create_drainage_well_with_place(params.to_struct(), position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+const (
+	PipeSupportSingleSide = 1
+	PipeSupportDoubleSide = 2
+)
+
+type PipeSupportParams struct {
+	Style     int32
+	Count     int32
+	Positions []Point2
+	Radii     []float32
+	Length    float32
+	Height    float32
+}
+
+func (p *PipeSupportParams) to_struct() C.pipe_support_params_t {
+	var c C.pipe_support_params_t
+	c.style = C.int(p.Style)
+	c.count = C.int(p.Count)
+	c.length = C.double(p.Length)
+	c.height = C.double(p.Height)
+
+	if len(p.Positions) > 0 {
+		c.positions = (*C.pnt2d_t)(C.malloc(C.size_t(len(p.Positions)) * C.sizeof_pnt2d_t))
+		for i, pos := range p.Positions {
+			C.pnt2d_t_array_set(c.positions, C.int(i), pos.val)
+		}
+	}
+
+	if len(p.Radii) > 0 {
+		c.radii = (*C.double)(C.malloc(C.size_t(len(p.Radii)) * C.sizeof_double))
+		for i, radius := range p.Radii {
+			C.double_array_set(c.radii, C.int(i), C.double(radius))
+		}
+	}
+
+	return c
+}
+
+func CreatePipeSupport(params PipeSupportParams) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.positions != nil {
+			C.free(unsafe.Pointer(cParams.positions))
+		}
+		if cParams.radii != nil {
+			C.free(unsafe.Pointer(cParams.radii))
+		}
+	}()
+
+	shp := C.create_pipe_support(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreatePipeSupportWithPlace(params PipeSupportParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.positions != nil {
+			C.free(unsafe.Pointer(cParams.positions))
+		}
+		if cParams.radii != nil {
+			C.free(unsafe.Pointer(cParams.radii))
+		}
+	}()
+
+	shp := C.create_pipe_support_with_place(cParams, position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+const (
+	CoverPlateRectangle = 0
+	CoverPlateSector    = 1
+)
+
+type CoverPlateParams struct {
+	Style       int32
+	Length      float32
+	Width       float32
+	SmallRadius float32
+	LargeRadius float32
+	Thickness   float32
+}
+
+func (p *CoverPlateParams) to_struct() C.cover_plate_params_t {
+	var c C.cover_plate_params_t
+	c.style = C.int(p.Style)
+	c.length = C.double(p.Length)
+	c.width = C.double(p.Width)
+	c.smallRadius = C.double(p.SmallRadius)
+	c.largeRadius = C.double(p.LargeRadius)
+	c.thickness = C.double(p.Thickness)
+	return c
+}
+
+func CreateCoverPlate(params CoverPlateParams) *Shape {
+	shp := C.create_cover_plate(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCoverPlateWithPlace(params CoverPlateParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_cover_plate_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type CableRayParams struct {
+	OuterLength    float32
+	OuterHeight    float32
+	InnerLength    float32
+	InnerHeight    float32
+	CoverThickness float32
+}
+
+func (p *CableRayParams) to_struct() C.cable_ray_params_t {
+	var c C.cable_ray_params_t
+	c.outerLength = C.double(p.OuterLength)
+	c.outerHeight = C.double(p.OuterHeight)
+	c.innerLength = C.double(p.InnerLength)
+	c.innerHeight = C.double(p.InnerHeight)
+	c.coverThickness = C.double(p.CoverThickness)
+	return c
+}
+
+func CreateCableRay(params CableRayParams) *Shape {
+	shp := C.create_cable_ray(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCableRayWithPlace(params CableRayParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	shp := C.create_cable_ray_with_place(params.to_struct(), position.val, direction.val, xDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s

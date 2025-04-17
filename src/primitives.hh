@@ -683,10 +683,10 @@ struct bored_pile_params {
   double D;                  // 底部直径
   double filletRadius = 0.0; // 圆角半径，默认为0
 };
-TopoDS_Shape create_bored_pile_foundation(const bored_pile_params &params);
-TopoDS_Shape create_bored_pile_foundation(const bored_pile_params &params,
-                                          const gp_Pnt &position,
-                                          const gp_Dir &direction = gp::DZ());
+TopoDS_Shape create_bored_pile_base(const bored_pile_params &params);
+TopoDS_Shape create_bored_pile_base(const bored_pile_params &params,
+                                    const gp_Pnt &position,
+                                    const gp_Dir &direction = gp::DZ());
 
 struct pile_cap_params {
   // 高度参数
@@ -719,10 +719,10 @@ struct pile_cap_params {
   double filletRadius = 0.0; // 圆角半径
 };
 
-TopoDS_Shape create_pile_cap_foundation(const pile_cap_params &params);
-TopoDS_Shape create_pile_cap_foundation(const pile_cap_params &params,
-                                        const gp_Pnt &position,
-                                        const gp_Dir &direction = gp::DZ());
+TopoDS_Shape create_pile_cap_base(const pile_cap_params &params);
+TopoDS_Shape create_pile_cap_base(const pile_cap_params &params,
+                                  const gp_Pnt &position,
+                                  const gp_Dir &direction = gp::DZ());
 
 struct rock_anchor_params {
   // 高度参数
@@ -739,10 +739,10 @@ struct rock_anchor_params {
   std::vector<gp_Pnt> ZPOSTARRAY; // 锚桩位置数组
 };
 
-TopoDS_Shape create_rock_anchor_foundation(const rock_anchor_params &params);
-TopoDS_Shape create_rock_anchor_foundation(const rock_anchor_params &params,
-                                           const gp_Pnt &position,
-                                           const gp_Dir &direction = gp::DZ());
+TopoDS_Shape create_rock_anchor_base(const rock_anchor_params &params);
+TopoDS_Shape create_rock_anchor_base(const rock_anchor_params &params,
+                                     const gp_Pnt &position,
+                                     const gp_Dir &direction = gp::DZ());
 
 struct rock_pile_cap_params {
   // 高度参数
@@ -768,12 +768,10 @@ struct rock_pile_cap_params {
   std::vector<gp_Pnt> ZPOSTARRAY; // 锚桩位置数组
 };
 
-TopoDS_Shape
-create_rock_pile_cap_foundation(const rock_pile_cap_params &params);
-TopoDS_Shape
-create_rock_pile_cap_foundation(const rock_pile_cap_params &params,
-                                const gp_Pnt &position,
-                                const gp_Dir &direction = gp::DZ());
+TopoDS_Shape create_rock_pile_cap_base(const rock_pile_cap_params &params);
+TopoDS_Shape create_rock_pile_cap_base(const rock_pile_cap_params &params,
+                                       const gp_Pnt &position,
+                                       const gp_Dir &direction = gp::DZ());
 
 struct embedded_rock_anchor_params {
   // 高度参数
@@ -786,11 +784,12 @@ struct embedded_rock_anchor_params {
   double D; // 底部直径
 };
 
-TopoDS_Shape create_embedded_rock_anchor_foundation(
-    const embedded_rock_anchor_params &params);
-TopoDS_Shape create_embedded_rock_anchor_foundation(
-    const embedded_rock_anchor_params &params, const gp_Pnt &position,
-    const gp_Dir &direction = gp::DZ());
+TopoDS_Shape
+create_embedded_rock_anchor_base(const embedded_rock_anchor_params &params);
+TopoDS_Shape
+create_embedded_rock_anchor_base(const embedded_rock_anchor_params &params,
+                                 const gp_Pnt &position,
+                                 const gp_Dir &direction = gp::DZ());
 
 struct inclined_rock_anchor_params {
   // 高度参数
@@ -814,13 +813,14 @@ struct inclined_rock_anchor_params {
   double alpha2; // Y轴坡度
 };
 
-TopoDS_Shape create_inclined_rock_anchor_foundation(
-    const inclined_rock_anchor_params &params);
-TopoDS_Shape create_inclined_rock_anchor_foundation(
-    const inclined_rock_anchor_params &params, const gp_Pnt &position,
-    const gp_Dir &direction = gp::DZ());
+TopoDS_Shape
+create_inclined_rock_anchor_base(const inclined_rock_anchor_params &params);
+TopoDS_Shape
+create_inclined_rock_anchor_base(const inclined_rock_anchor_params &params,
+                                 const gp_Pnt &position,
+                                 const gp_Dir &direction = gp::DZ());
 
-struct excavated_foundation_params {
+struct excavated_base_params {
   // 高度参数
   double H1; // 上部圆柱高度
   double H2; // 过渡段高度
@@ -835,14 +835,12 @@ struct excavated_foundation_params {
   double alpha2; // Y轴坡度
 };
 
-TopoDS_Shape
-create_excavated_foundation(const excavated_foundation_params &params);
-TopoDS_Shape
-create_excavated_foundation(const excavated_foundation_params &params,
-                            const gp_Pnt &position,
-                            const gp_Dir &direction = gp::DZ());
+TopoDS_Shape create_excavated_base(const excavated_base_params &params);
+TopoDS_Shape create_excavated_base(const excavated_base_params &params,
+                                   const gp_Pnt &position,
+                                   const gp_Dir &direction = gp::DZ());
 
-struct step_foundation_params {
+struct step_base_params {
   // 高度参数
   double H;  // 基础总高度
   double H1; // 第一级台阶高度
@@ -862,12 +860,12 @@ struct step_foundation_params {
   int N; // 台阶数量(1-3)
 };
 
-TopoDS_Shape create_step_foundation(const step_foundation_params &params);
-TopoDS_Shape create_step_foundation(const step_foundation_params &params,
-                                    const gp_Pnt &position,
-                                    const gp_Dir &direction = gp::DZ());
+TopoDS_Shape create_step_base(const step_base_params &params);
+TopoDS_Shape create_step_base(const step_base_params &params,
+                              const gp_Pnt &position,
+                              const gp_Dir &direction = gp::DZ());
 
-struct step_plate_foundation_params {
+struct step_plate_base_params {
   // 高度参数
   double H;  // 基础总高度
   double H1; // 第一级台阶高度
@@ -889,14 +887,12 @@ struct step_plate_foundation_params {
   int N; // 台阶数量(1-3)
 };
 
-TopoDS_Shape
-create_step_plate_foundation(const step_plate_foundation_params &params);
-TopoDS_Shape
-create_step_plate_foundation(const step_plate_foundation_params &params,
-                             const gp_Pnt &position,
-                             const gp_Dir &direction = gp::DZ());
+TopoDS_Shape create_step_plate_base(const step_plate_base_params &params);
+TopoDS_Shape create_step_plate_base(const step_plate_base_params &params,
+                                    const gp_Pnt &position,
+                                    const gp_Dir &direction = gp::DZ());
 
-struct sloped_base_foundation_params {
+struct sloped_base_base_params {
   // 高度参数
   double H1; // 底板前部高度
   double H2; // 底板后部高度差
@@ -914,14 +910,12 @@ struct sloped_base_foundation_params {
   double alpha2; // Y轴坡度
 };
 
-TopoDS_Shape
-create_sloped_base_foundation(const sloped_base_foundation_params &params);
-TopoDS_Shape
-create_sloped_base_foundation(const sloped_base_foundation_params &params,
-                              const gp_Pnt &position,
-                              const gp_Dir &direction = gp::DZ());
+TopoDS_Shape create_sloped_base_base(const sloped_base_base_params &params);
+TopoDS_Shape create_sloped_base_base(const sloped_base_base_params &params,
+                                     const gp_Pnt &position,
+                                     const gp_Dir &direction = gp::DZ());
 
-struct composite_caisson_foundation_params {
+struct composite_caisson_base_params {
   // 高度参数
   double H1; // 上部沉井高度
   double H2; // 过渡段高度
@@ -938,13 +932,14 @@ struct composite_caisson_foundation_params {
   double L2; // 下部基础长度
 };
 
-TopoDS_Shape create_composite_caisson_foundation(
-    const composite_caisson_foundation_params &params);
-TopoDS_Shape create_composite_caisson_foundation(
-    const composite_caisson_foundation_params &params, const gp_Pnt &position,
-    const gp_Dir &direction = gp::DZ());
+TopoDS_Shape
+create_composite_caisson_base(const composite_caisson_base_params &params);
+TopoDS_Shape
+create_composite_caisson_base(const composite_caisson_base_params &params,
+                              const gp_Pnt &position,
+                              const gp_Dir &direction = gp::DZ());
 
-struct raft_foundation_params {
+struct raft_base_params {
   // 高度参数
   double H1; // 底板高度
   double H2; // 边梁高度
@@ -959,12 +954,12 @@ struct raft_foundation_params {
   double L2; // 边梁长度
 };
 
-TopoDS_Shape create_raft_foundation(const raft_foundation_params &params);
-TopoDS_Shape create_raft_foundation(const raft_foundation_params &params,
-                                    const gp_Pnt &position,
-                                    const gp_Dir &direction = gp::DZ());
+TopoDS_Shape create_raft_base(const raft_base_params &params);
+TopoDS_Shape create_raft_base(const raft_base_params &params,
+                              const gp_Pnt &position,
+                              const gp_Dir &direction = gp::DZ());
 
-struct direct_buried_foundation_params {
+struct direct_buried_base_params {
   // 高度参数
   double H1; // 基础主体高度
   double H2; // 固定盘高度（可选）
@@ -980,14 +975,12 @@ struct direct_buried_foundation_params {
   bool isCircularPlate = true; // 是否为圆形固定盘
 };
 
-TopoDS_Shape
-create_direct_buried_foundation(const direct_buried_foundation_params &params);
-TopoDS_Shape
-create_direct_buried_foundation(const direct_buried_foundation_params &params,
-                                const gp_Pnt &position,
-                                const gp_Dir &direction = gp::DZ());
+TopoDS_Shape create_direct_buried_base(const direct_buried_base_params &params);
+TopoDS_Shape create_direct_buried_base(const direct_buried_base_params &params,
+                                       const gp_Pnt &position,
+                                       const gp_Dir &direction = gp::DZ());
 
-struct steel_sleeve_foundation_params {
+struct steel_sleeve_base_params {
   // 高度参数
   double H1; // 钢套筒高度
   double H2; // 底部扩大段高度
@@ -1005,14 +998,12 @@ struct steel_sleeve_foundation_params {
   double B2; // 顶部扩大段内径（可选）
 };
 
-TopoDS_Shape
-create_steel_sleeve_foundation(const steel_sleeve_foundation_params &params);
-TopoDS_Shape
-create_steel_sleeve_foundation(const steel_sleeve_foundation_params &params,
-                               const gp_Pnt &position,
-                               const gp_Dir &direction = gp::DZ());
+TopoDS_Shape create_steel_sleeve_base(const steel_sleeve_base_params &params);
+TopoDS_Shape create_steel_sleeve_base(const steel_sleeve_base_params &params,
+                                      const gp_Pnt &position,
+                                      const gp_Dir &direction = gp::DZ());
 
-struct precast_column_foundation_params {
+struct precast_column_base_params {
   // 高度参数
   double H1; // 柱体高度
   double H2; // 过渡段上部高度
@@ -1028,14 +1019,14 @@ struct precast_column_foundation_params {
   double L2; // 过渡段下部长度
 };
 
-TopoDS_Shape create_precast_column_foundation(
-    const precast_column_foundation_params &params);
 TopoDS_Shape
-create_precast_column_foundation(const precast_column_foundation_params &params,
-                                 const gp_Pnt &position,
-                                 const gp_Dir &direction = gp::DZ());
+create_precast_column_base(const precast_column_base_params &params);
+TopoDS_Shape
+create_precast_column_base(const precast_column_base_params &params,
+                           const gp_Pnt &position,
+                           const gp_Dir &direction = gp::DZ());
 
-struct precast_pinned_foundation_params {
+struct precast_pinned_base_params {
   // 高度参数
   double H1; // 柱体高度
   double H2; // 过渡段上部高度
@@ -1056,14 +1047,14 @@ struct precast_pinned_foundation_params {
   double L; // 卡盘长度
 };
 
-TopoDS_Shape create_precast_pinned_foundation(
-    const precast_pinned_foundation_params &params);
 TopoDS_Shape
-create_precast_pinned_foundation(const precast_pinned_foundation_params &params,
-                                 const gp_Pnt &position,
-                                 const gp_Dir &direction = gp::DZ());
+create_precast_pinned_base(const precast_pinned_base_params &params);
+TopoDS_Shape
+create_precast_pinned_base(const precast_pinned_base_params &params,
+                           const gp_Pnt &position,
+                           const gp_Dir &direction = gp::DZ());
 
-struct precast_metal_support_foundation_params {
+struct precast_metal_support_base_params {
   // 高度参数
   double H1; // 底板高度
   double H2; // 立柱高度
@@ -1088,13 +1079,13 @@ struct precast_metal_support_foundation_params {
   std::vector<double> HX; // 斜材层高数组
 };
 
-TopoDS_Shape create_precast_metal_support_foundation(
-    const precast_metal_support_foundation_params &params);
-TopoDS_Shape create_precast_metal_support_foundation(
-    const precast_metal_support_foundation_params &params,
-    const gp_Pnt &position, const gp_Dir &direction = gp::DZ());
+TopoDS_Shape create_precast_metal_support_base(
+    const precast_metal_support_base_params &params);
+TopoDS_Shape create_precast_metal_support_base(
+    const precast_metal_support_base_params &params, const gp_Pnt &position,
+    const gp_Dir &direction = gp::DZ());
 
-struct precast_concrete_support_foundation_params {
+struct precast_concrete_support_base_params {
   // 高度参数
   double H1; // 底板高度
   double H2; // 立柱高度
@@ -1116,11 +1107,11 @@ struct precast_concrete_support_foundation_params {
   int n1; // 支撑数量
 };
 
-TopoDS_Shape create_precast_concrete_support_foundation(
-    const precast_concrete_support_foundation_params &params);
-TopoDS_Shape create_precast_concrete_support_foundation(
-    const precast_concrete_support_foundation_params &params,
-    const gp_Pnt &position, const gp_Dir &direction = gp::DZ());
+TopoDS_Shape create_precast_concrete_support_base(
+    const precast_concrete_support_base_params &params);
+TopoDS_Shape create_precast_concrete_support_base(
+    const precast_concrete_support_base_params &params, const gp_Pnt &position,
+    const gp_Dir &direction = gp::DZ());
 
 struct transmission_line_params {
   std::string type;               // 型号
@@ -1233,6 +1224,87 @@ TopoDS_Shape create_insulator_string(const insulator_params &params);
 TopoDS_Shape create_insulator_string(const insulator_params &params,
                                      const gp_Pnt &position,
                                      const gp_Dir &direction = gp_Dir(0, 0, 1));
+
+// 杆件类型枚举
+enum class member_type {
+  ANGLE = 1,       // 角钢
+  TUBE = 2,        // 等径钢管
+  TAPERED_TUBE = 3 // 锥形钢管
+};
+
+// 挂点类型枚举
+enum class attachment_type {
+  GROUND_WIRE = 1, // 地线挂点
+  CONDUCTOR = 2,   // 导线挂点
+  JUMPER = 3       // 跳线挂点
+};
+
+// 杆塔节点信息
+struct pole_tower_node {
+  std::string id;  // 节点编号
+  gp_Pnt position; // 节点坐标
+};
+
+// 杆塔杆件信息
+struct pole_tower_member {
+  std::string id;            // 杆件编号
+  std::string startNodeId;   // 起始节点ID
+  std::string endNodeId;     // 结束节点ID
+  member_type type;          // 杆件类型
+  std::string specification; // 规格
+  std::string material;      // 材质
+  gp_Dir xDirection;         // X肢方向(角钢专用)
+  gp_Dir yDirection;         // Y肢方向(角钢专用)
+  double end1Diameter;       // 端1直径(锥形钢管专用)
+  double end2Diameter;       // 端2直径(锥形钢管专用)
+  double thickness;          // 厚度(钢管专用)
+  int sides;                 // 边数(锥形钢管专用)
+};
+
+// 杆塔挂点信息
+struct pole_tower_attachment {
+  std::string name;     // 挂点名称
+  attachment_type type; // 挂点类型
+  gp_Pnt position;      // 挂点坐标
+};
+
+// 杆塔接腿信息
+struct pole_tower_leg {
+  std::string id;                     // 接腿编号
+  double commonHeight;                // 共用部分高度
+  double specificHeight;              // 非共用部分高度
+  std::vector<pole_tower_node> nodes; // 接腿节点
+};
+
+// 杆塔本体信息
+struct pole_tower_body {
+  std::string id;                     // 本体编号
+  double height;                      // 本体高度
+  std::vector<pole_tower_node> nodes; // 本体节点
+  std::vector<pole_tower_leg> legs;   // 接腿信息
+};
+
+// 杆塔呼高信息
+struct pole_tower_height {
+  double value;       // 呼高值
+  std::string bodyId; // 对应本体ID
+  std::string legId;  // 对应接腿ID
+};
+
+// 杆塔参数结构体
+struct pole_tower_params {
+  std::vector<pole_tower_height> heights;         // 呼高集合
+  std::vector<pole_tower_body> bodies;            // 本体集合
+  std::vector<pole_tower_member> members;         // 杆件集合
+  std::vector<pole_tower_attachment> attachments; // 挂点集合
+};
+
+// 创建杆塔函数声明
+TopoDS_Shape create_pole_tower(const pole_tower_params &params);
+TopoDS_Shape create_pole_tower(const pole_tower_params &params,
+                               const gp_Pnt &position,
+                               const gp_Dir &normal = gp::DX(),
+                               const gp_Dir &xDirection = gp::DZ());
 
 // 单钩锚固参数结构体
 struct single_hook_anchor_params {
@@ -1388,6 +1460,7 @@ struct positioning_plate_anchor_params {
   double toBottomDistance;  // 到底部距离 (H2)
   double groutHoleDiameter; // 灌注孔径 (D)
 };
+
 // 创建定位板锚固函数声明
 TopoDS_Shape
 create_positioning_plate_anchor(const positioning_plate_anchor_params &params);
@@ -1403,6 +1476,7 @@ struct stub_angle_params {
   double exposedLength; // 露头长度 (mm)
   double anchorLength;  // 锚固长度 (mm)
 };
+
 // 创建插入角钢函数声明
 TopoDS_Shape create_stub_angle(const stub_angle_params &params);
 TopoDS_Shape create_stub_angle(const stub_angle_params &params,
@@ -2215,7 +2289,6 @@ TopoDS_Shape create_pipe_support(const pipe_support_params &params,
 
 // GZW_GB
 struct cover_plate_params {
-  std::string type = "GZW_GB"; // 固定值表明当前模型为盖板
   int style;                   // 盖板形式 (0-长方形, 1-扇形)
   double length;               // 盖板长度/扇形边长 L (mm)
   double width;                // 盖板宽度 W (mm)

@@ -639,11 +639,10 @@ typedef struct {
   double filletRadius;
 } bored_pile_params_t;
 
+PRIMCAPICALL topo_shape_t *create_bored_pile_base(bored_pile_params_t params);
 PRIMCAPICALL topo_shape_t *
-create_bored_pile_foundation(bored_pile_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_bored_pile_foundation_with_place(bored_pile_params_t params,
-                                        pnt3d_t position, dir3d_t direction);
+create_bored_pile_base_with_place(bored_pile_params_t params, pnt3d_t position,
+                                  dir3d_t direction);
 
 typedef struct {
   double H1;
@@ -665,10 +664,10 @@ typedef struct {
 } rock_pile_cap_params_t;
 
 PRIMCAPICALL topo_shape_t *
-create_rock_pile_cap_foundation(rock_pile_cap_params_t params);
+create_rock_pile_cap_base(rock_pile_cap_params_t params);
 PRIMCAPICALL topo_shape_t *
-create_rock_pile_cap_foundation_with_place(rock_pile_cap_params_t params,
-                                           pnt3d_t position, dir3d_t direction);
+create_rock_pile_cap_base_with_place(rock_pile_cap_params_t params,
+                                     pnt3d_t position, dir3d_t direction);
 
 typedef struct {
   double H1;
@@ -690,10 +689,10 @@ typedef struct {
   double filletRadius;
 } pile_cap_params_t;
 
-PRIMCAPICALL topo_shape_t *create_pile_cap_foundation(pile_cap_params_t params);
+PRIMCAPICALL topo_shape_t *create_pile_cap_base(pile_cap_params_t params);
 PRIMCAPICALL topo_shape_t *
-create_pile_cap_foundation_with_place(pile_cap_params_t params,
-                                      pnt3d_t position, dir3d_t direction);
+create_pile_cap_base_with_place(pile_cap_params_t params, pnt3d_t position,
+                                dir3d_t direction);
 
 typedef struct {
   double H1;
@@ -705,11 +704,10 @@ typedef struct {
   pnt3d_t *ZPOSTARRAY;
 } rock_anchor_params_t;
 
+PRIMCAPICALL topo_shape_t *create_rock_anchor_base(rock_anchor_params_t params);
 PRIMCAPICALL topo_shape_t *
-create_rock_anchor_foundation(rock_anchor_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_rock_anchor_foundation_with_place(rock_anchor_params_t params,
-                                         pnt3d_t position, dir3d_t direction);
+create_rock_anchor_base_with_place(rock_anchor_params_t params,
+                                   pnt3d_t position, dir3d_t direction);
 
 typedef struct {
   double H1;
@@ -720,8 +718,8 @@ typedef struct {
 } embedded_rock_anchor_params_t;
 
 PRIMCAPICALL topo_shape_t *
-create_embedded_rock_anchor_foundation(embedded_rock_anchor_params_t params);
-PRIMCAPICALL topo_shape_t *create_embedded_rock_anchor_foundation_with_place(
+create_embedded_rock_anchor_base(embedded_rock_anchor_params_t params);
+PRIMCAPICALL topo_shape_t *create_embedded_rock_anchor_base_with_place(
     embedded_rock_anchor_params_t params, pnt3d_t position, dir3d_t direction);
 
 typedef struct {
@@ -738,8 +736,8 @@ typedef struct {
 } inclined_rock_anchor_params_t;
 
 PRIMCAPICALL topo_shape_t *
-create_inclined_rock_anchor_foundation(inclined_rock_anchor_params_t params);
-PRIMCAPICALL topo_shape_t *create_inclined_rock_anchor_foundation_with_place(
+create_inclined_rock_anchor_base(inclined_rock_anchor_params_t params);
+PRIMCAPICALL topo_shape_t *create_inclined_rock_anchor_base_with_place(
     inclined_rock_anchor_params_t params, pnt3d_t position, dir3d_t direction);
 
 typedef struct {
@@ -750,13 +748,13 @@ typedef struct {
   double D;
   double alpha1;
   double alpha2;
-} excavated_foundation_params_t;
+} excavated_base_params_t;
 
 PRIMCAPICALL topo_shape_t *
-create_excavated_foundation(excavated_foundation_params_t params);
+create_excavated_base(excavated_base_params_t params);
 PRIMCAPICALL topo_shape_t *
-create_excavated_foundation_with_place(excavated_foundation_params_t params,
-                                       pnt3d_t position, dir3d_t direction);
+create_excavated_base_with_place(excavated_base_params_t params,
+                                 pnt3d_t position, dir3d_t direction);
 
 typedef struct {
   double H;
@@ -771,13 +769,12 @@ typedef struct {
   double L2;
   double L3;
   int N;
-} step_foundation_params_t;
+} step_base_params_t;
 
+PRIMCAPICALL topo_shape_t *create_step_base(step_base_params_t params);
 PRIMCAPICALL topo_shape_t *
-create_step_foundation(step_foundation_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_step_foundation_with_place(step_foundation_params_t params,
-                                  pnt3d_t position, dir3d_t direction);
+create_step_base_with_place(step_base_params_t params, pnt3d_t position,
+                            dir3d_t direction);
 
 typedef struct {
   double H;
@@ -792,13 +789,13 @@ typedef struct {
   double alpha1;
   double alpha2;
   int N;
-} step_plate_foundation_params_t;
+} step_plate_base_params_t;
 
 PRIMCAPICALL topo_shape_t *
-create_step_plate_foundation(step_plate_foundation_params_t params);
+create_step_plate_base(step_plate_base_params_t params);
 PRIMCAPICALL topo_shape_t *
-create_step_plate_foundation_with_place(step_plate_foundation_params_t params,
-                                        pnt3d_t position, dir3d_t direction);
+create_step_plate_base_with_place(step_plate_base_params_t params,
+                                  pnt3d_t position, dir3d_t direction);
 
 typedef struct {
   double H1;
@@ -811,13 +808,13 @@ typedef struct {
   double B2;
   double alpha1;
   double alpha2;
-} sloped_base_foundation_params_t;
+} sloped_base_base_params_t;
 
 PRIMCAPICALL topo_shape_t *
-create_sloped_base_foundation(sloped_base_foundation_params_t params);
+create_sloped_base_base(sloped_base_base_params_t params);
 PRIMCAPICALL topo_shape_t *
-create_sloped_base_foundation_with_place(sloped_base_foundation_params_t params,
-                                         pnt3d_t position, dir3d_t direction);
+create_sloped_base_base_with_place(sloped_base_base_params_t params,
+                                   pnt3d_t position, dir3d_t direction);
 
 typedef struct {
   double H1;
@@ -831,13 +828,13 @@ typedef struct {
   double B2;
   double L1;
   double L2;
-} composite_caisson_foundation_params_t;
+} composite_caisson_base_params_t;
 
-PRIMCAPICALL topo_shape_t *create_composite_caisson_foundation(
-    composite_caisson_foundation_params_t params);
-PRIMCAPICALL topo_shape_t *create_composite_caisson_foundation_with_place(
-    composite_caisson_foundation_params_t params, pnt3d_t position,
-    dir3d_t direction);
+PRIMCAPICALL topo_shape_t *
+create_composite_caisson_base(composite_caisson_base_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_composite_caisson_base_with_place(composite_caisson_base_params_t params,
+                                         pnt3d_t position, dir3d_t direction);
 
 typedef struct {
   double H1;
@@ -849,13 +846,12 @@ typedef struct {
   double B2;
   double L1;
   double L2;
-} raft_foundation_params_t;
+} raft_base_params_t;
 
+PRIMCAPICALL topo_shape_t *create_raft_base(raft_base_params_t params);
 PRIMCAPICALL topo_shape_t *
-create_raft_foundation(raft_foundation_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_raft_foundation_with_place(raft_foundation_params_t params,
-                                  pnt3d_t position, dir3d_t direction);
+create_raft_base_with_place(raft_base_params_t params, pnt3d_t position,
+                            dir3d_t direction);
 
 typedef struct {
   double H1;
@@ -866,13 +862,13 @@ typedef struct {
   double t;
   bool hasBasePlate;
   bool isCircularPlate;
-} direct_buried_foundation_params_t;
+} direct_buried_base_params_t;
 
 PRIMCAPICALL topo_shape_t *
-create_direct_buried_foundation(direct_buried_foundation_params_t params);
-PRIMCAPICALL topo_shape_t *create_direct_buried_foundation_with_place(
-    direct_buried_foundation_params_t params, pnt3d_t position,
-    dir3d_t direction);
+create_direct_buried_base(direct_buried_base_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_direct_buried_base_with_place(direct_buried_base_params_t params,
+                                     pnt3d_t position, dir3d_t direction);
 
 typedef struct {
   double H1;
@@ -885,13 +881,13 @@ typedef struct {
   double t;
   double B1;
   double B2;
-} steel_sleeve_foundation_params_t;
+} steel_sleeve_base_params_t;
 
 PRIMCAPICALL topo_shape_t *
-create_steel_sleeve_foundation(steel_sleeve_foundation_params_t params);
-PRIMCAPICALL topo_shape_t *create_steel_sleeve_foundation_with_place(
-    steel_sleeve_foundation_params_t params, pnt3d_t position,
-    dir3d_t direction);
+create_steel_sleeve_base(steel_sleeve_base_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_steel_sleeve_base_with_place(steel_sleeve_base_params_t params,
+                                    pnt3d_t position, dir3d_t direction);
 
 typedef struct {
   double H1;
@@ -902,13 +898,13 @@ typedef struct {
   double B2;
   double L1;
   double L2;
-} precast_column_foundation_params_t;
+} precast_column_base_params_t;
 
 PRIMCAPICALL topo_shape_t *
-create_precast_column_foundation(precast_column_foundation_params_t params);
-PRIMCAPICALL topo_shape_t *create_precast_column_foundation_with_place(
-    precast_column_foundation_params_t params, pnt3d_t position,
-    dir3d_t direction);
+create_precast_column_base(precast_column_base_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_precast_column_base_with_place(precast_column_base_params_t params,
+                                      pnt3d_t position, dir3d_t direction);
 
 typedef struct {
   double H1;
@@ -922,13 +918,13 @@ typedef struct {
   double B;
   double H;
   double L;
-} precast_pinned_foundation_params_t;
+} precast_pinned_base_params_t;
 
 PRIMCAPICALL topo_shape_t *
-create_precast_pinned_foundation(precast_pinned_foundation_params_t params);
-PRIMCAPICALL topo_shape_t *create_precast_pinned_foundation_with_place(
-    precast_pinned_foundation_params_t params, pnt3d_t position,
-    dir3d_t direction);
+create_precast_pinned_base(precast_pinned_base_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_precast_pinned_base_with_place(precast_pinned_base_params_t params,
+                                      pnt3d_t position, dir3d_t direction);
 typedef struct {
   double H1;
   double H2;
@@ -949,12 +945,12 @@ typedef struct {
 
   double *HX;
   int HXCount;
-} precast_metal_support_foundation_params_t;
+} precast_metal_support_base_params_t;
 
-PRIMCAPICALL topo_shape_t *create_precast_metal_support_foundation(
-    precast_metal_support_foundation_params_t params);
-PRIMCAPICALL topo_shape_t *create_precast_metal_support_foundation_with_place(
-    precast_metal_support_foundation_params_t params, pnt3d_t position,
+PRIMCAPICALL topo_shape_t *
+create_precast_metal_support_base(precast_metal_support_base_params_t params);
+PRIMCAPICALL topo_shape_t *create_precast_metal_support_base_with_place(
+    precast_metal_support_base_params_t params, pnt3d_t position,
     dir3d_t direction);
 
 typedef struct {
@@ -972,13 +968,12 @@ typedef struct {
   double L2;
   double S1;
   int n1;
-} precast_concrete_support_foundation_params_t;
+} precast_concrete_support_base_params_t;
 
-PRIMCAPICALL topo_shape_t *create_precast_concrete_support_foundation(
-    precast_concrete_support_foundation_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_precast_concrete_support_foundation_with_place(
-    precast_concrete_support_foundation_params_t params, pnt3d_t position,
+PRIMCAPICALL topo_shape_t *create_precast_concrete_support_base(
+    precast_concrete_support_base_params_t params);
+PRIMCAPICALL topo_shape_t *create_precast_concrete_support_base_with_place(
+    precast_concrete_support_base_params_t params, pnt3d_t position,
     dir3d_t direction);
 
 typedef struct {
@@ -1240,6 +1235,747 @@ PRIMCAPICALL topo_shape_t *create_stub_tube(stub_tube_params_t params);
 PRIMCAPICALL topo_shape_t *
 create_stub_tube_with_place(stub_tube_params_t params, pnt3d_t position,
                             dir3d_t normal, dir3d_t xDir);
+
+typedef enum {
+  MEMBER_TYPE_ANGLE = 1,       // 角钢
+  MEMBER_TYPE_TUBE = 2,        // 等径钢管
+  MEMBER_TYPE_TAPERED_TUBE = 3 // 锥形钢管
+};
+
+typedef enum {
+  ATTACHMENT_TYPE_GROUND_WIRE = 1, // 地线挂点
+  ATTACHMENT_TYPE_CONDUCTOR = 2,   // 导线挂点
+  ATTACHMENT_TYPE_JUMPER = 3       // 跳线挂点
+};
+
+typedef struct {
+  char *id;         // 节点编号
+  pnt3d_t position; // 节点坐标
+} pole_tower_node_t;
+
+typedef struct {
+  char *id;            // 杆件编号
+  char *startNodeId;   // 起始节点ID
+  char *endNodeId;     // 结束节点ID
+  int ctype;           // 杆件类型
+  char *specification; // 规格
+  char *material;      // 材质
+  dir3d_t xDirection;  // X肢方向(角钢专用)
+  dir3d_t yDirection;  // Y肢方向(角钢专用)
+  double end1Diameter; // 端1直径(锥形钢管专用)
+  double end2Diameter; // 端2直径(锥形钢管专用)
+  double thickness;    // 厚度(钢管专用)
+  int sides;           // 边数(锥形钢管专用)
+} pole_tower_member_t;
+
+typedef struct {
+  char *name;       // 挂点名称
+  int ctype;        // 挂点类型
+  pnt3d_t position; // 挂点坐标
+} pole_tower_attachment_t;
+
+typedef struct {
+  char *id;                 // 接腿编号
+  double commonHeight;      // 共用部分高度
+  double specificHeight;    // 非共用部分高度
+  pole_tower_node_t *nodes; // 接腿节点数组
+  int nodeCount;            // 节点数量
+} pole_tower_leg_t;
+
+typedef struct {
+  char *id;                 // 本体编号
+  double height;            // 本体高度
+  pole_tower_node_t *nodes; // 本体节点数组
+  int nodeCount;            // 节点数量
+  pole_tower_leg_t *legs;   // 接腿信息数组
+  int legCount;             // 接腿数量
+} pole_tower_body_t;
+
+typedef struct {
+  double value; // 呼高值
+  char *bodyId; // 对应本体ID
+  char *legId;  // 对应接腿ID
+} pole_tower_height_t;
+
+typedef struct {
+  pole_tower_height_t *heights;         // 呼高数组
+  int heightCount;                      // 呼高数量
+  pole_tower_body_t *bodies;            // 本体数组
+  int bodyCount;                        // 本体数量
+  pole_tower_member_t *members;         // 杆件数组
+  int memberCount;                      // 杆件数量
+  pole_tower_attachment_t *attachments; // 挂点数组
+  int attachmentCount;                  // 挂点数量
+} pole_tower_params_t;
+
+PRIMCAPICALL topo_shape_t *create_pole_tower(pole_tower_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_pole_tower_with_place(pole_tower_params_t params, pnt3d_t position,
+                             dir3d_t normal, dir3d_t xDir);
+
+typedef struct {
+  double length;
+  double outerDiameter;
+  double terminalLength;
+  double innerDiameter;
+} cable_joint_params_t;
+
+PRIMCAPICALL topo_shape_t *create_cable_joint(cable_joint_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_cable_joint_with_place(cable_joint_params_t params, pnt3d_t position,
+                              dir3d_t direction, dir3d_t xDir);
+
+typedef struct {
+  double length;
+  double height;
+  double width;
+} optical_fiber_box_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_optical_fiber_box(optical_fiber_box_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_optical_fiber_box_with_place(optical_fiber_box_params_t params,
+                                    pnt3d_t position, dir3d_t direction,
+                                    dir3d_t xDir);
+
+enum {
+  CABLE_BOX_DIRECT_GROUND = 1,
+  CABLE_BOX_PROTECTIVE_GROUND = 2,
+  CABLE_BOX_CROSS_INTERCONNECT = 3
+};
+
+typedef struct {
+  int sort;
+  double height;
+  double topDiameter;
+  double bottomDiameter;
+  double tailDiameter;
+  double tailHeight;
+  double upperTerminalDiameter;
+  double lowerTerminalLength;
+  double lowerTerminalDiameter;
+  double hole1Diameter;
+  double hole2Diameter;
+  double hole1Distance;
+  double holeSpacing;
+  double flangeHoleDiameter;
+  double flangeHoleSpacing;
+  double flangeWidth;
+  double flangeCenterHoleRadius;
+  double flangeChamferRadius;
+  double flangeOpeningWidth;
+  double flangeBoltHeight;
+} cable_terminal_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_cable_terminal(cable_terminal_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_cable_terminal_with_place(cable_terminal_params_t params,
+                                 pnt3d_t position, dir3d_t direction);
+
+typedef struct {
+  int ctype;
+  double length;
+  double width;
+  double height;
+  int portCount;
+  double portDiameter;
+  double backPanelDistance;
+  double sidePanelDistance;
+} cable_accessory_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_cable_accessory(cable_accessory_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_cable_accessory_with_place(cable_accessory_params_t params,
+                                  pnt3d_t position, dir3d_t normal,
+                                  dir3d_t xDir);
+
+enum {
+  CABLE_CLAMP_SINGLE = 1,
+  CABLE_CLAMP_LINEAR = 2,
+  CABLE_CLAMP_CONTACT_TRIPLE = 3,
+  CABLE_CLAMP_SEPARATE_TRIPLE = 4
+};
+
+typedef struct {
+  double length;
+  double rootHeight;
+  double rootWidth;
+  double width;
+  double topThickness;
+  double rootThickness;
+  pnt3d_t *columnMountPoints;
+  pnt3d_t *clampMountPoints;
+  int columnMountCount;
+  int clampMountCount;
+} cable_bracket_params_t;
+
+PRIMCAPICALL topo_shape_t *create_cable_bracket(cable_bracket_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_cable_bracket_with_place(cable_bracket_params_t params, pnt3d_t position,
+                                dir3d_t normal, dir3d_t xDir);
+
+typedef struct {
+  int ctype;
+  double diameter;
+  double thickness;
+  double width;
+} cable_clamp_params_t;
+
+PRIMCAPICALL topo_shape_t *create_cable_clamp(cable_clamp_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_cable_clamp_with_place(cable_clamp_params_t params, pnt3d_t position,
+                              dir3d_t normal, dir3d_t xDir);
+
+typedef struct {
+  char *specification;
+  double length;
+  double radius;
+  double arcAngle;
+  double width;
+  double fixedLegLength;
+  double fixedLegWidth;
+  double thickness;
+  pnt3d_t *mountPoints;
+  int mountCount;
+} cable_pole_params_t;
+
+PRIMCAPICALL topo_shape_t *create_cable_pole(cable_pole_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_cable_pole_with_place(cable_pole_params_t params, pnt3d_t position,
+                             dir3d_t direction);
+
+typedef struct {
+  double length;
+  double height;
+  double thickness;
+} ground_flat_iron_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_ground_flat_iron(ground_flat_iron_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_ground_flat_iron_with_place(ground_flat_iron_params_t params,
+                                   pnt3d_t position, dir3d_t normal,
+                                   dir3d_t xDir);
+
+typedef struct {
+  double length;
+  double radius;
+  double height;
+  double materialRadius;
+  double lowerLength;
+} embedded_part_params_t;
+
+PRIMCAPICALL topo_shape_t *create_embedded_part(embedded_part_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_embedded_part_with_place(embedded_part_params_t params, pnt3d_t position,
+                                dir3d_t normal, dir3d_t xDir);
+
+typedef struct {
+  double thickness;
+  double height;
+  double radius;
+  double length;
+} u_shaped_ring_params_t;
+
+PRIMCAPICALL topo_shape_t *create_u_shaped_ring(u_shaped_ring_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_u_shaped_ring_with_place(u_shaped_ring_params_t params, pnt3d_t position,
+                                dir3d_t normal, dir3d_t xDir);
+
+enum {
+  CONNECTION_SECTION_RECTANGULAR = 1,
+  CONNECTION_SECTION_HORSESHOE = 2,
+  CONNECTION_SECTION_CIRCULAR = 3
+};
+
+enum { TUNNEL_WELL_STRAIGHT = 1, TUNNEL_WELL_STRAIGHT_TUNNEL = 2 };
+
+enum {
+  THREE_WAY_WELL_WORKING = 1,
+  THREE_WAY_WELL_OPEN_CUT = 2,
+  THREE_WAY_WELL_UNDERGROUND = 3
+};
+
+enum { CORNER_STYLE_ROUNDED = 1, CORNER_STYLE_ANGLED = 2 };
+
+enum { SHAFT_STYLE_CIRCULAR = 1, SHAFT_STYLE_RECTANGULAR = 2 };
+
+typedef struct {
+  double height;
+  double ringRadius;
+  double pipeDiameter;
+  pnt3d_t connectionPoint;
+} lifting_eye_params_t;
+
+PRIMCAPICALL topo_shape_t *create_lifting_eye(lifting_eye_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_lifting_eye_with_place(lifting_eye_params_t params, pnt3d_t position,
+                              dir3d_t normal, dir3d_t xDir);
+
+typedef struct {
+  double leftLength;
+  double rightLength;
+  double width;
+  double height;
+  double topThickness;
+  double bottomThickness;
+  double wallThickness;
+  double angle;
+  double cornerRadius;
+  double cushionExtension;
+  double cushionThickness;
+} corner_well_params_t;
+
+PRIMCAPICALL topo_shape_t *create_corner_well(corner_well_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_corner_well_with_place(corner_well_params_t params, pnt3d_t position,
+                              dir3d_t direction, dir3d_t xDir);
+
+typedef struct {
+  int ctype;
+  double length;
+  double width;
+  double height;
+  double radius;
+  double topThickness;
+  double bottomThickness;
+  int leftSectionType;
+  double leftLength;
+  double leftWidth;
+  double leftHeight;
+  double leftArchHeight;
+  int rightSectionType;
+  double rightLength;
+  double rightWidth;
+  double rightHeight;
+  double rightArchHeight;
+  double outerWallThickness;
+  double innerWallThickness;
+  double cushionExtension;
+  double cushionThickness;
+} tunnel_well_params_t;
+
+PRIMCAPICALL topo_shape_t *create_tunnel_well(tunnel_well_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_tunnel_well_with_place(tunnel_well_params_t params, pnt3d_t position,
+                              dir3d_t direction, dir3d_t xDir);
+
+typedef struct {
+  int ctype;
+  int cornerType;
+  int shaftType;
+  double length;
+  double width;
+  double height;
+  double shaftRadius;
+  double cornerRadius;
+  double cornerLength;
+  double cornerWidth;
+  double angle;
+  double branchLength;
+  double branchWidth;
+  double topThickness;
+  double bottomThickness;
+  int leftSectionStyle;
+  double leftSectionLength;
+  double leftSectionWidth;
+  double leftSectionHeight;
+  double leftSectionArchHeight;
+  int rightSectionStyle;
+  double rightSectionLength;
+  double rightSectionWidth;
+  double rightSectionHeight;
+  double rightSectionArchHeight;
+  int branchSectionStyle;
+  double branchSectionLength;
+  double branchSectionWidth;
+  double branchSectionHeight;
+  double branchSectionArchHeight;
+  double outerWallThickness;
+  double innerWallThickness;
+  bool isDoubleShaft;
+  double doubleShaftSpacing;
+  double outerWallExtension;
+  double innerWallExtension;
+  double cushionExtension;
+  double cushionThickness;
+  double innerBottomThickness;
+  double outerBottomThickness;
+} three_way_well_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_three_way_well(three_way_well_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_three_way_well_with_place(three_way_well_params_t params,
+                                 pnt3d_t position, dir3d_t mainDirection,
+                                 dir3d_t branchDirection);
+
+typedef struct {
+  double length;
+  double width;
+  double height;
+  int cornerStyle;
+  double cornerRadius;
+  double cornerLength;
+  double cornerWidth;
+  double branchLength;
+  double branchWidth;
+  double roofThickness;
+  double floorThickness;
+  struct {
+    int sectionType;
+    double length;
+    double width;
+    double height;
+    double archHeight;
+  } leftSection, rightSection, branchSection1, branchSection2;
+  double outerWallThickness;
+  double innerWallThickness;
+  double cushionExtension;
+  double cushionThickness;
+} four_way_well_params_t;
+
+PRIMCAPICALL topo_shape_t *create_four_way_well(four_way_well_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_four_way_well_with_place(four_way_well_params_t params, pnt3d_t position,
+                                dir3d_t direction, dir3d_t xDirection);
+
+ enum {
+  TUNNEL_SECTION_RECTANGULAR = 1,
+  TUNNEL_SECTION_HORSESHOE = 2,
+  TUNNEL_SECTION_CIRCULAR = 3
+};
+
+typedef struct {
+  pnt3d_t position;
+  int ctype;
+} channel_point_t;
+
+typedef struct {
+  int pipeType;
+  bool hasEnclosure;
+  double enclosureWidth;
+  double enclosureHeight;
+  double baseExtension;
+  double baseThickness;
+  double cushionExtension;
+  double cushionThickness;
+  pnt2d_t *pipePositions;
+  double *pipeInnerDiameters;
+  double *pipeWallThicknesses;
+  int pipeCount;
+  double pullPipeInnerDiameter;
+  double pullPipeThickness;
+  channel_point_t *points;
+  int pointCount;
+} pipe_row_params_t;
+
+PRIMCAPICALL topo_shape_t *create_pipe_row(pipe_row_params_t params);
+PRIMCAPICALL topo_shape_t *create_pipe_row_with_place(pipe_row_params_t params,
+                                                      pnt3d_t position,
+                                                      dir3d_t normal,
+                                                      dir3d_t xDir);
+
+typedef struct {
+  double width;
+  double height;
+  double coverWidth;
+  double coverThickness;
+  double baseExtension;
+  double baseThickness;
+  double cushionExtension;
+  double cushionThickness;
+  double wallThickness;
+  double wallThickness2;
+  channel_point_t *points;
+  int pointCount;
+} cable_trench_params_t;
+
+PRIMCAPICALL topo_shape_t *create_cable_trench(cable_trench_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_cable_trench_with_place(cable_trench_params_t params, pnt3d_t position,
+                               dir3d_t direction, dir3d_t xDir);
+
+typedef struct {
+  int style;
+  double width;
+  double height;
+  double roofThickness;
+  double floorThickness;
+  double outerWallThickness;
+  double innerWallThickness;
+  double archHeight;
+  double bottomPlatformHeight;
+  double cushionExtension;
+  double cushionThickness;
+  channel_point_t *points;
+  int pointCount;
+} cable_tunnel_params_t;
+
+PRIMCAPICALL topo_shape_t *create_cable_tunnel(cable_tunnel_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_cable_tunnel_with_place(cable_tunnel_params_t params, pnt3d_t position,
+                               dir3d_t direction, dir3d_t xDir);
+
+enum { CABLE_TRAY_ARCH = 1, CABLE_TRAY_BEAM = 2 };
+
+enum { MANHOLE_CIRCULAR = 1, MANHOLE_RECTANGULAR = 2 };
+
+enum { MANHOLE_COVER_CIRCULAR = 1, MANHOLE_COVER_RECTANGULAR = 2 };
+
+typedef struct {
+  int style;
+  double columnDiameter;
+  double columnHeight;
+  double span;
+  double width;
+  double height;
+  double topPlateHeight;
+  double archHeight;
+  double wallThickness;
+  int pipeCount;
+  pnt3d_t *pipePositions;
+  double *pipeInnerDiameters;
+  double *pipeWallThicknesses;
+  int hasProtectionPlate;
+  channel_point_t *points;
+  int pointCount;
+} cable_tray_params_t;
+
+PRIMCAPICALL topo_shape_t *create_cable_tray(cable_tray_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_cable_tray_with_place(cable_tray_params_t params, pnt3d_t position,
+                             dir3d_t direction, dir3d_t xDir);
+
+typedef struct {
+  double length;
+  double width;
+  double height;
+} cable_L_beam_params_t;
+
+PRIMCAPICALL topo_shape_t *create_cable_L_beam(cable_L_beam_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_cable_L_beam_with_place(cable_L_beam_params_t params, pnt3d_t position,
+                               dir3d_t xDir, dir3d_t zDir);
+
+typedef struct {
+  int style;
+  double length;
+  double width;
+  double height;
+  double wallThickness;
+} manhole_params_t;
+
+PRIMCAPICALL topo_shape_t *create_manhole(manhole_params_t params);
+PRIMCAPICALL topo_shape_t *create_manhole_with_place(manhole_params_t params,
+                                                     pnt3d_t position,
+                                                     dir3d_t direction,
+                                                     dir3d_t xDir);
+
+typedef struct {
+  int style;
+  double length;
+  double width;
+  double thickness;
+} manhole_cover_params_t;
+
+PRIMCAPICALL topo_shape_t *create_manhole_cover(manhole_cover_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_manhole_cover_with_place(manhole_cover_params_t params, pnt3d_t position,
+                                dir3d_t direction, dir3d_t xDir);
+
+typedef struct {
+  double length;
+  double width;
+  double thickness;
+} ladder_params_t;
+
+PRIMCAPICALL topo_shape_t *create_ladder(ladder_params_t params);
+PRIMCAPICALL topo_shape_t *create_ladder_with_place(ladder_params_t params,
+                                                    pnt3d_t position,
+                                                    dir3d_t direction,
+                                                    dir3d_t xDir);
+
+typedef struct {
+  double length;
+  double width;
+  double depth;
+  double floorThickness;
+} sump_params_t;
+
+PRIMCAPICALL topo_shape_t *create_sump(sump_params_t params);
+PRIMCAPICALL topo_shape_t *create_sump_with_place(sump_params_t params,
+                                                  pnt3d_t position,
+                                                  dir3d_t normal, dir3d_t xDir);
+
+typedef struct {
+  double height;
+  double width;
+} footpath_params_t;
+
+PRIMCAPICALL topo_shape_t *create_footpath(footpath_params_t params);
+PRIMCAPICALL topo_shape_t *create_footpath_with_place(footpath_params_t params,
+                                                      pnt3d_t position,
+                                                      dir3d_t direction,
+                                                      dir3d_t xDir);
+
+typedef struct {
+  double supportWallThickness;
+  double supportDiameter;
+  double supportHeight;
+  double roofThickness;
+  double innerDiameter;
+  double workingHeight;
+  double outerWallThickness;
+  double innerWallThickness;
+} shaft_chamber_params_t;
+
+PRIMCAPICALL topo_shape_t *create_shaft_chamber(shaft_chamber_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_shaft_chamber_with_place(shaft_chamber_params_t params, pnt3d_t position,
+                                dir3d_t direction, dir3d_t xDir);
+
+typedef struct {
+  int style;
+  double length;
+  double width;
+  double thickness;
+  int holeCount;
+  pnt2d_t *holePositions;
+  int *holeStyles;
+  double *holeDiameters;
+  double *holeWidths;
+} tunnel_partition_board_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_tunnel_partition_board(tunnel_partition_board_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_tunnel_partition_board_with_place(tunnel_partition_board_params_t params,
+                                         pnt3d_t position, dir3d_t normal,
+                                         dir3d_t xDir);
+
+typedef struct {
+  double topLength;
+  double middleLength;
+  double bottomLength;
+  double topWidth;
+  double middleWidth;
+  double bottomWidth;
+  double topHeight;
+  double height;
+  double baseHeight;
+} ventilation_pavilion_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_ventilation_pavilion(ventilation_pavilion_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_ventilation_pavilion_with_place(ventilation_pavilion_params_t params,
+                                       pnt3d_t position, dir3d_t direction,
+                                       dir3d_t xDir);
+
+typedef struct {
+  double diameter;
+  double wallThickness;
+  double height;
+} straight_ventilation_duct_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_straight_ventilation_duct(straight_ventilation_duct_params_t params);
+PRIMCAPICALL topo_shape_t *create_straight_ventilation_duct_with_place(
+    straight_ventilation_duct_params_t params, pnt3d_t position,
+    dir3d_t direction, dir3d_t xDir);
+
+typedef struct {
+  double hoodRoomLength;
+  double hoodRoomWidth;
+  double hoodRoomHeight;
+  double hoodWallThickness;
+  double ductCenterHeight;
+  double ductLeftDistance;
+  double ductDiameter;
+  double ductWallThickness;
+  double ductLength;
+  double ductHeightDifference;
+  double baseLength;
+  double baseWidth;
+  double baseHeight;
+  double baseRoomLength;
+  double baseRoomWallThickness;
+  double baseRoomWidth;
+  double baseRoomHeight;
+} oblique_ventilation_duct_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_oblique_ventilation_duct(oblique_ventilation_duct_params_t params);
+PRIMCAPICALL topo_shape_t *create_oblique_ventilation_duct_with_place(
+    oblique_ventilation_duct_params_t params, pnt3d_t position,
+    dir3d_t direction, dir3d_t xDir);
+
+typedef struct {
+  double length;
+  double width;
+  double height;
+  double neckDiameter;
+  double neckHeight;
+  double cushionExtension;
+  double floorThickness;
+  double wallThickness;
+} drainage_well_params_t;
+
+PRIMCAPICALL topo_shape_t *create_drainage_well(drainage_well_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_drainage_well_with_place(drainage_well_params_t params, pnt3d_t position,
+                                dir3d_t direction, dir3d_t xDir);
+
+typedef enum { PIPE_SUPPORT_SINGLE_SIDE = 1, PIPE_SUPPORT_DOUBLE_SIDE = 2 };
+
+typedef struct {
+  int style;
+  int count;
+  pnt2d_t *positions;
+  double *radii;
+  double length;
+  double height;
+} pipe_support_params_t;
+
+PRIMCAPICALL void pnt2d_t_array_set(pnt2d_t *array, int index, pnt2d_t value);
+PRIMCAPICALL void double_array_set(double *array, int index, double value);
+
+PRIMCAPICALL topo_shape_t *create_pipe_support(pipe_support_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_pipe_support_with_place(pipe_support_params_t params, pnt3d_t position,
+                               dir3d_t direction, dir3d_t xDir);
+
+typedef enum { COVER_PLATE_RECTANGLE = 0, COVER_PLATE_SECTOR = 1 };
+
+typedef struct {
+  int style;
+  double length;
+  double width;
+  double smallRadius;
+  double largeRadius;
+  double thickness;
+} cover_plate_params_t;
+
+PRIMCAPICALL topo_shape_t *create_cover_plate(cover_plate_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_cover_plate_with_place(cover_plate_params_t params, pnt3d_t position,
+                              dir3d_t normal, dir3d_t xDir);
+
+typedef struct {
+  double outerLength;
+  double outerHeight;
+  double innerLength;
+  double innerHeight;
+  double coverThickness;
+} cable_ray_params_t;
+
+PRIMCAPICALL topo_shape_t *create_cable_ray(cable_ray_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_cable_ray_with_place(cable_ray_params_t params, pnt3d_t position,
+                            dir3d_t direction, dir3d_t xDir);
 
 #ifdef __cplusplus
 }
