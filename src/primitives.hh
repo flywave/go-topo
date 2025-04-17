@@ -1193,10 +1193,10 @@ struct insulator_params {
   // 绝缘子参数
   struct {
     boost::variant<double, composite_insulator_params> radius; // 半径或复合参数
-    double height;                                             // 结构高度(mm)
-    int leftCount;                                             // 左侧片数
-    int rightCount;                                            // 右侧片数
-    insulator_material material;                               // 材质
+    double height;               // 结构高度(mm)
+    int leftCount;               // 左侧片数
+    int rightCount;              // 右侧片数
+    insulator_material material; // 材质
   } insulator;
 
   // 均压环配置
@@ -2273,8 +2273,8 @@ TopoDS_Shape create_drainage_well(const drainage_well_params &params,
                                   const gp_Dir &xDir = gp::DX());
 // GZW_GZ
 struct pipe_support_params {
-  int style;                       // 管枕形式 (1-单侧管枕, 2-两侧管枕)
-  int count;                       // 管枕数量 N
+  int style; // 管枕形式 (1-单侧管枕, 2-两侧管枕)
+  int count; // 管枕数量 N
   std::vector<gp_Pnt2d> positions; // 管枕中心坐标 POS (mm)
   std::vector<double> radii;       // 管枕半径 R (mm)
   double length;                   // 管枕长 L (mm)
@@ -2289,12 +2289,12 @@ TopoDS_Shape create_pipe_support(const pipe_support_params &params,
 
 // GZW_GB
 struct cover_plate_params {
-  int style;                   // 盖板形式 (0-长方形, 1-扇形)
-  double length;               // 盖板长度/扇形边长 L (mm)
-  double width;                // 盖板宽度 W (mm)
-  double smallRadius;          // 扇形小半径 A (mm)
-  double largeRadius;          // 扇形大半径 B (mm)
-  double thickness;            // 盖板厚度 H (mm)
+  int style;          // 盖板形式 (0-长方形, 1-扇形)
+  double length;      // 盖板长度/扇形边长 L (mm)
+  double width;       // 盖板宽度 W (mm)
+  double smallRadius; // 扇形小半径 A (mm)
+  double largeRadius; // 扇形大半径 B (mm)
+  double thickness;   // 盖板厚度 H (mm)
 };
 
 TopoDS_Shape create_cover_plate(const cover_plate_params &params);

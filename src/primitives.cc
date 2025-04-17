@@ -77,20 +77,29 @@ TopoDS_Shape create_sphere(const sphere_params &params, const gp_Pnt &center) {
 
 TopoDS_Shape
 create_rotational_ellipsoid(const rotational_ellipsoid_params &params) {
-  // 参数验证
-  if (params.height <= 0.0 ||
-      params.height > 2 * params.polarRadius - Precision::Confusion()) {
-    throw Standard_ConstructionError(
-        "Polar and equatorial radii must be positive");
-  }
-
-  if (params.height <= 0.0 || params.height > 2 * params.polarRadius) {
-    throw Standard_ConstructionError("Height must be in range (0, 2*LR]");
-  }
-
+ // 参数验证
+ if (params.polarRadius <= 0.0 || params.equatorialRadius <= 0.0) {
+  throw Standard_ConstructionError(
+      "Polar and equatorial radii must be positive");
+}
+if (params.polarRadius < params.equatorialRadius) {
+  throw Standard_ConstructionError(
+      "Polar radius must be greater than or equal to equatorial radius");
+}
+if (params.height <= 0.0 || params.height > 2 * params.polarRadius) {
+  throw Standard_ConstructionError("Height must be in range (0, 2*LR]");
+}
   // 在YZ平面创建椭圆曲线（X=0平面）
-  gp_Elips ellipse(gp_Ax2(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), params.polarRadius,
-                   params.equatorialRadius);
+  // 坐标系定义：
+  // - 原点：(0,0,0)
+  // - 主方向：X轴方向(1,0,0)作为法向量，表示YZ平面
+  // - X方向：Y轴方向(0,1,0)作为椭圆长轴方向（对应极半径）
+  // - Y方向：Z轴方向(0,0,1)作为椭圆短轴方向（对应赤道半径）
+  gp_Ax2 ellipseAxes(gp_Pnt(0, 0, 0), // 中心点
+                     gp_Dir(1, 0, 0), // 法向量（指向X轴）
+                     gp_Dir(0, 1, 0)  // X方向（长轴方向）
+  );
+  gp_Elips ellipse(ellipseAxes, params.polarRadius, params.equatorialRadius);
 
   // 创建椭圆边并生成闭合线
   TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(ellipse).Edge();
@@ -207,7 +216,7 @@ TopoDS_Shape create_diamond_frustum(const diamond_frustum &params) {
         "Diagonals must maintain consistent scaling ratio");
 
   // 创建底面菱形（技术图纸中的基准面）
-  TColgp_Array1OfPnt bottomVerts(1, 5);              // 闭合多边形需要回到起点
+  TColgp_Array1OfPnt bottomVerts(1, 5); // 闭合多边形需要回到起点
   auto pnt1 = gp_Pnt(params.bottomDiag1 / 2, 0, 0);  // X+顶点
   auto pnt2 = gp_Pnt(0, params.bottomDiag2 / 2, 0);  // Y+顶点
   auto pnt3 = gp_Pnt(-params.bottomDiag1 / 2, 0, 0); // X-顶点
@@ -1424,9 +1433,9 @@ TopoDS_Shape create_porcelain_bushing(const porcelain_bushing_params &params) {
 
     // 创建更真实的5点伞裙截面
     BRepBuilderAPI_MakeWire wire;
-    gp_Pnt p1(skirtRadius, 0, zPos);                               // 伞裙外缘
-    gp_Pnt p2(skirtRadius * 0.95, 0, zPos + segmentHeight * 0.1);  // 轻微上翘
-    gp_Pnt p3(skirtRadius * 0.7, 0, zPos + segmentHeight * 0.3);   // 主要下凹
+    gp_Pnt p1(skirtRadius, 0, zPos); // 伞裙外缘
+    gp_Pnt p2(skirtRadius * 0.95, 0, zPos + segmentHeight * 0.1); // 轻微上翘
+    gp_Pnt p3(skirtRadius * 0.7, 0, zPos + segmentHeight * 0.3); // 主要下凹
     gp_Pnt p4(params.radius * 1.2, 0, zPos + segmentHeight * 0.6); // 靠近主体
     gp_Pnt p5(params.radius, 0, zPos + segmentHeight * 0.8);       // 连接处
 
@@ -1547,7 +1556,7 @@ create_cone_porcelain_bushing(const cone_porcelain_bushing_params &params) {
 
     // 创建更真实的5点伞裙截面（新生成方式）
     BRepBuilderAPI_MakeWire wire;
-    gp_Pnt p1(skirtRadius, 0, zPos);                               // 伞裙外缘
+    gp_Pnt p1(skirtRadius, 0, zPos); // 伞裙外缘
     gp_Pnt p2(skirtRadius * 0.95, 0, zPos + segmentHeight * 0.1);  // 上翘
     gp_Pnt p3(skirtRadius * 0.7, 0, zPos + segmentHeight * 0.3);   // 下凹
     gp_Pnt p4(currentRadius * 1.2, 0, zPos + segmentHeight * 0.6); // 过渡
@@ -2697,9 +2706,9 @@ TopoDS_Wire create_ibeam_profile(double height, double flangeWidth,
   gp_Pnt p20(0, -halfFlangeWidth, -halfHeight + flangeThickness - radius);
 
   // 创建所有直线段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());   // 下翼缘底部
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());   // 右下翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge());  // 右上翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge()); // 下翼缘底部
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge()); // 右下翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge()); // 右上翼缘垂直段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p12).Edge()); // 上翼缘顶部
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p14, p15).Edge()); // 左上翼缘垂直段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p19, p20).Edge()); // 左下翼缘垂直段
@@ -2960,18 +2969,18 @@ TopoDS_Wire create_hbeam_profile(double height, double flangeWidth,
   gp_Pnt p12(0, -halfFlangeWidth, -halfHeight + flangeThickness);
 
   // 创建所有直线段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());   // 下翼缘底部
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());   // 右下翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());   // 右下翼缘水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());   // 右腹板垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge());   // 右上翼缘水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge());   // 右上翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge());   // 上翼缘顶部
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p9).Edge());   // 左上翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge());  // 左上翼缘水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge()); // 下翼缘底部
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge()); // 右下翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge()); // 右下翼缘水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge()); // 右腹板垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge()); // 右上翼缘水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge()); // 右上翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge()); // 上翼缘顶部
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p9).Edge()); // 左上翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge()); // 左上翼缘水平段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p11).Edge()); // 左腹板垂直段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p12).Edge()); // 左下翼缘水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p1).Edge());  // 左下翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p1).Edge()); // 左下翼缘垂直段
 
   // 创建过渡圆弧（如果半径大于0）
   if (radius > Precision::Confusion()) {
@@ -3102,9 +3111,9 @@ TopoDS_Wire create_channel_profile(double height, double flangeWidth,
   gp_Pnt p2(0, -flangeWidth, -halfHeight); // 改为负方向
   gp_Pnt p3(0, -flangeWidth, -halfHeight + flangeThickness);
   gp_Pnt p4(0, -halfWebThickness, -halfHeight + flangeThickness); // 改为负方向
-  gp_Pnt p5(0, -halfWebThickness, halfHeight - flangeThickness);  // 改为负方向
-  gp_Pnt p6(0, -flangeWidth, halfHeight - flangeThickness);       // 改为负方向
-  gp_Pnt p7(0, -flangeWidth, halfHeight);                         // 改为负方向
+  gp_Pnt p5(0, -halfWebThickness, halfHeight - flangeThickness); // 改为负方向
+  gp_Pnt p6(0, -flangeWidth, halfHeight - flangeThickness); // 改为负方向
+  gp_Pnt p7(0, -flangeWidth, halfHeight);                   // 改为负方向
   gp_Pnt p8(0, 0, halfHeight);
 
   // 创建所有直线段
@@ -6387,7 +6396,7 @@ TopoDS_Shape create_transmission_line(const transmission_line_params &params,
 
   // 计算悬垂度 (简化公式: sag = (weight * length²) / (8 * tension))
   double weightPerMeter = params.wireWeight / 1000.0; // kg/m
-  double tension = params.ratedStrength * 0.25;       // 假设使用25%的额定拉断力
+  double tension = params.ratedStrength * 0.25; // 假设使用25%的额定拉断力
   double sag = (weightPerMeter * 9.8 * length * length) / (8 * tension);
 
   // 创建导地线路径(带悬垂度)
@@ -8967,7 +8976,7 @@ TopoDS_Shape create_corner_well(const corner_well_params &params) {
       BRepPrimAPI_MakeWedge(params.cornerRadius + params.width, // dx
                             params.height,                      // dy
                             params.wallThickness, // dz - 使用wallThickness
-                            angleRad              // ltx - X方向的倾斜长度
+                            angleRad // ltx - X方向的倾斜长度
                             )
           .Shape();
   cornerSection = BRepAlgoAPI_Common(cornerSection, cornerCut).Shape();
@@ -10754,7 +10763,7 @@ create_ventilation_pavilion(const ventilation_pavilion_params &params) {
   double grilleWidth = params.middleWidth * 0.8; // 格栅宽度
   double grilleHeight =
       (params.height - params.baseHeight - params.topHeight) * 0.6; // 格栅高度
-  double grilleThickness = params.middleLength * 0.05;              // 格栅厚度
+  double grilleThickness = params.middleLength * 0.05; // 格栅厚度
 
   // 四个方向的格栅
   for (int i = 0; i < 4; ++i) {
