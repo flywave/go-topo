@@ -81,9 +81,10 @@ void test_make_rotational_ellipsoid() {
   std::cout << "\n=== Testing Rotational Ellipsoid ===" << std::endl;
   try {
     auto shp = create_rotational_ellipsoid(rotational_ellipsoid_params{
-        .polarRadius = 30.0, 
-        .equatorialRadius = 20.0, 
-        .height = 20.0});  // Changed height to match 2*polarRadius
+        .polarRadius = 7.0,
+        .equatorialRadius = 7.0, // 小于极半径
+        .height = 7.0           // 等于极半径，生成上半部分
+    });                          
     if (shp.IsNull()) {
       std::cerr << "Error: Failed to create rotational ellipsoid" << std::endl;
       return;

@@ -77,52 +77,64 @@ TopoDS_Shape create_sphere(const sphere_params &params, const gp_Pnt &center) {
 
 TopoDS_Shape
 create_rotational_ellipsoid(const rotational_ellipsoid_params &params) {
- // 参数验证
- if (params.polarRadius <= 0.0 || params.equatorialRadius <= 0.0) {
-  throw Standard_ConstructionError(
-      "Polar and equatorial radii must be positive");
-}
-if (params.polarRadius < params.equatorialRadius) {
-  throw Standard_ConstructionError(
-      "Polar radius must be greater than or equal to equatorial radius");
-}
-if (params.height <= 0.0 || params.height > 2 * params.polarRadius) {
-  throw Standard_ConstructionError("Height must be in range (0, 2*LR]");
-}
-  // 在YZ平面创建椭圆曲线（X=0平面）
-  // 坐标系定义：
-  // - 原点：(0,0,0)
-  // - 主方向：X轴方向(1,0,0)作为法向量，表示YZ平面
-  // - X方向：Y轴方向(0,1,0)作为椭圆长轴方向（对应极半径）
-  // - Y方向：Z轴方向(0,0,1)作为椭圆短轴方向（对应赤道半径）
-  gp_Ax2 ellipseAxes(gp_Pnt(0, 0, 0), // 中心点
-                     gp_Dir(1, 0, 0), // 法向量（指向X轴）
-                     gp_Dir(0, 1, 0)  // X方向（长轴方向）
-  );
-  gp_Elips ellipse(ellipseAxes, params.polarRadius, params.equatorialRadius);
+  // 参数验证
+  if (params.polarRadius <= 0.0 || params.equatorialRadius <= 0.0) {
+    throw Standard_ConstructionError("Radii must be positive");
+  }
+  if (params.height <= 0.0 || params.height > 2 * params.polarRadius) {
+    throw Standard_ConstructionError("Height must be in (0, 2*polarRadius]");
+  }
 
-  // 创建椭圆边并生成闭合线
-  TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(ellipse).Edge();
+  // 正确的坐标系定义：
+  // - 旋转轴为Z轴
+  // - 椭圆在XZ平面（Y=0）
+  // - 长轴（polarRadius）沿Z方向
+  gp_Ax2 ellipseAxes(gp_Pnt(0, 0, 0), // 中心点
+                     gp_Dir(0, -1, 0), // Y轴负方向为法向量（定义XZ平面）
+                     gp_Dir(1, 0, 0) // X方向为参考方向
+  );
+
+  // 创建椭圆（主半径X方向=equatorialRadius，次半径Z方向=polarRadius）
+  gp_Elips ellipse(ellipseAxes, params.equatorialRadius, params.polarRadius);
+
+  // 生成半椭圆边（0-PI弧度）
+  TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(ellipse, 0, M_PI).Edge();
   TopoDS_Wire wire = BRepBuilderAPI_MakeWire(edge).Wire();
 
-  // 绕X轴旋转360度生成椭球面
+  // 绕Z轴旋转360度生成完整椭球
   gp_Ax1 revolutionAxis(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0));
   BRepPrimAPI_MakeRevol revolMaker(wire, revolutionAxis);
+
+  if (!revolMaker.IsDone()) {
+    throw Standard_ConstructionError("Revol operation failed");
+  }
+
   TopoDS_Shape fullEllipsoid = revolMaker.Shape();
 
-  // 如果需要切割（H < 2*LR）
+  // 高度切割（沿X轴方向）
   if (params.height < 2 * params.polarRadius) {
-    // 创建切割平面（沿X轴在X=H-LR位置切割）
-    double cutPosition = params.height - params.polarRadius;
-    gp_Pln cutPlane(gp_Pnt(cutPosition, 0, 0), gp_Dir(1, 0, 0));
-    TopoDS_Face cuttingFace = BRepBuilderAPI_MakeFace(cutPlane).Face();
+    // 计算切割位置（注意：现在是沿X轴切割）
+    double cutOffset = params.polarRadius - params.height / 2;
 
-    // 执行布尔切割操作
-    BRepAlgoAPI_Cut cutter(fullEllipsoid, cuttingFace);
-    if (!cutter.IsDone()) {
-      throw Standard_ConstructionError("Failed to cut the ellipsoid");
+    // 创建切割工具（两个平行平面）
+    gp_Pln cutPlane1(gp_Pnt(cutOffset, 0, 0), gp_Dir(0, 0, 1));
+    gp_Pln cutPlane2(gp_Pnt(-cutOffset, 0, 0), gp_Dir(0, 0, -1));
+
+    TopoDS_Shape cutter1 = BRepBuilderAPI_MakeFace(cutPlane1).Face();
+    TopoDS_Shape cutter2 = BRepBuilderAPI_MakeFace(cutPlane2).Face();
+
+    // 执行切割（先切割一侧，再切割另一侧）
+    BRepAlgoAPI_Cut firstCut(fullEllipsoid, cutter1);
+    if (!firstCut.IsDone()) {
+      throw Standard_ConstructionError("First cut failed");
     }
-    return cutter.Shape();
+
+    BRepAlgoAPI_Cut finalCut(firstCut.Shape(), cutter2);
+    if (!finalCut.IsDone()) {
+      throw Standard_ConstructionError("Second cut failed");
+    }
+
+    return finalCut.Shape();
   }
 
   return fullEllipsoid;
@@ -433,7 +445,8 @@ create_sharp_bent_cylinder(const sharp_bent_cylinder_params &params) {
 
   // 创建锐角过渡（最小化圆角半径）
   BRepFilletAPI_MakeFillet filletMaker(mergedShape);
-  filletMaker.Add(Precision::Confusion() * 0.1, sharpEdge); // 极小圆角模拟锐角
+  filletMaker.Add(Precision::Confusion() * 0.1,
+                  sharpEdge); // 极小圆角模拟锐角
   filletMaker.Build();
 
   if (!filletMaker.IsDone())
@@ -3110,7 +3123,8 @@ TopoDS_Wire create_channel_profile(double height, double flangeWidth,
   gp_Pnt p1(0, 0, -halfHeight);
   gp_Pnt p2(0, -flangeWidth, -halfHeight); // 改为负方向
   gp_Pnt p3(0, -flangeWidth, -halfHeight + flangeThickness);
-  gp_Pnt p4(0, -halfWebThickness, -halfHeight + flangeThickness); // 改为负方向
+  gp_Pnt p4(0, -halfWebThickness,
+            -halfHeight + flangeThickness); // 改为负方向
   gp_Pnt p5(0, -halfWebThickness, halfHeight - flangeThickness); // 改为负方向
   gp_Pnt p6(0, -flangeWidth, halfHeight - flangeThickness); // 改为负方向
   gp_Pnt p7(0, -flangeWidth, halfHeight);                   // 改为负方向
@@ -4058,7 +4072,8 @@ create_double_channel_steel(const double_channel_steel_params &params,
   gp_Dir yDirection = zDirection.Crossed(xDirection);
 
   // 创建坐标系变换
-  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX()); // Z:腹板方向, X:长度方向
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(),
+                   gp::DX()); // Z:腹板方向, X:长度方向
   gp_Ax3 targetAx3(position, zDirection, xDirection);
 
   gp_Trsf transformation;
