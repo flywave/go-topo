@@ -101,7 +101,7 @@ create_rotational_ellipsoid(const rotational_ellipsoid_params &params) {
   TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(ellipse, 0, M_PI).Edge();
   TopoDS_Wire wire = BRepBuilderAPI_MakeWire(edge).Wire();
 
-  // 绕Z轴旋转360度生成完整椭球
+  // 绕X轴旋转360度生成完整椭球
   gp_Ax1 revolutionAxis(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0));
   BRepPrimAPI_MakeRevol revolMaker(wire, revolutionAxis);
 
@@ -117,14 +117,18 @@ create_rotational_ellipsoid(const rotational_ellipsoid_params &params) {
     double cutOffset = params.polarRadius - params.height / 2;
 
     // 创建切割工具（两个平行平面）
-    gp_Pln cutPlane1(gp_Pnt(cutOffset, 0, 0), gp_Dir(0, 0, 1));
-    gp_Pln cutPlane2(gp_Pnt(-cutOffset, 0, 0), gp_Dir(0, 0, -1));
+    gp_Pln cutPlane1(gp_Pnt(cutOffset, 0, 0), gp_Dir(1, 0, 0));
+    gp_Pln cutPlane2(gp_Pnt(-cutOffset, 0, 0), gp_Dir(-1, 0, 0));
 
     TopoDS_Shape cutter1 = BRepBuilderAPI_MakeFace(cutPlane1).Face();
     TopoDS_Shape cutter2 = BRepBuilderAPI_MakeFace(cutPlane2).Face();
 
     // 执行切割（先切割一侧，再切割另一侧）
     BRepAlgoAPI_Cut firstCut(fullEllipsoid, cutter1);
+    firstCut.SetFuzzyValue(1e-5);
+
+    firstCut.Build();
+
     if (!firstCut.IsDone()) {
       throw Standard_ConstructionError("First cut failed");
     }
