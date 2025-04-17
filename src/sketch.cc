@@ -1496,9 +1496,7 @@ void sketch::set_error(const std::string &msg) {
 
 bool sketch::has_error() const { return this->parent_->has_error(); }
 
-const std::string &sketch::error() const {
-  return this->parent_->error();
-}
+const std::string &sketch::error() const { return this->parent_->error(); }
 
 } // namespace topo
 } // namespace flywave

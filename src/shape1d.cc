@@ -99,8 +99,8 @@ Handle(Geom_Curve) shape1d::approx_curve(double tolerance,
   if (this->is_null()) {
     throw std::invalid_argument("Input shape is null");
   }
-  GeomConvert_ApproxCurve approx(this->get_geom(), 
-                                 tolerance, continuity, maxSegments, maxDegree);
+  GeomConvert_ApproxCurve approx(this->get_geom(), tolerance, continuity,
+                                 maxSegments, maxDegree);
   return approx.Curve();
 }
 

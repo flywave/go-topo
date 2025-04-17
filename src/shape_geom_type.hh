@@ -34,4 +34,3 @@ enum shape_geom_type {
 };
 } // namespace topo
 } // namespace flywave
-

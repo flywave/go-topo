@@ -1574,7 +1574,7 @@ boost::optional<shape> shape::to_splines(int degree, double tolerance,
                                       tolerance, // 3D容差
                                       tolerance, // 2D容差
                                       degree,
-                                      1, // 段数 (被degree参数主导)
+                                      1,             // 段数 (被degree参数主导)
                                       GeomAbs_C0,    // 连续性
                                       GeomAbs_C0,    // 连续性
                                       Standard_True, // degree参数主导
@@ -1724,7 +1724,7 @@ int shape::num_entities(TopAbs_ShapeEnum type) const {
   return anIndices.Extent();
 }
 
-shape shape::filter(selector *sel, const std::vector<shape> &shapes)  {
+shape shape::filter(selector *sel, const std::vector<shape> &shapes) {
   std::vector<shape> selected;
 
   if (sel) {

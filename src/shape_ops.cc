@@ -572,9 +572,7 @@ boost::optional<shape> extrude_linear(const topo::face &f,
     double height =
         (d * vecNormal.Magnitude()) / std::cos(taper * M_PI / 180.0);
 
-    LocOpe_DPrism prismBuilder(f.value(), height,
-                               d * taper * M_PI / 180.0
-    );
+    LocOpe_DPrism prismBuilder(f.value(), height, d * taper * M_PI / 180.0);
 
     return boost::make_optional<shape>(prismBuilder.Shape());
   }
