@@ -1425,143 +1425,19 @@ TopoDS_Shape create_stub_tube(const stub_tube_params &params,
                               const gp_Dir &normal = gp::DZ(),
                               const gp_Dir &xDir = gp::DX());
 
-enum class cable_channel_type {
-  PIPEROT = 0,     // 排管
-  CABLETRENCH = 1, // 电缆沟
-  CABLETUNNEL = 2, // 隧道
-  CABLETRAY = 3    // 桥架
+struct cable_wire_params {
+  std::vector<gp_Pnt> points; // 电缆路径点集
+  double outside_diameter;    // 电缆外径(mm)
 };
 
-struct cable_channel_point {
-  gp_Pnt p; // 点
-  int type; // 点类型(0-普通节点,1-弧形顶点)
-};
-
-struct cable_channel_params {
-  cable_channel_type type;                 // 通道类型
-  std::vector<cable_channel_point> points; // 通道节点
-  bool is_pulled_pipe;                     // 是否为拉管
-  int pipe_count;                          // 排管数量
-  std::vector<gp_Pnt2d> positions;         // 管中心点坐标
-  std::vector<double> diameters;           // 管内径
-  std::vector<double> thicknesses;         // 管壁厚
-  double pulled_pipe_diameter;             // 拉管内径
-  double pulled_pipe_thickness;            // 拉管壁厚
-  bool has_encasement;                     // 是否有包封
-  double encasement_width;                 // 包封宽
-  double encasement_height;                // 包封高
-  double base_overflow;                    // 底板溢出距离
-  double base_thickness;                   // 底板厚
-  double cushion_overflow;                 // 垫层溢出距离
-  double cushion_thickness;                // 垫层厚
-};
-
-TopoDS_Shape create_cable_channel(const cable_channel_params &params);
-TopoDS_Shape create_cable_channel(const cable_channel_params &params,
-                                  const gp_Pnt &position,
-                                  const gp_Dir &normal = gp::DX(),
-                                  const gp_Dir &xDir = gp::DZ());
-
-struct cable_well_params {
-  std::string type;       // 类型: "Z"(直线井)或"ZA"(直线暗挖隧道井)
-  double length;          // 井净长，顺线路方向 (L > 0)
-  double width;           // 井净宽，垂直线路方向 (W > 0)
-  double height;          // 井净高 (H > 0)
-  double radius;          // 井内径，井室半径 (竖井使用, R > 0)
-  double topThickness;    // 井顶板厚 (H1 > 0)
-  double bottomThickness; // 井底板厚 (H2 > 0)
-
-  // 左连接段参数
-  int leftSectionType;   // 左连接段截面形式: 1-马蹄形, 2-圆形, 3-方形
-  double leftLength;     // 左连接段长 (LL > 0)
-  double leftWidth;      // 左连接段宽 (WL > 0)
-  double leftHeight;     // 左连接段高/半径 (HL > 0)
-  double leftArchHeight; // 左连接段拱高 (HL1 >= 0)
-
-  // 右连接段参数
-  int rightSectionType;   // 右连接段截面形式: 1-马蹄形, 2-圆形, 3-方形
-  double rightLength;     // 右连接段长 (LR > 0)
-  double rightWidth;      // 右连接段宽 (WR > 0)
-  double rightHeight;     // 右连接段高/半径 (HR > 0)
-  double rightArchHeight; // 右连接段拱高 (HR1 >= 0)
-
-  double outerWallThickness; // 井外壁厚 (T1 > 0)
-  double innerWallThickness; // 井内壁厚 (竖井使用, T2 > 0)
-  double cushionOverhang;    // 垫层溢出距离 (T3 >= 0)
-  double cushionThickness;   // 垫层厚 (H3 > 0)
-};
-
-TopoDS_Shape create_cable_well(const cable_well_params &params);
-TopoDS_Shape create_cable_well(const cable_well_params &params,
+TopoDS_Shape create_cable_wire(const cable_wire_params &params);
+TopoDS_Shape create_cable_wire(const cable_wire_params &params,
                                const gp_Pnt &position,
-                               const gp_Dir &lengthDirection = gp::DX(),
-                               const gp_Dir &widthDirection = gp::DZ());
-
-struct cable_well_L_beam_params {
-  double length; // 梁长 (L > 0)
-  double width;  // 梁宽 (W > 0)
-  double height; // 梁高 (H > 0)
-};
-
-TopoDS_Shape create_cable_well_L_beam(const cable_well_L_beam_params &params);
-TopoDS_Shape create_cable_well_L_beam(const cable_well_L_beam_params &params,
-                                      const gp_Pnt &position,
-                                      const gp_Dir &xDirection = gp::DX(),
-                                      const gp_Dir &zDirection = gp::DZ());
+                               const gp_Dir &direction = gp_Dir(0, 1, 0),
+                               const gp_Dir &upDirection = gp_Dir(1, 0, 0));
 
 /**
- * @brief 电缆附件类型枚举
- */
-enum cable_accessory_type {
-  DIRECT_GROUNDING_BOX,    // 直接接地箱
-  PROTECTED_GROUNDING_BOX, // 带护层保护器的接地箱
-  CROSS_INTERCONNECT_BOX   // 交叉互联箱
-};
-
-/**
- * @brief 电缆附件参数结构体
- */
-struct cable_accessory_params {
-  cable_accessory_type type; // 类型
-  double length;             // 箱体长度 (L > 0)
-  double width;              // 箱体宽度 (W > 0)
-  double height;             // 箱体高度 (H > 0)
-  int portCount;             // 电缆进出口数目 (3或6)
-  double portDiameter;       // 进出口直径 (d > 0)
-};
-
-TopoDS_Shape create_cable_accessory(const cable_accessory_params &params);
-TopoDS_Shape create_cable_accessory(const cable_accessory_params &params,
-                                    const gp_Pnt &position,
-                                    const gp_Dir &normal = gp::DZ(),
-                                    const gp_Dir &xDir = gp::DX());
-
-/**
- * @brief 电缆夹具类型枚举
- */
-enum cable_clamp_type {
-  SINGLE_CLAMP = 1,     // 单根夹具
-  STRAIGHT_CLAMP = 2,   // 一字式
-  TRIANGLE_CONTACT = 3, // 品字接触式
-  TRIANGLE_SEPARATE = 4 // 品字分离式
-};
-
-/**
- * @brief 电缆夹具参数结构体
- */
-struct cable_clamp_params {
-  cable_clamp_type type; // 夹具类型
-  double diameter;       // 夹具直径 (D > 0)
-};
-
-TopoDS_Shape create_cable_clamp(const cable_clamp_params &params);
-TopoDS_Shape create_cable_clamp(const cable_clamp_params &params,
-                                const gp_Pnt &position,
-                                const gp_Dir &normal = gp::DZ(),
-                                const gp_Dir &xDir = gp::DX());
-
-/**
- * @brief 中间接头参数结构体
+ * @brief 中间接头参数结构体 DL_JT
  */
 struct cable_joint_params {
   double length;         // 接头总长 (L > 0)
@@ -1575,19 +1451,23 @@ TopoDS_Shape create_cable_joint(const cable_joint_params &params,
                                 const gp_Pnt &position,
                                 const gp_Dir &direction = gp::DZ(),
                                 const gp_Dir &xDir = gp::DX());
-
-struct adss_box_params {
+/**
+ * @brief 光缆接头盒类型参数结构体 DL_GLJTH
+ */
+struct optical_fiber_box_params {
   double length; // 接头总长 (L > 0)
   double height; // 接头侧高 (H > 0)
   double width;  // 接头侧宽 (W > 0)
 };
 
-TopoDS_Shape create_adss_box(const adss_box_params &params);
-TopoDS_Shape create_adss_box(const adss_box_params &params,
-                             const gp_Pnt &position,
-                             const gp_Dir &direction = gp::DZ(),
-                             const gp_Dir &xDir = gp::DX());
-
+TopoDS_Shape create_optical_fiber_box(const optical_fiber_box_params &params);
+TopoDS_Shape create_optical_fiber_box(const optical_fiber_box_params &params,
+                                      const gp_Pnt &position,
+                                      const gp_Dir &direction = gp::DZ(),
+                                      const gp_Dir &xDir = gp::DX());
+/**
+ * @brief 电缆终端类型参数结构体 DL_ZDJT
+ */
 struct cable_terminal_params {
   int sort;                     // 类型: 1-户外, 2-户内(GIS), 3-干式
   double height;                // 总高度 H (mm)
@@ -1618,7 +1498,33 @@ TopoDS_Shape create_cable_terminal(const cable_terminal_params &params,
                                    const gp_Pnt &position,
                                    const gp_Dir &direction = gp::DZ());
 
-struct cable_support_params {
+// 接地箱类型枚举
+enum class cable_box_type {
+  DIRECT_GROUND = 1,     // 直接接地箱
+  PROTECTIVE_GROUND = 2, // 带护层保护器的接地箱
+  CROSS_INTERCONNECT = 3 // 交叉互联箱
+};
+
+// ZJJDX HCBHX JCHLX
+struct cable_accessory_params {
+  cable_box_type type;      // 箱体类型
+  double length;            // 箱体长度(mm)
+  double width;             // 箱体宽度(mm)
+  double height;            // 箱体高度(mm)
+  int portCount;            // 电缆进出口数目(3或6)
+  double portDiameter;      // 进出口直径(mm)
+  double backPanelDistance; // 进出口距箱后面板距离(mm)
+  double sidePanelDistance; // 进出口距箱侧面板距离(mm)
+};
+
+TopoDS_Shape create_cable_accessory(const cable_accessory_params &params);
+TopoDS_Shape create_cable_accessory(const cable_accessory_params &params,
+                                    const gp_Pnt &position,
+                                    const gp_Dir &normal = gp::DZ(),
+                                    const gp_Dir &xDir = gp::DX());
+
+// GJ_DLZJ
+struct cable_bracket_params {
   double length;                         // 支架长度 L (mm)
   double rootHeight;                     // 支架根部高度 H (mm)
   double rootWidth;                      // 支架根部宽度 B (mm)
@@ -1629,12 +1535,34 @@ struct cable_support_params {
   std::vector<gp_Pnt> clampMountPoints;  // 夹具安装点坐标
 };
 
-TopoDS_Shape create_cable_support(const cable_support_params &params);
-TopoDS_Shape create_cable_support(const cable_support_params &params,
+TopoDS_Shape create_cable_bracket(const cable_bracket_params &params);
+TopoDS_Shape create_cable_bracket(const cable_bracket_params &params,
                                   const gp_Pnt &position,
                                   const gp_Dir &normal = gp::DZ(),
                                   const gp_Dir &xDir = gp::DX());
 
+// 电缆夹具类型枚举
+enum class cable_clamp_type {
+  SINGLE = 1,         // 单根夹具
+  LINEAR = 2,         // 一字式
+  CONTACT_TRIPLE = 3, // 品字接触式
+  SEPARATE_TRIPLE = 4 // 品字分离式
+};
+
+// GJ_DLJV
+struct cable_clamp_params {
+  cable_clamp_type type; // 夹具类型
+  double diameter;       // 夹具直径(mm)
+  double thickness;      // 夹具厚度(mm)
+  double width;          // 夹具宽度(mm)
+};
+
+TopoDS_Shape create_cable_clamp(const cable_clamp_params &params);
+TopoDS_Shape create_cable_clamp(const cable_clamp_params &params,
+                                const gp_Pnt &position,
+                                const gp_Dir &normal = gp::DZ(),
+                                const gp_Dir &xDir = gp::DX());
+// GJ_DLLZ
 struct cable_pole_params {
   std::string specification;       // 规格型号
   double length;                   // 立柱长度 L (mm)
@@ -1652,20 +1580,21 @@ TopoDS_Shape create_cable_pole(const cable_pole_params &params,
                                const gp_Pnt &position,
                                const gp_Dir &direction = gp::DZ());
 
-struct flat_ground_iron_params {
+// GJ_JDBT
+struct ground_flat_iron_params {
   double length;    // 长度 L (mm)
   double height;    // 高度 H (mm)
   double thickness; // 厚度 T (mm)
 };
 
-TopoDS_Shape create_flat_ground_iron(const flat_ground_iron_params &params);
-TopoDS_Shape create_flat_ground_iron(const flat_ground_iron_params &params,
+TopoDS_Shape create_ground_flat_iron(const ground_flat_iron_params &params);
+TopoDS_Shape create_ground_flat_iron(const ground_flat_iron_params &params,
                                      const gp_Pnt &position,
                                      const gp_Dir &normal = gp::DZ(),
                                      const gp_Dir &xDir = gp::DX());
 
+// GJ_YMJ
 struct embedded_part_params {
-  std::string type;      // 类型，如"GJ_YMJ"
   double length;         // 预埋件长度 L (mm)
   double radius;         // 半圆钩半径 R (mm)
   double height;         // 预埋件高度 H (mm)
@@ -1678,9 +1607,8 @@ TopoDS_Shape create_embedded_part(const embedded_part_params &params,
                                   const gp_Pnt &position,
                                   const gp_Dir &normal = gp::DZ(),
                                   const gp_Dir &xDir = gp::DX());
-
+// GJ_UXLH
 struct u_shaped_ring_params {
-  std::string type; // 类型，如"GJ_UXLH"
   double thickness; // 材料厚度 T (mm)
   double height;    // 拉环开口高度 H (mm)
   double radius;    // 拉环半径 R (mm)
@@ -1693,8 +1621,8 @@ TopoDS_Shape create_u_shaped_ring(const u_shaped_ring_params &params,
                                   const gp_Dir &normal = gp::DZ(),
                                   const gp_Dir &xDir = gp::DX());
 
+// GJ_DP
 struct lifting_eye_params {
-  std::string type;       // 类型，如"GJ_DP"
   double height;          // 吊臂高度 H (mm)
   double ringRadius;      // 圆环半径 R (mm)
   double pipeDiameter;    // 钢管直径 I (mm)
@@ -1708,21 +1636,20 @@ TopoDS_Shape create_lifting_eye(const lifting_eye_params &params,
                                 const gp_Dir &xDir = gp::DX());
 
 /**
- * @brief 转角井参数结构体
+ * @brief 转角井参数结构体 DLJ_ZJJ
  */
 struct corner_well_params {
-  std::string type = "DLJ_ZJJ"; // 固定值表明当前模型为转角井
-  double leftLength;            // 井左段净长 L1 > 0
-  double rightLength;           // 井右段净长 L2 > 0
-  double width;                 // 井净宽 W > 0
-  double height;                // 井净高 H > 0
-  double topThickness;          // 井顶板厚 H1 > 0
-  double bottomThickness;       // 井底板厚 H2 > 0
-  double wallThickness;         // 井外壁厚 T1 > 0
-  double angle;                 // 井转角角度 A (0 < A < 180)
-  double cornerRadius;          // 井转角段半径 R > 0
-  double cushionExtension;      // 垫层滋出距离 T3 >= 0
-  double cushionThickness;      // 垫层厚 HB > 0
+  double leftLength;       // 井左段净长 L1 > 0
+  double rightLength;      // 井右段净长 L2 > 0
+  double width;            // 井净宽 W > 0
+  double height;           // 井净高 H > 0
+  double topThickness;     // 井顶板厚 H1 > 0
+  double bottomThickness;  // 井底板厚 H2 > 0
+  double wallThickness;    // 井外壁厚 T1 > 0
+  double angle;            // 井转角角度 A (0 < A < 180)
+  double cornerRadius;     // 井转角段半径 R > 0
+  double cushionExtension; // 垫层滋出距离 T3 >= 0
+  double cushionThickness; // 垫层厚 HB > 0
 };
 
 TopoDS_Shape create_corner_well(const corner_well_params &params);
@@ -1730,6 +1657,57 @@ TopoDS_Shape create_corner_well(const corner_well_params &params,
                                 const gp_Pnt &position,
                                 const gp_Dir &direction = gp::DZ(),
                                 const gp_Dir &xDir = gp::DX());
+
+/**
+ * @brief 连接段截面样式枚举
+ */
+enum class connection_section_style {
+  RECTANGULAR = 1, // 矩形
+  HORSESHOE = 2,   // 马蹄形
+  CIRCULAR = 3     // 圆形
+};
+
+// 井类型枚举
+enum class tunnel_well_type {
+  STRAIGHT = 1,       // 直线井
+  STRAIGHT_TUNNEL = 2 // 直线暗挖隧道井
+};
+
+struct tunnel_well_params {
+  tunnel_well_type type;  // 井类型
+  double length;          // 井净长(mm)
+  double width;           // 井净宽(mm)
+  double height;          // 井净高(mm)
+  double radius;          // 井内径(mm)，仅竖井使用
+  double topThickness;    // 井顶板厚(mm)
+  double bottomThickness; // 井底板厚(mm)
+
+  // 左连接段参数
+  connection_section_style leftSectionType; // 左连接段截面形式
+  double leftLength;                        // 左连接段长(mm)
+  double leftWidth;                         // 左连接段宽(mm)
+  double leftHeight;                        // 左连接段高/半径(mm)
+  double leftArchHeight;                    // 左连接段拱高(mm)
+
+  // 右连接段参数
+  connection_section_style rightSectionType; // 右连接段截面形式
+  double rightLength;                        // 右连接段长(mm)
+  double rightWidth;                         // 右连接段宽(mm)
+  double rightHeight;                        // 右连接段高/半径(mm)
+  double rightArchHeight;                    // 右连接段拱高(mm)
+
+  double outerWallThickness; // 井外壁厚(mm)
+  double innerWallThickness; // 井内壁厚(mm)，仅竖井使用
+  double cushionExtension;   // 垫层滋出距离(mm)
+  double cushionThickness;   // 垫层厚(mm)
+};
+
+TopoDS_Shape create_tunnel_well(const tunnel_well_params &params);
+TopoDS_Shape create_tunnel_well(const tunnel_well_params &params,
+                                const gp_Pnt &position,
+                                const gp_Dir &direction = gp::DZ(),
+                                const gp_Dir &xDir = gp::DX());
+
 /**
  * @brief 三通井类型枚举
  */
@@ -1756,16 +1734,7 @@ enum class shaft_style {
 };
 
 /**
- * @brief 连接段截面样式枚举
- */
-enum class connection_section_style {
-  RECTANGULAR = 1, // 矩形
-  HORSESHOE = 2,   // 马蹄形
-  CIRCULAR = 3     // 圆形
-};
-
-/**
- * @brief 三通井参数结构体
+ * @brief 三通井参数结构体 DLJ_3T/DLJ_3TMS/DLJ_3TAS
  */
 struct three_way_well_params {
   three_way_well_type type; // 三通井类型
@@ -1843,9 +1812,8 @@ enum class junction_section_type {
   CIRCULAR = 3     // 圆形
 };
 
-struct four_way_junction_params {
-  std::string type; // 类型: DLJ_4T/DLJ_4TMS/DLJ_4TAS
-
+// DLJ_4T/DLJ_4TMS/DLJ_4TAS
+struct four_way_well_params {
   // 主井参数
   double length; // 井净长 L (mm)
   double width;  // 井净宽 W (mm)
@@ -1883,24 +1851,60 @@ struct four_way_junction_params {
   double cushionThickness; // 垫层厚 H3 (mm)
 };
 
-TopoDS_Shape create_four_way_junction(const four_way_junction_params &params);
-TopoDS_Shape create_four_way_junction(const four_way_junction_params &params,
-                                      const gp_Pnt &position,
-                                      const gp_Dir &direction = gp::DZ(),
-                                      const gp_Dir &xDirection = gp::DX());
+TopoDS_Shape create_four_way_well(const four_way_well_params &params);
+TopoDS_Shape create_four_way_well(const four_way_well_params &params,
+                                  const gp_Pnt &position,
+                                  const gp_Dir &direction = gp::DZ(),
+                                  const gp_Dir &xDirection = gp::DX());
 
+struct channel_point {
+  gp_Pnt position; // 点坐标
+  int type;        // 点类型
+};
+
+// TD_PG
+struct pipe_row_params {
+  int pipeType;            // 1=普通排管, 2=拉管
+  bool hasEnclosure;       // 是否有包封
+  double enclosureWidth;   // 包封宽 W (mm)
+  double enclosureHeight;  // 包封高 H (mm)
+  double baseExtension;    // 底板滋出距离 W1 (mm)
+  double baseThickness;    // 底板厚 H1 (mm)
+  double cushionExtension; // 垫层滋出距离 W2 (mm)
+  double cushionThickness; // 垫层厚 H2 (mm)
+
+  // 普通排管参数
+  std::vector<gp_Pnt2d> pipePositions;     // 排管中心点坐标 (x,y)
+  std::vector<double> pipeInnerDiameters;  // 排管内径 DI (mm)
+  std::vector<double> pipeWallThicknesses; // 排管壁厚 TI (mm)
+
+  // 拉管参数
+  double pullPipeInnerDiameter; // 拉管内径 D (mm)
+  double pullPipeThickness;     // 拉管厚 T (mm)
+
+  std::vector<channel_point> points; // 通道点集
+};
+
+TopoDS_Shape create_pipe_row(const pipe_row_params &params);
+TopoDS_Shape create_pipe_row(const pipe_row_params &params,
+                             const gp_Pnt &position,
+                             const gp_Dir &normal = gp::DZ(),
+                             const gp_Dir &xDir = gp::DX());
+
+// TD_DLG
 struct cable_trench_params {
-  std::string type = "TD_DLG"; // 固定值表明当前模型为电缆沟
-  double width;                // 沟内净宽 W (mm)
-  double height;               // 沟内净高 H (mm)
-  double coverWidth;           // 盖板宽 W1 (mm)
-  double coverThickness;       // 盖板厚 H1 (mm)
-  double baseExtension;        // 底板滋出距离 W2 (mm)
-  double baseThickness;        // 底板厚 H2 (mm)
-  double cushionExtension;     // 垫层滋出距离 W3 (mm)
-  double cushionThickness;     // 垫层厚 H3 (mm)
-  double wallThickness;        // 壁厚 T (mm)
-  double wallThickness2;       // 壁厚2 T1 (mm)
+  double width;            // 沟内净宽 W (mm)
+  double height;           // 沟内净高 H (mm)
+  double coverWidth;       // 盖板宽 W1 (mm)
+  double coverThickness;   // 盖板厚 H1 (mm)
+  double baseExtension;    // 底板滋出距离 W2 (mm)
+  double baseThickness;    // 底板厚 H2 (mm)
+  double cushionExtension; // 垫层滋出距离 W3 (mm)
+  double cushionThickness; // 垫层厚 H3 (mm)
+  double wallThickness;    // 壁厚 T (mm)
+  double wallThickness2;   // 壁厚2 T1 (mm)
+
+  std::vector<channel_point> points; // 通道点集
 };
 
 TopoDS_Shape create_cable_trench(const cable_trench_params &params);
@@ -1916,9 +1920,9 @@ enum class tunnel_section_style {
   CIRCULAR = 3     // 圆形
 };
 
+// TD_DLSD
 struct cable_tunnel_params {
-  std::string type = "TD_DLSD"; // 固定值表明当前模型为电缆隧道
-  tunnel_section_style style;   // 截面样式
+  tunnel_section_style style; // 截面样式
 
   // 基本尺寸参数
   double width;  // 内净宽/内径 W (mm)
@@ -1939,6 +1943,8 @@ struct cable_tunnel_params {
   // 通用参数
   double cushionExtension; // 垫层滋出 W2 (mm)
   double cushionThickness; // 垫层厚 H3 (mm)
+
+  std::vector<channel_point> points;
 };
 
 TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params);
@@ -1953,9 +1959,9 @@ enum class cable_tray_style {
   BEAM = 2  // 平形桥架
 };
 
+// TD_DLQJ
 struct cable_tray_params {
-  std::string type = "TD_DLQJ"; // 固定值表明当前模型为电缆桥架
-  cable_tray_style style;       // 桥架样式
+  cable_tray_style style; // 桥架样式
 
   // 桥柱参数
   double columnDiameter; // 桥柱直径 DZ (mm)
@@ -1976,6 +1982,8 @@ struct cable_tray_params {
   std::vector<double> pipeWallThicknesses; // 排管壁厚 T1 (mm)
 
   bool hasProtectionPlate; // 是否有防护隔板 FH
+
+  std::vector<channel_point> points;
 };
 
 TopoDS_Shape create_cable_tray(const cable_tray_params &params);
@@ -1984,15 +1992,27 @@ TopoDS_Shape create_cable_tray(const cable_tray_params &params,
                                const gp_Dir &direction = gp::DZ(),
                                const gp_Dir &xDir = gp::DX());
 
+struct cable_L_beam_params {
+  double length; // 梁长 (L > 0)
+  double width;  // 梁宽 (W > 0)
+  double height; // 梁高 (H > 0)
+};
+
+TopoDS_Shape create_cable_L_beam(const cable_L_beam_params &params);
+TopoDS_Shape create_cable_L_beam(const cable_L_beam_params &params,
+                                 const gp_Pnt &position,
+                                 const gp_Dir &xDirection = gp::DX(),
+                                 const gp_Dir &zDirection = gp::DZ());
+
 // 人孔样式枚举
 enum class manhole_style {
   CIRCULAR = 1,   // 圆形
   RECTANGULAR = 2 // 方形
 };
 
+// GZW_RK
 struct manhole_params {
-  std::string type = "GZW_RK"; // 固定值表明当前模型为人孔
-  manhole_style style;         // 人孔样式
+  manhole_style style; // 人孔样式
 
   // 尺寸参数
   double length;        // 人孔长/直径 L (mm)
@@ -2013,9 +2033,9 @@ enum class manhole_cover_style {
   RECTANGULAR = 2 // 方形
 };
 
+// GZW_JG
 struct manhole_cover_params {
-  std::string type = "GZW_JG"; // 固定值表明当前模型为井盖
-  manhole_cover_style style;   // 井盖样式
+  manhole_cover_style style; // 井盖样式
 
   // 尺寸参数
   double length;    // 井盖长/直径 L (mm)
@@ -2029,11 +2049,11 @@ TopoDS_Shape create_manhole_cover(const manhole_cover_params &params,
                                   const gp_Dir &direction = gp::DZ(),
                                   const gp_Dir &xDir = gp::DX());
 
+// GZW_PT
 struct ladder_params {
-  std::string type = "GZW_PT"; // 固定值表明当前模型为爬梯
-  double length;               // 爬梯长 L (mm)
-  double width;                // 爬梯宽 W (mm)
-  double thickness;            // 爬梯厚 T (mm)
+  double length;    // 爬梯长 L (mm)
+  double width;     // 爬梯宽 W (mm)
+  double thickness; // 爬梯厚 T (mm)
 };
 
 TopoDS_Shape create_ladder(const ladder_params &params);
@@ -2041,24 +2061,23 @@ TopoDS_Shape create_ladder(const ladder_params &params, const gp_Pnt &position,
                            const gp_Dir &direction = gp::DZ(),
                            const gp_Dir &xDir = gp::DX());
 
-struct water_collection_pit_params {
-  std::string type = "GZW_JSK"; // 固定值表明当前模型为集水坑
-  double length;                // 集水坑长 L (mm)
-  double width;                 // 集水坑宽 W (mm)
-  double depth;                 // 集水坑深 H (mm)
-  double floorThickness;        // 集水坑底板厚 T (mm)
+// GZW_JSK
+struct sump_params {
+  double length;         // 集水坑长 L (mm)
+  double width;          // 集水坑宽 W (mm)
+  double depth;          // 集水坑深 H (mm)
+  double floorThickness; // 集水坑底板厚 T (mm)
 };
 
-TopoDS_Shape
-create_water_collection_pit(const water_collection_pit_params &params);
-TopoDS_Shape create_water_collection_pit(
-    const water_collection_pit_params &params, const gp_Pnt &position,
-    const gp_Dir &normal = gp::DZ(), const gp_Dir &xDir = gp::DX());
+TopoDS_Shape create_sump(const sump_params &params);
+TopoDS_Shape create_sump(const sump_params &params, const gp_Pnt &position,
+                         const gp_Dir &normal = gp::DZ(),
+                         const gp_Dir &xDir = gp::DX());
 
+// GZW_BD
 struct footpath_params {
-  std::string type = "GZW_BD"; // 固定值表明当前模型为步道
-  double height;               // 步道高 H (mm)
-  double width;                // 步道宽 W (mm)
+  double height; // 步道高 H (mm)
+  double width;  // 步道宽 W (mm)
 };
 
 TopoDS_Shape create_footpath(const footpath_params &params);
@@ -2066,27 +2085,25 @@ TopoDS_Shape create_footpath(const footpath_params &params,
                              const gp_Pnt &position,
                              const gp_Dir &direction = gp::DZ(),
                              const gp_Dir &xDir = gp::DX());
-
-struct vertical_well_params {
-  std::string type = "GZW_SJC"; // 固定值表明当前模型为竖井仓
-  double supportWallThickness;  // 支护壁厚 T1 (mm)
-  double supportDiameter;       // 支护直径 D1 (mm)
-  double supportHeight;         // 支护高度 H1 (mm)
-  double roofThickness;         // 顶板厚 T2 (mm)
-  double innerDiameter;         // 内壁直径 D (mm)
-  double workingHeight;         // 工作仓高度 H (mm)
-  double outerWallThickness;    // 外壁厚 T3 (mm)
-  double innerWallThickness;    // 内壁厚 T4 (mm)
+// GZW_SJC
+struct shaft_chamber_params {
+  double supportWallThickness; // 支护壁厚 T1 (mm)
+  double supportDiameter;      // 支护直径 D1 (mm)
+  double supportHeight;        // 支护高度 H1 (mm)
+  double roofThickness;        // 顶板厚 T2 (mm)
+  double innerDiameter;        // 内壁直径 D (mm)
+  double workingHeight;        // 工作仓高度 H (mm)
+  double outerWallThickness;   // 外壁厚 T3 (mm)
+  double innerWallThickness;   // 内壁厚 T4 (mm)
 };
 
-TopoDS_Shape create_vertical_well(const vertical_well_params &params);
-TopoDS_Shape create_vertical_well(const vertical_well_params &params,
+TopoDS_Shape create_shaft_chamber(const shaft_chamber_params &params);
+TopoDS_Shape create_shaft_chamber(const shaft_chamber_params &params,
                                   const gp_Pnt &position,
                                   const gp_Dir &direction = gp::DZ(),
                                   const gp_Dir &xDir = gp::DX());
-
-struct tunnel_partition_params {
-  std::string type = "GZW_SDJGB";      // 固定值表明当前模型为暗挖隧道井隔板
+// GZW_SDJGB
+struct tunnel_partition_board_params {
   int style;                           // 样式 (1-圆形, 2-方形)
   double length;                       // 隔板长/直径 L (mm)
   double width;                        // 隔板宽 W (mm)
@@ -2098,36 +2115,36 @@ struct tunnel_partition_params {
   std::vector<double> holeWidths;      // 开孔宽 W1...n (mm)
 };
 
-TopoDS_Shape create_tunnel_partition(const tunnel_partition_params &params);
-TopoDS_Shape create_tunnel_partition(const tunnel_partition_params &params,
-                                     const gp_Pnt &position,
-                                     const gp_Dir &normal = gp::DZ(),
-                                     const gp_Dir &xDir = gp::DX());
+TopoDS_Shape
+create_tunnel_partition_board(const tunnel_partition_board_params &params);
+TopoDS_Shape create_tunnel_partition_board(
+    const tunnel_partition_board_params &params, const gp_Pnt &position,
+    const gp_Dir &normal = gp::DZ(), const gp_Dir &xDir = gp::DX());
 
-struct wind_pavilion_params {
-  std::string type = "GZW_FT"; // 固定值表明当前模型为风亭
-  double topLength;            // 风亭顶长 L1 (mm)
-  double middleLength;         // 风亭长 L2 (mm)
-  double bottomLength;         // 风亭底长 L3 (mm)
-  double topWidth;             // 风亭顶宽 W1 (mm)
-  double middleWidth;          // 风亭宽 W2 (mm)
-  double bottomWidth;          // 风亭底宽 W3 (mm)
-  double topHeight;            // 风亭顶高 H1 (mm)
-  double height;               // 风亭高 H2 (mm)
-  double baseHeight;           // 风亭底高 H3 (mm)
+// GZW_FT
+struct ventilation_pavilion_params {
+  double topLength;    // 风亭顶长 L1 (mm)
+  double middleLength; // 风亭长 L2 (mm)
+  double bottomLength; // 风亭底长 L3 (mm)
+  double topWidth;     // 风亭顶宽 W1 (mm)
+  double middleWidth;  // 风亭宽 W2 (mm)
+  double bottomWidth;  // 风亭底宽 W3 (mm)
+  double topHeight;    // 风亭顶高 H1 (mm)
+  double height;       // 风亭高 H2 (mm)
+  double baseHeight;   // 风亭底高 H3 (mm)
 };
 
-TopoDS_Shape create_wind_pavilion(const wind_pavilion_params &params);
-TopoDS_Shape create_wind_pavilion(const wind_pavilion_params &params,
-                                  const gp_Pnt &position,
-                                  const gp_Dir &direction = gp::DZ(),
-                                  const gp_Dir &xDir = gp::DX());
+TopoDS_Shape
+create_ventilation_pavilion(const ventilation_pavilion_params &params);
+TopoDS_Shape create_ventilation_pavilion(
+    const ventilation_pavilion_params &params, const gp_Pnt &position,
+    const gp_Dir &direction = gp::DZ(), const gp_Dir &xDir = gp::DX());
 
+// GZW_ZTFD
 struct straight_ventilation_duct_params {
-  std::string type = "GZW_ZTFD"; // 固定值表明当前模型为直通风道
-  double diameter;               // 直通直径 D (mm)
-  double wallThickness;          // 直通壁厚 T (mm)
-  double height;                 // 直通高 H (mm)
+  double diameter;      // 直通直径 D (mm)
+  double wallThickness; // 直通壁厚 T (mm)
+  double height;        // 直通高 H (mm)
 };
 
 TopoDS_Shape create_straight_ventilation_duct(
@@ -2136,43 +2153,43 @@ TopoDS_Shape create_straight_ventilation_duct(
     const straight_ventilation_duct_params &params, const gp_Pnt &position,
     const gp_Dir &direction = gp::DZ(), const gp_Dir &xDir = gp::DX());
 
-struct inclined_ventilation_duct_params {
-  std::string type = "GZW_XTFD"; // 固定值表明当前模型为斜通风道
-  double hoodRoomLength;         // 风帽室长 L1 (mm)
-  double hoodRoomWidth;          // 风帽室宽 W1 (mm)
-  double hoodRoomHeight;         // 风帽室高 H1 (mm)
-  double hoodWallThickness;      // 风帽壁厚 T (mm)
-  double ductCenterHeight;       // 风通道圆心高 H5 (mm)
-  double ductLeftDistance;       // 风通道圆心距左侧距离 L5 (mm)
-  double ductDiameter;           // 风通道直径 D1 (mm)
-  double ductWallThickness;      // 风通道壁厚 T1 (mm)
-  double ductLength;             // 风通道长 L4 (mm)
-  double ductHeightDifference;   // 风通道高度差 H2 (mm)
-  double baseLength;             // 风基座长 L2 (mm)
-  double baseWidth;              // 风基座宽 W2 (mm)
-  double baseHeight;             // 风基座高 H4 (mm)
-  double baseRoomLength;         // 风基室长 L3 (mm)
-  double baseRoomWallThickness;  // 风基室壁厚 T2 (mm)
-  double baseRoomWidth;          // 风基室宽 W3 (mm)
-  double baseRoomHeight;         // 风基室高 H3 (mm)
+// GZW_XTFD
+struct oblique_ventilation_duct_params {
+  double hoodRoomLength;        // 风帽室长 L1 (mm)
+  double hoodRoomWidth;         // 风帽室宽 W1 (mm)
+  double hoodRoomHeight;        // 风帽室高 H1 (mm)
+  double hoodWallThickness;     // 风帽壁厚 T (mm)
+  double ductCenterHeight;      // 风通道圆心高 H5 (mm)
+  double ductLeftDistance;      // 风通道圆心距左侧距离 L5 (mm)
+  double ductDiameter;          // 风通道直径 D1 (mm)
+  double ductWallThickness;     // 风通道壁厚 T1 (mm)
+  double ductLength;            // 风通道长 L4 (mm)
+  double ductHeightDifference;  // 风通道高度差 H2 (mm)
+  double baseLength;            // 风基座长 L2 (mm)
+  double baseWidth;             // 风基座宽 W2 (mm)
+  double baseHeight;            // 风基座高 H4 (mm)
+  double baseRoomLength;        // 风基室长 L3 (mm)
+  double baseRoomWallThickness; // 风基室壁厚 T2 (mm)
+  double baseRoomWidth;         // 风基室宽 W3 (mm)
+  double baseRoomHeight;        // 风基室高 H3 (mm)
 };
 
-TopoDS_Shape create_inclined_ventilation_duct(
-    const inclined_ventilation_duct_params &params);
-TopoDS_Shape create_inclined_ventilation_duct(
-    const inclined_ventilation_duct_params &params, const gp_Pnt &position,
+TopoDS_Shape
+create_oblique_ventilation_duct(const oblique_ventilation_duct_params &params);
+TopoDS_Shape create_oblique_ventilation_duct(
+    const oblique_ventilation_duct_params &params, const gp_Pnt &position,
     const gp_Dir &direction = gp::DZ(), const gp_Dir &xDir = gp::DX());
 
+// GZW_PSJ
 struct drainage_well_params {
-  std::string type = "GZW_PSJ"; // 固定值表明当前模型为排水井
-  double length;                // 井净长 L (mm)
-  double width;                 // 井净宽 W (mm)
-  double height;                // 井净高 H (mm)
-  double neckDiameter;          // 井脖直径 D (mm)
-  double neckHeight;            // 井脖高 H1 (mm)
-  double cushionExtension;      // 垫层滋出距离 T1 (mm)
-  double floorThickness;        // 排水井底板厚 H2 (mm)
-  double wallThickness;         // 排水井壁厚 T (mm)
+  double length;           // 井净长 L (mm)
+  double width;            // 井净宽 W (mm)
+  double height;           // 井净高 H (mm)
+  double neckDiameter;     // 井脖直径 D (mm)
+  double neckHeight;       // 井脖高 H1 (mm)
+  double cushionExtension; // 垫层滋出距离 T1 (mm)
+  double floorThickness;   // 排水井底板厚 H2 (mm)
+  double wallThickness;    // 排水井壁厚 T (mm)
 };
 
 TopoDS_Shape create_drainage_well(const drainage_well_params &params);
@@ -2180,9 +2197,8 @@ TopoDS_Shape create_drainage_well(const drainage_well_params &params,
                                   const gp_Pnt &position,
                                   const gp_Dir &direction = gp::DZ(),
                                   const gp_Dir &xDir = gp::DX());
-
+// GZW_GZ
 struct pipe_support_params {
-  std::string type = "GZW_GZ";     // 固定值表明当前模型为管枕
   int style;                       // 管枕形式 (1-单侧管枕, 2-两侧管枕)
   int count;                       // 管枕数量 N
   std::vector<gp_Pnt2d> positions; // 管枕中心坐标 POS (mm)
@@ -2197,6 +2213,7 @@ TopoDS_Shape create_pipe_support(const pipe_support_params &params,
                                  const gp_Dir &direction = gp::DZ(),
                                  const gp_Dir &xDir = gp::DX());
 
+// GZW_GB
 struct cover_plate_params {
   std::string type = "GZW_GB"; // 固定值表明当前模型为盖板
   int style;                   // 盖板形式 (0-长方形, 1-扇形)
@@ -2213,20 +2230,20 @@ TopoDS_Shape create_cover_plate(const cover_plate_params &params,
                                 const gp_Dir &normal = gp::DZ(),
                                 const gp_Dir &xDir = gp::DX());
 
-struct cable_trough_params {
-  std::string type = "GZW_GLCH"; // 固定值表明当前模型为光缆槽盒
-  double outerLength;            // 槽盒外长度 L1 (mm)
-  double outerHeight;            // 槽盒外高度 H1 (mm)
-  double innerLength;            // 槽盒内长度 L2 (mm)
-  double innerHeight;            // 槽盒内高度 H2 (mm)
-  double coverThickness;         // 槽盒盖板厚度 D (mm)
+// GZW_GLCH
+struct cable_ray_params {
+  double outerLength;    // 槽盒外长度 L1 (mm)
+  double outerHeight;    // 槽盒外高度 H1 (mm)
+  double innerLength;    // 槽盒内长度 L2 (mm)
+  double innerHeight;    // 槽盒内高度 H2 (mm)
+  double coverThickness; // 槽盒盖板厚度 D (mm)
 };
 
-TopoDS_Shape create_cable_trough(const cable_trough_params &params);
-TopoDS_Shape create_cable_trough(const cable_trough_params &params,
-                                 const gp_Pnt &position,
-                                 const gp_Dir &direction = gp::DZ(),
-                                 const gp_Dir &xDir = gp::DX());
+TopoDS_Shape create_cable_ray(const cable_ray_params &params);
+TopoDS_Shape create_cable_ray(const cable_ray_params &params,
+                              const gp_Pnt &position,
+                              const gp_Dir &direction = gp::DZ(),
+                              const gp_Dir &xDir = gp::DX());
 
 } // namespace topo
 } // namespace flywave
