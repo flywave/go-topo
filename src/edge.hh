@@ -1,31 +1,33 @@
 #ifndef __FLYWAVE_MESH_TOPO_EDGE_HH__
 #define __FLYWAVE_MESH_TOPO_EDGE_HH__
 
+#include <BRepAdaptor_Curve.hxx>
 #include <Geom2d_Curve.hxx>
 #include <Geom_Curve.hxx>
 #include <Geom_Surface.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Edge.hxx>
-#include <gp_Dir.hxx>
 #include <gp_Circ.hxx>
-#include <gp_Elips.hxx>
-#include <gp_Hypr.hxx>
-#include <gp_Parab.hxx>
-#include <gp_Lin2d.hxx>
 #include <gp_Circ2d.hxx>
+#include <gp_Dir.hxx>
+#include <gp_Elips.hxx>
 #include <gp_Elips2d.hxx>
+#include <gp_Hypr.hxx>
 #include <gp_Hypr2d.hxx>
+#include <gp_Lin2d.hxx>
+#include <gp_Parab.hxx>
 #include <gp_Parab2d.hxx>
 
-#include "shape.hh"
+#include "shape1d.hh"
 
 namespace flywave {
 namespace topo {
 
 class vertex;
 class face;
+class wire;
 
-class edge : public shape {
+class edge : public shape1d {
 public:
   edge() = default;
   virtual ~edge() = default;
@@ -231,6 +233,49 @@ public:
   static edge make_polygon(std::initializer_list<gp_Pnt> vertexs,
                            const bool Close = false);
 
+  static edge make_rect(double width, double height);
+
+  static edge make_spline(const std::vector<gp_Pnt> &points, double tol = 1e-6,
+                          bool periodic = false);
+
+  static edge make_spline(const std::vector<gp_Pnt> &points,
+                          const std::pair<gp_Vec, gp_Vec> *tangents,
+                          const std::vector<double> *parameters,
+                          double tol = 1e-6, bool periodic = false,
+                          bool scale = true);
+
+  static edge make_spline(const std::vector<gp_Pnt> &points,
+                          const std::vector<gp_Vec> *tangents = nullptr,
+                          bool periodic = false,
+                          const std::vector<double> *parameters = nullptr,
+                          bool scale = true, double tol = 1e-6);
+
+  static edge make_spline_approx(
+      const std::vector<gp_Pnt> &points, double tolerance = 1e-3,
+      const boost::optional<std::tuple<double, double, double>> &smoothing =
+          boost::none,
+      int minDegree = 1, int maxDegree = 6);
+
+  static edge make_circle(double radius, const gp_Pnt &center = gp_Pnt(0, 0, 0),
+                          const gp_Dir &normal = gp_Dir(0, 0, 1),
+                          double angle1 = 360.0, double angle2 = 360.0,
+                          bool orientation = true);
+
+  static edge make_ellipse(double majorRadius, double minorRadius,
+                           const gp_Pnt &center = gp_Pnt(0, 0, 0),
+                           const gp_Dir &normal = gp_Dir(0, 0, 1),
+                           const gp_Dir &xnormal = gp_Dir(1, 0, 0),
+                           double angle1 = 360.0, double angle2 = 360.0,
+                           int sense = 1);
+
+  static edge make_three_point_arc(const gp_Pnt &v1, const gp_Pnt &v2,
+                                   const gp_Pnt &v3);
+
+  static edge make_tangent_arc(const gp_Pnt &v1, const gp_Vec &tangent,
+                               const gp_Pnt &v3);
+
+  static edge make_bezier(const std::vector<gp_Pnt> &points);
+
   TopoDS_Edge &value();
   const TopoDS_Edge &value() const;
 
@@ -242,8 +287,6 @@ public:
 
   bool is_inifinite() const;
 
-  int num_vertices() const;
-
   double length() const;
 
   float tolerance() const;
@@ -252,14 +295,23 @@ public:
 
   void convert_to_curve3d();
 
+  virtual Handle(Adaptor3d_Curve) get_geom() const override;
+
   virtual geometry_object_type type() const override {
     return geometry_object_type::EdgeType;
   }
 
   virtual shape copy(bool deep = true) const override;
 
-  edge(TopoDS_Shape shp) : shape(shp) {}
-  edge(const shape &e, TopoDS_Shape shp) : shape(e, shp) {}
+  edge(TopoDS_Shape shp, bool forConstruction = false)
+      : shape1d(shp, forConstruction) {}
+  edge(const shape &e, TopoDS_Shape shp) : shape1d(e, shp) {}
+
+  boost::variant<wire, edge> close() const;
+
+  gp_Pnt arc_center() const;
+
+  edge trim(double u0, double u1) const;
 
 protected:
   friend class edge_iterator;
@@ -285,4 +337,13 @@ public:
 } // namespace topo
 } // namespace flywave
 
+namespace std {
+
+template <> struct hash<flywave::topo::edge> {
+  size_t operator()(const flywave::topo::edge &v) const {
+    return v.hash_code();
+  }
+};
+
+} // namespace std
 #endif // __FLYWAVE_MESH_TOPO_EDGE_HH__

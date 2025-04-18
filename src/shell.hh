@@ -17,12 +17,12 @@ public:
   virtual ~shell() = default;
 
   static shell make_shell(const Handle(Geom_Surface) & S,
-                          const bool Segment = false);
+                          const bool segment = false);
 
   static shell make_shell(const Handle(Geom_Surface) & S,
                           const Standard_Real UMin, const Standard_Real UMax,
                           const Standard_Real VMin, const Standard_Real VMax,
-                          const bool Segment = false);
+                          const bool segment = false);
 
   static shell make_shell_from_box(const Standard_Real dx,
                                    const Standard_Real dy,
@@ -220,7 +220,8 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
-  shell(TopoDS_Shape shp) : shape(shp) {}
+  shell(TopoDS_Shape shp, bool forConstruction = false)
+      : shape(shp, forConstruction) {}
   shell(const shape &s, TopoDS_Shape shp) : shape(s, shp) {}
 
 protected:
@@ -246,4 +247,13 @@ public:
 } // namespace topo
 } // namespace flywave
 
+namespace std {
+
+template <> struct hash<flywave::topo::shell> {
+  size_t operator()(const flywave::topo::shell &v) const {
+    return v.hash_code();
+  }
+};
+
+} // namespace std
 #endif // __FLYWAVE_MESH_TOPO_SHELL_HH__

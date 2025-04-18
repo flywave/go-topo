@@ -46,9 +46,9 @@ shape shell::copy(bool deep) const {
   return shell{};
 }
 
-shell shell::make_shell(const Handle(Geom_Surface) & S, const bool Segment) {
+shell shell::make_shell(const Handle(Geom_Surface) & S, const bool segment) {
   try {
-    BRepBuilderAPI_MakeShell mb(S, Segment);
+    BRepBuilderAPI_MakeShell mb(S, segment);
     return shell{mb.Shell()};
   } catch (...) {
     return shell{};
@@ -58,9 +58,9 @@ shell shell::make_shell(const Handle(Geom_Surface) & S, const bool Segment) {
 shell shell::make_shell(const Handle(Geom_Surface) & S,
                         const Standard_Real UMin, const Standard_Real UMax,
                         const Standard_Real VMin, const Standard_Real VMax,
-                        const bool Segment) {
+                        const bool segment) {
   try {
-    BRepBuilderAPI_MakeShell mb(S, UMin, UMax, VMin, VMax, Segment);
+    BRepBuilderAPI_MakeShell mb(S, UMin, UMax, VMin, VMax, segment);
     return shell{mb.Shell()};
   } catch (...) {
     return shell{};
@@ -106,7 +106,7 @@ shell shell::make_shell_from_box(const gp_Ax2 &Axes, const Standard_Real dx,
   } catch (...) {
     return shell{};
   }
-} // namespace topo
+}
 
 shell shell::make_shell_from_cylinder(const Standard_Real R,
                                       const Standard_Real H) {
@@ -127,7 +127,7 @@ shell shell::make_shell_from_cylinder(const Standard_Real R,
   } catch (...) {
     return shell{};
   }
-} // namespace flywave
+}
 
 shell shell::make_shell_from_cylinder(const gp_Ax2 &Axes, const Standard_Real R,
                                       const Standard_Real H) {

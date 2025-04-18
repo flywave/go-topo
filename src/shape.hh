@@ -5,9 +5,12 @@
 #include "location.hh"
 #include "mesh_receiver.hh"
 #include "orientation.hh"
+#include "selector.hh"
+#include "shape_geom_type.hh"
 
 #include <BRepBuilderAPI_Copy.hxx>
 #include <OSD_Timer.hxx>
+#include <TopExp_Explorer.hxx>
 #include <TopoDS_Shape.hxx>
 
 #include <Message_ProgressIndicator.hxx>
@@ -16,10 +19,23 @@
 #include <Standard_Macro.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 
+#include <unordered_map>
 #include <vector>
+
+#include "bbox.hh"
 
 namespace flywave {
 namespace topo {
+
+class compound;
+class vertex;
+class wire;
+class edge;
+class face;
+class shell;
+class solid;
+class comp_solid;
+class topo_matrix;
 
 enum texture_mapping_rule {
   texture_cube,
@@ -31,6 +47,7 @@ class shape : public geometry_object {
 public:
   shape();
   virtual ~shape() = default;
+
   shape(const shape &) = default;
   shape &operator=(const shape &) = default;
 
@@ -42,12 +59,20 @@ public:
   virtual bool is_null() const override;
   virtual bool is_valid() const override;
 
+  bool is_solid() const;
+
   virtual geometry_object_type type() const override;
+
+  topo_bbox bbox(double tolerance = 1e-12) const;
 
   virtual Bnd_Box bounding_box(double tolerance = 1e-12) const override;
 
   int hash_code() const;
   virtual bool equals(const geometry_object &) const override;
+
+  bool is_same(const shape &) const;
+
+  bool for_construction() const;
 
   explicit operator bool() const;
 
@@ -82,6 +107,7 @@ public:
   bool surface_colour(double *colour) const;
 
   int transform(gp_Trsf mat);
+  int transform(const topo_matrix &mat);
 
   int translate(gp_Vec delta);
   int rotate(double angle, gp_Pnt p1, gp_Pnt p2);
@@ -89,14 +115,19 @@ public:
   int rotate(gp_Quaternion R);
   int scale(gp_Pnt pnt, double scale);
   int mirror(gp_Pnt pnt, gp_Pnt nor);
+  int mirror(gp_Pnt pnt, gp_Vec nor);
   int mirror(gp_Ax1 a);
   int mirror(gp_Ax2 a);
 
   gp_Pnt centre_of_mass() const;
+  gp_Pnt center_of_bound_box() const;
   double compute_mass() const;
   double compute_area() const;
+  double distance(const shape &o) const;
+  std::vector<double> distances(const std::vector<shape> &others) const;
 
   shape transformed(gp_Trsf mat) const;
+  shape transformed(const topo_matrix &mat) const;
 
   shape translated(gp_Vec delta) const;
   shape rotated(double angle, gp_Pnt p1, gp_Pnt p2) const;
@@ -104,8 +135,16 @@ public:
   shape rotated(gp_Quaternion R) const;
   shape scaled(gp_Pnt pnt, double scale) const;
   shape mirrored(gp_Pnt pnt, gp_Pnt nor) const;
+  shape mirrored(gp_Pnt pnt, gp_Vec nor) const;
   shape mirrored(gp_Ax1 a) const;
   shape mirrored(gp_Ax2 a) const;
+
+  shape clean();
+
+  boost::optional<compound> ancestors(const shape &shape,
+                                      TopAbs_ShapeEnum kind) const;
+  boost::optional<compound> siblings(const shape &shape, TopAbs_ShapeEnum kind,
+                                     int level = 1) const;
 
   gp_Pln find_plane(double tolerance = 1e-6);
 
@@ -121,6 +160,30 @@ public:
 
   void set_location(const topo_location &loc);
 
+  shape located(const topo_location &loc) const;
+
+  int move(const topo_location &loc);
+
+  int move(double x = 0, double y = 0, double z = 0, double rx = 0,
+           double ry = 0, double rz = 0);
+
+  int move(const gp_Vec &vec);
+
+  shape moved(const topo_location &loc) const;
+
+  shape moved(std::initializer_list<topo_location> locs) const;
+
+  shape moved(const std::vector<topo_location> &locs) const;
+
+  shape moved(double x = 0, double y = 0, double z = 0, double rx = 0,
+              double ry = 0, double rz = 0) const;
+
+  shape moved(const gp_Vec &vec) const;
+
+  shape moved(std::initializer_list<gp_Vec> vecs) const;
+
+  shape moved(const std::vector<gp_Vec> &vecs) const;
+
   orientation get_orientation() const;
 
   void set_orientation(orientation ori);
@@ -133,7 +196,8 @@ public:
 
   boost::optional<shape> auto_cast() const;
 
-  std::string shape_type() const;
+  TopAbs_ShapeEnum shape_type() const;
+  shape_geom_type geom_type() const;
 
   virtual int write_triangulation(mesh_receiver &mesh, double tolerance,
                                   double deflection, double angle,
@@ -150,13 +214,102 @@ public:
   inline bool operator==(const shape &s) const { return this->equals(s); }
   inline bool operator!=(const shape &s) const { return !(*this == s); }
 
-  shape(TopoDS_Shape shp);
+  bool operator<(const shape &other) const {
+    return this->hash_code() < other.hash_code();
+  }
+
+  shape(TopoDS_Shape shp, bool forConstruction = false);
   shape(const shape &s, TopoDS_Shape shp);
 
+  bool export_step(const std::string &fileName, bool write_pcurves = true,
+                   int precision_mode = 0) const;
+  bool export_brep(const std::string &fileName) const;
+
+  static boost::optional<shape> import_from_brep(const std::string &fileName);
+
+  static gp_Pnt combined_center(const std::vector<shape> &shapes);
+  static gp_Pnt
+  combined_center_of_bounding_box(const std::vector<shape> &shapes);
+
+  boost::optional<shape> to_splines(int degree = 3, double tolerance = 1e-3,
+                                    bool nurbs = false) const;
+  boost::optional<shape> to_nurbs() const;
+
+  std::vector<shape> children() const;
+  std::vector<shape> get_shapes(TopAbs_ShapeEnum kind = TopAbs_SHAPE) const;
+
+  virtual std::vector<vertex> vertices() const;
+  virtual std::vector<edge> edges() const;
+  virtual std::vector<compound> compounds() const;
+  virtual std::vector<wire> wires() const;
+  virtual std::vector<face> faces() const;
+  virtual std::vector<shell> shells() const;
+  virtual std::vector<solid> solids() const;
+  virtual std::vector<comp_solid> comp_solids() const;
+
+  void set_for_construction(bool for_construction);
+
+  virtual int num_vertices() const { return num_entities(TopAbs_VERTEX); }
+  virtual int num_edges() const { return num_entities(TopAbs_EDGE); }
+  virtual int num_wires() const { return num_entities(TopAbs_WIRE); }
+  virtual int num_faces() const { return num_entities(TopAbs_FACE); }
+  virtual int num_shells() const { return num_entities(TopAbs_SHELL); }
+  virtual int num_solids() const { return num_entities(TopAbs_SOLID); }
+  virtual int num_compounds() const { return num_entities(TopAbs_COMPOUND); }
+  virtual int num_comp_solids() const { return num_entities(TopAbs_COMPSOLID); }
+
+  std::string to_string(double tolerance = 1e-3,
+                        double angularTolerance = 0.1) const;
+
+  static shape filter(selector *sel, const std::vector<shape> &shapes);
+
+  inline shape vertices(selector *sel) const {
+    return shape::filter(sel, get_shapes(TopAbs_VERTEX));
+  }
+
+  inline shape edges(selector *sel) const {
+    return shape::filter(sel, get_shapes(TopAbs_EDGE));
+  }
+
+  inline shape wires(selector *sel) const {
+    return shape::filter(sel, get_shapes(TopAbs_WIRE));
+  }
+
+  inline shape faces(selector *sel) const {
+    return shape::filter(sel, get_shapes(TopAbs_FACE));
+  }
+
+  inline shape shells(selector *sel) const {
+    return shape::filter(sel, get_shapes(TopAbs_SHELL));
+  }
+
+  inline shape solids(selector *sel) const {
+    return shape::filter(sel, get_shapes(TopAbs_SOLID));
+  }
+
 protected:
+  template <typename OpType>
+  shape bool_op(const std::vector<shape> &args, const std::vector<shape> &tools,
+                OpType &op, bool parallel = true) const;
   void prepare_box_texture_coordinates(const TopoDS_Shape &aShape);
   void get_box_texture_coordinate(const gp_Pnt &p, const gp_Dir &N1,
                                   gp_Vec2d &theCoord_p);
+
+  std::unordered_map<shape, std::vector<shape>>
+  get_entities_from(TopAbs_ShapeEnum childType,
+                    TopAbs_ShapeEnum parentType) const;
+
+  template <typename T>
+  std::vector<T> extract_entities(TopAbs_ShapeEnum type) const {
+    std::vector<T> entities;
+    for (TopExp_Explorer exp(_shape, type); exp.More(); exp.Next()) {
+      if (!exp.Current().IsNull())
+        entities.push_back(T(exp.Current()));
+    }
+    return entities;
+  }
+
+  int num_entities(TopAbs_ShapeEnum type) const;
 
   void clear_maps();
   void build_maps();
@@ -166,6 +319,8 @@ protected:
   std::string _label;
   Quantity_Color _surface_colour;
   Quantity_Color _curve_colour;
+
+  bool _for_construction;
 
   TopoDS_Shape _shape;
 

@@ -1,15 +1,19 @@
 #ifndef GO_TOPO_IMPL_H
 #define GO_TOPO_IMPL_H
 
+#include "bbox.hh"
 #include "comp_solid.hh"
 #include "compound.hh"
 #include "edge.hh"
 #include "face.hh"
+#include "matrix.hh"
 #include "shell.hh"
 #include "solid.hh"
 #include "topo_c_api.h"
+#include "vector.hh"
 #include "vertex.hh"
 #include "wire.hh"
+
 #include <StlAPI_Writer.hxx>
 #include <string>
 
@@ -27,6 +31,22 @@ struct _topo_shape_t {
 
 struct _topo_location_t {
   flywave::topo::topo_location loc;
+};
+
+struct _topo_vector_t {
+  flywave::topo::topo_vector vec;
+};
+
+struct _topo_plane_t {
+  flywave::topo::topo_plane plane;
+};
+
+struct _topo_matrix_t {
+  flywave::topo::topo_matrix mat;
+};
+
+struct _topo_bbox_t {
+  flywave::topo::topo_bbox bbox;
 };
 
 struct _topo_mesh_receiver_t {

@@ -2,10 +2,12 @@
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepAlgoAPI_Section.hxx>
+#include <BRepAlgoAPI_Splitter.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepBuilderAPI_NurbsConvert.hxx>
+#include <BRepClass3d.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
 #include <BRepFeat_Gluer.hxx>
 #include <BRepFeat_MakeDPrism.hxx>
@@ -37,13 +39,16 @@
 #include <BRep_Builder.hxx>
 #include <GProp_GProps.hxx>
 #include <GeomFill_Trihedron.hxx>
+#include <LocOpe_DPrism.hxx>
 #include <ShapeAnalysis_FreeBounds.hxx>
 #include <ShapeFix_Wire.hxx>
 #include <TopExp.hxx>
+#include <TopExp_Explorer.hxx>
 #include <TopTools_HSequenceOfShape.hxx>
 #include <TopoDS.hxx>
 
 #include "comp_solid.hh"
+#include "compound.hh"
 #include "edge.hh"
 #include "face.hh"
 #include "shell.hh"
@@ -53,7 +58,8 @@
 namespace flywave {
 namespace topo {
 
-solid::solid(TopoDS_Shape shp) : shape(shp) {
+solid::solid(TopoDS_Shape shp, bool forConstruction)
+    : shape3d(shp, forConstruction) {
   TopAbs_ShapeEnum type = shp.ShapeType();
   if (type == TopAbs_SOLID || type == TopAbs_COMPSOLID) {
     _shape = shp;
@@ -93,7 +99,7 @@ solid::solid(TopoDS_Shape shp) : shape(shp) {
   }
 }
 
-solid::solid(const shape &s, TopoDS_Shape shp) : shape(s, shp) {
+solid::solid(const shape &s, TopoDS_Shape shp) : shape3d(s, shp) {
   TopAbs_ShapeEnum type = shp.ShapeType();
   if (type == TopAbs_SOLID || type == TopAbs_COMPSOLID) {
     _shape = shp;
@@ -283,16 +289,6 @@ solid solid::make_solid_from_box(const gp_Ax2 &Axes, const Standard_Real dx,
 }
 
 solid solid::make_solid_from_cylinder(const Standard_Real R,
-                                      const Standard_Real H) {
-  try {
-    BRepPrimAPI_MakeCylinder mw(R, H);
-    return solid{mw.Solid()};
-  } catch (...) {
-    return solid{};
-  }
-}
-
-solid solid::make_solid_from_cylinder(const Standard_Real R,
                                       const Standard_Real H,
                                       const Standard_Real Angle) {
   try {
@@ -324,16 +320,53 @@ solid solid::make_solid_from_cylinder(const gp_Ax2 &Axes, const Standard_Real R,
   }
 }
 
-solid solid::make_solid_from_cone(const Standard_Real R1,
-                                  const Standard_Real R2,
-                                  const Standard_Real H) {
+// Make a cylinder with given radius and height
+solid solid::make_solid_from_cylinder(double radius, double height,
+                                      const gp_Pnt &pnt, const gp_Dir &dir,
+                                      double angleDegrees) {
   try {
-    BRepPrimAPI_MakeCone mw(R1, R2, H);
-    return solid{mw.Solid()};
+    // Convert angle to radians
+    double angleRadians = angleDegrees * M_PI / 180.0;
+
+    // Create axis system
+    gp_Ax2 axis(pnt, dir);
+
+    // Build the cylinder
+    BRepPrimAPI_MakeCylinder cylinderMaker(axis, radius, height, angleRadians);
+
+    if (!cylinderMaker.IsDone()) {
+      throw std::runtime_error("Cylinder creation failed");
+    }
+
+    return solid(cylinderMaker.Shape());
   } catch (...) {
     return solid{};
   }
-} // namespace topo
+}
+
+solid solid::make_solid_from_cone(double radius1, double radius2, double height,
+                                  const gp_Pnt &pnt, const gp_Dir &dir,
+                                  double angleDegrees) {
+  try {
+    // Convert angle to radians
+    double angleRadians = angleDegrees * M_PI / 180.0;
+
+    // Create axis system
+    gp_Ax2 axis(pnt, dir);
+
+    // Build the cone
+    BRepPrimAPI_MakeCone coneMaker(axis, radius1, radius2, height,
+                                   angleRadians);
+
+    if (!coneMaker.IsDone()) {
+      throw std::runtime_error("Cone creation failed");
+    }
+
+    return solid(coneMaker.Shape());
+  } catch (...) {
+    return solid{};
+  }
+}
 
 solid solid::make_solid_from_cone(const Standard_Real R1,
                                   const Standard_Real R2, const Standard_Real H,
@@ -843,25 +876,29 @@ solid solid::make_solid(std::initializer_list<face> faces, double tolerance) {
   return s;
 }
 
-int solid::num_solids() const {
-  const TopoDS_Shape &shp = value();
-  if (shp.ShapeType() == TopAbs_SOLID) {
-    return 1;
-  } else {
-    TopTools_IndexedMapOfShape compsolids;
-    TopExp::MapShapes(shp, TopAbs_COMPSOLID, compsolids);
-
-    TopTools_IndexedMapOfShape solids;
-    TopExp::MapShapes(shp, TopAbs_SOLID, solids);
-
-    return solids.Extent() + compsolids.Extent();
+solid solid::make_solid_from_loft(const std::vector<wire> &wires, bool ruled) {
+  // Validate input
+  if (wires.size() < 2) {
+    throw std::invalid_argument("More than one wire is required");
   }
-}
 
-int solid::num_faces() const {
-  TopTools_IndexedMapOfShape anIndices;
-  TopExp::MapShapes(value(), TopAbs_FACE, anIndices);
-  return anIndices.Extent();
+  // Create loft builder (true = make solid, not shell)
+  BRepOffsetAPI_ThruSections loftBuilder(true, ruled);
+
+  // Add all wires
+  for (const wire &w : wires) {
+    loftBuilder.AddWire(TopoDS::Wire(w.value()));
+  }
+
+  // Build the loft
+  loftBuilder.Build();
+
+  // Check if operation succeeded
+  if (!loftBuilder.IsDone()) {
+    throw std::runtime_error("Failed to create loft");
+  }
+
+  return solid(loftBuilder.Shape());
 }
 
 double solid::area() const {
@@ -891,6 +928,78 @@ gp_Pnt solid::centre_of_mass() const {
   gp_Pnt cg = prop.CentreOfMass();
   return cg;
 }
+static TopoDS_Shape _extrudeAuxSpine(const TopoDS_Wire &wire,
+                                     const TopoDS_Wire &spine,
+                                     const TopoDS_Wire &auxSpine) {
+  BRepOffsetAPI_MakePipeShell extrudeBuilder(spine);
+  extrudeBuilder.SetMode(auxSpine, false); // auxiliary spine
+  extrudeBuilder.Add(wire);
+  extrudeBuilder.Build();
+  extrudeBuilder.MakeSolid();
+  return extrudeBuilder.Shape();
+}
+
+// Extrude with rotation - wire version
+int solid::extrude_with_rotation(const wire &outerWire,
+                                 const std::vector<wire> &innerWires,
+                                 const gp_Pnt &vecCenter,
+                                 const gp_Vec &vecNormal, double angleDegrees) {
+  try {
+
+    // Make straight spine
+    edge straightSpineEdge =
+        edge::make_polygon(vecCenter, vecCenter.XYZ() + vecNormal.XYZ());
+    auto shapes = std::vector<shape>({straightSpineEdge});
+    wire straightSpineWire = wire::combine(shapes)[0];
+
+    // Make auxiliary spine (helix)
+    double pitch = 360.0 / angleDegrees * vecNormal.Magnitude();
+    double radius = 1.0;
+    wire auxSpineWire = wire::make_helix(pitch, vecNormal.Magnitude(), radius,
+                                         vecCenter, vecNormal);
+
+    // Extrude outer wire
+    TopoDS_Shape outerSolid = _extrudeAuxSpine(
+        outerWire.value(), straightSpineWire.value(), auxSpineWire.value());
+
+    // Extrude inner wires and combine
+    std::vector<TopoDS_Shape> innerSolids;
+    for (const wire &w : innerWires) {
+      innerSolids.push_back(_extrudeAuxSpine(
+          w.value(), straightSpineWire.value(), auxSpineWire.value()));
+    }
+
+    BRep_Builder B;
+    TopoDS_Compound innerCompound;
+    B.MakeCompound(innerCompound);
+    for (unsigned i = 0; i < innerSolids.size(); i++) {
+      B.Add(innerCompound, innerSolids[i]);
+    }
+
+    // Subtract inner from outer
+    _shape = BRepAlgoAPI_Cut(outerSolid, innerCompound).Shape();
+
+    if (!this->fix_shape())
+      throw std::runtime_error("Shapes not valid");
+
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
+    if (msg != nullptr && strlen(msg) > 1) {
+      throw std::runtime_error(msg);
+    } else {
+      throw std::runtime_error("Failed to extrude");
+    }
+    return 0;
+  }
+  return 1;
+}
+
+// Extrude with rotation - face version
+int solid::extrude_with_rotation(const face &face, const gp_Pnt &vecCenter,
+                                 const gp_Vec &vecNormal, double angleDegrees) {
+  return extrude_with_rotation(face.outer_wire(), face.inner_wires(), vecCenter,
+                               vecNormal, angleDegrees);
+}
 
 int solid::extrude(const face &f, gp_Pnt p1, gp_Pnt p2) {
   try {
@@ -917,11 +1026,32 @@ int solid::extrude(const face &f, gp_Pnt p1, gp_Pnt p2) {
   return 1;
 }
 
-int solid::extrude(const face &f, gp_Vec d) {
-  try {
-    BRepPrimAPI_MakePrism MP(f.value(), d, Standard_False);
+int solid::extrude(const wire &outerWire, const std::vector<wire> &innerWires,
+                   const gp_Vec &vecNormal, double taper) {
+  face f;
+  if (taper == 0) {
+    f = face::make_face(outerWire, innerWires);
+  } else {
+    f = face::make_face(outerWire, false);
+  }
+  return extrude(f, vecNormal, taper);
+}
 
-    _shape = MP.Shape();
+int solid::extrude(const face &f, gp_Vec vecNormal, double taper) {
+  try {
+    if (taper == 0) {
+      BRepPrimAPI_MakePrism MP(f.value(), vecNormal, Standard_False);
+
+      _shape = MP.Shape();
+    } else {
+      gp_Vec faceNormal = f.normal_at();
+      double d = vecNormal.Angle(faceNormal) < M_PI / 2 ? 1 : -1;
+      double adjustedLength =
+          (d * vecNormal.Magnitude()) / cos(taper * M_PI / 180);
+      LocOpe_DPrism prismBuilder(f.value(), adjustedLength,
+                                 d * taper * M_PI / 180);
+      _shape = prismBuilder.Shape();
+    }
 
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
@@ -946,6 +1076,212 @@ int solid::revolve(const face &f, gp_Pnt p1, gp_Pnt p2, double angle) {
                              Standard_False);
 
     _shape = MR.Shape();
+
+    if (!this->fix_shape())
+      throw std::runtime_error("Shapes not valid");
+
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
+    if (msg != nullptr && strlen(msg) > 1) {
+      throw std::runtime_error(msg);
+    } else {
+      throw std::runtime_error("Failed to revolve");
+    }
+    return 0;
+  }
+  return 1;
+}
+
+int solid::revolve(const wire &outerWire, const std::vector<wire> &innerWires,
+                   double angleDegrees, const gp_Pnt &axisStart,
+                   const gp_Pnt &axisEnd) {
+  face f = face::make_face(outerWire, innerWires);
+  return revolve(f, angleDegrees, axisStart, axisEnd);
+}
+
+int solid::revolve(const face &f, double angleDegrees, const gp_Pnt &axisStart,
+                   const gp_Pnt &axisEnd) {
+  try {
+    gp_Vec axisVec(axisStart, axisEnd);
+    gp_Ax1 axis(axisStart, axisVec);
+    double angleRad = angleDegrees * M_PI / 180.0;
+
+    BRepPrimAPI_MakeRevol revolBuilder(f.value(), axis, angleRad, true);
+
+    _shape = revolBuilder.Shape();
+
+    if (!this->fix_shape())
+      throw std::runtime_error("Shapes not valid");
+
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
+    if (msg != nullptr && strlen(msg) > 1) {
+      throw std::runtime_error(msg);
+    } else {
+      throw std::runtime_error("Failed to revolve");
+    }
+    return 0;
+  }
+  return 1;
+}
+
+struct SweepModeVisitor : public boost::static_visitor<bool> {
+  BRepOffsetAPI_MakePipeShell &builder;
+  const TopoDS_Shape &path;
+
+  SweepModeVisitor(BRepOffsetAPI_MakePipeShell &b, const TopoDS_Shape &p)
+      : builder(b), path(p) {}
+
+  bool operator()(const gp_Vec &vec) const {
+    gp_Pnt startPoint = getStartPoint(path);
+    gp_Ax2 ax(startPoint, vec);
+    builder.SetMode(ax);
+    return true; // rotate = true
+  }
+
+  bool operator()(const TopoDS_Wire &wire) const {
+    builder.SetMode(wire, true);
+    return false;
+  }
+
+  bool operator()(const TopoDS_Edge &e) const {
+    TopoDS_Wire wire = wire::make_wire({edge(e)}).value();
+    builder.SetMode(wire, true);
+    return false;
+  }
+
+private:
+  gp_Pnt getStartPoint(const TopoDS_Shape &shape) const {
+    // Implementation to get start point from path
+    return gp_Pnt();
+  }
+};
+
+// Convert edge to wire
+static wire _to_wire(const TopoDS_Shape &shape) {
+  if (shape.ShapeType() == TopAbs_EDGE) {
+    return wire::make_wire({edge(TopoDS::Edge(shape))});
+  }
+  return wire(TopoDS::Wire(shape));
+}
+
+// Sweep - wire version
+int solid::sweep(const wire &outerWire, const std::vector<wire> &innerWires,
+                 const TopoDS_Shape &path, bool makeSolid, bool isFrenet,
+                 const boost::optional<SweepMode> &mode,
+                 const std::string &transitionMode) {
+  try {
+    TopoDS_Wire pathWire = _to_wire(path).value();
+    std::vector<TopoDS_Shape> shapes;
+
+    std::vector<wire> allWires = {innerWires};
+    allWires.push_back(outerWire);
+
+    for (const auto &wire : allWires) {
+      BRepOffsetAPI_MakePipeShell builder(pathWire);
+      bool rotate = false;
+
+      // Handle sweep mode
+      if (mode) {
+        SweepModeVisitor visitor(builder, path);
+        rotate = boost::apply_visitor(visitor, *mode);
+      } else {
+        builder.SetMode(isFrenet);
+      }
+
+      // Set transition mode
+      if (transitionMode == "transformed") {
+        builder.SetTransitionMode(BRepBuilderAPI_Transformed);
+      } else if (transitionMode == "round") {
+        builder.SetTransitionMode(BRepBuilderAPI_RoundCorner);
+      } else if (transitionMode == "right") {
+        builder.SetTransitionMode(BRepBuilderAPI_RightCorner);
+      }
+
+      builder.Add(wire.value(), false, rotate);
+      builder.Build();
+
+      if (makeSolid) {
+        builder.MakeSolid();
+      }
+
+      shapes.push_back(builder.Shape());
+    }
+
+    TopoDS_Shape result = shapes[0];
+    if (shapes.size() > 1) {
+      auto _shapes = std::vector<shape>(shapes.begin() + 1, shapes.end());
+      compound innerCompound = compound::make_compound(_shapes);
+      result = BRepAlgoAPI_Cut(result, innerCompound).Shape();
+    }
+
+    _shape = result;
+
+    if (!this->fix_shape())
+      throw std::runtime_error("Shapes not valid");
+
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
+    if (msg != nullptr && strlen(msg) > 1) {
+      throw std::runtime_error(msg);
+    } else {
+      throw std::runtime_error("Failed to revolve");
+    }
+    return 0;
+  }
+  return 1;
+}
+
+int solid::sweep(const face &f, const TopoDS_Shape &path, bool makeSolid,
+                 bool isFrenet, const boost::optional<SweepMode> &mode,
+                 const std::string &transitionMode) {
+  return sweep(f.outer_wire(), f.inner_wires(), path, makeSolid, isFrenet, mode,
+               transitionMode);
+}
+
+int solid::sweep_multi(const std::vector<boost::variant<wire, face>> &profiles,
+                       const TopoDS_Shape &path, bool makeSolid, bool isFrenet,
+                       const boost::optional<SweepMode> &mode) {
+  try {
+
+    TopoDS_Wire pathWire = _to_wire(path).value();
+    BRepOffsetAPI_MakePipeShell builder(pathWire);
+    bool rotate = false;
+
+    if (mode) {
+      SweepModeVisitor visitor(builder, path);
+      rotate = boost::apply_visitor(visitor, *mode);
+    } else {
+      builder.SetMode(isFrenet);
+    }
+
+    struct ProfileVisitor : public boost::static_visitor<> {
+      BRepOffsetAPI_MakePipeShell &builder;
+      bool rotate;
+
+      ProfileVisitor(BRepOffsetAPI_MakePipeShell &b, bool r)
+          : builder(b), rotate(r) {}
+
+      void operator()(const wire &w) const {
+        builder.Add(w.value(), false, rotate);
+      }
+
+      void operator()(const face &f) const {
+        builder.Add(f.outer_wire().value(), false, rotate);
+      }
+    };
+
+    ProfileVisitor profileVisitor(builder, rotate);
+    for (const auto &profile : profiles) {
+      boost::apply_visitor(profileVisitor, profile);
+    }
+
+    builder.Build();
+    if (makeSolid) {
+      builder.MakeSolid();
+    }
+
+    _shape = builder.Shape();
 
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
@@ -1255,14 +1591,15 @@ int solid::shelling(std::vector<face> &faces, double offset, double tolerance) {
       face *f = &faces[i];
       facelist.Append(f->value());
     }
-      
+
     BRepOffset_Mode mode = BRepOffset_Skin;
     Standard_Boolean bIntersection = Standard_False;
     Standard_Boolean bSelfInter = Standard_False;
     GeomAbs_JoinType joinType = GeomAbs_Arc;
-      
+
     BRepOffsetAPI_MakeThickSolid tool;
-    tool.MakeThickSolidByJoin(_shape, facelist, offset, tolerance, mode, bIntersection, bSelfInter, joinType);
+    tool.MakeThickSolidByJoin(_shape, facelist, offset, tolerance, mode,
+                              bIntersection, bSelfInter, joinType);
     tool.Build();
 
     if (!tool.IsDone())
@@ -1865,6 +2202,69 @@ int solid::convert_to_nurbs() {
     return 0;
   }
   return 1;
+}
+
+int solid::split(const std::vector<shape> &splitters) {
+  try {
+    BRepAlgoAPI_Splitter splitter;
+
+    splitter.SetNonDestructive(Standard_True);
+    splitter.SetRunParallel(Standard_True);
+
+    TopTools_ListOfShape arguments;
+    arguments.Append(_shape);
+    splitter.SetArguments(arguments);
+
+    TopTools_ListOfShape theTools;
+    for (const auto &s : splitters) {
+      theTools.Append(s.value());
+    }
+    splitter.SetTools(theTools);
+
+    splitter.Build();
+
+    if (!splitter.IsDone()) {
+      throw std::runtime_error("Split operation failed");
+    }
+
+    const TopoDS_Shape &result = splitter.Shape();
+    if (result.IsNull()) {
+      throw std::runtime_error("Resulting shape is null");
+    }
+
+    _shape = result;
+
+    if (!this->fix_shape())
+      throw std::runtime_error("Shapes not valid");
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
+    if (msg != nullptr && strlen(msg) > 1) {
+      throw std::runtime_error(msg);
+    } else {
+      throw std::runtime_error("Failed to shell solid");
+    }
+    return 0;
+  }
+  return 1;
+}
+
+shell solid::outer_shell() const {
+  return shell(BRepClass3d::OuterShell(this->value()));
+}
+
+std::vector<shell> solid::inner_shells() const {
+  shell outer = this->outer_shell();
+  std::vector<shell> innerShells;
+
+  std::vector<shell> allShells = this->shells();
+
+  for (const shell &s : allShells) {
+    if (!s.is_same(outer)) {
+      innerShells.push_back(s);
+    }
+  }
+
+  return innerShells;
 }
 
 } // namespace topo

@@ -20,11 +20,14 @@ public:
   virtual ~vertex() = default;
 
   static vertex make_vertex(const gp_Pnt &P);
+  static vertex make_vertex(const gp_Vec &P);
 
   TopoDS_Vertex &value();
   const TopoDS_Vertex &value() const;
 
   operator const gp_Pnt() const;
+
+  gp_Pnt point() const;
 
   virtual geometry_object_type type() const override {
     return geometry_object_type::VertexType;
@@ -32,7 +35,8 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
-  vertex(TopoDS_Shape shp) : shape(shp) {}
+  vertex(TopoDS_Shape shp, bool forConstruction = false)
+      : shape(shp, forConstruction) {}
   vertex(const shape &v, TopoDS_Shape shp) : shape(v, shp) {}
 
 protected:
@@ -60,4 +64,13 @@ public:
 } // namespace topo
 } // namespace flywave
 
+namespace std {
+
+template <> struct hash<flywave::topo::vertex> {
+  size_t operator()(const flywave::topo::vertex &v) const {
+    return v.hash_code();
+  }
+};
+
+} // namespace std
 #endif // __FLYWAVE_MESH_TOPO_VERTEX_HH__

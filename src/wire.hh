@@ -1,10 +1,16 @@
 #ifndef __FLYWAVE_MESH_TOPO_WIRE_HH__
 #define __FLYWAVE_MESH_TOPO_WIRE_HH__
 
+#include <BRepAdaptor_CompCurve.hxx>
+#include <BRepAdaptor_Curve.hxx>
+#include <GeomAbs_JoinType.hxx>
 #include <TopExp_Explorer.hxx>
+#include <TopoDS_Edge.hxx>
 #include <TopoDS_Wire.hxx>
 
-#include "shape.hh"
+#include <boost/variant.hpp>
+
+#include "shape1d.hh"
 
 namespace flywave {
 namespace topo {
@@ -14,7 +20,7 @@ class face;
 class vertex;
 class wire_iterator;
 
-class wire : public shape {
+class wire : public shape1d {
 public:
   wire() = default;
   virtual ~wire() = default;
@@ -24,18 +30,21 @@ public:
   static wire make_polygon(const gp_Pnt &P1, const gp_Pnt &P2);
 
   static wire make_polygon(const gp_Pnt &P1, const gp_Pnt &P2, const gp_Pnt &P3,
-                           const bool Close = false);
+                           const bool close = false);
 
   static wire make_polygon(const gp_Pnt &P1, const gp_Pnt &P2, const gp_Pnt &P3,
-                           const gp_Pnt &P4, const bool Close = false);
+                           const gp_Pnt &P4, const bool close = false);
 
   static wire make_polygon(const vertex &V1, const vertex &V2);
 
   static wire make_polygon(const vertex &V1, const vertex &V2, const vertex &V3,
-                           const bool Close = false);
+                           const bool close = false);
 
   static wire make_polygon(const vertex &V1, const vertex &V2, const vertex &V3,
-                           const vertex &V4, const bool Close = false);
+                           const vertex &V4, const bool close = false);
+
+  static wire make_polygon(const std::vector<gp_Pnt> &vertices,
+                           bool close = false, bool forConstruction = false);
 
   static wire make_wire(const edge &E);
   static wire make_wire(const edge &E1, const edge &E2);
@@ -56,11 +65,30 @@ public:
 
   static wire make_wire(std::initializer_list<wire> wires);
 
-  int num_vertices() const;
+  static wire make_rect(double width, double height);
 
-  int num_edges() const;
+  static wire make_circle(double radius, const gp_Pnt &center,
+                          const gp_Dir &normal);
 
-  bool is_closed() const;
+  static wire make_ellipse(double x_radius, double y_radius,
+                           const gp_Pnt &center, const gp_Dir &normal,
+                           const gp_Dir &xDir, double angle1 = 360.0,
+                           double angle2 = 360.0, double rotation_angle = 0.0,
+                           bool closed = true);
+
+  static wire make_helix(double pitch, double height, double radius,
+                         const gp_Pnt &center = gp_Pnt(0, 0, 0),
+                         const gp_Dir &dir = gp_Dir(0, 0, 1),
+                         double angle = 360.0, bool lefthand = false);
+
+  static std::vector<wire> combine(std::vector<shape> &wires,
+                                   double tol = 1e-9);
+
+  wire stitch(const wire &other) const;
+
+  int num_edges() const override;
+
+  std::vector<vertex> vertices() const override;
 
   double length() const;
 
@@ -68,11 +96,18 @@ public:
 
   int project(const face &f);
 
-  int offset(double distance, int joinType);
+  int offset(double distance, const GeomAbs_JoinType &kind = GeomAbs_Arc);
 
   int fillet(std::vector<vertex> &vertices, std::vector<double> radius);
 
   int chamfer(std::vector<vertex> &vertices, std::vector<double> distances);
+
+  std::vector<wire> offset2d(double distances,
+                             const GeomAbs_JoinType &kind = GeomAbs_Arc) const;
+
+  wire fillet2d(double radius, const std::vector<vertex> &vertices) const;
+
+  wire chamfer2d(double distances, const std::vector<vertex> &vertices) const;
 
   TopoDS_Wire &value();
   const TopoDS_Wire &value() const;
@@ -83,8 +118,13 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
-  wire(TopoDS_Shape shp) : shape(shp) {}
-  wire(const shape &v, TopoDS_Shape shp) : shape(v, shp) {}
+  wire(TopoDS_Shape shp, bool forConstruction = false)
+      : shape1d(shp, forConstruction) {}
+  wire(const shape &v, TopoDS_Shape shp) : shape1d(v, shp) {}
+
+  virtual Handle(Adaptor3d_Curve) get_geom() const override;
+
+  wire close() const;
 
 protected:
   friend class wire_iterator;
@@ -109,4 +149,13 @@ public:
 } // namespace topo
 } // namespace flywave
 
+namespace std {
+
+template <> struct hash<flywave::topo::wire> {
+  size_t operator()(const flywave::topo::wire &v) const {
+    return v.hash_code();
+  }
+};
+
+} // namespace std
 #endif // __FLYWAVE_MESH_TOPO_WIRE_HH__

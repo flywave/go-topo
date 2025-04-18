@@ -60,3 +60,13 @@ ELSEIF(UNIX AND NOT APPLE)
 ELSE()
     TARGET_LINK_LIBRARIES(topo_test topo ${FLYWAVE_LIBRARY_DEPES})
 ENDIF()
+
+ADD_EXECUTABLE(primitives_test primitives_test.cc)
+
+IF(MINGW)
+     TARGET_LINK_LIBRARIES(primitives_test -Wl,--start-group  stdc++ ${FLYWAVE_LIBRARY_DEPES} topo  -Wl,--end-group)
+ELSEIF(UNIX AND NOT APPLE)
+    TARGET_LINK_LIBRARIES(primitives_test -Wl,--start-group topo pthread dl stdc++ m ${FLYWAVE_LIBRARY_DEPES} -Wl,--end-group)
+ELSE()
+    TARGET_LINK_LIBRARIES(primitives_test topo ${FLYWAVE_LIBRARY_DEPES})
+ENDIF()

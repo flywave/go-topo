@@ -4,10 +4,13 @@
 #include <Geom_Surface.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Face.hxx>
-#include <gp_Cylinder.hxx>
 #include <gp_Cone.hxx>
+#include <gp_Cylinder.hxx>
 #include <gp_Sphere.hxx>
 #include <gp_Torus.hxx>
+#include <tuple>
+
+#include <boost/variant.hpp>
 
 #include "bool_type.hh"
 #include "shape.hh"
@@ -18,6 +21,7 @@ namespace topo {
 class wire;
 class solid;
 class edge;
+class vertex;
 class face_iterator;
 
 class face : public shape {
@@ -87,6 +91,13 @@ public:
 
   static face make_face(const face &F, const wire &W);
 
+  static face make_face(const face &F, const wire &outer,
+                        const std::vector<wire> &inners);
+
+  static face make_face(const edge &edge1, const edge &edge2);
+
+  static face make_face(const wire &wire1, const wire &wire2);
+
   static face make_face(std::vector<wire> &wires);
 
   static face make_face(std::initializer_list<wire> wires);
@@ -97,9 +108,29 @@ public:
 
   static face make_face(std::initializer_list<gp_Pnt> points);
 
-  int num_wires() const;
+  static face make_face(const wire &outerWire,
+                        const std::vector<wire> &innerWires);
 
-  int num_faces() const;
+  static std::vector<face>
+  make_from_wires(const wire &outer, const std::vector<wire> &inners = {});
+
+  static face
+  make_face(const std::vector<boost::variant<edge, wire>> &edges,
+            const std::vector<boost::variant<edge, wire, gp_Pnt>> &constraints,
+            GeomAbs_Shape continuity = GeomAbs_C0, int degree = 3,
+            int nbPtsOnCur = 15, int nbIter = 2, bool anisotropy = false,
+            double tol2d = 0.00001, double tol3d = 0.0001, double tolAng = 0.01,
+            double tolCurv = 0.1, int maxDeg = 8, int maxSegments = 9);
+
+  static face make_plane(const gp_Pnt &basePnt = gp_Pnt(0, 0, 0),
+                         const gp_Dir &dir = gp_Dir(0, 0, 1),
+                         boost::optional<double> length = boost::none,
+                         boost::optional<double> width = boost::none);
+
+  static face make_spline_approx(
+      const std::vector<std::vector<gp_Pnt>> &points, double tol = 1e-2,
+      const std::tuple<double, double, double> *smoothing = nullptr,
+      int minDeg = 1, int maxDeg = 3);
 
   double area() const;
 
@@ -108,6 +139,29 @@ public:
   Bnd_Box inertia() const;
 
   gp_Pnt centre_of_mass() const;
+
+  gp_Pnt center() const;
+
+  gp_Pln to_plane() const;
+
+  std::tuple<double, double, double, double> uv_bounds() const;
+
+  std::pair<double, double> param_at(const gp_Pnt &pt) const;
+
+  std::pair<std::vector<double>, std::vector<double>>
+  params(const std::vector<gp_Pnt> &pts, double tol = 1e-9) const;
+
+  gp_Pnt position_at(double u, double v) const;
+
+  std::vector<gp_Pnt>
+  positions(const std::vector<std::pair<double, double>> &uvs) const;
+
+  gp_Vec normal_at(const gp_Pnt *locationVector = nullptr) const;
+
+  std::pair<gp_Vec, gp_Pnt> normal_at(double u, double v) const;
+
+  std::pair<std::vector<gp_Vec>, std::vector<gp_Pnt>>
+  normals(const std::vector<double> &us, const std::vector<double> &vs) const;
 
   int offset(double offset, double tolerance = 1e-6);
 
@@ -121,10 +175,34 @@ public:
 
   int boolean(const face &tool, bool_op_type op);
 
+  face fillet2d(double radius, const std::vector<vertex> &vertices) const;
+
+  face chamfer2d(double distances, const std::vector<vertex> &vertices) const;
+
+  solid thicken(double thickness) const;
+
+  face project(const face &other, const gp_Vec &direction) const;
+
+  face to_arcs(double tolerance = 1e-3) const;
+
+  face trim(double u0, double u1, double v0, double v1,
+            double tol = 1e-6) const;
+
+  edge isoline(double param, const std::string &direction = "v") const;
+
+  std::vector<edge> isolines(const std::vector<double> &params,
+                             const std::string &direction = "v") const;
+
+  wire outer_wire() const;
+
+  std::vector<wire> inner_wires() const;
+
   TopoDS_Face &value();
   const TopoDS_Face &value() const;
 
   operator Handle(Geom_Surface)() const;
+
+  Handle_Geom_Surface get_geom() const;
 
   virtual geometry_object_type type() const override {
     return geometry_object_type::FaceType;
@@ -132,7 +210,8 @@ public:
 
   virtual shape copy(bool deep = true) const override;
 
-  face(TopoDS_Shape shp) : shape(shp) {}
+  face(TopoDS_Shape shp, bool forConstruction = false)
+      : shape(shp, forConstruction) {}
   face(const shape &v, TopoDS_Shape shp) : shape(v, shp) {}
 
 protected:
@@ -159,4 +238,13 @@ public:
 } // namespace topo
 } // namespace flywave
 
+namespace std {
+
+template <> struct hash<flywave::topo::face> {
+  size_t operator()(const flywave::topo::face &v) const {
+    return v.hash_code();
+  }
+};
+
+} // namespace std
 #endif // __FLYWAVE_MESH_TOPO_FACE_HH__

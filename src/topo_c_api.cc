@@ -1,5 +1,6 @@
 #include "topo_c_api.h"
 #include "geometry_impl.hh"
+#include "shape_ops.hh"
 #include "standard_impl.hh"
 #include "topo_impl.hh"
 
@@ -581,6 +582,90 @@ topo_wire_t topo_make_wire_from_wries(topo_wire_t *wires, int count) {
   }
 }
 
+topo_wire_t topo_make_wire_from_rect(double width, double height) {
+  try {
+    return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
+        flywave::topo::wire::make_rect(width, height))}};
+  } catch (...) {
+    return topo_wire_t{};
+  }
+}
+
+topo_wire_t topo_make_wire_from_circle(double radius, pnt3d_t center,
+                                       dir3d_t normal) {
+  try {
+    return topo_wire_t{new topo_shape_t{
+        std::make_shared<flywave::topo::wire>(flywave::topo::wire::make_circle(
+            radius, cast_to_gp(center), cast_to_gp(normal)))}};
+  } catch (...) {
+    return topo_wire_t{};
+  }
+}
+
+topo_wire_t topo_make_wire_from_ellipse(double x_radius, double y_radius,
+                                        pnt3d_t center, dir3d_t normal,
+                                        dir3d_t xDir, double angle1,
+                                        double angle2, double rotation_angle,
+                                        _Bool closed) {
+  try {
+    return topo_wire_t{new topo_shape_t{
+        std::make_shared<flywave::topo::wire>(flywave::topo::wire::make_ellipse(
+            x_radius, y_radius, cast_to_gp(center), cast_to_gp(normal),
+            cast_to_gp(xDir), angle1, angle2, rotation_angle, closed))}};
+  } catch (...) {
+    return topo_wire_t{};
+  }
+}
+
+topo_wire_t topo_make_wire_from_helix(double pitch, double height,
+                                      double radius, pnt3d_t center,
+                                      dir3d_t dir, double angle,
+                                      _Bool lefthand) {
+  try {
+    return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
+        flywave::topo::wire::make_helix(pitch, height, radius,
+                                        cast_to_gp(center), cast_to_gp(dir),
+                                        angle, lefthand))}};
+  } catch (...) {
+    return topo_wire_t{};
+  }
+}
+
+topo_wire_t *topo_make_wire_from_combine(topo_wire_t *wires, int count,
+                                         double tol, int *retCount) {
+  try {
+    std::vector<flywave::topo::shape> ows;
+    for (int i = 0; i < count; i++) {
+      ows.emplace_back(*cast_to_topo(wires[i]));
+    }
+    auto ret = flywave::topo::wire::combine(ows, tol);
+    *retCount = static_cast<int>(ret.size());
+    if (!ret.empty()) {
+      auto *p = new topo_wire_t[ret.size()];
+      for (size_t i = 0; i < ret.size(); i++) {
+        p[i] = topo_wire_t{
+            new topo_shape_t{std::make_shared<flywave::topo::wire>(ret[i])}};
+      }
+      return p;
+    }
+    return nullptr;
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+void topo_wire_list_free(topo_wire_t *wires, int count) { delete[] wires; }
+
+topo_wire_t topo_wire_stitch(topo_wire_t w1, topo_wire_t w2) {
+  try {
+    return topo_wire_t{
+        new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
+                             cast_to_topo(w1)->stitch(*cast_to_topo(w2)))}};
+  } catch (...) {
+    return topo_wire_t{};
+  }
+}
+
 int topo_wire_num_vertices(topo_wire_t w) {
   try {
     auto opt = cast_to_topo(w);
@@ -639,6 +724,66 @@ void topo_wire_convert_to_curves3d(topo_wire_t w) {
   }
 }
 
+topo_wire_t *topo_wire_offset2d(topo_wire_t w, double distance, int joinType,
+                                int *retCount) {
+  try {
+    auto opt = cast_to_topo(w);
+    if (opt) {
+      auto wires =
+          opt->offset2d(distance, static_cast<GeomAbs_JoinType>(joinType));
+      if (retCount) {
+        *retCount = static_cast<int>(wires.size());
+      }
+      auto *p = new topo_wire_t[wires.size()];
+      for (size_t i = 0; i < wires.size(); i++) {
+        p[i] = topo_wire_t{
+            new topo_shape_t{std::make_shared<flywave::topo::shape>(wires[i])}};
+      }
+      return p;
+    }
+    return nullptr;
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+topo_wire_t topo_wire_fillet2d(topo_wire_t w, topo_vertex_t *vertices,
+                               int vertcount, double radius) {
+  try {
+    auto opt = cast_to_topo(w);
+    if (opt) {
+      std::vector<flywave::topo::vertex> ows;
+      for (int i = 0; i < vertcount; i++) {
+        ows.emplace_back(*cast_to_topo(vertices[i]));
+      }
+
+      return topo_wire_t{
+          new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
+                               opt->fillet2d(radius, ows))}};
+    }
+  } catch (...) {
+    return topo_wire_t{};
+  }
+}
+
+topo_wire_t topo_wire_chamfer2d(topo_wire_t w, topo_vertex_t *vertices,
+                                int vertcount, double distance) {
+  try {
+    auto opt = cast_to_topo(w);
+    if (opt) {
+      std::vector<flywave::topo::vertex> ows;
+      for (int i = 0; i < vertcount; i++) {
+        ows.emplace_back(*cast_to_topo(vertices[i]));
+      }
+      return topo_wire_t{
+          new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
+                               opt->chamfer2d(distance, ows))}};
+    }
+  } catch (...) {
+    return topo_wire_t{};
+  }
+}
+
 int topo_wire_project(topo_wire_t w, topo_face_t f) {
   try {
     auto opt = cast_to_topo(w);
@@ -655,7 +800,7 @@ int topo_wire_offset(topo_wire_t w, double distance, int joinType) {
   try {
     auto opt = cast_to_topo(w);
     if (opt) {
-      return opt->offset(distance, joinType);
+      return opt->offset(distance, static_cast<GeomAbs_JoinType>(joinType));
     }
     return -1;
   } catch (...) {
@@ -695,6 +840,303 @@ int topo_wire_chamfer(topo_wire_t w, topo_vertex_t *vertices, int vertcount,
     return opt->chamfer(ows, ors);
   }
   return -1;
+}
+
+void topo_wire_bounds(topo_wire_t w, double *min, double *max) {
+  try {
+    auto bounds = cast_to_topo(w)->bounds();
+    *min = bounds.first;
+    *max = bounds.second;
+  } catch (...) {
+    *min = *max = 0.0;
+  }
+}
+
+pnt3d_t topo_wire_start_point(topo_wire_t w) {
+  pnt3d_t result = {0, 0, 0};
+  try {
+    auto point = cast_to_topo(w)->start_point();
+    result.x = point.X();
+    result.y = point.Y();
+    result.z = point.Z();
+  } catch (...) {
+  }
+  return result;
+}
+
+pnt3d_t topo_wire_end_point(topo_wire_t w) {
+  pnt3d_t result = {0, 0, 0};
+  try {
+    auto point = cast_to_topo(w)->end_point();
+    result.x = point.X();
+    result.y = point.Y();
+    result.z = point.Z();
+  } catch (...) {
+  }
+  return result;
+}
+
+double topo_wire_param_at(topo_wire_t w, double d) {
+  try {
+    return cast_to_topo(w)->param_at(d);
+  } catch (...) {
+    return 0.0;
+  }
+}
+
+double topo_wire_param_at_point(topo_wire_t w, pnt3d_t pt) {
+  try {
+    gp_Pnt point(pt.x, pt.y, pt.z);
+    return cast_to_topo(w)->param_at(point);
+  } catch (...) {
+    return 0.0;
+  }
+}
+
+void topo_wire_params(topo_wire_t w, pnt3d_t *pts, int count, double *params,
+                      double tol) {
+  try {
+    std::vector<gp_Pnt> points;
+    for (int i = 0; i < count; i++) {
+      points.emplace_back(pts[i].x, pts[i].y, pts[i].z);
+    }
+    auto result = cast_to_topo(w)->params(points, tol);
+    for (int i = 0; i < count; i++) {
+      params[i] = result[i];
+    }
+  } catch (...) {
+    for (int i = 0; i < count; i++) {
+      params[i] = 0.0;
+    }
+  }
+}
+
+void topo_wire_params_length(topo_wire_t w, double *locations, int count,
+                             double *params) {
+  try {
+    std::vector<double> locs(locations, locations + count);
+    auto result = cast_to_topo(w)->params_length(locs);
+    for (int i = 0; i < count; i++) {
+      params[i] = result[i];
+    }
+  } catch (...) {
+    for (int i = 0; i < count; i++) {
+      params[i] = 0.0;
+    }
+  }
+}
+
+dir3d_t topo_wire_tangent_at(topo_wire_t w, double param) {
+  dir3d_t result = {0, 0, 0};
+  try {
+    auto dir = cast_to_topo(w)->tangent_at(param);
+    result.x = dir.X();
+    result.y = dir.Y();
+    result.z = dir.Z();
+  } catch (...) {
+  }
+  return result;
+}
+
+void topo_wire_tangents(topo_wire_t w, double *params, int count,
+                        dir3d_t *tangents) {
+  try {
+    std::vector<double> paramVec(params, params + count);
+    auto result = cast_to_topo(w)->tangents(paramVec);
+    for (int i = 0; i < count; i++) {
+      tangents[i].x = result[i].X();
+      tangents[i].y = result[i].Y();
+      tangents[i].z = result[i].Z();
+    }
+  } catch (...) {
+    for (int i = 0; i < count; i++) {
+      tangents[i] = {0, 0, 0};
+    }
+  }
+}
+
+dir3d_t topo_wire_normal(topo_wire_t w) {
+  dir3d_t result = {0, 0, 0};
+  try {
+    auto dir = cast_to_topo(w)->normal();
+    result.x = dir.X();
+    result.y = dir.Y();
+    result.z = dir.Z();
+  } catch (...) {
+  }
+  return result;
+}
+
+pnt3d_t topo_wire_center(topo_wire_t w) {
+  pnt3d_t result = {0, 0, 0};
+  try {
+    auto point = cast_to_topo(w)->center();
+    result.x = point.X();
+    result.y = point.Y();
+    result.z = point.Z();
+  } catch (...) {
+  }
+  return result;
+}
+
+double topo_wire_radius(topo_wire_t w) {
+  try {
+    return cast_to_topo(w)->radius();
+  } catch (...) {
+    return 0.0;
+  }
+}
+
+pnt3d_t topo_wire_position_at(topo_wire_t w, double d, int mode) {
+  pnt3d_t result = {0, 0, 0};
+  try {
+    auto point = cast_to_topo(w)->position_at(
+        d, static_cast<flywave::topo::wire::ParamMode>(mode));
+    result.x = point.X();
+    result.y = point.Y();
+    result.z = point.Z();
+  } catch (...) {
+  }
+  return result;
+}
+
+void topo_wire_positions(topo_wire_t w, double *ds, int count, pnt3d_t *points,
+                         int mode) {
+  try {
+    std::vector<double> dVec(ds, ds + count);
+    auto result = cast_to_topo(w)->positions(
+        dVec, static_cast<flywave::topo::wire::ParamMode>(mode));
+    for (int i = 0; i < count; i++) {
+      points[i].x = result[i].X();
+      points[i].y = result[i].Y();
+      points[i].z = result[i].Z();
+    }
+  } catch (...) {
+    for (int i = 0; i < count; i++) {
+      points[i] = {0, 0, 0};
+    }
+  }
+}
+
+void topo_wire_sample_uniform(topo_wire_t w, double n, pnt3d_t **points,
+                              int *point_count, double **params,
+                              int *param_count) {
+  try {
+    auto result = cast_to_topo(w)->sample_uniform(n);
+
+    *point_count = static_cast<int>(result.first.size());
+    *param_count = static_cast<int>(result.second.size());
+
+    *points = new pnt3d_t[*point_count];
+    *params = new double[*param_count];
+
+    for (int i = 0; i < *point_count; i++) {
+      (*points)[i].x = result.first[i].X();
+      (*points)[i].y = result.first[i].Y();
+      (*points)[i].z = result.first[i].Z();
+    }
+
+    for (int i = 0; i < *param_count; i++) {
+      (*params)[i] = result.second[i];
+    }
+  } catch (...) {
+    *point_count = 0;
+    *param_count = 0;
+    *points = nullptr;
+    *params = nullptr;
+  }
+}
+
+topo_location_t *topo_wire_location_at(topo_wire_t w, double d, int mode,
+                                       int frame, bool planar) {
+  try {
+    auto loc = cast_to_topo(w)->location_at(
+        d, static_cast<flywave::topo::wire::ParamMode>(mode),
+        static_cast<flywave::topo::wire::FrameMode>(frame), planar);
+    return new topo_location_t{loc};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+topo_location_t **topo_wire_locations(topo_wire_t w, double *ds, int count,
+                                      int mode, int frame, bool planar,
+                                      int *result_count) {
+  try {
+    std::vector<double> dVec(ds, ds + count);
+    auto result = cast_to_topo(w)->locations(
+        dVec, static_cast<flywave::topo::wire::ParamMode>(mode),
+        static_cast<flywave::topo::wire::FrameMode>(frame), planar);
+
+    auto **locs = new topo_location_t *[result.size()];
+    for (size_t i = 0; i < result.size(); i++) {
+      locs[i] = new topo_location_t{result[i]};
+    }
+    *result_count = static_cast<int>(result.size());
+    return locs;
+  } catch (...) {
+    *result_count = 0;
+    return nullptr;
+  }
+}
+
+int topo_wire_projected(topo_wire_t w, topo_face_t f, vec3d_t direction,
+                        bool closest, topo_shape_t ***result,
+                        int *result_count) {
+  try {
+    gp_Vec dir(direction.x, direction.y, direction.z);
+    auto proj = cast_to_topo(w)->projected(*cast_to_topo(f), dir, closest);
+    if (proj.which() == 0) {
+      *result_count = 1;
+      *result = new topo_shape_t *[1];
+      (*result)[0] =
+          new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
+                               boost::get<flywave::topo::shape>(proj))};
+    } else {
+      auto shapes = boost::get<std::vector<flywave::topo::shape>>(proj);
+      *result_count = static_cast<int>(shapes.size());
+      *result = new topo_shape_t *[*result_count];
+      for (int i = 0; i < *result_count; i++) {
+        (*result)[i] = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::shape>(shapes[i])};
+      }
+    }
+    return 0;
+  } catch (...) {
+    *result_count = 0;
+    *result = nullptr;
+    return -1;
+  }
+}
+
+void topo_shape_list_free(topo_shape_t **result, int result_count) {
+  delete[] result;
+}
+
+double topo_wire_curvature_at(topo_wire_t w, double d, int mode,
+                              double resolution) {
+  try {
+    return cast_to_topo(w)->curvature_at(
+        d, static_cast<flywave::topo::wire::ParamMode>(mode), resolution);
+  } catch (...) {
+    return 0.0;
+  }
+}
+
+void topo_wire_curvatures(topo_wire_t w, double *ds, int count,
+                          double *curvatures, int mode, double resolution) {
+  try {
+    std::vector<double> dVec(ds, ds + count);
+    auto result = cast_to_topo(w)->curvatures(
+        dVec, static_cast<flywave::topo::wire::ParamMode>(mode), resolution);
+    for (int i = 0; i < count; i++) {
+      curvatures[i] = result[i];
+    }
+  } catch (...) {
+    for (int i = 0; i < count; i++) {
+      curvatures[i] = 0.0;
+    }
+  }
 }
 
 topo_edge_t topo_make_edge() {
@@ -1491,6 +1933,136 @@ topo_edge_t topo_edge_make_polygonn_from_points(pnt3d_t *vertexs, int vertcount,
   }
 }
 
+topo_edge_t topo_edge_make_rect(double width, double height) {
+  try {
+    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
+        flywave::topo::edge::make_rect(width, height))}};
+  } catch (...) {
+    return topo_edge_t{};
+  }
+}
+
+topo_edge_t topo_edge_make_spline(pnt3d_t *vertexs, int vertcount, double tol,
+                                  bool periodic) {
+  try {
+    std::vector<gp_Pnt> oes;
+    for (int i = 0; i < vertcount; i++) {
+      oes.emplace_back(cast_to_gp(vertexs[i]));
+    }
+    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
+        flywave::topo::edge::make_spline(oes, tol, periodic))}};
+  } catch (...) {
+    return topo_edge_t{};
+  }
+}
+
+topo_edge_t topo_edge_make_spline_from_tangents_and_parameters(
+    pnt3d_t *points, int pntcount, vec3d_t *tangents, int tancount,
+    double *parameters, int paramcount, double tol, bool periodic, bool scale) {
+  try {
+    std::vector<gp_Pnt> oes;
+    for (int i = 0; i < pntcount; i++) {
+      oes.emplace_back(cast_to_gp(points[i]));
+    }
+    std::vector<gp_Vec> otangents;
+    for (int i = 0; i < tancount; i++) {
+      otangents.emplace_back(cast_to_gp(tangents[i]));
+    }
+    std::vector<double> oparameters;
+    for (int i = 0; i < paramcount; i++) {
+      oparameters.emplace_back(parameters[i]);
+    }
+    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
+        flywave::topo::edge::make_spline(oes, &otangents, periodic,
+                                         parameters ? &oparameters : nullptr,
+                                         scale, tol))}};
+  } catch (...) {
+    return topo_edge_t{};
+  }
+}
+
+topo_edge_t topo_edge_make_spline_approx(pnt3d_t *points, int pntcount,
+                                         double tolerance, double *smoothing,
+                                         int minDegree, int maxDegree) {
+  try {
+    std::vector<gp_Pnt> oes;
+    for (int i = 0; i < pntcount; i++) {
+      oes.emplace_back(cast_to_gp(points[i]));
+    }
+    boost::optional<std::tuple<double, double, double>> osmoothing =
+        boost::none;
+    if (smoothing) {
+      osmoothing = std::make_tuple(smoothing[0], smoothing[1], smoothing[2]);
+    }
+    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
+        flywave::topo::edge::make_spline_approx(oes, tolerance, osmoothing,
+                                                minDegree, maxDegree))}};
+  } catch (...) {
+    return topo_edge_t{};
+  }
+}
+
+topo_edge_t topo_edge_make_circle(double radius, pnt3d_t center, vec3d_t normal,
+                                  double angle1, double angle2,
+                                  bool orientation) {
+  try {
+    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
+        flywave::topo::edge::make_circle(radius, cast_to_gp(center),
+                                         cast_to_gp(normal), angle1, angle2,
+                                         orientation))}};
+  } catch (...) {
+    return topo_edge_t{};
+  }
+}
+
+topo_edge_t topo_edge_make_ellipse(double majorRadius, double minorRadius,
+                                   pnt3d_t center, vec3d_t normal,
+                                   vec3d_t xnormal, double angle1,
+                                   double angle2, int sense) {
+  try {
+    return topo_edge_t{new topo_shape_t{
+        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_ellipse(
+            majorRadius, minorRadius, cast_to_gp(center), cast_to_gp(normal),
+            cast_to_gp(xnormal), angle1, angle2, sense))}};
+  } catch (...) {
+    return topo_edge_t{};
+  }
+}
+
+topo_edge_t topo_edge_make_three_point_arc(pnt3d_t v1, pnt3d_t v2, pnt3d_t v3) {
+  try {
+    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
+        flywave::topo::edge::make_three_point_arc(
+            cast_to_gp(v1), cast_to_gp(v2), cast_to_gp(v3)))}};
+  } catch (...) {
+    return topo_edge_t{};
+  }
+}
+
+topo_edge_t topo_edge_make_tangent_arc(pnt3d_t v1, vec3d_t tangent,
+                                       pnt3d_t v3) {
+  try {
+    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
+        flywave::topo::edge::make_tangent_arc(
+            cast_to_gp(v1), cast_to_gp(tangent), cast_to_gp(v3)))}};
+  } catch (...) {
+    return topo_edge_t{};
+  }
+}
+
+topo_edge_t topo_edge_make_bezier(pnt3d_t *points, int pntcount) {
+  try {
+    std::vector<gp_Pnt> oes;
+    for (int i = 0; i < pntcount; i++) {
+      oes.emplace_back(cast_to_gp(points[i]));
+    }
+    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
+        flywave::topo::edge::make_bezier(oes))}};
+  } catch (...) {
+    return topo_edge_t{};
+  }
+}
+
 bool topo_edge_is_seam(topo_edge_t e, topo_face_t f) {
   auto opt = cast_to_topo(e);
   if (opt) {
@@ -1559,6 +2131,300 @@ void topo_edge_convert_to_curve3d(topo_edge_t e) {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->convert_to_curve3d();
+  }
+}
+
+void topo_edge_bounds(topo_edge_t e, double *min, double *max) {
+  try {
+    auto bounds = cast_to_topo(e)->bounds();
+    *min = bounds.first;
+    *max = bounds.second;
+  } catch (...) {
+    *min = *max = 0.0;
+  }
+}
+
+pnt3d_t topo_edge_start_point(topo_edge_t e) {
+  pnt3d_t result = {0, 0, 0};
+  try {
+    auto point = cast_to_topo(e)->start_point();
+    result.x = point.X();
+    result.y = point.Y();
+    result.z = point.Z();
+  } catch (...) {
+  }
+  return result;
+}
+
+pnt3d_t topo_edge_end_point(topo_edge_t e) {
+  pnt3d_t result = {0, 0, 0};
+  try {
+    auto point = cast_to_topo(e)->end_point();
+    result.x = point.X();
+    result.y = point.Y();
+    result.z = point.Z();
+  } catch (...) {
+  }
+  return result;
+}
+
+double topo_edge_param_at(topo_edge_t e, double d) {
+  try {
+    return cast_to_topo(e)->param_at(d);
+  } catch (...) {
+    return 0.0;
+  }
+}
+
+double topo_edge_param_at_point(topo_edge_t e, pnt3d_t pt) {
+  try {
+    gp_Pnt point(pt.x, pt.y, pt.z);
+    return cast_to_topo(e)->param_at(point);
+  } catch (...) {
+    return 0.0;
+  }
+}
+
+void topo_edge_params(topo_edge_t e, pnt3d_t *pts, int count, double *params,
+                      double tol) {
+  try {
+    std::vector<gp_Pnt> points;
+    for (int i = 0; i < count; i++) {
+      points.emplace_back(pts[i].x, pts[i].y, pts[i].z);
+    }
+    auto result = cast_to_topo(e)->params(points, tol);
+    for (int i = 0; i < count; i++) {
+      params[i] = result[i];
+    }
+  } catch (...) {
+    for (int i = 0; i < count; i++) {
+      params[i] = 0.0;
+    }
+  }
+}
+
+void topo_edge_params_length(topo_edge_t e, double *locations, int count,
+                             double *params) {
+  try {
+    std::vector<double> locs(locations, locations + count);
+    auto result = cast_to_topo(e)->params_length(locs);
+    for (int i = 0; i < count; i++) {
+      params[i] = result[i];
+    }
+  } catch (...) {
+    for (int i = 0; i < count; i++) {
+      params[i] = 0.0;
+    }
+  }
+}
+
+dir3d_t topo_edge_tangent_at(topo_edge_t e, double param) {
+  dir3d_t result = {0, 0, 0};
+  try {
+    auto dir = cast_to_topo(e)->tangent_at(param);
+    result.x = dir.X();
+    result.y = dir.Y();
+    result.z = dir.Z();
+  } catch (...) {
+  }
+  return result;
+}
+
+void topo_edge_tangents(topo_edge_t e, double *params, int count,
+                        dir3d_t *tangents) {
+  try {
+    std::vector<double> paramVec(params, params + count);
+    auto result = cast_to_topo(e)->tangents(paramVec);
+    for (int i = 0; i < count; i++) {
+      tangents[i].x = result[i].X();
+      tangents[i].y = result[i].Y();
+      tangents[i].z = result[i].Z();
+    }
+  } catch (...) {
+    for (int i = 0; i < count; i++) {
+      tangents[i] = {0, 0, 0};
+    }
+  }
+}
+
+dir3d_t topo_edge_normal(topo_edge_t e) {
+  dir3d_t result = {0, 0, 0};
+  try {
+    auto dir = cast_to_topo(e)->normal();
+    result.x = dir.X();
+    result.y = dir.Y();
+    result.z = dir.Z();
+  } catch (...) {
+  }
+  return result;
+}
+
+pnt3d_t topo_edge_center(topo_edge_t e) {
+  pnt3d_t result = {0, 0, 0};
+  try {
+    auto point = cast_to_topo(e)->center();
+    result.x = point.X();
+    result.y = point.Y();
+    result.z = point.Z();
+  } catch (...) {
+  }
+  return result;
+}
+
+double topo_edge_radius(topo_edge_t e) {
+  try {
+    return cast_to_topo(e)->radius();
+  } catch (...) {
+    return 0.0;
+  }
+}
+
+pnt3d_t topo_edge_position_at(topo_edge_t e, double d, int mode) {
+  pnt3d_t result = {0, 0, 0};
+  try {
+    auto point = cast_to_topo(e)->position_at(
+        d, static_cast<flywave::topo::edge::ParamMode>(mode));
+    result.x = point.X();
+    result.y = point.Y();
+    result.z = point.Z();
+  } catch (...) {
+  }
+  return result;
+}
+
+void topo_edge_positions(topo_edge_t e, double *ds, int count, pnt3d_t *points,
+                         int mode) {
+  try {
+    std::vector<double> dVec(ds, ds + count);
+    auto result = cast_to_topo(e)->positions(
+        dVec, static_cast<flywave::topo::edge::ParamMode>(mode));
+    for (int i = 0; i < count; i++) {
+      points[i].x = result[i].X();
+      points[i].y = result[i].Y();
+      points[i].z = result[i].Z();
+    }
+  } catch (...) {
+    for (int i = 0; i < count; i++) {
+      points[i] = {0, 0, 0};
+    }
+  }
+}
+
+void topo_edge_sample_uniform(topo_edge_t e, double n, pnt3d_t **points,
+                              int *point_count, double **params,
+                              int *param_count) {
+  try {
+    auto result = cast_to_topo(e)->sample_uniform(n);
+
+    *point_count = static_cast<int>(result.first.size());
+    *param_count = static_cast<int>(result.second.size());
+
+    *points = new pnt3d_t[*point_count];
+    *params = new double[*param_count];
+
+    for (int i = 0; i < *point_count; i++) {
+      (*points)[i].x = result.first[i].X();
+      (*points)[i].y = result.first[i].Y();
+      (*points)[i].z = result.first[i].Z();
+    }
+
+    for (int i = 0; i < *param_count; i++) {
+      (*params)[i] = result.second[i];
+    }
+  } catch (...) {
+    *point_count = 0;
+    *param_count = 0;
+    *points = nullptr;
+    *params = nullptr;
+  }
+}
+
+topo_location_t *topo_edge_location_at(topo_edge_t e, double d, int mode,
+                                       int frame, bool planar) {
+  try {
+    auto loc = cast_to_topo(e)->location_at(
+        d, static_cast<flywave::topo::edge::ParamMode>(mode),
+        static_cast<flywave::topo::edge::FrameMode>(frame), planar);
+    return new topo_location_t{loc};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+topo_location_t **topo_edge_locations(topo_edge_t e, double *ds, int count,
+                                      int mode, int frame, bool planar,
+                                      int *result_count) {
+  try {
+    std::vector<double> dVec(ds, ds + count);
+    auto result = cast_to_topo(e)->locations(
+        dVec, static_cast<flywave::topo::edge::ParamMode>(mode),
+        static_cast<flywave::topo::edge::FrameMode>(frame), planar);
+
+    auto **locs = new topo_location_t *[result.size()];
+    for (size_t i = 0; i < result.size(); i++) {
+      locs[i] = new topo_location_t{result[i]};
+    }
+    *result_count = static_cast<int>(result.size());
+    return locs;
+  } catch (...) {
+    *result_count = 0;
+    return nullptr;
+  }
+}
+
+int topo_edge_projected(topo_edge_t e, topo_face_t f, vec3d_t direction,
+                        bool closest, topo_shape_t ***result,
+                        int *result_count) {
+  try {
+    gp_Vec dir(direction.x, direction.y, direction.z);
+    auto proj = cast_to_topo(e)->projected(*cast_to_topo(f), dir, closest);
+
+    if (proj.which() == 0) {
+      *result_count = 1;
+      *result = new topo_shape_t *[1];
+      *result[0] =
+          new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
+                               boost::get<flywave::topo::shape>(proj))};
+    } else {
+      auto shapes = boost::get<std::vector<flywave::topo::shape>>(proj);
+      *result_count = static_cast<int>(shapes.size());
+      *result = new topo_shape_t *[*result_count];
+      for (int i = 0; i < *result_count; i++) {
+        (*result)[i] = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::shape>(shapes[i])};
+      }
+    }
+    return 0;
+  } catch (...) {
+    *result_count = 0;
+    *result = nullptr;
+    return -1;
+  }
+}
+
+double topo_edge_curvature_at(topo_edge_t e, double d, int mode,
+                              double resolution) {
+  try {
+    return cast_to_topo(e)->curvature_at(
+        d, static_cast<flywave::topo::edge::ParamMode>(mode), resolution);
+  } catch (...) {
+    return 0.0;
+  }
+}
+
+void topo_edge_curvatures(topo_edge_t e, double *ds, int count,
+                          double *curvatures, int mode, double resolution) {
+  try {
+    std::vector<double> dVec(ds, ds + count);
+    auto result = cast_to_topo(e)->curvatures(
+        dVec, static_cast<flywave::topo::edge::ParamMode>(mode), resolution);
+    for (int i = 0; i < count; i++) {
+      curvatures[i] = result[i];
+    }
+  } catch (...) {
+    for (int i = 0; i < count; i++) {
+      curvatures[i] = 0.0;
+    }
   }
 }
 
@@ -1736,6 +2602,135 @@ topo_face_t topo_face_make_face_from_points(pnt3d_t *points, int count) {
       flywave::topo::face::make_face(ops))}};
 }
 
+topo_face_t *topo_face_make_from_wires(topo_wire_t outer, topo_wire_t *inners,
+                                       int inner_count, int *result_count) {
+  try {
+    std::vector<flywave::topo::wire> innerWires;
+    for (int i = 0; i < inner_count; i++) {
+      innerWires.push_back(*cast_to_topo(inners[i]));
+    }
+
+    auto result =
+        flywave::topo::face::make_from_wires(*cast_to_topo(outer), innerWires);
+
+    *result_count = static_cast<int>(result.size());
+    auto *faces = new topo_face_t[result.size()];
+    for (size_t i = 0; i < result.size(); i++) {
+      faces[i] =
+          topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
+              flywave::topo::face::make_face(result[i]))}};
+    }
+    return faces;
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+void topo_face_list_free(topo_face_t *faces, int count) {
+  delete [] faces;
+}
+
+topo_face_t topo_face_make_complex(
+    topo_shape_t **edges, int edge_count, topo_shape_t **constraints,
+    int constraint_count, int continuity, int degree, int nb_pts_on_curve,
+    int nb_iter, bool anisotropy, double tol2d, double tol3d, double tol_angle,
+    double tol_curv, int max_degree, int max_segments) {
+  try {
+    std::vector<boost::variant<flywave::topo::edge, flywave::topo::wire>>
+        edgeVec;
+    for (int i = 0; i < edge_count; i++) {
+      if (edges[i]->shp->shape_type() == TopAbs_EDGE) {
+        edgeVec.push_back(flywave::topo::edge(edges[i]->shp->value()));
+      } else if (edges[i]->shp->shape_type() == TopAbs_WIRE) {
+        edgeVec.push_back(flywave::topo::wire(edges[i]->shp->value()));
+      }
+    }
+
+    std::vector<
+        boost::variant<flywave::topo::edge, flywave::topo::wire, gp_Pnt>>
+        constraintVec;
+    for (int i = 0; i < constraint_count; i++) {
+      if (constraints[i]->shp->shape_type() == TopAbs_EDGE) {
+        constraintVec.push_back(
+            flywave::topo::edge(constraints[i]->shp->value()));
+      } else if (constraints[i]->shp->shape_type() == TopAbs_WIRE) {
+        constraintVec.push_back(
+            flywave::topo::wire(constraints[i]->shp->value()));
+      } else if (constraints[i]->shp->shape_type() == TopAbs_VERTEX) {
+        constraintVec.push_back(
+            (constraints[i])->shp->cast<flywave::topo::vertex>()->point());
+      }
+    }
+
+    auto result = flywave::topo::face::make_face(
+        edgeVec, constraintVec, static_cast<GeomAbs_Shape>(continuity), degree,
+        nb_pts_on_curve, nb_iter, anisotropy, tol2d, tol3d, tol_angle, tol_curv,
+        max_degree, max_segments);
+
+    return  topo_face_t{
+        new topo_shape_t{std::make_shared<flywave::topo::face>(
+            flywave::topo::face::make_face(result))}};
+  } catch (...) {
+    return topo_face_t{};
+  }
+}
+
+topo_face_t topo_face_make_plane(pnt3d_t base_point, dir3d_t direction,
+                                  double *length, double *width) {
+  try {
+    gp_Pnt basePnt(base_point.x, base_point.y, base_point.z);
+    gp_Dir dir(direction.x, direction.y, direction.z);
+
+    boost::optional<double> lenOpt, widthOpt;
+    if (length)
+      lenOpt = *length;
+    if (width)
+      widthOpt = *width;
+
+    auto result =
+        flywave::topo::face::make_plane(basePnt, dir, lenOpt, widthOpt);
+
+    return  topo_face_t{
+        new topo_shape_t{std::make_shared<flywave::topo::face>(
+            flywave::topo::face::make_face(result))}};
+  } catch (...) {
+    return topo_face_t{};
+  }
+}
+
+topo_face_t topo_face_make_spline_approx(pnt3d_t *points, int *point_counts,
+                                          int point_array_size, double tol,
+                                          double *smoothing, int min_degree,
+                                          int max_degree) {
+  try {
+    std::vector<std::vector<gp_Pnt>> pointVec;
+    int offset = 0;
+    for (int i = 0; i < point_array_size; i++) {
+      std::vector<gp_Pnt> curvePoints;
+      for (int j = 0; j < point_counts[i]; j++) {
+        auto &p = points[offset++];
+        curvePoints.emplace_back(p.x, p.y, p.z);
+      }
+      pointVec.push_back(curvePoints);
+    }
+
+    std::tuple<double, double, double> smoothParams;
+    if (smoothing) {
+      smoothParams = std::make_tuple(smoothing[0], smoothing[1], smoothing[2]);
+    }
+
+    auto result = flywave::topo::face::make_spline_approx(
+        pointVec, tol, smoothing ? &smoothParams : nullptr, min_degree,
+        max_degree);
+
+    return  topo_face_t{
+        new topo_shape_t{std::make_shared<flywave::topo::face>(
+            flywave::topo::face::make_face(result))}};
+  } catch (...) {
+    return  topo_face_t{};
+  }
+}
+
 int topo_face_num_wires(topo_face_t f) {
   auto opt = cast_to_topo(f);
   if (opt) {
@@ -1784,6 +2779,14 @@ pnt3d_t topo_face_centre_of_mass(topo_face_t f) {
   return pnt3d_t{0, 0, 0};
 }
 
+topo_plane_t *topo_face_to_plane(topo_face_t f) {
+  auto opt = cast_to_topo(f);
+  if (opt) {
+    return new topo_plane_t{.plane =
+                                flywave::topo::topo_plane(opt->to_plane())};
+  }
+}
+
 int topo_face_offset(topo_face_t f, double offset, double tolerance) {
   auto opt = cast_to_topo(f);
   if (opt) {
@@ -1824,6 +2827,7 @@ int topo_face_sweep(topo_face_t f, topo_wire_t spine, topo_shape_t **profiles,
   } catch (...) {
     return -1;
   }
+  return -1;
 }
 
 int topo_face_sweep_wire(topo_face_t f, topo_wire_t spine,
@@ -1841,6 +2845,7 @@ int topo_face_sweep_wire(topo_face_t f, topo_wire_t spine,
   } catch (...) {
     return -1;
   }
+  return -1;
 }
 
 int topo_face_loft(topo_face_t f, topo_shape_t **profiles, int profilesCount,
@@ -1863,6 +2868,275 @@ int topo_face_boolean(topo_face_t f, topo_face_t tool, int op) {
                         static_cast<flywave::topo::bool_op_type>(op));
   }
   return -1;
+}
+
+void topo_face_uv_bounds(topo_face_t f, double *u_min, double *u_max,
+                         double *v_min, double *v_max) {
+  try {
+    auto bounds = cast_to_topo(f)->uv_bounds();
+    *u_min = std::get<0>(bounds);
+    *u_max = std::get<1>(bounds);
+    *v_min = std::get<2>(bounds);
+    *v_max = std::get<3>(bounds);
+  } catch (...) {
+    *u_min = *u_max = *v_min = *v_max = 0.0;
+  }
+}
+
+void topo_face_param_at(topo_face_t f, pnt3d_t pt, double *u, double *v) {
+  try {
+    gp_Pnt point(pt.x, pt.y, pt.z);
+    auto params = cast_to_topo(f)->param_at(point);
+    *u = params.first;
+    *v = params.second;
+  } catch (...) {
+    *u = *v = 0.0;
+  }
+}
+
+void topo_face_params(topo_face_t f, pnt3d_t *pts, int count, double *us,
+                      double *vs, double tol) {
+  try {
+    std::vector<gp_Pnt> points;
+    for (int i = 0; i < count; i++) {
+      points.emplace_back(pts[i].x, pts[i].y, pts[i].z);
+    }
+    auto params = cast_to_topo(f)->params(points, tol);
+    for (int i = 0; i < count; i++) {
+      us[i] = params.first[i];
+      vs[i] = params.second[i];
+    }
+  } catch (...) {
+    for (int i = 0; i < count; i++) {
+      us[i] = vs[i] = 0.0;
+    }
+  }
+}
+
+pnt3d_t topo_face_position_at(topo_face_t f, double u, double v) {
+  pnt3d_t result = {0, 0, 0};
+  try {
+    auto point = cast_to_topo(f)->position_at(u, v);
+    result.x = point.X();
+    result.y = point.Y();
+    result.z = point.Z();
+  } catch (...) {
+  }
+  return result;
+}
+
+void topo_face_positions(topo_face_t f, double *us, double *vs, int count,
+                         pnt3d_t *points) {
+  try {
+    std::vector<std::pair<double, double>> uvs;
+    for (int i = 0; i < count; i++) {
+      uvs.emplace_back(us[i], vs[i]);
+    }
+    auto result = cast_to_topo(f)->positions(uvs);
+    for (int i = 0; i < count; i++) {
+      points[i].x = result[i].X();
+      points[i].y = result[i].Y();
+      points[i].z = result[i].Z();
+    }
+  } catch (...) {
+    for (int i = 0; i < count; i++) {
+      points[i] = {0, 0, 0};
+    }
+  }
+}
+
+vec3d_t topo_face_normal_at(topo_face_t f, pnt3d_t *location) {
+  vec3d_t result = {0, 0, 0};
+  try {
+    gp_Pnt loc(location ? location->x : 0, location ? location->y : 0,
+               location ? location->z : 0);
+    auto normal = cast_to_topo(f)->normal_at(location ? &loc : nullptr);
+    result.x = normal.X();
+    result.y = normal.Y();
+    result.z = normal.Z();
+  } catch (...) {
+  }
+  return result;
+}
+
+void topo_face_normal_at_uv(topo_face_t f, double u, double v, vec3d_t *normal,
+                            pnt3d_t *point) {
+  try {
+    auto result = cast_to_topo(f)->normal_at(u, v);
+    normal->x = result.first.X();
+    normal->y = result.first.Y();
+    normal->z = result.first.Z();
+    point->x = result.second.X();
+    point->y = result.second.Y();
+    point->z = result.second.Z();
+  } catch (...) {
+    *normal = {0, 0, 0};
+    *point = {0, 0, 0};
+  }
+}
+
+void topo_face_normals(topo_face_t f, double *us, double *vs, int count,
+                       vec3d_t *normals, pnt3d_t *points) {
+  try {
+    std::vector<double> uVec(us, us + count);
+    std::vector<double> vVec(vs, vs + count);
+    auto result = cast_to_topo(f)->normals(uVec, vVec);
+
+    for (int i = 0; i < count; i++) {
+      normals[i].x = result.first[i].X();
+      normals[i].y = result.first[i].Y();
+      normals[i].z = result.first[i].Z();
+      points[i].x = result.second[i].X();
+      points[i].y = result.second[i].Y();
+      points[i].z = result.second[i].Z();
+    }
+  } catch (...) {
+    for (int i = 0; i < count; i++) {
+      normals[i] = {0, 0, 0};
+      points[i] = {0, 0, 0};
+    }
+  }
+}
+
+topo_face_t topo_face_fillet2d(topo_face_t f, double radius,
+                               topo_vertex_t *vertices, int count) {
+  try {
+    std::vector<flywave::topo::vertex> verts;
+    for (int i = 0; i < count; i++) {
+      verts.push_back(*cast_to_topo(vertices[i]));
+    }
+    auto result = cast_to_topo(f)->fillet2d(radius, verts);
+    return topo_face_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::shell>(result)}};
+  } catch (...) {
+    return topo_face_t{nullptr};
+  }
+}
+
+topo_face_t topo_face_chamfer2d(topo_face_t f, double distance,
+                                topo_vertex_t *vertices, int count) {
+  try {
+    std::vector<flywave::topo::vertex> verts;
+    for (int i = 0; i < count; i++) {
+      verts.push_back(*cast_to_topo(vertices[i]));
+    }
+    auto result = cast_to_topo(f)->chamfer2d(distance, verts);
+    return topo_face_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::shell>(result)}};
+  } catch (...) {
+    return topo_face_t{nullptr};
+  }
+}
+
+topo_solid_t topo_face_thicken(topo_face_t f, double thickness) {
+  try {
+    auto result = cast_to_topo(f)->thicken(thickness);
+    return topo_solid_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::shell>(result)}};
+  } catch (...) {
+    return topo_solid_t{nullptr};
+  }
+}
+
+topo_face_t topo_face_project(topo_face_t f, topo_face_t other,
+                              vec3d_t direction) {
+  try {
+    gp_Vec dir(direction.x, direction.y, direction.z);
+    auto result = cast_to_topo(f)->project(*cast_to_topo(other), dir);
+    return topo_face_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::shell>(result)}};
+  } catch (...) {
+    return topo_face_t{nullptr};
+  }
+}
+
+topo_face_t topo_face_to_arcs(topo_face_t f, double tolerance) {
+  try {
+    auto result = cast_to_topo(f)->to_arcs(tolerance);
+    return topo_face_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::shell>(result)}};
+  } catch (...) {
+    return topo_face_t{nullptr};
+  }
+}
+
+topo_face_t topo_face_trim(topo_face_t f, double u0, double u1, double v0,
+                           double v1, double tol) {
+  try {
+    auto result = cast_to_topo(f)->trim(u0, u1, v0, v1, tol);
+    return topo_face_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::shell>(result)}};
+  } catch (...) {
+    return topo_face_t{nullptr};
+  }
+}
+
+topo_edge_t topo_face_isoline(topo_face_t f, double param,
+                              const char *direction) {
+  try {
+    std::string dir = direction ? direction : "v";
+    auto result = cast_to_topo(f)->isoline(param, dir);
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::shell>(result)}};
+  } catch (...) {
+    return topo_edge_t{nullptr};
+  }
+}
+
+topo_edge_t *topo_face_isolines(topo_face_t f, double *params, int count,
+                                const char *direction, int *result_count) {
+  try {
+    std::vector<double> paramVec(params, params + count);
+    std::string dir = direction ? direction : "v";
+    auto result = cast_to_topo(f)->isolines(paramVec, dir);
+
+    auto *edges = new topo_edge_t[result.size()];
+    for (size_t i = 0; i < result.size(); i++) {
+      edges[i] = topo_edge_t{
+          .shp = new topo_shape_t{
+              .shp = std::make_shared<flywave::topo::shell>(result[i])}};
+    }
+    *result_count = static_cast<int>(result.size());
+    return edges;
+  } catch (...) {
+    *result_count = 0;
+    return nullptr;
+  }
+}
+
+topo_wire_t topo_face_outer_wire(topo_face_t f) {
+  try {
+    auto result = cast_to_topo(f)->outer_wire();
+    return topo_wire_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::shell>(result)}};
+  } catch (...) {
+    return topo_wire_t{nullptr};
+  }
+}
+
+topo_wire_t *topo_face_inner_wires(topo_face_t f, int *count) {
+  try {
+    auto result = cast_to_topo(f)->inner_wires();
+    auto *wires = new topo_wire_t[result.size()];
+    for (size_t i = 0; i < result.size(); i++) {
+      wires[i] = topo_wire_t{
+          .shp = new topo_shape_t{
+              .shp = std::make_shared<flywave::topo::shell>(result[i])}};
+    }
+    *count = static_cast<int>(result.size());
+    return wires;
+  } catch (...) {
+    *count = 0;
+    return nullptr;
+  }
 }
 
 topo_shell_t topo_make_shell() {
@@ -2210,6 +3484,7 @@ int topo_shell_sweep(topo_shell_t ss, topo_wire_t spine,
   } catch (...) {
     return -1;
   }
+  return -1;
 }
 
 int topo_shell_sweep_wire(topo_shell_t ss, topo_wire_t spine,
@@ -2226,6 +3501,7 @@ int topo_shell_sweep_wire(topo_shell_t ss, topo_wire_t spine,
   } catch (...) {
     return -1;
   }
+  return -1;
 }
 
 void topo_solid_free(topo_solid_t t) {
@@ -2593,6 +3869,159 @@ topo_solid_t topo_solid_make_solid_from_wedge_axis2_limit(
                                                   xmin, zmin, xmax, zmax))}};
 }
 
+topo_solid_t topo_solid_make_solid_from_loft(topo_wire_t *wires, int count,
+                                             _Bool ruled) {
+  try {
+    std::vector<flywave::topo::wire> wireVec;
+    for (int i = 0; i < count; i++) {
+      wireVec.emplace_back(*cast_to_topo(wires[i]));
+    }
+    auto solid = flywave::topo::solid::make_solid_from_loft(wireVec, ruled);
+    return topo_solid_t{
+        new topo_shape_t{std::make_shared<flywave::topo::solid>(solid)}};
+  } catch (...) {
+    return topo_solid_t{nullptr};
+  }
+}
+
+int topo_solid_extrude_with_rotation_from_wire(
+    topo_solid_t s, topo_wire_t outerWire, topo_wire_t *innerWires,
+    int innerCount, pnt3d_t vecCenter, vec3d_t vecNormal, double angleDegrees) {
+  try {
+    std::vector<flywave::topo::wire> innerWireVec;
+    for (int i = 0; i < innerCount; i++) {
+      innerWireVec.emplace_back(*cast_to_topo(innerWires[i]));
+    }
+
+    gp_Pnt center(vecCenter.x, vecCenter.y, vecCenter.z);
+    gp_Vec normal(vecNormal.x, vecNormal.y, vecNormal.z);
+
+    return cast_to_topo(s)->extrude_with_rotation(
+        *cast_to_topo(outerWire), innerWireVec, center, normal, angleDegrees);
+  } catch (...) {
+    return -1;
+  }
+}
+
+int topo_solid_sweep_multi_from_vector(topo_solid_t s, topo_shape_t **profiles,
+                                       int count, topo_shape_t *path,
+                                       _Bool makeSolid, _Bool isFrenet,
+                                       topo_vector_t *vec) {
+  try {
+    std::vector<boost::variant<flywave::topo::wire, flywave::topo::face>>
+        profileVec;
+    for (int i = 0; i < count; i++) {
+      if (profiles[i]->shp->shape_type() == TopAbs_WIRE) {
+        profileVec.emplace_back(*profiles[i]->shp->cast<flywave::topo::wire>());
+      } else if (profiles[i]->shp->shape_type() == TopAbs_FACE) {
+        profileVec.emplace_back(*profiles[i]->shp->cast<flywave::topo::face>());
+      }
+    }
+
+    boost::optional<flywave::topo::solid::SweepMode> mode = boost::none;
+    if (vec) {
+      mode = vec->vec.to_vec();
+    }
+
+    return cast_to_topo(s)->sweep_multi(profileVec, *path->shp, makeSolid,
+                                        isFrenet, mode);
+  } catch (...) {
+    return -1;
+  }
+}
+
+int topo_solid_sweep_multi_from_wire(topo_solid_t s, topo_shape_t **profiles,
+                                     int count, topo_shape_t *path,
+                                     _Bool makeSolid, _Bool isFrenet,
+                                     topo_wire_t *wire) {
+  try {
+    std::vector<boost::variant<flywave::topo::wire, flywave::topo::face>>
+        profileVec;
+    for (int i = 0; i < count; i++) {
+      if (profiles[i]->shp->shape_type() == TopAbs_WIRE) {
+        profileVec.emplace_back(*profiles[i]->shp->cast<flywave::topo::wire>());
+      } else if (profiles[i]->shp->shape_type() == TopAbs_FACE) {
+        profileVec.emplace_back(*profiles[i]->shp->cast<flywave::topo::face>());
+      }
+    }
+
+    boost::optional<flywave::topo::solid::SweepMode> mode = boost::none;
+    if (wire) {
+      mode = cast_to_topo(*wire)->value();
+    }
+
+    return cast_to_topo(s)->sweep_multi(profileVec, *path->shp, makeSolid,
+                                        isFrenet, mode);
+  } catch (...) {
+    return -1;
+  }
+}
+
+int topo_solid_sweep_multi_from_edge(topo_solid_t s, topo_shape_t **profiles,
+                                     int count, topo_shape_t *path,
+                                     _Bool makeSolid, _Bool isFrenet,
+                                     topo_edge_t *edge) {
+  try {
+    std::vector<boost::variant<flywave::topo::wire, flywave::topo::face>>
+        profileVec;
+    for (int i = 0; i < count; i++) {
+      if (profiles[i]->shp->shape_type() == TopAbs_WIRE) {
+        profileVec.emplace_back(*profiles[i]->shp->cast<flywave::topo::wire>());
+      } else if (profiles[i]->shp->shape_type() == TopAbs_FACE) {
+        profileVec.emplace_back(*profiles[i]->shp->cast<flywave::topo::face>());
+      }
+    }
+
+    boost::optional<flywave::topo::solid::SweepMode> mode = boost::none;
+    if (edge) {
+      mode = cast_to_topo(*edge)->value();
+    }
+
+    return cast_to_topo(s)->sweep_multi(profileVec, *path->shp, makeSolid,
+                                        isFrenet, mode);
+  } catch (...) {
+    return -1;
+  }
+}
+
+int topo_solid_split(topo_solid_t s, topo_shape_t **splitters, int count) {
+  try {
+    std::vector<flywave::topo::shape> splitterVec;
+    for (int i = 0; i < count; i++) {
+      splitterVec.emplace_back(*splitters[i]->shp);
+    }
+    return cast_to_topo(s)->split(splitterVec);
+  } catch (...) {
+    return -1;
+  }
+}
+
+topo_wire_t topo_solid_section_wire(topo_solid_t s, pnt3d_t pnt, pnt3d_t nor) {
+  try {
+    gp_Pnt point(pnt.x, pnt.y, pnt.z);
+    gp_Pnt normal(nor.x, nor.y, nor.z);
+
+    auto section = cast_to_topo(s)->section(point, normal);
+    if (section) {
+      return topo_wire_t{
+          .shp = new topo_shape_t{
+              .shp = std::make_shared<flywave::topo::wire>(*section)}};
+    }
+    return topo_wire_t{nullptr};
+  } catch (...) {
+    return topo_wire_t{nullptr};
+  }
+}
+
+_Bool topo_solid_is_inside(topo_solid_t s, pnt3d_t p, double tol) {
+  try {
+    gp_Pnt point(p.x, p.y, p.z);
+    return cast_to_topo(s)->is_inside(point, tol);
+  } catch (...) {
+    return false;
+  }
+}
+
 int topo_solid_num_solids(topo_solid_t s) {
   auto opt = cast_to_topo(s);
   if (opt) {
@@ -2639,6 +4068,37 @@ pnt3d_t topo_solid_centre_of_mass(topo_solid_t s) {
     return cast_from_gp(opt->centre_of_mass());
   }
   return pnt3d_t{0, 0, 0};
+}
+
+int topo_solid_extrude_with_rotation(topo_solid_t s, topo_wire_t outerWire,
+                                     topo_wire_t *innerWires, int innerCount,
+                                     pnt3d_t vecCenter, vec3d_t vecNormal,
+                                     double angleDegrees) {
+  try {
+    std::vector<flywave::topo::wire> innerWireVec;
+    for (int i = 0; i < innerCount; i++) {
+      innerWireVec.emplace_back(*cast_to_topo(innerWires[i]));
+    }
+    gp_Pnt center(vecCenter.x, vecCenter.y, vecCenter.z);
+    gp_Vec normal(vecNormal.x, vecNormal.y, vecNormal.z);
+    return cast_to_topo(s)->extrude_with_rotation(
+        *cast_to_topo(outerWire), innerWireVec, center, normal, angleDegrees);
+  } catch (...) {
+    return -1;
+  }
+}
+
+int topo_solid_extrude_with_rotation_from_face(topo_solid_t s, topo_face_t face,
+                                               pnt3d_t vecCenter,
+                                               vec3d_t vecNormal,
+                                               double angleDegrees) {
+  auto opt = cast_to_topo(s);
+  if (opt) {
+    return opt->extrude_with_rotation(*cast_to_topo(face),
+                                      cast_to_gp(vecCenter),
+                                      cast_to_gp(vecNormal), angleDegrees);
+  }
+  return -1;
 }
 
 int topo_solid_extrude(topo_solid_t s, topo_face_t f, pnt3d_t p1, pnt3d_t p2) {
@@ -2702,6 +4162,7 @@ int topo_solid_sweep(topo_solid_t s, topo_wire_t spine, topo_shape_t **profiles,
   } catch (...) {
     return -1;
   }
+  return -1;
 }
 
 int topo_solid_sweep_wire(topo_solid_t s, topo_wire_t spine,
@@ -2718,6 +4179,7 @@ int topo_solid_sweep_wire(topo_solid_t s, topo_wire_t spine,
   } catch (...) {
     return -1;
   }
+  return -1;
 }
 
 int topo_solid_boolean(topo_solid_t s, topo_solid_t tool, int op) {
@@ -2966,10 +4428,119 @@ int topo_solid_convert_to_nurbs(topo_solid_t s) {
   return -1;
 }
 
+topo_shell_t topo_solid_outer_shell(topo_solid_t s) {
+  try {
+    auto opt = cast_to_topo(s);
+    if (opt) {
+      auto shell = opt->outer_shell();
+      return topo_shell_t{.shp = new topo_shape_t{
+                              std::make_shared<flywave::topo::shape>(shell)}};
+    }
+  } catch (...) {
+    return topo_shell_t{nullptr};
+  }
+  return topo_shell_t{nullptr};
+}
+
+topo_shell_t *topo_solid_inner_shells(topo_solid_t s, int *count) {
+  try {
+    auto opt = cast_to_topo(s);
+    if (opt) {
+      auto shells = opt->inner_shells();
+      *count = static_cast<int>(shells.size());
+      auto result = new topo_shell_t[*count];
+      for (int i = 0; i < *count; i++) {
+        result[i].shp =
+            new topo_shape_t{std::make_shared<flywave::topo::shape>(shells[i])};
+      }
+      return result;
+    }
+  } catch (...) {
+    return nullptr;
+  }
+  return nullptr;
+}
+
 topo_compound_t topo_make_compound() {
   return topo_compound_t{
       .shp =
           new topo_shape_t{.shp = std::make_shared<flywave::topo::compound>()}};
+}
+
+topo_compound_t  topo_make_text(const char *text, double size, const char *font,
+                                const char *fontPath, int kind, int halign,
+                                int valign, topo_plane_t *position) {
+  try {
+    auto cpp_plane =
+        position ? position->plane : flywave::topo::topo_plane::named("XY");
+    auto result = flywave::topo::compound::make_text(
+        text, size, font ? font : "Arial", fontPath ? fontPath : "",
+        static_cast<flywave::topo::font_kind>(kind),
+        static_cast<flywave::topo::horizontal_align>(halign),
+        static_cast<flywave::topo::vertical_align>(valign), cpp_plane);
+    return  topo_compound_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::compound>(result)}};
+  } catch (...) {
+    return topo_compound_t{};
+  }
+}
+
+topo_compound_t topo_make_text_with_spine(const char *text, double size,
+                                           topo_wire_t *spine, bool planar,
+                                           const char *font, const char *path,
+                                           int kind, int halign, int valign) {
+  try {
+    auto result = flywave::topo::compound::make_text(
+        text, size, *cast_to_topo(*spine), planar, font ? font : "Arial",
+        path ? path : "", static_cast<flywave::topo::font_kind>(kind),
+        static_cast<flywave::topo::horizontal_align>(halign),
+        static_cast<flywave::topo::vertical_align>(valign));
+    return  topo_compound_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::compound>(result)}};
+  } catch (...) {
+    return topo_compound_t{};
+  }
+}
+
+topo_compound_t topo_make_text_with_spine_and_base(
+    const char *text, double size, topo_wire_t *spine, topo_face_t *base,
+    const char *font, const char *path, int kind, int halign, int valign) {
+  try {
+    auto result = flywave::topo::compound::make_text(
+        text, size, *cast_to_topo(*spine), *cast_to_topo(*base),
+        font ? font : "Arial", path ? path : "",
+        static_cast<flywave::topo::font_kind>(kind),
+        static_cast<flywave::topo::horizontal_align>(halign),
+        static_cast<flywave::topo::vertical_align>(valign));
+    return  topo_compound_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::compound>(result)}};
+  } catch (...) {
+    return topo_compound_t{};
+  }
+}
+
+topo_compound_t topo_make_text_with_height(const char *text, double size,
+                                            double height, const char *font,
+                                            const char *fontPath, int kind,
+                                            int halign, int valign,
+                                            topo_plane_t *position) {
+  try {
+    auto cpp_plane =
+        position ? position->plane : flywave::topo::topo_plane::named("XY");
+    auto result = flywave::topo::compound::make_text(
+        text, size, height, font ? font : "Arial", fontPath ? fontPath : "",
+        static_cast<flywave::topo::font_kind>(kind),
+        static_cast<flywave::topo::horizontal_align>(halign),
+        static_cast<flywave::topo::vertical_align>(valign), cpp_plane);
+    return  topo_compound_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::compound>(result)}};
+  } catch (...) {
+    return topo_compound_t{};
+  }
 }
 
 void topo_compound_free(topo_compound_t t) {
@@ -2986,6 +4557,74 @@ topo_compound_t topo_compound_make_compound(topo_shape_t **S, int count) {
   return topo_compound_t{
       new topo_shape_t{std::make_shared<flywave::topo::compound>(
           flywave::topo::compound::make_compound(sps))}};
+}
+
+void topo_compound_remove(topo_compound_t t, topo_shape_t *s) {
+  auto opt = cast_to_topo(t);
+  if (opt) {
+    opt->remove(*s->shp);
+  }
+}
+
+topo_compound_t topo_compound_cut(topo_compound_t t, topo_shape_t **toCut,
+                                  int count, double tol) {
+  std::vector<flywave::topo::shape> sps;
+  for (int i = 0; i < count; i++) {
+    sps.emplace_back(*toCut[i]->shp);
+  }
+  return topo_compound_t{
+      new topo_shape_t{std::make_shared<flywave::topo::compound>(
+          flywave::topo::compound::make_compound(sps))}};
+}
+
+topo_compound_t topo_compound_fuse(topo_compound_t t, topo_shape_t **toFuse,
+                                   int count, bool glue, double tol) {
+  std::vector<flywave::topo::shape> sps;
+  for (int i = 0; i < count; i++) {
+    sps.emplace_back(*toFuse[i]->shp);
+  }
+  return topo_compound_t{
+      new topo_shape_t{std::make_shared<flywave::topo::compound>(
+          flywave::topo::compound::make_compound(sps))}};
+}
+
+topo_compound_t topo_compound_intersect(topo_compound_t t,
+                                        topo_shape_t **toIntersect, int count,
+                                        double tol) {
+  std::vector<flywave::topo::shape> sps;
+  for (int i = 0; i < count; i++) {
+    sps.emplace_back(*toIntersect[i]->shp);
+  }
+  return topo_compound_t{
+      new topo_shape_t{std::make_shared<flywave::topo::compound>(
+          flywave::topo::compound::make_compound(sps))}};
+}
+
+topo_compound_t topo_compound_ancestors(topo_compound_t t, topo_shape_t *s,
+                                        int kind) {
+  auto opt = cast_to_topo(t);
+  if (opt) {
+    auto fopt = opt->ancestors(*s->shp, static_cast<TopAbs_ShapeEnum>(kind));
+    if (fopt) {
+      return topo_compound_t{
+          new topo_shape_t{std::make_shared<flywave::topo::compound>(fopt)}};
+    }
+  }
+  return topo_compound_t{nullptr};
+}
+
+topo_compound_t topo_compound_siblings(topo_compound_t t, topo_shape_t *shape,
+                                       int kind, int level) {
+  auto opt = cast_to_topo(t);
+  if (opt) {
+    auto fopt =
+        opt->siblings(*shape->shp, static_cast<TopAbs_ShapeEnum>(kind), level);
+    if (fopt) {
+      return topo_compound_t{
+          new topo_shape_t{std::make_shared<flywave::topo::compound>(fopt)}};
+    }
+  }
+  return topo_compound_t{nullptr};
 }
 
 topo_comp_solid_t topo_make_comp_solid() {
@@ -3087,6 +4726,10 @@ trsf_t topo_location_get_trsf(topo_location_t *p) {
     return cast_from_gp(gp_Trsf(p->loc));
   }
   return trsf_t{};
+}
+
+void topo_location_list_free(topo_location_t **result, int result_count) {
+  delete[] result;
 }
 
 void topo_shape_to_stl(topo_shape_t *p, char *str) {
@@ -3230,6 +4873,541 @@ topo_shape_t *topo_wire_iterator_next(topo_wire_iterator_t *it) {
     return new topo_shape_t{std::make_shared<flywave::topo::wire>(*opt)};
   }
   return nullptr;
+}
+
+topo_vector_t *topo_vector_new(double x, double y, double z) {
+  return new topo_vector_t{flywave::topo::topo_vector(x, y, z)};
+}
+
+void topo_vector_free(topo_vector_t *p) {
+  if (p) {
+    delete p;
+  }
+}
+
+double topo_vector_get_x(topo_vector_t *p) {
+  if (p) {
+    return p->vec.x();
+  }
+  return 0;
+}
+
+double topo_vector_get_y(topo_vector_t *p) {
+  if (p) {
+    return p->vec.y();
+  }
+  return 0;
+}
+
+double topo_vector_get_z(topo_vector_t *p) {
+  if (p) {
+    return p->vec.z();
+  }
+  return 0;
+}
+
+topo_plane_t *topo_plane_new(pnt3d_t *origin, dir3d_t *xDir, vec3d_t *normal) {
+  return new topo_plane_t{flywave::topo::topo_plane(
+      flywave::topo::topo_vector(cast_to_gp(*origin)),
+      flywave::topo::topo_vector(cast_to_gp(*xDir)),
+      flywave::topo::topo_vector(cast_to_gp(*normal)))};
+}
+
+topo_plane_t *topo_plane_new_from_named(const char *name, pnt3d_t *origin) {
+  return new topo_plane_t{flywave::topo::topo_plane::named(
+      std::string(name), flywave::topo::topo_vector(cast_to_gp(*origin)))};
+}
+
+void topo_plane_free(topo_plane_t *p) {
+  if (p) {
+    delete p;
+  }
+}
+
+pnt3d_t topo_plane_get_origin(topo_plane_t *p) {
+  if (p) {
+    return cast_from_gp(p->plane.origin().to_pnt());
+  }
+  return pnt3d_t{};
+}
+
+dir3d_t topo_plane_get_x_dir(topo_plane_t *p) {
+  if (p) {
+    return cast_from_gp(p->plane.x_dir().to_dir());
+  }
+  return dir3d_t{};
+}
+
+dir3d_t topo_plane_get_y_dir(topo_plane_t *p) {
+  if (p) {
+    return cast_from_gp(p->plane.y_dir().to_dir());
+  }
+  return dir3d_t{};
+}
+
+dir3d_t topo_plane_get_z_dir(topo_plane_t *p) {
+  if (p) {
+    return cast_from_gp(p->plane.z_dir().to_dir());
+  }
+  return dir3d_t{};
+}
+
+topo_bbox_t *topo_bbox_new(bbox_t bbox) {
+  return new topo_bbox_t{flywave::topo::topo_bbox(
+      bbox.minx, bbox.miny, bbox.minz, bbox.maxx, bbox.maxy, bbox.maxz)};
+}
+
+topo_bbox_t *topo_bbox_new_from_shape(topo_shape_t *p) { return nullptr; }
+
+void topo_bbox_free(topo_bbox_t *p) {
+  if (p) {
+    delete p;
+  }
+}
+
+bbox_t topo_bbox_get_bbox(topo_bbox_t *p) {
+  if (p) {
+    bbox_t bbox{
+        .minx = p->bbox.x_min(),
+        .miny = p->bbox.y_min(),
+        .minz = p->bbox.z_min(),
+        .maxx = p->bbox.x_max(),
+        .maxy = p->bbox.y_max(),
+        .maxz = p->bbox.z_max(),
+    };
+    return bbox;
+  }
+  return bbox_t{};
+}
+
+topo_matrix_t *topo_matrix_new(trsf_t t) {
+  return new topo_matrix_t{flywave::topo::topo_matrix(cast_to_gp(t))};
+}
+
+void topo_matrix_free(topo_matrix_t *p) {
+  if (p) {
+    delete p;
+  }
+}
+
+double topo_matrix_get_value(topo_matrix_t *p, int row, int col) {
+  if (p) {
+    return p->mat.get(row, col);
+  }
+  return 0;
+}
+
+// Boolean operations
+TOPOCAPICALL topo_shape_t *topo_fuse(topo_shape_t **shapes, int count,
+                                     double tol, bool glue) {
+  try {
+    std::vector<flywave::topo::shape> shapeVec;
+    for (int i = 0; i < count; i++) {
+      shapeVec.emplace_back(*shapes[i]->shp);
+    }
+    auto result = flywave::topo::fuse(shapeVec, tol, glue);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+TOPOCAPICALL topo_shape_t *topo_cut(topo_shape_t *shp, topo_shape_t *tool,
+                                    double tol, bool glue) {
+  try {
+    auto result = flywave::topo::cut(*shp->shp, *tool->shp, tol, glue);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+TOPOCAPICALL topo_shape_t *topo_cut_multi(topo_shape_t *shp,
+                                          topo_shape_t **toCuts, int count,
+                                          double tol, bool glue) {
+  try {
+    std::vector<flywave::topo::shape> toCutVec;
+    for (int i = 0; i < count; i++) {
+      toCutVec.emplace_back(*toCuts[i]->shp);
+    }
+    auto result = flywave::topo::cut(*shp->shp, toCutVec, tol, glue);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+TOPOCAPICALL topo_shape_t *topo_intersect(topo_shape_t *shp,
+                                          topo_shape_t *toIntersect, double tol,
+                                          bool glue) {
+  try {
+    auto result =
+        flywave::topo::intersect(*shp->shp, *toIntersect->shp, tol, glue);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+TOPOCAPICALL topo_shape_t *topo_intersect_multi(topo_shape_t *shp,
+                                                topo_shape_t **toIntersects,
+                                                int count, double tol,
+                                                bool glue) {
+  try {
+    std::vector<flywave::topo::shape> toIntersectVec;
+    for (int i = 0; i < count; i++) {
+      toIntersectVec.emplace_back(*toIntersects[i]->shp);
+    }
+    auto result =
+        flywave::topo::intersect(*shp->shp, toIntersectVec, tol, glue);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+TOPOCAPICALL topo_shape_t *
+topo_split(topo_shape_t *shp, topo_shape_t **splitters, int count, double tol) {
+  try {
+    std::vector<flywave::topo::shape> splitterVec;
+    for (int i = 0; i < count; i++) {
+      splitterVec.emplace_back(*splitters[i]->shp);
+    }
+    auto result = flywave::topo::split(*shp->shp, splitterVec, tol);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+// Intersection operations
+TOPOCAPICALL topo_face_t *
+topo_faces_intersected_by_line(topo_shape_t *shp, pnt3d_t point, dir3d_t axis,
+                               double tolerance,
+                               intersection_direction_t direction, int *count) {
+  try {
+    gp_Pnt p(point.x, point.y, point.z);
+    gp_Dir d(axis.x, axis.y, axis.z);
+    auto faces = flywave::topo::faces_intersected_by_line(
+        *shp->shp, p, d, tolerance,
+        static_cast<flywave::topo::intersection_direction>(direction));
+
+    *count = static_cast<int>(faces.size());
+    auto result = new topo_face_t[*count];
+    for (int i = 0; i < *count; i++) {
+      result[i].shp =
+          new topo_shape_t{std::make_shared<flywave::topo::face>(faces[i])};
+    }
+    return result;
+  } catch (...) {
+    *count = 0;
+    return nullptr;
+  }
+}
+
+// Modeling operations
+TOPOCAPICALL topo_shape_t *topo_fill(topo_shape_t *shp,
+                                     topo_shape_t **constraints, int count) {
+  try {
+    std::vector<flywave::topo::shape> constraintVec;
+    for (int i = 0; i < count; i++) {
+      constraintVec.emplace_back(*constraints[i]->shp);
+    }
+    auto result = flywave::topo::fill(*shp->shp, constraintVec);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+TOPOCAPICALL topo_shape_t *topo_shelling(topo_shape_t *shp,
+                                         topo_face_t *faceList, int faceCount,
+                                         double thickness, double tolerance,
+                                         int joinType) {
+  try {
+    std::vector<flywave::topo::face> faces;
+    for (int i = 0; i < faceCount; i++) {
+      faces.emplace_back(*cast_to_topo(faceList[i]));
+    }
+    auto result =
+        flywave::topo::shelling(*shp->shp, faces, thickness, tolerance,
+                                static_cast<GeomAbs_JoinType>(joinType));
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+TOPOCAPICALL topo_shape_t *topo_fillet(topo_shape_t *shp, topo_edge_t *edges,
+                                       int edgeCount, double radius) {
+  try {
+    std::vector<flywave::topo::edge> edgeVec;
+    for (int i = 0; i < edgeCount; i++) {
+      edgeVec.emplace_back(*cast_to_topo(edges[i]));
+    }
+    auto result = flywave::topo::fillet(*shp->shp, edgeVec, radius);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+TOPOCAPICALL topo_shape_t *topo_chamfer(topo_shape_t *baseShape,
+                                        topo_edge_t *edges, int edgeCount,
+                                        double distance1, double distance2,
+                                        bool hasDistance2) {
+  try {
+    std::vector<flywave::topo::edge> edgeVec;
+    for (int i = 0; i < edgeCount; i++) {
+      edgeVec.emplace_back(*cast_to_topo(edges[i]));
+    }
+    boost::optional<double> dist2 =
+        hasDistance2 ? boost::optional<double>(distance2) : boost::none;
+    auto result =
+        flywave::topo::chamfer(*baseShape->shp, edgeVec, distance1, dist2);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+// Extrusion operations
+TOPOCAPICALL topo_shape_t *topo_extrude(topo_shape_t *shape,
+                                        vec3d_t direction) {
+  try {
+    gp_Vec dir(direction.x, direction.y, direction.z);
+    auto result = flywave::topo::extrude(*shape->shp, dir);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+TOPOCAPICALL topo_shape_t *
+topo_extrude_linear(topo_wire_t outerWire, topo_wire_t *innerWires,
+                    int innerCount, vec3d_t vecNormal, double taper) {
+  try {
+    std::vector<flywave::topo::wire> innerWireVec;
+    for (int i = 0; i < innerCount; i++) {
+      innerWireVec.emplace_back(*cast_to_topo(innerWires[i]));
+    }
+    gp_Vec normal(vecNormal.x, vecNormal.y, vecNormal.z);
+    auto result = flywave::topo::extrude_linear(*cast_to_topo(outerWire),
+                                                innerWireVec, normal, taper);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+TOPOCAPICALL topo_shape_t *topo_extrude_linear_with_rotation(
+    topo_wire_t outerWire, topo_wire_t *innerWires, int innerCount,
+    pnt3d_t center, vec3d_t normal, double angleDegrees) {
+  try {
+    std::vector<flywave::topo::wire> innerWireVec;
+    for (int i = 0; i < innerCount; i++) {
+      innerWireVec.emplace_back(*cast_to_topo(innerWires[i]));
+    }
+    gp_Pnt c(center.x, center.y, center.z);
+    gp_Vec n(normal.x, normal.y, normal.z);
+    auto result = flywave::topo::extrude_linear_with_rotation(
+        *cast_to_topo(outerWire), innerWireVec, c, n, angleDegrees);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+// Revolution operations
+TOPOCAPICALL topo_shape_t *topo_revolve(topo_shape_t *shape, pnt3d_t axisPoint,
+                                        dir3d_t axisDirection,
+                                        double angleDegrees) {
+  try {
+    gp_Pnt p(axisPoint.x, axisPoint.y, axisPoint.z);
+    gp_Dir d(axisDirection.x, axisDirection.y, axisDirection.z);
+    auto result = flywave::topo::revolve(*shape->shp, p, d, angleDegrees);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+TOPOCAPICALL topo_shape_t *
+topo_revolve_wire(topo_wire_t outerWire, topo_wire_t *innerWires,
+                  int innerCount, double angleDegrees, pnt3d_t axisStart,
+                  pnt3d_t axisEnd) {
+  try {
+    std::vector<flywave::topo::wire> innerWireVec;
+    for (int i = 0; i < innerCount; i++) {
+      innerWireVec.emplace_back(*cast_to_topo(innerWires[i]));
+    }
+    gp_Pnt start(axisStart.x, axisStart.y, axisStart.z);
+    gp_Pnt end(axisEnd.x, axisEnd.y, axisEnd.z);
+    auto result = flywave::topo::revolve(*cast_to_topo(outerWire), innerWireVec,
+                                         angleDegrees, start, end);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+// Sweep operations
+TOPOCAPICALL topo_shape_t *topo_sweep(topo_wire_t outerWire,
+                                      topo_wire_t *innerWires, int innerCount,
+                                      topo_shape_t *path, bool makeSolid,
+                                      bool isFrenet, topo_shape_t *mode,
+                                      transition_mode_t transitionMode) {
+  try {
+    std::vector<flywave::topo::wire> innerWireVec;
+    for (int i = 0; i < innerCount; i++) {
+      innerWireVec.emplace_back(*cast_to_topo(innerWires[i]));
+    }
+    auto result = flywave::topo::sweep(
+        *cast_to_topo(outerWire), innerWireVec, *path->shp, makeSolid, isFrenet,
+        mode ? &(*mode->shp) : nullptr,
+        static_cast<flywave::topo::transition_mode>(transitionMode));
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+TOPOCAPICALL topo_shape_t *topo_sweep_multi(topo_shape_t **profiles, int count,
+                                            topo_shape_t *path, bool makeSolid,
+                                            bool isFrenet, topo_shape_t *mode) {
+  try {
+    std::vector<flywave::topo::shape> profileVec;
+    for (int i = 0; i < count; i++) {
+      profileVec.emplace_back(*profiles[i]->shp);
+    }
+    auto result =
+        flywave::topo::sweep_multi(profileVec, *path->shp, makeSolid, isFrenet,
+                                   mode ? &(*mode->shp) : nullptr);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+// Loft operations
+TOPOCAPICALL topo_shape_t *
+topo_loft(topo_shape_t **profiles, int count, bool cap, bool ruled,
+          const char *continuity, const char *parametrization, int degree,
+          bool compat, bool smoothing, double *weights) {
+  try {
+    std::vector<flywave::topo::shape> profileVec;
+    for (int i = 0; i < count; i++) {
+      profileVec.emplace_back(*profiles[i]->shp);
+    }
+    std::array<double, 3> weightArr = {weights[0], weights[1], weights[2]};
+    auto result = flywave::topo::loft(
+        profileVec, cap, ruled, continuity ? continuity : "C2",
+        parametrization ? parametrization : "uniform", degree, compat,
+        smoothing, weightArr);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+// Other operations
+TOPOCAPICALL topo_shape_t *topo_offset(topo_shape_t *shape, double offset,
+                                       bool cap, bool both, double tol) {
+  try {
+    auto result = flywave::topo::offset(*shape->shp, offset, cap, both, tol);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+TOPOCAPICALL topo_shape_t *topo_clean(topo_shape_t *shape) {
+  try {
+    auto result = flywave::topo::clean(*shape->shp);
+    if (result) {
+      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+// Utility functions
+TOPOCAPICALL void topo_closest(topo_shape_t *shape1, topo_shape_t *shape2,
+                               pnt3d_t *p1, pnt3d_t *p2) {
+  try {
+    auto result = flywave::topo::closest(*shape1->shp, *shape2->shp);
+    *p1 = cast_from_gp(result.first);
+    *p2 = cast_from_gp(result.second);
+  } catch (...) {
+    *p1 = pnt3d_t{0, 0, 0};
+    *p2 = pnt3d_t{0, 0, 0};
+  }
+}
+
+TOPOCAPICALL pnt3d_t topo_combined_center(topo_shape_t **objects, int count) {
+  try {
+    std::vector<flywave::topo::shape> objectVec;
+    for (int i = 0; i < count; i++) {
+      objectVec.emplace_back(*objects[i]->shp);
+    }
+    auto result = flywave::topo::combined_center(objectVec);
+    return cast_from_gp(result);
+  } catch (...) {
+    return pnt3d_t{0, 0, 0};
+  }
+}
+
+TOPOCAPICALL pnt3d_t topo_combined_center_of_bound_box(topo_shape_t **objects,
+                                                       int count) {
+  try {
+    std::vector<flywave::topo::shape> objectVec;
+    for (int i = 0; i < count; i++) {
+      objectVec.emplace_back(*objects[i]->shp);
+    }
+    auto result = flywave::topo::combined_center_of_bound_box(objectVec);
+    return cast_from_gp(result);
+  } catch (...) {
+    return pnt3d_t{0, 0, 0};
+  }
 }
 
 #ifdef __cplusplus

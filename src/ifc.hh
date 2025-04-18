@@ -197,7 +197,7 @@ struct filter_settings {
     }                                                                          \
     ~NAME_SPACE##_convert() {}                                                 \
                                                                                \
-    std::vector<ifc_element_info> get_shape();                                     \
+    std::vector<ifc_element_info> get_shape();                                 \
                                                                                \
     void process_with_callback(visitor *vst);                                  \
                                                                                \

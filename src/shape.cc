@@ -5,34 +5,52 @@
 #include "compound.hh"
 #include "edge.hh"
 #include "face.hh"
+#include "matrix.hh"
 #include "shell.hh"
 #include "solid.hh"
 #include "vertex.hh"
 #include "wire.hh"
 
-#include <BRepGProp.hxx>
-#include <GProp_GProps.hxx>
+#include <BRepAdaptor_Curve.hxx>
+#include <BRepAdaptor_Surface.hxx>
+#include <BRepAlgoAPI_Common.hxx>
+#include <BRepAlgoAPI_Cut.hxx>
+#include <BRepAlgoAPI_Fuse.hxx>
+#include <BRepAlgoAPI_Splitter.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_FindPlane.hxx>
 #include <BRepBuilderAPI_GTransform.hxx>
+#include <BRepBuilderAPI_NurbsConvert.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepCheck_Analyzer.hxx>
+#include <BRepExtrema_DistShapeShape.hxx>
+#include <BRepGProp.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <BRepTools.hxx>
 #include <BRepTools_WireExplorer.hxx>
 #include <BRep_Tool.hxx>
 #include <Bnd_Box.hxx>
+#include <GProp_GProps.hxx>
+#include <GeomAbs_CurveType.hxx>
+#include <GeomAbs_SurfaceType.hxx>
 #include <Geom_Line.hxx>
 #include <Geom_Plane.hxx>
 #include <Geom_TrimmedCurve.hxx>
+#include <Interface_Static.hxx>
 #include <Poly.hxx>
 #include <Poly_Triangulation.hxx>
+#include <STEPControl_Writer.hxx>
+#include <ShapeCustom.hxx>
+#include <ShapeCustom_BSplineRestriction.hxx>
+#include <ShapeCustom_RestrictionParameters.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <ShapeFix_ShapeTolerance.hxx>
+#include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <TColStd_Array1OfReal.hxx>
 #include <TColgp_Array1OfPnt2d.hxx>
 #include <TShort_Array1OfShortReal.hxx>
+#include <TopAbs.hxx>
 #include <TopExp.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopoDS.hxx>
@@ -40,23 +58,127 @@
 
 #include <limits>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace flywave {
 namespace topo {
+
+namespace {
+std::pair<double, std::pair<gp_Pnt, gp_Pnt>>
+distance_with_points(const TopoDS_Shape &shape1, const TopoDS_Shape &shape2) {
+  if (shape1.IsNull() || shape2.IsNull()) {
+    throw std::invalid_argument("Cannot compute distance for null shapes");
+  }
+
+  BRepExtrema_DistShapeShape distTool(shape1, shape2);
+
+  if (!distTool.IsDone() || distTool.NbSolution() == 0) {
+    throw std::runtime_error("Distance computation failed");
+  }
+
+  return {distTool.Value(),
+          {distTool.PointOnShape1(1), distTool.PointOnShape2(1)}};
+}
+
+void compute_properties(const TopoDS_Shape &shape, GProp_GProps &props) {
+  switch (shape.ShapeType()) {
+  case TopAbs_SOLID:
+  case TopAbs_COMPSOLID:
+    BRepGProp::VolumeProperties(shape, props);
+    break;
+  case TopAbs_FACE:
+  case TopAbs_SHELL:
+    BRepGProp::SurfaceProperties(shape, props);
+    break;
+  case TopAbs_EDGE:
+  case TopAbs_WIRE:
+    BRepGProp::LinearProperties(shape, props);
+    break;
+  default:
+    throw std::runtime_error("Unsupported shape type for mass calculation");
+  }
+}
+
+const shape_geom_type &get_geom_type(const TopoDS_Shape &shape) {
+  static const std::unordered_map<TopAbs_ShapeEnum, shape_geom_type> geomLUT = {
+      {TopAbs_VERTEX, shape_geom_vertex},
+      {TopAbs_WIRE, shape_geom_wire},
+      {TopAbs_SHELL, shape_geom_shell},
+      {TopAbs_SOLID, shape_geom_solid},
+      {TopAbs_COMPSOLID, shape_geom_compsolid},
+      {TopAbs_COMPOUND, shape_geom_compound}};
+
+  static const std::unordered_map<GeomAbs_CurveType, shape_geom_type>
+      edgeGeomLUT = {{GeomAbs_Line, shape_geom_line},
+                     {GeomAbs_Circle, shape_geom_circle},
+                     {GeomAbs_Ellipse, shape_geom_ellipse},
+                     {GeomAbs_Hyperbola, shape_geom_hyperbola},
+                     {GeomAbs_Parabola, shape_geom_parabola},
+                     {GeomAbs_BezierCurve, shape_geom_bezier_curve},
+                     {GeomAbs_BSplineCurve, shape_geom_bspline_curve},
+                     {GeomAbs_OffsetCurve, shape_geom_offset_curve},
+                     {GeomAbs_OtherCurve, shape_geom_other_curve}};
+
+  static const std::unordered_map<GeomAbs_SurfaceType, shape_geom_type>
+      faceGeomLUT = {{GeomAbs_Plane, shape_geom_plane},
+                     {GeomAbs_Cylinder, shape_geom_cylinder},
+                     {GeomAbs_Cone, shape_geom_cone},
+                     {GeomAbs_Sphere, shape_geom_sphere},
+                     {GeomAbs_Torus, shape_geom_torus},
+                     {GeomAbs_BezierSurface, shape_geom_bezier_surface},
+                     {GeomAbs_BSplineSurface, shape_geom_bspline_surface},
+                     {GeomAbs_SurfaceOfRevolution, shape_geom_revolved_surface},
+                     {GeomAbs_SurfaceOfExtrusion, shape_geom_extruded_surface},
+                     {GeomAbs_OffsetSurface, shape_geom_offset_surface},
+                     {GeomAbs_OtherSurface, shape_geom_other_surface}};
+
+  TopAbs_ShapeEnum shapeType = shape.ShapeType();
+
+  auto it = geomLUT.find(shapeType);
+  if (it != geomLUT.end()) {
+    return it->second;
+  }
+
+  if (shapeType == TopAbs_EDGE) {
+    BRepAdaptor_Curve curve(TopoDS::Edge(shape));
+    auto curveType = curve.GetType();
+    return edgeGeomLUT.at(curveType);
+  }
+
+  if (shapeType == TopAbs_FACE) {
+    BRepAdaptor_Surface surface(TopoDS::Face(shape));
+    auto surfaceType = surface.GetType();
+    return faceGeomLUT.at(surfaceType);
+  }
+
+  throw std::runtime_error("Unknown shape type");
+}
+} // namespace
+
+struct TopoDS_ShapeHasher {
+  std::size_t operator()(const TopoDS_Shape &shape) const {
+    if (shape.IsNull()) {
+      return 0;
+    }
+    return std::hash<const void *>{}(shape.TShape().get());
+  }
+};
 
 shape::shape()
     : _shape(), _surface_colour(Quantity_NOC_WHITE),
       _curve_colour(Quantity_NOC_WHITE), _u_origin(0.), _v_origin(0.),
       _u_repeat(1.), _v_repeat(1.), _scale_u(1.), _scale_v(1.),
       _auto_scale_size_on_u(1.), _auto_scale_size_on_v(1.),
-      _txture_map_type(texture_normal), _rotation_angle(0.) {}
+      _txture_map_type(texture_normal), _rotation_angle(0.),
+      _for_construction(false) {}
 
-shape::shape(TopoDS_Shape shp)
+shape::shape(TopoDS_Shape shp, bool forConstruction)
     : _shape(shp), _surface_colour(Quantity_NOC_WHITE),
       _curve_colour(Quantity_NOC_WHITE), _u_origin(0.), _v_origin(0.),
       _u_repeat(1.), _v_repeat(1.), _scale_u(1.), _scale_v(1.),
       _auto_scale_size_on_u(1.), _auto_scale_size_on_v(1.),
-      _txture_map_type(texture_normal), _rotation_angle(0.) {}
+      _txture_map_type(texture_normal), _rotation_angle(0.),
+      _for_construction(forConstruction) {}
 
 shape::shape(const shape &s, TopoDS_Shape shp)
     : _shape(shp), _surface_colour(s._surface_colour),
@@ -65,8 +187,8 @@ shape::shape(const shape &s, TopoDS_Shape shp)
       _scale_u(s._scale_u), _scale_v(s._scale_v),
       _auto_scale_size_on_u(s._auto_scale_size_on_u),
       _auto_scale_size_on_v(s._auto_scale_size_on_v),
-      _txture_map_type(s._txture_map_type), _rotation_angle(s._rotation_angle) {
-}
+      _txture_map_type(s._txture_map_type), _rotation_angle(s._rotation_angle),
+      _for_construction(s._for_construction) {}
 
 TopoDS_Shape &shape::value() { return _shape; }
 
@@ -83,7 +205,8 @@ shape::shape(shape &&o) noexcept
       _scale_u(o._scale_u), _scale_v(o._scale_v),
       _auto_scale_size_on_u(o._auto_scale_size_on_u),
       _auto_scale_size_on_v(o._auto_scale_size_on_v),
-      _txture_map_type(o._txture_map_type), _rotation_angle(o._rotation_angle) {
+      _txture_map_type(o._txture_map_type), _rotation_angle(o._rotation_angle),
+      _for_construction(o._for_construction) {
   if (!o._shape.IsNull())
     o._shape.Free();
 }
@@ -102,6 +225,7 @@ shape &shape::operator=(shape &&o) noexcept {
   _auto_scale_size_on_v = o._auto_scale_size_on_v;
   _txture_map_type = o._txture_map_type;
   _rotation_angle = o._rotation_angle;
+  _for_construction = o._for_construction;
   if (!o._shape.IsNull())
     o._shape.Free();
   return *this;
@@ -112,8 +236,10 @@ shape shape::copy(bool deep) const {
     BRepBuilderAPI_Copy _copy(_shape, deep);
     _copy.Build();
 
-    if (!_copy.IsDone())
+    if (!_copy.IsDone()) {
+      _copy.Shape().Free();
       throw std::runtime_error("Section operation failed");
+    }
 
     auto shp = _copy.Shape();
 
@@ -137,14 +263,8 @@ shape shape::copy(bool deep) const {
       break;
     }
     return shape{};
-  } catch (Standard_Failure &e) {
-    
-    const Standard_CString msg = e.GetMessageString();
-    if (msg != nullptr && strlen(msg) > 1) {
-      throw std::runtime_error(msg);
-    } else {
-      throw std::runtime_error("Failed to offset face");
-    }
+  } catch (...) {
+    throw;
   }
   return shape{};
 }
@@ -200,6 +320,10 @@ Bnd_Box shape::bounding_box(double tolerance) const {
   }
 }
 
+topo_bbox shape::bbox(double tolerance) const {
+  return topo_bbox(bounding_box(tolerance));
+}
+
 int shape::hash_code() const {
   return _shape.HashCode(std::numeric_limits<int>::max());
 }
@@ -214,6 +338,30 @@ bool shape::equals(const geometry_object &other) const {
 
 int shape::transform(gp_Trsf mat) { return transform_impl(mat); }
 
+int shape::transform(const topo_matrix &mat) {
+  try {
+    TopoDS_Shape &shape = _shape;
+    BRepBuilderAPI_Transform transformer(shape, mat.get_value().Trsf(),
+                                         true // Make copy of the shape
+    );
+
+    transformer.Build();
+    if (!transformer.IsDone())
+      return 0;
+    _shape = transformer.Shape();
+    return 1;
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
+    if (msg != NULL && strlen(msg) > 1) {
+      throw std::runtime_error(msg);
+    } else {
+      throw std::runtime_error("Failed to transform object");
+    }
+    return 0;
+  }
+  return 1;
+}
+
 int shape::transform_impl(gp_Trsf &trans) {
   try {
     TopoDS_Shape &shape = _shape;
@@ -226,7 +374,7 @@ int shape::transform_impl(gp_Trsf &trans) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -254,7 +402,7 @@ int shape::translate(gp_Vec delta) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -265,6 +413,10 @@ int shape::translate(gp_Vec delta) {
   }
   return 1;
 }
+
+bool shape::is_same(const shape &o) const { return _shape.IsSame(o._shape); }
+
+bool shape::for_construction() const { return false; }
 
 int shape::rotate(double angle, gp_Pnt p1, gp_Pnt p2) {
   try {
@@ -283,7 +435,7 @@ int shape::rotate(double angle, gp_Pnt p1, gp_Pnt p2) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -310,7 +462,7 @@ int shape::rotate(double angle, gp_Ax1 a) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -337,7 +489,7 @@ int shape::rotate(gp_Quaternion R) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -364,7 +516,7 @@ int shape::scale(gp_Pnt pnt, double scale) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -374,6 +526,10 @@ int shape::scale(gp_Pnt pnt, double scale) {
     return 0;
   }
   return 1;
+}
+
+int shape::mirror(gp_Pnt pnt, gp_Vec nor) {
+  return mirror(pnt, gp_Pnt(nor.X(), nor.Y(), nor.Z()));
 }
 
 int shape::mirror(gp_Pnt pnt, gp_Pnt nor) {
@@ -393,7 +549,7 @@ int shape::mirror(gp_Pnt pnt, gp_Pnt nor) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -420,7 +576,7 @@ int shape::mirror(gp_Ax1 a) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -447,7 +603,7 @@ int shape::mirror(gp_Ax2 a) {
       return 0;
     _shape = aTrans.Shape();
   } catch (Standard_Failure &e) {
-    
+
     const Standard_CString msg = e.GetMessageString();
     if (msg != NULL && strlen(msg) > 1) {
       throw std::runtime_error(msg);
@@ -460,6 +616,12 @@ int shape::mirror(gp_Ax2 a) {
 }
 
 shape shape::transformed(gp_Trsf mat) const {
+  auto shp = copy();
+  shp.transform(mat);
+  return shp;
+}
+
+shape shape::transformed(const topo_matrix &mat) const {
   auto shp = copy();
   shp.transform(mat);
   return shp;
@@ -496,6 +658,12 @@ shape shape::scaled(gp_Pnt pnt, double scale) const {
 }
 
 shape shape::mirrored(gp_Pnt pnt, gp_Pnt nor) const {
+  auto shp = copy();
+  shp.mirror(pnt, nor);
+  return shp;
+}
+
+shape shape::mirrored(gp_Pnt pnt, gp_Vec nor) const {
   auto shp = copy();
   shp.mirror(pnt, nor);
   return shp;
@@ -545,6 +713,8 @@ gp_Pnt shape::centre_of_mass() const {
   return system.CentreOfMass();
 }
 
+gp_Pnt shape::center_of_bound_box() const { return this->bbox().center(); }
+
 double shape::compute_area() const {
   GProp_GProps system;
   BRepGProp::SurfaceProperties(_shape, system);
@@ -579,6 +749,106 @@ bool shape::surface_colour(double *colour) const {
 }
 
 void shape::set_location(const topo_location &loc) { _shape.Location(loc); }
+
+shape shape::located(const topo_location &loc) const {
+  shape result(value().Located(loc));
+  // result.forConstruction_ = forConstruction_;
+  return result;
+}
+
+int shape::move(const topo_location &loc) {
+  gp_Trsf trsf = loc;
+  value().Move(trsf);
+  return 1;
+}
+
+// Apply translation and rotation in relative sense to self
+int shape::move(double x, double y, double z, double rx, double ry, double rz) {
+  topo_location loc(gp_Vec(x, y, z), rx, ry, rz);
+  gp_Trsf trsf = loc;
+  value().Move(trsf);
+  return 1;
+}
+
+// Apply a vector in relative sense to self
+int shape::move(const gp_Vec &vec) {
+  gp_Trsf trsf;
+  trsf.SetTranslation(vec);
+  value().Move(trsf);
+  return 1;
+}
+
+// Moved methods (create new transformed shapes)
+
+// Apply a location in relative sense to a copy
+shape shape::moved(const topo_location &loc) const {
+  gp_Trsf trsf = loc;
+  TopoDS_Shape movedShape =
+      BRepBuilderAPI_Transform(value(), trsf, true).Shape();
+  shape result(movedShape);
+  // result.forConstruction_ = forConstruction_;
+  return result;
+}
+
+// Apply multiple locations
+shape shape::moved(std::initializer_list<topo_location> locs) const {
+  return moved(std::vector<topo_location>(locs));
+}
+
+shape shape::moved(const std::vector<topo_location> &locs) const {
+  TopTools_ListOfShape shapeList;
+
+  for (const auto &loc : locs) {
+    shapeList.Append(moved(loc).value());
+  }
+
+  if (shapeList.Size() == 1) {
+    return shape(shapeList.First());
+  }
+
+  // Combine multiple results into a compound
+  TopoDS_Compound compound;
+  BRep_Builder builder;
+  builder.MakeCompound(compound);
+
+  for (auto &shape : shapeList) {
+    builder.Add(compound, shape);
+  }
+
+  return shape(compound);
+}
+
+// Apply translation and rotation in relative sense to a copy
+shape shape::moved(double x, double y, double z, double rx, double ry,
+                   double rz) const {
+  topo_location loc(gp_Vec(x, y, z), rx, ry, rz);
+  gp_Trsf trsf = loc;
+  return moved(topo_location(trsf));
+}
+
+// Apply a vector in relative sense to a copy
+shape shape::moved(const gp_Vec &vec) const {
+  gp_Trsf trsf;
+  trsf.SetTranslation(vec);
+  return moved(topo_location(trsf));
+}
+
+// Apply multiple vectors in relative sense to a copy
+shape shape::moved(std::initializer_list<gp_Vec> vecs) const {
+  std::vector<topo_location> locs;
+  for (const auto &vec : vecs) {
+    locs.emplace_back(topo_location(vec));
+  }
+  return moved(locs);
+}
+
+shape shape::moved(const std::vector<gp_Vec> &vecs) const {
+  std::vector<topo_location> locs;
+  for (const auto &vec : vecs) {
+    locs.emplace_back(topo_location(vec));
+  }
+  return moved(locs);
+}
 
 orientation shape::get_orientation() const {
   switch (_shape.Orientation()) {
@@ -642,6 +912,93 @@ bool shape::fix_shape() {
     }
   }
   return aChecker.IsValid();
+}
+
+boost::optional<compound> shape::ancestors(const shape &shape,
+                                           TopAbs_ShapeEnum kind) const {
+  if (is_null() || shape.is_null()) {
+    return boost::none;
+  }
+
+  TopTools_IndexedDataMapOfShapeListOfShape shapeMap;
+  TopExp::MapShapesAndAncestors(shape, value().ShapeType(), kind, shapeMap);
+
+  if (!shapeMap.Contains(*this)) {
+    return boost::none;
+  }
+
+  BRep_Builder builder;
+  TopoDS_Compound result;
+  builder.MakeCompound(result);
+  const TopTools_ListOfShape &ancestors = shapeMap.FindFromKey(*this);
+
+  TopTools_ListIteratorOfListOfShape it(ancestors);
+  for (; it.More(); it.Next()) {
+    builder.Add(result, it.Value());
+  }
+
+  return boost::make_optional<compound>(result);
+}
+
+boost::optional<compound>
+shape::siblings(const shape &shape, TopAbs_ShapeEnum kind, int level) const {
+  TopTools_IndexedDataMapOfShapeListOfShape shapeMap;
+  TopTools_MapOfShape exclude;
+  BRep_Builder builder;
+  TopoDS_Compound result;
+  builder.MakeCompound(result);
+
+  TopExp::MapShapesAndAncestors(shape, kind, value().ShapeType(), shapeMap);
+
+  std::function<std::vector<TopoDS_Shape>(const std::vector<TopoDS_Shape> &,
+                                          int)>
+      findSiblings;
+  findSiblings = [&](const std::vector<TopoDS_Shape> &shapes,
+                     int currentLevel) {
+    std::unordered_set<TopoDS_Shape, TopoDS_ShapeHasher> siblingsSet;
+
+    for (const auto &s : shapes) {
+      exclude.Add(s);
+    }
+
+    for (const auto &s : shapes) {
+      TopTools_IndexedMapOfShape entities;
+      TopExp::MapShapes(s, kind, entities);
+
+      for (int i = 1; i <= entities.Extent(); ++i) {
+        const TopoDS_Shape &entity = entities(i);
+        if (shapeMap.Contains(entity)) {
+          const TopTools_ListOfShape &sharingShapes =
+              shapeMap.FindFromKey(entity);
+          TopTools_ListIteratorOfListOfShape sit(sharingShapes);
+          for (; sit.More(); sit.Next()) {
+            const TopoDS_Shape &sibling = sit.Value();
+            if (!exclude.Contains(sibling)) {
+              siblingsSet.insert(sibling);
+            }
+          }
+        }
+      }
+    }
+
+    std::vector<TopoDS_Shape> siblingsVec(siblingsSet.begin(),
+                                          siblingsSet.end());
+
+    if (currentLevel > 1 && !siblingsVec.empty()) {
+      return findSiblings(siblingsVec, currentLevel - 1);
+    }
+
+    return siblingsVec;
+  };
+
+  std::vector<TopoDS_Shape> initialShapes = {*this};
+  auto siblings = findSiblings(initialShapes, level);
+
+  for (const auto &s : siblings) {
+    builder.Add(result, s);
+  }
+
+  return boost::make_optional<compound>(result);
 }
 
 void shape::set_txture_map_type(texture_mapping_rule t) {
@@ -709,7 +1066,8 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
       if (hasSeam) {
         TColStd_Array1OfReal norms(1, mesh->MapNormalArray()->Length());
         for (Standard_Integer i = 1; i <= mesh->NbNodes() * 3; i += 3) {
-          gp_Dir dir(mesh->MapNormalArray()->Value(i), mesh->MapNormalArray()->Value(i + 1),
+          gp_Dir dir(mesh->MapNormalArray()->Value(i),
+                     mesh->MapNormalArray()->Value(i + 1),
                      mesh->MapNormalArray()->Value(i + 2));
           if (faceReversed)
             dir.Reverse();
@@ -987,17 +1345,19 @@ boost::optional<shape> shape::auto_cast() const {
   if (!_shape.IsNull()) {
     switch (_shape.ShapeType()) {
     case TopAbs_VERTEX:
-      return vertex(_shape);
+      return vertex(*this, _shape);
     case TopAbs_EDGE:
-      return edge(_shape);
+      return edge(*this, _shape);
     case TopAbs_WIRE:
-      return wire(_shape);
+      return wire(*this, _shape);
     case TopAbs_FACE:
-      return face(_shape);
+      return face(*this, _shape);
     case TopAbs_SHELL:
-      return shell(_shape);
+      return shell(*this, _shape);
     case TopAbs_SOLID:
-      return solid(_shape);
+      return solid(*this, _shape);
+    case TopAbs_COMPOUND:
+      return compound(*this, _shape);
     default:
       break;
     }
@@ -1020,6 +1380,8 @@ boost::optional<shape> shape::make_shape(TopoDS_Shape shp) {
       return shell(shp);
     case TopAbs_SOLID:
       return solid(shp);
+    case TopAbs_COMPOUND:
+      return compound(shp);
     default:
       break;
     }
@@ -1027,41 +1389,13 @@ boost::optional<shape> shape::make_shape(TopoDS_Shape shp) {
   return boost::none;
 }
 
-std::string shape::shape_type() const {
-  std::string type = "clue";
-  switch (_shape.ShapeType()) {
-  case TopAbs_COMPOUND:
-    type = "compound";
-    break;
-  case TopAbs_COMPSOLID:
-    type = "compound solid";
-    break;
-  case TopAbs_SOLID:
-    type = "solid";
-    break;
-  case TopAbs_SHELL:
-    type = "shell";
-    break;
-  case TopAbs_FACE:
-    type = "face";
-    break;
-  case TopAbs_WIRE:
-    type = "wire";
-    break;
-  case TopAbs_EDGE:
-    type = "edge";
-    break;
-  case TopAbs_VERTEX:
-    type = "vertex";
-    break;
-  case TopAbs_SHAPE:
-    type = "shape";
-    break;
-  default:
-    break;
-  }
+TopAbs_ShapeEnum shape::shape_type() const { return _shape.ShapeType(); }
 
-  return type;
+shape_geom_type shape::geom_type() const {
+  if (_shape.IsNull()) {
+    return shape_geom_null;
+  }
+  return get_geom_type(_shape);
 }
 
 void shape::build_maps() {
@@ -1144,6 +1478,332 @@ void shape::get_box_texture_coordinate(const gp_Pnt &p, const gp_Dir &N1,
       _coord_p.Rotate(M_PI / 2.);
     }
   }
+}
+
+shape shape::clean() {
+  Handle(ShapeUpgrade_UnifySameDomain) upgrader =
+      new ShapeUpgrade_UnifySameDomain(_shape, Standard_True, Standard_True,
+                                       Standard_True);
+  upgrader->AllowInternalEdges(Standard_False);
+  upgrader->Build();
+  return upgrader->Shape();
+}
+
+bool shape::export_step(const std::string &fileName, bool write_pcurves,
+                        int precision_mode) const {
+  Interface_Static::SetIVal("write.surfacecurve.mode", write_pcurves ? 1 : 0);
+  Interface_Static::SetIVal("write.precision.mode", precision_mode);
+
+  STEPControl_Writer writer;
+  writer.Transfer(_shape, STEPControl_AsIs);
+  return writer.Write(fileName.c_str());
+}
+
+bool shape::export_brep(const std::string &fileName) const {
+  return BRepTools::Write(_shape, fileName.c_str());
+}
+
+boost::optional<shape> shape::import_from_brep(const std::string &fileName) {
+  TopoDS_Shape shp;
+  BRep_Builder builder;
+
+  if (!BRepTools::Read(shp, fileName.c_str(), builder)) {
+    return boost::none;
+  }
+
+  if (shp.IsNull()) {
+    return boost::none;
+  }
+
+  return boost::make_optional<shape>(shp);
+}
+
+gp_Pnt shape::combined_center(const std::vector<shape> &shapes) {
+  if (shapes.empty()) {
+    throw std::invalid_argument("Empty shape list");
+  }
+
+  double totalMass = 0.0;
+  gp_Pnt weightedSum(0, 0, 0);
+
+  for (const auto &s : shapes) {
+    GProp_GProps props;
+    compute_properties(s, props);
+    double mass = props.Mass();
+    gp_Pnt com = props.CentreOfMass();
+
+    totalMass += mass;
+    weightedSum.ChangeCoord().Add(com.XYZ().Multiplied(mass));
+  }
+
+  if (totalMass <= 0.0) {
+    throw std::runtime_error("Total mass must be positive");
+  }
+
+  return gp_Pnt(weightedSum.XYZ().Divided(totalMass));
+}
+
+gp_Pnt
+shape::combined_center_of_bounding_box(const std::vector<shape> &shapes) {
+  if (shapes.empty()) {
+    throw std::invalid_argument("Empty shape list");
+  }
+
+  Bnd_Box combinedBox;
+  for (const auto &s : shapes) {
+    Bnd_Box shapeBox;
+    BRepBndLib::Add(s, shapeBox);
+    combinedBox.Add(shapeBox);
+  }
+
+  double xMin, yMin, zMin, xMax, yMax, zMax;
+  combinedBox.Get(xMin, yMin, zMin, xMax, yMax, zMax);
+
+  return gp_Pnt((xMin + xMax) / 2.0, (yMin + yMax) / 2.0, (zMin + zMax) / 2.0);
+}
+
+boost::optional<shape> shape::to_splines(int degree, double tolerance,
+                                         bool nurbs) const {
+
+  if (this->is_null()) {
+    return boost::none;
+  }
+
+  TopoDS_Shape result =
+      ShapeCustom::BSplineRestriction(_shape,
+                                      tolerance, // 3D容差
+                                      tolerance, // 2D容差
+                                      degree,
+                                      1,             // 段数 (被degree参数主导)
+                                      GeomAbs_C0,    // 连续性
+                                      GeomAbs_C0,    // 连续性
+                                      Standard_True, // degree参数主导
+                                      !nurbs,        // 是否禁用有理样条
+                                      nullptr);
+
+  if (result.IsNull()) {
+    return boost::none;
+  }
+
+  return boost::make_optional<shape>(result);
+}
+
+boost::optional<shape> shape::to_nurbs() const {
+  if (this->is_null()) {
+    return boost::none;
+  }
+
+  BRepBuilderAPI_NurbsConvert converter(_shape,
+                                        Standard_True); // Standard_True = Copy
+  converter.Perform(_shape);
+
+  if (!converter.IsDone()) {
+    return boost::none;
+  }
+
+  const TopoDS_Shape &result = converter.Shape();
+  if (result.IsNull()) {
+    throw std::runtime_error("Resulting shape is null");
+  }
+
+  return boost::make_optional<shape>(result);
+}
+
+double shape::distance(const shape &o) const {
+  return distance_with_points(_shape, o.value()).first;
+}
+
+std::unordered_map<shape, std::vector<shape>>
+shape::get_entities_from(TopAbs_ShapeEnum childType,
+                         TopAbs_ShapeEnum parentType) const {
+  TopTools_IndexedDataMapOfShapeListOfShape resultMap;
+
+  TopExp::MapShapesAndAncestors(this->value(), childType, parentType,
+                                resultMap);
+
+  std::unordered_map<shape, std::vector<shape>> outputMap;
+
+  for (int i = 1; i <= resultMap.Extent(); i++) {
+    const TopoDS_Shape &keyShape = resultMap.FindKey(i);
+    const TopTools_ListOfShape &valueList = resultMap.FindFromIndex(i);
+
+    std::vector<shape> valueVector;
+    TopTools_ListIteratorOfListOfShape it(valueList);
+    for (; it.More(); it.Next()) {
+      valueVector.push_back(shape(it.Value()));
+    }
+
+    outputMap[shape(keyShape)] = valueVector;
+  }
+
+  return outputMap;
+}
+
+std::vector<shape> shape::children() const {
+  std::vector<shape> result;
+
+  TopExp_Explorer exp(this->value(), TopAbs_SHAPE);
+  for (; exp.More(); exp.Next()) {
+    result.emplace_back(exp.Current());
+  }
+
+  return result;
+}
+
+std::vector<shape> shape::get_shapes(TopAbs_ShapeEnum kind) const {
+  std::vector<shape> result;
+
+  if (kind == TopAbs_SHAPE) {
+    TopoDS_Iterator it(this->value());
+
+    for (; it.More(); it.Next()) {
+      result.push_back(shape(it.Value()));
+    }
+  } else {
+
+    TopExp_Explorer exp(this->value(), kind);
+
+    for (; exp.More(); exp.Next()) {
+      result.emplace_back(exp.Current());
+    }
+  }
+
+  return result;
+}
+
+void shape::set_for_construction(bool for_construction) {
+  _for_construction = for_construction;
+}
+
+std::string shape::to_string(double tolerance, double angularTolerance) const {
+  STEPControl_Writer stepWriter;
+  stepWriter.Transfer(this->value(), STEPControl_AsIs);
+
+  std::ostringstream stepStream;
+  if (stepWriter.WriteStream(stepStream)) {
+    return stepStream.str();
+  }
+  return "";
+}
+
+std::vector<vertex> shape::vertices() const {
+  return extract_entities<vertex>(TopAbs_VERTEX);
+}
+
+std::vector<edge> shape::edges() const {
+  return extract_entities<edge>(TopAbs_EDGE);
+}
+
+std::vector<compound> shape::compounds() const {
+  return extract_entities<compound>(TopAbs_COMPOUND);
+}
+
+std::vector<wire> shape::wires() const {
+  return extract_entities<wire>(TopAbs_WIRE);
+}
+
+std::vector<face> shape::faces() const {
+  return extract_entities<face>(TopAbs_FACE);
+}
+
+std::vector<shell> shape::shells() const {
+  return extract_entities<shell>(TopAbs_SHELL);
+}
+
+std::vector<solid> shape::solids() const {
+  return extract_entities<solid>(TopAbs_SOLID);
+}
+
+std::vector<comp_solid> shape::comp_solids() const {
+  return extract_entities<comp_solid>(TopAbs_COMPSOLID);
+}
+
+int shape::num_entities(TopAbs_ShapeEnum type) const {
+  TopTools_IndexedMapOfShape anIndices;
+  TopExp::MapShapes(_shape, type, anIndices);
+  return anIndices.Extent();
+}
+
+shape shape::filter(selector *sel, const std::vector<shape> &shapes) {
+  std::vector<shape> selected;
+
+  if (sel) {
+    selected = sel->filter(shapes);
+  } else {
+    selected = shapes;
+  }
+
+  if (selected.size() == 1) {
+    return selected[0];
+  } else {
+    return compound::make_compound(selected);
+  }
+}
+
+bool shape::is_solid() const {
+  if (_shape.IsNull()) {
+    return false;
+  }
+
+  const TopAbs_ShapeEnum shapeType = _shape.ShapeType();
+
+  if (shapeType == TopAbs_SOLID) {
+    return true;
+  }
+
+  if (shapeType == TopAbs_COMPOUND) {
+    TopExp_Explorer exp(_shape, TopAbs_SOLID);
+    return exp.More();
+  }
+
+  return false;
+}
+
+std::vector<double> shape::distances(const std::vector<shape> &others) const {
+  std::vector<double> results;
+  results.reserve(others.size());
+
+  BRepExtrema_DistShapeShape distCalc;
+  distCalc.LoadS1(_shape);
+
+  for (const auto &other : others) {
+    distCalc.LoadS2(other);
+    distCalc.Perform();
+
+    if (distCalc.IsDone()) {
+      results.push_back(distCalc.Value());
+    } else {
+      results.push_back(-1.0); // Using -1.0 as error indicator
+    }
+  }
+
+  return results;
+}
+
+template <typename OpType>
+shape shape::bool_op(const std::vector<shape> &args,
+                     const std::vector<shape> &tools, OpType &op,
+                     bool parallel) const {
+  TopTools_ListOfShape argList;
+  for (const auto &obj : args) {
+    argList.Append(obj);
+  }
+
+  TopTools_ListOfShape toolList;
+  for (const auto &obj : tools) {
+    toolList.Append(obj);
+  }
+
+  op.SetArguments(argList);
+  op.SetTools(toolList);
+  op.SetRunParallel(parallel);
+  op.Build();
+
+  if (!op.IsDone()) {
+    throw std::runtime_error("Boolean operation failed");
+  }
+
+  return shape(op.Shape());
 }
 
 } // namespace topo

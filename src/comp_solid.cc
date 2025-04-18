@@ -1,4 +1,5 @@
 #include <BRepBuilderAPI_Copy.hxx>
+#include <TopExp.hxx>
 #include <TopoDS.hxx>
 
 #include "comp_solid.hh"
