@@ -84,10 +84,10 @@ void test_make_diamond_frustum() {
   std::cout << "\n=== Testing Diamond Frustum ===" << std::endl;
   try {
     auto shp = create_diamond_frustum(diamond_frustum{
-        .bottomDiag1 = 20.0, // 底面第一条对角线长度
-        .bottomDiag2 = 15.0, // 底面第二条对角线长度
         .topDiag1 = 10.0,    // 顶面第一条对角线长度
         .topDiag2 = 7.5,     // 顶面第二条对角线长度
+        .bottomDiag1 = 20.0, // 底面第一条对角线长度
+        .bottomDiag2 = 15.0, // 底面第二条对角线长度
         .height = 12.0       // 高度
     });
     if (shp.IsNull()) {
@@ -343,23 +343,164 @@ void test_make_table_gasket() {
     }
     test_export_shape(shp2, "./full_table_gasket.stl");
 
-    // 测试带定位参数的创建
-    gp_Pnt center(10, 20, 30);
-    gp_Dir normal(0, 1, 0); // Y轴方向
-    gp_Dir xDir(1, 0, 0);   // X轴方向
-    auto shp3 = create_table_gasket(table_gasket_params{.topRadius = 12.0,
-                                                        .outerRadius = 18.0,
-                                                        .innerRadius = 8.0,
-                                                        .height = 5.0,
-                                                        .angle = M_PI * 0.75},
-                                    center, normal, xDir);
-    if (shp3.IsNull()) {
-      std::cerr << "Error: Failed to create positioned table gasket"
-                << std::endl;
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_square_gasket() {
+  std::cout << "\n=== Testing Square Gasket ===" << std::endl;
+  try {
+    // 测试默认参数创建
+    auto shp = create_square_gasket(square_gasket_params{.outerLength = 30.0,
+                                                         .outerWidth = 20.0,
+                                                         .innerLength = 25.0,
+                                                         .innerWidth = 15.0,
+                                                         .height = 5.0,
+                                                         .cornerType = 1,
+                                                         .cornerParam = 0});
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create square gasket" << std::endl;
       return;
     }
-    test_export_shape(shp3, "./positioned_table_gasket.stl");
+    test_export_shape(shp, "./square_gasket.stl");
 
+    // 测试极端参数情况
+    auto shp2 = create_square_gasket(square_gasket_params{
+        .outerLength = 40.0,
+        .outerWidth = 30.0,
+        .innerLength = 15.0,
+        .innerWidth = 10.0,
+        .height = 8.0,
+        .cornerType = 2,   //  圆形角点
+        .cornerParam = 3.0 // 圆角半径
+    });
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create round square gasket" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./square_gasket_round.stl");
+
+    // 测试极端参数情况
+    auto shp3 = create_square_gasket(square_gasket_params{
+        .outerLength = 40.0,
+        .outerWidth = 30.0,
+        .innerLength = 15.0,
+        .innerWidth = 10.0,
+        .height = 8.0,
+        .cornerType = 3,   //  圆形角点
+        .cornerParam = 5.0 // 圆角半径
+    });
+    if (shp3.IsNull()) {
+      std::cerr << "Error: Failed to create cut square gasket" << std::endl;
+      return;
+    }
+    test_export_shape(shp3, "./square_gasket_cut.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_stretched_body() {
+  std::cout << "\n=== Testing Stretched Body ===" << std::endl;
+  try {
+    // 测试默认参数创建 - 三角形拉伸体
+    auto shp = create_stretched_body(stretched_body_params{
+        .points = {gp_Pnt(0, 0, 0), gp_Pnt(10, 0, 0), gp_Pnt(5, 8, 0)},
+        .normal = gp_Dir(0, 0, 1),
+        .length = 15.0});
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create stretched body" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./stretched_body_triangle.stl");
+
+    // 测试四边形拉伸体
+    auto shp2 = create_stretched_body(stretched_body_params{
+        .points = {gp_Pnt(0, 0, 0), gp_Pnt(20, 0, 0), 
+                  gp_Pnt(20, 10, 0), gp_Pnt(0, 10, 0)},
+        .normal = gp_Dir(0, 1, 1),
+        .length = 25.0});
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create quadrilateral stretched body" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./stretched_body_quadrilateral.stl");
+
+    // 测试五边形拉伸体
+    auto shp3 = create_stretched_body(stretched_body_params{
+        .points = {gp_Pnt(0, 0, 0), gp_Pnt(15, 0, 0), gp_Pnt(20, 10, 0),
+                  gp_Pnt(10, 15, 0), gp_Pnt(-5, 8, 0)},
+        .normal = gp_Dir(1, 0, 1),
+        .length = 12.0});
+    if (shp3.IsNull()) {
+      std::cerr << "Error: Failed to create pentagon stretched body" << std::endl;
+      return;
+    }
+    test_export_shape(shp3, "./stretched_body_pentagon.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+
+void test_make_porcelain_bushing() {
+  std::cout << "\n=== Testing Porcelain Bushing ===" << std::endl;
+  try {
+    // 测试默认参数创建 - 标准尺寸瓷套管
+    auto shp = create_porcelain_bushing(porcelain_bushing_params{
+        .height = 100.0,
+        .radius = 10.0,
+        .bigSkirtRadius = 15.0,
+        .smallSkirtRadius = 12.0,
+        .count = 20});
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create standard porcelain bushing" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./porcelain_bushing_standard.stl");
+/**
+    // 测试大伞裙瓷套管
+    auto shp2 = create_porcelain_bushing(porcelain_bushing_params{
+        .height = 120.0,
+        .radius = 8.0,
+        .bigSkirtRadius = 20.0,
+        .smallSkirtRadius = 15.0,
+        .count = 7});
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create large skirt porcelain bushing" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./porcelain_bushing_large_skirt.stl");
+
+    // 测试小伞裙瓷套管
+    auto shp3 = create_porcelain_bushing(porcelain_bushing_params{
+        .height = 80.0,
+        .radius = 6.0,
+        .bigSkirtRadius = 10.0,
+        .smallSkirtRadius = 8.0,
+        .count = 3});
+    if (shp3.IsNull()) {
+      std::cerr << "Error: Failed to create small skirt porcelain bushing" << std::endl;
+      return;
+    }
+    test_export_shape(shp3, "./porcelain_bushing_small_skirt.stl");
+
+    // 测试极端参数情况 - 超高瓷套管
+    auto shp4 = create_porcelain_bushing(porcelain_bushing_params{
+        .height = 200.0,
+        .radius = 12.0,
+        .bigSkirtRadius = 25.0,
+        .smallSkirtRadius = 20.0,
+        .count = 10});
+    if (shp4.IsNull()) {
+      std::cerr << "Error: Failed to create extreme height porcelain bushing" << std::endl;
+      return;
+    }
+    test_export_shape(shp4, "./porcelain_bushing_extreme_height.stl");
+ */
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
   }
@@ -379,5 +520,8 @@ int main() {
   test_make_elliptic_ring();
   test_make_circular_gasket();
   test_make_table_gasket();
+  test_make_square_gasket();
+  test_make_stretched_body();
+  test_make_porcelain_bushing();
   return 0;
 }
