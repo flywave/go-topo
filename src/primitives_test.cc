@@ -885,6 +885,114 @@ void test_make_curve_cable() {
   }
 }
 
+void test_make_equilateral_angle_steel() {
+  std::cout << "\n=== Testing Equilateral Angle Steel ===" << std::endl;
+  try {
+    // 标准尺寸测试
+    auto shp1 = create_equilateral_angle_steel(equilateral_angle_steel_params{
+        .L = 50.0,      // 边长50mm
+        .X = 5.0,       // 厚度5mm
+        .length = 200.0 // 长度200mm
+    });
+
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create standard angle steel" << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./equilateral_angle_steel_standard.stl");
+
+    // 极端尺寸测试
+    auto shp2 = create_equilateral_angle_steel(equilateral_angle_steel_params{
+        .L = 100.0,     // 大边长
+        .X = 2.0,       // 薄壁
+        .length = 500.0 // 超长
+    });
+
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create extreme angle steel" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./equilateral_angle_steel_extreme.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_scalene_angle_steel() {
+  std::cout << "\n=== Testing Scalene Angle Steel ===" << std::endl;
+  try {
+    // 标准尺寸测试
+    auto shp1 = create_scalene_angle_steel(scalene_angle_steel_params{
+        .L1 = 60.0,     // 长边60mm
+        .L2 = 40.0,     // 短边40mm
+        .X = 5.0,       // 厚度5mm
+        .length = 200.0 // 长度200mm
+    });
+
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create standard scalene angle steel"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./scalene_angle_steel_standard.stl");
+
+    // 极端尺寸测试
+    auto shp2 = create_scalene_angle_steel(scalene_angle_steel_params{
+        .L1 = 100.0,    // 大长边
+        .L2 = 30.0,     // 小短边
+        .X = 3.0,       // 薄壁
+        .length = 500.0 // 超长
+    });
+
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create extreme scalene angle steel"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./scalene_angle_steel_extreme.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_ibeam() {
+  std::cout << "\n=== Testing I-Beam ===" << std::endl;
+  try {
+    // 标准参数测试
+    auto shp1 = create_ibeam(ibeam_params{.height = 200.0,
+                                          .flangeWidth = 100.0,
+                                          .webThickness = 12.0, // 腹板厚度12mm
+                                          .flangeThickness = 15.0,
+                                          .radius = 17.0, // 半径3mm < 12/3=4mm
+                                          .length = 1000.0});
+
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create standard I-beam" << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./ibeam_standard.stl");
+
+    // 极端参数测试 - 薄腹板窄翼缘
+    auto shp2 = create_ibeam(ibeam_params{.height = 200.0,
+                                          .flangeWidth = 100.0,
+                                          .webThickness = 10.0,
+                                          .flangeThickness = 15.0,
+                                          .radius = 16.0, // 半径16mm > 15mm
+                                          .length = 1000.0});
+
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create extreme I-beam" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./ibeam_extreme.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
 int main() {
   test_make_sphere();
   test_make_rotational_ellipsoid();
@@ -910,6 +1018,9 @@ int main() {
   test_make_circular_fixed_plate();
   test_make_wire();
   test_make_cable();
-  test_make_curve_cable(); 
+  test_make_curve_cable();
+  test_make_equilateral_angle_steel();
+  test_make_scalene_angle_steel();
+  test_make_ibeam();
   return 0;
 }

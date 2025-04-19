@@ -38,6 +38,7 @@
 #include <Geom_Circle.hxx>
 #include <Geom_Line.hxx>
 #include <Geom_Plane.hxx>
+#include <Law_Linear.hxx>
 #include <Precision.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <Standard_ConstructionError.hxx>
@@ -56,7 +57,6 @@
 #include <gp_Pln.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Vec.hxx>
-#include <Law_Linear.hxx>
 
 namespace flywave {
 namespace topo {
@@ -2700,14 +2700,14 @@ TopoDS_Shape create_curve_cable(const curve_cable_params &params) {
 
   // 使用扫掠器自动计算坐标系（添加Frenet模式）
   BRepOffsetAPI_MakePipeShell pipeMaker(pathMaker.Wire());
-  pipeMaker.SetMode(true);                    // 设置为实体模式
-  pipeMaker.SetMaxDegree(5);                   // 提高最大阶数以适应复杂曲率
-  pipeMaker.SetTolerance(1e-5);                // 放宽容差适应复杂路径
-  pipeMaker.SetForceApproxC1(Standard_True);   // 强制C1连续近似
-  
+  pipeMaker.SetMode(true);                   // 设置为实体模式
+  pipeMaker.SetMaxDegree(5);                 // 提高最大阶数以适应复杂曲率
+  pipeMaker.SetTolerance(1e-5);              // 放宽容差适应复杂路径
+  pipeMaker.SetForceApproxC1(Standard_True); // 强制C1连续近似
+
   // 创建动态调整的圆形截面（直径始终垂直于路径）
   Handle(Law_Linear) law = new Law_Linear();
-  law->Set(0, 1, 0, 1);  // 保持恒定半径
+  law->Set(0, 1, 0, 1);                           // 保持恒定半径
   pipeMaker.SetLaw(profile, law, Standard_False); // 关联截面和变化规律
 
   pipeMaker.Add(profile);
@@ -2757,35 +2757,33 @@ create_equilateral_angle_steel(const equilateral_angle_steel_params &params) {
     throw Standard_ConstructionError("All dimensions must be positive");
   }
 
-  // 创建角钢截面轮廓
+  // 创建角钢截面轮廓（位于XY平面）
   BRepBuilderAPI_MakeWire wireMaker;
 
-  // 第一边 (沿Y轴负方向)
+  // 截面顶点定义（所有Z坐标为0）
   gp_Pnt p1(0, 0, 0);
-  gp_Pnt p2(0, -params.L, 0);
-  gp_Pnt p3(params.X, -params.L, 0);
-  gp_Pnt p4(params.X, -params.X, 0);
+  gp_Pnt p2(0, -params.L, 0);        // 沿Y轴负方向
+  gp_Pnt p3(0, -params.L, params.X); // 沿X轴正方向（厚度X）
+  gp_Pnt p4(0, -params.X, params.X); // 沿Y轴正方向至内缘
+  gp_Pnt p5(0, -params.X, params.L); // 沿X轴正方向（边长为L）
+  gp_Pnt p6(0, 0, params.L);         // 沿Y轴正方向回到起点高度
+  gp_Pnt p7(0, 0, 0);                // 闭合轮廓
 
-  // 第二边 (沿Z轴正方向)
-  gp_Pnt p5(0, -params.X, 0);
-  gp_Pnt p6(0, -params.X, params.L);
-  gp_Pnt p7(params.X, -params.X, params.L);
-  gp_Pnt p8(params.X, 0, params.L);
-  gp_Pnt p9(0, 0, params.L);
-
-  // 添加边线
+  // 添加边线（确保顺序连接）
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge());
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge());
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge());
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p9).Edge());
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p1).Edge());
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge()); // p7到p1自动闭合
 
   if (!wireMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to create angle steel profile");
+  }
+
+  // 验证Wire是否闭合
+  if (!wireMaker.Wire().Closed()) {
+    throw Standard_ConstructionError("Profile wire is not closed");
   }
 
   // 创建截面面
@@ -2794,7 +2792,7 @@ create_equilateral_angle_steel(const equilateral_angle_steel_params &params) {
     throw Standard_ConstructionError("Failed to create angle steel face");
   }
 
-  // 沿X轴拉伸
+  // 沿Z轴拉伸（示例中改为沿Z轴，根据需求调整方向）
   BRepPrimAPI_MakePrism prismMaker(faceMaker.Face(),
                                    gp_Vec(params.length, 0, 0));
 
@@ -2850,30 +2848,26 @@ create_scalene_angle_steel(const scalene_angle_steel_params &params) {
         "Thickness must be less than both L1 and L2");
   }
 
-  // 创建角钢截面轮廓
+  // 创建角钢截面轮廓（调整到ZY平面）
   BRepBuilderAPI_MakeWire wireMaker;
 
-  // 长边 (沿Z轴正方向)
-  gp_Pnt p1(0, 0, 0);
-  gp_Pnt p2(0, 0, params.L1);
-  gp_Pnt p3(params.X, 0, params.L1);
-  gp_Pnt p4(params.X, 0, params.X);
+  // 关键点定义（工业标准不等边角钢形状）
+  gp_Pnt p1(0, 0, 0);                 // 原点(角钢内角点)
+  gp_Pnt p2(0, 0, params.L1);         // 长边顶点
+  gp_Pnt p3(0, -params.X, params.L1); // 长边厚度点
+  gp_Pnt p4(0, -params.X, params.X);  // 新增折角点
+  gp_Pnt p5(0, -params.L2, params.X); // 短边顶点
+  gp_Pnt p6(0, -params.L2, 0);        // 短边端点
+  gp_Pnt p7(0, -params.X, 0);         // 厚度点
 
-  // 短边 (沿Y轴负方向)
-  gp_Pnt p5(0, -params.X, params.X);
-  gp_Pnt p6(0, -params.L2, params.X);
-  gp_Pnt p7(params.X, -params.L2, params.X);
-  gp_Pnt p8(params.X, 0, 0);
-
-  // 添加边线
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge());
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge());
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge());
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p1).Edge());
+  // 添加边线（按工业标准顺序连接）
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge()); // 长边外缘
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge()); // 长边厚度
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge()); // 长边折角
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge()); // 斜边连接
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge()); // 短边外缘
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge()); // 短边厚度
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p1).Edge()); // 闭合边
 
   if (!wireMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to create angle steel profile");
@@ -2920,6 +2914,7 @@ create_scalene_angle_steel(const scalene_angle_steel_params &params,
   BRepBuilderAPI_Transform transform(angleSteel, transformation);
   return transform.Shape();
 }
+
 /**
  * @brief 创建工字钢截面轮廓（带圆弧过渡）
  * @param height 总高度 (Z轴方向)
@@ -2934,108 +2929,135 @@ TopoDS_Wire create_ibeam_profile(double height, double flangeWidth,
                                  double radius) {
   BRepBuilderAPI_MakeWire wireMaker;
 
-  // 计算关键尺寸 - 注意坐标轴调整：
-  // X轴: 长度方向(函数内不使用，由拉伸操作决定)
-  // Y轴: 翼缘宽度方向(负方向)
-  // Z轴: 腹板高度方向
-  double halfHeight = height / 2;
+  // 计算关键尺寸
   double halfFlangeWidth = flangeWidth / 2;
   double halfWebThickness = webThickness / 2;
 
-  // 外轮廓关键点（右侧）
-  // 注意坐标顺序调整为: (X,Y,Z) -> (0,Y,Z) 因为截面在YZ平面
-  gp_Pnt p1(0, -halfFlangeWidth, -halfHeight);
-  gp_Pnt p2(0, halfFlangeWidth, -halfHeight);
-  gp_Pnt p3(0, halfFlangeWidth, -halfHeight + flangeThickness - radius);
-  gp_Pnt p4(0, halfFlangeWidth, -halfHeight + flangeThickness);
-  gp_Pnt p5(0, halfWebThickness + radius, -halfHeight + flangeThickness);
-  gp_Pnt p6(0, halfWebThickness, -halfHeight + flangeThickness + radius);
-  gp_Pnt p7(0, halfWebThickness, halfHeight - flangeThickness - radius);
-  gp_Pnt p8(0, halfWebThickness + radius, halfHeight - flangeThickness);
-  gp_Pnt p9(0, halfFlangeWidth, halfHeight - flangeThickness);
-  gp_Pnt p10(0, halfFlangeWidth, halfHeight - flangeThickness + radius);
-  gp_Pnt p11(0, halfFlangeWidth, halfHeight);
-  gp_Pnt p12(0, -halfFlangeWidth, halfHeight);
+  // 外轮廓关键点（按顺时针顺序）
+  // 右下翼缘起始点
+  gp_Pnt p1(0, halfFlangeWidth, 0);
+  gp_Pnt p2(0, halfFlangeWidth, flangeThickness - radius);
+  gp_Pnt p3(0, halfWebThickness + radius, flangeThickness);
+  gp_Pnt p4(0, halfWebThickness, flangeThickness + radius);
+  gp_Pnt p5(0, halfWebThickness, height - flangeThickness - radius);
+  gp_Pnt p6(0, halfWebThickness + radius, height - flangeThickness);
+  gp_Pnt p7(0, halfFlangeWidth, height - flangeThickness + radius);
+  gp_Pnt p8(0, halfFlangeWidth, height);
+  // 左上翼缘起始点
+  gp_Pnt p9(0, -halfFlangeWidth, height);
+  gp_Pnt p10(0, -halfFlangeWidth, height - flangeThickness + radius);
+  gp_Pnt p11(0, -halfWebThickness - radius, height - flangeThickness);
+  gp_Pnt p12(0, -halfWebThickness, height - flangeThickness - radius);
+  gp_Pnt p13(0, -halfWebThickness, flangeThickness + radius);
+  gp_Pnt p14(0, -halfWebThickness - radius, flangeThickness);
+  gp_Pnt p15(0, -halfFlangeWidth, flangeThickness - radius);
+  gp_Pnt p16(0, -halfFlangeWidth, 0);
 
-  // 左侧对称点
-  gp_Pnt p13(0, -halfFlangeWidth, halfHeight - flangeThickness + radius);
-  gp_Pnt p14(0, -halfFlangeWidth, halfHeight - flangeThickness);
-  gp_Pnt p15(0, -halfWebThickness - radius, halfHeight - flangeThickness);
-  gp_Pnt p16(0, -halfWebThickness, halfHeight - flangeThickness - radius);
-  gp_Pnt p17(0, -halfWebThickness, -halfHeight + flangeThickness + radius);
-  gp_Pnt p18(0, -halfWebThickness - radius, -halfHeight + flangeThickness);
-  gp_Pnt p19(0, -halfFlangeWidth, -halfHeight + flangeThickness);
-  gp_Pnt p20(0, -halfFlangeWidth, -halfHeight + flangeThickness - radius);
+  // 构建右侧轮廓
+  // 1. 下翼缘右侧 (p16 -> p1)
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p16, p1).Edge());
 
-  // 创建所有直线段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());   // 下翼缘底部
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());   // 右下翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge());  // 右上翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p12).Edge()); // 上翼缘顶部
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p14, p15).Edge()); // 左上翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p19, p20).Edge()); // 左下翼缘垂直段
+  // 2. 右下翼缘垂直段 (p1 -> p2)
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
 
-  // 创建所有圆弧过渡
-  if (radius < flangeThickness / 3) { // 小半径过渡（轻型工字钢）
-    // 右下翼缘圆弧 (Y轴负方向)
-    gp_Circ arc1(gp_Ax2(p4, gp_Dir(1, 0, 0)), radius);
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc1, p4, p5).Edge());
-
-    // 右下腹板圆弧 (Z轴正方向)
-    gp_Circ arc2(gp_Ax2(p6, gp_Dir(1, 0, 0)), radius);
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc2, p6, p7).Edge());
-
-    // 右上腹板圆弧 (Z轴负方向)
-    gp_Circ arc3(gp_Ax2(p8, gp_Dir(1, 0, 0)), radius);
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc3, p8, p9).Edge());
-
-    // 右上翼缘圆弧 (Y轴正方向)
-    gp_Circ arc4(gp_Ax2(p10, gp_Dir(1, 0, 0)), radius);
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc4, p10, p11).Edge());
-
-    // 左上翼缘圆弧 (Y轴正方向)
-    gp_Circ arc5(gp_Ax2(p13, gp_Dir(1, 0, 0)), radius);
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc5, p13, p14).Edge());
-
-    // 左上腹板圆弧 (Z轴负方向)
-    gp_Circ arc6(gp_Ax2(p15, gp_Dir(1, 0, 0)), radius);
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc6, p15, p16).Edge());
-
-    // 左下腹板圆弧 (Z轴正方向)
-    gp_Circ arc7(gp_Ax2(p17, gp_Dir(1, 0, 0)), radius);
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc7, p17, p18).Edge());
-
-    // 左下翼缘圆弧 (Y轴负方向)
-    gp_Circ arc8(gp_Ax2(p19, gp_Dir(1, 0, 0)), radius);
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc8, p19, p20).Edge());
-  } else { // 大半径过渡（普通工字钢）
-    // 仅创建翼缘圆弧
-    gp_Circ arc1(gp_Ax2(p4, gp_Dir(1, 0, 0)), radius);
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc1, p4, p5).Edge());
-
-    gp_Circ arc2(gp_Ax2(p10, gp_Dir(1, 0, 0)), radius);
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc2, p10, p11).Edge());
-
-    gp_Circ arc3(gp_Ax2(p13, gp_Dir(1, 0, 0)), radius);
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc3, p13, p14).Edge());
-
-    gp_Circ arc4(gp_Ax2(p19, gp_Dir(1, 0, 0)), radius);
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc4, p19, p20).Edge());
+  // 3. 右下翼缘圆弧过渡 (p2 -> p3)
+  if (radius > Precision::Confusion()) {
+    Handle(Geom_TrimmedCurve) arc =
+        GC_MakeArcOfCircle(
+            p2,
+            gp_Pnt(0, halfFlangeWidth,
+                  flangeThickness), // 圆心在翼缘末端
+            p3)
+            .Value();
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc).Edge());
+  } else {
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
   }
 
-  // 创建腹板水平段 (Y轴方向)
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p18).Edge()); // 下腹板
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p15).Edge()); // 上腹板
+  // 4. 腹板右侧垂直段 (p3 -> p4)
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
 
-  // 创建腹板垂直段（Z轴方向，仅普通工字钢需要）
-  if (radius >= flangeThickness / 3) {
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p17).Edge()); // 右腹板
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p16).Edge()); // 左腹板
+  // 5. 腹板右侧圆弧过渡 (p4 -> p5)
+  if (radius > Precision::Confusion()) {
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());
+    /**
+           Handle(Geom_TrimmedCurve) arc = GC_MakeArcOfCircle(
+               p4,
+               gp_Pnt(0, halfWebThickness, height - flangeThickness), //
+       圆心在腹板中心 p5
+           ).Value();
+           wireMaker.Add(BRepBuilderAPI_MakeEdge(arc).Edge());*/
   }
+
+  // 6. 腹板上部水平段 (p5 -> p6)
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge());
+
+  // 7. 右上翼缘圆弧过渡 (p6 -> p7)
+  if (radius > Precision::Confusion()) {
+    Handle(Geom_TrimmedCurve) arc =
+        GC_MakeArcOfCircle(
+            p6,
+            gp_Pnt(0, halfFlangeWidth,
+              height - flangeThickness), // 圆心在翼缘根部
+            p7)
+            .Value();
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc).Edge());
+  }
+
+  // 8. 上翼缘右侧垂直段 (p7 -> p8)
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge());
+
+  // 构建左侧轮廓
+  // 9. 上翼缘左侧 (p8 -> p9)
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p9).Edge());
+
+  // 10. 左上翼缘垂直段 (p9 -> p10)
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge());
+
+  // 11. 左上翼缘圆弧过渡 (p10 -> p11)
+  if (radius > Precision::Confusion()) {
+    Handle(Geom_TrimmedCurve) arc =
+        GC_MakeArcOfCircle(
+            p10, gp_Pnt(0, -halfFlangeWidth, height - flangeThickness), p11)
+            .Value();
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc).Edge());
+  }
+
+  // 12. 腹板左侧垂直段 (p11 -> p12)
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p12).Edge());
+
+  // 13. 腹板左侧圆弧过渡 (p12 -> p13)
+  if (radius > Precision::Confusion()) {
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p13).Edge());
+    /**
+  Handle(Geom_TrimmedCurve) arc = GC_MakeArcOfCircle(
+      p12,
+      gp_Pnt(0, -halfWebThickness, flangeThickness),
+      p13
+  ).Value();
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(arc).Edge());*/
+  }
+
+  // 14. 腹板下部水平段 (p13 -> p14)
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p13, p14).Edge());
+
+  // 15. 左下翼缘圆弧过渡 (p14 -> p15)
+  if (radius > Precision::Confusion()) {
+    Handle(Geom_TrimmedCurve) arc =
+        GC_MakeArcOfCircle(
+            p14, gp_Pnt(0, -halfFlangeWidth, flangeThickness),
+            p15)
+            .Value();
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc).Edge());
+  }
+
+  // 16. 下翼缘左侧垂直段 (p15 -> p16)
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p15, p16).Edge());
 
   if (!wireMaker.IsDone()) {
-    throw Standard_ConstructionError("Failed to create I-beam profile");
+    throw Standard_ConstructionError("Failed to create I-Beam profile");
   }
+
   return wireMaker.Wire();
 }
 
@@ -3049,7 +3071,7 @@ TopoDS_Shape create_ibeam(const ibeam_params &params) {
   // 参数验证
   if (params.height <= 0 || params.flangeWidth <= 0 ||
       params.webThickness <= 0 || params.flangeThickness <= 0 ||
-      params.radius <= 0 || params.length <= 0) {
+      params.length <= 0) {
     throw Standard_ConstructionError("All dimensions must be positive");
   }
   if (params.webThickness >= params.flangeWidth) {
