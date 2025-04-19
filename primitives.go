@@ -470,7 +470,6 @@ type TerminalBlockParams struct {
 	ColumnCount   int32
 	RowCount      int32
 	BottomOffset  float32
-	Phase         byte
 }
 
 func (p *TerminalBlockParams) to_struct() C.terminal_block_params_t {
@@ -485,7 +484,6 @@ func (p *TerminalBlockParams) to_struct() C.terminal_block_params_t {
 	c.columnCount = C.int(p.ColumnCount)
 	c.rowCount = C.int(p.RowCount)
 	c.bottomOffset = C.double(p.BottomOffset)
-	c.phase = C.char(p.Phase)
 	return c
 }
 

@@ -447,7 +447,7 @@ create_terminal_block(terminal_block_params_t params) {
       params.length,        params.width,         params.thickness,
       params.chamferLength, params.columnSpacing, params.rowSpacing,
       params.holeRadius,    params.columnCount,   params.rowCount,
-      params.bottomOffset,  params.phase};
+      params.bottomOffset};
   return new topo_shape_t{
       std::make_shared<shape>(create_terminal_block(cpp_params))};
 }
@@ -460,7 +460,7 @@ create_terminal_block_with_place(terminal_block_params_t params,
       params.length,        params.width,         params.thickness,
       params.chamferLength, params.columnSpacing, params.rowSpacing,
       params.holeRadius,    params.columnCount,   params.rowCount,
-      params.bottomOffset,  params.phase};
+      params.bottomOffset};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_lengthDir(lengthDir.x, lengthDir.y, lengthDir.z);
   gp_Dir cpp_widthDir(widthDir.x, widthDir.y, widthDir.z);

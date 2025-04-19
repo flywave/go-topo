@@ -417,13 +417,14 @@ void test_make_stretched_body() {
     test_export_shape(shp, "./stretched_body_triangle.stl");
 
     // 测试四边形拉伸体
-    auto shp2 = create_stretched_body(stretched_body_params{
-        .points = {gp_Pnt(0, 0, 0), gp_Pnt(20, 0, 0), 
-                  gp_Pnt(20, 10, 0), gp_Pnt(0, 10, 0)},
-        .normal = gp_Dir(0, 1, 1),
-        .length = 25.0});
+    auto shp2 = create_stretched_body(
+        stretched_body_params{.points = {gp_Pnt(0, 0, 0), gp_Pnt(20, 0, 0),
+                                         gp_Pnt(20, 10, 0), gp_Pnt(0, 10, 0)},
+                              .normal = gp_Dir(0, 1, 1),
+                              .length = 25.0});
     if (shp2.IsNull()) {
-      std::cerr << "Error: Failed to create quadrilateral stretched body" << std::endl;
+      std::cerr << "Error: Failed to create quadrilateral stretched body"
+                << std::endl;
       return;
     }
     test_export_shape(shp2, "./stretched_body_quadrilateral.stl");
@@ -431,11 +432,12 @@ void test_make_stretched_body() {
     // 测试五边形拉伸体
     auto shp3 = create_stretched_body(stretched_body_params{
         .points = {gp_Pnt(0, 0, 0), gp_Pnt(15, 0, 0), gp_Pnt(20, 10, 0),
-                  gp_Pnt(10, 15, 0), gp_Pnt(-5, 8, 0)},
+                   gp_Pnt(10, 15, 0), gp_Pnt(-5, 8, 0)},
         .normal = gp_Dir(1, 0, 1),
         .length = 12.0});
     if (shp3.IsNull()) {
-      std::cerr << "Error: Failed to create pentagon stretched body" << std::endl;
+      std::cerr << "Error: Failed to create pentagon stretched body"
+                << std::endl;
       return;
     }
     test_export_shape(shp3, "./stretched_body_pentagon.stl");
@@ -445,62 +447,439 @@ void test_make_stretched_body() {
   }
 }
 
-
 void test_make_porcelain_bushing() {
   std::cout << "\n=== Testing Porcelain Bushing ===" << std::endl;
   try {
     // 测试默认参数创建 - 标准尺寸瓷套管
-    auto shp = create_porcelain_bushing(porcelain_bushing_params{
-        .height = 100.0,
-        .radius = 10.0,
-        .bigSkirtRadius = 15.0,
-        .smallSkirtRadius = 12.0,
-        .count = 20});
+    auto shp = create_porcelain_bushing(
+        porcelain_bushing_params{.height = 100.0,
+                                 .radius = 10.0,
+                                 .bigSkirtRadius = 15.0,
+                                 .smallSkirtRadius = 12.0,
+                                 .count = 20});
     if (shp.IsNull()) {
-      std::cerr << "Error: Failed to create standard porcelain bushing" << std::endl;
+      std::cerr << "Error: Failed to create standard porcelain bushing"
+                << std::endl;
       return;
     }
     test_export_shape(shp, "./porcelain_bushing_standard.stl");
-/**
-    // 测试大伞裙瓷套管
-    auto shp2 = create_porcelain_bushing(porcelain_bushing_params{
-        .height = 120.0,
-        .radius = 8.0,
-        .bigSkirtRadius = 20.0,
-        .smallSkirtRadius = 15.0,
-        .count = 7});
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_cone_porcelain_bushing() {
+  std::cout << "\n=== Testing Cone Porcelain Bushing ===" << std::endl;
+  try {
+    // 测试默认参数创建 - 标准尺寸锥形瓷套管
+    auto shp = create_cone_porcelain_bushing(
+        cone_porcelain_bushing_params{.height = 100.0,
+                                      .bottomRadius = 15.0,
+                                      .topRadius = 10.0,
+                                      .bottomSkirtRadius1 = 20.0,
+                                      .bottomSkirtRadius2 = 18.0,
+                                      .topSkirtRadius1 = 15.0,
+                                      .topSkirtRadius2 = 12.0,
+                                      .count = 20});
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create standard cone porcelain bushing"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./cone_porcelain_bushing.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_insulator_string() {
+  std::cout << "\n=== Testing Insulator String ===" << std::endl;
+  try {
+    // 测试默认参数创建 - 标准绝缘子串
+    auto shp =
+        create_insulator_string(insulator_string_params{.count = 2,
+                                                        .spacing = 30.0,
+                                                        .insulatorCount = 10,
+                                                        .height = 5.0,
+                                                        .bigSkirtRadius = 8.0,
+                                                        .smallSkirtRadius = 6.0,
+                                                        .radius = 4.0,
+                                                        .frontLength = 15.0,
+                                                        .backLength = 10.0,
+                                                        .splitCount = 2});
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create standard insulator string"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./insulator_string_standard.stl");
+
+    // 测试单联绝缘子串
+    auto shp2 =
+        create_insulator_string(insulator_string_params{.count = 1,
+                                                        .spacing = 0.0,
+                                                        .insulatorCount = 8,
+                                                        .height = 4.0,
+                                                        .bigSkirtRadius = 7.0,
+                                                        .smallSkirtRadius = 5.0,
+                                                        .radius = 3.5,
+                                                        .frontLength = 6.0,
+                                                        .backLength = 5.0,
+                                                        .splitCount = 2});
     if (shp2.IsNull()) {
-      std::cerr << "Error: Failed to create large skirt porcelain bushing" << std::endl;
+      std::cerr << "Error: Failed to create single insulator string"
+                << std::endl;
       return;
     }
-    test_export_shape(shp2, "./porcelain_bushing_large_skirt.stl");
+    test_export_shape(shp2, "./insulator_string_single.stl");
 
-    // 测试小伞裙瓷套管
-    auto shp3 = create_porcelain_bushing(porcelain_bushing_params{
-        .height = 80.0,
-        .radius = 6.0,
-        .bigSkirtRadius = 10.0,
-        .smallSkirtRadius = 8.0,
-        .count = 3});
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_vtype_insulator() {
+  std::cout << "\n=== Testing V-Type Insulator ===" << std::endl;
+  try {
+    // 测试标准V型绝缘子串
+    auto shp = create_vtype_insulator(vtype_insulator_params{
+        .frontSpacing = 30.0,    // 前端间距
+        .backSpacing = 20.0,     // 后端间距
+        .insulatorCount = 8,     // 每串绝缘子片数
+        .height = 5.0,           // 单片高度
+        .radius = 3.0,           // 绝缘子半径
+        .bigSkirtRadius = 6.0,   // 大伞半径
+        .smallSkirtRadius = 5.0, // 小伞半径
+        .frontLength = 10.0,     // 构架端长度
+        .backLength = 8.0,       // 导线端长度
+        .splitCount = 2          // 分裂数
+    });
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create standard V-type insulator"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./vtype_insulator_standard.stl");
+
+    // 测试不同参数的V型绝缘子串
+    auto shp2 = create_vtype_insulator(vtype_insulator_params{
+        .frontSpacing = 40.0,    // 更大的前端间距
+        .backSpacing = 15.0,     // 更小的后端间距
+        .insulatorCount = 6,     // 更少的绝缘子片数
+        .height = 4.0,           // 更低的单片高度
+        .radius = 2.5,           // 更小的绝缘子半径
+        .bigSkirtRadius = 5.0,   // 更小的大伞半径
+        .smallSkirtRadius = 4.0, // 更小的小伞半径
+        .frontLength = 8.0,      // 更短的构架端长度
+        .backLength = 6.0,       // 更短的导线端长度
+        .splitCount = 1          // 单分裂
+    });
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create alternative V-type insulator"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./vtype_insulator_alternative.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_terminal_block() {
+  std::cout << "\n=== Testing Terminal Block ===" << std::endl;
+  try {
+    auto shp = create_terminal_block(terminal_block_params{
+        .length = 100.0,       // 长度
+        .width = 50.0,         // 宽度
+        .thickness = 10.0,     // 厚度
+        .chamferLength = 5.0,  // 倒角长度
+        .columnSpacing = 15.0, // 列间距
+        .rowSpacing = 20.0,    // 行间距
+        .holeRadius = 3.0,     // 孔半径
+        .columnCount = 3,      // 列数
+        .rowCount = 4,         // 行数
+        .bottomOffset = 20.0,  // 底边偏移
+    });
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create terminal block" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./terminal_block.stl");
+
+    // 测试极端参数情况
+    auto shp2 =
+        create_terminal_block(terminal_block_params{.length = 200.0,
+                                                    .width = 30.0,
+                                                    .thickness = 5.0,
+                                                    .chamferLength = 1.0,
+                                                    .columnSpacing = 10.0,
+                                                    .rowSpacing = 15.0,
+                                                    .holeRadius = 2.0,
+                                                    .columnCount = 5,
+                                                    .rowCount = 6,
+                                                    .bottomOffset = 5.0});
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create extreme terminal block"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./terminal_block_extreme.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_rectangular_fixed_plate() {
+  std::cout << "\n=== Testing Rectangular Fixed Plate ===" << std::endl;
+  try {
+    auto shp = create_rectangular_fixed_plate(rectangular_hole_plate_params{
+        .length = 100.0,       // 长度
+        .width = 80.0,         // 宽度
+        .thickness = 10.0,     // 厚度
+        .columnSpacing = 20.0, // 列间距
+        .rowSpacing = 15.0,    // 行间距
+        .columnCount = 4,      // 列数
+        .rowCount = 5,         // 行数
+        .hasMiddleHole = 1,    // 有中间孔
+        .holeDiameter = 8.0    // 孔直径
+    });
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create rectangular fixed plate"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./rectangular_fixed_plate.stl");
+
+    // 测试无中间孔的情况
+    auto shp2 = create_rectangular_fixed_plate(
+        rectangular_hole_plate_params{.length = 120.0,
+                                      .width = 120.0,
+                                      .thickness = 8.0,
+                                      .columnSpacing = 25.0,
+                                      .rowSpacing = 20.0,
+                                      .columnCount = 3,
+                                      .rowCount = 5,
+                                      .hasMiddleHole = 0,
+                                      .holeDiameter = 6.0});
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create rectangular fixed plate without "
+                   "middle hole"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./rectangular_fixed_plate_no_middle.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_circular_fixed_plate() {
+  std::cout << "\n=== Testing Circular Fixed Plate ===" << std::endl;
+  try {
+    // 基本测试用例 - 带中间孔
+    auto shp1 = create_circular_fixed_plate(
+        circular_fixed_plate_params{.length = 200.0,
+                                    .width = 200.0,
+                                    .thickness = 12.0,
+                                    .ringRadius = 60.0,
+                                    .holeCount = 8,
+                                    .hasMiddleHole = 1,
+                                    .holeDiameter = 15.0});
+
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create circular plate with middle hole"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./circular_plate_with_middle_hole.stl");
+
+    // 测试无中间孔的情况
+    auto shp2 = create_circular_fixed_plate(
+        circular_fixed_plate_params{.length = 180.0,
+                                    .width = 180.0,
+                                    .thickness = 10.0,
+                                    .ringRadius = 50.0,
+                                    .holeCount = 6,
+                                    .hasMiddleHole = 0,
+                                    .holeDiameter = 12.0});
+
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create circular plate without middle hole"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./circular_plate_no_middle_hole.stl");
+
+    // 极端参数测试 - 小尺寸多孔
+    auto shp3 = create_circular_fixed_plate(
+        circular_fixed_plate_params{.length = 100.0,
+                                    .width = 100.0,
+                                    .thickness = 5.0,
+                                    .ringRadius = 30.0,
+                                    .holeCount = 12,
+                                    .hasMiddleHole = 1,
+                                    .holeDiameter = 8.0});
+
     if (shp3.IsNull()) {
-      std::cerr << "Error: Failed to create small skirt porcelain bushing" << std::endl;
+      std::cerr << "Error: Failed to create extreme circular plate"
+                << std::endl;
       return;
     }
-    test_export_shape(shp3, "./porcelain_bushing_small_skirt.stl");
+    test_export_shape(shp3, "./circular_plate_extreme.stl");
 
-    // 测试极端参数情况 - 超高瓷套管
-    auto shp4 = create_porcelain_bushing(porcelain_bushing_params{
-        .height = 200.0,
-        .radius = 12.0,
-        .bigSkirtRadius = 25.0,
-        .smallSkirtRadius = 20.0,
-        .count = 10});
-    if (shp4.IsNull()) {
-      std::cerr << "Error: Failed to create extreme height porcelain bushing" << std::endl;
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_wire() {
+  std::cout << "\n=== Testing Wire ===" << std::endl;
+  try {
+    // 测试直线导线
+    auto shp1 = create_wire(wire_params{.startPoint = gp_Pnt(0, 0, 0),
+                                        .endPoint = gp_Pnt(100, 100, 50),
+                                        .startDir = gp_Dir(1, 1, 0.5),
+                                        .endDir = gp_Dir(1, 1, 0.5),
+                                        .sag = 10.0,
+                                        .diameter = 5.0});
+
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create straight wire" << std::endl;
       return;
     }
-    test_export_shape(shp4, "./porcelain_bushing_extreme_height.stl");
- */
+    test_export_shape(shp1, "./straight_wire.stl");
+
+    // 测试带拟合点的曲线导线
+    std::vector<gp_Pnt> fitPoints = {gp_Pnt(0, 0, 0), gp_Pnt(100, 100, 50),
+                                     gp_Pnt(200, 50, 100), gp_Pnt(300, 0, 150)};
+
+    auto shp2 = create_wire(
+        wire_params{.startPoint = gp_Pnt(0, 0, 0),
+                    .endPoint = gp_Pnt(300, 0, 150), // 与最后一个拟合点一致
+                    .startDir = gp_Dir(1, 0, 0),     // 初始方向沿X轴
+                    .endDir = gp_Dir(0, 0, 1),       // 结束方向沿Z轴
+                    .sag = 25.0,                     // 合理弧垂值
+                    .diameter = 8.0,                 // 典型导线直径
+                    .fitPoints = fitPoints});
+
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create curved wire" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./curved_wire.stl");
+
+    // 测试极端参数 - 小直径大弧垂
+    auto shp3 = create_wire(wire_params{.startPoint = gp_Pnt(0, 0, 0),
+                                        .endPoint = gp_Pnt(200, 0, 0),
+                                        .startDir = gp_Dir(1, 0, 0),
+                                        .endDir = gp_Dir(1, 0, 0),
+                                        .sag = 50.0,
+                                        .diameter = 2.0});
+
+    if (shp3.IsNull()) {
+      std::cerr << "Error: Failed to create extreme wire" << std::endl;
+      return;
+    }
+    test_export_shape(shp3, "./extreme_wire.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_cable() {
+  std::cout << "\n=== Testing Cable ===" << std::endl;
+  try {
+    // 测试简单直线电缆
+    auto shp1 = create_cable(cable_params{.startPoint = gp_Pnt(0, 0, 0),
+                                          .endPoint = gp_Pnt(100, 0, 0),
+                                          .diameter = 10.0});
+
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create straight cable" << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./straight_cable.stl");
+
+    // 测试带转弯半径的曲线电缆
+    std::vector<gp_Pnt> inflectionPoints = {gp_Pnt(50, 50, 0),
+                                            gp_Pnt(100, 50, 50)};
+    std::vector<double> radii = {20.0, 15.0};
+
+    auto shp2 = create_cable(cable_params{.startPoint = gp_Pnt(0, 0, 0),
+                                          .endPoint = gp_Pnt(150, 50, 50),
+                                          .inflectionPoints = inflectionPoints,
+                                          .radii = radii,
+                                          .diameter = 8.0});
+
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create curved cable" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./curved_cable.stl");
+
+    // 测试极端参数 - 小直径大转弯半径
+    std::vector<gp_Pnt> extremePoints = {gp_Pnt(50, 100, 0),
+                                         gp_Pnt(100, 100, 100)};
+    std::vector<double> extremeRadii = {50.0, 30.0};
+
+    auto shp3 = create_cable(cable_params{.startPoint = gp_Pnt(0, 0, 0),
+                                          .endPoint = gp_Pnt(200, 100, 100),
+                                          .inflectionPoints = extremePoints,
+                                          .radii = extremeRadii,
+                                          .diameter = 2.0});
+
+    if (shp3.IsNull()) {
+      std::cerr << "Error: Failed to create extreme cable" << std::endl;
+      return;
+    }
+    test_export_shape(shp3, "./extreme_cable.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_curve_cable() {
+  std::cout << "\n=== Testing Curve Cable ===" << std::endl;
+  try {
+    // 测试简单直线段电缆
+    std::vector<gp_Pnt> linePoints = {gp_Pnt(0, 0, 0), gp_Pnt(100, 0, 0)};
+
+    auto shp1 =
+        create_curve_cable(curve_cable_params{.controlPoints = {linePoints},
+                                              .curveTypes = {curve_type::LINE},
+                                              .diameter = 10.0});
+
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create straight curve cable" << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./straight_curve_cable.stl");
+
+    // 测试混合曲线电缆(直线+圆弧+样条)
+    std::vector<gp_Pnt> arcPoints = {gp_Pnt(100, 0, 0), gp_Pnt(150, 50, 0),
+                                     gp_Pnt(200, 0, 0)};
+
+    std::vector<gp_Pnt> splinePoints = {gp_Pnt(200, 0, 0), gp_Pnt(250, 50, 50),
+                                        gp_Pnt(300, 0, 100),
+                                        gp_Pnt(350, -50, 150)};
+
+    auto shp2 = create_curve_cable(curve_cable_params{
+        .controlPoints = {linePoints, arcPoints, splinePoints},
+        .curveTypes = {curve_type::LINE, curve_type::ARC, curve_type::SPLINE},
+        .diameter = 8.0});
+
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create mixed curve cable" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./mixed_curve_cable.stl");
+
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
   }
@@ -523,5 +902,14 @@ int main() {
   test_make_square_gasket();
   test_make_stretched_body();
   test_make_porcelain_bushing();
+  test_make_cone_porcelain_bushing();
+  test_make_insulator_string();
+  test_make_vtype_insulator();
+  test_make_terminal_block();
+  test_make_rectangular_fixed_plate();
+  test_make_circular_fixed_plate();
+  test_make_wire();
+  test_make_cable();
+  test_make_curve_cable(); 
   return 0;
 }

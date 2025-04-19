@@ -295,7 +295,6 @@ typedef struct {
   int columnCount;
   int rowCount;
   double bottomOffset;
-  char phase;
 } terminal_block_params_t;
 
 PRIMCAPICALL topo_shape_t *

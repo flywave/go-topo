@@ -283,7 +283,6 @@ struct terminal_block_params {
   int columnCount;      // 开孔列数 (CN > 0)
   int rowCount;         // 开孔行数 (RN > 0)
   double bottomOffset;  // 孔行距底边距离 (BL > 0)
-  char phase;           // 相位信息 (A/B/C/N)
 };
 TopoDS_Shape create_terminal_block(const terminal_block_params &params);
 TopoDS_Shape create_terminal_block(const terminal_block_params &params,
