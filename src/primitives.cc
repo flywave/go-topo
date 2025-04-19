@@ -38,6 +38,7 @@
 #include <Geom_Circle.hxx>
 #include <Geom_Line.hxx>
 #include <Geom_Plane.hxx>
+#include <Geom_SurfaceOfRevolution.hxx>
 #include <Law_Linear.hxx>
 #include <Precision.hxx>
 #include <ShapeFix_Shape.hxx>
@@ -3184,6 +3185,45 @@ TopoDS_Shape create_t_steel(const t_steel_params &params,
   return transform.Shape();
 }
 
+TopoDS_Shape create_rounded_base(double D, double H4, double z_bottom) {
+  // 1. 定义母线（圆弧）
+  const double R = (D * D + 4 * H4 * H4) / (8 * H4);
+  Handle(Geom_TrimmedCurve) profile =
+      GC_MakeArcOfCircle(gp_Pnt(D / 2, 0, z_bottom),
+                         gp_Pnt(0, 0, z_bottom - H4),
+                         gp_Pnt(-D / 2, 0, z_bottom))
+          .Value();
+
+  // 2. 创建旋转曲面
+  Handle(Geom_SurfaceOfRevolution) revolSurface = new Geom_SurfaceOfRevolution(
+      profile, gp_Ax1(gp_Pnt(0, 0, z_bottom), gp_Dir(0, 0, -1)) // 旋转轴
+  );
+
+  // 3. 转换为拓扑面
+  TopoDS_Face face =
+      BRepBuilderAPI_MakeFace(revolSurface, Precision::Confusion()).Face();
+
+  BRepBuilderAPI_MakeWire wireMaker(BRepBuilderAPI_MakeEdge(
+      new Geom_Circle(gp_Ax2(gp_Pnt(0, 0, z_bottom), gp_Dir(0, 0, 1)), D / 2)));
+
+  // 4. 封闭底部（添加圆形平面）
+  TopoDS_Face bottom_face = BRepBuilderAPI_MakeFace(wireMaker.Wire()).Face();
+
+  // 5. 缝合为壳体
+  BRepBuilderAPI_Sewing sewer;
+  sewer.Add(face);
+  sewer.Add(bottom_face);
+  sewer.Perform();
+  TopoDS_Shell shell = TopoDS::Shell(sewer.SewedShape());
+
+  // 6. 转换为实体
+  BRepBuilderAPI_MakeSolid solidMaker(shell);
+  if (!solidMaker.IsDone()) {
+    throw Standard_ConstructionError("实体转换失败");
+  }
+  return solidMaker.Shape();
+}
+
 /**
  * @brief 创建挖孔桩基础/灌注桩单桩基础
  * @param params 基础参数结构体
@@ -3225,12 +3265,23 @@ TopoDS_Shape create_bored_pile_base(const bored_pile_params &params) {
     if (!revolver.IsDone()) {
       throw Standard_ConstructionError("过渡段创建失败");
     }
-    transition = revolver.Shape();
+    TopoDS_Shell shell = TopoDS::Shell(revolver.Shape());
+
+    // 6. 转换为实体
+    BRepBuilderAPI_MakeSolid solidMaker(shell);
+    if (!solidMaker.IsDone()) {
+      throw Standard_ConstructionError("实体转换失败");
+    }
+
+    transition = solidMaker.Shape();
   }
 
   // 创建H3段（下部圆柱段）
   const gp_Ax2 h3_axis(gp_Pnt(0, 0, -(HA + params.H2)), gp_Dir(0, 0, -1));
   BRepPrimAPI_MakeCylinder h3_cylinder(h3_axis, params.D / 2, params.H3);
+  // H4段构建部分(H4段为一个圆底)
+  const double z_h3_bottom = -(HA + params.H2 + params.H3);
+  auto h4Shape = create_rounded_base(params.D, params.H4, z_h3_bottom);
 
   // 组合所有部件
   TopoDS_Compound result;
@@ -3241,6 +3292,7 @@ TopoDS_Shape create_bored_pile_base(const bored_pile_params &params) {
   if (params.D != params.d)
     builder.Add(result, transition);
   builder.Add(result, h3_cylinder.Shape());
+  builder.Add(result, h4Shape);
 
   return result;
 }
