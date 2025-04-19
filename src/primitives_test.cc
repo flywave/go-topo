@@ -760,10 +760,10 @@ void test_make_wire() {
     auto shp2 = create_wire(
         wire_params{.startPoint = gp_Pnt(0, 0, 0),
                     .endPoint = gp_Pnt(300, 0, 150), // 与最后一个拟合点一致
-                    .startDir = gp_Dir(1, 0, 0),     // 初始方向沿X轴
-                    .endDir = gp_Dir(0, 0, 1),       // 结束方向沿Z轴
-                    .sag = 25.0,                     // 合理弧垂值
-                    .diameter = 8.0,                 // 典型导线直径
+                    .startDir = gp_Dir(1, 0, 0), // 初始方向沿X轴
+                    .endDir = gp_Dir(0, 0, 1),   // 结束方向沿Z轴
+                    .sag = 25.0,                 // 合理弧垂值
+                    .diameter = 8.0,             // 典型导线直径
                     .fitPoints = fitPoints});
 
     if (shp2.IsNull()) {
@@ -885,45 +885,11 @@ void test_make_curve_cable() {
   }
 }
 
-void test_make_equilateral_angle_steel() {
-  std::cout << "\n=== Testing Equilateral Angle Steel ===" << std::endl;
+void test_make_angle_steel() {
+  std::cout << "\n=== Testing  Angle Steel ===" << std::endl;
   try {
     // 标准尺寸测试
-    auto shp1 = create_equilateral_angle_steel(equilateral_angle_steel_params{
-        .L = 50.0,      // 边长50mm
-        .X = 5.0,       // 厚度5mm
-        .length = 200.0 // 长度200mm
-    });
-
-    if (shp1.IsNull()) {
-      std::cerr << "Error: Failed to create standard angle steel" << std::endl;
-      return;
-    }
-    test_export_shape(shp1, "./equilateral_angle_steel_standard.stl");
-
-    // 极端尺寸测试
-    auto shp2 = create_equilateral_angle_steel(equilateral_angle_steel_params{
-        .L = 100.0,     // 大边长
-        .X = 2.0,       // 薄壁
-        .length = 500.0 // 超长
-    });
-
-    if (shp2.IsNull()) {
-      std::cerr << "Error: Failed to create extreme angle steel" << std::endl;
-      return;
-    }
-    test_export_shape(shp2, "./equilateral_angle_steel_extreme.stl");
-
-  } catch (const Standard_ConstructionError &e) {
-    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
-  }
-}
-
-void test_make_scalene_angle_steel() {
-  std::cout << "\n=== Testing Scalene Angle Steel ===" << std::endl;
-  try {
-    // 标准尺寸测试
-    auto shp1 = create_scalene_angle_steel(scalene_angle_steel_params{
+    auto shp1 = create_angle_steel(angle_steel_params{
         .L1 = 60.0,     // 长边60mm
         .L2 = 40.0,     // 短边40mm
         .X = 5.0,       // 厚度5mm
@@ -935,10 +901,10 @@ void test_make_scalene_angle_steel() {
                 << std::endl;
       return;
     }
-    test_export_shape(shp1, "./scalene_angle_steel_standard.stl");
+    test_export_shape(shp1, "./angle_steel_standard.stl");
 
     // 极端尺寸测试
-    auto shp2 = create_scalene_angle_steel(scalene_angle_steel_params{
+    auto shp2 = create_angle_steel(angle_steel_params{
         .L1 = 100.0,    // 大长边
         .L2 = 30.0,     // 小短边
         .X = 3.0,       // 薄壁
@@ -950,43 +916,122 @@ void test_make_scalene_angle_steel() {
                 << std::endl;
       return;
     }
-    test_export_shape(shp2, "./scalene_angle_steel_extreme.stl");
+    test_export_shape(shp2, "./angle_steel_extreme.stl");
 
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
   }
 }
 
-void test_make_ibeam() {
+void test_make_i_shaped_steel() {
   std::cout << "\n=== Testing I-Beam ===" << std::endl;
   try {
     // 标准参数测试
-    auto shp1 = create_ibeam(ibeam_params{.height = 200.0,
-                                          .flangeWidth = 100.0,
-                                          .webThickness = 12.0, // 腹板厚度12mm
-                                          .flangeThickness = 15.0,
-                                          .radius = 17.0, // 半径3mm < 12/3=4mm
-                                          .length = 1000.0});
+    auto shp1 = create_i_shaped_steel(
+        i_shaped_steel_params{.height = 200.0,
+                              .flangeWidth = 150.0,
+                              .webThickness = 12.0, // 腹板厚度12mm
+                              .flangeThickness = 8.0,
+                              .length = 1000.0});
 
     if (shp1.IsNull()) {
       std::cerr << "Error: Failed to create standard I-beam" << std::endl;
       return;
     }
-    test_export_shape(shp1, "./ibeam_standard.stl");
+    test_export_shape(shp1, "./i_shaped_steel_standard.stl");
 
-    // 极端参数测试 - 薄腹板窄翼缘
-    auto shp2 = create_ibeam(ibeam_params{.height = 200.0,
-                                          .flangeWidth = 100.0,
-                                          .webThickness = 10.0,
-                                          .flangeThickness = 15.0,
-                                          .radius = 16.0, // 半径16mm > 15mm
-                                          .length = 1000.0});
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
 
-    if (shp2.IsNull()) {
-      std::cerr << "Error: Failed to create extreme I-beam" << std::endl;
+void test_make_channel_steel() {
+  std::cout << "\n=== Testing Channel Steel ===" << std::endl;
+  try {
+    // 标准参数测试
+    auto shp1 =
+        create_channel_steel(channel_steel_params{.height = 100.0,
+                                                  .flangeWidth = 50.0,
+                                                  .webThickness = 6.0,
+                                                  .flangeThickness = 8.0,
+                                                  .length = 500.0});
+
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create standard channel steel"
+                << std::endl;
       return;
     }
-    test_export_shape(shp2, "./ibeam_extreme.stl");
+    test_export_shape(shp1, "./channel_steel_standard.stl");
+
+    // 极端参数测试
+    auto shp2 =
+        create_channel_steel(channel_steel_params{.height = 200.0,
+                                                  .flangeWidth = 30.0,
+                                                  .webThickness = 4.0,
+                                                  .flangeThickness = 5.0,
+                                                  .length = 1000.0});
+
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create extreme channel steel" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./channel_steel_extreme.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_t_steel() {
+  std::cout << "\n=== Testing T-Steel ===" << std::endl;
+  try {
+    // 标准参数测试
+    auto shp1 = create_t_steel(t_steel_params{.height = 120.0,
+                                              .width = 60.0,
+                                              .webThickness = 8.0,
+                                              .flangeThickness = 10.0,
+                                              .length = 600.0});
+
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create standard T-steel" << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./t_steel_standard.stl");
+
+    // 极端参数测试
+    auto shp2 = create_t_steel(t_steel_params{.height = 150.0,
+                                              .width = 40.0,
+                                              .webThickness = 5.0,
+                                              .flangeThickness = 6.0,
+                                              .length = 800.0});
+
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create extreme T-steel" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./t_steel_extreme.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+void test_make_bored_pile() {
+  std::cout << "\n=== Testing Bored Pile ===" << std::endl;
+  try {
+    // 标准参数测试 
+    auto shp1 = create_bored_pile_base(bored_pile_params{
+      .H1 = 100.0,  // 上部圆柱高度
+      .H2 = 30.0,   // 过渡段高度
+      .H3 = 50.0,   // 底部圆柱高度
+      .H4 = 8.0,    // 桩头高度（必须小于D/2）
+      .d = 10.0,    // 上部直径
+      .D = 20.0     // 底部直径
+    });
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create standard bored pile" << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./bored_pile_standard.stl");
 
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
@@ -994,6 +1039,7 @@ void test_make_ibeam() {
 }
 
 int main() {
+  //变电
   test_make_sphere();
   test_make_rotational_ellipsoid();
   test_make_diamond_frustum();
@@ -1019,8 +1065,11 @@ int main() {
   test_make_wire();
   test_make_cable();
   test_make_curve_cable();
-  test_make_equilateral_angle_steel();
-  test_make_scalene_angle_steel();
-  test_make_ibeam();
+  test_make_angle_steel();
+  test_make_i_shaped_steel();
+  test_make_channel_steel();
+  test_make_t_steel();
+  //输电
+  test_make_bored_pile();
   return 0;
 }

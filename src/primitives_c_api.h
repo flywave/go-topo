@@ -396,237 +396,57 @@ create_curve_cable_with_place(curve_cable_params_t params, pnt3d_t position,
                               dir3d_t direction, dir3d_t upDirection);
 
 typedef struct {
-  double L;
-  double X;
-  double length;
-} equilateral_angle_steel_params_t;
-PRIMCAPICALL topo_shape_t *
-create_equilateral_angle_steel(equilateral_angle_steel_params_t params);
-PRIMCAPICALL topo_shape_t *create_equilateral_angle_steel_with_place(
-    equilateral_angle_steel_params_t params, pnt3d_t position, dir3d_t xDir,
-    dir3d_t yDir);
-
-typedef struct {
   double L1;
   double L2;
   double X;
   double length;
-} scalene_angle_steel_params_t;
+} angle_steel_params_t;
 
+PRIMCAPICALL topo_shape_t *create_angle_steel(angle_steel_params_t params);
 PRIMCAPICALL topo_shape_t *
-create_scalene_angle_steel(scalene_angle_steel_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_scalene_angle_steel_with_place(scalene_angle_steel_params_t params,
-                                      pnt3d_t position, dir3d_t xDir,
-                                      dir3d_t longEdgeDir);
+create_angle_steel_with_place(angle_steel_params_t params, pnt3d_t position,
+                              dir3d_t xDir, dir3d_t longEdgeDir);
 
 typedef struct {
   double height;
   double flangeWidth;
   double webThickness;
   double flangeThickness;
-  double radius;
   double length;
-} ibeam_params_t;
+} i_shaped_steel_params_t;
 
-PRIMCAPICALL topo_shape_t *create_ibeam(ibeam_params_t params);
-PRIMCAPICALL topo_shape_t *create_ibeam_with_place(ibeam_params_t params,
-                                                   pnt3d_t position,
-                                                   dir3d_t xDir, dir3d_t zDir);
+PRIMCAPICALL topo_shape_t *
+create_i_shaped_steel(i_shaped_steel_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_i_shaped_steel_with_place(i_shaped_steel_params_t params,
+                                 pnt3d_t position, dir3d_t xDir, dir3d_t zDir);
 
 typedef struct {
   double height;
   double flangeWidth;
   double webThickness;
   double flangeThickness;
-  double radius;
   double length;
-  double flangeSlope;
-} light_ibeam_params_t;
+} channel_steel_params_t;
 
-PRIMCAPICALL topo_shape_t *create_light_ibeam(light_ibeam_params_t params);
+PRIMCAPICALL topo_shape_t *create_channel_steel(channel_steel_params_t params);
 PRIMCAPICALL topo_shape_t *
-create_light_ibeam_with_place(light_ibeam_params_t params, pnt3d_t position,
-                              dir3d_t xDir, dir3d_t zDir);
-
-typedef struct {
-  double height;
-  double flangeWidth;
-  double webThickness;
-  double flangeThickness;
-  double radius;
-  double length;
-} hbeam_params_t;
-
-PRIMCAPICALL topo_shape_t *create_hbeam(hbeam_params_t params);
-PRIMCAPICALL topo_shape_t *create_hbeam_with_place(hbeam_params_t params,
-                                                   pnt3d_t position,
-                                                   dir3d_t xDir, dir3d_t zDir);
-
-typedef struct {
-  double height;
-  double flangeWidth;
-  double webThickness;
-  double flangeThickness;
-  double radius;
-  double length;
-} beam_channel_params_t;
-
-PRIMCAPICALL topo_shape_t *create_beam_channel(beam_channel_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_beam_channel_with_place(beam_channel_params_t params, pnt3d_t position,
-                               dir3d_t xDir, dir3d_t zDir);
-
-typedef struct {
-  double height;
-  double flangeWidth;
-  double webThickness;
-  double flangeThickness;
-  double radius;
-  double length;
-  double flangeSlope;
-} light_beam_channel_params_t;
-
-PRIMCAPICALL topo_shape_t *
-create_light_beam_channel(light_beam_channel_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_light_beam_channel_with_place(light_beam_channel_params_t params,
-                                     pnt3d_t position, dir3d_t xDir,
-                                     dir3d_t zDir);
-
-typedef struct {
-  double width;
-  double thickness;
-  double length;
-} flat_steel_params_t;
-
-PRIMCAPICALL topo_shape_t *create_flat_steel(flat_steel_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_flat_steel_with_place(flat_steel_params_t params, pnt3d_t position,
-                             dir3d_t xDir, dir3d_t zDir);
-
-typedef struct {
-  double height;
-  double width;
-  double thickness;
-  double radius;
-  double length;
-} lsteel_params_t;
-
-PRIMCAPICALL topo_shape_t *create_lsteel(lsteel_params_t params);
-PRIMCAPICALL topo_shape_t *create_lsteel_with_place(lsteel_params_t params,
-                                                    pnt3d_t position,
-                                                    dir3d_t xDir, dir3d_t zDir);
+create_channel_steel_with_place(channel_steel_params_t params, pnt3d_t position,
+                                dir3d_t xDir, dir3d_t zDir);
 
 typedef struct {
   double height;
   double width;
   double webThickness;
   double flangeThickness;
-  double radius;
   double length;
-} tsteel_params_t;
+} t_steel_params_t;
 
-PRIMCAPICALL topo_shape_t *create_tsteel(tsteel_params_t params);
-PRIMCAPICALL topo_shape_t *create_tsteel_with_place(tsteel_params_t params,
-                                                    pnt3d_t position,
-                                                    dir3d_t xDir, dir3d_t zDir);
-
-typedef struct {
-  double diameter;
-  double length;
-} round_steel_params_t;
-
-PRIMCAPICALL topo_shape_t *create_round_steel(round_steel_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_round_steel_with_place(round_steel_params_t params, pnt3d_t position,
-                              dir3d_t xDir);
-
-typedef struct {
-  double outerDiameter;
-  double innerDiameter;
-  double length;
-} round_steel_tube_params_t;
-
-PRIMCAPICALL topo_shape_t *
-create_round_steel_tube(round_steel_tube_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_round_steel_tube_with_place(round_steel_tube_params_t params,
-                                   pnt3d_t position, dir3d_t xDir);
-
-typedef struct {
-  double height;
-  double width;
-  double thickness;
-  double length;
-} rectangular_steel_tube_params_t;
-
-PRIMCAPICALL topo_shape_t *
-create_rectangular_steel_tube(rectangular_steel_tube_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_rectangular_steel_tube_with_place(rectangular_steel_tube_params_t params,
-                                         pnt3d_t position, dir3d_t xDir,
-                                         dir3d_t zDir);
-
-typedef struct {
-  double size;
-  double thickness;
-  double length;
-} square_steel_tube_params_t;
-
-PRIMCAPICALL topo_shape_t *
-create_square_steel_tube(square_steel_tube_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_square_steel_tube_with_place(square_steel_tube_params_t params,
-                                    pnt3d_t position, dir3d_t xDir,
-                                    dir3d_t zDir);
-
-typedef struct {
-  beam_channel_params_t base;
-  double spacing;
-} double_channel_steel_params_t;
-
-PRIMCAPICALL topo_shape_t *
-create_double_channel_steel(double_channel_steel_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_double_channel_steel_with_place(double_channel_steel_params_t params,
-                                       pnt3d_t position, dir3d_t xDir,
-                                       dir3d_t zDir);
-
-typedef struct {
-  equilateral_angle_steel_params_t base;
-  double spacing;
-} equilateral_double_angle_steel_params_t;
-
-PRIMCAPICALL topo_shape_t *create_equilateral_double_angle_steel(
-    equilateral_double_angle_steel_params_t params);
-PRIMCAPICALL topo_shape_t *create_equilateral_double_angle_steel_with_place(
-    equilateral_double_angle_steel_params_t params, pnt3d_t position,
-    dir3d_t xDir, dir3d_t zDir);
-
-typedef struct {
-  scalene_angle_steel_params_t base;
-  double spacing;
-} unequal_angle_steel_params_t;
-
-PRIMCAPICALL topo_shape_t *
-create_unequal_angle_steel(unequal_angle_steel_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_unequal_angle_steel_with_place(unequal_angle_steel_params_t params,
-                                      pnt3d_t position, dir3d_t xDir,
-                                      dir3d_t zDir);
-
-typedef struct {
-  double side_length;
-  double thickness;
-  double length;
-  int sides;
-} polygon_tube_params_t;
-
-PRIMCAPICALL topo_shape_t *create_polygon_tube(polygon_tube_params_t params);
-PRIMCAPICALL topo_shape_t *
-create_polygon_tube_with_place(polygon_tube_params_t params, pnt3d_t position,
-                               dir3d_t xDir);
+PRIMCAPICALL topo_shape_t *create_t_steel(t_steel_params_t params);
+PRIMCAPICALL topo_shape_t *create_t_steel_with_place(t_steel_params_t params,
+                                                     pnt3d_t position,
+                                                     dir3d_t xDir,
+                                                     dir3d_t zDir);
 
 typedef struct {
   double H1;
@@ -635,7 +455,6 @@ typedef struct {
   double H4;
   double d;
   double D;
-  double filletRadius;
 } bored_pile_params_t;
 
 PRIMCAPICALL topo_shape_t *create_bored_pile_base(bored_pile_params_t params);
@@ -1641,7 +1460,7 @@ PRIMCAPICALL topo_shape_t *
 create_four_way_well_with_place(four_way_well_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t xDirection);
 
- enum {
+enum {
   TUNNEL_SECTION_RECTANGULAR = 1,
   TUNNEL_SECTION_HORSESHOE = 2,
   TUNNEL_SECTION_CIRCULAR = 3

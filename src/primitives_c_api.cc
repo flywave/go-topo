@@ -443,11 +443,11 @@ create_vtype_insulator_with_place(vtype_insulator_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_terminal_block(terminal_block_params_t params) {
-  terminal_block_params cpp_params{
-      params.length,        params.width,         params.thickness,
-      params.chamferLength, params.columnSpacing, params.rowSpacing,
-      params.holeRadius,    params.columnCount,   params.rowCount,
-      params.bottomOffset};
+  terminal_block_params cpp_params{params.length,        params.width,
+                                   params.thickness,     params.chamferLength,
+                                   params.columnSpacing, params.rowSpacing,
+                                   params.holeRadius,    params.columnCount,
+                                   params.rowCount,      params.bottomOffset};
   return new topo_shape_t{
       std::make_shared<shape>(create_terminal_block(cpp_params))};
 }
@@ -456,11 +456,11 @@ PRIMCAPICALL topo_shape_t *
 create_terminal_block_with_place(terminal_block_params_t params,
                                  pnt3d_t position, dir3d_t lengthDir,
                                  dir3d_t widthDir) {
-  terminal_block_params cpp_params{
-      params.length,        params.width,         params.thickness,
-      params.chamferLength, params.columnSpacing, params.rowSpacing,
-      params.holeRadius,    params.columnCount,   params.rowCount,
-      params.bottomOffset};
+  terminal_block_params cpp_params{params.length,        params.width,
+                                   params.thickness,     params.chamferLength,
+                                   params.columnSpacing, params.rowSpacing,
+                                   params.holeRadius,    params.columnCount,
+                                   params.rowCount,      params.bottomOffset};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_lengthDir(lengthDir.x, lengthDir.y, lengthDir.z);
   gp_Dir cpp_widthDir(widthDir.x, widthDir.y, widthDir.z);
@@ -674,400 +674,88 @@ create_curve_cable_with_place(curve_cable_params_t params, pnt3d_t position,
   }
 }
 
-PRIMCAPICALL topo_shape_t *
-create_equilateral_angle_steel(equilateral_angle_steel_params_t params) {
-  equilateral_angle_steel_params cpp_params{params.L, params.X, params.length};
+PRIMCAPICALL topo_shape_t *create_angle_steel(angle_steel_params_t params) {
+  angle_steel_params cpp_params{params.L1, params.L2, params.X, params.length};
   return new topo_shape_t{
-      std::make_shared<shape>(create_equilateral_angle_steel(cpp_params))};
-}
-
-PRIMCAPICALL topo_shape_t *create_equilateral_angle_steel_with_place(
-    equilateral_angle_steel_params_t params, pnt3d_t position, dir3d_t xDir,
-    dir3d_t yDir) {
-  equilateral_angle_steel_params cpp_params{params.L, params.X, params.length};
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  gp_Dir cpp_yDir(yDir.x, yDir.y, yDir.z);
-  return new topo_shape_t{
-      std::make_shared<shape>(create_equilateral_angle_steel(
-          cpp_params, cpp_position, cpp_xDir, cpp_yDir))};
+      std::make_shared<shape>(create_angle_steel(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
-create_scalene_angle_steel(scalene_angle_steel_params_t params) {
-  scalene_angle_steel_params cpp_params{params.L1, params.L2, params.X,
-                                        params.length};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_scalene_angle_steel(cpp_params))};
-}
-
-PRIMCAPICALL topo_shape_t *
-create_scalene_angle_steel_with_place(scalene_angle_steel_params_t params,
-                                      pnt3d_t position, dir3d_t xDir,
-                                      dir3d_t longEdgeDir) {
-  scalene_angle_steel_params cpp_params{params.L1, params.L2, params.X,
-                                        params.length};
+create_angle_steel_with_place(angle_steel_params_t params, pnt3d_t position,
+                              dir3d_t xDir, dir3d_t longEdgeDir) {
+  angle_steel_params cpp_params{params.L1, params.L2, params.X, params.length};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
   gp_Dir cpp_longEdgeDir(longEdgeDir.x, longEdgeDir.y, longEdgeDir.z);
-  return new topo_shape_t{std::make_shared<shape>(create_scalene_angle_steel(
-      cpp_params, cpp_position, cpp_xDir, cpp_longEdgeDir))};
-}
-
-PRIMCAPICALL topo_shape_t *create_ibeam(ibeam_params_t params) {
-  ibeam_params cpp_params{params.height,       params.flangeWidth,
-                          params.webThickness, params.flangeThickness,
-                          params.radius,       params.length};
-  return new topo_shape_t{std::make_shared<shape>(create_ibeam(cpp_params))};
-}
-
-PRIMCAPICALL topo_shape_t *create_ibeam_with_place(ibeam_params_t params,
-                                                   pnt3d_t position,
-                                                   dir3d_t xDir, dir3d_t zDir) {
-  ibeam_params cpp_params{params.height,       params.flangeWidth,
-                          params.webThickness, params.flangeThickness,
-                          params.radius,       params.length};
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
   return new topo_shape_t{std::make_shared<shape>(
-      create_ibeam(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
+      create_angle_steel(cpp_params, cpp_position, cpp_xDir, cpp_longEdgeDir))};
 }
 
-PRIMCAPICALL topo_shape_t *create_light_ibeam(light_ibeam_params_t params) {
-  light_ibeam_params cpp_params{params.height,       params.flangeWidth,
-                                params.webThickness, params.flangeThickness,
-                                params.radius,       params.length,
-                                params.flangeSlope};
+PRIMCAPICALL topo_shape_t *
+create_i_shaped_steel(i_shaped_steel_params_t params) {
+  i_shaped_steel_params cpp_params{params.height, params.flangeWidth,
+                                   params.webThickness, params.flangeThickness,
+                                   params.length};
   return new topo_shape_t{
-      std::make_shared<shape>(create_light_ibeam(cpp_params))};
+      std::make_shared<shape>(create_i_shaped_steel(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
-create_light_ibeam_with_place(light_ibeam_params_t params, pnt3d_t position,
-                              dir3d_t xDir, dir3d_t zDir) {
-  light_ibeam_params cpp_params{params.height,       params.flangeWidth,
-                                params.webThickness, params.flangeThickness,
-                                params.radius,       params.length,
-                                params.flangeSlope};
+create_i_shaped_steel_with_place(i_shaped_steel_params_t params,
+                                 pnt3d_t position, dir3d_t xDir, dir3d_t zDir) {
+  i_shaped_steel_params cpp_params{params.height, params.flangeWidth,
+                                   params.webThickness, params.flangeThickness,
+                                   params.length};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
   gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
   return new topo_shape_t{std::make_shared<shape>(
-      create_light_ibeam(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
+      create_i_shaped_steel(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
 }
 
-PRIMCAPICALL topo_shape_t *create_hbeam(hbeam_params_t params) {
-  hbeam_params cpp_params{params.height,       params.flangeWidth,
-                          params.webThickness, params.flangeThickness,
-                          params.radius,       params.length};
-  return new topo_shape_t{std::make_shared<shape>(create_hbeam(cpp_params))};
-}
-
-PRIMCAPICALL topo_shape_t *create_hbeam_with_place(hbeam_params_t params,
-                                                   pnt3d_t position,
-                                                   dir3d_t xDir, dir3d_t zDir) {
-  hbeam_params cpp_params{params.height,       params.flangeWidth,
-                          params.webThickness, params.flangeThickness,
-                          params.radius,       params.length};
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_hbeam(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
-}
-
-PRIMCAPICALL topo_shape_t *create_beam_channel(beam_channel_params_t params) {
-  beam_channel_params cpp_params{params.height,       params.flangeWidth,
-                                 params.webThickness, params.flangeThickness,
-                                 params.radius,       params.length};
+PRIMCAPICALL topo_shape_t *create_channel_steel(channel_steel_params_t params) {
+  channel_steel_params cpp_params{params.height, params.flangeWidth,
+                                  params.webThickness, params.flangeThickness,
+                                  params.length};
   return new topo_shape_t{
-      std::make_shared<shape>(create_beam_channel(cpp_params))};
+      std::make_shared<shape>(create_channel_steel(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
-create_beam_channel_with_place(beam_channel_params_t params, pnt3d_t position,
-                               dir3d_t xDir, dir3d_t zDir) {
-  beam_channel_params cpp_params{params.height,       params.flangeWidth,
-                                 params.webThickness, params.flangeThickness,
-                                 params.radius,       params.length};
+create_channel_steel_with_place(channel_steel_params_t params, pnt3d_t position,
+                                dir3d_t xDir, dir3d_t zDir) {
+  channel_steel_params cpp_params{params.height, params.flangeWidth,
+                                  params.webThickness, params.flangeThickness,
+                                  params.length};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
   gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
   return new topo_shape_t{std::make_shared<shape>(
-      create_beam_channel(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
+      create_channel_steel(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
 }
 
-PRIMCAPICALL topo_shape_t *
-create_light_beam_channel(light_beam_channel_params_t params) {
-  light_beam_channel_params cpp_params{
-      params.height,          params.flangeWidth, params.webThickness,
-      params.flangeThickness, params.radius,      params.length,
-      params.flangeSlope};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_light_beam_channel(cpp_params))};
+PRIMCAPICALL topo_shape_t *create_t_steel(t_steel_params_t params) {
+  t_steel_params cpp_params{params.height, params.width, params.webThickness,
+                            params.flangeThickness, params.length};
+  return new topo_shape_t{std::make_shared<shape>(create_t_steel(cpp_params))};
 }
 
-PRIMCAPICALL topo_shape_t *
-create_light_beam_channel_with_place(light_beam_channel_params_t params,
-                                     pnt3d_t position, dir3d_t xDir,
-                                     dir3d_t zDir) {
-  light_beam_channel_params cpp_params{
-      params.height,          params.flangeWidth, params.webThickness,
-      params.flangeThickness, params.radius,      params.length,
-      params.flangeSlope};
+PRIMCAPICALL topo_shape_t *create_t_steel_with_place(t_steel_params_t params,
+                                                     pnt3d_t position,
+                                                     dir3d_t xDir,
+                                                     dir3d_t zDir) {
+  t_steel_params cpp_params{params.height, params.width, params.webThickness,
+                            params.flangeThickness, params.length};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
   gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
   return new topo_shape_t{std::make_shared<shape>(
-      create_light_beam_channel(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
-}
-
-PRIMCAPICALL topo_shape_t *create_flat_steel(flat_steel_params_t params) {
-  flat_steel_params cpp_params{params.width, params.thickness, params.length};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_flat_steel(cpp_params))};
-}
-
-PRIMCAPICALL topo_shape_t *
-create_flat_steel_with_place(flat_steel_params_t params, pnt3d_t position,
-                             dir3d_t xDir, dir3d_t zDir) {
-  flat_steel_params cpp_params{params.width, params.thickness, params.length};
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_flat_steel(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
-}
-
-PRIMCAPICALL topo_shape_t *create_lsteel(lsteel_params_t params) {
-  lsteel_params cpp_params{params.height, params.width, params.thickness,
-                           params.radius, params.length};
-  return new topo_shape_t{std::make_shared<shape>(create_lsteel(cpp_params))};
-}
-
-PRIMCAPICALL topo_shape_t *create_lsteel_with_place(lsteel_params_t params,
-                                                    pnt3d_t position,
-                                                    dir3d_t xDir,
-                                                    dir3d_t zDir) {
-  lsteel_params cpp_params{params.height, params.width, params.thickness,
-                           params.radius, params.length};
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_lsteel(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
-}
-
-PRIMCAPICALL topo_shape_t *create_tsteel(tsteel_params_t params) {
-  tsteel_params cpp_params{params.height,       params.width,
-                           params.webThickness, params.flangeThickness,
-                           params.radius,       params.length};
-  return new topo_shape_t{std::make_shared<shape>(create_tsteel(cpp_params))};
-}
-
-PRIMCAPICALL topo_shape_t *create_tsteel_with_place(tsteel_params_t params,
-                                                    pnt3d_t position,
-                                                    dir3d_t xDir,
-                                                    dir3d_t zDir) {
-  tsteel_params cpp_params{params.height,       params.width,
-                           params.webThickness, params.flangeThickness,
-                           params.radius,       params.length};
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_tsteel(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
-}
-
-PRIMCAPICALL topo_shape_t *create_round_steel(round_steel_params_t params) {
-  round_steel_params cpp_params{params.diameter, params.length};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_round_steel(cpp_params))};
-}
-
-PRIMCAPICALL topo_shape_t *
-create_round_steel_with_place(round_steel_params_t params, pnt3d_t position,
-                              dir3d_t xDir) {
-  round_steel_params cpp_params{params.diameter, params.length};
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_round_steel(cpp_params, cpp_position, cpp_xDir))};
-}
-
-PRIMCAPICALL topo_shape_t *
-create_round_steel_tube(round_steel_tube_params_t params) {
-  round_steel_tube_params cpp_params{params.outerDiameter, params.innerDiameter,
-                                     params.length};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_round_steel_tube(cpp_params))};
-}
-
-PRIMCAPICALL topo_shape_t *
-create_round_steel_tube_with_place(round_steel_tube_params_t params,
-                                   pnt3d_t position, dir3d_t xDir) {
-  round_steel_tube_params cpp_params{params.outerDiameter, params.innerDiameter,
-                                     params.length};
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_round_steel_tube(cpp_params, cpp_position, cpp_xDir))};
-}
-
-PRIMCAPICALL topo_shape_t *
-create_rectangular_steel_tube(rectangular_steel_tube_params_t params) {
-  rectangular_steel_tube_params cpp_params{params.height, params.width,
-                                           params.thickness, params.length};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_rectangular_steel_tube(cpp_params))};
-}
-
-PRIMCAPICALL topo_shape_t *
-create_rectangular_steel_tube_with_place(rectangular_steel_tube_params_t params,
-                                         pnt3d_t position, dir3d_t xDir,
-                                         dir3d_t zDir) {
-  rectangular_steel_tube_params cpp_params{params.height, params.width,
-                                           params.thickness, params.length};
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
-  return new topo_shape_t{std::make_shared<shape>(create_rectangular_steel_tube(
-      cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
-}
-
-PRIMCAPICALL topo_shape_t *
-create_square_steel_tube(square_steel_tube_params_t params) {
-  square_steel_tube_params cpp_params{params.size, params.thickness,
-                                      params.length};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_square_steel_tube(cpp_params))};
-}
-
-PRIMCAPICALL topo_shape_t *
-create_square_steel_tube_with_place(square_steel_tube_params_t params,
-                                    pnt3d_t position, dir3d_t xDir,
-                                    dir3d_t zDir) {
-  square_steel_tube_params cpp_params{params.size, params.thickness,
-                                      params.length};
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_square_steel_tube(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
-}
-
-PRIMCAPICALL topo_shape_t *
-create_double_channel_steel(double_channel_steel_params_t params) {
-  double_channel_steel_params cpp_params;
-  cpp_params.height = params.base.height;
-  cpp_params.flangeWidth = params.base.flangeWidth;
-  cpp_params.webThickness = params.base.webThickness;
-  cpp_params.flangeThickness = params.base.flangeThickness;
-  cpp_params.radius = params.base.radius;
-  cpp_params.length = params.base.length;
-  cpp_params.spacing = params.spacing;
-  return new topo_shape_t{
-      std::make_shared<shape>(create_double_channel_steel(cpp_params))};
-}
-
-PRIMCAPICALL topo_shape_t *
-create_double_channel_steel_with_place(double_channel_steel_params_t params,
-                                       pnt3d_t position, dir3d_t xDir,
-                                       dir3d_t zDir) {
-  double_channel_steel_params cpp_params;
-  cpp_params.height = params.base.height;
-  cpp_params.flangeWidth = params.base.flangeWidth;
-  cpp_params.webThickness = params.base.webThickness;
-  cpp_params.flangeThickness = params.base.flangeThickness;
-  cpp_params.radius = params.base.radius;
-  cpp_params.length = params.base.length;
-  cpp_params.spacing = params.spacing;
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
-  return new topo_shape_t{std::make_shared<shape>(create_double_channel_steel(
-      cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
-}
-
-PRIMCAPICALL topo_shape_t *create_equilateral_double_angle_steel(
-    equilateral_double_angle_steel_params_t params) {
-  equilateral_double_angle_steel_params cpp_params;
-  cpp_params.L = params.base.L;
-  cpp_params.X = params.base.X;
-  cpp_params.length = params.base.length;
-  cpp_params.spacing = params.spacing;
-  return new topo_shape_t{std::make_shared<shape>(
-      create_equilateral_double_angle_steel(cpp_params))};
-}
-
-PRIMCAPICALL topo_shape_t *create_equilateral_double_angle_steel_with_place(
-    equilateral_double_angle_steel_params_t params, pnt3d_t position,
-    dir3d_t xDir, dir3d_t zDir) {
-  equilateral_double_angle_steel_params cpp_params;
-  cpp_params.L = params.base.L;
-  cpp_params.X = params.base.X;
-  cpp_params.length = params.base.length;
-  cpp_params.spacing = params.spacing;
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
-  return new topo_shape_t{
-      std::make_shared<shape>(create_equilateral_double_angle_steel(
-          cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
-}
-
-PRIMCAPICALL topo_shape_t *
-create_unequal_angle_steel(unequal_angle_steel_params_t params) {
-  unequal_angle_steel_params cpp_params;
-  cpp_params.L1 = params.base.L1;
-  cpp_params.L2 = params.base.L2;
-  cpp_params.X = params.base.X;
-  cpp_params.length = params.base.length;
-  cpp_params.spacing = params.spacing;
-  return new topo_shape_t{
-      std::make_shared<shape>(create_unequal_angle_steel(cpp_params))};
-}
-
-PRIMCAPICALL topo_shape_t *
-create_unequal_angle_steel_with_place(unequal_angle_steel_params_t params,
-                                      pnt3d_t position, dir3d_t xDir,
-                                      dir3d_t zDir) {
-  unequal_angle_steel_params cpp_params;
-  cpp_params.L1 = params.base.L1;
-  cpp_params.L2 = params.base.L2;
-  cpp_params.X = params.base.X;
-  cpp_params.length = params.base.length;
-  cpp_params.spacing = params.spacing;
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
-  return new topo_shape_t{std::make_shared<shape>(create_unequal_angle_steel(
-      cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
-}
-
-PRIMCAPICALL topo_shape_t *create_polygon_tube(polygon_tube_params_t params) {
-  polygon_tube_params cpp_params{params.side_length, params.thickness,
-                                 params.length, params.sides};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_polygon_tube(cpp_params))};
-}
-
-PRIMCAPICALL topo_shape_t *
-create_polygon_tube_with_place(polygon_tube_params_t params, pnt3d_t position,
-                               dir3d_t xDir) {
-  polygon_tube_params cpp_params{params.side_length, params.thickness,
-                                 params.length, params.sides};
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_polygon_tube(cpp_params, cpp_position, cpp_xDir))};
+      create_t_steel(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_bored_pile_base(bored_pile_params_t params) {
   bored_pile_params cpp_params{params.H1,          params.H2, params.H3,
-                               params.H4,          params.d,  params.D,
-                               params.filletRadius};
+                               params.H4,          params.d,  params.D};
   return new topo_shape_t{
       std::make_shared<shape>(create_bored_pile_base(cpp_params))};
 }
@@ -1076,8 +764,7 @@ PRIMCAPICALL topo_shape_t *
 create_bored_pile_base_with_place(bored_pile_params_t params, pnt3d_t position,
                                   dir3d_t direction) {
   bored_pile_params cpp_params{params.H1,          params.H2, params.H3,
-                               params.H4,          params.d,  params.D,
-                               params.filletRadius};
+                               params.H4,          params.d,  params.D};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   return new topo_shape_t{std::make_shared<shape>(
@@ -3270,14 +2957,14 @@ create_drainage_well_with_place(drainage_well_params_t params, pnt3d_t position,
 // 辅助函数用于设置 pnt2d_t 数组元素
 PRIMCAPICALL void pnt2d_t_array_set(pnt2d_t *array, int index, pnt2d_t value) {
   if (array != NULL) {
-      array[index] = value;
+    array[index] = value;
   }
 }
 
 // 辅助函数用于设置 double 数组元素
 PRIMCAPICALL void double_array_set(double *array, int index, double value) {
   if (array != NULL) {
-      array[index] = value;
+    array[index] = value;
   }
 }
 

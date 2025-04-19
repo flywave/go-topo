@@ -403,275 +403,71 @@ TopoDS_Shape create_curve_cable(const curve_cable_params &params,
                                 const gp_Dir &upDirection = gp_Dir(1, 0, 0));
 
 /**
- * @brief 等边角钢参数结构体
+ * @brief 角钢参数结构体
  */
-struct equilateral_angle_steel_params {
-  double L;      // 边长 (L > 0)
-  double X;      // 厚度 (X > 0)
-  double length; // 长度 (length > 0)
-};
-
-TopoDS_Shape
-create_equilateral_angle_steel(const equilateral_angle_steel_params &params);
-TopoDS_Shape
-create_equilateral_angle_steel(const equilateral_angle_steel_params &params,
-                               const gp_Pnt &position,
-                               const gp_Dir &xDirection = gp::DX(),
-                               const gp_Dir &yDirection = gp::DY().Reversed());
-
-/**
- * @brief 不等边角钢参数结构体
- */
-struct scalene_angle_steel_params {
+struct angle_steel_params {
   double L1;     // 长边长度 (L1 > 0)
   double L2;     // 短边长度 (0 < L2 < L1)
   double X;      // 厚度 (0 < X < min(L1,L2))
   double length; // 长度 (length > 0)
 };
 
-TopoDS_Shape
-create_scalene_angle_steel(const scalene_angle_steel_params &params);
-TopoDS_Shape create_scalene_angle_steel(
-    const scalene_angle_steel_params &params, const gp_Pnt &position,
-    const gp_Dir &xDirection = gp::DX(), const gp_Dir &longEdgeDir = gp::DZ());
+TopoDS_Shape create_angle_steel(const angle_steel_params &params);
+TopoDS_Shape create_angle_steel(const angle_steel_params &params,
+                                const gp_Pnt &position,
+                                const gp_Dir &xDirection = gp::DX(),
+                                const gp_Dir &longEdgeDir = gp::DZ());
 
 /**
  * @brief 工字钢参数结构体
  */
-struct ibeam_params {
+struct i_shaped_steel_params {
   double height;          // 总高度 (H > 0)
   double flangeWidth;     // 翼缘宽度 (B > 0)
   double webThickness;    // 腹板厚度 (t1 > 0)
   double flangeThickness; // 翼缘厚度 (t2 > 0)
-  double radius;          // 过渡圆弧半径 (r > 0)
   double length;          // 长度 (L > 0)
 };
 
-TopoDS_Shape create_ibeam(const ibeam_params &params);
-TopoDS_Shape create_ibeam(const ibeam_params &params, const gp_Pnt &position,
-                          const gp_Dir &xDirection = gp::DX(),
-                          const gp_Dir &zDirection = gp::DZ());
+TopoDS_Shape create_i_shaped_steel(const i_shaped_steel_params &params);
+TopoDS_Shape create_i_shaped_steel(const i_shaped_steel_params &params,
+                                   const gp_Pnt &position,
+                                   const gp_Dir &xDirection = gp::DX(),
+                                   const gp_Dir &zDirection = gp::DZ());
 
-/**
- * @brief 轻型工字钢参数结构体
- */
-struct light_ibeam_params {
-  double height;          // 总高度 (H > 0)
-  double flangeWidth;     // 翼缘宽度 (B > 0)
-  double webThickness;    // 腹板厚度 (t1 > 0)
-  double flangeThickness; // 翼缘厚度 (t2 > 0)
-  double radius;          // 过渡圆弧半径 (r > 0)
-  double length;          // 长度 (L > 0)
-  double flangeSlope;     // 翼缘坡度 (0 ≤ S < 1)
-};
-
-TopoDS_Shape create_light_ibeam(const light_ibeam_params &params);
-TopoDS_Shape create_light_ibeam(const light_ibeam_params &params,
-                                const gp_Pnt &position,
-                                const gp_Dir &xDirection = gp::DX(),
-                                const gp_Dir &zDirection = gp::DZ());
-
-/**
- * @brief H型钢参数结构体
- */
-struct hbeam_params {
-  double height;          // 总高度 (H > 0)
-  double flangeWidth;     // 翼缘宽度 (B > 0)
-  double webThickness;    // 腹板厚度 (t1 > 0)
-  double flangeThickness; // 翼缘厚度 (t2 > 0)
-  double radius;          // 过渡圆弧半径 (r > 0)
-  double length;          // 长度 (L > 0)
-};
-TopoDS_Shape create_hbeam(const hbeam_params &params);
-TopoDS_Shape create_hbeam(const hbeam_params &params, const gp_Pnt &position,
-                          const gp_Dir &xDirection = gp::DX(),
-                          const gp_Dir &zDirection = gp::DZ());
 /**
  * @brief 槽钢参数结构体
  */
-struct beam_channel_params {
+struct channel_steel_params {
   double height;          // 总高度 (H > 0)
   double flangeWidth;     // 翼缘宽度 (B > 0)
   double webThickness;    // 腹板厚度 (t1 > 0)
   double flangeThickness; // 翼缘厚度 (t2 > 0)
-  double radius;          // 过渡圆弧半径 (r > 0)
   double length;          // 长度 (L > 0)
 };
 
-TopoDS_Shape create_beam_channel(const beam_channel_params &params);
-TopoDS_Shape create_beam_channel(const beam_channel_params &params,
-                                 const gp_Pnt &position,
-                                 const gp_Dir &xDirection = gp::DX(),
-                                 const gp_Dir &zDirection = gp::DZ());
-
-/**
- * @brief 轻型槽钢参数结构体
- */
-struct light_beam_channel_params {
-  double height;          // 总高度 (H > 0)
-  double flangeWidth;     // 翼缘宽度 (B > 0)
-  double webThickness;    // 腹板厚度 (t1 > 0)
-  double flangeThickness; // 翼缘厚度 (t2 > 0)
-  double radius;          // 过渡圆弧半径 (r > 0)
-  double length;          // 长度 (L > 0)
-  double flangeSlope;     // 翼缘坡度 (0 ≤ S < 1)
-};
-
-TopoDS_Shape create_light_beam_channel(const light_beam_channel_params &params);
-TopoDS_Shape create_light_beam_channel(const light_beam_channel_params &params,
-                                       const gp_Pnt &position,
-                                       const gp_Dir &xDirection = gp::DX(),
-                                       const gp_Dir &zDirection = gp::DZ());
-
-/**
- * @brief 扁钢参数结构体
- */
-struct flat_steel_params {
-  double width;     // 宽度 (W > 0)
-  double thickness; // 厚度 (T > 0)
-  double length;    // 长度 (L > 0)
-};
-TopoDS_Shape create_flat_steel(const flat_steel_params &params);
-TopoDS_Shape create_flat_steel(const flat_steel_params &params,
-                               const gp_Pnt &position,
-                               const gp_Dir &xDirection = gp::DX(),
-                               const gp_Dir &zDirection = gp::DZ());
-
-/**
- * @brief L型钢参数结构体
- */
-struct lsteel_params {
-  double height;    // 高度 (H > 0)
-  double width;     // 宽度 (W > 0)
-  double thickness; // 厚度 (T > 0)
-  double radius;    // 过渡圆弧半径 (R ≥ 0)
-  double length;    // 长度 (L > 0)
-};
-
-TopoDS_Shape create_lsteel(const lsteel_params &params);
-TopoDS_Shape create_lsteel(const lsteel_params &params, const gp_Pnt &position,
-                           const gp_Dir &xDirection = gp::DX(),
-                           const gp_Dir &zDirection = gp::DZ());
+TopoDS_Shape create_channel_steel(const channel_steel_params &params);
+TopoDS_Shape create_channel_steel(const channel_steel_params &params,
+                                  const gp_Pnt &position,
+                                  const gp_Dir &xDirection = gp::DX(),
+                                  const gp_Dir &zDirection = gp::DZ());
 
 /**
  * @brief T型钢参数结构体
  */
-struct tsteel_params {
+struct t_steel_params {
   double height;          // 高度 (H > 0)
   double width;           // 宽度 (W > 0)
   double webThickness;    // 腹板厚度 (T1 > 0)
   double flangeThickness; // 翼缘厚度 (T2 > 0)
-  double radius;          // 过渡圆弧半径 (R ≥ 0)
   double length;          // 长度 (L > 0)
 };
 
-TopoDS_Shape create_tsteel(const tsteel_params &params);
-TopoDS_Shape create_tsteel(const tsteel_params &params, const gp_Pnt &position,
-                           const gp_Dir &xDirection = gp::DX(),
-                           const gp_Dir &zDirection = gp::DZ());
-
-/**
- * @brief 圆钢参数结构体
- */
-struct round_steel_params {
-  double diameter; // 直径 (D > 0)
-  double length;   // 长度 (L > 0)
-};
-
-TopoDS_Shape create_round_steel(const round_steel_params &params);
-TopoDS_Shape create_round_steel(const round_steel_params &params,
-                                const gp_Pnt &position,
-                                const gp_Dir &xDirection = gp::DX());
-
-/**
- * @brief 圆钢管参数结构体
- */
-struct round_steel_tube_params {
-  double outerDiameter; // 外径 (OD > ID)
-  double innerDiameter; // 内径 (ID > 0)
-  double length;        // 长度 (L > 0)
-};
-
-TopoDS_Shape create_round_steel_tube(const round_steel_tube_params &params);
-TopoDS_Shape create_round_steel_tube(const round_steel_tube_params &params,
-                                     const gp_Pnt &position,
-                                     const gp_Dir &xDirection = gp::DX());
-
-/**
- * @brief 矩形钢管参数结构体
- */
-struct rectangular_steel_tube_params {
-  double height;    // 高度 (H > 0)
-  double width;     // 宽度 (W > 0)
-  double thickness; // 厚度 (T > 0)
-  double length;    // 长度 (L > 0)
-};
-
-TopoDS_Shape
-create_rectangular_steel_tube(const rectangular_steel_tube_params &params);
-TopoDS_Shape create_rectangular_steel_tube(
-    const rectangular_steel_tube_params &params, const gp_Pnt &position,
-    const gp_Dir &xDirection = gp::DX(), const gp_Dir &zDirection = gp::DZ());
-
-/**
- * @brief 方形钢管参数结构体
- */
-struct square_steel_tube_params {
-  double size;      // 外形尺寸 (S > 0)
-  double thickness; // 壁厚 (T > 0)
-  double length;    // 长度 (L > 0)
-};
-
-TopoDS_Shape create_square_steel_tube(const square_steel_tube_params &params);
-TopoDS_Shape create_square_steel_tube(const square_steel_tube_params &params,
-                                      const gp_Pnt &position,
-                                      const gp_Dir &xDirection = gp::DX(),
-                                      const gp_Dir &zDirection = gp::DZ());
-
-/**
- * @brief 双槽钢参数结构体
- */
-struct double_channel_steel_params : beam_channel_params {
-  double spacing; // 间距 (S >= 0)
-};
-
-TopoDS_Shape
-create_double_channel_steel(const double_channel_steel_params &params);
-TopoDS_Shape create_double_channel_steel(
-    const double_channel_steel_params &params, const gp_Pnt &position,
-    const gp_Dir &xDirection = gp::DX(), const gp_Dir &zDirection = gp::DZ());
-
-struct equilateral_double_angle_steel_params : equilateral_angle_steel_params {
-  double spacing; // 间距 (S >= 0)
-};
-
-TopoDS_Shape create_equilateral_double_angle_steel(
-    const equilateral_double_angle_steel_params &params);
-TopoDS_Shape create_equilateral_double_angle_steel(
-    const equilateral_double_angle_steel_params &params, const gp_Pnt &position,
-    const gp_Dir &xDirection = gp::DX(), const gp_Dir &zDirection = gp::DZ());
-
-struct unequal_angle_steel_params : scalene_angle_steel_params {
-  double spacing; // 间距 (S >= 0)
-};
-
-TopoDS_Shape
-create_unequal_angle_steel(const unequal_angle_steel_params &params);
-TopoDS_Shape create_unequal_angle_steel(
-    const unequal_angle_steel_params &params, const gp_Pnt &position,
-    const gp_Dir &xDirection = gp::DX(), const gp_Dir &zDirection = gp::DZ());
-
-struct polygon_tube_params {
-  double side_length; // 边长 (L > 0)
-  double thickness;   // 壁厚 (T > 0)
-  double length;      // 长度 (Len > 0)
-  int sides;          // 边数 (N >= 3)
-};
-
-TopoDS_Shape create_polygon_tube(const polygon_tube_params &params);
-TopoDS_Shape create_polygon_tube(const polygon_tube_params &params,
-                                 const gp_Pnt &position,
-                                 const gp_Dir &xDirection = gp::DX());
+TopoDS_Shape create_t_steel(const t_steel_params &params);
+TopoDS_Shape create_t_steel(const t_steel_params &params,
+                            const gp_Pnt &position,
+                            const gp_Dir &xDirection = gp::DX(),
+                            const gp_Dir &zDirection = gp::DZ());
 
 struct bored_pile_params {
   double H1;                 // 上部圆柱高度
@@ -680,7 +476,6 @@ struct bored_pile_params {
   double H4;                 // 桩头高度
   double d;                  // 上部直径
   double D;                  // 底部直径
-  double filletRadius = 0.0; // 圆角半径，默认为0
 };
 TopoDS_Shape create_bored_pile_base(const bored_pile_params &params);
 TopoDS_Shape create_bored_pile_base(const bored_pile_params &params,
