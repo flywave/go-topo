@@ -2961,48 +2961,34 @@ TopoDS_Wire create_ibeam_profile(double height, double flangeWidth,
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
 
   // 3. 右下翼缘圆弧过渡 (p2 -> p3)
-  if (radius > Precision::Confusion()) {
-    Handle(Geom_TrimmedCurve) arc =
-        GC_MakeArcOfCircle(
-            p2,
-            gp_Pnt(0, halfFlangeWidth,
-                  flangeThickness), // 圆心在翼缘末端
-            p3)
-            .Value();
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc).Edge());
-  } else {
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
-  }
+  Handle(Geom_TrimmedCurve) arc1 =
+      GC_MakeArcOfCircle(
+          p2, gp_Pnt(0, halfFlangeWidth, flangeThickness), // 中间点（圆弧顶点）
+          p3)
+          .Value();
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(arc1).Edge());
 
   // 4. 腹板右侧垂直段 (p3 -> p4)
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
 
-  // 5. 腹板右侧圆弧过渡 (p4 -> p5)
-  if (radius > Precision::Confusion()) {
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());
-    /**
-           Handle(Geom_TrimmedCurve) arc = GC_MakeArcOfCircle(
-               p4,
-               gp_Pnt(0, halfWebThickness, height - flangeThickness), //
-       圆心在腹板中心 p5
-           ).Value();
-           wireMaker.Add(BRepBuilderAPI_MakeEdge(arc).Edge());*/
-  }
+  // 5. 腹板右侧垂直段 (p4 -> p5)
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());
 
-  // 6. 腹板上部水平段 (p5 -> p6)
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge());
+  // 6. 腹板上部圆弧过渡 (p5 -> p6)
+  Handle(Geom_TrimmedCurve) arc2 =
+      GC_MakeArcOfCircle(
+          p5, gp_Pnt(0, halfWebThickness, height - flangeThickness), // 圆心
+          p6)
+          .Value();
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(arc2).Edge());
 
   // 7. 右上翼缘圆弧过渡 (p6 -> p7)
-  if (radius > Precision::Confusion()) {
-    Handle(Geom_TrimmedCurve) arc =
-        GC_MakeArcOfCircle(
-            p6,
-            gp_Pnt(0, halfFlangeWidth,
-              height - flangeThickness), // 圆心在翼缘根部
-            p7)
-            .Value();
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc).Edge());
-  }
+  Handle(Geom_TrimmedCurve) arc3 =
+      GC_MakeArcOfCircle(
+          p6, gp_Pnt(0, halfFlangeWidth, height - flangeThickness), // 中间点
+          p7)
+          .Value();
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(arc3).Edge());
 
   // 8. 上翼缘右侧垂直段 (p7 -> p8)
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge());
@@ -3015,41 +3001,34 @@ TopoDS_Wire create_ibeam_profile(double height, double flangeWidth,
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge());
 
   // 11. 左上翼缘圆弧过渡 (p10 -> p11)
-  if (radius > Precision::Confusion()) {
-    Handle(Geom_TrimmedCurve) arc =
-        GC_MakeArcOfCircle(
-            p10, gp_Pnt(0, -halfFlangeWidth, height - flangeThickness), p11)
-            .Value();
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc).Edge());
-  }
+  Handle(Geom_TrimmedCurve) arc4 =
+      GC_MakeArcOfCircle(
+          p10, gp_Pnt(0, -halfFlangeWidth, height - flangeThickness), // 中间点
+          p11)
+          .Value();
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(arc4).Edge());
 
   // 12. 腹板左侧垂直段 (p11 -> p12)
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p12).Edge());
 
-  // 13. 腹板左侧圆弧过渡 (p12 -> p13)
-  if (radius > Precision::Confusion()) {
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p13).Edge());
-    /**
-  Handle(Geom_TrimmedCurve) arc = GC_MakeArcOfCircle(
-      p12,
-      gp_Pnt(0, -halfWebThickness, flangeThickness),
-      p13
-  ).Value();
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(arc).Edge());*/
-  }
+  // 13. 腹板左侧垂直段 (p12 -> p13)
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p13).Edge());
 
-  // 14. 腹板下部水平段 (p13 -> p14)
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p13, p14).Edge());
+  // 14. 腹板下部圆弧过渡 (p13 -> p14)
+  Handle(Geom_TrimmedCurve) arc5 =
+      GC_MakeArcOfCircle(p13,
+                         gp_Pnt(0, -halfWebThickness, flangeThickness), // 圆心
+                         p14)
+          .Value();
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(arc5).Edge());
 
   // 15. 左下翼缘圆弧过渡 (p14 -> p15)
-  if (radius > Precision::Confusion()) {
-    Handle(Geom_TrimmedCurve) arc =
-        GC_MakeArcOfCircle(
-            p14, gp_Pnt(0, -halfFlangeWidth, flangeThickness),
-            p15)
-            .Value();
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arc).Edge());
-  }
+  Handle(Geom_TrimmedCurve) arc6 =
+      GC_MakeArcOfCircle(p14,
+                         gp_Pnt(0, -halfFlangeWidth, flangeThickness), // 中间点
+                         p15)
+          .Value();
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(arc6).Edge());
 
   // 16. 下翼缘左侧垂直段 (p15 -> p16)
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p15, p16).Edge());
