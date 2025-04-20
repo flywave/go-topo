@@ -6010,18 +6010,6 @@ TopoDS_Shape create_pole_tower(const pole_tower_params &params) {
     }
   }
 
-  // 创建挂点标识
-  for (const auto &attachment : params.attachments) {
-    // 创建小球标识挂点位置
-    TopoDS_Shape attachmentMarker =
-        BRepPrimAPI_MakeSphere(attachment.position,
-                               50.0 // 挂点标记球半径50mm
-                               )
-            .Shape();
-
-    builder.Add(tower, attachmentMarker);
-  }
-
   gp_Trsf moveToOrigin;
   moveToOrigin.SetTranslation(gp_Vec(-origin.X(), -origin.Y(), -origin.Z()));
   BRepBuilderAPI_Transform moveTransform(tower, moveToOrigin);
