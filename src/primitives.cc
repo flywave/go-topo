@@ -5397,61 +5397,6 @@ TopoDS_Shape create_precast_concrete_support_base(
 }
 
 /**
- * @brief 创建螺纹结构
- * @param radius 螺纹半径
- * @param length 螺纹长度
- * @param pitch 螺纹间距
- * @param position 螺纹起始位置
- * @return TopoDS_Shape 生成的螺纹形状
- */
-TopoDS_Shape create_thread(double radius, double length, double pitch,
-                           const gp_Pnt &position) {
-  // 创建螺纹截面三角形
-  BRepBuilderAPI_MakeWire threadWire;
-  gp_Pnt p1(radius, 0, 0);
-  gp_Pnt p2(radius + pitch / 4, 0, pitch / 2);
-  gp_Pnt p3(radius, 0, pitch);
-  threadWire.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
-  threadWire.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
-  threadWire.Add(BRepBuilderAPI_MakeEdge(p3, p1).Edge());
-
-  // 创建螺旋路径
-  BRepBuilderAPI_MakeWire spineWire;
-  gp_Pnt lastPoint(0, 0, 0);
-  int turns = ceil(length / pitch);
-  int segments = turns * 12; // 每圈12段
-
-  for (int i = 0; i <= segments; i++) {
-    double angle = 2 * M_PI * turns * i / segments;
-    double z = length * i / segments;
-    gp_Pnt point(radius * cos(angle), radius * sin(angle), z);
-    if (i > 0) {
-      spineWire.Add(BRepBuilderAPI_MakeEdge(lastPoint, point).Edge());
-    }
-    lastPoint = point;
-  }
-
-  // 创建管道生成器
-  BRepOffsetAPI_MakePipeShell pipeMaker(spineWire.Wire());
-  pipeMaker.SetTolerance(1e-6);
-  pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
-  pipeMaker.Add(threadWire.Wire());
-
-  pipeMaker.Build();
-
-  if (!pipeMaker.IsDone()) {
-    throw Standard_ConstructionError("螺纹创建失败");
-  }
-
-  // 移动到指定位置
-  gp_Trsf transform;
-  transform.SetTranslation(gp_Vec(position.X(), position.Y(), position.Z()));
-  BRepBuilderAPI_Transform mover(pipeMaker.Shape(), transform);
-
-  return mover.Shape();
-}
-
-/**
  * @brief 创建导地线(含OPGW)模型
  * @param params 导地线参数结构体
  * @param startPoint 起始点坐标
