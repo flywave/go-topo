@@ -5424,15 +5424,25 @@ TopoDS_Shape create_transmission_line(const transmission_line_params &params,
     throw Standard_ConstructionError("起点和终点距离过小");
   }
 
-  // 计算悬垂度 (简化公式: sag = (weight * length²) / (8 * tension))
+  // 计算悬垂度 (带高差修正)
   double weightPerMeter = params.wireWeight / 1000.0; // kg/m
-  double tension = params.ratedStrength * 0.25; // 假设使用25%的额定拉断力
-  double sag = (weightPerMeter * 9.8 * length * length) / (8 * tension);
+  double tension = params.ratedStrength * 1000 * 0.25; // kN→N (25%额定强度)
+
+  // 计算高差修正系数 (cosθ ≈ 1/cosh(β), β=高差/水平档距)
+  double heightDiff = endPoint.Z() - startPoint.Z();
+  double lengthHorizontal =
+      sqrt(pow(endPoint.X() - startPoint.X(), 2) +
+           pow(endPoint.Y() - startPoint.Y(), 2)); // 水平投影档距
+  double beta = heightDiff / lengthHorizontal;
+  double coshBeta = std::cosh(beta);
+  double sag = (weightPerMeter * 9.8 * lengthHorizontal * lengthHorizontal) /
+               (8 * tension * coshBeta);
+  double sagAtMid = sag * (1 - pow(heightDiff / (2 * lengthHorizontal), 2));
 
   // 创建导地线路径(带悬垂度)
   gp_Pnt midPoint((startPoint.X() + endPoint.X()) / 2,
                   (startPoint.Y() + endPoint.Y()) / 2,
-                  (startPoint.Z() + endPoint.Z()) / 2 - sag);
+                  (startPoint.Z() + endPoint.Z()) / 2 - sagAtMid);
 
   TColgp_Array1OfPnt points(1, 3);
   points.SetValue(1, startPoint);
@@ -5455,6 +5465,7 @@ TopoDS_Shape create_transmission_line(const transmission_line_params &params,
   // 扫掠生成导地线
   BRepOffsetAPI_MakePipeShell pipeMaker(wirePath);
   pipeMaker.Add(section);
+  pipeMaker.SetMode(Standard_True);
   pipeMaker.Build();
 
   if (!pipeMaker.IsDone()) {
