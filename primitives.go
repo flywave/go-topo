@@ -1463,14 +1463,12 @@ func CreateRaftBaseWithPlace(params RaftBaseParams, position Point3, direction D
 }
 
 type DirectBuriedBaseParams struct {
-	H1              float32
-	H2              float32
-	D               float32
-	Diameter        float32
-	B               float32
-	T               float32
-	HasBasePlate    bool
-	IsCircularPlate bool
+	H1       float32
+	H2       float32
+	D        float32
+	Diameter float32
+	B        float32
+	T        float32
 }
 
 func (p *DirectBuriedBaseParams) to_struct() C.direct_buried_base_params_t {
@@ -1481,8 +1479,6 @@ func (p *DirectBuriedBaseParams) to_struct() C.direct_buried_base_params_t {
 	c.D = C.double(p.D)
 	c.B = C.double(p.B)
 	c.t = C.double(p.T)
-	c.hasBasePlate = C.bool(p.HasBasePlate)
-	c.isCircularPlate = C.bool(p.IsCircularPlate)
 	return c
 }
 

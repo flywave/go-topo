@@ -677,8 +677,6 @@ typedef struct {
   double D;
   double B;
   double t;
-  bool hasBasePlate;
-  bool isCircularPlate;
 } direct_buried_base_params_t;
 
 PRIMCAPICALL topo_shape_t *

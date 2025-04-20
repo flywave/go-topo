@@ -711,11 +711,11 @@ struct composite_caisson_base_params {
   double H1; // 上部沉井高度
   double H2; // 过渡段高度
   double H3; // 下部基础高度
-  double H4; // 预留参数
+  double H4; // 沉井底部圆管部分高度
 
   // 尺寸参数
-  double b;  // 预留参数
-  double D;  // 沉井直径
+  double b;  // 上部沉井圆筒直径/边长
+  double D;  // 沉井底部圆管外径
   double t;  // 沉井壁厚
   double B1; // 过渡段底部宽度
   double B2; // 下部基础宽度
@@ -760,10 +760,6 @@ struct direct_buried_base_params {
   double D; // 圆形固定盘直径（可选）
   double B; // 方形固定盘边长（可选）
   double t; // 壁厚
-
-  // 固定盘标志
-  bool hasBasePlate = false;   // 是否有固定盘
-  bool isCircularPlate = true; // 是否为圆形固定盘
 };
 
 TopoDS_Shape create_direct_buried_base(const direct_buried_base_params &params);
@@ -1123,7 +1119,6 @@ TopoDS_Shape create_single_hook_anchor(const single_hook_anchor_params &params,
                                        const gp_Dir &xDir = gp::DX());
 
 // 三钩锚固参数结构体
-
 struct triple_hook_anchor_params {
   // 基础参数
   double boltDiameter;    // 地脚螺栓直径

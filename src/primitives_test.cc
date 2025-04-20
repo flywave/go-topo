@@ -1018,14 +1018,14 @@ void test_make_t_steel() {
 void test_make_bored_pile() {
   std::cout << "\n=== Testing Bored Pile ===" << std::endl;
   try {
-    // 标准参数测试 
+    // 标准参数测试
     auto shp1 = create_bored_pile_base(bored_pile_params{
-      .H1 = 100.0,  // 上部圆柱高度
-      .H2 = 30.0,   // 过渡段高度
-      .H3 = 50.0,   // 底部圆柱高度
-      .H4 = 3.0,    // 桩头高度（必须小于D/2）
-      .d = 5.0,    // 上部直径
-      .D = 20.0     // 底部直径
+        .H1 = 100.0, // 上部圆柱高度
+        .H2 = 30.0,  // 过渡段高度
+        .H3 = 50.0,  // 底部圆柱高度
+        .H4 = 3.0,   // 桩头高度（必须小于D/2）
+        .d = 5.0,    // 上部直径
+        .D = 20.0    // 底部直径
     });
     if (shp1.IsNull()) {
       std::cerr << "Error: Failed to create standard bored pile" << std::endl;
@@ -1044,31 +1044,30 @@ void test_make_pile_cap() {
     // 标准参数测试
     pile_cap_params params{
         // 高度参数
-        .H1 = 100.0,   // 桩上部圆柱高度
-        .H2 = 30.0,    // 桩过渡段高度
-        .H3 = 50.0,    // 桩底部圆柱高度
-        .H4 = 40.0,    // 承台柱高度
-        .H5 = 20.0,    // 承台底板高度
-        .H6 = 3.0,     // 桩头高度
-        
+        .H1 = 100.0, // 桩上部圆柱高度
+        .H2 = 30.0,  // 桩过渡段高度
+        .H3 = 50.0,  // 桩底部圆柱高度
+        .H4 = 40.0,  // 承台柱高度
+        .H5 = 20.0,  // 承台底板高度
+        .H6 = 3.0,   // 桩头高度
+
         // 尺寸参数
-        .d = 5.0,      // 桩上部直径
-        .D = 20.0,     // 桩底部直径
-        .b = 15.0,     // 承台柱直径/边长
-        .B1 = 200.0,   // 承台底板宽度
-        .L1 = 300.0,   // 承台底板长度
-        
+        .d = 5.0,    // 桩上部直径
+        .D = 20.0,   // 桩底部直径
+        .b = 15.0,   // 承台柱直径/边长
+        .B1 = 200.0, // 承台底板宽度
+        .L1 = 300.0, // 承台底板长度
+
         // 偏心参数
-        .e1 = 10.0,     // X方向偏心
-        .e2 = 5.0,      // Y方向偏心
-        
+        .e1 = 10.0, // X方向偏心
+        .e2 = 5.0,  // Y方向偏心
+
         // 承台样式
-        .cs = 0,        // 圆形承台柱
-        
+        .cs = 0, // 圆形承台柱
+
         // 桩参数
-        .ZCOUNT = 3,    // 桩数量
-        .ZPOSTARRAY = {gp_Pnt(0,0,0), gp_Pnt(100,0,0), gp_Pnt(0,100,0)}
-    };
+        .ZCOUNT = 3, // 桩数量
+        .ZPOSTARRAY = {gp_Pnt(0, 0, 0), gp_Pnt(100, 0, 0), gp_Pnt(0, 100, 0)}};
 
     auto shp = create_pile_cap_base(params);
     if (shp.IsNull()) {
@@ -1082,8 +1081,758 @@ void test_make_pile_cap() {
   }
 }
 
+void test_make_rock_anchor() {
+  std::cout << "\n=== Testing Rock Anchor ===" << std::endl;
+  try {
+    // 标准参数测试
+    rock_anchor_params params{
+        // 高度参数
+        .H1 = 20.0, // 基础底板高度
+        .H2 = 50.0, // 锚桩长度
+
+        // 尺寸参数
+        .d = 5.0,    // 锚桩直径
+        .B1 = 100.0, // 底板宽度
+        .L1 = 150.0, // 底板长度
+
+        // 锚桩参数
+        .ZCOUNT = 4, // 锚桩数量
+        .ZPOSTARRAY = {gp_Pnt(-40, -60, 0), gp_Pnt(40, -60, 0),
+                       gp_Pnt(40, 60, 0), gp_Pnt(-40, 60, 0)}};
+
+    auto shp = create_rock_anchor_base(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create rock anchor" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./rock_anchor_standard.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_rock_pile_cap() {
+  std::cout << "\n=== Testing Rock Pile Cap ===" << std::endl;
+  try {
+    // 标准参数测试
+    rock_pile_cap_params params{
+        // 高度参数
+        .H1 = 40.0, // 承台柱高度
+        .H2 = 20.0, // 承台底板高度
+        .H3 = 50.0, // 锚桩长度
+
+        // 尺寸参数
+        .d = 5.0,    // 锚桩直径
+        .b = 15.0,   // 承台柱直径/边长
+        .B1 = 200.0, // 承台底板宽度
+        .L1 = 300.0, // 承台底板长度
+
+        // 偏心参数
+        .e1 = 10.0, // X方向偏心
+        .e2 = 5.0,  // Y方向偏心
+
+        // 承台样式
+        .cs = 0, // 圆形承台柱
+
+        // 锚桩参数
+        .ZCOUNT = 4, // 锚桩数量
+        .ZPOSTARRAY = {gp_Pnt(-50, -50, 0), gp_Pnt(50, -50, 0),
+                       gp_Pnt(50, 50, 0), gp_Pnt(-50, 50, 0)}};
+
+    auto shp = create_rock_pile_cap_base(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create rock pile cap" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./rock_pile_cap_standard.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_embedded_rock_anchor() {
+  std::cout << "\n=== Testing Embedded Rock Anchor ===" << std::endl;
+  try {
+    // 标准参数测试
+    embedded_rock_anchor_params params{
+        // 高度参数
+        .H1 = 100.0, // 上部圆柱高度
+        .H2 = 30.0,  // 过渡段高度
+        .H3 = 50.0,  // 底部圆柱高度
+
+        // 直径参数
+        .d = 5.0, // 上部直径
+        .D = 20.0 // 底部直径
+    };
+
+    auto shp = create_embedded_rock_anchor_base(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create embedded rock anchor" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./embedded_rock_anchor_standard.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_inclined_rock_anchor() {
+  std::cout << "\n=== Testing Inclined Rock Anchor ===" << std::endl;
+  try {
+    // 标准参数测试
+    inclined_rock_anchor_params params{
+        // 高度参数
+        .H1 = 20.0, // 基础底板高度
+        .H2 = 50.0, // 锚桩长度
+
+        // 直径参数
+        .d = 5.0,  // 锚桩直径
+        .D = 15.0, // 底部扩大头直径
+
+        // 底板尺寸
+        .B = 100.0, // 底板宽度
+        .L = 150.0, // 底板长度
+
+        // 偏心参数
+        .e1 = 10.0, // X方向偏心
+        .e2 = 5.0,  // Y方向偏心
+
+        // 坡度参数
+        .alpha1 = 15.0, // X轴坡度(度)
+        .alpha2 = 10.0  // Y轴坡度(度)
+    };
+
+    auto shp = create_inclined_rock_anchor_base(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create inclined rock anchor" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./inclined_rock_anchor_standard.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_excavated_base() {
+  std::cout << "\n=== Testing Excavated Base ===" << std::endl;
+  try {
+    // 标准参数测试 - 直柱掏挖基础
+    excavated_base_params params1{
+        // 高度参数
+        .H1 = 100.0, // 上部圆柱高度
+        .H2 = 30.0,  // 过渡段高度
+        .H3 = 50.0,  // 底部圆柱高度
+
+        // 直径参数
+        .d = 5.0,  // 上部直径
+        .D = 20.0, // 底部直径
+
+        // 坡度参数
+        .alpha1 = 0.0, // 无X轴坡度
+        .alpha2 = 0.0  // 无Y轴坡度
+    };
+
+    auto shp1 = create_excavated_base(params1);
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create straight excavated base"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./straight_excavated_base.stl");
+
+    // 极端参数测试 - 斜柱掏挖基础
+    excavated_base_params params2{
+        // 高度参数
+        .H1 = 150.0, // 上部圆柱高度
+        .H2 = 40.0,  // 过渡段高度
+        .H3 = 60.0,  // 底部圆柱高度
+
+        // 直径参数
+        .d = 8.0,  // 上部直径
+        .D = 25.0, // 底部直径
+
+        // 坡度参数
+        .alpha1 = 15.0, // X轴坡度15度
+        .alpha2 = 10.0  // Y轴坡度10度
+    };
+
+    auto shp2 = create_excavated_base(params2);
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create sloped excavated base" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./sloped_excavated_base.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_step_base() {
+  std::cout << "\n=== Testing Step Base ===" << std::endl;
+  try {
+    // 标准参数测试 - 3级台阶
+    step_base_params params1{
+        // 高度参数
+        .H = 150.0, // 基础总高度
+        .H1 = 50.0, // 第一级台阶高度
+        .H2 = 50.0, // 第二级台阶高度
+        .H3 = 50.0, // 第三级台阶高度
+
+        // 尺寸参数
+        .b = 30.0,   // 基础顶部宽度
+        .B1 = 100.0, // 第一级台阶宽度
+        .B2 = 150.0, // 第二级台阶宽度
+        .B3 = 200.0, // 第三级台阶宽度
+        .L1 = 100.0, // 第一级台阶长度
+        .L2 = 150.0, // 第二级台阶长度
+        .L3 = 200.0, // 第三级台阶长度
+
+        // 台阶参数
+        .N = 3 // 台阶数量
+    };
+
+    auto shp1 = create_step_base(params1);
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create 3-step base" << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./3_step_base.stl");
+
+    // 简化参数测试 - 2级台阶
+    step_base_params params2{
+        // 高度参数
+        .H = 100.0, // 基础总高度
+        .H1 = 40.0, // 第一级台阶高度
+        .H2 = 60.0, // 第二级台阶高度
+        .H3 = 0.0,  // 不使用
+
+        // 尺寸参数
+        .b = 20.0,   // 基础顶部宽度
+        .B1 = 80.0,  // 第一级台阶宽度
+        .B2 = 120.0, // 第二级台阶宽度
+        .B3 = 0.0,   // 不使用
+        .L1 = 80.0,  // 第一级台阶长度
+        .L2 = 120.0, // 第二级台阶长度
+        .L3 = 0.0,   // 不使用
+
+        // 台阶参数
+        .N = 2 // 台阶数量
+    };
+
+    auto shp2 = create_step_base(params2);
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create 2-step base" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./2_step_base.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_step_plate_base() {
+  std::cout << "\n=== Testing Step Plate Base ===" << std::endl;
+  try {
+    // 标准参数测试 - 3级台阶
+    step_plate_base_params params1{
+        // 高度参数
+        .H = 150.0, // 基础总高度
+        .H1 = 50.0, // 第一级台阶高度
+        .H2 = 50.0, // 第二级台阶高度
+        .H3 = 50.0, // 第三级台阶高度
+
+        // 尺寸参数
+        .b = 30.0,   // 柱顶宽度/直径
+        .L1 = 100.0, // 第一级台阶长度
+        .L2 = 150.0, // 第二级台阶长度
+        .B1 = 200.0, // 基础底板宽度
+        .B2 = 300.0, // 第一级台阶宽度
+
+        // 坡度参数
+        .alpha1 = 15.0, // X轴坡度15度
+        .alpha2 = 10.0, // Y轴坡度10度
+
+        // 台阶参数
+        .N = 3 // 台阶数量
+    };
+
+    auto shp1 = create_step_plate_base(params1);
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create 3-step plate base" << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./3_step_plate_base.stl");
+
+    // 简化参数测试 - 2级台阶
+    step_plate_base_params params2{
+        // 高度参数
+        .H = 100.0, // 基础总高度
+        .H1 = 40.0, // 第一级台阶高度
+        .H2 = 60.0, // 第二级台阶高度
+        .H3 = 0.0,  // 不使用
+
+        // 尺寸参数
+        .b = 20.0,   // 柱顶宽度/直径
+        .L1 = 80.0,  // 第一级台阶长度
+        .L2 = 120.0, // 第二级台阶长度
+        .B1 = 180.0, // 基础底板宽度
+        .B2 = 100.0, // 第一级台阶宽度
+
+        // 坡度参数
+        .alpha1 = 0.0, // 无X轴坡度
+        .alpha2 = 0.0, // 无Y轴坡度
+
+        // 台阶参数
+        .N = 2 // 台阶数量
+    };
+
+    auto shp2 = create_step_plate_base(params2);
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create 2-step plate base" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./2_step_plate_base.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+void test_make_sloped_base_base() {
+  std::cout << "\n=== Testing Sloped Base Base ===" << std::endl;
+  try {
+    // 标准参数测试
+    sloped_base_base_params params{.H1 = 100.0,
+                                   .H2 = 30.0,
+                                   .H3 = 50.0,
+                                   .b = 15.0,
+                                   .L1 = 200.0,
+                                   .L2 = 150.0,
+                                   .B1 = 100.0,
+                                   .B2 = 80.0,
+                                   .alpha1 = 15.0,
+                                   .alpha2 = 10.0};
+
+    auto shp = create_sloped_base_base(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create sloped base base" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./sloped_base_base.stl");
+
+    // 可以添加更多测试用例...
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_composite_caisson_base() {
+  std::cout << "\n=== Testing Composite Caisson Base ===" << std::endl;
+  try {
+    // 标准参数测试
+    composite_caisson_base_params params1{
+        // 高度参数
+        .H1 = 100.0, // 上部沉井高度
+        .H2 = 30.0,  // 过渡段高度
+        .H3 = 50.0,  // 下部基础高度
+        .H4 = 200.0, // 下部沉井高度
+
+        // 尺寸参数
+        .b = 15.0,   // 预留参数
+        .D = 200.0,  // 沉井直径
+        .t = 15.0,   // 沉井壁厚
+        .B1 = 200.0, // 过渡段底部宽度
+        .B2 = 250.0, // 下部基础宽度
+        .L1 = 300.0, // 过渡段底部长度
+        .L2 = 350.0  // 下部基础长度
+    };
+
+    auto shp1 = create_composite_caisson_base(params1);
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create standard composite caisson base"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./standard_composite_caisson_base.stl");
+
+    // 极端参数测试
+    composite_caisson_base_params params2{
+        // 高度参数
+        .H1 = 150.0, // 上部沉井高度
+        .H2 = 40.0,  // 过渡段高度
+        .H3 = 60.0,  // 下部基础高度
+        .H4 = 30.0,  // 预留参数
+
+        // 尺寸参数
+        .b = 20.0,   // 预留参数
+        .D = 15.0,   // 沉井直径
+        .t = 1.5,    // 沉井壁厚
+        .B1 = 250.0, // 过渡段底部宽度
+        .B2 = 300.0, // 下部基础宽度
+        .L1 = 350.0, // 过渡段底部长度
+        .L2 = 400.0  // 下部基础长度
+    };
+
+    auto shp2 = create_composite_caisson_base(params2);
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create extreme composite caisson base"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./extreme_composite_caisson_base.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+void test_make_raft_base() {
+  std::cout << "\n=== Testing Raft Base ===" << std::endl;
+  try {
+    // 标准参数测试 - 带主梁
+    raft_base_params params1{
+        // 高度参数
+        .H1 = 100.0, // 底板高度
+        .H2 = 100.0, // 边梁高度
+        .H3 = 50.0,  // 主梁高度
+
+        // 尺寸参数
+        .b1 = 30.0,  // 纵向主梁宽度
+        .b2 = 30.0,  // 横向主梁宽度
+        .B1 = 500.0, // 底板宽度
+        .B2 = 400.0, // 边梁宽度
+        .L1 = 800.0, // 底板长度
+        .L2 = 600.0  // 边梁长度
+    };
+
+    auto shp1 = create_raft_base(params1);
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create raft base with beams" << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./raft_base_with_beams.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_direct_buried_base() {
+  std::cout << "\n=== Testing Direct Buried Base ===" << std::endl;
+  try {
+    // 测试圆形固定盘
+    direct_buried_base_params params1{
+        // 高度参数
+        .H1 = 500.0, // 基础主体高度
+        .H2 = 100.0, // 固定盘高度
+
+        // 尺寸参数
+        .d = 300.0, // 基础主体直径
+        .D = 600.0, // 圆形固定盘直径
+        .t = 20.0   // 壁厚
+    };
+
+    auto shp1 = create_direct_buried_base(params1);
+    if (shp1.IsNull()) {
+      std::cerr
+          << "Error: Failed to create direct buried base with circular plate"
+          << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./direct_buried_base_circular.stl");
+
+    // 测试方形固定盘
+    direct_buried_base_params params2{
+        // 高度参数
+        .H1 = 500.0, // 基础主体高度
+        .H2 = 100.0, // 固定盘高度
+
+        // 尺寸参数
+        .d = 300.0, // 基础主体直径
+        .B = 600.0, // 方形固定盘边长
+        .t = 20.0   // 壁厚
+    };
+
+    auto shp2 = create_direct_buried_base(params2);
+    if (shp2.IsNull()) {
+      std::cerr
+          << "Error: Failed to create direct buried base with square plate"
+          << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./direct_buried_base_square.stl");
+
+    // 测试无固定盘
+    direct_buried_base_params params3{
+        // 高度参数
+        .H1 = 500.0, // 基础主体高度
+
+        // 尺寸参数
+        .d = 300.0, // 基础主体直径
+        .t = 20.0   // 壁厚
+    };
+
+    auto shp3 = create_direct_buried_base(params3);
+    if (shp3.IsNull()) {
+      std::cerr << "Error: Failed to create direct buried base without plate"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp3, "./direct_buried_base_no_plate.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+void test_make_steel_sleeve_base() {
+  std::cout << "\n=== Testing Steel Sleeve Base ===" << std::endl;
+  try {
+    // 测试带圆形扩大段的基础
+    steel_sleeve_base_params params1{
+        // 高度参数
+        .H1 = 500.0, // 钢套筒高度
+        .H2 = 100.0, // 底部扩大段高度
+        .H3 = 150.0, // 顶部扩大段高度
+        .H4 = 50.0,  // 内部填充高度
+
+        // 直径参数
+        .d = 300.0,  // 钢套筒外径
+        .D1 = 600.0, // 底部扩大段外径
+        .D2 = 400.0, // 底部扩大段内径
+        .t = 20.0    // 钢套筒壁厚
+    };
+
+    auto shp1 = create_steel_sleeve_base(params1);
+    if (shp1.IsNull()) {
+      std::cerr
+          << "Error: Failed to create steel sleeve base with circular expansion"
+          << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./steel_sleeve_base_circular.stl");
+
+    // 测试带方形扩大段的基础
+    steel_sleeve_base_params params2{
+        // 高度参数
+        .H1 = 500.0, // 钢套筒高度
+        .H2 = 100.0, // 底部扩大段高度
+        .H3 = 150.0, // 顶部扩大段高度
+        .H4 = 50.0,  // 内部填充高度
+
+        // 直径参数
+        .d = 300.0, // 钢套筒外径
+        .t = 20.0,  // 钢套筒壁厚
+
+        // 顶部扩大段参数
+        .B1 = 600.0, // 顶部扩大段外径
+        .B2 = 400.0  // 顶部扩大段内径
+    };
+
+    auto shp2 = create_steel_sleeve_base(params2);
+    if (shp2.IsNull()) {
+      std::cerr
+          << "Error: Failed to create steel sleeve base with square expansion"
+          << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./steel_sleeve_base_square.stl");
+
+    // 测试无扩大段的简单基础
+    steel_sleeve_base_params params3{
+        // 高度参数
+        .H1 = 500.0, // 钢套筒高度
+        .H4 = 50.0,  // 内部填充高度
+
+        // 直径参数
+        .d = 300.0, // 钢套筒外径
+        .t = 20.0   // 钢套筒壁厚
+    };
+
+    auto shp3 = create_steel_sleeve_base(params3);
+    if (shp3.IsNull()) {
+      std::cerr << "Error: Failed to create simple steel sleeve base"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp3, "./steel_sleeve_base_simple.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_precast_column_base() {
+  std::cout << "\n=== Testing Precast Column Base ===" << std::endl;
+  try {
+    // 标准参数测试
+    precast_column_base_params params1{
+        // 高度参数
+        .H1 = 500.0, // 柱体高度
+        .H2 = 200.0, // 过渡段上部高度
+        .H3 = 300.0, // 过渡段下部高度
+
+        // 直径参数
+        .d = 100.0, // 柱体直径
+
+        // 尺寸参数
+        .B1 = 200.0, // 过渡段上部宽度
+        .B2 = 400.0, // 过渡段下部宽度
+        .L1 = 300.0, // 过渡段上部长度
+        .L2 = 600.0  // 过渡段下部长度
+    };
+
+    auto shp1 = create_precast_column_base(params1);
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create precast column base" << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./precast_column_base.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_precast_pinned_base() {
+  std::cout << "\n=== Testing Precast Pinned Base ===" << std::endl;
+  try {
+    // 标准参数测试 - 带卡盘
+    precast_pinned_base_params params1{
+        // 高度参数
+        .H1 = 500.0, // 柱体高度
+        .H2 = 200.0, // 过渡段上部高度
+        .H3 = 200.0, // 过渡段下部高度
+
+        // 直径参数
+        .d = 100.0, // 柱体直径
+
+        // 尺寸参数
+        .B1 = 200.0, // 过渡段上部宽度
+        .B2 = 400.0, // 过渡段下部宽度
+        .L1 = 300.0, // 过渡段上部长度
+        .L2 = 600.0, // 过渡段下部长度
+
+        // 卡盘参数
+        .B = 40.0, // 卡盘宽度
+        .H = 40.0, // 卡盘高度
+        .L = 200.0 // 卡盘长度
+    };
+
+    auto shp1 = create_precast_pinned_base(params1);
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create precast pinned base with clamp"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./precast_pinned_base_with_clamp.stl");
+
+    // 不带卡盘测试
+    precast_pinned_base_params params2 = params1;
+    params2.B = 0; // 禁用卡盘
+    params2.H = 0;
+    params2.L = 0;
+
+    auto shp2 = create_precast_pinned_base(params2);
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create precast pinned base without clamp"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./precast_pinned_base_without_clamp.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_precast_metal_support_base() {
+  std::cout << "\n=== Testing Precast Metal Support Base ===" << std::endl;
+  try {
+    // 标准参数测试
+    precast_metal_support_base_params params1{
+        // 高度参数
+        .H1 = 100.0, // 底板高度
+        .H2 = 500.0, // 立柱高度
+        .H3 = 300.0, // 连接梁高度
+        .H4 = 200.0, // 斜撑高度差
+
+        // 尺寸参数
+        .b1 = 50.0,   // 立柱直径
+        .b2 = 30.0,   // 连接梁直径
+        .B1 = 800.0,  // 底板宽度
+        .B2 = 600.0,  // 支架正面根开
+        .L1 = 1000.0, // 底板长度
+        .L2 = 800.0,  // 支架侧面根开
+        .S1 = 40.0,   // 支架规格
+        .S2 = 20.0,   // 斜材规格
+
+        // 数量参数
+        .n1 = 4, // 斜材组数
+        .n2 = 8, // 板条数量
+
+        // 斜材层高
+        .HX = {100.0, 300.0, 500.0, 700.0} // 斜材层高数组
+    };
+
+    auto shp1 = create_precast_metal_support_base(params1);
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create precast metal support base"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./precast_metal_support_base.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+
+void test_make_precast_concrete_support_base() {
+  std::cout << "\n=== Testing Precast Concrete Support Base ===" << std::endl;
+  try {
+    // 标准参数测试
+    precast_concrete_support_base_params params1{
+        // 高度参数
+        .H1 = 100.0,  // 底板高度
+        .H2 = 500.0,  // 立柱高度
+        .H3 = 300.0,  // 连接梁高度
+        .H4 = 400.0,  // 支撑顶部高度
+        .H5 = 200.0,  // 支撑底部高度
+        
+        // 尺寸参数
+        .b1 = 50.0,   // 立柱直径
+        .b2 = 30.0,   // 连接梁直径
+        .b3 = 20.0,   // 支撑直径
+        .B1 = 800.0,  // 底板宽度
+        .B2 = 600.0,  // 支架正面根开
+        .L1 = 1000.0, // 底板长度
+        .L2 = 800.0,  // 支架侧面根开
+        .S1 = 400.0,  // 顶部平台尺寸
+        
+        // 数量参数
+        .n1 = 4       // 支撑数量
+    };
+
+    auto shp1 = create_precast_concrete_support_base(params1);
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create precast concrete support base" << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./precast_concrete_support_base.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
 int main() {
-  //变电
+  // 变电
   test_make_sphere();
   test_make_rotational_ellipsoid();
   test_make_diamond_frustum();
@@ -1113,8 +1862,24 @@ int main() {
   test_make_i_shaped_steel();
   test_make_channel_steel();
   test_make_t_steel();
-  //输电
+  // 输电
   test_make_bored_pile();
   test_make_pile_cap();
+  test_make_rock_anchor();
+  test_make_rock_pile_cap();
+  test_make_embedded_rock_anchor();
+  test_make_inclined_rock_anchor();
+  test_make_excavated_base();
+  test_make_step_base();
+  test_make_step_plate_base();
+  test_make_sloped_base_base();
+  test_make_composite_caisson_base();
+  test_make_raft_base();
+  test_make_direct_buried_base();
+  test_make_steel_sleeve_base();
+  test_make_precast_column_base();
+  test_make_precast_pinned_base();
+  test_make_precast_metal_support_base();
+  test_make_precast_concrete_support_base();
   return 0;
 }

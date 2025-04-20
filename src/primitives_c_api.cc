@@ -1036,9 +1036,7 @@ create_direct_buried_base(direct_buried_base_params_t params) {
                                        params.d,
                                        params.D,
                                        params.B,
-                                       params.t,
-                                       params.hasBasePlate,
-                                       params.isCircularPlate};
+                                       params.t};
   return new topo_shape_t{
       std::make_shared<shape>(create_direct_buried_base(cpp_params))};
 }
@@ -1051,9 +1049,7 @@ create_direct_buried_base_with_place(direct_buried_base_params_t params,
                                        params.d,
                                        params.D,
                                        params.B,
-                                       params.t,
-                                       params.hasBasePlate,
-                                       params.isCircularPlate};
+                                       params.t};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   return new topo_shape_t{std::make_shared<shape>(
