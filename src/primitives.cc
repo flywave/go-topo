@@ -5426,7 +5426,7 @@ TopoDS_Shape create_transmission_line(const transmission_line_params &params,
 
   // 计算悬垂度 (带高差修正)
   double weightPerMeter = params.wireWeight / 1000.0; // kg/m
-  double tension = params.ratedStrength * 1000 * 0.25; // kN→N (25%额定强度)
+  double tension = params.ratedStrength * 0.25; // (25%额定强度)
 
   // 计算高差修正系数 (cosθ ≈ 1/cosh(β), β=高差/水平档距)
   double heightDiff = endPoint.Z() - startPoint.Z();
