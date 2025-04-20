@@ -3347,16 +3347,26 @@ TopoDS_Shape create_pile_cap_base(const pile_cap_params &params) {
   // 创建承台
   TopoDS_Shape cap;
   if (params.cs == 0) { // 圆形承台柱
-    gp_Ax2 axis(gp_Pnt(0, 0, -params.H4), gp_Dir(0, 0, 1));
-    cap = BRepPrimAPI_MakeCylinder(axis, params.b / 2, params.H4).Shape();
+    gp_Ax2 axis(gp_Pnt(0, 0, -params.H1), gp_Dir(0, 0, 1));
+    cap = BRepPrimAPI_MakeCylinder(axis, params.b / 2, params.H1).Shape();
   } else { // 方形承台柱
     BRepBuilderAPI_MakeWire wire;
     double halfB = params.b / 2;
-    wire.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(-halfB, -halfB, -params.H4),
-                                     gp_Pnt(halfB, -halfB, -params.H4))
-                 .Edge());
-    // ... 创建方形轮廓
+    // 创建闭合矩形轮廓（四个顶点）
+    gp_Pnt p1(-halfB, -halfB, -params.H1); // 左下角
+    gp_Pnt p2(halfB, -halfB, -params.H1);  // 右下角
+    gp_Pnt p3(halfB, halfB, -params.H1);   // 右上角
+    gp_Pnt p4(-halfB, halfB, -params.H1);  // 左上角
+
+    wire.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge()); // 底边
+    wire.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge()); // 右边
+    wire.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge()); // 顶边
+    wire.Add(BRepBuilderAPI_MakeEdge(p4, p1).Edge()); // 左边（闭合）
+    
     BRepBuilderAPI_MakeFace face(wire.Wire());
+    if (!face.IsDone()) {
+      throw Standard_ConstructionError("Failed to create square column face");
+    }
     cap = BRepPrimAPI_MakePrism(face.Face(), gp_Vec(0, 0, params.H4)).Shape();
   }
 
@@ -3364,29 +3374,39 @@ TopoDS_Shape create_pile_cap_base(const pile_cap_params &params) {
   BRepBuilderAPI_MakeWire baseWire;
   double halfB1 = params.B1 / 2;
   double halfL1 = params.L1 / 2;
-  baseWire.Add(
-      BRepBuilderAPI_MakeEdge(gp_Pnt(-halfB1, -halfL1, -params.H4 - params.H5),
-                              gp_Pnt(halfB1, -halfL1, -params.H4 - params.H5))
-          .Edge());
+  gp_Pnt p1(-halfB1, -halfL1, -params.H1 - params.H2); // 左下角
+  gp_Pnt p2(halfB1, -halfL1, -params.H1 - params.H2);  // 右下角
+  gp_Pnt p3(halfB1, halfL1, -params.H1 - params.H2);   // 右上角
+  gp_Pnt p4(-halfB1, halfL1, -params.H1 - params.H2);  // 左上角
+
+  baseWire.Add(BRepBuilderAPI_MakeEdge(p1, p2)); // 底边
+  baseWire.Add(BRepBuilderAPI_MakeEdge(p2, p3)); // 右边
+  baseWire.Add(BRepBuilderAPI_MakeEdge(p3, p4)); // 顶边
+  baseWire.Add(BRepBuilderAPI_MakeEdge(p4, p1)); // 左边（闭合）
+
   // ... 创建底板轮廓
   BRepBuilderAPI_MakeFace baseFace(baseWire.Wire());
   TopoDS_Shape base =
-      BRepPrimAPI_MakePrism(baseFace.Face(), gp_Vec(0, 0, params.H5)).Shape();
+      BRepPrimAPI_MakePrism(baseFace.Face(), gp_Vec(0, 0, params.H2)).Shape();
 
-  // 合并承台和底板
-  BRepAlgoAPI_Fuse fuser(cap, base);
+  // 组合所有部件
+  TopoDS_Compound result;
+  BRep_Builder builder;
+  builder.MakeCompound(result);
+  builder.Add(result, cap);
+  builder.Add(result, base);
 
   // 创建桩
   std::vector<TopoDS_Shape> piles;
   for (int i = 0; i < params.ZCOUNT; i++) {
     gp_Pnt position(params.ZPOSTARRAY[i].X(), params.ZPOSTARRAY[i].Y(),
-                    params.ZPOSTARRAY[i].Z());
+                    params.ZPOSTARRAY[i].Z() - params.H1 - params.H2);
 
     // 创建单桩
     bored_pile_params pileParams;
-    pileParams.H1 = params.H1;
-    pileParams.H2 = params.H2;
-    pileParams.H3 = params.H3;
+    pileParams.H1 = params.H3;
+    pileParams.H2 = params.H4;
+    pileParams.H3 = params.H5;
     pileParams.H4 = params.H6;
     pileParams.d = params.d;
     pileParams.D = params.D;
@@ -3402,21 +3422,18 @@ TopoDS_Shape create_pile_cap_base(const pile_cap_params &params) {
 
   // 合并所有桩
   for (const auto &pile : piles) {
-    fuser = BRepAlgoAPI_Fuse(fuser.Shape(), pile);
-    if (!fuser.IsDone()) {
-      throw Standard_ConstructionError("桩合并失败");
-    }
+    builder.Add(result, pile);
   }
 
   // 应用偏心调整
   if (params.e1 != 0 || params.e2 != 0) {
     gp_Trsf eccTransform;
     eccTransform.SetTranslation(gp_Vec(params.e1, params.e2, 0));
-    BRepBuilderAPI_Transform eccMover(fuser.Shape(), eccTransform);
+    BRepBuilderAPI_Transform eccMover(result, eccTransform);
     return eccMover.Shape();
   }
 
-  return fuser.Shape();
+  return result;
 }
 
 /**

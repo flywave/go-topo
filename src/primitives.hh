@@ -508,9 +508,6 @@ struct pile_cap_params {
   // 桩参数
   int ZCOUNT;                     // 桩数量
   std::vector<gp_Pnt> ZPOSTARRAY; // 桩位置数组
-
-  // 圆角参数
-  double filletRadius = 0.0; // 圆角半径
 };
 
 TopoDS_Shape create_pile_cap_base(const pile_cap_params &params);

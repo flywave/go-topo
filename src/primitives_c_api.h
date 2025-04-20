@@ -504,7 +504,6 @@ typedef struct {
   int cs;
   int ZCOUNT;
   pnt3d_t *ZPOSTARRAY;
-  double filletRadius;
 } pile_cap_params_t;
 
 PRIMCAPICALL topo_shape_t *create_pile_cap_base(pile_cap_params_t params);

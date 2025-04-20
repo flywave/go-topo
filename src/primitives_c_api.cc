@@ -781,7 +781,7 @@ PRIMCAPICALL topo_shape_t *create_pile_cap_base(pile_cap_params_t params) {
       params.H1, params.H2,          params.H3, params.H4, params.H5,
       params.H6, params.d,           params.D,  params.b,  params.B1,
       params.L1, params.e1,          params.e2, params.cs, params.ZCOUNT,
-      points,    params.filletRadius};
+      points};
   return new topo_shape_t{
       std::make_shared<shape>(create_pile_cap_base(cpp_params))};
 }
@@ -798,7 +798,7 @@ create_pile_cap_base_with_place(pile_cap_params_t params, pnt3d_t position,
       params.H1, params.H2,          params.H3, params.H4, params.H5,
       params.H6, params.d,           params.D,  params.b,  params.B1,
       params.L1, params.e1,          params.e2, params.cs, params.ZCOUNT,
-      points,    params.filletRadius};
+      points};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   return new topo_shape_t{std::make_shared<shape>(

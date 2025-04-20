@@ -1038,6 +1038,50 @@ void test_make_bored_pile() {
   }
 }
 
+void test_make_pile_cap() {
+  std::cout << "\n=== Testing Pile Cap ===" << std::endl;
+  try {
+    // 标准参数测试
+    pile_cap_params params{
+        // 高度参数
+        .H1 = 100.0,   // 桩上部圆柱高度
+        .H2 = 30.0,    // 桩过渡段高度
+        .H3 = 50.0,    // 桩底部圆柱高度
+        .H4 = 40.0,    // 承台柱高度
+        .H5 = 20.0,    // 承台底板高度
+        .H6 = 3.0,     // 桩头高度
+        
+        // 尺寸参数
+        .d = 5.0,      // 桩上部直径
+        .D = 20.0,     // 桩底部直径
+        .b = 15.0,     // 承台柱直径/边长
+        .B1 = 200.0,   // 承台底板宽度
+        .L1 = 300.0,   // 承台底板长度
+        
+        // 偏心参数
+        .e1 = 10.0,     // X方向偏心
+        .e2 = 5.0,      // Y方向偏心
+        
+        // 承台样式
+        .cs = 0,        // 圆形承台柱
+        
+        // 桩参数
+        .ZCOUNT = 3,    // 桩数量
+        .ZPOSTARRAY = {gp_Pnt(0,0,0), gp_Pnt(100,0,0), gp_Pnt(0,100,0)}
+    };
+
+    auto shp = create_pile_cap_base(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create pile cap" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./pile_cap_standard.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
 int main() {
   //变电
   test_make_sphere();
@@ -1071,5 +1115,6 @@ int main() {
   test_make_t_steel();
   //输电
   test_make_bored_pile();
+  test_make_pile_cap();
   return 0;
 }

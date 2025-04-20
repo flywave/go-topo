@@ -1006,23 +1006,22 @@ func CreateRockPileCapBaseWithPlace(params RockPileCapParams, position Point3, d
 }
 
 type PileCapParams struct {
-	H1           float32
-	H2           float32
-	H3           float32
-	H4           float32
-	H5           float32
-	H6           float32
-	D            float32
-	Diameter     float32
-	B            float32
-	B1           float32
-	L1           float32
-	E1           float32
-	E2           float32
-	CS           int32
-	ZCount       int32
-	ZPosArray    []Point3
-	FilletRadius float32
+	H1        float32
+	H2        float32
+	H3        float32
+	H4        float32
+	H5        float32
+	H6        float32
+	D         float32
+	Diameter  float32
+	B         float32
+	B1        float32
+	L1        float32
+	E1        float32
+	E2        float32
+	CS        int32
+	ZCount    int32
+	ZPosArray []Point3
 }
 
 func (p *PileCapParams) to_struct() C.pile_cap_params_t {
@@ -1042,7 +1041,6 @@ func (p *PileCapParams) to_struct() C.pile_cap_params_t {
 	c.e2 = C.double(p.E2)
 	c.cs = C.int(p.CS)
 	c.ZCOUNT = C.int(p.ZCount)
-	c.filletRadius = C.double(p.FilletRadius)
 
 	if len(p.ZPosArray) > 0 {
 		c.ZPOSTARRAY = (*C.pnt3d_t)(C.malloc(C.size_t(len(p.ZPosArray)) * C.sizeof_pnt3d_t))
