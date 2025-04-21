@@ -760,10 +760,10 @@ void test_make_wire() {
     auto shp2 = create_wire(
         wire_params{.startPoint = gp_Pnt(0, 0, 0),
                     .endPoint = gp_Pnt(300, 0, 150), // 与最后一个拟合点一致
-                    .startDir = gp_Dir(1, 0, 0), // 初始方向沿X轴
-                    .endDir = gp_Dir(0, 0, 1),   // 结束方向沿Z轴
-                    .sag = 25.0,                 // 合理弧垂值
-                    .diameter = 8.0,             // 典型导线直径
+                    .startDir = gp_Dir(1, 0, 0),     // 初始方向沿X轴
+                    .endDir = gp_Dir(0, 0, 1),       // 结束方向沿Z轴
+                    .sag = 25.0,                     // 合理弧垂值
+                    .diameter = 8.0,                 // 典型导线直径
                     .fitPoints = fitPoints});
 
     if (shp2.IsNull()) {
@@ -1382,7 +1382,7 @@ void test_make_step_plate_base() {
         .L1 = 80.0,  // 第一级台阶长度
         .L2 = 120.0, // 第二级台阶长度
         .B1 = 180.0, // 基础底板宽度
-        .B2 = 100.0, // 第一级台阶宽度
+        .B2 = 200.0, // 第一级台阶宽度
 
         // 坡度参数
         .alpha1 = 0.0, // 无X轴坡度
@@ -1756,13 +1756,13 @@ void test_make_precast_metal_support_base() {
     // 标准参数测试
     precast_metal_support_base_params params1{
         // 高度参数
-        .H1 = 100.0, // 底板高度
-        .H2 = 500.0, // 立柱高度
-        .H3 = 300.0, // 连接梁高度
-        .H4 = 200.0, // 斜撑高度差
+        .H1 = 40.0,  // 底板高度
+        .H2 = 400.0, // 立柱高度
+        .H3 = 20.0,  // 连接梁高度
+        .H4 = 20.0,  // 斜撑高度差
 
         // 尺寸参数
-        .b1 = 50.0,   // 立柱直径
+        .b1 = 30.0,   // 立柱直径
         .b2 = 30.0,   // 连接梁直径
         .B1 = 800.0,  // 底板宽度
         .B2 = 600.0,  // 支架正面根开
@@ -1772,11 +1772,11 @@ void test_make_precast_metal_support_base() {
         .S2 = 20.0,   // 斜材规格
 
         // 数量参数
-        .n1 = 4, // 斜材组数
-        .n2 = 8, // 板条数量
+        .n1 = 3, // 斜材组数
+        .n2 = 9, // 板条数量
 
         // 斜材层高
-        .HX = {100.0, 300.0, 500.0, 700.0} // 斜材层高数组
+        .HX = {100.0, 100.0, 100.0} // 斜材层高数组
     };
 
     auto shp1 = create_precast_metal_support_base(params1);
@@ -1792,39 +1792,494 @@ void test_make_precast_metal_support_base() {
   }
 }
 
-
 void test_make_precast_concrete_support_base() {
   std::cout << "\n=== Testing Precast Concrete Support Base ===" << std::endl;
   try {
     // 标准参数测试
     precast_concrete_support_base_params params1{
         // 高度参数
-        .H1 = 100.0,  // 底板高度
-        .H2 = 500.0,  // 立柱高度
-        .H3 = 300.0,  // 连接梁高度
-        .H4 = 400.0,  // 支撑顶部高度
-        .H5 = 200.0,  // 支撑底部高度
-        
+        .H1 = 40.0,  // 底板高度
+        .H2 = 400.0, // 立柱高度
+        .H3 = 20.0,  // 连接梁高度
+        .H4 = 20.0,  // 支撑顶部高度
+        .H5 = 20.0,  // 支撑底部高度
+
         // 尺寸参数
-        .b1 = 50.0,   // 立柱直径
-        .b2 = 30.0,   // 连接梁直径
+        .b1 = 30.0,   // 立柱直径
+        .b2 = 40.0,   // 连接梁直径
         .b3 = 20.0,   // 支撑直径
         .B1 = 800.0,  // 底板宽度
         .B2 = 600.0,  // 支架正面根开
         .L1 = 1000.0, // 底板长度
         .L2 = 800.0,  // 支架侧面根开
-        .S1 = 400.0,  // 顶部平台尺寸
-        
+        .S1 = 40.0,   // 顶部平台尺寸
+
         // 数量参数
-        .n1 = 4       // 支撑数量
+        .n1 = 9 // 支撑数量
     };
 
     auto shp1 = create_precast_concrete_support_base(params1);
     if (shp1.IsNull()) {
-      std::cerr << "Error: Failed to create precast concrete support base" << std::endl;
+      std::cerr << "Error: Failed to create precast concrete support base"
+                << std::endl;
       return;
     }
     test_export_shape(shp1, "./precast_concrete_support_base.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_transmission_line() {
+  std::cout << "\n=== Testing Transmission Line ===" << std::endl;
+  try {
+    transmission_line_params params{.type = "LGJ-400/35",
+                                    .sectionalArea = 425.24,
+                                    .outsideDiameter = 26.82,
+                                    .wireWeight = 1349,
+                                    .coefficientOfElasticity = 65000,
+                                    .expansionCoefficient = 0.0000205,
+                                    .ratedStrength = 103900};
+
+    gp_Pnt startPoint(0, 0, 0);
+    gp_Pnt endPoint(1000, 0, 50); // 1000米跨度，50米高差
+
+    auto shp = create_transmission_line(params, startPoint, endPoint);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create transmission line" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./transmission_line.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_gt_insulator_string() {
+  std::cout << "\n=== Testing Insulator String ===" << std::endl;
+  try {
+    // 测试标准悬垂串
+    insulator_params params1{
+        .type = "XWP-70",
+        .subNum = 1,
+        .subType = 0,
+        .splitDistance = 0,
+        .vAngleLeft = 0,
+        .vAngleRight = 0,
+        .uLinkLength = 100,
+        .weight = 5.2,
+        .fittingLengths = {.leftUpper = 50,
+                           .rightUpper = 50,
+                           .leftLower = 50,
+                           .rightLower = 50},
+        .multiLink = {.count = 1,
+                      .spacing = 0,
+                      .arrangement = arrangement_type::VERTICAL},
+        .insulator = {.radius = 0.075,
+                      .height = 0.146,
+                      .leftCount = 7,
+                      .rightCount = 7,
+                      .material = insulator_material::CERAMIC},
+        .gradingRing = {.count = 1,
+                        .position = 0.5,
+                        .height = 0.03,
+                        .radius = 0.15},
+        .application = application_type::CONDUCTOR,
+        .stringType = string_type::SUSPENSION};
+
+    auto shp1 = create_insulator_string(params1);
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create suspension insulator string"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./insulator_string_suspension.stl");
+
+    // 测试V型耐张串
+    insulator_params params2{
+        .type = "FXBW-110/100",
+        .subNum = 2,
+        .subType = 1,
+        .splitDistance = 400,
+        .vAngleLeft = 30,
+        .vAngleRight = 30,
+        .uLinkLength = 200,
+        .weight = 8.5,
+        .fittingLengths = {.leftUpper = 60,
+                           .rightUpper = 60,
+                           .leftLower = 60,
+                           .rightLower = 60},
+        .multiLink = {.count = 2,
+                      .spacing = 300,
+                      .arrangement = arrangement_type::HORIZONTAL},
+        .insulator = {.radius = composite_insulator_params{.majorRadius = 0.085,
+                                                           .minorRadius = 0.055,
+                                                           .gap = 0.02},
+                      .height = 1.2,
+                      .leftCount = 0,
+                      .rightCount = 0,
+                      .material = insulator_material::COMPOSITE},
+        .gradingRing = {.count = 2,
+                        .position = 0.4,
+                        .height = 0.04,
+                        .radius = 0.2},
+        .application = application_type::GROUND_WIRE,
+        .stringType = string_type::TENSION};
+
+    auto shp2 = create_insulator_string(params2);
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create tension insulator string"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./insulator_string_tension.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_pole_tower() {
+  std::cout << "\n=== Testing Pole Tower ===" << std::endl;
+  try {
+    // 创建测试杆塔参数
+    pole_tower_params params;
+
+    // 添加呼高信息
+    params.heights.push_back(
+        pole_tower_height{.value = 18.0, .bodyId = "body1", .legId = "leg1"});
+
+    // 添加本体信息
+    pole_tower_body body{.id = "body1", .height = 30.0};
+
+    // 添加接腿信息
+    pole_tower_leg leg{
+        .id = "leg1", .commonHeight = 10.0, .specificHeight = 8.0};
+
+    // 添加节点
+    body.nodes.push_back(
+        pole_tower_node{.id = "node1", .position = gp_Pnt(0, 0, 0)});
+    body.nodes.push_back(
+        pole_tower_node{.id = "node2", .position = gp_Pnt(1000, 0, 30000)});
+
+    // 添加杆件
+    params.members.push_back(pole_tower_member{.id = "member1",
+                                               .startNodeId = "node1",
+                                               .endNodeId = "node2",
+                                               .type = member_type::ANGLE,
+                                               .specification = "L100x10",
+                                               .material = "Q345",
+                                               .xDirection = gp_Dir(1, 0, 0),
+                                               .yDirection = gp_Dir(0, 1, 0)});
+
+    // 添加挂点
+    params.attachments.push_back(
+        pole_tower_attachment{.name = "ground_wire",
+                              .type = attachment_type::GROUND_WIRE,
+                              .position = gp_Pnt(500, 0, 30000)});
+
+    body.legs.push_back(leg);
+    params.bodies.push_back(body);
+
+    // 创建杆塔模型
+    auto shp = create_pole_tower(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create pole tower" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./pole_tower.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_single_hook_anchor() {
+  std::cout << "\n=== Testing Single Hook Anchor ===" << std::endl;
+  try {
+    single_hook_anchor_params params{
+        // 基础参数
+        .boltDiameter = 24.0,
+        .exposedLength = 100.0,
+        .nutCount = 2,
+        .nutHeight = 15.0,
+        .nutOD = 40.0,
+        .washerCount = 1,
+        .washerShape = 2, // 圆形垫片
+        .washerSize = 50.0,
+        .washerThickness = 5.0,
+        .anchorLength = 800.0,
+        
+        // 单钩锚固特有参数
+        .hookStraightLength = 150.0,
+        .hookDiameter = 60.0
+    };
+
+    auto shp = create_single_hook_anchor(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create single hook anchor" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./single_hook_anchor.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_triple_hook_anchor() {
+  std::cout << "\n=== Testing Triple Hook Anchor ===" << std::endl;
+  try {
+    triple_hook_anchor_params params{
+        .boltDiameter = 20.0,
+        .exposedLength = 100.0,
+        .nutCount = 2,
+        .nutHeight = 15.0,
+        .nutOD = 40.0,
+        .washerCount = 1,
+        .washerShape = 2, // 圆形垫片
+        .washerSize = 50.0,
+        .washerThickness = 5.0,
+        .anchorLength = 1000.0,
+        .hookStraightLengthA = 100.0,
+        .hookStraightLengthB = 150.0,
+        .hookDiameter = 30.0,
+        .anchorBarDiameter = 25.0
+    };
+
+    auto shp = create_triple_hook_anchor(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create triple hook anchor" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./triple_hook_anchor.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_ribbed_anchor() {
+  std::cout << "\n=== Testing Ribbed Anchor ===" << std::endl;
+  try {
+    ribbed_anchor_params params{
+        // 基础参数
+        .boltDiameter = 20.0,
+        .exposedLength = 100.0,
+        .nutCount = 2,
+        .nutHeight = 10.0,
+        .nutOD = 40.0,
+        .washerCount = 1,
+        .washerShape = 2, // 圆形垫片
+        .washerSize = 30.0,
+        .washerThickness = 5.0,
+        .anchorLength = 500.0,
+        
+        // 肋板锚固特有参数
+        .basePlateSize = 200.0,
+        .ribTopWidth = 60.0,
+        .ribBottomWidth = 100.0,
+        .basePlateThickness = 20.0,
+        .ribHeight = 150.0,
+        .ribThickness = 15.0
+    };
+    
+    auto shp = create_ribbed_anchor(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create ribbed anchor" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./ribbed_anchor.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_nut_anchor() {
+  std::cout << "\n=== Testing Nut Anchor ===" << std::endl;
+  try {
+    nut_anchor_params params{
+        // 基础参数
+        .boltDiameter = 24.0,
+        .exposedLength = 100.0,
+        .nutCount = 2,
+        .nutHeight = 12.0,
+        .nutOD = 45.0,
+        .washerCount = 1,
+        .washerShape = 2, // 圆形垫片
+        .washerSize = 36.0,
+        .washerThickness = 6.0,
+        .anchorLength = 800.0,
+        
+        // 螺帽锚固特有参数
+        .basePlateSize = 200.0,
+        .basePlateThickness = 20.0,
+        .boltToPlateDistance = 50.0
+    };
+    
+    auto shp = create_nut_anchor(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create nut anchor" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./nut_anchor.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+
+void test_make_triple_arm_anchor() {
+  std::cout << "\n=== Testing Triple Arm Anchor ===" << std::endl;
+  try {
+    triple_arm_anchor_params params{
+        // 基础参数
+        .boltDiameter = 20.0,    // 地脚螺栓直径20mm
+        .exposedLength = 50.0,   // 露头长度50mm
+        .nutCount = 2,           // 2个蝶帽
+        .nutHeight = 10.0,       // 蝶帽高度10mm
+        .nutOD = 30.0,           // 蝶帽外径30mm
+        .washerCount = 1,        // 1个垫片
+        .washerShape = 2,        // 圆形垫片
+        .washerSize = 25.0,      // 垫片直径25mm
+        .washerThickness = 2.0,  // 垫片厚度2mm
+        .anchorLength = 500.0,   // 锚固长度500mm
+        
+        // 三支锚固特有参数
+        .armDiameter = 16.0,       // 弯支规格16mm
+        .armStraightLength = 100.0, // 弯支直段长100mm
+        .armBendLength = 50.0,     // 弯支弯折段长50mm
+        .armBendAngle = 45.0       // 弯支弯折角度45度
+    };
+
+    auto shp = create_triple_arm_anchor(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create triple arm anchor" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./triple_arm_anchor.stl");
+
+    // 测试带定位的创建
+    gp_Pnt position(100, 100, 0);
+    gp_Dir normal(0, 0, 1);
+    gp_Dir xDir(1, 0, 0);
+    auto shp2 = create_triple_arm_anchor(params, position, normal, xDir);
+    test_export_shape(shp2, "./triple_arm_anchor_positioned.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_positioning_plate_anchor() {
+  std::cout << "\n=== Testing Positioning Plate Anchor ===" << std::endl;
+  try {
+    positioning_plate_anchor_params params{
+        // 基础参数
+        .boltDiameter = 24.0,    // 地脚螺栓直径24mm
+        .exposedLength = 50.0,   // 露头长度50mm
+        .nutCount = 2,           // 2个蝶帽
+        .nutHeight = 12.0,       // 蝶帽高度12mm
+        .nutOD = 36.0,           // 蝶帽外径36mm
+        .washerCount = 1,        // 1个垫片
+        .washerShape = 2,        // 圆形垫片
+        .washerSize = 30.0,      // 垫片直径30mm
+        .washerThickness = 3.0,  // 垫片厚度3mm
+        .anchorLength = 500.0,   // 锚固长度500mm
+        
+        // 定位板锚固特有参数
+        .plateLength = 200.0,       // 定位板长度200mm
+        .plateThickness = 20.0,    // 定位板厚度20mm
+        .toBaseDistance = 100.0,   // 到基础面距离100mm
+        .toBottomDistance = 50.0,  // 到底部距离50mm
+        .groutHoleDiameter = 30.0  // 灌注孔径30mm
+    };
+
+    auto shp = create_positioning_plate_anchor(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create positioning plate anchor" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./positioning_plate_anchor.stl");
+
+    // 测试带定位的创建
+    gp_Pnt position(100, 100, 0);
+    gp_Dir normal(0, 0, 1);
+    gp_Dir xDir(1, 0, 0);
+    auto shp2 = create_positioning_plate_anchor(params, position, normal, xDir);
+    test_export_shape(shp2, "./positioning_plate_anchor_positioned.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_stub_angle() {
+  std::cout << "\n=== Testing Stub Angle ===" << std::endl;
+  try {
+    stub_angle_params params{
+        .legWidth = 100.0,     // 肢宽100mm
+        .thickness = 10.0,     // 厚度10mm
+        .slope = 0.1,          // 坡度10%
+        .exposedLength = 200.0, // 露头长度200mm
+        .anchorLength = 500.0   // 锚固长度500mm
+    };
+
+    // 创建标准方向的插入角钢
+    auto shp = create_stub_angle(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create stub angle" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./stub_angle.stl");
+
+    // 创建带定位的插入角钢
+    gp_Pnt position(0, 0, 1000);
+    gp_Dir normal(0, 1, 0);  // Y轴方向
+    gp_Dir xDir(1, 0, 0);    // X轴方向
+    auto positionedShp = create_stub_angle(params, position, normal, xDir);
+    test_export_shape(positionedShp, "./stub_angle_positioned.stl");
+    
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+
+void test_make_stub_tube() {
+  std::cout << "\n=== Testing Stub Tube ===" << std::endl;
+  try {
+    // 测试标准插入钢管
+    stub_tube_params params1{
+        .diameter = 500.0,
+        .thickness = 10.0,
+        .slope = 0.1,
+        .exposedLength = 200.0,
+        .anchorLength = 1000.0
+    };
+
+    auto shp1 = create_stub_tube(params1);
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create stub tube" << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./stub_tube_standard.stl");
+
+    // 测试带坡度的插入钢管
+    stub_tube_params params2{
+        .diameter = 600.0,
+        .thickness = 12.0,
+        .slope = 0.2,
+        .exposedLength = 300.0,
+        .anchorLength = 1200.0
+    };
+
+    auto shp2 = create_stub_tube(params2);
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create sloped stub tube" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./stub_tube_sloped.stl");
 
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
@@ -1881,5 +2336,16 @@ int main() {
   test_make_precast_pinned_base();
   test_make_precast_metal_support_base();
   test_make_precast_concrete_support_base();
+  test_make_transmission_line();
+  test_make_gt_insulator_string();
+  test_make_pole_tower();
+  test_make_single_hook_anchor();
+  test_make_triple_hook_anchor();
+  test_make_ribbed_anchor(); 
+  test_make_nut_anchor(); 
+  test_make_triple_arm_anchor();
+  test_make_positioning_plate_anchor();
+  test_make_stub_angle();
+  test_make_stub_tube();
   return 0;
 }

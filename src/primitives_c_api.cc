@@ -754,8 +754,8 @@ PRIMCAPICALL topo_shape_t *create_t_steel_with_place(t_steel_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_bored_pile_base(bored_pile_params_t params) {
-  bored_pile_params cpp_params{params.H1,          params.H2, params.H3,
-                               params.H4,          params.d,  params.D};
+  bored_pile_params cpp_params{params.H1, params.H2, params.H3,
+                               params.H4, params.d,  params.D};
   return new topo_shape_t{
       std::make_shared<shape>(create_bored_pile_base(cpp_params))};
 }
@@ -763,8 +763,8 @@ PRIMCAPICALL topo_shape_t *create_bored_pile_base(bored_pile_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_bored_pile_base_with_place(bored_pile_params_t params, pnt3d_t position,
                                   dir3d_t direction) {
-  bored_pile_params cpp_params{params.H1,          params.H2, params.H3,
-                               params.H4,          params.d,  params.D};
+  bored_pile_params cpp_params{params.H1, params.H2, params.H3,
+                               params.H4, params.d,  params.D};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   return new topo_shape_t{std::make_shared<shape>(
@@ -777,11 +777,10 @@ PRIMCAPICALL topo_shape_t *create_pile_cap_base(pile_cap_params_t params) {
     points.push_back(gp_Pnt(params.ZPOSTARRAY[i].x, params.ZPOSTARRAY[i].y,
                             params.ZPOSTARRAY[i].z));
   }
-  pile_cap_params cpp_params{
-      params.H1, params.H2,          params.H3, params.H4, params.H5,
-      params.H6, params.d,           params.D,  params.b,  params.B1,
-      params.L1, params.e1,          params.e2, params.cs, params.ZCOUNT,
-      points};
+  pile_cap_params cpp_params{params.H1, params.H2, params.H3,     params.H4,
+                             params.H5, params.H6, params.d,      params.D,
+                             params.b,  params.B1, params.L1,     params.e1,
+                             params.e2, params.cs, params.ZCOUNT, points};
   return new topo_shape_t{
       std::make_shared<shape>(create_pile_cap_base(cpp_params))};
 }
@@ -794,11 +793,10 @@ create_pile_cap_base_with_place(pile_cap_params_t params, pnt3d_t position,
     points.push_back(gp_Pnt(params.ZPOSTARRAY[i].x, params.ZPOSTARRAY[i].y,
                             params.ZPOSTARRAY[i].z));
   }
-  pile_cap_params cpp_params{
-      params.H1, params.H2,          params.H3, params.H4, params.H5,
-      params.H6, params.d,           params.D,  params.b,  params.B1,
-      params.L1, params.e1,          params.e2, params.cs, params.ZCOUNT,
-      points};
+  pile_cap_params cpp_params{params.H1, params.H2, params.H3,     params.H4,
+                             params.H5, params.H6, params.d,      params.D,
+                             params.b,  params.B1, params.L1,     params.e1,
+                             params.e2, params.cs, params.ZCOUNT, points};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   return new topo_shape_t{std::make_shared<shape>(
@@ -1031,12 +1029,8 @@ create_raft_base_with_place(raft_base_params_t params, pnt3d_t position,
 
 PRIMCAPICALL topo_shape_t *
 create_direct_buried_base(direct_buried_base_params_t params) {
-  direct_buried_base_params cpp_params{params.H1,
-                                       params.H2,
-                                       params.d,
-                                       params.D,
-                                       params.B,
-                                       params.t};
+  direct_buried_base_params cpp_params{params.H1, params.H2, params.d,
+                                       params.D,  params.B,  params.t};
   return new topo_shape_t{
       std::make_shared<shape>(create_direct_buried_base(cpp_params))};
 }
@@ -1044,12 +1038,8 @@ create_direct_buried_base(direct_buried_base_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_direct_buried_base_with_place(direct_buried_base_params_t params,
                                      pnt3d_t position, dir3d_t direction) {
-  direct_buried_base_params cpp_params{params.H1,
-                                       params.H2,
-                                       params.d,
-                                       params.D,
-                                       params.B,
-                                       params.t};
+  direct_buried_base_params cpp_params{params.H1, params.H2, params.d,
+                                       params.D,  params.B,  params.t};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   return new topo_shape_t{std::make_shared<shape>(
