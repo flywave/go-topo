@@ -760,10 +760,10 @@ void test_make_wire() {
     auto shp2 = create_wire(
         wire_params{.startPoint = gp_Pnt(0, 0, 0),
                     .endPoint = gp_Pnt(300, 0, 150), // 与最后一个拟合点一致
-                    .startDir = gp_Dir(1, 0, 0),     // 初始方向沿X轴
-                    .endDir = gp_Dir(0, 0, 1),       // 结束方向沿Z轴
-                    .sag = 25.0,                     // 合理弧垂值
-                    .diameter = 8.0,                 // 典型导线直径
+                    .startDir = gp_Dir(1, 0, 0), // 初始方向沿X轴
+                    .endDir = gp_Dir(0, 0, 1),   // 结束方向沿Z轴
+                    .sag = 25.0,                 // 合理弧垂值
+                    .diameter = 8.0,             // 典型导线直径
                     .fitPoints = fitPoints});
 
     if (shp2.IsNull()) {
@@ -1998,23 +1998,21 @@ void test_make_pole_tower() {
 void test_make_single_hook_anchor() {
   std::cout << "\n=== Testing Single Hook Anchor ===" << std::endl;
   try {
-    single_hook_anchor_params params{
-        // 基础参数
-        .boltDiameter = 24.0,
-        .exposedLength = 100.0,
-        .nutCount = 2,
-        .nutHeight = 15.0,
-        .nutOD = 40.0,
-        .washerCount = 1,
-        .washerShape = 2, // 圆形垫片
-        .washerSize = 50.0,
-        .washerThickness = 5.0,
-        .anchorLength = 800.0,
-        
-        // 单钩锚固特有参数
-        .hookStraightLength = 150.0,
-        .hookDiameter = 60.0
-    };
+    single_hook_anchor_params params{// 基础参数
+                                     .boltDiameter = 24.0,
+                                     .exposedLength = 100.0,
+                                     .nutCount = 2,
+                                     .nutHeight = 15.0,
+                                     .nutOD = 40.0,
+                                     .washerCount = 1,
+                                     .washerShape = 2, // 圆形垫片
+                                     .washerSize = 50.0,
+                                     .washerThickness = 5.0,
+                                     .anchorLength = 800.0,
+
+                                     // 单钩锚固特有参数
+                                     .hookStraightLength = 150.0,
+                                     .hookDiameter = 60.0};
 
     auto shp = create_single_hook_anchor(params);
     if (shp.IsNull()) {
@@ -2031,22 +2029,20 @@ void test_make_single_hook_anchor() {
 void test_make_triple_hook_anchor() {
   std::cout << "\n=== Testing Triple Hook Anchor ===" << std::endl;
   try {
-    triple_hook_anchor_params params{
-        .boltDiameter = 20.0,
-        .exposedLength = 100.0,
-        .nutCount = 2,
-        .nutHeight = 15.0,
-        .nutOD = 40.0,
-        .washerCount = 1,
-        .washerShape = 2, // 圆形垫片
-        .washerSize = 50.0,
-        .washerThickness = 5.0,
-        .anchorLength = 1000.0,
-        .hookStraightLengthA = 100.0,
-        .hookStraightLengthB = 150.0,
-        .hookDiameter = 30.0,
-        .anchorBarDiameter = 25.0
-    };
+    triple_hook_anchor_params params{.boltDiameter = 20.0,
+                                     .exposedLength = 100.0,
+                                     .nutCount = 2,
+                                     .nutHeight = 15.0,
+                                     .nutOD = 40.0,
+                                     .washerCount = 1,
+                                     .washerShape = 2, // 圆形垫片
+                                     .washerSize = 50.0,
+                                     .washerThickness = 5.0,
+                                     .anchorLength = 1000.0,
+                                     .hookStraightLengthA = 100.0,
+                                     .hookStraightLengthB = 150.0,
+                                     .hookDiameter = 30.0,
+                                     .anchorBarDiameter = 25.0};
 
     auto shp = create_triple_hook_anchor(params);
     if (shp.IsNull()) {
@@ -2062,28 +2058,26 @@ void test_make_triple_hook_anchor() {
 void test_make_ribbed_anchor() {
   std::cout << "\n=== Testing Ribbed Anchor ===" << std::endl;
   try {
-    ribbed_anchor_params params{
-        // 基础参数
-        .boltDiameter = 20.0,
-        .exposedLength = 100.0,
-        .nutCount = 2,
-        .nutHeight = 10.0,
-        .nutOD = 40.0,
-        .washerCount = 1,
-        .washerShape = 2, // 圆形垫片
-        .washerSize = 30.0,
-        .washerThickness = 5.0,
-        .anchorLength = 500.0,
-        
-        // 肋板锚固特有参数
-        .basePlateSize = 200.0,
-        .ribTopWidth = 60.0,
-        .ribBottomWidth = 100.0,
-        .basePlateThickness = 20.0,
-        .ribHeight = 150.0,
-        .ribThickness = 15.0
-    };
-    
+    ribbed_anchor_params params{// 基础参数
+                                .boltDiameter = 20.0,
+                                .exposedLength = 100.0,
+                                .nutCount = 2,
+                                .nutHeight = 10.0,
+                                .nutOD = 40.0,
+                                .washerCount = 1,
+                                .washerShape = 2, // 圆形垫片
+                                .washerSize = 30.0,
+                                .washerThickness = 5.0,
+                                .anchorLength = 500.0,
+
+                                // 肋板锚固特有参数
+                                .basePlateSize = 200.0,
+                                .ribTopWidth = 60.0,
+                                .ribBottomWidth = 100.0,
+                                .basePlateThickness = 20.0,
+                                .ribHeight = 150.0,
+                                .ribThickness = 15.0};
+
     auto shp = create_ribbed_anchor(params);
     if (shp.IsNull()) {
       std::cerr << "Error: Failed to create ribbed anchor" << std::endl;
@@ -2098,25 +2092,23 @@ void test_make_ribbed_anchor() {
 void test_make_nut_anchor() {
   std::cout << "\n=== Testing Nut Anchor ===" << std::endl;
   try {
-    nut_anchor_params params{
-        // 基础参数
-        .boltDiameter = 24.0,
-        .exposedLength = 100.0,
-        .nutCount = 2,
-        .nutHeight = 12.0,
-        .nutOD = 45.0,
-        .washerCount = 1,
-        .washerShape = 2, // 圆形垫片
-        .washerSize = 36.0,
-        .washerThickness = 6.0,
-        .anchorLength = 800.0,
-        
-        // 螺帽锚固特有参数
-        .basePlateSize = 200.0,
-        .basePlateThickness = 20.0,
-        .boltToPlateDistance = 50.0
-    };
-    
+    nut_anchor_params params{// 基础参数
+                             .boltDiameter = 24.0,
+                             .exposedLength = 100.0,
+                             .nutCount = 2,
+                             .nutHeight = 12.0,
+                             .nutOD = 45.0,
+                             .washerCount = 1,
+                             .washerShape = 2, // 圆形垫片
+                             .washerSize = 36.0,
+                             .washerThickness = 6.0,
+                             .anchorLength = 800.0,
+
+                             // 螺帽锚固特有参数
+                             .basePlateSize = 200.0,
+                             .basePlateThickness = 20.0,
+                             .boltToPlateDistance = 50.0};
+
     auto shp = create_nut_anchor(params);
     if (shp.IsNull()) {
       std::cerr << "Error: Failed to create nut anchor" << std::endl;
@@ -2128,28 +2120,27 @@ void test_make_nut_anchor() {
   }
 }
 
-
 void test_make_triple_arm_anchor() {
   std::cout << "\n=== Testing Triple Arm Anchor ===" << std::endl;
   try {
     triple_arm_anchor_params params{
         // 基础参数
-        .boltDiameter = 20.0,    // 地脚螺栓直径20mm
-        .exposedLength = 50.0,   // 露头长度50mm
-        .nutCount = 2,           // 2个蝶帽
-        .nutHeight = 10.0,       // 蝶帽高度10mm
-        .nutOD = 30.0,           // 蝶帽外径30mm
-        .washerCount = 1,        // 1个垫片
-        .washerShape = 2,        // 圆形垫片
-        .washerSize = 25.0,      // 垫片直径25mm
-        .washerThickness = 2.0,  // 垫片厚度2mm
-        .anchorLength = 500.0,   // 锚固长度500mm
-        
+        .boltDiameter = 20.0,   // 地脚螺栓直径20mm
+        .exposedLength = 50.0,  // 露头长度50mm
+        .nutCount = 2,          // 2个蝶帽
+        .nutHeight = 10.0,      // 蝶帽高度10mm
+        .nutOD = 30.0,          // 蝶帽外径30mm
+        .washerCount = 1,       // 1个垫片
+        .washerShape = 2,       // 圆形垫片
+        .washerSize = 25.0,     // 垫片直径25mm
+        .washerThickness = 2.0, // 垫片厚度2mm
+        .anchorLength = 500.0,  // 锚固长度500mm
+
         // 三支锚固特有参数
-        .armDiameter = 16.0,       // 弯支规格16mm
+        .armDiameter = 16.0,        // 弯支规格16mm
         .armStraightLength = 100.0, // 弯支直段长100mm
-        .armBendLength = 50.0,     // 弯支弯折段长50mm
-        .armBendAngle = 45.0       // 弯支弯折角度45度
+        .armBendLength = 50.0,      // 弯支弯折段长50mm
+        .armBendAngle = 45.0        // 弯支弯折角度45度
     };
 
     auto shp = create_triple_arm_anchor(params);
@@ -2176,28 +2167,29 @@ void test_make_positioning_plate_anchor() {
   try {
     positioning_plate_anchor_params params{
         // 基础参数
-        .boltDiameter = 24.0,    // 地脚螺栓直径24mm
-        .exposedLength = 50.0,   // 露头长度50mm
-        .nutCount = 2,           // 2个蝶帽
-        .nutHeight = 12.0,       // 蝶帽高度12mm
-        .nutOD = 36.0,           // 蝶帽外径36mm
-        .washerCount = 1,        // 1个垫片
-        .washerShape = 2,        // 圆形垫片
-        .washerSize = 30.0,      // 垫片直径30mm
-        .washerThickness = 3.0,  // 垫片厚度3mm
-        .anchorLength = 500.0,   // 锚固长度500mm
-        
+        .boltDiameter = 24.0,   // 地脚螺栓直径24mm
+        .exposedLength = 50.0,  // 露头长度50mm
+        .nutCount = 2,          // 2个蝶帽
+        .nutHeight = 12.0,      // 蝶帽高度12mm
+        .nutOD = 36.0,          // 蝶帽外径36mm
+        .washerCount = 1,       // 1个垫片
+        .washerShape = 2,       // 圆形垫片
+        .washerSize = 30.0,     // 垫片直径30mm
+        .washerThickness = 3.0, // 垫片厚度3mm
+        .anchorLength = 500.0,  // 锚固长度500mm
+
         // 定位板锚固特有参数
-        .plateLength = 200.0,       // 定位板长度200mm
-        .plateThickness = 20.0,    // 定位板厚度20mm
-        .toBaseDistance = 100.0,   // 到基础面距离100mm
-        .toBottomDistance = 50.0,  // 到底部距离50mm
-        .groutHoleDiameter = 30.0  // 灌注孔径30mm
+        .plateLength = 200.0,     // 定位板长度200mm
+        .plateThickness = 20.0,   // 定位板厚度20mm
+        .toBaseDistance = 100.0,  // 到基础面距离100mm
+        .toBottomDistance = 50.0, // 到底部距离50mm
+        .groutHoleDiameter = 30.0 // 灌注孔径30mm
     };
 
     auto shp = create_positioning_plate_anchor(params);
     if (shp.IsNull()) {
-      std::cerr << "Error: Failed to create positioning plate anchor" << std::endl;
+      std::cerr << "Error: Failed to create positioning plate anchor"
+                << std::endl;
       return;
     }
     test_export_shape(shp, "./positioning_plate_anchor.stl");
@@ -2218,9 +2210,9 @@ void test_make_stub_angle() {
   std::cout << "\n=== Testing Stub Angle ===" << std::endl;
   try {
     stub_angle_params params{
-        .legWidth = 100.0,     // 肢宽100mm
-        .thickness = 10.0,     // 厚度10mm
-        .slope = 0.1,          // 坡度10%
+        .legWidth = 100.0,      // 肢宽100mm
+        .thickness = 10.0,      // 厚度10mm
+        .slope = 0.1,           // 坡度10%
         .exposedLength = 200.0, // 露头长度200mm
         .anchorLength = 500.0   // 锚固长度500mm
     };
@@ -2235,28 +2227,25 @@ void test_make_stub_angle() {
 
     // 创建带定位的插入角钢
     gp_Pnt position(0, 0, 1000);
-    gp_Dir normal(0, 1, 0);  // Y轴方向
-    gp_Dir xDir(1, 0, 0);    // X轴方向
+    gp_Dir normal(0, 1, 0); // Y轴方向
+    gp_Dir xDir(1, 0, 0);   // X轴方向
     auto positionedShp = create_stub_angle(params, position, normal, xDir);
     test_export_shape(positionedShp, "./stub_angle_positioned.stl");
-    
+
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
   }
 }
 
-
 void test_make_stub_tube() {
   std::cout << "\n=== Testing Stub Tube ===" << std::endl;
   try {
     // 测试标准插入钢管
-    stub_tube_params params1{
-        .diameter = 500.0,
-        .thickness = 10.0,
-        .slope = 0.1,
-        .exposedLength = 200.0,
-        .anchorLength = 1000.0
-    };
+    stub_tube_params params1{.diameter = 500.0,
+                             .thickness = 10.0,
+                             .slope = 0.1,
+                             .exposedLength = 200.0,
+                             .anchorLength = 1000.0};
 
     auto shp1 = create_stub_tube(params1);
     if (shp1.IsNull()) {
@@ -2266,13 +2255,11 @@ void test_make_stub_tube() {
     test_export_shape(shp1, "./stub_tube_standard.stl");
 
     // 测试带坡度的插入钢管
-    stub_tube_params params2{
-        .diameter = 600.0,
-        .thickness = 12.0,
-        .slope = 0.2,
-        .exposedLength = 300.0,
-        .anchorLength = 1200.0
-    };
+    stub_tube_params params2{.diameter = 600.0,
+                             .thickness = 12.0,
+                             .slope = 0.2,
+                             .exposedLength = 300.0,
+                             .anchorLength = 1200.0};
 
     auto shp2 = create_stub_tube(params2);
     if (shp2.IsNull()) {
@@ -2338,14 +2325,14 @@ int main() {
   test_make_precast_concrete_support_base();
   test_make_transmission_line();
   test_make_gt_insulator_string();
-  test_make_pole_tower();
-  test_make_single_hook_anchor();
-  test_make_triple_hook_anchor();
-  test_make_ribbed_anchor(); 
-  test_make_nut_anchor(); 
-  test_make_triple_arm_anchor();
-  test_make_positioning_plate_anchor();
-  test_make_stub_angle();
-  test_make_stub_tube();
+  // test_make_pole_tower();
+  // test_make_single_hook_anchor();
+  // test_make_triple_hook_anchor();
+  // test_make_ribbed_anchor();
+  // test_make_nut_anchor();
+  // test_make_triple_arm_anchor();
+  // test_make_positioning_plate_anchor();
+  // test_make_stub_angle();
+  // test_make_stub_tube();
   return 0;
 }
