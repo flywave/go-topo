@@ -980,10 +980,10 @@ struct insulator_params {
   // 绝缘子参数
   struct {
     boost::variant<double, composite_insulator_params> radius; // 半径或复合参数
-    double height;                                             // 结构高度(mm)
-    int leftCount;                                             // 左侧片数
-    int rightCount;                                            // 右侧片数
-    insulator_material material;                               // 材质
+    double height;               // 结构高度(mm)
+    int leftCount;               // 左侧片数
+    int rightCount;              // 右侧片数
+    insulator_material material; // 材质
   } insulator;
 
   // 均压环配置
@@ -1373,6 +1373,7 @@ struct cable_accessory_params {
   double height;            // 箱体高度(mm)
   int portCount;            // 电缆进出口数目(3或6)
   double portDiameter;      // 进出口直径(mm)
+  double portSpacing;       // 进出口间距(mm)
   double backPanelDistance; // 进出口距箱后面板距离(mm)
   double sidePanelDistance; // 进出口距箱侧面板距离(mm)
 };
@@ -2059,8 +2060,8 @@ TopoDS_Shape create_drainage_well(const drainage_well_params &params,
                                   const gp_Dir &xDir = gp::DX());
 // GZW_GZ
 struct pipe_support_params {
-  int style;                       // 管枕形式 (1-单侧管枕, 2-两侧管枕)
-  int count;                       // 管枕数量 N
+  int style; // 管枕形式 (1-单侧管枕, 2-两侧管枕)
+  int count; // 管枕数量 N
   std::vector<gp_Pnt2d> positions; // 管枕中心坐标 POS (mm)
   std::vector<double> radii;       // 管枕半径 R (mm)
   double length;                   // 管枕长 L (mm)

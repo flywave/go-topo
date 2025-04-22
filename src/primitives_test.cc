@@ -501,11 +501,11 @@ void test_make_insulator_string() {
     auto shp =
         create_insulator_string(insulator_string_params{.count = 2,
                                                         .spacing = 30.0,
-                                                        .insulatorCount = 10,
+                                                        .insulatorCount = 22,
                                                         .height = 5.0,
                                                         .bigSkirtRadius = 8.0,
                                                         .smallSkirtRadius = 6.0,
-                                                        .radius = 4.0,
+                                                        .radius = 2,
                                                         .frontLength = 15.0,
                                                         .backLength = 10.0,
                                                         .splitCount = 2});
@@ -520,11 +520,11 @@ void test_make_insulator_string() {
     auto shp2 =
         create_insulator_string(insulator_string_params{.count = 1,
                                                         .spacing = 0.0,
-                                                        .insulatorCount = 8,
+                                                        .insulatorCount = 22,
                                                         .height = 4.0,
                                                         .bigSkirtRadius = 7.0,
                                                         .smallSkirtRadius = 5.0,
-                                                        .radius = 3.5,
+                                                        .radius = 2,
                                                         .frontLength = 6.0,
                                                         .backLength = 5.0,
                                                         .splitCount = 2});
@@ -547,9 +547,9 @@ void test_make_vtype_insulator() {
     auto shp = create_vtype_insulator(vtype_insulator_params{
         .frontSpacing = 30.0,    // 前端间距
         .backSpacing = 20.0,     // 后端间距
-        .insulatorCount = 8,     // 每串绝缘子片数
+        .insulatorCount = 22,    // 每串绝缘子片数
         .height = 5.0,           // 单片高度
-        .radius = 3.0,           // 绝缘子半径
+        .radius = 2.0,           // 绝缘子半径
         .bigSkirtRadius = 6.0,   // 大伞半径
         .smallSkirtRadius = 5.0, // 小伞半径
         .frontLength = 10.0,     // 构架端长度
@@ -760,10 +760,10 @@ void test_make_wire() {
     auto shp2 = create_wire(
         wire_params{.startPoint = gp_Pnt(0, 0, 0),
                     .endPoint = gp_Pnt(300, 0, 150), // 与最后一个拟合点一致
-                    .startDir = gp_Dir(1, 0, 0),     // 初始方向沿X轴
-                    .endDir = gp_Dir(0, 0, 1),       // 结束方向沿Z轴
-                    .sag = 25.0,                     // 合理弧垂值
-                    .diameter = 8.0,                 // 典型导线直径
+                    .startDir = gp_Dir(1, 0, 0), // 初始方向沿X轴
+                    .endDir = gp_Dir(0, 0, 1),   // 结束方向沿Z轴
+                    .sag = 25.0,                 // 合理弧垂值
+                    .diameter = 8.0,             // 典型导线直径
                     .fitPoints = fitPoints});
 
     if (shp2.IsNull()) {
@@ -2032,17 +2032,18 @@ void test_make_pole_tower() {
                           .yDirection = gp_Dir(0, 1, 0)});
 
     // 3. 添加锥形钢管测试案例（规格格式：锥形管需要单独参数）
-    params.members.push_back(
-        pole_tower_member{.id = "member3",
-                          .startNodeId = "node5",
-                          .endNodeId = "node6",
-                          .type = member_type::TAPERED_TUBE,
-                          .specification = "TAPERED", // 锥形管需要单独参数
-                          .material = "Q345",
-                          .end1Diameter = 60.0, // 起始端直径
-                          .end2Diameter = 40.0, // 终止端直径
-                          .xDirection = gp_Dir(1, 0, 0),
-                          .yDirection = gp_Dir(0, 1, 0)});
+    params.members.push_back(pole_tower_member{
+        .id = "member3",
+        .startNodeId = "node5",
+        .endNodeId = "node6",
+        .type = member_type::TAPERED_TUBE,
+        .specification = "TAPERED", // 锥形管需要单独参数
+        .material = "Q345",
+        .xDirection = gp_Dir(1, 0, 0),
+        .yDirection = gp_Dir(0, 1, 0),
+        .end1Diameter = 60.0, // 起始端直径
+        .end2Diameter = 40.0, // 终止端直径
+    });
 
     // 添加挂点
     params.attachments.push_back(
@@ -2171,17 +2172,17 @@ void test_make_ribbed_anchor() {
 void test_make_nut_anchor() {
   std::cout << "\n=== Testing Nut Anchor ===" << std::endl;
   try {
-    nut_anchor_params params{                       // 基础参数
-                             .boltDiameter = 0.2,   // 地脚螺栓直径 20mm → 0.02m
+    nut_anchor_params params{                     // 基础参数
+                             .boltDiameter = 0.2, // 地脚螺栓直径 20mm → 0.02m
                              .exposedLength = 0.40, // 露头长度 100mm → 0.1m
                              .nutCount = 2,         // 蝶帽数量保持不变
-                             .nutHeight = 0.1,      // 蝶帽高度 10mm → 0.01m
-                             .nutOD = 0.6,          // 蝶帽外径 40mm → 0.04m
-                             .washerCount = 2,      // 垫片数量保持不变
-                             .washerShape = 2,      // 圆形垫片
-                             .washerSize = 0.65,    // 垫片直径 30mm → 0.03m
+                             .nutHeight = 0.1,   // 蝶帽高度 10mm → 0.01m
+                             .nutOD = 0.6,       // 蝶帽外径 40mm → 0.04m
+                             .washerCount = 2,   // 垫片数量保持不变
+                             .washerShape = 2,   // 圆形垫片
+                             .washerSize = 0.65, // 垫片直径 30mm → 0.03m
                              .washerThickness = 0.015, // 垫片厚度 5mm → 0.005m
-                             .anchorLength = 1.5,      // 锚固长度 500mm → 0.5m
+                             .anchorLength = 1.5, // 锚固长度 500mm → 0.5m
 
                              // 螺帽锚固特有参数
                              .basePlateSize = 0.60,
@@ -2331,6 +2332,157 @@ void test_make_stub_tube() {
   }
 }
 
+void test_make_cable_wire() {
+  std::cout << "\n=== Testing Cable Wire ===" << std::endl;
+  try {
+    // 测试简单直线电缆
+    std::vector<gp_Pnt> straightPoints = {gp_Pnt(0, 0, 0), gp_Pnt(100, 0, 0)};
+
+    auto shp1 = create_cable_wire(
+        cable_wire_params{.points = straightPoints, .outside_diameter = 10.0});
+
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create straight cable wire" << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./straight_cable_wire.stl");
+
+    // 测试曲线电缆
+    std::vector<gp_Pnt> curvedPoints = {gp_Pnt(0, 0, 0), gp_Pnt(50, 50, 0),
+                                        gp_Pnt(100, 50, 50),
+                                        gp_Pnt(150, 0, 100)};
+
+    auto shp2 = create_cable_wire(
+        cable_wire_params{.points = curvedPoints, .outside_diameter = 8.0});
+
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create curved cable wire" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./curved_cable_wire.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_cable_joint() {
+  std::cout << "\n=== Testing Cable Joint ===" << std::endl;
+  try {
+    // 测试标准电缆接头
+    auto shp1 = create_cable_joint(cable_joint_params{
+        .length = 100.0,        // 总长100mm
+        .outerDiameter = 30.0,  // 外径30mm
+        .terminalLength = 20.0, // 端子长度20mm
+        .innerDiameter = 20.0   // 内径20mm
+    });
+
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create standard cable joint" << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./standard_cable_joint.stl");
+
+    // 测试短接头
+    auto shp2 = create_cable_joint(cable_joint_params{
+        .length = 50.0,         // 总长50mm
+        .outerDiameter = 20.0,  // 外径20mm
+        .terminalLength = 10.0, // 端子长度10mm
+        .innerDiameter = 15.0   // 内径15mm
+    });
+
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create short cable joint" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./short_cable_joint.stl");
+
+    // 测试长端子接头
+    auto shp3 = create_cable_joint(cable_joint_params{
+        .length = 150.0,        // 总长150mm
+        .outerDiameter = 40.0,  // 外径40mm
+        .terminalLength = 50.0, // 端子长度50mm
+        .innerDiameter = 30.0   // 内径30mm
+    });
+
+    if (shp3.IsNull()) {
+      std::cerr << "Error: Failed to create long terminal cable joint"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp3, "./long_terminal_cable_joint.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_optical_fiber_box() {
+  std::cout << "\n=== Testing Optical Fiber Box ===" << std::endl;
+  try {
+    // 测试标准光缆接头盒
+    auto shp1 = create_optical_fiber_box(optical_fiber_box_params{
+        .length = 300.0, // 总长300mm
+        .height = 150.0, // 高度150mm
+        .width = 200.0   // 宽度200mm
+    });
+
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create standard optical fiber box"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./standard_optical_fiber_box.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_cable_accessory() {
+  std::cout << "\n=== Testing Cable Accessory ===" << std::endl;
+  try {
+    // 测试直接接地箱
+    auto shp1 = create_cable_accessory(
+        cable_accessory_params{.type = cable_box_type::DIRECT_GROUND,
+                               .length = 500.0,
+                               .width = 400.0,
+                               .height = 300.0,
+                               .portCount = 3,
+                               .portDiameter = 100.0,
+                               .portSpacing = 180,
+                               .backPanelDistance = 50.0,
+                               .sidePanelDistance = 60.0});
+
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create direct ground box" << std::endl;
+      return;
+    }
+    test_export_shape(shp1, "./direct_ground_box.stl");
+
+    // 测试带护层保护器的接地箱
+    auto shp2 = create_cable_accessory(
+        cable_accessory_params{.type = cable_box_type::PROTECTIVE_GROUND,
+                               .length = 600.0,
+                               .width = 500.0,
+                               .height = 400.0,
+                               .portCount = 6,
+                               .portDiameter = 120.0,
+                               .portSpacing = 180,
+                               .backPanelDistance = 60.0,
+                               .sidePanelDistance = 70.0});
+
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create protective ground box" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./protective_ground_box.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
 int main() {
   // 变电
   test_make_sphere();
@@ -2392,5 +2544,10 @@ int main() {
   test_make_positioning_plate_anchor();
   test_make_stub_angle();
   test_make_stub_tube();
+  // 电缆工程
+  test_make_cable_wire();
+  test_make_cable_joint();
+  test_make_optical_fiber_box();
+  test_make_cable_accessory();
   return 0;
 }
