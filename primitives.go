@@ -470,7 +470,6 @@ type TerminalBlockParams struct {
 	ColumnCount   int32
 	RowCount      int32
 	BottomOffset  float32
-	Phase         byte
 }
 
 func (p *TerminalBlockParams) to_struct() C.terminal_block_params_t {
@@ -485,7 +484,6 @@ func (p *TerminalBlockParams) to_struct() C.terminal_block_params_t {
 	c.columnCount = C.int(p.ColumnCount)
 	c.rowCount = C.int(p.RowCount)
 	c.bottomOffset = C.double(p.BottomOffset)
-	c.phase = C.char(p.Phase)
 	return c
 }
 
@@ -781,43 +779,15 @@ func CreateCurveCableWithPlace(params CurveCableParams, position Point3, directi
 	return s
 }
 
-type EquilateralAngleSteelParams struct {
-	L      float32
-	X      float32
-	Length float32
-}
-
-func (p *EquilateralAngleSteelParams) to_struct() C.equilateral_angle_steel_params_t {
-	var c C.equilateral_angle_steel_params_t
-	c.L = C.double(p.L)
-	c.X = C.double(p.X)
-	c.length = C.double(p.Length)
-	return c
-}
-
-func CreateEquilateralAngleSteel(params EquilateralAngleSteelParams) *Shape {
-	shp := C.create_equilateral_angle_steel(params.to_struct())
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-func CreateEquilateralAngleSteelWithPlace(params EquilateralAngleSteelParams, position Point3, xDir Dir3, yDir Dir3) *Shape {
-	shp := C.create_equilateral_angle_steel_with_place(params.to_struct(), position.val, xDir.val, yDir.val)
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-type ScaleneAngleSteelParams struct {
+type AngleSteelParams struct {
 	L1     float32
 	L2     float32
 	X      float32
 	Length float32
 }
 
-func (p *ScaleneAngleSteelParams) to_struct() C.scalene_angle_steel_params_t {
-	var c C.scalene_angle_steel_params_t
+func (p *AngleSteelParams) to_struct() C.angle_steel_params_t {
+	var c C.angle_steel_params_t
 	c.L1 = C.double(p.L1)
 	c.L2 = C.double(p.L2)
 	c.X = C.double(p.X)
@@ -825,249 +795,79 @@ func (p *ScaleneAngleSteelParams) to_struct() C.scalene_angle_steel_params_t {
 	return c
 }
 
-func CreateScaleneAngleSteel(params ScaleneAngleSteelParams) *Shape {
-	shp := C.create_scalene_angle_steel(params.to_struct())
+func CreateAngleSteel(params AngleSteelParams) *Shape {
+	shp := C.create_angle_steel(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateScaleneAngleSteelWithPlace(params ScaleneAngleSteelParams, position Point3, xDir Dir3, longEdgeDir Dir3) *Shape {
-	shp := C.create_scalene_angle_steel_with_place(params.to_struct(), position.val, xDir.val, longEdgeDir.val)
+func CreateAngleSteelWithPlace(params AngleSteelParams, position Point3, xDir Dir3, longEdgeDir Dir3) *Shape {
+	shp := C.create_angle_steel_with_place(params.to_struct(), position.val, xDir.val, longEdgeDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-type IBeamParams struct {
+type IShapedSteelParams struct {
 	Height          float32
 	FlangeWidth     float32
 	WebThickness    float32
 	FlangeThickness float32
-	Radius          float32
 	Length          float32
 }
 
-func (p *IBeamParams) to_struct() C.ibeam_params_t {
-	var c C.ibeam_params_t
+func (p *IShapedSteelParams) to_struct() C.i_shaped_steel_params_t {
+	var c C.i_shaped_steel_params_t
 	c.height = C.double(p.Height)
 	c.flangeWidth = C.double(p.FlangeWidth)
 	c.webThickness = C.double(p.WebThickness)
 	c.flangeThickness = C.double(p.FlangeThickness)
-	c.radius = C.double(p.Radius)
 	c.length = C.double(p.Length)
 	return c
 }
 
-func CreateIBeam(params IBeamParams) *Shape {
-	shp := C.create_ibeam(params.to_struct())
+func CreateIShapedSteel(params IShapedSteelParams) *Shape {
+	shp := C.create_i_shaped_steel(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateIBeamWithPlace(params IBeamParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	shp := C.create_ibeam_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
+func CreateIShapedSteelWithPlace(params IShapedSteelParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
+	shp := C.create_i_shaped_steel_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-type LightIBeamParams struct {
+type ChannelSteelParams struct {
 	Height          float32
 	FlangeWidth     float32
 	WebThickness    float32
 	FlangeThickness float32
-	Radius          float32
 	Length          float32
-	FlangeSlope     float32
 }
 
-func (p *LightIBeamParams) to_struct() C.light_ibeam_params_t {
-	var c C.light_ibeam_params_t
+func (p *ChannelSteelParams) to_struct() C.channel_steel_params_t {
+	var c C.channel_steel_params_t
 	c.height = C.double(p.Height)
 	c.flangeWidth = C.double(p.FlangeWidth)
 	c.webThickness = C.double(p.WebThickness)
 	c.flangeThickness = C.double(p.FlangeThickness)
-	c.radius = C.double(p.Radius)
-	c.length = C.double(p.Length)
-	c.flangeSlope = C.double(p.FlangeSlope)
-	return c
-}
-
-func CreateLightIBeam(params LightIBeamParams) *Shape {
-	shp := C.create_light_ibeam(params.to_struct())
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-func CreateLightIBeamWithPlace(params LightIBeamParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	shp := C.create_light_ibeam_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-type HBeamParams struct {
-	Height          float32
-	FlangeWidth     float32
-	WebThickness    float32
-	FlangeThickness float32
-	Radius          float32
-	Length          float32
-}
-
-func (p *HBeamParams) to_struct() C.hbeam_params_t {
-	var c C.hbeam_params_t
-	c.height = C.double(p.Height)
-	c.flangeWidth = C.double(p.FlangeWidth)
-	c.webThickness = C.double(p.WebThickness)
-	c.flangeThickness = C.double(p.FlangeThickness)
-	c.radius = C.double(p.Radius)
 	c.length = C.double(p.Length)
 	return c
 }
 
-func CreateHBeam(params HBeamParams) *Shape {
-	shp := C.create_hbeam(params.to_struct())
+func CreateChannelSteel(params ChannelSteelParams) *Shape {
+	shp := C.create_channel_steel(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateHBeamWithPlace(params HBeamParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	shp := C.create_hbeam_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-type BeamChannelParams struct {
-	Height          float32
-	FlangeWidth     float32
-	WebThickness    float32
-	FlangeThickness float32
-	Radius          float32
-	Length          float32
-}
-
-func (p *BeamChannelParams) to_struct() C.beam_channel_params_t {
-	var c C.beam_channel_params_t
-	c.height = C.double(p.Height)
-	c.flangeWidth = C.double(p.FlangeWidth)
-	c.webThickness = C.double(p.WebThickness)
-	c.flangeThickness = C.double(p.FlangeThickness)
-	c.radius = C.double(p.Radius)
-	c.length = C.double(p.Length)
-	return c
-}
-
-func CreateBeamChannel(params BeamChannelParams) *Shape {
-	shp := C.create_beam_channel(params.to_struct())
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-func CreateBeamChannelWithPlace(params BeamChannelParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	shp := C.create_beam_channel_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-type LightBeamChannelParams struct {
-	Height          float32
-	FlangeWidth     float32
-	WebThickness    float32
-	FlangeThickness float32
-	Radius          float32
-	Length          float32
-	FlangeSlope     float32
-}
-
-func (p *LightBeamChannelParams) to_struct() C.light_beam_channel_params_t {
-	var c C.light_beam_channel_params_t
-	c.height = C.double(p.Height)
-	c.flangeWidth = C.double(p.FlangeWidth)
-	c.webThickness = C.double(p.WebThickness)
-	c.flangeThickness = C.double(p.FlangeThickness)
-	c.radius = C.double(p.Radius)
-	c.length = C.double(p.Length)
-	c.flangeSlope = C.double(p.FlangeSlope)
-	return c
-}
-
-func CreateLightBeamChannel(params LightBeamChannelParams) *Shape {
-	shp := C.create_light_beam_channel(params.to_struct())
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-func CreateLightBeamChannelWithPlace(params LightBeamChannelParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	shp := C.create_light_beam_channel_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-type FlatSteelParams struct {
-	Width     float32
-	Thickness float32
-	Length    float32
-}
-
-func (p *FlatSteelParams) to_struct() C.flat_steel_params_t {
-	var c C.flat_steel_params_t
-	c.width = C.double(p.Width)
-	c.thickness = C.double(p.Thickness)
-	c.length = C.double(p.Length)
-	return c
-}
-
-func CreateFlatSteel(params FlatSteelParams) *Shape {
-	shp := C.create_flat_steel(params.to_struct())
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-func CreateFlatSteelWithPlace(params FlatSteelParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	shp := C.create_flat_steel_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-type LSteelParams struct {
-	Height    float32
-	Width     float32
-	Thickness float32
-	Radius    float32
-	Length    float32
-}
-
-func (p *LSteelParams) to_struct() C.lsteel_params_t {
-	var c C.lsteel_params_t
-	c.height = C.double(p.Height)
-	c.width = C.double(p.Width)
-	c.thickness = C.double(p.Thickness)
-	c.radius = C.double(p.Radius)
-	c.length = C.double(p.Length)
-	return c
-}
-
-func CreateLSteel(params LSteelParams) *Shape {
-	shp := C.create_lsteel(params.to_struct())
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-func CreateLSteelWithPlace(params LSteelParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	shp := C.create_lsteel_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
+func CreateChannelSteelWithPlace(params ChannelSteelParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
+	shp := C.create_channel_steel_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
@@ -1078,263 +878,40 @@ type TSteelParams struct {
 	Width           float32
 	WebThickness    float32
 	FlangeThickness float32
-	Radius          float32
 	Length          float32
 }
 
-func (p *TSteelParams) to_struct() C.tsteel_params_t {
-	var c C.tsteel_params_t
+func (p *TSteelParams) to_struct() C.t_steel_params_t {
+	var c C.t_steel_params_t
 	c.height = C.double(p.Height)
 	c.width = C.double(p.Width)
 	c.webThickness = C.double(p.WebThickness)
 	c.flangeThickness = C.double(p.FlangeThickness)
-	c.radius = C.double(p.Radius)
 	c.length = C.double(p.Length)
 	return c
 }
 
 func CreateTSteel(params TSteelParams) *Shape {
-	shp := C.create_tsteel(params.to_struct())
+	shp := C.create_t_steel(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
 func CreateTSteelWithPlace(params TSteelParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	shp := C.create_tsteel_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-type RoundSteelParams struct {
-	Diameter float32
-	Length   float32
-}
-
-func (p *RoundSteelParams) to_struct() C.round_steel_params_t {
-	var c C.round_steel_params_t
-	c.diameter = C.double(p.Diameter)
-	c.length = C.double(p.Length)
-	return c
-}
-
-func CreateRoundSteel(params RoundSteelParams) *Shape {
-	shp := C.create_round_steel(params.to_struct())
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-func CreateRoundSteelWithPlace(params RoundSteelParams, position Point3, xDir Dir3) *Shape {
-	shp := C.create_round_steel_with_place(params.to_struct(), position.val, xDir.val)
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-type RoundSteelTubeParams struct {
-	OuterDiameter float32
-	InnerDiameter float32
-	Length        float32
-}
-
-func (p *RoundSteelTubeParams) to_struct() C.round_steel_tube_params_t {
-	var c C.round_steel_tube_params_t
-	c.outerDiameter = C.double(p.OuterDiameter)
-	c.innerDiameter = C.double(p.InnerDiameter)
-	c.length = C.double(p.Length)
-	return c
-}
-
-func CreateRoundSteelTube(params RoundSteelTubeParams) *Shape {
-	shp := C.create_round_steel_tube(params.to_struct())
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-func CreateRoundSteelTubeWithPlace(params RoundSteelTubeParams, position Point3, xDir Dir3) *Shape {
-	shp := C.create_round_steel_tube_with_place(params.to_struct(), position.val, xDir.val)
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-type RectangularSteelTubeParams struct {
-	Height    float32
-	Width     float32
-	Thickness float32
-	Length    float32
-}
-
-func (p *RectangularSteelTubeParams) to_struct() C.rectangular_steel_tube_params_t {
-	var c C.rectangular_steel_tube_params_t
-	c.height = C.double(p.Height)
-	c.width = C.double(p.Width)
-	c.thickness = C.double(p.Thickness)
-	c.length = C.double(p.Length)
-	return c
-}
-
-func CreateRectangularSteelTube(params RectangularSteelTubeParams) *Shape {
-	shp := C.create_rectangular_steel_tube(params.to_struct())
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-func CreateRectangularSteelTubeWithPlace(params RectangularSteelTubeParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	shp := C.create_rectangular_steel_tube_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-type SquareSteelTubeParams struct {
-	Size      float32
-	Thickness float32
-	Length    float32
-}
-
-func (p *SquareSteelTubeParams) to_struct() C.square_steel_tube_params_t {
-	var c C.square_steel_tube_params_t
-	c.size = C.double(p.Size)
-	c.thickness = C.double(p.Thickness)
-	c.length = C.double(p.Length)
-	return c
-}
-
-func CreateSquareSteelTube(params SquareSteelTubeParams) *Shape {
-	shp := C.create_square_steel_tube(params.to_struct())
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-func CreateSquareSteelTubeWithPlace(params SquareSteelTubeParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	shp := C.create_square_steel_tube_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-type DoubleChannelSteelParams struct {
-	Base    BeamChannelParams
-	Spacing float32
-}
-
-func (p *DoubleChannelSteelParams) to_struct() C.double_channel_steel_params_t {
-	var c C.double_channel_steel_params_t
-	c.base = p.Base.to_struct()
-	c.spacing = C.double(p.Spacing)
-	return c
-}
-
-func CreateDoubleChannelSteel(params DoubleChannelSteelParams) *Shape {
-	shp := C.create_double_channel_steel(params.to_struct())
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-func CreateDoubleChannelSteelWithPlace(params DoubleChannelSteelParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	shp := C.create_double_channel_steel_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-type EquilateralDoubleAngleSteelParams struct {
-	Base    EquilateralAngleSteelParams
-	Spacing float32
-}
-
-func (p *EquilateralDoubleAngleSteelParams) to_struct() C.equilateral_double_angle_steel_params_t {
-	var c C.equilateral_double_angle_steel_params_t
-	c.base = p.Base.to_struct()
-	c.spacing = C.double(p.Spacing)
-	return c
-}
-
-func CreateEquilateralDoubleAngleSteel(params EquilateralDoubleAngleSteelParams) *Shape {
-	shp := C.create_equilateral_double_angle_steel(params.to_struct())
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-func CreateEquilateralDoubleAngleSteelWithPlace(params EquilateralDoubleAngleSteelParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	shp := C.create_equilateral_double_angle_steel_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-type UnequalAngleSteelParams struct {
-	Base    ScaleneAngleSteelParams
-	Spacing float32
-}
-
-func (p *UnequalAngleSteelParams) to_struct() C.unequal_angle_steel_params_t {
-	var c C.unequal_angle_steel_params_t
-	c.base = p.Base.to_struct()
-	c.spacing = C.double(p.Spacing)
-	return c
-}
-
-func CreateUnequalAngleSteel(params UnequalAngleSteelParams) *Shape {
-	shp := C.create_unequal_angle_steel(params.to_struct())
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-func CreateUnequalAngleSteelWithPlace(params UnequalAngleSteelParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	shp := C.create_unequal_angle_steel_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-type PolygonTubeParams struct {
-	SideLength float32
-	Thickness  float32
-	Length     float32
-	Sides      int32
-}
-
-func (p *PolygonTubeParams) to_struct() C.polygon_tube_params_t {
-	var c C.polygon_tube_params_t
-	c.side_length = C.double(p.SideLength)
-	c.thickness = C.double(p.Thickness)
-	c.length = C.double(p.Length)
-	c.sides = C.int(p.Sides)
-	return c
-}
-
-func CreatePolygonTube(params PolygonTubeParams) *Shape {
-	shp := C.create_polygon_tube(params.to_struct())
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-func CreatePolygonTubeWithPlace(params PolygonTubeParams, position Point3, xDir Dir3) *Shape {
-	shp := C.create_polygon_tube_with_place(params.to_struct(), position.val, xDir.val)
+	shp := C.create_t_steel_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
 type BoredPileParams struct {
-	H1           float32
-	H2           float32
-	H3           float32
-	H4           float32
-	D            float32
-	Diameter     float32
-	FilletRadius float32
+	H1       float32
+	H2       float32
+	H3       float32
+	H4       float32
+	D        float32
+	Diameter float32
 }
 
 func (p *BoredPileParams) to_struct() C.bored_pile_params_t {
@@ -1345,7 +922,6 @@ func (p *BoredPileParams) to_struct() C.bored_pile_params_t {
 	c.H4 = C.double(p.H4)
 	c.d = C.double(p.Diameter)
 	c.D = C.double(p.D)
-	c.filletRadius = C.double(p.FilletRadius)
 	return c
 }
 
@@ -1430,23 +1006,22 @@ func CreateRockPileCapBaseWithPlace(params RockPileCapParams, position Point3, d
 }
 
 type PileCapParams struct {
-	H1           float32
-	H2           float32
-	H3           float32
-	H4           float32
-	H5           float32
-	H6           float32
-	D            float32
-	Diameter     float32
-	B            float32
-	B1           float32
-	L1           float32
-	E1           float32
-	E2           float32
-	CS           int32
-	ZCount       int32
-	ZPosArray    []Point3
-	FilletRadius float32
+	H1        float32
+	H2        float32
+	H3        float32
+	H4        float32
+	H5        float32
+	H6        float32
+	D         float32
+	Diameter  float32
+	B         float32
+	B1        float32
+	L1        float32
+	E1        float32
+	E2        float32
+	CS        int32
+	ZCount    int32
+	ZPosArray []Point3
 }
 
 func (p *PileCapParams) to_struct() C.pile_cap_params_t {
@@ -1466,7 +1041,6 @@ func (p *PileCapParams) to_struct() C.pile_cap_params_t {
 	c.e2 = C.double(p.E2)
 	c.cs = C.int(p.CS)
 	c.ZCOUNT = C.int(p.ZCount)
-	c.filletRadius = C.double(p.FilletRadius)
 
 	if len(p.ZPosArray) > 0 {
 		c.ZPOSTARRAY = (*C.pnt3d_t)(C.malloc(C.size_t(len(p.ZPosArray)) * C.sizeof_pnt3d_t))
@@ -1889,14 +1463,12 @@ func CreateRaftBaseWithPlace(params RaftBaseParams, position Point3, direction D
 }
 
 type DirectBuriedBaseParams struct {
-	H1              float32
-	H2              float32
-	D               float32
-	Diameter        float32
-	B               float32
-	T               float32
-	HasBasePlate    bool
-	IsCircularPlate bool
+	H1       float32
+	H2       float32
+	D        float32
+	Diameter float32
+	B        float32
+	T        float32
 }
 
 func (p *DirectBuriedBaseParams) to_struct() C.direct_buried_base_params_t {
@@ -1907,8 +1479,6 @@ func (p *DirectBuriedBaseParams) to_struct() C.direct_buried_base_params_t {
 	c.D = C.double(p.D)
 	c.B = C.double(p.B)
 	c.t = C.double(p.T)
-	c.hasBasePlate = C.bool(p.HasBasePlate)
-	c.isCircularPlate = C.bool(p.IsCircularPlate)
 	return c
 }
 
