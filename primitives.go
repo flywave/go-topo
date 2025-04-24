@@ -2655,26 +2655,41 @@ const (
 )
 
 type CableTerminalParams struct {
-	Sort                   int32
-	Height                 float32
-	TopDiameter            float32
-	BottomDiameter         float32
-	TailDiameter           float32
-	TailHeight             float32
-	UpperTerminalDiameter  float32
-	LowerTerminalLength    float32
-	LowerTerminalDiameter  float32
-	Hole1Diameter          float32
-	Hole2Diameter          float32
-	Hole1Distance          float32
-	HoleSpacing            float32
-	FlangeHoleDiameter     float32
-	FlangeHoleSpacing      float32
-	FlangeWidth            float32
-	FlangeCenterHoleRadius float32
-	FlangeChamferRadius    float32
-	FlangeOpeningWidth     float32
-	FlangeBoltHeight       float32
+	Sort           int32   // 类型 SORT: 1-户外, 2-户内(GIS), 3-干式
+	Height         float32 // 总高度 H (mm)
+	TopDiameter    float32 // 上部直径 L1 (mm)
+	BottomDiameter float32 // 下部直径 d (mm)
+	TailDiameter   float32 // 尾管直径 D3 (mm)
+	TailHeight     float32 // 尾管高度 WH (mm)
+
+	// 伞裙参数 (仅户外和干式终端使用)
+	SkirtCount               int32   // 伞裙片数 N
+	UpperSkirtTopDiameter    float32 // 伞裙1上部直径 SD (mm)
+	UpperSkirtBottomDiameter float32 // 伞裙1下部直径 SDI (mm)
+	LowerSkirtTopDiameter    float32 // 伞裙2上部直径 BD (mm)
+	LowerSkirtBottomDiameter float32 // 伞裙2下部直径 BDI (mm)
+	SkirtSectionHeight       float32 // 伞裙节高度 h (mm)
+
+	// 端子参数
+	UpperTerminalLength   float32 // 上端子长度 LI (mm)
+	UpperTerminalDiameter float32 // 上端子直径 ZDI (mm)
+	LowerTerminalLength   float32 // 下端子长度 L2 (mm)
+	LowerTerminalDiameter float32 // 下端子直径 ZD2 (mm)
+
+	// 连接孔参数
+	Hole1Diameter float32 // 连接孔1直径 Φ1 (mm)
+	Hole2Diameter float32 // 连接孔2直径 Φ2 (mm)
+	Hole1Distance float32 // 连接孔1端距离 dl (mm)
+	HoleSpacing   float32 // 连接孔1到2间距 d2 (mm)
+
+	// 户外终端专用参数
+	FlangeHoleDiameter     float32 // 法兰盘连接孔直径 FD (mm)
+	FlangeHoleSpacing      float32 // 法兰盘连接孔间距 KD (mm)
+	FlangeWidth            float32 // 法兰盘宽度 PD (mm)
+	FlangeCenterHoleRadius float32 // 法兰盘中心孔半径 PR (mm)
+	FlangeChamferRadius    float32 // 法兰盘边缘倒角半径 BR (mm)
+	FlangeOpeningWidth     float32 // 法兰盘开口宽度 K (mm)
+	FlangeBoltHeight       float32 // 法兰盘螺栓高度 H (mm)
 }
 
 func (p *CableTerminalParams) to_struct() C.cable_terminal_params_t {
@@ -2685,6 +2700,13 @@ func (p *CableTerminalParams) to_struct() C.cable_terminal_params_t {
 	c.bottomDiameter = C.double(p.BottomDiameter)
 	c.tailDiameter = C.double(p.TailDiameter)
 	c.tailHeight = C.double(p.TailHeight)
+	c.skirtCount = C.int(p.SkirtCount)
+	c.upperSkirtTopDiameter = C.double(p.UpperSkirtTopDiameter)
+	c.upperSkirtBottomDiameter = C.double(p.UpperSkirtBottomDiameter)
+	c.lowerSkirtTopDiameter = C.double(p.LowerSkirtTopDiameter)
+	c.lowerSkirtBottomDiameter = C.double(p.LowerSkirtBottomDiameter)
+	c.skirtSectionHeight = C.double(p.SkirtSectionHeight)
+	c.upperTerminalLength = C.double(p.UpperTerminalLength)
 	c.upperTerminalDiameter = C.double(p.UpperTerminalDiameter)
 	c.lowerTerminalLength = C.double(p.LowerTerminalLength)
 	c.lowerTerminalDiameter = C.double(p.LowerTerminalDiameter)
@@ -3060,10 +3082,9 @@ const (
 )
 
 type LiftingEyeParams struct {
-	Height          float64
-	RingRadius      float64
-	PipeDiameter    float64
-	ConnectionPoint Point3
+	Height       float64
+	RingRadius   float64
+	PipeDiameter float64
 }
 
 func (p *LiftingEyeParams) to_struct() C.lifting_eye_params_t {
@@ -3071,7 +3092,6 @@ func (p *LiftingEyeParams) to_struct() C.lifting_eye_params_t {
 	c.height = C.double(p.Height)
 	c.ringRadius = C.double(p.RingRadius)
 	c.pipeDiameter = C.double(p.PipeDiameter)
-	c.connectionPoint = p.ConnectionPoint.val
 	return c
 }
 

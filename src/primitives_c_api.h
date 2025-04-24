@@ -1160,26 +1160,41 @@ enum {
 };
 
 typedef struct {
-  int sort;
-  double height;
-  double topDiameter;
-  double bottomDiameter;
-  double tailDiameter;
-  double tailHeight;
-  double upperTerminalDiameter;
-  double lowerTerminalLength;
-  double lowerTerminalDiameter;
-  double hole1Diameter;
-  double hole2Diameter;
-  double hole1Distance;
-  double holeSpacing;
-  double flangeHoleDiameter;
-  double flangeHoleSpacing;
-  double flangeWidth;
-  double flangeCenterHoleRadius;
-  double flangeChamferRadius;
-  double flangeOpeningWidth;
-  double flangeBoltHeight;
+    int sort;                    // 类型 SORT: 1-户外, 2-户内(GIS), 3-干式
+    double height;               // 总高度 H (mm)
+    double topDiameter;          // 上部直径 L1 (mm)
+    double bottomDiameter;       // 下部直径 d (mm)
+    double tailDiameter;         // 尾管直径 D3 (mm)
+    double tailHeight;           // 尾管高度 WH (mm)
+    
+    // 伞裙参数 (仅户外和干式终端使用)
+    int skirtCount;              // 伞裙片数 N
+    double upperSkirtTopDiameter;    // 伞裙1上部直径 SD (mm)
+    double upperSkirtBottomDiameter; // 伞裙1下部直径 SDI (mm)
+    double lowerSkirtTopDiameter;    // 伞裙2上部直径 BD (mm)
+    double lowerSkirtBottomDiameter; // 伞裙2下部直径 BDI (mm)
+    double skirtSectionHeight;   // 伞裙节高度 h (mm)
+    
+    // 端子参数
+    double upperTerminalLength;  // 上端子长度 LI (mm)
+    double upperTerminalDiameter; // 上端子直径 ZDI (mm)
+    double lowerTerminalLength;  // 下端子长度 L2 (mm)
+    double lowerTerminalDiameter; // 下端子直径 ZD2 (mm)
+    
+    // 连接孔参数
+    double hole1Diameter;        // 连接孔1直径 Φ1 (mm)
+    double hole2Diameter;        // 连接孔2直径 Φ2 (mm)
+    double hole1Distance;        // 连接孔1端距离 dl (mm)
+    double holeSpacing;          // 连接孔1到2间距 d2 (mm)
+
+    // 户外终端专用参数
+    double flangeHoleDiameter;    // 法兰盘连接孔直径 FD (mm)
+    double flangeHoleSpacing;     // 法兰盘连接孔间距 KD (mm)
+    double flangeWidth;           // 法兰盘宽度 PD (mm)
+    double flangeCenterHoleRadius; // 法兰盘中心孔半径 PR (mm)
+    double flangeChamferRadius;   // 法兰盘边缘倒角半径 BR (mm)
+    double flangeOpeningWidth;    // 法兰盘开口宽度 K (mm)
+    double flangeBoltHeight;      // 法兰盘螺栓高度 H1 (mm)
 } cable_terminal_params_t;
 
 PRIMCAPICALL topo_shape_t *
@@ -1321,7 +1336,6 @@ typedef struct {
   double height;
   double ringRadius;
   double pipeDiameter;
-  pnt3d_t connectionPoint;
 } lifting_eye_params_t;
 
 PRIMCAPICALL topo_shape_t *create_lifting_eye(lifting_eye_params_t params);

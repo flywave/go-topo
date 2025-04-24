@@ -980,10 +980,10 @@ struct insulator_params {
   // 绝缘子参数
   struct {
     boost::variant<double, composite_insulator_params> radius; // 半径或复合参数
-    double height;               // 结构高度(mm)
-    int leftCount;               // 左侧片数
-    int rightCount;              // 右侧片数
-    insulator_material material; // 材质
+    double height;                                             // 结构高度(mm)
+    int leftCount;                                             // 左侧片数
+    int rightCount;                                            // 右侧片数
+    insulator_material material;                               // 材质
   } insulator;
 
   // 均压环配置
@@ -1329,19 +1329,32 @@ TopoDS_Shape create_optical_fiber_box(const optical_fiber_box_params &params,
  * @brief 电缆终端类型参数结构体 DL_ZDJT
  */
 struct cable_terminal_params {
-  int sort;                     // 类型: 1-户外, 2-户内(GIS), 3-干式
-  double height;                // 总高度 H (mm)
-  double topDiameter;           // 上部直径 DI (mm)
-  double bottomDiameter;        // 下部直径 D2 (mm)
-  double tailDiameter;          // 尾管直径 D3 (mm)
-  double tailHeight;            // 尾管高度 WH (mm)
+  int sort;              // 类型 SORT: 1-户外, 2-户内(GIS), 3-干式
+  double height;         // 总高度 H (mm)
+  double topDiameter;    // 上部直径 L1 (mm)
+  double bottomDiameter; // 下部直径 d (mm)
+  double tailDiameter;   // 尾管直径 D3 (mm)
+  double tailHeight;     // 尾管高度 WH (mm)
+
+  // 伞裙参数 (仅户外和干式终端使用)
+  int skirtCount;                  // 伞裙片数 N
+  double upperSkirtTopDiameter;    // 伞裙1上部直径 SD (mm)
+  double upperSkirtBottomDiameter; // 伞裙1下部直径 SDI (mm)
+  double lowerSkirtTopDiameter;    // 伞裙2上部直径 BD (mm)
+  double lowerSkirtBottomDiameter; // 伞裙2下部直径 BDI (mm)
+  double skirtSectionHeight;       // 伞裙节高度 h (mm)
+
+  // 端子参数
+  double upperTerminalLength;   // 上端子长度 LI (mm)
   double upperTerminalDiameter; // 上端子直径 ZDI (mm)
   double lowerTerminalLength;   // 下端子长度 L2 (mm)
   double lowerTerminalDiameter; // 下端子直径 ZD2 (mm)
-  double hole1Diameter;         // 连接孔1直径 Φ1 (mm)
-  double hole2Diameter;         // 连接孔2直径 Φ2 (mm)
-  double hole1Distance;         // 连接孔1端距离 dl (mm)
-  double holeSpacing;           // 连接孔1到2间距 d2 (mm)
+
+  // 连接孔参数
+  double hole1Diameter; // 连接孔1直径 Φ1 (mm)
+  double hole2Diameter; // 连接孔2直径 Φ2 (mm)
+  double hole1Distance; // 连接孔1端距离 dl (mm)
+  double holeSpacing;   // 连接孔1到2间距 d2 (mm)
 
   // 户外终端专用参数
   double flangeHoleDiameter;     // 法兰盘连接孔直径 FD (mm)
@@ -1487,7 +1500,6 @@ struct lifting_eye_params {
   double height;          // 吊臂高度 H (mm)
   double ringRadius;      // 圆环半径 R (mm)
   double pipeDiameter;    // 钢管直径 I (mm)
-  gp_Pnt connectionPoint; // 连接点坐标
 };
 
 TopoDS_Shape create_lifting_eye(const lifting_eye_params &params);
@@ -2060,8 +2072,8 @@ TopoDS_Shape create_drainage_well(const drainage_well_params &params,
                                   const gp_Dir &xDir = gp::DX());
 // GZW_GZ
 struct pipe_support_params {
-  int style; // 管枕形式 (1-单侧管枕, 2-两侧管枕)
-  int count; // 管枕数量 N
+  int style;                       // 管枕形式 (1-单侧管枕, 2-两侧管枕)
+  int count;                       // 管枕数量 N
   std::vector<gp_Pnt2d> positions; // 管枕中心坐标 POS (mm)
   std::vector<double> radii;       // 管枕半径 R (mm)
   double length;                   // 管枕长 L (mm)

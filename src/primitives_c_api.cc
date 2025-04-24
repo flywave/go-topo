@@ -1789,26 +1789,35 @@ create_optical_fiber_box_with_place(optical_fiber_box_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_cable_terminal(cable_terminal_params_t params) {
-  cable_terminal_params cpp_params{params.sort,
-                                   params.height,
-                                   params.topDiameter,
-                                   params.bottomDiameter,
-                                   params.tailDiameter,
-                                   params.tailHeight,
-                                   params.upperTerminalDiameter,
-                                   params.lowerTerminalLength,
-                                   params.lowerTerminalDiameter,
-                                   params.hole1Diameter,
-                                   params.hole2Diameter,
-                                   params.hole1Distance,
-                                   params.holeSpacing,
-                                   params.flangeHoleDiameter,
-                                   params.flangeHoleSpacing,
-                                   params.flangeWidth,
-                                   params.flangeCenterHoleRadius,
-                                   params.flangeChamferRadius,
-                                   params.flangeOpeningWidth,
-                                   params.flangeBoltHeight};
+  cable_terminal_params cpp_params{
+      .sort = params.sort,
+      .height = params.height,
+      .topDiameter = params.topDiameter,
+      .bottomDiameter = params.bottomDiameter,
+      .tailDiameter = params.tailDiameter,
+      .tailHeight = params.tailHeight,
+      .skirtCount = params.skirtCount,
+      .upperSkirtTopDiameter = params.upperSkirtTopDiameter,
+      .upperSkirtBottomDiameter = params.upperSkirtBottomDiameter,
+      .lowerSkirtTopDiameter = params.lowerSkirtTopDiameter,
+      .lowerSkirtBottomDiameter = params.lowerSkirtBottomDiameter,
+      .skirtSectionHeight = params.skirtSectionHeight,
+      .upperTerminalLength = params.upperTerminalLength,
+      .upperTerminalDiameter = params.upperTerminalDiameter,
+      .lowerTerminalLength = params.lowerTerminalLength,
+      .lowerTerminalDiameter = params.lowerTerminalDiameter,
+      .hole1Diameter = params.hole1Diameter,
+      .hole2Diameter = params.hole2Diameter,
+      .hole1Distance = params.hole1Distance,
+      .holeSpacing = params.holeSpacing,
+      .flangeHoleDiameter = params.flangeHoleDiameter,
+      .flangeHoleSpacing = params.flangeHoleSpacing,
+      .flangeWidth = params.flangeWidth,
+      .flangeCenterHoleRadius = params.flangeCenterHoleRadius,
+      .flangeChamferRadius = params.flangeChamferRadius,
+      .flangeOpeningWidth = params.flangeOpeningWidth,
+      .flangeBoltHeight = params.flangeBoltHeight,
+  };
   return new topo_shape_t{
       std::make_shared<shape>(create_cable_terminal(cpp_params))};
 }
@@ -1816,26 +1825,35 @@ create_cable_terminal(cable_terminal_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cable_terminal_with_place(cable_terminal_params_t params,
                                  pnt3d_t position, dir3d_t direction) {
-  cable_terminal_params cpp_params{params.sort,
-                                   params.height,
-                                   params.topDiameter,
-                                   params.bottomDiameter,
-                                   params.tailDiameter,
-                                   params.tailHeight,
-                                   params.upperTerminalDiameter,
-                                   params.lowerTerminalLength,
-                                   params.lowerTerminalDiameter,
-                                   params.hole1Diameter,
-                                   params.hole2Diameter,
-                                   params.hole1Distance,
-                                   params.holeSpacing,
-                                   params.flangeHoleDiameter,
-                                   params.flangeHoleSpacing,
-                                   params.flangeWidth,
-                                   params.flangeCenterHoleRadius,
-                                   params.flangeChamferRadius,
-                                   params.flangeOpeningWidth,
-                                   params.flangeBoltHeight};
+  cable_terminal_params cpp_params{
+      .sort = params.sort,
+      .height = params.height,
+      .topDiameter = params.topDiameter,
+      .bottomDiameter = params.bottomDiameter,
+      .tailDiameter = params.tailDiameter,
+      .tailHeight = params.tailHeight,
+      .skirtCount = params.skirtCount,
+      .upperSkirtTopDiameter = params.upperSkirtTopDiameter,
+      .upperSkirtBottomDiameter = params.upperSkirtBottomDiameter,
+      .lowerSkirtTopDiameter = params.lowerSkirtTopDiameter,
+      .lowerSkirtBottomDiameter = params.lowerSkirtBottomDiameter,
+      .skirtSectionHeight = params.skirtSectionHeight,
+      .upperTerminalLength = params.upperTerminalLength,
+      .upperTerminalDiameter = params.upperTerminalDiameter,
+      .lowerTerminalLength = params.lowerTerminalLength,
+      .lowerTerminalDiameter = params.lowerTerminalDiameter,
+      .hole1Diameter = params.hole1Diameter,
+      .hole2Diameter = params.hole2Diameter,
+      .hole1Distance = params.hole1Distance,
+      .holeSpacing = params.holeSpacing,
+      .flangeHoleDiameter = params.flangeHoleDiameter,
+      .flangeHoleSpacing = params.flangeHoleSpacing,
+      .flangeWidth = params.flangeWidth,
+      .flangeCenterHoleRadius = params.flangeCenterHoleRadius,
+      .flangeChamferRadius = params.flangeChamferRadius,
+      .flangeOpeningWidth = params.flangeOpeningWidth,
+      .flangeBoltHeight = params.flangeBoltHeight,
+  };
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   return new topo_shape_t{std::make_shared<shape>(
@@ -2067,10 +2085,8 @@ create_u_shaped_ring_with_place(u_shaped_ring_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_lifting_eye(lifting_eye_params_t params) {
-  lifting_eye_params cpp_params{
-      params.height, params.ringRadius, params.pipeDiameter,
-      gp_Pnt(params.connectionPoint.x, params.connectionPoint.y,
-             params.connectionPoint.z)};
+  lifting_eye_params cpp_params{params.height, params.ringRadius,
+                                params.pipeDiameter};
   return new topo_shape_t{
       std::make_shared<shape>(create_lifting_eye(cpp_params))};
 }
@@ -2078,10 +2094,8 @@ PRIMCAPICALL topo_shape_t *create_lifting_eye(lifting_eye_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_lifting_eye_with_place(lifting_eye_params_t params, pnt3d_t position,
                               dir3d_t normal, dir3d_t xDir) {
-  lifting_eye_params cpp_params{
-      params.height, params.ringRadius, params.pipeDiameter,
-      gp_Pnt(params.connectionPoint.x, params.connectionPoint.y,
-             params.connectionPoint.z)};
+  lifting_eye_params cpp_params{params.height, params.ringRadius,
+                                params.pipeDiameter};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);

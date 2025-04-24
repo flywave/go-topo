@@ -41,6 +41,34 @@ bool exportShapeToStl(const TopoDS_Shape &shape, const std::string &path,
   return success;
 }
 
+bool exportShapeToStep(const TopoDS_Shape &shape, const std::string &path,
+                       double tolerance = 0.5, double angularTolerance = 0.3) {
+  // 检查输入形状是否有效
+  if (shape.IsNull()) {
+    return false;
+  }
+
+  // 创建STEP写入器和文档
+  Handle(TDocStd_Document) doc = new TDocStd_Document("STEP");
+  STEPCAFControl_Writer stepWriter;
+
+  // 设置转换参数
+  Interface_Static::SetCVal("write.step.unit", "MM");
+  Interface_Static::SetIVal("write.step.nonmanifold", 1);
+
+  // 添加形状到文档
+  Handle(XCAFDoc_ShapeTool) shapeTool =
+      XCAFDoc_DocumentTool::ShapeTool(doc->Main());
+  TDF_Label label = shapeTool->AddShape(shape);
+
+  // 执行导出
+  if (!stepWriter.Transfer(doc, STEPControl_AsIs)) {
+    return false;
+  }
+
+  return stepWriter.Write(path.c_str()) == IFSelect_RetDone;
+}
+
 bool test_export_shape(const TopoDS_Shape &shape, const std::string &filename) {
   std::cout << "Exporting " << filename << "... ";
   bool result = exportShapeToStl(shape, filename);
@@ -760,10 +788,10 @@ void test_make_wire() {
     auto shp2 = create_wire(
         wire_params{.startPoint = gp_Pnt(0, 0, 0),
                     .endPoint = gp_Pnt(300, 0, 150), // 与最后一个拟合点一致
-                    .startDir = gp_Dir(1, 0, 0), // 初始方向沿X轴
-                    .endDir = gp_Dir(0, 0, 1),   // 结束方向沿Z轴
-                    .sag = 25.0,                 // 合理弧垂值
-                    .diameter = 8.0,             // 典型导线直径
+                    .startDir = gp_Dir(1, 0, 0),     // 初始方向沿X轴
+                    .endDir = gp_Dir(0, 0, 1),       // 结束方向沿Z轴
+                    .sag = 25.0,                     // 合理弧垂值
+                    .diameter = 8.0,                 // 典型导线直径
                     .fitPoints = fitPoints});
 
     if (shp2.IsNull()) {
@@ -2172,17 +2200,17 @@ void test_make_ribbed_anchor() {
 void test_make_nut_anchor() {
   std::cout << "\n=== Testing Nut Anchor ===" << std::endl;
   try {
-    nut_anchor_params params{                     // 基础参数
-                             .boltDiameter = 0.2, // 地脚螺栓直径 20mm → 0.02m
+    nut_anchor_params params{                       // 基础参数
+                             .boltDiameter = 0.2,   // 地脚螺栓直径 20mm → 0.02m
                              .exposedLength = 0.40, // 露头长度 100mm → 0.1m
                              .nutCount = 2,         // 蝶帽数量保持不变
-                             .nutHeight = 0.1,   // 蝶帽高度 10mm → 0.01m
-                             .nutOD = 0.6,       // 蝶帽外径 40mm → 0.04m
-                             .washerCount = 2,   // 垫片数量保持不变
-                             .washerShape = 2,   // 圆形垫片
-                             .washerSize = 0.65, // 垫片直径 30mm → 0.03m
+                             .nutHeight = 0.1,      // 蝶帽高度 10mm → 0.01m
+                             .nutOD = 0.6,          // 蝶帽外径 40mm → 0.04m
+                             .washerCount = 2,      // 垫片数量保持不变
+                             .washerShape = 2,      // 圆形垫片
+                             .washerSize = 0.65,    // 垫片直径 30mm → 0.03m
                              .washerThickness = 0.015, // 垫片厚度 5mm → 0.005m
-                             .anchorLength = 1.5, // 锚固长度 500mm → 0.5m
+                             .anchorLength = 1.5,      // 锚固长度 500mm → 0.5m
 
                              // 螺帽锚固特有参数
                              .basePlateSize = 0.60,
@@ -2483,6 +2511,363 @@ void test_make_cable_accessory() {
   }
 }
 
+void test_make_cable_terminal() {
+  std::cout << "\n=== Testing Cable Terminal ===" << std::endl;
+
+  try {
+    // 测试户外终端
+    cable_terminal_params outdoor_params{.sort = 1, // 户外终端
+                                         .height = 1000,
+                                         .topDiameter = 200,
+                                         .bottomDiameter = 300,
+                                         .tailDiameter = 350,
+                                         .tailHeight = 50,
+                                         .skirtCount = 18,
+                                         .upperSkirtTopDiameter = 330,
+                                         .upperSkirtBottomDiameter = 340,
+                                         .lowerSkirtTopDiameter = 380,
+                                         .lowerSkirtBottomDiameter = 400,
+                                         .skirtSectionHeight = 40,
+                                         .upperTerminalLength = 100,
+                                         .upperTerminalDiameter = 80,
+                                         .lowerTerminalLength = 120,
+                                         .lowerTerminalDiameter = 100,
+                                         .hole1Diameter = 20,
+                                         .hole2Diameter = 20,
+                                         .hole1Distance = 30,
+                                         .holeSpacing = 40,
+                                         .flangeHoleDiameter = 25,
+                                         .flangeHoleSpacing = 400,
+                                         .flangeWidth = 450,
+                                         .flangeCenterHoleRadius = 75,
+                                         .flangeChamferRadius = 10,
+                                         .flangeOpeningWidth = 120,
+                                         .flangeBoltHeight = 40};
+
+    auto outdoor_terminal = create_cable_terminal(outdoor_params);
+    if (outdoor_terminal.IsNull()) {
+      std::cerr << "Error: Failed to create outdoor terminal" << std::endl;
+      return;
+    }
+    test_export_shape(outdoor_terminal, "./outdoor_terminal.stl");
+
+    // 测试户内终端
+    cable_terminal_params indoor_params{.sort = 2, // 户内终端
+                                        .height = 800,
+                                        .topDiameter = 180,
+                                        .bottomDiameter = 220,
+                                        .tailDiameter = 0, // 户内无尾管
+                                        .tailHeight = 0,
+                                        .upperTerminalLength = 80,
+                                        .upperTerminalDiameter = 70,
+                                        .lowerTerminalLength = 100,
+                                        .lowerTerminalDiameter = 90};
+
+    auto indoor_terminal = create_cable_terminal(indoor_params);
+    if (indoor_terminal.IsNull()) {
+      std::cerr << "Error: Failed to create indoor terminal" << std::endl;
+      return;
+    }
+    test_export_shape(indoor_terminal, "./indoor_terminal.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_cable_clamp() {
+  std::cout << "\n=== Testing Cable Clamp ===" << std::endl;
+
+  try {
+    // 测试单根夹具
+    auto singleClamp =
+        create_cable_clamp(cable_clamp_params{.type = cable_clamp_type::SINGLE,
+                                              .diameter = 50.0,
+                                              .thickness = 10.0,
+                                              .width = 30.0});
+    if (singleClamp.IsNull()) {
+      std::cerr << "Error: Failed to create single cable clamp" << std::endl;
+      return;
+    }
+    test_export_shape(singleClamp, "./single_clamp.stl");
+
+    // 测试一字式夹具
+    auto linearClamp =
+        create_cable_clamp(cable_clamp_params{.type = cable_clamp_type::LINEAR,
+                                              .diameter = 60.0,
+                                              .thickness = 12.0,
+                                              .width = 40.0});
+    if (linearClamp.IsNull()) {
+      std::cerr << "Error: Failed to create linear cable clamp" << std::endl;
+      return;
+    }
+    test_export_shape(linearClamp, "./linear_clamp.stl");
+
+    // 测试品字接触式夹具
+    auto contactTripleClamp = create_cable_clamp(
+        cable_clamp_params{.type = cable_clamp_type::CONTACT_TRIPLE,
+                           .diameter = 70.0,
+                           .thickness = 15.0,
+                           .width = 50.0});
+    if (contactTripleClamp.IsNull()) {
+      std::cerr << "Error: Failed to create contact triple cable clamp"
+                << std::endl;
+      return;
+    }
+    test_export_shape(contactTripleClamp, "./contact_triple_clamp.stl");
+
+    // 测试品字分离式夹具
+    auto separateTripleClamp = create_cable_clamp(
+        cable_clamp_params{.type = cable_clamp_type::SEPARATE_TRIPLE,
+                           .diameter = 80.0,
+                           .thickness = 18.0,
+                           .width = 60.0});
+    if (separateTripleClamp.IsNull()) {
+      std::cerr << "Error: Failed to create separate triple cable clamp"
+                << std::endl;
+      return;
+    }
+    test_export_shape(separateTripleClamp, "./separate_triple_clamp.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_cable_bracket() {
+  std::cout << "\n=== Testing Cable Bracket ===" << std::endl;
+  try {
+    // 创建测试用的安装点
+    std::vector<gp_Pnt> columnPoints = {gp_Pnt(10, -8.0, -10),
+                                        gp_Pnt(10, -8.0, -35)};
+    std::vector<gp_Pnt> clampPoints = {gp_Pnt(90, -5.0, -7.5),
+                                       gp_Pnt(50, -5.0, -7.5)};
+
+    // 测试默认参数创建
+    auto shp = create_cable_bracket(
+        cable_bracket_params{.length = 100.0,      // 支架长度 L
+                             .rootHeight = 50.0,   // 根部高度 H
+                             .rootWidth = 20.0,    // 根部宽度 B
+                             .width = 15.0,        // 支架宽度 C
+                             .topThickness = 5.0,  // 顶部厚度 t
+                             .rootThickness = 8.0, // 根部厚度 T
+                             .columnMountPoints = columnPoints,
+                             .clampMountPoints = clampPoints});
+
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create cable bracket" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./cable_bracket.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_cable_pole() {
+  std::cout << "\n=== Testing Cable Pole ===" << std::endl;
+
+  // 创建测试用的安装点
+  std::vector<gp_Pnt> mountPoints = {
+      gp_Pnt(-20, 0, 50),  // 第一个安装点
+      gp_Pnt(20, 0, 50),   // 第二个安装点
+      gp_Pnt(-20, 0, 100), // 第三个安装点
+      gp_Pnt(20, 0, 100),  // 第四个安装点
+      gp_Pnt(-20, 0, 150), // 第五个安装点
+      gp_Pnt(20, 0, 150),  // 第六个安装点
+  };
+
+  // 测试默认参数创建
+  auto shp = create_cable_pole(cable_pole_params{
+      .specification = "GJ-DLLZ-1", // 规格型号
+      .length = 200.0,              // 立柱长度(mm)
+      .radius = 0,                  // 立柱半径(mm)
+      .arcAngle = M_PI / 4,         // 立柱弧度(π/4)
+      .width = 20.0,                // 立柱宽度(mm)
+      .fixedLegLength = 20.0,       // 固定肢长度(mm)
+      .fixedLegWidth = 10.0,        // 固定肢宽度(mm)
+      .thickness = 5.0,             // 立柱厚度(mm)
+      .mountPoints = mountPoints    // 安装点
+  });
+
+  if (shp.IsNull()) {
+    std::cerr << "Error: Failed to create cable pole" << std::endl;
+    return;
+  }
+
+  test_export_shape(shp, "./cable_pole.stl");
+
+  // 弧形立柱测试参数
+  // 弧形立柱测试参数
+  cable_pole_params params{
+      .specification = "GJ-DLLZ-2",
+      .length = 200.0,        // 立柱总高度
+      .radius = 50.0,         // 圆弧半径
+      .arcAngle = M_PI / 2,   // 90度圆弧
+      .width = 20.0,          // 立柱宽度
+      .fixedLegLength = 16.0, // 固定肢长度
+      .fixedLegWidth = 8.0,   // 固定肢宽度
+      .thickness = 3.0        // 立柱厚度
+  };
+  // 计算弧形立柱上的安装点位置（XZ平面坐标系）
+  for (int i = 0; i < 6; i++) {
+    double angle = params.arcAngle * i / 5;
+
+    // 圆弧路径坐标（XZ平面）
+    double x = params.radius * sin(angle);       // X轴坐标
+    double z = params.radius * (1 - cos(angle)); // Z轴坐标
+
+    // 直接使用圆弧路径的z坐标（无需叠加高度参数）
+    params.mountPoints.push_back(gp_Pnt(x, params.width / 2 + 8, z));  // 外侧
+    params.mountPoints.push_back(gp_Pnt(x, -params.width / 2 - 8, z)); // 内侧
+  }
+  // 测试弧形立柱（更新相关参数）
+  auto arcPole = create_cable_pole(params);
+
+  if (arcPole.IsNull()) {
+    std::cerr << "Error: Failed to create arc cable pole" << std::endl;
+    return;
+  }
+  test_export_shape(arcPole, "./arc_cable_pole.stl");
+}
+
+void test_make_ground_flat_iron() {
+  std::cout << "\n=== Testing Ground Flat Iron ===" << std::endl;
+
+  ground_flat_iron_params params{
+      .length = 100.0,  // 100mm长度
+      .height = 20.0,   // 20mm高度
+      .thickness = 10.0 // 10mm厚度
+  };
+
+  auto shp = create_ground_flat_iron(params);
+  if (shp.IsNull()) {
+    std::cerr << "Error: Failed to create ground flat iron" << std::endl;
+    return;
+  }
+  test_export_shape(shp, "./ground_flat_iron.stl");
+}
+
+void test_make_embedded_part() {
+  std::cout << "\n=== Testing Embedded Part ===" << std::endl;
+
+  embedded_part_params params{
+      .length = 100.0,       // 预埋件主体长度
+      .radius = 20.0,        // 半圆钩半径
+      .height = 50.0,        // 总高度
+      .materialRadius = 5.0, // 材料半径
+      .lowerLength = 30.0    // 下部延伸长度
+  };
+
+  try {
+    auto shp = create_embedded_part(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create embedded part" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./embedded_part.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_u_shaped_ring() {
+  std::cout << "\n=== Testing U-Shaped Ring ===" << std::endl;
+
+  u_shaped_ring_params params{
+      .thickness = 5.0, // 材料厚度
+      .height = 30.0,   // 开口高度
+      .radius = 25.0,   // 弯曲半径
+      .length = 100.0   // 总长度
+  };
+
+  try {
+    auto shp = create_u_shaped_ring(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create U-shaped ring" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./u_shaped_ring.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_lifting_eye() {
+  std::cout << "\n=== Testing Lifting Eye ===" << std::endl;
+
+  lifting_eye_params params{
+      .height = 100.0,     // 吊臂高度
+      .ringRadius = 25.0,  // 圆环半径
+      .pipeDiameter = 10.0 // 钢管直径
+  };
+
+  try {
+    auto shp = create_lifting_eye(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create lifting eye" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./lifting_eye.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_tunnel_well() {
+  std::cout << "\n=== Testing Tunnel Well ===" << std::endl;
+
+  try {
+    // 测试矩形连接段
+    auto shp1 = create_tunnel_well(
+        tunnel_well_params{.type = tunnel_well_type::STRAIGHT,
+                           .length = 200.0,
+                           .width = 150.0,
+                           .height = 180.0,
+                           .topThickness = 20.0,
+                           .bottomThickness = 25.0,
+                           .outerWallThickness = 30.0,
+                           .cushionExtension = 10.0,
+                           .cushionThickness = 15.0});
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create rectangular tunnel well"
+                << std::endl;
+    } else {
+      test_export_shape(shp1, "./tunnel_straight_well.stl");
+    }
+
+    // 测试圆形连接段
+    auto shp3 = create_tunnel_well(tunnel_well_params{
+        .type = tunnel_well_type::STRAIGHT_TUNNEL,
+        .length = 150.0,
+        .width = 120.0,
+        .height = 140.0,
+        .radius = 60.0,
+        .topThickness = 15.0,
+        .bottomThickness = 20.0,
+        .leftSectionType = connection_section_style::CIRCULAR,
+        .leftLength = 80.0,
+        .leftWidth = 100.0,
+        .leftHeight = 70.0,
+        .rightSectionType = connection_section_style::CIRCULAR,
+        .rightLength = 60.0,
+        .rightWidth = 80.0,
+        .rightHeight = 60.0,
+        .innerWallThickness = 20.0,
+        .outerWallThickness = 20.0
+      });
+    if (shp3.IsNull()) {
+      std::cerr << "Error: Failed to create circular tunnel well" << std::endl;
+    } else {
+      test_export_shape(shp3, "./tunnel_well_circular.stl");
+    }
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
 int main() {
   // 变电
   test_make_sphere();
@@ -2549,5 +2934,14 @@ int main() {
   test_make_cable_joint();
   test_make_optical_fiber_box();
   test_make_cable_accessory();
+  test_make_cable_terminal();
+  test_make_cable_clamp();
+  test_make_cable_bracket();
+  test_make_cable_pole();
+  test_make_ground_flat_iron();
+  test_make_embedded_part();
+  test_make_u_shaped_ring();
+  test_make_lifting_eye();
+  test_make_tunnel_well();
   return 0;
 }
