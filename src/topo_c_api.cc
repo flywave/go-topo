@@ -3,7 +3,11 @@
 #include "shape_ops.hh"
 #include "standard_impl.hh"
 #include "topo_impl.hh"
-
+#include "shape.hh"
+ 
+#include <memory>
+#include <string>
+#include <vector>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -5409,6 +5413,15 @@ TOPOCAPICALL pnt3d_t topo_combined_center_of_bound_box(topo_shape_t **objects,
     return pnt3d_t{0, 0, 0};
   }
 }
+
+topo_shape_t *step_get_topo_shape(const char *filename) {
+  std::string f{filename};
+  auto res = flywave::topo::read_shape_from_step(f);
+  auto shp = std::make_shared<flywave::topo::shape>(res);
+   return new _topo_shape_t{
+        .shp = shp 
+    };
+ }
 
 #ifdef __cplusplus
 }

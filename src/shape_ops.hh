@@ -160,5 +160,7 @@ gp_Pnt combined_center(const std::vector<shape> &objects);
 
 gp_Pnt combined_center_of_bound_box(const std::vector<shape> &objects);
 
+shape  read_shape_from_step(const std::string &filename);
+
 } // namespace topo
 } // namespace flywave
