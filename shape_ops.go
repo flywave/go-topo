@@ -330,3 +330,10 @@ func CombinedCenterOfBoundBox(objects []*Shape) Point3 {
 	result := C.topo_combined_center_of_bound_box(&cObjects[0], C.int(count))
 	return Point3{val: result}
 }
+
+func StepToTopoShape(f string) *Shape {
+	fl := C.CString(f)
+	defer C.free(unsafe.Pointer(fl))
+	res := C.step_get_topo_shape(fl)
+	return NewShape(res)
+}

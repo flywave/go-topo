@@ -35,6 +35,7 @@
 #include <TopoDS_Solid.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
+#include <STEPControl_Reader.hxx>
 #include <algorithm>
 #include <cmath> // for M_PI
 #include <gce_MakeDir.hxx>
@@ -1340,6 +1341,18 @@ gp_Pnt combined_center_of_bound_box(const std::vector<shape> &objects) {
   combinedBox.Get(xMin, yMin, zMin, xMax, yMax, zMax);
   return gp_Pnt((xMin + xMax) / 2.0, (yMin + yMax) / 2.0, (zMin + zMax) / 2.0);
 }
+
+shape  read_shape_from_step(const std::string &filename){
+  STEPControl_Reader reader;
+  IFSelect_ReturnStatus status = reader.ReadFile(filename.c_str());
+  if (status != IFSelect_RetDone) {
+    throw std::runtime_error("Failed to read STEP file");
+  }
+  reader.TransferRoots();
+  TopoDS_Shape shp = reader.OneShape();
+  return  std::move(shp);
+}
+
 
 } // namespace topo
 } // namespace flywave
