@@ -2822,7 +2822,7 @@ void test_make_tunnel_well() {
     // 测试矩形连接段
     auto shp1 = create_tunnel_well(
         tunnel_well_params{.type = tunnel_well_type::STRAIGHT,
-                           .length = 200.0,
+                           .length = 800.0,
                            .width = 150.0,
                            .height = 180.0,
                            .topThickness = 20.0,
@@ -2838,7 +2838,7 @@ void test_make_tunnel_well() {
     }
 
     // 测试圆形连接段
-    auto shp3 = create_tunnel_well(tunnel_well_params{
+    auto shp2 = create_tunnel_well(tunnel_well_params{
         .type = tunnel_well_type::STRAIGHT_TUNNEL,
         .length = 150.0,
         .width = 120.0,
@@ -2847,21 +2847,113 @@ void test_make_tunnel_well() {
         .topThickness = 15.0,
         .bottomThickness = 20.0,
         .leftSectionType = connection_section_style::CIRCULAR,
-        .leftLength = 80.0,
+        .leftLength = 800.0,
         .leftWidth = 100.0,
-        .leftHeight = 70.0,
+        .leftHeight = 140.0,
         .rightSectionType = connection_section_style::CIRCULAR,
-        .rightLength = 60.0,
+        .rightLength = 600.0,
         .rightWidth = 80.0,
-        .rightHeight = 60.0,
+        .rightHeight = 100.0,
         .innerWallThickness = 20.0,
-        .outerWallThickness = 20.0
-      });
-    if (shp3.IsNull()) {
+        .outerWallThickness = 20.0});
+    if (shp2.IsNull()) {
       std::cerr << "Error: Failed to create circular tunnel well" << std::endl;
     } else {
-      test_export_shape(shp3, "./tunnel_well_circular.stl");
+      test_export_shape(shp2, "./tunnel_well_circular.stl");
     }
+
+    // 测试矩形连接段
+    auto shp3 = create_tunnel_well(tunnel_well_params{
+        .type = tunnel_well_type::STRAIGHT_TUNNEL,
+        .length = 150.0,
+        .width = 120.0,
+        .height = 140.0,
+        .radius = 60.0,
+        .topThickness = 15.0,
+        .bottomThickness = 20.0,
+        .leftSectionType = connection_section_style::RECTANGULAR,
+        .leftLength = 800.0,
+        .leftWidth = 100.0,
+        .leftHeight = 140.0,
+        .rightSectionType = connection_section_style::RECTANGULAR,
+        .rightLength = 600.0,
+        .rightWidth = 80.0,
+        .rightHeight = 100.0,
+        .innerWallThickness = 20.0,
+        .outerWallThickness = 20.0});
+    if (shp3.IsNull()) {
+      std::cerr << "Error: Failed to create rectangular tunnel well"
+                << std::endl;
+    } else {
+      test_export_shape(shp3, "./tunnel_well_rectangular.stl");
+    }
+
+    // 测试马蹄形连接段
+    auto shp4 = create_tunnel_well(tunnel_well_params{
+        .type = tunnel_well_type::STRAIGHT_TUNNEL,
+        .length = 150.0,
+        .width = 120.0,
+        .height = 140.0,
+        .radius = 50.0,
+        .topThickness = 15.0,
+        .bottomThickness = 20.0,
+        .leftSectionType = connection_section_style::HORSESHOE,
+        .leftLength = 800.0,
+        .leftWidth = 100.0,
+        .leftHeight = 140.0,
+        .leftArchHeight = 30.0,
+        .rightSectionType = connection_section_style::HORSESHOE,
+        .rightLength = 600.0,
+        .rightWidth = 80.0,
+        .rightHeight = 100.0,
+        .rightArchHeight = 25.0,
+        .innerWallThickness = 20.0,
+        .outerWallThickness = 20.0});
+    if (shp4.IsNull()) {
+      std::cerr << "Error: Failed to create horseshoe tunnel well" << std::endl;
+    } else {
+      test_export_shape(shp4, "./tunnel_well_horseshoe.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_corner_well() {
+  std::cout << "\n=== Testing Corner Well ===" << std::endl;
+  try {
+    // 测试基本转角井
+    corner_well_params params{
+        .leftLength = 800.0,      // 左段长800mm
+        .rightLength = 600.0,     // 右段长600mm 
+        .width = 150.0,           // 净宽150mm
+        .height = 180.0,          // 净高180mm
+        .topThickness = 20.0,     // 顶板厚20mm
+        .bottomThickness = 25.0,  // 底板厚25mm
+        .wallThickness = 30.0,    // 壁厚30mm
+        .angle = 90.0,            // 转角90度
+        .cornerRadius = 100.0,    // 转角半径100mm
+        .cushionExtension = 10.0, // 垫层滋出10mm
+        .cushionThickness = 15.0  // 垫层厚15mm
+    };
+
+    auto shp = create_corner_well(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create corner well" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./corner_well.stl");
+
+    // 测试不同转角角度
+    params.angle = 120.0;
+    auto shp2 = create_corner_well(params);
+    test_export_shape(shp2, "./corner_well_120deg.stl");
+
+    // 测试不同转角半径
+    params.angle = 90.0;
+    params.cornerRadius = 150.0;
+    auto shp3 = create_corner_well(params);
+    test_export_shape(shp3, "./corner_well_large_radius.stl");
 
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
@@ -2943,5 +3035,6 @@ int main() {
   test_make_u_shaped_ring();
   test_make_lifting_eye();
   test_make_tunnel_well();
+  test_make_corner_well();
   return 0;
 }
