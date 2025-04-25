@@ -7852,7 +7852,7 @@ TopoDS_Shape create_cable_joint(const cable_joint_params &params) {
   }
 
   // 计算中间圆柱体长度
-  double middleLength = params.length - 2 * params.terminalLength;
+  double middleLength = params.length - (2 * params.terminalLength);
 
   // 创建中间圆柱体
   gp_Ax2 middleAxis(gp_Pnt(-middleLength / 2, 0, 0), gp::DX());
@@ -7880,9 +7880,10 @@ TopoDS_Shape create_cable_joint(const cable_joint_params &params) {
   joint = BRepAlgoAPI_Fuse(joint, rightCone).Shape();
 
   // 创建中间芯体
-  gp_Ax2 holeAxis(gp_Pnt(-params.length / 2, 0, 0), gp::DX());
+  gp_Ax2 holeAxis(gp_Pnt(-params.length, 0, 0), gp::DX());
   TopoDS_Shape middleHole =
-      BRepPrimAPI_MakeCylinder(middleAxis, params.length / 2, middleLength)
+      BRepPrimAPI_MakeCylinder(middleAxis, params.innerDiameter / 2,
+                               params.length*2)
           .Shape();
 
   BRepAlgoAPI_Cut fusHole(joint, middleHole);
