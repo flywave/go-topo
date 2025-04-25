@@ -788,10 +788,10 @@ void test_make_wire() {
     auto shp2 = create_wire(
         wire_params{.startPoint = gp_Pnt(0, 0, 0),
                     .endPoint = gp_Pnt(300, 0, 150), // 与最后一个拟合点一致
-                    .startDir = gp_Dir(1, 0, 0),     // 初始方向沿X轴
-                    .endDir = gp_Dir(0, 0, 1),       // 结束方向沿Z轴
-                    .sag = 25.0,                     // 合理弧垂值
-                    .diameter = 8.0,                 // 典型导线直径
+                    .startDir = gp_Dir(1, 0, 0), // 初始方向沿X轴
+                    .endDir = gp_Dir(0, 0, 1),   // 结束方向沿Z轴
+                    .sag = 25.0,                 // 合理弧垂值
+                    .diameter = 8.0,             // 典型导线直径
                     .fitPoints = fitPoints});
 
     if (shp2.IsNull()) {
@@ -2200,17 +2200,17 @@ void test_make_ribbed_anchor() {
 void test_make_nut_anchor() {
   std::cout << "\n=== Testing Nut Anchor ===" << std::endl;
   try {
-    nut_anchor_params params{                       // 基础参数
-                             .boltDiameter = 0.2,   // 地脚螺栓直径 20mm → 0.02m
+    nut_anchor_params params{                     // 基础参数
+                             .boltDiameter = 0.2, // 地脚螺栓直径 20mm → 0.02m
                              .exposedLength = 0.40, // 露头长度 100mm → 0.1m
                              .nutCount = 2,         // 蝶帽数量保持不变
-                             .nutHeight = 0.1,      // 蝶帽高度 10mm → 0.01m
-                             .nutOD = 0.6,          // 蝶帽外径 40mm → 0.04m
-                             .washerCount = 2,      // 垫片数量保持不变
-                             .washerShape = 2,      // 圆形垫片
-                             .washerSize = 0.65,    // 垫片直径 30mm → 0.03m
+                             .nutHeight = 0.1,   // 蝶帽高度 10mm → 0.01m
+                             .nutOD = 0.6,       // 蝶帽外径 40mm → 0.04m
+                             .washerCount = 2,   // 垫片数量保持不变
+                             .washerShape = 2,   // 圆形垫片
+                             .washerSize = 0.65, // 垫片直径 30mm → 0.03m
                              .washerThickness = 0.015, // 垫片厚度 5mm → 0.005m
-                             .anchorLength = 1.5,      // 锚固长度 500mm → 0.5m
+                             .anchorLength = 1.5, // 锚固长度 500mm → 0.5m
 
                              // 螺帽锚固特有参数
                              .basePlateSize = 0.60,
@@ -2854,8 +2854,8 @@ void test_make_tunnel_well() {
         .rightLength = 600.0,
         .rightWidth = 80.0,
         .rightHeight = 100.0,
-        .innerWallThickness = 20.0,
-        .outerWallThickness = 20.0});
+        .outerWallThickness = 20.0,
+        .innerWallThickness = 20.0});
     if (shp2.IsNull()) {
       std::cerr << "Error: Failed to create circular tunnel well" << std::endl;
     } else {
@@ -2879,8 +2879,8 @@ void test_make_tunnel_well() {
         .rightLength = 600.0,
         .rightWidth = 80.0,
         .rightHeight = 100.0,
-        .innerWallThickness = 20.0,
-        .outerWallThickness = 20.0});
+        .outerWallThickness = 20.0,
+        .innerWallThickness = 20.0});
     if (shp3.IsNull()) {
       std::cerr << "Error: Failed to create rectangular tunnel well"
                 << std::endl;
@@ -2907,8 +2907,8 @@ void test_make_tunnel_well() {
         .rightWidth = 80.0,
         .rightHeight = 100.0,
         .rightArchHeight = 25.0,
-        .innerWallThickness = 20.0,
-        .outerWallThickness = 20.0});
+        .outerWallThickness = 20.0,
+        .innerWallThickness = 20.0});
     if (shp4.IsNull()) {
       std::cerr << "Error: Failed to create horseshoe tunnel well" << std::endl;
     } else {
@@ -2925,7 +2925,7 @@ void test_make_corner_well() {
     // 测试基本转角井
     corner_well_params params{
         .leftLength = 800.0,      // 左段长800mm
-        .rightLength = 600.0,     // 右段长600mm 
+        .rightLength = 600.0,     // 右段长600mm
         .width = 150.0,           // 净宽150mm
         .height = 180.0,          // 净高180mm
         .topThickness = 20.0,     // 顶板厚20mm
