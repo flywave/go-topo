@@ -9886,10 +9886,9 @@ TopoDS_Shape create_corner_well(const corner_well_params &params,
  * @param cornerRadius 井转角半径(mm)
  * @return 直角三通圆角工作井的形状
  */
-TopoDS_Shape
-create_three_way_round_working_well_part(double length, double width,
-                                         double height, double length1,
-                                         double width1, double cornerRadius) {
+TopoDS_Shape create_three_way_round_working_well_part(
+    double length, double width, double height, double length1, double width1,
+    double cornerRadius, double zoffset) {
   // 参数校验
   if (length <= 0 || width <= 0 || height <= 0 || length1 <= 0 || width1 <= 0) {
     throw Standard_ConstructionError("尺寸参数必须为正数");
@@ -9904,32 +9903,32 @@ create_three_way_round_working_well_part(double length, double width,
   const double halfWidth1 = width1 / 2;
 
   // 2. 定义主直通段四个角点
-  const gp_Pnt p1(-halfLength, -halfWidth, 0); // 左下角
-  const gp_Pnt p2(-halfLength, halfWidth, 0);  // 左上角
-  const gp_Pnt p3(halfLength, halfWidth, 0);   // 右上角
-  const gp_Pnt p4(halfLength, -halfWidth, 0);  // 右下角
+  const gp_Pnt p1(-halfLength, -halfWidth, zoffset); // 左下角
+  const gp_Pnt p2(-halfLength, halfWidth, zoffset);  // 左上角
+  const gp_Pnt p3(halfLength, halfWidth, zoffset);   // 右上角
+  const gp_Pnt p4(halfLength, -halfWidth, zoffset);  // 右下角
 
   // 3. 定义支线段端点
-  const gp_Pnt p7(-halfWidth1, halfWidth + length1, 0); // 支线段左上角点
-  const gp_Pnt p8(halfWidth1, halfWidth + length1, 0);  // 支线段右下角点
+  const gp_Pnt p7(-halfWidth1, halfWidth + length1, zoffset); // 支线段左上角点
+  const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset);  // 支线段右下角点
 
   // 4. 计算圆弧关键点（精确几何关系）
   // 右圆弧参数（连接直通段右侧底部与支段底部）
-  const gp_Pnt rightArcStart(halfWidth1 + cornerRadius, halfWidth, 0);
-  const gp_Pnt rightArcEnd(halfWidth1, halfWidth + cornerRadius, 0);
+  const gp_Pnt rightArcStart(halfWidth1 + cornerRadius, halfWidth, zoffset);
+  const gp_Pnt rightArcEnd(halfWidth1, halfWidth + cornerRadius, zoffset);
 
   // 左圆弧参数（连接直通段右侧顶部与支段顶部）
-  const gp_Pnt leftArcStart(-halfWidth1 - cornerRadius, halfWidth, 0);
-  const gp_Pnt leftArcEnd(-halfWidth1, halfWidth + cornerRadius, 0);
+  const gp_Pnt leftArcStart(-halfWidth1 - cornerRadius, halfWidth, zoffset);
+  const gp_Pnt leftArcEnd(-halfWidth1, halfWidth + cornerRadius, zoffset);
 
   // 5. 计算圆心位置（Y轴中点）
   // 左圆弧圆心
   const gp_Pnt leftCircleCenter(-halfWidth1 - cornerRadius,
-                                halfWidth + cornerRadius, 0);
+                                halfWidth + cornerRadius, zoffset);
 
   // 右圆弧圆心
   const gp_Pnt rightCircleCenter(halfWidth1 + cornerRadius,
-                                 halfWidth + cornerRadius, 0);
+                                 halfWidth + cornerRadius, zoffset);
 
   // 6. 构造圆弧几何
   // 左圆弧构造
@@ -9999,7 +9998,7 @@ create_three_way_round_working_well_part(double length, double width,
  */
 TopoDS_Shape create_three_way_corner_working_well_part(
     double length, double width, double height, double length1, double width1,
-    double cornerLength, double cornerWidth) {
+    double cornerLength, double cornerWidth, double zoffset) {
   // 参数校验
   if (length <= 0 || width <= 0 || height <= 0 || length1 <= 0 || width1 <= 0) {
     throw Standard_ConstructionError("尺寸参数必须为正数");
@@ -10014,20 +10013,20 @@ TopoDS_Shape create_three_way_corner_working_well_part(
   const double halfWidth1 = width1 / 2;
 
   // 2. 定义主直通段四个角点
-  const gp_Pnt p1(-halfLength, -halfWidth, 0); // 左下角
-  const gp_Pnt p2(-halfLength, halfWidth, 0);  // 左上角
-  const gp_Pnt p3(halfLength, halfWidth, 0);   // 右上角
-  const gp_Pnt p4(halfLength, -halfWidth, 0);  // 右下角
+  const gp_Pnt p1(-halfLength, -halfWidth, zoffset); // 左下角
+  const gp_Pnt p2(-halfLength, halfWidth, zoffset);  // 左上角
+  const gp_Pnt p3(halfLength, halfWidth, zoffset);   // 右上角
+  const gp_Pnt p4(halfLength, -halfWidth, zoffset);  // 右下角
 
   // 3. 定义支线段端点
-  const gp_Pnt p7(-halfWidth1, halfWidth + length1, 0); // 支线段左上角点
-  const gp_Pnt p8(halfWidth1, halfWidth + length1, 0);  // 支线段右下角点
+  const gp_Pnt p7(-halfWidth1, halfWidth + length1, zoffset); // 支线段左上角点
+  const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset);  // 支线段右下角点
 
-  const gp_Pnt leftStart(-halfWidth1 - cornerLength, halfWidth, 0);
-  const gp_Pnt leftEnd(-halfWidth1, halfWidth + cornerWidth, 0);
+  const gp_Pnt leftStart(-halfWidth1 - cornerLength, halfWidth, zoffset);
+  const gp_Pnt leftEnd(-halfWidth1, halfWidth + cornerWidth, zoffset);
 
-  const gp_Pnt rightStart(halfWidth1 + cornerLength, halfWidth, 0);
-  const gp_Pnt rightEnd(halfWidth1, halfWidth + cornerWidth, 0);
+  const gp_Pnt rightStart(halfWidth1 + cornerLength, halfWidth, zoffset);
+  const gp_Pnt rightEnd(halfWidth1, halfWidth + cornerWidth, zoffset);
 
   // 7. 构建完整线框（确保拓扑闭合）
   BRepBuilderAPI_MakeWire wireMaker;
@@ -10065,21 +10064,22 @@ TopoDS_Shape create_three_way_corner_working_well_part(
 
 TopoDS_Shape create_three_way_chamfer_round_corner_working_well_part(
     double length, double width, double height, double length1, double width1,
-    double cornerLength2, double cornerRadius, double angle) {
+    double cornerLength2, double cornerRadius, double angle, double yoffset,
+    double zoffset) {
   // 1. 计算关键点坐标
   double halfLength = length / 2;
   double halfWidth = width / 2;
   double halfWidth1 = width1 / 2;
 
   // 2. 定义主直通段四个角点
-  const gp_Pnt p1(-halfLength, 0, 0);     // 左下角
-  const gp_Pnt p2(-halfLength, width, 0); // 左上角
-  const gp_Pnt p3(halfLength, width, 0);  // 右上角
-  const gp_Pnt p4(halfLength, 0, 0);      // 右下角
+  const gp_Pnt p1(-halfLength, yoffset, zoffset);         // 左下角
+  const gp_Pnt p2(-halfLength, width + yoffset, zoffset); // 左上角
+  const gp_Pnt p3(halfLength, width + yoffset, zoffset);  // 右上角
+  const gp_Pnt p4(halfLength, yoffset, zoffset);          // 右下角
 
   // 3. 计算支线段端点
-  const gp_Pnt p9(-halfLength + cornerLength2, 0, 0); // 支线段起点
-  gp_Vec vec19(p1, p9);                               // p1指向p9的向量
+  const gp_Pnt p9(-halfLength + cornerLength2, yoffset, zoffset); // 支线段起点
+  gp_Vec vec19(p1, p9); // p1指向p9的向量
 
   // 创建旋转轴(Z轴负方向)
   gp_Ax1 rotationAxis(p9, gp_Dir(0, 0, 1));
@@ -10112,9 +10112,6 @@ TopoDS_Shape create_three_way_chamfer_round_corner_working_well_part(
 
   // 5. 圆弧计算优化
   // 校验p6位置合法性
-  if (p6.Y() > 0 || p6.Y() < -2 * cornerRadius) {
-    throw Standard_ConstructionError("支线段端点Y坐标超出圆弧构造范围");
-  }
   const double y6 = p6.Y();
   const double x6 = p6.X();
 
@@ -10152,19 +10149,20 @@ TopoDS_Shape create_three_way_chamfer_round_corner_working_well_part(
   }
 
   // 最终圆心坐标
-  const gp_Pnt circleCenter(h, -cornerRadius, 0);
-  const gp_Pnt p5(h, 0, 0);
+  const gp_Pnt circleCenter(h, -cornerRadius, zoffset);
+  const gp_Pnt p5(h, yoffset, zoffset);
 
   // 构造圆弧
   gp_Circ circle(gp_Ax2(circleCenter, gp_Dir(0, 0, -1)), cornerRadius);
-  TopoDS_Edge arcEdge = BRepBuilderAPI_MakeEdge(circle, p6, p5).Edge();
+  // TopoDS_Edge arcEdge = BRepBuilderAPI_MakeEdge(circle, p6, p5).Edge();
 
   BRepBuilderAPI_MakeWire wireMaker;
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2));
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3));
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4));
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5));
-  wireMaker.Add(arcEdge);
+  // wireMaker.Add(arcEdge);
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6));
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7));
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8));
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p9));
@@ -10188,27 +10186,132 @@ create_three_way_working_well(const three_way_well_params &params) {
     throw Standard_ConstructionError(
         "three_way_well_type must be WORKING_WELL");
   }
+  TopoDS_Shape outer;
   if (params.angle != 90) {
-    return create_three_way_chamfer_round_corner_working_well_part(
-        params.length, params.width, params.height, params.branchLength,
-        params.branchWidth, params.branchSectionLength,
-        params.branchSectionLeftLength, params.angle);
+    outer = create_three_way_chamfer_round_corner_working_well_part(
+        params.length + params.outerWallThickness * 2,
+        params.width + params.outerWallThickness * 2,
+        params.height + params.topThickness + params.bottomThickness,
+        params.branchLength + params.outerWallThickness,
+        params.branchWidth + params.outerWallThickness * 2,
+        params.branchSectionLeftLength + params.outerWallThickness,
+        params.cornerRadius , params.angle,
+        params.outerWallThickness, -params.bottomThickness);
+  } else {
+    switch (params.cornerType) {
+    case corner_style::ROUNDED:
+      outer = create_three_way_round_working_well_part(
+          params.length + params.outerWallThickness * 2,
+          params.width + params.outerWallThickness * 2,
+          params.height + params.topThickness + params.bottomThickness,
+          params.branchLength + params.outerWallThickness,
+          params.branchWidth + params.outerWallThickness * 2,
+          params.cornerRadius - params.outerWallThickness,
+          -params.bottomThickness);
+      break;
+    case corner_style::ANGLED:
+      outer = create_three_way_corner_working_well_part(
+          params.length + params.outerWallThickness * 2,
+          params.width + params.outerWallThickness * 2,
+          params.height + params.topThickness + params.bottomThickness,
+          params.branchLength + params.outerWallThickness,
+          params.branchWidth + params.outerWallThickness * 2,
+          params.cornerLength + params.outerWallThickness,
+          params.cornerWidth + params.outerWallThickness,
+          -params.bottomThickness);
+      break;
+    default:
+      break;
+    }
   }
-  switch (params.cornerType) {
-  case corner_style::ROUNDED:
-    return create_three_way_round_working_well_part(
+
+  TopoDS_Shape inner;
+  if (params.angle != 90) {
+    inner = create_three_way_chamfer_round_corner_working_well_part(
         params.length, params.width, params.height, params.branchLength,
-        params.branchWidth, params.cornerRadius);
-    break;
-  case corner_style::ANGLED:
-    return create_three_way_corner_working_well_part(
-        params.length, params.width, params.height, params.branchLength,
-        params.branchWidth, params.cornerLength, params.cornerWidth);
-    break;
-  default:
-    break;
+        params.branchWidth, // 支线宽度保持对称
+        params.branchSectionLeftLength,
+        params.cornerRadius, // 修正转角半径
+        params.angle, 0, 0);
+  } else {
+    switch (params.cornerType) {
+    case corner_style::ROUNDED:
+      inner = create_three_way_round_working_well_part(
+          params.length + params.outerWallThickness * 2, params.width,
+          params.height, params.branchLength + params.outerWallThickness * 2,
+          params.branchWidth, params.cornerRadius, 0);
+      break;
+    case corner_style::ANGLED:
+      inner = create_three_way_corner_working_well_part(
+          params.length + params.outerWallThickness * 2, params.width,
+          params.height, params.branchLength + params.outerWallThickness * 2,
+          params.branchWidth, params.cornerLength, params.cornerWidth, 0);
+      break;
+    default:
+      break;
+    }
   }
-  return TopoDS_Shape();
+
+  TopoDS_Shape cushion;
+  if (params.angle != 90) {
+    cushion = create_three_way_chamfer_round_corner_working_well_part(
+        params.length + params.outerWallThickness * 2 +
+            params.cushionExtension * 2,
+        params.width + params.outerWallThickness * 2, params.cushionThickness,
+        params.branchLength + params.outerWallThickness +
+            params.cushionExtension,
+        params.branchWidth + params.outerWallThickness * 2 +
+            params.cushionExtension * 2,
+        params.branchSectionLeftLength + params.outerWallThickness +
+            params.cushionExtension,
+        params.cornerRadius,
+        params.angle, params.cushionExtension + params.outerWallThickness,
+        -params.bottomThickness - params.cushionThickness);
+  } else {
+    switch (params.cornerType) {
+    case corner_style::ROUNDED:
+      cushion = create_three_way_round_working_well_part(
+          params.length + params.outerWallThickness * 2 +
+              params.cushionExtension * 2,
+          params.width + params.outerWallThickness * 2 +
+              params.cushionExtension * 2,
+          params.cushionThickness,
+          params.branchLength + params.outerWallThickness +
+              params.cushionExtension,
+          params.branchWidth + params.outerWallThickness * 2 +
+              params.cushionExtension * 2,
+          params.cornerRadius - params.outerWallThickness -
+              params.cushionExtension,
+          -params.bottomThickness - params.cushionThickness);
+      break;
+    case corner_style::ANGLED:
+      cushion = create_three_way_corner_working_well_part(
+          params.length + params.outerWallThickness * 2 +
+              params.cushionExtension * 2,
+          params.width + params.outerWallThickness * 2 +
+              params.cushionExtension * 2,
+          params.cushionThickness,
+          params.branchLength + params.outerWallThickness +
+              params.cushionExtension,
+          params.branchWidth + params.outerWallThickness * 2 +
+              params.cushionExtension * 2,
+          params.cornerLength + params.outerWallThickness +
+              params.cushionExtension,
+          params.cornerWidth + params.outerWallThickness +
+              params.cushionExtension,
+          -params.bottomThickness - params.cushionThickness);
+      break;
+    default:
+      break;
+    }
+  }
+
+  // 合并所有部分
+  TopoDS_Shape well = BRepAlgoAPI_Cut(outer, inner).Shape();
+
+  well = BRepAlgoAPI_Fuse(well, cushion).Shape();
+
+  return well;
 }
 
 /**

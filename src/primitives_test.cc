@@ -2960,60 +2960,105 @@ void test_make_corner_well() {
   }
 }
 
-void test_make_three_way_round_working_well() {
-  std::cout << "\n=== Testing Three Way Round Working Well ===" << std::endl;
+void test_make_three_way_working_well() {
+  std::cout << "\n=== Testing Three Way Working Well ===" << std::endl;
+
+  // 1. 圆形转角三通井测试
   try {
-    auto shp = create_three_way_round_working_well_part(
-        /*length*/ 200.0,
-        /*width*/ 80.0,
-        /*height*/ 60.0,
-        /*length1*/ 100.0,
-        /*width1*/ 80.0,
-        /*cornerRadius*/ 30.0);
+    three_way_well_params roundParams{.type = three_way_well_type::WORKING_WELL,
+                                      .cornerType = corner_style::ROUNDED,
+                                      .shaftType = shaft_style::RECTANGULAR,
+                                      .length = 200.0,
+                                      .width = 80.0,
+                                      .height = 60.0,
+                                      .cornerRadius = 30.0,
+                                      .angle = 90.0,
+                                      .branchLength = 100.0,
+                                      .branchWidth = 80.0,
+                                      .topThickness = 10.0,
+                                      .bottomThickness = 10.0,
+                                      .outerWallThickness = 5.0,
+                                      .innerWallThickness = 3.0,
+                                      .cushionExtension = 10.0,
+                                      .cushionThickness = 15.0};
 
-    if (shp.IsNull()) {
-      std::cerr << "Error: Failed to create three way round working well"
+    auto roundShp = create_three_way_working_well(roundParams);
+    if (roundShp.IsNull()) {
+      std::cerr << "Error: Failed to create round corner three way well"
                 << std::endl;
-      return;
+    } else {
+      test_export_shape(roundShp, "./three_way_round_working_well.stl");
     }
-    test_export_shape(shp, "./three_way_round_working_well.stl");
-
-    auto shp2 = create_three_way_corner_working_well_part(
-        /*length*/ 200.0,
-        /*width*/ 80.0,
-        /*height*/ 60.0,
-        /*length1*/ 100.0,
-        /*width1*/ 80.0,
-        /*cornerLength*/ 20.0,
-        /*cornerWidth*/ 20.0);
-
-    if (shp2.IsNull()) {
-      std::cerr << "Error: Failed to create three way corner working well"
-                << std::endl;
-      return;
-    }
-    test_export_shape(shp2, "./three_way_corner_working_well.stl");
-
-    auto shp3 = create_three_way_chamfer_round_corner_working_well_part(
-        /*length*/ 200.0,
-        /*width*/ 80.0,
-        /*height*/ 60.0,
-        /*length1*/ 100.0,
-        /*width1*/ 80.0,
-        /*cornerLength2*/ 60.0,
-        /*cornerRadius*/ 80.0,
-        /*angle*/ 60.0);
-
-    if (shp3.IsNull()) {
-      std::cerr << "Error: Failed to create three way corner working well"
-                << std::endl;
-      return;
-    }
-    test_export_shape(shp3,
-                      "./three_way_chamfer_round_corner_working_well.stl");
-
   } catch (const Standard_ConstructionError &e) {
-    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+    std::cerr << "Round Corner Construction Error: " << e.GetMessageString()
+              << std::endl;
+  }
+
+  // 2. 折角形转角三通井测试
+  try {
+    three_way_well_params angledParams{.type =
+                                           three_way_well_type::WORKING_WELL,
+                                       .cornerType = corner_style::ANGLED,
+                                       .shaftType = shaft_style::RECTANGULAR,
+                                       .length = 200.0,
+                                       .width = 80.0,
+                                       .height = 60.0,
+                                       .cornerLength = 20.0,
+                                       .cornerWidth = 20.0,
+                                       .angle = 90.0,
+                                       .branchLength = 100.0,
+                                       .branchWidth = 80.0,
+                                       .topThickness = 10.0,
+                                       .bottomThickness = 10.0,
+                                       .outerWallThickness = 5.0,
+                                       .innerWallThickness = 3.0,
+                                       .cushionExtension = 10.0,
+                                       .cushionThickness = 15.0};
+
+    auto angledShp = create_three_way_working_well(angledParams);
+    if (angledShp.IsNull()) {
+      std::cerr << "Error: Failed to create angled corner three way well"
+                << std::endl;
+    } else {
+      test_export_shape(angledShp, "./three_way_angled_working_well.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Angled Corner Construction Error: " << e.GetMessageString()
+              << std::endl;
+  }
+
+  // 3. 带角度和倒角的圆形转角三通井测试
+  try {
+    three_way_well_params chamferParams{.type =
+                                            three_way_well_type::WORKING_WELL,
+                                        .cornerType = corner_style::ROUNDED,
+                                        .shaftType = shaft_style::RECTANGULAR,
+                                        .length = 200.0,
+                                        .width = 80.0,
+                                        .height = 60.0,
+                                        .angle = 60.0,
+                                        .branchLength = 100.0,
+                                        .branchWidth = 80.0,
+                                        .topThickness = 10.0,
+                                        .bottomThickness = 10.0,
+                                        .outerWallThickness = 5.0,
+                                        .innerWallThickness = 3.0,
+                                        .cornerRadius =80.0,
+                                        .branchSectionLeftLength = 60,
+                                        .cushionExtension = 5.0,
+                                        .cushionThickness = 15.0};
+
+    auto chamferShp = create_three_way_working_well(chamferParams);
+    if (chamferShp.IsNull()) {
+      std::cerr << "Error: Failed to create chamfer round corner three way well"
+                << std::endl;
+    } else {
+      test_export_shape(chamferShp,
+                        "./three_way_chamfer_round_working_well.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Chamfer Round Corner Construction Error: "
+              << e.GetMessageString() << std::endl;
   }
 }
 
@@ -3093,6 +3138,6 @@ int main() {
   test_make_lifting_eye();
   test_make_tunnel_well();
   test_make_corner_well();
-  test_make_three_way_round_working_well();
+  test_make_three_way_working_well();
   return 0;
 }

@@ -2120,16 +2120,18 @@ TopoDS_Shape create_cable_ray(const cable_ray_params &params,
 
 // test
 TopoDS_Shape
-create_three_way_round_working_well_part(double length, double width,
-                                         double height, double length1,
-                                         double width1, double cornerRadius);
+create_three_way_working_well(const three_way_well_params &params);
+TopoDS_Shape create_three_way_round_working_well_part(
+    double length, double width, double height, double length1, double width1,
+    double cornerRadius, double zoffset);
 
 TopoDS_Shape create_three_way_corner_working_well_part(
     double length, double width, double height, double length1, double width1,
-    double cornerLength, double cornerWidth);
+    double cornerLength, double cornerWidth, double zoffset);
 
 TopoDS_Shape create_three_way_chamfer_round_corner_working_well_part(
     double length, double width, double height, double length1, double width1,
-    double cornerLength2, double cornerRadius, double angle);
+    double cornerLength2, double cornerRadius, double angle, double yoffset, 
+    double zoffset);
 } // namespace topo
 } // namespace flywave
