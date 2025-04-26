@@ -9175,6 +9175,29 @@ TopoDS_Shape create_u_shaped_ring(const u_shaped_ring_params &params) {
   return pipeMaker.Shape();
 }
 
+TopoDS_Shape create_u_shaped_ring(const u_shaped_ring_params &params,
+  const gp_Pnt &position,
+  const gp_Dir &normal,
+  const gp_Dir &xDir) {
+// 正交性校验
+if (Abs(normal.Dot(xDir)) > Precision::Angular()) {
+throw Standard_ConstructionError(
+"Normal and xDir must be perpendicular");
+}
+
+// 创建标准方向的U型环
+TopoDS_Shape ring = create_u_shaped_ring(params);
+
+// 创建坐标系变换
+gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+gp_Ax3 targetAx3(position, normal, xDir);
+gp_Trsf transformation;
+transformation.SetTransformation(targetAx3, sourceAx3);
+
+BRepBuilderAPI_Transform transform(ring, transformation);
+return transform.Shape();
+}
+
 TopoDS_Shape create_lifting_eye(const lifting_eye_params &params) {
   // 参数验证
   if (params.height <= 0)
