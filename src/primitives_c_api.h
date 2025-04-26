@@ -1422,6 +1422,7 @@ typedef struct {
   double branchSectionWidth;
   double branchSectionHeight;
   double branchSectionArchHeight;
+  double branchSectionLeftLength;
   double outerWallThickness;
   double innerWallThickness;
   bool isDoubleShaft;

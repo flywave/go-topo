@@ -1497,9 +1497,9 @@ TopoDS_Shape create_u_shaped_ring(const u_shaped_ring_params &params,
 
 // GJ_DP
 struct lifting_eye_params {
-  double height;          // 吊臂高度 H (mm)
-  double ringRadius;      // 圆环半径 R (mm)
-  double pipeDiameter;    // 钢管直径 I (mm)
+  double height;       // 吊臂高度 H (mm)
+  double ringRadius;   // 圆环半径 R (mm)
+  double pipeDiameter; // 钢管直径 I (mm)
 };
 
 TopoDS_Shape create_lifting_eye(const lifting_eye_params &params);
@@ -1654,6 +1654,7 @@ struct three_way_well_params {
   double branchSectionWidth;                   // 支线连接段宽(mm)
   double branchSectionHeight;                  // 支线连接段高/半径(mm)
   double branchSectionArchHeight;              // 支线连接段拱高(mm)
+  double branchSectionLeftLength;              // 左侧到支线井距离(mm)
 
   // 壁厚参数
   double outerWallThickness; // 井外壁厚(mm)
@@ -2117,5 +2118,18 @@ TopoDS_Shape create_cable_ray(const cable_ray_params &params,
                               const gp_Dir &direction = gp::DZ(),
                               const gp_Dir &xDir = gp::DX());
 
+// test
+TopoDS_Shape
+create_three_way_round_working_well_part(double length, double width,
+                                         double height, double length1,
+                                         double width1, double cornerRadius);
+
+TopoDS_Shape create_three_way_corner_working_well_part(
+    double length, double width, double height, double length1, double width1,
+    double cornerLength, double cornerWidth);
+
+TopoDS_Shape create_three_way_chamfer_round_corner_working_well_part(
+    double length, double width, double height, double length1, double width1,
+    double cornerLength2, double cornerRadius, double angle);
 } // namespace topo
 } // namespace flywave
