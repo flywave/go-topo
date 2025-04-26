@@ -3236,6 +3236,7 @@ type ThreeWayWellParams struct {
 	CornerWidth             float32
 	Angle                   float32
 	BranchLength            float32
+	BranchLeftLength        float32
 	BranchWidth             float32
 	TopThickness            float32
 	BottomThickness         float32
@@ -3281,6 +3282,7 @@ func (p *ThreeWayWellParams) to_struct() C.three_way_well_params_t {
 	c.cornerWidth = C.double(p.CornerWidth)
 	c.angle = C.double(p.Angle)
 	c.branchLength = C.double(p.BranchLength)
+	c.branchLeftLength = C.double(p.BranchLeftLength)
 	c.branchWidth = C.double(p.BranchWidth)
 	c.topThickness = C.double(p.TopThickness)
 	c.bottomThickness = C.double(p.BottomThickness)
@@ -3299,7 +3301,6 @@ func (p *ThreeWayWellParams) to_struct() C.three_way_well_params_t {
 	c.branchSectionWidth = C.double(p.BranchSectionWidth)
 	c.branchSectionHeight = C.double(p.BranchSectionHeight)
 	c.branchSectionArchHeight = C.double(p.BranchSectionArchHeight)
-	c.branchSectionLeftLength = C.double(p.BranchSectionLeftLength)
 	c.outerWallThickness = C.double(p.OuterWallThickness)
 	c.innerWallThickness = C.double(p.InnerWallThickness)
 	c.isDoubleShaft = C.bool(p.IsDoubleShaft)

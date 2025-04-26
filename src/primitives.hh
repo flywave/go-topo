@@ -980,10 +980,10 @@ struct insulator_params {
   // 绝缘子参数
   struct {
     boost::variant<double, composite_insulator_params> radius; // 半径或复合参数
-    double height;                                             // 结构高度(mm)
-    int leftCount;                                             // 左侧片数
-    int rightCount;                                            // 右侧片数
-    insulator_material material;                               // 材质
+    double height;               // 结构高度(mm)
+    int leftCount;               // 左侧片数
+    int rightCount;              // 右侧片数
+    insulator_material material; // 材质
   } insulator;
 
   // 均压环配置
@@ -1629,8 +1629,9 @@ struct three_way_well_params {
   double angle;        // 支线段转角度数(度)
 
   // 支线井参数
-  double branchLength; // 支线井净长(mm)
-  double branchWidth;  // 支线井净宽(mm)
+  double branchLength;     // 支线井净长(mm)
+  double branchLeftLength; // 左侧到支线井距离(mm)
+  double branchWidth;      // 支线井净宽(mm)
 
   // 结构厚度
   double topThickness;    // 井顶板厚(mm)
@@ -1654,7 +1655,6 @@ struct three_way_well_params {
   double branchSectionWidth;                   // 支线连接段宽(mm)
   double branchSectionHeight;                  // 支线连接段高/半径(mm)
   double branchSectionArchHeight;              // 支线连接段拱高(mm)
-  double branchSectionLeftLength;              // 左侧到支线井距离(mm)
 
   // 壁厚参数
   double outerWallThickness; // 井外壁厚(mm)
@@ -2073,8 +2073,8 @@ TopoDS_Shape create_drainage_well(const drainage_well_params &params,
                                   const gp_Dir &xDir = gp::DX());
 // GZW_GZ
 struct pipe_support_params {
-  int style;                       // 管枕形式 (1-单侧管枕, 2-两侧管枕)
-  int count;                       // 管枕数量 N
+  int style; // 管枕形式 (1-单侧管枕, 2-两侧管枕)
+  int count; // 管枕数量 N
   std::vector<gp_Pnt2d> positions; // 管枕中心坐标 POS (mm)
   std::vector<double> radii;       // 管枕半径 R (mm)
   double length;                   // 管枕长 L (mm)
@@ -2119,8 +2119,7 @@ TopoDS_Shape create_cable_ray(const cable_ray_params &params,
                               const gp_Dir &xDir = gp::DX());
 
 // test
-TopoDS_Shape
-create_three_way_working_well(const three_way_well_params &params);
+TopoDS_Shape create_three_way_working_well(const three_way_well_params &params);
 TopoDS_Shape create_three_way_round_working_well_part(
     double length, double width, double height, double length1, double width1,
     double cornerRadius, double zoffset);
@@ -2131,7 +2130,7 @@ TopoDS_Shape create_three_way_corner_working_well_part(
 
 TopoDS_Shape create_three_way_chamfer_round_corner_working_well_part(
     double length, double width, double height, double length1, double width1,
-    double cornerLength2, double cornerRadius, double angle, double yoffset, 
+    double cornerLength2, double cornerRadius, double angle, double yoffset,
     double zoffset);
 } // namespace topo
 } // namespace flywave
