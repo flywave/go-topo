@@ -788,10 +788,10 @@ void test_make_wire() {
     auto shp2 = create_wire(
         wire_params{.startPoint = gp_Pnt(0, 0, 0),
                     .endPoint = gp_Pnt(300, 0, 150), // 与最后一个拟合点一致
-                    .startDir = gp_Dir(1, 0, 0), // 初始方向沿X轴
-                    .endDir = gp_Dir(0, 0, 1),   // 结束方向沿Z轴
-                    .sag = 25.0,                 // 合理弧垂值
-                    .diameter = 8.0,             // 典型导线直径
+                    .startDir = gp_Dir(1, 0, 0),     // 初始方向沿X轴
+                    .endDir = gp_Dir(0, 0, 1),       // 结束方向沿Z轴
+                    .sag = 25.0,                     // 合理弧垂值
+                    .diameter = 8.0,                 // 典型导线直径
                     .fitPoints = fitPoints});
 
     if (shp2.IsNull()) {
@@ -2200,17 +2200,17 @@ void test_make_ribbed_anchor() {
 void test_make_nut_anchor() {
   std::cout << "\n=== Testing Nut Anchor ===" << std::endl;
   try {
-    nut_anchor_params params{                     // 基础参数
-                             .boltDiameter = 0.2, // 地脚螺栓直径 20mm → 0.02m
+    nut_anchor_params params{                       // 基础参数
+                             .boltDiameter = 0.2,   // 地脚螺栓直径 20mm → 0.02m
                              .exposedLength = 0.40, // 露头长度 100mm → 0.1m
                              .nutCount = 2,         // 蝶帽数量保持不变
-                             .nutHeight = 0.1,   // 蝶帽高度 10mm → 0.01m
-                             .nutOD = 0.6,       // 蝶帽外径 40mm → 0.04m
-                             .washerCount = 2,   // 垫片数量保持不变
-                             .washerShape = 2,   // 圆形垫片
-                             .washerSize = 0.65, // 垫片直径 30mm → 0.03m
+                             .nutHeight = 0.1,      // 蝶帽高度 10mm → 0.01m
+                             .nutOD = 0.6,          // 蝶帽外径 40mm → 0.04m
+                             .washerCount = 2,      // 垫片数量保持不变
+                             .washerShape = 2,      // 圆形垫片
+                             .washerSize = 0.65,    // 垫片直径 30mm → 0.03m
                              .washerThickness = 0.015, // 垫片厚度 5mm → 0.005m
-                             .anchorLength = 1.5, // 锚固长度 500mm → 0.5m
+                             .anchorLength = 1.5,      // 锚固长度 500mm → 0.5m
 
                              // 螺帽锚固特有参数
                              .basePlateSize = 0.60,
@@ -3062,6 +3062,174 @@ void test_make_three_way_working_well() {
   }
 }
 
+void test_make_three_way_open_cut_tunnel() {
+  std::cout << "\n=== Testing Three Way Open Cut Tunnel ===" << std::endl;
+  try {
+    three_way_well_params params{
+        .type = three_way_well_type::OPEN_CUT_TUNNEL,
+        .cornerType = corner_style::ROUNDED,
+        .shaftType = shaft_style::RECTANGULAR,
+        .length = 200.0,
+        .width = 80.0,
+        .height = 60.0,
+        .cornerRadius = 30.0,
+        .angle = 90.0,
+        .branchLength = 100.0,
+        .branchWidth = 80.0,
+        .topThickness = 10.0,
+        .bottomThickness = 10.0,
+        .leftSectionStyle = connection_section_style::RECTANGULAR,
+        .leftSectionLength = 60.0,
+        .leftSectionWidth = 80.0,
+        .leftSectionHeight = 90.0,
+        .leftSectionArchHeight = 15.0,
+        .rightSectionStyle = connection_section_style::RECTANGULAR,
+        .rightSectionLength = 60.0,
+        .rightSectionWidth = 80.0,
+        .rightSectionHeight = 90.0,
+        .rightSectionArchHeight = 15.0,
+        .branchSectionStyle = connection_section_style::HORSESHOE,
+        .branchSectionLength = 80.0,
+        .branchSectionWidth = 80.0,
+        .branchSectionHeight = 50.0,
+        .branchSectionArchHeight = 15.0,
+        .outerWallThickness = 5.0,
+        .innerWallThickness = 3.0,
+        .isDoubleShaft = false,
+        .doubleShaftSpacing = 0.0,
+        .outerWallExtension = 10.0,
+        .innerWallExtension = 5.0,
+        .cushionExtension = 10.0,
+        .cushionThickness = 10.0,
+        .innerBottomThickness = 18.0,
+        .outerBottomThickness = 20.0};
+
+    auto shp = create_three_way_open_cut_tunnel(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create three way open cut tunnel"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./three_way_open_cut_tunnel.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_three_way_underground_tunnel() {
+  std::cout << "\n=== Testing Three Way UnderGround Tunnel ===" << std::endl;
+  try {
+    three_way_well_params params{
+        .type = three_way_well_type::UNDERGROUND_TUNNEL,
+        .cornerType = corner_style::ROUNDED,
+        .shaftType = shaft_style::CIRCULAR,
+        .length = 200.0,
+        .width = 80.0,
+        .height = 60.0,
+        .shaftRadius = 80.0,
+        .cornerRadius = 30.0,
+        .cornerLength = 40.0,
+        .cornerWidth = 35.0,
+        .branchLength = 120.0,
+        .branchLeftLength = 80.0,
+        .branchWidth = 100.0,
+        .topThickness = 20.0,
+        .bottomThickness = 25.0,
+        .leftSectionStyle = connection_section_style::RECTANGULAR,
+        .leftSectionLength = 60.0,
+        .leftSectionWidth = 80.0,
+        .leftSectionHeight = 90.0,
+        .leftSectionArchHeight = 15.0,
+        .rightSectionStyle = connection_section_style::RECTANGULAR,
+        .rightSectionLength = 60.0,
+        .rightSectionWidth = 80.0,
+        .rightSectionHeight = 90.0,
+        .rightSectionArchHeight = 15.0,
+        .branchSectionStyle = connection_section_style::HORSESHOE,
+        .branchSectionLength = 80.0,
+        .branchSectionWidth = 80.0,
+        .branchSectionHeight = 50.0,
+        .branchSectionArchHeight = 15.0,
+        .outerWallThickness = 5.0,
+        .innerWallThickness = 3.0,
+        .isDoubleShaft = false,
+        .doubleShaftSpacing = 0.0,
+        .outerWallExtension = 10.0,
+        .innerWallExtension = 5.0,
+        .cushionExtension = 15.0,
+        .cushionThickness = 10.0,
+        .innerBottomThickness = 18.0,
+        .outerBottomThickness = 20.0};
+
+    auto shp = create_three_way_underground_tunnel(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create three way open cut tunnel"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./three_way_open_underground.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_three_way_double_shaft_tunnel() {
+  std::cout << "\n=== Testing Three Way double shaft Tunnel ===" << std::endl;
+  try {
+    three_way_well_params params{
+        .type = three_way_well_type::UNDERGROUND_TUNNEL,
+        .cornerType = corner_style::ROUNDED,
+        .shaftType = shaft_style::CIRCULAR,
+        .length = 200.0,
+        .width = 80.0,
+        .height = 60.0,
+        .shaftRadius = 80.0,
+        .cornerRadius = 30.0,
+        .cornerLength = 40.0,
+        .cornerWidth = 35.0,
+        .branchLength = 120.0,
+        .branchLeftLength = 80.0,
+        .branchWidth = 100.0,
+        .topThickness = 20.0,
+        .bottomThickness = 25.0,
+        .leftSectionStyle = connection_section_style::RECTANGULAR,
+        .leftSectionLength = 60.0,
+        .leftSectionWidth = 80.0,
+        .leftSectionHeight = 90.0,
+        .leftSectionArchHeight = 15.0,
+        .rightSectionStyle = connection_section_style::RECTANGULAR,
+        .rightSectionLength = 60.0,
+        .rightSectionWidth = 80.0,
+        .rightSectionHeight = 90.0,
+        .rightSectionArchHeight = 15.0,
+        .branchSectionStyle = connection_section_style::HORSESHOE,
+        .branchSectionLength = 80.0,
+        .branchSectionWidth = 80.0,
+        .branchSectionHeight = 50.0,
+        .branchSectionArchHeight = 15.0,
+        .outerWallThickness = 5.0,
+        .innerWallThickness = 3.0,
+        .isDoubleShaft = true,
+        .doubleShaftSpacing = 0.0,
+        .outerWallExtension = 10.0,
+        .innerWallExtension = 5.0,
+        .cushionExtension = 15.0,
+        .cushionThickness = 10.0,
+        .innerBottomThickness = 18.0,
+        .outerBottomThickness = 20.0};
+
+    auto shp = create_three_way_double_shaft_tunnel(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create three way double shaft tunnel"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./three_way_double_shaft_tunnel.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
 int main() {
   // 变电
   test_make_sphere();
@@ -3139,5 +3307,8 @@ int main() {
   test_make_tunnel_well();
   test_make_corner_well();
   test_make_three_way_working_well();
+  test_make_three_way_open_cut_tunnel();
+  test_make_three_way_underground_tunnel();
+  test_make_three_way_double_shaft_tunnel();
   return 0;
 }

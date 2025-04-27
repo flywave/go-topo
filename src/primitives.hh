@@ -980,10 +980,10 @@ struct insulator_params {
   // 绝缘子参数
   struct {
     boost::variant<double, composite_insulator_params> radius; // 半径或复合参数
-    double height;               // 结构高度(mm)
-    int leftCount;               // 左侧片数
-    int rightCount;              // 右侧片数
-    insulator_material material; // 材质
+    double height;                                             // 结构高度(mm)
+    int leftCount;                                             // 左侧片数
+    int rightCount;                                            // 右侧片数
+    insulator_material material;                               // 材质
   } insulator;
 
   // 均压环配置
@@ -2073,8 +2073,8 @@ TopoDS_Shape create_drainage_well(const drainage_well_params &params,
                                   const gp_Dir &xDir = gp::DX());
 // GZW_GZ
 struct pipe_support_params {
-  int style; // 管枕形式 (1-单侧管枕, 2-两侧管枕)
-  int count; // 管枕数量 N
+  int style;                       // 管枕形式 (1-单侧管枕, 2-两侧管枕)
+  int count;                       // 管枕数量 N
   std::vector<gp_Pnt2d> positions; // 管枕中心坐标 POS (mm)
   std::vector<double> radii;       // 管枕半径 R (mm)
   double length;                   // 管枕长 L (mm)
@@ -2120,6 +2120,12 @@ TopoDS_Shape create_cable_ray(const cable_ray_params &params,
 
 // test
 TopoDS_Shape create_three_way_working_well(const three_way_well_params &params);
+TopoDS_Shape
+create_three_way_open_cut_tunnel(const three_way_well_params &params);
+TopoDS_Shape
+create_three_way_underground_tunnel(const three_way_well_params &params);
+TopoDS_Shape
+create_three_way_double_shaft_tunnel(const three_way_well_params &params);
 TopoDS_Shape create_three_way_round_working_well_part(
     double length, double width, double height, double length1, double width1,
     double cornerRadius, double zoffset);
