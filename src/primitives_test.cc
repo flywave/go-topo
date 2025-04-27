@@ -3420,6 +3420,88 @@ void test_make_four_way_underground_tunnel() {
   }
 }
 
+void test_make_pipe_row() {
+  std::cout << "\n=== Testing Pipe Row ===" << std::endl;
+
+  // 创建测试点集
+  std::vector<channel_point> points = {
+      {gp_Pnt(0, 0, 0), 0},      // 起点
+      {gp_Pnt(1000, 0, 0), 0},   // 直线段
+      {gp_Pnt(1500, 500, 0), 1}, // 弧形顶点
+      {gp_Pnt(2000, 500, 0), 0}  // 终点
+  };
+
+  // 测试普通排管无封包
+  try {
+    pipe_row_params params{
+        .pipeType = 1,
+        .hasEnclosure = false,
+        .baseExtension = 20,
+        .baseThickness = 5,
+        .pipePositions = {gp_Pnt2d(70, 0), gp_Pnt2d(20, 0), gp_Pnt2d(120, 0)},
+        .pipeInnerDiameters = {20, 30, 20},
+        .pipeWallThicknesses = {4, 4, 4},
+        .points = points};
+
+    auto shp = create_pipe_row(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create pipe row without enclosure"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./pipe_row_no_enclosure.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+
+  // 测试普通排管有封包
+  try {
+    pipe_row_params params{
+        .pipeType = 1,
+        .hasEnclosure = true,
+        .enclosureWidth = 200,
+        .enclosureHeight = 200,
+        .baseExtension = 5,
+        .baseThickness = 5,
+        .cushionExtension = 5,
+        .cushionThickness = 5,
+        .pipePositions = {gp_Pnt2d(70, 0), gp_Pnt2d(20, 0), gp_Pnt2d(120, 0)},
+        .pipeInnerDiameters = {20, 30, 20},
+        .pipeWallThicknesses = {4, 4, 4},
+        .points = points};
+
+    auto shp = create_pipe_row(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create pipe row with enclosure"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./pipe_row_with_enclosure.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+
+  // 测试拉管
+  try {
+    pipe_row_params params{.pipeType = 2,
+                           .pullPipeInnerDiameter = 200,
+                           .pullPipeThickness = 20,
+                           .pipePositions = {gp_Pnt2d(-50, 0), gp_Pnt2d(50, 0)},
+                           .pipeInnerDiameters = {50, 50},
+                           .pipeWallThicknesses = {10, 10},
+                           .points = points};
+
+    auto shp = create_pipe_row(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create pull pipe" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./pull_pipe.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
 int main() {
   // 变电
   test_make_sphere();
@@ -3503,5 +3585,6 @@ int main() {
   test_make_four_way_working_well();
   test_make_four_way_open_cut_tunnel();
   test_make_four_way_underground_tunnel();
+  test_make_pipe_row();
   return 0;
 }

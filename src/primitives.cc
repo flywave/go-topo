@@ -505,6 +505,13 @@ create_sharp_bent_cylinder(const sharp_bent_cylinder_params &params) {
   pipeShell.Add(circleWire);
   pipeShell.SetTransitionMode(BRepBuilderAPI_RightCorner);
   pipeShell.Build();
+  
+  if (!pipeShell.IsDone()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
+  if (!pipeShell.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
 
   return pipeShell.Shape();
 }
@@ -719,6 +726,9 @@ TopoDS_Shape create_ring(const ring_params &params) {
 
     if (!pipeMaker.IsDone())
       throw Standard_ConstructionError("Pipe generation failed");
+    if (!pipeMaker.MakeSolid()) {
+      throw std::runtime_error("Failed to create a solid object from sweep");
+    }
 
     return pipeMaker.Shape();
   }
@@ -834,6 +844,9 @@ TopoDS_Shape create_rectangular_ring(const rectangular_ring_params &params) {
   if (!pipeMaker.IsDone()) {
     throw Standard_ConstructionError("Pipe generation failed. Error code");
   }
+  if (!pipeMaker.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
 
   return pipeMaker.Shape();
 }
@@ -893,6 +906,9 @@ TopoDS_Shape create_elliptic_ring(const elliptic_ring_params &params) {
 
   if (!pipeMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to generate elliptic ring");
+  }
+  if (!pipeMaker.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
   }
 
   return pipeMaker.Shape();
@@ -1044,6 +1060,9 @@ TopoDS_Shape create_circular_gasket(const circular_gasket_params &params) {
   if (!pipeMaker.IsDone()) {
     throw Standard_ConstructionError("Sweep operation failed");
   }
+  if (!pipeMaker.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
 
   return pipeMaker.Shape();
 }
@@ -1133,20 +1152,11 @@ TopoDS_Shape create_table_gasket(const table_gasket_params &params) {
     if (pipeShell.Shape().IsNull()) {
       throw std::runtime_error("Pipe shell generation failed");
     }
-
-    ShapeFix_Shell shellFixer;
-    shellFixer.Init(TopoDS::Shell(pipeShell.Shape()));
-    shellFixer.Perform();
-    TopoDS_Shell fixedShell = shellFixer.Shell();
-
-    // 6. 转换为实体
-    BRepBuilderAPI_MakeSolid solidMaker;
-    solidMaker.Add(fixedShell);
-    if (!solidMaker.IsDone()) {
-      throw Standard_ConstructionError("实体转换失败");
+    if (!pipeShell.MakeSolid()) {
+      throw std::runtime_error("Failed to create a solid object from sweep");
     }
 
-    return solidMaker.Shape();
+    return pipeShell.Shape();
   }
 }
 
@@ -2528,6 +2538,9 @@ TopoDS_Shape create_wire(const wire_params &params) {
   if (!pipeMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to generate wire pipe");
   }
+  if (!pipeMaker.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
 
   // 闭合开口端
   if (pipeMaker.Shape().IsNull()) {
@@ -2614,6 +2627,9 @@ TopoDS_Shape create_cable(const cable_params &params) {
 
   if (!pipeMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to generate cable");
+  }
+  if (!pipeMaker.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
   }
 
   return pipeMaker.Shape();
@@ -2750,6 +2766,9 @@ TopoDS_Shape create_curve_cable(const curve_cable_params &params) {
 
   if (!pipeMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to create cable by pipe shell");
+  }
+  if (!pipeMaker.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
   }
 
   return pipeMaker.Shape();
@@ -3845,6 +3864,10 @@ create_inclined_rock_anchor_base(const inclined_rock_anchor_params &params) {
   if (!pipeMaker.IsDone()) {
     throw Standard_ConstructionError("斜圆台创建失败");
   }
+  if (!pipeMaker.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
+
   TopoDS_Shape slopedAnchor = pipeMaker.Shape();
 
   // 组合所有部件
@@ -3941,6 +3964,13 @@ TopoDS_Shape create_excavated_base(const excavated_base_params &params) {
   pipeMaker.Add(BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(bottomCircle)));
 
   pipeMaker.Build();
+  if (!pipeMaker.IsDone()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
+  if (!pipeMaker.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
+
   TopoDS_Shape h2Transition = pipeMaker.Shape();
 
   // 创建H3段（垂直圆柱）
@@ -5789,7 +5819,9 @@ TopoDS_Shape create_transmission_line(const transmission_line_params &params,
   if (!pipeMaker.IsDone()) {
     throw Standard_ConstructionError("导地线建模失败");
   }
-
+  if (!pipeMaker.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
   return pipeMaker.Shape();
 }
 
@@ -6625,6 +6657,9 @@ create_single_hook_anchor(const single_hook_anchor_params &params) {
     if (!pipeMaker.IsDone()) {
       Standard_Failure::Raise("扫掠操作失败");
     }
+    if (!pipeMaker.MakeSolid()) {
+      throw std::runtime_error("Failed to create a solid object from sweep");
+    }
     TopoDS_Shape arcTube = pipeMaker.Shape();
 
     // 1. 创建直段圆管
@@ -6893,6 +6928,9 @@ create_triple_hook_anchor(const triple_hook_anchor_params &params) {
 
     if (!pipeMaker.IsDone()) {
       Standard_Failure::Raise("扫掠操作失败");
+    }
+    if (!pipeMaker.MakeSolid()) {
+      throw std::runtime_error("Failed to create a solid object from sweep");
     }
     builder.Add(result, pipeMaker.Shape());
 
@@ -7390,6 +7428,9 @@ TopoDS_Shape create_triple_arm_anchor(const triple_arm_anchor_params &params) {
     if (!pipeMaker.IsDone()) {
       Standard_Failure::Raise("扫掠操作失败");
     }
+    if (!pipeMaker.MakeSolid()) {
+      throw std::runtime_error("Failed to create a solid object from sweep");
+    }
     builder.Add(result, pipeMaker.Shape());
   }
 
@@ -7701,6 +7742,9 @@ TopoDS_Shape create_stub_tube(const stub_tube_params &params) {
   if (!pipeMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to create pipe");
   }
+  if (!pipeMaker.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
 
   TopoDS_Shape tube = pipeMaker.Shape();
 
@@ -7721,6 +7765,9 @@ TopoDS_Shape create_stub_tube(const stub_tube_params &params) {
 
     if (exposedPipe.IsDone()) {
       tube = BRepAlgoAPI_Fuse(tube, exposedPipe.Shape()).Shape();
+    }
+    if (!exposedPipe.MakeSolid()) {
+      throw std::runtime_error("Failed to create a solid object from sweep");
     }
   }
 
@@ -7816,6 +7863,9 @@ TopoDS_Shape create_cable_wire(const cable_wire_params &params) {
 
   if (!pipeMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to generate cable wire");
+  }
+  if (!pipeMaker.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
   }
 
   return pipeMaker.Shape();
@@ -8834,6 +8884,10 @@ TopoDS_Shape create_cable_pole(const cable_pole_params &params) {
       }
       throw Standard_ConstructionError(msg.c_str());
     }
+    if (!pipeMaker.MakeSolid()) {
+      throw std::runtime_error("Failed to create a solid object from sweep");
+    }
+
     pole = pipeMaker.Shape();
   } else {
     // 直立柱
@@ -9086,8 +9140,12 @@ TopoDS_Shape create_embedded_part(const embedded_part_params &params) {
   pipeMaker.SetMode(Standard_True);
   pipeMaker.SetTransitionMode(BRepBuilderAPI_RightCorner);
   pipeMaker.Build();
-  if (!pipeMaker.IsDone())
-    throw Standard_ConstructionError("Failed to create horizontal extension");
+  if (!pipeMaker.IsDone()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
+  if (!pipeMaker.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
 
   return pipeMaker.Shape();
 }
@@ -9169,8 +9227,12 @@ TopoDS_Shape create_u_shaped_ring(const u_shaped_ring_params &params) {
   pipeMaker.SetMode(Standard_True);
   pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
   pipeMaker.Build();
-  if (!pipeMaker.IsDone())
-    throw Standard_ConstructionError("Failed to create horizontal extension");
+  if (!pipeMaker.IsDone()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
+  if (!pipeMaker.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
 
   return pipeMaker.Shape();
 }
@@ -12600,126 +12662,250 @@ TopoDS_Shape create_four_way_well(const four_way_well_params &params,
   return transform.Shape();
 }
 
-TopoDS_Shape create_pipe_row(const pipe_row_params &params) {
-  // 参数验证
-  if (params.pipeType != 1 && params.pipeType != 2) {
-    throw Standard_ConstructionError(
-        "Pipe type must be 1 (normal) or 2 (pull)");
+TopoDS_Shape create_channel_shape(TopoDS_Shape section,
+                                  std::vector<channel_point> points) {
+  // 参数校验
+  if (points.size() < 2) {
+    throw Standard_ConstructionError("至少需要两个点来创建路径");
+  }
+  if (section.IsNull()) {
+    throw Standard_ConstructionError("截面形状不能为空");
+  }
+  if (section.ShapeType() != TopAbs_WIRE) {
+    throw Standard_ConstructionError("截面形状必须是线框");
+  }
+  if (!BRep_Tool::IsClosed(section)) {
+    throw Standard_ConstructionError("截面形状必须是闭合的");
   }
 
-  if (params.pipeType == 1) {
-    if (params.pipePositions.empty()) {
-      throw Standard_ConstructionError("Normal pipe must have positions");
-    }
-    if (params.pipePositions.size() != params.pipeInnerDiameters.size() ||
-        params.pipePositions.size() != params.pipeWallThicknesses.size()) {
-      throw Standard_ConstructionError("Pipe parameters count mismatch");
-    }
-  } else {
-    if (params.pullPipeInnerDiameter <= 0 || params.pullPipeThickness <= 0) {
-      throw Standard_ConstructionError("Pull pipe dimensions must be positive");
-    }
-  }
+  // 创建路径线框
+  BRepBuilderAPI_MakeWire pathWire;
 
-  if (params.points.size() < 2) {
-    throw Standard_ConstructionError("At least 2 points are required");
-  }
+  // 处理点序列
+  for (size_t i = 0; i < points.size() - 1; i++) {
+    const gp_Pnt &current = points[i].position;
+    const gp_Pnt &next = points[i + 1].position;
 
-  // 创建路径线
-  BRepBuilderAPI_MakePolygon pathMaker;
-  for (size_t i = 0; i < params.points.size(); ++i) {
-    const auto &point = params.points[i];
-    if (point.type == 1 && (i == 0 || i == params.points.size() - 1)) {
-      throw Standard_ConstructionError(
-          "First and last points cannot be arc points");
-    }
-    pathMaker.Add(point.position);
-  }
-  TopoDS_Wire pathWire = pathMaker.Wire();
-
-  // 创建截面轮廓
-  TopoDS_Shape section;
-  if (params.pipeType == 1) {
-    // 普通排管截面
-    for (size_t i = 0; i < params.pipePositions.size(); ++i) {
-      double outerRadius =
-          params.pipeInnerDiameters[i] / 2 + params.pipeWallThicknesses[i];
-      gp_Pnt center(params.pipePositions[i].X(), params.pipePositions[i].Y(),
-                    0);
-
-      TopoDS_Shape pipe =
-          BRepPrimAPI_MakeCylinder(gp_Ax2(center, gp::DZ()), outerRadius,
-                                   params.pipeInnerDiameters[i] / 2)
-              .Shape();
-
-      if (section.IsNull()) {
-        section = pipe;
-      } else {
-        section = BRepAlgoAPI_Fuse(section, pipe).Shape();
+    if (points[i].type == 0) { // 普通节点
+      // 创建直线段
+      pathWire.Add(BRepBuilderAPI_MakeEdge(current, next).Edge());
+    } else if (points[i].type == 1) { // 弧形节点
+      // 确保有前一个点和后一个点
+      if (i == 0 || i == points.size() - 1) {
+        throw Standard_ConstructionError("弧形节点需要前后都有节点");
       }
+
+      const gp_Pnt &prev = points[i - 1].position;
+      // 创建三点圆弧
+      pathWire.Add(BRepBuilderAPI_MakeEdge(
+                       GC_MakeArcOfCircle(prev, current, next).Value())
+                       .Edge());
     }
-  } else {
-    // 拉管截面
-    double outerRadius =
-        params.pullPipeInnerDiameter / 2 + params.pullPipeThickness;
-    section =
-        BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DZ()), outerRadius,
-                                 params.pullPipeInnerDiameter / 2)
-            .Shape();
   }
 
-  // 沿路径扫掠
-  BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
+  if (!pathWire.IsDone()) {
+    throw Standard_ConstructionError("路径线框创建失败");
+  }
+
+  // 创建管道形状
+  BRepOffsetAPI_MakePipeShell pipeMaker(pathWire.Wire());
   pipeMaker.Add(section);
+  pipeMaker.SetMode(Standard_True);
+  pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
   pipeMaker.Build();
-
   if (!pipeMaker.IsDone()) {
-    throw Standard_ConstructionError("Failed to create pipe row");
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
+  if (!pipeMaker.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
   }
 
-  TopoDS_Shape pipes = pipeMaker.Shape();
+  return pipeMaker.Shape();
+}
 
-  // 创建包封
-  if (params.hasEnclosure) {
-    gp_Pnt enclosureCorner(-params.enclosureWidth / 2,
-                           -params.enclosureHeight / 2, 0);
-    TopoDS_Shape enclosure =
-        BRepPrimAPI_MakeBox(enclosureCorner, params.enclosureWidth,
-                            params.enclosureHeight, 1000)
-            .Shape();
+// 辅助函数：创建拉管截面
+TopoDS_Compound create_pull_pipe_section(const pipe_row_params &params) {
+  BRepBuilderAPI_MakeWire outerMaker;
 
-    pipes = BRepAlgoAPI_Fuse(pipes, enclosure).Shape();
+  // 创建外管圆
+  gp_Circ outerCircle(gp_Ax2(gp::Origin(), gp::DX()),
+                      params.pullPipeInnerDiameter / 2 +
+                          params.pullPipeThickness);
+  outerMaker.Add(BRepBuilderAPI_MakeEdge(outerCircle).Edge());
+
+  BRepBuilderAPI_MakeWire innerMaker;
+
+  // 创建内管圆（挖空）
+  gp_Circ innerCircle(gp_Ax2(gp::Origin(), gp::DX()),
+                      params.pullPipeInnerDiameter / 2);
+  innerMaker.Add(BRepBuilderAPI_MakeEdge(innerCircle).Edge());
+
+  TopoDS_Shape outerPipe =
+      create_channel_shape(outerMaker.Wire(), params.points);
+  TopoDS_Shape innerPipe =
+      create_channel_shape(innerMaker.Wire(), params.points);
+
+  TopoDS_Shape rpipe = BRepAlgoAPI_Cut(outerPipe, innerPipe).Shape();
+
+  TopoDS_Compound result;
+  BRep_Builder builder;
+  builder.MakeCompound(result);
+
+  builder.Add(result, rpipe);
+
+  // 创建内部排管
+  for (size_t i = 0; i < params.pipePositions.size(); ++i) {
+    BRepBuilderAPI_MakeWire pipeMaker;
+    BRepBuilderAPI_MakeWire pipeHoleMaker;
+
+    gp_Pnt center(params.pipePositions[i].X(), params.pipePositions[i].Y(), 0);
+    gp_Circ pipeCircle(gp_Ax2(center, gp::DX()),
+                       params.pipeInnerDiameters[i] / 2 +
+                           params.pipeWallThicknesses[i]);
+    gp_Circ pipeHole(gp_Ax2(center, gp::DX()),
+                     params.pipeInnerDiameters[i] / 2);
+
+    pipeMaker.Add(BRepBuilderAPI_MakeEdge(pipeCircle).Edge());
+    pipeHoleMaker.Add(BRepBuilderAPI_MakeEdge(pipeHole).Edge());
+
+    TopoDS_Shape outerPipe =
+        create_channel_shape(pipeMaker.Wire(), params.points);
+    TopoDS_Shape holePipe =
+        create_channel_shape(pipeHoleMaker.Wire(), params.points);
+
+    TopoDS_Shape ipipe = BRepAlgoAPI_Cut(outerPipe, holePipe).Shape();
+
+    builder.Add(result, ipipe);
   }
 
-  // 创建底板
-  if (params.baseThickness > 0) {
-    double baseWidth = params.enclosureWidth + 2 * params.baseExtension;
-    double baseHeight = params.enclosureHeight + 2 * params.baseExtension;
-    gp_Pnt baseCorner(-baseWidth / 2, -baseHeight / 2, -params.baseThickness);
-    TopoDS_Shape base = BRepPrimAPI_MakeBox(baseCorner, baseWidth, baseHeight,
-                                            params.baseThickness)
-                            .Shape();
+  return result;
+}
 
-    pipes = BRepAlgoAPI_Fuse(pipes, base).Shape();
-  }
+// 辅助函数：创建普通排管截面(YZ平面)
+TopoDS_Compound create_normal_pipe_section(const pipe_row_params &params) {
 
-  // 创建垫层
-  if (params.cushionThickness > 0) {
-    double cushionWidth = params.enclosureWidth + 2 * params.baseExtension +
-                          2 * params.cushionExtension;
-    double cushionHeight = params.enclosureHeight + 2 * params.baseExtension +
-                           2 * params.cushionExtension;
-    gp_Pnt cushionCorner(-cushionWidth / 2, -cushionHeight / 2,
-                         -params.baseThickness - params.cushionThickness);
+  // 创建底板轮廓
+  double baseWidth =
+      params.hasEnclosure
+          ? params.enclosureWidth + 2 * params.baseExtension
+          : [&]() {
+              // 计算最外侧管道位置(Y坐标)
+              double minY = std::numeric_limits<double>::max();
+              double maxY = std::numeric_limits<double>::lowest();
+              for (const auto &pos : params.pipePositions) {
+                size_t i = &pos - &params.pipePositions[0];
+                double radius = params.pipeInnerDiameters[i] / 2 +
+                                params.pipeWallThicknesses[i];
+                minY = std::min(minY, pos.Y() - radius);
+                maxY = std::max(maxY, pos.Y() + radius);
+              }
+              return (maxY - minY) + 2 * params.baseExtension;
+            }();
+  BRepBuilderAPI_MakeWire baseMaker;
+
+  // YZ平面上的点坐标 (X=0)
+  gp_Pnt p1(0, -baseWidth / 2, -params.baseThickness);
+  gp_Pnt p2(0, baseWidth / 2, -params.baseThickness);
+  gp_Pnt p3(0, baseWidth / 2, 0);
+  gp_Pnt p4(0, -baseWidth / 2, 0);
+
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(p4, p1).Edge());
+
+  TopoDS_Compound result;
+  BRep_Builder builder;
+  builder.MakeCompound(result);
+
+  TopoDS_Shape base = create_channel_shape(baseMaker.Wire(), params.points);
+
+  builder.Add(result, base);
+
+  if (params.cushionExtension > 0 && params.cushionThickness > 0) {
+    BRepBuilderAPI_MakeWire cushionMaker;
+    gp_Pnt p1(0, -baseWidth / 2 - params.cushionExtension,
+              -params.baseThickness - params.cushionThickness);
+    gp_Pnt p2(0, baseWidth / 2 + params.cushionExtension,
+              -params.baseThickness - params.cushionThickness);
+    gp_Pnt p3(0, baseWidth / 2 + params.cushionExtension, 0);
+    gp_Pnt p4(0, -baseWidth / 2 - params.cushionExtension, 0);
+
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p4, p1).Edge());
+
     TopoDS_Shape cushion =
-        BRepPrimAPI_MakeBox(cushionCorner, cushionWidth, cushionHeight,
-                            params.cushionThickness)
-            .Shape();
+        create_channel_shape(cushionMaker.Wire(), params.points);
 
-    pipes = BRepAlgoAPI_Fuse(pipes, cushion).Shape();
+    builder.Add(result, cushion);
   }
 
-  return pipes;
+  BRepBuilderAPI_MakeWire wireMaker1;
+  TopoDS_Shape enclosure;
+
+  // 创建封包（如果有）
+  if (params.hasEnclosure) {
+    gp_Pnt e1(0, -params.enclosureWidth / 2, 0);
+    gp_Pnt e2(0, -params.enclosureWidth / 2, params.enclosureHeight);
+    gp_Pnt e3(0, params.enclosureWidth / 2, params.enclosureHeight);
+    gp_Pnt e4(0, params.enclosureWidth / 2, 0);
+
+    wireMaker1.Add(BRepBuilderAPI_MakeEdge(e1, e2).Edge());
+    wireMaker1.Add(BRepBuilderAPI_MakeEdge(e2, e3).Edge());
+    wireMaker1.Add(BRepBuilderAPI_MakeEdge(e3, e4).Edge());
+    wireMaker1.Add(BRepBuilderAPI_MakeEdge(e4, e1).Edge());
+
+    enclosure = create_channel_shape(wireMaker1.Wire(), params.points);
+  }
+
+  // 创建管道
+  for (size_t i = 0; i < params.pipePositions.size(); ++i) {
+    BRepBuilderAPI_MakeWire pipeMaker;
+    BRepBuilderAPI_MakeWire pipeHoleMaker;
+
+    // YZ平面上的中心点 (X=0)
+    gp_Pnt center(0, params.pipePositions[i].Y(), params.pipePositions[i].X());
+    gp_Circ pipeCircle(gp_Ax2(center, gp::DX()), // 法线方向为X轴
+                       params.pipeInnerDiameters[i] / 2 +
+                           params.pipeWallThicknesses[i]);
+    gp_Circ pipeHole(gp_Ax2(center, gp::DX()),
+                     params.pipeInnerDiameters[i] / 2);
+
+    pipeMaker.Add(BRepBuilderAPI_MakeEdge(pipeCircle).Edge());
+    pipeHoleMaker.Add(BRepBuilderAPI_MakeEdge(pipeHole).Edge());
+
+    TopoDS_Shape pipe = create_channel_shape(pipeMaker.Wire(), params.points);
+
+    if (params.hasEnclosure) {
+      enclosure = BRepAlgoAPI_Cut(enclosure, pipe).Shape();
+    } else {
+      TopoDS_Shape holePipe =
+          create_channel_shape(pipeHoleMaker.Wire(), params.points);
+
+      pipe = BRepAlgoAPI_Cut(pipe, holePipe).Shape();
+      builder.Add(result, pipe);
+    }
+  }
+
+  if (params.hasEnclosure) {
+    builder.Add(result, enclosure);
+  }
+
+  return result;
+}
+
+TopoDS_Shape create_pipe_row(const pipe_row_params &params) {
+  // 创建截面
+  TopoDS_Shape result;
+  if (params.pipeType == 1) {
+    result = create_normal_pipe_section(params);
+  } else {
+    result = create_pull_pipe_section(params);
+  }
+
+  return result;
 }
 
 TopoDS_Shape create_pipe_row(const pipe_row_params &params,
