@@ -349,6 +349,10 @@ func (e *Edge) ParamAtPoint(pt Point3) float64 {
 	return float64(C.topo_edge_param_at_point(e.inner.val, pt.val))
 }
 
+func (s *Edge) Reverse() {
+	C.topo_edge_reverse(s.inner.val)
+}
+
 func (e *Edge) Params(pts []Point3, tol float64) []float64 {
 	count := len(pts)
 	cPoints := make([]C.pnt3d_t, count)

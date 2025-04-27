@@ -1794,16 +1794,9 @@ TopoDS_Shape create_cable_trench(const cable_trench_params &params,
                                  const gp_Dir &direction = gp::DZ(),
                                  const gp_Dir &xDir = gp::DX());
 
-// 电缆隧道截面样式枚举
-enum class tunnel_section_style {
-  RECTANGULAR = 1, // 矩形
-  HORSESHOE = 2,   // 马蹄形
-  CIRCULAR = 3     // 圆形
-};
-
 // TD_DLSD
 struct cable_tunnel_params {
-  tunnel_section_style style; // 截面样式
+  connection_section_style style; // 截面样式
 
   // 基本尺寸参数
   double width;  // 内净宽/内径 W (mm)

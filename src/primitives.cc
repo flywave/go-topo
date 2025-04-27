@@ -12916,7 +12916,7 @@ TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params) {
   // 创建隧道截面轮廓
   TopoDS_Wire sectionWire;
   switch (params.style) {
-  case tunnel_section_style::RECTANGULAR: {
+  case connection_section_style::RECTANGULAR: {
     // 矩形截面
     gp_Pnt p1(0, -params.width / 2, 0);
     gp_Pnt p2(0, params.width / 2, 0);
@@ -12925,7 +12925,7 @@ TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params) {
     sectionWire = BRepBuilderAPI_MakePolygon(p1, p2, p3, p4, true).Wire();
     break;
   }
-  case tunnel_section_style::HORSESHOE: {
+  case connection_section_style::HORSESHOE: {
     // 马蹄形截面
     double radius = params.width / 2;
     gp_Pnt center(0, 0, radius);
@@ -12949,7 +12949,7 @@ TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params) {
     sectionWire = wire;
     break;
   }
-  case tunnel_section_style::CIRCULAR: {
+  case connection_section_style::CIRCULAR: {
     // 圆形截面
     gp_Pnt center(0, 0, 0);
     Handle(Geom_Circle) circle =

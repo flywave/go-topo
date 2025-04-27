@@ -795,6 +795,8 @@ bool edge::is_closed() const {
 
 bool edge::is_inifinite() const { return value().Infinite(); }
 
+void edge::reverse() { value().Reverse(); }
+
 bool edge::is_curve3d() const { return BRep_Tool::IsGeometric(value()); }
 
 double edge::length() const {

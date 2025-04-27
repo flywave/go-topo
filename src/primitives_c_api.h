@@ -1482,12 +1482,6 @@ PRIMCAPICALL topo_shape_t *
 create_four_way_well_with_place(four_way_well_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t xDirection);
 
-enum {
-  TUNNEL_SECTION_RECTANGULAR = 1,
-  TUNNEL_SECTION_HORSESHOE = 2,
-  TUNNEL_SECTION_CIRCULAR = 3
-};
-
 typedef struct {
   pnt3d_t position;
   int ctype;

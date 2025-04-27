@@ -617,6 +617,7 @@ TOPOCAPICALL double topo_edge_length(topo_edge_t e);
 TOPOCAPICALL float topo_edge_tolerance(topo_edge_t e);
 TOPOCAPICALL bool topo_edge_is_curve3d(topo_edge_t e);
 TOPOCAPICALL void topo_edge_convert_to_curve3d(topo_edge_t e);
+TOPOCAPICALL void topo_edge_reverse(topo_edge_t e);
 
 TOPOCAPICALL void topo_edge_bounds(topo_edge_t e, double *min, double *max);
 TOPOCAPICALL double topo_edge_length(topo_edge_t e);

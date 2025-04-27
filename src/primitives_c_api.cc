@@ -2505,7 +2505,7 @@ create_cable_trench_with_place(cable_trench_params_t params, pnt3d_t position,
 
 PRIMCAPICALL topo_shape_t *create_cable_tunnel(cable_tunnel_params_t params) {
   cable_tunnel_params cpp_params{
-      static_cast<tunnel_section_style>(params.style),
+      static_cast<connection_section_style>(params.style),
       params.width,
       params.height,
       params.topThickness,
@@ -2535,7 +2535,7 @@ PRIMCAPICALL topo_shape_t *
 create_cable_tunnel_with_place(cable_tunnel_params_t params, pnt3d_t position,
                                dir3d_t direction, dir3d_t xDir) {
   cable_tunnel_params cpp_params{
-      static_cast<tunnel_section_style>(params.style),
+      static_cast<connection_section_style>(params.style),
       params.width,
       params.height,
       params.topThickness,

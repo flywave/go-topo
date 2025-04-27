@@ -295,6 +295,8 @@ public:
 
   void convert_to_curve3d();
 
+  void reverse();
+
   virtual Handle(Adaptor3d_Curve) get_geom() const override;
 
   virtual geometry_object_type type() const override {

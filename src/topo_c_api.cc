@@ -2138,6 +2138,13 @@ void topo_edge_convert_to_curve3d(topo_edge_t e) {
   }
 }
 
+void topo_edge_reverse(topo_edge_t e) {
+  auto opt = cast_to_topo(e);
+  if (opt) {
+    return opt->reverse();
+  }
+}
+
 void topo_edge_bounds(topo_edge_t e, double *min, double *max) {
   try {
     auto bounds = cast_to_topo(e)->bounds();
