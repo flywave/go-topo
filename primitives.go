@@ -3328,19 +3328,27 @@ func CreateThreeWayWellWithPlace(params ThreeWayWellParams, position Point3, mai
 	return s
 }
 
+const (
+	FourWayWellWorking     = C.FOUR_WAY_WELL_WORKING
+	FourWayWellOpenCut     = C.FOUR_WAY_WELL_OPEN_CUT
+	FourWayWellUnderground = C.FOUR_WAY_WELL_UNDERGROUND
+)
+
 type FourWayWellParams struct {
-	Length         float32
-	Width          float32
-	Height         float32
-	CornerStyle    int
-	CornerRadius   float32
-	CornerLength   float32
-	CornerWidth    float32
-	BranchLength   float32
-	BranchWidth    float32
-	RoofThickness  float32
-	FloorThickness float32
-	LeftSection    struct {
+	Ctype           int
+	Length          float32
+	Width           float32
+	Height          float32
+	ShaftRadius     float32
+	CornerStyle     int
+	CornerRadius    float32
+	CornerLength    float32
+	CornerWidth     float32
+	BranchLength    float32
+	BranchWidth     float32
+	TopThickness    float32
+	BottomThickness float32
+	LeftSection     struct {
 		SectionType int
 		Length      float32
 		Width       float32
@@ -3376,17 +3384,19 @@ type FourWayWellParams struct {
 
 func (p *FourWayWellParams) to_struct() C.four_way_well_params_t {
 	var c C.four_way_well_params_t
+	c.ctype = C.int(p.Ctype)
 	c.length = C.double(p.Length)
 	c.width = C.double(p.Width)
 	c.height = C.double(p.Height)
+	c.shaftRadius = C.double(p.ShaftRadius)
 	c.cornerStyle = C.int(p.CornerStyle)
 	c.cornerRadius = C.double(p.CornerRadius)
 	c.cornerLength = C.double(p.CornerLength)
 	c.cornerWidth = C.double(p.CornerWidth)
 	c.branchLength = C.double(p.BranchLength)
 	c.branchWidth = C.double(p.BranchWidth)
-	c.roofThickness = C.double(p.RoofThickness)
-	c.floorThickness = C.double(p.FloorThickness)
+	c.topThickness = C.double(p.TopThickness)
+	c.bottomThickness = C.double(p.BottomThickness)
 
 	c.leftSection.sectionType = C.int(p.LeftSection.SectionType)
 	c.leftSection.length = C.double(p.LeftSection.Length)
@@ -3594,8 +3604,8 @@ type CableTunnelParams struct {
 	Style                int32
 	Width                float32
 	Height               float32
-	RoofThickness        float32
-	FloorThickness       float32
+	TopThickness         float32
+	BottomThickness      float32
 	OuterWallThickness   float32
 	InnerWallThickness   float32
 	ArchHeight           float32
@@ -3610,8 +3620,8 @@ func (p *CableTunnelParams) to_struct() C.cable_tunnel_params_t {
 	c.style = C.int(p.Style)
 	c.width = C.double(p.Width)
 	c.height = C.double(p.Height)
-	c.roofThickness = C.double(p.RoofThickness)
-	c.floorThickness = C.double(p.FloorThickness)
+	c.topThickness = C.double(p.TopThickness)
+	c.bottomThickness = C.double(p.BottomThickness)
 	c.outerWallThickness = C.double(p.OuterWallThickness)
 	c.innerWallThickness = C.double(p.InnerWallThickness)
 	c.archHeight = C.double(p.ArchHeight)
@@ -3873,10 +3883,10 @@ func CreateLadderWithPlace(params LadderParams, position Point3, direction Dir3,
 }
 
 type SumpParams struct {
-	Length         float32
-	Width          float32
-	Depth          float32
-	FloorThickness float32
+	Length          float32
+	Width           float32
+	Depth           float32
+	BottomThickness float32
 }
 
 func (p *SumpParams) to_struct() C.sump_params_t {
@@ -3884,7 +3894,7 @@ func (p *SumpParams) to_struct() C.sump_params_t {
 	c.length = C.double(p.Length)
 	c.width = C.double(p.Width)
 	c.depth = C.double(p.Depth)
-	c.floorThickness = C.double(p.FloorThickness)
+	c.bottomThickness = C.double(p.BottomThickness)
 	return c
 }
 
@@ -3932,7 +3942,7 @@ type ShaftChamberParams struct {
 	SupportWallThickness float32
 	SupportDiameter      float32
 	SupportHeight        float32
-	RoofThickness        float32
+	TopThickness         float32
 	InnerDiameter        float32
 	WorkingHeight        float32
 	OuterWallThickness   float32
@@ -3944,7 +3954,7 @@ func (p *ShaftChamberParams) to_struct() C.shaft_chamber_params_t {
 	c.supportWallThickness = C.double(p.SupportWallThickness)
 	c.supportDiameter = C.double(p.SupportDiameter)
 	c.supportHeight = C.double(p.SupportHeight)
-	c.roofThickness = C.double(p.RoofThickness)
+	c.topThickness = C.double(p.TopThickness)
 	c.innerDiameter = C.double(p.InnerDiameter)
 	c.workingHeight = C.double(p.WorkingHeight)
 	c.outerWallThickness = C.double(p.OuterWallThickness)
@@ -4122,7 +4132,7 @@ type DrainageWellParams struct {
 	NeckDiameter     float32
 	NeckHeight       float32
 	CushionExtension float32
-	FloorThickness   float32
+	BottomThickness  float32
 	WallThickness    float32
 }
 
@@ -4134,7 +4144,7 @@ func (p *DrainageWellParams) to_struct() C.drainage_well_params_t {
 	c.neckDiameter = C.double(p.NeckDiameter)
 	c.neckHeight = C.double(p.NeckHeight)
 	c.cushionExtension = C.double(p.CushionExtension)
-	c.floorThickness = C.double(p.FloorThickness)
+	c.bottomThickness = C.double(p.BottomThickness)
 	c.wallThickness = C.double(p.WallThickness)
 	return c
 }

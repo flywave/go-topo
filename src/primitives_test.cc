@@ -2982,7 +2982,7 @@ void test_make_three_way_working_well() {
                                       .cushionExtension = 10.0,
                                       .cushionThickness = 15.0};
 
-    auto roundShp = create_three_way_working_well(roundParams);
+    auto roundShp = create_three_way_well(roundParams);
     if (roundShp.IsNull()) {
       std::cerr << "Error: Failed to create round corner three way well"
                 << std::endl;
@@ -3015,7 +3015,7 @@ void test_make_three_way_working_well() {
                                        .cushionExtension = 10.0,
                                        .cushionThickness = 15.0};
 
-    auto angledShp = create_three_way_working_well(angledParams);
+    auto angledShp = create_three_way_well(angledParams);
     if (angledShp.IsNull()) {
       std::cerr << "Error: Failed to create angled corner three way well"
                 << std::endl;
@@ -3048,7 +3048,7 @@ void test_make_three_way_working_well() {
                                         .cushionExtension = 5.0,
                                         .cushionThickness = 5.0};
 
-    auto chamferShp = create_three_way_working_well(chamferParams);
+    auto chamferShp = create_three_way_well(chamferParams);
     if (chamferShp.IsNull()) {
       std::cerr << "Error: Failed to create chamfer round corner three way well"
                 << std::endl;
@@ -3104,7 +3104,7 @@ void test_make_three_way_open_cut_tunnel() {
         .innerBottomThickness = 18.0,
         .outerBottomThickness = 20.0};
 
-    auto shp = create_three_way_open_cut_tunnel(params);
+    auto shp = create_three_way_well(params);
     if (shp.IsNull()) {
       std::cerr << "Error: Failed to create three way open cut tunnel"
                 << std::endl;
@@ -3161,13 +3161,13 @@ void test_make_three_way_underground_tunnel() {
         .innerBottomThickness = 18.0,
         .outerBottomThickness = 20.0};
 
-    auto shp = create_three_way_underground_tunnel(params);
+    auto shp = create_three_way_well(params);
     if (shp.IsNull()) {
       std::cerr << "Error: Failed to create three way open cut tunnel"
                 << std::endl;
       return;
     }
-    test_export_shape(shp, "./three_way_open_underground.stl");
+    test_export_shape(shp, "./three_way_underground_tunnel.stl");
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
   }
@@ -3218,13 +3218,203 @@ void test_make_three_way_double_shaft_tunnel() {
         .innerBottomThickness = 18.0,
         .outerBottomThickness = 20.0};
 
-    auto shp = create_three_way_double_shaft_tunnel(params);
+    auto shp = create_three_way_well(params);
     if (shp.IsNull()) {
       std::cerr << "Error: Failed to create three way double shaft tunnel"
                 << std::endl;
       return;
     }
     test_export_shape(shp, "./three_way_double_shaft_tunnel.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_four_way_working_well() {
+  std::cout << "\n=== Testing Four Way Working Well ===" << std::endl;
+
+  // 1. 圆形转角四通井测试
+  try {
+    four_way_well_params roundParams{.type = four_way_well_type::WORKING_WELL,
+                                     .cornerStyle = corner_style::ROUNDED,
+                                     .length = 200.0,
+                                     .width = 80.0,
+                                     .height = 60.0,
+                                     .cornerRadius = 30.0,
+                                     .branchLength = 100.0,
+                                     .branchWidth = 80.0,
+                                     .topThickness = 10.0,
+                                     .bottomThickness = 10.0,
+                                     .outerWallThickness = 5.0,
+                                     .innerWallThickness = 3.0,
+                                     .cushionExtension = 10.0,
+                                     .cushionThickness = 15.0};
+
+    auto roundShp = create_four_way_well(roundParams);
+    if (roundShp.IsNull()) {
+      std::cerr << "Error: Failed to create round corner four way well"
+                << std::endl;
+    } else {
+      test_export_shape(roundShp, "./four_way_round_working_well.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Round Corner Construction Error: " << e.GetMessageString()
+              << std::endl;
+  }
+
+  // 2. 折角形转角四通井测试
+  try {
+    four_way_well_params angledParams{.type = four_way_well_type::WORKING_WELL,
+                                      .cornerStyle = corner_style::ANGLED,
+                                      .length = 200.0,
+                                      .width = 80.0,
+                                      .height = 60.0,
+                                      .cornerLength = 20.0,
+                                      .cornerWidth = 20.0,
+                                      .branchLength = 100.0,
+                                      .branchWidth = 80.0,
+                                      .topThickness = 10.0,
+                                      .bottomThickness = 10.0,
+                                      .outerWallThickness = 5.0,
+                                      .innerWallThickness = 3.0,
+                                      .cushionExtension = 10.0,
+                                      .cushionThickness = 15.0};
+
+    auto angledShp = create_four_way_well(angledParams);
+    if (angledShp.IsNull()) {
+      std::cerr << "Error: Failed to create angled corner four way well"
+                << std::endl;
+    } else {
+      test_export_shape(angledShp, "./four_way_angled_working_well.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Angled Corner Construction Error: " << e.GetMessageString()
+              << std::endl;
+  }
+}
+
+void test_make_four_way_open_cut_tunnel() {
+  std::cout << "\n=== Testing Four Way Open Cut Tunnel ===" << std::endl;
+  try {
+    four_way_well_params params{
+        .type = four_way_well_type::OPEN_CUT_TUNNEL,
+        .cornerStyle = corner_style::ROUNDED,
+        .length = 200.0,
+        .width = 80.0,
+        .height = 60.0,
+        .cornerRadius = 30.0,
+        .branchLength = 100.0,
+        .branchWidth = 80.0,
+        .topThickness = 10.0,
+        .bottomThickness = 10.0,
+        .leftSection =
+            {
+                .sectionType = connection_section_style::RECTANGULAR,
+                .length = 60.0,
+                .width = 80.0,
+                .height = 90.0,
+                .archHeight = 15.0,
+            },
+        .rightSection =
+            {
+                .sectionType = connection_section_style::RECTANGULAR,
+                .length = 60.0,
+                .width = 80.0,
+                .height = 90.0,
+                .archHeight = 15.0,
+            },
+        .branchSection1 =
+            {
+                .sectionType = connection_section_style::HORSESHOE,
+                .length = 80.0,
+                .width = 80.0,
+                .height = 50.0,
+                .archHeight = 15.0,
+            },
+        .branchSection2 =
+            {
+                .sectionType = connection_section_style::HORSESHOE,
+                .length = 80.0,
+                .width = 80.0,
+                .height = 50.0,
+                .archHeight = 15.0,
+            },
+        .outerWallThickness = 5.0,
+        .innerWallThickness = 3.0,
+        .cushionExtension = 10.0,
+        .cushionThickness = 10.0};
+
+    auto shp = create_four_way_well(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create four way open cut tunnel"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./four_way_open_cut_tunnel.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_four_way_underground_tunnel() {
+  std::cout << "\n=== Testing Four Way UnderGround Tunnel ===" << std::endl;
+  try {
+    four_way_well_params params{
+        .type = four_way_well_type::UNDERGROUND_TUNNEL,
+        .cornerStyle = corner_style::ROUNDED,
+        .length = 200.0,
+        .width = 80.0,
+        .height = 60.0,
+        .shaftRadius = 80.0,
+        .cornerRadius = 30.0,
+        .branchLength = 100.0,
+        .branchWidth = 80.0,
+        .topThickness = 10.0,
+        .bottomThickness = 10.0,
+        .leftSection =
+            {
+                .sectionType = connection_section_style::RECTANGULAR,
+                .length = 60.0,
+                .width = 80.0,
+                .height = 90.0,
+                .archHeight = 15.0,
+            },
+        .rightSection =
+            {
+                .sectionType = connection_section_style::RECTANGULAR,
+                .length = 60.0,
+                .width = 80.0,
+                .height = 90.0,
+                .archHeight = 15.0,
+            },
+        .branchSection1 =
+            {
+                .sectionType = connection_section_style::HORSESHOE,
+                .length = 80.0,
+                .width = 80.0,
+                .height = 50.0,
+                .archHeight = 15.0,
+            },
+        .branchSection2 =
+            {
+                .sectionType = connection_section_style::HORSESHOE,
+                .length = 80.0,
+                .width = 80.0,
+                .height = 50.0,
+                .archHeight = 15.0,
+            },
+        .outerWallThickness = 5.0,
+        .innerWallThickness = 3.0,
+        .cushionExtension = 10.0,
+        .cushionThickness = 10.0};
+
+    auto shp = create_four_way_well(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create four way open cut tunnel"
+                << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./four_way_underground_tunnel.stl");
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
   }
@@ -3310,5 +3500,8 @@ int main() {
   test_make_three_way_open_cut_tunnel();
   test_make_three_way_underground_tunnel();
   test_make_three_way_double_shaft_tunnel();
+  test_make_four_way_working_well();
+  test_make_four_way_open_cut_tunnel();
+  test_make_four_way_underground_tunnel();
   return 0;
 }

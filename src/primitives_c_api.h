@@ -1442,18 +1442,28 @@ create_three_way_well_with_place(three_way_well_params_t params,
                                  pnt3d_t position, dir3d_t mainDirection,
                                  dir3d_t branchDirection);
 
+
+enum {
+  FOUR_WAY_WELL_WORKING = 1,
+  FOUR_WAY_WELL_OPEN_CUT = 2,
+  FOUR_WAY_WELL_UNDERGROUND = 3
+};
+
+
 typedef struct {
+  int ctype;
   double length;
   double width;
   double height;
+  double shaftRadius;
   int cornerStyle;
   double cornerRadius;
   double cornerLength;
   double cornerWidth;
   double branchLength;
   double branchWidth;
-  double roofThickness;
-  double floorThickness;
+  double topThickness;
+  double bottomThickness;
   struct {
     int sectionType;
     double length;
@@ -1532,8 +1542,8 @@ typedef struct {
   int style;
   double width;
   double height;
-  double roofThickness;
-  double floorThickness;
+  double topThickness;
+  double bottomThickness;
   double outerWallThickness;
   double innerWallThickness;
   double archHeight;
@@ -1632,7 +1642,7 @@ typedef struct {
   double length;
   double width;
   double depth;
-  double floorThickness;
+  double bottomThickness;
 } sump_params_t;
 
 PRIMCAPICALL topo_shape_t *create_sump(sump_params_t params);
@@ -1655,7 +1665,7 @@ typedef struct {
   double supportWallThickness;
   double supportDiameter;
   double supportHeight;
-  double roofThickness;
+  double topThickness;
   double innerDiameter;
   double workingHeight;
   double outerWallThickness;
@@ -1750,7 +1760,7 @@ typedef struct {
   double neckDiameter;
   double neckHeight;
   double cushionExtension;
-  double floorThickness;
+  double bottomThickness;
   double wallThickness;
 } drainage_well_params_t;
 

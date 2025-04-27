@@ -2290,27 +2290,29 @@ create_three_way_well_with_place(three_way_well_params_t params,
 
 PRIMCAPICALL topo_shape_t *create_four_way_well(four_way_well_params_t params) {
   four_way_well_params cpp_params{
+      static_cast<four_way_well_type>(params.ctype),
       params.length,
       params.width,
       params.height,
-      params.cornerStyle,
+      params.shaftRadius,
+      static_cast<corner_style>(params.cornerStyle),
       params.cornerRadius,
       params.cornerLength,
       params.cornerWidth,
       params.branchLength,
       params.branchWidth,
-      params.roofThickness,
-      params.floorThickness,
-      {static_cast<junction_section_type>(params.leftSection.sectionType),
+      params.topThickness,
+      params.bottomThickness,
+      {static_cast<connection_section_style>(params.leftSection.sectionType),
        params.leftSection.length, params.leftSection.width,
        params.leftSection.height, params.leftSection.archHeight},
-      {static_cast<junction_section_type>(params.rightSection.sectionType),
+      {static_cast<connection_section_style>(params.rightSection.sectionType),
        params.rightSection.length, params.rightSection.width,
        params.rightSection.height, params.rightSection.archHeight},
-      {static_cast<junction_section_type>(params.branchSection1.sectionType),
+      {static_cast<connection_section_style>(params.branchSection1.sectionType),
        params.branchSection1.length, params.branchSection1.width,
        params.branchSection1.height, params.branchSection1.archHeight},
-      {static_cast<junction_section_type>(params.branchSection2.sectionType),
+      {static_cast<connection_section_style>(params.branchSection2.sectionType),
        params.branchSection2.length, params.branchSection2.width,
        params.branchSection2.height, params.branchSection2.archHeight},
       params.outerWallThickness,
@@ -2325,27 +2327,29 @@ PRIMCAPICALL topo_shape_t *
 create_four_way_well_with_place(four_way_well_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t xDirection) {
   four_way_well_params cpp_params{
+      static_cast<four_way_well_type>(params.ctype),
       params.length,
       params.width,
       params.height,
-      params.cornerStyle,
+      params.shaftRadius,
+      static_cast<corner_style>(params.cornerStyle),
       params.cornerRadius,
       params.cornerLength,
       params.cornerWidth,
       params.branchLength,
       params.branchWidth,
-      params.roofThickness,
-      params.floorThickness,
-      {static_cast<junction_section_type>(params.leftSection.sectionType),
+      params.topThickness,
+      params.bottomThickness,
+      {static_cast<connection_section_style>(params.leftSection.sectionType),
        params.leftSection.length, params.leftSection.width,
        params.leftSection.height, params.leftSection.archHeight},
-      {static_cast<junction_section_type>(params.rightSection.sectionType),
+      {static_cast<connection_section_style>(params.rightSection.sectionType),
        params.rightSection.length, params.rightSection.width,
        params.rightSection.height, params.rightSection.archHeight},
-      {static_cast<junction_section_type>(params.branchSection1.sectionType),
+      {static_cast<connection_section_style>(params.branchSection1.sectionType),
        params.branchSection1.length, params.branchSection1.width,
        params.branchSection1.height, params.branchSection1.archHeight},
-      {static_cast<junction_section_type>(params.branchSection2.sectionType),
+      {static_cast<connection_section_style>(params.branchSection2.sectionType),
        params.branchSection2.length, params.branchSection2.width,
        params.branchSection2.height, params.branchSection2.archHeight},
       params.outerWallThickness,
@@ -2504,8 +2508,8 @@ PRIMCAPICALL topo_shape_t *create_cable_tunnel(cable_tunnel_params_t params) {
       static_cast<tunnel_section_style>(params.style),
       params.width,
       params.height,
-      params.roofThickness,
-      params.floorThickness,
+      params.topThickness,
+      params.bottomThickness,
       params.outerWallThickness,
       params.innerWallThickness,
       params.archHeight,
@@ -2534,8 +2538,8 @@ create_cable_tunnel_with_place(cable_tunnel_params_t params, pnt3d_t position,
       static_cast<tunnel_section_style>(params.style),
       params.width,
       params.height,
-      params.roofThickness,
-      params.floorThickness,
+      params.topThickness,
+      params.bottomThickness,
       params.outerWallThickness,
       params.innerWallThickness,
       params.archHeight,
@@ -2725,7 +2729,7 @@ PRIMCAPICALL topo_shape_t *create_ladder_with_place(ladder_params_t params,
 
 PRIMCAPICALL topo_shape_t *create_sump(sump_params_t params) {
   sump_params cpp_params{params.length, params.width, params.depth,
-                         params.floorThickness};
+                         params.bottomThickness};
 
   return new topo_shape_t{std::make_shared<shape>(create_sump(cpp_params))};
 }
@@ -2735,7 +2739,7 @@ PRIMCAPICALL topo_shape_t *create_sump_with_place(sump_params_t params,
                                                   dir3d_t normal,
                                                   dir3d_t xDir) {
   sump_params cpp_params{params.length, params.width, params.depth,
-                         params.floorThickness};
+                         params.bottomThickness};
 
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
@@ -2768,7 +2772,7 @@ PRIMCAPICALL topo_shape_t *create_footpath_with_place(footpath_params_t params,
 PRIMCAPICALL topo_shape_t *create_shaft_chamber(shaft_chamber_params_t params) {
   shaft_chamber_params cpp_params{
       params.supportWallThickness, params.supportDiameter,
-      params.supportHeight,        params.roofThickness,
+      params.supportHeight,        params.topThickness,
       params.innerDiameter,        params.workingHeight,
       params.outerWallThickness,   params.innerWallThickness};
 
@@ -2781,7 +2785,7 @@ create_shaft_chamber_with_place(shaft_chamber_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t xDir) {
   shaft_chamber_params cpp_params{
       params.supportWallThickness, params.supportDiameter,
-      params.supportHeight,        params.roofThickness,
+      params.supportHeight,        params.topThickness,
       params.innerDiameter,        params.workingHeight,
       params.outerWallThickness,   params.innerWallThickness};
 
@@ -2937,7 +2941,7 @@ PRIMCAPICALL topo_shape_t *create_drainage_well(drainage_well_params_t params) {
   drainage_well_params cpp_params{
       params.length,         params.width,        params.height,
       params.neckDiameter,   params.neckHeight,   params.cushionExtension,
-      params.floorThickness, params.wallThickness};
+      params.bottomThickness, params.wallThickness};
   return new topo_shape_t{
       std::make_shared<shape>(create_drainage_well(cpp_params))};
 }
@@ -2948,7 +2952,7 @@ create_drainage_well_with_place(drainage_well_params_t params, pnt3d_t position,
   drainage_well_params cpp_params{
       params.length,         params.width,        params.height,
       params.neckDiameter,   params.neckHeight,   params.cushionExtension,
-      params.floorThickness, params.wallThickness};
+      params.bottomThickness, params.wallThickness};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);

@@ -1679,41 +1679,48 @@ TopoDS_Shape create_three_way_well(const three_way_well_params &params,
                                    const gp_Dir &mainDirection = gp::DX(),
                                    const gp_Dir &branchDirection = gp::DY());
 
-// 连接段截面样式枚举
-enum class junction_section_type {
-  RECTANGULAR = 1, // 矩形
-  HORSESHOE = 2,   // 马蹄形
-  CIRCULAR = 3     // 圆形
+/**
+ * @brief  四通井类型枚举
+ */
+enum class four_way_well_type {
+  WORKING_WELL = 1,      // 工作井
+  OPEN_CUT_TUNNEL = 2,   // 明挖隧道井
+  UNDERGROUND_TUNNEL = 3 // 暗挖隧道井
 };
 
 // DLJ_4T/DLJ_4TMS/DLJ_4TAS
 struct four_way_well_params {
+  four_way_well_type type; // 四通井类型
+
   // 主井参数
   double length; // 井净长 L (mm)
   double width;  // 井净宽 W (mm)
   double height; // 井净高 H (mm)
 
+  // 竖井参数
+  double shaftRadius; // 竖井内半径(mm)
+
   // 转角样式参数
-  int cornerStyle;     // 1=圆形, 2=折角形
-  double cornerRadius; // 转角半径 RZ (mm)
-  double cornerLength; // 折角长 LZ1 (mm)
-  double cornerWidth;  // 折角宽 WZ1 (mm)
+  corner_style cornerStyle; // 1=圆形, 2=折角形
+  double cornerRadius;      // 转角半径 RZ (mm)
+  double cornerLength;      // 折角长 LZ1 (mm)
+  double cornerWidth;       // 折角宽 WZ1 (mm)
 
   // 支线段参数
   double branchLength; // 支线段净长 L1 (mm)
   double branchWidth;  // 支线段净宽 W1 (mm)
 
   // 顶底板参数
-  double roofThickness;  // 顶板厚 H1 (mm)
-  double floorThickness; // 底板厚 H2 (mm)
+  double topThickness;    // 顶板厚 H1 (mm)
+  double bottomThickness; // 底板厚 H2 (mm)
 
   // 连接段参数
   struct {
-    junction_section_type sectionType; // 截面样式
-    double length;                     // 连接段长
-    double width;                      // 连接段宽
-    double height;                     // 高度/半径
-    double archHeight;                 // 拱高
+    connection_section_style sectionType; // 截面样式
+    double length;                        // 连接段长
+    double width;                         // 连接段宽
+    double height;                        // 高度/半径
+    double archHeight;                    // 拱高
   } leftSection, rightSection, branchSection1, branchSection2;
 
   // 壁厚参数
@@ -1803,8 +1810,8 @@ struct cable_tunnel_params {
   double height; // 内净高 H (mm)
 
   // 矩形隧道参数
-  double roofThickness;  // 顶板厚 H1 (mm)
-  double floorThickness; // 底板厚 H2 (mm)
+  double topThickness;    // 顶板厚 H1 (mm)
+  double bottomThickness; // 底板厚 H2 (mm)
 
   // 马蹄形隧道参数
   double outerWallThickness; // 外壁厚 T (mm)
@@ -1937,10 +1944,10 @@ TopoDS_Shape create_ladder(const ladder_params &params, const gp_Pnt &position,
 
 // GZW_JSK
 struct sump_params {
-  double length;         // 集水坑长 L (mm)
-  double width;          // 集水坑宽 W (mm)
-  double depth;          // 集水坑深 H (mm)
-  double floorThickness; // 集水坑底板厚 T (mm)
+  double length;          // 集水坑长 L (mm)
+  double width;           // 集水坑宽 W (mm)
+  double depth;           // 集水坑深 H (mm)
+  double bottomThickness; // 集水坑底板厚 T (mm)
 };
 
 TopoDS_Shape create_sump(const sump_params &params);
@@ -1964,7 +1971,7 @@ struct shaft_chamber_params {
   double supportWallThickness; // 支护壁厚 T1 (mm)
   double supportDiameter;      // 支护直径 D1 (mm)
   double supportHeight;        // 支护高度 H1 (mm)
-  double roofThickness;        // 顶板厚 T2 (mm)
+  double topThickness;         // 顶板厚 T2 (mm)
   double innerDiameter;        // 内壁直径 D (mm)
   double workingHeight;        // 工作仓高度 H (mm)
   double outerWallThickness;   // 外壁厚 T3 (mm)
@@ -2062,7 +2069,7 @@ struct drainage_well_params {
   double neckDiameter;     // 井脖直径 D (mm)
   double neckHeight;       // 井脖高 H1 (mm)
   double cushionExtension; // 垫层滋出距离 T1 (mm)
-  double floorThickness;   // 排水井底板厚 H2 (mm)
+  double bottomThickness;  // 排水井底板厚 H2 (mm)
   double wallThickness;    // 排水井壁厚 T (mm)
 };
 
@@ -2118,25 +2125,5 @@ TopoDS_Shape create_cable_ray(const cable_ray_params &params,
                               const gp_Dir &direction = gp::DZ(),
                               const gp_Dir &xDir = gp::DX());
 
-// test
-TopoDS_Shape create_three_way_working_well(const three_way_well_params &params);
-TopoDS_Shape
-create_three_way_open_cut_tunnel(const three_way_well_params &params);
-TopoDS_Shape
-create_three_way_underground_tunnel(const three_way_well_params &params);
-TopoDS_Shape
-create_three_way_double_shaft_tunnel(const three_way_well_params &params);
-TopoDS_Shape create_three_way_round_working_well_part(
-    double length, double width, double height, double length1, double width1,
-    double cornerRadius, double zoffset);
-
-TopoDS_Shape create_three_way_corner_working_well_part(
-    double length, double width, double height, double length1, double width1,
-    double cornerLength, double cornerWidth, double zoffset);
-
-TopoDS_Shape create_three_way_chamfer_round_corner_working_well_part(
-    double length, double width, double height, double length1, double width1,
-    double cornerLength2, double cornerRadius, double angle, double yoffset,
-    double zoffset);
 } // namespace topo
 } // namespace flywave

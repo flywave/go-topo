@@ -11397,8 +11397,7 @@ TopoDS_Shape create_three_way_well(const three_way_well_params &params) {
   }
   switch (params.type) {
   case three_way_well_type::WORKING_WELL:
-    return params.isDoubleShaft ? create_three_way_double_shaft_tunnel(params)
-                                : create_three_way_working_well(params);
+    return create_three_way_working_well(params);
   case three_way_well_type::OPEN_CUT_TUNNEL:
     return create_three_way_open_cut_tunnel(params);
   case three_way_well_type::UNDERGROUND_TUNNEL:
@@ -11433,20 +11432,1149 @@ TopoDS_Shape create_three_way_well(const three_way_well_params &params,
   return transform.Shape();
 }
 
+/**
+ * @brief 创建四通圆角工作井
+ * @param length 直通段长度(mm)
+ * @param width 直通段宽度(mm)
+ * @param height 直通段高度(mm)
+ * @param length1 支线段长度(mm)
+ * @param width1 支线段宽度(mm)
+ * @param cornerRadius 井转角半径(mm)
+ * @return 四通圆角工作井的形状
+ */
+TopoDS_Shape create_four_way_round_working_well_part(
+    double length, double width, double height, double length1, double width1,
+    double length2, double width2, double cornerRadius, double zoffset) {
+  // 参数校验
+  if (length <= 0 || width <= 0 || height <= 0 || length1 <= 0 || width1 <= 0 ||
+      length2 <= 0 || width2 <= 0) {
+    throw Standard_ConstructionError("尺寸参数必须为正数");
+  }
+  if (cornerRadius <= 0) {
+    throw Standard_ConstructionError("圆角半径必须大于0");
+  }
+
+  // 1. 计算关键几何参数
+  const double halfLength = length / 2;
+  const double halfWidth = width / 2;
+  const double halfWidth1 = width1 / 2;
+  const double halfWidth2 = width2 / 2;
+
+  // 2. 定义主直通段四个角点
+  const gp_Pnt p1(-halfLength, -halfWidth, zoffset); // 左下角
+  const gp_Pnt p2(-halfLength, halfWidth, zoffset);  // 左上角
+  const gp_Pnt p3(halfLength, halfWidth, zoffset);   // 右上角
+  const gp_Pnt p4(halfLength, -halfWidth, zoffset);  // 右下角
+
+  // 3. 定义支线段端点
+  const gp_Pnt p7(-halfWidth1, halfWidth + length1, zoffset); // 支线段左上角点
+  const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset);  // 支线段右下角点
+
+  // 4. 定义支线段2端点（下方）
+  const gp_Pnt p9(-halfWidth2, -halfWidth - length2,
+                  zoffset); // 支线段2左下角点
+  const gp_Pnt p10(halfWidth2, -halfWidth - length2,
+                   zoffset); // 支线段2右下角点
+
+  // 4. 计算圆弧关键点（精确几何关系）
+  // 上方圆弧（连接直通段与支线段1）
+  const gp_Pnt topRightArcStart(halfWidth1 + cornerRadius, halfWidth, zoffset);
+  const gp_Pnt topRightArcEnd(halfWidth1, halfWidth + cornerRadius, zoffset);
+  const gp_Pnt topLeftArcStart(-halfWidth1 - cornerRadius, halfWidth, zoffset);
+  const gp_Pnt topLeftArcEnd(-halfWidth1, halfWidth + cornerRadius, zoffset);
+
+  // 下方圆弧（连接直通段与支线段2）
+  const gp_Pnt bottomRightArcStart(halfWidth2 + cornerRadius, -halfWidth,
+                                   zoffset);
+  const gp_Pnt bottomRightArcEnd(halfWidth2, -halfWidth - cornerRadius,
+                                 zoffset);
+  const gp_Pnt bottomLeftArcStart(-halfWidth2 - cornerRadius, -halfWidth,
+                                  zoffset);
+  const gp_Pnt bottomLeftArcEnd(-halfWidth2, -halfWidth - cornerRadius,
+                                zoffset);
+
+  // 6. 构造圆弧几何
+  // 上方左圆弧
+  gp_Pnt topLeftCircleCenter(-halfWidth1 - cornerRadius,
+                             halfWidth + cornerRadius, zoffset);
+  gp_Circ topLeftCircle(gp_Ax2(topLeftCircleCenter, gp_Dir(0, 0, 1)),
+                        cornerRadius);
+  TopoDS_Edge topLeftArc =
+      BRepBuilderAPI_MakeEdge(new Geom_Circle(topLeftCircle),
+                              ElCLib::Parameter(topLeftCircle, topLeftArcStart),
+                              ElCLib::Parameter(topLeftCircle, topLeftArcEnd))
+          .Edge();
+
+  // 上方右圆弧
+  gp_Pnt topRightCircleCenter(halfWidth1 + cornerRadius,
+                              halfWidth + cornerRadius, zoffset);
+  gp_Circ topRightCircle(gp_Ax2(topRightCircleCenter, gp_Dir(0, 0, 1)),
+                         cornerRadius);
+  TopoDS_Edge topRightArc =
+      BRepBuilderAPI_MakeEdge(
+          new Geom_Circle(topRightCircle),
+          ElCLib::Parameter(topRightCircle, topRightArcEnd),
+          ElCLib::Parameter(topRightCircle, topRightArcStart))
+          .Edge();
+  topRightArc.Reverse();
+
+  // 下方左圆弧
+  gp_Pnt bottomLeftCircleCenter(-halfWidth2 - cornerRadius,
+                                -halfWidth - cornerRadius, zoffset);
+  gp_Circ bottomLeftCircle(gp_Ax2(bottomLeftCircleCenter, gp_Dir(0, 0, -1)),
+                           cornerRadius);
+  TopoDS_Edge bottomLeftArc =
+      BRepBuilderAPI_MakeEdge(
+          new Geom_Circle(bottomLeftCircle),
+          ElCLib::Parameter(bottomLeftCircle, bottomLeftArcStart),
+          ElCLib::Parameter(bottomLeftCircle, bottomLeftArcEnd))
+          .Edge();
+
+  // 下方右圆弧
+  gp_Pnt bottomRightCircleCenter(halfWidth2 + cornerRadius,
+                                 -halfWidth - cornerRadius, zoffset);
+  gp_Circ bottomRightCircle(gp_Ax2(bottomRightCircleCenter, gp_Dir(0, 0, -1)),
+                            cornerRadius);
+  TopoDS_Edge bottomRightArc =
+      BRepBuilderAPI_MakeEdge(
+          new Geom_Circle(bottomRightCircle),
+          ElCLib::Parameter(bottomRightCircle, bottomRightArcEnd),
+          ElCLib::Parameter(bottomRightCircle, bottomRightArcStart))
+          .Edge();
+  bottomRightArc.Reverse();
+
+  // 7. 构建完整线框
+  BRepBuilderAPI_MakeWire wireMaker;
+
+  // 主直通段左侧边
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2));
+
+  // 上方连接段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, topLeftArcStart));
+  wireMaker.Add(topLeftArc);
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(topLeftArcEnd, p7));
+
+  // 支线段1顶部
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8));
+
+  // 上方右侧连接段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, topRightArcEnd));
+  wireMaker.Add(topRightArc);
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(topRightArcStart, p3));
+
+  // 主直通段右侧边
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4));
+
+  // 下方右侧连接段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, bottomRightArcStart));
+  wireMaker.Add(bottomRightArc);
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(bottomRightArcEnd, p10));
+
+  // 支线段2底部
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p9));
+
+  // 下方左侧连接段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, bottomLeftArcEnd));
+  wireMaker.Add(bottomLeftArc);
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(bottomLeftArcStart, p1));
+
+  // 8. 创建底面并拉伸
+  if (!wireMaker.IsDone()) {
+    throw Standard_ConstructionError("线框构造失败");
+  }
+  TopoDS_Face face = BRepBuilderAPI_MakeFace(wireMaker.Wire());
+
+  return BRepPrimAPI_MakePrism(face, gp_Vec(0, 0, height)).Shape();
+}
+
+/**
+ * @brief 创建四通折角工作井
+ * @param length 直通段长度(mm)
+ * @param width 直通段宽度(mm)
+ * @param height 直通段高度(mm)
+ * @param length1 支线段长度(mm)
+ * @param width1 支线段宽度(mm)
+ * @param cornerLength 井转角折角长(mm)
+ * @param cornerWidth 井转角折角宽(mm)
+ * @param angle  井转角角度
+ * @return 四通工作井的形状
+ */
+TopoDS_Shape create_four_way_corner_working_well_part(
+    double length, double width, double height, double length1, double width1,
+    double length2, double width2, double cornerLength, double cornerWidth,
+    double zoffset) {
+  // 参数校验
+  if (length <= 0 || width <= 0 || height <= 0 || length1 <= 0 || width1 <= 0 ||
+      length2 <= 0 || width2 <= 0) {
+    throw Standard_ConstructionError("尺寸参数必须为正数");
+  }
+  if (length1 <= 0 || width1 <= 0) {
+    throw Standard_ConstructionError("支线段尺寸参数必须为正数");
+  }
+
+  // 1. 计算关键几何参数
+  const double halfLength = length / 2;
+  const double halfWidth = width / 2;
+  const double halfWidth1 = width1 / 2;
+  const double halfWidth2 = width2 / 2;
+
+  // 2. 定义主直通段四个角点
+  const gp_Pnt p1(-halfLength, -halfWidth, zoffset); // 左下角
+  const gp_Pnt p2(-halfLength, halfWidth, zoffset);  // 左上角
+  const gp_Pnt p3(halfLength, halfWidth, zoffset);   // 右上角
+  const gp_Pnt p4(halfLength, -halfWidth, zoffset);  // 右下角
+
+  // 3. 定义支线段1端点（上方）
+  const gp_Pnt p7(-halfWidth1, halfWidth + length1, zoffset); // 支线段1左上角点
+  const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset);  // 支线段1右下角点
+
+  // 4. 定义支线段2端点（下方）
+  const gp_Pnt p9(-halfWidth2, -halfWidth - length2,
+                  zoffset); // 支线段2左下角点
+  const gp_Pnt p10(halfWidth2, -halfWidth - length2,
+                   zoffset); // 支线段2右下角点
+
+  // 5. 定义转角连接点
+  // 上方转角点
+  const gp_Pnt topLeftStart(-halfWidth1 - cornerLength, halfWidth, zoffset);
+  const gp_Pnt topLeftEnd(-halfWidth1, halfWidth + cornerWidth, zoffset);
+  const gp_Pnt topRightStart(halfWidth1 + cornerLength, halfWidth, zoffset);
+  const gp_Pnt topRightEnd(halfWidth1, halfWidth + cornerWidth, zoffset);
+
+  // 下方转角点
+  const gp_Pnt bottomLeftStart(-halfWidth2 - cornerLength, -halfWidth, zoffset);
+  const gp_Pnt bottomLeftEnd(-halfWidth2, -halfWidth - cornerWidth, zoffset);
+  const gp_Pnt bottomRightStart(halfWidth2 + cornerLength, -halfWidth, zoffset);
+  const gp_Pnt bottomRightEnd(halfWidth2, -halfWidth - cornerWidth, zoffset);
+
+  // 6. 构建完整线框
+  BRepBuilderAPI_MakeWire wireMaker;
+
+  // 主直通段左侧边
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2));
+
+  // 上方连接段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, topLeftStart));
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(topLeftStart, topLeftEnd));
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(topLeftEnd, p7));
+
+  // 支线段1顶部
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8));
+
+  // 上方右侧连接段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, topRightEnd));
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(topRightEnd, topRightStart));
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(topRightStart, p3));
+
+  // 主直通段右侧边
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4));
+
+  // 下方右侧连接段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, bottomRightStart));
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(bottomRightStart, bottomRightEnd));
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(bottomRightEnd, p10));
+
+  // 支线段2底部
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p9));
+
+  // 下方左侧连接段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, bottomLeftEnd));
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(bottomLeftEnd, bottomLeftStart));
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(bottomLeftStart, p1));
+
+  // 7. 创建底面并拉伸
+  if (!wireMaker.IsDone()) {
+    throw Standard_ConstructionError("线框构造失败");
+  }
+  TopoDS_Face face = BRepBuilderAPI_MakeFace(wireMaker.Wire());
+
+  return BRepPrimAPI_MakePrism(face, gp_Vec(0, 0, height)).Shape();
+}
+
+TopoDS_Shape create_four_way_working_well(const four_way_well_params &params) {
+  if (params.type != four_way_well_type::WORKING_WELL) {
+    throw Standard_ConstructionError("four_way_well_type must be WORKING_WELL");
+  }
+  TopoDS_Shape outer;
+  switch (params.cornerStyle) {
+  case corner_style::ROUNDED:
+    outer = create_four_way_round_working_well_part(
+        params.length, params.width + params.outerWallThickness * 2,
+        params.height + params.topThickness + params.bottomThickness,
+        params.branchLength, params.branchWidth + params.outerWallThickness * 2,
+        params.branchLength, params.branchWidth + params.outerWallThickness * 2,
+        params.cornerRadius - params.outerWallThickness,
+        -params.bottomThickness);
+    break;
+  case corner_style::ANGLED:
+    outer = create_four_way_corner_working_well_part(
+        params.length, params.width + params.outerWallThickness * 2,
+        params.height + params.topThickness + params.bottomThickness,
+        params.branchLength, params.branchWidth + params.outerWallThickness * 2,
+        params.branchLength, params.branchWidth + params.outerWallThickness * 2,
+        params.cornerLength - params.outerWallThickness,
+        params.cornerWidth - params.outerWallThickness,
+        -params.bottomThickness);
+    break;
+  default:
+    break;
+  }
+
+  TopoDS_Shape inner;
+  switch (params.cornerStyle) {
+  case corner_style::ROUNDED:
+    inner = create_four_way_round_working_well_part(
+        params.length + params.outerWallThickness * 2, params.width,
+        params.height, params.branchLength + params.outerWallThickness * 2,
+        params.branchWidth, params.branchLength + params.outerWallThickness * 2,
+        params.branchWidth, params.cornerRadius, 0);
+    break;
+  case corner_style::ANGLED:
+    inner = create_four_way_corner_working_well_part(
+        params.length + params.outerWallThickness * 2, params.width,
+        params.height, params.branchLength + params.outerWallThickness * 2,
+        params.branchWidth, params.branchLength + params.outerWallThickness * 2,
+        params.branchWidth, params.cornerLength, params.cornerWidth, 0);
+    break;
+  default:
+    break;
+  }
+
+  TopoDS_Shape cushion;
+  switch (params.cornerStyle) {
+  case corner_style::ROUNDED:
+    cushion = create_four_way_round_working_well_part(
+        params.length,
+        params.width + params.outerWallThickness * 2 +
+            params.cushionExtension * 2,
+        params.cushionThickness, params.branchLength,
+        params.branchWidth + params.outerWallThickness * 2 +
+            params.cushionExtension * 2,
+        params.branchLength,
+        params.branchWidth + params.outerWallThickness * 2 +
+            params.cushionExtension * 2,
+        params.cornerRadius - params.outerWallThickness -
+            params.cushionExtension,
+        -params.bottomThickness - params.cushionThickness);
+    break;
+  case corner_style::ANGLED:
+    cushion = create_four_way_corner_working_well_part(
+        params.length,
+        params.width + params.outerWallThickness * 2 +
+            params.cushionExtension * 2,
+        params.cushionThickness, params.branchLength,
+        params.branchWidth + params.outerWallThickness * 2 +
+            params.cushionExtension * 2,
+        params.branchLength,
+        params.branchWidth + params.outerWallThickness * 2 +
+            params.cushionExtension * 2,
+        params.cornerLength + params.outerWallThickness +
+            params.cushionExtension,
+        params.cornerWidth + params.outerWallThickness +
+            params.cushionExtension,
+        -params.bottomThickness - params.cushionThickness);
+    break;
+  default:
+    break;
+  }
+
+  // 合并所有部分
+  TopoDS_Shape well = BRepAlgoAPI_Cut(outer, inner).Shape();
+
+  well = BRepAlgoAPI_Fuse(well, cushion).Shape();
+
+  return well;
+}
+
+TopoDS_Shape
+create_four_way_open_cut_tunnel(const four_way_well_params &params) {
+  if (params.type != four_way_well_type::OPEN_CUT_TUNNEL) {
+    throw Standard_ConstructionError(
+        "three_way_open_cut_tunnel must be OPEN_CUT_TUNNEL");
+  }
+  TopoDS_Shape outer;
+  switch (params.cornerStyle) {
+  case corner_style::ROUNDED:
+    outer = create_four_way_round_working_well_part(
+        params.length + params.outerWallThickness * 2,
+        params.width + params.outerWallThickness * 2,
+        params.height + params.topThickness + params.bottomThickness,
+        params.branchLength + params.outerWallThickness * 2,
+        params.branchWidth + params.outerWallThickness * 2,
+        params.branchLength + params.outerWallThickness * 2,
+        params.branchWidth + params.outerWallThickness * 2,
+        params.cornerRadius - params.outerWallThickness,
+        -params.bottomThickness);
+    break;
+  case corner_style::ANGLED:
+    outer = create_four_way_corner_working_well_part(
+        params.length + params.outerWallThickness * 2,
+        params.width + params.outerWallThickness * 2,
+        params.height + params.topThickness + params.bottomThickness,
+        params.branchLength + params.outerWallThickness * 2,
+        params.branchWidth + params.outerWallThickness * 2,
+        params.branchLength + params.outerWallThickness * 2,
+        params.branchWidth + params.outerWallThickness * 2,
+        params.cornerLength - params.outerWallThickness,
+        params.cornerWidth - params.outerWallThickness,
+        -params.bottomThickness);
+    break;
+  default:
+    break;
+  }
+
+  // 2. 创建左连接段
+  TopoDS_Shape leftTunnel;
+  switch (params.leftSection.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    leftTunnel = create_rectangular_section(
+        params.leftSection.length, params.leftSection.width,
+        params.leftSection.height, params.outerWallThickness,
+        params.topThickness, params.bottomThickness, true);
+    break;
+  case connection_section_style::HORSESHOE:
+    leftTunnel = create_horseshoe_section(
+        params.leftSection.length, params.leftSection.width,
+        params.leftSection.height, params.leftSection.archHeight,
+        params.outerWallThickness, true);
+    break;
+  case connection_section_style::CIRCULAR:
+    leftTunnel = create_circular_section(params.leftSection.length,
+                                         params.leftSection.height / 2,
+                                         params.outerWallThickness, true);
+    break;
+  }
+
+  // 移动左连接段到正确位置
+  gp_Trsf leftTrsf;
+  leftTrsf.SetTranslation(
+      gp_Vec(-params.leftSection.length - params.length / 2, 0, 0));
+  leftTunnel = BRepBuilderAPI_Transform(leftTunnel, leftTrsf).Shape();
+
+  outer = BRepAlgoAPI_Fuse(outer, leftTunnel).Shape();
+
+  // 3. 创建右连接段
+  TopoDS_Shape rightTunnel;
+  switch (params.rightSection.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    rightTunnel = create_rectangular_section(
+        params.rightSection.length, params.rightSection.width,
+        params.rightSection.height, params.outerWallThickness,
+        params.topThickness, params.bottomThickness, true);
+    break;
+  case connection_section_style::HORSESHOE:
+    rightTunnel = create_horseshoe_section(
+        params.rightSection.length, params.rightSection.width,
+        params.rightSection.height, params.rightSection.archHeight,
+        params.outerWallThickness, true);
+    break;
+  case connection_section_style::CIRCULAR:
+    rightTunnel = create_circular_section(params.rightSection.length,
+                                          params.rightSection.height / 2,
+                                          params.outerWallThickness, true);
+    break;
+  }
+
+  // 移动支连接段到正确位置
+  gp_Trsf rightTrsf;
+  rightTrsf.SetTranslation(gp_Vec(params.length / 2, 0, 0));
+  rightTunnel = BRepBuilderAPI_Transform(rightTunnel, rightTrsf).Shape();
+
+  outer = BRepAlgoAPI_Fuse(outer, rightTunnel).Shape();
+
+  // 3. 创建上支连接段
+  TopoDS_Shape branch1Tunnel;
+  switch (params.branchSection1.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    branch1Tunnel = create_rectangular_section(
+        params.branchSection1.length, params.branchSection1.width,
+        params.branchSection1.height, params.outerWallThickness,
+        params.topThickness, params.bottomThickness, true);
+    break;
+  case connection_section_style::HORSESHOE:
+    branch1Tunnel = create_horseshoe_section(
+        params.branchSection1.length, params.branchSection1.width,
+        params.branchSection1.height, params.branchSection1.archHeight,
+        params.outerWallThickness, true);
+    break;
+  case connection_section_style::CIRCULAR:
+    branch1Tunnel = create_circular_section(params.branchSection1.length,
+                                            params.branchSection1.height / 2,
+                                            params.outerWallThickness, true);
+    break;
+  }
+
+  // 移动上连接段到正确位置
+  gp_Trsf branch1Trsf;
+  gp_Trsf branch1Model;
+  branch1Model.SetTranslation(gp_Vec(-params.branchSection1.length / 2, 0, 0));
+  gp_Trsf rotate1Trsf;
+  rotate1Trsf.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, -1)),
+                          90 * M_PI / 180.0);
+
+  branch1Trsf.SetTranslation(gp_Vec(0,
+                                    params.branchLength + params.width / 2 +
+                                        params.branchSection1.length / 2,
+                                    0));
+  branch1Tunnel = BRepBuilderAPI_Transform(branch1Tunnel, branch1Model).Shape();
+  branch1Tunnel = BRepBuilderAPI_Transform(branch1Tunnel, rotate1Trsf).Shape();
+  branch1Tunnel = BRepBuilderAPI_Transform(branch1Tunnel, branch1Trsf).Shape();
+
+  outer = BRepAlgoAPI_Fuse(outer, branch1Tunnel).Shape();
+
+  // 4. 创建下支连接段
+  TopoDS_Shape branch2Tunnel;
+  switch (params.branchSection2.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    branch2Tunnel = create_rectangular_section(
+        params.branchSection2.length, params.branchSection2.width,
+        params.branchSection2.height, params.outerWallThickness,
+        params.topThickness, params.bottomThickness, true);
+    break;
+  case connection_section_style::HORSESHOE:
+    branch2Tunnel = create_horseshoe_section(
+        params.branchSection2.length, params.branchSection2.width,
+        params.branchSection2.height, params.branchSection2.archHeight,
+        params.outerWallThickness, true);
+    break;
+  case connection_section_style::CIRCULAR:
+    branch2Tunnel = create_circular_section(params.branchSection2.length,
+                                            params.branchSection2.height / 2,
+                                            params.outerWallThickness, true);
+    break;
+  }
+
+  // 移动上连接段到正确位置
+  gp_Trsf branch2Trsf;
+  gp_Trsf branch2Model;
+  branch2Model.SetTranslation(gp_Vec(-params.branchSection2.length / 2, 0, 0));
+  gp_Trsf rotate2Trsf;
+  rotate2Trsf.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, -1)),
+                          -90 * M_PI / 180.0);
+
+  branch2Trsf.SetTranslation(gp_Vec(0,
+                                    -params.branchLength - params.width / 2 -
+                                        params.branchSection2.length / 2,
+                                    0));
+  branch2Tunnel = BRepBuilderAPI_Transform(branch2Tunnel, branch2Model).Shape();
+  branch2Tunnel = BRepBuilderAPI_Transform(branch2Tunnel, rotate2Trsf).Shape();
+  branch2Tunnel = BRepBuilderAPI_Transform(branch2Tunnel, branch2Trsf).Shape();
+
+  outer = BRepAlgoAPI_Fuse(outer, branch2Tunnel).Shape();
+
+  TopoDS_Shape inner;
+  switch (params.cornerStyle) {
+  case corner_style::ROUNDED:
+    inner = create_four_way_round_working_well_part(
+        params.length + params.outerWallThickness * 2, params.width,
+        params.height, params.branchLength + params.outerWallThickness * 2,
+        params.branchWidth, params.branchLength + params.outerWallThickness * 2,
+        params.branchWidth, params.cornerRadius, 0);
+    break;
+  case corner_style::ANGLED:
+    inner = create_four_way_corner_working_well_part(
+        params.length + params.outerWallThickness * 2, params.width,
+        params.height, params.branchLength + params.outerWallThickness * 2,
+        params.branchWidth, params.branchLength + params.outerWallThickness * 2,
+        params.branchWidth, params.cornerLength, params.cornerWidth, 0);
+    break;
+  default:
+    break;
+  }
+
+  TopoDS_Shape innerLeftTunnel;
+  switch (params.leftSection.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    innerLeftTunnel = create_rectangular_section(
+        params.leftSection.length - params.outerWallThickness,
+        params.leftSection.width, params.leftSection.height,
+        params.outerWallThickness, params.topThickness, params.bottomThickness,
+        false);
+    break;
+  case connection_section_style::HORSESHOE:
+    innerLeftTunnel = create_horseshoe_section(
+        params.leftSection.length - params.outerWallThickness,
+        params.leftSection.width, params.leftSection.height,
+        params.leftSection.archHeight, params.outerWallThickness, false);
+    break;
+  case connection_section_style::CIRCULAR:
+    innerLeftTunnel = create_circular_section(
+        params.leftSection.length - params.outerWallThickness,
+        params.leftSection.height / 2, params.outerWallThickness, false);
+    break;
+  }
+
+  innerLeftTunnel = BRepBuilderAPI_Transform(innerLeftTunnel, leftTrsf).Shape();
+
+  inner = BRepAlgoAPI_Fuse(inner, innerLeftTunnel).Shape();
+
+  TopoDS_Shape innerRightTunnel;
+  switch (params.rightSection.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    innerRightTunnel = create_rectangular_section(
+        params.rightSection.length - params.outerWallThickness,
+        params.rightSection.width, params.rightSection.height,
+        params.outerWallThickness, params.topThickness, params.bottomThickness,
+        false);
+    break;
+  case connection_section_style::HORSESHOE:
+    innerRightTunnel = create_horseshoe_section(
+        params.rightSection.length - params.outerWallThickness,
+        params.rightSection.width, params.rightSection.height,
+        params.rightSection.archHeight, params.outerWallThickness, false);
+    break;
+  case connection_section_style::CIRCULAR:
+    innerRightTunnel = create_circular_section(
+        params.rightSection.length - params.outerWallThickness,
+        params.rightSection.height / 2, params.outerWallThickness, false);
+    break;
+  }
+
+  rightTrsf.SetTranslation(
+      gp_Vec(params.length / 2 + params.outerWallThickness, 0, 0));
+  innerRightTunnel =
+      BRepBuilderAPI_Transform(innerRightTunnel, rightTrsf).Shape();
+
+  inner = BRepAlgoAPI_Fuse(inner, innerRightTunnel).Shape();
+
+  // 3. 创建上连接段
+  TopoDS_Shape innerBranch1Tunnel;
+  switch (params.branchSection1.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    innerBranch1Tunnel = create_rectangular_section(
+        params.branchSection1.length - params.outerWallThickness,
+        params.branchSection1.width, params.branchSection1.height,
+        params.outerWallThickness, params.topThickness, params.bottomThickness,
+        false);
+    break;
+  case connection_section_style::HORSESHOE:
+    innerBranch1Tunnel = create_horseshoe_section(
+        params.branchSection1.length - params.outerWallThickness,
+        params.branchSection1.width, params.branchSection1.height,
+        params.branchSection1.archHeight, params.outerWallThickness, false);
+    break;
+  case connection_section_style::CIRCULAR:
+    innerBranch1Tunnel = create_circular_section(
+        params.branchSection1.length - params.outerWallThickness,
+        params.branchSection1.height / 2, params.outerWallThickness, false);
+    break;
+  }
+
+  branch1Model.SetTranslation(gp_Vec(
+      -(params.branchSection1.length - params.outerWallThickness) / 2, 0, 0));
+  branch1Trsf.SetTranslation(gp_Vec(0,
+                                    params.branchLength + params.width / 2 +
+                                        params.branchSection1.length / 2 +
+                                        params.outerWallThickness +
+                                        params.outerWallThickness / 2,
+                                    0));
+  innerBranch1Tunnel =
+      BRepBuilderAPI_Transform(innerBranch1Tunnel, branch1Model).Shape();
+  innerBranch1Tunnel =
+      BRepBuilderAPI_Transform(innerBranch1Tunnel, rotate1Trsf).Shape();
+  innerBranch1Tunnel =
+      BRepBuilderAPI_Transform(innerBranch1Tunnel, branch1Trsf).Shape();
+
+  inner = BRepAlgoAPI_Fuse(inner, innerBranch1Tunnel).Shape();
+
+  // 4. 创建下连接段
+  TopoDS_Shape innerBranch2Tunnel;
+  switch (params.branchSection2.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    innerBranch2Tunnel = create_rectangular_section(
+        params.branchSection2.length - params.outerWallThickness,
+        params.branchSection2.width, params.branchSection2.height,
+        params.outerWallThickness, params.topThickness, params.bottomThickness,
+        false);
+    break;
+  case connection_section_style::HORSESHOE:
+    innerBranch2Tunnel = create_horseshoe_section(
+        params.branchSection2.length - params.outerWallThickness,
+        params.branchSection2.width, params.branchSection2.height,
+        params.branchSection2.archHeight, params.outerWallThickness, false);
+    break;
+  case connection_section_style::CIRCULAR:
+    innerBranch2Tunnel = create_circular_section(
+        params.branchSection2.length - params.outerWallThickness,
+        params.branchSection2.height / 2, params.outerWallThickness, false);
+    break;
+  }
+
+  branch2Model.SetTranslation(gp_Vec(
+      -(params.branchSection2.length - params.outerWallThickness) / 2, 0, 0));
+  branch2Trsf.SetTranslation(gp_Vec(0,
+                                    -params.branchLength - params.width / 2 -
+                                        params.branchSection2.length / 2 -
+                                        params.outerWallThickness -
+                                        params.outerWallThickness / 2,
+                                    0));
+  innerBranch2Tunnel =
+      BRepBuilderAPI_Transform(innerBranch2Tunnel, branch2Model).Shape();
+  innerBranch2Tunnel =
+      BRepBuilderAPI_Transform(innerBranch2Tunnel, rotate2Trsf).Shape();
+  innerBranch2Tunnel =
+      BRepBuilderAPI_Transform(innerBranch2Tunnel, branch2Trsf).Shape();
+
+  inner = BRepAlgoAPI_Fuse(inner, innerBranch2Tunnel).Shape();
+
+  TopoDS_Shape cushion;
+  switch (params.cornerStyle) {
+  case corner_style::ROUNDED:
+    cushion = create_four_way_round_working_well_part(
+        params.length + params.leftSection.length + params.rightSection.length,
+        params.width + params.outerWallThickness * 2 +
+            params.cushionExtension * 2,
+        params.cushionThickness,
+        params.branchLength + params.branchSection1.length,
+        params.branchWidth + params.outerWallThickness * 2 +
+            params.cushionExtension * 2,
+        params.branchLength + params.branchSection2.length,
+        params.branchWidth + params.outerWallThickness * 2 +
+            params.cushionExtension * 2,
+        params.cornerRadius - params.outerWallThickness -
+            params.cushionExtension,
+        -params.bottomThickness - params.cushionThickness);
+    break;
+  case corner_style::ANGLED:
+    cushion = create_four_way_corner_working_well_part(
+        params.length + params.leftSection.length + params.rightSection.length,
+        params.width + params.outerWallThickness * 2 +
+            params.cushionExtension * 2,
+        params.cushionThickness,
+        params.branchLength + params.branchSection1.length,
+        params.branchWidth + params.outerWallThickness * 2 +
+            params.cushionExtension * 2,
+        params.branchLength + params.branchSection2.length,
+        params.branchWidth + params.outerWallThickness * 2 +
+            params.cushionExtension * 2,
+        params.cornerLength + params.outerWallThickness +
+            params.cushionExtension,
+        params.cornerWidth + params.outerWallThickness +
+            params.cushionExtension,
+        -params.bottomThickness - params.cushionThickness);
+    break;
+  default:
+    break;
+  }
+
+  // 合并所有部分
+  TopoDS_Shape well = BRepAlgoAPI_Cut(outer, inner).Shape();
+
+  well = BRepAlgoAPI_Fuse(well, cushion).Shape();
+
+  return well;
+}
+
+TopoDS_Shape create_four_way_circle_well_part(double length, double width,
+                                              double height, double length1,
+                                              double width1, double length2,
+                                              double width2, double wellRadius,
+                                              double weelheight,
+                                              double zoffset) {
+  // 参数校验
+  if (length <= 0 || width <= 0 || height <= 0 || length1 <= 0 || width1 <= 0 ||
+      length2 <= 0 || width2 <= 0) {
+    throw Standard_ConstructionError("尺寸参数必须为正数");
+  }
+
+  // 1. 计算关键几何参数
+  const double halfLength = length / 2;
+  const double halfWidth = width / 2;
+  const double halfWidth1 = width1 / 2;
+  const double halfWidth2 = width2 / 2;
+
+  // 2. 定义主直通段四个角点
+  const gp_Pnt p1(-halfLength, -halfWidth, zoffset); // 左下角
+  const gp_Pnt p2(-halfLength, halfWidth, zoffset);  // 左上角
+  const gp_Pnt p3(halfLength, halfWidth, zoffset);   // 右上角
+  const gp_Pnt p4(halfLength, -halfWidth, zoffset);  // 右下角
+
+  // 3. 定义支线段1端点（上方）
+  const gp_Pnt p7(-halfWidth1, halfWidth + length1, zoffset); // 支线段1左上角点
+  const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset);  // 支线段1右下角点
+  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset);           // 支线段1左下角点
+  const gp_Pnt p10(halfWidth1, halfWidth, zoffset);           // 支线段1右下角点
+
+  // 4. 定义支线段2端点（下方）
+  const gp_Pnt p11(-halfWidth2, -halfWidth - length2,
+                   zoffset); // 支线段2左下角点
+  const gp_Pnt p12(halfWidth2, -halfWidth - length2,
+                   zoffset);                          // 支线段2右下角点
+  const gp_Pnt p13(-halfWidth2, -halfWidth, zoffset); // 支线段2左上角点
+  const gp_Pnt p14(halfWidth2, -halfWidth, zoffset);  // 支线段2右上角点
+
+  // 5. 构建完整线框
+  BRepBuilderAPI_MakeWire wireMaker;
+
+  // 主直通段左侧边
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2));
+
+  // 上方连接段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p9));
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p7));
+
+  // 支线段1顶部
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8));
+
+  // 上方右侧连接段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p10));
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p3));
+
+  // 主直通段右侧边
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4));
+
+  // 下方右侧连接段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p14));
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p14, p12));
+
+  // 支线段2底部
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p11));
+
+  // 下方左侧连接段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p13));
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p13, p1));
+
+  // 6. 创建底面并拉伸
+  if (!wireMaker.IsDone()) {
+    throw Standard_ConstructionError("线框构造失败");
+  }
+  TopoDS_Face face = BRepBuilderAPI_MakeFace(wireMaker.Wire());
+
+  TopoDS_Shape tunnel =
+      BRepPrimAPI_MakePrism(face, gp_Vec(0, 0, height)).Shape();
+
+  // 创建竖井
+  gp_Ax2 wellAxis(gp_Pnt(0, 0, zoffset), gp::DZ());
+  TopoDS_Shape well =
+      BRepPrimAPI_MakeCylinder(wellAxis, wellRadius, weelheight).Shape();
+
+  return BRepAlgoAPI_Fuse(tunnel, well).Shape();
+}
+
+TopoDS_Shape
+create_four_way_underground_tunnel(const four_way_well_params &params) {
+  if (params.type != four_way_well_type::UNDERGROUND_TUNNEL) {
+    throw Standard_ConstructionError(
+        "four_way_underground_tunnel must be UNDERGROUND_TUNNEL");
+  }
+  TopoDS_Shape outer;
+  outer = create_four_way_circle_well_part(
+      params.length + params.outerWallThickness * 2,
+      params.width + params.outerWallThickness * 2,
+      params.height + params.outerWallThickness * 2,
+      params.branchLength + params.outerWallThickness * 2,
+      params.branchWidth + params.outerWallThickness * 2,
+      params.branchLength + params.outerWallThickness * 2,
+      params.branchWidth + params.outerWallThickness * 2,
+      params.shaftRadius + params.outerWallThickness +
+          params.innerWallThickness,
+      params.height + params.outerWallThickness * 2,
+      -params.outerWallThickness);
+
+  // 2. 创建左连接段
+  TopoDS_Shape leftTunnel;
+  switch (params.leftSection.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    leftTunnel = create_rectangular_section(
+        params.leftSection.length, params.leftSection.width,
+        params.leftSection.height, params.outerWallThickness,
+        params.topThickness, params.bottomThickness, true);
+    break;
+  case connection_section_style::HORSESHOE:
+    leftTunnel = create_horseshoe_section(
+        params.leftSection.length, params.leftSection.width,
+        params.leftSection.height, params.leftSection.archHeight,
+        params.outerWallThickness, true);
+    break;
+  case connection_section_style::CIRCULAR:
+    leftTunnel = create_circular_section(params.leftSection.length,
+                                         params.leftSection.height / 2,
+                                         params.outerWallThickness, true);
+    break;
+  }
+
+  // 移动左连接段到正确位置
+  gp_Trsf leftTrsf;
+  leftTrsf.SetTranslation(
+      gp_Vec(-params.leftSection.length - params.length / 2, 0, 0));
+  leftTunnel = BRepBuilderAPI_Transform(leftTunnel, leftTrsf).Shape();
+
+  outer = BRepAlgoAPI_Fuse(outer, leftTunnel).Shape();
+
+  // 3. 创建右连接段
+  TopoDS_Shape rightTunnel;
+  switch (params.rightSection.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    rightTunnel = create_rectangular_section(
+        params.rightSection.length, params.rightSection.width,
+        params.rightSection.height, params.outerWallThickness,
+        params.topThickness, params.bottomThickness, true);
+    break;
+  case connection_section_style::HORSESHOE:
+    rightTunnel = create_horseshoe_section(
+        params.rightSection.length, params.rightSection.width,
+        params.rightSection.height, params.rightSection.archHeight,
+        params.outerWallThickness, true);
+    break;
+  case connection_section_style::CIRCULAR:
+    rightTunnel = create_circular_section(params.rightSection.length,
+                                          params.rightSection.height / 2,
+                                          params.outerWallThickness, true);
+    break;
+  }
+
+  // 移动支连接段到正确位置
+  gp_Trsf rightTrsf;
+  rightTrsf.SetTranslation(gp_Vec(params.length / 2, 0, 0));
+  rightTunnel = BRepBuilderAPI_Transform(rightTunnel, rightTrsf).Shape();
+
+  outer = BRepAlgoAPI_Fuse(outer, rightTunnel).Shape();
+
+  // 3. 创建上支连接段
+  TopoDS_Shape branch1Tunnel;
+  switch (params.branchSection1.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    branch1Tunnel = create_rectangular_section(
+        params.branchSection1.length, params.branchSection1.width,
+        params.branchSection1.height, params.outerWallThickness,
+        params.topThickness, params.bottomThickness, true);
+    break;
+  case connection_section_style::HORSESHOE:
+    branch1Tunnel = create_horseshoe_section(
+        params.branchSection1.length, params.branchSection1.width,
+        params.branchSection1.height, params.branchSection1.archHeight,
+        params.outerWallThickness, true);
+    break;
+  case connection_section_style::CIRCULAR:
+    branch1Tunnel = create_circular_section(params.branchSection1.length,
+                                            params.branchSection1.height / 2,
+                                            params.outerWallThickness, true);
+    break;
+  }
+
+  // 移动上连接段到正确位置
+  gp_Trsf branch1Trsf;
+  gp_Trsf branch1Model;
+  branch1Model.SetTranslation(gp_Vec(-params.branchSection1.length / 2, 0, 0));
+  gp_Trsf rotate1Trsf;
+  rotate1Trsf.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, -1)),
+                          90 * M_PI / 180.0);
+
+  branch1Trsf.SetTranslation(gp_Vec(0,
+                                    params.branchLength + params.width / 2 +
+                                        params.branchSection1.length / 2,
+                                    0));
+  branch1Tunnel = BRepBuilderAPI_Transform(branch1Tunnel, branch1Model).Shape();
+  branch1Tunnel = BRepBuilderAPI_Transform(branch1Tunnel, rotate1Trsf).Shape();
+  branch1Tunnel = BRepBuilderAPI_Transform(branch1Tunnel, branch1Trsf).Shape();
+
+  outer = BRepAlgoAPI_Fuse(outer, branch1Tunnel).Shape();
+
+  // 4. 创建下支连接段
+  TopoDS_Shape branch2Tunnel;
+  switch (params.branchSection2.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    branch2Tunnel = create_rectangular_section(
+        params.branchSection2.length, params.branchSection2.width,
+        params.branchSection2.height, params.outerWallThickness,
+        params.topThickness, params.bottomThickness, true);
+    break;
+  case connection_section_style::HORSESHOE:
+    branch2Tunnel = create_horseshoe_section(
+        params.branchSection2.length, params.branchSection2.width,
+        params.branchSection2.height, params.branchSection2.archHeight,
+        params.outerWallThickness, true);
+    break;
+  case connection_section_style::CIRCULAR:
+    branch2Tunnel = create_circular_section(params.branchSection2.length,
+                                            params.branchSection2.height / 2,
+                                            params.outerWallThickness, true);
+    break;
+  }
+
+  // 移动上连接段到正确位置
+  gp_Trsf branch2Trsf;
+  gp_Trsf branch2Model;
+  branch2Model.SetTranslation(gp_Vec(-params.branchSection2.length / 2, 0, 0));
+  gp_Trsf rotate2Trsf;
+  rotate2Trsf.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, -1)),
+                          -90 * M_PI / 180.0);
+
+  branch2Trsf.SetTranslation(gp_Vec(0,
+                                    -params.branchLength - params.width / 2 -
+                                        params.branchSection2.length / 2,
+                                    0));
+  branch2Tunnel = BRepBuilderAPI_Transform(branch2Tunnel, branch2Model).Shape();
+  branch2Tunnel = BRepBuilderAPI_Transform(branch2Tunnel, rotate2Trsf).Shape();
+  branch2Tunnel = BRepBuilderAPI_Transform(branch2Tunnel, branch2Trsf).Shape();
+
+  outer = BRepAlgoAPI_Fuse(outer, branch2Tunnel).Shape();
+
+  TopoDS_Shape inner;
+  inner = create_four_way_circle_well_part(
+      params.length + params.outerWallThickness * 2, params.width,
+      params.height, params.branchLength + params.outerWallThickness * 2,
+      params.branchWidth, params.branchLength + params.outerWallThickness * 2,
+      params.branchWidth, params.shaftRadius,
+      params.height + params.outerWallThickness * 2, 0);
+
+  TopoDS_Shape innerLeftTunnel;
+  switch (params.leftSection.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    innerLeftTunnel = create_rectangular_section(
+        params.leftSection.length - params.outerWallThickness,
+        params.leftSection.width, params.leftSection.height,
+        params.outerWallThickness, params.topThickness, params.bottomThickness,
+        false);
+    break;
+  case connection_section_style::HORSESHOE:
+    innerLeftTunnel = create_horseshoe_section(
+        params.leftSection.length - params.outerWallThickness,
+        params.leftSection.width, params.leftSection.height,
+        params.leftSection.archHeight, params.outerWallThickness, false);
+    break;
+  case connection_section_style::CIRCULAR:
+    innerLeftTunnel = create_circular_section(
+        params.leftSection.length - params.outerWallThickness,
+        params.leftSection.height / 2, params.outerWallThickness, false);
+    break;
+  }
+
+  innerLeftTunnel = BRepBuilderAPI_Transform(innerLeftTunnel, leftTrsf).Shape();
+
+  inner = BRepAlgoAPI_Fuse(inner, innerLeftTunnel).Shape();
+
+  TopoDS_Shape innerRightTunnel;
+  switch (params.rightSection.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    innerRightTunnel = create_rectangular_section(
+        params.rightSection.length - params.outerWallThickness,
+        params.rightSection.width, params.rightSection.height,
+        params.outerWallThickness, params.topThickness, params.bottomThickness,
+        false);
+    break;
+  case connection_section_style::HORSESHOE:
+    innerRightTunnel = create_horseshoe_section(
+        params.rightSection.length - params.outerWallThickness,
+        params.rightSection.width, params.rightSection.height,
+        params.rightSection.archHeight, params.outerWallThickness, false);
+    break;
+  case connection_section_style::CIRCULAR:
+    innerRightTunnel = create_circular_section(
+        params.rightSection.length - params.outerWallThickness,
+        params.rightSection.height / 2, params.outerWallThickness, false);
+    break;
+  }
+
+  rightTrsf.SetTranslation(
+      gp_Vec(params.length / 2 + params.outerWallThickness, 0, 0));
+  innerRightTunnel =
+      BRepBuilderAPI_Transform(innerRightTunnel, rightTrsf).Shape();
+
+  inner = BRepAlgoAPI_Fuse(inner, innerRightTunnel).Shape();
+
+  // 3. 创建上连接段
+  TopoDS_Shape innerBranch1Tunnel;
+  switch (params.branchSection1.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    innerBranch1Tunnel = create_rectangular_section(
+        params.branchSection1.length - params.outerWallThickness,
+        params.branchSection1.width, params.branchSection1.height,
+        params.outerWallThickness, params.topThickness, params.bottomThickness,
+        false);
+    break;
+  case connection_section_style::HORSESHOE:
+    innerBranch1Tunnel = create_horseshoe_section(
+        params.branchSection1.length - params.outerWallThickness,
+        params.branchSection1.width, params.branchSection1.height,
+        params.branchSection1.archHeight, params.outerWallThickness, false);
+    break;
+  case connection_section_style::CIRCULAR:
+    innerBranch1Tunnel = create_circular_section(
+        params.branchSection1.length - params.outerWallThickness,
+        params.branchSection1.height / 2, params.outerWallThickness, false);
+    break;
+  }
+
+  branch1Model.SetTranslation(gp_Vec(
+      -(params.branchSection1.length - params.outerWallThickness) / 2, 0, 0));
+  branch1Trsf.SetTranslation(gp_Vec(0,
+                                    params.branchLength + params.width / 2 +
+                                        params.branchSection1.length / 2 +
+                                        params.outerWallThickness +
+                                        params.outerWallThickness / 2,
+                                    0));
+  innerBranch1Tunnel =
+      BRepBuilderAPI_Transform(innerBranch1Tunnel, branch1Model).Shape();
+  innerBranch1Tunnel =
+      BRepBuilderAPI_Transform(innerBranch1Tunnel, rotate1Trsf).Shape();
+  innerBranch1Tunnel =
+      BRepBuilderAPI_Transform(innerBranch1Tunnel, branch1Trsf).Shape();
+
+  inner = BRepAlgoAPI_Fuse(inner, innerBranch1Tunnel).Shape();
+
+  // 4. 创建下连接段
+  TopoDS_Shape innerBranch2Tunnel;
+  switch (params.branchSection2.sectionType) {
+  case connection_section_style::RECTANGULAR:
+    innerBranch2Tunnel = create_rectangular_section(
+        params.branchSection2.length - params.outerWallThickness,
+        params.branchSection2.width, params.branchSection2.height,
+        params.outerWallThickness, params.topThickness, params.bottomThickness,
+        false);
+    break;
+  case connection_section_style::HORSESHOE:
+    innerBranch2Tunnel = create_horseshoe_section(
+        params.branchSection2.length - params.outerWallThickness,
+        params.branchSection2.width, params.branchSection2.height,
+        params.branchSection2.archHeight, params.outerWallThickness, false);
+    break;
+  case connection_section_style::CIRCULAR:
+    innerBranch2Tunnel = create_circular_section(
+        params.branchSection2.length - params.outerWallThickness,
+        params.branchSection2.height / 2, params.outerWallThickness, false);
+    break;
+  }
+
+  branch2Model.SetTranslation(gp_Vec(
+      -(params.branchSection2.length - params.outerWallThickness) / 2, 0, 0));
+  branch2Trsf.SetTranslation(gp_Vec(0,
+                                    -params.branchLength - params.width / 2 -
+                                        params.branchSection2.length / 2 -
+                                        params.outerWallThickness -
+                                        params.outerWallThickness / 2,
+                                    0));
+  innerBranch2Tunnel =
+      BRepBuilderAPI_Transform(innerBranch2Tunnel, branch2Model).Shape();
+  innerBranch2Tunnel =
+      BRepBuilderAPI_Transform(innerBranch2Tunnel, rotate2Trsf).Shape();
+  innerBranch2Tunnel =
+      BRepBuilderAPI_Transform(innerBranch2Tunnel, branch2Trsf).Shape();
+
+  inner = BRepAlgoAPI_Fuse(inner, innerBranch2Tunnel).Shape();
+
+  // 合并所有部分
+  TopoDS_Shape well = BRepAlgoAPI_Cut(outer, inner).Shape();
+
+  return well;
+}
+
 TopoDS_Shape create_four_way_well(const four_way_well_params &params) {
   // 参数验证
   if (params.length <= 0 || params.width <= 0 || params.height <= 0) {
     throw Standard_ConstructionError(
         "Length, width and height must be positive");
   }
-
-  // 创建主井体
-  gp_Pnt origin(-params.length / 2, -params.width / 2, 0);
-  BRepPrimAPI_MakeBox mainBox(origin, params.length, params.width,
-                              params.height);
-  TopoDS_Shape mainWell = mainBox.Shape();
-
-  return mainWell;
+  switch (params.type) {
+  case four_way_well_type::WORKING_WELL:
+    return create_four_way_working_well(params);
+  case four_way_well_type::OPEN_CUT_TUNNEL:
+    return create_four_way_open_cut_tunnel(params);
+  case four_way_well_type::UNDERGROUND_TUNNEL:
+    return create_four_way_underground_tunnel(params);
+  default:
+    break;
+  }
 }
 
 TopoDS_Shape create_four_way_well(const four_way_well_params &params,
@@ -12289,20 +13417,20 @@ TopoDS_Shape create_sump(const sump_params &params) {
     throw Standard_ConstructionError(
         "Length, width and depth must be positive");
   }
-  if (params.floorThickness < 0) {
+  if (params.bottomThickness < 0) {
     throw Standard_ConstructionError("Floor thickness must be non-negative");
   }
 
   // 创建集水坑主体（长方体）
-  gp_Pnt origin(-params.length / 2, -params.width / 2, -params.floorThickness);
+  gp_Pnt origin(-params.length / 2, -params.width / 2, -params.bottomThickness);
   BRepPrimAPI_MakeBox pitMaker(origin, params.length, params.width,
-                               params.depth + params.floorThickness);
+                               params.depth + params.bottomThickness);
   TopoDS_Shape pit = pitMaker.Shape();
 
   // 创建内部空腔（如果底板厚度大于0）
-  if (params.floorThickness > 0) {
+  if (params.bottomThickness > 0) {
     gp_Pnt innerOrigin(-params.length / 2 + 1, -params.width / 2 + 1,
-                       -params.floorThickness + 1);
+                       -params.bottomThickness + 1);
     BRepPrimAPI_MakeBox cavityMaker(innerOrigin, params.length - 2,
                                     params.width - 2, params.depth - 1);
     pit = BRepAlgoAPI_Cut(pit, cavityMaker.Shape()).Shape();
@@ -12374,7 +13502,7 @@ TopoDS_Shape create_shaft_chamber(const shaft_chamber_params &params) {
     throw Standard_ConstructionError("Diameter and height must be positive");
   }
   if (params.supportWallThickness < 0 || params.outerWallThickness < 0 ||
-      params.innerWallThickness < 0 || params.roofThickness < 0) {
+      params.innerWallThickness < 0 || params.topThickness < 0) {
     throw Standard_ConstructionError("Thickness values must be non-negative");
   }
 
@@ -12411,11 +13539,11 @@ TopoDS_Shape create_shaft_chamber(const shaft_chamber_params &params) {
 
   // 创建顶板
   TopoDS_Shape roof;
-  if (params.roofThickness > 0) {
+  if (params.topThickness > 0) {
     double roofRadius = params.supportDiameter / 2;
     roof = BRepPrimAPI_MakeCylinder(
                gp_Ax2(gp_Pnt(0, 0, params.workingHeight), gp::DZ()), roofRadius,
-               params.roofThickness)
+               params.topThickness)
                .Shape();
 
     if (!outerWall.IsNull()) {
@@ -12813,14 +13941,14 @@ TopoDS_Shape create_drainage_well(const drainage_well_params &params) {
     throw Standard_ConstructionError(
         "Length, width and height must be positive");
   }
-  if (params.wallThickness < 0 || params.floorThickness < 0) {
+  if (params.wallThickness < 0 || params.bottomThickness < 0) {
     throw Standard_ConstructionError("Thickness values must be non-negative");
   }
 
   // 创建井主体外壁
   double outerLength = params.length + 2 * params.wallThickness;
   double outerWidth = params.width + 2 * params.wallThickness;
-  double outerHeight = params.height + params.floorThickness;
+  double outerHeight = params.height + params.bottomThickness;
 
   gp_Pnt baseOrigin(-outerLength / 2, -outerWidth / 2, 0);
   TopoDS_Shape outerBox =
@@ -12829,7 +13957,7 @@ TopoDS_Shape create_drainage_well(const drainage_well_params &params) {
 
   // 创建井主体内腔
   gp_Pnt innerOrigin(-params.length / 2, -params.width / 2,
-                     params.floorThickness);
+                     params.bottomThickness);
   TopoDS_Shape innerBox = BRepPrimAPI_MakeBox(innerOrigin, params.length,
                                               params.width, params.height)
                               .Shape();
@@ -12857,7 +13985,7 @@ TopoDS_Shape create_drainage_well(const drainage_well_params &params) {
     gp_Pnt cushionOrigin(-cushionLength / 2, -cushionWidth / 2, 0);
     TopoDS_Shape cushion =
         BRepPrimAPI_MakeBox(cushionOrigin, cushionLength, cushionWidth,
-                            params.floorThickness)
+                            params.bottomThickness)
             .Shape();
 
     wellBody = BRepAlgoAPI_Fuse(wellBody, cushion).Shape();
