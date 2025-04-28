@@ -1570,7 +1570,7 @@ typedef struct {
   double archHeight;
   double wallThickness;
   int pipeCount;
-  pnt3d_t *pipePositions;
+  pnt2d_t *pipePositions;
   double *pipeInnerDiameters;
   double *pipeWallThicknesses;
   int hasProtectionPlate;

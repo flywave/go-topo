@@ -3675,7 +3675,7 @@ type CableTrayParams struct {
 	ArchHeight          float32
 	WallThickness       float32
 	PipeCount           int32
-	PipePositions       []Point3
+	PipePositions       []Point2
 	PipeInnerDiameters  []float32
 	PipeWallThicknesses []float32
 	HasProtectionPlate  bool
@@ -3696,7 +3696,7 @@ func (p *CableTrayParams) to_struct() C.cable_tray_params_t {
 	c.pipeCount = C.int(p.PipeCount)
 
 	if len(p.PipePositions) > 0 {
-		c.pipePositions = (*C.pnt3d_t)(unsafe.Pointer(&p.PipePositions[0]))
+		c.pipePositions = (*C.pnt2d_t)(unsafe.Pointer(&p.PipePositions[0]))
 	}
 	if len(p.PipeInnerDiameters) > 0 {
 		c.pipeInnerDiameters = (*C.double)(unsafe.Pointer(&p.PipeInnerDiameters[0]))

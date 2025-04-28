@@ -2579,8 +2579,8 @@ PRIMCAPICALL topo_shape_t *create_cable_tray(cable_tray_params_t params) {
 
   if (params.pipeCount > 0) {
     for (int i = 0; i < params.pipeCount; i++) {
-      pnt3d_t pos = params.pipePositions[i];
-      cpp_params.pipePositions.push_back(gp_Pnt(pos.x, pos.y, pos.z));
+      pnt2d_t pos = params.pipePositions[i];
+      cpp_params.pipePositions.push_back(gp_Pnt2d(pos.x, pos.y));
       cpp_params.pipeInnerDiameters.push_back(params.pipeInnerDiameters[i]);
       cpp_params.pipeWallThicknesses.push_back(params.pipeWallThicknesses[i]);
     }
@@ -2615,8 +2615,8 @@ create_cable_tray_with_place(cable_tray_params_t params, pnt3d_t position,
 
   if (params.pipeCount > 0) {
     for (int i = 0; i < params.pipeCount; i++) {
-      pnt3d_t pos = params.pipePositions[i];
-      cpp_params.pipePositions.push_back(gp_Pnt(pos.x, pos.y, pos.z));
+      pnt2d_t pos = params.pipePositions[i];
+      cpp_params.pipePositions.push_back(gp_Pnt2d(pos.x, pos.y));
       cpp_params.pipeInnerDiameters.push_back(params.pipeInnerDiameters[i]);
       cpp_params.pipeWallThicknesses.push_back(params.pipeWallThicknesses[i]);
     }
@@ -2939,8 +2939,8 @@ PRIMCAPICALL topo_shape_t *create_oblique_ventilation_duct_with_place(
 
 PRIMCAPICALL topo_shape_t *create_drainage_well(drainage_well_params_t params) {
   drainage_well_params cpp_params{
-      params.length,         params.width,        params.height,
-      params.neckDiameter,   params.neckHeight,   params.cushionExtension,
+      params.length,          params.width,        params.height,
+      params.neckDiameter,    params.neckHeight,   params.cushionExtension,
       params.bottomThickness, params.wallThickness};
   return new topo_shape_t{
       std::make_shared<shape>(create_drainage_well(cpp_params))};
@@ -2950,8 +2950,8 @@ PRIMCAPICALL topo_shape_t *
 create_drainage_well_with_place(drainage_well_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t xDir) {
   drainage_well_params cpp_params{
-      params.length,         params.width,        params.height,
-      params.neckDiameter,   params.neckHeight,   params.cushionExtension,
+      params.length,          params.width,        params.height,
+      params.neckDiameter,    params.neckHeight,   params.cushionExtension,
       params.bottomThickness, params.wallThickness};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);

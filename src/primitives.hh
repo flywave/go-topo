@@ -1740,7 +1740,8 @@ TopoDS_Shape create_four_way_well(const four_way_well_params &params,
 
 struct channel_point {
   gp_Pnt position; // 点坐标
-  int type;        // 点类型 (0-普通节点 1-弧形节点（弧形节点为圆弧顶点，与前后点三点成弧）)
+  int type;        // 点类型 (0-普通节点
+                   // 1-弧形节点（弧形节点为圆弧顶点，与前后点三点成弧）)
 };
 
 // TD_PG
@@ -1851,7 +1852,7 @@ struct cable_tray_params {
 
   // 排管参数
   int pipeCount;                           // 排管数 N
-  std::vector<gp_Pnt> pipePositions;       // 排管坐标 POS
+  std::vector<gp_Pnt2d> pipePositions;       // 排管坐标 POS
   std::vector<double> pipeInnerDiameters;  // 排管内径 DI (mm)
   std::vector<double> pipeWallThicknesses; // 排管壁厚 T1 (mm)
 
