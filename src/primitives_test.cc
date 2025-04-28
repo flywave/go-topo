@@ -4005,15 +4005,15 @@ void test_make_ventilation_pavilion() {
   try {
     // 测试标准风亭
     auto shp = create_ventilation_pavilion(ventilation_pavilion_params{
-        .topLength = 200.0,    // 顶长200mm
+        .topLength = 400.0,    // 顶长200mm
         .middleLength = 300.0, // 中部长度300mm
         .bottomLength = 400.0, // 底长400mm
-        .topWidth = 150.0,     // 顶宽150mm
+        .topWidth = 350.0,     // 顶宽150mm
         .middleWidth = 250.0,  // 中部宽度250mm
         .bottomWidth = 350.0,  // 底宽350mm
-        .topHeight = 50.0,     // 顶高50mm
-        .height = 300.0,       // 总高300mm
-        .baseHeight = 100.0    // 基础高100mm
+        .topHeight = 100.0,     // 顶高50mm
+        .height =  150.0,       // 总高300mm
+        .baseHeight = 30.0    // 基础高100mm
     });
 
     if (shp.IsNull()) {

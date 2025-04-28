@@ -14616,72 +14616,203 @@ create_ventilation_pavilion(const ventilation_pavilion_params &params) {
   }
 
   // 创建底座
-  gp_Pnt baseOrigin(-params.bottomLength / 2, -params.bottomWidth / 2, 0);
-  TopoDS_Shape base = BRepPrimAPI_MakeBox(baseOrigin, params.bottomLength,
-                                          params.bottomWidth, params.baseHeight)
-                          .Shape();
+
+  // 创建底座（改为棱台形状）
+  gp_Pnt baseBottom1(-params.bottomLength / 2, -params.bottomWidth / 2, 0);
+  gp_Pnt baseBottom2(params.bottomLength / 2, -params.bottomWidth / 2, 0);
+  gp_Pnt baseBottom3(params.bottomLength / 2, params.bottomWidth / 2, 0);
+  gp_Pnt baseBottom4(-params.bottomLength / 2, params.bottomWidth / 2, 0);
+
+  // 棱台上部与主体相同尺寸
+  gp_Pnt baseTop1(-params.middleLength / 2, -params.middleWidth / 2,
+                  params.baseHeight);
+  gp_Pnt baseTop2(params.middleLength / 2, -params.middleWidth / 2,
+                  params.baseHeight);
+  gp_Pnt baseTop3(params.middleLength / 2, params.middleWidth / 2,
+                  params.baseHeight);
+  gp_Pnt baseTop4(-params.middleLength / 2, params.middleWidth / 2,
+                  params.baseHeight);
+
+  // 创建上下底面
+  BRepBuilderAPI_MakeWire bottomWire;
+  bottomWire.Add(BRepBuilderAPI_MakeEdge(baseBottom1, baseBottom2));
+  bottomWire.Add(BRepBuilderAPI_MakeEdge(baseBottom2, baseBottom3));
+  bottomWire.Add(BRepBuilderAPI_MakeEdge(baseBottom3, baseBottom4));
+  bottomWire.Add(BRepBuilderAPI_MakeEdge(baseBottom4, baseBottom1));
+
+  BRepBuilderAPI_MakeWire topWire;
+  topWire.Add(BRepBuilderAPI_MakeEdge(baseTop1, baseTop2));
+  topWire.Add(BRepBuilderAPI_MakeEdge(baseTop2, baseTop3));
+  topWire.Add(BRepBuilderAPI_MakeEdge(baseTop3, baseTop4));
+  topWire.Add(BRepBuilderAPI_MakeEdge(baseTop4, baseTop1));
+
+  // 创建棱台的侧面（通过放样）
+  TopoDS_Shape base;
+  BRepOffsetAPI_ThruSections loftMaker(Standard_True); // 生成实体
+  loftMaker.AddWire(bottomWire.Wire());
+  loftMaker.AddWire(topWire.Wire());
+  loftMaker.Build();
+  if (!loftMaker.IsDone())
+    throw Standard_ConstructionError("棱台放样失败");
+  base = loftMaker.Shape();
 
   // 创建主体
   gp_Pnt bodyOrigin(-params.middleLength / 2, -params.middleWidth / 2,
                     params.baseHeight);
-  TopoDS_Shape body =
-      BRepPrimAPI_MakeBox(bodyOrigin, params.middleLength, params.middleWidth,
-                          params.height - params.baseHeight - params.topHeight)
-          .Shape();
-  body = BRepAlgoAPI_Fuse(base, body).Shape();
+  TopoDS_Shape body = BRepPrimAPI_MakeBox(bodyOrigin, params.middleLength,
+                                          params.middleWidth, params.height)
+                          .Shape();
 
   // 创建屋顶
-  gp_Pnt roofOrigin(-params.topLength / 2, -params.topWidth / 2,
-                    params.height - params.topHeight);
-  TopoDS_Shape roof = BRepPrimAPI_MakeBox(roofOrigin, params.topLength,
-                                          params.topWidth, params.topHeight)
-                          .Shape();
+  gp_Pnt roofBaseCenter(0, 0, params.height + params.baseHeight);
+  gp_Pnt roofTop(0, 0, params.height + params.baseHeight + params.topHeight);
+
+  // 创建金字塔底面四个角点
+  gp_Pnt base1(-params.topLength / 2, -params.topWidth / 2, roofBaseCenter.Z());
+  gp_Pnt base2(params.topLength / 2, -params.topWidth / 2, roofBaseCenter.Z());
+  gp_Pnt base3(params.topLength / 2, params.topWidth / 2, roofBaseCenter.Z());
+  gp_Pnt base4(-params.topLength / 2, params.topWidth / 2, roofBaseCenter.Z());
+
+  // 创建金字塔的四个三角形面
+  BRepBuilderAPI_MakeEdge edge1(base1, base2);
+  BRepBuilderAPI_MakeEdge edge2(base2, roofTop);
+  BRepBuilderAPI_MakeEdge edge3(roofTop, base1);
+  BRepBuilderAPI_MakeWire wire1;
+  wire1.Add(edge1);
+  wire1.Add(edge2);
+  wire1.Add(edge3);
+
+  TopoDS_Wire faceWire1 = wire1.Wire();
+
+  if (!faceWire1.Closed()) {
+    throw Standard_ConstructionError("Face wire is not closed");
+  }
+
+  BRepBuilderAPI_MakeFace face1(faceWire1);
+
+  // 其他三个面也采用同样的方式创建
+  BRepBuilderAPI_MakeEdge edge4(base2, base3);
+  BRepBuilderAPI_MakeEdge edge5(base3, roofTop);
+  BRepBuilderAPI_MakeEdge edge6(roofTop, base2);
+  BRepBuilderAPI_MakeWire wire2;
+  wire2.Add(edge4);
+  wire2.Add(edge5);
+  wire2.Add(edge6);
+
+  TopoDS_Wire faceWire2 = wire2.Wire();
+
+  if (!faceWire2.Closed()) {
+    throw Standard_ConstructionError("Face wire is not closed");
+  }
+
+  BRepBuilderAPI_MakeFace face2(faceWire2);
+
+  BRepBuilderAPI_MakeEdge edge7(base3, base4);
+  BRepBuilderAPI_MakeEdge edge8(base4, roofTop);
+  BRepBuilderAPI_MakeEdge edge9(roofTop, base3);
+  BRepBuilderAPI_MakeWire wire3;
+  wire3.Add(edge7);
+  wire3.Add(edge8);
+  wire3.Add(edge9);
+
+  TopoDS_Wire faceWire3 = wire3.Wire();
+
+  if (!faceWire3.Closed()) {
+    throw Standard_ConstructionError("Face wire is not closed");
+  }
+
+  BRepBuilderAPI_MakeFace face3(faceWire3);
+
+  BRepBuilderAPI_MakeEdge edge10(base4, base1);
+  BRepBuilderAPI_MakeEdge edge11(base1, roofTop);
+  BRepBuilderAPI_MakeEdge edge12(roofTop, base4);
+  BRepBuilderAPI_MakeWire wire4;
+  wire4.Add(edge10);
+  wire4.Add(edge11);
+  wire4.Add(edge12);
+
+  TopoDS_Wire faceWire4 = wire4.Wire();
+
+  if (!faceWire4.Closed()) {
+    throw Standard_ConstructionError("Face wire is not closed");
+  }
+
+  BRepBuilderAPI_MakeFace face4(faceWire4);
+
+  // 创建金字塔底面
+  BRepBuilderAPI_MakeWire baseWire;
+  baseWire.Add(BRepBuilderAPI_MakeEdge(base1, base2));
+  baseWire.Add(BRepBuilderAPI_MakeEdge(base2, base3));
+  baseWire.Add(BRepBuilderAPI_MakeEdge(base3, base4));
+  baseWire.Add(BRepBuilderAPI_MakeEdge(base4, base1));
+
+  TopoDS_Wire faceWire5 = baseWire.Wire();
+
+  if (!faceWire5.Closed()) {
+    throw Standard_ConstructionError("Face wire is not closed");
+  }
+
+  BRepBuilderAPI_MakeFace baseFace(faceWire5);
+
+  // 组合所有面形成封闭的金字塔形状
+  BRepBuilderAPI_Sewing sewer;
+  sewer.Add(face1.Face());
+  sewer.Add(face2.Face());
+  sewer.Add(face3.Face());
+  sewer.Add(face4.Face());
+  sewer.Add(baseFace.Face());
+  sewer.Perform();
+
+  TopoDS_Shape roof = sewer.SewedShape();
 
   // 组合所有部件
   TopoDS_Shape pavilion = BRepAlgoAPI_Fuse(body, roof).Shape();
 
   // 添加通风格栅（长条洞）
-  double grilleWidth = params.middleWidth * 0.8; // 格栅宽度
-  double grilleHeight =
-      (params.height - params.baseHeight - params.topHeight) * 0.6; // 格栅高度
-  double grilleThickness = params.middleLength * 0.05; // 格栅厚度
+  double holeWidth = params.middleWidth * 0.8;   // 洞长为面宽的0.8倍
+  double holeLength = params.middleLength * 0.8; // 洞长为面宽的0.8倍
 
-  // 四个方向的格栅
-  for (int i = 0; i < 4; ++i) {
-    double angle = i * M_PI_2; // 0, 90, 180, 270度
+  double holeHeight = (params.height / 8.0) * 0.3; // 洞高为body高的0.05倍
 
-    // 创建格栅板
-    gp_Pnt grilleCenter(
-        (params.middleLength / 2 - grilleThickness / 2) * cos(angle),
-        (params.middleWidth / 2 - grilleThickness / 2) * sin(angle),
-        params.baseHeight +
-            (params.height - params.baseHeight - params.topHeight) / 2);
+  // 在（前、后）面上均匀挖8个洞
+  for (int j = 0; j < 8; ++j) {
+    // 计算洞的位置（垂直方向均匀分布）
+    double holePosZ = params.baseHeight + (j + 0.5) * (params.height / 8.0);
 
-    TopoDS_Shape grille =
-        BRepPrimAPI_MakeBox(gp_Pnt(grilleCenter.X() - grilleThickness / 2,
-                                   grilleCenter.Y() - grilleWidth / 2,
-                                   grilleCenter.Z() - grilleHeight / 2),
-                            grilleThickness, grilleWidth, grilleHeight)
+    // 根据面的方向确定洞的长宽
+
+    TopoDS_Shape hole =
+        BRepPrimAPI_MakeBox(
+            gp_Pnt(-holeLength / 2, -params.middleLength, holePosZ), holeLength,
+            params.middleLength * 2, holeHeight)
             .Shape();
 
-    // 创建格栅孔洞
-    int holeCount = 5; // 每面格栅孔洞数量
-    for (int j = 0; j < holeCount; ++j) {
-      double holePos = -grilleWidth / 2 + (j + 0.5) * (grilleWidth / holeCount);
-      TopoDS_Shape hole =
-          BRepPrimAPI_MakeBox(gp_Pnt(grilleCenter.X() - grilleThickness,
-                                     holePos - grilleWidth / holeCount * 0.4,
-                                     grilleCenter.Z() - grilleHeight * 0.4),
-                              grilleThickness * 2,
-                              grilleWidth / holeCount * 0.8, grilleHeight * 0.8)
-              .Shape();
-      grille = BRepAlgoAPI_Cut(grille, hole).Shape();
-    }
-
-    pavilion = BRepAlgoAPI_Fuse(pavilion, grille).Shape();
+    body = BRepAlgoAPI_Cut(body, hole).Shape();
   }
 
-  return pavilion;
+  // 在（左，右）面上均匀挖8个洞
+  for (int j = 0; j < 8; ++j) {
+    // 计算洞的位置（垂直方向均匀分布）
+    double holePosZ = params.baseHeight + (j + 0.5) * (params.height / 8.0);
+
+    // 创建左右方向的通风格栅
+    TopoDS_Shape hole =
+        BRepPrimAPI_MakeBox(
+            gp_Pnt(-params.middleWidth, -holeWidth / 2, holePosZ),
+            params.middleWidth * 2, holeWidth, holeHeight)
+            .Shape();
+
+    body = BRepAlgoAPI_Cut(body, hole).Shape();
+  }
+
+  BRep_Builder builder;
+  TopoDS_Compound compound;
+  builder.MakeCompound(compound);
+  builder.Add(compound, roof);
+  builder.Add(compound, body);
+  builder.Add(compound, base);
+
+  return compound;
 }
 
 TopoDS_Shape
