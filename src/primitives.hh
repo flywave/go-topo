@@ -1953,6 +1953,8 @@ TopoDS_Shape create_sump(const sump_params &params, const gp_Pnt &position,
 struct footpath_params {
   double height; // 步道高 H (mm)
   double width;  // 步道宽 W (mm)
+  
+  std::vector<channel_point> points;
 };
 
 TopoDS_Shape create_footpath(const footpath_params &params);

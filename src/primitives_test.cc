@@ -3630,7 +3630,7 @@ void test_make_cable_tray() {
   // 创建测试点集
   std::vector<channel_point> arcPoints = {
       {gp_Pnt(0, 0, 0), 0},    // 起点
-      {gp_Pnt(900, 0, 0), 0} // 终点
+      {gp_Pnt(900, 500, 0), 0} // 终点
   };
 
   // 测试拱形桥架
@@ -3695,6 +3695,232 @@ void test_make_cable_tray() {
       std::cerr << "Error: Failed to create beam cable tray" << std::endl;
     } else {
       test_export_shape(beam_shp, "./beam_cable_tray.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+// 添加L型梁测试函数
+void test_make_cable_L_beam() {
+  std::cout << "\n=== Testing Cable L-Beam ===" << std::endl;
+  try {
+    // 标准参数测试
+    auto shp = create_cable_L_beam(cable_L_beam_params{
+        .length = 300.0, // 梁长300mm
+        .width = 150.0,  // 梁宽150mm
+        .height = 200.0  // 梁高200mm
+    });
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create standard L-beam" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./cable_L_beam.stl");
+
+    // 极端参数测试
+    auto shp2 = create_cable_L_beam(cable_L_beam_params{
+        .length = 500.0, // 超长梁
+        .width = 50.0,   // 窄宽度
+        .height = 300.0  // 高梁
+    });
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create extreme L-beam" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./cable_L_beam_extreme.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_manhole() {
+  std::cout << "\n=== Testing Manhole ===" << std::endl;
+
+  // 测试圆形人孔
+  try {
+    auto shp = create_manhole(manhole_params{
+        .style = manhole_style::CIRCULAR,
+        .length = 100.0,      // 直径100mm
+        .width = 0.0,         // 圆形人孔宽度设为0
+        .height = 150.0,      // 高度150mm
+        .wallThickness = 10.0 // 壁厚10mm
+    });
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create circular manhole" << std::endl;
+    } else {
+      test_export_shape(shp, "./circular_manhole.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+
+  // 测试方形人孔
+  try {
+    auto shp = create_manhole(manhole_params{
+        .style = manhole_style::RECTANGULAR,
+        .length = 120.0,      // 长度120mm
+        .width = 80.0,        // 宽度80mm
+        .height = 150.0,      // 高度150mm
+        .wallThickness = 10.0 // 壁厚10mm
+    });
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create rectangular manhole" << std::endl;
+    } else {
+      test_export_shape(shp, "./rectangular_manhole.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_manhole_cover() {
+  std::cout << "\n=== Testing Manhole Cover ===" << std::endl;
+
+  // 测试圆形井盖
+  try {
+    auto shp = create_manhole_cover(manhole_cover_params{
+        .style = manhole_cover_style::CIRCULAR,
+        .length = 100.0,  // 直径100mm
+        .width = 0.0,     // 圆形井盖宽度设为0
+        .thickness = 10.0 // 厚度10mm
+    });
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create circular manhole cover"
+                << std::endl;
+    } else {
+      test_export_shape(shp, "./circular_manhole_cover.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+
+  // 测试方形井盖
+  try {
+    auto shp = create_manhole_cover(manhole_cover_params{
+        .style = manhole_cover_style::RECTANGULAR,
+        .length = 120.0,  // 长度120mm
+        .width = 80.0,    // 宽度80mm
+        .thickness = 10.0 // 厚度10mm
+    });
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create rectangular manhole cover"
+                << std::endl;
+    } else {
+      test_export_shape(shp, "./rectangular_manhole_cover.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_ladder() {
+  std::cout << "\n=== Testing Ladder ===" << std::endl;
+
+  // 测试标准爬梯
+  try {
+    auto shp = create_ladder(ladder_params{
+        .length = 3000.0, // 长度3000mm
+        .width = 400.0,   // 宽度400mm
+        .thickness = 20.0 // 厚度20mm
+    });
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create standard ladder" << std::endl;
+    } else {
+      test_export_shape(shp, "./standard_ladder.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_sump() {
+  std::cout << "\n=== Testing Sump ===" << std::endl;
+
+  // 测试标准集水坑
+  try {
+    auto shp = create_sump(sump_params{
+        .length = 500.0,        // 长度500mm
+        .width = 300.0,         // 宽度300mm
+        .depth = 400.0,         // 深度400mm
+        .bottomThickness = 50.0 // 底板厚度50mm
+    });
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create standard sump" << std::endl;
+    } else {
+      test_export_shape(shp, "./standard_sump.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+
+  // 测试浅集水坑
+  try {
+    auto shp = create_sump(sump_params{
+        .length = 600.0,        // 长度600mm
+        .width = 400.0,         // 宽度400mm
+        .depth = 200.0,         // 深度200mm
+        .bottomThickness = 30.0 // 底板厚度30mm
+    });
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create shallow sump" << std::endl;
+    } else {
+      test_export_shape(shp, "./shallow_sump.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+
+void test_make_footpath() {
+  std::cout << "\n=== Testing Footpath ===" << std::endl;
+  
+  // 创建测试点集
+  std::vector<channel_point> points = {
+      {gp_Pnt(0, 0, 0), 0},      // 起点
+      {gp_Pnt(100, 0, 0), 0},   // 直线段
+      {gp_Pnt(150, 50, 0), 1}, // 转弯点
+      {gp_Pnt(150, 100, 0), 0} // 终点
+  };
+
+  // 测试标准步道
+  try {
+    auto shp = create_footpath(footpath_params{
+        .height = 15.0,  // 高度150mm
+        .width = 80.0,   // 宽度800mm
+        .points = points  // 路径点集
+    });
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create standard footpath" << std::endl;
+    } else {
+      test_export_shape(shp, "./standard_footpath.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+
+void test_make_shaft_chamber() {
+  std::cout << "\n=== Testing Shaft Chamber ===" << std::endl;
+  
+  // 测试标准竖井室
+  try {
+    auto shp = create_shaft_chamber(shaft_chamber_params{
+        .supportWallThickness = 10.0,  // 支护壁厚10mm
+        .supportDiameter = 100.0,     // 支护直径100mm
+        .supportHeight = 50.0,        // 支护高度50mm
+        .topThickness = 8.0,          // 顶板厚8mm
+        .innerDiameter = 80.0,        // 内壁直径80mm
+        .workingHeight = 120.0,      // 工作仓高度120mm
+        .outerWallThickness = 12.0,  // 外壁厚12mm
+        .innerWallThickness = 6.0    // 内壁厚6mm
+    });
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create standard shaft chamber" << std::endl;
+    } else {
+      test_export_shape(shp, "./standard_shaft_chamber.stl");
     }
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
@@ -3788,5 +4014,12 @@ int main() {
   test_make_cable_trench();
   test_make_cable_tunnel();
   test_make_cable_tray();
+  test_make_cable_L_beam();
+  test_make_manhole();
+  test_make_manhole_cover();
+  test_make_ladder();
+  test_make_sump();
+  test_make_footpath();
+  test_make_shaft_chamber();
   return 0;
 }

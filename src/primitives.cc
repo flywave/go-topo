@@ -14069,32 +14069,12 @@ TopoDS_Shape create_cable_L_beam(const cable_L_beam_params &params) {
     throw Standard_ConstructionError("L, W and H must be positive");
   }
 
-  // 创建L型梁的主体部分
-  gp_Pnt p1(0, 0, 0);
-  gp_Pnt p2(params.length, 0, 0);
-  gp_Pnt p3(params.length, params.width, 0);
-  gp_Pnt p4(params.width, params.width, 0);
-  gp_Pnt p5(params.width, params.height, 0);
-  gp_Pnt p6(0, params.height, 0);
-
-  // 创建多边形轮廓
-  BRepBuilderAPI_MakePolygon polyMaker;
-  polyMaker.Add(p1);
-  polyMaker.Add(p2);
-  polyMaker.Add(p3);
-  polyMaker.Add(p4);
-  polyMaker.Add(p5);
-  polyMaker.Add(p6);
-  polyMaker.Add(p1);
-  TopoDS_Wire wire = polyMaker.Wire();
-
-  // 拉伸成实体
-  TopoDS_Shape LBeam =
-      BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(wire).Face(),
-                            gp_Vec(0, 0, params.height))
+  TopoDS_Shape beam =
+      BRepPrimAPI_MakeBox(gp_Pnt(-params.length / 2, -params.width / 2, 0),
+                          params.length, params.width, params.height)
           .Shape();
 
-  return LBeam;
+  return beam;
 }
 
 TopoDS_Shape create_cable_L_beam(const cable_L_beam_params &params,
@@ -14148,8 +14128,9 @@ TopoDS_Shape create_manhole(const manhole_params &params) {
     // 创建内壁圆柱(空心部分)
     if (innerRadius > 0) {
       TopoDS_Shape innerCylinder =
-          BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(0, 0, -1), gp::DZ()),
-                                   innerRadius, params.height + 2)
+          BRepPrimAPI_MakeCylinder(
+              gp_Ax2(gp_Pnt(0, 0, -params.height), gp::DZ()), innerRadius,
+              params.height * 2)
               .Shape();
       manhole = BRepAlgoAPI_Cut(outerCylinder, innerCylinder).Shape();
     } else {
@@ -14279,34 +14260,9 @@ TopoDS_Shape create_ladder(const ladder_params &params) {
 
   // 创建爬梯主体
   TopoDS_Shape ladder =
-      BRepPrimAPI_MakeBox(gp_Pnt(-params.width / 2, 0, 0), params.width,
-                          params.length, params.thickness)
+      BRepPrimAPI_MakeBox(gp_Pnt(-params.length / 2, -params.width, 0),
+                          params.length, params.width, params.thickness)
           .Shape();
-
-  // 创建横档
-  double stepWidth = params.width * 0.8;
-  double stepThickness = params.thickness * 1.5;
-  double stepSpacing = params.length / 10; // 假设10级横档
-
-  TopoDS_Shape steps;
-  for (double z = stepSpacing; z < params.length; z += stepSpacing) {
-    TopoDS_Shape step =
-        BRepPrimAPI_MakeBox(
-            gp_Pnt(-stepWidth / 2, z - stepThickness / 2, -params.thickness),
-            stepWidth, stepThickness, params.thickness * 3)
-            .Shape();
-
-    if (steps.IsNull()) {
-      steps = step;
-    } else {
-      steps = BRepAlgoAPI_Fuse(steps, step).Shape();
-    }
-  }
-
-  // 合并主体和横档
-  if (!steps.IsNull()) {
-    ladder = BRepAlgoAPI_Fuse(ladder, steps).Shape();
-  }
 
   return ladder;
 }
@@ -14343,17 +14299,20 @@ TopoDS_Shape create_sump(const sump_params &params) {
   }
 
   // 创建集水坑主体（长方体）
-  gp_Pnt origin(-params.length / 2, -params.width / 2, -params.bottomThickness);
-  BRepPrimAPI_MakeBox pitMaker(origin, params.length, params.width,
+  gp_Pnt origin(-params.length / 2 - params.bottomThickness,
+                -params.width / 2 - params.bottomThickness,
+                -params.depth - params.bottomThickness);
+  BRepPrimAPI_MakeBox pitMaker(origin,
+                               params.length + 2 * params.bottomThickness,
+                               params.width + 2 * params.bottomThickness,
                                params.depth + params.bottomThickness);
   TopoDS_Shape pit = pitMaker.Shape();
 
   // 创建内部空腔（如果底板厚度大于0）
   if (params.bottomThickness > 0) {
-    gp_Pnt innerOrigin(-params.length / 2 + 1, -params.width / 2 + 1,
-                       -params.bottomThickness + 1);
-    BRepPrimAPI_MakeBox cavityMaker(innerOrigin, params.length - 2,
-                                    params.width - 2, params.depth - 1);
+    gp_Pnt innerOrigin(-params.length / 2, -params.width / 2, -params.depth);
+    BRepPrimAPI_MakeBox cavityMaker(innerOrigin, params.length, params.width,
+                                    params.depth * 2);
     pit = BRepAlgoAPI_Cut(pit, cavityMaker.Shape()).Shape();
   }
 
@@ -14387,12 +14346,53 @@ TopoDS_Shape create_footpath(const footpath_params &params) {
     throw Standard_ConstructionError("Height and width must be positive");
   }
 
-  // 创建步道主体（长方体）
-  gp_Pnt origin(-params.width / 2, -params.width / 2, 0); // 底面中心在原点
-  BRepPrimAPI_MakeBox footpathMaker(origin, params.width, params.width,
-                                    params.height);
+  BRepBuilderAPI_MakeWire baseMaker;
 
-  return footpathMaker.Shape();
+  // 创建路径线框
+  BRepBuilderAPI_MakeWire pathWire;
+
+  // 处理点序列
+  for (size_t i = 0; i < params.points.size() - 1; i++) {
+    const gp_Pnt &current = params.points[i].position;
+    const gp_Pnt &next = params.points[i + 1].position;
+
+    if (params.points[i].type == 0 &&
+        params.points[i + 1].type == 0) { // 普通节点
+      // 创建直线段
+      pathWire.Add(BRepBuilderAPI_MakeEdge(current, next).Edge());
+    } else if (params.points[i].type == 1) { // 弧形节点
+      // 确保有前一个点和后一个点
+      if (i == 0 || i == params.points.size() - 1) {
+        throw Standard_ConstructionError("弧形节点需要前后都有节点");
+      }
+
+      const gp_Pnt &prev = params.points[i - 1].position;
+
+      // 创建三点圆弧
+      pathWire.Add(BRepBuilderAPI_MakeEdge(
+                       GC_MakeArcOfCircle(prev, current, next).Value())
+                       .Edge());
+    }
+  }
+
+  if (!pathWire.IsDone()) {
+    throw Standard_ConstructionError("路径线框创建失败");
+  }
+
+  TopoDS_Wire path = pathWire.Wire();
+
+  // YZ平面上的点坐标 (X=0)
+  gp_Pnt p1(0, -params.width / 2, -params.height);
+  gp_Pnt p2(0, params.width / 2, -params.height);
+  gp_Pnt p3(0, params.width / 2, 0);
+  gp_Pnt p4(0, -params.width / 2, 0);
+
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(p4, p1).Edge());
+
+  return create_channel_shape(baseMaker.Wire(), path);
 }
 
 TopoDS_Shape create_footpath(const footpath_params &params,
