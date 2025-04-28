@@ -13681,7 +13681,7 @@ TopoDS_Shape create_cable_tray(const cable_tray_params &params) {
 
         // 生成加强筋
         double rebarRadius = params.width / 40;
-        int rebarCount = 5;
+        int rebarCount = 9;
         // 计算左侧圆弧点
         gp_Pnt leftArcStartPoint(arcStartPoint.X() - sideVec.X() * offset,
                                  arcStartPoint.Y() - sideVec.Y() * offset,
@@ -13783,8 +13783,10 @@ TopoDS_Shape create_cable_tray(const cable_tray_params &params) {
           for (int i = 1; i <= rebarCount; ++i) {
             double t = i * 1.0 / (rebarCount + 1);
 
-            // 计算左侧钢梁上的点（考虑弧形）
-            gp_Pnt leftPoint;
+            // 计算当前和下一个加强筋位置
+            gp_Pnt leftPoint, rightPoint;
+            gp_Pnt nextLeftPoint, nextRightPoint;
+
             if (leftArcStartPoint.Distance(leftArcEndPoint) >
                 Precision::Confusion()) {
               // 创建圆弧
@@ -13808,8 +13810,6 @@ TopoDS_Shape create_cable_tray(const cable_tray_params &params) {
               leftPoint = leftArcStartPoint;
             }
 
-            // 计算右侧钢梁上的点（考虑弧形）
-            gp_Pnt rightPoint;
             if (rightArcStartPoint.Distance(rightArcEndPoint) >
                 Precision::Confusion()) {
               // 创建圆弧
@@ -13884,6 +13884,150 @@ TopoDS_Shape create_cable_tray(const cable_tray_params &params) {
                     rebarRadius, rightPoint.Distance(rightBottomPoint))
                     .Shape();
             builder.Add(result, rightVerticalRebar);
+
+            // 如果不是最后一个加强筋，添加斜拉筋
+            if (i < rebarCount) {
+              // 计算下一个加强筋位置
+              double nextT = (i + 1) * 1.0 / (rebarCount + 1);
+              gp_Pnt nextLeftPoint, nextRightPoint;
+
+              // 计算下一个左侧点
+              if (leftArcStartPoint.Distance(leftArcEndPoint) >
+                  Precision::Confusion()) {
+                GC_MakeArcOfCircle leftArc(leftArcStartPoint, leftArcMidPoint,
+                                           leftArcEndPoint);
+                if (leftArc.IsDone()) {
+                  nextLeftPoint = leftArc.Value()->Value(
+                      leftArc.Value()->FirstParameter() +
+                      nextT * (leftArc.Value()->LastParameter() -
+                               leftArc.Value()->FirstParameter()));
+                } else {
+                  nextLeftPoint = leftArcStartPoint.Translated(
+                      gp_Vec(leftArcEndPoint.X() - leftArcStartPoint.X(),
+                             leftArcEndPoint.Y() - leftArcStartPoint.Y(),
+                             leftArcEndPoint.Z() - leftArcStartPoint.Z()) *
+                      nextT);
+                }
+              } else {
+                nextLeftPoint = leftArcStartPoint;
+              }
+
+              // 计算下一个右侧点
+              if (rightArcStartPoint.Distance(rightArcEndPoint) >
+                  Precision::Confusion()) {
+                GC_MakeArcOfCircle rightArc(rightArcStartPoint,
+                                            rightArcMidPoint, rightArcEndPoint);
+                if (rightArc.IsDone()) {
+                  nextRightPoint = rightArc.Value()->Value(
+                      rightArc.Value()->FirstParameter() +
+                      nextT * (rightArc.Value()->LastParameter() -
+                               rightArc.Value()->FirstParameter()));
+                } else {
+                  nextRightPoint = rightArcStartPoint.Translated(
+                      gp_Vec(rightArcEndPoint.X() - rightArcStartPoint.X(),
+                             rightArcEndPoint.Y() - rightArcStartPoint.Y(),
+                             rightArcEndPoint.Z() - rightArcStartPoint.Z()) *
+                      nextT);
+                }
+              } else {
+                nextRightPoint = rightArcStartPoint;
+              }
+
+              gp_Pnt nextLeftBottomPoint =
+                  startPoint.Translated(gp_Vec(endPoint.X() - startPoint.X(),
+                                               endPoint.Y() - startPoint.Y(),
+                                               endPoint.Z() - startPoint.Z()) *
+                                        nextT);
+              nextLeftBottomPoint.SetX(nextLeftBottomPoint.X() -
+                                       sideVec.X() * offset);
+              nextLeftBottomPoint.SetY(nextLeftBottomPoint.Y() -
+                                       sideVec.Y() * offset);
+              nextLeftBottomPoint.SetZ(nextLeftBottomPoint.Z() + params.height);
+
+              gp_Pnt nextRightBottomPoint =
+                  startPoint.Translated(gp_Vec(endPoint.X() - startPoint.X(),
+                                               endPoint.Y() - startPoint.Y(),
+                                               endPoint.Z() - startPoint.Z()) *
+                                        nextT);
+              nextRightBottomPoint.SetX(nextRightBottomPoint.X() +
+                                        sideVec.X() * offset);
+              nextRightBottomPoint.SetY(nextRightBottomPoint.Y() +
+                                        sideVec.Y() * offset);
+              nextRightBottomPoint.SetZ(nextRightBottomPoint.Z() +
+                                        params.height);
+
+              // 创建左上到右下的斜拉筋
+              TopoDS_Shape diagonalRebar1 =
+                  BRepPrimAPI_MakeCylinder(
+                      gp_Ax2(leftPoint,
+                             gp_Vec(nextRightPoint.X() - leftPoint.X(),
+                                    nextRightPoint.Y() - leftPoint.Y(),
+                                    nextRightPoint.Z() - leftPoint.Z())),
+                      rebarRadius, leftPoint.Distance(nextRightPoint))
+                      .Shape();
+              builder.Add(result, diagonalRebar1);
+
+              // 创建右上到左下的斜拉筋
+              TopoDS_Shape diagonalRebar2 =
+                  BRepPrimAPI_MakeCylinder(
+                      gp_Ax2(rightPoint,
+                             gp_Vec(nextLeftPoint.X() - rightPoint.X(),
+                                    nextLeftPoint.Y() - rightPoint.Y(),
+                                    nextLeftPoint.Z() - rightPoint.Z())),
+                      rebarRadius, rightPoint.Distance(nextLeftPoint))
+                      .Shape();
+              builder.Add(result, diagonalRebar2);
+
+              // 添加左侧斜拉筋 (从当前左点到下一个左底点)
+              if (i < 5) {
+                TopoDS_Shape leftDiagonalRebar =
+                    BRepPrimAPI_MakeCylinder(
+                        gp_Ax2(leftPoint,
+                               gp_Vec(nextLeftBottomPoint.X() - leftPoint.X(),
+                                      nextLeftBottomPoint.Y() - leftPoint.Y(),
+                                      nextLeftBottomPoint.Z() - leftPoint.Z())),
+                        rebarRadius, leftPoint.Distance(nextLeftBottomPoint))
+                        .Shape();
+                builder.Add(result, leftDiagonalRebar);
+              } else {
+                // 后半部分：从当前底端连向下一个顶端
+                TopoDS_Shape leftDiagonalRebar =
+                    BRepPrimAPI_MakeCylinder(
+                        gp_Ax2(nextLeftPoint,
+                               gp_Vec(leftBottomPoint.X() - nextLeftPoint.X(),
+                                      leftBottomPoint.Y() - nextLeftPoint.Y(),
+                                      leftBottomPoint.Z() - nextLeftPoint.Z())),
+                        rebarRadius, nextLeftPoint.Distance(leftBottomPoint))
+                        .Shape();
+                builder.Add(result, leftDiagonalRebar);
+              }
+
+              // 添加右侧斜拉筋 (从当前右点到下一个右底点)
+              if (i < 5) {
+                TopoDS_Shape rightDiagonalRebar =
+                    BRepPrimAPI_MakeCylinder(
+                        gp_Ax2(
+                            rightPoint,
+                            gp_Vec(nextRightBottomPoint.X() - rightPoint.X(),
+                                   nextRightBottomPoint.Y() - rightPoint.Y(),
+                                   nextRightBottomPoint.Z() - rightPoint.Z())),
+                        rebarRadius, rightPoint.Distance(nextRightBottomPoint))
+                        .Shape();
+                builder.Add(result, rightDiagonalRebar);
+              } else {
+                // 后半部分：从当前底端连向下一个顶端
+                TopoDS_Shape rightDiagonalRebar =
+                    BRepPrimAPI_MakeCylinder(
+                        gp_Ax2(
+                            nextRightPoint,
+                            gp_Vec(rightBottomPoint.X() - nextRightPoint.X(),
+                                   rightBottomPoint.Y() - nextRightPoint.Y(),
+                                   rightBottomPoint.Z() - nextRightPoint.Z())),
+                        rebarRadius, nextRightPoint.Distance(rightBottomPoint))
+                        .Shape();
+                builder.Add(result, rightDiagonalRebar);
+              }
+            }
           }
         }
 
