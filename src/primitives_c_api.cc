@@ -2752,6 +2752,15 @@ PRIMCAPICALL topo_shape_t *create_sump_with_place(sump_params_t params,
 PRIMCAPICALL topo_shape_t *create_footpath(footpath_params_t params) {
   footpath_params cpp_params{params.height, params.width};
 
+  if (params.pointCount > 0) {
+    for (int i = 0; i < params.pointCount; i++) {
+      cpp_params.points.push_back(
+          {gp_Pnt(params.points[i].position.x, params.points[i].position.y,
+                  params.points[i].position.z),
+           params.points[i].ctype});
+    }
+  }
+
   return new topo_shape_t{std::make_shared<shape>(create_footpath(cpp_params))};
 }
 
@@ -2760,6 +2769,15 @@ PRIMCAPICALL topo_shape_t *create_footpath_with_place(footpath_params_t params,
                                                       dir3d_t direction,
                                                       dir3d_t xDir) {
   footpath_params cpp_params{params.height, params.width};
+
+  if (params.pointCount > 0) {
+    for (int i = 0; i < params.pointCount; i++) {
+      cpp_params.points.push_back(
+          {gp_Pnt(params.points[i].position.x, params.points[i].position.y,
+                  params.points[i].position.z),
+           params.points[i].ctype});
+    }
+  }
 
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
@@ -2795,6 +2813,43 @@ create_shaft_chamber_with_place(shaft_chamber_params_t params, pnt3d_t position,
 
   return new topo_shape_t{std::make_shared<shape>(
       create_shaft_chamber(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+}
+
+PRIMCAPICALL topo_shape_t *create_tunnel_compartment_partition(
+    tunnel_compartment_partition_params_t params) {
+  try {
+    tunnel_compartment_partition_params cpp_params;
+    cpp_params.width = params.width;
+    cpp_params.thickness = params.thickness;
+
+    return new topo_shape_t{std::make_shared<shape>(
+        create_tunnel_compartment_partition(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_tunnel_compartment_partition_with_place(
+    tunnel_compartment_partition_params_t params, pnt3d_t position,
+    dir3d_t normal, dir3d_t xDir) {
+  try {
+    tunnel_compartment_partition_params cpp_params;
+    cpp_params.width = params.width;
+    cpp_params.thickness = params.thickness;
+
+    gp_Pnt pos(position.x, position.y, position.z);
+    gp_Dir norm(normal.x, normal.y, normal.z);
+    gp_Dir xdir(xDir.x, xDir.y, xDir.z);
+
+    auto shp = create_tunnel_compartment_partition(cpp_params, pos, norm, xdir);
+    if (shp.IsNull()) {
+      return nullptr;
+    }
+    return new topo_shape_t{std::make_shared<shape>(
+        create_tunnel_compartment_partition(cpp_params, pos, norm, xdir))};
+  } catch (...) {
+    return nullptr;
+  }
 }
 
 PRIMCAPICALL topo_shape_t *

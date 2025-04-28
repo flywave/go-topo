@@ -788,10 +788,10 @@ void test_make_wire() {
     auto shp2 = create_wire(
         wire_params{.startPoint = gp_Pnt(0, 0, 0),
                     .endPoint = gp_Pnt(300, 0, 150), // 与最后一个拟合点一致
-                    .startDir = gp_Dir(1, 0, 0),     // 初始方向沿X轴
-                    .endDir = gp_Dir(0, 0, 1),       // 结束方向沿Z轴
-                    .sag = 25.0,                     // 合理弧垂值
-                    .diameter = 8.0,                 // 典型导线直径
+                    .startDir = gp_Dir(1, 0, 0), // 初始方向沿X轴
+                    .endDir = gp_Dir(0, 0, 1),   // 结束方向沿Z轴
+                    .sag = 25.0,                 // 合理弧垂值
+                    .diameter = 8.0,             // 典型导线直径
                     .fitPoints = fitPoints});
 
     if (shp2.IsNull()) {
@@ -2200,17 +2200,17 @@ void test_make_ribbed_anchor() {
 void test_make_nut_anchor() {
   std::cout << "\n=== Testing Nut Anchor ===" << std::endl;
   try {
-    nut_anchor_params params{                       // 基础参数
-                             .boltDiameter = 0.2,   // 地脚螺栓直径 20mm → 0.02m
+    nut_anchor_params params{                     // 基础参数
+                             .boltDiameter = 0.2, // 地脚螺栓直径 20mm → 0.02m
                              .exposedLength = 0.40, // 露头长度 100mm → 0.1m
                              .nutCount = 2,         // 蝶帽数量保持不变
-                             .nutHeight = 0.1,      // 蝶帽高度 10mm → 0.01m
-                             .nutOD = 0.6,          // 蝶帽外径 40mm → 0.04m
-                             .washerCount = 2,      // 垫片数量保持不变
-                             .washerShape = 2,      // 圆形垫片
-                             .washerSize = 0.65,    // 垫片直径 30mm → 0.03m
+                             .nutHeight = 0.1,   // 蝶帽高度 10mm → 0.01m
+                             .nutOD = 0.6,       // 蝶帽外径 40mm → 0.04m
+                             .washerCount = 2,   // 垫片数量保持不变
+                             .washerShape = 2,   // 圆形垫片
+                             .washerSize = 0.65, // 垫片直径 30mm → 0.03m
                              .washerThickness = 0.015, // 垫片厚度 5mm → 0.005m
-                             .anchorLength = 1.5,      // 锚固长度 500mm → 0.5m
+                             .anchorLength = 1.5, // 锚固长度 500mm → 0.5m
 
                              // 螺帽锚固特有参数
                              .basePlateSize = 0.60,
@@ -3605,9 +3605,9 @@ void test_make_cable_tunnel() {
   try {
     cable_tunnel_params circular_params{.style =
                                             connection_section_style::CIRCULAR,
-                                        .width = 60.0,                // 600→60
-                                        .height = 60.0,               // 600→60
-                                        .outerWallThickness = 7.0,    // 70→7
+                                        .width = 60.0,             // 600→60
+                                        .height = 60.0,            // 600→60
+                                        .outerWallThickness = 7.0, // 70→7
                                         .bottomPlatformHeight = 10.0, // 100→10
                                         .cushionExtension = 0.0,      // 80→8
                                         .cushionThickness = 0.0,      // 60→6
@@ -3872,14 +3872,13 @@ void test_make_sump() {
   }
 }
 
-
 void test_make_footpath() {
   std::cout << "\n=== Testing Footpath ===" << std::endl;
-  
+
   // 创建测试点集
   std::vector<channel_point> points = {
-      {gp_Pnt(0, 0, 0), 0},      // 起点
-      {gp_Pnt(100, 0, 0), 0},   // 直线段
+      {gp_Pnt(0, 0, 0), 0},    // 起点
+      {gp_Pnt(100, 0, 0), 0},  // 直线段
       {gp_Pnt(150, 50, 0), 1}, // 转弯点
       {gp_Pnt(150, 100, 0), 0} // 终点
   };
@@ -3889,7 +3888,7 @@ void test_make_footpath() {
     auto shp = create_footpath(footpath_params{
         .height = 15.0,  // 高度150mm
         .width = 80.0,   // 宽度800mm
-        .points = points  // 路径点集
+        .points = points // 路径点集
     });
     if (shp.IsNull()) {
       std::cerr << "Error: Failed to create standard footpath" << std::endl;
@@ -3901,27 +3900,307 @@ void test_make_footpath() {
   }
 }
 
-
 void test_make_shaft_chamber() {
   std::cout << "\n=== Testing Shaft Chamber ===" << std::endl;
-  
+
   // 测试标准竖井室
   try {
     auto shp = create_shaft_chamber(shaft_chamber_params{
-        .supportWallThickness = 10.0,  // 支护壁厚10mm
-        .supportDiameter = 100.0,     // 支护直径100mm
+        .supportWallThickness = 20.0, // 支护壁厚20mm
+        .supportDiameter = 110.0,     // 支护直径110mm
         .supportHeight = 50.0,        // 支护高度50mm
         .topThickness = 8.0,          // 顶板厚8mm
         .innerDiameter = 80.0,        // 内壁直径80mm
-        .workingHeight = 120.0,      // 工作仓高度120mm
-        .outerWallThickness = 12.0,  // 外壁厚12mm
-        .innerWallThickness = 6.0    // 内壁厚6mm
+        .workingHeight = 120.0,       // 工作仓高度120mm
+        .outerWallThickness = 12.0,   // 外壁厚12mm
+        .innerWallThickness = 6.0     // 内壁厚6mm
     });
     if (shp.IsNull()) {
-      std::cerr << "Error: Failed to create standard shaft chamber" << std::endl;
+      std::cerr << "Error: Failed to create standard shaft chamber"
+                << std::endl;
     } else {
       test_export_shape(shp, "./standard_shaft_chamber.stl");
     }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_tunnel_compartment_partition() {
+  std::cout << "\n=== Testing Tunnel Compartment Partition ===" << std::endl;
+
+  try {
+    // 测试标准隧道分仓隔板
+    auto shp =
+        create_tunnel_compartment_partition(tunnel_compartment_partition_params{
+            .width = 300.0,   // 隔板宽300mm
+            .thickness = 15.0 // 隔板厚15mm
+        });
+
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create tunnel compartment partition"
+                << std::endl;
+    } else {
+      test_export_shape(shp, "./tunnel_compartment_partition.stl");
+    }
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+void test_make_tunnel_partition_board() {
+  std::cout << "\n=== Testing Tunnel Partition Board ===" << std::endl;
+
+  try {
+    // 测试圆形隔板
+    auto shp1 = create_tunnel_partition_board(tunnel_partition_board_params{
+        .style = 1,        // 圆形
+        .length = 200.0,   // 直径200mm
+        .width = 0.0,      // 圆形不需要宽度
+        .thickness = 10.0, // 厚度10mm
+        .holeCount = 4,
+        .holePositions = {gp_Pnt2d(50, 50), gp_Pnt2d(-50, 50),
+                          gp_Pnt2d(-50, -50), gp_Pnt2d(50, -50)},
+        .holeStyles = {1, 1, 1, 1},                // 圆形孔
+        .holeDiameters = {20.0, 20.0, 20.0, 20.0}, // 直径20mm
+        .holeWidths = {0.0, 0.0, 0.0, 0.0}         // 圆形孔不需要宽度
+    });
+
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create circular partition board"
+                << std::endl;
+    } else {
+      test_export_shape(shp1, "./circular_partition_board.stl");
+    }
+
+    // 测试方形隔板
+    auto shp2 = create_tunnel_partition_board(tunnel_partition_board_params{
+        .style = 2,        // 方形
+        .length = 300.0,   // 长度300mm
+        .width = 200.0,    // 宽度200mm
+        .thickness = 15.0, // 厚度15mm
+        .holeCount = 3,
+        .holePositions = {gp_Pnt2d(100, 50), gp_Pnt2d(-100, 50),
+                          gp_Pnt2d(0, -50)},
+        .holeStyles = {1, 2, 1},             // 混合孔型
+        .holeDiameters = {30.0, 40.0, 25.0}, // 圆形孔直径/方形孔长度
+        .holeWidths = {0.0, 20.0, 0.0}       // 方形孔宽度
+    });
+
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create rectangular partition board"
+                << std::endl;
+    } else {
+      test_export_shape(shp2, "./rectangular_partition_board.stl");
+    }
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_ventilation_pavilion() {
+  std::cout << "\n=== Testing Ventilation Pavilion ===" << std::endl;
+
+  try {
+    // 测试标准风亭
+    auto shp = create_ventilation_pavilion(ventilation_pavilion_params{
+        .topLength = 200.0,    // 顶长200mm
+        .middleLength = 300.0, // 中部长度300mm
+        .bottomLength = 400.0, // 底长400mm
+        .topWidth = 150.0,     // 顶宽150mm
+        .middleWidth = 250.0,  // 中部宽度250mm
+        .bottomWidth = 350.0,  // 底宽350mm
+        .topHeight = 50.0,     // 顶高50mm
+        .height = 300.0,       // 总高300mm
+        .baseHeight = 100.0    // 基础高100mm
+    });
+
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create ventilation pavilion" << std::endl;
+    } else {
+      test_export_shape(shp, "./ventilation_pavilion.stl");
+    }
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_straight_ventilation_duct() {
+  std::cout << "\n=== Testing Straight Ventilation Duct ===" << std::endl;
+
+  try {
+    // 测试标准直通风道
+    auto shp =
+        create_straight_ventilation_duct(straight_ventilation_duct_params{
+            .diameter = 200.0,     // 直径200mm
+            .wallThickness = 10.0, // 壁厚10mm
+            .height = 500.0        // 高度500mm
+        });
+
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create straight ventilation duct"
+                << std::endl;
+    } else {
+      test_export_shape(shp, "./straight_ventilation_duct.stl");
+    }
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_oblique_ventilation_duct() {
+  std::cout << "\n=== Testing Oblique Ventilation Duct ===" << std::endl;
+
+  try {
+    // 测试标准斜通风道
+    auto shp = create_oblique_ventilation_duct(oblique_ventilation_duct_params{
+        .hoodRoomLength = 200.0,       // 风帽室长200mm
+        .hoodRoomWidth = 150.0,        // 风帽室宽150mm
+        .hoodRoomHeight = 100.0,       // 风帽室高100mm
+        .hoodWallThickness = 10.0,     // 风帽壁厚10mm
+        .ductCenterHeight = 80.0,      // 风通道圆心高80mm
+        .ductLeftDistance = 50.0,      // 风通道圆心距左侧50mm
+        .ductDiameter = 120.0,         // 风通道直径120mm
+        .ductWallThickness = 8.0,      // 风通道壁厚8mm
+        .ductLength = 300.0,           // 风通道长300mm
+        .ductHeightDifference = 40.0,  // 风通道高度差40mm
+        .baseLength = 180.0,           // 风基座长180mm
+        .baseWidth = 160.0,            // 风基座宽160mm
+        .baseHeight = 60.0,            // 风基座高60mm
+        .baseRoomLength = 220.0,       // 风基室长220mm
+        .baseRoomWallThickness = 12.0, // 风基室壁厚12mm
+        .baseRoomWidth = 140.0,        // 风基室宽140mm
+        .baseRoomHeight = 90.0         // 风基室高90mm
+    });
+
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create oblique ventilation duct"
+                << std::endl;
+    } else {
+      test_export_shape(shp, "./oblique_ventilation_duct.stl");
+    }
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_drainage_well() {
+  std::cout << "\n=== Testing Drainage Well ===" << std::endl;
+
+  try {
+    // 测试标准排水井
+    auto shp = create_drainage_well(drainage_well_params{
+        .length = 500.0,          // 井净长500mm
+        .width = 300.0,           // 井净宽300mm
+        .height = 400.0,          // 井净高400mm
+        .neckDiameter = 150.0,    // 井脖直径150mm
+        .neckHeight = 100.0,      // 井脖高100mm
+        .cushionExtension = 50.0, // 垫层滋出距离50mm
+        .bottomThickness = 60.0,  // 底板厚60mm
+        .wallThickness = 20.0     // 壁厚20mm
+    });
+
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create drainage well" << std::endl;
+    } else {
+      test_export_shape(shp, "./drainage_well.stl");
+    }
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_pipe_support() {
+  std::cout << "\n=== Testing Pipe Support ===" << std::endl;
+
+  try {
+    // 测试标准管枕
+    auto shp = create_pipe_support(pipe_support_params{
+        .style = 1,                       // 单侧管枕
+        .count = 2,                       // 2个管枕
+        .positions = {{50, 0}, {150, 0}}, // 管枕中心坐标
+        .radii = {30, 30},                // 管枕半径30mm
+        .length = 100,                    // 管枕长100mm
+        .height = 20                      // 管枕高20mm
+    });
+
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create pipe support" << std::endl;
+    } else {
+      test_export_shape(shp, "./pipe_support.stl");
+    }
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_cover_plate() {
+  std::cout << "\n=== Testing Cover Plate ===" << std::endl;
+
+  try {
+    // 测试长方形盖板
+    auto rectShp = create_cover_plate(cover_plate_params{
+        .style = 0,       // 长方形
+        .length = 200.0,  // 长度200mm
+        .width = 100.0,   // 宽度100mm
+        .smallRadius = 0, // 不适用
+        .largeRadius = 0, // 不适用
+        .thickness = 10.0 // 厚度10mm
+    });
+
+    if (rectShp.IsNull()) {
+      std::cerr << "Error: Failed to create rectangular cover plate"
+                << std::endl;
+    } else {
+      test_export_shape(rectShp, "./rectangular_cover_plate.stl");
+    }
+
+    // 测试扇形盖板
+    auto sectorShp = create_cover_plate(cover_plate_params{
+        .style = 1,           // 扇形
+        .length = 150.0,      // 扇形边长150mm
+        .width = 0,           // 不适用
+        .smallRadius = 50.0,  // 小半径50mm
+        .largeRadius = 100.0, // 大半径100mm
+        .thickness = 8.0      // 厚度8mm
+    });
+
+    if (sectorShp.IsNull()) {
+      std::cerr << "Error: Failed to create sector cover plate" << std::endl;
+    } else {
+      test_export_shape(sectorShp, "./sector_cover_plate.stl");
+    }
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_cable_ray() {
+  std::cout << "\n=== Testing Cable Ray ===" << std::endl;
+
+  try {
+    // 测试标准槽盒
+    auto shp = create_cable_ray(cable_ray_params{
+        .outerLength = 300.0, // 外长度300mm
+        .outerHeight = 100.0, // 外高度100mm
+        .innerLength = 280.0, // 内长度280mm
+        .innerHeight = 80.0,  // 内高度80mm
+        .coverThickness = 5.0 // 盖板厚度5mm
+    });
+
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create cable ray" << std::endl;
+    } else {
+      test_export_shape(shp, "./cable_ray.stl");
+    }
+
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
   }
@@ -4021,5 +4300,14 @@ int main() {
   test_make_sump();
   test_make_footpath();
   test_make_shaft_chamber();
+  test_make_tunnel_compartment_partition();
+  test_make_tunnel_partition_board();
+  test_make_ventilation_pavilion();
+  test_make_straight_ventilation_duct();
+  test_make_oblique_ventilation_duct();
+  test_make_drainage_well();
+  test_make_pipe_support();
+  test_make_cover_plate();
+  test_make_cable_ray();
   return 0;
 }

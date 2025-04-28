@@ -3913,14 +3913,29 @@ func CreateSumpWithPlace(params SumpParams, position Point3, normal Dir3, xDir D
 }
 
 type FootpathParams struct {
-	Height float32
-	Width  float32
+	Height     float32
+	Width      float32
+	Points     []ChannelPoint
+	PointCount int
 }
 
 func (p *FootpathParams) to_struct() C.footpath_params_t {
 	var c C.footpath_params_t
 	c.height = C.double(p.Height)
 	c.width = C.double(p.Width)
+
+	if len(p.Points) > 0 {
+		c.points = (*C.channel_point_t)(C.malloc(C.size_t(len(p.Points)) * C.sizeof_channel_point_t))
+		for i, point := range p.Points {
+			cp := C.channel_point_t{
+				position: point.Position.val,
+				ctype:    C.int(point.Ctype),
+			}
+			*(*C.channel_point_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.points)) + uintptr(i)*C.sizeof_channel_point_t)) = cp
+		}
+	}
+
+	c.pointCount = C.int(p.PointCount)
 	return c
 }
 
@@ -3971,6 +3986,32 @@ func CreateShaftChamber(params ShaftChamberParams) *Shape {
 
 func CreateShaftChamberWithPlace(params ShaftChamberParams, position Point3, direction Dir3, xDir Dir3) *Shape {
 	shp := C.create_shaft_chamber_with_place(params.to_struct(), position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type TunnelCompartmentPartitionParams struct {
+	Width     float32 // 隔板宽 (mm)
+	Thickness float32 // 隔板厚 (mm)
+}
+
+func (p *TunnelCompartmentPartitionParams) to_struct() C.tunnel_compartment_partition_params_t {
+	var c C.tunnel_compartment_partition_params_t
+	c.width = C.double(p.Width)
+	c.thickness = C.double(p.Thickness)
+	return c
+}
+
+func CreateTunnelCompartmentPartition(params TunnelCompartmentPartitionParams) *Shape {
+	shp := C.create_tunnel_compartment_partition(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateTunnelCompartmentPartitionWithPlace(params TunnelCompartmentPartitionParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_tunnel_compartment_partition_with_place(params.to_struct(), position.val, normal.val, xDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s

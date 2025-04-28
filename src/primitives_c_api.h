@@ -1160,41 +1160,41 @@ enum {
 };
 
 typedef struct {
-    int sort;                    // 类型 SORT: 1-户外, 2-户内(GIS), 3-干式
-    double height;               // 总高度 H (mm)
-    double topDiameter;          // 上部直径 L1 (mm)
-    double bottomDiameter;       // 下部直径 d (mm)
-    double tailDiameter;         // 尾管直径 D3 (mm)
-    double tailHeight;           // 尾管高度 WH (mm)
-    
-    // 伞裙参数 (仅户外和干式终端使用)
-    int skirtCount;              // 伞裙片数 N
-    double upperSkirtTopDiameter;    // 伞裙1上部直径 SD (mm)
-    double upperSkirtBottomDiameter; // 伞裙1下部直径 SDI (mm)
-    double lowerSkirtTopDiameter;    // 伞裙2上部直径 BD (mm)
-    double lowerSkirtBottomDiameter; // 伞裙2下部直径 BDI (mm)
-    double skirtSectionHeight;   // 伞裙节高度 h (mm)
-    
-    // 端子参数
-    double upperTerminalLength;  // 上端子长度 LI (mm)
-    double upperTerminalDiameter; // 上端子直径 ZDI (mm)
-    double lowerTerminalLength;  // 下端子长度 L2 (mm)
-    double lowerTerminalDiameter; // 下端子直径 ZD2 (mm)
-    
-    // 连接孔参数
-    double hole1Diameter;        // 连接孔1直径 Φ1 (mm)
-    double hole2Diameter;        // 连接孔2直径 Φ2 (mm)
-    double hole1Distance;        // 连接孔1端距离 dl (mm)
-    double holeSpacing;          // 连接孔1到2间距 d2 (mm)
+  int sort;              // 类型 SORT: 1-户外, 2-户内(GIS), 3-干式
+  double height;         // 总高度 H (mm)
+  double topDiameter;    // 上部直径 L1 (mm)
+  double bottomDiameter; // 下部直径 d (mm)
+  double tailDiameter;   // 尾管直径 D3 (mm)
+  double tailHeight;     // 尾管高度 WH (mm)
 
-    // 户外终端专用参数
-    double flangeHoleDiameter;    // 法兰盘连接孔直径 FD (mm)
-    double flangeHoleSpacing;     // 法兰盘连接孔间距 KD (mm)
-    double flangeWidth;           // 法兰盘宽度 PD (mm)
-    double flangeCenterHoleRadius; // 法兰盘中心孔半径 PR (mm)
-    double flangeChamferRadius;   // 法兰盘边缘倒角半径 BR (mm)
-    double flangeOpeningWidth;    // 法兰盘开口宽度 K (mm)
-    double flangeBoltHeight;      // 法兰盘螺栓高度 H1 (mm)
+  // 伞裙参数 (仅户外和干式终端使用)
+  int skirtCount;                  // 伞裙片数 N
+  double upperSkirtTopDiameter;    // 伞裙1上部直径 SD (mm)
+  double upperSkirtBottomDiameter; // 伞裙1下部直径 SDI (mm)
+  double lowerSkirtTopDiameter;    // 伞裙2上部直径 BD (mm)
+  double lowerSkirtBottomDiameter; // 伞裙2下部直径 BDI (mm)
+  double skirtSectionHeight;       // 伞裙节高度 h (mm)
+
+  // 端子参数
+  double upperTerminalLength;   // 上端子长度 LI (mm)
+  double upperTerminalDiameter; // 上端子直径 ZDI (mm)
+  double lowerTerminalLength;   // 下端子长度 L2 (mm)
+  double lowerTerminalDiameter; // 下端子直径 ZD2 (mm)
+
+  // 连接孔参数
+  double hole1Diameter; // 连接孔1直径 Φ1 (mm)
+  double hole2Diameter; // 连接孔2直径 Φ2 (mm)
+  double hole1Distance; // 连接孔1端距离 dl (mm)
+  double holeSpacing;   // 连接孔1到2间距 d2 (mm)
+
+  // 户外终端专用参数
+  double flangeHoleDiameter;     // 法兰盘连接孔直径 FD (mm)
+  double flangeHoleSpacing;      // 法兰盘连接孔间距 KD (mm)
+  double flangeWidth;            // 法兰盘宽度 PD (mm)
+  double flangeCenterHoleRadius; // 法兰盘中心孔半径 PR (mm)
+  double flangeChamferRadius;    // 法兰盘边缘倒角半径 BR (mm)
+  double flangeOpeningWidth;     // 法兰盘开口宽度 K (mm)
+  double flangeBoltHeight;       // 法兰盘螺栓高度 H1 (mm)
 } cable_terminal_params_t;
 
 PRIMCAPICALL topo_shape_t *
@@ -1442,13 +1442,11 @@ create_three_way_well_with_place(three_way_well_params_t params,
                                  pnt3d_t position, dir3d_t mainDirection,
                                  dir3d_t branchDirection);
 
-
 enum {
   FOUR_WAY_WELL_WORKING = 1,
   FOUR_WAY_WELL_OPEN_CUT = 2,
   FOUR_WAY_WELL_UNDERGROUND = 3
 };
-
 
 typedef struct {
   int ctype;
@@ -1647,6 +1645,8 @@ PRIMCAPICALL topo_shape_t *create_sump_with_place(sump_params_t params,
 typedef struct {
   double height;
   double width;
+  channel_point_t *points;
+  int pointCount;
 } footpath_params_t;
 
 PRIMCAPICALL topo_shape_t *create_footpath(footpath_params_t params);
@@ -1670,6 +1670,17 @@ PRIMCAPICALL topo_shape_t *create_shaft_chamber(shaft_chamber_params_t params);
 PRIMCAPICALL topo_shape_t *
 create_shaft_chamber_with_place(shaft_chamber_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t xDir);
+
+typedef struct {
+  double width;     // 隔板宽 W (mm)
+  double thickness; // 隔板厚 T (mm)
+} tunnel_compartment_partition_params_t;
+
+PRIMCAPICALL topo_shape_t *create_tunnel_compartment_partition(
+    tunnel_compartment_partition_params_t params);
+PRIMCAPICALL topo_shape_t *create_tunnel_compartment_partition_with_place(
+    tunnel_compartment_partition_params_t params, pnt3d_t position,
+    dir3d_t normal, dir3d_t xDir);
 
 typedef struct {
   int style;

@@ -1979,6 +1979,20 @@ TopoDS_Shape create_shaft_chamber(const shaft_chamber_params &params,
                                   const gp_Pnt &position,
                                   const gp_Dir &direction = gp::DZ(),
                                   const gp_Dir &xDir = gp::DX());
+
+
+// GZW_SDFCGB
+struct tunnel_compartment_partition_params {
+  double width;     // 隔板宽 W (mm)
+  double thickness; // 隔板厚 T (mm)
+};
+
+TopoDS_Shape create_tunnel_compartment_partition(
+    const tunnel_compartment_partition_params &params);
+TopoDS_Shape create_tunnel_compartment_partition(
+    const tunnel_compartment_partition_params &params, const gp_Pnt &position,
+    const gp_Dir &normal = gp::DZ(), const gp_Dir &xDir = gp::DX());
+
 // GZW_SDJGB
 struct tunnel_partition_board_params {
   int style;                           // 样式 (1-圆形, 2-方形)
