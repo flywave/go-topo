@@ -1852,7 +1852,7 @@ struct cable_tray_params {
 
   // 排管参数
   int pipeCount;                           // 排管数 N
-  std::vector<gp_Pnt2d> pipePositions;       // 排管坐标 POS
+  std::vector<gp_Pnt2d> pipePositions;     // 排管坐标 POS
   std::vector<double> pipeInnerDiameters;  // 排管内径 DI (mm)
   std::vector<double> pipeWallThicknesses; // 排管壁厚 T1 (mm)
 
@@ -1953,7 +1953,7 @@ TopoDS_Shape create_sump(const sump_params &params, const gp_Pnt &position,
 struct footpath_params {
   double height; // 步道高 H (mm)
   double width;  // 步道宽 W (mm)
-  
+
   std::vector<channel_point> points;
 };
 
@@ -1979,7 +1979,6 @@ TopoDS_Shape create_shaft_chamber(const shaft_chamber_params &params,
                                   const gp_Pnt &position,
                                   const gp_Dir &direction = gp::DZ(),
                                   const gp_Dir &xDir = gp::DX());
-
 
 // GZW_SDFCGB
 struct tunnel_compartment_partition_params {

@@ -272,9 +272,9 @@ void test_make_rectangular_ring() {
     // 测试默认参数创建
     auto shp =
         create_rectangular_ring(rectangular_ring_params{.tubeRadius = 5.0,
-                                                        .filletRadius = 5.0,
+                                                        .filletRadius = 15.0,
                                                         .length = 100.0,
-                                                        .width = 50.0});
+                                                        .width = 80.0});
     if (shp.IsNull()) {
       std::cerr << "Error: Failed to create rectangular ring" << std::endl;
       return;
