@@ -4011,7 +4011,7 @@ void test_make_ventilation_pavilion() {
         .topWidth = 350.0,     // 顶宽150mm
         .middleWidth = 250.0,  // 中部宽度250mm
         .bottomWidth = 350.0,  // 底宽350mm
-        .topHeight = 100.0,     // 顶高50mm
+        .topHeight = 50.0,     // 顶高50mm
         .height =  150.0,       // 总高300mm
         .baseHeight = 30.0    // 基础高100mm
     });
