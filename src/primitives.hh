@@ -2095,6 +2095,7 @@ struct pipe_support_params {
   std::vector<gp_Pnt2d> positions; // 管枕中心坐标 POS (mm)
   std::vector<double> radii;       // 管枕半径 R (mm)
   double length;                   // 管枕长 L (mm)
+  double width;                    // 管枕宽 W (mm)
   double height;                   // 管枕高 h (mm)
 };
 
