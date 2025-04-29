@@ -272,9 +272,9 @@ void test_make_rectangular_ring() {
     // 测试默认参数创建
     auto shp =
         create_rectangular_ring(rectangular_ring_params{.tubeRadius = 5.0,
-                                                        .filletRadius = 5.0,
+                                                        .filletRadius = 15.0,
                                                         .length = 100.0,
-                                                        .width = 50.0});
+                                                        .width = 80.0});
     if (shp.IsNull()) {
       std::cerr << "Error: Failed to create rectangular ring" << std::endl;
       return;
@@ -788,10 +788,10 @@ void test_make_wire() {
     auto shp2 = create_wire(
         wire_params{.startPoint = gp_Pnt(0, 0, 0),
                     .endPoint = gp_Pnt(300, 0, 150), // 与最后一个拟合点一致
-                    .startDir = gp_Dir(1, 0, 0), // 初始方向沿X轴
-                    .endDir = gp_Dir(0, 0, 1),   // 结束方向沿Z轴
-                    .sag = 25.0,                 // 合理弧垂值
-                    .diameter = 8.0,             // 典型导线直径
+                    .startDir = gp_Dir(1, 0, 0),     // 初始方向沿X轴
+                    .endDir = gp_Dir(0, 0, 1),       // 结束方向沿Z轴
+                    .sag = 25.0,                     // 合理弧垂值
+                    .diameter = 8.0,                 // 典型导线直径
                     .fitPoints = fitPoints});
 
     if (shp2.IsNull()) {
@@ -2200,17 +2200,17 @@ void test_make_ribbed_anchor() {
 void test_make_nut_anchor() {
   std::cout << "\n=== Testing Nut Anchor ===" << std::endl;
   try {
-    nut_anchor_params params{                     // 基础参数
-                             .boltDiameter = 0.2, // 地脚螺栓直径 20mm → 0.02m
+    nut_anchor_params params{                       // 基础参数
+                             .boltDiameter = 0.2,   // 地脚螺栓直径 20mm → 0.02m
                              .exposedLength = 0.40, // 露头长度 100mm → 0.1m
                              .nutCount = 2,         // 蝶帽数量保持不变
-                             .nutHeight = 0.1,   // 蝶帽高度 10mm → 0.01m
-                             .nutOD = 0.6,       // 蝶帽外径 40mm → 0.04m
-                             .washerCount = 2,   // 垫片数量保持不变
-                             .washerShape = 2,   // 圆形垫片
-                             .washerSize = 0.65, // 垫片直径 30mm → 0.03m
+                             .nutHeight = 0.1,      // 蝶帽高度 10mm → 0.01m
+                             .nutOD = 0.6,          // 蝶帽外径 40mm → 0.04m
+                             .washerCount = 2,      // 垫片数量保持不变
+                             .washerShape = 2,      // 圆形垫片
+                             .washerSize = 0.65,    // 垫片直径 30mm → 0.03m
                              .washerThickness = 0.015, // 垫片厚度 5mm → 0.005m
-                             .anchorLength = 1.5, // 锚固长度 500mm → 0.5m
+                             .anchorLength = 1.5,      // 锚固长度 500mm → 0.5m
 
                              // 螺帽锚固特有参数
                              .basePlateSize = 0.60,
@@ -3605,9 +3605,9 @@ void test_make_cable_tunnel() {
   try {
     cable_tunnel_params circular_params{.style =
                                             connection_section_style::CIRCULAR,
-                                        .width = 60.0,             // 600→60
-                                        .height = 60.0,            // 600→60
-                                        .outerWallThickness = 7.0, // 70→7
+                                        .width = 60.0,                // 600→60
+                                        .height = 60.0,               // 600→60
+                                        .outerWallThickness = 7.0,    // 70→7
                                         .bottomPlatformHeight = 10.0, // 100→10
                                         .cushionExtension = 0.0,      // 80→8
                                         .cushionThickness = 0.0,      // 60→6
@@ -4059,21 +4059,21 @@ void test_make_oblique_ventilation_duct() {
     auto shp = create_oblique_ventilation_duct(oblique_ventilation_duct_params{
         .hoodRoomLength = 200.0,       // 风帽室长200mm
         .hoodRoomWidth = 150.0,        // 风帽室宽150mm
-        .hoodRoomHeight = 100.0,       // 风帽室高100mm
+        .hoodRoomHeight = 200.0,       // 风帽室高200mm
         .hoodWallThickness = 10.0,     // 风帽壁厚10mm
         .ductCenterHeight = 80.0,      // 风通道圆心高80mm
-        .ductLeftDistance = 50.0,      // 风通道圆心距左侧50mm
+        .ductLeftDistance = 80.0,      // 风通道圆心距左侧80mm
         .ductDiameter = 120.0,         // 风通道直径120mm
         .ductWallThickness = 8.0,      // 风通道壁厚8mm
         .ductLength = 300.0,           // 风通道长300mm
-        .ductHeightDifference = 40.0,  // 风通道高度差40mm
-        .baseLength = 180.0,           // 风基座长180mm
-        .baseWidth = 160.0,            // 风基座宽160mm
-        .baseHeight = 60.0,            // 风基座高60mm
-        .baseRoomLength = 220.0,       // 风基室长220mm
+        .ductHeightDifference = 50.0,  // 风通道高度差50mm
+        .baseLength = 220.0,           // 风基座长220mm
+        .baseWidth = 180.0,            // 风基座宽180mm
+        .baseHeight = 10.0,            // 风基座高10mm
+        .baseRoomLength = 200.0,       // 风基室长200mm
         .baseRoomWallThickness = 12.0, // 风基室壁厚12mm
-        .baseRoomWidth = 140.0,        // 风基室宽140mm
-        .baseRoomHeight = 90.0         // 风基室高90mm
+        .baseRoomWidth = 150.0,        // 风基室宽150mm
+        .baseRoomHeight = 220.0        // 风基室高220mm
     });
 
     if (shp.IsNull()) {
@@ -4096,9 +4096,9 @@ void test_make_drainage_well() {
     auto shp = create_drainage_well(drainage_well_params{
         .length = 500.0,          // 井净长500mm
         .width = 300.0,           // 井净宽300mm
-        .height = 400.0,          // 井净高400mm
+        .height = 300.0,          // 井净高300mm
         .neckDiameter = 150.0,    // 井脖直径150mm
-        .neckHeight = 100.0,      // 井脖高100mm
+        .neckHeight = 400.0,      // 井脖高400mm
         .cushionExtension = 50.0, // 垫层滋出距离50mm
         .bottomThickness = 60.0,  // 底板厚60mm
         .wallThickness = 20.0     // 壁厚20mm
@@ -4119,20 +4119,45 @@ void test_make_pipe_support() {
   std::cout << "\n=== Testing Pipe Support ===" << std::endl;
 
   try {
-    // 测试标准管枕
+    // 测试单侧管枕
     auto shp = create_pipe_support(pipe_support_params{
-        .style = 1,                       // 单侧管枕
-        .count = 2,                       // 2个管枕
-        .positions = {{50, 0}, {150, 0}}, // 管枕中心坐标
-        .radii = {30, 30},                // 管枕半径30mm
-        .length = 100,                    // 管枕长100mm
-        .height = 20                      // 管枕高20mm
+        .style = 1,                         // 单侧管枕
+        .count = 2,                         // 2个管枕
+        .positions = {{-20, 16}, {20, 16}}, // 管枕中心坐标
+        .radii = {8, 8},                    // 管枕半径30mm
+        .length = 100,                      // 管枕长100mm
+        .width = 18,                        // 管枕宽18mm
+        .height = 20                        // 管枕高20mm
     });
 
     if (shp.IsNull()) {
       std::cerr << "Error: Failed to create pipe support" << std::endl;
     } else {
       test_export_shape(shp, "./pipe_support.stl");
+    }
+
+    // 测试双侧管枕
+    auto shp1 = create_pipe_support(pipe_support_params{
+        .style = 2, // 双侧管枕
+        .count = 8, // 8个管枕
+        .positions = {{-10, 12},
+                      {-30, 12},
+                      {10, 12},
+                      {30, 12},
+                      {-10, -12},
+                      {-30, -12},
+                      {10, -12},
+                      {30, -12}},          // 管枕中心坐标
+        .radii = {8, 8, 8, 8, 8, 8, 8, 8}, // 管枕半径8mm
+        .length = 100,                     // 管枕长100mm
+        .width = 18,                       // 管枕宽18mm
+        .height = 26                       // 管枕高26mm
+    });
+
+    if (shp1.IsNull()) {
+      std::cerr << "Error: Failed to create pipe double support" << std::endl;
+    } else {
+      test_export_shape(shp1, "./pipe_double_support.stl");
     }
 
   } catch (const Standard_ConstructionError &e) {
@@ -4164,9 +4189,9 @@ void test_make_cover_plate() {
     // 测试扇形盖板
     auto sectorShp = create_cover_plate(cover_plate_params{
         .style = 1,           // 扇形
-        .length = 150.0,      // 扇形边长150mm
+        .length = 250.0,      // 扇形边长150mm
         .width = 0,           // 不适用
-        .smallRadius = 50.0,  // 小半径50mm
+        .smallRadius = 20.0,  // 小半径50mm
         .largeRadius = 100.0, // 大半径100mm
         .thickness = 8.0      // 厚度8mm
     });
