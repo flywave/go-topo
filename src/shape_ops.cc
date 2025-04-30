@@ -1392,21 +1392,21 @@ sample_wire_at_distances(const wire &wire_path,
     TopExp_Explorer edgeExplorer(wire_path, TopAbs_EDGE);
     for (int edgeIndex = 0; edgeExplorer.More() && !found;
          edgeExplorer.Next(), edgeIndex++) {
-      const TopoDS_Edge &edge = TopoDS::Edge(edgeExplorer.Current());
+      const TopoDS_Edge &e = TopoDS::Edge(edgeExplorer.Current());
 
       GProp_GProps edgeProps;
-      BRepGProp::LinearProperties(edge, edgeProps);
+      BRepGProp::LinearProperties(e, edgeProps);
       double edgeLength = edgeProps.Mass();
 
       if (distance <= accumulatedLength + edgeLength) {
-        BRepAdaptor_Curve curveAdaptor(edge);
+        BRepAdaptor_Curve curveAdaptor(e);
         double param =
             curveAdaptor.FirstParameter() +
             (distance - accumulatedLength) / edgeLength *
                 (curveAdaptor.LastParameter() - curveAdaptor.FirstParameter());
 
         curveAdaptor.D1(param, sample.position, sample.tangent);
-        sample.edge = topo::edge(edge);
+        sample.edge = edge(e);
         found = true;
       }
       accumulatedLength += edgeLength;
@@ -1440,7 +1440,7 @@ wire clip_wire_between_distances(const wire &wire_path, double start_distance,
     throw std::invalid_argument("start_distance exceeds total wire length");
   }
   if (end_distance >= totalLength) {
-    throw std::invalid_argument("end_distance exceeds total wire length");
+    end_distance = totalLength;
   }
 
   BRepBuilderAPI_MakeWire wireBuilder;
