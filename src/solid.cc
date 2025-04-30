@@ -1370,18 +1370,18 @@ int solid::pipe(const face &f, const wire &w) {
 int solid::sweep(std::vector<std::vector<gp_Pnt>> points,
                  std::vector<curve_type> curveTypes,
                  std::vector<sweep_profile> &profiles, int cornerMode) {
-  try {
-    // 参数验证
-    if (points.empty()) {
-      throw std::runtime_error("Control points cannot be empty");
-    }
-    if (points.size() != curveTypes.size()) {
-      throw std::runtime_error("Points and curve types count mismatch");
-    }
-    if (profiles.empty()) {
-      throw std::runtime_error("Profiles cannot be empty");
-    }
+  // 参数验证
+  if (points.empty()) {
+    throw std::runtime_error("Control points cannot be empty");
+  }
+  if (points.size() != curveTypes.size()) {
+    throw std::runtime_error("Points and curve types count mismatch");
+  }
+  if (profiles.empty()) {
+    throw std::runtime_error("Profiles cannot be empty");
+  }
 
+  try {
     // 创建路径线
     BRepBuilderAPI_MakeWire pathMaker;
 
