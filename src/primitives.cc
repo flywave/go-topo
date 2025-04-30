@@ -15711,11 +15711,9 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     gp_Pnt arcCenter(0, 0, centerHeight);
     gp_Ax2 arcAxis(arcCenter, gp::DZ()); // 修正坐标系方向
     Handle(Geom_TrimmedCurve) topArc =
-        GC_MakeArcOfCircle(
-            gp_Circ(arcAxis, arcRadius),
-            gp_Pnt(arcStart.X(), arcStart.Y(), arcStart.Z()),
-            gp_Pnt(arcEnd.X(), arcEnd.Y(), arcEnd.Z()), // 明确指定起点终点
-            false)
+        GC_MakeArcOfCircle(gp_Circ(arcAxis, arcRadius), arcStart,
+                           arcEnd, // 明确指定起点终点
+                           false)
             .Value();
 
     TopoDS_Edge bootomEgde =
@@ -15724,10 +15722,14 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
 
     // 修正连接顺序和边方向
     BRepBuilderAPI_MakeWire wireMaker;
-    wireMaker.Add(leftSegment);                            // 左侧连接段
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(topArc).Edge()); // 顶部圆弧
-    wireMaker.Add(rightSegment);                           // 右侧连接段
-    wireMaker.Add(bootomEgde);                             // 底部边
+    //wireMaker.Add(leftSegment);                            // 左侧连接段
+   // wireMaker.Add(BRepBuilderAPI_MakeEdge(topArc).Edge()); // 顶部圆弧
+    
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(arcStart, gp::Origin()).Edge()); 
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(gp::Origin(), arcEnd).Edge()); 
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(arcEnd, arcStart).Edge()); 
+    //wireMaker.Add(rightSegment);                           // 右侧连接段
+    //wireMaker.Add(bootomEgde);                             // 底部边
 
     // 添加完整性检查
     if (!wireMaker.IsDone() || !wireMaker.Wire().Closed()) {
@@ -15737,11 +15739,15 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     }
 
     outerWire = wireMaker.Wire();
+
+    break;
   }
   default:
     throw Standard_ConstructionError("Invalid tunnel section style");
   }
   TopoDS_Shape outer = create_channel_shape(outerWire, path);
+
+  return outer;
 
   // 创建隧道截面轮廓
   TopoDS_Wire innerWire;
