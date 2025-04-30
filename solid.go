@@ -459,7 +459,7 @@ const (
 	SweepCurveTypeLine            = SweepCurveType(C.CURVE_LINE)
 	SweepCurveTypeThreePointArc   = SweepCurveType(C.CURVE_THREE_POINT_ARC)
 	SweepCurveTypeCircleCenterArc = SweepCurveType(C.CURVE_CIRCLE_CENTER_ARC)
-	SweepCurveTypeSplinec         = SweepCurveType(C.CURVE_SPLINE)
+	SweepCurveTypeSpline          = SweepCurveType(C.CURVE_SPLINE)
 )
 
 // SweepProfile 扫掠剖面结构
