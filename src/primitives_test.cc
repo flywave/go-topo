@@ -4247,19 +4247,22 @@ void test_water_tunnel() {
   std::cout << "\n=== Testing Water Tunnel ===" << std::endl;
 
   // 准备测试点集
-  std::vector<channel_point> points{
-      {gp_Pnt(0, 0, 0), 1}, {gp_Pnt(100, 0, 0), 1}, {gp_Pnt(100, 100, 0), 1}};
+  std::vector<channel_point> points = {
+      {gp_Pnt(0, 0, 0), 0},    // 起点
+      {gp_Pnt(900, 500, 0), 0} // 终点
+  };
 
   // 测试矩形截面隧道 (所有尺寸参数缩小10倍)
   try {
     water_tunnel_params rect_params{.style =
                                         water_tunnel_section_style::RECTANGULAR,
-                                    .width = 60.0,           // 600→60
-                                    .height = 80.0,          // 800→80
-                                    .topThickness = 5.0,     // 50→5
-                                    .bottomThickness = 6.0,  // 60→6
-                                    .cushionExtension = 5.0, // 100→10
-                                    .cushionThickness = 8.0, // 80→8
+                                    .width = 60.0,             // 600→60
+                                    .height = 80.0,            // 800→80
+                                    .topThickness = 5.0,       // 50→5
+                                    .bottomThickness = 6.0,    // 60→6
+                                    .outerWallThickness = 7.0, // 70→7
+                                    .cushionExtension = 5.0,   // 100→10
+                                    .cushionThickness = 8.0,   // 80→8
                                     .points = points};
 
     auto rect_shp = create_water_tunnel(rect_params);
@@ -4268,6 +4271,30 @@ void test_water_tunnel() {
                 << std::endl;
     } else {
       test_export_shape(rect_shp, "./rectangular_water_tunnel.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+
+  // 测试城门洞形截面隧道 (所有尺寸参数缩小10倍)
+  try {
+    water_tunnel_params cityopening_params{
+        .style = water_tunnel_section_style::CITYOPENING,
+        .width = 50.0,             // 500→50
+        .height = 70.0,            // 700→70
+        .outerWallThickness = 4.0, // 40→4
+        .innerWallThickness = 3.0, // 30→3
+        .arcRadius = 40.0,         // 100→10
+        .cushionExtension = 5.0,   // 90→9
+        .cushionThickness = 7.0,   // 70→7
+        .points = points};
+
+    auto cityopening_shp = create_water_tunnel(cityopening_params);
+    if (cityopening_shp.IsNull()) {
+      std::cerr << "Error: Failed to create cityopening water tunnel"
+                << std::endl;
+    } else {
+      test_export_shape(cityopening_shp, "./cityopening_water_tunnel.stl");
     }
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
@@ -4424,7 +4451,7 @@ int main() {
   test_make_pipe_support();
   test_make_cover_plate();
   test_make_cable_ray();
-  //水利
+  // 水利
   test_water_tunnel();
   return 0;
 }

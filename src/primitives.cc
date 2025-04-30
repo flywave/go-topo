@@ -15690,48 +15690,48 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     gp_Pnt bottomRight(0, outerRadius,
                        -params.outerWallThickness - params.innerWallThickness);
 
-    // 左侧连接段点
-    gp_Pnt leftBottom(0, -outerRadius, 0);
-    // 右侧连接段点
-    gp_Pnt rightBottom(0, outerRadius, 0);
-
     // 计算圆弧起点和终点(与连接段相连)
     double angle = params.arcAngle * M_PI / 180.0;
-    gp_Pnt arcStart(0, -outerRadius * cos(angle),
-                    centerHeight + arcRadius * sin(angle));
-    gp_Pnt arcEnd(0, outerRadius * cos(angle),
-                  centerHeight + arcRadius * sin(angle));
+    double actualAngle =
+        angle > M_PI / 2 ? M_PI / 2 : angle; // 限制最大角度为90度
+    gp_Pnt arcStart(0, -outerRadius * cos(actualAngle),
+                    centerHeight + arcRadius * sin(actualAngle));
+    gp_Pnt arcEnd(0, outerRadius * cos(actualAngle),
+                  centerHeight + arcRadius * sin(actualAngle));
 
     // 创建左侧连接段(从底部到顶部)
     TopoDS_Edge leftSegment =
-        BRepBuilderAPI_MakeEdge(leftBottom, arcStart).Edge();
+        BRepBuilderAPI_MakeEdge(bottomLeft, arcStart).Edge();
 
     // 创建右侧连接段(从顶部到底部)
     TopoDS_Edge rightSegment =
-        BRepBuilderAPI_MakeEdge(arcEnd, rightBottom).Edge();
+        BRepBuilderAPI_MakeEdge(arcEnd, bottomRight).Edge();
 
-    // 创建顶部圆弧(从左到右)
+    // 创建顶部圆弧(从右到左)
     gp_Pnt arcCenter(0, 0, centerHeight);
-    gp_Dir arcDir(0, 0, 1);
-    gp_Ax2 arcAxis(arcCenter, arcDir);
+    gp_Ax2 arcAxis(arcCenter, gp::DZ()); // 修正坐标系方向
     Handle(Geom_TrimmedCurve) topArc =
-        GC_MakeArcOfCircle(gp_Circ(arcAxis, arcRadius), M_PI - angle, angle,
-                           false)
+        GC_MakeArcOfCircle(
+            gp_Circ(arcAxis, arcRadius),
+            gp_Pnt(arcStart.X(), arcStart.Y(), arcStart.Z()),
+            gp_Pnt(arcEnd.X(), arcEnd.Y(), arcEnd.Z()), // 明确指定起点终点
+            false)
             .Value();
-    TopoDS_Edge topEdge = BRepBuilderAPI_MakeEdge(topArc).Edge();
 
-    // 创建底部连接段(从右到左)
-    TopoDS_Edge bottomEdge =
+    TopoDS_Edge bootomEgde =
         BRepBuilderAPI_MakeEdge(bottomRight, bottomLeft).Edge();
+    bootomEgde.Reversed();
 
-    // 组合成完整轮廓(按顺序连接)
+    // 修正连接顺序和边方向
     BRepBuilderAPI_MakeWire wireMaker;
-    wireMaker.Add(leftSegment);
-    wireMaker.Add(topEdge);
-    wireMaker.Add(rightSegment);
-    wireMaker.Add(bottomEdge);
+    wireMaker.Add(leftSegment);                            // 左侧连接段
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(topArc).Edge()); // 顶部圆弧
+    wireMaker.Add(rightSegment);                           // 右侧连接段
+    wireMaker.Add(bootomEgde);                             // 底部边
 
-    if (!wireMaker.IsDone()) {
+    // 添加完整性检查
+    if (!wireMaker.IsDone() || !wireMaker.Wire().Closed()) {
+      // 输出调试信息
       throw Standard_ConstructionError(
           "Failed to create closed wire for horseshoe section");
     }
@@ -15853,10 +15853,6 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     gp_Pnt innerBottomLeft(0, -innerRadius, 0);
     gp_Pnt innerBottomRight(0, innerRadius, 0);
 
-    // 内轮廓侧壁点
-    gp_Pnt innerLeftBottom(0, -innerRadius, 0);
-    gp_Pnt innerRightBottom(0, innerRadius, 0);
-
     // 计算内轮廓圆弧起点和终点
     double innerAngle = params.arcAngle * M_PI / 180.0;
     gp_Pnt innerArcStart(0, -innerRadius * cos(innerAngle),
@@ -15866,25 +15862,29 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
 
     // 创建内轮廓左侧连接段
     TopoDS_Edge innerLeftSegment =
-        BRepBuilderAPI_MakeEdge(innerLeftBottom, innerArcStart).Edge();
+        BRepBuilderAPI_MakeEdge(innerBottomLeft, innerArcStart).Edge();
 
     // 创建内轮廓右侧连接段
     TopoDS_Edge innerRightSegment =
-        BRepBuilderAPI_MakeEdge(innerArcEnd, innerRightBottom).Edge();
+        BRepBuilderAPI_MakeEdge(innerArcEnd, innerBottomRight).Edge();
 
     // 创建内轮廓顶部圆弧
     gp_Pnt innerArcCenter(0, 0, innerCenterHeight);
     gp_Dir innerArcDir(0, 0, 1);
     gp_Ax2 innerArcAxis(innerArcCenter, innerArcDir);
+    // 创建内轮廓顶部圆弧（调整参数顺序）
     Handle(Geom_TrimmedCurve) innerTopArc =
         GC_MakeArcOfCircle(gp_Circ(innerArcAxis, innerArcRadius),
-                           M_PI - innerAngle, innerAngle, false)
+                           innerArcStart, // 明确指定起点
+                           innerArcEnd,   // 明确指定终点
+                           false)
             .Value();
     TopoDS_Edge innerTopEdge = BRepBuilderAPI_MakeEdge(innerTopArc).Edge();
 
-    // 创建内轮廓底部连接段
+    // 添加底部连接段时调整方向
     TopoDS_Edge innerBottomEdge =
         BRepBuilderAPI_MakeEdge(innerBottomRight, innerBottomLeft).Edge();
+    innerBottomEdge.Reversed();
 
     // 组合内轮廓线框
     BRepBuilderAPI_MakeWire innerWireMaker;
@@ -15893,7 +15893,7 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     innerWireMaker.Add(innerRightSegment);
     innerWireMaker.Add(innerBottomEdge);
 
-    if (!innerWireMaker.IsDone()) {
+    if (!innerWireMaker.IsDone() || !innerWireMaker.Wire().Closed()) {
       throw Standard_ConstructionError(
           "Failed to create closed wire for inner horseshoe section");
     }
