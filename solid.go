@@ -464,7 +464,7 @@ const (
 
 // SweepProfile 扫掠剖面结构
 type SweepProfile struct {
-	Profile  *Shape
+	Profile  Shape
 	Location *Vertex
 }
 
