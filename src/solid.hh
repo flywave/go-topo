@@ -17,6 +17,7 @@ class shell;
 class face;
 class wire;
 class edge;
+class vertex;
 class comp_solid;
 
 class solid : public shape3d {
@@ -277,6 +278,22 @@ public:
            double tolerance = 1.0e-06);
 
   int pipe(const face &f, const wire &w);
+
+  enum class curve_type {
+    line,
+    three_point_arc,
+    circle_center_arc,
+    spline,
+  };
+
+  struct sweep_profile {
+    shape profile;
+    vertex *location;
+  };
+
+  int sweep(std::vector<std::vector<gp_Pnt>> points,
+            std::vector<curve_type> curveTypes,
+            std::vector<sweep_profile> &profiles, int cornerMode);
 
   int sweep(const wire &spine, std::vector<shape> &profiles, int cornerMode);
 

@@ -14775,7 +14775,7 @@ create_ventilation_pavilion(const ventilation_pavilion_params &params) {
                         params.height + params.baseHeight + params.topHeight);
   gp_Pnt roofTop(0, 0,
                  params.height + params.baseHeight + params.topHeight +
-                     params.topHeight / 2);
+                     params.topHeight);
 
   // 创建金字塔底面四个角点
   gp_Pnt base1(-params.topLength / 2, -params.topWidth / 2, roofBaseCenter.Z());

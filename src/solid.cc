@@ -4,8 +4,10 @@
 #include <BRepAlgoAPI_Section.hxx>
 #include <BRepAlgoAPI_Splitter.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
+#include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeSolid.hxx>
+#include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_NurbsConvert.hxx>
 #include <BRepClass3d.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
@@ -37,7 +39,9 @@
 #include <BRepPrimAPI_MakeTorus.hxx>
 #include <BRepPrimAPI_MakeWedge.hxx>
 #include <BRep_Builder.hxx>
+#include <GC_MakeArcOfCircle.hxx>
 #include <GProp_GProps.hxx>
+#include <GeomAPI_Interpolate.hxx>
 #include <GeomFill_Trihedron.hxx>
 #include <LocOpe_DPrism.hxx>
 #include <ShapeAnalysis_FreeBounds.hxx>
@@ -53,6 +57,7 @@
 #include "face.hh"
 #include "shell.hh"
 #include "solid.hh"
+#include "vertex.hh"
 #include "wire.hh"
 
 namespace flywave {
@@ -1356,6 +1361,140 @@ int solid::pipe(const face &f, const wire &w) {
       throw std::runtime_error(msg);
     } else {
       throw std::runtime_error("Failed to create pipe");
+    }
+    return 0;
+  }
+  return 1;
+}
+
+int solid::sweep(std::vector<std::vector<gp_Pnt>> points,
+                 std::vector<curve_type> curveTypes,
+                 std::vector<sweep_profile> &profiles, int cornerMode) {
+  try {
+    // 参数验证
+    if (points.empty()) {
+      throw std::runtime_error("Control points cannot be empty");
+    }
+    if (points.size() != curveTypes.size()) {
+      throw std::runtime_error("Points and curve types count mismatch");
+    }
+    if (profiles.empty()) {
+      throw std::runtime_error("Profiles cannot be empty");
+    }
+
+    // 创建路径线
+    BRepBuilderAPI_MakeWire pathMaker;
+
+    for (size_t i = 0; i < points.size(); ++i) {
+      const auto &pts = points[i];
+      curve_type type = curveTypes[i];
+
+      switch (type) {
+      case curve_type::line: {
+        if (pts.size() != 2) {
+          throw Standard_ConstructionError("Line requires exactly 2 points");
+        }
+        pathMaker.Add(BRepBuilderAPI_MakeEdge(pts[0], pts[1]).Edge());
+        break;
+      }
+      case curve_type::three_point_arc: {
+        if (pts.size() != 3) {
+          throw Standard_ConstructionError("Three-point arc requires 3 points");
+        }
+        GC_MakeArcOfCircle arcMaker(pts[0], pts[1], pts[2]);
+        if (!arcMaker.IsDone()) {
+          throw Standard_ConstructionError("Failed to create three-point arc");
+        }
+        pathMaker.Add(BRepBuilderAPI_MakeEdge(arcMaker.Value()));
+        break;
+      }
+      case curve_type::circle_center_arc: {
+        if (pts.size() != 3) {
+          throw Standard_ConstructionError(
+              "Center arc requires [start, center, end] points");
+        }
+        gp_Circ circle(gp_Ax2(pts[1], gp_Dir(0, 0, -1)),
+                       pts[0].Distance(pts[1]));
+        GC_MakeArcOfCircle arcMaker(circle, pts[0], pts[2], true);
+        if (!arcMaker.IsDone()) {
+          throw Standard_ConstructionError("Failed to create center arc");
+        }
+        pathMaker.Add(BRepBuilderAPI_MakeEdge(arcMaker.Value()));
+        break;
+      }
+      case curve_type::spline: {
+        if (pts.size() < 2) {
+          throw Standard_ConstructionError("Spline requires at least 2 points");
+        }
+        Handle(TColgp_HArray1OfPnt) array =
+            new TColgp_HArray1OfPnt(1, pts.size());
+        for (size_t j = 0; j < pts.size(); ++j) {
+          array->SetValue(j + 1, pts[j]);
+        }
+        GeomAPI_Interpolate interpolate(array, false, Precision::Confusion());
+        interpolate.Perform();
+        if (!interpolate.IsDone()) {
+          throw Standard_ConstructionError("Failed to create spline");
+        }
+        pathMaker.Add(BRepBuilderAPI_MakeEdge(interpolate.Curve()));
+        break;
+      }
+      default:
+        throw Standard_ConstructionError("Unknown curve type");
+      }
+    }
+
+    if (!pathMaker.IsDone()) {
+      throw Standard_ConstructionError("Failed to create path wire");
+    }
+    TopoDS_Wire pathWire = pathMaker.Wire();
+
+    // 创建扫掠器
+    BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
+    pipeMaker.SetMode(true); // 实体模式
+    switch (cornerMode) {
+    case 1:
+      pipeMaker.SetTransitionMode(BRepBuilderAPI_RightCorner);
+      break;
+    case 2:
+      pipeMaker.SetTransitionMode(BRepBuilderAPI_RoundCorner);
+      break;
+    default:
+      pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
+      break;
+    }
+
+    // 添加所有截面
+    for (const auto &profile : profiles) {
+      if (profile.location != nullptr) {
+        pipeMaker.Add(profile.profile.value(), profile.location->value(), false,
+                      false);
+      } else {
+        pipeMaker.Add(profile.profile.value(), false, false);
+      }
+    }
+
+    pipeMaker.Build();
+    if (!pipeMaker.IsDone()) {
+      throw Standard_ConstructionError("Sweep operation failed");
+    }
+
+    if (!pipeMaker.MakeSolid()) {
+      throw Standard_ConstructionError("Failed to make solid from sweep");
+    }
+
+    _shape = pipeMaker.Shape();
+    return 0;
+
+    if (!this->fix_shape())
+      throw std::runtime_error("Shapes not valid");
+
+  } catch (const Standard_ConstructionError &e) {
+    const Standard_CString msg = e.GetMessageString();
+    if (msg != nullptr && strlen(msg) > 1) {
+      throw std::runtime_error(msg);
+    } else {
+      throw std::runtime_error("Failed to create sweep");
     }
     return 0;
   }
