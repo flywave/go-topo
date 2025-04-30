@@ -160,7 +160,19 @@ gp_Pnt combined_center(const std::vector<shape> &objects);
 
 gp_Pnt combined_center_of_bound_box(const std::vector<shape> &objects);
 
-shape  read_shape_from_step(const std::string &filename);
+shape read_shape_from_step(const std::string &filename);
+
+struct wire_sample_point {
+  gp_Pnt position;
+  gp_Vec tangent;
+  edge edge;
+};
+
+std::vector<wire_sample_point>
+sample_wire_at_distances(const wire &wire_path,
+                         const std::vector<double> &distances);
+wire clip_wire_between_distances(const wire &wire_path, double start_distance,
+                                 double end_distance);
 
 } // namespace topo
 } // namespace flywave

@@ -5485,6 +5485,53 @@ topo_shape_t *step_get_topo_shape(const char *filename) {
   return new _topo_shape_t{.shp = shp};
 }
 
+topo_wire_sample_point_t *topo_wire_sample_at_distances(topo_wire_t wire,
+                                                        double *distances,
+                                                        int count,
+                                                        int *result_count) {
+  try {
+    std::vector<double> dists(distances, distances + count);
+    auto samples =
+        flywave::topo::sample_wire_at_distances(*cast_to_topo(wire), dists);
+
+    auto result = new topo_wire_sample_point_t[samples.size()];
+    for (size_t i = 0; i < samples.size(); i++) {
+      result[i].position = cast_from_gp(samples[i].position);
+      result[i].tangent = cast_from_gp(samples[i].tangent);
+        result[i].edge = topo_edge_t{ new topo_shape_t{std::make_shared<flywave::topo::shape>(samples[i].edge)}};
+    }
+    *result_count = static_cast<int>(samples.size());
+    return result;
+  } catch (...) {
+    *result_count = 0;
+    return nullptr;
+  }
+}
+
+void topo_wire_sample_list_free(topo_wire_sample_point_t *samples, int count) {
+  if (samples) {
+    for (int i = 0; i < count; i++) {
+      if (samples[i].edge.shp) {
+        delete samples[i].edge.shp;
+      }
+    }
+    delete[] samples;
+  }
+}
+
+topo_wire_t topo_wire_clip_between_distances(topo_wire_t wire,
+                                             double start_distance,
+                                             double end_distance) {
+  try {
+    auto clipped = flywave::topo::clip_wire_between_distances(
+        *cast_to_topo(wire), start_distance, end_distance);
+    return topo_wire_t{
+        new topo_shape_t{std::make_shared<flywave::topo::shape>(clipped)}};
+  } catch (...) {
+    return {nullptr};
+  }
+}
+
 #ifdef __cplusplus
 }
 #endif

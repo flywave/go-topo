@@ -10,7 +10,10 @@ package topo
 #cgo windows CXXFLAGS: -I ./libs  -std=gnu++14
 */
 import "C"
-import "unsafe"
+import (
+	"runtime"
+	"unsafe"
+)
 
 func Fuse(shapes []*Shape, tol float64, glue bool) *Shape {
 	count := len(shapes)
@@ -336,4 +339,67 @@ func StepToTopoShape(f string) *Shape {
 	defer C.free(unsafe.Pointer(fl))
 	res := C.step_get_topo_shape(fl)
 	return NewShape(res)
+}
+
+type WireSamplePoint struct {
+	Position Point3
+	Tangent  Vector3
+	Edge     *Edge
+}
+
+func SampleWireAtDistances(wire *Wire, distances []float64) []WireSamplePoint {
+	count := len(distances)
+	if count == 0 {
+		return nil
+	}
+
+	var resultCount C.int
+	cDistances := make([]C.double, count)
+	for i, d := range distances {
+		cDistances[i] = C.double(d)
+	}
+
+	cSamples := C.topo_wire_sample_at_distances(
+		wire.inner.val,
+		&cDistances[0],
+		C.int(count),
+		&resultCount,
+	)
+	defer C.topo_wire_sample_list_free(cSamples, resultCount)
+
+	if cSamples == nil {
+		return nil
+	}
+
+	sampleSlice := (*[1 << 30]C.topo_wire_sample_point_t)(unsafe.Pointer(cSamples))[:resultCount:resultCount]
+
+	samples := make([]WireSamplePoint, resultCount)
+	for i := 0; i < int(resultCount); i++ {
+		e := &Edge{inner: &innerEdge{val: sampleSlice[i].edge}}
+		runtime.SetFinalizer(e.inner, (*innerEdge).free)
+
+		samples[i] = WireSamplePoint{
+			Position: Point3{val: sampleSlice[i].position},
+			Tangent:  Vector3{val: sampleSlice[i].tangent},
+			Edge:     e,
+		}
+	}
+
+	return samples
+}
+
+func ClipWireBetweenDistances(wire *Wire, startDistance, endDistance float64) *Wire {
+	result := C.topo_wire_clip_between_distances(
+		wire.inner.val,
+		C.double(startDistance),
+		C.double(endDistance),
+	)
+
+	if result.shp == nil {
+		return nil
+	}
+
+	w := &Wire{inner: &innerWire{result}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
 }

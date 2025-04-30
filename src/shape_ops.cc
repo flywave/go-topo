@@ -5,12 +5,14 @@
 #include <BRepAlgoAPI_Check.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Splitter.hxx>
+#include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepFeat_MakeDPrism.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
+#include <BRepGProp.hxx>
 #include <BRepIntCurveSurface_Inter.hxx>
 #include <BRepOffsetAPI_MakeFilling.hxx>
 #include <BRepOffsetAPI_MakePipeShell.hxx>
@@ -21,9 +23,12 @@
 #include <BRepPrimAPI_MakeRevol.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Builder.hxx>
+#include <GProp_GProps.hxx>
 #include <GeomAbs_JoinType.hxx>
 #include <GeomAbs_Shape.hxx>
+#include <Geom_TrimmedCurve.hxx>
 #include <LocOpe_DPrism.hxx>
+#include <STEPControl_Reader.hxx>
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_ListOfShape.hxx>
@@ -35,7 +40,6 @@
 #include <TopoDS_Solid.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
-#include <STEPControl_Reader.hxx>
 #include <algorithm>
 #include <cmath> // for M_PI
 #include <gce_MakeDir.hxx>
@@ -1342,7 +1346,7 @@ gp_Pnt combined_center_of_bound_box(const std::vector<shape> &objects) {
   return gp_Pnt((xMin + xMax) / 2.0, (yMin + yMax) / 2.0, (zMin + zMax) / 2.0);
 }
 
-shape  read_shape_from_step(const std::string &filename){
+shape read_shape_from_step(const std::string &filename) {
   STEPControl_Reader reader;
   IFSelect_ReturnStatus status = reader.ReadFile(filename.c_str());
   if (status != IFSelect_RetDone) {
@@ -1350,9 +1354,156 @@ shape  read_shape_from_step(const std::string &filename){
   }
   reader.TransferRoots();
   TopoDS_Shape shp = reader.OneShape();
-  return  std::move(shp);
+  return std::move(shp);
 }
 
+std::vector<wire_sample_point>
+sample_wire_at_distances(const wire &wire_path,
+                         const std::vector<double> &distances) {
+  std::vector<wire_sample_point> results(distances.size());
 
+  // 1. 使用map记录原始位置索引和距离
+  std::map<size_t, double> indexedDistances;
+  for (size_t i = 0; i < distances.size(); ++i) {
+    indexedDistances[i] = distances[i];
+  }
+
+  // 2. 按距离值排序
+  std::vector<std::pair<size_t, double>> sortedDistances(
+      indexedDistances.begin(), indexedDistances.end());
+  std::sort(sortedDistances.begin(), sortedDistances.end(),
+            [](const auto &a, const auto &b) { return a.second < b.second; });
+
+  // 3. 计算路径总长度
+  GProp_GProps props;
+  BRepGProp::LinearProperties(wire_path, props);
+  double totalLength = props.Mass();
+
+  // 4. 按排序后的距离执行采样
+  for (const auto &[origIndex, distance] : sortedDistances) {
+    if (distance < 0 || distance > totalLength) {
+      continue;
+    }
+
+    wire_sample_point sample;
+    double accumulatedLength = 0;
+    bool found = false;
+
+    TopExp_Explorer edgeExplorer(wire_path, TopAbs_EDGE);
+    for (int edgeIndex = 0; edgeExplorer.More() && !found;
+         edgeExplorer.Next(), edgeIndex++) {
+      const TopoDS_Edge &edge = TopoDS::Edge(edgeExplorer.Current());
+
+      GProp_GProps edgeProps;
+      BRepGProp::LinearProperties(edge, edgeProps);
+      double edgeLength = edgeProps.Mass();
+
+      if (distance <= accumulatedLength + edgeLength) {
+        BRepAdaptor_Curve curveAdaptor(edge);
+        double param =
+            curveAdaptor.FirstParameter() +
+            (distance - accumulatedLength) / edgeLength *
+                (curveAdaptor.LastParameter() - curveAdaptor.FirstParameter());
+
+        curveAdaptor.D1(param, sample.position, sample.tangent);
+        sample.edge = topo::edge(edge);
+        found = true;
+      }
+      accumulatedLength += edgeLength;
+    }
+
+    if (found) {
+      results[origIndex] = sample;
+    }
+  }
+
+  return results;
+}
+
+wire clip_wire_between_distances(const wire &wire_path, double start_distance,
+                                 double end_distance) {
+  if (start_distance < 0 || end_distance < 0 ||
+      start_distance >= end_distance) {
+    throw std::invalid_argument("Invalid distance range");
+  }
+
+  // 计算路径总长度
+  GProp_GProps props;
+  BRepGProp::LinearProperties(wire_path, props);
+  double totalLength = props.Mass();
+
+  if (end_distance > totalLength) {
+    end_distance = totalLength;
+  }
+
+  if (start_distance >= totalLength) {
+    throw std::invalid_argument("start_distance exceeds total wire length");
+  }
+  if (end_distance >= totalLength) {
+    throw std::invalid_argument("end_distance exceeds total wire length");
+  }
+
+  BRepBuilderAPI_MakeWire wireBuilder;
+  double accumulatedLength = 0;
+  bool inRange = false;
+
+  TopExp_Explorer edgeExplorer(wire_path, TopAbs_EDGE);
+  for (; edgeExplorer.More(); edgeExplorer.Next()) {
+    const TopoDS_Edge &edge = TopoDS::Edge(edgeExplorer.Current());
+
+    // 计算当前边的长度
+    GProp_GProps edgeProps;
+    BRepGProp::LinearProperties(edge, edgeProps);
+    double edgeLength = edgeProps.Mass();
+
+    double edgeStart = accumulatedLength;
+    double edgeEnd = accumulatedLength + edgeLength;
+
+    // 检查边是否在区间内
+    if (edgeEnd <= start_distance || edgeStart >= end_distance) {
+      accumulatedLength += edgeLength;
+      continue;
+    }
+
+    // 获取边的几何曲线
+    BRepAdaptor_Curve curveAdaptor(edge);
+    Handle(Geom_Curve) curve = curveAdaptor.Curve().Curve();
+
+    // 计算截取参数
+    double param1 = curveAdaptor.FirstParameter();
+    double param2 = curveAdaptor.LastParameter();
+
+    if (edgeStart < start_distance && edgeEnd > start_distance) {
+      // 计算起始截取点
+      double ratio = (start_distance - edgeStart) / edgeLength;
+      param1 = curveAdaptor.FirstParameter() +
+               ratio * (curveAdaptor.LastParameter() -
+                        curveAdaptor.FirstParameter());
+    }
+
+    if (edgeStart < end_distance && edgeEnd > end_distance) {
+      // 计算结束截取点
+      double ratio = (end_distance - edgeStart) / edgeLength;
+      param2 = curveAdaptor.FirstParameter() +
+               ratio * (curveAdaptor.LastParameter() -
+                        curveAdaptor.FirstParameter());
+    }
+
+    // 创建截取后的曲线
+    Handle(Geom_TrimmedCurve) trimmedCurve =
+        new Geom_TrimmedCurve(curve, param1, param2);
+
+    // 创建新的边
+    wireBuilder.Add(BRepBuilderAPI_MakeEdge(trimmedCurve).Edge());
+
+    accumulatedLength += edgeLength;
+  }
+
+  if (!wireBuilder.IsDone()) {
+    throw std::runtime_error("Failed to create sub wire");
+  }
+
+  return wire(wireBuilder.Wire());
+}
 } // namespace topo
 } // namespace flywave

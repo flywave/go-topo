@@ -1542,6 +1542,21 @@ TOPOCAPICALL pnt3d_t topo_combined_center_of_bound_box(topo_shape_t **objects,
                                                        int count);
 
 TOPOCAPICALL topo_shape_t *step_get_topo_shape(const char *filename);
+
+typedef struct {
+  pnt3d_t position;
+  vec3d_t tangent;
+  topo_edge_t edge;
+} topo_wire_sample_point_t;
+
+TOPOCAPICALL topo_wire_sample_point_t *
+topo_wire_sample_at_distances(topo_wire_t wire, double *distances, int count,
+                              int *result_count);
+TOPOCAPICALL void topo_wire_sample_list_free(topo_wire_sample_point_t *samples,
+                                             int count);
+TOPOCAPICALL topo_wire_t topo_wire_clip_between_distances(topo_wire_t wire,
+                                                          double start_distance,
+                                                          double end_distance);
 #ifdef __cplusplus
 }
 #endif

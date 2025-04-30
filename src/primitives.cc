@@ -9609,8 +9609,7 @@ TopoDS_Shape create_transition_section(const tunnel_well_params &params,
     break;
   case connection_section_style::HORSESHOE: {
     double radius = rightWidth / 2;
-    gp_Pnt arcStart(endX, -radius,
-                    rightHeight - rightArcHeight + heightOffset);
+    gp_Pnt arcStart(endX, -radius, rightHeight - rightArcHeight + heightOffset);
     gp_Pnt arcMid(endX, 0, rightHeight + heightOffset); // 拱顶中点
     gp_Pnt arcEnd(endX, radius, rightHeight - rightArcHeight + heightOffset);
 
@@ -12777,9 +12776,32 @@ TopoDS_Shape create_channel_shape(TopoDS_Shape section, TopoDS_Wire pathWire) {
     throw Standard_ConstructionError("截面形状必须是闭合的");
   }
 
+  // 获取路径起始点的切线方向
+  BRepAdaptor_CompCurve curveAdaptor(pathWire);
+  gp_Pnt startPoint;
+  gp_Vec startTangent;
+  curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
+
+  // 在创建截面圆之前添加方向修正
+  gp_Dir initNormal = startTangent.Normalized();
+  gp_Dir refDir(0, 1, 0);
+  // 确保参考方向与切线不平行
+  if (Abs(initNormal.Dot(refDir)) > 0.99) {
+    refDir = gp_Dir(1, 0, 0);
+  }
+
+  // 创建坐标系并旋转截面
+  gp_Ax2 sectionAxes(gp::Origin(), initNormal, refDir);
+  gp_Trsf rotation;
+  rotation.SetRotation(gp_Ax1(gp::Origin(), gp::DZ()), refDir.Angle(gp::DX()));
+
+  // 应用旋转变换到截面
+  BRepBuilderAPI_Transform sectionTransform(section, rotation);
+  TopoDS_Shape rotatedSection = sectionTransform.Shape();
+
   // 创建管道形状
   BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
-  pipeMaker.Add(section);
+  pipeMaker.Add(rotatedSection, Standard_False, Standard_True);
   pipeMaker.SetMode(Standard_True);
   pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
   pipeMaker.Build();
