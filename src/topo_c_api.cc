@@ -1,10 +1,10 @@
 #include "topo_c_api.h"
 #include "geometry_impl.hh"
+#include "shape.hh"
 #include "shape_ops.hh"
 #include "standard_impl.hh"
 #include "topo_impl.hh"
-#include "shape.hh"
- 
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -2637,15 +2637,15 @@ topo_face_t *topo_face_make_from_wires(topo_wire_t outer, topo_wire_t *inners,
   }
 }
 
-void topo_face_list_free(topo_face_t *faces, int count) {
-  delete [] faces;
-}
+void topo_face_list_free(topo_face_t *faces, int count) { delete[] faces; }
 
-topo_face_t topo_face_make_complex(
-    topo_shape_t **edges, int edge_count, topo_shape_t **constraints,
-    int constraint_count, int continuity, int degree, int nb_pts_on_curve,
-    int nb_iter, bool anisotropy, double tol2d, double tol3d, double tol_angle,
-    double tol_curv, int max_degree, int max_segments) {
+topo_face_t topo_face_make_complex(topo_shape_t **edges, int edge_count,
+                                   topo_shape_t **constraints,
+                                   int constraint_count, int continuity,
+                                   int degree, int nb_pts_on_curve, int nb_iter,
+                                   bool anisotropy, double tol2d, double tol3d,
+                                   double tol_angle, double tol_curv,
+                                   int max_degree, int max_segments) {
   try {
     std::vector<boost::variant<flywave::topo::edge, flywave::topo::wire>>
         edgeVec;
@@ -2678,16 +2678,15 @@ topo_face_t topo_face_make_complex(
         nb_pts_on_curve, nb_iter, anisotropy, tol2d, tol3d, tol_angle, tol_curv,
         max_degree, max_segments);
 
-    return  topo_face_t{
-        new topo_shape_t{std::make_shared<flywave::topo::face>(
-            flywave::topo::face::make_face(result))}};
+    return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
+        flywave::topo::face::make_face(result))}};
   } catch (...) {
     return topo_face_t{};
   }
 }
 
 topo_face_t topo_face_make_plane(pnt3d_t base_point, dir3d_t direction,
-                                  double *length, double *width) {
+                                 double *length, double *width) {
   try {
     gp_Pnt basePnt(base_point.x, base_point.y, base_point.z);
     gp_Dir dir(direction.x, direction.y, direction.z);
@@ -2701,18 +2700,17 @@ topo_face_t topo_face_make_plane(pnt3d_t base_point, dir3d_t direction,
     auto result =
         flywave::topo::face::make_plane(basePnt, dir, lenOpt, widthOpt);
 
-    return  topo_face_t{
-        new topo_shape_t{std::make_shared<flywave::topo::face>(
-            flywave::topo::face::make_face(result))}};
+    return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
+        flywave::topo::face::make_face(result))}};
   } catch (...) {
     return topo_face_t{};
   }
 }
 
 topo_face_t topo_face_make_spline_approx(pnt3d_t *points, int *point_counts,
-                                          int point_array_size, double tol,
-                                          double *smoothing, int min_degree,
-                                          int max_degree) {
+                                         int point_array_size, double tol,
+                                         double *smoothing, int min_degree,
+                                         int max_degree) {
   try {
     std::vector<std::vector<gp_Pnt>> pointVec;
     int offset = 0;
@@ -2734,11 +2732,10 @@ topo_face_t topo_face_make_spline_approx(pnt3d_t *points, int *point_counts,
         pointVec, tol, smoothing ? &smoothParams : nullptr, min_degree,
         max_degree);
 
-    return  topo_face_t{
-        new topo_shape_t{std::make_shared<flywave::topo::face>(
-            flywave::topo::face::make_face(result))}};
+    return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
+        flywave::topo::face::make_face(result))}};
   } catch (...) {
-    return  topo_face_t{};
+    return topo_face_t{};
   }
 }
 
@@ -4159,6 +4156,66 @@ int topo_solid_pipe(topo_solid_t s, topo_face_t f, topo_wire_t w) {
   return -1;
 }
 
+// 实现函数
+TOPOCAPICALL int topo_solid_sweep_compound(topo_solid_t s, pnt3d_t **points,
+                                           int *point_counts, int curve_count,
+                                           int *curve_types,
+                                           topo_sweep_profile_t *profiles,
+                                           int profile_count, int corner_mode) {
+  try {
+    // 转换点数据
+    std::vector<std::vector<gp_Pnt>> cpp_points;
+    for (int i = 0; i < curve_count; i++) {
+      std::vector<gp_Pnt> curve_points;
+      for (int j = 0; j < point_counts[i]; j++) {
+        curve_points.push_back(
+            gp_Pnt(points[i][j].x, points[i][j].y, points[i][j].z));
+      }
+      cpp_points.push_back(curve_points);
+    }
+
+    // 转换曲线类型
+    std::vector<flywave::topo::solid::curve_type> cpp_curve_types;
+    for (int i = 0; i < curve_count; i++) {
+      switch (curve_types[i]) {
+      case CURVE_LINE:
+        cpp_curve_types.push_back(flywave::topo::solid::curve_type::line);
+        break;
+      case CURVE_THREE_POINT_ARC:
+        cpp_curve_types.push_back(
+            flywave::topo::solid::curve_type::three_point_arc);
+        break;
+      case CURVE_CIRCLE_CENTER_ARC:
+        cpp_curve_types.push_back(
+            flywave::topo::solid::curve_type::circle_center_arc);
+        break;
+      case CURVE_SPLINE:
+        cpp_curve_types.push_back(flywave::topo::solid::curve_type::spline);
+        break;
+      default:
+        return -1; // 无效曲线类型
+      }
+    }
+
+    std::vector<flywave::topo::solid::sweep_profile> cpp_profiles;
+    for (int i = 0; i < profile_count; i++) {
+      flywave::topo::solid::sweep_profile profile;
+      profile.profile = *profiles[i].profile->shp;
+      if (profiles[i].location != nullptr) {
+        profile.location = cast_to_topo(*profiles[i].location);
+      }
+      cpp_profiles.push_back(profile);
+    }
+
+    auto result = reinterpret_cast<flywave::topo::solid *>(s.shp)->sweep(
+        cpp_points, cpp_curve_types, cpp_profiles, corner_mode);
+
+    return result;
+  } catch (...) {
+    return -1; // 异常处理
+  }
+}
+
 int topo_solid_sweep(topo_solid_t s, topo_wire_t spine, topo_shape_t **profiles,
                      int count, int cornerMode) {
   try {
@@ -4478,9 +4535,9 @@ topo_compound_t topo_make_compound() {
           new topo_shape_t{.shp = std::make_shared<flywave::topo::compound>()}};
 }
 
-topo_compound_t  topo_make_text(const char *text, double size, const char *font,
-                                const char *fontPath, int kind, int halign,
-                                int valign, topo_plane_t *position) {
+topo_compound_t topo_make_text(const char *text, double size, const char *font,
+                               const char *fontPath, int kind, int halign,
+                               int valign, topo_plane_t *position) {
   try {
     auto cpp_plane =
         position ? position->plane : flywave::topo::topo_plane::named("XY");
@@ -4489,7 +4546,7 @@ topo_compound_t  topo_make_text(const char *text, double size, const char *font,
         static_cast<flywave::topo::font_kind>(kind),
         static_cast<flywave::topo::horizontal_align>(halign),
         static_cast<flywave::topo::vertical_align>(valign), cpp_plane);
-    return  topo_compound_t{
+    return topo_compound_t{
         .shp = new topo_shape_t{
             .shp = std::make_shared<flywave::topo::compound>(result)}};
   } catch (...) {
@@ -4498,16 +4555,16 @@ topo_compound_t  topo_make_text(const char *text, double size, const char *font,
 }
 
 topo_compound_t topo_make_text_with_spine(const char *text, double size,
-                                           topo_wire_t *spine, bool planar,
-                                           const char *font, const char *path,
-                                           int kind, int halign, int valign) {
+                                          topo_wire_t *spine, bool planar,
+                                          const char *font, const char *path,
+                                          int kind, int halign, int valign) {
   try {
     auto result = flywave::topo::compound::make_text(
         text, size, *cast_to_topo(*spine), planar, font ? font : "Arial",
         path ? path : "", static_cast<flywave::topo::font_kind>(kind),
         static_cast<flywave::topo::horizontal_align>(halign),
         static_cast<flywave::topo::vertical_align>(valign));
-    return  topo_compound_t{
+    return topo_compound_t{
         .shp = new topo_shape_t{
             .shp = std::make_shared<flywave::topo::compound>(result)}};
   } catch (...) {
@@ -4525,7 +4582,7 @@ topo_compound_t topo_make_text_with_spine_and_base(
         static_cast<flywave::topo::font_kind>(kind),
         static_cast<flywave::topo::horizontal_align>(halign),
         static_cast<flywave::topo::vertical_align>(valign));
-    return  topo_compound_t{
+    return topo_compound_t{
         .shp = new topo_shape_t{
             .shp = std::make_shared<flywave::topo::compound>(result)}};
   } catch (...) {
@@ -4534,10 +4591,10 @@ topo_compound_t topo_make_text_with_spine_and_base(
 }
 
 topo_compound_t topo_make_text_with_height(const char *text, double size,
-                                            double height, const char *font,
-                                            const char *fontPath, int kind,
-                                            int halign, int valign,
-                                            topo_plane_t *position) {
+                                           double height, const char *font,
+                                           const char *fontPath, int kind,
+                                           int halign, int valign,
+                                           topo_plane_t *position) {
   try {
     auto cpp_plane =
         position ? position->plane : flywave::topo::topo_plane::named("XY");
@@ -4546,7 +4603,7 @@ topo_compound_t topo_make_text_with_height(const char *text, double size,
         static_cast<flywave::topo::font_kind>(kind),
         static_cast<flywave::topo::horizontal_align>(halign),
         static_cast<flywave::topo::vertical_align>(valign), cpp_plane);
-    return  topo_compound_t{
+    return topo_compound_t{
         .shp = new topo_shape_t{
             .shp = std::make_shared<flywave::topo::compound>(result)}};
   } catch (...) {
@@ -5425,10 +5482,8 @@ topo_shape_t *step_get_topo_shape(const char *filename) {
   std::string f{filename};
   auto res = flywave::topo::read_shape_from_step(f);
   auto shp = std::make_shared<flywave::topo::shape>(res);
-   return new _topo_shape_t{
-        .shp = shp 
-    };
- }
+  return new _topo_shape_t{.shp = shp};
+}
 
 #ifdef __cplusplus
 }

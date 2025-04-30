@@ -1220,6 +1220,32 @@ TOPOCAPICALL int topo_solid_loft(topo_solid_t s, topo_shape_t **profiles,
 
 TOPOCAPICALL int topo_solid_pipe(topo_solid_t s, topo_face_t f, topo_wire_t w);
 
+// 在enum定义区域添加曲线类型枚举
+enum {
+  CURVE_LINE,
+  CURVE_THREE_POINT_ARC,
+  CURVE_CIRCLE_CENTER_ARC,
+  CURVE_SPLINE
+};
+
+// 定义扫掠剖面结构体
+typedef struct {
+  topo_shape_t *profile;
+  topo_vertex_t *location; // 可为NULL
+} topo_sweep_profile_t;
+
+// 添加函数声明
+TOPOCAPICALL int
+topo_solid_sweep_compound(topo_solid_t s,
+                          pnt3d_t **points,               // 二维点数组指针
+                          int *point_counts,              // 每个曲线的点数数组
+                          int curve_count,                // 曲线数量
+                          int *curve_types,               // 曲线类型数组
+                          topo_sweep_profile_t *profiles, // 剖面数组
+                          int profile_count,              // 剖面数量
+                          int corner_mode                 // 转角模式
+);
+
 TOPOCAPICALL int topo_solid_sweep(topo_solid_t s, topo_wire_t spine,
                                   topo_shape_t **profiles, int count,
                                   int cornerMode);
@@ -1331,21 +1357,20 @@ TOPOCAPICALL topo_shell_t *topo_solid_inner_shells(topo_solid_t s, int *count);
 TOPOCAPICALL topo_compound_t topo_make_compound();
 
 TOPOCAPICALL topo_compound_t topo_make_text(const char *text, double size,
-                                             const char *font,
-                                             const char *fontPath, int kind,
-                                             int halign, int valign,
-                                             topo_plane_t *position);
+                                            const char *font,
+                                            const char *fontPath, int kind,
+                                            int halign, int valign,
+                                            topo_plane_t *position);
 
-TOPOCAPICALL topo_compound_t 
-topo_make_text_with_spine(const char *text, double size, topo_wire_t *spine,
-                          bool planar, const char *font, const char *path,
-                          int kind, int halign, int valign);
+TOPOCAPICALL topo_compound_t topo_make_text_with_spine(
+    const char *text, double size, topo_wire_t *spine, bool planar,
+    const char *font, const char *path, int kind, int halign, int valign);
 
 TOPOCAPICALL topo_compound_t topo_make_text_with_spine_and_base(
     const char *text, double size, topo_wire_t *spine, topo_face_t *base,
     const char *font, const char *path, int kind, int halign, int valign);
 
-TOPOCAPICALL topo_compound_t 
+TOPOCAPICALL topo_compound_t
 topo_make_text_with_height(const char *text, double size, double height,
                            const char *font, const char *fontPath, int kind,
                            int halign, int valign, topo_plane_t *position);
