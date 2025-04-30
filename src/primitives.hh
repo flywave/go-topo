@@ -1560,14 +1560,14 @@ struct tunnel_well_params {
   double leftLength;                        // 左连接段长(mm)
   double leftWidth;                         // 左连接段宽(mm)
   double leftHeight;                        // 左连接段高/半径(mm)
-  double leftArchHeight;                    // 左连接段拱高(mm)
+  double leftArcHeight;                    // 左连接段拱高(mm)
 
   // 右连接段参数
   connection_section_style rightSectionType; // 右连接段截面形式
   double rightLength;                        // 右连接段长(mm)
   double rightWidth;                         // 右连接段宽(mm)
   double rightHeight;                        // 右连接段高/半径(mm)
-  double rightArchHeight;                    // 右连接段拱高(mm)
+  double rightArcHeight;                    // 右连接段拱高(mm)
 
   double outerWallThickness; // 井外壁厚(mm)
   double innerWallThickness; // 井内壁厚(mm)，仅竖井使用
@@ -1642,19 +1642,19 @@ struct three_way_well_params {
   double leftSectionLength;                  // 左侧连接段长(mm)
   double leftSectionWidth;                   // 左侧连接段宽(mm)
   double leftSectionHeight;                  // 左侧连接段高/半径(mm)
-  double leftSectionArchHeight;              // 左侧连接段拱高(mm)
+  double leftSectionArcHeight;              // 左侧连接段拱高(mm)
 
   connection_section_style rightSectionStyle; // 右侧连接段截面样式
   double rightSectionLength;                  // 右侧连接段长(mm)
   double rightSectionWidth;                   // 右侧连接段宽(mm)
   double rightSectionHeight;                  // 右侧连接段高/半径(mm)
-  double rightSectionArchHeight;              // 右侧连接段拱高(mm)
+  double rightSectionArcHeight;              // 右侧连接段拱高(mm)
 
   connection_section_style branchSectionStyle; // 支线连接段截面样式
   double branchSectionLength;                  // 支线连接段长(mm)
   double branchSectionWidth;                   // 支线连接段宽(mm)
   double branchSectionHeight;                  // 支线连接段高/半径(mm)
-  double branchSectionArchHeight;              // 支线连接段拱高(mm)
+  double branchSectionArcHeight;              // 支线连接段拱高(mm)
 
   // 壁厚参数
   double outerWallThickness; // 井外壁厚(mm)

@@ -9523,20 +9523,20 @@ TopoDS_Shape create_transition_section(const tunnel_well_params &params,
   // 计算实际使用的尺寸参数
   double leftWidth = params.leftWidth;
   double leftHeight = params.leftHeight;
-  double leftArchHeight = params.leftArchHeight;
+  double leftArcHeight = params.leftArcHeight;
   double rightWidth = params.rightWidth;
   double rightHeight = params.rightHeight;
-  double rightArchHeight = params.rightArchHeight;
+  double rightArcHeight = params.rightArcHeight;
   double heightOffset = 0;
 
   if (isOuter) {
     // 外轮廓需要加上壁厚
     leftWidth += 2 * params.outerWallThickness;
     leftHeight += 2 * params.outerWallThickness;
-    leftArchHeight += params.outerWallThickness;
+    leftArcHeight += params.outerWallThickness;
     rightWidth += 2 * params.outerWallThickness;
     rightHeight += 2 * params.outerWallThickness;
-    rightArchHeight += params.outerWallThickness;
+    rightArcHeight += params.outerWallThickness;
     heightOffset = -params.outerWallThickness;
   }
 
@@ -9555,9 +9555,9 @@ TopoDS_Shape create_transition_section(const tunnel_well_params &params,
   case connection_section_style::HORSESHOE: {
     double radius = leftWidth / 2;
     gp_Pnt startPoint(startX, -radius,
-                      leftHeight - leftArchHeight + heightOffset);
+                      leftHeight - leftArcHeight + heightOffset);
     gp_Pnt midPoint(startX, 0, leftHeight + heightOffset); // 拱顶中点
-    gp_Pnt endPoint(startX, radius, leftHeight - leftArchHeight + heightOffset);
+    gp_Pnt endPoint(startX, radius, leftHeight - leftArcHeight + heightOffset);
 
     // 使用三点法创建圆弧
     Handle(Geom_TrimmedCurve) arc =
@@ -9610,9 +9610,9 @@ TopoDS_Shape create_transition_section(const tunnel_well_params &params,
   case connection_section_style::HORSESHOE: {
     double radius = rightWidth / 2;
     gp_Pnt arcStart(endX, -radius,
-                    rightHeight - rightArchHeight + heightOffset);
+                    rightHeight - rightArcHeight + heightOffset);
     gp_Pnt arcMid(endX, 0, rightHeight + heightOffset); // 拱顶中点
-    gp_Pnt arcEnd(endX, radius, rightHeight - rightArchHeight + heightOffset);
+    gp_Pnt arcEnd(endX, radius, rightHeight - rightArcHeight + heightOffset);
 
     // 使用三点法创建圆弧
     Handle(Geom_TrimmedCurve) arc =
@@ -9739,7 +9739,7 @@ TopoDS_Shape create_straight_tunnel_well(const tunnel_well_params &params) {
   case connection_section_style::HORSESHOE:
     leftTunnel = create_horseshoe_section(
         params.leftLength, params.leftWidth, params.leftHeight,
-        params.leftArchHeight, params.outerWallThickness, true);
+        params.leftArcHeight, params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
     leftTunnel =
@@ -9766,7 +9766,7 @@ TopoDS_Shape create_straight_tunnel_well(const tunnel_well_params &params) {
   case connection_section_style::HORSESHOE:
     rightTunnel = create_horseshoe_section(
         params.rightLength, params.rightWidth, params.rightHeight,
-        params.rightArchHeight, params.outerWallThickness, true);
+        params.rightArcHeight, params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
     rightTunnel =
@@ -9796,7 +9796,7 @@ TopoDS_Shape create_straight_tunnel_well(const tunnel_well_params &params) {
   case connection_section_style::HORSESHOE:
     innerTunnel = create_horseshoe_section(
         params.leftLength, params.leftWidth, params.leftHeight,
-        params.leftArchHeight, params.outerWallThickness, false);
+        params.leftArcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerTunnel =
@@ -9818,7 +9818,7 @@ TopoDS_Shape create_straight_tunnel_well(const tunnel_well_params &params) {
   case connection_section_style::HORSESHOE:
     innerRightTunnel = create_horseshoe_section(
         params.rightLength, params.rightWidth, params.rightHeight,
-        params.rightArchHeight, params.outerWallThickness, false);
+        params.rightArcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerRightTunnel =
@@ -10555,7 +10555,7 @@ create_three_way_open_cut_tunnel(const three_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     leftTunnel = create_horseshoe_section(
         params.leftSectionLength, params.leftSectionWidth,
-        params.leftSectionHeight, params.leftSectionArchHeight,
+        params.leftSectionHeight, params.leftSectionArcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -10585,7 +10585,7 @@ create_three_way_open_cut_tunnel(const three_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     rightTunnel = create_horseshoe_section(
         params.rightSectionLength, params.rightSectionWidth,
-        params.rightSectionHeight, params.rightSectionArchHeight,
+        params.rightSectionHeight, params.rightSectionArcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -10614,7 +10614,7 @@ create_three_way_open_cut_tunnel(const three_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     branchTunnel = create_horseshoe_section(
         params.branchSectionLength, params.branchSectionWidth,
-        params.branchSectionHeight, params.branchSectionArchHeight,
+        params.branchSectionHeight, params.branchSectionArcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -10673,7 +10673,7 @@ create_three_way_open_cut_tunnel(const three_way_well_params &params) {
     innerLeftTunnel = create_horseshoe_section(
         params.leftSectionLength - params.outerWallThickness,
         params.leftSectionWidth, params.leftSectionHeight,
-        params.leftSectionArchHeight, params.outerWallThickness, false);
+        params.leftSectionArcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerLeftTunnel = create_circular_section(
@@ -10699,7 +10699,7 @@ create_three_way_open_cut_tunnel(const three_way_well_params &params) {
     innerRightTunnel = create_horseshoe_section(
         params.rightSectionLength - params.outerWallThickness,
         params.rightSectionWidth, params.rightSectionHeight,
-        params.rightSectionArchHeight, params.outerWallThickness, false);
+        params.rightSectionArcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerRightTunnel = create_circular_section(
@@ -10729,7 +10729,7 @@ create_three_way_open_cut_tunnel(const three_way_well_params &params) {
     innerBranchTunnel = create_horseshoe_section(
         params.branchSectionLength - params.outerWallThickness,
         params.branchSectionWidth, params.branchSectionHeight,
-        params.branchSectionArchHeight, params.outerWallThickness, false);
+        params.branchSectionArcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerBranchTunnel = create_circular_section(
@@ -10988,7 +10988,7 @@ create_three_way_underground_tunnel(const three_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     leftTunnel = create_horseshoe_section(
         params.leftSectionLength, params.leftSectionWidth,
-        params.leftSectionHeight, params.leftSectionArchHeight,
+        params.leftSectionHeight, params.leftSectionArcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -11018,7 +11018,7 @@ create_three_way_underground_tunnel(const three_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     rightTunnel = create_horseshoe_section(
         params.rightSectionLength, params.rightSectionWidth,
-        params.rightSectionHeight, params.rightSectionArchHeight,
+        params.rightSectionHeight, params.rightSectionArcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -11047,7 +11047,7 @@ create_three_way_underground_tunnel(const three_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     branchTunnel = create_horseshoe_section(
         params.branchSectionLength, params.branchSectionWidth,
-        params.branchSectionHeight, params.branchSectionArchHeight,
+        params.branchSectionHeight, params.branchSectionArcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -11108,7 +11108,7 @@ create_three_way_underground_tunnel(const three_way_well_params &params) {
     innerLeftTunnel = create_horseshoe_section(
         params.leftSectionLength - params.outerWallThickness,
         params.leftSectionWidth, params.leftSectionHeight,
-        params.leftSectionArchHeight, params.outerWallThickness, false);
+        params.leftSectionArcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerLeftTunnel = create_circular_section(
@@ -11134,7 +11134,7 @@ create_three_way_underground_tunnel(const three_way_well_params &params) {
     innerRightTunnel = create_horseshoe_section(
         params.rightSectionLength - params.outerWallThickness,
         params.rightSectionWidth, params.rightSectionHeight,
-        params.rightSectionArchHeight, params.outerWallThickness, false);
+        params.rightSectionArcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerRightTunnel = create_circular_section(
@@ -11164,7 +11164,7 @@ create_three_way_underground_tunnel(const three_way_well_params &params) {
     innerBranchTunnel = create_horseshoe_section(
         params.branchSectionLength - params.outerWallThickness,
         params.branchSectionWidth, params.branchSectionHeight,
-        params.branchSectionArchHeight, params.outerWallThickness, false);
+        params.branchSectionArcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerBranchTunnel = create_circular_section(
@@ -11250,7 +11250,7 @@ create_three_way_double_shaft_tunnel(const three_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     leftTunnel = create_horseshoe_section(
         params.leftSectionLength, params.leftSectionWidth,
-        params.leftSectionHeight, params.leftSectionArchHeight,
+        params.leftSectionHeight, params.leftSectionArcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -11280,7 +11280,7 @@ create_three_way_double_shaft_tunnel(const three_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     rightTunnel = create_horseshoe_section(
         params.rightSectionLength, params.rightSectionWidth,
-        params.rightSectionHeight, params.rightSectionArchHeight,
+        params.rightSectionHeight, params.rightSectionArcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -11309,7 +11309,7 @@ create_three_way_double_shaft_tunnel(const three_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     branchLeftTunnel = create_horseshoe_section(
         params.branchSectionLength, params.branchSectionWidth,
-        params.branchSectionHeight, params.branchSectionArchHeight,
+        params.branchSectionHeight, params.branchSectionArcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -11352,7 +11352,7 @@ create_three_way_double_shaft_tunnel(const three_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     branchRightTunnel = create_horseshoe_section(
         params.branchSectionLength, params.branchSectionWidth,
-        params.branchSectionHeight, params.branchSectionArchHeight,
+        params.branchSectionHeight, params.branchSectionArcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -11417,7 +11417,7 @@ create_three_way_double_shaft_tunnel(const three_way_well_params &params) {
     innerLeftTunnel = create_horseshoe_section(
         params.leftSectionLength - params.outerWallThickness,
         params.leftSectionWidth, params.leftSectionHeight,
-        params.leftSectionArchHeight, params.outerWallThickness, false);
+        params.leftSectionArcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerLeftTunnel = create_circular_section(
@@ -11443,7 +11443,7 @@ create_three_way_double_shaft_tunnel(const three_way_well_params &params) {
     innerRightTunnel = create_horseshoe_section(
         params.rightSectionLength - params.outerWallThickness,
         params.rightSectionWidth, params.rightSectionHeight,
-        params.rightSectionArchHeight, params.outerWallThickness, false);
+        params.rightSectionArcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerRightTunnel = create_circular_section(
@@ -11473,7 +11473,7 @@ create_three_way_double_shaft_tunnel(const three_way_well_params &params) {
     innerLeftBranchTunnel = create_horseshoe_section(
         params.branchSectionLength - params.outerWallThickness,
         params.branchSectionWidth, params.branchSectionHeight,
-        params.branchSectionArchHeight, params.outerWallThickness, false);
+        params.branchSectionArcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerLeftBranchTunnel = create_circular_section(
@@ -11512,7 +11512,7 @@ create_three_way_double_shaft_tunnel(const three_way_well_params &params) {
     innerRightBranchTunnel = create_horseshoe_section(
         params.branchSectionLength - params.outerWallThickness,
         params.branchSectionWidth, params.branchSectionHeight,
-        params.branchSectionArchHeight, params.outerWallThickness, false);
+        params.branchSectionArcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerRightBranchTunnel = create_circular_section(
