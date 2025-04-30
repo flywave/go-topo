@@ -1720,7 +1720,7 @@ struct four_way_well_params {
     double length;                        // 连接段长
     double width;                         // 连接段宽
     double height;                        // 高度/半径
-    double archHeight;                    // 拱高
+    double arcHeight;                     // 拱高
   } leftSection, rightSection, branchSection1, branchSection2;
 
   // 壁厚参数
@@ -1810,7 +1810,7 @@ struct cable_tunnel_params {
   // 马蹄形隧道参数
   double outerWallThickness; // 外壁厚 T (mm)
   double innerWallThickness; // 内壁厚 T1 (mm)
-  double archHeight;         // 拱高 H4 (mm)
+  double arcHeight;          // 拱高 H4 (mm)
 
   // 圆形隧道参数
   double bottomPlatformHeight; // 底部平台高 H5 (mm)
@@ -1847,7 +1847,7 @@ struct cable_tray_params {
   double width;          // 桥架宽 W (mm)
   double height;         // 桥架高 H (mm)
   double topPlateHeight; // 桥顶板高 H1 (mm)
-  double archHeight;     // 桥拱高 H2 (mm)
+  double arcHeight;      // 桥拱高 H2 (mm)
   double wallThickness;  // 桥架壁厚 TQ (mm)
 
   // 排管参数
@@ -2134,6 +2134,53 @@ TopoDS_Shape create_cable_ray(const cable_ray_params &params,
                               const gp_Pnt &position,
                               const gp_Dir &direction = gp::DZ(),
                               const gp_Dir &xDir = gp::DX());
+
+/**
+ * @brief 截面样式枚举
+ */
+enum class water_tunnel_section_style {
+  RECTANGULAR = 1, // 矩形
+  CITYOPENING = 2, // 城市洞形
+  CIRCULAR = 3,    // 圆形
+  HORSESHOE = 4,   // 马蹄形
+};
+
+// Water Tunnel
+struct water_tunnel_params {
+  water_tunnel_section_style style; // 截面样式
+
+  // 基本尺寸参数
+  double width;  // 内净宽/内径 W (mm)
+  double height; // 内净高 H (mm)
+
+  // 矩形隧道参数
+  double topThickness;    // 顶板厚 H1 (mm)
+  double bottomThickness; // 底板厚 H2 (mm)
+
+  // 城市洞形隧道参数 （拱半径和拱高只需要提供一个）
+  double outerWallThickness; // 外壁厚 T (mm)
+  double innerWallThickness; // 内壁厚 T1 (mm)
+  double arcHeight;          // 拱高 H4 (mm)
+  double arcRadius;          // 拱半径 R (mm)
+
+  // 马蹄形隧道参数
+  double arcAngle; // 拱角 α (°)
+
+  // 圆形隧道参数
+  double bottomPlatformHeight; // 底部平台高 H5 (mm)
+
+  // 通用参数
+  double cushionExtension; // 垫层滋出 W2 (mm)
+  double cushionThickness; // 垫层厚 H3 (mm)
+
+  std::vector<channel_point> points;
+};
+
+TopoDS_Shape create_water_tunnel(const water_tunnel_params &params);
+TopoDS_Shape create_water_tunnel(const water_tunnel_params &params,
+                                 const gp_Pnt &position,
+                                 const gp_Dir &direction = gp::DZ(),
+                                 const gp_Dir &xDir = gp::DX());
 
 } // namespace topo
 } // namespace flywave

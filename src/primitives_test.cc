@@ -272,7 +272,7 @@ void test_make_rectangular_ring() {
     // 测试默认参数创建
     auto shp =
         create_rectangular_ring(rectangular_ring_params{.tubeRadius = 5.0,
-                                                        .filletRadius = 15.0,
+                                                        .filletRadius = 0.0,
                                                         .length = 100.0,
                                                         .width = 80.0});
     if (shp.IsNull()) {
@@ -280,6 +280,18 @@ void test_make_rectangular_ring() {
       return;
     }
     test_export_shape(shp, "./rectangular_ring.stl");
+
+    // 测试默认参数创建
+    auto shp2 =
+        create_rectangular_ring(rectangular_ring_params{.tubeRadius = 5.0,
+                                                        .filletRadius = 15.0,
+                                                        .length = 100.0,
+                                                        .width = 80.0});
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create rectangular ring" << std::endl;
+      return;
+    }
+    test_export_shape(shp2, "./rectangular_ring_round.stl");
 
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
@@ -3313,7 +3325,7 @@ void test_make_four_way_open_cut_tunnel() {
                 .length = 60.0,
                 .width = 80.0,
                 .height = 90.0,
-                .archHeight = 15.0,
+                .arcHeight = 15.0,
             },
         .rightSection =
             {
@@ -3321,7 +3333,7 @@ void test_make_four_way_open_cut_tunnel() {
                 .length = 60.0,
                 .width = 80.0,
                 .height = 90.0,
-                .archHeight = 15.0,
+                .arcHeight = 15.0,
             },
         .branchSection1 =
             {
@@ -3329,7 +3341,7 @@ void test_make_four_way_open_cut_tunnel() {
                 .length = 80.0,
                 .width = 80.0,
                 .height = 50.0,
-                .archHeight = 15.0,
+                .arcHeight = 15.0,
             },
         .branchSection2 =
             {
@@ -3337,7 +3349,7 @@ void test_make_four_way_open_cut_tunnel() {
                 .length = 80.0,
                 .width = 80.0,
                 .height = 50.0,
-                .archHeight = 15.0,
+                .arcHeight = 15.0,
             },
         .outerWallThickness = 5.0,
         .innerWallThickness = 3.0,
@@ -3377,7 +3389,7 @@ void test_make_four_way_underground_tunnel() {
                 .length = 60.0,
                 .width = 80.0,
                 .height = 90.0,
-                .archHeight = 15.0,
+                .arcHeight = 15.0,
             },
         .rightSection =
             {
@@ -3385,7 +3397,7 @@ void test_make_four_way_underground_tunnel() {
                 .length = 60.0,
                 .width = 80.0,
                 .height = 90.0,
-                .archHeight = 15.0,
+                .arcHeight = 15.0,
             },
         .branchSection1 =
             {
@@ -3393,7 +3405,7 @@ void test_make_four_way_underground_tunnel() {
                 .length = 80.0,
                 .width = 80.0,
                 .height = 50.0,
-                .archHeight = 15.0,
+                .arcHeight = 15.0,
             },
         .branchSection2 =
             {
@@ -3401,7 +3413,7 @@ void test_make_four_way_underground_tunnel() {
                 .length = 80.0,
                 .width = 80.0,
                 .height = 50.0,
-                .archHeight = 15.0,
+                .arcHeight = 15.0,
             },
         .outerWallThickness = 5.0,
         .innerWallThickness = 3.0,
@@ -3585,7 +3597,7 @@ void test_make_cable_tunnel() {
         .height = 70.0,            // 700→70
         .outerWallThickness = 4.0, // 40→4
         .innerWallThickness = 3.0, // 30→3
-        .archHeight = 12.0,        // 100→10
+        .arcHeight = 12.0,         // 100→10
         .cushionExtension = 5.0,   // 90→9
         .cushionThickness = 7.0,   // 70→7
         .points = points};
@@ -3643,7 +3655,7 @@ void test_make_cable_tray() {
         .width = 60.0,
         .height = 30.0,
         .topPlateHeight = 5.0,
-        .archHeight = 55.0,
+        .arcHeight = 55.0,
         .wallThickness = 3.0,
         .pipeCount = 3,
         .pipePositions = {gp_Pnt2d(-20, 15), gp_Pnt2d(0, 15), gp_Pnt2d(20, 15)},
@@ -3681,7 +3693,7 @@ void test_make_cable_tray() {
         .width = 60.0,
         .height = 30.0,
         .topPlateHeight = 5.0,
-        .archHeight = 15.0,
+        .arcHeight = 15.0,
         .wallThickness = 3.0,
         .pipeCount = 3,
         .pipePositions = {gp_Pnt2d(-20, 15), gp_Pnt2d(0, 15), gp_Pnt2d(20, 15)},
@@ -4012,8 +4024,8 @@ void test_make_ventilation_pavilion() {
         .middleWidth = 250.0,  // 中部宽度250mm
         .bottomWidth = 350.0,  // 底宽350mm
         .topHeight = 50.0,     // 顶高50mm
-        .height =  150.0,       // 总高300mm
-        .baseHeight = 30.0    // 基础高100mm
+        .height = 150.0,       // 总高300mm
+        .baseHeight = 30.0     // 基础高100mm
     });
 
     if (shp.IsNull()) {
@@ -4231,6 +4243,84 @@ void test_make_cable_ray() {
   }
 }
 
+void test_water_tunnel() {
+  std::cout << "\n=== Testing Water Tunnel ===" << std::endl;
+
+  // 准备测试点集
+  std::vector<channel_point> points{
+      {gp_Pnt(0, 0, 0), 1}, {gp_Pnt(100, 0, 0), 1}, {gp_Pnt(100, 100, 0), 1}};
+
+  // 测试矩形截面隧道 (所有尺寸参数缩小10倍)
+  try {
+    water_tunnel_params rect_params{.style =
+                                        water_tunnel_section_style::RECTANGULAR,
+                                    .width = 60.0,           // 600→60
+                                    .height = 80.0,          // 800→80
+                                    .topThickness = 5.0,     // 50→5
+                                    .bottomThickness = 6.0,  // 60→6
+                                    .cushionExtension = 5.0, // 100→10
+                                    .cushionThickness = 8.0, // 80→8
+                                    .points = points};
+
+    auto rect_shp = create_water_tunnel(rect_params);
+    if (rect_shp.IsNull()) {
+      std::cerr << "Error: Failed to create rectangular water tunnel"
+                << std::endl;
+    } else {
+      test_export_shape(rect_shp, "./rectangular_water_tunnel.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+
+  // 测试马蹄形截面隧道 (所有尺寸参数缩小10倍)
+  try {
+    water_tunnel_params horseshoe_params{
+        .style = water_tunnel_section_style::HORSESHOE,
+        .width = 50.0,             // 500→50
+        .height = 70.0,            // 700→70
+        .outerWallThickness = 4.0, // 40→4
+        .innerWallThickness = 3.0, // 30→3
+        .arcHeight = 12.0,         // 100→10
+        .arcAngle = 120.0,         // 120度
+        .cushionExtension = 5.0,   // 90→9
+        .cushionThickness = 7.0,   // 70→7
+        .points = points};
+
+    auto horseshoe_shp = create_water_tunnel(horseshoe_params);
+    if (horseshoe_shp.IsNull()) {
+      std::cerr << "Error: Failed to create horseshoe water tunnel"
+                << std::endl;
+    } else {
+      test_export_shape(horseshoe_shp, "./horseshoe_water_tunnel.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+
+  // 测试圆形截面隧道 (所有尺寸参数缩小10倍)
+  try {
+    water_tunnel_params circular_params{
+        .style = water_tunnel_section_style::CIRCULAR,
+        .width = 60.0,                // 600→60
+        .height = 60.0,               // 600→60
+        .outerWallThickness = 7.0,    // 70→7
+        .bottomPlatformHeight = 10.0, // 100→10
+        .cushionExtension = 0.0,      // 80→8
+        .cushionThickness = 0.0,      // 60→6
+        .points = points};
+
+    auto circular_shp = create_water_tunnel(circular_params);
+    if (circular_shp.IsNull()) {
+      std::cerr << "Error: Failed to create circular water tunnel" << std::endl;
+    } else {
+      test_export_shape(circular_shp, "./circular_water_tunnel.stl");
+    }
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
 int main() {
   // 变电
   test_make_sphere();
@@ -4334,5 +4424,7 @@ int main() {
   test_make_pipe_support();
   test_make_cover_plate();
   test_make_cable_ray();
+  //水利
+  test_water_tunnel();
   return 0;
 }

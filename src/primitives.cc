@@ -823,6 +823,7 @@ TopoDS_Shape create_rectangular_ring(const rectangular_ring_params &params) {
   }
   // 创建带精确圆角的矩形路径
   BRepBuilderAPI_MakeWire pathWire;
+  BRepBuilderAPI_TransitionMode mode = BRepBuilderAPI_Transformed;
 
   // 定义基准角点（修正坐标系）
   const gp_Pnt base_points[4] = {
@@ -893,6 +894,7 @@ TopoDS_Shape create_rectangular_ring(const rectangular_ring_params &params) {
       pathWire.Add(
           BRepBuilderAPI_MakeEdge(base_points[i], base_points[next_i]).Edge());
     }
+    mode = BRepBuilderAPI_RightCorner;
   }
 
   // 创建圆形截面（修正截面方向）
@@ -909,8 +911,8 @@ TopoDS_Shape create_rectangular_ring(const rectangular_ring_params &params) {
   // 执行扫掠（增强容错处理）
   BRepOffsetAPI_MakePipeShell pipeMaker(pathWire.Wire());
   pipeMaker.Add(sectionWire);
-  pipeMaker.SetMode(Standard_True);                        // Frenet框架
-  pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed); // 设置圆角过渡模式
+  pipeMaker.SetMode(Standard_True);  // Frenet框架
+  pipeMaker.SetTransitionMode(mode); // 设置圆角过渡模式
   pipeMaker.Build();
 
   if (!pipeMaker.IsDone()) {
@@ -2056,7 +2058,7 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
       gp_Ax2 cylinderAxis(segment_start, gp_Dir(segment_vec));
       TopoDS_Shape cylinder =
           BRepPrimAPI_MakeCylinder(cylinderAxis,
-                                   params.radius, // 使用绝缘子半径参数
+                                   params.radius,          // 使用绝缘子半径参数
                                    segment_vec.Magnitude() // 实际长度
                                    )
               .Shape();
@@ -2119,9 +2121,9 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
 
     // 创建连接盒（参数顺序：X长度，Y长度，Z长度）
     BRepPrimAPI_MakeBox connector_box(box_axis,
-                                      box_x_length, // X方向尺寸（沿全局X轴）
+                                      box_x_length,    // X方向尺寸（沿全局X轴）
                                       box_y_thickness, // Y方向尺寸（沿全局Y轴）
-                                      box_z_height // Z方向尺寸（沿全局Z轴）
+                                      box_z_height     // Z方向尺寸（沿全局Z轴）
     );
 
     connector_box.Build();
@@ -2236,7 +2238,7 @@ TopoDS_Shape create_terminal_block(const terminal_block_params &params) {
 
       // 创建穿透孔洞（Y方向完全穿透）
       gp_Ax2 holeAxis(gp_Pnt(x, -params.thickness, z), // 起始于底面（Y=0）
-                      gp_Dir(0, 1, 0) // 沿Y轴方向（厚度方向）
+                      gp_Dir(0, 1, 0)                  // 沿Y轴方向（厚度方向）
       );
       BRepPrimAPI_MakeCylinder holeMaker(holeAxis, params.holeRadius,
                                          params.thickness * 2 // 确保完全穿透
@@ -2821,9 +2823,9 @@ TopoDS_Shape create_curve_cable(const curve_cable_params &params) {
 
   // 使用扫掠器自动计算坐标系（添加Frenet模式）
   BRepOffsetAPI_MakePipeShell pipeMaker(pathMaker.Wire());
-  pipeMaker.SetMode(true);      // 设置为实体模式
-  pipeMaker.SetMaxDegree(5);    // 提高最大阶数以适应复杂曲率
-  pipeMaker.SetTolerance(1e-5); // 放宽容差适应复杂路径
+  pipeMaker.SetMode(true);                   // 设置为实体模式
+  pipeMaker.SetMaxDegree(5);                 // 提高最大阶数以适应复杂曲率
+  pipeMaker.SetTolerance(1e-5);              // 放宽容差适应复杂路径
   pipeMaker.SetForceApproxC1(Standard_True); // 强制C1连续近似
 
   // 创建动态调整的圆形截面（直径始终垂直于路径）
@@ -2988,16 +2990,16 @@ TopoDS_Wire create_ibeam_profile(double height, double flangeWidth,
   gp_Pnt p12(0, -halfFlangeWidth, 0);
 
   // 构建轮廓线（按顺序连接所有点）
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p1).Edge()); // 下翼缘
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge()); // 右下翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge()); // 右下腹板水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge()); // 右腹板垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge()); // 右上腹板水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge()); // 右上翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge()); // 上翼缘
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge()); // 左上翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p9).Edge()); // 左上腹板水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge()); // 左腹板垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p1).Edge());  // 下翼缘
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());   // 右下翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());   // 右下腹板水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());   // 右腹板垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());   // 右上腹板水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge());   // 右上翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge());   // 上翼缘
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge());   // 左上翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p9).Edge());   // 左上腹板水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge());  // 左腹板垂直段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p11).Edge()); // 左下腹板水平段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p12).Edge()); // 左下翼缘垂直段
 
@@ -3219,17 +3221,17 @@ TopoDS_Wire create_t_steel_profile(double height, double width,
   gp_Pnt p11(0, halfWidth, 0);                // 右侧端点
 
   // 构建完整轮廓（顺时针连接）
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge()); // 底部中心→左
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge()); // 腹板左侧垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p9).Edge()); // 新增：左侧翼缘连接
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p8).Edge()); // 左侧翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p4).Edge()); // 顶部翼缘左段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge()); // 腹板顶部水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p11).Edge()); // 顶部翼缘右段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());   // 底部中心→左
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());   // 腹板左侧垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p9).Edge());   // 新增：左侧翼缘连接
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p8).Edge());   // 左侧翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p4).Edge());   // 顶部翼缘左段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());   // 腹板顶部水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p11).Edge());  // 顶部翼缘右段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p10).Edge()); // 右侧翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p6).Edge()); // 新增：右侧翼缘连接
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge()); // 腹板右侧垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p1).Edge()); // 底部右侧→中心
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p6).Edge());  // 新增：右侧翼缘连接
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge());   // 腹板右侧垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p1).Edge());   // 底部右侧→中心
 
   if (!wireMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to create T-steel profile");
@@ -6726,7 +6728,7 @@ create_single_hook_anchor(const single_hook_anchor_params &params) {
       // 定义截面坐标系：Z轴沿路径切线，Y轴垂直圆弧平面
       sectionAxis = gp_Ax2(arcStart,
                            tangent.Normalized(), // 截面Z轴沿路径方向
-                           gp_Dir(0, 0, 1)); // Y轴垂直圆弧平面（YZ平面）
+                           gp_Dir(0, 0, 1));     // Y轴垂直圆弧平面（YZ平面）
     }
 
     // 创建截面圆（直径参数验证）
@@ -9463,23 +9465,23 @@ TopoDS_Shape create_circular_section(double length, double radius,
  * @param length 长度（X方向）
  * @param width 宽度（Y方向）
  * @param height 高度（Z方向）
- * @param archHeight 拱高
+ * @param arcHeight 拱高
  * @param wallThickness 壁厚
  * @param isOuter 是否创建外壁
  * @return TopoDS_Shape 连接段形状
  */
 TopoDS_Shape create_horseshoe_section(double length, double width,
-                                      double height, double archHeight,
+                                      double height, double arcHeight,
                                       double wallThickness, bool isOuter) {
   // 计算尺寸参数
   double halfWidth = width / 2.0;
-  double baseHeight = height - archHeight;
+  double baseHeight = height - arcHeight;
   double heightOffset = 0;
 
   if (isOuter) {
     halfWidth += wallThickness;
     baseHeight += wallThickness;
-    archHeight += wallThickness;
+    arcHeight += wallThickness;
     heightOffset = -wallThickness;
   }
 
@@ -9497,7 +9499,7 @@ TopoDS_Shape create_horseshoe_section(double length, double width,
 
   // 顶部圆弧 (使用三点构造圆弧)
   gp_Pnt arcStart(0, halfWidth, baseHeight + heightOffset);
-  gp_Pnt arcMid(0, 0, baseHeight + archHeight + heightOffset); // 拱顶中点
+  gp_Pnt arcMid(0, 0, baseHeight + arcHeight + heightOffset); // 拱顶中点
   gp_Pnt arcEnd(0, -halfWidth, baseHeight + heightOffset);
 
   Handle(Geom_TrimmedCurve) topArc =
@@ -10089,7 +10091,7 @@ TopoDS_Shape create_three_way_round_working_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset); // 支线段左上角点
+                  zoffset);                                  // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
 
   // 4. 计算圆弧关键点（精确几何关系）
@@ -10200,7 +10202,7 @@ TopoDS_Shape create_three_way_corner_working_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset); // 支线段左上角点
+                  zoffset);                                  // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
 
   const gp_Pnt leftStart(-halfWidth1 - cornerLength, halfWidth, zoffset);
@@ -10820,10 +10822,10 @@ TopoDS_Shape create_three_way_circle_well_part(double length, double width,
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset); // 支线段左上角点
+                  zoffset);                                  // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
-  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset); // 支线段左下角点
-  const gp_Pnt p10(halfWidth1, halfWidth, zoffset); // 支线段右下角点
+  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset);          // 支线段左下角点
+  const gp_Pnt p10(halfWidth1, halfWidth, zoffset);          // 支线段右下角点
 
   // 7. 构建完整线框（确保拓扑闭合）
   BRepBuilderAPI_MakeWire wireMaker;
@@ -10887,10 +10889,10 @@ TopoDS_Shape create_three_way_rectangular_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset); // 支线段左上角点
+                  zoffset);                                  // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右上角点
-  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset); // 支线段左下角点
-  const gp_Pnt p10(halfWidth1, halfWidth, zoffset); // 支线段右下角点
+  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset);          // 支线段左下角点
+  const gp_Pnt p10(halfWidth1, halfWidth, zoffset);          // 支线段右下角点
 
   // 7. 构建完整线框（确保拓扑闭合）
   BRepBuilderAPI_MakeWire wireMaker;
@@ -11626,7 +11628,7 @@ TopoDS_Shape create_four_way_round_working_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset); // 支线段左上角点
+                  zoffset);                                  // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
 
   // 4. 定义支线段2端点（下方）
@@ -11996,7 +11998,7 @@ create_four_way_open_cut_tunnel(const four_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     leftTunnel = create_horseshoe_section(
         params.leftSection.length, params.leftSection.width,
-        params.leftSection.height, params.leftSection.archHeight,
+        params.leftSection.height, params.leftSection.arcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -12026,7 +12028,7 @@ create_four_way_open_cut_tunnel(const four_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     rightTunnel = create_horseshoe_section(
         params.rightSection.length, params.rightSection.width,
-        params.rightSection.height, params.rightSection.archHeight,
+        params.rightSection.height, params.rightSection.arcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -12055,7 +12057,7 @@ create_four_way_open_cut_tunnel(const four_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     branch1Tunnel = create_horseshoe_section(
         params.branchSection1.length, params.branchSection1.width,
-        params.branchSection1.height, params.branchSection1.archHeight,
+        params.branchSection1.height, params.branchSection1.arcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -12095,7 +12097,7 @@ create_four_way_open_cut_tunnel(const four_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     branch2Tunnel = create_horseshoe_section(
         params.branchSection2.length, params.branchSection2.width,
-        params.branchSection2.height, params.branchSection2.archHeight,
+        params.branchSection2.height, params.branchSection2.arcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -12156,7 +12158,7 @@ create_four_way_open_cut_tunnel(const four_way_well_params &params) {
     innerLeftTunnel = create_horseshoe_section(
         params.leftSection.length - params.outerWallThickness,
         params.leftSection.width, params.leftSection.height,
-        params.leftSection.archHeight, params.outerWallThickness, false);
+        params.leftSection.arcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerLeftTunnel = create_circular_section(
@@ -12182,7 +12184,7 @@ create_four_way_open_cut_tunnel(const four_way_well_params &params) {
     innerRightTunnel = create_horseshoe_section(
         params.rightSection.length - params.outerWallThickness,
         params.rightSection.width, params.rightSection.height,
-        params.rightSection.archHeight, params.outerWallThickness, false);
+        params.rightSection.arcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerRightTunnel = create_circular_section(
@@ -12212,7 +12214,7 @@ create_four_way_open_cut_tunnel(const four_way_well_params &params) {
     innerBranch1Tunnel = create_horseshoe_section(
         params.branchSection1.length - params.outerWallThickness,
         params.branchSection1.width, params.branchSection1.height,
-        params.branchSection1.archHeight, params.outerWallThickness, false);
+        params.branchSection1.arcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerBranch1Tunnel = create_circular_section(
@@ -12252,7 +12254,7 @@ create_four_way_open_cut_tunnel(const four_way_well_params &params) {
     innerBranch2Tunnel = create_horseshoe_section(
         params.branchSection2.length - params.outerWallThickness,
         params.branchSection2.width, params.branchSection2.height,
-        params.branchSection2.archHeight, params.outerWallThickness, false);
+        params.branchSection2.arcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerBranch2Tunnel = create_circular_section(
@@ -12446,7 +12448,7 @@ create_four_way_underground_tunnel(const four_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     leftTunnel = create_horseshoe_section(
         params.leftSection.length, params.leftSection.width,
-        params.leftSection.height, params.leftSection.archHeight,
+        params.leftSection.height, params.leftSection.arcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -12476,7 +12478,7 @@ create_four_way_underground_tunnel(const four_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     rightTunnel = create_horseshoe_section(
         params.rightSection.length, params.rightSection.width,
-        params.rightSection.height, params.rightSection.archHeight,
+        params.rightSection.height, params.rightSection.arcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -12505,7 +12507,7 @@ create_four_way_underground_tunnel(const four_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     branch1Tunnel = create_horseshoe_section(
         params.branchSection1.length, params.branchSection1.width,
-        params.branchSection1.height, params.branchSection1.archHeight,
+        params.branchSection1.height, params.branchSection1.arcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -12545,7 +12547,7 @@ create_four_way_underground_tunnel(const four_way_well_params &params) {
   case connection_section_style::HORSESHOE:
     branch2Tunnel = create_horseshoe_section(
         params.branchSection2.length, params.branchSection2.width,
-        params.branchSection2.height, params.branchSection2.archHeight,
+        params.branchSection2.height, params.branchSection2.arcHeight,
         params.outerWallThickness, true);
     break;
   case connection_section_style::CIRCULAR:
@@ -12594,7 +12596,7 @@ create_four_way_underground_tunnel(const four_way_well_params &params) {
     innerLeftTunnel = create_horseshoe_section(
         params.leftSection.length - params.outerWallThickness,
         params.leftSection.width, params.leftSection.height,
-        params.leftSection.archHeight, params.outerWallThickness, false);
+        params.leftSection.arcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerLeftTunnel = create_circular_section(
@@ -12620,7 +12622,7 @@ create_four_way_underground_tunnel(const four_way_well_params &params) {
     innerRightTunnel = create_horseshoe_section(
         params.rightSection.length - params.outerWallThickness,
         params.rightSection.width, params.rightSection.height,
-        params.rightSection.archHeight, params.outerWallThickness, false);
+        params.rightSection.arcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerRightTunnel = create_circular_section(
@@ -12650,7 +12652,7 @@ create_four_way_underground_tunnel(const four_way_well_params &params) {
     innerBranch1Tunnel = create_horseshoe_section(
         params.branchSection1.length - params.outerWallThickness,
         params.branchSection1.width, params.branchSection1.height,
-        params.branchSection1.archHeight, params.outerWallThickness, false);
+        params.branchSection1.arcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerBranch1Tunnel = create_circular_section(
@@ -12690,7 +12692,7 @@ create_four_way_underground_tunnel(const four_way_well_params &params) {
     innerBranch2Tunnel = create_horseshoe_section(
         params.branchSection2.length - params.outerWallThickness,
         params.branchSection2.width, params.branchSection2.height,
-        params.branchSection2.archHeight, params.outerWallThickness, false);
+        params.branchSection2.arcHeight, params.outerWallThickness, false);
     break;
   case connection_section_style::CIRCULAR:
     innerBranch2Tunnel = create_circular_section(
@@ -13339,7 +13341,7 @@ TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params) {
     double outerRadius = outerWidth / 2;
     double outerHeight =
         params.height + params.outerWallThickness + params.innerWallThickness;
-    double outerArchHeight = params.archHeight + params.outerWallThickness +
+    double outerArchHeight = params.arcHeight + params.outerWallThickness +
                              params.innerWallThickness;
 
     // 底部点
@@ -13419,7 +13421,7 @@ TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params) {
     // 马蹄形截面 - 内部轮廓
     double innerRadius = params.width / 2;
     double innerHeight = params.height;
-    double innerArchHeight = params.archHeight;
+    double innerArchHeight = params.arcHeight;
 
     // 底部点
     gp_Pnt bottomLeft(0, -innerRadius, 0);
@@ -13756,7 +13758,7 @@ TopoDS_Shape create_cable_tray(const cable_tray_params &params) {
         gp_Pnt arcMidPoint((startPoint.X() + endPoint.X()) / 2,
                            (startPoint.Y() + endPoint.Y()) / 2,
                            (startPoint.Z() + endPoint.Z()) / 2 + params.height +
-                               params.archHeight);
+                               params.arcHeight);
 
         // 创建拱形起点和终点（高度增加桥架高度）
         gp_Pnt arcStartPoint(startPoint.X(), startPoint.Y(),
@@ -15467,6 +15469,463 @@ TopoDS_Shape create_cable_ray(const cable_ray_params &params,
   transformation.SetTransformation(targetAx3, sourceAx3);
 
   BRepBuilderAPI_Transform transform(trough, transformation);
+  return transform.Shape();
+}
+
+TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
+  // 参数验证
+  if (params.width <= 0 || params.height <= 0) {
+    throw Standard_ConstructionError("Width and height must be positive");
+  }
+  if (params.points.size() < 2) {
+    throw Standard_ConstructionError("At least 2 points are required");
+  }
+
+  // 创建路径线框
+  BRepBuilderAPI_MakeWire pathWire;
+
+  // 处理点序列
+  for (size_t i = 0; i < params.points.size() - 1; i++) {
+    const gp_Pnt &current = params.points[i].position;
+    const gp_Pnt &next = params.points[i + 1].position;
+
+    if (params.points[i].type == 0 &&
+        params.points[i + 1].type == 0) { // 普通节点
+      // 创建直线段
+      pathWire.Add(BRepBuilderAPI_MakeEdge(current, next).Edge());
+    } else if (params.points[i].type == 1) { // 弧形节点
+      // 确保有前一个点和后一个点
+      if (i == 0 || i == params.points.size() - 1) {
+        throw Standard_ConstructionError("弧形节点需要前后都有节点");
+      }
+
+      const gp_Pnt &prev = params.points[i - 1].position;
+
+      // 创建三点圆弧
+      pathWire.Add(BRepBuilderAPI_MakeEdge(
+                       GC_MakeArcOfCircle(prev, current, next).Value())
+                       .Edge());
+    }
+  }
+
+  if (!pathWire.IsDone()) {
+    throw Standard_ConstructionError("路径线框创建失败");
+  }
+
+  TopoDS_Wire path = pathWire.Wire();
+
+  TopoDS_Compound result;
+  BRep_Builder builder;
+  builder.MakeCompound(result);
+
+  if (params.cushionExtension > 0 && params.cushionThickness > 0 &&
+      params.style != water_tunnel_section_style::CIRCULAR) {
+    double zoffset = -params.cushionThickness;
+
+    if (params.style == water_tunnel_section_style::CITYOPENING) {
+      zoffset = -params.cushionThickness - params.outerWallThickness -
+                params.innerWallThickness;
+    }
+
+    double cushionWidth = params.width + 2 * params.cushionExtension +
+                          2 * params.outerWallThickness;
+    BRepBuilderAPI_MakeWire cushionMaker;
+    gp_Pnt p1(0, -cushionWidth / 2 - params.cushionExtension, zoffset);
+    gp_Pnt p2(0, cushionWidth / 2 + params.cushionExtension, zoffset);
+    gp_Pnt p3(0, cushionWidth / 2 + params.cushionExtension,
+              zoffset + params.cushionThickness);
+    gp_Pnt p4(0, -cushionWidth / 2 - params.cushionExtension,
+              zoffset + params.cushionThickness);
+
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p4, p1).Edge());
+
+    TopoDS_Shape cushion = create_channel_shape(cushionMaker.Wire(), path);
+
+    builder.Add(result, cushion);
+  }
+
+  // 创建隧道截面轮廓
+  TopoDS_Wire outerWire;
+  switch (params.style) {
+  case water_tunnel_section_style::RECTANGULAR: {
+    // 矩形截面
+    double width = params.width + 2 * params.outerWallThickness;
+    gp_Pnt p1(0, -width / 2, -params.bottomThickness);
+    gp_Pnt p2(0, width / 2, -params.bottomThickness);
+    gp_Pnt p3(0, width / 2, params.height + params.topThickness);
+    gp_Pnt p4(0, -width / 2, params.height + params.topThickness);
+    outerWire = BRepBuilderAPI_MakePolygon(p1, p2, p3, p4, true).Wire();
+    break;
+  }
+  case water_tunnel_section_style::CITYOPENING: {
+    // 城门洞截面 - 外部轮廓
+    double arcHeight = params.arcHeight;
+    if (arcHeight == 0 && params.arcRadius == 0) {
+      throw Standard_ConstructionError(
+          "Either arcHeight or arcRadius must be non-zero");
+    }
+
+    double outerWidth = params.width + 2 * params.outerWallThickness +
+                        2 * params.innerWallThickness;
+    double outerRadius = outerWidth / 2;
+    double outerHeight =
+        params.height + params.outerWallThickness + params.innerWallThickness;
+    double outerArchHeight;
+
+    // 计算拱高或拱半径
+    if (arcHeight == 0) {
+      // 根据拱半径计算拱高
+      double halfWidth = params.width / 2;
+      if (params.arcRadius < halfWidth) {
+        throw Standard_ConstructionError(
+            "Arc radius must be greater than or equal to half width");
+      }
+      arcHeight = params.arcRadius - sqrt(params.arcRadius * params.arcRadius -
+                                          halfWidth * halfWidth);
+      outerArchHeight =
+          arcHeight + params.outerWallThickness + params.innerWallThickness;
+    } else {
+      // 使用提供的拱高
+      outerArchHeight =
+          arcHeight + params.outerWallThickness + params.innerWallThickness;
+    }
+
+    // 底部点
+    gp_Pnt bottomLeft(0, -outerRadius,
+                      -params.outerWallThickness - params.innerWallThickness);
+    gp_Pnt bottomRight(0, outerRadius,
+                       -params.outerWallThickness - params.innerWallThickness);
+
+    // 侧壁点
+    gp_Pnt leftTop(0, -outerRadius, outerHeight);
+    gp_Pnt rightTop(0, outerRadius, outerHeight);
+
+    // 顶部圆弧中点
+    gp_Pnt arcMid(0, 0, outerHeight + outerArchHeight);
+
+    // 创建侧壁直线
+    TopoDS_Edge leftEdge = BRepBuilderAPI_MakeEdge(bottomLeft, leftTop).Edge();
+    TopoDS_Edge rightEdge =
+        BRepBuilderAPI_MakeEdge(bottomRight, rightTop).Edge();
+
+    // 创建顶部圆弧 (从右到左)
+    Handle(Geom_TrimmedCurve) topArc =
+        GC_MakeArcOfCircle(rightTop, arcMid, leftTop).Value();
+    TopoDS_Edge topEdge = BRepBuilderAPI_MakeEdge(topArc).Edge();
+
+    // 创建底部直线
+    TopoDS_Edge bottomEdge =
+        BRepBuilderAPI_MakeEdge(bottomLeft, bottomRight).Edge();
+
+    // 组合成完整轮廓 (确保闭合)
+    BRepBuilderAPI_MakeWire wireMaker;
+    wireMaker.Add(leftEdge);
+    wireMaker.Add(topEdge);
+    wireMaker.Add(rightEdge);
+    wireMaker.Add(bottomEdge);
+
+    if (!wireMaker.IsDone()) {
+      throw Standard_ConstructionError(
+          "Failed to create closed wire for horseshoe section");
+    }
+
+    outerWire = wireMaker.Wire();
+
+    if (!outerWire.Closed()) {
+      throw Standard_ConstructionError("Outer horseshoe section is not closed");
+    }
+    break;
+  }
+  case water_tunnel_section_style::CIRCULAR: {
+    // 圆形截面 - 外部轮廓
+    double outerRadius = params.width / 2 + params.outerWallThickness;
+    gp_Pnt center(0, 0, 0);
+    Handle(Geom_Circle) outerCircle =
+        new Geom_Circle(gp_Ax2(center, gp::DX()), outerRadius);
+    TopoDS_Edge outerEdge = BRepBuilderAPI_MakeEdge(outerCircle).Edge();
+    outerWire = BRepBuilderAPI_MakeWire(outerEdge).Wire();
+    break;
+  }
+  case water_tunnel_section_style::HORSESHOE: {
+    // 马蹄形截面 - 外部轮廓
+    double outerWidth = params.width + 2 * params.outerWallThickness +
+                        2 * params.innerWallThickness;
+    double outerRadius = outerWidth / 2;
+    double outerHeight =
+        params.height + params.outerWallThickness + params.innerWallThickness;
+
+    // 计算圆心位置
+    double arcRadius = params.arcRadius + params.outerWallThickness +
+                       params.innerWallThickness;
+    double centerHeight = params.height - params.arcRadius;
+
+    // 底部连接段点
+    gp_Pnt bottomLeft(0, -outerRadius,
+                      -params.outerWallThickness - params.innerWallThickness);
+    gp_Pnt bottomRight(0, outerRadius,
+                       -params.outerWallThickness - params.innerWallThickness);
+
+    // 左侧连接段点
+    gp_Pnt leftBottom(0, -outerRadius, 0);
+    // 右侧连接段点
+    gp_Pnt rightBottom(0, outerRadius, 0);
+
+    // 计算圆弧起点和终点(与连接段相连)
+    double angle = params.arcAngle * M_PI / 180.0;
+    gp_Pnt arcStart(0, -outerRadius * cos(angle),
+                    centerHeight + arcRadius * sin(angle));
+    gp_Pnt arcEnd(0, outerRadius * cos(angle),
+                  centerHeight + arcRadius * sin(angle));
+
+    // 创建左侧连接段(从底部到顶部)
+    TopoDS_Edge leftSegment =
+        BRepBuilderAPI_MakeEdge(leftBottom, arcStart).Edge();
+
+    // 创建右侧连接段(从顶部到底部)
+    TopoDS_Edge rightSegment =
+        BRepBuilderAPI_MakeEdge(arcEnd, rightBottom).Edge();
+
+    // 创建顶部圆弧(从左到右)
+    gp_Pnt arcCenter(0, 0, centerHeight);
+    gp_Dir arcDir(0, 0, 1);
+    gp_Ax2 arcAxis(arcCenter, arcDir);
+    Handle(Geom_TrimmedCurve) topArc =
+        GC_MakeArcOfCircle(gp_Circ(arcAxis, arcRadius), M_PI - angle, angle,
+                           false)
+            .Value();
+    TopoDS_Edge topEdge = BRepBuilderAPI_MakeEdge(topArc).Edge();
+
+    // 创建底部连接段(从右到左)
+    TopoDS_Edge bottomEdge =
+        BRepBuilderAPI_MakeEdge(bottomRight, bottomLeft).Edge();
+
+    // 组合成完整轮廓(按顺序连接)
+    BRepBuilderAPI_MakeWire wireMaker;
+    wireMaker.Add(leftSegment);
+    wireMaker.Add(topEdge);
+    wireMaker.Add(rightSegment);
+    wireMaker.Add(bottomEdge);
+
+    if (!wireMaker.IsDone()) {
+      throw Standard_ConstructionError(
+          "Failed to create closed wire for horseshoe section");
+    }
+
+    outerWire = wireMaker.Wire();
+  }
+  default:
+    throw Standard_ConstructionError("Invalid tunnel section style");
+  }
+  TopoDS_Shape outer = create_channel_shape(outerWire, path);
+
+  // 创建隧道截面轮廓
+  TopoDS_Wire innerWire;
+  switch (params.style) {
+  case water_tunnel_section_style::RECTANGULAR: {
+    // 矩形截面
+    gp_Pnt p1(0, -params.width / 2, 0);
+    gp_Pnt p2(0, params.width / 2, 0);
+    gp_Pnt p3(0, params.width / 2, params.height);
+    gp_Pnt p4(0, -params.width / 2, params.height);
+    innerWire = BRepBuilderAPI_MakePolygon(p1, p2, p3, p4, true).Wire();
+    break;
+  }
+  case water_tunnel_section_style::CITYOPENING: {
+    double arcHeight = params.arcHeight;
+    if (arcHeight == 0 && params.arcRadius == 0) {
+      throw Standard_ConstructionError(
+          "Either arcHeight or arcRadius must be non-zero");
+    }
+
+    // 马蹄形截面 - 内部轮廓
+    double innerRadius = params.width / 2;
+    double innerHeight = params.height;
+    double innerArchHeight = params.arcHeight;
+
+    // 计算拱高或拱半径
+    if (arcHeight == 0) {
+      // 根据拱半径计算拱高
+      double halfWidth = innerRadius;
+      if (params.arcRadius < halfWidth) {
+        throw Standard_ConstructionError(
+            "Arc radius must be greater than or equal to half width");
+      }
+      innerArchHeight =
+          params.arcRadius -
+          sqrt(params.arcRadius * params.arcRadius - halfWidth * halfWidth);
+    } else {
+      // 使用提供的拱高
+      innerArchHeight = arcHeight;
+    }
+
+    // 底部点
+    gp_Pnt bottomLeft(0, -innerRadius, 0);
+    gp_Pnt bottomRight(0, innerRadius, 0);
+
+    // 侧壁点
+    gp_Pnt leftTop(0, -innerRadius, innerHeight);
+    gp_Pnt rightTop(0, innerRadius, innerHeight);
+
+    // 顶部圆弧中点
+    gp_Pnt arcMid(0, 0, innerHeight + innerArchHeight);
+
+    // 创建侧壁直线
+    TopoDS_Edge leftEdge = BRepBuilderAPI_MakeEdge(bottomLeft, leftTop).Edge();
+    TopoDS_Edge rightEdge =
+        BRepBuilderAPI_MakeEdge(bottomRight, rightTop).Edge();
+
+    // 创建顶部圆弧 (从右到左)
+    Handle(Geom_TrimmedCurve) topArc =
+        GC_MakeArcOfCircle(rightTop, arcMid, leftTop).Value();
+    TopoDS_Edge topEdge = BRepBuilderAPI_MakeEdge(topArc).Edge();
+
+    // 创建底部直线
+    TopoDS_Edge bottomEdge =
+        BRepBuilderAPI_MakeEdge(bottomLeft, bottomRight).Edge();
+
+    // 组合成完整轮廓 (确保闭合)
+    BRepBuilderAPI_MakeWire wireMaker;
+    wireMaker.Add(leftEdge);
+    wireMaker.Add(topEdge);
+    wireMaker.Add(rightEdge);
+    wireMaker.Add(bottomEdge);
+
+    if (!wireMaker.IsDone()) {
+      throw Standard_ConstructionError(
+          "Failed to create closed wire for inner horseshoe section");
+    }
+
+    innerWire = wireMaker.Wire();
+
+    if (!innerWire.Closed()) {
+      throw Standard_ConstructionError("Inner horseshoe section is not closed");
+    }
+    break;
+  }
+  case water_tunnel_section_style::CIRCULAR: {
+    // 圆形截面 - 内部轮廓
+    double innerRadius = params.width / 2;
+    gp_Pnt center(0, 0, 0);
+    Handle(Geom_Circle) innerCircle =
+        new Geom_Circle(gp_Ax2(center, gp::DX()), innerRadius);
+    TopoDS_Edge innerEdge = BRepBuilderAPI_MakeEdge(innerCircle).Edge();
+    innerWire = BRepBuilderAPI_MakeWire(innerEdge).Wire();
+
+    break;
+  }
+  case water_tunnel_section_style::HORSESHOE: {
+    // 马蹄形截面 - 内部轮廓
+    // 内轮廓实现
+    double innerWidth = params.width; // 内净宽
+    double innerRadius = innerWidth / 2;
+    double innerHeight = params.height; // 内净高
+
+    // 计算内轮廓圆心位置
+    double innerArcRadius = params.arcRadius;
+    double innerCenterHeight = innerHeight - innerArcRadius;
+
+    // 内轮廓底部点
+    gp_Pnt innerBottomLeft(0, -innerRadius, 0);
+    gp_Pnt innerBottomRight(0, innerRadius, 0);
+
+    // 内轮廓侧壁点
+    gp_Pnt innerLeftBottom(0, -innerRadius, 0);
+    gp_Pnt innerRightBottom(0, innerRadius, 0);
+
+    // 计算内轮廓圆弧起点和终点
+    double innerAngle = params.arcAngle * M_PI / 180.0;
+    gp_Pnt innerArcStart(0, -innerRadius * cos(innerAngle),
+                         innerCenterHeight + innerArcRadius * sin(innerAngle));
+    gp_Pnt innerArcEnd(0, innerRadius * cos(innerAngle),
+                       innerCenterHeight + innerArcRadius * sin(innerAngle));
+
+    // 创建内轮廓左侧连接段
+    TopoDS_Edge innerLeftSegment =
+        BRepBuilderAPI_MakeEdge(innerLeftBottom, innerArcStart).Edge();
+
+    // 创建内轮廓右侧连接段
+    TopoDS_Edge innerRightSegment =
+        BRepBuilderAPI_MakeEdge(innerArcEnd, innerRightBottom).Edge();
+
+    // 创建内轮廓顶部圆弧
+    gp_Pnt innerArcCenter(0, 0, innerCenterHeight);
+    gp_Dir innerArcDir(0, 0, 1);
+    gp_Ax2 innerArcAxis(innerArcCenter, innerArcDir);
+    Handle(Geom_TrimmedCurve) innerTopArc =
+        GC_MakeArcOfCircle(gp_Circ(innerArcAxis, innerArcRadius),
+                           M_PI - innerAngle, innerAngle, false)
+            .Value();
+    TopoDS_Edge innerTopEdge = BRepBuilderAPI_MakeEdge(innerTopArc).Edge();
+
+    // 创建内轮廓底部连接段
+    TopoDS_Edge innerBottomEdge =
+        BRepBuilderAPI_MakeEdge(innerBottomRight, innerBottomLeft).Edge();
+
+    // 组合内轮廓线框
+    BRepBuilderAPI_MakeWire innerWireMaker;
+    innerWireMaker.Add(innerLeftSegment);
+    innerWireMaker.Add(innerTopEdge);
+    innerWireMaker.Add(innerRightSegment);
+    innerWireMaker.Add(innerBottomEdge);
+
+    if (!innerWireMaker.IsDone()) {
+      throw Standard_ConstructionError(
+          "Failed to create closed wire for inner horseshoe section");
+    }
+
+    innerWire = innerWireMaker.Wire();
+  }
+  default:
+    throw Standard_ConstructionError("Invalid tunnel section style");
+  }
+
+  TopoDS_Shape inner = create_channel_shape(innerWire, path);
+
+  // 处理底部平台
+  if (params.style == water_tunnel_section_style::CIRCULAR &&
+      params.bottomPlatformHeight != 0) {
+    double innerRadius = params.width / 2;
+
+    double zoffset = -innerRadius;
+    gp_Pnt p1(0, -innerRadius, -innerRadius + params.bottomPlatformHeight);
+    gp_Pnt p2(0, innerRadius, -innerRadius + params.bottomPlatformHeight);
+    gp_Pnt p3(0, innerRadius, -innerRadius);
+    gp_Pnt p4(0, -innerRadius, -innerRadius);
+    TopoDS_Wire tempWire =
+        BRepBuilderAPI_MakePolygon(p1, p2, p3, p4, true).Wire();
+    TopoDS_Shape cutBottom = create_channel_shape(tempWire, path);
+
+    inner = BRepAlgoAPI_Cut(inner, cutBottom).Shape();
+  }
+
+  TopoDS_Shape tunnel = BRepAlgoAPI_Cut(outer, inner).Shape();
+  builder.Add(result, tunnel);
+
+  return result;
+}
+
+TopoDS_Shape create_water_tunnel(const water_tunnel_params &params,
+                                 const gp_Pnt &position,
+                                 const gp_Dir &direction, const gp_Dir &xDir) {
+  // 正交性校验
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  // 创建标准方向的输水隧洞
+  TopoDS_Shape tunnel = create_water_tunnel(params);
+
+  // 创建坐标系变换
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(tunnel, transformation);
   return transform.Shape();
 }
 

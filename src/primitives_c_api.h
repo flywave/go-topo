@@ -1467,7 +1467,7 @@ typedef struct {
     double length;
     double width;
     double height;
-    double archHeight;
+    double arcHeight;
   } leftSection, rightSection, branchSection1, branchSection2;
   double outerWallThickness;
   double innerWallThickness;
@@ -1538,7 +1538,7 @@ typedef struct {
   double bottomThickness;
   double outerWallThickness;
   double innerWallThickness;
-  double archHeight;
+  double arcHeight;
   double bottomPlatformHeight;
   double cushionExtension;
   double cushionThickness;
@@ -1565,7 +1565,7 @@ typedef struct {
   double width;
   double height;
   double topPlateHeight;
-  double archHeight;
+  double arcHeight;
   double wallThickness;
   int pipeCount;
   pnt2d_t *pipePositions;

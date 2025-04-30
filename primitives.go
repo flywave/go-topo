@@ -3169,12 +3169,12 @@ type TunnelWellParams struct {
 	LeftLength         float64
 	LeftWidth          float64
 	LeftHeight         float64
-	LeftArchHeight     float64
+	LeftArcHeight      float64
 	RightSectionType   int
 	RightLength        float64
 	RightWidth         float64
 	RightHeight        float64
-	RightArchHeight    float64
+	RightArcHeight     float64
 	OuterWallThickness float64
 	InnerWallThickness float64
 	CushionExtension   float64
@@ -3194,12 +3194,12 @@ func (p *TunnelWellParams) to_struct() C.tunnel_well_params_t {
 	c.leftLength = C.double(p.LeftLength)
 	c.leftWidth = C.double(p.LeftWidth)
 	c.leftHeight = C.double(p.LeftHeight)
-	c.leftArchHeight = C.double(p.LeftArchHeight)
+	c.leftArcHeight = C.double(p.LeftArcHeight)
 	c.rightSectionType = C.int(p.RightSectionType)
 	c.rightLength = C.double(p.RightLength)
 	c.rightWidth = C.double(p.RightWidth)
 	c.rightHeight = C.double(p.RightHeight)
-	c.rightArchHeight = C.double(p.RightArchHeight)
+	c.rightArcHeight = C.double(p.RightArcHeight)
 	c.outerWallThickness = C.double(p.OuterWallThickness)
 	c.innerWallThickness = C.double(p.InnerWallThickness)
 	c.cushionExtension = C.double(p.CushionExtension)
@@ -3244,17 +3244,17 @@ type ThreeWayWellParams struct {
 	LeftSectionLength       float32
 	LeftSectionWidth        float32
 	LeftSectionHeight       float32
-	LeftSectionArchHeight   float32
+	LeftSectionArcHeight    float32
 	RightSectionStyle       int
 	RightSectionLength      float32
 	RightSectionWidth       float32
 	RightSectionHeight      float32
-	RightSectionArchHeight  float32
+	RightSectionArcHeight   float32
 	BranchSectionStyle      int
 	BranchSectionLength     float32
 	BranchSectionWidth      float32
 	BranchSectionHeight     float32
-	BranchSectionArchHeight float32
+	BranchSectionArcHeight  float32
 	BranchSectionLeftLength float32
 	OuterWallThickness      float32
 	InnerWallThickness      float32
@@ -3290,17 +3290,17 @@ func (p *ThreeWayWellParams) to_struct() C.three_way_well_params_t {
 	c.leftSectionLength = C.double(p.LeftSectionLength)
 	c.leftSectionWidth = C.double(p.LeftSectionWidth)
 	c.leftSectionHeight = C.double(p.LeftSectionHeight)
-	c.leftSectionArchHeight = C.double(p.LeftSectionArchHeight)
+	c.leftSectionArcHeight = C.double(p.LeftSectionArcHeight)
 	c.rightSectionStyle = C.int(p.RightSectionStyle)
 	c.rightSectionLength = C.double(p.RightSectionLength)
 	c.rightSectionWidth = C.double(p.RightSectionWidth)
 	c.rightSectionHeight = C.double(p.RightSectionHeight)
-	c.rightSectionArchHeight = C.double(p.RightSectionArchHeight)
+	c.rightSectionArcHeight = C.double(p.RightSectionArcHeight)
 	c.branchSectionStyle = C.int(p.BranchSectionStyle)
 	c.branchSectionLength = C.double(p.BranchSectionLength)
 	c.branchSectionWidth = C.double(p.BranchSectionWidth)
 	c.branchSectionHeight = C.double(p.BranchSectionHeight)
-	c.branchSectionArchHeight = C.double(p.BranchSectionArchHeight)
+	c.branchSectionArcHeight = C.double(p.BranchSectionArcHeight)
 	c.outerWallThickness = C.double(p.OuterWallThickness)
 	c.innerWallThickness = C.double(p.InnerWallThickness)
 	c.isDoubleShaft = C.bool(p.IsDoubleShaft)
@@ -3353,28 +3353,28 @@ type FourWayWellParams struct {
 		Length      float32
 		Width       float32
 		Height      float32
-		ArchHeight  float32
+		ArcHeight   float32
 	}
 	RightSection struct {
 		SectionType int
 		Length      float32
 		Width       float32
 		Height      float32
-		ArchHeight  float32
+		ArcHeight   float32
 	}
 	BranchSection1 struct {
 		SectionType int
 		Length      float32
 		Width       float32
 		Height      float32
-		ArchHeight  float32
+		ArcHeight   float32
 	}
 	BranchSection2 struct {
 		SectionType int
 		Length      float32
 		Width       float32
 		Height      float32
-		ArchHeight  float32
+		ArcHeight   float32
 	}
 	OuterWallThickness float32
 	InnerWallThickness float32
@@ -3402,25 +3402,25 @@ func (p *FourWayWellParams) to_struct() C.four_way_well_params_t {
 	c.leftSection.length = C.double(p.LeftSection.Length)
 	c.leftSection.width = C.double(p.LeftSection.Width)
 	c.leftSection.height = C.double(p.LeftSection.Height)
-	c.leftSection.archHeight = C.double(p.LeftSection.ArchHeight)
+	c.leftSection.arcHeight = C.double(p.LeftSection.ArcHeight)
 
 	c.rightSection.sectionType = C.int(p.RightSection.SectionType)
 	c.rightSection.length = C.double(p.RightSection.Length)
 	c.rightSection.width = C.double(p.RightSection.Width)
 	c.rightSection.height = C.double(p.RightSection.Height)
-	c.rightSection.archHeight = C.double(p.RightSection.ArchHeight)
+	c.rightSection.arcHeight = C.double(p.RightSection.ArcHeight)
 
 	c.branchSection1.sectionType = C.int(p.BranchSection1.SectionType)
 	c.branchSection1.length = C.double(p.BranchSection1.Length)
 	c.branchSection1.width = C.double(p.BranchSection1.Width)
 	c.branchSection1.height = C.double(p.BranchSection1.Height)
-	c.branchSection1.archHeight = C.double(p.BranchSection1.ArchHeight)
+	c.branchSection1.arcHeight = C.double(p.BranchSection1.ArcHeight)
 
 	c.branchSection2.sectionType = C.int(p.BranchSection2.SectionType)
 	c.branchSection2.length = C.double(p.BranchSection2.Length)
 	c.branchSection2.width = C.double(p.BranchSection2.Width)
 	c.branchSection2.height = C.double(p.BranchSection2.Height)
-	c.branchSection2.archHeight = C.double(p.BranchSection2.ArchHeight)
+	c.branchSection2.arcHeight = C.double(p.BranchSection2.ArcHeight)
 
 	c.outerWallThickness = C.double(p.OuterWallThickness)
 	c.innerWallThickness = C.double(p.InnerWallThickness)
@@ -3608,7 +3608,7 @@ type CableTunnelParams struct {
 	BottomThickness      float32
 	OuterWallThickness   float32
 	InnerWallThickness   float32
-	ArchHeight           float32
+	ArcHeight            float32
 	BottomPlatformHeight float32
 	CushionExtension     float32
 	CushionThickness     float32
@@ -3624,7 +3624,7 @@ func (p *CableTunnelParams) to_struct() C.cable_tunnel_params_t {
 	c.bottomThickness = C.double(p.BottomThickness)
 	c.outerWallThickness = C.double(p.OuterWallThickness)
 	c.innerWallThickness = C.double(p.InnerWallThickness)
-	c.archHeight = C.double(p.ArchHeight)
+	c.arcHeight = C.double(p.ArcHeight)
 	c.bottomPlatformHeight = C.double(p.BottomPlatformHeight)
 	c.cushionExtension = C.double(p.CushionExtension)
 	c.cushionThickness = C.double(p.CushionThickness)
@@ -3672,7 +3672,7 @@ type CableTrayParams struct {
 	Width               float32
 	Height              float32
 	TopPlateHeight      float32
-	ArchHeight          float32
+	ArcHeight           float32
 	WallThickness       float32
 	PipeCount           int32
 	PipePositions       []Point2
@@ -3691,7 +3691,7 @@ func (p *CableTrayParams) to_struct() C.cable_tray_params_t {
 	c.width = C.double(p.Width)
 	c.height = C.double(p.Height)
 	c.topPlateHeight = C.double(p.TopPlateHeight)
-	c.archHeight = C.double(p.ArchHeight)
+	c.arcHeight = C.double(p.ArcHeight)
 	c.wallThickness = C.double(p.WallThickness)
 	c.pipeCount = C.int(p.PipeCount)
 
