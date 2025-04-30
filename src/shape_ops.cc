@@ -1380,7 +1380,10 @@ sample_wire_at_distances(const wire &wire_path,
   double totalLength = props.Mass();
 
   // 4. 按排序后的距离执行采样
-  for (const auto &[origIndex, distance] : sortedDistances) {
+  for (auto it = sortedDistances.begin(); it != sortedDistances.end(); ++it) {
+    size_t origIndex = it->first;
+    double distance = it->second;
+
     if (distance < 0 || distance > totalLength) {
       continue;
     }

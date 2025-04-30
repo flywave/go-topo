@@ -165,7 +165,7 @@ shape read_shape_from_step(const std::string &filename);
 struct wire_sample_point {
   gp_Pnt position;
   gp_Vec tangent;
-  edge edge;
+  flywave::topo::edge edge;
 };
 
 std::vector<wire_sample_point>
