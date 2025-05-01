@@ -2058,7 +2058,7 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
       gp_Ax2 cylinderAxis(segment_start, gp_Dir(segment_vec));
       TopoDS_Shape cylinder =
           BRepPrimAPI_MakeCylinder(cylinderAxis,
-                                   params.radius,          // 使用绝缘子半径参数
+                                   params.radius, // 使用绝缘子半径参数
                                    segment_vec.Magnitude() // 实际长度
                                    )
               .Shape();
@@ -2121,9 +2121,9 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
 
     // 创建连接盒（参数顺序：X长度，Y长度，Z长度）
     BRepPrimAPI_MakeBox connector_box(box_axis,
-                                      box_x_length,    // X方向尺寸（沿全局X轴）
+                                      box_x_length, // X方向尺寸（沿全局X轴）
                                       box_y_thickness, // Y方向尺寸（沿全局Y轴）
-                                      box_z_height     // Z方向尺寸（沿全局Z轴）
+                                      box_z_height // Z方向尺寸（沿全局Z轴）
     );
 
     connector_box.Build();
@@ -2238,7 +2238,7 @@ TopoDS_Shape create_terminal_block(const terminal_block_params &params) {
 
       // 创建穿透孔洞（Y方向完全穿透）
       gp_Ax2 holeAxis(gp_Pnt(x, -params.thickness, z), // 起始于底面（Y=0）
-                      gp_Dir(0, 1, 0)                  // 沿Y轴方向（厚度方向）
+                      gp_Dir(0, 1, 0) // 沿Y轴方向（厚度方向）
       );
       BRepPrimAPI_MakeCylinder holeMaker(holeAxis, params.holeRadius,
                                          params.thickness * 2 // 确保完全穿透
@@ -2823,9 +2823,9 @@ TopoDS_Shape create_curve_cable(const curve_cable_params &params) {
 
   // 使用扫掠器自动计算坐标系（添加Frenet模式）
   BRepOffsetAPI_MakePipeShell pipeMaker(pathMaker.Wire());
-  pipeMaker.SetMode(true);                   // 设置为实体模式
-  pipeMaker.SetMaxDegree(5);                 // 提高最大阶数以适应复杂曲率
-  pipeMaker.SetTolerance(1e-5);              // 放宽容差适应复杂路径
+  pipeMaker.SetMode(true);      // 设置为实体模式
+  pipeMaker.SetMaxDegree(5);    // 提高最大阶数以适应复杂曲率
+  pipeMaker.SetTolerance(1e-5); // 放宽容差适应复杂路径
   pipeMaker.SetForceApproxC1(Standard_True); // 强制C1连续近似
 
   // 创建动态调整的圆形截面（直径始终垂直于路径）
@@ -2990,16 +2990,16 @@ TopoDS_Wire create_ibeam_profile(double height, double flangeWidth,
   gp_Pnt p12(0, -halfFlangeWidth, 0);
 
   // 构建轮廓线（按顺序连接所有点）
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p1).Edge());  // 下翼缘
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());   // 右下翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());   // 右下腹板水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());   // 右腹板垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());   // 右上腹板水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge());   // 右上翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge());   // 上翼缘
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge());   // 左上翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p9).Edge());   // 左上腹板水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge());  // 左腹板垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p1).Edge()); // 下翼缘
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge()); // 右下翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge()); // 右下腹板水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge()); // 右腹板垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge()); // 右上腹板水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge()); // 右上翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge()); // 上翼缘
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge()); // 左上翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p9).Edge()); // 左上腹板水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge()); // 左腹板垂直段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p11).Edge()); // 左下腹板水平段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p12).Edge()); // 左下翼缘垂直段
 
@@ -3221,17 +3221,17 @@ TopoDS_Wire create_t_steel_profile(double height, double width,
   gp_Pnt p11(0, halfWidth, 0);                // 右侧端点
 
   // 构建完整轮廓（顺时针连接）
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());   // 底部中心→左
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());   // 腹板左侧垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p9).Edge());   // 新增：左侧翼缘连接
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p8).Edge());   // 左侧翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p4).Edge());   // 顶部翼缘左段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());   // 腹板顶部水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p11).Edge());  // 顶部翼缘右段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge()); // 底部中心→左
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge()); // 腹板左侧垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p9).Edge()); // 新增：左侧翼缘连接
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p8).Edge()); // 左侧翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p4).Edge()); // 顶部翼缘左段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge()); // 腹板顶部水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p11).Edge()); // 顶部翼缘右段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p10).Edge()); // 右侧翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p6).Edge());  // 新增：右侧翼缘连接
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge());   // 腹板右侧垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p1).Edge());   // 底部右侧→中心
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p6).Edge()); // 新增：右侧翼缘连接
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge()); // 腹板右侧垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p1).Edge()); // 底部右侧→中心
 
   if (!wireMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to create T-steel profile");
@@ -6728,7 +6728,7 @@ create_single_hook_anchor(const single_hook_anchor_params &params) {
       // 定义截面坐标系：Z轴沿路径切线，Y轴垂直圆弧平面
       sectionAxis = gp_Ax2(arcStart,
                            tangent.Normalized(), // 截面Z轴沿路径方向
-                           gp_Dir(0, 0, 1));     // Y轴垂直圆弧平面（YZ平面）
+                           gp_Dir(0, 0, 1)); // Y轴垂直圆弧平面（YZ平面）
     }
 
     // 创建截面圆（直径参数验证）
@@ -10090,7 +10090,7 @@ TopoDS_Shape create_three_way_round_working_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset);                                  // 支线段左上角点
+                  zoffset); // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
 
   // 4. 计算圆弧关键点（精确几何关系）
@@ -10201,7 +10201,7 @@ TopoDS_Shape create_three_way_corner_working_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset);                                  // 支线段左上角点
+                  zoffset); // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
 
   const gp_Pnt leftStart(-halfWidth1 - cornerLength, halfWidth, zoffset);
@@ -10821,10 +10821,10 @@ TopoDS_Shape create_three_way_circle_well_part(double length, double width,
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset);                                  // 支线段左上角点
+                  zoffset); // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
-  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset);          // 支线段左下角点
-  const gp_Pnt p10(halfWidth1, halfWidth, zoffset);          // 支线段右下角点
+  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset); // 支线段左下角点
+  const gp_Pnt p10(halfWidth1, halfWidth, zoffset); // 支线段右下角点
 
   // 7. 构建完整线框（确保拓扑闭合）
   BRepBuilderAPI_MakeWire wireMaker;
@@ -10888,10 +10888,10 @@ TopoDS_Shape create_three_way_rectangular_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset);                                  // 支线段左上角点
+                  zoffset); // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右上角点
-  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset);          // 支线段左下角点
-  const gp_Pnt p10(halfWidth1, halfWidth, zoffset);          // 支线段右下角点
+  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset); // 支线段左下角点
+  const gp_Pnt p10(halfWidth1, halfWidth, zoffset); // 支线段右下角点
 
   // 7. 构建完整线框（确保拓扑闭合）
   BRepBuilderAPI_MakeWire wireMaker;
@@ -11627,7 +11627,7 @@ TopoDS_Shape create_four_way_round_working_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset);                                  // 支线段左上角点
+                  zoffset); // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
 
   // 4. 定义支线段2端点（下方）
@@ -15690,14 +15690,14 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     gp_Pnt bottomRight(0, outerRadius,
                        -params.outerWallThickness - params.innerWallThickness);
 
-    // 计算圆弧起点和终点(与连接段相连)
-    double angle = params.arcAngle * M_PI / 180.0;
-    double actualAngle =
-        angle > M_PI / 2 ? M_PI / 2 : angle; // 限制最大角度为90度
-    gp_Pnt arcStart(0, -outerRadius * cos(actualAngle),
-                    centerHeight + arcRadius * sin(actualAngle));
-    gp_Pnt arcEnd(0, outerRadius * cos(actualAngle),
-                  centerHeight + arcRadius * sin(actualAngle));
+    // 计算钝角情况下的圆弧起点和终点
+    double angle = params.arcAngle * M_PI / 180.0; // 转换为弧度
+
+    // 圆弧起点和终点计算(使用补角)
+    gp_Pnt arcStart(0, -arcRadius * sin(angle),
+                    outerHeight - arcRadius * (1 - cos(angle)));
+    gp_Pnt arcEnd(0, arcRadius * sin(angle),
+                  outerHeight - arcRadius * (1 - cos(angle)));
 
     // 创建左侧连接段(从底部到顶部)
     TopoDS_Edge leftSegment =
@@ -15708,13 +15708,9 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
         BRepBuilderAPI_MakeEdge(arcEnd, bottomRight).Edge();
 
     // 创建顶部圆弧(从右到左)
-    gp_Pnt arcCenter(0, 0, centerHeight);
-    gp_Ax2 arcAxis(arcCenter, gp::DZ()); // 修正坐标系方向
+    gp_Pnt arcMid(0, 0, outerHeight);
     Handle(Geom_TrimmedCurve) topArc =
-        GC_MakeArcOfCircle(gp_Circ(arcAxis, arcRadius), arcStart,
-                           arcEnd, // 明确指定起点终点
-                           false)
-            .Value();
+        GC_MakeArcOfCircle(arcStart, arcMid, arcEnd).Value();
 
     TopoDS_Edge bootomEgde =
         BRepBuilderAPI_MakeEdge(bottomRight, bottomLeft).Edge();
@@ -15722,14 +15718,10 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
 
     // 修正连接顺序和边方向
     BRepBuilderAPI_MakeWire wireMaker;
-    //wireMaker.Add(leftSegment);                            // 左侧连接段
-   // wireMaker.Add(BRepBuilderAPI_MakeEdge(topArc).Edge()); // 顶部圆弧
-    
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arcStart, gp::Origin()).Edge()); 
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(gp::Origin(), arcEnd).Edge()); 
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(arcEnd, arcStart).Edge()); 
-    //wireMaker.Add(rightSegment);                           // 右侧连接段
-    //wireMaker.Add(bootomEgde);                             // 底部边
+    wireMaker.Add(leftSegment);                            // 左侧连接段
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(topArc).Edge()); // 顶部圆弧
+    wireMaker.Add(rightSegment);                           // 右侧连接段
+    wireMaker.Add(bootomEgde);                             // 底部边
 
     // 添加完整性检查
     if (!wireMaker.IsDone() || !wireMaker.Wire().Closed()) {
@@ -15746,8 +15738,6 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     throw Standard_ConstructionError("Invalid tunnel section style");
   }
   TopoDS_Shape outer = create_channel_shape(outerWire, path);
-
-  return outer;
 
   // 创建隧道截面轮廓
   TopoDS_Wire innerWire;
@@ -15846,14 +15836,13 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
   }
   case water_tunnel_section_style::HORSESHOE: {
     // 马蹄形截面 - 内部轮廓
-    // 内轮廓实现
     double innerWidth = params.width; // 内净宽
     double innerRadius = innerWidth / 2;
     double innerHeight = params.height; // 内净高
 
     // 计算内轮廓圆心位置
     double innerArcRadius = params.arcRadius;
-    double innerCenterHeight = innerHeight - innerArcRadius;
+    double innerCenterHeight = params.height - params.arcRadius;
 
     // 内轮廓底部点
     gp_Pnt innerBottomLeft(0, -innerRadius, 0);
@@ -15861,10 +15850,10 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
 
     // 计算内轮廓圆弧起点和终点
     double innerAngle = params.arcAngle * M_PI / 180.0;
-    gp_Pnt innerArcStart(0, -innerRadius * cos(innerAngle),
-                         innerCenterHeight + innerArcRadius * sin(innerAngle));
-    gp_Pnt innerArcEnd(0, innerRadius * cos(innerAngle),
-                       innerCenterHeight + innerArcRadius * sin(innerAngle));
+    gp_Pnt innerArcStart(0, -innerRadius * sin(innerAngle),
+                         innerHeight - innerArcRadius * (1 - cos(innerAngle)));
+    gp_Pnt innerArcEnd(0, innerRadius * sin(innerAngle),
+                       innerHeight - innerArcRadius * (1 - cos(innerAngle)));
 
     // 创建内轮廓左侧连接段
     TopoDS_Edge innerLeftSegment =
@@ -15874,20 +15863,14 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     TopoDS_Edge innerRightSegment =
         BRepBuilderAPI_MakeEdge(innerArcEnd, innerBottomRight).Edge();
 
-    // 创建内轮廓顶部圆弧
-    gp_Pnt innerArcCenter(0, 0, innerCenterHeight);
-    gp_Dir innerArcDir(0, 0, 1);
-    gp_Ax2 innerArcAxis(innerArcCenter, innerArcDir);
-    // 创建内轮廓顶部圆弧（调整参数顺序）
+    // 创建顶部圆弧(从右到左)
+    gp_Pnt innerArcMid(0, 0, innerHeight);
     Handle(Geom_TrimmedCurve) innerTopArc =
-        GC_MakeArcOfCircle(gp_Circ(innerArcAxis, innerArcRadius),
-                           innerArcStart, // 明确指定起点
-                           innerArcEnd,   // 明确指定终点
-                           false)
-            .Value();
+        GC_MakeArcOfCircle(innerArcStart, innerArcMid, innerArcEnd).Value();
+
     TopoDS_Edge innerTopEdge = BRepBuilderAPI_MakeEdge(innerTopArc).Edge();
 
-    // 添加底部连接段时调整方向
+    // 创建内轮廓底部边
     TopoDS_Edge innerBottomEdge =
         BRepBuilderAPI_MakeEdge(innerBottomRight, innerBottomLeft).Edge();
     innerBottomEdge.Reversed();
@@ -15905,6 +15888,7 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     }
 
     innerWire = innerWireMaker.Wire();
+    break;
   }
   default:
     throw Standard_ConstructionError("Invalid tunnel section style");

@@ -4304,10 +4304,11 @@ void test_water_tunnel() {
   try {
     water_tunnel_params horseshoe_params{
         .style = water_tunnel_section_style::HORSESHOE,
-        .width = 50.0,             // 500→50
-        .height = 70.0,            // 700→70
+        .width = 60.0,             // 500→50
+        .height = 120.0,            // 700→70
         .outerWallThickness = 4.0, // 40→4
         .innerWallThickness = 3.0, // 30→3
+        .arcRadius = 50.0,         // 100→10
         .arcAngle = 120.0,         // 120度
         .cushionExtension = 5.0,   // 90→9
         .cushionThickness = 7.0,   // 70→7
