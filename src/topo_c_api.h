@@ -1568,6 +1568,11 @@ TOPOCAPICALL topo_profile_projection_t
 topo_calc_profile_projection(topo_wire_t path);
 TOPOCAPICALL pnt3d_t topo_profile_project_point(topo_profile_projection_t *proj,
                                                 pnt3d_t point);
+TOPOCAPICALL pnt3d_t *
+topo_profile_project_point_list(topo_profile_projection_t *proj, pnt3d_t *point,
+                                int count);
+TOPOCAPICALL void topo_profile_project_point_list_free(pnt3d_t *points);
+
 TOPOCAPICALL double topo_wrie_length(topo_wire_t wire);
 
 #ifdef __cplusplus

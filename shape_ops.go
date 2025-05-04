@@ -436,6 +436,33 @@ func ProfileProjectPoint(proj *ProfileProjection, point Point3) Point3 {
 	return Point3{val: result}
 }
 
+func ProfileProjectPointList(proj *ProfileProjection, points []Point3) []Point3 {
+	count := len(points)
+	if count == 0 {
+		return nil
+	}
+
+	cPoints := make([]C.pnt3d_t, count)
+	for i, p := range points {
+		cPoints[i] = p.val
+	}
+
+	cResult := C.topo_profile_project_point_list(&proj.inner, &cPoints[0], C.int(count))
+	defer C.topo_profile_project_point_list_free(cResult)
+
+	if cResult == nil {
+		return nil
+	}
+
+	result := make([]Point3, count)
+	resultSlice := (*[1 << 30]C.pnt3d_t)(unsafe.Pointer(cResult))[:count:count]
+	for i := 0; i < count; i++ {
+		result[i] = Point3{val: resultSlice[i]}
+	}
+
+	return result
+}
+
 func WireLength(wire *Wire) float64 {
 	return float64(C.topo_wrie_length(wire.inner.val))
 }

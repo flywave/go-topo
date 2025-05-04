@@ -5551,6 +5551,31 @@ pnt3d_t topo_profile_project_point(topo_profile_projection_t *proj,
   return cast_from_gp(out);
 }
 
+pnt3d_t *topo_profile_project_point_list(topo_profile_projection_t *proj,
+                                         pnt3d_t *points, int count) {
+  try {
+    gp_Ax2 axes = cast_to_gp(proj->axes);
+    gp_Trsf trsf = cast_to_gp(proj->trsf);
+
+    pnt3d_t *result = new pnt3d_t[count];
+    for (int i = 0; i < count; i++) {
+      gp_Pnt point(points[i].x, points[i].y, points[i].z);
+      gp_Pnt projected = axes.Location().Translated(
+          gp_Vec(point.Z(), point.Y(), 0).Transformed(trsf));
+      result[i] = cast_from_gp(projected);
+    }
+    return result;
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+void topo_profile_project_point_list_free(pnt3d_t *points) {
+  if (points) {
+    delete[] points;
+  }
+}
+
 double topo_wrie_length(topo_wire_t wire) {
   return flywave::topo::wrie_length(*cast_to_topo(wire));
 }
