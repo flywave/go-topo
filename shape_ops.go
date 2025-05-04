@@ -404,7 +404,6 @@ func ClipWireBetweenDistances(wire *Wire, startDistance, endDistance float64) *W
 	return w
 }
 
-// 在文件顶部添加结构体定义
 type ProfileProjection struct {
 	inner C.topo_profile_projection_t
 }
@@ -421,7 +420,12 @@ func (p *ProfileProjection) GetTrsf() Trsf {
 	}
 }
 
-// 添加新函数实现
+func (p *ProfileProjection) GeTangent() Vector3 {
+	return Vector3{
+		val: p.inner.tangent,
+	}
+}
+
 func CalcProfileProjection(wire *Wire) ProfileProjection {
 	result := C.topo_calc_profile_projection(wire.inner.val)
 	return ProfileProjection{inner: result}

@@ -5538,6 +5538,7 @@ topo_profile_projection_t topo_calc_profile_projection(topo_wire_t path) {
   auto section = flywave::topo::cacl_profile_projection(*cast_to_topo(path));
   result.axes = cast_from_gp(section.axes);
   result.trsf = cast_from_gp(section.trsf);
+  result.tangent = cast_from_gp(section.tangent);
   return result;
 }
 

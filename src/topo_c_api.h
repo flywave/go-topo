@@ -1558,13 +1558,12 @@ TOPOCAPICALL topo_wire_t topo_wire_clip_between_distances(topo_wire_t wire,
                                                           double start_distance,
                                                           double end_distance);
 
-// 在enum定义后添加结构体定义
 typedef struct {
   axis2_t axes;
   trsf_t trsf;
+  vec3d_t tangent;
 } topo_profile_projection_t;
 
-// 在函数声明区域添加函数声明
 TOPOCAPICALL topo_profile_projection_t
 topo_calc_profile_projection(topo_wire_t path);
 TOPOCAPICALL pnt3d_t topo_profile_project_point(topo_profile_projection_t *proj,

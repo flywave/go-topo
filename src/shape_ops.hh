@@ -177,6 +177,7 @@ wire clip_wire_between_distances(const wire &wire_path, double start_distance,
 struct profile_projection {
   gp_Ax2 axes;
   gp_Trsf trsf;
+  gp_Vec tangent;
 };
 
 profile_projection cacl_profile_projection(wire path);
