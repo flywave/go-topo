@@ -174,5 +174,16 @@ sample_wire_at_distances(const wire &wire_path,
 wire clip_wire_between_distances(const wire &wire_path, double start_distance,
                                  double end_distance);
 
+struct profile_projection {
+  gp_Ax2 axes;
+  gp_Trsf trsf;
+};
+
+profile_projection cacl_profile_projection(wire path);
+
+gp_Pnt profile_project_point(profile_projection *proj, gp_Pnt point);
+
+double wrie_length(wire path);
+
 } // namespace topo
 } // namespace flywave

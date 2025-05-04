@@ -68,7 +68,10 @@
 
 namespace flywave {
 namespace topo {
-
+// 判断两个方向是否平行（考虑浮点误差）
+bool IsParallel(const gp_Dir &dir1, const gp_Dir &dir2) {
+  return Abs(dir1.Dot(dir2)) > 1 - Precision::Angular();
+}
 TopoDS_Shape create_sphere(const sphere_params &params) {
   // 验证参数有效性
   if (params.radius <= 0.0) {
@@ -825,83 +828,90 @@ TopoDS_Shape create_rectangular_ring(const rectangular_ring_params &params) {
   BRepBuilderAPI_MakeWire pathWire;
   BRepBuilderAPI_TransitionMode mode = BRepBuilderAPI_Transformed;
 
-  // 定义基准角点（修正坐标系）
-  const gp_Pnt base_points[4] = {
-      gp_Pnt(straight_length / 2, -straight_width / 2, 0), // 右下基准点
-      gp_Pnt(straight_length / 2, straight_width / 2, 0),  // 右上基准点
-      gp_Pnt(-straight_length / 2, straight_width / 2, 0), // 左上基准点
-      gp_Pnt(-straight_length / 2, -straight_width / 2, 0) // 左下基准点
-  };
+  // 创建圆形截面（修正截面方向）
+  gp_Pnt sectionStart;
+  gp_Vec sectionDir;
 
   // 添加倒角圆弧（如果半径大于0）
   if (R > Precision::Confusion()) {
+    // 定义四个角点参数
+    struct CornerInfo {
+      gp_Pnt center;
+      gp_Pnt start;
+      gp_Pnt end;
+    } corners[4];
 
-    // 创建四个圆角
-    for (int i = 0; i < 4; i++) {
-      int next_i = (i + 1) % 4;
-      int prev_i = (i + 3) % 4;
+    // 右下角 (i=0)
+    corners[0].center = gp_Pnt(L / 2 - R, -W / 2 + R, 0);
+    corners[0].start = gp_Pnt(L / 2 - R, -W / 2, 0); // 东向直边终点
+    corners[0].end = gp_Pnt(L / 2, -W / 2 + R, 0);   // 南向直边起点
 
-      // 计算圆角中心点
-      gp_Vec vec1(base_points[prev_i], base_points[i]);
-      gp_Vec vec2(base_points[i], base_points[next_i]);
-      vec1.Normalize();
-      vec2.Normalize();
+    // 右上角 (i=1)
+    corners[1].center = gp_Pnt(L / 2 - R, W / 2 - R, 0);
+    corners[1].start = gp_Pnt(L / 2, W / 2 - R, 0); // 东向直边终点
+    corners[1].end = gp_Pnt(L / 2 - R, W / 2, 0);   // 北向直边起点
 
-      // 计算圆弧法向量（统一使用右手定则）
-      gp_Dir arc_normal = vec1.Crossed(vec2);
-      arc_normal.Reverse();   // 确保Z轴正向
-      gp_Dir arc_xdir = vec1; // X方向沿第一条边
+    // 左上角 (i=2)
+    corners[2].center = gp_Pnt(-L / 2 + R, W / 2 - R, 0);
+    corners[2].start = gp_Pnt(-L / 2 + R, W / 2, 0); // 北向直边终点
+    corners[2].end = gp_Pnt(-L / 2, W / 2 - R, 0);   // 西向直边起点
 
-      gp_Pnt corner_center =
-          base_points[i].Translated(vec1 * R).Translated(vec2 * R);
+    // 左下角 (i=3)
+    corners[3].center = gp_Pnt(-L / 2 + R, -W / 2 + R, 0);
+    corners[3].start = gp_Pnt(-L / 2, -W / 2 + R, 0); // 西向直边终点
+    corners[3].end = gp_Pnt(-L / 2 + R, -W / 2, 0);   // 南向直边起点
 
-      // 计算圆弧的起点和终点
-      gp_Pnt arc_start = base_points[i].Translated(vec1 * R);
-      gp_Pnt arc_end = base_points[i].Translated(vec2 * R);
+    // 圆角模式下使用第一个圆角的起点和方向
+    sectionStart = corners[0].start;
+    sectionDir = gp_Vec(corners[0].end.XYZ() - corners[0].start.XYZ());
 
-      // 创建圆弧（使用统一坐标系）
-      gp_Ax2 arc_axis(corner_center, arc_normal, arc_xdir);
-      gp_Circ arc(arc_axis, R);
-
-      // 计算圆弧参数范围（确保方向一致）
-      Standard_Real start_param = ElCLib::Parameter(arc, arc_start);
-      Standard_Real end_param = ElCLib::Parameter(arc, arc_end);
-
-      // 添加直线边（从前一个角点到当前圆弧起点）
-      gp_Pnt line_start = base_points[prev_i].Translated(
-          gp_Vec(base_points[prev_i], base_points[i]).Normalized() * R);
-      pathWire.Add(BRepBuilderAPI_MakeEdge(line_start, arc_start).Edge());
-
-      // 添加圆弧（确保参数范围正确）
-      if (end_param < start_param) {
-        end_param += 2 * M_PI;
+    // 构建路径：直边段 -> 圆角
+    for (int i = 0; i < 4; ++i) {
+      // 添加直线段（连接上一个圆角终点到当前圆角起点）
+      if (i == 0) {
+        // 从最后一个圆角终点连接到第一个圆角起点
+        pathWire.Add(
+            BRepBuilderAPI_MakeEdge(corners[3].end, corners[0].start).Edge());
+      } else {
+        // 连接前一个圆角终点到当前圆角起点
+        pathWire.Add(
+            BRepBuilderAPI_MakeEdge(corners[i - 1].end, corners[i].start)
+                .Edge());
       }
-      pathWire.Add(BRepBuilderAPI_MakeEdge(arc, start_param, end_param).Edge());
+
+      gp_Circ arc(gp_Ax2(corners[i].center, gp_Dir(0, 0, 1)), R);
+      Handle(Geom_TrimmedCurve) arcCurve =
+          GC_MakeArcOfCircle(arc, corners[i].start, corners[i].end,
+                             true // 确保顺时针方向
+          );
+      pathWire.Add(BRepBuilderAPI_MakeEdge(arcCurve).Edge());
     }
 
-    // 闭合路径（添加最后一条直线边）
-    gp_Pnt last_line_start = base_points[3].Translated(
-        gp_Vec(base_points[3], base_points[0]).Normalized() * R);
-    gp_Pnt last_line_end = base_points[0].Translated(
-        gp_Vec(base_points[0], base_points[1]).Normalized() * R);
-    pathWire.Add(
-        BRepBuilderAPI_MakeEdge(last_line_start, last_line_end).Edge());
-
+    mode = BRepBuilderAPI_RoundCorner;
   } else {
+    // 定义基准角点（修正坐标系）
+    const gp_Pnt base_points[4] = {
+        gp_Pnt(straight_length / 2, -straight_width / 2, 0), // 右下基准点
+        gp_Pnt(straight_length / 2, straight_width / 2, 0),  // 右上基准点
+        gp_Pnt(-straight_length / 2, straight_width / 2, 0), // 左上基准点
+        gp_Pnt(-straight_length / 2, -straight_width / 2, 0) // 左下基准点
+    };
     // 直角处理
     for (int i = 0; i < 4; i++) {
       int next_i = (i + 1) % 4;
       pathWire.Add(
           BRepBuilderAPI_MakeEdge(base_points[i], base_points[next_i]).Edge());
     }
+    sectionStart = base_points[0];
+    sectionDir = gp_Vec(base_points[1].XYZ() - base_points[0].XYZ());
+
     mode = BRepBuilderAPI_RightCorner;
   }
 
   // 创建圆形截面（修正截面方向）
-  const gp_Ax2 section_axis(
-      base_points[0], // 截面起点在路径起始点
-      gp_Vec(base_points[1].XYZ() - base_points[0].XYZ()), // 法线方向沿路径切线
-      gp::DZ()                                             // 垂直方向
+  const gp_Ax2 section_axis(sectionStart, // 截面起点
+                            sectionDir,   // 法线方向沿路径切线
+                            gp::DZ()      // 垂直方向
   );
   gp_Circ sectionCircle(section_axis, DR);
   TopoDS_Wire sectionWire =
@@ -2058,7 +2068,7 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
       gp_Ax2 cylinderAxis(segment_start, gp_Dir(segment_vec));
       TopoDS_Shape cylinder =
           BRepPrimAPI_MakeCylinder(cylinderAxis,
-                                   params.radius, // 使用绝缘子半径参数
+                                   params.radius,          // 使用绝缘子半径参数
                                    segment_vec.Magnitude() // 实际长度
                                    )
               .Shape();
@@ -2121,9 +2131,9 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
 
     // 创建连接盒（参数顺序：X长度，Y长度，Z长度）
     BRepPrimAPI_MakeBox connector_box(box_axis,
-                                      box_x_length, // X方向尺寸（沿全局X轴）
+                                      box_x_length,    // X方向尺寸（沿全局X轴）
                                       box_y_thickness, // Y方向尺寸（沿全局Y轴）
-                                      box_z_height // Z方向尺寸（沿全局Z轴）
+                                      box_z_height     // Z方向尺寸（沿全局Z轴）
     );
 
     connector_box.Build();
@@ -2238,7 +2248,7 @@ TopoDS_Shape create_terminal_block(const terminal_block_params &params) {
 
       // 创建穿透孔洞（Y方向完全穿透）
       gp_Ax2 holeAxis(gp_Pnt(x, -params.thickness, z), // 起始于底面（Y=0）
-                      gp_Dir(0, 1, 0) // 沿Y轴方向（厚度方向）
+                      gp_Dir(0, 1, 0)                  // 沿Y轴方向（厚度方向）
       );
       BRepPrimAPI_MakeCylinder holeMaker(holeAxis, params.holeRadius,
                                          params.thickness * 2 // 确保完全穿透
@@ -2823,9 +2833,9 @@ TopoDS_Shape create_curve_cable(const curve_cable_params &params) {
 
   // 使用扫掠器自动计算坐标系（添加Frenet模式）
   BRepOffsetAPI_MakePipeShell pipeMaker(pathMaker.Wire());
-  pipeMaker.SetMode(true);      // 设置为实体模式
-  pipeMaker.SetMaxDegree(5);    // 提高最大阶数以适应复杂曲率
-  pipeMaker.SetTolerance(1e-5); // 放宽容差适应复杂路径
+  pipeMaker.SetMode(true);                   // 设置为实体模式
+  pipeMaker.SetMaxDegree(5);                 // 提高最大阶数以适应复杂曲率
+  pipeMaker.SetTolerance(1e-5);              // 放宽容差适应复杂路径
   pipeMaker.SetForceApproxC1(Standard_True); // 强制C1连续近似
 
   // 创建动态调整的圆形截面（直径始终垂直于路径）
@@ -2990,16 +3000,16 @@ TopoDS_Wire create_ibeam_profile(double height, double flangeWidth,
   gp_Pnt p12(0, -halfFlangeWidth, 0);
 
   // 构建轮廓线（按顺序连接所有点）
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p1).Edge()); // 下翼缘
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge()); // 右下翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge()); // 右下腹板水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge()); // 右腹板垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge()); // 右上腹板水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge()); // 右上翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge()); // 上翼缘
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge()); // 左上翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p9).Edge()); // 左上腹板水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge()); // 左腹板垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p1).Edge());  // 下翼缘
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());   // 右下翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());   // 右下腹板水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());   // 右腹板垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());   // 右上腹板水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge());   // 右上翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge());   // 上翼缘
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge());   // 左上翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p9).Edge());   // 左上腹板水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge());  // 左腹板垂直段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p11).Edge()); // 左下腹板水平段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p12).Edge()); // 左下翼缘垂直段
 
@@ -3221,17 +3231,17 @@ TopoDS_Wire create_t_steel_profile(double height, double width,
   gp_Pnt p11(0, halfWidth, 0);                // 右侧端点
 
   // 构建完整轮廓（顺时针连接）
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge()); // 底部中心→左
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge()); // 腹板左侧垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p9).Edge()); // 新增：左侧翼缘连接
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p8).Edge()); // 左侧翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p4).Edge()); // 顶部翼缘左段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge()); // 腹板顶部水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p11).Edge()); // 顶部翼缘右段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());   // 底部中心→左
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());   // 腹板左侧垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p9).Edge());   // 新增：左侧翼缘连接
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p8).Edge());   // 左侧翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p4).Edge());   // 顶部翼缘左段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());   // 腹板顶部水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p11).Edge());  // 顶部翼缘右段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p10).Edge()); // 右侧翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p6).Edge()); // 新增：右侧翼缘连接
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge()); // 腹板右侧垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p1).Edge()); // 底部右侧→中心
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p6).Edge());  // 新增：右侧翼缘连接
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge());   // 腹板右侧垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p1).Edge());   // 底部右侧→中心
 
   if (!wireMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to create T-steel profile");
@@ -6728,7 +6738,7 @@ create_single_hook_anchor(const single_hook_anchor_params &params) {
       // 定义截面坐标系：Z轴沿路径切线，Y轴垂直圆弧平面
       sectionAxis = gp_Ax2(arcStart,
                            tangent.Normalized(), // 截面Z轴沿路径方向
-                           gp_Dir(0, 0, 1)); // Y轴垂直圆弧平面（YZ平面）
+                           gp_Dir(0, 0, 1));     // Y轴垂直圆弧平面（YZ平面）
     }
 
     // 创建截面圆（直径参数验证）
@@ -10090,7 +10100,7 @@ TopoDS_Shape create_three_way_round_working_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset); // 支线段左上角点
+                  zoffset);                                  // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
 
   // 4. 计算圆弧关键点（精确几何关系）
@@ -10201,7 +10211,7 @@ TopoDS_Shape create_three_way_corner_working_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset); // 支线段左上角点
+                  zoffset);                                  // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
 
   const gp_Pnt leftStart(-halfWidth1 - cornerLength, halfWidth, zoffset);
@@ -10821,10 +10831,10 @@ TopoDS_Shape create_three_way_circle_well_part(double length, double width,
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset); // 支线段左上角点
+                  zoffset);                                  // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
-  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset); // 支线段左下角点
-  const gp_Pnt p10(halfWidth1, halfWidth, zoffset); // 支线段右下角点
+  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset);          // 支线段左下角点
+  const gp_Pnt p10(halfWidth1, halfWidth, zoffset);          // 支线段右下角点
 
   // 7. 构建完整线框（确保拓扑闭合）
   BRepBuilderAPI_MakeWire wireMaker;
@@ -10888,10 +10898,10 @@ TopoDS_Shape create_three_way_rectangular_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset); // 支线段左上角点
+                  zoffset);                                  // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右上角点
-  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset); // 支线段左下角点
-  const gp_Pnt p10(halfWidth1, halfWidth, zoffset); // 支线段右下角点
+  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset);          // 支线段左下角点
+  const gp_Pnt p10(halfWidth1, halfWidth, zoffset);          // 支线段右下角点
 
   // 7. 构建完整线框（确保拓扑闭合）
   BRepBuilderAPI_MakeWire wireMaker;
@@ -11627,7 +11637,7 @@ TopoDS_Shape create_four_way_round_working_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset); // 支线段左上角点
+                  zoffset);                                  // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
 
   // 4. 定义支线段2端点（下方）
@@ -12776,33 +12786,9 @@ TopoDS_Shape create_channel_shape(TopoDS_Shape section, TopoDS_Wire pathWire) {
     throw Standard_ConstructionError("截面形状必须是闭合的");
   }
 
-  // 获取路径起始点的切线方向
-  BRepAdaptor_CompCurve curveAdaptor(pathWire);
-  gp_Pnt startPoint;
-  gp_Vec startTangent;
-  curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
-
-  // 在创建截面圆之前添加方向修正
-  gp_Dir initNormal = startTangent.Normalized();
-  gp_Dir refDir(0, 1, 0);
-  // 确保参考方向与切线不平行
-  if (Abs(initNormal.Dot(refDir)) > 0.99) {
-    refDir = gp_Dir(1, 0, 0);
-  }
-
-  // 创建坐标系并旋转截面
-  gp_Ax2 sectionAxes(gp::Origin(), initNormal, refDir);
-  gp_Trsf rotation;
-  rotation.SetRotation(gp_Ax1(gp::Origin(), gp::DZ()), refDir.Angle(gp::DX()));
-
-  // 应用旋转变换到截面
-  BRepBuilderAPI_Transform sectionTransform(section, rotation);
-  TopoDS_Shape rotatedSection = sectionTransform.Shape();
-
   // 创建管道形状
   BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
-  pipeMaker.Add(rotatedSection, Standard_False, Standard_True);
-  pipeMaker.SetMode(Standard_True);
+  pipeMaker.Add(section, Standard_False, Standard_True);
   pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
   pipeMaker.Build();
 
@@ -12857,6 +12843,26 @@ TopoDS_Compound create_pull_pipe_section(const pipe_row_params &params) {
 
   TopoDS_Wire path = pathWire.Wire();
 
+  // 获取路径起始点的切线方向
+  BRepAdaptor_CompCurve curveAdaptor(path);
+  gp_Pnt startPoint;
+  gp_Vec startTangent;
+  curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
+
+  // 在创建截面圆之前添加方向修正
+  gp_Dir tanDir = startTangent.Normalized();
+  gp_Dir refDir = gp::DZ(); // 默认参考方向为全局Y轴
+
+  // 如果tanDir平行于全局X轴，调整参考方向为全局Z轴
+  if (IsParallel(tanDir, gp::DX())) {
+    refDir = gp::DZ();
+  }
+  gp_Ax2 sectionAxes(startPoint, tanDir, refDir);
+
+  // 创建变换对象
+  gp_Trsf trsf;
+  trsf.SetTransformation(sectionAxes, gp_Ax2(gp::Origin(), gp::DZ()));
+
   // 创建外管圆
   gp_Circ outerCircle(gp_Ax2(gp::Origin(), gp::DX()),
                       params.pullPipeInnerDiameter / 2 +
@@ -12886,11 +12892,15 @@ TopoDS_Compound create_pull_pipe_section(const pipe_row_params &params) {
     BRepBuilderAPI_MakeWire pipeMaker;
     BRepBuilderAPI_MakeWire pipeHoleMaker;
 
-    gp_Pnt center(0, params.pipePositions[i].X(), params.pipePositions[i].Y());
-    gp_Circ pipeCircle(gp_Ax2(center, gp::DX()),
+    gp_Pnt localCenter(0, params.pipePositions[i].X(),
+                       params.pipePositions[i].Y());
+    gp_Pnt projectedPoint = sectionAxes.Location().Translated(
+        gp_Vec(localCenter.Z(), localCenter.Y(), 0).Transformed(trsf));
+
+    gp_Circ pipeCircle(gp_Ax2(projectedPoint, tanDir),
                        params.pipeInnerDiameters[i] / 2 +
                            params.pipeWallThicknesses[i]);
-    gp_Circ pipeHole(gp_Ax2(center, gp::DX()),
+    gp_Circ pipeHole(gp_Ax2(projectedPoint, tanDir),
                      params.pipeInnerDiameters[i] / 2);
 
     pipeMaker.Add(BRepBuilderAPI_MakeEdge(pipeCircle).Edge());
@@ -12962,16 +12972,47 @@ TopoDS_Compound create_normal_pipe_section(const pipe_row_params &params) {
 
   TopoDS_Wire path = pathWire.Wire();
 
+  // 获取路径起始点的切线方向
+  BRepAdaptor_CompCurve curveAdaptor(path);
+  gp_Pnt startPoint;
+  gp_Vec startTangent;
+  curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
+
+  // 在创建截面圆之前添加方向修正
+  gp_Dir tanDir = startTangent.Normalized();
+  gp_Dir refDir = gp::DZ(); // 默认参考方向为全局Y轴
+
+  // 如果tanDir平行于全局X轴，调整参考方向为全局Z轴
+  if (IsParallel(tanDir, gp::DX())) {
+    refDir = gp::DZ();
+  }
+  gp_Ax2 sectionAxes(startPoint, tanDir, refDir);
+
+  // 创建变换对象
+  gp_Trsf trsf;
+  trsf.SetTransformation(sectionAxes, gp_Ax2(gp::Origin(), gp::DZ()));
+
   // YZ平面上的点坐标 (X=0)
   gp_Pnt p1(0, -baseWidth / 2, -params.baseThickness);
-  gp_Pnt p2(0, baseWidth / 2, -params.baseThickness);
-  gp_Pnt p3(0, baseWidth / 2, 0);
-  gp_Pnt p4(0, -baseWidth / 2, 0);
+  gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+      gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
 
-  baseMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
-  baseMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
-  baseMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
-  baseMaker.Add(BRepBuilderAPI_MakeEdge(p4, p1).Edge());
+  gp_Pnt p2(0, baseWidth / 2, -params.baseThickness);
+  gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+      gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+
+  gp_Pnt p3(0, baseWidth / 2, 0);
+  gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+      gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+
+  gp_Pnt p4(0, -baseWidth / 2, 0);
+  gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+      gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(projectedp1, projectedp2).Edge());
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(projectedp2, projectedp3).Edge());
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(projectedp3, projectedp4).Edge());
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(projectedp4, projectedp1).Edge());
 
   TopoDS_Compound result;
   BRep_Builder builder;
@@ -12985,17 +13026,28 @@ TopoDS_Compound create_normal_pipe_section(const pipe_row_params &params) {
     BRepBuilderAPI_MakeWire cushionMaker;
     gp_Pnt p1(0, -baseWidth / 2 - params.cushionExtension,
               -params.baseThickness - params.cushionThickness);
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+
     gp_Pnt p2(0, baseWidth / 2 + params.cushionExtension,
               -params.baseThickness - params.cushionThickness);
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+
     gp_Pnt p3(0, baseWidth / 2 + params.cushionExtension,
               -params.baseThickness);
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+
     gp_Pnt p4(0, -baseWidth / 2 - params.cushionExtension,
               -params.baseThickness);
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
 
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p4, p1).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp1, projectedp2).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp2, projectedp3).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp3, projectedp4).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp4, projectedp1).Edge());
 
     TopoDS_Shape cushion = create_channel_shape(cushionMaker.Wire(), path);
 
@@ -13012,10 +13064,19 @@ TopoDS_Compound create_normal_pipe_section(const pipe_row_params &params) {
     gp_Pnt e3(0, params.enclosureWidth / 2, params.enclosureHeight);
     gp_Pnt e4(0, params.enclosureWidth / 2, 0);
 
-    wireMaker1.Add(BRepBuilderAPI_MakeEdge(e1, e2).Edge());
-    wireMaker1.Add(BRepBuilderAPI_MakeEdge(e2, e3).Edge());
-    wireMaker1.Add(BRepBuilderAPI_MakeEdge(e3, e4).Edge());
-    wireMaker1.Add(BRepBuilderAPI_MakeEdge(e4, e1).Edge());
+    gp_Pnt projectede1 = sectionAxes.Location().Translated(
+        gp_Vec(e1.Z(), e1.Y(), 0).Transformed(trsf));
+    gp_Pnt projectede2 = sectionAxes.Location().Translated(
+        gp_Vec(e2.Z(), e2.Y(), 0).Transformed(trsf));
+    gp_Pnt projectede3 = sectionAxes.Location().Translated(
+        gp_Vec(e3.Z(), e3.Y(), 0).Transformed(trsf));
+    gp_Pnt projectede4 = sectionAxes.Location().Translated(
+        gp_Vec(e4.Z(), e4.Y(), 0).Transformed(trsf));
+
+    wireMaker1.Add(BRepBuilderAPI_MakeEdge(projectede1, projectede2).Edge());
+    wireMaker1.Add(BRepBuilderAPI_MakeEdge(projectede2, projectede3).Edge());
+    wireMaker1.Add(BRepBuilderAPI_MakeEdge(projectede3, projectede4).Edge());
+    wireMaker1.Add(BRepBuilderAPI_MakeEdge(projectede4, projectede1).Edge());
 
     enclosure = create_channel_shape(wireMaker1.Wire(), path);
   }
@@ -13026,11 +13087,15 @@ TopoDS_Compound create_normal_pipe_section(const pipe_row_params &params) {
     BRepBuilderAPI_MakeWire pipeHoleMaker;
 
     // YZ平面上的中心点 (X=0)
-    gp_Pnt center(0, params.pipePositions[i].X(), params.pipePositions[i].Y());
-    gp_Circ pipeCircle(gp_Ax2(center, gp::DX()), // 法线方向为X轴
+    gp_Pnt localCenter(0, params.pipePositions[i].X(),
+                       params.pipePositions[i].Y());
+    gp_Pnt projectedPoint = sectionAxes.Location().Translated(
+        gp_Vec(localCenter.Z(), localCenter.Y(), 0).Transformed(trsf));
+
+    gp_Circ pipeCircle(gp_Ax2(projectedPoint, tanDir), // 法线方向为X轴
                        params.pipeInnerDiameters[i] / 2 +
                            params.pipeWallThicknesses[i]);
-    gp_Circ pipeHole(gp_Ax2(center, gp::DX()),
+    gp_Circ pipeHole(gp_Ax2(projectedPoint, tanDir),
                      params.pipeInnerDiameters[i] / 2);
 
     pipeMaker.Add(BRepBuilderAPI_MakeEdge(pipeCircle).Edge());
@@ -13134,6 +13199,26 @@ TopoDS_Shape create_cable_trench(const cable_trench_params &params) {
 
   TopoDS_Wire path = pathWire.Wire();
 
+  // 获取路径起始点的切线方向
+  BRepAdaptor_CompCurve curveAdaptor(path);
+  gp_Pnt startPoint;
+  gp_Vec startTangent;
+  curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
+
+  // 在创建截面圆之前添加方向修正
+  gp_Dir tanDir = startTangent.Normalized();
+  gp_Dir refDir = gp::DZ(); // 默认参考方向为全局Y轴
+
+  // 如果tanDir平行于全局X轴，调整参考方向为全局Z轴
+  if (IsParallel(tanDir, gp::DX())) {
+    refDir = gp::DZ();
+  }
+  gp_Ax2 sectionAxes(startPoint, tanDir, refDir);
+
+  // 创建变换对象
+  gp_Trsf trsf;
+  trsf.SetTransformation(sectionAxes, gp_Ax2(gp::Origin(), gp::DZ()));
+
   double baseWidth =
       params.width + 2 * params.wallThickness + 2 * params.baseExtension;
 
@@ -13143,10 +13228,19 @@ TopoDS_Shape create_cable_trench(const cable_trench_params &params) {
   gp_Pnt p3(0, baseWidth / 2, 0);
   gp_Pnt p4(0, -baseWidth / 2, 0);
 
-  baseMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
-  baseMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
-  baseMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
-  baseMaker.Add(BRepBuilderAPI_MakeEdge(p4, p1).Edge());
+  gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+      gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+  gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+      gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+  gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+      gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+  gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+      gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(projectedp1, projectedp2).Edge());
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(projectedp2, projectedp3).Edge());
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(projectedp3, projectedp4).Edge());
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(projectedp4, projectedp1).Edge());
 
   TopoDS_Compound result;
   BRep_Builder builder;
@@ -13167,10 +13261,19 @@ TopoDS_Shape create_cable_trench(const cable_trench_params &params) {
     gp_Pnt p4(0, -baseWidth / 2 - params.cushionExtension,
               -params.baseThickness);
 
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p4, p1).Edge());
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp1, projectedp2).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp2, projectedp3).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp3, projectedp4).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp4, projectedp1).Edge());
 
     TopoDS_Shape cushion = create_channel_shape(cushionMaker.Wire(), path);
 
@@ -13190,10 +13293,19 @@ TopoDS_Shape create_cable_trench(const cable_trench_params &params) {
     gp_Pnt p3(0, params.coverWidth / 2, params.height + params.coverThickness);
     gp_Pnt p4(0, -params.coverWidth / 2, params.height + params.coverThickness);
 
-    coverMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
-    coverMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
-    coverMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
-    coverMaker.Add(BRepBuilderAPI_MakeEdge(p4, p1).Edge());
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+
+    coverMaker.Add(BRepBuilderAPI_MakeEdge(projectedp1, projectedp2).Edge());
+    coverMaker.Add(BRepBuilderAPI_MakeEdge(projectedp2, projectedp3).Edge());
+    coverMaker.Add(BRepBuilderAPI_MakeEdge(projectedp3, projectedp4).Edge());
+    coverMaker.Add(BRepBuilderAPI_MakeEdge(projectedp4, projectedp1).Edge());
 
     TopoDS_Shape cover = create_channel_shape(coverMaker.Wire(), path);
 
@@ -13205,19 +13317,36 @@ TopoDS_Shape create_cable_trench(const cable_trench_params &params) {
     BRepBuilderAPI_MakeWire wall1Maker;
     double wall1Width = params.width + 2 * params.wallThickness;
     gp_Pnt p1(0, params.width / 2, 0);
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+
     gp_Pnt p2(0, wall1Width / 2, 0);
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+
     gp_Pnt p3(0, wall1Width / 2, params.height + params.coverThickness);
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+
     gp_Pnt p4(0, wall1Width / 2 - params.wallThickness2,
               params.height + params.coverThickness);
-    gp_Pnt p5(0, wall1Width / 2 - params.wallThickness2, params.height);
-    gp_Pnt p6(0, params.width / 2, params.height);
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
 
-    wall1Maker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
-    wall1Maker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
-    wall1Maker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
-    wall1Maker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());
-    wall1Maker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge());
-    wall1Maker.Add(BRepBuilderAPI_MakeEdge(p6, p1).Edge());
+    gp_Pnt p5(0, wall1Width / 2 - params.wallThickness2, params.height);
+    gp_Pnt projectedp5 = sectionAxes.Location().Translated(
+        gp_Vec(p5.Z(), p5.Y(), 0).Transformed(trsf));
+
+    gp_Pnt p6(0, params.width / 2, params.height);
+    gp_Pnt projectedp6 = sectionAxes.Location().Translated(
+        gp_Vec(p6.Z(), p6.Y(), 0).Transformed(trsf));
+
+    wall1Maker.Add(BRepBuilderAPI_MakeEdge(projectedp1, projectedp2).Edge());
+    wall1Maker.Add(BRepBuilderAPI_MakeEdge(projectedp2, projectedp3).Edge());
+    wall1Maker.Add(BRepBuilderAPI_MakeEdge(projectedp3, projectedp4).Edge());
+    wall1Maker.Add(BRepBuilderAPI_MakeEdge(projectedp4, projectedp5).Edge());
+    wall1Maker.Add(BRepBuilderAPI_MakeEdge(projectedp5, projectedp6).Edge());
+    wall1Maker.Add(BRepBuilderAPI_MakeEdge(projectedp6, projectedp1).Edge());
     TopoDS_Shape wall = create_channel_shape(wall1Maker.Wire(), path);
     builder.Add(result, wall);
   }
@@ -13225,19 +13354,36 @@ TopoDS_Shape create_cable_trench(const cable_trench_params &params) {
     BRepBuilderAPI_MakeWire wall2Maker;
     double wall1Width = params.width + 2 * params.wallThickness;
     gp_Pnt p1(0, -params.width / 2, 0);
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+
     gp_Pnt p2(0, -wall1Width / 2, 0);
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+
     gp_Pnt p3(0, -wall1Width / 2, params.height + params.coverThickness);
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+
     gp_Pnt p4(0, -wall1Width / 2 + params.wallThickness2,
               params.height + params.coverThickness);
-    gp_Pnt p5(0, -wall1Width / 2 + params.wallThickness2, params.height);
-    gp_Pnt p6(0, -params.width / 2, params.height);
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
 
-    wall2Maker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
-    wall2Maker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
-    wall2Maker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
-    wall2Maker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());
-    wall2Maker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge());
-    wall2Maker.Add(BRepBuilderAPI_MakeEdge(p6, p1).Edge());
+    gp_Pnt p5(0, -wall1Width / 2 + params.wallThickness2, params.height);
+    gp_Pnt projectedp5 = sectionAxes.Location().Translated(
+        gp_Vec(p5.Z(), p5.Y(), 0).Transformed(trsf));
+
+    gp_Pnt p6(0, -params.width / 2, params.height);
+    gp_Pnt projectedp6 = sectionAxes.Location().Translated(
+        gp_Vec(p6.Z(), p6.Y(), 0).Transformed(trsf));
+
+    wall2Maker.Add(BRepBuilderAPI_MakeEdge(projectedp1, projectedp2).Edge());
+    wall2Maker.Add(BRepBuilderAPI_MakeEdge(projectedp2, projectedp3).Edge());
+    wall2Maker.Add(BRepBuilderAPI_MakeEdge(projectedp3, projectedp4).Edge());
+    wall2Maker.Add(BRepBuilderAPI_MakeEdge(projectedp4, projectedp5).Edge());
+    wall2Maker.Add(BRepBuilderAPI_MakeEdge(projectedp5, projectedp6).Edge());
+    wall2Maker.Add(BRepBuilderAPI_MakeEdge(projectedp6, projectedp1).Edge());
     TopoDS_Shape wall = create_channel_shape(wall2Maker.Wire(), path);
     builder.Add(result, wall);
   }
@@ -13310,6 +13456,26 @@ TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params) {
 
   TopoDS_Wire path = pathWire.Wire();
 
+  // 获取路径起始点的切线方向
+  BRepAdaptor_CompCurve curveAdaptor(path);
+  gp_Pnt startPoint;
+  gp_Vec startTangent;
+  curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
+
+  // 在创建截面圆之前添加方向修正
+  gp_Dir tanDir = startTangent.Normalized();
+  gp_Dir refDir = gp::DZ(); // 默认参考方向为全局Y轴
+
+  // 如果tanDir平行于全局X轴，调整参考方向为全局Z轴
+  if (IsParallel(tanDir, gp::DX())) {
+    refDir = gp::DZ();
+  }
+  gp_Ax2 sectionAxes(startPoint, tanDir, refDir);
+
+  // 创建变换对象
+  gp_Trsf trsf;
+  trsf.SetTransformation(sectionAxes, gp_Ax2(gp::Origin(), gp::DZ()));
+
   TopoDS_Compound result;
   BRep_Builder builder;
   builder.MakeCompound(result);
@@ -13333,10 +13499,19 @@ TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params) {
     gp_Pnt p4(0, -cushionWidth / 2 - params.cushionExtension,
               zoffset + params.cushionThickness);
 
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p4, p1).Edge());
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp1, projectedp2).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp2, projectedp3).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp3, projectedp4).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp4, projectedp1).Edge());
 
     TopoDS_Shape cushion = create_channel_shape(cushionMaker.Wire(), path);
 
@@ -13353,7 +13528,19 @@ TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params) {
     gp_Pnt p2(0, width / 2, -params.bottomThickness);
     gp_Pnt p3(0, width / 2, params.height + params.topThickness);
     gp_Pnt p4(0, -width / 2, params.height + params.topThickness);
-    outerWire = BRepBuilderAPI_MakePolygon(p1, p2, p3, p4, true).Wire();
+
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+
+    outerWire = BRepBuilderAPI_MakePolygon(projectedp1, projectedp2,
+                                           projectedp3, projectedp4, true)
+                    .Wire();
     break;
   }
   case connection_section_style::HORSESHOE: {
@@ -13367,17 +13554,31 @@ TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params) {
                              params.innerWallThickness;
 
     // 底部点
-    gp_Pnt bottomLeft(0, -outerRadius,
-                      -params.outerWallThickness - params.innerWallThickness);
-    gp_Pnt bottomRight(0, outerRadius,
-                       -params.outerWallThickness - params.innerWallThickness);
+    gp_Pnt localBottomLeft(0, -outerRadius,
+                           -params.outerWallThickness -
+                               params.innerWallThickness);
+    gp_Pnt bottomLeft = sectionAxes.Location().Translated(
+        gp_Vec(localBottomLeft.Z(), localBottomLeft.Y(), 0).Transformed(trsf));
+
+    gp_Pnt localBottomRight(
+        0, outerRadius, -params.outerWallThickness - params.innerWallThickness);
+    gp_Pnt bottomRight = sectionAxes.Location().Translated(
+        gp_Vec(localBottomRight.Z(), localBottomRight.Y(), 0)
+            .Transformed(trsf));
 
     // 侧壁点
-    gp_Pnt leftTop(0, -outerRadius, outerHeight);
-    gp_Pnt rightTop(0, outerRadius, outerHeight);
+    gp_Pnt localLeftTop(0, -outerRadius, outerHeight);
+    gp_Pnt leftTop = sectionAxes.Location().Translated(
+        gp_Vec(localLeftTop.Z(), localLeftTop.Y(), 0).Transformed(trsf));
+
+    gp_Pnt localRightTop(0, outerRadius, outerHeight);
+    gp_Pnt rightTop = sectionAxes.Location().Translated(
+        gp_Vec(localRightTop.Z(), localRightTop.Y(), 0).Transformed(trsf));
 
     // 顶部圆弧中点
-    gp_Pnt arcMid(0, 0, outerHeight + outerArchHeight);
+    gp_Pnt localArcMid(0, 0, outerHeight + outerArchHeight);
+    gp_Pnt arcMid = sectionAxes.Location().Translated(
+        gp_Vec(localArcMid.Z(), localArcMid.Y(), 0).Transformed(trsf));
 
     // 创建侧壁直线
     TopoDS_Edge leftEdge = BRepBuilderAPI_MakeEdge(bottomLeft, leftTop).Edge();
@@ -13436,7 +13637,19 @@ TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params) {
     gp_Pnt p2(0, params.width / 2, 0);
     gp_Pnt p3(0, params.width / 2, params.height);
     gp_Pnt p4(0, -params.width / 2, params.height);
-    innerWire = BRepBuilderAPI_MakePolygon(p1, p2, p3, p4, true).Wire();
+
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+
+    innerWire = BRepBuilderAPI_MakePolygon(projectedp1, projectedp2,
+                                           projectedp3, projectedp4, true)
+                    .Wire();
     break;
   }
   case connection_section_style::HORSESHOE: {
@@ -13446,15 +13659,28 @@ TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params) {
     double innerArchHeight = params.arcHeight;
 
     // 底部点
-    gp_Pnt bottomLeft(0, -innerRadius, 0);
-    gp_Pnt bottomRight(0, innerRadius, 0);
+    gp_Pnt localBottomLeft(0, -innerRadius, 0);
+    gp_Pnt bottomLeft = sectionAxes.Location().Translated(
+        gp_Vec(localBottomLeft.Z(), localBottomLeft.Y(), 0).Transformed(trsf));
+
+    gp_Pnt localBottomRight(0, innerRadius, 0);
+    gp_Pnt bottomRight = sectionAxes.Location().Translated(
+        gp_Vec(localBottomRight.Z(), localBottomRight.Y(), 0)
+            .Transformed(trsf));
 
     // 侧壁点
-    gp_Pnt leftTop(0, -innerRadius, innerHeight);
-    gp_Pnt rightTop(0, innerRadius, innerHeight);
+    gp_Pnt localLeftTop(0, -innerRadius, innerHeight);
+    gp_Pnt leftTop = sectionAxes.Location().Translated(
+        gp_Vec(localLeftTop.Z(), localLeftTop.Y(), 0).Transformed(trsf));
+
+    gp_Pnt localRightTop(0, innerRadius, innerHeight);
+    gp_Pnt rightTop = sectionAxes.Location().Translated(
+        gp_Vec(localRightTop.Z(), localRightTop.Y(), 0).Transformed(trsf));
 
     // 顶部圆弧中点
-    gp_Pnt arcMid(0, 0, innerHeight + innerArchHeight);
+    gp_Pnt localArcMid(0, 0, innerHeight + innerArchHeight);
+    gp_Pnt arcMid = sectionAxes.Location().Translated(
+        gp_Vec(localArcMid.Z(), localArcMid.Y(), 0).Transformed(trsf));
 
     // 创建侧壁直线
     TopoDS_Edge leftEdge = BRepBuilderAPI_MakeEdge(bottomLeft, leftTop).Edge();
@@ -13516,8 +13742,20 @@ TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params) {
     gp_Pnt p2(0, innerRadius, -innerRadius + params.bottomPlatformHeight);
     gp_Pnt p3(0, innerRadius, -innerRadius);
     gp_Pnt p4(0, -innerRadius, -innerRadius);
+
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+
     TopoDS_Wire tempWire =
-        BRepBuilderAPI_MakePolygon(p1, p2, p3, p4, true).Wire();
+        BRepBuilderAPI_MakePolygon(projectedp1, projectedp2, projectedp3,
+                                   projectedp4, true)
+            .Wire();
     TopoDS_Shape cutBottom = create_channel_shape(tempWire, path);
 
     inner = BRepAlgoAPI_Cut(inner, cutBottom).Shape();
@@ -13593,6 +13831,26 @@ TopoDS_Shape create_cable_tray(const cable_tray_params &params) {
 
   TopoDS_Wire path = pathWire.Wire();
 
+  // 获取路径起始点的切线方向
+  BRepAdaptor_CompCurve curveAdaptor(path);
+  gp_Pnt startPoint;
+  gp_Vec startTangent;
+  curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
+
+  // 在创建截面圆之前添加方向修正
+  gp_Dir tanDir = startTangent.Normalized();
+  gp_Dir refDir = gp::DZ(); // 默认参考方向为全局Y轴
+
+  // 如果tanDir平行于全局X轴，调整参考方向为全局Z轴
+  if (IsParallel(tanDir, gp::DX())) {
+    refDir = gp::DZ();
+  }
+  gp_Ax2 sectionAxes(startPoint, tanDir, refDir);
+
+  // 创建变换对象
+  gp_Trsf trsf;
+  trsf.SetTransformation(sectionAxes, gp_Ax2(gp::Origin(), gp::DZ()));
+
   TopoDS_Compound result;
   BRep_Builder builder;
   builder.MakeCompound(result);
@@ -13603,11 +13861,16 @@ TopoDS_Shape create_cable_tray(const cable_tray_params &params) {
     BRepBuilderAPI_MakeWire pipeHoleMaker;
 
     // YZ平面上的中心点 (X=0)
-    gp_Pnt center(0, params.pipePositions[i].X(), params.pipePositions[i].Y());
-    gp_Circ pipeCircle(gp_Ax2(center, gp::DX()), // 法线方向为X轴
+    gp_Pnt localCenter(0, params.pipePositions[i].X(),
+                       params.pipePositions[i].Y());
+
+    gp_Pnt projectedPoint = sectionAxes.Location().Translated(
+        gp_Vec(localCenter.Z(), localCenter.Y(), 0).Transformed(trsf));
+
+    gp_Circ pipeCircle(gp_Ax2(projectedPoint, tanDir), // 法线方向为X轴
                        params.pipeInnerDiameters[i] / 2 +
                            params.pipeWallThicknesses[i]);
-    gp_Circ pipeHole(gp_Ax2(center, gp::DX()),
+    gp_Circ pipeHole(gp_Ax2(projectedPoint, tanDir),
                      params.pipeInnerDiameters[i] / 2);
 
     pipeMaker.Add(BRepBuilderAPI_MakeEdge(pipeCircle).Edge());
@@ -13646,14 +13909,25 @@ TopoDS_Shape create_cable_tray(const cable_tray_params &params) {
     BRepBuilderAPI_MakeWire wall1Maker;
     double wall1Width = params.width;
     gp_Pnt p1(0, wall1Width / 2, 0);
-    gp_Pnt p2(0, wall1Width / 2, params.height);
-    gp_Pnt p3(0, wall1Width / 2 - params.wallThickness, params.height);
-    gp_Pnt p4(0, params.width / 2 - params.wallThickness, 0);
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
 
-    wall1Maker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
-    wall1Maker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
-    wall1Maker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
-    wall1Maker.Add(BRepBuilderAPI_MakeEdge(p4, p1).Edge());
+    gp_Pnt p2(0, wall1Width / 2, params.height);
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+
+    gp_Pnt p3(0, wall1Width / 2 - params.wallThickness, params.height);
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+
+    gp_Pnt p4(0, params.width / 2 - params.wallThickness, 0);
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+
+    wall1Maker.Add(BRepBuilderAPI_MakeEdge(projectedp1, projectedp2).Edge());
+    wall1Maker.Add(BRepBuilderAPI_MakeEdge(projectedp2, projectedp3).Edge());
+    wall1Maker.Add(BRepBuilderAPI_MakeEdge(projectedp3, projectedp4).Edge());
+    wall1Maker.Add(BRepBuilderAPI_MakeEdge(projectedp4, projectedp1).Edge());
     TopoDS_Shape wall = create_channel_shape(wall1Maker.Wire(), path);
     builder.Add(result, wall);
   }
@@ -13661,14 +13935,25 @@ TopoDS_Shape create_cable_tray(const cable_tray_params &params) {
     BRepBuilderAPI_MakeWire wall2Maker;
     double wall1Width = params.width;
     gp_Pnt p1(0, -wall1Width / 2, 0);
-    gp_Pnt p2(0, -wall1Width / 2, params.height);
-    gp_Pnt p3(0, -wall1Width / 2 + params.wallThickness, params.height);
-    gp_Pnt p4(0, -wall1Width / 2 + params.wallThickness, 0);
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
 
-    wall2Maker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
-    wall2Maker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
-    wall2Maker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
-    wall2Maker.Add(BRepBuilderAPI_MakeEdge(p4, p1).Edge());
+    gp_Pnt p2(0, -wall1Width / 2, params.height);
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+
+    gp_Pnt p3(0, -wall1Width / 2 + params.wallThickness, params.height);
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+
+    gp_Pnt p4(0, -wall1Width / 2 + params.wallThickness, 0);
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+
+    wall2Maker.Add(BRepBuilderAPI_MakeEdge(projectedp1, projectedp2).Edge());
+    wall2Maker.Add(BRepBuilderAPI_MakeEdge(projectedp2, projectedp3).Edge());
+    wall2Maker.Add(BRepBuilderAPI_MakeEdge(projectedp3, projectedp4).Edge());
+    wall2Maker.Add(BRepBuilderAPI_MakeEdge(projectedp4, projectedp1).Edge());
     TopoDS_Shape wall = create_channel_shape(wall2Maker.Wire(), path);
     builder.Add(result, wall);
   }
@@ -14504,16 +14789,45 @@ TopoDS_Shape create_footpath(const footpath_params &params) {
 
   TopoDS_Wire path = pathWire.Wire();
 
+  // 获取路径起始点的切线方向
+  BRepAdaptor_CompCurve curveAdaptor(path);
+  gp_Pnt startPoint;
+  gp_Vec startTangent;
+  curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
+
+  // 在创建截面圆之前添加方向修正
+  gp_Dir tanDir = startTangent.Normalized();
+  gp_Dir refDir = gp::DZ(); // 默认参考方向为全局Y轴
+
+  // 如果tanDir平行于全局X轴，调整参考方向为全局Z轴
+  if (IsParallel(tanDir, gp::DX())) {
+    refDir = gp::DZ();
+  }
+  gp_Ax2 sectionAxes(startPoint, tanDir, refDir);
+
+  // 创建变换对象
+  gp_Trsf trsf;
+  trsf.SetTransformation(sectionAxes, gp_Ax2(gp::Origin(), gp::DZ()));
+
   // YZ平面上的点坐标 (X=0)
   gp_Pnt p1(0, -params.width / 2, -params.height);
   gp_Pnt p2(0, params.width / 2, -params.height);
   gp_Pnt p3(0, params.width / 2, 0);
   gp_Pnt p4(0, -params.width / 2, 0);
 
-  baseMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
-  baseMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
-  baseMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
-  baseMaker.Add(BRepBuilderAPI_MakeEdge(p4, p1).Edge());
+  gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+      gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+  gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+      gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+  gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+      gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+  gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+      gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(projectedp1, projectedp2).Edge());
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(projectedp2, projectedp3).Edge());
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(projectedp3, projectedp4).Edge());
+  baseMaker.Add(BRepBuilderAPI_MakeEdge(projectedp4, projectedp1).Edge());
 
   return create_channel_shape(baseMaker.Wire(), path);
 }
@@ -15536,18 +15850,34 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
 
   TopoDS_Wire path = pathWire.Wire();
 
+  // 获取路径起始点的切线方向
+  BRepAdaptor_CompCurve curveAdaptor(path);
+  gp_Pnt startPoint;
+  gp_Vec startTangent;
+  curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
+
+  // 在创建截面圆之前添加方向修正
+  gp_Dir tanDir = startTangent.Normalized();
+  gp_Dir refDir = gp::DZ(); // 默认参考方向为全局Y轴
+
+  // 如果tanDir平行于全局X轴，调整参考方向为全局Z轴
+  if (IsParallel(tanDir, gp::DX())) {
+    refDir = gp::DZ();
+  }
+  gp_Ax2 sectionAxes(startPoint, tanDir, refDir);
+
+  // 创建变换对象
+  gp_Trsf trsf;
+
+  trsf.SetTransformation(sectionAxes, gp_Ax2(gp::Origin(), gp::DZ()));
+
   TopoDS_Compound result;
   BRep_Builder builder;
   builder.MakeCompound(result);
 
   if (params.cushionExtension > 0 && params.cushionThickness > 0 &&
-      params.style != water_tunnel_section_style::CIRCULAR) {
+      params.style == water_tunnel_section_style::RECTANGULAR) {
     double zoffset = -params.cushionThickness;
-
-    if (params.style == water_tunnel_section_style::CITYOPENING) {
-      zoffset = -params.cushionThickness - params.outerWallThickness -
-                params.innerWallThickness;
-    }
 
     double cushionWidth = params.width + 2 * params.cushionExtension +
                           2 * params.outerWallThickness;
@@ -15559,10 +15889,19 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     gp_Pnt p4(0, -cushionWidth / 2 - params.cushionExtension,
               zoffset + params.cushionThickness);
 
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());
-    cushionMaker.Add(BRepBuilderAPI_MakeEdge(p4, p1).Edge());
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp1, projectedp2).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp2, projectedp3).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp3, projectedp4).Edge());
+    cushionMaker.Add(BRepBuilderAPI_MakeEdge(projectedp4, projectedp1).Edge());
 
     TopoDS_Shape cushion = create_channel_shape(cushionMaker.Wire(), path);
 
@@ -15575,11 +15914,24 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
   case water_tunnel_section_style::RECTANGULAR: {
     // 矩形截面
     double width = params.width + 2 * params.outerWallThickness;
+
     gp_Pnt p1(0, -width / 2, -params.bottomThickness);
     gp_Pnt p2(0, width / 2, -params.bottomThickness);
     gp_Pnt p3(0, width / 2, params.height + params.topThickness);
     gp_Pnt p4(0, -width / 2, params.height + params.topThickness);
-    outerWire = BRepBuilderAPI_MakePolygon(p1, p2, p3, p4, true).Wire();
+
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+
+    outerWire = BRepBuilderAPI_MakePolygon(projectedp1, projectedp2,
+                                           projectedp3, projectedp4, true)
+                    .Wire();
     break;
   }
   case water_tunnel_section_style::CITYOPENING: {
@@ -15616,17 +15968,31 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     }
 
     // 底部点
-    gp_Pnt bottomLeft(0, -outerRadius,
-                      -params.outerWallThickness - params.innerWallThickness);
-    gp_Pnt bottomRight(0, outerRadius,
-                       -params.outerWallThickness - params.innerWallThickness);
+    gp_Pnt localBottomLeft(0, -outerRadius,
+                           -params.outerWallThickness -
+                               params.innerWallThickness);
+    gp_Pnt bottomLeft = sectionAxes.Location().Translated(
+        gp_Vec(localBottomLeft.Z(), localBottomLeft.Y(), 0).Transformed(trsf));
+
+    gp_Pnt localBottomRight(
+        0, outerRadius, -params.outerWallThickness - params.innerWallThickness);
+    gp_Pnt bottomRight = sectionAxes.Location().Translated(
+        gp_Vec(localBottomRight.Z(), localBottomRight.Y(), 0)
+            .Transformed(trsf));
 
     // 侧壁点
-    gp_Pnt leftTop(0, -outerRadius, outerHeight);
-    gp_Pnt rightTop(0, outerRadius, outerHeight);
+    gp_Pnt localLeftTop(0, -outerRadius, outerHeight);
+    gp_Pnt leftTop = sectionAxes.Location().Translated(
+        gp_Vec(localLeftTop.Z(), localLeftTop.Y(), 0).Transformed(trsf));
+
+    gp_Pnt localRightTop(0, outerRadius, outerHeight);
+    gp_Pnt rightTop = sectionAxes.Location().Translated(
+        gp_Vec(localRightTop.Z(), localRightTop.Y(), 0).Transformed(trsf));
 
     // 顶部圆弧中点
-    gp_Pnt arcMid(0, 0, outerHeight + outerArchHeight);
+    gp_Pnt localArcMid(0, 0, outerHeight + outerArchHeight);
+    gp_Pnt arcMid = sectionAxes.Location().Translated(
+        gp_Vec(localArcMid.Z(), localArcMid.Y(), 0).Transformed(trsf));
 
     // 创建侧壁直线
     TopoDS_Edge leftEdge = BRepBuilderAPI_MakeEdge(bottomLeft, leftTop).Edge();
@@ -15682,22 +16048,36 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     // 计算圆心位置
     double arcRadius = params.arcRadius + params.outerWallThickness +
                        params.innerWallThickness;
-    double centerHeight = params.height - params.arcRadius;
 
     // 底部连接段点
-    gp_Pnt bottomLeft(0, -outerRadius,
-                      -params.outerWallThickness - params.innerWallThickness);
-    gp_Pnt bottomRight(0, outerRadius,
-                       -params.outerWallThickness - params.innerWallThickness);
+    gp_Pnt localBottomLeft(0, -outerRadius,
+                           -params.outerWallThickness -
+                               params.innerWallThickness);
+    gp_Pnt bottomLeft = sectionAxes.Location().Translated(
+        gp_Vec(localBottomLeft.Z(), localBottomLeft.Y(), 0).Transformed(trsf));
+
+    gp_Pnt localBottomRight(
+        0, outerRadius, -params.outerWallThickness - params.innerWallThickness);
+    gp_Pnt bottomRight = sectionAxes.Location().Translated(
+        gp_Vec(localBottomRight.Z(), localBottomRight.Y(), 0)
+            .Transformed(trsf));
 
     // 计算钝角情况下的圆弧起点和终点
-    double angle = params.arcAngle * M_PI / 180.0; // 转换为弧度
+    double angle =
+        (360 - params.arcAngle) * M_PI / 180.0; // 正确转换补角为 360-θ
 
-    // 圆弧起点和终点计算(使用补角)
-    gp_Pnt arcStart(0, -arcRadius * sin(angle),
-                    outerHeight - arcRadius * (1 - cos(angle)));
-    gp_Pnt arcEnd(0, arcRadius * sin(angle),
-                  outerHeight - arcRadius * (1 - cos(angle)));
+    // 圆弧起点和终点计算(使用360补角)
+    gp_Pnt localArcEnd(
+        0, -arcRadius * sin(angle), // 当 angle>180° 时 sin 值为负，负负得正
+        params.height - arcRadius * (1 - cos(angle)));
+    gp_Pnt arcEnd = sectionAxes.Location().Translated(
+        gp_Vec(localArcEnd.Z(), localArcEnd.Y(), 0).Transformed(trsf));
+
+    gp_Pnt localArcStart(0,
+                         arcRadius * sin(angle), // 当 angle>180° 时 sin 值为负
+                         params.height - arcRadius * (1 - cos(angle)));
+    gp_Pnt arcStart = sectionAxes.Location().Translated(
+        gp_Vec(localArcStart.Z(), localArcStart.Y(), 0).Transformed(trsf));
 
     // 创建左侧连接段(从底部到顶部)
     TopoDS_Edge leftSegment =
@@ -15708,7 +16088,10 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
         BRepBuilderAPI_MakeEdge(arcEnd, bottomRight).Edge();
 
     // 创建顶部圆弧(从右到左)
-    gp_Pnt arcMid(0, 0, outerHeight);
+    gp_Pnt localArcMid(0, 0, outerHeight);
+    gp_Pnt arcMid = sectionAxes.Location().Translated(
+        gp_Vec(localArcMid.Z(), localArcMid.Y(), 0).Transformed(trsf));
+
     Handle(Geom_TrimmedCurve) topArc =
         GC_MakeArcOfCircle(arcStart, arcMid, arcEnd).Value();
 
@@ -15748,7 +16131,19 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     gp_Pnt p2(0, params.width / 2, 0);
     gp_Pnt p3(0, params.width / 2, params.height);
     gp_Pnt p4(0, -params.width / 2, params.height);
-    innerWire = BRepBuilderAPI_MakePolygon(p1, p2, p3, p4, true).Wire();
+
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+
+    innerWire = BRepBuilderAPI_MakePolygon(projectedp1, projectedp2,
+                                           projectedp3, projectedp4, true)
+                    .Wire();
     break;
   }
   case water_tunnel_section_style::CITYOPENING: {
@@ -15780,15 +16175,28 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     }
 
     // 底部点
-    gp_Pnt bottomLeft(0, -innerRadius, 0);
-    gp_Pnt bottomRight(0, innerRadius, 0);
+    gp_Pnt localBottomLeft(0, -innerRadius, 0);
+    gp_Pnt bottomLeft = sectionAxes.Location().Translated(
+        gp_Vec(localBottomLeft.Z(), localBottomLeft.Y(), 0).Transformed(trsf));
+
+    gp_Pnt localBottomRight(0, innerRadius, 0);
+    gp_Pnt bottomRight = sectionAxes.Location().Translated(
+        gp_Vec(localBottomRight.Z(), localBottomRight.Y(), 0)
+            .Transformed(trsf));
 
     // 侧壁点
-    gp_Pnt leftTop(0, -innerRadius, innerHeight);
-    gp_Pnt rightTop(0, innerRadius, innerHeight);
+    gp_Pnt localLeftTop(0, -innerRadius, innerHeight);
+    gp_Pnt leftTop = sectionAxes.Location().Translated(
+        gp_Vec(localLeftTop.Z(), localLeftTop.Y(), 0).Transformed(trsf));
+
+    gp_Pnt localRightTop(0, innerRadius, innerHeight);
+    gp_Pnt rightTop = sectionAxes.Location().Translated(
+        gp_Vec(localRightTop.Z(), localRightTop.Y(), 0).Transformed(trsf));
 
     // 顶部圆弧中点
-    gp_Pnt arcMid(0, 0, innerHeight + innerArchHeight);
+    gp_Pnt localArcMid(0, 0, innerHeight + innerArchHeight);
+    gp_Pnt arcMid = sectionAxes.Location().Translated(
+        gp_Vec(localArcMid.Z(), localArcMid.Y(), 0).Transformed(trsf));
 
     // 创建侧壁直线
     TopoDS_Edge leftEdge = BRepBuilderAPI_MakeEdge(bottomLeft, leftTop).Edge();
@@ -15831,7 +16239,6 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
         new Geom_Circle(gp_Ax2(center, gp::DX()), innerRadius);
     TopoDS_Edge innerEdge = BRepBuilderAPI_MakeEdge(innerCircle).Edge();
     innerWire = BRepBuilderAPI_MakeWire(innerEdge).Wire();
-
     break;
   }
   case water_tunnel_section_style::HORSESHOE: {
@@ -15842,18 +16249,31 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
 
     // 计算内轮廓圆心位置
     double innerArcRadius = params.arcRadius;
-    double innerCenterHeight = params.height - params.arcRadius;
 
     // 内轮廓底部点
-    gp_Pnt innerBottomLeft(0, -innerRadius, 0);
-    gp_Pnt innerBottomRight(0, innerRadius, 0);
+    gp_Pnt localBottomLeft(0, -innerRadius, 0);
+    gp_Pnt innerBottomLeft = sectionAxes.Location().Translated(
+        gp_Vec(localBottomLeft.Z(), localBottomLeft.Y(), 0).Transformed(trsf));
+
+    gp_Pnt localBottomRight(0, innerRadius, 0);
+    gp_Pnt innerBottomRight = sectionAxes.Location().Translated(
+        gp_Vec(localBottomRight.Z(), localBottomRight.Y(), 0)
+            .Transformed(trsf));
 
     // 计算内轮廓圆弧起点和终点
-    double innerAngle = params.arcAngle * M_PI / 180.0;
-    gp_Pnt innerArcStart(0, -innerRadius * sin(innerAngle),
-                         innerHeight - innerArcRadius * (1 - cos(innerAngle)));
-    gp_Pnt innerArcEnd(0, innerRadius * sin(innerAngle),
-                       innerHeight - innerArcRadius * (1 - cos(innerAngle)));
+    double innerAngle =
+        (360 - params.arcAngle) * M_PI / 180.0; // 正确转换补角为 360-θ
+
+    gp_Pnt localArcEnd(0, -innerArcRadius * sin(innerAngle),
+                       params.height - innerArcRadius * (1 - cos(innerAngle)));
+    gp_Pnt innerArcEnd = sectionAxes.Location().Translated(
+        gp_Vec(localArcEnd.Z(), localArcEnd.Y(), 0).Transformed(trsf));
+
+    gp_Pnt localArcStart(0, innerArcRadius * sin(innerAngle),
+                         params.height -
+                             innerArcRadius * (1 - cos(innerAngle)));
+    gp_Pnt innerArcStart = sectionAxes.Location().Translated(
+        gp_Vec(localArcStart.Z(), localArcStart.Y(), 0).Transformed(trsf));
 
     // 创建内轮廓左侧连接段
     TopoDS_Edge innerLeftSegment =
@@ -15864,7 +16284,10 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
         BRepBuilderAPI_MakeEdge(innerArcEnd, innerBottomRight).Edge();
 
     // 创建顶部圆弧(从右到左)
-    gp_Pnt innerArcMid(0, 0, innerHeight);
+    gp_Pnt localArcMid(0, 0, innerHeight);
+    gp_Pnt innerArcMid = sectionAxes.Location().Translated(
+        gp_Vec(localArcMid.Z(), localArcMid.Y(), 0).Transformed(trsf));
+
     Handle(Geom_TrimmedCurve) innerTopArc =
         GC_MakeArcOfCircle(innerArcStart, innerArcMid, innerArcEnd).Value();
 
@@ -15906,8 +16329,20 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     gp_Pnt p2(0, innerRadius, -innerRadius + params.bottomPlatformHeight);
     gp_Pnt p3(0, innerRadius, -innerRadius);
     gp_Pnt p4(0, -innerRadius, -innerRadius);
+
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+
     TopoDS_Wire tempWire =
-        BRepBuilderAPI_MakePolygon(p1, p2, p3, p4, true).Wire();
+        BRepBuilderAPI_MakePolygon(projectedp1, projectedp2, projectedp3,
+                                   projectedp4, true)
+            .Wire();
     TopoDS_Shape cutBottom = create_channel_shape(tempWire, path);
 
     inner = BRepAlgoAPI_Cut(inner, cutBottom).Shape();

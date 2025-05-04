@@ -403,3 +403,35 @@ func ClipWireBetweenDistances(wire *Wire, startDistance, endDistance float64) *W
 	runtime.SetFinalizer(w.inner, (*innerWire).free)
 	return w
 }
+
+// 在文件顶部添加结构体定义
+type ProfileProjection struct {
+	inner C.topo_profile_projection_t
+}
+
+func (p *ProfileProjection) GetAxis2() Axis2 {
+	return Axis2{
+		val: p.inner.axes,
+	}
+}
+
+func (p *ProfileProjection) GetTrsf() Trsf {
+	return Trsf{
+		val: p.inner.trsf,
+	}
+}
+
+// 添加新函数实现
+func CalcProfileProjection(wire *Wire) ProfileProjection {
+	result := C.topo_calc_profile_projection(wire.inner.val)
+	return ProfileProjection{inner: result}
+}
+
+func ProfileProjectPoint(proj *ProfileProjection, point Point3) Point3 {
+	result := C.topo_profile_project_point(&proj.inner, point.val)
+	return Point3{val: result}
+}
+
+func WireLength(wire *Wire) float64 {
+	return float64(C.topo_wrie_length(wire.inner.val))
+}

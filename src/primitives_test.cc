@@ -284,7 +284,7 @@ void test_make_rectangular_ring() {
     // 测试默认参数创建
     auto shp2 =
         create_rectangular_ring(rectangular_ring_params{.tubeRadius = 5.0,
-                                                        .filletRadius = 15.0,
+                                                        .filletRadius = 12.0,
                                                         .length = 100.0,
                                                         .width = 80.0});
     if (shp2.IsNull()) {
@@ -3888,6 +3888,12 @@ void test_make_footpath() {
   std::cout << "\n=== Testing Footpath ===" << std::endl;
 
   // 创建测试点集
+  std::vector<channel_point> points1 = {
+      {gp_Pnt(0, 0, 0), 0},    // 起点
+      {gp_Pnt(900, 500, 0), 0} // 终点
+  };
+
+  // 创建测试点集
   std::vector<channel_point> points = {
       {gp_Pnt(0, 0, 0), 0},    // 起点
       {gp_Pnt(100, 0, 0), 0},  // 直线段
@@ -3898,9 +3904,9 @@ void test_make_footpath() {
   // 测试标准步道
   try {
     auto shp = create_footpath(footpath_params{
-        .height = 15.0,  // 高度150mm
-        .width = 80.0,   // 宽度800mm
-        .points = points // 路径点集
+        .height = 15.0,   // 高度150mm
+        .width = 80.0,    // 宽度800mm
+        .points = points1 // 路径点集
     });
     if (shp.IsNull()) {
       std::cerr << "Error: Failed to create standard footpath" << std::endl;
@@ -4246,8 +4252,16 @@ void test_make_cable_ray() {
 void test_water_tunnel() {
   std::cout << "\n=== Testing Water Tunnel ===" << std::endl;
 
-  // 准备测试点集
+  // 创建测试点集
   std::vector<channel_point> points = {
+      {gp_Pnt(0, 0, 0), 0},    // 起点
+      {gp_Pnt(100, 0, 0), 0},  // 直线段
+      {gp_Pnt(150, 50, 0), 1}, // 转弯点
+      {gp_Pnt(150, 100, 0), 0} // 终点
+  };
+
+  // 创建测试点集
+  std::vector<channel_point> points1 = {
       {gp_Pnt(0, 0, 0), 0},    // 起点
       {gp_Pnt(900, 500, 0), 0} // 终点
   };
@@ -4305,7 +4319,7 @@ void test_water_tunnel() {
     water_tunnel_params horseshoe_params{
         .style = water_tunnel_section_style::HORSESHOE,
         .width = 60.0,             // 500→50
-        .height = 120.0,            // 700→70
+        .height = 120.0,           // 700→70
         .outerWallThickness = 4.0, // 40→4
         .innerWallThickness = 3.0, // 30→3
         .arcRadius = 50.0,         // 100→10

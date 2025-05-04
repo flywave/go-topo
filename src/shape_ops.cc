@@ -1508,5 +1508,50 @@ wire clip_wire_between_distances(const wire &wire_path, double start_distance,
 
   return wire(wireBuilder.Wire());
 }
+
+profile_projection cacl_profile_projection(wire path) {
+  // 获取路径起始点的切线方向
+  BRepAdaptor_CompCurve curveAdaptor(path.value());
+  gp_Pnt startPoint;
+  gp_Vec startTangent;
+  curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
+
+  // 在创建截面圆之前添加方向修正
+  gp_Dir tanDir = startTangent.Normalized();
+  gp_Dir refDir = gp::DZ(); // 默认参考方向为全局Y轴
+
+  // 如果tanDir平行于全局X轴，调整参考方向为全局Z轴
+  if (Abs(tanDir.Dot(gp::DX())) > 1 - Precision::Angular()) {
+    refDir = gp::DZ();
+  }
+  gp_Ax2 sectionAxes(startPoint, tanDir, refDir);
+
+  // 创建变换对象
+  gp_Trsf trsf;
+
+  trsf.SetTransformation(sectionAxes, gp_Ax2(gp::Origin(), gp::DZ()));
+
+  return {.axes = sectionAxes, .trsf = trsf};
+}
+
+gp_Pnt profile_project_point(profile_projection *proj, gp_Pnt point) {
+  return proj->axes.Location().Translated(
+      gp_Vec(point.Z(), point.Y(), 0).Transformed(proj->trsf));
+}
+
+double wrie_length(wire path) {
+  try {
+    // 计算路径总长度
+    GProp_GProps props;
+    BRepGProp::LinearProperties(path.value(), props);
+    double totalLength = props.Mass();
+
+    return totalLength;
+  } catch (const std::exception &e) {
+    std::cerr << "Error calculating wire length: " << e.what() << std::endl;
+    return 0.0;
+  }
+}
+
 } // namespace topo
 } // namespace flywave

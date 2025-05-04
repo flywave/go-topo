@@ -5498,7 +5498,8 @@ topo_wire_sample_point_t *topo_wire_sample_at_distances(topo_wire_t wire,
     for (size_t i = 0; i < samples.size(); i++) {
       result[i].position = cast_from_gp(samples[i].position);
       result[i].tangent = cast_from_gp(samples[i].tangent);
-        result[i].edge = topo_edge_t{ new topo_shape_t{std::make_shared<flywave::topo::shape>(samples[i].edge)}};
+      result[i].edge = topo_edge_t{new topo_shape_t{
+          std::make_shared<flywave::topo::shape>(samples[i].edge)}};
     }
     *result_count = static_cast<int>(samples.size());
     return result;
@@ -5530,6 +5531,27 @@ topo_wire_t topo_wire_clip_between_distances(topo_wire_t wire,
   } catch (...) {
     return {nullptr};
   }
+}
+
+topo_profile_projection_t topo_calc_profile_projection(topo_wire_t path) {
+  topo_profile_projection_t result;
+  auto section = flywave::topo::cacl_profile_projection(*cast_to_topo(path));
+  result.axes = cast_from_gp(section.axes);
+  result.trsf = cast_from_gp(section.trsf);
+  return result;
+}
+
+pnt3d_t topo_profile_project_point(topo_profile_projection_t *proj,
+                                   pnt3d_t point) {
+  gp_Ax2 axes = cast_to_gp(proj->axes);
+  gp_Trsf trsf = cast_to_gp(proj->trsf);
+  gp_Pnt out =
+      axes.Location().Translated(gp_Vec(point.z, point.y, 0).Transformed(trsf));
+  return cast_from_gp(out);
+}
+
+double topo_wrie_length(topo_wire_t wire) {
+  return flywave::topo::wrie_length(*cast_to_topo(wire));
 }
 
 #ifdef __cplusplus
