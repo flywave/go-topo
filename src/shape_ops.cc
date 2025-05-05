@@ -1518,7 +1518,12 @@ profile_projection cacl_profile_projection(wire path, gp_Dir upDir) {
 
   // 在创建截面圆之前添加方向修正
   gp_Dir tanDir = startTangent.Normalized();
-  gp_Dir refDir = gp_Vec(tanDir.Crossed(upDir)).Normalized();
+  gp_Dir refDir = gp_Vec(upDir.Crossed(tanDir)).Normalized();
+
+  // 如果参考方向长度接近0(切线几乎与径向平行)，使用全局Y轴作为备用
+  if (gp_Vec(refDir).SquareMagnitude() < Precision::SquareConfusion()) {
+    refDir = gp::DY();
+  }
 
   gp_Ax2 sectionAxes(startPoint, tanDir, refDir);
 

@@ -271,7 +271,7 @@ void test_bug() {
 
   // 在创建截面圆之前添加方向修正
   gp_Dir tanDir = startTangent.Normalized();
-  gp_Dir refDir = gp::DZ(); // 默认参考方向为全局Y轴
+  gp_Dir refDir = gp::DZ(); // 默认参考方向为全局Z轴
 
   gp_Ax2 sectionAxes(startPoint, tanDir, refDir);
 
