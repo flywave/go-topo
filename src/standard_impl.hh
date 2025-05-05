@@ -276,8 +276,8 @@ inline gp_Mat cast_to_gp(const mat3x3_t &a) {
 }
 
 inline mat3x3_t cast_from_gp(const gp_Mat &a) {
-  return mat3x3_t{{a(0, 0), a(1, 0), a(2, 0), a(0, 1), a(1, 1), a(2, 1),
-                   a(0, 2), a(1, 2), a(2, 2)}};
+  return mat3x3_t{{a(1, 1), a(2, 1), a(3, 1), a(1, 2), a(2, 2), a(3, 2),
+                   a(1, 3), a(2, 3), a(3, 3)}};
 }
 
 inline gp_Mat2d cast_to_gp(const mat2x2_t &a) {
@@ -288,7 +288,7 @@ inline gp_Mat2d cast_to_gp(const mat2x2_t &a) {
 }
 
 inline mat2x2_t cast_from_gp(const gp_Mat2d &a) {
-  return mat2x2_t{{a(0, 0), a(1, 0), a(0, 1), a(1, 1)}};
+  return mat2x2_t{{a(1, 1), a(2, 1), a(1, 2), a(2, 2)}};
 }
 
 template <typename T> inline gp_GTrsf cast_to_gp(const transform_t &a) {
@@ -446,6 +446,9 @@ inline bbox_t cast_from_gp(const Bnd_Box &b) {
 
 inline TColgp_Array1OfPnt &cast_to_gp(const std::vector<pnt3d_t> &a,
                                       TColgp_Array1OfPnt &dst) {
+  if (dst.Length() != a.size()) {
+    dst.Resize(0, a.size() - 1, Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     dst.SetValue(i + dst.Lower(), gp_Pnt{cast_to_gp(a[i])});
   }
@@ -463,6 +466,9 @@ inline std::vector<pnt3d_t> cast_from_gp(const TColgp_Array1OfPnt &a) {
 
 inline TColgp_HArray1OfPnt &cast_to_gp(const std::vector<pnt3d_t> &a,
                                        TColgp_HArray1OfPnt &dst) {
+  if (dst.Length() != a.size()) {
+    dst.Resize(0, a.size() - 1, Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     dst.SetValue(i + dst.Lower(), gp_Pnt{cast_to_gp(a[i])});
   }
@@ -480,6 +486,9 @@ inline std::vector<pnt3d_t> cast_from_gp(const TColgp_HArray1OfPnt &a) {
 
 inline TColStd_Array1OfReal &cast_to_gp(const std::vector<Standard_Real> &a,
                                         TColStd_Array1OfReal &dst) {
+  if (dst.Length() != a.size()) {
+    dst.Resize(0, a.size() - 1, Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     dst.SetValue(i + dst.Lower(), a[i]);
   }
@@ -498,6 +507,9 @@ inline std::vector<Standard_Real> cast_from_gp(const TColStd_Array1OfReal &a) {
 inline TColStd_Array1OfInteger &
 cast_to_gp(const std::vector<Standard_Integer> &a,
            TColStd_Array1OfInteger &dst) {
+  if (dst.Length() != a.size()) {
+    dst.Resize(0, a.size() - 1, Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     dst.SetValue(i, a[i]);
   }
@@ -516,6 +528,9 @@ cast_from_gp(const TColStd_Array1OfInteger &a) {
 
 inline TColgp_Array1OfCirc2d &cast_to_gp(const std::vector<circ2d_t> &a,
                                          TColgp_Array1OfCirc2d &dst) {
+  if (dst.Length() != a.size()) {
+    dst.Resize(0, a.size() - 1, Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     dst.SetValue(i + dst.Lower(), cast_to_gp(a[i]));
   }
@@ -532,6 +547,9 @@ inline std::vector<circ2d_t> cast_from_gp(const TColgp_Array1OfCirc2d &a) {
 
 inline TColgp_Array1OfDir &cast_to_gp(const std::vector<dir3d_t> &a,
                                       TColgp_Array1OfDir &dst) {
+  if (dst.Length() != a.size()) {
+    dst.Resize(0, a.size() - 1, Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     dst.SetValue(i + dst.Lower(), cast_to_gp(a[i]));
   }
@@ -548,6 +566,9 @@ inline std::vector<dir3d_t> cast_from_gp(const TColgp_Array1OfDir &a) {
 
 inline TColgp_Array1OfDir2d &cast_to_gp(const std::vector<dir2d_t> &a,
                                         TColgp_Array1OfDir2d &dst) {
+  if (dst.Length() != a.size()) {
+    dst.Resize(0, a.size() - 1, Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     dst.SetValue(i + dst.Lower(), cast_to_gp(a[i]));
   }
@@ -565,6 +586,9 @@ inline std::vector<dir2d_t> cast_from_gp(const TColgp_Array1OfDir2d &a) {
 
 inline TColgp_Array1OfLin2d &cast_to_gp(const std::vector<line2d_t> &a,
                                         TColgp_Array1OfLin2d &dst) {
+  if (dst.Length() != a.size()) {
+    dst.Resize(0, a.size() - 1, Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     dst.SetValue(i + dst.Lower(), cast_to_gp(a[i]));
   }
@@ -582,6 +606,9 @@ inline std::vector<line2d_t> cast_from_gp(const TColgp_Array1OfLin2d &a) {
 
 inline TColgp_Array1OfPnt2d &cast_to_gp(const std::vector<pnt2d_t> &a,
                                         TColgp_Array1OfPnt2d &dst) {
+  if (dst.Length() != a.size()) {
+    dst.Resize(0, a.size() - 1, Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     dst.SetValue(i + dst.Lower(), gp_Pnt2d{cast_to_gp(a[i])});
   }
@@ -599,6 +626,9 @@ inline std::vector<pnt2d_t> cast_from_gp(const TColgp_Array1OfPnt2d &a) {
 
 inline TColgp_Array1OfVec &cast_to_gp(const std::vector<vec3d_t> &a,
                                       TColgp_Array1OfVec &dst) {
+  if (dst.Length() != a.size()) {
+    dst.Resize(0, a.size() - 1, Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     dst.SetValue(i + dst.Lower(), cast_to_gp(a[i]));
   }
@@ -616,6 +646,9 @@ inline std::vector<vec3d_t> cast_from_gp(const TColgp_Array1OfVec &a) {
 
 inline TColgp_Array1OfVec2d &cast_to_gp(const std::vector<vec2d_t> &a,
                                         TColgp_Array1OfVec2d &dst) {
+  if (dst.Length() != a.size()) {
+    dst.Resize(0, a.size() - 1, Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     dst.SetValue(i + dst.Lower(), cast_to_gp(a[i]));
   }
@@ -633,6 +666,9 @@ inline std::vector<vec2d_t> cast_from_gp(const TColgp_Array1OfVec2d &a) {
 
 inline TColgp_Array1OfXY &cast_to_gp(const std::vector<xy_t> &a,
                                      TColgp_Array1OfXY &dst) {
+  if (dst.Length() != a.size()) {
+    dst.Resize(0, a.size() - 1, Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     dst.SetValue(i + dst.Lower(), cast_to_gp(a[i]));
   }
@@ -650,6 +686,9 @@ inline std::vector<xy_t> cast_from_gp(const TColgp_Array1OfXY &a) {
 
 inline TColgp_Array1OfXYZ &cast_to_gp(const std::vector<xyz_t> &a,
                                       TColgp_Array1OfXYZ &dst) {
+  if (dst.Length() != a.size()) {
+    dst.Resize(0, a.size() - 1, Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     dst.SetValue(i + dst.Lower(), cast_to_gp(a[i]));
   }
@@ -668,6 +707,11 @@ inline std::vector<xyz_t> cast_from_gp(const TColgp_Array1OfXYZ &a) {
 inline TColgp_Array2OfCirc2d &
 cast_to_gp(const std::vector<std::vector<circ2d_t>> &a,
            TColgp_Array2OfCirc2d &dst) {
+  if (dst.RowLength() != a.size() ||
+      dst.ColLength() != (a.empty() ? 0 : a[0].size())) {
+    dst.Resize(0, a.size() - 1, 0, a.empty() ? 0 : a[0].size() - 1,
+               Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     for (int j = 0; j < a[i].size(); j++) {
       dst.SetValue(i, j, cast_to_gp(a[i][j]));
@@ -692,6 +736,11 @@ cast_from_gp(const TColgp_Array2OfCirc2d &a) {
 inline TColgp_Array2OfDir &
 cast_to_gp(const std::vector<std::vector<dir3d_t>> &a,
            TColgp_Array2OfDir &dst) {
+  if (dst.RowLength() != a.size() ||
+      dst.ColLength() != (a.empty() ? 0 : a[0].size())) {
+    dst.Resize(0, a.size() - 1, 0, a.empty() ? 0 : a[0].size() - 1,
+               Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     for (int j = 0; j < a[i].size(); j++) {
       dst.SetValue(i, j, cast_to_gp(a[i][j]));
@@ -716,6 +765,11 @@ cast_from_gp(const TColgp_Array2OfDir &a) {
 inline TColgp_Array2OfDir2d &
 cast_to_gp(const std::vector<std::vector<dir2d_t>> &a,
            TColgp_Array2OfDir2d &dst) {
+  if (dst.RowLength() != a.size() ||
+      dst.ColLength() != (a.empty() ? 0 : a[0].size())) {
+    dst.Resize(0, a.size() - 1, 0, a.empty() ? 0 : a[0].size() - 1,
+               Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     for (int j = 0; j < a[i].size(); j++) {
       dst.SetValue(i, j, cast_to_gp(a[i][j]));
@@ -740,6 +794,11 @@ cast_from_gp(const TColgp_Array2OfDir2d &a) {
 inline TColgp_Array2OfLin2d &
 cast_to_gp(const std::vector<std::vector<line2d_t>> &a,
            TColgp_Array2OfLin2d &dst) {
+  if (dst.RowLength() != a.size() ||
+      dst.ColLength() != (a.empty() ? 0 : a[0].size())) {
+    dst.Resize(0, a.size() - 1, 0, a.empty() ? 0 : a[0].size() - 1,
+               Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     for (int j = 0; j < a[i].size(); j++) {
       dst.SetValue(i, j, cast_to_gp(a[i][j]));
@@ -764,6 +823,11 @@ cast_from_gp(const TColgp_Array2OfLin2d &a) {
 inline TColgp_Array2OfPnt &
 cast_to_gp(const std::vector<std::vector<pnt3d_t>> &a,
            TColgp_Array2OfPnt &dst) {
+  if (dst.RowLength() != a.size() ||
+      dst.ColLength() != (a.empty() ? 0 : a[0].size())) {
+    dst.Resize(0, a.size() - 1, 0, a.empty() ? 0 : a[0].size() - 1,
+               Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     for (int j = 0; j < a[i].size(); j++) {
       dst.SetValue(i, j, cast_to_gp(a[i][j]));
@@ -788,6 +852,11 @@ cast_from_gp(const TColgp_Array2OfPnt &a) {
 inline TColgp_Array2OfPnt2d &
 cast_to_gp(const std::vector<std::vector<pnt2d_t>> &a,
            TColgp_Array2OfPnt2d &dst) {
+  if (dst.RowLength() != a.size() ||
+      dst.ColLength() != (a.empty() ? 0 : a[0].size())) {
+    dst.Resize(0, a.size() - 1, 0, a.empty() ? 0 : a[0].size() - 1,
+               Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     for (int j = 0; j < a[i].size(); j++) {
       dst.SetValue(i, j, cast_to_gp(a[i][j]));
@@ -812,6 +881,11 @@ cast_from_gp(const TColgp_Array2OfPnt2d &a) {
 inline TColgp_Array2OfVec &
 cast_to_gp(const std::vector<std::vector<vec3d_t>> &a,
            TColgp_Array2OfVec &dst) {
+  if (dst.RowLength() != a.size() ||
+      dst.ColLength() != (a.empty() ? 0 : a[0].size())) {
+    dst.Resize(0, a.size() - 1, 0, a.empty() ? 0 : a[0].size() - 1,
+               Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     for (int j = 0; j < a[i].size(); j++) {
       dst.SetValue(i, j, cast_to_gp(a[i][j]));
@@ -836,6 +910,11 @@ cast_from_gp(const TColgp_Array2OfVec &a) {
 inline TColgp_Array2OfVec2d &
 cast_to_gp(const std::vector<std::vector<vec2d_t>> &a,
            TColgp_Array2OfVec2d &dst) {
+  if (dst.RowLength() != a.size() ||
+      dst.ColLength() != (a.empty() ? 0 : a[0].size())) {
+    dst.Resize(0, a.size() - 1, 0, a.empty() ? 0 : a[0].size() - 1,
+               Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     for (int j = 0; j < a[i].size(); j++) {
       dst.SetValue(i, j, cast_to_gp(a[i][j]));
@@ -859,6 +938,11 @@ cast_from_gp(const TColgp_Array2OfVec2d &a) {
 
 inline TColgp_Array2OfXY &cast_to_gp(const std::vector<std::vector<xy_t>> &a,
                                      TColgp_Array2OfXY &dst) {
+  if (dst.RowLength() != a.size() ||
+      dst.ColLength() != (a.empty() ? 0 : a[0].size())) {
+    dst.Resize(0, a.size() - 1, 0, a.empty() ? 0 : a[0].size() - 1,
+               Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     for (int j = 0; j < a[i].size(); j++) {
       dst.SetValue(i, j, cast_to_gp(a[i][j]));
@@ -881,6 +965,11 @@ inline std::vector<std::vector<xy_t>> cast_from_gp(const TColgp_Array2OfXY &a) {
 
 inline TColgp_Array2OfXYZ &cast_to_gp(const std::vector<std::vector<xyz_t>> &a,
                                       TColgp_Array2OfXYZ &dst) {
+  if (dst.RowLength() != a.size() ||
+      dst.ColLength() != (a.empty() ? 0 : a[0].size())) {
+    dst.Resize(0, a.size() - 1, 0, a.empty() ? 0 : a[0].size() - 1,
+               Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     for (int j = 0; j < a[i].size(); j++) {
       dst.SetValue(i, j, cast_to_gp(a[i][j]));
@@ -905,6 +994,11 @@ cast_from_gp(const TColgp_Array2OfXYZ &a) {
 inline TColStd_Array2OfReal &
 cast_to_gp(const std::vector<std::vector<Standard_Real>> &a,
            TColStd_Array2OfReal &dst) {
+  if (dst.RowLength() != a.size() ||
+      dst.ColLength() != (a.empty() ? 0 : a[0].size())) {
+    dst.Resize(0, a.size() - 1, 0, a.empty() ? 0 : a[0].size() - 1,
+               Standard_False);
+  }
   for (int i = 0; i < a.size(); i++) {
     for (int j = 0; j < a[i].size(); j++) {
       dst.SetValue(i, j, a[i][j]);
@@ -938,6 +1032,7 @@ cast_from_gp(const TColgp_SequenceOfArray1OfPnt2d &a) {
 inline TColgp_SequenceOfArray1OfPnt2d &
 cast_to_gp(const std::list<std::vector<pnt2d_t>> &a,
            TColgp_SequenceOfArray1OfPnt2d &dst) {
+  dst.Clear();
   for (auto &s : a) {
     Handle(TColgp_HArray1OfPnt2d) arr = new TColgp_HArray1OfPnt2d(0, s.size());
     for (int i = 0; i < s.size(); i++) {
@@ -958,6 +1053,8 @@ inline std::list<axis1_t> cast_from_gp(const TColgp_SequenceOfAx1 &a) {
 
 inline TColgp_SequenceOfAx1 &cast_to_gp(const std::list<axis1_t> &a,
                                         TColgp_SequenceOfAx1 &dst) {
+  dst.Clear();
+
   for (auto &s : a) {
     dst.Append(cast_to_gp(s));
   }
@@ -974,6 +1071,7 @@ inline std::list<dir3d_t> cast_from_gp(const TColgp_SequenceOfDir &a) {
 
 inline TColgp_SequenceOfDir &cast_to_gp(const std::list<dir3d_t> &a,
                                         TColgp_SequenceOfDir &dst) {
+  dst.Clear();
   for (auto &s : a) {
     dst.Append(cast_to_gp(s));
   }
@@ -990,6 +1088,7 @@ inline std::list<dir2d_t> cast_from_gp(const TColgp_SequenceOfDir2d &a) {
 
 inline TColgp_SequenceOfDir2d &cast_to_gp(const std::list<dir2d_t> &a,
                                           TColgp_SequenceOfDir2d &dst) {
+  dst.Clear();
   for (auto &s : a) {
     dst.Append(cast_to_gp(s));
   }
@@ -1006,6 +1105,7 @@ inline std::list<pnt2d_t> cast_from_gp(const TColgp_SequenceOfPnt2d &a) {
 
 inline TColgp_SequenceOfPnt2d &cast_to_gp(const std::list<pnt2d_t> &a,
                                           TColgp_SequenceOfPnt2d &dst) {
+  dst.Clear();
   for (auto &s : a) {
     dst.Append(cast_to_gp(s));
   }
@@ -1022,6 +1122,7 @@ inline std::list<pnt3d_t> cast_from_gp(const TColgp_SequenceOfPnt &a) {
 
 inline TColgp_SequenceOfPnt &cast_to_gp(const std::list<pnt3d_t> &a,
                                         TColgp_SequenceOfPnt &dst) {
+  dst.Clear();
   for (auto &s : a) {
     dst.Append(cast_to_gp(s));
   }
@@ -1038,6 +1139,7 @@ inline std::list<vec3d_t> cast_from_gp(const TColgp_SequenceOfVec &a) {
 
 inline TColgp_SequenceOfVec &cast_to_gp(const std::list<vec3d_t> &a,
                                         TColgp_SequenceOfVec &dst) {
+  dst.Clear();
   for (auto &s : a) {
     dst.Append(cast_to_gp(s));
   }
@@ -1054,6 +1156,7 @@ inline std::list<vec2d_t> cast_from_gp(const TColgp_SequenceOfVec2d &a) {
 
 inline TColgp_SequenceOfVec2d &cast_to_gp(const std::list<vec2d_t> &a,
                                           TColgp_SequenceOfVec2d &dst) {
+  dst.Clear();
   for (auto &s : a) {
     dst.Append(cast_to_gp(s));
   }
@@ -1070,6 +1173,7 @@ inline std::list<xy_t> cast_from_gp(const TColgp_SequenceOfXY &a) {
 
 inline TColgp_SequenceOfXY &cast_to_gp(const std::list<xy_t> &a,
                                        TColgp_SequenceOfXY &dst) {
+  dst.Clear();
   for (auto &s : a) {
     dst.Append(cast_to_gp(s));
   }
@@ -1086,6 +1190,7 @@ inline std::list<xyz_t> cast_from_gp(const TColgp_SequenceOfXYZ &a) {
 
 inline TColgp_SequenceOfXYZ &cast_to_gp(const std::list<xyz_t> &a,
                                         TColgp_SequenceOfXYZ &dst) {
+  dst.Clear();
   for (auto &s : a) {
     dst.Append(cast_to_gp(s));
   }
