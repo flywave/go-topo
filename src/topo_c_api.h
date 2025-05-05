@@ -287,6 +287,17 @@ TOPOCAPICALL topo_wire_t topo_make_wire_from_helix(double pitch, double height,
                                                    pnt3d_t center, dir3d_t dir,
                                                    double angle,
                                                    _Bool lefthand);
+
+enum {
+  CURVE_LINE,
+  CURVE_THREE_POINT_ARC,
+  CURVE_CIRCLE_CENTER_ARC,
+  CURVE_SPLINE
+};
+TOPOCAPICALL topo_wire_t topo_make_wire_from_combine_curve(pnt3d_t **points,
+                                                           int *point_counts,
+                                                           int curve_count,
+                                                           int *curve_types);
 TOPOCAPICALL topo_wire_t *topo_make_wire_from_combine(topo_wire_t *wires,
                                                       int count, double tol,
                                                       int *retCount);
@@ -1220,31 +1231,14 @@ TOPOCAPICALL int topo_solid_loft(topo_solid_t s, topo_shape_t **profiles,
 
 TOPOCAPICALL int topo_solid_pipe(topo_solid_t s, topo_face_t f, topo_wire_t w);
 
-// 在enum定义区域添加曲线类型枚举
-enum {
-  CURVE_LINE,
-  CURVE_THREE_POINT_ARC,
-  CURVE_CIRCLE_CENTER_ARC,
-  CURVE_SPLINE
-};
-
-// 定义扫掠剖面结构体
 typedef struct {
   topo_shape_t *profile;
-  topo_vertex_t *location; // 可为NULL
+  int index; // -1为NULL
 } topo_sweep_profile_t;
 
-// 添加函数声明
-TOPOCAPICALL int
-topo_solid_sweep_compound(topo_solid_t s,
-                          pnt3d_t **points,               // 二维点数组指针
-                          int *point_counts,              // 每个曲线的点数数组
-                          int curve_count,                // 曲线数量
-                          int *curve_types,               // 曲线类型数组
-                          topo_sweep_profile_t *profiles, // 剖面数组
-                          int profile_count,              // 剖面数量
-                          int corner_mode                 // 转角模式
-);
+TOPOCAPICALL int topo_solid_sweep_compound(topo_solid_t s, topo_wire_t spine,
+                                           topo_sweep_profile_t *profiles,
+                                           int profile_count, int corner_mode);
 
 TOPOCAPICALL int topo_solid_sweep(topo_solid_t s, topo_wire_t spine,
                                   topo_shape_t **profiles, int count,

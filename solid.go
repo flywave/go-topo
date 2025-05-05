@@ -453,42 +453,17 @@ func (s *Solid) Pipe(f *Face, w Wire) int {
 	return int(C.topo_solid_pipe(s.inner.val, f.inner.val, w.inner.val))
 }
 
-type SweepCurveType int
-
-const (
-	SweepCurveTypeLine            = SweepCurveType(C.CURVE_LINE)
-	SweepCurveTypeThreePointArc   = SweepCurveType(C.CURVE_THREE_POINT_ARC)
-	SweepCurveTypeCircleCenterArc = SweepCurveType(C.CURVE_CIRCLE_CENTER_ARC)
-	SweepCurveTypeSpline          = SweepCurveType(C.CURVE_SPLINE)
-)
-
 // SweepProfile 扫掠剖面结构
 type SweepProfile struct {
-	Profile  Shape
-	Location *Vertex
+	Profile Shape
+	Index   *int
 }
 
-// SweepCompound 通过点集和剖面进行扫掠
-func (s *Solid) SweepCompound(
-	points [][]Point3,
-	curveTypes []SweepCurveType,
+func (s *Solid) SweepCompound(spine *Wire,
 	profiles []SweepProfile,
 	cornerMode int,
 ) int {
-	curveCount := len(points)
 	profileCount := len(profiles)
-
-	cPoints := make([]*C.pnt3d_t, curveCount)
-	cPointCounts := make([]C.int, curveCount)
-	for i, pts := range points {
-		cPointCounts[i] = C.int(len(pts))
-		cPoints[i] = (*C.pnt3d_t)(unsafe.Pointer(&pts[0].val))
-	}
-
-	cCurveTypes := make([]C.int, curveCount)
-	for i, t := range curveTypes {
-		cCurveTypes[i] = C.int(t)
-	}
 
 	cProfiles := make([]C.topo_sweep_profile_t, profileCount)
 	for i, p := range profiles {
@@ -496,17 +471,16 @@ func (s *Solid) SweepCompound(
 			profile: p.Profile.inner.val,
 		}
 
-		if p.Location != nil {
-			cProfiles[i].location = &p.Location.inner.val
+		if p.Index != nil {
+			cProfiles[i].index = C.int(*p.Index)
+		} else {
+			cProfiles[i].index = -1
 		}
 	}
 
 	ret := C.topo_solid_sweep_compound(
 		s.inner.val,
-		(**C.pnt3d_t)(unsafe.Pointer(&cPoints[0])),
-		(*C.int)(unsafe.Pointer(&cPointCounts[0])),
-		C.int(curveCount),
-		(*C.int)(unsafe.Pointer(&cCurveTypes[0])),
+		spine.inner.val,
 		(*C.topo_sweep_profile_t)(unsafe.Pointer(&cProfiles[0])),
 		C.int(profileCount),
 		C.int(cornerMode),

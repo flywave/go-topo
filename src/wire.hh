@@ -83,6 +83,15 @@ public:
 
   static std::vector<wire> combine(std::vector<shape> &wires,
                                    double tol = 1e-9);
+  enum class curve_type {
+    line,
+    three_point_arc,
+    circle_center_arc,
+    spline,
+  };
+
+  static wire make_wire(const std::vector<std::vector<gp_Pnt>> &points,
+                        const std::vector<curve_type> &curveTypes);
 
   wire stitch(const wire &other) const;
 

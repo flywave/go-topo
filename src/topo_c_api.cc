@@ -669,6 +669,54 @@ topo_wire_t topo_make_wire_from_helix(double pitch, double height,
   }
 }
 
+topo_wire_t topo_make_wire_from_combine_curve(pnt3d_t **points,
+                                              int *point_counts,
+                                              int curve_count,
+                                              int *curve_types) {
+  try {
+    // 转换点数据
+    std::vector<std::vector<gp_Pnt>> cpp_points;
+    for (int i = 0; i < curve_count; i++) {
+      std::vector<gp_Pnt> curve_points;
+      for (int j = 0; j < point_counts[i]; j++) {
+        curve_points.push_back(
+            gp_Pnt(points[i][j].x, points[i][j].y, points[i][j].z));
+      }
+      cpp_points.push_back(curve_points);
+    }
+
+    // 转换曲线类型
+    std::vector<flywave::topo::wire::curve_type> cpp_curve_types;
+    for (int i = 0; i < curve_count; i++) {
+      switch (curve_types[i]) {
+      case CURVE_LINE:
+        cpp_curve_types.push_back(flywave::topo::wire::curve_type::line);
+        break;
+      case CURVE_THREE_POINT_ARC:
+        cpp_curve_types.push_back(
+            flywave::topo::wire::curve_type::three_point_arc);
+        break;
+      case CURVE_CIRCLE_CENTER_ARC:
+        cpp_curve_types.push_back(
+            flywave::topo::wire::curve_type::circle_center_arc);
+        break;
+      case CURVE_SPLINE:
+        cpp_curve_types.push_back(flywave::topo::wire::curve_type::spline);
+        break;
+      default:
+        return topo_wire_t{};
+      }
+    }
+    return topo_wire_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::wire>(
+                flywave::topo::wire::make_wire(cpp_points, cpp_curve_types))}};
+
+  } catch (...) {
+    return topo_wire_t{};
+  }
+}
+
 topo_wire_t *topo_make_wire_from_combine(topo_wire_t *wires, int count,
                                          double tol, int *retCount) {
   try {
@@ -1473,8 +1521,8 @@ topo_edge_t topo_edge_make_edge_from_parab_vertex(parabola_t L,
 topo_edge_t topo_edge_make_edgee_from_curve(geom_curve_t *L) {
   try {
     return topo_edge_t{.shp = new topo_shape_t{
-      .shp = std::make_shared<flywave::topo::edge>(
-          flywave::topo::edge::make_edge(L->handle))}};
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_edge(L->handle))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -4532,58 +4580,25 @@ int topo_solid_pipe(topo_solid_t s, topo_face_t f, topo_wire_t w) {
 }
 
 // 实现函数
-TOPOCAPICALL int topo_solid_sweep_compound(topo_solid_t s, pnt3d_t **points,
-                                           int *point_counts, int curve_count,
-                                           int *curve_types,
+TOPOCAPICALL int topo_solid_sweep_compound(topo_solid_t s, topo_wire_t spine,
                                            topo_sweep_profile_t *profiles,
                                            int profile_count, int corner_mode) {
   try {
-    // 转换点数据
-    std::vector<std::vector<gp_Pnt>> cpp_points;
-    for (int i = 0; i < curve_count; i++) {
-      std::vector<gp_Pnt> curve_points;
-      for (int j = 0; j < point_counts[i]; j++) {
-        curve_points.push_back(
-            gp_Pnt(points[i][j].x, points[i][j].y, points[i][j].z));
-      }
-      cpp_points.push_back(curve_points);
-    }
-
-    // 转换曲线类型
-    std::vector<flywave::topo::solid::curve_type> cpp_curve_types;
-    for (int i = 0; i < curve_count; i++) {
-      switch (curve_types[i]) {
-      case CURVE_LINE:
-        cpp_curve_types.push_back(flywave::topo::solid::curve_type::line);
-        break;
-      case CURVE_THREE_POINT_ARC:
-        cpp_curve_types.push_back(
-            flywave::topo::solid::curve_type::three_point_arc);
-        break;
-      case CURVE_CIRCLE_CENTER_ARC:
-        cpp_curve_types.push_back(
-            flywave::topo::solid::curve_type::circle_center_arc);
-        break;
-      case CURVE_SPLINE:
-        cpp_curve_types.push_back(flywave::topo::solid::curve_type::spline);
-        break;
-      default:
-        return -1; // 无效曲线类型
-      }
-    }
 
     std::vector<flywave::topo::solid::sweep_profile> cpp_profiles;
     for (int i = 0; i < profile_count; i++) {
       flywave::topo::solid::sweep_profile profile;
       profile.profile = *profiles[i].profile->shp;
-      if (profiles[i].location != nullptr) {
-        profile.location = cast_to_topo(*profiles[i].location);
+      if (profiles[i].index >= 0) {
+        profile.index = profiles[i].index;
+      } else {
+        profile.index = -1;
       }
       cpp_profiles.push_back(profile);
     }
 
     auto result = reinterpret_cast<flywave::topo::solid *>(s.shp)->sweep(
-        cpp_points, cpp_curve_types, cpp_profiles, corner_mode);
+        *cast_to_topo(spine), cpp_profiles, corner_mode);
 
     return result;
   } catch (...) {

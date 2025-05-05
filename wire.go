@@ -684,6 +684,37 @@ func TopoMakeWireFromCombine(wires []Wire, tol float64) []*Wire {
 	return ws
 }
 
+type SweepCurveType int
+
+const (
+	SweepCurveTypeLine            = SweepCurveType(C.CURVE_LINE)
+	SweepCurveTypeThreePointArc   = SweepCurveType(C.CURVE_THREE_POINT_ARC)
+	SweepCurveTypeCircleCenterArc = SweepCurveType(C.CURVE_CIRCLE_CENTER_ARC)
+	SweepCurveTypeSpline          = SweepCurveType(C.CURVE_SPLINE)
+)
+
+func TopoMakeWireFromCombineCurve(points [][]Point3, curveTypes []SweepCurveType) *Wire {
+	curveCount := len(points)
+
+	cPoints := make([]*C.pnt3d_t, curveCount)
+	cPointCounts := make([]C.int, curveCount)
+	for i, pts := range points {
+		cPointCounts[i] = C.int(len(pts))
+		cPoints[i] = (*C.pnt3d_t)(unsafe.Pointer(&pts[0].val))
+	}
+
+	cCurveTypes := make([]C.int, curveCount)
+	for i, t := range curveTypes {
+		cCurveTypes[i] = C.int(t)
+	}
+	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_combine_curve((**C.pnt3d_t)(unsafe.Pointer(&cPoints[0])),
+		(*C.int)(unsafe.Pointer(&cPointCounts[0])),
+		C.int(curveCount),
+		(*C.int)(unsafe.Pointer(&cCurveTypes[0])))}}
+	runtime.SetFinalizer(wr.inner, (*innerWire).free)
+	return wr
+}
+
 type WireIterator struct {
 	inner *innerWireIterator
 }

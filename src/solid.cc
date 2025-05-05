@@ -1367,87 +1367,14 @@ int solid::pipe(const face &f, const wire &w) {
   return 1;
 }
 
-int solid::sweep(std::vector<std::vector<gp_Pnt>> points,
-                 std::vector<curve_type> curveTypes,
-                 std::vector<sweep_profile> &profiles, int cornerMode) {
-  // 参数验证
-  if (points.empty()) {
-    throw std::runtime_error("Control points cannot be empty");
-  }
-  if (points.size() != curveTypes.size()) {
-    throw std::runtime_error("Points and curve types count mismatch");
-  }
+int solid::sweep(const wire &spine, std::vector<sweep_profile> &profiles,
+                 int cornerMode) {
   if (profiles.empty()) {
     throw std::runtime_error("Profiles cannot be empty");
   }
 
   try {
-    // 创建路径线
-    BRepBuilderAPI_MakeWire pathMaker;
-
-    for (size_t i = 0; i < points.size(); ++i) {
-      const auto &pts = points[i];
-      curve_type type = curveTypes[i];
-
-      switch (type) {
-      case curve_type::line: {
-        if (pts.size() != 2) {
-          throw Standard_ConstructionError("Line requires exactly 2 points");
-        }
-        pathMaker.Add(BRepBuilderAPI_MakeEdge(pts[0], pts[1]).Edge());
-        break;
-      }
-      case curve_type::three_point_arc: {
-        if (pts.size() != 3) {
-          throw Standard_ConstructionError("Three-point arc requires 3 points");
-        }
-        GC_MakeArcOfCircle arcMaker(pts[0], pts[1], pts[2]);
-        if (!arcMaker.IsDone()) {
-          throw Standard_ConstructionError("Failed to create three-point arc");
-        }
-        pathMaker.Add(BRepBuilderAPI_MakeEdge(arcMaker.Value()));
-        break;
-      }
-      case curve_type::circle_center_arc: {
-        if (pts.size() != 3) {
-          throw Standard_ConstructionError(
-              "Center arc requires [start, center, end] points");
-        }
-        gp_Circ circle(gp_Ax2(pts[1], gp_Dir(0, 0, -1)),
-                       pts[0].Distance(pts[1]));
-        GC_MakeArcOfCircle arcMaker(circle, pts[0], pts[2], true);
-        if (!arcMaker.IsDone()) {
-          throw Standard_ConstructionError("Failed to create center arc");
-        }
-        pathMaker.Add(BRepBuilderAPI_MakeEdge(arcMaker.Value()));
-        break;
-      }
-      case curve_type::spline: {
-        if (pts.size() < 2) {
-          throw Standard_ConstructionError("Spline requires at least 2 points");
-        }
-        Handle(TColgp_HArray1OfPnt) array =
-            new TColgp_HArray1OfPnt(1, pts.size());
-        for (size_t j = 0; j < pts.size(); ++j) {
-          array->SetValue(j + 1, pts[j]);
-        }
-        GeomAPI_Interpolate interpolate(array, false, Precision::Confusion());
-        interpolate.Perform();
-        if (!interpolate.IsDone()) {
-          throw Standard_ConstructionError("Failed to create spline");
-        }
-        pathMaker.Add(BRepBuilderAPI_MakeEdge(interpolate.Curve()));
-        break;
-      }
-      default:
-        throw Standard_ConstructionError("Unknown curve type");
-      }
-    }
-
-    if (!pathMaker.IsDone()) {
-      throw Standard_ConstructionError("Failed to create path wire");
-    }
-    TopoDS_Wire pathWire = pathMaker.Wire();
+    TopoDS_Wire pathWire = spine.value();
 
     // 创建扫掠器
     BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
@@ -1464,13 +1391,16 @@ int solid::sweep(std::vector<std::vector<gp_Pnt>> points,
       break;
     }
 
+    TopTools_IndexedMapOfShape vertices;
+    TopExp::MapShapes(pathWire, TopAbs_VERTEX, vertices);
+
     // 添加所有截面
     for (const auto &profile : profiles) {
-      if (profile.location != nullptr) {
-        pipeMaker.Add(profile.profile.value(), profile.location->value(), false,
-                      false);
+      if (profile.index >= 0 && profile.index < vertices.Extent()) {
+        pipeMaker.Add(profile.profile.value(),
+                      TopoDS::Vertex(vertices(profile.index + 1)), false, true);
       } else {
-        pipeMaker.Add(profile.profile.value(), false, false);
+        pipeMaker.Add(profile.profile.value(), false, true);
       }
     }
 
@@ -1484,7 +1414,6 @@ int solid::sweep(std::vector<std::vector<gp_Pnt>> points,
     }
 
     _shape = pipeMaker.Shape();
-    return 0;
 
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");

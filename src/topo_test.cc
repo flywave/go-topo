@@ -7,12 +7,15 @@
 #include "wire.hh"
 
 #include <BRepBuilderAPI_MakeEdge.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakePolygon.hxx>
+#include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepGProp.hxx>
 #include <BRepOffsetAPI_MakePipeShell.hxx>
 #include <GC_MakeArcOfCircle.hxx>
+#include <GC_MakeCircle.hxx>
 #include <GProp_GProps.hxx>
 #include <StlAPI_Writer.hxx>
 #include <TopExp_Explorer.hxx>
@@ -21,7 +24,7 @@
 
 #include <iostream>
 #include <memory>
-#include <string> 
+#include <string>
 
 using namespace flywave::topo;
 
@@ -242,8 +245,7 @@ void test_make_arc() {
     if (!edge.IsNull()) {
       std::cout << "Arc created successfully." << std::endl;
     }
- 
-  
+
   } catch (const Standard_Failure &e) {
     std::cerr << "Error: " << e.GetMessageString() << std::endl;
   }
@@ -337,8 +339,194 @@ void test_bug() {
   bool success = stlWriter.Write(shp, "./output_bug.stl");
 }
 
+void test_profile() {
+  std::vector<gp_Pnt> arcPoints = {gp_Pnt(100, 0, 0),
+                                   gp_Pnt(125, 25, 0), // 原150,50改为125,25
+                                   gp_Pnt(150, 0, 0)}; // 原200,0改为150,0
+
+  GC_MakeArcOfCircle arcMaker(arcPoints[0], arcPoints[1], arcPoints[2]);
+  if (!arcMaker.IsDone()) {
+    throw Standard_ConstructionError("Failed to create three-point arc");
+  }
+  BRepBuilderAPI_MakeWire pathMaker;
+  pathMaker.Add(BRepBuilderAPI_MakeEdge(arcMaker.Value()));
+
+  TopoDS_Wire pathWire = pathMaker.Wire();
+
+  TopTools_IndexedMapOfShape vertices;
+  TopExp::MapShapes(pathWire, TopAbs_VERTEX, vertices);
+
+  for (int i = 0; i < vertices.Extent(); ++i) {
+    gp_Pnt v = BRep_Tool::Pnt(TopoDS::Vertex(vertices(i + 1)));
+    std::cout << "Vertex " << i + 1 << ": (" << v.X() << ", " << v.Y() << ", "
+              << v.Z() << ")" << std::endl;
+  }
+  // 创建扫掠器
+  BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
+  pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
+
+  // 创建路径参数化工具
+  BRepAdaptor_CompCurve pathAdaptor(pathWire);
+  gp_Pnt startParam, endParam;
+  pathAdaptor.D0(pathAdaptor.FirstParameter(),
+                 startParam); // 获取精确起点参数
+  pathAdaptor.D0(pathAdaptor.LastParameter(), endParam); // 获取精确终点参数
+
+  // 创建起始圆形截面 (半径10)
+  gp_Pnt center1(0, 0, 0);
+  Handle(Geom_Circle) outerCircle1 =
+      new Geom_Circle(gp_Ax2(center1, gp::DX()), 10);
+  TopoDS_Edge outerEdge1 = BRepBuilderAPI_MakeEdge(outerCircle1).Edge();
+  TopoDS_Wire circleWire1 = BRepBuilderAPI_MakeWire(outerEdge1).Wire();
+
+  pipeMaker.Add(circleWire1, TopoDS::Vertex(vertices(1)), false, true);
+
+  // 添加第二个截面（添加坐标系旋转）
+  gp_Ax2 endAxes(
+      endParam,
+      pathAdaptor.DN(pathAdaptor.LastParameter(), 1).Normalized(), // 切线方向
+      gp_Dir(0, 0, 1)); // 法向保持Z轴
+  Handle(Geom_Circle) outerCircle2 = new Geom_Circle(endAxes, 30);
+  TopoDS_Edge outerEdge2 = BRepBuilderAPI_MakeEdge(outerCircle2).Edge();
+  TopoDS_Wire circleWire2 = BRepBuilderAPI_MakeWire(outerEdge2).Wire();
+
+  pipeMaker.Add(circleWire2, TopoDS::Vertex(vertices(2)), false, true);
+
+  pipeMaker.Build();
+  if (!pipeMaker.IsDone()) {
+    throw Standard_ConstructionError("Sweep operation failed");
+  }
+
+  if (!pipeMaker.MakeSolid()) {
+    throw Standard_ConstructionError("Failed to make solid from sweep");
+  }
+
+  auto shp = pipeMaker.Shape();
+
+  // 导出结果
+  BRepMesh_IncrementalMesh mesher(shp, 0.5);
+  mesher.Perform();
+
+  StlAPI_Writer stlWriter;
+  if (!stlWriter.Write(shp, "./test_profile.stl")) {
+    std::cerr << "Error: Failed to export sweep result" << std::endl;
+  } else {
+    std::cout << "Sweep result exported to test_profile.stl" << std::endl;
+  }
+}
+
+void test_sweep() {
+  std::cout << "\n=== Testing Sweep Function ===" << std::endl;
+
+  try {
+    // 准备测试数据 - 直线段 (保持原样)
+    std::vector<gp_Pnt> linePoints = {gp_Pnt(0, 0, 0), gp_Pnt(100, 0, 0)};
+
+    // 准备测试数据 - 三点圆弧 (调整中间点高度，使过渡更平缓)
+    std::vector<gp_Pnt> arcPoints = {gp_Pnt(100, 0, 0),
+                                     gp_Pnt(125, 25, 0), // 原150,50改为125,25
+                                     gp_Pnt(150, 0, 0)}; // 原200,0改为150,0
+
+    // 组合控制点
+    std::vector<std::vector<gp_Pnt>> controlPoints = {linePoints, arcPoints};
+
+    // 指定曲线类型
+    std::vector<flywave::topo::wire::curve_type> curveTypes = {
+        flywave::topo::wire::curve_type::line,
+        flywave::topo::wire::curve_type::three_point_arc};
+
+    flywave::topo::wire pathWire =
+        flywave::topo::wire::make_wire(controlPoints, curveTypes);
+
+    // 准备扫掠截面
+    std::vector<flywave::topo::solid::sweep_profile> profiles;
+
+    // 创建起始圆形截面 (半径10)
+    gp_Pnt center1(0, 0, 0);
+    Handle(Geom_Circle) outerCircle1 =
+        new Geom_Circle(gp_Ax2(center1, gp::DX()), 10);
+    TopoDS_Edge outerEdge1 = BRepBuilderAPI_MakeEdge(outerCircle1).Edge();
+    TopoDS_Wire circleWire1 = BRepBuilderAPI_MakeWire(outerEdge1).Wire();
+
+    flywave::topo::solid::sweep_profile profile1;
+    profile1.profile = circleWire1;
+    profile1.index = 0; // 在直线中点位置
+    profiles.push_back(profile1);
+
+    TopoDS_Wire pathWire1;
+    {
+      GC_MakeArcOfCircle arcMaker(arcPoints[0], arcPoints[1], arcPoints[2]);
+      if (!arcMaker.IsDone()) {
+        throw Standard_ConstructionError("Failed to create three-point arc");
+      }
+      BRepBuilderAPI_MakeWire pathMaker1;
+      pathMaker1.Add(BRepBuilderAPI_MakeEdge(arcMaker.Value()));
+
+      pathWire1 = pathMaker1.Wire();
+    }
+
+    // 创建路径参数化工具
+    BRepAdaptor_CompCurve pathAdaptor(pathWire1);
+    gp_Pnt startParam, endParam;
+    pathAdaptor.D0(pathAdaptor.FirstParameter(),
+                   startParam); // 获取精确起点参数
+    pathAdaptor.D0(pathAdaptor.LastParameter(), endParam); // 获取精确终点参数
+
+    // 创建中间圆形截面 (半径15)
+    gp_Ax2 startAxes(endParam,
+                     pathAdaptor.DN(pathAdaptor.FirstParameter(), 1)
+                         .Normalized(), // 切线方向
+                     gp_Dir(0, 0, 1));  // 法向保持Z轴
+    Handle(Geom_Circle) outerCircle2 = new Geom_Circle(startAxes, 5);
+    TopoDS_Edge outerEdge2 = BRepBuilderAPI_MakeEdge(outerCircle2).Edge();
+    TopoDS_Wire circleWire2 = BRepBuilderAPI_MakeWire(outerEdge2).Wire();
+
+    flywave::topo::solid::sweep_profile profile2;
+    profile2.profile = circleWire2;
+    profile2.index = 0; // 在直线中点位置
+    // profiles.push_back(profile2);
+
+    gp_Ax2 endAxes(
+        endParam,
+        pathAdaptor.DN(pathAdaptor.LastParameter(), 1).Normalized(), // 切线方向
+        gp_Dir(0, 0, 1)); // 法向保持Z轴
+    Handle(Geom_Circle) outerCircle3 = new Geom_Circle(endAxes, 15);
+    TopoDS_Edge outerEdge3 = BRepBuilderAPI_MakeEdge(outerCircle3).Edge();
+    TopoDS_Wire circleWire3 = BRepBuilderAPI_MakeWire(outerEdge3).Wire();
+
+    flywave::topo::solid::sweep_profile profile3;
+    profile3.profile = circleWire3;
+    profile3.index = 1; // 在直线中点位置
+    profiles.push_back(profile3);
+
+    flywave::topo::solid shp;
+
+    // 执行扫掠
+    int result = shp.sweep(pathWire1, profiles, 0);
+
+    if (result != 1) {
+      std::cerr << "Error: Sweep operation failed with code " << result
+                << std::endl;
+      return;
+    }
+
+    // 导出结果
+    BRepMesh_IncrementalMesh mesher(shp, 0.5);
+    mesher.Perform();
+
+    StlAPI_Writer stlWriter;
+    if (!stlWriter.Write(shp, "./sweep_result.stl")) {
+      std::cerr << "Error: Failed to export sweep result" << std::endl;
+    } else {
+      std::cout << "Sweep result exported to sweep_result.stl" << std::endl;
+    }
+
+  } catch (const Standard_Failure &e) {
+    std::cerr << "Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
 int main() {
-  test_clip_wire_between_distances();
-  test_bug();
+  test_sweep();
   return 0;
 }

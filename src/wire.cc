@@ -20,8 +20,10 @@
 #include <GCPnts_AbscissaPoint.hxx>
 #include <GCPnts_QuasiUniformAbscissa.hxx>
 #include <GCPnts_QuasiUniformDeflection.hxx>
+#include <GC_MakeArcOfCircle.hxx>
 #include <GProp_GProps.hxx>
 #include <Geom2d_Line.hxx>
+#include <GeomAPI_Interpolate.hxx>
 #include <GeomAPI_ProjectPointOnCurve.hxx>
 #include <GeomConvert_ApproxCurve.hxx>
 #include <GeomFill_CorrectedFrenet.hxx>
@@ -470,6 +472,89 @@ wire wire::make_helix(double pitch, double height, double radius,
   BRepLib::BuildCurves3d(w, 1e-6, GeomAbs_C1, 14, 2000);
 
   return wire(w);
+}
+
+wire wire::make_wire(const std::vector<std::vector<gp_Pnt>> &points,
+                     const std::vector<curve_type> &curveTypes) {
+  if (points.empty()) {
+    throw std::runtime_error("Control points cannot be empty");
+  }
+  if (points.size() != curveTypes.size()) {
+    throw std::runtime_error("Points and curve types count mismatch");
+  }
+
+  try {
+    // 创建路径线
+    BRepBuilderAPI_MakeWire pathMaker;
+
+    for (size_t i = 0; i < points.size(); ++i) {
+      const auto &pts = points[i];
+      curve_type type = curveTypes[i];
+
+      switch (type) {
+      case curve_type::line: {
+        if (pts.size() != 2) {
+          throw Standard_ConstructionError("Line requires exactly 2 points");
+        }
+        pathMaker.Add(BRepBuilderAPI_MakeEdge(pts[0], pts[1]).Edge());
+        break;
+      }
+      case curve_type::three_point_arc: {
+        if (pts.size() != 3) {
+          throw Standard_ConstructionError("Three-point arc requires 3 points");
+        }
+        GC_MakeArcOfCircle arcMaker(pts[0], pts[1], pts[2]);
+        if (!arcMaker.IsDone()) {
+          throw Standard_ConstructionError("Failed to create three-point arc");
+        }
+        pathMaker.Add(BRepBuilderAPI_MakeEdge(arcMaker.Value()));
+        break;
+      }
+      case curve_type::circle_center_arc: {
+        if (pts.size() != 3) {
+          throw Standard_ConstructionError(
+              "Center arc requires [start, center, end] points");
+        }
+        gp_Circ circle(gp_Ax2(pts[1], gp_Dir(0, 0, -1)),
+                       pts[0].Distance(pts[1]));
+        GC_MakeArcOfCircle arcMaker(circle, pts[0], pts[2], true);
+        if (!arcMaker.IsDone()) {
+          throw Standard_ConstructionError("Failed to create center arc");
+        }
+        pathMaker.Add(BRepBuilderAPI_MakeEdge(arcMaker.Value()));
+        break;
+      }
+      case curve_type::spline: {
+        if (pts.size() < 2) {
+          throw Standard_ConstructionError("Spline requires at least 2 points");
+        }
+        Handle(TColgp_HArray1OfPnt) array =
+            new TColgp_HArray1OfPnt(1, pts.size());
+        for (size_t j = 0; j < pts.size(); ++j) {
+          array->SetValue(j + 1, pts[j]);
+        }
+        GeomAPI_Interpolate interpolate(array, false, Precision::Confusion());
+        interpolate.Perform();
+        if (!interpolate.IsDone()) {
+          throw Standard_ConstructionError("Failed to create spline");
+        }
+        pathMaker.Add(BRepBuilderAPI_MakeEdge(interpolate.Curve()));
+        break;
+      }
+      default:
+        throw Standard_ConstructionError("Unknown curve type");
+      }
+    }
+
+    if (!pathMaker.IsDone()) {
+      throw Standard_ConstructionError("Failed to create path wire");
+    }
+    TopoDS_Wire pathWire = pathMaker.Wire();
+
+    // 关闭路径线
+  } catch (const Standard_ConstructionError &e) {
+    return wire();
+  }
 }
 
 int wire::project(const face &f) {
