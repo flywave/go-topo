@@ -280,32 +280,21 @@ void test_bug() {
   trsf.SetTransformation(sectionAxes, gp_Ax2(gp::Origin(), gp::DZ()));
 
   // 创建点数组
-  std::vector<gp_Pnt> points1 = {
-      gp_Pnt(-3.4, 3.25, 0), gp_Pnt(-2.773, 4.717, 0), gp_Pnt(-1.553, 5.746, 0),
-      gp_Pnt(0, 6.115, 0),   gp_Pnt(1.553, 5.746, 0),  gp_Pnt(2.773, 4.717, 0),
-      gp_Pnt(3.4, 3.25, 0),  gp_Pnt(3.4, 0, 0),        gp_Pnt(-3.4, 0, 0),
-      gp_Pnt(-3.4, 3.25, 0) // 闭合多边形
-  };
-
   std::vector<gp_Pnt> points = {
-    gp_Pnt(0, -3.4, 3.25),    // X=0, Y=-3.4, Z=3.25
-    gp_Pnt(0, -2.773, 4.717), 
-    gp_Pnt(0, -1.553, 5.746),
-    gp_Pnt(0, 0, 6.115),     
-    gp_Pnt(0, 1.553, 5.746),  
-    gp_Pnt(0, 2.773, 4.717), 
-    gp_Pnt(0, 3.4, 3.25),    
-    gp_Pnt(0, 3.4, 0),       
-    gp_Pnt(0, -3.4, 0),      
-    gp_Pnt(0, -3.4, 3.25)    // 闭合多边形
-};
+      gp_Pnt(0, -3.4, 3.25), // X=0, Y=-3.4, Z=3.25
+      gp_Pnt(0, -2.773, 4.717), gp_Pnt(0, -1.553, 5.746),
+      gp_Pnt(0, 0, 6.115),      gp_Pnt(0, 1.553, 5.746),
+      gp_Pnt(0, 2.773, 4.717),  gp_Pnt(0, 3.4, 3.25),
+      gp_Pnt(0, 3.4, 0),        gp_Pnt(0, -3.4, 0),
+      gp_Pnt(0, -3.4, 3.25) // 闭合多边形
+  };
   // 创建多边形构建器
   BRepBuilderAPI_MakePolygon polygonMaker;
 
   // 添加所有点
   for (const auto &point : points) {
     gp_Pnt p = sectionAxes.Location().Translated(
-         gp_Vec(point.Z(), point.Y(), 0).Transformed(trsf));
+        gp_Vec(point.Z(), point.Y(), 0).Transformed(trsf));
     polygonMaker.Add(p);
   }
 
