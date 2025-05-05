@@ -159,12 +159,11 @@ void test_clip_wire_between_distances() {
   // 创建直线段
   auto lineEdge = flywave::topo::edge::make_edge(p1, p2);
 
-  // 创建圆弧段
-  gp_Circ circle(gp_Ax2(p2, gp_Dir(0, 0, 1)), 50);
-  auto arcEdge = flywave::topo::edge::make_edge(circle, p2, p4);
+  // 创建Spline段
+  auto splineEdge = flywave::topo::edge::make_spline({p2, p3, p4}, 1e-6);
 
   // 组合成wire
-  std::vector<flywave::topo::edge> edges{lineEdge, arcEdge};
+  std::vector<flywave::topo::edge> edges{lineEdge, splineEdge};
   auto mixedWire = flywave::topo::wire::make_wire(edges);
 
   // 计算总长度
@@ -175,7 +174,7 @@ void test_clip_wire_between_distances() {
   std::vector<std::pair<double, double>> testRanges = {
       {0, totalLength / 4},                   // 第一段直线部分
       {totalLength / 4, totalLength / 2},     // 直线到圆弧过渡部分
-      {totalLength / 2, totalLength * 3 / 4}, // 圆弧部分
+      {totalLength / 2, totalLength * 3 / 4}, // Spline段部分
       {totalLength / 4, totalLength * 3 / 4}, // 跨直线和圆弧
       {totalLength - 10, totalLength}         // 最后一段
   };

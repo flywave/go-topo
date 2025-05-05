@@ -138,16 +138,16 @@ int topo_shape_mirror_from_axis2(topo_shape_t *p, axis2_t a) {
 
 topo_shape_t *topo_shape_transformed(topo_shape_t *p, trsf_t mat) {
   if (p) {
-    return new topo_shape_t{std::make_shared<flywave::topo::shape>(
-        p->shp->transformed(cast_to_gp(mat)))};
+    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
+                                p->shp->transformed(cast_to_gp(mat)))};
   }
   return nullptr;
 }
 
 topo_shape_t *topo_shape_translated(topo_shape_t *p, vec3d_t delta) {
   if (p) {
-    return new topo_shape_t{std::make_shared<flywave::topo::shape>(
-        p->shp->translated(cast_to_gp(delta)))};
+    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
+                                p->shp->translated(cast_to_gp(delta)))};
   }
   return nullptr;
 }
@@ -155,8 +155,9 @@ topo_shape_t *topo_shape_translated(topo_shape_t *p, vec3d_t delta) {
 topo_shape_t *topo_shape_rotated_from_two_point(topo_shape_t *p, double angle,
                                                 pnt3d_t p1, pnt3d_t p2) {
   if (p) {
-    return new topo_shape_t{std::make_shared<flywave::topo::shape>(
-        p->shp->rotated(angle, cast_to_gp(p1), cast_to_gp(p2)))};
+    return new topo_shape_t{
+        .shp = std::make_shared<flywave::topo::shape>(
+            p->shp->rotated(angle, cast_to_gp(p1), cast_to_gp(p2)))};
   }
   return nullptr;
 }
@@ -164,8 +165,8 @@ topo_shape_t *topo_shape_rotated_from_two_point(topo_shape_t *p, double angle,
 topo_shape_t *topo_shape_rotated_from_axis1(topo_shape_t *p, double angle,
                                             axis1_t a) {
   if (p) {
-    return new topo_shape_t{std::make_shared<flywave::topo::shape>(
-        p->shp->rotated(angle, cast_to_gp(a)))};
+    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
+                                p->shp->rotated(angle, cast_to_gp(a)))};
   }
   return nullptr;
 }
@@ -173,16 +174,16 @@ topo_shape_t *topo_shape_rotated_from_axis1(topo_shape_t *p, double angle,
 topo_shape_t *topo_shape_rotated_from_quaternion(topo_shape_t *p,
                                                  quaternion_t q) {
   if (p) {
-    return new topo_shape_t{
-        std::make_shared<flywave::topo::shape>(p->shp->rotated(cast_to_gp(q)))};
+    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
+                                p->shp->rotated(cast_to_gp(q)))};
   }
   return nullptr;
 }
 
 topo_shape_t *topo_shape_scaled(topo_shape_t *p, double angle, pnt3d_t a) {
   if (p) {
-    return new topo_shape_t{std::make_shared<flywave::topo::shape>(
-        p->shp->scaled(cast_to_gp(a), angle))};
+    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
+                                p->shp->scaled(cast_to_gp(a), angle))};
   }
   return nullptr;
 }
@@ -190,24 +191,25 @@ topo_shape_t *topo_shape_scaled(topo_shape_t *p, double angle, pnt3d_t a) {
 topo_shape_t *topo_shape_mirrored_from_point_norm(topo_shape_t *p, pnt3d_t pnt,
                                                   pnt3d_t ner) {
   if (p) {
-    return new topo_shape_t{std::make_shared<flywave::topo::shape>(
-        p->shp->mirrored(cast_to_gp(pnt), cast_to_gp(ner)))};
+    return new topo_shape_t{
+        .shp = std::make_shared<flywave::topo::shape>(
+            p->shp->mirrored(cast_to_gp(pnt), cast_to_gp(ner)))};
   }
   return nullptr;
 }
 
 topo_shape_t *topo_shape_mirrored_from_axis1(topo_shape_t *p, axis1_t a) {
   if (p) {
-    return new topo_shape_t{std::make_shared<flywave::topo::shape>(
-        p->shp->mirrored(cast_to_gp(a)))};
+    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
+                                p->shp->mirrored(cast_to_gp(a)))};
   }
   return nullptr;
 }
 
 topo_shape_t *topo_shape_mirrored_from_axis2(topo_shape_t *p, axis2_t a) {
   if (p) {
-    return new topo_shape_t{std::make_shared<flywave::topo::shape>(
-        p->shp->mirrored(cast_to_gp(a)))};
+    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
+                                p->shp->mirrored(cast_to_gp(a)))};
   }
   return nullptr;
 }
@@ -223,7 +225,7 @@ void topo_shape_set_orientation(topo_shape_t *p, int ori) {
 }
 
 topo_location_t *topo_shape_get_location(topo_shape_t *p) {
-  return new topo_location_t{p->shp->location()};
+  return new topo_location_t{.loc = p->shp->location()};
 }
 
 void topo_shape_set_location(topo_shape_t *p, topo_location_t *loc) {
@@ -234,7 +236,7 @@ _Bool topo_shape_fix_shape(topo_shape_t *p) { return p->shp->fix_shape(); }
 
 topo_shape_t *topo_shape_copy(topo_shape_t *p) {
   return new topo_shape_t{
-      std::make_shared<flywave::topo::shape>(p->shp->copy())};
+      .shp = std::make_shared<flywave::topo::shape>(p->shp->copy())};
 }
 
 int topo_shape_mesh(topo_shape_t *p, topo_mesh_receiver_t *receiver,
@@ -447,7 +449,8 @@ double topo_shape_compute_area(topo_shape_t *p) {
 
 topo_vertex_t topo_vertex_new(double x, double y, double z) {
   return topo_vertex_t{
-      new topo_shape_t{std::make_shared<flywave::topo::vertex>(x, y, z)}};
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::vertex>(x, y, z)}};
 }
 
 void topo_vertex_free(topo_vertex_t t) {
@@ -477,87 +480,110 @@ void topo_wire_free(topo_wire_t t) {
 }
 
 topo_wire_t topo_make_polygon() {
-  return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
-      flywave::topo::wire::make_polygon())}};
+  return topo_wire_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
+                                  flywave::topo::wire::make_polygon())}};
 }
 
 topo_wire_t topo_make_polygon_from_two_point(pnt3d_t P1, pnt3d_t P2) {
-  return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
-      flywave::topo::wire::make_polygon(cast_to_gp(P1), cast_to_gp(P2)))}};
+  return topo_wire_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
+                                  flywave::topo::wire::make_polygon(
+                                      cast_to_gp(P1), cast_to_gp(P2)))}};
 }
 
 topo_wire_t topo_make_polygon_from_three_point(pnt3d_t P1, pnt3d_t P2,
                                                pnt3d_t P3, _Bool Close) {
-  return topo_wire_t{new topo_shape_t{
-      std::make_shared<flywave::topo::wire>(flywave::topo::wire::make_polygon(
-          cast_to_gp(P1), cast_to_gp(P2), cast_to_gp(P3), Close))}};
+  return topo_wire_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::wire>(
+              flywave::topo::wire::make_polygon(cast_to_gp(P1), cast_to_gp(P2),
+                                                cast_to_gp(P3), Close))}};
 }
 
 topo_wire_t topo_make_polygon_from_four_point(pnt3d_t P1, pnt3d_t P2,
                                               pnt3d_t P3, pnt3d_t P4,
                                               _Bool Close) {
-  return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
-      flywave::topo::wire::make_polygon(cast_to_gp(P1), cast_to_gp(P2),
-                                        cast_to_gp(P3), cast_to_gp(P4),
-                                        Close))}};
+  return topo_wire_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
+                                  flywave::topo::wire::make_polygon(
+                                      cast_to_gp(P1), cast_to_gp(P2),
+                                      cast_to_gp(P3), cast_to_gp(P4), Close))}};
 }
 
 topo_wire_t topo_make_polygon_two_vertex(topo_vertex_t V1, topo_vertex_t V2) {
-  return topo_wire_t{new topo_shape_t{
-      std::make_shared<flywave::topo::wire>(flywave::topo::wire::make_polygon(
-          *cast_to_topo(V1), *cast_to_topo(V2)))}};
+  return topo_wire_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
+                                  flywave::topo::wire::make_polygon(
+                                      *cast_to_topo(V1), *cast_to_topo(V2)))}};
 }
 
 topo_wire_t topo_make_polygon_from_three_vertex(topo_vertex_t V1,
                                                 topo_vertex_t V2,
                                                 topo_vertex_t V3, _Bool Close) {
-  return topo_wire_t{new topo_shape_t{
-      std::make_shared<flywave::topo::wire>(flywave::topo::wire::make_polygon(
-          *cast_to_topo(V1), *cast_to_topo(V2), *cast_to_topo(V3), Close))}};
+  return topo_wire_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
+                                  flywave::topo::wire::make_polygon(
+                                      *cast_to_topo(V1), *cast_to_topo(V2),
+                                      *cast_to_topo(V3), Close))}};
 }
 
 topo_wire_t topo_make_polygon_from_four_vertex(topo_vertex_t V1,
                                                topo_vertex_t V2,
                                                topo_vertex_t V3,
                                                topo_vertex_t V4, _Bool Close) {
-  return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
-      flywave::topo::wire::make_polygon(*cast_to_topo(V1), *cast_to_topo(V2),
-                                        *cast_to_topo(V3), *cast_to_topo(V4),
-                                        Close))}};
+  return topo_wire_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::wire>(
+              flywave::topo::wire::make_polygon(
+                  *cast_to_topo(V1), *cast_to_topo(V2), *cast_to_topo(V3),
+                  *cast_to_topo(V4), Close))}};
 }
 
 topo_wire_t topo_make_wire_from_edge(topo_edge_t E) {
-  return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
-      flywave::topo::wire::make_wire(*cast_to_topo(E)))}};
+  return topo_wire_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::wire>(
+              flywave::topo::wire::make_wire(*cast_to_topo(E)))}};
 }
 
 topo_wire_t topo_make_wire_from_two_edge(topo_edge_t E1, topo_edge_t E2) {
-  return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
-      flywave::topo::wire::make_wire(*cast_to_topo(E1), *cast_to_topo(E2)))}};
+  return topo_wire_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
+                                  flywave::topo::wire::make_wire(
+                                      *cast_to_topo(E1), *cast_to_topo(E2)))}};
 }
 
 topo_wire_t topo_make_wire_from_three_edge(topo_edge_t E1, topo_edge_t E2,
                                            topo_edge_t E3) {
-  return topo_wire_t{new topo_shape_t{
-      std::make_shared<flywave::topo::wire>(flywave::topo::wire::make_wire(
-          *cast_to_topo(E1), *cast_to_topo(E2), *cast_to_topo(E3)))}};
+  return topo_wire_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::wire>(
+              flywave::topo::wire::make_wire(
+                  *cast_to_topo(E1), *cast_to_topo(E2), *cast_to_topo(E3)))}};
 }
 
 topo_wire_t topo_make_wire_from_four_edge(topo_edge_t E1, topo_edge_t E2,
                                           topo_edge_t E3, topo_edge_t E4) {
-  return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
-      flywave::topo::wire::make_wire(*cast_to_topo(E1), *cast_to_topo(E2),
-                                     *cast_to_topo(E3), *cast_to_topo(E4)))}};
+  return topo_wire_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
+                                  flywave::topo::wire::make_wire(
+                                      *cast_to_topo(E1), *cast_to_topo(E2),
+                                      *cast_to_topo(E3), *cast_to_topo(E4)))}};
 }
 
 topo_wire_t topo_make_wire_from_wire(topo_wire_t W) {
-  return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
-      flywave::topo::wire::make_wire(*cast_to_topo(W)))}};
+  return topo_wire_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::wire>(
+              flywave::topo::wire::make_wire(*cast_to_topo(W)))}};
 }
 
 topo_wire_t topo_make_wire_from_two_wire(topo_wire_t W, topo_edge_t E) {
-  return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
-      flywave::topo::wire::make_wire(*cast_to_topo(W), *cast_to_topo(E)))}};
+  return topo_wire_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
+                                  flywave::topo::wire::make_wire(
+                                      *cast_to_topo(W), *cast_to_topo(E)))}};
 }
 
 topo_wire_t topo_make_wire_from_edges(topo_edge_t *edges, int count) {
@@ -566,8 +592,9 @@ topo_wire_t topo_make_wire_from_edges(topo_edge_t *edges, int count) {
     for (int i = 0; i < count; i++) {
       oes.emplace_back(*cast_to_topo(edges[i]));
     }
-    return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
-        flywave::topo::wire::make_wire(oes))}};
+    return topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
+                                    flywave::topo::wire::make_wire(oes))}};
   } catch (...) {
     return topo_wire_t{};
   }
@@ -579,8 +606,9 @@ topo_wire_t topo_make_wire_from_wries(topo_wire_t *wires, int count) {
     for (int i = 0; i < count; i++) {
       ows.emplace_back(*cast_to_topo(wires[i]));
     }
-    return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
-        flywave::topo::wire::make_wire(ows))}};
+    return topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
+                                    flywave::topo::wire::make_wire(ows))}};
   } catch (...) {
     return topo_wire_t{};
   }
@@ -588,8 +616,9 @@ topo_wire_t topo_make_wire_from_wries(topo_wire_t *wires, int count) {
 
 topo_wire_t topo_make_wire_from_rect(double width, double height) {
   try {
-    return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
-        flywave::topo::wire::make_rect(width, height))}};
+    return topo_wire_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::wire>(
+                               flywave::topo::wire::make_rect(width, height))}};
   } catch (...) {
     return topo_wire_t{};
   }
@@ -598,9 +627,11 @@ topo_wire_t topo_make_wire_from_rect(double width, double height) {
 topo_wire_t topo_make_wire_from_circle(double radius, pnt3d_t center,
                                        dir3d_t normal) {
   try {
-    return topo_wire_t{new topo_shape_t{
-        std::make_shared<flywave::topo::wire>(flywave::topo::wire::make_circle(
-            radius, cast_to_gp(center), cast_to_gp(normal)))}};
+    return topo_wire_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::wire>(
+                flywave::topo::wire::make_circle(radius, cast_to_gp(center),
+                                                 cast_to_gp(normal)))}};
   } catch (...) {
     return topo_wire_t{};
   }
@@ -612,10 +643,12 @@ topo_wire_t topo_make_wire_from_ellipse(double x_radius, double y_radius,
                                         double angle2, double rotation_angle,
                                         _Bool closed) {
   try {
-    return topo_wire_t{new topo_shape_t{
-        std::make_shared<flywave::topo::wire>(flywave::topo::wire::make_ellipse(
-            x_radius, y_radius, cast_to_gp(center), cast_to_gp(normal),
-            cast_to_gp(xDir), angle1, angle2, rotation_angle, closed))}};
+    return topo_wire_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::wire>(
+                               flywave::topo::wire::make_ellipse(
+                                   x_radius, y_radius, cast_to_gp(center),
+                                   cast_to_gp(normal), cast_to_gp(xDir), angle1,
+                                   angle2, rotation_angle, closed))}};
   } catch (...) {
     return topo_wire_t{};
   }
@@ -626,10 +659,11 @@ topo_wire_t topo_make_wire_from_helix(double pitch, double height,
                                       dir3d_t dir, double angle,
                                       _Bool lefthand) {
   try {
-    return topo_wire_t{new topo_shape_t{std::make_shared<flywave::topo::wire>(
-        flywave::topo::wire::make_helix(pitch, height, radius,
-                                        cast_to_gp(center), cast_to_gp(dir),
-                                        angle, lefthand))}};
+    return topo_wire_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::wire>(
+                               flywave::topo::wire::make_helix(
+                                   pitch, height, radius, cast_to_gp(center),
+                                   cast_to_gp(dir), angle, lefthand))}};
   } catch (...) {
     return topo_wire_t{};
   }
@@ -648,7 +682,8 @@ topo_wire_t *topo_make_wire_from_combine(topo_wire_t *wires, int count,
       auto *p = new topo_wire_t[ret.size()];
       for (size_t i = 0; i < ret.size(); i++) {
         p[i] = topo_wire_t{
-            new topo_shape_t{std::make_shared<flywave::topo::wire>(ret[i])}};
+            .shp = new topo_shape_t{
+                .shp = std::make_shared<flywave::topo::wire>(ret[i])}};
       }
       return p;
     }
@@ -662,9 +697,9 @@ void topo_wire_list_free(topo_wire_t *wires, int count) { delete[] wires; }
 
 topo_wire_t topo_wire_stitch(topo_wire_t w1, topo_wire_t w2) {
   try {
-    return topo_wire_t{
-        new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
-                             cast_to_topo(w1)->stitch(*cast_to_topo(w2)))}};
+    return topo_wire_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::shape>(
+                               cast_to_topo(w1)->stitch(*cast_to_topo(w2)))}};
   } catch (...) {
     return topo_wire_t{};
   }
@@ -741,7 +776,8 @@ topo_wire_t *topo_wire_offset2d(topo_wire_t w, double distance, int joinType,
       auto *p = new topo_wire_t[wires.size()];
       for (size_t i = 0; i < wires.size(); i++) {
         p[i] = topo_wire_t{
-            new topo_shape_t{std::make_shared<flywave::topo::shape>(wires[i])}};
+            .shp = new topo_shape_t{
+                .shp = std::make_shared<flywave::topo::shape>(wires[i])}};
       }
       return p;
     }
@@ -762,8 +798,8 @@ topo_wire_t topo_wire_fillet2d(topo_wire_t w, topo_vertex_t *vertices,
       }
 
       return topo_wire_t{
-          new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
-                               opt->fillet2d(radius, ows))}};
+          .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
+                                      opt->fillet2d(radius, ows))}};
     }
   } catch (...) {
     return topo_wire_t{};
@@ -780,8 +816,8 @@ topo_wire_t topo_wire_chamfer2d(topo_wire_t w, topo_vertex_t *vertices,
         ows.emplace_back(*cast_to_topo(vertices[i]));
       }
       return topo_wire_t{
-          new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
-                               opt->chamfer2d(distance, ows))}};
+          .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
+                                      opt->chamfer2d(distance, ows))}};
     }
   } catch (...) {
     return topo_wire_t{};
@@ -1057,7 +1093,7 @@ topo_location_t *topo_wire_location_at(topo_wire_t w, double d, int mode,
     auto loc = cast_to_topo(w)->location_at(
         d, static_cast<flywave::topo::wire::ParamMode>(mode),
         static_cast<flywave::topo::wire::FrameMode>(frame), planar);
-    return new topo_location_t{loc};
+    return new topo_location_t{.loc = loc};
   } catch (...) {
     return nullptr;
   }
@@ -1074,7 +1110,7 @@ topo_location_t **topo_wire_locations(topo_wire_t w, double *ds, int count,
 
     auto **locs = new topo_location_t *[result.size()];
     for (size_t i = 0; i < result.size(); i++) {
-      locs[i] = new topo_location_t{result[i]};
+      locs[i] = new topo_location_t{.loc = result[i]};
     }
     *result_count = static_cast<int>(result.size());
     return locs;
@@ -1164,8 +1200,9 @@ topo_edge_t topo_edge_make_edge_from_points(pnt3d_t *pts, int size) {
     vec.emplace_back(cast_to_gp(pts[i]));
   }
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_polygon(vec, true))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_polygon(vec, true))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1174,8 +1211,10 @@ topo_edge_t topo_edge_make_edge_from_points(pnt3d_t *pts, int size) {
 topo_edge_t topo_edge_make_edge_from_two_vertex(topo_vertex_t V1,
                                                 topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(*cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_edge(
+                                   *cast_to_topo(V1), *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1183,8 +1222,10 @@ topo_edge_t topo_edge_make_edge_from_two_vertex(topo_vertex_t V1,
 
 topo_edge_t topo_edge_make_edge_from_two_point(pnt3d_t P1, pnt3d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
+                                    flywave::topo::edge::make_edge(
+                                        cast_to_gp(P1), cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1192,8 +1233,9 @@ topo_edge_t topo_edge_make_edge_from_two_point(pnt3d_t P1, pnt3d_t P2) {
 
 topo_edge_t topo_edge_make_edge_from_line(line_t L) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(cast_to_gp(L)))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_edge(cast_to_gp(L)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1201,8 +1243,10 @@ topo_edge_t topo_edge_make_edge_from_line(line_t L) {
 
 topo_edge_t topo_edge_make_edge_from_line_p(line_t L, double p1, double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(cast_to_gp(L), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(cast_to_gp(L), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1211,9 +1255,11 @@ topo_edge_t topo_edge_make_edge_from_line_p(line_t L, double p1, double p2) {
 topo_edge_t topo_edge_make_edge_from_line_point(line_t L, pnt3d_t P1,
                                                 pnt3d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(cast_to_gp(L), cast_to_gp(P1),
+                                               cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1222,9 +1268,11 @@ topo_edge_t topo_edge_make_edge_from_line_point(line_t L, pnt3d_t P1,
 topo_edge_t topo_edge_make_edge_from_line_vertex(line_t L, topo_vertex_t V1,
                                                  topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            cast_to_gp(L), *cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(cast_to_gp(L), *cast_to_topo(V1),
+                                               *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1232,8 +1280,9 @@ topo_edge_t topo_edge_make_edge_from_line_vertex(line_t L, topo_vertex_t V1,
 
 topo_edge_t topo_edge_make_edge_from_circ(circ_t L) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(cast_to_gp(L)))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_edge(cast_to_gp(L)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1241,8 +1290,10 @@ topo_edge_t topo_edge_make_edge_from_circ(circ_t L) {
 
 topo_edge_t topo_edge_make_edge_from_circ_p(circ_t L, double p1, double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(cast_to_gp(L), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(cast_to_gp(L), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1251,9 +1302,11 @@ topo_edge_t topo_edge_make_edge_from_circ_p(circ_t L, double p1, double p2) {
 topo_edge_t topo_edge_make_edge_from_circ_point(circ_t L, pnt3d_t P1,
                                                 pnt3d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(cast_to_gp(L), cast_to_gp(P1),
+                                               cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1262,9 +1315,11 @@ topo_edge_t topo_edge_make_edge_from_circ_point(circ_t L, pnt3d_t P1,
 topo_edge_t topo_edge_make_edge_from_circ_vertex(circ_t L, topo_vertex_t V1,
                                                  topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            cast_to_gp(L), *cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(cast_to_gp(L), *cast_to_topo(V1),
+                                               *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1272,8 +1327,9 @@ topo_edge_t topo_edge_make_edge_from_circ_vertex(circ_t L, topo_vertex_t V1,
 
 topo_edge_t topo_edge_make_edge_from_elips(elips_t L) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(cast_to_gp(L)))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_edge(cast_to_gp(L)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1281,8 +1337,10 @@ topo_edge_t topo_edge_make_edge_from_elips(elips_t L) {
 
 topo_edge_t topo_edge_make_edge_from_elips_p(elips_t L, double p1, double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(cast_to_gp(L), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(cast_to_gp(L), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1291,9 +1349,11 @@ topo_edge_t topo_edge_make_edge_from_elips_p(elips_t L, double p1, double p2) {
 topo_edge_t topo_edge_make_edge_from_elips_point(elips_t L, pnt3d_t P1,
                                                  pnt3d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(cast_to_gp(L), cast_to_gp(P1),
+                                               cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1302,9 +1362,11 @@ topo_edge_t topo_edge_make_edge_from_elips_point(elips_t L, pnt3d_t P1,
 topo_edge_t topo_edge_make_edge_from_elips_vertex(elips_t L, topo_vertex_t V1,
                                                   topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            cast_to_gp(L), *cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(cast_to_gp(L), *cast_to_topo(V1),
+                                               *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1312,8 +1374,9 @@ topo_edge_t topo_edge_make_edge_from_elips_vertex(elips_t L, topo_vertex_t V1,
 
 topo_edge_t topo_edge_make_edge_from_hyper(hyperbola_t L) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(cast_to_gp(L)))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_edge(cast_to_gp(L)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1322,8 +1385,10 @@ topo_edge_t topo_edge_make_edge_from_hyper(hyperbola_t L) {
 topo_edge_t topo_edge_make_edge_from_hyper_p(hyperbola_t L, double p1,
                                              double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(cast_to_gp(L), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(cast_to_gp(L), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1332,9 +1397,11 @@ topo_edge_t topo_edge_make_edge_from_hyper_p(hyperbola_t L, double p1,
 topo_edge_t topo_edge_make_edge_from_hyper_point(hyperbola_t L, pnt3d_t P1,
                                                  pnt3d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(cast_to_gp(L), cast_to_gp(P1),
+                                               cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1344,9 +1411,11 @@ topo_edge_t topo_edge_make_edge_from_hyper_vertex(hyperbola_t L,
                                                   topo_vertex_t V1,
                                                   topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            cast_to_gp(L), *cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(cast_to_gp(L), *cast_to_topo(V1),
+                                               *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1354,8 +1423,9 @@ topo_edge_t topo_edge_make_edge_from_hyper_vertex(hyperbola_t L,
 
 topo_edge_t topo_edge_make_edge_from_parab(parabola_t L) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(cast_to_gp(L)))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_edge(cast_to_gp(L)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1364,8 +1434,10 @@ topo_edge_t topo_edge_make_edge_from_parab(parabola_t L) {
 topo_edge_t topo_edge_make_edge_from_parab_p(parabola_t L, double p1,
                                              double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(cast_to_gp(L), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(cast_to_gp(L), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1374,9 +1446,11 @@ topo_edge_t topo_edge_make_edge_from_parab_p(parabola_t L, double p1,
 topo_edge_t topo_edge_make_edge_from_parab_point(parabola_t L, pnt3d_t P1,
                                                  pnt3d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(cast_to_gp(L), cast_to_gp(P1),
+                                               cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1386,9 +1460,11 @@ topo_edge_t topo_edge_make_edge_from_parab_vertex(parabola_t L,
                                                   topo_vertex_t V1,
                                                   topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            cast_to_gp(L), *cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(cast_to_gp(L), *cast_to_topo(V1),
+                                               *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1396,8 +1472,9 @@ topo_edge_t topo_edge_make_edge_from_parab_vertex(parabola_t L,
 
 topo_edge_t topo_edge_make_edgee_from_curve(geom_curve_t *L) {
   try {
-    return topo_edge_t{.shp=new topo_shape_t{.shp=std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(L->handle))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_edge(L->handle))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1406,8 +1483,10 @@ topo_edge_t topo_edge_make_edgee_from_curve(geom_curve_t *L) {
 topo_edge_t topo_edge_make_edge_from_curve_p(geom_curve_t *L, double p1,
                                              double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(L->handle, p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(L->handle, p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1416,9 +1495,11 @@ topo_edge_t topo_edge_make_edge_from_curve_p(geom_curve_t *L, double p1,
 topo_edge_t topo_edge_make_edge_from_curve_point(geom_curve_t *L, pnt3d_t P1,
                                                  pnt3d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            L->handle, cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(L->handle, cast_to_gp(P1),
+                                               cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1428,9 +1509,11 @@ topo_edge_t topo_edge_make_edge_from_curve_vertex(geom_curve_t *L,
                                                   topo_vertex_t V1,
                                                   topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            L->handle, *cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(L->handle, *cast_to_topo(V1),
+                                               *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1440,9 +1523,11 @@ topo_edge_t topo_edge_make_edgee_from_curve_point_p(geom_curve_t *L, pnt3d_t P1,
                                                     pnt3d_t P2, double p1,
                                                     double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            L->handle, cast_to_gp(P1), cast_to_gp(P2), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(L->handle, cast_to_gp(P1),
+                                               cast_to_gp(P2), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1453,9 +1538,11 @@ topo_edge_t topo_edge_make_edge_from_curve_vertex_p(geom_curve_t *L,
                                                     topo_vertex_t V2, double p1,
                                                     double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            L->handle, *cast_to_topo(V1), *cast_to_topo(V2), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(L->handle, *cast_to_topo(V1),
+                                               *cast_to_topo(V2), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1464,8 +1551,10 @@ topo_edge_t topo_edge_make_edge_from_curve_vertex_p(geom_curve_t *L,
 topo_edge_t topo_edge_make_edge_from_curve_surface(geom2d_curve_t *L,
                                                    geom_surface_t *S) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(L->handle, S->handle))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(L->handle, S->handle))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1475,8 +1564,10 @@ topo_edge_t topo_edge_make_edge_from_curve_surface_p(geom2d_curve_t *L,
                                                      geom_surface_t *S,
                                                      double p1, double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(L->handle, S->handle, p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(L->handle, S->handle, p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1487,9 +1578,11 @@ topo_edge_t topo_edge_make_edge_from_curve_surface_point(geom2d_curve_t *L,
                                                          pnt3d_t P1,
                                                          pnt3d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            L->handle, S->handle, cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge(
+                    L->handle, S->handle, cast_to_gp(P1), cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1500,9 +1593,11 @@ topo_edge_t topo_edge_make_edge_from_curve_surface_vertex(geom2d_curve_t *L,
                                                           topo_vertex_t V1,
                                                           topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            L->handle, S->handle, *cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
+                                    flywave::topo::edge::make_edge(
+                                        L->handle, S->handle, *cast_to_topo(V1),
+                                        *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1512,9 +1607,11 @@ topo_edge_t topo_edge_make_edge_from_curve_surface_point_p(
     geom2d_curve_t *L, geom_surface_t *S, pnt3d_t P1, pnt3d_t P2, double p1,
     double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge(
-            L->handle, S->handle, cast_to_gp(P1), cast_to_gp(P2), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
+                                    flywave::topo::edge::make_edge(
+                                        L->handle, S->handle, cast_to_gp(P1),
+                                        cast_to_gp(P2), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1524,9 +1621,11 @@ topo_edge_t topo_edge_make_edge_from_curve_surface_vertex_p(
     geom2d_curve_t *L, geom_surface_t *S, topo_vertex_t V1, topo_vertex_t V2,
     double p1, double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge(L->handle, S->handle, *cast_to_topo(V1),
-                                       *cast_to_topo(V2), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
+                                    flywave::topo::edge::make_edge(
+                                        L->handle, S->handle, *cast_to_topo(V1),
+                                        *cast_to_topo(V2), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1535,9 +1634,10 @@ topo_edge_t topo_edge_make_edge_from_curve_surface_vertex_p(
 topo_edge_t topo_edge_make_edge2d_from_two_vertex(topo_vertex_t V1,
                                                   topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge2d(
-            *cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_edge2d(
+                                   *cast_to_topo(V1), *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1545,8 +1645,10 @@ topo_edge_t topo_edge_make_edge2d_from_two_vertex(topo_vertex_t V1,
 
 topo_edge_t topo_edge_make_edge2d_from_two_point(pnt2d_t P1, pnt2d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge2d(cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
+                                    flywave::topo::edge::make_edge2d(
+                                        cast_to_gp(P1), cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1554,8 +1656,10 @@ topo_edge_t topo_edge_make_edge2d_from_two_point(pnt2d_t P1, pnt2d_t P2) {
 
 topo_edge_t topo_edge_make_edge2d_from_line(line2d_t L) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge2d(cast_to_gp(L)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(cast_to_gp(L)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1564,8 +1668,10 @@ topo_edge_t topo_edge_make_edge2d_from_line(line2d_t L) {
 topo_edge_t topo_edge_make_edge2d_from_line_p(line2d_t L, double p1,
                                               double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge2d(cast_to_gp(L), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(cast_to_gp(L), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1574,9 +1680,11 @@ topo_edge_t topo_edge_make_edge2d_from_line_p(line2d_t L, double p1,
 topo_edge_t topo_edge_make_edge2d_from_line_point(line2d_t L, pnt2d_t P1,
                                                   pnt2d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge2d(
-            cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(cast_to_gp(L), cast_to_gp(P1),
+                                                 cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1585,9 +1693,11 @@ topo_edge_t topo_edge_make_edge2d_from_line_point(line2d_t L, pnt2d_t P1,
 topo_edge_t topo_edge_make_edge2d_from_line_vertex(line2d_t L, topo_vertex_t V1,
                                                    topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge2d(
-            cast_to_gp(L), *cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(
+                    cast_to_gp(L), *cast_to_topo(V1), *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1595,8 +1705,10 @@ topo_edge_t topo_edge_make_edge2d_from_line_vertex(line2d_t L, topo_vertex_t V1,
 
 topo_edge_t topo_edge_make_edge2d_from_circ(circ2d_t L) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge2d(cast_to_gp(L)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(cast_to_gp(L)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1605,8 +1717,10 @@ topo_edge_t topo_edge_make_edge2d_from_circ(circ2d_t L) {
 topo_edge_t topo_edge_make_edge2d_from_circ_p(circ2d_t L, double p1,
                                               double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge2d(cast_to_gp(L), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(cast_to_gp(L), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1615,9 +1729,11 @@ topo_edge_t topo_edge_make_edge2d_from_circ_p(circ2d_t L, double p1,
 topo_edge_t topo_edge_make_edge2d_from_circ_point(circ2d_t L, pnt2d_t P1,
                                                   pnt2d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge2d(
-            cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(cast_to_gp(L), cast_to_gp(P1),
+                                                 cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1626,9 +1742,11 @@ topo_edge_t topo_edge_make_edge2d_from_circ_point(circ2d_t L, pnt2d_t P1,
 topo_edge_t topo_edge_make_edge2d_from_circ_vertex(circ2d_t L, topo_vertex_t V1,
                                                    topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge2d(
-            cast_to_gp(L), *cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(
+                    cast_to_gp(L), *cast_to_topo(V1), *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1636,8 +1754,10 @@ topo_edge_t topo_edge_make_edge2d_from_circ_vertex(circ2d_t L, topo_vertex_t V1,
 
 topo_edge_t topo_edge_make_edge2d_from_elips(elips2d_t L) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge2d(cast_to_gp(L)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(cast_to_gp(L)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1646,8 +1766,10 @@ topo_edge_t topo_edge_make_edge2d_from_elips(elips2d_t L) {
 topo_edge_t topo_edge_make_edge2d_from_elips_p(elips2d_t L, double p1,
                                                double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge2d(cast_to_gp(L), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(cast_to_gp(L), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1656,9 +1778,11 @@ topo_edge_t topo_edge_make_edge2d_from_elips_p(elips2d_t L, double p1,
 topo_edge_t topo_edge_make_edge2d_from_elips_point(elips2d_t L, pnt2d_t P1,
                                                    pnt2d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge2d(
-            cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(cast_to_gp(L), cast_to_gp(P1),
+                                                 cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1668,9 +1792,11 @@ topo_edge_t topo_edge_make_edge2d_from_elips_vertex(elips2d_t L,
                                                     topo_vertex_t V1,
                                                     topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge2d(
-            cast_to_gp(L), *cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(
+                    cast_to_gp(L), *cast_to_topo(V1), *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1678,8 +1804,10 @@ topo_edge_t topo_edge_make_edge2d_from_elips_vertex(elips2d_t L,
 
 topo_edge_t topo_edge_make_edge2d_from_hyper(hyperbola2d_t L) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge2d(cast_to_gp(L)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(cast_to_gp(L)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1688,8 +1816,10 @@ topo_edge_t topo_edge_make_edge2d_from_hyper(hyperbola2d_t L) {
 topo_edge_t topo_edge_make_edge2d_from_hyper_p(hyperbola2d_t L, double p1,
                                                double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge2d(cast_to_gp(L), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(cast_to_gp(L), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1698,9 +1828,11 @@ topo_edge_t topo_edge_make_edge2d_from_hyper_p(hyperbola2d_t L, double p1,
 topo_edge_t topo_edge_make_edge2d_from_hyper_point(hyperbola2d_t L, pnt2d_t P1,
                                                    pnt2d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge2d(
-            cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(cast_to_gp(L), cast_to_gp(P1),
+                                                 cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1710,9 +1842,11 @@ topo_edge_t topo_edge_make_edge2d_from_hyper_vertex(hyperbola2d_t L,
                                                     topo_vertex_t V1,
                                                     topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge2d(
-            cast_to_gp(L), *cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(
+                    cast_to_gp(L), *cast_to_topo(V1), *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1720,8 +1854,10 @@ topo_edge_t topo_edge_make_edge2d_from_hyper_vertex(hyperbola2d_t L,
 
 topo_edge_t topo_edge_make_edge2d_from_parab(parabola2d_t L) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge2d(cast_to_gp(L)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(cast_to_gp(L)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1730,8 +1866,10 @@ topo_edge_t topo_edge_make_edge2d_from_parab(parabola2d_t L) {
 topo_edge_t topo_edge_make_edge2d_from_parab_p(parabola2d_t L, double p1,
                                                double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge2d(cast_to_gp(L), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(cast_to_gp(L), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1740,9 +1878,11 @@ topo_edge_t topo_edge_make_edge2d_from_parab_p(parabola2d_t L, double p1,
 topo_edge_t topo_edge_make_edge2d_from_parab_point(parabola2d_t L, pnt2d_t P1,
                                                    pnt2d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge2d(
-            cast_to_gp(L), cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(cast_to_gp(L), cast_to_gp(P1),
+                                                 cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1752,9 +1892,11 @@ topo_edge_t topo_edge_make_edge2d_from_parab_vertex(parabola2d_t L,
                                                     topo_vertex_t V1,
                                                     topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge2d(
-            cast_to_gp(L), *cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(
+                    cast_to_gp(L), *cast_to_topo(V1), *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1762,8 +1904,9 @@ topo_edge_t topo_edge_make_edge2d_from_parab_vertex(parabola2d_t L,
 
 topo_edge_t topo_edge_make_edge2d_from_curve(geom2d_curve_t *L) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge2d(L->handle))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_edge2d(L->handle))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1771,8 +1914,10 @@ topo_edge_t topo_edge_make_edge2d_from_curve(geom2d_curve_t *L) {
 topo_edge_t topo_edge_make_edge2d_from_curve_p(geom2d_curve_t *L, double p1,
                                                double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_edge2d(L->handle, p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(L->handle, p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1781,9 +1926,11 @@ topo_edge_t topo_edge_make_edge2d_from_curve_p(geom2d_curve_t *L, double p1,
 topo_edge_t topo_edge_make_edge2d_from_curve_point(geom2d_curve_t *L,
                                                    pnt2d_t P1, pnt2d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge2d(
-            L->handle, cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(L->handle, cast_to_gp(P1),
+                                                 cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1793,9 +1940,11 @@ topo_edge_t topo_edge_make_edge2d_from_curve_vertex(geom2d_curve_t *L,
                                                     topo_vertex_t V1,
                                                     topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge2d(
-            L->handle, *cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(L->handle, *cast_to_topo(V1),
+                                                 *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1805,9 +1954,11 @@ topo_edge_t topo_edge_make_edge2d_from_curve_point_p(geom2d_curve_t *L,
                                                      pnt2d_t P1, pnt2d_t P2,
                                                      double p1, double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge2d(
-            L->handle, cast_to_gp(P1), cast_to_gp(P2), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(L->handle, cast_to_gp(P1),
+                                                 cast_to_gp(P2), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1818,9 +1969,11 @@ topo_edge_t topo_edge_make_edge2d_from_curve_vertex_p(geom2d_curve_t *L,
                                                       topo_vertex_t V2,
                                                       double p1, double p2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_edge2d(
-            L->handle, *cast_to_topo(V1), *cast_to_topo(V2), p1, p2))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_edge2d(L->handle, *cast_to_topo(V1),
+                                                 *cast_to_topo(V2), p1, p2))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1828,8 +1981,9 @@ topo_edge_t topo_edge_make_edge2d_from_curve_vertex_p(geom2d_curve_t *L,
 
 topo_edge_t topo_edge_make_polygon() {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_polygon())}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
+                                    flywave::topo::edge::make_polygon())}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1837,8 +1991,10 @@ topo_edge_t topo_edge_make_polygon() {
 
 topo_edge_t topo_edge_make_polygon_from_two_point(pnt3d_t P1, pnt3d_t P2) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_polygon(cast_to_gp(P1), cast_to_gp(P2)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
+                                    flywave::topo::edge::make_polygon(
+                                        cast_to_gp(P1), cast_to_gp(P2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1847,9 +2003,11 @@ topo_edge_t topo_edge_make_polygon_from_two_point(pnt3d_t P1, pnt3d_t P2) {
 topo_edge_t topo_edge_make_polygon_from_three_point(pnt3d_t P1, pnt3d_t P2,
                                                     pnt3d_t P3, _Bool Close) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_polygon(
-            cast_to_gp(P1), cast_to_gp(P2), cast_to_gp(P3), Close))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_polygon(
+                    cast_to_gp(P1), cast_to_gp(P2), cast_to_gp(P3), Close))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1859,10 +2017,11 @@ topo_edge_t topo_edge_make_polygon_from_four_point(pnt3d_t P1, pnt3d_t P2,
                                                    pnt3d_t P3, pnt3d_t P4,
                                                    _Bool Close) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_polygon(cast_to_gp(P1), cast_to_gp(P2),
-                                          cast_to_gp(P3), cast_to_gp(P4),
-                                          Close))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_polygon(
+                                   cast_to_gp(P1), cast_to_gp(P2),
+                                   cast_to_gp(P3), cast_to_gp(P4), Close))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1871,9 +2030,10 @@ topo_edge_t topo_edge_make_polygon_from_four_point(pnt3d_t P1, pnt3d_t P2,
 topo_edge_t topo_edge_make_polygon_from_two_vertex(topo_vertex_t V1,
                                                    topo_vertex_t V2) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_polygon(
-            *cast_to_topo(V1), *cast_to_topo(V2)))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_polygon(
+                                   *cast_to_topo(V1), *cast_to_topo(V2)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1884,9 +2044,11 @@ topo_edge_t topo_edge_make_polygon_from_three_vertex(topo_vertex_t V1,
                                                      topo_vertex_t V3,
                                                      _Bool Close) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_polygon(
-            *cast_to_topo(V1), *cast_to_topo(V2), *cast_to_topo(V3), Close))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
+                                    flywave::topo::edge::make_polygon(
+                                        *cast_to_topo(V1), *cast_to_topo(V2),
+                                        *cast_to_topo(V3), Close))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1898,10 +2060,12 @@ topo_edge_t topo_edge_make_polygon_from_four_vertex(topo_vertex_t V1,
                                                     topo_vertex_t V4,
                                                     _Bool Close) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_polygon(*cast_to_topo(V1), *cast_to_topo(V2),
-                                          *cast_to_topo(V3), *cast_to_topo(V4),
-                                          Close))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_polygon(
+                    *cast_to_topo(V1), *cast_to_topo(V2), *cast_to_topo(V3),
+                    *cast_to_topo(V4), Close))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1916,8 +2080,9 @@ topo_edge_t topo_edge_make_polygon_from_vertices(topo_vertex_t *vertices,
             .get());
   }
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_polygon(oes, Close))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_polygon(oes, Close))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1930,8 +2095,9 @@ topo_edge_t topo_edge_make_polygonn_from_points(pnt3d_t *vertexs, int vertcount,
     oes.emplace_back(cast_to_gp(vertexs[i]));
   }
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_polygon(oes, Close))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_polygon(oes, Close))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1939,8 +2105,9 @@ topo_edge_t topo_edge_make_polygonn_from_points(pnt3d_t *vertexs, int vertcount,
 
 topo_edge_t topo_edge_make_rect(double width, double height) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_rect(width, height))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_rect(width, height))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1953,8 +2120,10 @@ topo_edge_t topo_edge_make_spline(pnt3d_t *vertexs, int vertcount, double tol,
     for (int i = 0; i < vertcount; i++) {
       oes.emplace_back(cast_to_gp(vertexs[i]));
     }
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_spline(oes, tol, periodic))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_spline(oes, tol, periodic))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1976,10 +2145,12 @@ topo_edge_t topo_edge_make_spline_from_tangents_and_parameters(
     for (int i = 0; i < paramcount; i++) {
       oparameters.emplace_back(parameters[i]);
     }
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_spline(oes, &otangents, periodic,
-                                         parameters ? &oparameters : nullptr,
-                                         scale, tol))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_spline(
+                    oes, &otangents, periodic,
+                    parameters ? &oparameters : nullptr, scale, tol))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -1998,9 +2169,11 @@ topo_edge_t topo_edge_make_spline_approx(pnt3d_t *points, int pntcount,
     if (smoothing) {
       osmoothing = std::make_tuple(smoothing[0], smoothing[1], smoothing[2]);
     }
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_spline_approx(oes, tolerance, osmoothing,
-                                                minDegree, maxDegree))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_spline_approx(
+                    oes, tolerance, osmoothing, minDegree, maxDegree))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -2024,10 +2197,12 @@ topo_edge_t topo_edge_make_ellipse(double majorRadius, double minorRadius,
                                    vec3d_t xnormal, double angle1,
                                    double angle2, int sense) {
   try {
-    return topo_edge_t{new topo_shape_t{
-        std::make_shared<flywave::topo::edge>(flywave::topo::edge::make_ellipse(
-            majorRadius, minorRadius, cast_to_gp(center), cast_to_gp(normal),
-            cast_to_gp(xnormal), angle1, angle2, sense))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_ellipse(
+                                   majorRadius, minorRadius, cast_to_gp(center),
+                                   cast_to_gp(normal), cast_to_gp(xnormal),
+                                   angle1, angle2, sense))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -2035,9 +2210,11 @@ topo_edge_t topo_edge_make_ellipse(double majorRadius, double minorRadius,
 
 topo_edge_t topo_edge_make_three_point_arc(pnt3d_t v1, pnt3d_t v2, pnt3d_t v3) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_three_point_arc(
-            cast_to_gp(v1), cast_to_gp(v2), cast_to_gp(v3)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_three_point_arc(
+                    cast_to_gp(v1), cast_to_gp(v2), cast_to_gp(v3)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -2046,9 +2223,11 @@ topo_edge_t topo_edge_make_three_point_arc(pnt3d_t v1, pnt3d_t v2, pnt3d_t v3) {
 topo_edge_t topo_edge_make_tangent_arc(pnt3d_t v1, vec3d_t tangent,
                                        pnt3d_t v3) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_tangent_arc(
-            cast_to_gp(v1), cast_to_gp(tangent), cast_to_gp(v3)))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_tangent_arc(
+                    cast_to_gp(v1), cast_to_gp(tangent), cast_to_gp(v3)))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -2060,8 +2239,9 @@ topo_edge_t topo_edge_make_bezier(pnt3d_t *points, int pntcount) {
     for (int i = 0; i < pntcount; i++) {
       oes.emplace_back(cast_to_gp(points[i]));
     }
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
-        flywave::topo::edge::make_bezier(oes))}};
+    return topo_edge_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
+                                    flywave::topo::edge::make_bezier(oes))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -2356,7 +2536,7 @@ topo_location_t *topo_edge_location_at(topo_edge_t e, double d, int mode,
     auto loc = cast_to_topo(e)->location_at(
         d, static_cast<flywave::topo::edge::ParamMode>(mode),
         static_cast<flywave::topo::edge::FrameMode>(frame), planar);
-    return new topo_location_t{loc};
+    return new topo_location_t{.loc = loc};
   } catch (...) {
     return nullptr;
   }
@@ -2373,7 +2553,7 @@ topo_location_t **topo_edge_locations(topo_edge_t e, double *ds, int count,
 
     auto **locs = new topo_location_t *[result.size()];
     for (size_t i = 0; i < result.size(); i++) {
-      locs[i] = new topo_location_t{result[i]};
+      locs[i] = new topo_location_t{.loc = result[i]};
     }
     *result_count = static_cast<int>(result.size());
     return locs;
@@ -2451,133 +2631,165 @@ void topo_face_free(topo_face_t t) {
 }
 
 topo_face_t topo_face_make_face(topo_face_t F) {
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(*cast_to_topo(F)))}};
+  return topo_face_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::face>(
+              flywave::topo::face::make_face(*cast_to_topo(F)))}};
 }
 
 topo_face_t topo_face_make_face_from_plane(plane_t P) {
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(cast_to_gp(P)))}};
+  return topo_face_t{.shp = new topo_shape_t{
+                         .shp = std::make_shared<flywave::topo::face>(
+                             flywave::topo::face::make_face(cast_to_gp(P)))}};
 }
 
 topo_face_t topo_face_make_face_from_cylinder(cylinder_t C) {
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(cast_to_gp(C)))}};
+  return topo_face_t{.shp = new topo_shape_t{
+                         .shp = std::make_shared<flywave::topo::face>(
+                             flywave::topo::face::make_face(cast_to_gp(C)))}};
 }
 
 topo_face_t topo_face_make_face_from_cone(cone_t C) {
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(cast_to_gp(C)))}};
+  return topo_face_t{.shp = new topo_shape_t{
+                         .shp = std::make_shared<flywave::topo::face>(
+                             flywave::topo::face::make_face(cast_to_gp(C)))}};
 }
 
 topo_face_t topo_face_make_face_from_sphere(sphere_t S) {
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(cast_to_gp(S)))}};
+  return topo_face_t{.shp = new topo_shape_t{
+                         .shp = std::make_shared<flywave::topo::face>(
+                             flywave::topo::face::make_face(cast_to_gp(S)))}};
 }
 
 topo_face_t topo_face_make_face_from_torus(torus_t C) {
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(cast_to_gp(C)))}};
+  return topo_face_t{.shp = new topo_shape_t{
+                         .shp = std::make_shared<flywave::topo::face>(
+                             flywave::topo::face::make_face(cast_to_gp(C)))}};
 }
 
 topo_face_t topo_face_make_face_from_surface(geom_surface_t *S,
                                              double TolDegen) {
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(S->handle, TolDegen))}};
+  return topo_face_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::face>(
+              flywave::topo::face::make_face(S->handle, TolDegen))}};
 }
 
 topo_face_t topo_face_make_face_from_plane_p(plane_t P, double UMin,
                                              double UMax, double VMin,
                                              double VMax) {
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(cast_to_gp(P), UMin, UMax, VMin, VMax))}};
+  return topo_face_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
+                                  flywave::topo::face::make_face(
+                                      cast_to_gp(P), UMin, UMax, VMin, VMax))}};
 }
 
 topo_face_t topo_face_make_face_from_cylinder_p(cylinder_t C, double UMin,
                                                 double UMax, double VMin,
                                                 double VMax) {
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(cast_to_gp(C), UMin, UMax, VMin, VMax))}};
+  return topo_face_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
+                                  flywave::topo::face::make_face(
+                                      cast_to_gp(C), UMin, UMax, VMin, VMax))}};
 }
 
 topo_face_t topo_face_make_face_from_cone_p(cone_t C, double UMin, double UMax,
                                             double VMin, double VMax) {
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(cast_to_gp(C), UMin, UMax, VMin, VMax))}};
+  return topo_face_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
+                                  flywave::topo::face::make_face(
+                                      cast_to_gp(C), UMin, UMax, VMin, VMax))}};
 }
 
 topo_face_t topo_face_make_face_from_sphere_p(sphere_t S, double UMin,
                                               double UMax, double VMin,
                                               double VMax) {
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(cast_to_gp(S), UMin, UMax, VMin, VMax))}};
+  return topo_face_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
+                                  flywave::topo::face::make_face(
+                                      cast_to_gp(S), UMin, UMax, VMin, VMax))}};
 }
 
 topo_face_t topo_face_make_face_from_torus_p(torus_t C, double UMin,
                                              double UMax, double VMin,
                                              double VMax) {
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(cast_to_gp(C), UMin, UMax, VMin, VMax))}};
+  return topo_face_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
+                                  flywave::topo::face::make_face(
+                                      cast_to_gp(C), UMin, UMax, VMin, VMax))}};
 }
 
 topo_face_t topo_face_make_face_from_surface_p(geom_surface_t *S, double UMin,
                                                double UMax, double VMin,
                                                double VMax, double TolDegen) {
-  return topo_face_t{new topo_shape_t{
-      std::make_shared<flywave::topo::face>(flywave::topo::face::make_face(
-          S->handle, UMin, UMax, VMin, VMax, TolDegen))}};
+  return topo_face_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::face>(
+              flywave::topo::face::make_face(S->handle, UMin, UMax, VMin, VMax,
+                                             TolDegen))}};
 }
 
 topo_face_t topo_face_make_face_from_wire_onlyplane(topo_wire_t W,
                                                     _Bool OnlyPlane) {
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(*cast_to_topo(W), OnlyPlane))}};
+  return topo_face_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::face>(
+              flywave::topo::face::make_face(*cast_to_topo(W), OnlyPlane))}};
 }
 
 topo_face_t topo_face_make_face_from_plane_wire(plane_t P, topo_wire_t W,
                                                 _Bool Inside) {
-  return topo_face_t{new topo_shape_t{
-      std::make_shared<flywave::topo::face>(flywave::topo::face::make_face(
-          cast_to_gp(P), *cast_to_topo(W), Inside))}};
+  return topo_face_t{.shp = new topo_shape_t{
+                         .shp = std::make_shared<flywave::topo::face>(
+                             flywave::topo::face::make_face(
+                                 cast_to_gp(P), *cast_to_topo(W), Inside))}};
 }
 
 topo_face_t topo_face_make_face_from_cylinder_wire(cylinder_t C, topo_wire_t W,
                                                    _Bool Inside) {
-  return topo_face_t{new topo_shape_t{
-      std::make_shared<flywave::topo::face>(flywave::topo::face::make_face(
-          cast_to_gp(C), *cast_to_topo(W), Inside))}};
+  return topo_face_t{.shp = new topo_shape_t{
+                         .shp = std::make_shared<flywave::topo::face>(
+                             flywave::topo::face::make_face(
+                                 cast_to_gp(C), *cast_to_topo(W), Inside))}};
 }
 
 topo_face_t topo_face_make_face_from_cone_wire(cone_t C, topo_wire_t W,
                                                _Bool Inside) {
-  return topo_face_t{new topo_shape_t{
-      std::make_shared<flywave::topo::face>(flywave::topo::face::make_face(
-          cast_to_gp(C), *cast_to_topo(W), Inside))}};
+  return topo_face_t{.shp = new topo_shape_t{
+                         .shp = std::make_shared<flywave::topo::face>(
+                             flywave::topo::face::make_face(
+                                 cast_to_gp(C), *cast_to_topo(W), Inside))}};
 }
 
 topo_face_t topo_face_make_face_from_sphere_wire(sphere_t S, topo_wire_t W,
                                                  _Bool Inside) {
-  return topo_face_t{new topo_shape_t{
-      std::make_shared<flywave::topo::face>(flywave::topo::face::make_face(
-          cast_to_gp(S), *cast_to_topo(W), Inside))}};
+  return topo_face_t{.shp = new topo_shape_t{
+                         .shp = std::make_shared<flywave::topo::face>(
+                             flywave::topo::face::make_face(
+                                 cast_to_gp(S), *cast_to_topo(W), Inside))}};
 }
 
 topo_face_t topo_face_make_face_from_torus_wire(torus_t C, topo_wire_t W,
                                                 _Bool Inside) {
-  return topo_face_t{new topo_shape_t{
-      std::make_shared<flywave::topo::face>(flywave::topo::face::make_face(
-          cast_to_gp(C), *cast_to_topo(W), Inside))}};
+  return topo_face_t{.shp = new topo_shape_t{
+                         .shp = std::make_shared<flywave::topo::face>(
+                             flywave::topo::face::make_face(
+                                 cast_to_gp(C), *cast_to_topo(W), Inside))}};
 }
 
 topo_face_t topo_face_make_face_from_surface_wire(geom_surface_t *S,
                                                   topo_wire_t W, _Bool Inside) {
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(S->handle, *cast_to_topo(W), Inside))}};
+  return topo_face_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
+                                  flywave::topo::face::make_face(
+                                      S->handle, *cast_to_topo(W), Inside))}};
 }
 
 topo_face_t topo_face_make_face_from_face_wire(topo_face_t F, topo_wire_t W) {
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(*cast_to_topo(F), *cast_to_topo(W)))}};
+  return topo_face_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
+                                  flywave::topo::face::make_face(
+                                      *cast_to_topo(F), *cast_to_topo(W)))}};
 }
 
 topo_face_t topo_face_make_face_from_wire(topo_wire_t *wires, int count) {
@@ -2585,8 +2797,9 @@ topo_face_t topo_face_make_face_from_wire(topo_wire_t *wires, int count) {
   for (int i = 0; i < count; i++) {
     ows.emplace_back(*cast_to_topo(wires[i]));
   }
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(ows))}};
+  return topo_face_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
+                                  flywave::topo::face::make_face(ows))}};
 }
 
 topo_face_t topo_face_make_face_from_egdes(topo_edge_t *edges, int edgecount,
@@ -2600,8 +2813,9 @@ topo_face_t topo_face_make_face_from_egdes(topo_edge_t *edges, int edgecount,
   for (int i = 0; i < pcount; i++) {
     ops.emplace_back(cast_to_gp(points[i]));
   }
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(oes, ops))}};
+  return topo_face_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
+                                  flywave::topo::face::make_face(oes, ops))}};
 }
 
 topo_face_t topo_face_make_face_from_points(pnt3d_t *points, int count) {
@@ -2609,8 +2823,9 @@ topo_face_t topo_face_make_face_from_points(pnt3d_t *points, int count) {
   for (int i = 0; i < count; i++) {
     ops.emplace_back(cast_to_gp(points[i]));
   }
-  return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-      flywave::topo::face::make_face(ops))}};
+  return topo_face_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
+                                  flywave::topo::face::make_face(ops))}};
 }
 
 topo_face_t *topo_face_make_from_wires(topo_wire_t outer, topo_wire_t *inners,
@@ -2628,8 +2843,9 @@ topo_face_t *topo_face_make_from_wires(topo_wire_t outer, topo_wire_t *inners,
     auto *faces = new topo_face_t[result.size()];
     for (size_t i = 0; i < result.size(); i++) {
       faces[i] =
-          topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-              flywave::topo::face::make_face(result[i]))}};
+          topo_face_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::face>(
+                              flywave::topo::face::make_face(result[i]))}};
     }
     return faces;
   } catch (...) {
@@ -2678,8 +2894,9 @@ topo_face_t topo_face_make_complex(topo_shape_t **edges, int edge_count,
         nb_pts_on_curve, nb_iter, anisotropy, tol2d, tol3d, tol_angle, tol_curv,
         max_degree, max_segments);
 
-    return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-        flywave::topo::face::make_face(result))}};
+    return topo_face_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
+                                    flywave::topo::face::make_face(result))}};
   } catch (...) {
     return topo_face_t{};
   }
@@ -2700,8 +2917,9 @@ topo_face_t topo_face_make_plane(pnt3d_t base_point, dir3d_t direction,
     auto result =
         flywave::topo::face::make_plane(basePnt, dir, lenOpt, widthOpt);
 
-    return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-        flywave::topo::face::make_face(result))}};
+    return topo_face_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
+                                    flywave::topo::face::make_face(result))}};
   } catch (...) {
     return topo_face_t{};
   }
@@ -2732,8 +2950,9 @@ topo_face_t topo_face_make_spline_approx(pnt3d_t *points, int *point_counts,
         pointVec, tol, smoothing ? &smoothParams : nullptr, min_degree,
         max_degree);
 
-    return topo_face_t{new topo_shape_t{std::make_shared<flywave::topo::face>(
-        flywave::topo::face::make_face(result))}};
+    return topo_face_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
+                                    flywave::topo::face::make_face(result))}};
   } catch (...) {
     return topo_face_t{};
   }
@@ -3160,322 +3379,394 @@ void topo_shell_free(topo_shell_t t) {
 
 topo_shell_t topo_shell_make_shell_from_surface(geom_surface_t *S,
                                                 _Bool Segment) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell(S->handle, Segment))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell(S->handle, Segment))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_surface_p(geom_surface_t *S,
                                                   double UMin, double UMax,
                                                   double VMin, double VMax,
                                                   _Bool Segment) {
-  return topo_shell_t{new topo_shape_t{
-      std::make_shared<flywave::topo::shell>(flywave::topo::shell::make_shell(
-          S->handle, UMin, UMax, VMin, VMax, Segment))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell(S->handle, UMin, UMax, VMin,
+                                               VMax, Segment))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_box(double dx, double dy, double dz) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_box(dx, dy, dz))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_box(dx, dy, dz))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_box_point(pnt3d_t P, double dx,
                                                   double dy, double dz) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_box(cast_to_gp(P), dx, dy, dz))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_box(
+                                      cast_to_gp(P), dx, dy, dz))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_box_two_point(pnt3d_t P1, pnt3d_t P2) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_box(cast_to_gp(P1),
-                                                cast_to_gp(P2)))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_box(
+                                      cast_to_gp(P1), cast_to_gp(P2)))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_box_axis2(axis2_t Axes, double dx,
                                                   double dy, double dz) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_box(cast_to_gp(Axes), dx, dy,
-                                                dz))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_box(
+                                      cast_to_gp(Axes), dx, dy, dz))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_cylinder(double R, double H) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_cylinder(R, H))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_cylinder(R, H))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_cylinder_angle(double R, double H,
                                                        double Angle) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_cylinder(R, H, Angle))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_cylinder(R, H, Angle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_cylinder_axis2(axis2_t Axes, double R,
                                                        double H) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_cylinder(cast_to_gp(Axes), R, H))}};
+  return topo_shell_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::shell>(
+                              flywave::topo::shell::make_shell_from_cylinder(
+                                  cast_to_gp(Axes), R, H))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_cylinder_axis2_angle(axis2_t Axes,
                                                              double R, double H,
                                                              double Angle) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_cylinder(cast_to_gp(Axes), R, H,
-                                                     Angle))}};
+  return topo_shell_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::shell>(
+                              flywave::topo::shell::make_shell_from_cylinder(
+                                  cast_to_gp(Axes), R, H, Angle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_cone(double R1, double R2, double H) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_cone(R1, R2, H))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_cone(R1, R2, H))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_cone_angle(double R1, double R2,
                                                    double H, double angle) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_cone(R1, R2, H, angle))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_cone(R1, R2, H, angle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_cone_axis2(axis2_t Axes, double R1,
                                                    double R2, double H) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_cone(cast_to_gp(Axes), R1, R2,
-                                                 H))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_cone(
+                                      cast_to_gp(Axes), R1, R2, H))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_cone_axis2_angle(axis2_t Axes,
                                                          double R1, double R2,
                                                          double H,
                                                          double angle) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_cone(cast_to_gp(Axes), R1, R2, H,
-                                                 angle))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_cone(
+                                      cast_to_gp(Axes), R1, R2, H, angle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution(geom_curve_t *Meridian) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_revolution(Meridian->handle))}};
+  return topo_shell_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::shell>(
+                              flywave::topo::shell::make_shell_from_revolution(
+                                  Meridian->handle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_angle(geom_curve_t *Meridian,
                                                          double angle) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_revolution(Meridian->handle,
-                                                       angle))}};
+  return topo_shell_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::shell>(
+                              flywave::topo::shell::make_shell_from_revolution(
+                                  Meridian->handle, angle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_limit(geom_curve_t *Meridian,
                                                          double VMin,
                                                          double VMax) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_revolution(Meridian->handle, VMin,
-                                                       VMax))}};
+  return topo_shell_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::shell>(
+                              flywave::topo::shell::make_shell_from_revolution(
+                                  Meridian->handle, VMin, VMax))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_limit_angle(
     geom_curve_t *Meridian, double VMin, double VMax, double angle) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_revolution(Meridian->handle, VMin,
-                                                       VMax, angle))}};
+  return topo_shell_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::shell>(
+                              flywave::topo::shell::make_shell_from_revolution(
+                                  Meridian->handle, VMin, VMax, angle))}};
 }
 
 topo_shell_t
 topo_shell_make_shell_from_revolution_axis2(axis2_t Axes,
                                             geom_curve_t *Meridian) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_revolution(cast_to_gp(Axes),
-                                                       Meridian->handle))}};
+  return topo_shell_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::shell>(
+                              flywave::topo::shell::make_shell_from_revolution(
+                                  cast_to_gp(Axes), Meridian->handle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_axis2_angle(
     axis2_t Axes, geom_curve_t *Meridian, double angle) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_revolution(
-          cast_to_gp(Axes), Meridian->handle, angle))}};
+  return topo_shell_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::shell>(
+                              flywave::topo::shell::make_shell_from_revolution(
+                                  cast_to_gp(Axes), Meridian->handle, angle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_axis2_limit(
     axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_revolution(
-          cast_to_gp(Axes), Meridian->handle, VMin, VMax))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_revolution(
+                  cast_to_gp(Axes), Meridian->handle, VMin, VMax))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_axis2_limit_angle(
     axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax,
     double angle) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_revolution(
-          cast_to_gp(Axes), Meridian->handle, VMin, VMax, angle))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_revolution(
+                  cast_to_gp(Axes), Meridian->handle, VMin, VMax, angle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere(double R) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_sphere(R))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_sphere(R))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_angle(double R, double angle) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_sphere(R, angle))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_sphere(R, angle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_two_angle(double R,
                                                          double angle1,
                                                          double angle2) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_sphere(R, angle1, angle2))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_sphere(
+                                      R, angle1, angle2))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_three_angle(double R,
                                                            double angle1,
                                                            double angle2,
                                                            double angle3) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_sphere(R, angle1, angle2,
-                                                   angle3))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_sphere(
+                                      R, angle1, angle2, angle3))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_center_raduis(pnt3d_t Center,
                                                              double R) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_sphere(cast_to_gp(Center), R))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_sphere(
+                                      cast_to_gp(Center), R))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_center_angle(pnt3d_t Center,
                                                             double R,
                                                             double angle) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_sphere(cast_to_gp(Center), R,
-                                                   angle))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_sphere(
+                                      cast_to_gp(Center), R, angle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_center_two_angle(pnt3d_t Center,
                                                                 double R,
                                                                 double angle1,
                                                                 double angle2) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_sphere(cast_to_gp(Center), R,
-                                                   angle1, angle2))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_sphere(
+                                      cast_to_gp(Center), R, angle1, angle2))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_center_three_angle(
     pnt3d_t Center, double R, double angle1, double angle2, double angle3) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_sphere(cast_to_gp(Center), R,
-                                                   angle1, angle2, angle3))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_sphere(
+                  cast_to_gp(Center), R, angle1, angle2, angle3))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_axis2(axis2_t Axis, double R) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_sphere(cast_to_gp(Axis), R))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_sphere(
+                                      cast_to_gp(Axis), R))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_axis2_raduis(axis2_t Axis,
                                                             double R,
                                                             double angle) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_sphere(cast_to_gp(Axis), R,
-                                                   angle))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_sphere(
+                                      cast_to_gp(Axis), R, angle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_axis2_two_angle(axis2_t Axis,
                                                                double R,
                                                                double angle1,
                                                                double angle2) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_sphere(cast_to_gp(Axis), R, angle1,
-                                                   angle2))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_sphere(
+                                      cast_to_gp(Axis), R, angle1, angle2))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_axis2_three_angle(
     axis2_t Axis, double R, double angle1, double angle2, double angle3) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_sphere(cast_to_gp(Axis), R, angle1,
-                                                   angle2, angle3))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_sphere(
+                  cast_to_gp(Axis), R, angle1, angle2, angle3))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_torus(double R1, double R2) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_torus(R1, R2))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_torus(R1, R2))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_angle(double R1, double R2,
                                                     double angle) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_torus(R1, R2, angle))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_torus(R1, R2, angle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_two_angle(double R1, double R2,
                                                         double angle1,
                                                         double angle2) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_torus(R1, R2, angle1, angle2))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_torus(
+                                      R1, R2, angle1, angle2))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_three_angle(double R1, double R2,
                                                           double angle1,
                                                           double angle2,
                                                           double angle) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_torus(R1, R2, angle1, angle2,
-                                                  angle))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_torus(
+                                      R1, R2, angle1, angle2, angle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_axis2(axis2_t Axes, double R1,
                                                     double R2) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_torus(cast_to_gp(Axes), R1, R2))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_torus(
+                                      cast_to_gp(Axes), R1, R2))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_axis2_angle(axis2_t Axes,
                                                           double R1, double R2,
                                                           double angle) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_torus(cast_to_gp(Axes), R1, R2,
-                                                  angle))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_torus(
+                                      cast_to_gp(Axes), R1, R2, angle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_axis2_two_angle(
     axis2_t Axes, double R1, double R2, double angle1, double angle2) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_torus(cast_to_gp(Axes), R1, R2,
-                                                  angle1, angle2))}};
+  return topo_shell_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::shell>(
+                              flywave::topo::shell::make_shell_from_torus(
+                                  cast_to_gp(Axes), R1, R2, angle1, angle2))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_axis2_three_angle(
     axis2_t Axes, double R1, double R2, double angle1, double angle2,
     double angle) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_torus(cast_to_gp(Axes), R1, R2,
-                                                  angle1, angle2, angle))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_torus(
+                  cast_to_gp(Axes), R1, R2, angle1, angle2, angle))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_wedge(double dx, double dy, double dz,
                                               double ltx) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_wedge(dx, dy, dz, ltx))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_wedge(dx, dy, dz, ltx))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_wedge_axis2(axis2_t Axes, double dx,
                                                     double dy, double dz,
                                                     double ltx) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_wedge(cast_to_gp(Axes), dx, dy, dz,
-                                                  ltx))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_wedge(
+                                      cast_to_gp(Axes), dx, dy, dz, ltx))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_wedge_limit(double dx, double dy,
                                                     double dz, double xmin,
                                                     double zmin, double xmax,
                                                     double zmax) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_wedge(dx, dy, dz, xmin, zmin, xmax,
-                                                  zmax))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
+                                  flywave::topo::shell::make_shell_from_wedge(
+                                      dx, dy, dz, xmin, zmin, xmax, zmax))}};
 }
 
 topo_shell_t topo_shell_make_shell_from_wedge_axis2_limit(
     axis2_t Axes, double dx, double dy, double dz, double xmin, double zmin,
     double xmax, double zmax) {
-  return topo_shell_t{new topo_shape_t{std::make_shared<flywave::topo::shell>(
-      flywave::topo::shell::make_shell_from_wedge(cast_to_gp(Axes), dx, dy, dz,
-                                                  xmin, zmin, xmax, zmax))}};
+  return topo_shell_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shell>(
+              flywave::topo::shell::make_shell_from_wedge(
+                  cast_to_gp(Axes), dx, dy, dz, xmin, zmin, xmax, zmax))}};
 }
 
 int topo_shell_sweep(topo_shell_t ss, topo_wire_t spine,
@@ -3518,27 +3809,35 @@ void topo_solid_free(topo_solid_t t) {
   }
 }
 topo_solid_t topo_solid_make_solid_from_comp_solid(topo_comp_solid_t S) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid(*cast_to_topo(S)))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid(*cast_to_topo(S)))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_shell(topo_shell_t S) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid(*cast_to_topo(S)))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid(*cast_to_topo(S)))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_two_shell(topo_shell_t S1,
                                                   topo_shell_t S2) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid(*cast_to_topo(S1), *cast_to_topo(S2)))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid(
+                                      *cast_to_topo(S1), *cast_to_topo(S2)))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_three_shell(topo_shell_t S1,
                                                     topo_shell_t S2,
                                                     topo_shell_t S3) {
-  return topo_solid_t{new topo_shape_t{
-      std::make_shared<flywave::topo::solid>(flywave::topo::solid::make_solid(
-          *cast_to_topo(S1), *cast_to_topo(S2), *cast_to_topo(S3)))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid(
+                  *cast_to_topo(S1), *cast_to_topo(S2), *cast_to_topo(S3)))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_shells(topo_shell_t *shells,
@@ -3547,19 +3846,24 @@ topo_solid_t topo_solid_make_solid_from_shells(topo_shell_t *shells,
   for (int i = 0; i < count; i++) {
     shels.emplace_back(*cast_to_topo(shells[i]));
   }
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid(shels))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid(shels))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_solid(topo_solid_t So) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid(*cast_to_topo(So)))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid(*cast_to_topo(So)))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_solid_shell(topo_solid_t So,
                                                     topo_shell_t S) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid(*cast_to_topo(So), *cast_to_topo(S)))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid(
+                                      *cast_to_topo(So), *cast_to_topo(S)))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_faces(topo_face_t *faces, int count,
@@ -3568,313 +3872,383 @@ topo_solid_t topo_solid_make_solid_from_faces(topo_face_t *faces, int count,
   for (int i = 0; i < count; i++) {
     cfaces.emplace_back(*cast_to_topo(faces[i]));
   }
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid(cfaces, tolerance))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid(cfaces, tolerance))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_box(double dx, double dy, double dz) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_box(dx, dy, dz))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_box(dx, dy, dz))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_box_point(pnt3d_t P, double dx,
                                                   double dy, double dz) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_box(cast_to_gp(P), dx, dy, dz))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_box(
+                                      cast_to_gp(P), dx, dy, dz))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_box_two_point(pnt3d_t P1, pnt3d_t P2) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_box(cast_to_gp(P1),
-                                                cast_to_gp(P2)))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_box(
+                                      cast_to_gp(P1), cast_to_gp(P2)))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_box_axis2(axis2_t Axes, double dx,
                                                   double dy, double dz) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_box(cast_to_gp(Axes), dx, dy,
-                                                dz))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_box(
+                                      cast_to_gp(Axes), dx, dy, dz))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_cylinder(double R, double H) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_cylinder(R, H))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_cylinder(R, H))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_cylinder_angle(double R, double H,
                                                        double Angle) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_cylinder(R, H, Angle))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_cylinder(R, H, Angle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_cylinder_axis2(axis2_t Axes, double R,
                                                        double H) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_cylinder(cast_to_gp(Axes), R, H))}};
+  return topo_solid_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::solid>(
+                              flywave::topo::solid::make_solid_from_cylinder(
+                                  cast_to_gp(Axes), R, H))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_cylinder_axis2_angle(axis2_t Axes,
                                                              double R, double H,
                                                              double Angle) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_cylinder(cast_to_gp(Axes), R, H,
-                                                     Angle))}};
+  return topo_solid_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::solid>(
+                              flywave::topo::solid::make_solid_from_cylinder(
+                                  cast_to_gp(Axes), R, H, Angle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_cone(double R1, double R2, double H) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_cone(R1, R2, H))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_cone(R1, R2, H))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_cone_angle(double R1, double R2,
                                                    double H, double angle) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_cone(R1, R2, H, angle))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_cone(R1, R2, H, angle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_cone_axis2(axis2_t Axes, double R1,
                                                    double R2, double H) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_cone(cast_to_gp(Axes), R1, R2,
-                                                 H))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_cone(
+                                      cast_to_gp(Axes), R1, R2, H))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_cone_axis2_angle(axis2_t Axes,
                                                          double R1, double R2,
                                                          double H,
                                                          double angle) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_cone(cast_to_gp(Axes), R1, R2, H,
-                                                 angle))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_cone(
+                                      cast_to_gp(Axes), R1, R2, H, angle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution(geom_curve_t *Meridian) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_revolution(Meridian->handle))}};
+  return topo_solid_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::solid>(
+                              flywave::topo::solid::make_solid_from_revolution(
+                                  Meridian->handle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_angle(geom_curve_t *Meridian,
                                                          double angle) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_revolution(Meridian->handle,
-                                                       angle))}};
+  return topo_solid_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::solid>(
+                              flywave::topo::solid::make_solid_from_revolution(
+                                  Meridian->handle, angle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_limit(geom_curve_t *Meridian,
                                                          double VMin,
                                                          double VMax) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_revolution(Meridian->handle, VMin,
-                                                       VMax))}};
+  return topo_solid_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::solid>(
+                              flywave::topo::solid::make_solid_from_revolution(
+                                  Meridian->handle, VMin, VMax))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_limit_angle(
     geom_curve_t *Meridian, double VMin, double VMax, double angle) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_revolution(Meridian->handle, VMin,
-                                                       VMax, angle))}};
+  return topo_solid_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::solid>(
+                              flywave::topo::solid::make_solid_from_revolution(
+                                  Meridian->handle, VMin, VMax, angle))}};
 }
 
 topo_solid_t
 topo_solid_make_solid_from_revolution_axis2(axis2_t Axes,
                                             geom_curve_t *Meridian) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_revolution(cast_to_gp(Axes),
-                                                       Meridian->handle))}};
+  return topo_solid_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::solid>(
+                              flywave::topo::solid::make_solid_from_revolution(
+                                  cast_to_gp(Axes), Meridian->handle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_axis2_angle(
     axis2_t Axes, geom_curve_t *Meridian, double angle) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_revolution(
-          cast_to_gp(Axes), Meridian->handle, angle))}};
+  return topo_solid_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::solid>(
+                              flywave::topo::solid::make_solid_from_revolution(
+                                  cast_to_gp(Axes), Meridian->handle, angle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_axis2_limit(
     axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_revolution(
-          cast_to_gp(Axes), Meridian->handle, VMin, VMax))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_revolution(
+                  cast_to_gp(Axes), Meridian->handle, VMin, VMax))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_axis2_limit_angle(
     axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax,
     double angle) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_revolution(
-          cast_to_gp(Axes), Meridian->handle, VMin, VMax, angle))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_revolution(
+                  cast_to_gp(Axes), Meridian->handle, VMin, VMax, angle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere(double R) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_sphere(R))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_sphere(R))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_angle(double R, double angle) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_sphere(R, angle))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_sphere(R, angle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_two_angle(double R,
                                                          double angle1,
                                                          double angle2) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_sphere(R, angle1, angle2))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_sphere(
+                                      R, angle1, angle2))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_three_angle(double R,
                                                            double angle1,
                                                            double angle2,
                                                            double angle3) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_sphere(R, angle1, angle2,
-                                                   angle3))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_sphere(
+                                      R, angle1, angle2, angle3))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_center_raduis(pnt3d_t Center,
                                                              double R) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_sphere(cast_to_gp(Center), R))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_sphere(
+                                      cast_to_gp(Center), R))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_center_angle(pnt3d_t Center,
                                                             double R,
                                                             double angle) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_sphere(cast_to_gp(Center), R,
-                                                   angle))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_sphere(
+                                      cast_to_gp(Center), R, angle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_center_two_angle(pnt3d_t Center,
                                                                 double R,
                                                                 double angle1,
                                                                 double angle2) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_sphere(cast_to_gp(Center), R,
-                                                   angle1, angle2))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_sphere(
+                                      cast_to_gp(Center), R, angle1, angle2))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_center_three_angle(
     pnt3d_t Center, double R, double angle1, double angle2, double angle3) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_sphere(cast_to_gp(Center), R,
-                                                   angle1, angle2, angle3))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_sphere(
+                  cast_to_gp(Center), R, angle1, angle2, angle3))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_axis2(axis2_t Axis, double R) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_sphere(cast_to_gp(Axis), R))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_sphere(
+                                      cast_to_gp(Axis), R))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_axis2_angle(axis2_t Axis,
                                                            double R,
                                                            double angle) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_sphere(cast_to_gp(Axis), R,
-                                                   angle))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_sphere(
+                                      cast_to_gp(Axis), R, angle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_axis2_two_angle(axis2_t Axis,
                                                                double R,
                                                                double angle1,
                                                                double angle2) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_sphere(cast_to_gp(Axis), R, angle1,
-                                                   angle2))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_sphere(
+                                      cast_to_gp(Axis), R, angle1, angle2))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_axis2_three_angle(
     axis2_t Axis, double R, double angle1, double angle2, double angle3) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_sphere(cast_to_gp(Axis), R, angle1,
-                                                   angle2, angle3))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_sphere(
+                  cast_to_gp(Axis), R, angle1, angle2, angle3))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_torus(double R1, double R2) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_torus(R1, R2))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_torus(R1, R2))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_angle(double R1, double R2,
                                                     double angle) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_torus(R1, R2, angle))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_torus(R1, R2, angle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_two_angle(double R1, double R2,
                                                         double angle1,
                                                         double angle2) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_torus(R1, R2, angle1, angle2))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_torus(
+                                      R1, R2, angle1, angle2))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_three_angle(double R1, double R2,
                                                           double angle1,
                                                           double angle2,
                                                           double angle) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_torus(R1, R2, angle1, angle2,
-                                                  angle))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_torus(
+                                      R1, R2, angle1, angle2, angle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_axis2(axis2_t Axes, double R1,
                                                     double R2) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_torus(cast_to_gp(Axes), R1, R2))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_torus(
+                                      cast_to_gp(Axes), R1, R2))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_axis2_angle(axis2_t Axes,
                                                           double R1, double R2,
                                                           double angle) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_torus(cast_to_gp(Axes), R1, R2,
-                                                  angle))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_torus(
+                                      cast_to_gp(Axes), R1, R2, angle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_axis2_two_angle(
     axis2_t Axes, double R1, double R2, double angle1, double angle2) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_torus(cast_to_gp(Axes), R1, R2,
-                                                  angle1, angle2))}};
+  return topo_solid_t{.shp = new topo_shape_t{
+                          .shp = std::make_shared<flywave::topo::solid>(
+                              flywave::topo::solid::make_solid_from_torus(
+                                  cast_to_gp(Axes), R1, R2, angle1, angle2))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_axis2_three_angle(
     axis2_t Axes, double R1, double R2, double angle1, double angle2,
     double angle) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_torus(cast_to_gp(Axes), R1, R2,
-                                                  angle1, angle2, angle))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_torus(
+                  cast_to_gp(Axes), R1, R2, angle1, angle2, angle))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_wedge(double dx, double dy, double dz,
                                               double ltx) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_wedge(dx, dy, dz, ltx))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_wedge(dx, dy, dz, ltx))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_wedge_axis2(axis2_t Axes, double dx,
                                                     double dy, double dz,
                                                     double ltx) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_wedge(cast_to_gp(Axes), dx, dy, dz,
-                                                  ltx))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_wedge(
+                                      cast_to_gp(Axes), dx, dy, dz, ltx))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_wedge_limit(double dx, double dy,
                                                     double dz, double xmin,
                                                     double zmin, double xmax,
                                                     double zmax) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_wedge(dx, dy, dz, xmin, zmin, xmax,
-                                                  zmax))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
+                                  flywave::topo::solid::make_solid_from_wedge(
+                                      dx, dy, dz, xmin, zmin, xmax, zmax))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_wedge_axis2_limit(
     axis2_t Axes, double dx, double dy, double dz, double xmin, double zmin,
     double xmax, double zmax) {
-  return topo_solid_t{new topo_shape_t{std::make_shared<flywave::topo::solid>(
-      flywave::topo::solid::make_solid_from_wedge(cast_to_gp(Axes), dx, dy, dz,
-                                                  xmin, zmin, xmax, zmax))}};
+  return topo_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::solid>(
+              flywave::topo::solid::make_solid_from_wedge(
+                  cast_to_gp(Axes), dx, dy, dz, xmin, zmin, xmax, zmax))}};
 }
 
 topo_solid_t topo_solid_make_solid_from_loft(topo_wire_t *wires, int count,
@@ -3886,7 +4260,8 @@ topo_solid_t topo_solid_make_solid_from_loft(topo_wire_t *wires, int count,
     }
     auto solid = flywave::topo::solid::make_solid_from_loft(wireVec, ruled);
     return topo_solid_t{
-        new topo_shape_t{std::make_shared<flywave::topo::solid>(solid)}};
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::solid>(solid)}};
   } catch (...) {
     return topo_solid_t{nullptr};
   }
@@ -4481,8 +4856,9 @@ topo_face_t topo_solid_section_face(topo_solid_t s, pnt3d_t pnt, pnt3d_t nor) {
   if (opt) {
     auto fopt = opt->section(cast_to_gp(pnt), cast_to_gp(nor));
     if (fopt) {
-      return topo_face_t{new topo_shape_t{
-          std::make_shared<flywave::topo::shape>(fopt->value())}};
+      return topo_face_t{
+          .shp = new topo_shape_t{
+              .shp = std::make_shared<flywave::topo::shape>(fopt->value())}};
     }
   }
   return topo_face_t{nullptr};
@@ -4501,8 +4877,9 @@ topo_shell_t topo_solid_outer_shell(topo_solid_t s) {
     auto opt = cast_to_topo(s);
     if (opt) {
       auto shell = opt->outer_shell();
-      return topo_shell_t{.shp = new topo_shape_t{
-                              std::make_shared<flywave::topo::shape>(shell)}};
+      return topo_shell_t{
+          .shp = new topo_shape_t{
+              .shp = std::make_shared<flywave::topo::shape>(shell)}};
     }
   } catch (...) {
     return topo_shell_t{nullptr};
@@ -4518,8 +4895,8 @@ topo_shell_t *topo_solid_inner_shells(topo_solid_t s, int *count) {
       *count = static_cast<int>(shells.size());
       auto result = new topo_shell_t[*count];
       for (int i = 0; i < *count; i++) {
-        result[i].shp =
-            new topo_shape_t{std::make_shared<flywave::topo::shape>(shells[i])};
+        result[i].shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::shape>(shells[i])};
       }
       return result;
     }
@@ -4622,9 +4999,9 @@ topo_compound_t topo_compound_make_compound(topo_shape_t **S, int count) {
   for (int i = 0; i < count; i++) {
     sps.emplace_back(*S[i]->shp);
   }
-  return topo_compound_t{
-      new topo_shape_t{std::make_shared<flywave::topo::compound>(
-          flywave::topo::compound::make_compound(sps))}};
+  return topo_compound_t{.shp = new topo_shape_t{
+                             .shp = std::make_shared<flywave::topo::compound>(
+                                 flywave::topo::compound::make_compound(sps))}};
 }
 
 void topo_compound_remove(topo_compound_t t, topo_shape_t *s) {
@@ -4640,9 +5017,9 @@ topo_compound_t topo_compound_cut(topo_compound_t t, topo_shape_t **toCut,
   for (int i = 0; i < count; i++) {
     sps.emplace_back(*toCut[i]->shp);
   }
-  return topo_compound_t{
-      new topo_shape_t{std::make_shared<flywave::topo::compound>(
-          flywave::topo::compound::make_compound(sps))}};
+  return topo_compound_t{.shp = new topo_shape_t{
+                             .shp = std::make_shared<flywave::topo::compound>(
+                                 flywave::topo::compound::make_compound(sps))}};
 }
 
 topo_compound_t topo_compound_fuse(topo_compound_t t, topo_shape_t **toFuse,
@@ -4651,9 +5028,9 @@ topo_compound_t topo_compound_fuse(topo_compound_t t, topo_shape_t **toFuse,
   for (int i = 0; i < count; i++) {
     sps.emplace_back(*toFuse[i]->shp);
   }
-  return topo_compound_t{
-      new topo_shape_t{std::make_shared<flywave::topo::compound>(
-          flywave::topo::compound::make_compound(sps))}};
+  return topo_compound_t{.shp = new topo_shape_t{
+                             .shp = std::make_shared<flywave::topo::compound>(
+                                 flywave::topo::compound::make_compound(sps))}};
 }
 
 topo_compound_t topo_compound_intersect(topo_compound_t t,
@@ -4663,9 +5040,9 @@ topo_compound_t topo_compound_intersect(topo_compound_t t,
   for (int i = 0; i < count; i++) {
     sps.emplace_back(*toIntersect[i]->shp);
   }
-  return topo_compound_t{
-      new topo_shape_t{std::make_shared<flywave::topo::compound>(
-          flywave::topo::compound::make_compound(sps))}};
+  return topo_compound_t{.shp = new topo_shape_t{
+                             .shp = std::make_shared<flywave::topo::compound>(
+                                 flywave::topo::compound::make_compound(sps))}};
 }
 
 topo_compound_t topo_compound_ancestors(topo_compound_t t, topo_shape_t *s,
@@ -4675,7 +5052,8 @@ topo_compound_t topo_compound_ancestors(topo_compound_t t, topo_shape_t *s,
     auto fopt = opt->ancestors(*s->shp, static_cast<TopAbs_ShapeEnum>(kind));
     if (fopt) {
       return topo_compound_t{
-          new topo_shape_t{std::make_shared<flywave::topo::compound>(fopt)}};
+          .shp = new topo_shape_t{
+              .shp = std::make_shared<flywave::topo::compound>(fopt)}};
     }
   }
   return topo_compound_t{nullptr};
@@ -4689,7 +5067,8 @@ topo_compound_t topo_compound_siblings(topo_compound_t t, topo_shape_t *shape,
         opt->siblings(*shape->shp, static_cast<TopAbs_ShapeEnum>(kind), level);
     if (fopt) {
       return topo_compound_t{
-          new topo_shape_t{std::make_shared<flywave::topo::compound>(fopt)}};
+          .shp = new topo_shape_t{
+              .shp = std::make_shared<flywave::topo::compound>(fopt)}};
     }
   }
   return topo_compound_t{nullptr};
@@ -4713,8 +5092,9 @@ topo_comp_solid_t topo_comp_solid_make_comp_solid(topo_solid_t *S, int count) {
     sps.emplace_back(*cast_to_topo(S[i]));
   }
   return topo_comp_solid_t{
-      new topo_shape_t{std::make_shared<flywave::topo::comp_solid>(
-          flywave::topo::comp_solid::make_comp_solid(sps))}};
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::comp_solid>(
+              flywave::topo::comp_solid::make_comp_solid(sps))}};
 }
 
 class go_mesh_receiver : public flywave::topo::mesh_receiver {
@@ -4770,7 +5150,8 @@ topo_mesh_receiver_t *topo_mesh_receiver_new(mesh_receiver_cb_t cb) {
   cb.append_node_norm_uv = appendNodeNormUv;
   cb.append_triangle = appendTriangle;
   return new topo_mesh_receiver_t{
-      std::unique_ptr<flywave::topo::mesh_receiver>(new go_mesh_receiver(cb))};
+      .recv = std::unique_ptr<flywave::topo::mesh_receiver>(
+          new go_mesh_receiver(cb))};
 }
 
 void topo_mesh_receiver_free(topo_mesh_receiver_t *p) {
@@ -4780,7 +5161,8 @@ void topo_mesh_receiver_free(topo_mesh_receiver_t *p) {
 }
 
 topo_location_t *topo_location_new(trsf_t t) {
-  return new topo_location_t{flywave::topo::topo_location{cast_to_gp(t)}};
+  return new topo_location_t{.loc =
+                                 flywave::topo::topo_location{cast_to_gp(t)}};
 }
 
 void topo_location_free(topo_location_t *p) {
@@ -4807,7 +5189,7 @@ void topo_shape_to_stl(topo_shape_t *p, char *str) {
 
 topo_comp_solid_iterator_t *topo_comp_solid_iterator_make(topo_shape_t *shp) {
   return new topo_comp_solid_iterator_t{
-      flywave::topo::comp_solid_iterator{*shp->shp}};
+      .iter = flywave::topo::comp_solid_iterator{*shp->shp}};
 }
 
 void topo_comp_solid_iterator_reset(topo_comp_solid_iterator_t *it) {
@@ -4821,14 +5203,15 @@ void topo_comp_solid_iterator_free(topo_comp_solid_iterator_t *it) {
 topo_shape_t *topo_comp_solid_iterator_next(topo_comp_solid_iterator_t *it) {
   boost::optional<flywave::topo::comp_solid> opt = it->iter.next();
   if (opt) {
-    return new topo_shape_t{std::make_shared<flywave::topo::comp_solid>(*opt)};
+    return new topo_shape_t{
+        .shp = std::make_shared<flywave::topo::comp_solid>(*opt)};
   }
   return nullptr;
 }
 
 topo_compound_iterator_t *topo_compound_iterator_make(topo_shape_t *shp) {
   return new topo_compound_iterator_t{
-      flywave::topo::compound_iterator{*shp->shp}};
+      .iter = flywave::topo::compound_iterator{*shp->shp}};
 }
 
 void topo_compound_iterator_reset(topo_compound_iterator_t *it) {
@@ -4840,13 +5223,15 @@ void topo_compound_iterator_free(topo_compound_iterator_t *it) { delete it; }
 topo_shape_t *topo_compound_iterator_next(topo_compound_iterator_t *it) {
   boost::optional<flywave::topo::compound> opt = it->iter.next();
   if (opt) {
-    return new topo_shape_t{std::make_shared<flywave::topo::compound>(*opt)};
+    return new topo_shape_t{
+        .shp = std::make_shared<flywave::topo::compound>(*opt)};
   }
   return nullptr;
 }
 
 topo_edge_iterator_t *topo_edge_iterator_make(topo_shape_t *shp) {
-  return new topo_edge_iterator_t{flywave::topo::edge_iterator{*shp->shp}};
+  return new topo_edge_iterator_t{.iter =
+                                      flywave::topo::edge_iterator{*shp->shp}};
 }
 
 void topo_edge_iterator_free(topo_edge_iterator_t *it) { delete it; }
@@ -4856,13 +5241,14 @@ void topo_edge_iterator_reset(topo_edge_iterator_t *it) { it->iter.reset(); }
 topo_shape_t *topo_edge_iterator_next(topo_edge_iterator_t *it) {
   boost::optional<flywave::topo::edge> opt = it->iter.next();
   if (opt) {
-    return new topo_shape_t{std::make_shared<flywave::topo::edge>(*opt)};
+    return new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(*opt)};
   }
   return nullptr;
 }
 
 topo_face_iterator_t *topo_face_iterator_make(topo_shape_t *shp) {
-  return new topo_face_iterator_t{flywave::topo::face_iterator{*shp->shp}};
+  return new topo_face_iterator_t{.iter =
+                                      flywave::topo::face_iterator{*shp->shp}};
 }
 
 void topo_face_iterator_free(topo_face_iterator_t *it) { delete it; }
@@ -4872,13 +5258,14 @@ void topo_face_iterator_reset(topo_face_iterator_t *it) { it->iter.reset(); }
 topo_shape_t *topo_face_iterator_next(topo_face_iterator_t *it) {
   boost::optional<flywave::topo::face> opt = it->iter.next();
   if (opt) {
-    return new topo_shape_t{std::make_shared<flywave::topo::face>(*opt)};
+    return new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(*opt)};
   }
   return nullptr;
 }
 
 topo_shell_iterator_t *topo_shell_iterator_make(topo_shape_t *shp) {
-  return new topo_shell_iterator_t{flywave::topo::shell_iterator{*shp->shp}};
+  return new topo_shell_iterator_t{
+      .iter = flywave::topo::shell_iterator{*shp->shp}};
 }
 
 void topo_shell_iterator_free(topo_shell_iterator_t *it) { delete it; }
@@ -4888,13 +5275,15 @@ void topo_shell_iterator_reset(topo_shell_iterator_t *it) { it->iter.reset(); }
 topo_shape_t *topo_shell_iterator_next(topo_shell_iterator_t *it) {
   boost::optional<flywave::topo::shell> opt = it->iter.next();
   if (opt) {
-    return new topo_shape_t{std::make_shared<flywave::topo::shell>(*opt)};
+    return new topo_shape_t{.shp =
+                                std::make_shared<flywave::topo::shell>(*opt)};
   }
   return nullptr;
 }
 
 topo_solid_iterator_t *topo_solid_iterator_make(topo_shape_t *shp) {
-  return new topo_solid_iterator_t{flywave::topo::solid_iterator{*shp->shp}};
+  return new topo_solid_iterator_t{
+      .iter = flywave::topo::solid_iterator{*shp->shp}};
 }
 
 void topo_solid_iterator_free(topo_solid_iterator_t *it) { delete it; }
@@ -4904,13 +5293,15 @@ void topo_solid_iterator_reset(topo_solid_iterator_t *it) { it->iter.reset(); }
 topo_shape_t *topo_solid_iterator_next(topo_solid_iterator_t *it) {
   boost::optional<flywave::topo::solid> opt = it->iter.next();
   if (opt) {
-    return new topo_shape_t{std::make_shared<flywave::topo::solid>(*opt)};
+    return new topo_shape_t{.shp =
+                                std::make_shared<flywave::topo::solid>(*opt)};
   }
   return nullptr;
 }
 
 topo_vertex_iterator_t *topo_vertex_iterator_make(topo_shape_t *shp) {
-  return new topo_vertex_iterator_t{flywave::topo::vertex_iterator{*shp->shp}};
+  return new topo_vertex_iterator_t{
+      .iter = flywave::topo::vertex_iterator{*shp->shp}};
 }
 
 void topo_vertex_iterator_free(topo_vertex_iterator_t *it) { delete it; }
@@ -4922,13 +5313,15 @@ void topo_vertex_iterator_reset(topo_vertex_iterator_t *it) {
 topo_shape_t *topo_vertex_iterator_next(topo_vertex_iterator_t *it) {
   boost::optional<flywave::topo::vertex> opt = it->iter.next();
   if (opt) {
-    return new topo_shape_t{std::make_shared<flywave::topo::vertex>(*opt)};
+    return new topo_shape_t{.shp =
+                                std::make_shared<flywave::topo::vertex>(*opt)};
   }
   return nullptr;
 }
 
 topo_wire_iterator_t *topo_wire_iterator_make(topo_shape_t *shp) {
-  return new topo_wire_iterator_t{flywave::topo::wire_iterator{*shp->shp}};
+  return new topo_wire_iterator_t{.iter =
+                                      flywave::topo::wire_iterator{*shp->shp}};
 }
 
 void topo_wire_iterator_free(topo_wire_iterator_t *it) { delete it; }
@@ -4938,13 +5331,13 @@ void topo_wire_iterator_reset(topo_wire_iterator_t *it) { it->iter.reset(); }
 topo_shape_t *topo_wire_iterator_next(topo_wire_iterator_t *it) {
   boost::optional<flywave::topo::wire> opt = it->iter.next();
   if (opt) {
-    return new topo_shape_t{std::make_shared<flywave::topo::wire>(*opt)};
+    return new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(*opt)};
   }
   return nullptr;
 }
 
 topo_vector_t *topo_vector_new(double x, double y, double z) {
-  return new topo_vector_t{flywave::topo::topo_vector(x, y, z)};
+  return new topo_vector_t{.vec = flywave::topo::topo_vector(x, y, z)};
 }
 
 void topo_vector_free(topo_vector_t *p) {
@@ -4975,15 +5368,16 @@ double topo_vector_get_z(topo_vector_t *p) {
 }
 
 topo_plane_t *topo_plane_new(pnt3d_t *origin, dir3d_t *xDir, vec3d_t *normal) {
-  return new topo_plane_t{flywave::topo::topo_plane(
-      flywave::topo::topo_vector(cast_to_gp(*origin)),
-      flywave::topo::topo_vector(cast_to_gp(*xDir)),
-      flywave::topo::topo_vector(cast_to_gp(*normal)))};
+  return new topo_plane_t{.plane = flywave::topo::topo_plane(
+                              flywave::topo::topo_vector(cast_to_gp(*origin)),
+                              flywave::topo::topo_vector(cast_to_gp(*xDir)),
+                              flywave::topo::topo_vector(cast_to_gp(*normal)))};
 }
 
 topo_plane_t *topo_plane_new_from_named(const char *name, pnt3d_t *origin) {
-  return new topo_plane_t{flywave::topo::topo_plane::named(
-      std::string(name), flywave::topo::topo_vector(cast_to_gp(*origin)))};
+  return new topo_plane_t{
+      .plane = flywave::topo::topo_plane::named(
+          std::string(name), flywave::topo::topo_vector(cast_to_gp(*origin)))};
 }
 
 void topo_plane_free(topo_plane_t *p) {
@@ -5021,8 +5415,9 @@ dir3d_t topo_plane_get_z_dir(topo_plane_t *p) {
 }
 
 topo_bbox_t *topo_bbox_new(bbox_t bbox) {
-  return new topo_bbox_t{flywave::topo::topo_bbox(
-      bbox.minx, bbox.miny, bbox.minz, bbox.maxx, bbox.maxy, bbox.maxz)};
+  return new topo_bbox_t{
+      .bbox = flywave::topo::topo_bbox(bbox.minx, bbox.miny, bbox.minz,
+                                       bbox.maxx, bbox.maxy, bbox.maxz)};
 }
 
 topo_bbox_t *topo_bbox_new_from_shape(topo_shape_t *p) { return nullptr; }
@@ -5049,7 +5444,7 @@ bbox_t topo_bbox_get_bbox(topo_bbox_t *p) {
 }
 
 topo_matrix_t *topo_matrix_new(trsf_t t) {
-  return new topo_matrix_t{flywave::topo::topo_matrix(cast_to_gp(t))};
+  return new topo_matrix_t{.mat = flywave::topo::topo_matrix(cast_to_gp(t))};
 }
 
 void topo_matrix_free(topo_matrix_t *p) {
@@ -5075,7 +5470,8 @@ TOPOCAPICALL topo_shape_t *topo_fuse(topo_shape_t **shapes, int count,
     }
     auto result = flywave::topo::fuse(shapeVec, tol, glue);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5087,7 +5483,8 @@ TOPOCAPICALL topo_shape_t *topo_cut(topo_shape_t *shp, topo_shape_t *tool,
   try {
     auto result = flywave::topo::cut(*shp->shp, *tool->shp, tol, glue);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5104,7 +5501,8 @@ TOPOCAPICALL topo_shape_t *topo_cut_multi(topo_shape_t *shp,
     }
     auto result = flywave::topo::cut(*shp->shp, toCutVec, tol, glue);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5118,7 +5516,8 @@ TOPOCAPICALL topo_shape_t *topo_intersect(topo_shape_t *shp,
     auto result =
         flywave::topo::intersect(*shp->shp, *toIntersect->shp, tol, glue);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5137,7 +5536,8 @@ TOPOCAPICALL topo_shape_t *topo_intersect_multi(topo_shape_t *shp,
     auto result =
         flywave::topo::intersect(*shp->shp, toIntersectVec, tol, glue);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5153,7 +5553,8 @@ topo_split(topo_shape_t *shp, topo_shape_t **splitters, int count, double tol) {
     }
     auto result = flywave::topo::split(*shp->shp, splitterVec, tol);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5175,8 +5576,8 @@ topo_faces_intersected_by_line(topo_shape_t *shp, pnt3d_t point, dir3d_t axis,
     *count = static_cast<int>(faces.size());
     auto result = new topo_face_t[*count];
     for (int i = 0; i < *count; i++) {
-      result[i].shp =
-          new topo_shape_t{std::make_shared<flywave::topo::face>(faces[i])};
+      result[i].shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::face>(faces[i])};
     }
     return result;
   } catch (...) {
@@ -5195,7 +5596,8 @@ TOPOCAPICALL topo_shape_t *topo_fill(topo_shape_t *shp,
     }
     auto result = flywave::topo::fill(*shp->shp, constraintVec);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5215,7 +5617,8 @@ TOPOCAPICALL topo_shape_t *topo_shelling(topo_shape_t *shp,
         flywave::topo::shelling(*shp->shp, faces, thickness, tolerance,
                                 static_cast<GeomAbs_JoinType>(joinType));
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5231,7 +5634,8 @@ TOPOCAPICALL topo_shape_t *topo_fillet(topo_shape_t *shp, topo_edge_t *edges,
     }
     auto result = flywave::topo::fillet(*shp->shp, edgeVec, radius);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5252,7 +5656,8 @@ TOPOCAPICALL topo_shape_t *topo_chamfer(topo_shape_t *baseShape,
     auto result =
         flywave::topo::chamfer(*baseShape->shp, edgeVec, distance1, dist2);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5266,7 +5671,8 @@ TOPOCAPICALL topo_shape_t *topo_extrude(topo_shape_t *shape,
     gp_Vec dir(direction.x, direction.y, direction.z);
     auto result = flywave::topo::extrude(*shape->shp, dir);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5285,7 +5691,8 @@ topo_extrude_linear(topo_wire_t outerWire, topo_wire_t *innerWires,
     auto result = flywave::topo::extrude_linear(*cast_to_topo(outerWire),
                                                 innerWireVec, normal, taper);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5305,7 +5712,8 @@ TOPOCAPICALL topo_shape_t *topo_extrude_linear_with_rotation(
     auto result = flywave::topo::extrude_linear_with_rotation(
         *cast_to_topo(outerWire), innerWireVec, c, n, angleDegrees);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5321,7 +5729,8 @@ TOPOCAPICALL topo_shape_t *topo_revolve(topo_shape_t *shape, pnt3d_t axisPoint,
     gp_Dir d(axisDirection.x, axisDirection.y, axisDirection.z);
     auto result = flywave::topo::revolve(*shape->shp, p, d, angleDegrees);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5342,7 +5751,8 @@ topo_revolve_wire(topo_wire_t outerWire, topo_wire_t *innerWires,
     auto result = flywave::topo::revolve(*cast_to_topo(outerWire), innerWireVec,
                                          angleDegrees, start, end);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5365,7 +5775,8 @@ TOPOCAPICALL topo_shape_t *topo_sweep(topo_wire_t outerWire,
         mode ? &(*mode->shp) : nullptr,
         static_cast<flywave::topo::transition_mode>(transitionMode));
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5407,7 +5818,8 @@ topo_loft(topo_shape_t **profiles, int count, bool cap, bool ruled,
         parametrization ? parametrization : "uniform", degree, compat,
         smoothing, weightArr);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5420,7 +5832,8 @@ TOPOCAPICALL topo_shape_t *topo_offset(topo_shape_t *shape, double offset,
   try {
     auto result = flywave::topo::offset(*shape->shp, offset, cap, both, tol);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5431,7 +5844,8 @@ TOPOCAPICALL topo_shape_t *topo_clean(topo_shape_t *shape) {
   try {
     auto result = flywave::topo::clean(*shape->shp);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
@@ -5498,8 +5912,9 @@ topo_wire_sample_point_t *topo_wire_sample_at_distances(topo_wire_t wire,
     for (size_t i = 0; i < samples.size(); i++) {
       result[i].position = cast_from_gp(samples[i].position);
       result[i].tangent = cast_from_gp(samples[i].tangent);
-      result[i].edge = topo_edge_t{.shp = new topo_shape_t{
-        .shp = std::make_shared<flywave::topo::shape>(samples[i].edge)}};
+      result[i].edge = topo_edge_t{
+          .shp = new topo_shape_t{
+              .shp = std::make_shared<flywave::topo::shape>(samples[i].edge)}};
     }
     *result_count = static_cast<int>(samples.size());
     return result;

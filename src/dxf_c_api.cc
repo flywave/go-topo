@@ -39,7 +39,7 @@ typedef struct _dxf_text_entity_t {
 dxf_reader_t *dxf_open_reader(const char *filename) {
   auto reader = std::make_unique<flywave::dxf::dxf_shape_reader>(filename);
   reader->do_read();
-  return new dxf_reader_t{std::move(reader)};
+  return new dxf_reader_t{.reader = std::move(reader)};
 }
 
 void dxf_reader_free(dxf_reader_t *p) {
@@ -105,7 +105,7 @@ dxf_shape_entity_layer_t *dxf_reader_get_shape_entity_layer(dxf_reader_t *p,
     const auto &layers = p->reader->shape_layers();
     auto it = layers.find(name);
     if (it != layers.end()) {
-      return new dxf_shape_entity_layer_t{it->second};
+      return new dxf_shape_entity_layer_t{.entities = it->second};
     }
   }
   return nullptr;
@@ -133,7 +133,7 @@ int dxf_shape_entity_layer_get_count(dxf_shape_entity_layer_t *p) {
 dxf_shape_entity_t *
 dxf_shape_entity_layer_get_entity(dxf_shape_entity_layer_t *p, int index) {
   if (p) {
-    return new dxf_shape_entity_t{p->entities[index]};
+    return new dxf_shape_entity_t{.entity = p->entities[index]};
   }
   return nullptr;
 }
@@ -164,7 +164,7 @@ color_t dxf_shape_entity_get_color(dxf_shape_entity_t *p) {
 topo_shape_t *dxf_shape_entity_get_shape(dxf_shape_entity_t *p) {
   if (p) {
     return new topo_shape_t{
-        std::make_shared<flywave::topo::shape>(p->entity.shape)};
+        .shp = std::make_shared<flywave::topo::shape>(p->entity.shape)};
   }
   return nullptr;
 }
@@ -179,7 +179,7 @@ dxf_text_entity_layer_t *dxf_reader_get_text_entity_layer(dxf_reader_t *p,
     const auto &layers = p->reader->text_layers();
     auto it = layers.find(name);
     if (it != layers.end()) {
-      return new dxf_text_entity_layer_t{it->second};
+      return new dxf_text_entity_layer_t{.entities = it->second};
     }
   }
   return nullptr;
@@ -208,7 +208,7 @@ int dxf_text_entity_layer_get_count(dxf_text_entity_layer_t *p) {
 dxf_text_entity_t *dxf_text_entity_layer_get_entity(dxf_text_entity_layer_t *p,
                                                     int index) {
   if (p) {
-    return new dxf_text_entity_t{p->entities[index]};
+    return new dxf_text_entity_t{.entity = p->entities[index]};
   }
   return nullptr;
 }
@@ -261,7 +261,7 @@ vec3d_t dxf_text_entity_get_x_axis_dir(dxf_text_entity_t *p) {
 
 dxf_writer_t *dxf_open_writer(const char *filename) {
   auto writer = std::make_unique<flywave::dxf::dxf_shape_writer>(filename);
-  return new dxf_writer_t{std::move(writer)};
+  return new dxf_writer_t{.writer = std::move(writer)};
 }
 
 void dxf_writer_free(dxf_writer_t *p) {

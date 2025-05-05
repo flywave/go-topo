@@ -24,15 +24,14 @@ struct _constraint_param_t {
 };
 
 assembly_object_t *assembly_object_create_from_shape(topo_shape_t *shape) {
-  auto obj = new assembly_object_t{flywave::topo::assembly_object(*shape->shp)};
-  return obj;
+  return new assembly_object_t{.obj =
+                                   flywave::topo::assembly_object(*shape->shp)};
 }
 
 assembly_object_t *
 assembly_object_create_from_workplane(workplane_t *workplane) {
-  auto obj =
-      new assembly_object_t{flywave::topo::assembly_object(workplane->ptr)};
-  return obj;
+  return new assembly_object_t{
+      .obj = flywave::topo::assembly_object(workplane->ptr)};
 }
 
 void assembly_object_free(assembly_object_t *obj) {
@@ -42,7 +41,8 @@ void assembly_object_free(assembly_object_t *obj) {
 
 topo_shape_t *assembly_object_get_shape(assembly_object_t *obj) {
   if (auto shp = boost::get<flywave::topo::shape>(&obj->obj)) {
-    return new topo_shape_t{std::make_shared<flywave::topo::shape>(*shp)};
+    return new topo_shape_t{.shp =
+                                std::make_shared<flywave::topo::shape>(*shp)};
   }
   return nullptr;
 }
@@ -50,7 +50,7 @@ topo_shape_t *assembly_object_get_shape(assembly_object_t *obj) {
 workplane_t *assembly_object_get_workplane(assembly_object_t *obj) {
   if (auto wp =
           boost::get<std::shared_ptr<flywave::topo::workplane>>(&obj->obj)) {
-    return new workplane_t{*wp};
+    return new workplane_t{.ptr = *wp};
   }
   return nullptr;
 }
@@ -74,9 +74,8 @@ const char *assembly_element_get_name(assembly_element_t *el) {
 }
 
 topo_shape_t *assembly_element_get_shape(assembly_element_t *el) {
-  auto shape =
-      new topo_shape_t{std::make_shared<flywave::topo::shape>(el->el.shp)};
-  return shape;
+  return new topo_shape_t{
+      .shp = std::make_shared<flywave::topo::shape>(el->el.shp)};
 }
 
 color_t assembly_element_get_color(assembly_element_t *el) {
@@ -86,8 +85,7 @@ color_t assembly_element_get_color(assembly_element_t *el) {
 }
 
 topo_location_t *assembly_element_get_location(assembly_element_t *el) {
-  auto loc = new topo_location_t{el->el.location};
-  return loc;
+  return new topo_location_t{.loc = el->el.location};
 }
 
 void assembly_element_free(assembly_element_t *el) {
@@ -96,21 +94,19 @@ void assembly_element_free(assembly_element_t *el) {
 }
 
 constraint_param_t *constraint_param_create_from_double(double value) {
-  auto param = new constraint_param_t{flywave::topo::constraint_param(value)};
-  return param;
+  return new constraint_param_t{.param =
+                                    flywave::topo::constraint_param(value)};
 }
 
 constraint_param_t *constraint_param_create_from_double3(double x, double y,
                                                          double z) {
-  auto param = new constraint_param_t{
-      flywave::topo::constraint_param(std::array<double, 3>{x, y, z})};
-  return param;
+  return new constraint_param_t{
+      .param = flywave::topo::constraint_param(std::array<double, 3>{x, y, z})};
 }
 
 constraint_param_t *constraint_param_create_from_double2(double x, double y) {
-  auto param = new constraint_param_t{
-      flywave::topo::constraint_param(std::array<double, 2>{x, y})};
-  return param;
+  return new constraint_param_t{
+      .param = flywave::topo::constraint_param(std::array<double, 2>{x, y})};
 }
 
 void constraint_param_free(constraint_param_t *param) {
@@ -120,13 +116,15 @@ void constraint_param_free(constraint_param_t *param) {
 
 assembly_t *assembly_create(assembly_object_t *obj, topo_location_t *loc,
                             const char *name, color_t *color) {
-  auto as = new assembly_t{flywave::topo::assembly::create(
-      obj->obj,
-      loc ? std::make_shared<flywave::topo::topo_location>(loc->loc) : nullptr,
-      name ? name : "",
-      color ? std::make_shared<Quantity_Color>(color->r, color->g, color->b,
-                                               Quantity_TOC_RGB)
-            : nullptr)};
+  auto as = new assembly_t{
+      .ptr = flywave::topo::assembly::create(
+          obj->obj,
+          loc ? std::make_shared<flywave::topo::topo_location>(loc->loc)
+              : nullptr,
+          name ? name : "",
+          color ? std::make_shared<Quantity_Color>(color->r, color->g, color->b,
+                                                   Quantity_TOC_RGB)
+                : nullptr)};
   return as;
 }
 
@@ -136,7 +134,7 @@ void assembly_free(assembly_t *as) {
 }
 
 assembly_t *assembly_copy(assembly_t *as) {
-  auto copy = new assembly_t{as->ptr};
+  auto copy = new assembly_t{.ptr = as->ptr};
   return copy;
 }
 
@@ -212,8 +210,8 @@ topo_shape_t **assembly_shapes(assembly_t *as, int *size) {
   *size = static_cast<int>(shapes.size());
   auto result = new topo_shape_t *[shapes.size()];
   for (size_t i = 0; i < shapes.size(); i++) {
-    result[i] =
-        new topo_shape_t{std::make_shared<flywave::topo::shape>(shapes[i])};
+    result[i] = new topo_shape_t{
+        .shp = std::make_shared<flywave::topo::shape>(shapes[i])};
   }
   return result;
 }
@@ -229,7 +227,7 @@ assembly_element_t **assembly_get_elements(assembly_t *as, int *size) {
   *size = static_cast<int>(elements.size());
   auto result = new assembly_element_t *[elements.size()];
   for (size_t i = 0; i < elements.size(); i++) {
-    result[i] = new assembly_element_t{elements[i]};
+    result[i] = new assembly_element_t{.el = elements[i]};
   }
   return result;
 }
@@ -245,8 +243,7 @@ const char *assembly_get_name(assembly_t *as) {
 }
 
 topo_location_t *assembly_get_location(assembly_t *as) {
-  auto loc = new topo_location_t{as->ptr->location()};
-  return loc;
+  return new topo_location_t{.loc = as->ptr->location()};
 }
 
 color_t assembly_get_color(assembly_t *as) {
@@ -255,8 +252,7 @@ color_t assembly_get_color(assembly_t *as) {
 }
 
 assembly_object_t *assembly_get_object(assembly_t *as) {
-  auto obj = new assembly_object_t{as->ptr->obj()};
-  return obj;
+  return new assembly_object_t{.obj = as->ptr->obj()};
 }
 
 assembly_t **assembly_children(assembly_t *as, int *size) {
@@ -264,7 +260,7 @@ assembly_t **assembly_children(assembly_t *as, int *size) {
   *size = static_cast<int>(children.size());
   auto result = new assembly_t *[children.size()];
   for (size_t i = 0; i < children.size(); i++) {
-    result[i] = new assembly_t{children[i]};
+    result[i] = new assembly_t{.ptr = children[i]};
   }
   return result;
 }
