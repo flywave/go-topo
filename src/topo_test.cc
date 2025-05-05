@@ -6,10 +6,12 @@
 #include "solid.hh"
 #include "wire.hh"
 
+#include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepGProp.hxx>
 #include <BRepOffsetAPI_MakePipeShell.hxx>
+#include <GC_MakeArcOfCircle.hxx>
 #include <GProp_GProps.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
@@ -211,7 +213,32 @@ void test_clip_wire_between_distances() {
   }
 }
 
+void test_make_arc() {
+  std::cout << "\n=== Testing make_arc ===" << std::endl;
+
+  std::vector<gp_Pnt> points = {
+      gp_Pnt(88.27510582562536, 47.17234171088785, 1.3518126332201064),
+      gp_Pnt(-2.002824238501489, 61.12643328495324, -79.24088457413018),
+      gp_Pnt(0, 0, 0)};
+
+  auto arc = (points[0], points[1], points[2]);
+
+  try {
+    Handle(Geom_TrimmedCurve) arsc =
+        GC_MakeArcOfCircle(points[0], points[1], points[2]).Value();
+
+    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(arsc).Edge();
+
+    if (!edge.IsNull()) {
+      std::cout << "Arc created successfully." << std::endl;
+    }
+
+  } catch (const Standard_Failure &e) {
+    std::cerr << "Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
 int main() {
-  test_clip_wire_between_distances();
+  test_make_arc();
   return 0;
 }
