@@ -425,8 +425,8 @@ func (p *ProfileProjection) GeTangent() Vector3 {
 	}
 }
 
-func CalcProfileProjection(wire *Wire) ProfileProjection {
-	result := C.topo_calc_profile_projection(wire.inner.val)
+func CalcProfileProjection(wire *Wire, up Dir3) ProfileProjection {
+	result := C.topo_calc_profile_projection(wire.inner.val, up.val)
 	return ProfileProjection{inner: result}
 }
 

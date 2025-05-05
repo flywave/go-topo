@@ -5950,9 +5950,11 @@ topo_wire_t topo_wire_clip_between_distances(topo_wire_t wire,
   }
 }
 
-topo_profile_projection_t topo_calc_profile_projection(topo_wire_t path) {
+topo_profile_projection_t topo_calc_profile_projection(topo_wire_t path,
+                                                       dir3d_t upDir) {
   topo_profile_projection_t result;
-  auto section = flywave::topo::cacl_profile_projection(*cast_to_topo(path));
+  auto section = flywave::topo::cacl_profile_projection(*cast_to_topo(path),
+                                                        cast_to_gp(upDir));
   result.axes = cast_from_gp(section.axes);
   result.trsf = cast_from_gp(section.trsf);
   result.tangent = cast_from_gp(section.tangent);
