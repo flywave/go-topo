@@ -49,8 +49,8 @@
 #include <gp_Sphere.hxx>
 #include <gp_Torus.hxx>
 
-#include <Quantity_Color.hxx>
 #include <Bnd_Box.hxx>
+#include <Quantity_Color.hxx>
 
 #include <TColgp_HArray1OfPnt.hxx>
 #include <TColgp_HArray1OfPnt2d.hxx>
@@ -407,10 +407,10 @@ inline gp_Trsf cast_to_gp(const trsf_t &a) {
 }
 
 inline trsf_t cast_from_gp(const gp_Trsf &mat) {
-  return trsf_t{{mat.Value(0, 0), mat.Value(0, 1), mat.Value(0, 2),
-                 mat.Value(0, 3), mat.Value(1, 0), mat.Value(1, 1),
-                 mat.Value(1, 2), mat.Value(1, 3), mat.Value(2, 0),
-                 mat.Value(2, 1), mat.Value(2, 2), mat.Value(2, 3)}};
+  return trsf_t{{mat.Value(1, 1), mat.Value(1, 2), mat.Value(1, 3),
+                 mat.Value(1, 4), mat.Value(2, 1), mat.Value(2, 2),
+                 mat.Value(2, 3), mat.Value(2, 4), mat.Value(3, 1),
+                 mat.Value(3, 2), mat.Value(3, 3), mat.Value(3, 4)}};
 }
 
 inline gp_Trsf2d cast_to_gp(const trsf2d_t &a) {
@@ -420,8 +420,8 @@ inline gp_Trsf2d cast_to_gp(const trsf2d_t &a) {
 }
 
 inline trsf2d_t cast_from_gp(const gp_Trsf2d &mat) {
-  return trsf2d_t{{mat.Value(0, 0), mat.Value(0, 1), mat.Value(0, 2),
-                   mat.Value(1, 0), mat.Value(1, 1), mat.Value(1, 2)}};
+  return trsf2d_t{{mat.Value(1, 1), mat.Value(1, 2), mat.Value(1, 3),
+                   mat.Value(2, 1), mat.Value(2, 2), mat.Value(2, 3)}};
 }
 
 inline Quantity_Color cast_to_gp(const color_t &a) {
@@ -434,13 +434,13 @@ inline color_t cast_from_gp(const Quantity_Color &mat) {
 
 inline Bnd_Box cast_to_gp(const bbox_t &a) {
   Bnd_Box b;
-  b.Update(a.minx, a.miny, a.minz,a.maxx, a.maxy, a.maxz);
+  b.Update(a.minx, a.miny, a.minz, a.maxx, a.maxy, a.maxz);
   return b;
 }
 
 inline bbox_t cast_from_gp(const Bnd_Box &b) {
   bbox_t a;
-  b.Get(a.minx, a.miny, a.minz,a.maxx, a.maxy, a.maxz);
+  b.Get(a.minx, a.miny, a.minz, a.maxx, a.maxy, a.maxz);
   return a;
 }
 
