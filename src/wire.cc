@@ -549,9 +549,7 @@ wire wire::make_wire(const std::vector<std::vector<gp_Pnt>> &points,
     if (!pathMaker.IsDone()) {
       throw Standard_ConstructionError("Failed to create path wire");
     }
-    TopoDS_Wire pathWire = pathMaker.Wire();
-
-    // 关闭路径线
+    return pathMaker.Wire();
   } catch (const Standard_ConstructionError &e) {
     return wire();
   }
