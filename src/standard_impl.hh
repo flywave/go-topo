@@ -123,7 +123,7 @@ inline xyz_t cast_from_gp(const gp_XYZ &p) {
 }
 
 inline vec3d_t cast_from_gp(const gp_Vec &p) {
-  return vec3d_t{p.X(), p.Y(), p.Z()};
+  return vec3d_t{.x = p.X(), .y = p.Y(),.z =  p.Z()};
 }
 
 inline gp_Dir cast_to_gp(const dir3d_t &p) {
@@ -132,7 +132,7 @@ inline gp_Dir cast_to_gp(const dir3d_t &p) {
 }
 
 inline dir3d_t cast_from_gp(const gp_Dir &d) {
-  return dir3d_t{d.X(), d.Y(), d.Z()};
+  return dir3d_t{.x = d.X(), .y = d.Y(), .z = d.Z()};
 }
 
 inline gp_XY cast_to_gp(const xy_t &p) {
@@ -168,7 +168,7 @@ inline gp_Ax1 cast_to_gp(const axis1_t &a) {
 }
 
 inline axis1_t cast_from_gp(const gp_Ax1 &a) {
-  return axis1_t{cast_from_gp(a.Location()), cast_from_gp(a.Direction())};
+  return axis1_t{.p = cast_from_gp(a.Location()), .d = cast_from_gp(a.Direction())};
 }
 
 inline gp_Ax2 cast_to_gp(const axis2_t &a) {
@@ -180,8 +180,8 @@ inline gp_Ax2 cast_to_gp(const axis2_t &a) {
 }
 
 inline axis2_t cast_from_gp(const gp_Ax2 &a) {
-  return axis2_t{cast_from_gp(a.Axis()), cast_from_gp(a.YDirection()),
-                 cast_from_gp(a.XDirection())};
+  return axis2_t{.a=cast_from_gp(a.Axis()), .vy=cast_from_gp(a.YDirection()),
+                 .vx = cast_from_gp(a.XDirection())};
 }
 
 inline gp_Ax3 cast_to_gp(const axis3_t &a) {
@@ -407,10 +407,11 @@ inline gp_Trsf cast_to_gp(const trsf_t &a) {
 }
 
 inline trsf_t cast_from_gp(const gp_Trsf &mat) {
-  return trsf_t{{mat.Value(0, 0), mat.Value(0, 1), mat.Value(0, 2),
-                 mat.Value(0, 3), mat.Value(1, 0), mat.Value(1, 1),
-                 mat.Value(1, 2), mat.Value(1, 3), mat.Value(2, 0),
-                 mat.Value(2, 1), mat.Value(2, 2), mat.Value(2, 3)}};
+  return trsf_t{{
+    mat.Value(1, 1), mat.Value(1, 2), mat.Value(1, 3), mat.Value(1, 4),
+    mat.Value(2, 1), mat.Value(2, 2), mat.Value(2, 3), mat.Value(2, 4),
+    mat.Value(3, 1), mat.Value(3, 2), mat.Value(3, 3), mat.Value(3, 4)
+  }};
 }
 
 inline gp_Trsf2d cast_to_gp(const trsf2d_t &a) {
