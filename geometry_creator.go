@@ -9,7 +9,9 @@ package topo
 #cgo windows CXXFLAGS:  -I ./libs -std=gnu++14
 */
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+)
 
 func GeomMakeAxis1Placement(a Axis1) *GeomAxis1Placement {
 	return &GeomAxis1Placement{inner: &innerGeomAxis1Placement{geom: C.geom_make_axis1_placement(a.val)}}
@@ -162,7 +164,8 @@ func GeomMakeArcOfCircleTwoPoint(c *Circ, P1, P2 Point3, sense bool) *GeomTrimme
 }
 
 func GeomMakeArcOfPoint(P1, P2, P3 Point3) *GeomTrimmedCurve {
-	return &GeomTrimmedCurve{inner: &innerGeomTrimmedCurve{geom: C.geom_make_arc_of_point(P1.val, P2.val, P3.val)}}
+	geom := C.geom_make_arc_of_point(P1.val, P2.val, P3.val)
+	return &GeomTrimmedCurve{inner: &innerGeomTrimmedCurve{geom: geom}}
 }
 
 func GeomMakeArcOfTwoPointsVector(P1 Point3, V Vector3, P2 Point3) *GeomTrimmedCurve {

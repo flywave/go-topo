@@ -1473,8 +1473,8 @@ topo_edge_t topo_edge_make_edge_from_parab_vertex(parabola_t L,
 topo_edge_t topo_edge_make_edgee_from_curve(geom_curve_t *L) {
   try {
     return topo_edge_t{.shp = new topo_shape_t{
-                           .shp = std::make_shared<flywave::topo::edge>(
-                               flywave::topo::edge::make_edge(L->handle))}};
+      .shp = std::make_shared<flywave::topo::edge>(
+          flywave::topo::edge::make_edge(L->handle))}};
   } catch (...) {
     return topo_edge_t{};
   }
