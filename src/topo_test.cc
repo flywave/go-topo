@@ -161,11 +161,17 @@ void test_clip_wire_between_distances() {
   // 创建直线段
   auto lineEdge = flywave::topo::edge::make_edge(p1, p2);
 
-  // 创建Spline段
-  auto splineEdge = flywave::topo::edge::make_spline({p2, p3, p4}, 1e-6);
+  // 创建圆弧段
+  GC_MakeArcOfCircle arc(p2, p3, p4);
+  if (!arc.IsDone()) {
+    std::cerr << "Error: Failed to create arc" << std::endl;
+    return;
+  }
+
+  auto arcEdge = flywave::topo::edge(BRepLib_MakeEdge(arc.Value()).Shape());
 
   // 组合成wire
-  std::vector<flywave::topo::edge> edges{lineEdge, splineEdge};
+  std::vector<flywave::topo::edge> edges{lineEdge, arcEdge};
   auto mixedWire = flywave::topo::wire::make_wire(edges);
 
   // 计算总长度
@@ -176,7 +182,7 @@ void test_clip_wire_between_distances() {
   std::vector<std::pair<double, double>> testRanges = {
       {0, totalLength / 4},                   // 第一段直线部分
       {totalLength / 4, totalLength / 2},     // 直线到圆弧过渡部分
-      {totalLength / 2, totalLength * 3 / 4}, // Spline段部分
+      {totalLength / 2, totalLength * 3 / 4}, // 圆弧段部分
       {totalLength / 4, totalLength * 3 / 4}, // 跨直线和圆弧
       {totalLength - 10, totalLength}         // 最后一段
   };
@@ -241,6 +247,6 @@ void test_make_arc() {
 }
 
 int main() {
-  test_make_arc();
+  test_clip_wire_between_distances();
   return 0;
 }
