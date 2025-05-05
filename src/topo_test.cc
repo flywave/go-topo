@@ -1,18 +1,19 @@
-#include "shape.hh"
-#include "solid.hh"
-#include "wire.hh"
+#include "bool_type.hh"
 #include "edge.hh"
 #include "face.hh"
-#include "bool_type.hh"
+#include "shape.hh"
+#include "shape_ops.hh"
+#include "solid.hh"
+#include "wire.hh"
 
-#include <TopExp_Explorer.hxx>
-#include <TopoDS.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
-#include <BRepOffsetAPI_MakePipeShell.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepGProp.hxx>
+#include <BRepOffsetAPI_MakePipeShell.hxx>
 #include <GProp_GProps.hxx>
+#include <TopExp_Explorer.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
+#include <TopoDS.hxx>
 
 #include <iostream>
 #include <memory>
@@ -20,56 +21,51 @@
 
 using namespace flywave::topo;
 
-
-void ExtractWiresFromFace(
-  const TopoDS_Face& face, 
-  TopoDS_Wire& outerWire, 
-  TopTools_ListOfShape& innerWires
-) {
+void ExtractWiresFromFace(const TopoDS_Face &face, TopoDS_Wire &outerWire,
+                          TopTools_ListOfShape &innerWires) {
   TopExp_Explorer explorer(face, TopAbs_WIRE);
   GProp_GProps props;
-  
+
   // 遍历所有 Wire
   for (; explorer.More(); explorer.Next()) {
-      TopoDS_Wire wire = TopoDS::Wire(explorer.Current());
-      
-      // 计算 Wire 的面积（假设为平面）
-      BRepGProp::SurfaceProperties(wire, props);
-      double area = props.Mass();
+    TopoDS_Wire wire = TopoDS::Wire(explorer.Current());
 
-      BRepGProp::SurfaceProperties(outerWire, props);
-      double area1 = props.Mass();
-      
-      // 假设外轮廓是面积最大的 Wire
-      if (outerWire.IsNull() || area >area1 ) {
-          if (!outerWire.IsNull()) {
-              innerWires.Append(outerWire); // 将之前的外轮廓降级为内孔
-          }
-          outerWire = wire;
-      } else {
-          innerWires.Append(wire);
+    // 计算 Wire 的面积（假设为平面）
+    BRepGProp::SurfaceProperties(wire, props);
+    double area = props.Mass();
+
+    BRepGProp::SurfaceProperties(outerWire, props);
+    double area1 = props.Mass();
+
+    // 假设外轮廓是面积最大的 Wire
+    if (outerWire.IsNull() || area > area1) {
+      if (!outerWire.IsNull()) {
+        innerWires.Append(outerWire); // 将之前的外轮廓降级为内孔
       }
+      outerWire = wire;
+    } else {
+      innerWires.Append(wire);
+    }
   }
 }
 
-TopoDS_Shape CreateHollowPipe(
-  const TopoDS_Wire& spineWire, 
-  const TopoDS_Face& profileFace
-) {
+TopoDS_Shape CreateHollowPipe(const TopoDS_Wire &spineWire,
+                              const TopoDS_Face &profileFace) {
   TopoDS_Wire outerWire;
   TopTools_ListOfShape innerWires;
   ExtractWiresFromFace(profileFace, outerWire, innerWires);
 
   if (outerWire.IsNull()) {
-      Standard_Failure::Raise("No outer wire found.");
-      return TopoDS_Shape();
+    Standard_Failure::Raise("No outer wire found.");
+    return TopoDS_Shape();
   }
 
   // 创建复合 Wire（外轮廓 + 内孔）
   BRepBuilderAPI_MakeWire compoundWireMaker;
   compoundWireMaker.Add(outerWire);
-  for (TopTools_ListIteratorOfListOfShape it(innerWires); it.More(); it.Next()) {
-      compoundWireMaker.Add(TopoDS::Wire(it.Value()));
+  for (TopTools_ListIteratorOfListOfShape it(innerWires); it.More();
+       it.Next()) {
+    compoundWireMaker.Add(TopoDS::Wire(it.Value()));
   }
   TopoDS_Wire compoundWire = compoundWireMaker.Wire();
 
@@ -77,21 +73,20 @@ TopoDS_Shape CreateHollowPipe(
   BRepOffsetAPI_MakePipeShell pipeMaker(spineWire);
   pipeMaker.Add(compoundWire);
   if (!pipeMaker.IsDone()) {
-      Standard_Failure::Raise("Pipe generation failed.");
-      return TopoDS_Shape();
+    Standard_Failure::Raise("Pipe generation failed.");
+    return TopoDS_Shape();
   }
 
   // 验证结果
   TopoDS_Shape pipeShape = pipeMaker.Shape();
   BRepCheck_Analyzer analyzer(pipeShape);
   if (!analyzer.IsValid()) {
-      Standard_Failure::Raise("Invalid pipe shape.");
-      return TopoDS_Shape();
+    Standard_Failure::Raise("Invalid pipe shape.");
+    return TopoDS_Shape();
   }
 
   return pipeShape;
 }
-
 
 class mock_mesh_receiver : public flywave::topo::mesh_receiver {
 public:
@@ -113,48 +108,111 @@ public:
   void append_triangle(int face, int tri[3]) override {}
 };
 
-void test_make_wires(){
-  gp_Pnt p1{0,0,0};
-  gp_Pnt p2{10,0,0};
-  gp_Pnt p3{10,10,0};
-  gp_Pnt p4{0,10,0};
+void test_make_wires() {
+  gp_Pnt p1{0, 0, 0};
+  gp_Pnt p2{10, 0, 0};
+  gp_Pnt p3{10, 10, 0};
+  gp_Pnt p4{0, 10, 0};
 
-  gp_Pnt p11{1,1,0};
-  gp_Pnt p12{9,1,0};
-  gp_Pnt p13{9,9,0};
-  gp_Pnt p14{1,9,0};
+  gp_Pnt p11{1, 1, 0};
+  gp_Pnt p12{9, 1, 0};
+  gp_Pnt p13{9, 9, 0};
+  gp_Pnt p14{1, 9, 0};
 
-  gp_Pnt p15{0,0,10};
+  gp_Pnt p15{0, 0, 10};
 
+  auto e1 = flywave::topo::edge::make_edge(p1, p2);
+  auto e2 = flywave::topo::edge::make_edge(p2, p3);
+  auto e3 = flywave::topo::edge::make_edge(p3, p4);
+  auto e4 = flywave::topo::edge::make_edge(p4, p1);
 
-  auto e1 = flywave::topo::edge::make_edge(p1,p2);
-  auto e2 = flywave::topo::edge::make_edge(p2,p3);
-  auto e3 = flywave::topo::edge::make_edge(p3,p4);
-  auto e4 = flywave::topo::edge::make_edge(p4,p1);
+  auto e5 = flywave::topo::edge::make_edge(p11, p12);
+  auto e6 = flywave::topo::edge::make_edge(p12, p13);
+  auto e7 = flywave::topo::edge::make_edge(p13, p14);
+  auto e8 = flywave::topo::edge::make_edge(p14, p11);
 
-  auto e5 = flywave::topo::edge::make_edge(p11,p12);
-  auto e6 = flywave::topo::edge::make_edge(p12,p13);
-  auto e7 = flywave::topo::edge::make_edge(p13,p14);
-  auto e8 = flywave::topo::edge::make_edge(p14,p11);
+  std::vector<flywave::topo::edge> edges1{e1, e2, e3, e4};
+  std::vector<flywave::topo::edge> edges2{e5, e6, e7, e8};
+  std::vector<flywave::topo::edge> edges3{
+      flywave::topo::edge::make_edge(p1, p15)};
 
- 
-
-  std::vector<flywave::topo::edge> edges1{e1,e2,e3,e4};
-  std::vector<flywave::topo::edge> edges2{e5,e6,e7,e8};
-  std::vector<flywave::topo::edge> edges3{ flywave::topo::edge::make_edge(p1,p15)};
-  
-  auto w1=flywave::topo::wire::make_wire(edges1);
-  auto w2=flywave::topo::wire::make_wire(edges2);
-  auto w3=flywave::topo::wire::make_wire(edges3);
+  auto w1 = flywave::topo::wire::make_wire(edges1);
+  auto w2 = flywave::topo::wire::make_wire(edges2);
+  auto w3 = flywave::topo::wire::make_wire(edges3);
 
   auto out_face = flywave::topo::face::make_face(w1);
   // auto inner_face = flywave::topo::face::make_face(w2);
   // out_face.boolean(inner_face,flywave::topo::bool_op_type::BOOL_CUT);
 
-  CreateHollowPipe(w3.value(),out_face.value());
- }
+  CreateHollowPipe(w3.value(), out_face.value());
+}
+
+void test_clip_wire_between_distances() {
+  std::cout << "\n=== Testing clip_wire_between_distances ===" << std::endl;
+
+  // 创建混合路径（直线+圆弧）
+  gp_Pnt p1(0, 0, 0);
+  gp_Pnt p2(100, 0, 0);
+  gp_Pnt p3(150, 50, 0);
+  gp_Pnt p4(200, 0, 0);
+
+  // 创建直线段
+  auto lineEdge = flywave::topo::edge::make_edge(p1, p2);
+
+  // 创建圆弧段
+  gp_Circ circle(gp_Ax2(p2, gp_Dir(0, 0, 1)), 50);
+  auto arcEdge = flywave::topo::edge::make_edge(circle, p2, p4);
+
+  // 组合成wire
+  std::vector<flywave::topo::edge> edges{lineEdge, arcEdge};
+  auto mixedWire = flywave::topo::wire::make_wire(edges);
+
+  // 计算总长度
+  double totalLength = flywave::topo::wrie_length(mixedWire);
+  std::cout << "Total wire length: " << totalLength << " mm" << std::endl;
+
+  // 测试不同裁剪范围
+  std::vector<std::pair<double, double>> testRanges = {
+      {0, totalLength / 4},                   // 第一段直线部分
+      {totalLength / 4, totalLength / 2},     // 直线到圆弧过渡部分
+      {totalLength / 2, totalLength * 3 / 4}, // 圆弧部分
+      {totalLength / 4, totalLength * 3 / 4}, // 跨直线和圆弧
+      {totalLength - 10, totalLength}         // 最后一段
+  };
+
+  for (const auto &range : testRanges) {
+    double start = range.first;
+    double end = range.second;
+
+    std::cout << "\nClipping wire from " << start << " to " << end << " mm"
+              << std::endl;
+
+    // 裁剪wire
+    auto clippedWire =
+        flywave::topo::clip_wire_between_distances(mixedWire, start, end);
+
+    // 验证结果
+    if (clippedWire.is_null()) {
+      std::cerr << "Error: Failed to clip wire" << std::endl;
+      continue;
+    }
+
+    double clippedLength = flywave::topo::wrie_length(clippedWire);
+    std::cout << "Clipped wire length: " << clippedLength << " mm" << std::endl;
+
+    // 采样点验证
+    auto samples = flywave::topo::sample_wire_at_distances(
+        clippedWire, {0, clippedLength / 2, clippedLength});
+
+    for (const auto &sample : samples) {
+      std::cout << "Sample point at (" << sample.position.X() << ", "
+                << sample.position.Y() << ", " << sample.position.Z() << ")"
+                << std::endl;
+    }
+  }
+}
 
 int main() {
-  test_make_wires();
+  test_clip_wire_between_distances();
   return 0;
 }

@@ -1396,7 +1396,7 @@ topo_edge_t topo_edge_make_edge_from_parab_vertex(parabola_t L,
 
 topo_edge_t topo_edge_make_edgee_from_curve(geom_curve_t *L) {
   try {
-    return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
+    return topo_edge_t{.shp=new topo_shape_t{.shp=std::make_shared<flywave::topo::edge>(
         flywave::topo::edge::make_edge(L->handle))}};
   } catch (...) {
     return topo_edge_t{};
@@ -5498,8 +5498,8 @@ topo_wire_sample_point_t *topo_wire_sample_at_distances(topo_wire_t wire,
     for (size_t i = 0; i < samples.size(); i++) {
       result[i].position = cast_from_gp(samples[i].position);
       result[i].tangent = cast_from_gp(samples[i].tangent);
-      result[i].edge = topo_edge_t{new topo_shape_t{
-          std::make_shared<flywave::topo::shape>(samples[i].edge)}};
+      result[i].edge = topo_edge_t{.shp = new topo_shape_t{
+        .shp = std::make_shared<flywave::topo::shape>(samples[i].edge)}};
     }
     *result_count = static_cast<int>(samples.size());
     return result;
@@ -5526,8 +5526,9 @@ topo_wire_t topo_wire_clip_between_distances(topo_wire_t wire,
   try {
     auto clipped = flywave::topo::clip_wire_between_distances(
         *cast_to_topo(wire), start_distance, end_distance);
-     return topo_wire_t{
-        new topo_shape_t{std::make_shared<flywave::topo::shape>(clipped)}};
+    return topo_wire_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::wire>(clipped)}};
   } catch (...) {
     return {nullptr};
   }
