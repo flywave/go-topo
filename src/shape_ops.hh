@@ -180,7 +180,7 @@ struct profile_projection {
   gp_Vec tangent;
 };
 
-profile_projection cacl_profile_projection(wire path);
+profile_projection cacl_profile_projection(wire path, gp_Dir upDir);
 
 gp_Pnt profile_project_point(profile_projection *proj, gp_Pnt point);
 

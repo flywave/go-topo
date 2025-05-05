@@ -1509,7 +1509,7 @@ wire clip_wire_between_distances(const wire &wire_path, double start_distance,
   return wire(wireBuilder.Wire());
 }
 
-profile_projection cacl_profile_projection(wire path) {
+profile_projection cacl_profile_projection(wire path, gp_Dir upDir) {
   // 获取路径起始点的切线方向
   BRepAdaptor_CompCurve curveAdaptor(path.value());
   gp_Pnt startPoint;
@@ -1518,12 +1518,8 @@ profile_projection cacl_profile_projection(wire path) {
 
   // 在创建截面圆之前添加方向修正
   gp_Dir tanDir = startTangent.Normalized();
-  gp_Dir refDir = gp::DZ(); // 默认参考方向为全局Y轴
+  gp_Dir refDir = gp_Vec(tanDir.Crossed(upDir)).Normalized();
 
-  // 如果tanDir平行于全局X轴，调整参考方向为全局Z轴
-  if (Abs(tanDir.Dot(gp::DX())) > 1 - Precision::Angular()) {
-    refDir = gp::DZ();
-  }
   gp_Ax2 sectionAxes(startPoint, tanDir, refDir);
 
   // 创建变换对象
