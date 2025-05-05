@@ -93,6 +93,19 @@ void test_make_sphere() {
 void test_make_rotational_ellipsoid() {
   std::cout << "\n=== Testing Rotational Ellipsoid ===" << std::endl;
   try {
+    // 测试完整椭球
+    auto fullShp = create_rotational_ellipsoid(rotational_ellipsoid_params{
+        .polarRadius = 8,
+        .equatorialRadius = 4,
+        .height = 16 // 2*polarRadius 表示完整椭球
+    });
+    if (fullShp.IsNull()) {
+      std::cerr << "Error: Failed to create full rotational ellipsoid"
+                << std::endl;
+      return;
+    }
+    test_export_shape(fullShp, "./full_rotational_ellipsoid.stl");
+
     auto shp = create_rotational_ellipsoid(rotational_ellipsoid_params{
         .polarRadius = 5,
         .equatorialRadius = 3, // 小于极半径
@@ -4465,7 +4478,7 @@ int main() {
   test_make_pipe_support();
   test_make_cover_plate();
   test_make_cable_ray();
-  // 水利
+  // 水利工程
   test_water_tunnel();
   return 0;
 }

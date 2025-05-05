@@ -159,15 +159,12 @@ create_rotational_ellipsoid(const rotational_ellipsoid_params &params) {
 
     TopoDS_Shape cutResult = cutOperation.Shape();
 
-    if (cutResult.ShapeType() == TopAbs_SHELL) {
-      TopoDS_Shell shell = TopoDS::Shell(cutResult);
-      BRepLib_MakeSolid makeSolid(shell);
-      makeSolid.Build();
-      if (!makeSolid.IsDone()) {
-        throw Standard_ConstructionError("Solid construction failed");
+    if (cutResult.ShapeType() == TopAbs_COMPOUND) {
+      TopTools_IndexedMapOfShape shapeMap;
+      TopExp::MapShapes(cutResult, TopAbs_SOLID, shapeMap);
+      if (shapeMap.Extent() == 1) {
+        return shapeMap(1);
       }
-
-      return makeSolid.Solid();
     }
 
     return cutResult;
@@ -2673,40 +2670,61 @@ TopoDS_Shape create_cable(const cable_params &params) {
                    params.inflectionPoints.end());
   allPoints.push_back(params.endPoint);
 
-  // 创建样条曲线
-  Handle(TColgp_HArray1OfPnt) points =
-      new TColgp_HArray1OfPnt(1, allPoints.size());
-  for (int i = 0; i < allPoints.size(); ++i) {
-    points->SetValue(i + 1, allPoints[i]);
-  }
+  if (allPoints.size() == 2) {
+    wireMaker.Add(
+        BRepBuilderAPI_MakeEdge(params.startPoint, params.endPoint).Edge());
+  } else {
+    // 创建样条曲线
+    Handle(TColgp_HArray1OfPnt) points =
+        new TColgp_HArray1OfPnt(1, allPoints.size());
+    for (int i = 0; i < allPoints.size(); ++i) {
+      points->SetValue(i + 1, allPoints[i]);
+    }
 
-  GeomAPI_Interpolate interpolate(points, false, Precision::Confusion());
-  interpolate.Load(gp_Vec(0, 0, 1), gp_Vec(0, 0, 1),
-                   true); // 添加首末端导数约束
-  interpolate.Perform();
-  if (!interpolate.IsDone()) {
-    throw Standard_ConstructionError("Failed to create interpolated curve");
-  }
+    GeomAPI_Interpolate interpolate(points, false, Precision::Confusion());
+    interpolate.Load(gp_Vec(0, 0, 1), gp_Vec(0, 0, 1),
+                     true); // 添加首末端导数约束
+    interpolate.Perform();
+    if (!interpolate.IsDone()) {
+      throw Standard_ConstructionError("Failed to create interpolated curve");
+    }
 
-  Handle(Geom_BSplineCurve) curve = interpolate.Curve();
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(curve).Edge());
+    Handle(Geom_BSplineCurve) curve = interpolate.Curve();
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(curve).Edge());
+  }
 
   if (!wireMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to create cable path");
   }
   TopoDS_Wire pathWire = wireMaker.Wire();
 
+  // 获取路径起始点的切线方向
+  BRepAdaptor_CompCurve curveAdaptor(wireMaker.Wire());
+  gp_Pnt startPoint;
+  gp_Vec startTangent;
+  curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
+
+  // 在创建截面圆之前添加方向修正
+  gp_Dir initNormal = startTangent.Normalized();
+  gp_Dir refDir(0, 1, 0);
+  // 确保参考方向与切线不平行
+  if (Abs(initNormal.Dot(refDir)) > 0.99) {
+    refDir = gp_Dir(1, 0, 0);
+  }
+  gp_Ax2 sectionAxes(gp::Origin(), initNormal, refDir);
+
   // 创建电缆截面圆
-  gp_Circ sectionCircle(gp_Ax2(params.startPoint, gp_Dir(0, 0, 1)),
-                        params.diameter / 2);
+  gp_Circ sectionCircle(sectionAxes, params.diameter / 2);
   TopoDS_Edge sectionEdge = BRepBuilderAPI_MakeEdge(sectionCircle).Edge();
   TopoDS_Wire sectionWire = BRepBuilderAPI_MakeWire(sectionEdge).Wire();
 
   // 沿路径扫掠创建电缆
   BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
   pipeMaker.Add(sectionWire);
-  pipeMaker.SetTolerance(1e-6);     // 添加容差设置
+  pipeMaker.SetTolerance(1e-6); // 添加容差设置
+  pipeMaker.SetMaxDegree(5);
   pipeMaker.SetMode(Standard_True); // 启用Frenet坐标系
+  pipeMaker.SetTransitionMode(BRepBuilderAPI_RoundCorner);
   pipeMaker.Build();
 
   if (!pipeMaker.IsDone()) {
@@ -7914,30 +7932,37 @@ TopoDS_Shape create_cable_wire(const cable_wire_params &params) {
   // 创建电缆路径
   BRepBuilderAPI_MakeWire wireMaker;
 
-  // 使用拟合点集创建样条曲线
-  Handle(TColgp_HArray1OfPnt) points =
-      new TColgp_HArray1OfPnt(1, params.points.size());
-  for (int i = 0; i < params.points.size(); ++i) {
-    points->SetValue(i + 1, params.points[i]);
-  }
+  if (params.points.size() == 2) {
+    // 直接创建直线
+    wireMaker.Add(
+        BRepBuilderAPI_MakeEdge(params.points[0], params.points[1]).Edge());
+  } else {
 
-  GeomAPI_Interpolate interpolate(points, false, Precision::Confusion());
-  interpolate.Load(gp_Vec(0, 0, 1), gp_Vec(0, 0, 1),
-                   true); // 添加首末端导数约束
-  interpolate.Perform();
-  if (!interpolate.IsDone()) {
-    throw Standard_ConstructionError("Failed to create interpolated curve");
-  }
+    // 使用拟合点集创建样条曲线
+    Handle(TColgp_HArray1OfPnt) points =
+        new TColgp_HArray1OfPnt(1, params.points.size());
+    for (int i = 0; i < params.points.size(); ++i) {
+      points->SetValue(i + 1, params.points[i]);
+    }
 
-  const Handle(Geom_BSplineCurve) &curve = interpolate.Curve();
-  if (curve.IsNull()) {
-    throw Standard_ConstructionError("Failed to create curve");
+    GeomAPI_Interpolate interpolate(points, false, Precision::Confusion());
+    interpolate.Load(gp_Vec(0, 0, 1), gp_Vec(0, 0, 1),
+                     true); // 添加首末端导数约束
+    interpolate.Perform();
+    if (!interpolate.IsDone()) {
+      throw Standard_ConstructionError("Failed to create interpolated curve");
+    }
+
+    const Handle(Geom_BSplineCurve) &curve = interpolate.Curve();
+    if (curve.IsNull()) {
+      throw Standard_ConstructionError("Failed to create curve");
+    }
+    BRepBuilderAPI_MakeEdge edgeMaker(curve);
+    if (!edgeMaker.IsDone()) {
+      throw Standard_ConstructionError("Failed to create edge from curve");
+    }
+    wireMaker.Add(edgeMaker.Edge());
   }
-  BRepBuilderAPI_MakeEdge edgeMaker(curve);
-  if (!edgeMaker.IsDone()) {
-    throw Standard_ConstructionError("Failed to create edge from curve");
-  }
-  wireMaker.Add(edgeMaker.Edge());
 
   // 获取路径起始点的切线方向
   BRepAdaptor_CompCurve curveAdaptor(wireMaker.Wire());
@@ -7963,6 +7988,9 @@ TopoDS_Shape create_cable_wire(const cable_wire_params &params) {
   BRepOffsetAPI_MakePipeShell pipeMaker(wireMaker.Wire());
   pipeMaker.Add(profile);
   pipeMaker.SetMode(Standard_True); // 使用Frenet坐标系
+  pipeMaker.SetTolerance(1e-6);
+  pipeMaker.SetMaxDegree(5);
+  pipeMaker.SetTransitionMode(BRepBuilderAPI_RoundCorner);
   pipeMaker.Build();
 
   if (!pipeMaker.IsDone()) {
