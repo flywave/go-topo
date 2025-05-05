@@ -5526,7 +5526,7 @@ topo_wire_t topo_wire_clip_between_distances(topo_wire_t wire,
   try {
     auto clipped = flywave::topo::clip_wire_between_distances(
         *cast_to_topo(wire), start_distance, end_distance);
-    return topo_wire_t{
+     return topo_wire_t{
         new topo_shape_t{std::make_shared<flywave::topo::shape>(clipped)}};
   } catch (...) {
     return {nullptr};
