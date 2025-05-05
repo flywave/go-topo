@@ -20,7 +20,7 @@ void topo_shape_free(topo_shape_t *p) {
 
 topo_shape_t *topo_shape_share(topo_shape_t *p) {
   if (p) {
-    return new topo_shape_t{p->shp};
+    return new topo_shape_t{.shp = p->shp};
   }
   return nullptr;
 }
@@ -5795,7 +5795,8 @@ TOPOCAPICALL topo_shape_t *topo_sweep_multi(topo_shape_t **profiles, int count,
         flywave::topo::sweep_multi(profileVec, *path->shp, makeSolid, isFrenet,
                                    mode ? &(*mode->shp) : nullptr);
     if (result) {
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(*result)};
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
     }
   } catch (...) {
   }
