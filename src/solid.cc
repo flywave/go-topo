@@ -1519,7 +1519,7 @@ int solid::sweep(const wire &spine, std::vector<shape> &profiles,
     }
 
     for (unsigned i = 0; i < profiles.size(); i++) {
-      PS.Add(profiles[i].value(), false, false);
+      PS.Add(profiles[i].value(), false, true);
     }
 
     PS.Build();

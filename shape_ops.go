@@ -398,7 +398,6 @@ func ClipWireBetweenDistances(wire *Wire, startDistance, endDistance float64) *W
 	if result.shp == nil {
 		return nil
 	}
-
 	w := &Wire{inner: &innerWire{result}}
 	runtime.SetFinalizer(w.inner, (*innerWire).free)
 	return w

@@ -746,7 +746,7 @@ geom_trimmed_curve_t *geom_make_arc_of_circle_two_point(circ_t Circ, pnt3d_t P1,
 
 geom_trimmed_curve_t *geom_make_arc_of_point(pnt3d_t P1, pnt3d_t P2,
                                              pnt3d_t P3) {
-  return new geom_trimmed_curve_t{.handle =
+  return new geom_trimmed_curve_t{
       flywave::topo::geometry_creator::make_arc_of_circle(
           cast_to_gp(P1), cast_to_gp(P2), cast_to_gp(P3))};
 }
