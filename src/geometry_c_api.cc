@@ -407,7 +407,7 @@ geom_axis2_placement_t *geom_axis2_placement_copy(geom_axis2_placement_t *t) {
 }
 
 geom_curve_t *geom_curve_copy(geom_curve_t *t) {
-  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle->Copy())};
+  return new geom_curve_t{.handle =Handle(Geom_Curve)::DownCast(t->handle->Copy())};
 }
 
 geom_bounded_curve_t *geom_bounded_curve_copy(geom_bounded_curve_t *t) {
@@ -747,14 +747,14 @@ geom_trimmed_curve_t *geom_make_arc_of_circle_two_point(circ_t Circ, pnt3d_t P1,
 geom_trimmed_curve_t *geom_make_arc_of_point(pnt3d_t P1, pnt3d_t P2,
                                              pnt3d_t P3) {
   return new geom_trimmed_curve_t{
-      flywave::topo::geometry_creator::make_arc_of_circle(
+     .handle=flywave::topo::geometry_creator::make_arc_of_circle(
           cast_to_gp(P1), cast_to_gp(P2), cast_to_gp(P3))};
 }
 
 geom_trimmed_curve_t *geom_make_arc_of_two_points_vector(pnt3d_t P1, vec3d_t V,
                                                          pnt3d_t P2) {
   return new geom_trimmed_curve_t{
-      flywave::topo::geometry_creator::make_arc_of_circle_vector(
+    .handle=flywave::topo::geometry_creator::make_arc_of_circle_vector(
           cast_to_gp(P1), cast_to_gp(V), cast_to_gp(P2))};
 }
 
@@ -1801,7 +1801,7 @@ geom_curve_t *geom_curve_from_geometry(geom_geometry_t *t) {
   if (t->handle->DynamicType() != STANDARD_TYPE(Geom_Curve)) {
     return nullptr;
   }
-  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+  return new geom_curve_t{.handle =Handle(Geom_Curve)::DownCast(t->handle)};
 }
 
 geom_bounded_curve_t *geom_bounded_curve_from_geometry(geom_geometry_t *t) {
@@ -2246,35 +2246,35 @@ geom2d_vector_with_magnitude_from_geometry(geom2d_geometry_t *t) {
     return nullptr;
   }
   return new geom2d_vector_with_magnitude_t{
-      Handle(Geom2d_VectorWithMagnitude)::DownCast(t->handle)};
+    .handle =Handle(Geom2d_VectorWithMagnitude)::DownCast(t->handle)};
 }
 
 geom_curve_t *geom_bounded_curve_to_geom_curve(geom_bounded_curve_t *t) {
-  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+  return new geom_curve_t{.handle =Handle(Geom_Curve)::DownCast(t->handle)};
 }
 
 geom_curve_t *geom_bezier_curve_to_geom_curve(geom_bezier_curve_t *t) {
-  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+  return new geom_curve_t{.handle =Handle(Geom_Curve)::DownCast(t->handle)};
 }
 
 geom_curve_t *geom_bspline_curve_to_geom_curve(geom_bspline_curve_t *t) {
-  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+  return new geom_curve_t{.handle =Handle(Geom_Curve)::DownCast(t->handle)};
 }
 
 geom_curve_t *geom_trimmed_curve_to_geom_curve(geom_trimmed_curve_t *t) {
-  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+  return new geom_curve_t{.handle =Handle(Geom_Curve)::DownCast(t->handle)};
 }
 
 geom_curve_t *geom_conic_to_geom_curve(geom_conic_t *t) {
-  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+  return new geom_curve_t{.handle =Handle(Geom_Curve)::DownCast(t->handle)};
 }
 
 geom_curve_t *geom_circle_to_geom_curve(geom_circle_t *t) {
-  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+  return new geom_curve_t{.handle =Handle(Geom_Curve)::DownCast(t->handle)};
 }
 
 geom_curve_t *geom_ellipse_to_geom_curve(geom_ellipse_t *t) {
-  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+  return new geom_curve_t{.handle =Handle(Geom_Curve)::DownCast(t->handle)};
 }
 
 geom_curve_t *geom_hyperbola_to_geom_curve(geom_hyperbola_t *t) {
@@ -2282,15 +2282,15 @@ geom_curve_t *geom_hyperbola_to_geom_curve(geom_hyperbola_t *t) {
 }
 
 geom_curve_t *geom_parabola_to_geom_curve(geom_parabola_t *t) {
-  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+  return new geom_curve_t{.handle =Handle(Geom_Curve)::DownCast(t->handle)};
 }
 
 geom_curve_t *geom_line_to_geom_curve(geom_line_t *t) {
-  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+  return new geom_curve_t{.handle =Handle(Geom_Curve)::DownCast(t->handle)};
 }
 
 geom_curve_t *geom_offset_curve_to_geom_curve(geom_offset_curve_t *t) {
-  return new geom_curve_t{Handle(Geom_Curve)::DownCast(t->handle)};
+  return new geom_curve_t{.handle =Handle(Geom_Curve)::DownCast(t->handle)};
 }
 
 geom_surface_t *
