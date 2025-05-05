@@ -11,7 +11,8 @@ extern "C" {
 
 PRIMCAPICALL topo_shape_t *create_sphere(sphere_params_t params) {
   sphere_params cpp_params{params.radius};
-  return new topo_shape_t{std::make_shared<shape>(create_sphere(cpp_params))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_sphere(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_sphere_with_place(sphere_params_t params,
@@ -19,7 +20,7 @@ PRIMCAPICALL topo_shape_t *create_sphere_with_place(sphere_params_t params,
   sphere_params cpp_params{params.radius};
   gp_Pnt cpp_center(center.x, center.y, center.z);
   return new topo_shape_t{
-      std::make_shared<shape>(create_sphere(cpp_params, cpp_center))};
+      .shp = std::make_shared<shape>(create_sphere(cpp_params, cpp_center))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -27,7 +28,7 @@ create_rotational_ellipsoid(rotational_ellipsoid_params_t params) {
   rotational_ellipsoid_params cpp_params{
       params.polarRadius, params.equatorialRadius, params.height};
   return new topo_shape_t{
-      std::make_shared<shape>(create_rotational_ellipsoid(cpp_params))};
+      .shp = std::make_shared<shape>(create_rotational_ellipsoid(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -37,13 +38,15 @@ create_rotational_ellipsoid_with_place(rotational_ellipsoid_params_t params,
       params.polarRadius, params.equatorialRadius, params.height};
   gp_Pnt cpp_center(center.x, center.y, center.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_rotational_ellipsoid(cpp_params, cpp_center, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_rotational_ellipsoid(cpp_params, cpp_center, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cuboid(cuboid_params_t params) {
   cuboid_params cpp_params{params.length, params.width, params.height};
-  return new topo_shape_t{std::make_shared<shape>(create_cuboid(cpp_params))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_cuboid(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cuboid_with_place(cuboid_params_t params,
@@ -54,8 +57,8 @@ PRIMCAPICALL topo_shape_t *create_cuboid_with_place(cuboid_params_t params,
   gp_Pnt cpp_center(center.x, center.y, center.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
   gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cuboid(cpp_params, cpp_center, cpp_xDir, cpp_zDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_cuboid(
+                              cpp_params, cpp_center, cpp_xDir, cpp_zDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_diamond_frustum(diamond_frustum_t params) {
@@ -63,7 +66,7 @@ PRIMCAPICALL topo_shape_t *create_diamond_frustum(diamond_frustum_t params) {
                              params.bottomDiag1, params.bottomDiag2,
                              params.height};
   return new topo_shape_t{
-      std::make_shared<shape>(create_diamond_frustum(cpp_params))};
+      .shp = std::make_shared<shape>(create_diamond_frustum(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -75,8 +78,8 @@ create_diamond_frustum_with_place(diamond_frustum_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_diamond_frustum(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_diamond_frustum(
+                              cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -85,8 +88,8 @@ create_offset_rectangular_table(offset_rectangular_table_params_t params) {
       params.topLength,   params.topWidth, params.bottomLength,
       params.bottomWidth, params.height,   params.xOffset,
       params.yOffset};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_offset_rectangular_table(cpp_params))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(
+                              create_offset_rectangular_table(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_offset_rectangular_table_with_place(
@@ -100,13 +103,14 @@ PRIMCAPICALL topo_shape_t *create_offset_rectangular_table_with_place(
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
   return new topo_shape_t{
-      std::make_shared<shape>(create_offset_rectangular_table(
+      .shp = std::make_shared<shape>(create_offset_rectangular_table(
           cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cylinder(cylinder_params_t params) {
   cylinder_params cpp_params{params.radius, params.height};
-  return new topo_shape_t{std::make_shared<shape>(create_cylinder(cpp_params))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_cylinder(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cylinder_with_place(cylinder_params_t params,
@@ -115,8 +119,8 @@ PRIMCAPICALL topo_shape_t *create_cylinder_with_place(cylinder_params_t params,
   cylinder_params cpp_params{params.radius, params.height};
   gp_Pnt cpp_baseCenter(baseCenter.x, baseCenter.y, baseCenter.z);
   gp_Dir cpp_axisDir(axisDir.x, axisDir.y, axisDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cylinder(cpp_params, cpp_baseCenter, cpp_axisDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_cylinder(
+                              cpp_params, cpp_baseCenter, cpp_axisDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -124,7 +128,7 @@ create_sharp_bent_cylinder(sharp_bent_cylinder_params_t params) {
   sharp_bent_cylinder_params cpp_params{params.radius, params.length,
                                         params.bendAngle};
   return new topo_shape_t{
-      std::make_shared<shape>(create_sharp_bent_cylinder(cpp_params))};
+      .shp = std::make_shared<shape>(create_sharp_bent_cylinder(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -137,8 +141,9 @@ create_sharp_bent_cylinder_with_place(sharp_bent_cylinder_params_t params,
   gp_Dir cpp_initialDir(initialDir.x, initialDir.y, initialDir.z);
   gp_Dir cpp_bendPlaneNormal(bendPlaneNormal.x, bendPlaneNormal.y,
                              bendPlaneNormal.z);
-  return new topo_shape_t{std::make_shared<shape>(create_sharp_bent_cylinder(
-      cpp_params, cpp_bendPoint, cpp_initialDir, cpp_bendPlaneNormal))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_sharp_bent_cylinder(
+          cpp_params, cpp_bendPoint, cpp_initialDir, cpp_bendPlaneNormal))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -146,7 +151,7 @@ create_truncated_cone(truncated_cone_params_t params) {
   truncated_cone_params cpp_params{params.topRadius, params.bottomRadius,
                                    params.height};
   return new topo_shape_t{
-      std::make_shared<shape>(create_truncated_cone(cpp_params))};
+      .shp = std::make_shared<shape>(create_truncated_cone(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -156,8 +161,8 @@ create_truncated_cone_with_place(truncated_cone_params_t params,
                                    params.height};
   gp_Pnt cpp_baseCenter(baseCenter.x, baseCenter.y, baseCenter.z);
   gp_Dir cpp_axisDir(axisDir.x, axisDir.y, axisDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_truncated_cone(cpp_params, cpp_baseCenter, cpp_axisDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_truncated_cone(
+                              cpp_params, cpp_baseCenter, cpp_axisDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -165,8 +170,8 @@ create_eccentric_truncated_cone(eccentric_truncated_cone_params_t params) {
   eccentric_truncated_cone_params cpp_params{
       params.topRadius, params.bottomRadius, params.height, params.topXOffset,
       params.topYOffset};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_eccentric_truncated_cone(cpp_params))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(
+                              create_eccentric_truncated_cone(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_eccentric_truncated_cone_with_place(
@@ -178,13 +183,14 @@ PRIMCAPICALL topo_shape_t *create_eccentric_truncated_cone_with_place(
   gp_Pnt cpp_baseCenter(baseCenter.x, baseCenter.y, baseCenter.z);
   gp_Dir cpp_axisDir(axisDir.x, axisDir.y, axisDir.z);
   return new topo_shape_t{
-      std::make_shared<shape>(create_eccentric_truncated_cone(
+      .shp = std::make_shared<shape>(create_eccentric_truncated_cone(
           cpp_params, cpp_baseCenter, cpp_axisDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_ring(ring_params_t params) {
   ring_params cpp_params{params.ringRadius, params.tubeRadius, params.angle};
-  return new topo_shape_t{std::make_shared<shape>(create_ring(cpp_params))};
+  return new topo_shape_t{.shp =
+                              std::make_shared<shape>(create_ring(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_ring_with_place(ring_params_t params,
@@ -195,8 +201,8 @@ PRIMCAPICALL topo_shape_t *create_ring_with_place(ring_params_t params,
   gp_Pnt cpp_center(center.x, center.y, center.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_ring(cpp_params, cpp_center, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_ring(
+                              cpp_params, cpp_center, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -204,7 +210,7 @@ create_rectangular_ring(rectangular_ring_params_t params) {
   rectangular_ring_params cpp_params{params.tubeRadius, params.filletRadius,
                                      params.length, params.width};
   return new topo_shape_t{
-      std::make_shared<shape>(create_rectangular_ring(cpp_params))};
+      .shp = std::make_shared<shape>(create_rectangular_ring(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -216,15 +222,16 @@ create_rectangular_ring_with_place(rectangular_ring_params_t params,
   gp_Pnt cpp_center(center.x, center.y, center.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_rectangular_ring(cpp_params, cpp_center, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_rectangular_ring(
+          cpp_params, cpp_center, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_elliptic_ring(elliptic_ring_params_t params) {
   elliptic_ring_params cpp_params{params.tubeRadius, params.majorRadius,
                                   params.minorRadius};
   return new topo_shape_t{
-      std::make_shared<shape>(create_elliptic_ring(cpp_params))};
+      .shp = std::make_shared<shape>(create_elliptic_ring(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -235,8 +242,8 @@ create_elliptic_ring_with_place(elliptic_ring_params_t params, pnt3d_t center,
   gp_Pnt cpp_center(center.x, center.y, center.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_elliptic_ring(cpp_params, cpp_center, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_elliptic_ring(
+                              cpp_params, cpp_center, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -244,7 +251,7 @@ create_circular_gasket(circular_gasket_params_t params) {
   circular_gasket_params cpp_params{params.outerRadius, params.innerRadius,
                                     params.height, params.angle};
   return new topo_shape_t{
-      std::make_shared<shape>(create_circular_gasket(cpp_params))};
+      .shp = std::make_shared<shape>(create_circular_gasket(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -256,8 +263,8 @@ create_circular_gasket_with_place(circular_gasket_params_t params,
   gp_Pnt cpp_center(center.x, center.y, center.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_circular_gasket(cpp_params, cpp_center, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_circular_gasket(
+                              cpp_params, cpp_center, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_table_gasket(table_gasket_params_t params) {
@@ -265,7 +272,7 @@ PRIMCAPICALL topo_shape_t *create_table_gasket(table_gasket_params_t params) {
                                  params.innerRadius, params.height,
                                  params.angle};
   return new topo_shape_t{
-      std::make_shared<shape>(create_table_gasket(cpp_params))};
+      .shp = std::make_shared<shape>(create_table_gasket(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -277,8 +284,8 @@ create_table_gasket_with_place(table_gasket_params_t params, pnt3d_t center,
   gp_Pnt cpp_center(center.x, center.y, center.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_table_gasket(cpp_params, cpp_center, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_table_gasket(
+                              cpp_params, cpp_center, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_square_gasket(square_gasket_params_t params) {
@@ -287,7 +294,7 @@ PRIMCAPICALL topo_shape_t *create_square_gasket(square_gasket_params_t params) {
                                   params.height,      params.cornerType,
                                   params.cornerParam};
   return new topo_shape_t{
-      std::make_shared<shape>(create_square_gasket(cpp_params))};
+      .shp = std::make_shared<shape>(create_square_gasket(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -300,8 +307,8 @@ create_square_gasket_with_place(square_gasket_params_t params, pnt3d_t center,
   gp_Pnt cpp_center(center.x, center.y, center.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_square_gasket(cpp_params, cpp_center, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_square_gasket(
+                              cpp_params, cpp_center, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -315,7 +322,7 @@ create_stretched_body(stretched_body_params_t params) {
       points, gp_Dir(params.normal.x, params.normal.y, params.normal.z),
       params.length};
   return new topo_shape_t{
-      std::make_shared<shape>(create_stretched_body(cpp_params))};
+      .shp = std::make_shared<shape>(create_stretched_body(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -331,8 +338,8 @@ create_stretched_body_with_place(stretched_body_params_t params,
       params.length};
   gp_Pnt cpp_basePoint(basePoint.x, basePoint.y, basePoint.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_stretched_body(cpp_params, cpp_basePoint, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_stretched_body(
+                              cpp_params, cpp_basePoint, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -341,7 +348,7 @@ create_porcelain_bushing(porcelain_bushing_params_t params) {
                                       params.bigSkirtRadius,
                                       params.smallSkirtRadius, params.count};
   return new topo_shape_t{
-      std::make_shared<shape>(create_porcelain_bushing(cpp_params))};
+      .shp = std::make_shared<shape>(create_porcelain_bushing(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -352,8 +359,9 @@ create_porcelain_bushing_with_place(porcelain_bushing_params_t params,
                                       params.smallSkirtRadius, params.count};
   gp_Pnt cpp_basePoint(basePoint.x, basePoint.y, basePoint.z);
   gp_Dir cpp_axisDir(axisDir.x, axisDir.y, axisDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_porcelain_bushing(cpp_params, cpp_basePoint, cpp_axisDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_porcelain_bushing(cpp_params, cpp_basePoint, cpp_axisDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -366,8 +374,8 @@ create_cone_porcelain_bushing(cone_porcelain_bushing_params_t params) {
                                            params.topSkirtRadius1,
                                            params.topSkirtRadius2,
                                            params.count};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_cone_porcelain_bushing(cpp_params))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(
+                              create_cone_porcelain_bushing(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -383,8 +391,9 @@ create_cone_porcelain_bushing_with_place(cone_porcelain_bushing_params_t params,
                                            params.count};
   gp_Pnt cpp_basePoint(basePoint.x, basePoint.y, basePoint.z);
   gp_Dir cpp_axisDir(axisDir.x, axisDir.y, axisDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cone_porcelain_bushing(cpp_params, cpp_basePoint, cpp_axisDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_cone_porcelain_bushing(
+          cpp_params, cpp_basePoint, cpp_axisDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -395,7 +404,7 @@ create_insulator_string(insulator_string_params_t params) {
       params.radius,    params.frontLength,    params.backLength,
       params.splitCount};
   return new topo_shape_t{
-      std::make_shared<shape>(create_insulator_string(cpp_params))};
+      .shp = std::make_shared<shape>(create_insulator_string(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -410,8 +419,9 @@ create_insulator_string_with_place(insulator_string_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_upDirection(upDirection.x, upDirection.y, upDirection.z);
-  return new topo_shape_t{std::make_shared<shape>(create_insulator_string(
-      cpp_params, cpp_position, cpp_direction, cpp_upDirection))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_insulator_string(
+          cpp_params, cpp_position, cpp_direction, cpp_upDirection))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -422,7 +432,7 @@ create_vtype_insulator(vtype_insulator_params_t params) {
       params.smallSkirtRadius, params.frontLength, params.backLength,
       params.splitCount};
   return new topo_shape_t{
-      std::make_shared<shape>(create_vtype_insulator(cpp_params))};
+      .shp = std::make_shared<shape>(create_vtype_insulator(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -437,8 +447,9 @@ create_vtype_insulator_with_place(vtype_insulator_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_upDirection(upDirection.x, upDirection.y, upDirection.z);
-  return new topo_shape_t{std::make_shared<shape>(create_vtype_insulator(
-      cpp_params, cpp_position, cpp_direction, cpp_upDirection))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_vtype_insulator(
+          cpp_params, cpp_position, cpp_direction, cpp_upDirection))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -449,7 +460,7 @@ create_terminal_block(terminal_block_params_t params) {
                                    params.holeRadius,    params.columnCount,
                                    params.rowCount,      params.bottomOffset};
   return new topo_shape_t{
-      std::make_shared<shape>(create_terminal_block(cpp_params))};
+      .shp = std::make_shared<shape>(create_terminal_block(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -464,8 +475,9 @@ create_terminal_block_with_place(terminal_block_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_lengthDir(lengthDir.x, lengthDir.y, lengthDir.z);
   gp_Dir cpp_widthDir(widthDir.x, widthDir.y, widthDir.z);
-  return new topo_shape_t{std::make_shared<shape>(create_terminal_block(
-      cpp_params, cpp_position, cpp_lengthDir, cpp_widthDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_terminal_block(
+          cpp_params, cpp_position, cpp_lengthDir, cpp_widthDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -474,8 +486,8 @@ create_rectangular_fixed_plate(rectangular_hole_plate_params_t params) {
       params.length,        params.width,         params.thickness,
       params.columnSpacing, params.rowSpacing,    params.columnCount,
       params.rowCount,      params.hasMiddleHole, params.holeDiameter};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_rectangular_fixed_plate(cpp_params))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(
+                              create_rectangular_fixed_plate(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_rectangular_fixed_plate_with_place(
@@ -489,7 +501,7 @@ PRIMCAPICALL topo_shape_t *create_rectangular_fixed_plate_with_place(
   gp_Dir cpp_lengthDir(lengthDir.x, lengthDir.y, lengthDir.z);
   gp_Dir cpp_widthDir(widthDir.x, widthDir.y, widthDir.z);
   return new topo_shape_t{
-      std::make_shared<shape>(create_rectangular_fixed_plate(
+      .shp = std::make_shared<shape>(create_rectangular_fixed_plate(
           cpp_params, cpp_position, cpp_lengthDir, cpp_widthDir))};
 }
 
@@ -500,7 +512,7 @@ create_circular_fixed_plate(circular_fixed_plate_params_t params) {
       params.ringRadius,  params.holeCount, params.hasMiddleHole,
       params.holeDiameter};
   return new topo_shape_t{
-      std::make_shared<shape>(create_circular_fixed_plate(cpp_params))};
+      .shp = std::make_shared<shape>(create_circular_fixed_plate(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -514,8 +526,9 @@ create_circular_fixed_plate_with_place(circular_fixed_plate_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_lengthDir(lengthDir.x, lengthDir.y, lengthDir.z);
   gp_Dir cpp_widthDir(widthDir.x, widthDir.y, widthDir.z);
-  return new topo_shape_t{std::make_shared<shape>(create_circular_fixed_plate(
-      cpp_params, cpp_position, cpp_lengthDir, cpp_widthDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_circular_fixed_plate(
+          cpp_params, cpp_position, cpp_lengthDir, cpp_widthDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_wire(wire_params_t params) {
@@ -532,7 +545,8 @@ PRIMCAPICALL topo_shape_t *create_wire(wire_params_t params) {
       params.sag,
       params.diameter,
       points};
-  return new topo_shape_t{std::make_shared<shape>(create_wire(cpp_params))};
+  return new topo_shape_t{.shp =
+                              std::make_shared<shape>(create_wire(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_wire_with_place(wire_params_t params,
@@ -557,8 +571,9 @@ PRIMCAPICALL topo_shape_t *create_wire_with_place(wire_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_upDirection(upDirection.x, upDirection.y, upDirection.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_wire(cpp_params, cpp_position, cpp_direction, cpp_upDirection))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_wire(
+          cpp_params, cpp_position, cpp_direction, cpp_upDirection))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cable(cable_params_t params) {
@@ -573,7 +588,8 @@ PRIMCAPICALL topo_shape_t *create_cable(cable_params_t params) {
       gp_Pnt(params.endPoint.x, params.endPoint.y, params.endPoint.z), points,
       std::vector<double>(params.radii, params.radii + params.numRadii),
       params.diameter};
-  return new topo_shape_t{std::make_shared<shape>(create_cable(cpp_params))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_cable(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_with_place(cable_params_t params,
@@ -594,8 +610,9 @@ PRIMCAPICALL topo_shape_t *create_cable_with_place(cable_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_upDirection(upDirection.x, upDirection.y, upDirection.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cable(cpp_params, cpp_position, cpp_direction, cpp_upDirection))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_cable(
+          cpp_params, cpp_position, cpp_direction, cpp_upDirection))};
 }
 
 PRIMCAPICALL topo_shape_t *create_curve_cable(curve_cable_params_t params) {
@@ -627,7 +644,7 @@ PRIMCAPICALL topo_shape_t *create_curve_cable(curve_cable_params_t params) {
     curve_cable_params cpp_params{cpp_controlPoints, cpp_curveTypes,
                                   params.diameter};
     return new topo_shape_t{
-        std::make_shared<shape>(create_curve_cable(cpp_params))};
+        .shp = std::make_shared<shape>(create_curve_cable(cpp_params))};
   } catch (...) {
     return nullptr;
   }
@@ -667,8 +684,9 @@ create_curve_cable_with_place(curve_cable_params_t params, pnt3d_t position,
     gp_Dir cpp_direction(direction.x, direction.y, direction.z);
     gp_Dir cpp_upDirection(upDirection.x, upDirection.y, upDirection.z);
 
-    return new topo_shape_t{std::make_shared<shape>(create_curve_cable(
-        cpp_params, cpp_position, cpp_direction, cpp_upDirection))};
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_curve_cable(
+            cpp_params, cpp_position, cpp_direction, cpp_upDirection))};
   } catch (...) {
     return nullptr;
   }
@@ -677,7 +695,7 @@ create_curve_cable_with_place(curve_cable_params_t params, pnt3d_t position,
 PRIMCAPICALL topo_shape_t *create_angle_steel(angle_steel_params_t params) {
   angle_steel_params cpp_params{params.L1, params.L2, params.X, params.length};
   return new topo_shape_t{
-      std::make_shared<shape>(create_angle_steel(cpp_params))};
+      .shp = std::make_shared<shape>(create_angle_steel(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -687,8 +705,9 @@ create_angle_steel_with_place(angle_steel_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
   gp_Dir cpp_longEdgeDir(longEdgeDir.x, longEdgeDir.y, longEdgeDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_angle_steel(cpp_params, cpp_position, cpp_xDir, cpp_longEdgeDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_angle_steel(
+          cpp_params, cpp_position, cpp_xDir, cpp_longEdgeDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -697,7 +716,7 @@ create_i_shaped_steel(i_shaped_steel_params_t params) {
                                    params.webThickness, params.flangeThickness,
                                    params.length};
   return new topo_shape_t{
-      std::make_shared<shape>(create_i_shaped_steel(cpp_params))};
+      .shp = std::make_shared<shape>(create_i_shaped_steel(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -709,8 +728,8 @@ create_i_shaped_steel_with_place(i_shaped_steel_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
   gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_i_shaped_steel(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_i_shaped_steel(
+                              cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_channel_steel(channel_steel_params_t params) {
@@ -718,7 +737,7 @@ PRIMCAPICALL topo_shape_t *create_channel_steel(channel_steel_params_t params) {
                                   params.webThickness, params.flangeThickness,
                                   params.length};
   return new topo_shape_t{
-      std::make_shared<shape>(create_channel_steel(cpp_params))};
+      .shp = std::make_shared<shape>(create_channel_steel(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -730,14 +749,15 @@ create_channel_steel_with_place(channel_steel_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
   gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_channel_steel(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_channel_steel(
+                              cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_t_steel(t_steel_params_t params) {
   t_steel_params cpp_params{params.height, params.width, params.webThickness,
                             params.flangeThickness, params.length};
-  return new topo_shape_t{std::make_shared<shape>(create_t_steel(cpp_params))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_t_steel(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_t_steel_with_place(t_steel_params_t params,
@@ -749,15 +769,15 @@ PRIMCAPICALL topo_shape_t *create_t_steel_with_place(t_steel_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
   gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_t_steel(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_t_steel(
+                              cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_bored_pile_base(bored_pile_params_t params) {
   bored_pile_params cpp_params{params.H1, params.H2, params.H3,
                                params.H4, params.d,  params.D};
   return new topo_shape_t{
-      std::make_shared<shape>(create_bored_pile_base(cpp_params))};
+      .shp = std::make_shared<shape>(create_bored_pile_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -767,8 +787,8 @@ create_bored_pile_base_with_place(bored_pile_params_t params, pnt3d_t position,
                                params.H4, params.d,  params.D};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_bored_pile_base(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_bored_pile_base(
+                              cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *create_pile_cap_base(pile_cap_params_t params) {
@@ -782,7 +802,7 @@ PRIMCAPICALL topo_shape_t *create_pile_cap_base(pile_cap_params_t params) {
                              params.b,  params.B1, params.L1,     params.e1,
                              params.e2, params.cs, params.ZCOUNT, points};
   return new topo_shape_t{
-      std::make_shared<shape>(create_pile_cap_base(cpp_params))};
+      .shp = std::make_shared<shape>(create_pile_cap_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -799,8 +819,8 @@ create_pile_cap_base_with_place(pile_cap_params_t params, pnt3d_t position,
                              params.e2, params.cs, params.ZCOUNT, points};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_pile_cap_base(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_pile_cap_base(
+                              cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -813,7 +833,7 @@ create_rock_anchor_base(rock_anchor_params_t params) {
   rock_anchor_params cpp_params{params.H1, params.H2,     params.d, params.B1,
                                 params.L1, params.ZCOUNT, points};
   return new topo_shape_t{
-      std::make_shared<shape>(create_rock_anchor_base(cpp_params))};
+      .shp = std::make_shared<shape>(create_rock_anchor_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -828,8 +848,9 @@ create_rock_anchor_base_with_place(rock_anchor_params_t params,
                                 params.L1, params.ZCOUNT, points};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_rock_anchor_base(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_rock_anchor_base(cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -843,7 +864,7 @@ create_rock_pile_cap_base(rock_pile_cap_params_t params) {
       params.H1, params.H2, params.H3, params.d,  params.b,      params.B1,
       params.L1, params.e1, params.e2, params.cs, params.ZCOUNT, points};
   return new topo_shape_t{
-      std::make_shared<shape>(create_rock_pile_cap_base(cpp_params))};
+      .shp = std::make_shared<shape>(create_rock_pile_cap_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -859,16 +880,17 @@ create_rock_pile_cap_base_with_place(rock_pile_cap_params_t params,
       params.L1, params.e1, params.e2, params.cs, params.ZCOUNT, points};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_rock_pile_cap_base(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_rock_pile_cap_base(cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *
 create_embedded_rock_anchor_base(embedded_rock_anchor_params_t params) {
   embedded_rock_anchor_params cpp_params{params.H1, params.H2, params.H3,
                                          params.d, params.D};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_embedded_rock_anchor_base(cpp_params))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(
+                              create_embedded_rock_anchor_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_embedded_rock_anchor_base_with_place(
@@ -878,7 +900,7 @@ PRIMCAPICALL topo_shape_t *create_embedded_rock_anchor_base_with_place(
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   return new topo_shape_t{
-      std::make_shared<shape>(create_embedded_rock_anchor_base(
+      .shp = std::make_shared<shape>(create_embedded_rock_anchor_base(
           cpp_params, cpp_position, cpp_direction))};
 }
 
@@ -887,8 +909,8 @@ create_inclined_rock_anchor_base(inclined_rock_anchor_params_t params) {
   inclined_rock_anchor_params cpp_params{
       params.H1, params.H2, params.d,  params.D,      params.B,
       params.L,  params.e1, params.e2, params.alpha1, params.alpha2};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_inclined_rock_anchor_base(cpp_params))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(
+                              create_inclined_rock_anchor_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_inclined_rock_anchor_base_with_place(
@@ -899,7 +921,7 @@ PRIMCAPICALL topo_shape_t *create_inclined_rock_anchor_base_with_place(
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   return new topo_shape_t{
-      std::make_shared<shape>(create_inclined_rock_anchor_base(
+      .shp = std::make_shared<shape>(create_inclined_rock_anchor_base(
           cpp_params, cpp_position, cpp_direction))};
 }
 
@@ -909,7 +931,7 @@ create_excavated_base(excavated_base_params_t params) {
                                    params.d,     params.D,  params.alpha1,
                                    params.alpha2};
   return new topo_shape_t{
-      std::make_shared<shape>(create_excavated_base(cpp_params))};
+      .shp = std::make_shared<shape>(create_excavated_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -920,8 +942,8 @@ create_excavated_base_with_place(excavated_base_params_t params,
                                    params.alpha2};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_excavated_base(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_excavated_base(
+                              cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *create_step_base(step_base_params_t params) {
@@ -929,7 +951,7 @@ PRIMCAPICALL topo_shape_t *create_step_base(step_base_params_t params) {
                               params.b,  params.B1, params.B2, params.B3,
                               params.L1, params.L2, params.L3, params.N};
   return new topo_shape_t{
-      std::make_shared<shape>(create_step_base(cpp_params))};
+      .shp = std::make_shared<shape>(create_step_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -940,8 +962,8 @@ create_step_base_with_place(step_base_params_t params, pnt3d_t position,
                               params.L1, params.L2, params.L3, params.N};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_step_base(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_step_base(
+                              cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -950,7 +972,7 @@ create_step_plate_base(step_plate_base_params_t params) {
       params.H,  params.H1, params.H2, params.H3,     params.b,      params.L1,
       params.L2, params.B1, params.B2, params.alpha1, params.alpha2, params.N};
   return new topo_shape_t{
-      std::make_shared<shape>(create_step_plate_base(cpp_params))};
+      .shp = std::make_shared<shape>(create_step_plate_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -961,8 +983,8 @@ create_step_plate_base_with_place(step_plate_base_params_t params,
       params.L2, params.B1, params.B2, params.alpha1, params.alpha2, params.N};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_step_plate_base(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_step_plate_base(
+                              cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -971,7 +993,7 @@ create_sloped_base_base(sloped_base_base_params_t params) {
       params.H1, params.H2, params.H3, params.b,      params.L1,
       params.L2, params.B1, params.B2, params.alpha1, params.alpha2};
   return new topo_shape_t{
-      std::make_shared<shape>(create_sloped_base_base(cpp_params))};
+      .shp = std::make_shared<shape>(create_sloped_base_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -982,8 +1004,9 @@ create_sloped_base_base_with_place(sloped_base_base_params_t params,
       params.L2, params.B1, params.B2, params.alpha1, params.alpha2};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_sloped_base_base(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_sloped_base_base(cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -991,8 +1014,8 @@ create_composite_caisson_base(composite_caisson_base_params_t params) {
   composite_caisson_base_params cpp_params{
       params.H1, params.H2, params.H3, params.H4, params.b, params.D,
       params.t,  params.B1, params.B2, params.L1, params.L2};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_composite_caisson_base(cpp_params))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(
+                              create_composite_caisson_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1003,8 +1026,9 @@ create_composite_caisson_base_with_place(composite_caisson_base_params_t params,
       params.t,  params.B1, params.B2, params.L1, params.L2};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_composite_caisson_base(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_composite_caisson_base(
+          cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *create_raft_base(raft_base_params_t params) {
@@ -1012,7 +1036,7 @@ PRIMCAPICALL topo_shape_t *create_raft_base(raft_base_params_t params) {
                               params.b1, params.b2, params.B1,
                               params.B2, params.L1, params.L2};
   return new topo_shape_t{
-      std::make_shared<shape>(create_raft_base(cpp_params))};
+      .shp = std::make_shared<shape>(create_raft_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1023,8 +1047,8 @@ create_raft_base_with_place(raft_base_params_t params, pnt3d_t position,
                               params.B2, params.L1, params.L2};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_raft_base(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_raft_base(
+                              cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1032,7 +1056,7 @@ create_direct_buried_base(direct_buried_base_params_t params) {
   direct_buried_base_params cpp_params{params.H1, params.H2, params.d,
                                        params.D,  params.B,  params.t};
   return new topo_shape_t{
-      std::make_shared<shape>(create_direct_buried_base(cpp_params))};
+      .shp = std::make_shared<shape>(create_direct_buried_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1042,8 +1066,9 @@ create_direct_buried_base_with_place(direct_buried_base_params_t params,
                                        params.D,  params.B,  params.t};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_direct_buried_base(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_direct_buried_base(cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1052,7 +1077,7 @@ create_steel_sleeve_base(steel_sleeve_base_params_t params) {
       params.H1, params.H2, params.H3, params.H4, params.d,
       params.D1, params.D2, params.t,  params.B1, params.B2};
   return new topo_shape_t{
-      std::make_shared<shape>(create_steel_sleeve_base(cpp_params))};
+      .shp = std::make_shared<shape>(create_steel_sleeve_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1063,8 +1088,9 @@ create_steel_sleeve_base_with_place(steel_sleeve_base_params_t params,
       params.D1, params.D2, params.t,  params.B1, params.B2};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_steel_sleeve_base(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_steel_sleeve_base(cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1073,7 +1099,7 @@ create_precast_column_base(precast_column_base_params_t params) {
                                         params.d,  params.B1, params.B2,
                                         params.L1, params.L2};
   return new topo_shape_t{
-      std::make_shared<shape>(create_precast_column_base(cpp_params))};
+      .shp = std::make_shared<shape>(create_precast_column_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1084,8 +1110,9 @@ create_precast_column_base_with_place(precast_column_base_params_t params,
                                         params.L1, params.L2};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_precast_column_base(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_precast_column_base(cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1094,7 +1121,7 @@ create_precast_pinned_base(precast_pinned_base_params_t params) {
       params.H1, params.H2, params.H3, params.d, params.B1, params.B2,
       params.L1, params.L2, params.B,  params.H, params.L};
   return new topo_shape_t{
-      std::make_shared<shape>(create_precast_pinned_base(cpp_params))};
+      .shp = std::make_shared<shape>(create_precast_pinned_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1105,8 +1132,9 @@ create_precast_pinned_base_with_place(precast_pinned_base_params_t params,
       params.L1, params.L2, params.B,  params.H, params.L};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_precast_pinned_base(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_precast_pinned_base(cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1127,8 +1155,8 @@ create_precast_metal_support_base(precast_metal_support_base_params_t params) {
       params.n1,
       params.n2,
       std::vector<double>(params.HX, params.HX + params.HXCount)};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_precast_metal_support_base(cpp_params))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(
+                              create_precast_metal_support_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_precast_metal_support_base_with_place(
@@ -1153,7 +1181,7 @@ PRIMCAPICALL topo_shape_t *create_precast_metal_support_base_with_place(
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   return new topo_shape_t{
-      std::make_shared<shape>(create_precast_metal_support_base(
+      .shp = std::make_shared<shape>(create_precast_metal_support_base(
           cpp_params, cpp_position, cpp_direction))};
 }
 
@@ -1163,8 +1191,9 @@ PRIMCAPICALL topo_shape_t *create_precast_concrete_support_base(
       params.H1, params.H2, params.H3, params.H4, params.H5,
       params.b1, params.b2, params.b3, params.B1, params.B2,
       params.L1, params.L2, params.S1, params.n1};
-  return new topo_shape_t{std::make_shared<shape>(
-      create_precast_concrete_support_base(cpp_params))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_precast_concrete_support_base(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_precast_concrete_support_base_with_place(
@@ -1177,7 +1206,7 @@ PRIMCAPICALL topo_shape_t *create_precast_concrete_support_base_with_place(
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   return new topo_shape_t{
-      std::make_shared<shape>(create_precast_concrete_support_base(
+      .shp = std::make_shared<shape>(create_precast_concrete_support_base(
           cpp_params, cpp_position, cpp_direction))};
 }
 
@@ -1193,8 +1222,9 @@ create_transmission_line(transmission_line_params_t params, pnt3d_t startPoint,
                                       params.ratedStrength};
   gp_Pnt cpp_start(startPoint.x, startPoint.y, startPoint.z);
   gp_Pnt cpp_end(endPoint.x, endPoint.y, endPoint.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_transmission_line(cpp_params, cpp_start, cpp_end))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_transmission_line(cpp_params, cpp_start, cpp_end))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1234,7 +1264,7 @@ create_composite_insulator(insulator_composite_params_t params) {
       static_cast<string_type>(params.stringType)};
 
   return new topo_shape_t{
-      std::make_shared<shape>(create_insulator_string(cpp_params))};
+      .shp = std::make_shared<shape>(create_insulator_string(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1277,8 +1307,9 @@ create_composite_insulator_with_place(insulator_composite_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_insulator_string(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_insulator_string(cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1296,7 +1327,7 @@ create_single_hook_anchor(single_hook_anchor_params_t params) {
                                        params.hookStraightLength,
                                        params.hookDiameter};
   return new topo_shape_t{
-      std::make_shared<shape>(create_single_hook_anchor(cpp_params))};
+      .shp = std::make_shared<shape>(create_single_hook_anchor(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1318,8 +1349,9 @@ create_single_hook_anchor_with_place(single_hook_anchor_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(create_single_hook_anchor(
-      cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_single_hook_anchor(
+          cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1339,7 +1371,7 @@ create_triple_hook_anchor(triple_hook_anchor_params_t params) {
                                        params.hookDiameter,
                                        params.anchorBarDiameter};
   return new topo_shape_t{
-      std::make_shared<shape>(create_triple_hook_anchor(cpp_params))};
+      .shp = std::make_shared<shape>(create_triple_hook_anchor(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1363,8 +1395,9 @@ create_triple_hook_anchor_with_place(triple_hook_anchor_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(create_triple_hook_anchor(
-      cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_triple_hook_anchor(
+          cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_ribbed_anchor(ribbed_anchor_params_t params) {
@@ -1378,7 +1411,7 @@ PRIMCAPICALL topo_shape_t *create_ribbed_anchor(ribbed_anchor_params_t params) {
       params.ribBottomWidth,  params.basePlateThickness,
       params.ribHeight,       params.ribThickness};
   return new topo_shape_t{
-      std::make_shared<shape>(create_ribbed_anchor(cpp_params))};
+      .shp = std::make_shared<shape>(create_ribbed_anchor(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1396,8 +1429,8 @@ create_ribbed_anchor_with_place(ribbed_anchor_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_ribbed_anchor(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_ribbed_anchor(
+                              cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_nut_anchor(nut_anchor_params_t params) {
@@ -1415,7 +1448,7 @@ PRIMCAPICALL topo_shape_t *create_nut_anchor(nut_anchor_params_t params) {
                                params.basePlateThickness,
                                params.boltToPlateDistance};
   return new topo_shape_t{
-      std::make_shared<shape>(create_nut_anchor(cpp_params))};
+      .shp = std::make_shared<shape>(create_nut_anchor(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1437,8 +1470,8 @@ create_nut_anchor_with_place(nut_anchor_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_nut_anchor(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_nut_anchor(
+                              cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1450,7 +1483,7 @@ create_triple_arm_anchor(triple_arm_anchor_params_t params) {
       params.anchorLength,  params.armDiameter,   params.armStraightLength,
       params.armBendLength, params.armBendAngle};
   return new topo_shape_t{
-      std::make_shared<shape>(create_triple_arm_anchor(cpp_params))};
+      .shp = std::make_shared<shape>(create_triple_arm_anchor(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1466,8 +1499,9 @@ create_triple_arm_anchor_with_place(triple_arm_anchor_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(create_triple_arm_anchor(
-      cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_triple_arm_anchor(
+          cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1487,8 +1521,8 @@ create_positioning_plate_anchor(positioning_plate_anchor_params_t params) {
                                              params.toBaseDistance,
                                              params.toBottomDistance,
                                              params.groutHoleDiameter};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_positioning_plate_anchor(cpp_params))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(
+                              create_positioning_plate_anchor(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_positioning_plate_anchor_with_place(
@@ -1513,7 +1547,7 @@ PRIMCAPICALL topo_shape_t *create_positioning_plate_anchor_with_place(
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
   return new topo_shape_t{
-      std::make_shared<shape>(create_positioning_plate_anchor(
+      .shp = std::make_shared<shape>(create_positioning_plate_anchor(
           cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
@@ -1521,7 +1555,7 @@ PRIMCAPICALL topo_shape_t *create_stub_angle(stub_angle_params_t params) {
   stub_angle_params cpp_params{params.legWidth, params.thickness, params.slope,
                                params.exposedLength, params.anchorLength};
   return new topo_shape_t{
-      std::make_shared<shape>(create_stub_angle(cpp_params))};
+      .shp = std::make_shared<shape>(create_stub_angle(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1532,15 +1566,15 @@ create_stub_angle_with_place(stub_angle_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_stub_angle(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_stub_angle(
+                              cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_stub_tube(stub_tube_params_t params) {
   stub_tube_params cpp_params{params.diameter, params.thickness, params.slope,
                               params.exposedLength, params.anchorLength};
   return new topo_shape_t{
-      std::make_shared<shape>(create_stub_tube(cpp_params))};
+      .shp = std::make_shared<shape>(create_stub_tube(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1551,8 +1585,8 @@ create_stub_tube_with_place(stub_tube_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_stub_tube(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_stub_tube(
+                              cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_pole_tower(pole_tower_params_t params) {
@@ -1646,7 +1680,7 @@ PRIMCAPICALL topo_shape_t *create_pole_tower(pole_tower_params_t params) {
   cpp_params.attachments = cpp_attachments;
 
   return new topo_shape_t{
-      std::make_shared<shape>(create_pole_tower(cpp_params))};
+      .shp = std::make_shared<shape>(create_pole_tower(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1743,15 +1777,15 @@ create_pole_tower_with_place(pole_tower_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_pole_tower(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_pole_tower(
+                              cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_joint(cable_joint_params_t params) {
   cable_joint_params cpp_params{params.length, params.outerDiameter,
                                 params.terminalLength, params.innerDiameter};
   return new topo_shape_t{
-      std::make_shared<shape>(create_cable_joint(cpp_params))};
+      .shp = std::make_shared<shape>(create_cable_joint(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1762,8 +1796,9 @@ create_cable_joint_with_place(cable_joint_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cable_joint(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_cable_joint(
+          cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1771,7 +1806,7 @@ create_optical_fiber_box(optical_fiber_box_params_t params) {
   optical_fiber_box_params cpp_params{params.length, params.height,
                                       params.width};
   return new topo_shape_t{
-      std::make_shared<shape>(create_optical_fiber_box(cpp_params))};
+      .shp = std::make_shared<shape>(create_optical_fiber_box(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1783,8 +1818,9 @@ create_optical_fiber_box_with_place(optical_fiber_box_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(create_optical_fiber_box(
-      cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_optical_fiber_box(
+          cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1819,7 +1855,7 @@ create_cable_terminal(cable_terminal_params_t params) {
       .flangeBoltHeight = params.flangeBoltHeight,
   };
   return new topo_shape_t{
-      std::make_shared<shape>(create_cable_terminal(cpp_params))};
+      .shp = std::make_shared<shape>(create_cable_terminal(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1856,8 +1892,8 @@ create_cable_terminal_with_place(cable_terminal_params_t params,
   };
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cable_terminal(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_cable_terminal(
+                              cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1871,7 +1907,7 @@ create_cable_accessory(cable_accessory_params_t params) {
                                     params.backPanelDistance,
                                     params.sidePanelDistance};
   return new topo_shape_t{
-      std::make_shared<shape>(create_cable_accessory(cpp_params))};
+      .shp = std::make_shared<shape>(create_cable_accessory(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1889,8 +1925,8 @@ create_cable_accessory_with_place(cable_accessory_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cable_accessory(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_cable_accessory(
+                              cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_bracket(cable_bracket_params_t params) {
@@ -1913,7 +1949,7 @@ PRIMCAPICALL topo_shape_t *create_cable_bracket(cable_bracket_params_t params) {
   }
 
   return new topo_shape_t{
-      std::make_shared<shape>(create_cable_bracket(cpp_params))};
+      .shp = std::make_shared<shape>(create_cable_bracket(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1941,8 +1977,8 @@ create_cable_bracket_with_place(cable_bracket_params_t params, pnt3d_t position,
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cable_bracket(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_cable_bracket(
+                              cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_clamp(cable_clamp_params_t params) {
@@ -1951,7 +1987,7 @@ PRIMCAPICALL topo_shape_t *create_cable_clamp(cable_clamp_params_t params) {
                                 params.width};
 
   return new topo_shape_t{
-      std::make_shared<shape>(create_cable_clamp(cpp_params))};
+      .shp = std::make_shared<shape>(create_cable_clamp(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -1965,8 +2001,8 @@ create_cable_clamp_with_place(cable_clamp_params_t params, pnt3d_t position,
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cable_clamp(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_cable_clamp(
+                              cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_pole(cable_pole_params_t params) {
@@ -1987,7 +2023,7 @@ PRIMCAPICALL topo_shape_t *create_cable_pole(cable_pole_params_t params) {
   }
 
   return new topo_shape_t{
-      std::make_shared<shape>(create_cable_pole(cpp_params))};
+      .shp = std::make_shared<shape>(create_cable_pole(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2012,8 +2048,8 @@ create_cable_pole_with_place(cable_pole_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cable_pole(cpp_params, cpp_position, cpp_direction))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_cable_pole(
+                              cpp_params, cpp_position, cpp_direction))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2022,7 +2058,7 @@ create_ground_flat_iron(ground_flat_iron_params_t params) {
                                      params.thickness};
 
   return new topo_shape_t{
-      std::make_shared<shape>(create_ground_flat_iron(cpp_params))};
+      .shp = std::make_shared<shape>(create_ground_flat_iron(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2036,8 +2072,9 @@ create_ground_flat_iron_with_place(ground_flat_iron_params_t params,
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_ground_flat_iron(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_ground_flat_iron(
+          cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_embedded_part(embedded_part_params_t params) {
@@ -2045,7 +2082,7 @@ PRIMCAPICALL topo_shape_t *create_embedded_part(embedded_part_params_t params) {
                                   params.materialRadius, params.lowerLength};
 
   return new topo_shape_t{
-      std::make_shared<shape>(create_embedded_part(cpp_params))};
+      .shp = std::make_shared<shape>(create_embedded_part(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2058,8 +2095,8 @@ create_embedded_part_with_place(embedded_part_params_t params, pnt3d_t position,
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_embedded_part(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_embedded_part(
+                              cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_u_shaped_ring(u_shaped_ring_params_t params) {
@@ -2067,7 +2104,7 @@ PRIMCAPICALL topo_shape_t *create_u_shaped_ring(u_shaped_ring_params_t params) {
                                   params.radius, params.length};
 
   return new topo_shape_t{
-      std::make_shared<shape>(create_u_shaped_ring(cpp_params))};
+      .shp = std::make_shared<shape>(create_u_shaped_ring(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2080,15 +2117,15 @@ create_u_shaped_ring_with_place(u_shaped_ring_params_t params, pnt3d_t position,
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_u_shaped_ring(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_u_shaped_ring(
+                              cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_lifting_eye(lifting_eye_params_t params) {
   lifting_eye_params cpp_params{params.height, params.ringRadius,
                                 params.pipeDiameter};
   return new topo_shape_t{
-      std::make_shared<shape>(create_lifting_eye(cpp_params))};
+      .shp = std::make_shared<shape>(create_lifting_eye(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2099,8 +2136,8 @@ create_lifting_eye_with_place(lifting_eye_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_lifting_eye(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_lifting_eye(
+                              cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_corner_well(corner_well_params_t params) {
@@ -2110,7 +2147,7 @@ PRIMCAPICALL topo_shape_t *create_corner_well(corner_well_params_t params) {
       params.wallThickness,    params.angle,           params.cornerRadius,
       params.cushionExtension, params.cushionThickness};
   return new topo_shape_t{
-      std::make_shared<shape>(create_corner_well(cpp_params))};
+      .shp = std::make_shared<shape>(create_corner_well(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2124,8 +2161,9 @@ create_corner_well_with_place(corner_well_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_corner_well(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_corner_well(
+          cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_tunnel_well(tunnel_well_params_t params) {
@@ -2152,7 +2190,7 @@ PRIMCAPICALL topo_shape_t *create_tunnel_well(tunnel_well_params_t params) {
       params.cushionExtension,
       params.cushionThickness};
   return new topo_shape_t{
-      std::make_shared<shape>(create_tunnel_well(cpp_params))};
+      .shp = std::make_shared<shape>(create_tunnel_well(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2183,8 +2221,9 @@ create_tunnel_well_with_place(tunnel_well_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_tunnel_well(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_tunnel_well(
+          cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2232,7 +2271,7 @@ create_three_way_well(three_way_well_params_t params) {
       params.innerBottomThickness,
       params.outerBottomThickness};
   return new topo_shape_t{
-      std::make_shared<shape>(create_three_way_well(cpp_params))};
+      .shp = std::make_shared<shape>(create_three_way_well(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2284,8 +2323,9 @@ create_three_way_well_with_place(three_way_well_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_mainDir(mainDirection.x, mainDirection.y, mainDirection.z);
   gp_Dir cpp_branchDir(branchDirection.x, branchDirection.y, branchDirection.z);
-  return new topo_shape_t{std::make_shared<shape>(create_three_way_well(
-      cpp_params, cpp_position, cpp_mainDir, cpp_branchDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_three_way_well(
+          cpp_params, cpp_position, cpp_mainDir, cpp_branchDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_four_way_well(four_way_well_params_t params) {
@@ -2320,7 +2360,7 @@ PRIMCAPICALL topo_shape_t *create_four_way_well(four_way_well_params_t params) {
       params.cushionExtension,
       params.cushionThickness};
   return new topo_shape_t{
-      std::make_shared<shape>(create_four_way_well(cpp_params))};
+      .shp = std::make_shared<shape>(create_four_way_well(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2359,8 +2399,9 @@ create_four_way_well_with_place(four_way_well_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDirection.x, xDirection.y, xDirection.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_four_way_well(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_four_way_well(
+          cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_pipe_row(pipe_row_params_t params) {
@@ -2397,7 +2438,8 @@ PRIMCAPICALL topo_shape_t *create_pipe_row(pipe_row_params_t params) {
     }
   }
 
-  return new topo_shape_t{std::make_shared<shape>(create_pipe_row(cpp_params))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_pipe_row(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_pipe_row_with_place(pipe_row_params_t params,
@@ -2441,8 +2483,8 @@ PRIMCAPICALL topo_shape_t *create_pipe_row_with_place(pipe_row_params_t params,
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_pipe_row(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_pipe_row(
+                              cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_trench(cable_trench_params_t params) {
@@ -2468,7 +2510,7 @@ PRIMCAPICALL topo_shape_t *create_cable_trench(cable_trench_params_t params) {
   }
 
   return new topo_shape_t{
-      std::make_shared<shape>(create_cable_trench(cpp_params))};
+      .shp = std::make_shared<shape>(create_cable_trench(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2499,8 +2541,9 @@ create_cable_trench_with_place(cable_trench_params_t params, pnt3d_t position,
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cable_trench(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_cable_trench(
+          cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_tunnel(cable_tunnel_params_t params) {
@@ -2528,7 +2571,7 @@ PRIMCAPICALL topo_shape_t *create_cable_tunnel(cable_tunnel_params_t params) {
   }
 
   return new topo_shape_t{
-      std::make_shared<shape>(create_cable_tunnel(cpp_params))};
+      .shp = std::make_shared<shape>(create_cable_tunnel(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2561,8 +2604,9 @@ create_cable_tunnel_with_place(cable_tunnel_params_t params, pnt3d_t position,
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cable_tunnel(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_cable_tunnel(
+          cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_tray(cable_tray_params_t params) {
@@ -2596,7 +2640,7 @@ PRIMCAPICALL topo_shape_t *create_cable_tray(cable_tray_params_t params) {
   }
 
   return new topo_shape_t{
-      std::make_shared<shape>(create_cable_tray(cpp_params))};
+      .shp = std::make_shared<shape>(create_cable_tray(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2635,15 +2679,16 @@ create_cable_tray_with_place(cable_tray_params_t params, pnt3d_t position,
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cable_tray(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_cable_tray(
+          cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_L_beam(cable_L_beam_params_t params) {
   cable_L_beam_params cpp_params{params.length, params.width, params.height};
 
   return new topo_shape_t{
-      std::make_shared<shape>(create_cable_L_beam(cpp_params))};
+      .shp = std::make_shared<shape>(create_cable_L_beam(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2655,8 +2700,8 @@ create_cable_L_beam_with_place(cable_L_beam_params_t params, pnt3d_t position,
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
   gp_Dir cpp_zDir(zDir.x, zDir.y, zDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cable_L_beam(cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_cable_L_beam(
+                              cpp_params, cpp_position, cpp_xDir, cpp_zDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_manhole(manhole_params_t params) {
@@ -2664,7 +2709,8 @@ PRIMCAPICALL topo_shape_t *create_manhole(manhole_params_t params) {
                             params.length, params.width, params.height,
                             params.wallThickness};
 
-  return new topo_shape_t{std::make_shared<shape>(create_manhole(cpp_params))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_manhole(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_manhole_with_place(manhole_params_t params,
@@ -2679,8 +2725,9 @@ PRIMCAPICALL topo_shape_t *create_manhole_with_place(manhole_params_t params,
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_manhole(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_manhole(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_manhole_cover(manhole_cover_params_t params) {
@@ -2689,7 +2736,7 @@ PRIMCAPICALL topo_shape_t *create_manhole_cover(manhole_cover_params_t params) {
       params.width, params.thickness};
 
   return new topo_shape_t{
-      std::make_shared<shape>(create_manhole_cover(cpp_params))};
+      .shp = std::make_shared<shape>(create_manhole_cover(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2703,14 +2750,16 @@ create_manhole_cover_with_place(manhole_cover_params_t params, pnt3d_t position,
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_manhole_cover(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_manhole_cover(
+          cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_ladder(ladder_params_t params) {
   ladder_params cpp_params{params.length, params.width, params.thickness};
 
-  return new topo_shape_t{std::make_shared<shape>(create_ladder(cpp_params))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_ladder(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_ladder_with_place(ladder_params_t params,
@@ -2723,15 +2772,17 @@ PRIMCAPICALL topo_shape_t *create_ladder_with_place(ladder_params_t params,
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_ladder(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_ladder(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_sump(sump_params_t params) {
   sump_params cpp_params{params.length, params.width, params.depth,
                          params.bottomThickness};
 
-  return new topo_shape_t{std::make_shared<shape>(create_sump(cpp_params))};
+  return new topo_shape_t{.shp =
+                              std::make_shared<shape>(create_sump(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_sump_with_place(sump_params_t params,
@@ -2745,8 +2796,8 @@ PRIMCAPICALL topo_shape_t *create_sump_with_place(sump_params_t params,
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_sump(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_sump(
+                              cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_footpath(footpath_params_t params) {
@@ -2761,7 +2812,8 @@ PRIMCAPICALL topo_shape_t *create_footpath(footpath_params_t params) {
     }
   }
 
-  return new topo_shape_t{std::make_shared<shape>(create_footpath(cpp_params))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_footpath(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_footpath_with_place(footpath_params_t params,
@@ -2783,8 +2835,9 @@ PRIMCAPICALL topo_shape_t *create_footpath_with_place(footpath_params_t params,
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_footpath(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_footpath(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_shaft_chamber(shaft_chamber_params_t params) {
@@ -2795,7 +2848,7 @@ PRIMCAPICALL topo_shape_t *create_shaft_chamber(shaft_chamber_params_t params) {
       params.outerWallThickness,   params.innerWallThickness};
 
   return new topo_shape_t{
-      std::make_shared<shape>(create_shaft_chamber(cpp_params))};
+      .shp = std::make_shared<shape>(create_shaft_chamber(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2811,8 +2864,9 @@ create_shaft_chamber_with_place(shaft_chamber_params_t params, pnt3d_t position,
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_shaft_chamber(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_shaft_chamber(
+          cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_tunnel_compartment_partition(
@@ -2822,8 +2876,9 @@ PRIMCAPICALL topo_shape_t *create_tunnel_compartment_partition(
     cpp_params.width = params.width;
     cpp_params.thickness = params.thickness;
 
-    return new topo_shape_t{std::make_shared<shape>(
-        create_tunnel_compartment_partition(cpp_params))};
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(
+            create_tunnel_compartment_partition(cpp_params))};
   } catch (...) {
     return nullptr;
   }
@@ -2845,8 +2900,9 @@ PRIMCAPICALL topo_shape_t *create_tunnel_compartment_partition_with_place(
     if (shp.IsNull()) {
       return nullptr;
     }
-    return new topo_shape_t{std::make_shared<shape>(
-        create_tunnel_compartment_partition(cpp_params, pos, norm, xdir))};
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(
+            create_tunnel_compartment_partition(cpp_params, pos, norm, xdir))};
   } catch (...) {
     return nullptr;
   }
@@ -2867,8 +2923,8 @@ create_tunnel_partition_board(tunnel_partition_board_params_t params) {
     }
   }
 
-  return new topo_shape_t{
-      std::make_shared<shape>(create_tunnel_partition_board(cpp_params))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(
+                              create_tunnel_partition_board(cpp_params))};
 }
 PRIMCAPICALL topo_shape_t *
 create_tunnel_partition_board_with_place(tunnel_partition_board_params_t params,
@@ -2891,8 +2947,9 @@ create_tunnel_partition_board_with_place(tunnel_partition_board_params_t params,
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(create_tunnel_partition_board(
-      cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_tunnel_partition_board(
+          cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2902,7 +2959,7 @@ create_ventilation_pavilion(ventilation_pavilion_params_t params) {
       params.topWidth,  params.middleWidth,  params.bottomWidth,
       params.topHeight, params.height,       params.baseHeight};
   return new topo_shape_t{
-      std::make_shared<shape>(create_ventilation_pavilion(cpp_params))};
+      .shp = std::make_shared<shape>(create_ventilation_pavilion(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -2916,16 +2973,17 @@ create_ventilation_pavilion_with_place(ventilation_pavilion_params_t params,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(create_ventilation_pavilion(
-      cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_ventilation_pavilion(
+          cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *
 create_straight_ventilation_duct(straight_ventilation_duct_params_t params) {
   straight_ventilation_duct_params cpp_params{
       params.diameter, params.wallThickness, params.height};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_straight_ventilation_duct(cpp_params))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(
+                              create_straight_ventilation_duct(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_straight_ventilation_duct_with_place(
@@ -2937,7 +2995,7 @@ PRIMCAPICALL topo_shape_t *create_straight_ventilation_duct_with_place(
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
   return new topo_shape_t{
-      std::make_shared<shape>(create_straight_ventilation_duct(
+      .shp = std::make_shared<shape>(create_straight_ventilation_duct(
           cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
@@ -2960,8 +3018,8 @@ create_oblique_ventilation_duct(oblique_ventilation_duct_params_t params) {
                                              params.baseRoomWallThickness,
                                              params.baseRoomWidth,
                                              params.baseRoomHeight};
-  return new topo_shape_t{
-      std::make_shared<shape>(create_oblique_ventilation_duct(cpp_params))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(
+                              create_oblique_ventilation_duct(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *create_oblique_ventilation_duct_with_place(
@@ -2988,7 +3046,7 @@ PRIMCAPICALL topo_shape_t *create_oblique_ventilation_duct_with_place(
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
   return new topo_shape_t{
-      std::make_shared<shape>(create_oblique_ventilation_duct(
+      .shp = std::make_shared<shape>(create_oblique_ventilation_duct(
           cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
@@ -2998,7 +3056,7 @@ PRIMCAPICALL topo_shape_t *create_drainage_well(drainage_well_params_t params) {
       params.neckDiameter,    params.neckHeight,   params.cushionExtension,
       params.bottomThickness, params.wallThickness};
   return new topo_shape_t{
-      std::make_shared<shape>(create_drainage_well(cpp_params))};
+      .shp = std::make_shared<shape>(create_drainage_well(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -3011,8 +3069,9 @@ create_drainage_well_with_place(drainage_well_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_drainage_well(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_drainage_well(
+          cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 // 辅助函数用于设置 pnt2d_t 数组元素
@@ -3044,7 +3103,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_support(pipe_support_params_t params) {
   cpp_params.height = params.height;
 
   return new topo_shape_t{
-      std::make_shared<shape>(create_pipe_support(cpp_params))};
+      .shp = std::make_shared<shape>(create_pipe_support(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -3067,8 +3126,9 @@ create_pipe_support_with_place(pipe_support_params_t params, pnt3d_t position,
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
 
-  return new topo_shape_t{std::make_shared<shape>(
-      create_pipe_support(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(create_pipe_support(
+          cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cover_plate(cover_plate_params_t params) {
@@ -3076,7 +3136,7 @@ PRIMCAPICALL topo_shape_t *create_cover_plate(cover_plate_params_t params) {
                                 params.width,       params.smallRadius,
                                 params.largeRadius, params.thickness};
   return new topo_shape_t{
-      std::make_shared<shape>(create_cover_plate(cpp_params))};
+      .shp = std::make_shared<shape>(create_cover_plate(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -3088,8 +3148,8 @@ create_cover_plate_with_place(cover_plate_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cover_plate(cpp_params, cpp_position, cpp_normal, cpp_xDir))};
+  return new topo_shape_t{.shp = std::make_shared<shape>(create_cover_plate(
+                              cpp_params, cpp_position, cpp_normal, cpp_xDir))};
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_ray(cable_ray_params_t params) {
@@ -3097,7 +3157,7 @@ PRIMCAPICALL topo_shape_t *create_cable_ray(cable_ray_params_t params) {
                               params.innerLength, params.innerHeight,
                               params.coverThickness};
   return new topo_shape_t{
-      std::make_shared<shape>(create_cable_ray(cpp_params))};
+      .shp = std::make_shared<shape>(create_cable_ray(cpp_params))};
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -3109,8 +3169,9 @@ create_cable_ray_with_place(cable_ray_params_t params, pnt3d_t position,
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-  return new topo_shape_t{std::make_shared<shape>(
-      create_cable_ray(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  return new topo_shape_t{
+      .shp = std::make_shared<shape>(
+          create_cable_ray(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
 }
 #ifdef __cplusplus
 }
