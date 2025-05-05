@@ -227,7 +227,9 @@ void test_make_arc() {
     Handle(Geom_TrimmedCurve) arsc =
         GC_MakeArcOfCircle(points[0], points[1], points[2]).Value();
 
-    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(arsc).Edge();
+    Handle_Geom_Curve curve = Handle(Geom_Curve)::DownCast(arsc);
+
+    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(curve).Edge();
 
     if (!edge.IsNull()) {
       std::cout << "Arc created successfully." << std::endl;
