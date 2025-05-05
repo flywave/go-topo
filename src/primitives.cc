@@ -125,7 +125,7 @@ create_rotational_ellipsoid(const rotational_ellipsoid_params &params) {
 
   // 绕X轴旋转360度生成完整椭球
   gp_Ax1 revolutionAxis(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0));
-  BRepPrimAPI_MakeRevol revolMaker(wire, revolutionAxis);
+  BRepPrimAPI_MakeRevol revolMaker(BRepLib_MakeFace(wire).Face(), revolutionAxis);
 
   if (!revolMaker.IsDone()) {
     throw Standard_ConstructionError("Revol operation failed");
@@ -1556,7 +1556,7 @@ TopoDS_Shape create_porcelain_bushing(const porcelain_bushing_params &params) {
     }
 
     // 旋转生成大伞裙
-    BRepPrimAPI_MakeRevol bigSkirtRevol(wire.Wire(),
+    BRepPrimAPI_MakeRevol bigSkirtRevol(BRepLib_MakeFace(wire.Wire()).Face(),
                                         gp_Ax1(gp::Origin(), gp::DZ()));
     bigSkirtRevol.Build();
     TopoDS_Shape bigSkirt = bigSkirtRevol.Shape();
@@ -1669,7 +1669,7 @@ create_cone_porcelain_bushing(const cone_porcelain_bushing_params &params) {
 
     // 旋转生成伞裙（360度）
 
-    BRepPrimAPI_MakeRevol bigSkirtRevol(wire.Wire(),
+    BRepPrimAPI_MakeRevol bigSkirtRevol(BRepLib_MakeFace(wire.Wire()).Face(),
                                         gp_Ax1(gp::Origin(), gp::DZ()));
     bigSkirtRevol.Build();
     TopoDS_Shape bigSkirt = bigSkirtRevol.Shape();
@@ -1835,7 +1835,9 @@ TopoDS_Shape create_insulator_string(const insulator_string_params &params) {
       wire.Add(BRepBuilderAPI_MakeEdge(endPoint, basePoint));
 
       gp_Ax1 rotAxis(gp_Pnt(xPos, yOffset, 0), gp_Dir(1, 0, 0));
-      TopoDS_Shape skirt = BRepPrimAPI_MakeRevol(wire.Wire(), rotAxis).Shape();
+      TopoDS_Shape skirt =
+          BRepPrimAPI_MakeRevol(BRepLib_MakeFace(wire.Wire()).Face(), rotAxis)
+              .Shape();
       builder.Add(compound, skirt);
     }
   }
@@ -2101,7 +2103,8 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
       gp_Ax1 rotAxis(segment_start, segment_vec.Normalized());
 
       // 生成旋转体（360度旋转）
-      BRepPrimAPI_MakeRevol skirtRevol(skirtWire.Wire(), rotAxis);
+      BRepPrimAPI_MakeRevol skirtRevol(
+          BRepLib_MakeFace(skirtWire.Wire()).Face(), rotAxis);
       if (!skirtRevol.IsDone()) {
         throw Standard_ConstructionError("Failed to create insulator skirt");
       }
@@ -6033,7 +6036,9 @@ TopoDS_Shape create_disk_insulator(const insulator_params &params) {
       wire.Add(BRepBuilderAPI_MakeEdge(p6, p1).Edge());
 
       gp_Ax1 axis(basePos, gp_Dir(0, 0, 1));
-      TopoDS_Shape shed = BRepPrimAPI_MakeRevol(wire.Wire(), axis).Shape();
+      TopoDS_Shape shed =
+          BRepPrimAPI_MakeRevol(BRepLib_MakeFace(wire.Wire()).Face(), axis)
+              .Shape();
 
       resultBuilder.Add(result, shed);
     }
@@ -6270,7 +6275,9 @@ TopoDS_Shape create_rod_insulator(const insulator_params &params) {
 
       // 旋转生成伞裙
       gp_Ax1 axis(p_base, gp_Dir(0, 0, 1));
-      TopoDS_Shape shed = BRepPrimAPI_MakeRevol(wire.Wire(), axis).Shape();
+      TopoDS_Shape shed =
+          BRepPrimAPI_MakeRevol(BRepLib_MakeFace(wire.Wire()).Face(), axis)
+              .Shape();
 
       insulatorBuilder.Add(insulator, shed);
     }
@@ -8317,7 +8324,7 @@ create_outdoor_cable_terminal(const cable_terminal_params &params) {
       }
 
       // 旋转生成伞裙 (360度)
-      BRepPrimAPI_MakeRevol skirtRevol(wire.Wire(),
+      BRepPrimAPI_MakeRevol skirtRevol(BRepLib_MakeFace(wire.Wire()).Face(),
                                        gp_Ax1(gp::Origin(), gp::DZ()));
       TopoDS_Shape skirt = skirtRevol.Shape();
       if (skirt.IsNull()) {
