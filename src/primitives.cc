@@ -125,7 +125,8 @@ create_rotational_ellipsoid(const rotational_ellipsoid_params &params) {
 
   // 绕X轴旋转360度生成完整椭球
   gp_Ax1 revolutionAxis(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0));
-  BRepPrimAPI_MakeRevol revolMaker(BRepLib_MakeFace(wire).Face(), revolutionAxis);
+  BRepPrimAPI_MakeRevol revolMaker(BRepLib_MakeFace(wire).Face(),
+                                   revolutionAxis);
 
   if (!revolMaker.IsDone()) {
     throw Standard_ConstructionError("Revol operation failed");

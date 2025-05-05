@@ -7,12 +7,14 @@
 #include "wire.hh"
 
 #include <BRepBuilderAPI_MakeEdge.hxx>
+#include <BRepBuilderAPI_MakePolygon.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepGProp.hxx>
 #include <BRepOffsetAPI_MakePipeShell.hxx>
 #include <GC_MakeArcOfCircle.hxx>
 #include <GProp_GProps.hxx>
+#include <StlAPI_Writer.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopoDS.hxx>
@@ -161,11 +163,17 @@ void test_clip_wire_between_distances() {
   // 创建直线段
   auto lineEdge = flywave::topo::edge::make_edge(p1, p2);
 
-  // 创建Spline段
-  auto splineEdge = flywave::topo::edge::make_spline({p2, p3, p4}, 1e-6);
+  // 创建圆弧段
+  GC_MakeArcOfCircle arc(p2, p3, p4);
+  if (!arc.IsDone()) {
+    std::cerr << "Error: Failed to create arc" << std::endl;
+    return;
+  }
+
+  auto arcEdge = flywave::topo::edge(BRepLib_MakeEdge(arc.Value()).Shape());
 
   // 组合成wire
-  std::vector<flywave::topo::edge> edges{lineEdge, splineEdge};
+  std::vector<flywave::topo::edge> edges{lineEdge, arcEdge};
   auto mixedWire = flywave::topo::wire::make_wire(edges);
 
   // 计算总长度
@@ -176,7 +184,7 @@ void test_clip_wire_between_distances() {
   std::vector<std::pair<double, double>> testRanges = {
       {0, totalLength / 4},                   // 第一段直线部分
       {totalLength / 4, totalLength / 2},     // 直线到圆弧过渡部分
-      {totalLength / 2, totalLength * 3 / 4}, // Spline段部分
+      {totalLength / 2, totalLength * 3 / 4}, // 圆弧段部分
       {totalLength / 4, totalLength * 3 / 4}, // 跨直线和圆弧
       {totalLength - 10, totalLength}         // 最后一段
   };
@@ -227,7 +235,9 @@ void test_make_arc() {
     Handle(Geom_TrimmedCurve) arsc =
         GC_MakeArcOfCircle(points[0], points[1], points[2]).Value();
 
-    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(arsc).Edge();
+    Handle_Geom_Curve curve = Handle(Geom_Curve)::DownCast(arsc);
+
+    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(curve).Edge();
 
     if (!edge.IsNull()) {
       std::cout << "Arc created successfully." << std::endl;
@@ -239,7 +249,107 @@ void test_make_arc() {
   }
 }
 
+void test_bug() {
+
+  std::vector<gp_Pnt> points2 = {
+      gp_Pnt(88.27510582562536, 47.17234171088785, 1.3518126332201064),
+      gp_Pnt(-2.002824238501489, 61.12643328495324, -7.24088457413018),
+      gp_Pnt(0, 0, 0)};
+
+  Handle(Geom_TrimmedCurve) arsc =
+      GC_MakeArcOfCircle(points2[0], points2[1], points2[2]).Value();
+
+  Handle_Geom_Curve curve = Handle(Geom_Curve)::DownCast(arsc);
+
+  TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(curve).Edge();
+  TopoDS_Wire path = BRepLib_MakeWire(edge).Wire();
+
+  // 获取路径起始点的切线方向
+  BRepAdaptor_CompCurve curveAdaptor(path);
+  gp_Pnt startPoint;
+  gp_Vec startTangent;
+  curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
+
+  // 在创建截面圆之前添加方向修正
+  gp_Dir tanDir = startTangent.Normalized();
+  gp_Dir refDir = gp::DZ(); // 默认参考方向为全局Y轴
+
+  gp_Ax2 sectionAxes(startPoint, tanDir, refDir);
+
+  // 创建变换对象
+  gp_Trsf trsf;
+  trsf.SetTransformation(sectionAxes, gp_Ax2(gp::Origin(), gp::DZ()));
+
+  // 创建点数组
+  std::vector<gp_Pnt> points1 = {
+      gp_Pnt(-3.4, 3.25, 0), gp_Pnt(-2.773, 4.717, 0), gp_Pnt(-1.553, 5.746, 0),
+      gp_Pnt(0, 6.115, 0),   gp_Pnt(1.553, 5.746, 0),  gp_Pnt(2.773, 4.717, 0),
+      gp_Pnt(3.4, 3.25, 0),  gp_Pnt(3.4, 0, 0),        gp_Pnt(-3.4, 0, 0),
+      gp_Pnt(-3.4, 3.25, 0) // 闭合多边形
+  };
+
+  std::vector<gp_Pnt> points = {
+    gp_Pnt(0, -3.4, 3.25),    // X=0, Y=-3.4, Z=3.25
+    gp_Pnt(0, -2.773, 4.717), 
+    gp_Pnt(0, -1.553, 5.746),
+    gp_Pnt(0, 0, 6.115),     
+    gp_Pnt(0, 1.553, 5.746),  
+    gp_Pnt(0, 2.773, 4.717), 
+    gp_Pnt(0, 3.4, 3.25),    
+    gp_Pnt(0, 3.4, 0),       
+    gp_Pnt(0, -3.4, 0),      
+    gp_Pnt(0, -3.4, 3.25)    // 闭合多边形
+};
+  // 创建多边形构建器
+  BRepBuilderAPI_MakePolygon polygonMaker;
+
+  // 添加所有点
+  for (const auto &point : points) {
+    gp_Pnt p = sectionAxes.Location().Translated(
+         gp_Vec(point.Z(), point.Y(), 0).Transformed(trsf));
+    polygonMaker.Add(p);
+  }
+
+  // 检查是否成功创建
+  if (!polygonMaker.IsDone()) {
+    throw Standard_ConstructionError("Failed to create polygon");
+  }
+
+  // 获取结果Wire
+  TopoDS_Wire section = polygonMaker.Wire();
+
+  // 创建管道形状
+  BRepOffsetAPI_MakePipeShell pipeMaker(BRepLib_MakeWire(edge).Wire());
+  pipeMaker.Add(section, Standard_False, Standard_True);
+  pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
+  pipeMaker.Build();
+
+  if (!pipeMaker.IsDone()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
+
+  if (!pipeMaker.MakeSolid()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
+
+  auto shp = pipeMaker.Shape();
+  if (shp.IsNull()) {
+    throw std::runtime_error("Failed to create a solid object from sweep");
+  }
+
+  // 对形状进行网格化（三角剖分）
+  BRepMesh_IncrementalMesh mesher(shp, 0.5, false, 0.3);
+  mesher.Perform();
+
+  // 创建 STL 写入器
+  StlAPI_Writer stlWriter;
+
+  // 执行导出
+  bool success = stlWriter.Write(shp, "./output_bug.stl");
+}
+
 int main() {
-  test_make_arc();
+  test_clip_wire_between_distances();
+  test_bug();
   return 0;
 }
