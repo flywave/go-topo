@@ -1608,14 +1608,8 @@ gp_Pnt profile_project_point(profile_projection *proj, gp_Pnt point) {
 
 double wrie_length(wire path) {
   try {
-    // 计算路径总长度
-    GProp_GProps props;
-    BRepGProp::LinearProperties(path.value(), props);
-    double totalLength = props.Mass();
-
-    return totalLength;
+    return path.length();
   } catch (const std::exception &e) {
-    std::cerr << "Error calculating wire length: " << e.what() << std::endl;
     return 0.0;
   }
 }

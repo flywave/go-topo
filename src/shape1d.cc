@@ -104,32 +104,6 @@ Handle(Geom_Curve) shape1d::approx_curve(double tolerance,
   return approx.Curve();
 }
 
-Handle(Adaptor3d_Curve) shape1d::get_geom() const {
-  if (this->is_null()) {
-    throw std::invalid_argument("Input shape is null");
-  }
-
-  int edgeCount = 0;
-  for (TopExp_Explorer exp(this->value(), TopAbs_EDGE); exp.More();
-       exp.Next()) {
-    edgeCount++;
-  }
-
-  if (edgeCount == 0) {
-    throw std::invalid_argument("Shape contains no edges");
-  }
-
-  if (edgeCount == 1) {
-    TopExp_Explorer exp(this->value(), TopAbs_EDGE);
-    const TopoDS_Edge &edge = TopoDS::Edge(exp.Current());
-    return new BRepAdaptor_Curve(edge);
-  } else if (this->value().ShapeType() == TopAbs_WIRE) {
-    return new BRepAdaptor_CompCurve(TopoDS::Wire(this->value()));
-  } else {
-    throw std::invalid_argument("Unsupported shape type for compound curve");
-  }
-}
-
 gp_Pnt shape1d::start_point() const {
   if (this->is_null()) {
     throw std::invalid_argument("Input shape is null");
@@ -167,13 +141,17 @@ double shape1d::param_at(double d) const {
 
 double shape1d::param_at(gp_Pnt point) const {
   auto curve = this->get_geom();
-  auto geomCurve = this->get_curve();
-  if (geomCurve.IsNull()) {
-    throw std::invalid_argument("Geometric curve is null");
+
+  Handle_Geom_Curve _curve;
+
+  if (curve->DynamicType() == STANDARD_TYPE(BRepAdaptor_Curve)) {
+    _curve = Handle(BRepAdaptor_Curve)::DownCast(curve)->Curve().Curve();
+  } else {
+    _curve = this->approx_curve();
   }
 
-  GeomAPI_ProjectPointOnCurve projector(
-      point, geomCurve, curve->FirstParameter(), curve->LastParameter());
+  GeomAPI_ProjectPointOnCurve projector(point, _curve, curve->FirstParameter(),
+                                        curve->LastParameter());
 
   if (projector.NbPoints() == 0) {
     throw std::runtime_error("Projection failed");
@@ -187,14 +165,22 @@ std::vector<double> shape1d::params(const std::vector<gp_Pnt> &points,
   if (points.empty()) {
     throw std::invalid_argument("Point list is empty");
   }
+
   auto curve = this->get_geom();
-  auto geomCurve = this->get_curve();
 
   std::vector<double> parameters;
   parameters.reserve(points.size());
 
+  Handle_Geom_Curve _curve;
+
+  if (curve->DynamicType() == STANDARD_TYPE(BRepAdaptor_Curve)) {
+    _curve = Handle(BRepAdaptor_Curve)::DownCast(curve)->Curve().Curve();
+  } else {
+    _curve = this->approx_curve(tol);
+  }
+
   GeomAPI_ProjectPointOnCurve projector;
-  projector.Init(geomCurve, curve->FirstParameter(), curve->LastParameter());
+  projector.Init(_curve, _curve->FirstParameter(), _curve->LastParameter());
 
   for (const auto &point : points) {
     projector.Perform(point);
