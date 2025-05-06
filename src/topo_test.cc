@@ -369,7 +369,7 @@ void test_profile() {
   BRepAdaptor_CompCurve pathAdaptor(pathWire);
   gp_Pnt startParam, endParam;
   pathAdaptor.D0(pathAdaptor.FirstParameter(),
-                 startParam); // 获取精确起点参数
+                 startParam);                            // 获取精确起点参数
   pathAdaptor.D0(pathAdaptor.LastParameter(), endParam); // 获取精确终点参数
 
   // 创建起始圆形截面 (半径10)
@@ -469,7 +469,7 @@ void test_sweep() {
     BRepAdaptor_CompCurve pathAdaptor(pathWire1);
     gp_Pnt startParam, endParam;
     pathAdaptor.D0(pathAdaptor.FirstParameter(),
-                   startParam); // 获取精确起点参数
+                   startParam);                            // 获取精确起点参数
     pathAdaptor.D0(pathAdaptor.LastParameter(), endParam); // 获取精确终点参数
 
     // 创建中间圆形截面 (半径15)
@@ -526,7 +526,52 @@ void test_sweep() {
   }
 }
 
+void test_profile_projection() {
+  std::cout << "\n=== Testing Profile Projection ===" << std::endl;
+
+  // 创建路径 (直线+圆弧)
+  gp_Pnt p1(0, 0, 0);
+  gp_Pnt p2(100, 0, 0);
+  gp_Pnt p3(150, 50, 0);
+  gp_Pnt p4(200, 0, 0);
+
+  auto lineEdge = flywave::topo::edge::make_edge(p1, p2);
+  GC_MakeArcOfCircle arc(p2, p3, p4);
+  auto arcEdge = flywave::topo::edge(BRepLib_MakeEdge(arc.Value()).Shape());
+  std::vector<flywave::topo::edge> edges{lineEdge, arcEdge};
+  auto pathWire = flywave::topo::wire::make_wire(edges);
+
+  // 测试不同位置的投影
+  gp_Dir upDir(0, 0, 1); // Z-up方向
+  std::vector<gp_Pnt> testPositions = {
+      p1,                 // 起点
+      gp_Pnt(50, 0, 0),   // 直线中点
+      p2,                 // 直线终点/圆弧起点
+      gp_Pnt(125, 25, 0), // 圆弧中点
+      p4                  // 终点
+  };
+
+  for (const auto &pos : testPositions) {
+    std::cout << "\nTesting projection at point: (" << pos.X() << ", "
+              << pos.Y() << ", " << pos.Z() << ")" << std::endl;
+
+    // 计算带位置的投影
+    auto proj = flywave::topo::cacl_profile_projection(pathWire, upDir, pos);
+
+    // 测试投影点
+    gp_Pnt testPoint(0, 10, 5); // 原始点 (profile space)
+    gp_Pnt projectedPoint =
+        flywave::topo::profile_project_point(&proj, testPoint);
+
+    std::cout << "Original point: (" << testPoint.X() << ", " << testPoint.Y()
+              << ", " << testPoint.Z() << ")" << std::endl;
+    std::cout << "Projected point: (" << projectedPoint.X() << ", "
+              << projectedPoint.Y() << ", " << projectedPoint.Z() << ")"
+              << std::endl;
+  }
+}
+
 int main() {
-  test_sweep();
+  test_profile_projection();
   return 0;
 }
