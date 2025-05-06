@@ -1455,6 +1455,10 @@ wire clip_wire_between_distances(const wire &wire_path, double start_distance,
   for (; edgeExplorer.More(); edgeExplorer.Next()) {
     const TopoDS_Edge &edge = TopoDS::Edge(edgeExplorer.Current());
 
+    // 获取原始边的定位和方向
+    const TopLoc_Location &edgeLoc = edge.Location();
+    TopAbs_Orientation edgeOrientation = edge.Orientation();
+
     // 计算当前边的长度
     GProp_GProps edgeProps;
     BRepGProp::LinearProperties(edge, edgeProps);
@@ -1464,9 +1468,13 @@ wire clip_wire_between_distances(const wire &wire_path, double start_distance,
     double edgeEnd = accumulatedLength + edgeLength;
 
     // 检查边是否在区间内
-    if (edgeEnd <= start_distance || edgeStart >= end_distance) {
+    if (edgeEnd <= start_distance) {
       accumulatedLength += edgeLength;
       continue;
+    }
+
+    if (edgeStart >= end_distance) {
+      break;
     }
 
     // 获取边的几何曲线
@@ -1496,11 +1504,18 @@ wire clip_wire_between_distances(const wire &wire_path, double start_distance,
     }
 
     // 创建截取后的曲线
-    Handle(Geom_TrimmedCurve) trimmedCurve = new Geom_TrimmedCurve(
-        curve, param1, param2); // 第三个参数为true表示保持方向
+    Handle(Geom_TrimmedCurve) trimmedCurve =
+        new Geom_TrimmedCurve(curve, param1, param2);
 
-    // 创建新的边
-    wireBuilder.Add(BRepBuilderAPI_MakeEdge(trimmedCurve).Edge());
+    BRepBuilderAPI_MakeEdge makeEdge(trimmedCurve);
+    if (!makeEdge.IsDone())
+      continue;
+
+    TopoDS_Edge newEdge = makeEdge.Edge();
+    newEdge.Location(edgeLoc);
+    newEdge.Orientation(edgeOrientation);
+
+    wireBuilder.Add(newEdge);
 
     accumulatedLength += edgeLength;
   }
