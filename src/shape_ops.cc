@@ -1473,12 +1473,15 @@ wire clip_wire_between_distances(const wire &wire_path, double start_distance,
     BRepAdaptor_Curve curveAdaptor(edge);
     Handle(Geom_Curve) curve = curveAdaptor.Curve().Curve();
 
+    // 检查曲线是否是周期性的(如圆弧)
+    bool isPeriodic = curve->IsPeriodic();
+    double period = isPeriodic ? curve->Period() : 0.0;
+
     // 计算截取参数
     double param1 = curveAdaptor.FirstParameter();
     double param2 = curveAdaptor.LastParameter();
 
     if (edgeStart < start_distance && edgeEnd > start_distance) {
-      // 计算起始截取点
       double ratio = (start_distance - edgeStart) / edgeLength;
       param1 = curveAdaptor.FirstParameter() +
                ratio * (curveAdaptor.LastParameter() -
@@ -1486,7 +1489,6 @@ wire clip_wire_between_distances(const wire &wire_path, double start_distance,
     }
 
     if (edgeStart < end_distance && edgeEnd > end_distance) {
-      // 计算结束截取点
       double ratio = (end_distance - edgeStart) / edgeLength;
       param2 = curveAdaptor.FirstParameter() +
                ratio * (curveAdaptor.LastParameter() -
@@ -1494,8 +1496,8 @@ wire clip_wire_between_distances(const wire &wire_path, double start_distance,
     }
 
     // 创建截取后的曲线
-    Handle(Geom_TrimmedCurve) trimmedCurve =
-        new Geom_TrimmedCurve(curve, param1, param2);
+    Handle(Geom_TrimmedCurve) trimmedCurve = new Geom_TrimmedCurve(
+        curve, param1, param2); // 第三个参数为true表示保持方向
 
     // 创建新的边
     wireBuilder.Add(BRepBuilderAPI_MakeEdge(trimmedCurve).Edge());
