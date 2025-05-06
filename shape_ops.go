@@ -425,8 +425,12 @@ func (p *ProfileProjection) GeTangent() Vector3 {
 	}
 }
 
-func CalcProfileProjection(wire *Wire, up Dir3) ProfileProjection {
-	result := C.topo_calc_profile_projection(wire.inner.val, up.val)
+func CalcProfileProjection(wire *Wire, up Dir3, pos *Point3) ProfileProjection {
+	var cPos *C.pnt3d_t
+	if pos != nil {
+		cPos = &pos.val
+	}
+	result := C.topo_calc_profile_projection(wire.inner.val, up.val, cPos)
 	return ProfileProjection{inner: result}
 }
 

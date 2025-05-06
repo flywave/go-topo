@@ -24,6 +24,7 @@
 #include <BRepTools.hxx>
 #include <BRep_Builder.hxx>
 #include <GProp_GProps.hxx>
+#include <GeomAPI_ProjectPointOnCurve.hxx>
 #include <GeomAbs_JoinType.hxx>
 #include <GeomAbs_Shape.hxx>
 #include <Geom_TrimmedCurve.hxx>
@@ -1509,12 +1510,24 @@ wire clip_wire_between_distances(const wire &wire_path, double start_distance,
   return wire(wireBuilder.Wire());
 }
 
-profile_projection cacl_profile_projection(wire path, gp_Dir upDir) {
+profile_projection cacl_profile_projection(wire path, gp_Dir upDir,
+                                           boost::optional<gp_Pnt> pos) {
   // 获取路径起始点的切线方向
   BRepAdaptor_CompCurve curveAdaptor(path.value());
+  Standard_Real param = curveAdaptor.FirstParameter();
+  if (pos) {
+    GeomAPI_ProjectPointOnCurve projector;
+    projector.Init(path.get_curve(), curveAdaptor.FirstParameter(),
+                   curveAdaptor.LastParameter());
+    projector.Perform(*pos);
+    if (projector.NbPoints() == 0) {
+      throw std::runtime_error("Projection failed for point");
+    }
+    param = projector.LowerDistanceParameter();
+  }
   gp_Pnt startPoint;
   gp_Vec startTangent;
-  curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
+  curveAdaptor.D1(param, startPoint, startTangent);
 
   // 在创建截面圆之前添加方向修正
   gp_Dir tanDir = startTangent.Normalized();
