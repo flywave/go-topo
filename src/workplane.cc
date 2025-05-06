@@ -2165,7 +2165,7 @@ workplane::sweep(const topo::wire &path, bool multisection, bool makeSolid,
 }
 
 std::shared_ptr<workplane>
-workplane::sweep(const edge &path, bool multisection, bool makeSolid,
+workplane::sweep(const topo::edge &path, bool multisection, bool makeSolid,
                  bool isFrenet, bool combine, bool clean,
                  const transition_mode &transition,
                  const boost::optional<topo_vector> &normal,

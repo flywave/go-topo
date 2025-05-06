@@ -1023,7 +1023,7 @@ topo_vector sketch::end_point() {
 sketch &sketch::edge(const topo::edge &val,
                      const boost::optional<std::string> &tag,
                      bool for_construction) {
-  const_cast<topo::edge &>(val).set_for_construction(for_construction);
+  val.set_for_construction(for_construction);
   edges_.push_back(val);
 
   if (tag) {
@@ -1166,6 +1166,7 @@ sketch &sketch::constrain(const std::string &tag,
   constraints_.emplace_back(
       std::vector<std::string>({tag}),
       std::vector<topo::edge>({*edge->cast<topo::edge>()}), constraint, arg);
+
   return *this;
 }
 

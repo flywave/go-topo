@@ -1671,7 +1671,7 @@ std::vector<shape> shape::get_shapes(TopAbs_ShapeEnum kind) const {
   return result;
 }
 
-void shape::set_for_construction(bool for_construction) {
+void shape::set_for_construction(bool for_construction) const {
   _for_construction = for_construction;
 }
 

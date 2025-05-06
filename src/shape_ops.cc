@@ -1527,24 +1527,57 @@ wire clip_wire_between_distances(const wire &wire_path, double start_distance,
   return wire(wireBuilder.Wire());
 }
 
+std::pair<gp_Pnt, gp_Vec> project_point_on_wire(const TopoDS_Wire &wire,
+                                                const gp_Pnt &point) {
+  double minDist = DBL_MAX;
+  gp_Pnt closestPoint;
+  gp_Vec tangent;
+
+  // 遍历Wire中的所有Edge
+  for (TopExp_Explorer exp(wire, TopAbs_EDGE); exp.More(); exp.Next()) {
+    const TopoDS_Edge &edge = TopoDS::Edge(exp.Current());
+
+    // 获取Edge的曲线和参数范围
+    Standard_Real first, last;
+    Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, first, last);
+    BRepAdaptor_Curve compCurve(edge);
+
+    // 计算投影
+    GeomAPI_ProjectPointOnCurve projector(point, curve, first, last);
+    if (projector.NbPoints() > 0) {
+      gp_Pnt projectedPoint;
+      gp_Vec projectedTangent;
+      compCurve.D1(projector.LowerDistanceParameter(), projectedPoint,
+                   projectedTangent);
+      double dist = point.Distance(projectedPoint);
+      if (dist < minDist) {
+        minDist = dist;
+        tangent = projectedTangent;
+        closestPoint = projectedPoint;
+      }
+    }
+  }
+
+  if (minDist == DBL_MAX) {
+    throw std::runtime_error("Projection failed on wire");
+  }
+
+  return {closestPoint, tangent};
+}
+
 profile_projection cacl_profile_projection(wire path, gp_Dir upDir,
                                            boost::optional<gp_Pnt> pos) {
   // 获取路径起始点的切线方向
   BRepAdaptor_CompCurve curveAdaptor(path.value());
-  Standard_Real param = curveAdaptor.FirstParameter();
-  if (pos) {
-    GeomAPI_ProjectPointOnCurve projector;
-    projector.Init(path.get_curve(), curveAdaptor.FirstParameter(),
-                   curveAdaptor.LastParameter());
-    projector.Perform(*pos);
-    if (projector.NbPoints() == 0) {
-      throw std::runtime_error("Projection failed for point");
-    }
-    param = projector.LowerDistanceParameter();
-  }
   gp_Pnt startPoint;
   gp_Vec startTangent;
-  curveAdaptor.D1(param, startPoint, startTangent);
+  if (pos) {
+    auto pair = project_point_on_wire(path.value(), *pos);
+    startPoint = pair.first;
+    startTangent = pair.second;
+  } else {
+    curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
+  }
 
   // 在创建截面圆之前添加方向修正
   gp_Dir tanDir = startTangent.Normalized();

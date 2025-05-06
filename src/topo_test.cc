@@ -631,40 +631,41 @@ void test_sweep() {
   }
 }
 
+
 void test_profile_projection() {
   std::cout << "\n=== Testing Profile Projection ===" << std::endl;
 
   // 创建路径 (直线+圆弧)
   gp_Pnt p1(0, 0, 0);
-  gp_Pnt p2(100, 0, 0);
-  gp_Pnt p3(150, 50, 0);
-  gp_Pnt p4(200, 0, 0);
+  gp_Pnt p2(196.83821527427062, 64.74109684024006, 44.808894059155136);
+
 
   auto lineEdge = flywave::topo::edge::make_edge(p1, p2);
-  GC_MakeArcOfCircle arc(p2, p3, p4);
-  auto arcEdge = flywave::topo::edge(BRepLib_MakeEdge(arc.Value()).Shape());
-  std::vector<flywave::topo::edge> edges{lineEdge, arcEdge};
-  auto pathWire = flywave::topo::wire::make_wire(edges);
+  auto pathWire = flywave::topo::wire::make_wire(lineEdge);
+    
+    // 计算路径总长度
+    GProp_GProps props;
+    BRepGProp::LinearProperties(pathWire, props);
+    double totalLength = props.Mass();
+    
+    double len = 64.100861;
+    
+    double ratio =  len /totalLength;
+
+    BRepAdaptor_CompCurve pathAdaptor(pathWire.value());
+    gp_Pnt _pos;
+    pathAdaptor.D0(pathAdaptor.FirstParameter() + (pathAdaptor.LastParameter() - pathAdaptor.FirstParameter()) * ratio, _pos); // 获取精确终点参数
+
 
   // 测试不同位置的投影
-  gp_Dir upDir(0, 0, 1); // Z-up方向
-  std::vector<gp_Pnt> testPositions = {
-      p1,                 // 起点
-      gp_Pnt(50, 0, 0),   // 直线中点
-      p2,                 // 直线终点/圆弧起点
-      gp_Pnt(125, 25, 0), // 圆弧中点
-      p4                  // 终点
-  };
-
-  for (const auto &pos : testPositions) {
-    std::cout << "\nTesting projection at point: (" << pos.X() << ", "
-              << pos.Y() << ", " << pos.Z() << ")" << std::endl;
-
+  gp_Dir upDir(-0.37125487348195574,0.7200820747659262,0.5862180690806932); // Z-up方向
+//gp_Pnt(59.5161544248291,19.575167920556733,13.548451730851868)
+    
     // 计算带位置的投影
-    auto proj = flywave::topo::cacl_profile_projection(pathWire, upDir, pos);
+    auto proj = flywave::topo::cacl_profile_projection(pathWire, upDir,_pos );
 
     // 测试投影点
-    gp_Pnt testPoint(0, 10, 5); // 原始点 (profile space)
+    gp_Pnt testPoint(59.5161544248291,19.575167920556733,13.548451730851868); // 原始点 (profile space)
     gp_Pnt projectedPoint =
         flywave::topo::profile_project_point(&proj, testPoint);
 
@@ -673,10 +674,9 @@ void test_profile_projection() {
     std::cout << "Projected point: (" << projectedPoint.X() << ", "
               << projectedPoint.Y() << ", " << projectedPoint.Z() << ")"
               << std::endl;
-  }
 }
 
 int main() {
-  test_sweep();
+    test_profile_projection();
   return 0;
 }

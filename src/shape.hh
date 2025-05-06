@@ -247,7 +247,7 @@ public:
   virtual std::vector<solid> solids() const;
   virtual std::vector<comp_solid> comp_solids() const;
 
-  void set_for_construction(bool for_construction);
+  void set_for_construction(bool for_construction) const;
 
   virtual int num_vertices() const { return num_entities(TopAbs_VERTEX); }
   virtual int num_edges() const { return num_entities(TopAbs_EDGE); }
@@ -320,7 +320,7 @@ protected:
   Quantity_Color _surface_colour;
   Quantity_Color _curve_colour;
 
-  bool _for_construction;
+  mutable bool _for_construction;
 
   TopoDS_Shape _shape;
 

@@ -357,8 +357,9 @@ public:
         const boost::optional<topo_vector> &normal = boost::none,
         const std::shared_ptr<workplane> &auxSpine = nullptr);
   std::shared_ptr<workplane>
-  sweep(const edge &path, bool multisection = false, bool makeSolid = true,
-        bool isFrenet = false, bool combine = true, bool clean = true,
+  sweep(const topo::edge &path, bool multisection = false,
+        bool makeSolid = true, bool isFrenet = false, bool combine = true,
+        bool clean = true,
         const transition_mode &transition = transition_mode::RIGHT,
         const boost::optional<topo_vector> &normal = boost::none,
         const std::shared_ptr<workplane> &auxSpine = nullptr);
