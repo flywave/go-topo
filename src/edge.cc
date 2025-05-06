@@ -826,14 +826,20 @@ boost::variant<wire, edge> edge::close() const {
 
 gp_Pnt edge::arc_center() const {
   shape_geom_type g = this->geom_type();
-  Handle(Adaptor3d_Curve) a = this->get_geom();
+  Handle(Adaptor3d_Curve) curve = this->get_geom();
 
-  auto curve = dynamic_cast<BRepAdaptor_Curve &>(*a);
+  Handle_BRepAdaptor_Curve _curve;
+
+  if (curve->DynamicType() == STANDARD_TYPE(BRepAdaptor_Curve)) {
+    _curve = Handle(BRepAdaptor_Curve)::DownCast(curve);
+  } else {
+    throw std::runtime_error(" is not a curve");
+  }
 
   if (g == shape_geom_circle) {
-    return (curve.Circle().Position().Location());
+    return (_curve->Circle().Position().Location());
   } else if (g == shape_geom_ellipse) {
-    return (curve.Ellipse().Position().Location());
+    return (_curve->Ellipse().Position().Location());
   } else {
     throw std::runtime_error(" has no arc center");
   }

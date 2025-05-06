@@ -2250,12 +2250,12 @@ int solid::convert_to_nurbs() {
   try {
     BRepBuilderAPI_NurbsConvert nc;
     nc.Perform(_shape);
-    TopoDS_Shape Slocal = nc.Shape();
+    TopoDS_Shape slocal = nc.Shape();
 
-    if (Slocal.IsNull())
+    if (slocal.IsNull())
       throw std::runtime_error("Shell operation resulted in Null shape");
 
-    _shape = Slocal;
+    _shape = slocal;
 
     if (!this->fix_shape())
       throw std::runtime_error("Shapes not valid");
