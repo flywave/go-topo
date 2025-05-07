@@ -1532,10 +1532,26 @@ profile_projection cacl_profile_projection(wire path, gp_Dir upDir,
   // 获取路径起始点的切线方向
   gp_Pnt startPoint;
   gp_Vec startTangent;
+  BRepAdaptor_CompCurve curveAdaptor(path.value());
+
   if (offset) {
-   
+    double length = path.length();
+
+    if (*offset > length) {
+      *offset = length;
+    }
+
+    if (*offset < 0) {
+      *offset = 0;
+    }
+
+    double ratio = *offset / length;
+    curveAdaptor.D1(
+        curveAdaptor.FirstParameter() +
+            (curveAdaptor.LastParameter() - curveAdaptor.FirstParameter()) *
+                ratio,
+        startPoint, startTangent);
   } else {
-    BRepAdaptor_CompCurve curveAdaptor(path.value());
     curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
   }
 

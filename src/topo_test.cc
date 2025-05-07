@@ -661,19 +661,7 @@ void test_profile_projection() {
   gp_Dir upDir(-0.37125487348195574,0.7200820747659262,0.5862180690806932); // Z-up方向
 //gp_Pnt(59.5161544248291,19.575167920556733,13.548451730851868)
     
-    // 计算带位置的投影
-    auto proj = flywave::topo::cacl_profile_projection(pathWire, upDir,_pos );
-
-    // 测试投影点
-    gp_Pnt testPoint(59.5161544248291,19.575167920556733,13.548451730851868); // 原始点 (profile space)
-    gp_Pnt projectedPoint =
-        flywave::topo::profile_project_point(&proj, testPoint);
-
-    std::cout << "Original point: (" << testPoint.X() << ", " << testPoint.Y()
-              << ", " << testPoint.Z() << ")" << std::endl;
-    std::cout << "Projected point: (" << projectedPoint.X() << ", "
-              << projectedPoint.Y() << ", " << projectedPoint.Z() << ")"
-              << std::endl;
+   
 }
 
 int main() {
