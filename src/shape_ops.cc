@@ -1571,8 +1571,10 @@ profile_projection cacl_profile_projection(wire path, gp_Dir upDir,
 
   trsf.SetTransformation(sectionAxes, gp_Ax2(gp::Origin(), gp::DZ()));
 
-  return {
-      .axes = sectionAxes, .trsf = trsf, .tangent = startTangent.Normalized()};
+  return {.axes = sectionAxes,
+          .trsf = trsf,
+          .tangent = startTangent.Normalized(),
+          .position = startPoint};
 }
 
 gp_Pnt profile_project_point(profile_projection *proj, gp_Pnt point) {

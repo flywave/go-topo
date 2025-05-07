@@ -178,6 +178,7 @@ struct profile_projection {
   gp_Ax2 axes;
   gp_Trsf trsf;
   gp_Vec tangent;
+  gp_Pnt position;
 };
 
 profile_projection

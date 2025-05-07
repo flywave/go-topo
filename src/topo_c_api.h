@@ -1556,6 +1556,7 @@ typedef struct {
   axis2_t axes;
   trsf_t trsf;
   vec3d_t tangent;
+  pnt3d_t position;
 } topo_profile_projection_t;
 
 TOPOCAPICALL topo_profile_projection_t

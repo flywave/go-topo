@@ -5975,6 +5975,7 @@ topo_calc_profile_projection(topo_wire_t path, dir3d_t upDir, double *offset) {
   result.axes = cast_from_gp(section.axes);
   result.trsf = cast_from_gp(section.trsf);
   result.tangent = cast_from_gp(section.tangent);
+  result.position = cast_from_gp(section.position);
   return result;
 }
 

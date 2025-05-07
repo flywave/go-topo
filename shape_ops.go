@@ -425,6 +425,12 @@ func (p *ProfileProjection) GeTangent() Vector3 {
 	}
 }
 
+func (p *ProfileProjection) GePosition() Point3 {
+	return Point3{
+		val: p.inner.position,
+	}
+}
+
 func CalcProfileProjection(wire *Wire, up Dir3, offset *float64) ProfileProjection {
 	var cOffset *C.double
 	if offset != nil {
