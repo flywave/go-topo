@@ -752,7 +752,7 @@ void shape::set_location(const topo_location &loc) { _shape.Location(loc); }
 
 shape shape::located(const topo_location &loc) const {
   shape result(value().Located(loc));
-  // result.forConstruction_ = forConstruction_;
+  result._for_construction = _for_construction;
   return result;
 }
 
@@ -762,7 +762,6 @@ int shape::move(const topo_location &loc) {
   return 1;
 }
 
-// Apply translation and rotation in relative sense to self
 int shape::move(double x, double y, double z, double rx, double ry, double rz) {
   topo_location loc(gp_Vec(x, y, z), rx, ry, rz);
   gp_Trsf trsf = loc;
@@ -770,7 +769,6 @@ int shape::move(double x, double y, double z, double rx, double ry, double rz) {
   return 1;
 }
 
-// Apply a vector in relative sense to self
 int shape::move(const gp_Vec &vec) {
   gp_Trsf trsf;
   trsf.SetTranslation(vec);
@@ -778,19 +776,15 @@ int shape::move(const gp_Vec &vec) {
   return 1;
 }
 
-// Moved methods (create new transformed shapes)
-
-// Apply a location in relative sense to a copy
 shape shape::moved(const topo_location &loc) const {
   gp_Trsf trsf = loc;
   TopoDS_Shape movedShape =
       BRepBuilderAPI_Transform(value(), trsf, true).Shape();
   shape result(movedShape);
-  // result.forConstruction_ = forConstruction_;
+  result._for_construction = _for_construction;
   return result;
 }
 
-// Apply multiple locations
 shape shape::moved(std::initializer_list<topo_location> locs) const {
   return moved(std::vector<topo_location>(locs));
 }
@@ -806,7 +800,6 @@ shape shape::moved(const std::vector<topo_location> &locs) const {
     return shape(shapeList.First());
   }
 
-  // Combine multiple results into a compound
   TopoDS_Compound compound;
   BRep_Builder builder;
   builder.MakeCompound(compound);
@@ -818,7 +811,6 @@ shape shape::moved(const std::vector<topo_location> &locs) const {
   return shape(compound);
 }
 
-// Apply translation and rotation in relative sense to a copy
 shape shape::moved(double x, double y, double z, double rx, double ry,
                    double rz) const {
   topo_location loc(gp_Vec(x, y, z), rx, ry, rz);
@@ -826,14 +818,12 @@ shape shape::moved(double x, double y, double z, double rx, double ry,
   return moved(topo_location(trsf));
 }
 
-// Apply a vector in relative sense to a copy
 shape shape::moved(const gp_Vec &vec) const {
   gp_Trsf trsf;
   trsf.SetTranslation(vec);
   return moved(topo_location(trsf));
 }
 
-// Apply multiple vectors in relative sense to a copy
 shape shape::moved(std::initializer_list<gp_Vec> vecs) const {
   std::vector<topo_location> locs;
   for (const auto &vec : vecs) {
@@ -1574,7 +1564,7 @@ boost::optional<shape> shape::to_splines(int degree, double tolerance,
                                       tolerance, // 3D容差
                                       tolerance, // 2D容差
                                       degree,
-                                      1,             // 段数 (被degree参数主导)
+                                      1, // 段数 (被degree参数主导)
                                       GeomAbs_C0,    // 连续性
                                       GeomAbs_C0,    // 连续性
                                       Standard_True, // degree参数主导
