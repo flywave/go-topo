@@ -636,19 +636,32 @@ void test_profile_projection() {
   std::cout << "\n=== Testing Profile Projection ===" << std::endl;
 
   // 创建路径 (直线+圆弧)
-  gp_Pnt p1(0, 0, 0);
-  gp_Pnt p2(196.83821527427062, 64.74109684024006, 44.808894059155136);
+    std::vector<gp_Pnt> arcPoints = {
+        gp_Pnt(0, 0, 0),
+        gp_Pnt(-33.91682722046971, 21.064596123062074, -50.42796690296382),
+        gp_Pnt(-90.27793006412685, 13.954091574065387, -80.59269720735028)};
 
+    std::vector<gp_Pnt> linePoints = {
+        gp_Pnt(-90.27793006412685, 13.954091574065387, -80.59269720735028),
+        gp_Pnt(-351.1830200678669, -87.76781802345067, -152.73005951102823)};
+    // 组合控制点
+    std::vector<std::vector<gp_Pnt>> controlPoints = {arcPoints, linePoints};
 
-  auto lineEdge = flywave::topo::edge::make_edge(p1, p2);
-  auto pathWire = flywave::topo::wire::make_wire(lineEdge);
-    
+    // 指定曲线类型
+    std::vector<flywave::topo::wire::curve_type> curveTypes = {
+        flywave::topo::wire::curve_type::three_point_arc,
+        flywave::topo::wire::curve_type::line,
+    };
+
+    flywave::topo::wire pathWire =
+        flywave::topo::wire::make_wire(controlPoints, curveTypes);
+
     // 计算路径总长度
     GProp_GProps props;
     BRepGProp::LinearProperties(pathWire, props);
     double totalLength = props.Mass();
     
-    double len = 64.100861;
+    double len = totalLength * 0.99;
     
     double ratio =  len /totalLength;
 
