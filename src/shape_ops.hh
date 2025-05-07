@@ -182,7 +182,7 @@ struct profile_projection {
 
 profile_projection
 cacl_profile_projection(wire path, gp_Dir upDir,
-                        boost::optional<gp_Pnt> pos = boost::none);
+                        boost::optional<double> offset = boost::none);
 
 gp_Pnt profile_project_point(profile_projection *proj, gp_Pnt point);
 

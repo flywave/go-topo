@@ -1527,55 +1527,13 @@ wire clip_wire_between_distances(const wire &wire_path, double start_distance,
   return wire(wireBuilder.Wire());
 }
 
-std::pair<gp_Pnt, gp_Vec> project_point_on_wire(const TopoDS_Wire &wire,
-                                                const gp_Pnt &point) {
-  double minDistSq = DBL_MAX;
-  gp_Pnt closestPoint;
-  gp_Vec tangent;
-
-  // 遍历Wire中的所有Edge
-  for (TopExp_Explorer exp(wire, TopAbs_EDGE); exp.More(); exp.Next()) {
-    const TopoDS_Edge &edge = TopoDS::Edge(exp.Current());
-
-    // 获取Edge的曲线和参数范围
-    Standard_Real first, last;
-    Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, first, last);
-    BRepAdaptor_Curve compCurve(edge);
-
-    // 计算投影
-    GeomAPI_ProjectPointOnCurve projector(point, curve, first, last);
-    if (projector.NbPoints() > 0) {
-      const Standard_Real param = projector.LowerDistanceParameter();
-
-      gp_Pnt projectedPoint;
-      gp_Vec projectedTangent;
-      compCurve.D1(param, projectedPoint, projectedTangent);
-
-      const double distSq = point.SquareDistance(projectedPoint);
-      if (distSq < minDistSq) {
-        minDistSq = distSq;
-        tangent = projectedTangent;
-        closestPoint = projectedPoint;
-      }
-    }
-  }
-
-  if (minDistSq == DBL_MAX) {
-    throw std::runtime_error("Projection failed on wire");
-  }
-
-  return {closestPoint, tangent};
-}
-
 profile_projection cacl_profile_projection(wire path, gp_Dir upDir,
-                                           boost::optional<gp_Pnt> pos) {
+                                           boost::optional<double> offset) {
   // 获取路径起始点的切线方向
   gp_Pnt startPoint;
   gp_Vec startTangent;
-  if (pos) {
-    auto pair = project_point_on_wire(path.value(), *pos);
-    startPoint = pair.first;
-    startTangent = pair.second;
+  if (offset) {
+   
   } else {
     BRepAdaptor_CompCurve curveAdaptor(path.value());
     curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
