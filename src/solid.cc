@@ -1434,7 +1434,7 @@ int solid::sweep(const wire &spine, std::vector<shape> &profiles,
                  int cornerMode) {
   try {
     BRepOffsetAPI_MakePipeShell PS(spine.value());
-    PS.SetMode(true);
+    PS.SetMode(false);
     switch (cornerMode) {
     case 1:
       PS.SetTransitionMode(BRepBuilderAPI_RightCorner);
@@ -1448,7 +1448,7 @@ int solid::sweep(const wire &spine, std::vector<shape> &profiles,
     }
 
     for (unsigned i = 0; i < profiles.size(); i++) {
-      PS.Add(profiles[i].value(), false, true);
+      PS.Add(profiles[i].value(), false, false);
     }
 
     PS.Build();
