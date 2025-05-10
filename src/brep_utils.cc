@@ -1,4 +1,5 @@
 #include "brep_utils.hh"
+#include "version.hh"
 
 #include "tkernel_utils.hh"
 #if OCC_VERSION_HEX >= OCC_VERSION_CHECK(7, 5, 0)

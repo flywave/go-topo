@@ -1,6 +1,7 @@
 
 #include "progress_indicator.hh"
 #include "string_conv.hh"
+#include "version.hh"
 
 #include <algorithm>
 

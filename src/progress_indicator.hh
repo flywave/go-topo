@@ -2,6 +2,7 @@
 
 #include "tkernel_utils.hh"
 #include <Message_ProgressIndicator.hxx>
+#include "version.hh"
 
 namespace flywave {
 

@@ -7,6 +7,7 @@
 #include "mesh_utils.hh"
 #include "ogg_handle.hh"
 #include "string_conv.hh"
+#include "version.hh"
 
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
@@ -45,11 +46,8 @@
 #include <iostream>
 #include <optional>
 #include <sstream>
+#include "version.hh"
 
-#ifndef OCC_VERSION_CHECK
-#define OCC_VERSION_CHECK(major, minor, patch)                                 \
-  ((major << 16) | (minor << 8) | (patch))
-#endif
 
 namespace flywave {
 namespace dxf {

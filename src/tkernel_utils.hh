@@ -2,16 +2,12 @@
 #pragma once
 
 #include "ogg_handle.hh"
+#include "version.hh"
 
 #include <Quantity_Color.hxx>
 #include <Standard_Version.hxx>
 #include <string>
 #include <string_view>
-
-#ifndef OCC_VERSION_CHECK
-#define OCC_VERSION_CHECK(major, minor, patch)                                 \
-  ((major << 16) | (minor << 8) | (patch))
-#endif
 
 #if OCC_VERSION_HEX >= OCC_VERSION_CHECK(7, 5, 0)
 #include <Message_ProgressRange.hxx>

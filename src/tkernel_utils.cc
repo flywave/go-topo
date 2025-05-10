@@ -1,5 +1,6 @@
 
 #include "tkernel_utils.hh"
+#include "version.hh"
 
 #include <Message_ProgressIndicator.hxx>
 #include <cmath>
