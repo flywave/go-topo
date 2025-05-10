@@ -1287,7 +1287,7 @@ TopoDS_Shape create_stub_tube(const stub_tube_params &params,
 
 struct cable_wire_params {
   std::vector<gp_Pnt> points; // 电缆路径点集
-  double outside_diameter;    // 电缆外径(mm)
+  double outsideDiameter;    // 电缆外径(mm)
 };
 
 TopoDS_Shape create_cable_wire(const cable_wire_params &params);

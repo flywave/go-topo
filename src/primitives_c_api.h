@@ -1051,6 +1051,17 @@ PRIMCAPICALL topo_shape_t *
 create_stub_tube_with_place(stub_tube_params_t params, pnt3d_t position,
                             dir3d_t normal, dir3d_t xDir);
 
+typedef struct {
+  pnt3d_t *points;        // 电缆路径点集
+  int numPoints;          // 点数量
+  double outsideDiameter; // 电缆外径(mm)
+} cable_wire_params_t;
+
+PRIMCAPICALL topo_shape_t *create_cable_wire(cable_wire_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_cable_wire_with_place(cable_wire_params_t params, pnt3d_t position,
+                             dir3d_t direction, dir3d_t upDirection);
+
 typedef enum {
   MEMBER_TYPE_ANGLE = 1,       // 角钢
   MEMBER_TYPE_TUBE = 2,        // 等径钢管

@@ -2392,7 +2392,7 @@ void test_make_cable_wire() {
     std::vector<gp_Pnt> straightPoints = {gp_Pnt(0, 0, 0), gp_Pnt(100, 0, 0)};
 
     auto shp1 = create_cable_wire(
-        cable_wire_params{.points = straightPoints, .outside_diameter = 10.0});
+        cable_wire_params{.points = straightPoints, .outsideDiameter = 10.0});
 
     if (shp1.IsNull()) {
       std::cerr << "Error: Failed to create straight cable wire" << std::endl;
@@ -2406,7 +2406,7 @@ void test_make_cable_wire() {
                                         gp_Pnt(150, 0, 100)};
 
     auto shp2 = create_cable_wire(
-        cable_wire_params{.points = curvedPoints, .outside_diameter = 8.0});
+        cable_wire_params{.points = curvedPoints, .outsideDiameter = 8.0});
 
     if (shp2.IsNull()) {
       std::cerr << "Error: Failed to create curved cable wire" << std::endl;

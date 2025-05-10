@@ -7933,7 +7933,7 @@ TopoDS_Shape create_cable_wire(const cable_wire_params &params) {
   if (params.points.size() < 2) {
     throw Standard_ConstructionError("At least 2 points are required");
   }
-  if (params.outside_diameter <= 0.0) {
+  if (params.outsideDiameter <= 0.0) {
     throw Standard_ConstructionError("Outside diameter must be positive");
   }
 
@@ -7988,7 +7988,7 @@ TopoDS_Shape create_cable_wire(const cable_wire_params &params) {
   gp_Ax2 sectionAxes(gp::Origin(), initNormal, refDir);
 
   // 创建圆形截面（直径方向始终垂直于路径）
-  gp_Circ circle(sectionAxes, params.outside_diameter / 2);
+  gp_Circ circle(sectionAxes, params.outsideDiameter / 2);
   TopoDS_Wire profile =
       BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(circle).Edge()).Wire();
 

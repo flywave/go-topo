@@ -2052,6 +2052,54 @@ create_stub_tube_with_place(stub_tube_params_t params, pnt3d_t position,
   }
 }
 
+PRIMCAPICALL topo_shape_t *create_cable_wire(cable_wire_params_t params) {
+  try {
+    // 将C数组转换为C++ vector
+    std::vector<gp_Pnt> points;
+    for (int i = 0; i < params.numPoints; ++i) {
+      points.push_back(
+          gp_Pnt(params.points[i].x, params.points[i].y, params.points[i].z));
+    }
+
+    // 创建C++参数结构
+    cable_wire_params cpp_params{.points = points,
+                                 .outsideDiameter = params.outsideDiameter};
+
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_cable_wire(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_cable_wire_with_place(cable_wire_params_t params, pnt3d_t position,
+                             dir3d_t direction, dir3d_t upDirection) {
+  try {
+    // 将C数组转换为C++ vector
+    std::vector<gp_Pnt> points;
+    for (int i = 0; i < params.numPoints; ++i) {
+      points.push_back(
+          gp_Pnt(params.points[i].x, params.points[i].y, params.points[i].z));
+    }
+
+    // 创建C++参数结构
+    cable_wire_params cpp_params{.points = points,
+                                 .outsideDiameter = params.outsideDiameter};
+
+    // 转换位置和方向参数
+    gp_Pnt cpp_position(position.x, position.y, position.z);
+    gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+    gp_Dir cpp_upDirection(upDirection.x, upDirection.y, upDirection.z);
+
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_cable_wire(
+            cpp_params, cpp_position, cpp_direction, cpp_upDirection))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
 PRIMCAPICALL topo_shape_t *create_pole_tower(pole_tower_params_t params) {
   pole_tower_params cpp_params;
 

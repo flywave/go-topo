@@ -2290,6 +2290,45 @@ func CreateStubTubeWithPlace(params StubTubeParams, position Point3, normal Dir3
 	return s
 }
 
+type CableWireParams struct {
+	Points          []Point3 // 电缆路径点集
+	OutsideDiameter float32  // 电缆外径(mm)
+}
+
+func (p *CableWireParams) to_struct() C.cable_wire_params_t {
+	var c C.cable_wire_params_t
+	c.numPoints = C.int(len(p.Points))
+	c.outsideDiameter = C.double(p.OutsideDiameter)
+
+	if len(p.Points) > 0 {
+		c.points = (*C.pnt3d_t)(C.malloc(C.size_t(len(p.Points)) * C.sizeof_pnt3d_t))
+		for i, pt := range p.Points {
+			*(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.points)) + uintptr(i)*C.sizeof_pnt3d_t)) = pt.val
+		}
+	}
+	return c
+}
+
+func CreateCableWire(params CableWireParams) *Shape {
+	cParams := params.to_struct()
+	defer C.free(unsafe.Pointer(cParams.points))
+
+	shp := C.create_cable_wire(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCableWireWithPlace(params CableWireParams, position Point3, direction Dir3, upDirection Dir3) *Shape {
+	cParams := params.to_struct()
+	defer C.free(unsafe.Pointer(cParams.points))
+
+	shp := C.create_cable_wire_with_place(cParams, position.val, direction.val, upDirection.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
 type PoleTowerNode struct {
 	ID       string
 	Position Point3
