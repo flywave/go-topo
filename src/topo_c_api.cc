@@ -3822,9 +3822,9 @@ int topo_shell_sweep(topo_shell_t ss, topo_wire_t spine,
   try {
     auto opt = cast_to_topo(ss);
     if (opt) {
-      std::vector<flywave::topo::shape *> pros;
+      std::vector<flywave::topo::shape> pros;
       for (int i = 0; i < count; i++) {
-        pros.emplace_back(profiles[i]->shp.get());
+        pros.emplace_back(*profiles[i]->shp);
       }
       return opt->sweep(*cast_to_topo(spine), pros, cornerMode);
     }
@@ -3839,9 +3839,9 @@ int topo_shell_sweep_wire(topo_shell_t ss, topo_wire_t spine,
   try {
     auto opt = cast_to_topo(ss);
     if (opt) {
-      std::vector<flywave::topo::shape *> pros;
+      std::vector<flywave::topo::shape> pros;
       for (int i = 0; i < count; i++) {
-        pros.emplace_back(profiles[i].shp->shp.get());
+        pros.emplace_back(*profiles[i].shp->shp);
       }
       return opt->sweep(*cast_to_topo(spine), pros, cornerMode);
     }

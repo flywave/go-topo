@@ -209,7 +209,7 @@ public:
                         const Standard_Real xmin, const Standard_Real zmin,
                         const Standard_Real xmax, const Standard_Real zmax);
 
-  int sweep(const wire &spine, std::vector<shape *> profiles, int cornerMode);
+  int sweep(const wire &spine, std::vector<shape> profiles, int cornerMode);
 
   TopoDS_Shell &value();
   const TopoDS_Shell &value() const;

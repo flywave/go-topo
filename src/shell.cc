@@ -549,7 +549,7 @@ shell shell::make_shell_from_wedge(
   }
 }
 
-int shell::sweep(const wire &spine, std::vector<shape *> profiles,
+int shell::sweep(const wire &spine, std::vector<shape> profiles,
                  int cornerMode) {
   try {
     BRepOffsetAPI_MakePipeShell PS(spine.value());
@@ -567,7 +567,7 @@ int shell::sweep(const wire &spine, std::vector<shape *> profiles,
     }
 
     for (unsigned i = 0; i < profiles.size(); i++) {
-      PS.Add(profiles[i]->value());
+      PS.Add(profiles[i].value());
     }
 
     if (!PS.IsReady()) {
