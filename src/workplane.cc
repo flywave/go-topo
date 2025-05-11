@@ -2470,7 +2470,7 @@ std::shared_ptr<workplane> workplane::cut_thru_all(bool clean, double taper) {
     throw std::runtime_error("No pending wires to cut with");
   }
 
-  shape s = *topo::dprism(solidRef, nullptr, faces, boost::none, taper, nullptr,
+  shape s = *topo::dprism(solidRef, face(), faces, boost::none, taper, nullptr,
                           true, false);
   if (clean) {
     s = s.clean();
@@ -2612,14 +2612,14 @@ shape workplane::_extrude(const boost::optional<double> &distance, bool both,
         limitFace = boost::get<topo::face>(*upToFace);
       }
 
-      res = *topo::dprism(res, nullptr, {face}, boost::none, taperAngle,
+      res = *topo::dprism(res, topo::face(), {face}, boost::none, taperAngle,
                           &limitFace, additive);
 
       if (both) {
         auto facesList2 = _get_intersected_faces(face, eDir.Multiplied(-1.0),
                                                  direction, both);
         auto limitFace2 = facesList2[boost::get<int>(*upToFace)];
-        res = *topo::dprism(res, nullptr, {face}, boost::none, taperAngle,
+        res = *topo::dprism(res, topo::face(), {face}, boost::none, taperAngle,
                             &limitFace2, additive);
       }
     }
