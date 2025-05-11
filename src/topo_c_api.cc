@@ -2911,7 +2911,7 @@ topo_face_t topo_face_make_complex(topo_shape_t **edges, int edge_count,
                                    double tol_angle, double tol_curv,
                                    int max_degree, int max_segments) {
   try {
-    std::vector<boost::variant<flywave::topo::edge, flywave::topo::wire>>
+    std::vector<boost::variant<flywave::topo::wire, flywave::topo::edge>>
         edgeVec;
     for (int i = 0; i < edge_count; i++) {
       if (edges[i]->shp->shape_type() == TopAbs_EDGE) {
@@ -2922,7 +2922,7 @@ topo_face_t topo_face_make_complex(topo_shape_t **edges, int edge_count,
     }
 
     std::vector<
-        boost::variant<flywave::topo::edge, flywave::topo::wire, gp_Pnt>>
+        boost::variant<flywave::topo::wire, flywave::topo::edge, gp_Pnt>>
         constraintVec;
     for (int i = 0; i < constraint_count; i++) {
       if (constraints[i]->shp->shape_type() == TopAbs_EDGE) {
@@ -3093,9 +3093,9 @@ int topo_face_sweep(topo_face_t f, topo_wire_t spine, topo_shape_t **profiles,
   try {
     auto opt = cast_to_topo(f);
     if (opt) {
-      std::vector<flywave::topo::shape *> prs;
+      std::vector<flywave::topo::shape> prs;
       for (int i = 0; i < profilesCount; i++) {
-        prs.emplace_back(profiles[i]->shp.get());
+        prs.emplace_back(*profiles[i]->shp);
       }
       return opt->sweep(*cast_to_topo(spine), prs, cornerMode);
     }
@@ -3111,9 +3111,9 @@ int topo_face_sweep_wire(topo_face_t f, topo_wire_t spine,
   try {
     auto opt = cast_to_topo(f);
     if (opt) {
-      std::vector<flywave::topo::shape *> prs;
+      std::vector<flywave::topo::shape> prs;
       for (int i = 0; i < profilesCount; i++) {
-        prs.emplace_back(profiles[i].shp->shp.get());
+        prs.emplace_back(*profiles[i].shp->shp);
       }
       return opt->sweep(*cast_to_topo(spine), prs, cornerMode);
     }

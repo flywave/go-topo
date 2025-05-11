@@ -368,8 +368,8 @@ face face::make_face(std::initializer_list<gp_Pnt> points) {
 }
 
 face face::make_face(
-    const std::vector<boost::variant<edge, wire>> &edges,
-    const std::vector<boost::variant<edge, wire, gp_Pnt>> &constraints,
+    const std::vector<boost::variant<wire, edge>> &edges,
+    const std::vector<boost::variant<wire, edge, gp_Pnt>> &constraints,
     GeomAbs_Shape continuity, int degree, int nbPtsOnCur, int nbIter,
     bool anisotropy, double tol2d, double tol3d, double tolAng, double tolCurv,
     int maxDeg, int maxSegments) {
@@ -699,7 +699,7 @@ int face::revolve(const shape &shp, gp_Pnt p1, gp_Pnt p2, double angle) {
   return 1;
 }
 
-int face::sweep(const wire &spine, std::vector<shape *> profiles,
+int face::sweep(const wire &spine, std::vector<shape> profiles,
                 int cornerMode) {
   try {
     BRepOffsetAPI_MakePipeShell PS(spine.value());
@@ -717,7 +717,7 @@ int face::sweep(const wire &spine, std::vector<shape *> profiles,
     }
 
     for (unsigned i = 0; i < profiles.size(); i++) {
-      PS.Add(*profiles[i]);
+      PS.Add(profiles[i]);
     }
     if (!PS.IsReady()) {
       throw std::runtime_error("Failed in sweep operation");

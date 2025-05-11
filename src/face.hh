@@ -115,8 +115,8 @@ public:
   make_from_wires(const wire &outer, const std::vector<wire> &inners = {});
 
   static face
-  make_face(const std::vector<boost::variant<edge, wire>> &edges,
-            const std::vector<boost::variant<edge, wire, gp_Pnt>> &constraints,
+  make_face(const std::vector<boost::variant<wire, edge>> &edges,
+            const std::vector<boost::variant<wire, edge, gp_Pnt>> &constraints,
             GeomAbs_Shape continuity = GeomAbs_C0, int degree = 3,
             int nbPtsOnCur = 15, int nbIter = 2, bool anisotropy = false,
             double tol2d = 0.00001, double tol3d = 0.0001, double tolAng = 0.01,
@@ -169,7 +169,7 @@ public:
 
   int revolve(const shape &shp, gp_Pnt p1, gp_Pnt p2, double angle);
 
-  int sweep(const wire &spine, std::vector<shape *> profiles, int cornerMode);
+  int sweep(const wire &spine, std::vector<shape> profiles, int cornerMode);
 
   int loft(std::vector<shape> profiles, bool ruled, double tolerance);
 
