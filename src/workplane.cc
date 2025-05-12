@@ -2775,7 +2775,7 @@ workplane::_interp_plate(boost::variant<std::vector<gp_Pnt>, std::vector<edge>,
                          int nbIter, bool anisotropy, double tol2d,
                          double tol3d, double tolAng, double tolCurv,
                          int maxDeg, int maxSegments) {
-  std::vector<boost::variant<edge, topo::wire>> edges;
+  std::vector<boost::variant<topo::wire, topo::edge>> edges;
   std::vector<gp_Pnt> points;
 
   if (auto wp =
@@ -2795,7 +2795,7 @@ workplane::_interp_plate(boost::variant<std::vector<gp_Pnt>, std::vector<edge>,
     }
   }
 
-  std::vector<boost::variant<edge, topo::wire, gp_Pnt>> constraints;
+  std::vector<boost::variant<topo::wire, topo::edge, gp_Pnt>> constraints;
   for (auto pnt : surf_pts) {
     constraints.push_back(pnt);
   }
