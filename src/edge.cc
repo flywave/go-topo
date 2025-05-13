@@ -137,10 +137,10 @@ edge edge::make_rect(double width, double height) {
   return edge{polyBuilder.Edge()};
 }
 
-edge edge::make_polygon(std::vector<vertex *> &vertexs, const bool Close) {
+edge edge::make_polygon(std::vector<vertex> &vertexs, const bool Close) {
   BRepBuilderAPI_MakePolygon me;
   for (auto _vert : vertexs) {
-    me.Add(_vert->value());
+    me.Add(_vert.value());
   }
   if (Close) {
     me.Close();
@@ -148,11 +148,11 @@ edge edge::make_polygon(std::vector<vertex *> &vertexs, const bool Close) {
   return edge{me.Edge()};
 }
 
-edge edge::make_polygon(std::initializer_list<vertex *> vertexs,
+edge edge::make_polygon(std::initializer_list<vertex> vertexs,
                         const bool Close) {
   BRepBuilderAPI_MakePolygon me;
   for (auto _vert : vertexs) {
-    me.Add(_vert->value());
+    me.Add(_vert.value());
   }
   if (Close) {
     me.Close();

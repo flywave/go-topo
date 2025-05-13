@@ -146,7 +146,7 @@ public:
   boost::optional<compound> siblings(const shape &shape, TopAbs_ShapeEnum kind,
                                      int level = 1) const;
 
-  gp_Pln find_plane(double tolerance = 1e-6);
+  gp_Pln find_plane(double tolerance = 1e-6) const;
 
   TopoDS_Shape &value();
   const TopoDS_Shape &value() const;

@@ -681,7 +681,7 @@ shape shape::mirrored(gp_Ax2 a) const {
   return shp;
 }
 
-gp_Pln shape::find_plane(double tolerance) {
+gp_Pln shape::find_plane(double tolerance) const {
   try {
     const TopoDS_Shape &shape = _shape;
     BRepBuilderAPI_FindPlane FP(shape, tolerance);

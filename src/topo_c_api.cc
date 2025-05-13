@@ -2121,9 +2121,9 @@ topo_edge_t topo_edge_make_polygon_from_four_vertex(topo_vertex_t V1,
 
 topo_edge_t topo_edge_make_polygon_from_vertices(topo_vertex_t *vertices,
                                                  int vertcount, _Bool Close) {
-  std::vector<flywave::topo::vertex *> oes;
+  std::vector<flywave::topo::vertex> oes;
   for (int i = 0; i < vertcount; i++) {
-    oes.emplace_back(
+    oes.emplace_back(*
         std::dynamic_pointer_cast<flywave::topo::vertex>(vertices[i].shp->shp)
             .get());
   }
