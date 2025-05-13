@@ -261,30 +261,39 @@ public:
   std::string to_string(double tolerance = 1e-3,
                         double angularTolerance = 0.1) const;
 
-  static shape filter(selector *sel, const std::vector<shape> &shapes);
+  static shape filter(const selector_ptr &sel,
+                      const std::vector<shape> &shapes);
 
-  inline shape vertices(selector *sel) const {
+  inline shape vertices(const selector_ptr &sel) const {
     return shape::filter(sel, get_shapes(TopAbs_VERTEX));
   }
 
-  inline shape edges(selector *sel) const {
+  inline shape edges(const selector_ptr &sel) const {
     return shape::filter(sel, get_shapes(TopAbs_EDGE));
   }
 
-  inline shape wires(selector *sel) const {
+  inline shape wires(const selector_ptr &sel) const {
     return shape::filter(sel, get_shapes(TopAbs_WIRE));
   }
 
-  inline shape faces(selector *sel) const {
+  inline shape faces(const selector_ptr &sel) const {
     return shape::filter(sel, get_shapes(TopAbs_FACE));
   }
 
-  inline shape shells(selector *sel) const {
+  inline shape shells(const selector_ptr &sel) const {
     return shape::filter(sel, get_shapes(TopAbs_SHELL));
   }
 
-  inline shape solids(selector *sel) const {
+  inline shape solids(const selector_ptr &sel) const {
     return shape::filter(sel, get_shapes(TopAbs_SOLID));
+  }
+
+  inline shape compounds(const selector_ptr &sel) const {
+    return shape::filter(sel, get_shapes(TopAbs_COMPOUND));
+  }
+
+  inline shape comp_solids(const selector_ptr &sel) const {
+    return shape::filter(sel, get_shapes(TopAbs_COMPSOLID));
   }
 
 protected:
