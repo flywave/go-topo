@@ -209,6 +209,9 @@ public:
     return write_triangulation(mesh, precision, deflection, angle, uv_coords);
   }
 
+  virtual int mesh_edges(mesh_edges_receiver &receiver, double tolerance = 1e-3,
+                         double angular_tolerance = 0.1) const;
+
   virtual shape copy(bool deep = true) const;
 
   inline bool operator==(const shape &s) const { return this->equals(s); }

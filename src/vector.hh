@@ -59,6 +59,7 @@ public:
   gp_Pnt to_pnt() const { return gp_Pnt(_value.XYZ()); }
   gp_Dir to_dir() const { return gp_Dir(_value.XYZ()); }
   gp_Vec to_vec() const { return _value; }
+  gp_XYZ to_xyz() const { return _value.XYZ(); }
 
   topo_vector cross(const topo_vector &v) const {
     return topo_vector(_value.Crossed(v._value));

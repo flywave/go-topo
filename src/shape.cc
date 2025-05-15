@@ -31,6 +31,7 @@
 #include <BRepTools_WireExplorer.hxx>
 #include <BRep_Tool.hxx>
 #include <Bnd_Box.hxx>
+#include <GCPnts_TangentialDeflection.hxx>
 #include <GProp_GProps.hxx>
 #include <GeomAbs_CurveType.hxx>
 #include <GeomAbs_SurfaceType.hxx>
@@ -1246,6 +1247,75 @@ int shape::write_triangulation(mesh_receiver &meshReceiver, double tolerance,
     }
 
     meshReceiver.end();
+    return 0;
+  } catch (Standard_Failure &e) {
+    return 1;
+  } catch (...) {
+    return 1;
+  }
+}
+
+int shape::mesh_edges(mesh_edges_receiver &receiver, double tolerance,
+                      double angular_tolerance) const {
+  try {
+    std::unordered_set<int> recorded_edges;
+    receiver.begin();
+
+    TopLoc_Location location;
+
+    for (const auto &face : faces()) {
+      Handle(Poly_Triangulation) triangulation =
+          BRep_Tool::Triangulation(face.value(), location);
+      if (triangulation.IsNull())
+        continue;
+
+      for (const auto &edge : face.edges()) {
+        int edge_hash = edge.hash_code();
+        if (recorded_edges.count(edge_hash))
+          continue;
+
+        TopLoc_Location edge_loc;
+        Handle(Poly_PolygonOnTriangulation) polygon =
+            BRep_Tool::PolygonOnTriangulation(edge.value(), triangulation,
+                                              edge_loc);
+
+        if (polygon.IsNull())
+          continue;
+
+        const TColStd_Array1OfInteger &nodes = polygon->Nodes();
+
+        Quantity_Color color(1., 1., 1., Quantity_TOC_RGB);
+        int edge_id = receiver.append_edge(color);
+        for (int i = nodes.Lower(); i <= nodes.Upper(); ++i) {
+          gp_Pnt p = triangulation->Node(nodes(i)).Transformed(
+              edge_loc.Transformation());
+          receiver.append_point(edge_id, p);
+        }
+
+        recorded_edges.insert(edge_hash);
+      }
+    }
+
+    for (const auto &edge : edges()) {
+      int edge_hash = edge.hash_code();
+      if (recorded_edges.count(edge_hash))
+        continue;
+
+      Quantity_Color color(1., 1., 1., Quantity_TOC_RGB);
+
+      BRepAdaptor_Curve curve(edge.value());
+      GCPnts_TangentialDeflection discretizer(curve, tolerance,
+                                              angular_tolerance, 2, 1e-9, 1e-7);
+      int edge_id = receiver.append_edge(color);
+      for (int i = 1; i <= discretizer.NbPoints(); ++i) {
+        gp_Pnt p = discretizer.Value(i).Transformed(location.Transformation());
+        receiver.append_point(edge_id, p);
+      }
+
+      recorded_edges.insert(edge_hash);
+    }
+
+    receiver.end();
     return 0;
   } catch (Standard_Failure &e) {
     return 1;
