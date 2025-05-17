@@ -15,7 +15,9 @@
 #include <stdexcept>
 #include <vector>
 
+#ifndef __EMSCRIPTEN__
 using namespace Ipopt;
+#endif
 
 namespace flywave {
 namespace topo {
