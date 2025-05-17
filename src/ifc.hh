@@ -5,31 +5,17 @@
 #include <Standard_Version.hxx>
 #include <TopoDS_Shape.hxx>
 
-#include <array>
+#include <ifcgeom/IfcGeomElement.h>
+#include <ifcgeom/IfcGeomFilter.h>
+#include <ifcgeom/IfcGeomRenderStyles.h>
+#include <ifcgeom/Iterator.h>
+#include <ifcparse/IfcFile.h>
+#include <serializers/OpenCascadeBasedSerializer.h>
 
-#include <ifc23.h>
-#include <ifc4.h>
-#include <ifc41.h>
-#include <ifc42.h>
-#include <ifc43_rc1.h>
+#include <array>
 
 namespace flywave {
 namespace ifc {
-
-class visitor {
-public:
-  virtual ~visitor() {}
-  virtual void
-  apply(const ifc23::IfcGeom::TriangulationElement<double> *element) = 0;
-  virtual void
-  apply(const ifc4::IfcGeom::TriangulationElement<double> *element) = 0;
-  virtual void
-  apply(const ifc41::IfcGeom::TriangulationElement<double> *element) = 0;
-  virtual void
-  apply(const ifc42::IfcGeom::TriangulationElement<double> *element) = 0;
-  virtual void
-  apply(const ifc43_rc1::IfcGeom::TriangulationElement<double> *element) = 0;
-};
 
 struct ifc_element_info {
   TopoDS_Shape shp;
@@ -37,6 +23,12 @@ struct ifc_element_info {
   int parent_id;
   std::string name;
   std::string guid;
+};
+
+class visitor {
+public:
+  virtual ~visitor() {}
+  virtual void apply(const IfcGeom::TriangulationElement *element) = 0;
 };
 
 class base_convert {
@@ -127,129 +119,69 @@ struct filter_settings {
   }
 };
 
-#define GEN_CONVERT(NAME_SPACE)                                                \
-  class NAME_SPACE##_serializer_settings                                       \
-      : public NAME_SPACE::IfcGeom::IteratorSettings {                         \
-  public:                                                                      \
-    enum Setting {                                                             \
-      USE_ELEMENT_NAMES =                                                      \
-          1 << (NAME_SPACE::IfcGeom::IteratorSettings::NUM_SETTINGS + 1),      \
-      USE_ELEMENT_GUIDS =                                                      \
-          1 << (NAME_SPACE::IfcGeom::IteratorSettings::NUM_SETTINGS + 2),      \
-      USE_MATERIAL_NAMES =                                                     \
-          1 << (NAME_SPACE::IfcGeom::IteratorSettings::NUM_SETTINGS + 3),      \
-      USE_ELEMENT_TYPES =                                                      \
-          1 << (NAME_SPACE::IfcGeom::IteratorSettings::NUM_SETTINGS + 4),      \
-      USE_ELEMENT_HIERARCHY =                                                  \
-          1 << (NAME_SPACE::IfcGeom::IteratorSettings::NUM_SETTINGS + 5),      \
-      NUM_SETTINGS = 5                                                         \
-    };                                                                         \
-                                                                               \
-    NAME_SPACE##_serializer_settings() : precision(DEFAULT_PRECISION) {        \
-      memset(offset, 0, sizeof(offset));                                       \
-    }                                                                          \
-    double offset[3];                                                          \
-                                                                               \
-    short precision;                                                           \
-                                                                               \
-    enum { DEFAULT_PRECISION = 15 };                                           \
-  };                                                                           \
-                                                                               \
-  class NAME_SPACE##_convert : public base_convert {                           \
-  protected:                                                                   \
-    NAME_SPACE::IfcGeom::entity_filter entity_filter;                          \
-    NAME_SPACE::IfcGeom::layer_filter layer_filter;                            \
-    NAME_SPACE::IfcGeom::attribute_filter attribute_filter;                    \
-                                                                               \
-    void setup_filters(const std::vector<geom_filter> &);                      \
-                                                                               \
-    std::vector<geom_filter> used_filters;                                     \
-                                                                               \
-    NAME_SPACE##_serializer_settings settings;                                 \
-                                                                               \
-    std::string _file_name;                                                    \
-                                                                               \
-    std::vector<NAME_SPACE::IfcGeom::filter_t> filter_funcs;                   \
-                                                                               \
-    void append_element(                                                       \
-        const NAME_SPACE::IfcGeom::TriangulationElement<double> *element,      \
-        unsigned int &vcount_total);                                           \
-                                                                               \
-  public:                                                                      \
-    NAME_SPACE##_convert(const std::string &filename,                          \
-                         NAME_SPACE##_serializer_settings set =                \
-                             NAME_SPACE##_serializer_settings{},               \
-                         filter_settings filters = filter_settings{})          \
-        : settings(set), _file_name(filename) {                                \
-      if (filters.include_filter.type != geom_filter::UNUSED) {                \
-        used_filters.push_back(filters.include_filter);                        \
-      }                                                                        \
-      if (filters.include_traverse_filter.type != geom_filter::UNUSED) {       \
-        used_filters.push_back(filters.include_traverse_filter);               \
-      }                                                                        \
-      if (filters.exclude_filter.type != geom_filter::UNUSED) {                \
-        used_filters.push_back(filters.exclude_filter);                        \
-      }                                                                        \
-      if (filters.exclude_traverse_filter.type != geom_filter::UNUSED) {       \
-        used_filters.push_back(filters.exclude_traverse_filter);               \
-      }                                                                        \
-      setup_filters(used_filters);                                             \
-    }                                                                          \
-    ~NAME_SPACE##_convert() {}                                                 \
-                                                                               \
-    std::vector<ifc_element_info> get_shape();                                 \
-                                                                               \
-    void process_with_callback(visitor *vst);                                  \
-                                                                               \
-    const std::vector<NAME_SPACE::IfcGeom::filter_t> &get_filter_funcs() {     \
-      return filter_funcs;                                                     \
-    }                                                                          \
-  };
+class ifc_convert : public base_convert {
+protected:
+  IfcGeom::entity_filter entity_filter;
+  IfcGeom::layer_filter layer_filter;
+  IfcGeom::attribute_filter attribute_filter;
 
-GEN_CONVERT(ifc23)
-GEN_CONVERT(ifc4)
-GEN_CONVERT(ifc41)
-GEN_CONVERT(ifc42)
-GEN_CONVERT(ifc43_rc1)
+  std::vector<IfcGeom::filter_t>
+  setup_filters(const std::vector<geom_filter> &);
+
+  std::vector<geom_filter> used_filters;
+
+  std::string _file_name;
+
+  ifcopenshell::geometry::Settings settings;
+
+  std::vector<IfcGeom::filter_t> filter_funcs;
+
+  void append_element(const IfcGeom::TriangulationElement *element,
+                      unsigned int &vcount_total);
+
+public:
+  ifc_convert(const std::string &filename,
+              ifcopenshell::geometry::Settings settings =
+                  ifcopenshell::geometry::Settings(),
+              filter_settings filters = filter_settings{})
+      : _file_name(filename), settings(settings) {
+    if (filters.include_filter.type != geom_filter::UNUSED) {
+      used_filters.push_back(filters.include_filter);
+    }
+    if (filters.include_traverse_filter.type != geom_filter::UNUSED) {
+      used_filters.push_back(filters.include_traverse_filter);
+    }
+    if (filters.exclude_filter.type != geom_filter::UNUSED) {
+      used_filters.push_back(filters.exclude_filter);
+    }
+    if (filters.exclude_traverse_filter.type != geom_filter::UNUSED) {
+      used_filters.push_back(filters.exclude_traverse_filter);
+    }
+    setup_filters(used_filters);
+  }
+  ~ifc_convert() {}
+
+  std::vector<ifc_element_info> get_shape();
+
+  void process_with_callback(visitor *vst);
+
+  const std::vector<IfcGeom::filter_t> &get_filter_funcs() {
+    return filter_funcs;
+  }
+};
 
 inline std::string get_version(const std::string &f) {
-  ifc23::IfcParse::IfcFile fl{&ifc23::Ifc2x3::get_schema()};
-  return fl.GetVersion(f);
+  IfcParse::IfcFile fl{f};
+  return fl.good() == IfcParse::file_open_status::SUCCESS
+             ? fl.header().file_description().implementation_level()
+             : "";
 }
 
 inline std::unique_ptr<base_convert> get_convert(const std::string &f) {
-  auto v = get_version(f);
-  if (v == ifc23::Ifc2x3::Identifier) {
-    return std::unique_ptr<ifc23_convert>(new ifc23_convert{f});
-  } else if (v == ifc4::Ifc4::Identifier) {
-    return std::unique_ptr<ifc4_convert>(new ifc4_convert{f});
-  } else if (v == ifc41::Ifc4x1::Identifier) {
-    return std::unique_ptr<ifc41_convert>(new ifc41_convert{f});
-  } else if (v == ifc42::Ifc4x2::Identifier) {
-    return std::unique_ptr<ifc42_convert>(new ifc42_convert{f});
-  } else if (v == ifc43_rc1::Ifc4x3_rc1::Identifier) {
-    return std::unique_ptr<ifc43_rc1_convert>(new ifc43_rc1_convert{f});
-  }
-  return std::unique_ptr<ifc23_convert>(nullptr);
+  return std::unique_ptr<ifc_convert>(new ifc_convert{f});
 }
 
-inline void ifc_register_schema() {
-  static ifc23::IfcParse::schema_definition schem23 =
-      ifc23::Ifc2x3::get_schema();
-  static ifc4::IfcParse::schema_definition schem4 = ifc4::Ifc4::get_schema();
-  static ifc41::IfcParse::schema_definition schem41 =
-      ifc41::Ifc4x1::get_schema();
-  static ifc42::IfcParse::schema_definition schem42 =
-      ifc42::Ifc4x2::get_schema();
-  static ifc43_rc1::IfcParse::schema_definition schem43 =
-      ifc43_rc1::Ifc4x3_rc1::get_schema();
-
-  ifc23::IfcParse::register_schema(&schem23);
-  ifc4::IfcParse::register_schema(&schem4);
-  ifc41::IfcParse::register_schema(&schem41);
-  ifc42::IfcParse::register_schema(&schem42);
-  ifc43_rc1::IfcParse::register_schema(&schem43);
-}
+inline void ifc_register_schema() {}
 
 } // namespace ifc
 } // namespace flywave

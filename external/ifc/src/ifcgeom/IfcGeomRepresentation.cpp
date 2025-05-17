@@ -17,49 +17,21 @@
  *                                                                              *
  ********************************************************************************/
 
+#include <ifcgeom/IfcGeomRepresentation.h>
+
+#include <ifcparse/IfcLogger.h>
+#include <ifcgeom/kernels/OpenCascadeConversionResult.h>
+#include <ifcgeom/kernels/base_utils.h>
+
 #include <BRep_Tool.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Builder.hxx>
-
-#include <TopoDS_Compound.hxx>
 #include <Geom_Plane.hxx>
-#include <GProp_GProps.hxx>
+#include <TopoDS_Compound.hxx>
 #include <BRepGProp.hxx>
+#include <GProp_GProps.hxx>
+#include <TopoDS.hxx>
 
-#include "../ifcgeom/IfcGeom.h"
-
-#include "IfcGeomRepresentation.h"
-
-namespace IFC_NAMESPACE {
-
-IfcGeom::Representation::Serialization::Serialization(const BRep& brep)
-	: Representation(brep.settings())
-	, id_(brep.id())
-{
-	TopoDS_Compound compound = brep.as_compound();
-	for (IfcGeom::IfcRepresentationShapeItems::const_iterator it = brep.begin(); it != brep.end(); ++ it) {
-		if (it->hasStyle() && it->Style().Diffuse()) {
-			const IfcGeom::SurfaceStyle::ColorComponent& clr = *it->Style().Diffuse();
-			surface_styles_.push_back(clr.R());
-			surface_styles_.push_back(clr.G());
-			surface_styles_.push_back(clr.B());
-		} else {
-			surface_styles_.push_back(-1.);
-			surface_styles_.push_back(-1.);
-			surface_styles_.push_back(-1.);
-		}
-		if (it->hasStyle() && it->Style().Transparency()) {
-			surface_styles_.push_back(1. - *it->Style().Transparency());
-		} else {
-			surface_styles_.push_back(1.);
-		}
-	}
-	std::stringstream sstream;
-	BRepTools::Write(compound,sstream);
-	brep_data_ = sstream.str();
-}
-
-// todo copied from kernel
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepBuilderAPI_GTransform.hxx>
 
@@ -82,26 +54,6 @@ TopoDS_Shape apply_transformation(const TopoDS_Shape& s, const gp_GTrsf& t) {
 	} else {
 		return apply_transformation(s, t.Trsf());
 	}
-}
-
-TopoDS_Compound IfcGeom::Representation::BRep::as_compound(bool force_meters) const {
-	TopoDS_Compound compound;
-	BRep_Builder builder;
-	builder.MakeCompound(compound);
-	for (IfcGeom::IfcRepresentationShapeItems::const_iterator it = begin(); it != end(); ++it) {
-		const TopoDS_Shape& s = it->Shape();
-		gp_GTrsf trsf = it->Placement();
-
-		if (!force_meters && settings().get(IteratorSettings::CONVERT_BACK_UNITS)) {
-			gp_Trsf scale;
-			scale.SetScaleFactor(1.0 / settings().unit_magnitude());
-			trsf.PreMultiply(scale);
-		}
-
-		const TopoDS_Shape moved_shape = apply_transformation(s, trsf);
-		builder.Add(compound, moved_shape);
-	}
-	return compound;
 }
 
 namespace {
@@ -143,22 +95,21 @@ namespace {
 				TopLoc_Location loc;
 				Handle(Poly_Triangulation) tri = BRep_Tool::Triangulation(face, loc);
 				if (!tri.IsNull()) {
-                    Handle(TColgp_HArray1OfPnt) nodes = tri->MapNodeArray();
 					std::vector<gp_XYZ> coords;
-					coords.reserve(nodes->Length());
+					coords.reserve(tri->NbNodes());
 
-					for (int i = 1; i <= nodes->Length(); ++i) {
-						coords.push_back(nodes->Value(i).Transformed(loc).XYZ());
+					for (int i = 1; i <= tri->NbNodes(); ++i) {
+						coords.push_back(tri->Node(i).Transformed(loc).XYZ());
 					}
 
-                    Handle(Poly_HArray1OfTriangle) triangles = tri->MapTriangleArray();
-					for (int i = 1; i <= triangles->Length(); ++i) {
+					const Poly_Array1OfTriangle& triangles = tri->Triangles();
+					for (int i = 1; i <= triangles.Length(); ++i) {
 						int n1, n2, n3;
 
 						if (face.Orientation() == TopAbs_REVERSED) {
-							triangles->Value(i).Get(n3, n2, n1);
+							triangles(i).Get(n3, n2, n1);
 						} else {
-                            triangles->Value(i).Get(n1, n2, n3);
+							triangles(i).Get(n1, n2, n3);
 						}
 
 						const gp_XYZ& pt1 = coords[n1 - 1];
@@ -168,7 +119,7 @@ namespace {
 						const gp_Vec v2 = pt3 - pt2;
 						const gp_Vec v3 = pt1 - pt3;
 						const gp_Vec normal_vector = v1 ^ v2;
-						if (normal_vector.Magnitude() > ALMOST_ZERO) {
+						if (normal_vector.Magnitude() > 1.e-7) {
 							gp_Dir normal = gp_Dir();
 
 							double edge_lengths[3] = { v1.Magnitude(), v2.Magnitude(), v3.Magnitude() };
@@ -188,13 +139,97 @@ namespace {
 	}
 }
 
+IfcGeom::Representation::Serialization::Serialization(const BRep& brep)
+	: Representation(brep.settings(), brep.entity(), brep.id())
+{
+	for (auto it = brep.begin(); it != brep.end(); ++it) {
+		int sid = -1;
+
+		if (it->hasStyle()) {
+            const auto& clr = it->Style().get_color().ccomponents();
+			surface_styles_.push_back(clr(0));
+			surface_styles_.push_back(clr(1));
+			surface_styles_.push_back(clr(2));
+
+			sid = it->Style().instance ? it->Style().instance->as<IfcUtil::IfcBaseEntity>()->id() : -1;
+		} else {
+			surface_styles_.push_back(-1.);
+			surface_styles_.push_back(-1.);
+			surface_styles_.push_back(-1.);
+		}
+
+		if (it->hasStyle() && it->Style().has_transparency()) {
+			surface_styles_.push_back(1. - it->Style().transparency);
+		} else {
+			surface_styles_.push_back(1.);
+		}
+
+		surface_style_ids_.push_back(sid);
+	}
+
+	if (brep.begin() != brep.end()) {
+		if (std::dynamic_pointer_cast<ifcopenshell::geometry::OpenCascadeShape>(brep.begin()->Shape())) {
+			ConversionResultShape* shape = brep.as_compound();
+			ifcopenshell::geometry::taxonomy::matrix4 identity;
+			shape->Serialize(identity, brep_data_);
+			delete shape;
+		} else {
+			for (auto it = brep.begin(); it != brep.end(); ++it) {
+				std::string part;
+				it->Shape()->Serialize(*it->Placement(), part);
+				if (brep_data_.size()) {
+					brep_data_ = brep_data_ + "\n---\n" + part;
+				} else {
+					brep_data_ = part;
+				}
+			}
+		}
+	}
+
+}
+
+IfcGeom::ConversionResultShape* IfcGeom::Representation::BRep::as_compound(bool force_meters) const {
+	TopoDS_Compound compound;
+	BRep_Builder builder;
+	builder.MakeCompound(compound);
+
+	for (auto it = begin(); it != end(); ++it) {
+		const TopoDS_Shape& s = *std::static_pointer_cast<ifcopenshell::geometry::OpenCascadeShape>(it->Shape());
+
+		// @todo, check
+		gp_GTrsf trsf;
+		if (it->Placement()->components_) {
+			gp_Trsf tr;
+			const auto& m = it->Placement()->ccomponents();
+			tr.SetValues(
+				m(0, 0), m(0, 1), m(0, 2), m(0, 3),
+				m(1, 0), m(1, 1), m(1, 2), m(1, 3),
+				m(2, 0), m(2, 1), m(2, 2), m(2, 3)
+			);
+			trsf = tr;
+		}
+
+		if (!force_meters && settings().get<ifcopenshell::geometry::settings::ConvertBackUnits>().get()) {
+			gp_Trsf scale;
+			scale.SetScaleFactor(1.0 / settings().get<ifcopenshell::geometry::settings::LengthUnit>().get());
+			trsf.PreMultiply(scale);
+		}
+
+		const TopoDS_Shape moved_shape = apply_transformation(s, trsf);
+		builder.Add(compound, moved_shape);
+	}
+
+	return new ifcopenshell::geometry::OpenCascadeShape(compound);
+}
+
+
 bool IfcGeom::Representation::BRep::calculate_surface_area(double& area) const {
 	try {
 		area = 0.;
 
-		for (IfcGeom::IfcRepresentationShapeItems::const_iterator it = begin(); it != end(); ++it) {
+		for (IfcGeom::ConversionResults::const_iterator it = begin(); it != end(); ++it) {
 			GProp_GProps prop;
-			BRepGProp::SurfaceProperties(it->Shape(), prop);
+			BRepGProp::SurfaceProperties(*std::static_pointer_cast<ifcopenshell::geometry::OpenCascadeShape>(it->Shape()), prop);
 			area += prop.Mass();
 		}
 
@@ -209,10 +244,10 @@ bool IfcGeom::Representation::BRep::calculate_volume(double& volume) const {
 	try {
 		volume = 0.;
 
-		for (IfcGeom::IfcRepresentationShapeItems::const_iterator it = begin(); it != end(); ++it) {
-			if (Kernel::is_manifold(it->Shape())) {
+		for (IfcGeom::ConversionResults::const_iterator it = begin(); it != end(); ++it) {
+			if (util::is_manifold(*std::static_pointer_cast<ifcopenshell::geometry::OpenCascadeShape>(it->Shape()))) {
 				GProp_GProps prop;
-				BRepGProp::VolumeProperties(it->Shape(), prop);
+				BRepGProp::VolumeProperties(*std::static_pointer_cast<ifcopenshell::geometry::OpenCascadeShape>(it->Shape()), prop);
 				volume += prop.Mass();
 			} else {
 				return false;
@@ -226,15 +261,31 @@ bool IfcGeom::Representation::BRep::calculate_volume(double& volume) const {
 	}
 }
 
-bool IfcGeom::Representation::BRep::calculate_projected_surface_area(const gp_Ax3 & ax, double & along_x, double & along_y, double & along_z) const {
+bool IfcGeom::Representation::BRep::calculate_projected_surface_area(const ifcopenshell::geometry::taxonomy::matrix4& place, double & along_x, double & along_y, double & along_z) const {
 	try {
+		gp_GTrsf trsf;
+
+		if (place.components_) {
+			gp_Trsf tr;
+			const auto& m = place.ccomponents();
+			tr.SetValues(
+				m(0, 0), m(0, 1), m(0, 2), m(0, 3),
+				m(1, 0), m(1, 1), m(1, 2), m(1, 3),
+				m(2, 0), m(2, 1), m(2, 2), m(2, 3)
+			);
+			trsf = tr;
+		}
+
+		gp_Mat mat = trsf.Trsf().HVectorialPart();
+		gp_Ax3 ax(trsf.TranslationPart(), mat.Column(3), mat.Column(1));
+
 		along_x = along_y = along_z = 0.;
 
-		for (IfcGeom::IfcRepresentationShapeItems::const_iterator it = begin(); it != end(); ++it) {
+		for (IfcGeom::ConversionResults::const_iterator it = begin(); it != end(); ++it) {
 			double x, y, z;
-			surface_area_along_direction(settings().deflection_tolerance(), it->Shape(), ax, x, y, z);
+			surface_area_along_direction(settings().get<ifcopenshell::geometry::settings::MesherLinearDeflection>().get(), *std::static_pointer_cast<ifcopenshell::geometry::OpenCascadeShape>(it->Shape()), ax, x, y, z);
 
-			if (Kernel::is_manifold(it->Shape())) {
+			if (util::is_manifold(*std::static_pointer_cast<ifcopenshell::geometry::OpenCascadeShape>(it->Shape()))) {
 				x /= 2.;
 				y /= 2.;
 				z /= 2.;
@@ -251,4 +302,113 @@ bool IfcGeom::Representation::BRep::calculate_projected_surface_area(const gp_Ax
 		return false;
 	}
 }
+
+IfcGeom::Representation::Triangulation::Triangulation(const BRep& shape_model)
+	: Representation(shape_model.settings(), shape_model.entity(), shape_model.id())
+	, weld_offset_(0)
+{
+	for (IfcGeom::ConversionResults::const_iterator iit = shape_model.begin(); iit != shape_model.end(); ++iit) {
+		
+		// Don't weld vertices that belong to different items to prevent non-manifold situations.
+		resetWelds();
+
+		int surface_style_id = -1;
+		if (iit->hasStyle()) {
+			auto jt = std::find(materials_.begin(), materials_.end(), iit->StylePtr());
+			if (jt == materials_.end()) {
+				surface_style_id = (int)materials_.size();
+				materials_.push_back(iit->StylePtr());
+			} else {
+				surface_style_id = (int)(jt - materials_.begin());
+			}
+		}
+
+		if (settings().get<ifcopenshell::geometry::settings::ApplyDefaultMaterials>().get() && surface_style_id == -1) {
+			const auto& material = IfcGeom::get_default_style(shape_model.entity());
+			auto mit = std::find(materials_.begin(), materials_.end(), material);
+			if (mit == materials_.end()) {
+				surface_style_id = (int)materials_.size();
+				materials_.push_back(material);
+			} else {
+				surface_style_id = (int)(mit - materials_.begin());
+			}
+		}
+
+		iit->Shape()->Triangulate(settings(), *iit->Placement(), this, iit->ItemId(), surface_style_id);
+	}
+}
+
+/// Generates UVs for a single mesh using box projection.
+/// @todo Very simple impl. Assumes that input vertices and normals match 1:1.
+
+std::vector<double> IfcGeom::Representation::Triangulation::box_project_uvs(const std::vector<double>& vertices, const std::vector<double>& normals)
+{
+	std::vector<double> uvs;
+	uvs.resize(vertices.size() / 3 * 2);
+	for (size_t uv_idx = 0, v_idx = 0;
+		uv_idx < uvs.size() && v_idx < vertices.size() && v_idx < normals.size();
+		uv_idx += 2, v_idx += 3) {
+
+		double n_x = normals[v_idx], n_y = normals[v_idx + 1], n_z = normals[v_idx + 2];
+		double v_x = vertices[v_idx], v_y = vertices[v_idx + 1], v_z = vertices[v_idx + 2];
+
+		if (std::abs(n_x) > std::abs(n_y) && std::abs(n_x) > std::abs(n_z)) {
+			uvs[uv_idx] = v_z;
+			uvs[uv_idx + 1] = v_y;
+		}
+		if (std::abs(n_y) > std::abs(n_x) && std::abs(n_y) > std::abs(n_z)) {
+			uvs[uv_idx] = v_x;
+			uvs[uv_idx + 1] = v_z;
+		}
+		if (std::abs(n_z) > std::abs(n_x) && std::abs(n_z) > std::abs(n_y)) {
+			uvs[uv_idx] = v_x;
+			uvs[uv_idx + 1] = v_y;
+		}
+	}
+
+	return uvs;
+}
+
+int IfcGeom::Representation::Triangulation::addVertex(int item_id, int material_index, double pX, double pY, double pZ) {
+	const bool convert = settings().get<ifcopenshell::geometry::settings::ConvertBackUnits>().get();
+	auto unit_magnitude = settings().get<ifcopenshell::geometry::settings::LengthUnit>().get();
+	const double X = convert ? (pX /unit_magnitude) : pX;
+	const double Y = convert ? (pY /unit_magnitude) : pY;
+	const double Z = convert ? (pZ /unit_magnitude) : pZ;
+	int i = (int)verts_.size() / 3;
+	if (settings().get<ifcopenshell::geometry::settings::WeldVertices>().get()) {
+		const VertexKey key = std::make_tuple(item_id, material_index, X, Y, Z);
+		typename VertexKeyMap::const_iterator it = welds.find(key);
+		if (it != welds.end()) {
+			// Return index for previously encountered point
+			return it->second;
+		}
+		i = (int)(welds.size() + weld_offset_);
+		welds[key] = i;
+	}
+	verts_.push_back(X);
+	verts_.push_back(Y);
+	verts_.push_back(Z);
+	return i;
+}
+
+void IfcGeom::Representation::Triangulation::registerEdgeCount(int n1, int n2, std::map<std::pair<int, int>, int>& edgecount) {
+	const Edge e = Edge((std::min)(n1, n2), (std::max)(n1, n2));
+	edgecount[e] ++;
+}
+
+const IfcGeom::ConversionResultShape* IfcGeom::Representation::BRep::item(int i) const {
+	if (i >= 0 && i < shapes_.size()) {
+		return shapes_[i].Shape()->moved(shapes_[i].Placement());
+	} else {
+		return nullptr;
+	}
+}
+
+int IfcGeom::Representation::BRep::item_id(int i) const {
+	if (i >= 0 && i < shapes_.size()) {
+		return shapes_[i].ItemId();
+	} else {
+		return 0;
+	}
 }

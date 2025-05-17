@@ -20,28 +20,11 @@
 #ifndef IFCGEOMREPRESENTATION_H
 #define IFCGEOMREPRESENTATION_H
 
-#include <BRepMesh_IncrementalMesh.hxx>
-#include <BRepGProp_Face.hxx>
+#include <ifcgeom/ConversionSettings.h>
+#include <ifcgeom/ConversionResult.h>
 
-#include <Poly_Triangulation.hxx>
-#include <TColgp_Array1OfPnt.hxx>
-#include <TColgp_Array1OfPnt2d.hxx>
+#include <map>
 
-#include <TopoDS.hxx>
-#include <BRepTools.hxx>
-#include <TopExp_Explorer.hxx>
-
-#include <BRepAdaptor_Curve.hxx>
-#include <GCPnts_QuasiUniformDeflection.hxx>
-#include <Geom_SphericalSurface.hxx>
-
-#include "../ifcgeom/IfcGeomIteratorSettings.h"
-#include "../ifcgeom_schema_agnostic/IfcGeomMaterial.h"
-#include "../ifcgeom/IfcRepresentationShapeItem.h"
-
-#include <TopoDS_Compound.hxx>
-
-namespace IFC_NAMESPACE{
 namespace IfcGeom {
 
 	namespace Representation {
@@ -50,358 +33,203 @@ namespace IfcGeom {
 			Representation(const Representation&); //N/A
 			Representation& operator =(const Representation&); //N/A
 		protected:
-			const ElementSettings settings_;
+			const ifcopenshell::geometry::Settings settings_;
+			const std::string entity_;
+			std::string id_;
 		public:
-			explicit Representation(const ElementSettings& settings)
-				: settings_(settings) 
+			explicit Representation(const ifcopenshell::geometry::Settings& settings, const std::string& entity, const std::string& id)
+				: settings_(settings)
+				, entity_(entity)
+				, id_(id)
 			{}
-			const ElementSettings& settings() const { return settings_; }
+			const ifcopenshell::geometry::Settings& settings() const { return settings_; }
+			const std::string& entity() const {
+				return entity_;
+			}
+			// id starts with representation id and then it may have the following dash separated elements:
+			// - layerset-layerset_id
+			// - material-material_id
+			// - openings-opening0_id-...-openingN_id
+			const std::string& id() const { return id_; }
 			virtual ~Representation() {}
 		};
 
 		class IFC_GEOM_API BRep : public Representation {
 		private:
-			std::string id_;
-			const IfcGeom::IfcRepresentationShapeItems shapes_;
+			const IfcGeom::ConversionResults shapes_;
 			BRep(const BRep& other);
 			BRep& operator=(const BRep& other);
 		public:
-			BRep(const ElementSettings& settings, const std::string& id, const IfcGeom::IfcRepresentationShapeItems& shapes)
-				: Representation(settings)
-				, id_(id)
+			BRep(const ifcopenshell::geometry::Settings& settings, const std::string& entity, const std::string& id, const IfcGeom::ConversionResults& shapes)
+				: Representation(settings, entity, id)
 				, shapes_(shapes)
 			{}
 			virtual ~BRep() {}
-			IfcGeom::IfcRepresentationShapeItems::const_iterator begin() const { return shapes_.begin(); }
-			IfcGeom::IfcRepresentationShapeItems::const_iterator end() const { return shapes_.end(); }
-			const IfcGeom::IfcRepresentationShapeItems& shapes() const { return shapes_; }
-			const std::string& id() const { return id_; }
-			TopoDS_Compound as_compound(bool force_meters = false) const;
+			IfcGeom::ConversionResults::const_iterator begin() const { return shapes_.begin(); }
+			IfcGeom::ConversionResults::const_iterator end() const { return shapes_.end(); }
+			const IfcGeom::ConversionResults& shapes() const { return shapes_; }
+			IfcGeom::ConversionResultShape* as_compound(bool force_meters = false) const;
 
 			bool calculate_volume(double&) const;
 			bool calculate_surface_area(double&) const;
-			bool calculate_projected_surface_area(const gp_Ax3& ax, double& along_x, double& along_y, double& along_z) const;
+			bool calculate_projected_surface_area(const ifcopenshell::geometry::taxonomy::matrix4& ax, double& along_x, double& along_y, double& along_z) const;
+
+			int size() const { return (int) shapes_.size(); }
+			const IfcGeom::ConversionResultShape* item(int i) const;
+			int item_id(int i) const;
 		};
 
 		class IFC_GEOM_API Serialization : public Representation  {
 		private:
-			std::string id_;
 			std::string brep_data_;
 			std::vector<double> surface_styles_;
+			std::vector<int> surface_style_ids_;
 		public:
 			const std::string& brep_data() const { return brep_data_; }
 			const std::vector<double>& surface_styles() const { return surface_styles_; }
+			const std::vector<int>& surface_style_ids() const { return surface_style_ids_; }
 			Serialization(const BRep& brep);
 			virtual ~Serialization() {}
-			const std::string& id() const { return id_; }
 		private:
 			Serialization();
 			Serialization(const Serialization&);
 			Serialization& operator=(const Serialization&);
 		};
 
-		template <typename P>
 		class Triangulation : public Representation {
 		private:
-			// A nested pair of floats and a material index to be able to store an XYZ coordinate in a map.
-			// TODO: Make this a std::tuple when compilers add support for that.
-			typedef typename std::pair<P, std::pair<P, P> > Coordinate;
-			typedef typename std::pair<int, Coordinate> VertexKey;
+			// A tuple of <item, material, x, y, z> to store as a key in a map.
+			typedef typename std::tuple<int, int, double, double, double> VertexKey;
 			typedef std::map<VertexKey, int> VertexKeyMap;
 			typedef std::pair<int, int> Edge;
 
-			std::string id_;
-			std::vector<P> _verts;
-			std::vector<int> _faces;
-			std::vector<int> _edges;
-			std::vector<P> _normals;
-            std::vector<P> uvs_;
-			std::vector<int> _material_ids;
-			std::vector<Material> _materials;
+			std::vector<double> verts_;
+
+			// @nb only one of these is populated based on settings, we didn't want to go
+			// all in with templates or subtypes because of reduced ease of use.
+			std::vector<int> faces_;
+			std::vector<std::vector<int>> polyhedral_faces_without_holes_;
+			std::vector<std::vector<std::vector<int>>> polyhedral_faces_with_holes_;
+			
+			std::vector<int> edges_;
+			std::vector<double> normals_;
+			std::vector<double> uvs_;
+			std::vector<int> material_ids_;
+			std::vector<ifcopenshell::geometry::taxonomy::style::ptr> materials_;
+			std::vector<int> item_ids_;
+			std::vector<int> edges_item_ids_;
+			size_t weld_offset_;
 			VertexKeyMap welds;
 
+			Triangulation(const ifcopenshell::geometry::Settings& settings, const std::string& entity,  const std::string& id)
+				: Representation(settings, entity, id)
+				, weld_offset_(0)
+				{}
+
 		public:
-			const std::string& id() const { return id_; }
-			const std::vector<P>& verts() const { return _verts; }
-			const std::vector<int>& faces() const { return _faces; }
-			const std::vector<int>& edges() const { return _edges; }
-			const std::vector<P>& normals() const { return _normals; }
-            const std::vector<P>& uvs() const { return uvs_; }
-			const std::vector<int>& material_ids() const { return _material_ids; }
-			const std::vector<Material>& materials() const { return _materials; }
+			const std::vector<double>& verts() const { return verts_; }
+			const std::vector<int>& faces() const { return faces_; }
+			const std::vector<std::vector<int>>& polyhedral_faces_without_holes() const { return polyhedral_faces_without_holes_; }
+			const std::vector<std::vector<std::vector<int>>>& polyhedral_faces_with_holes() const { return polyhedral_faces_with_holes_; }
+			const std::vector<int>& edges() const { return edges_; }
+			const std::vector<double>& normals() const { return normals_; }
+			const std::vector<double>& uvs() const { return uvs_; }
+			std::vector<double>& uvs_ref() { return uvs_; }
+			const std::vector<int>& material_ids() const { return material_ids_; }
+			const std::vector<ifcopenshell::geometry::taxonomy::style::ptr>& materials() const { return materials_; }
+			const std::vector<int>& item_ids() const { return item_ids_; }
+			const std::vector<int>& edges_item_ids() const { return edges_item_ids_; }
 
-			Triangulation(const BRep& shape_model)
-					: Representation(shape_model.settings())
-					, id_(shape_model.id())
-			{
-				for ( IfcGeom::IfcRepresentationShapeItems::const_iterator iit = shape_model.begin(); iit != shape_model.end(); ++ iit ) {
+			Triangulation(const BRep& shape_model);
 
-					int surface_style_id = -1;
-					if (iit->hasStyle()) {
-						Material adapter(&iit->Style());
-						std::vector<Material>::const_iterator jt = std::find(_materials.begin(), _materials.end(), adapter);
-						if (jt == _materials.end()) {
-							surface_style_id = (int)_materials.size();
-							_materials.push_back(adapter);
-						} else {
-							surface_style_id = (int)(jt - _materials.begin());
-						}
-					}
+			Triangulation(
+				const ifcopenshell::geometry::Settings& settings,
+				const std::string& entity,
+				const std::string& id,
+				const std::vector<double>& verts,
+				const std::vector<int>& faces,
+				const std::vector<int>& edges,
+				const std::vector<double>& normals,
+				const std::vector<double>& uvs,
+				const std::vector<int>& material_ids,
+				const std::vector<ifcopenshell::geometry::taxonomy::style::ptr>& materials,
+				const std::vector<int>& item_ids
+				, const std::vector<int>& edges_item_ids
+			)
+				: Representation(settings, entity, id)
+				, verts_(verts)
+				, faces_(faces)
+				, edges_(edges)
+				, normals_(normals)
+				, uvs_(uvs)
+				, material_ids_(material_ids)
+				, materials_(materials)
+				, item_ids_(item_ids)
+				, edges_item_ids_(edges_item_ids)
+			{}
 
-					if (settings().get(IteratorSettings::APPLY_DEFAULT_MATERIALS) && surface_style_id == -1) {
-						Material material(IfcGeom::get_default_style(settings().element_type()));
-						std::vector<Material>::const_iterator mit = std::find(_materials.begin(), _materials.end(), material);
-						if (mit == _materials.end()) {
-							surface_style_id = (int)_materials.size();
-							_materials.push_back(material);
-						} else {
-							surface_style_id = (int)(mit - _materials.begin());
-						}
-					}
-
-					const TopoDS_Shape& s = iit->Shape();
-					const gp_GTrsf& trsf = iit->Placement();
-
-					// Triangulate the shape
-					try {
-						BRepMesh_IncrementalMesh(s, settings().deflection_tolerance(), false, settings().angular_tolerance());
-					} catch(...) {
-						Logger::Message(Logger::LOG_ERROR, "Failed to triangulate shape");
-						continue;
-					}
-
-					// Iterates over the faces of the shape
-					int num_faces = 0;
-					TopExp_Explorer exp;
-					for ( exp.Init(s,TopAbs_FACE); exp.More(); exp.Next(), ++num_faces ) {
-						TopoDS_Face face = TopoDS::Face(exp.Current());
-						TopLoc_Location loc;
-						Handle_Poly_Triangulation tri = BRep_Tool::Triangulation(face,loc);
-
-						if (tri.IsNull()) {
-							Logger::Message(Logger::LOG_ERROR, "Triangulation missing for face");
-						} else {
-							// A 3x3 matrix to rotate the vertex normals
-							const gp_Mat rotation_matrix = trsf.VectorialPart();
-			
-							// Keep track of the number of times an edge is used
-							// Manifold edges (i.e. edges used twice) are deemed invisible
-							std::map<std::pair<int,int>,int> edgecount;
-							std::vector<std::pair<int,int> > edges_temp;
-                            
-                            Handle(TColgp_HArray1OfPnt) nodes = tri->MapNodeArray();
-                            Handle(TColgp_HArray1OfPnt2d) uvs = tri->MapUVNodeArray();
-
-							std::vector<gp_XYZ> coords;
-							BRepGProp_Face prop(face);
-							std::map<int,int> dict;
-
-                            // Vertex normals are only calculated if vertices are not welded and calculation is not disable explicitly.
-                            const bool calculate_normals = !settings().get(IteratorSettings::WELD_VERTICES) &&
-                                !settings().get(IteratorSettings::NO_NORMALS);
-
-							for( int i = 1; i <= nodes->Length(); ++ i ) {
-								coords.push_back(nodes->Value(i).Transformed(loc).XYZ());
-								trsf.Transforms(*coords.rbegin());
-								dict[i] = addVertex(surface_style_id, *coords.rbegin());
-					
-								if ( calculate_normals ) {
-									const gp_Pnt2d& uv = uvs->Value(i);
-									gp_Pnt p;
-									gp_Vec normal_direction;
-									prop.Normal(uv.X(),uv.Y(),p,normal_direction);
-									gp_Vec normal(0., 0., 0.);
-									if (normal_direction.Magnitude() > 1.e-9) {
-										normal = gp_Dir(normal_direction.XYZ() * rotation_matrix);
-									} else {
-										Handle_Geom_Surface surf = BRep_Tool::Surface(face);
-										// Special case the normal at the poles of a spherical surface
-										if (surf->DynamicType() == STANDARD_TYPE(Geom_SphericalSurface)) {
-											if (fabs(fabs(uv.Y()) - M_PI / 2.) < 1.e-9) {
-												const bool is_top = uv.Y() > 0;
-												const bool is_forward = face.Orientation() == TopAbs_FORWARD;
-												const double z = (is_top == is_forward) ? 1. : -1.;
-												normal = gp_Dir(gp_XYZ(0, 0, z) * rotation_matrix);
-											}
-										}
-										// TODO: Do the same for conical surfaces, but they are rare in IFC.
-									}
-									_normals.push_back(static_cast<P>(normal.X()));
-									_normals.push_back(static_cast<P>(normal.Y()));
-									_normals.push_back(static_cast<P>(normal.Z()));
-								}
-							}
-
-                            Handle(Poly_HArray1OfTriangle) triangles = tri->MapTriangleArray();
-							for( int i = 1; i <= triangles->Length(); ++ i ) {
-								int n1,n2,n3;
-								if ( face.Orientation() == TopAbs_REVERSED )
-									triangles->Value(i).Get(n3,n2,n1);
-								else triangles->Value(i).Get(n1,n2,n3);
-
-								/* An alternative would be to calculate normals based
-									* on the coordinates of the mesh vertices */
-								/*
-								const gp_XYZ pt1 = coords[n1-1];
-								const gp_XYZ pt2 = coords[n2-1];
-								const gp_XYZ pt3 = coords[n3-1];
-								const gp_XYZ v1 = pt2-pt1;
-								const gp_XYZ v2 = pt3-pt2;
-								gp_Dir normal = gp_Dir(v1^v2);
-								_normals.push_back((float)normal.X());
-								_normals.push_back((float)normal.Y());
-								_normals.push_back((float)normal.Z());
-								*/
-
-								_faces.push_back(dict[n1]);
-								_faces.push_back(dict[n2]);
-								_faces.push_back(dict[n3]);
-
-								_material_ids.push_back(surface_style_id);
-
-								addEdge(dict[n1], dict[n2], edgecount, edges_temp);
-								addEdge(dict[n2], dict[n3], edgecount, edges_temp);
-								addEdge(dict[n3], dict[n1], edgecount, edges_temp);
-							}
-							for ( std::vector<std::pair<int,int> >::const_iterator jt = edges_temp.begin(); jt != edges_temp.end(); ++jt ) {
-								if (edgecount[*jt] == 1) {
-									// non manifold edge, face boundary
-									_edges.push_back(jt->first);
-									_edges.push_back(jt->second);
-								}
-							}
-						}
-					}
-
-                    if (!_normals.empty() && settings().get(IfcGeom::IteratorSettings::GENERATE_UVS)) {
-                        uvs_ = box_project_uvs(_verts, _normals);
-                    }
-
-					if (num_faces == 0) {
-						// Edges are only emitted if there are no faces. A mixed representation of faces
-						// and loose edges is discouraged by the standard. An alternative would be to use
-						// TopExp_Explorer texp(s, TopAbs_EDGE, TopAbs_FACE) to find edges that do not
-						// belong to any face.
-						for (TopExp_Explorer texp(s, TopAbs_EDGE); texp.More(); texp.Next()) {
-							BRepAdaptor_Curve crv(TopoDS::Edge(texp.Current()));
-							GCPnts_QuasiUniformDeflection tessellater(crv, settings().deflection_tolerance());
-							int n = tessellater.NbPoints();
-							int previous = -1;
-							
-							for (int i = 1; i <= n; ++i) {
-								gp_XYZ p = tessellater.Value(i).XYZ();
-								
-								int current = addVertex(surface_style_id, p);
-
-								std::vector<std::pair<int, int>> segments;
-								if (i > 1) {
-									segments.push_back(std::make_pair(previous, current));
-								}
-
-								if (settings().get(IfcGeom::IteratorSettings::EDGE_ARROWS)) {
-									// In case you want direction arrows on your edges
-									double u = tessellater.Parameter(i);
-									gp_XYZ p2, p3;
-									gp_Pnt tmp;
-									gp_Vec tmp2;
-									crv.D1(u, tmp, tmp2);
-									gp_Dir d1, d2, d3, d4;
-									d1 = tmp2;
-									if (texp.Current().Orientation() == TopAbs_REVERSED) {
-										d1 = -d1;
-									}
-									if (fabs(d1.Z()) < 0.5) {
-										d2 = d1.Crossed(gp::DZ());
-									} else {
-										d2 = d1.Crossed(gp::DY());
-									}
-									d3 = d1.XYZ() + d2.XYZ();
-									d4 = d1.XYZ() - d2.XYZ();
-									p2 = p - d3.XYZ() / 10.;
-									p3 = p - d4.XYZ() / 10.;
-									trsf.Transforms(p2);
-									trsf.Transforms(p3);
-									trsf.Transforms(p);
-
-									int left = addVertex(surface_style_id, p2);
-									int right = addVertex(surface_style_id, p3);
-
-									segments.push_back(std::make_pair(left, current));
-									segments.push_back(std::make_pair(right, current));
-								}
-
-								for (auto& s : segments) {
-									_edges.push_back(s.first);
-									_edges.push_back(s.second);
-									_material_ids.push_back(surface_style_id);
-								}
-
-								previous = current;
-							}
-						}
-					}
-
-                    BRepTools::Clean(s);
-				}
-			}
 			virtual ~Triangulation() {}
 
             /// Generates UVs for a single mesh using box projection.
             /// @todo Very simple impl. Assumes that input vertices and normals match 1:1.
-            static std::vector<P> box_project_uvs(const std::vector<P> &vertices, const std::vector<P> &normals)
-            {
-                std::vector<P> uvs;
-                uvs.resize(vertices.size() / 3 * 2);
-                for (size_t uv_idx = 0, v_idx = 0;
-                uv_idx < uvs.size() && v_idx < vertices.size() && v_idx < normals.size();
-                    uv_idx += 2, v_idx += 3) {
+			static std::vector<double> box_project_uvs(const std::vector<double> &vertices, const std::vector<double> &normals);
 
-                    P n_x = normals[v_idx], n_y = normals[v_idx + 1], n_z = normals[v_idx + 2];
-                    P v_x = vertices[v_idx], v_y = vertices[v_idx + 1], v_z = vertices[v_idx + 2];
+			static Triangulation* empty(const ifcopenshell::geometry::Settings& settings) { return new Triangulation(settings, "", ""); }
 
-                    if (std::abs(n_x) > std::abs(n_y) && std::abs(n_x) > std::abs(n_z)) {
-                        uvs[uv_idx] = v_z;
-                        uvs[uv_idx + 1] = v_y;
-                    }
-                    if (std::abs(n_y) > std::abs(n_x) && std::abs(n_y) > std::abs(n_z)) {
-                        uvs[uv_idx] = v_x;
-                        uvs[uv_idx + 1] = v_z;
-                    }
-                    if (std::abs(n_z) > std::abs(n_x) && std::abs(n_z) > std::abs(n_y)) {
-                        uvs[uv_idx] = v_x;
-                        uvs[uv_idx + 1] = v_y;
-                    }
-                }
+			/// Welds vertices that belong to different faces
+			int addVertex(int item_index, int material_index, double X, double Y, double Z);
 
-                return uvs;
-            }
+			void addNormal(double X, double Y, double Z) {
+				normals_.push_back(X);
+				normals_.push_back(Y);
+				normals_.push_back(Z);
+			}
+
+			void addFace(int item_id, int style, int i0, int i1, int i2) {
+				faces_.push_back(i0);
+				faces_.push_back(i1);
+				faces_.push_back(i2);
+
+				item_ids_.push_back(item_id);
+				material_ids_.push_back(style);
+			}
+
+			void addFace(int item_id, int style, const std::vector<int>& outer_bound) {
+				polyhedral_faces_without_holes_.push_back(outer_bound);
+
+				item_ids_.push_back(item_id);
+				material_ids_.push_back(style);
+			}
+
+			void addFace(int item_id, int style, const std::vector<std::vector<int>>& bounds) {
+				polyhedral_faces_with_holes_.push_back(bounds);
+
+				item_ids_.push_back(item_id);
+				material_ids_.push_back(style);
+			}
+
+			void addEdge(int item_id, int style, int i0, int i1) {
+				edges_.push_back(i0);
+				edges_.push_back(i1);
+
+				material_ids_.push_back(style);
+				edges_item_ids_.push_back(item_id);
+			}
+
+			void registerEdge(int item_id, int i0, int i1) {
+				edges_.push_back(i0);
+				edges_.push_back(i1);
+				edges_item_ids_.push_back(item_id);
+			}
+
+			void registerEdgeCount(int n1, int n2, std::map<std::pair<int, int>, int>& edgecount);
+
+			void resetWelds() {
+				weld_offset_ += welds.size();
+				welds.clear();
+			}
 
 		private:
-			// Welds vertices that belong to different faces
-			int addVertex(int material_index, const gp_XYZ& p) {
-                const bool convert = settings().get(IteratorSettings::CONVERT_BACK_UNITS);
-				const P X = static_cast<P>(convert ? (p.X() / settings().unit_magnitude()) : p.X());
-				const P Y = static_cast<P>(convert ? (p.Y() / settings().unit_magnitude()) : p.Y());
-				const P Z = static_cast<P>(convert ? (p.Z() / settings().unit_magnitude()) : p.Z());
-				int i = (int) _verts.size() / 3;
-				if (settings().get(IteratorSettings::WELD_VERTICES)) {
-					const VertexKey key = std::make_pair(material_index, std::make_pair(X, std::make_pair(Y, Z)));
-					typename VertexKeyMap::const_iterator it = welds.find(key);
-					if ( it != welds.end() ) return it->second;
-					i = (int) welds.size();
-					welds[key] = i;
-				}
-				_verts.push_back(X);
-				_verts.push_back(Y);
-				_verts.push_back(Z);
-				return i;
-			}
-			inline void addEdge(int n1, int n2, std::map<std::pair<int,int>,int>& edgecount, std::vector<std::pair<int,int> >& edges_temp) {
-				const Edge e = Edge( (std::min)(n1,n2),(std::max)(n1,n2) );
-				if ( edgecount.find(e) == edgecount.end() ) edgecount[e] = 1;
-				else edgecount[e] ++;
-				edges_temp.push_back(e);
-			}
 			Triangulation();
 			Triangulation(const Triangulation&);
 			Triangulation& operator=(const Triangulation&);
@@ -409,5 +237,5 @@ namespace IfcGeom {
 
 	}
 }
-}
+
 #endif

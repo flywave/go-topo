@@ -223,11 +223,23 @@ IF(NOT IFC_INCLUDE)
   LIST(APPEND FLYWAVE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/external/ifc/src/ifcparse/")
   LIST(APPEND FLYWAVE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/external/ifc/src/ifcgeom_schema_agnostic/")
   LIST(APPEND FLYWAVE_LIBRARY_DIRS "${CMAKE_CURRENT_BINARY_DIR}/external/ifc/")
-  LIST(APPEND FLYWAVE_LIBRARY_DEPES "ifc23"
-                                    "ifc4" 
-                                    "ifc41" 
-                                    "ifc42" 
-                                    "ifc43_rc1")
+  LIST(APPEND FLYWAVE_LIBRARY_DEPES "ifc"
+                                    "geometry_mapping_ifc2x3" 
+                                    "geometry_mapping_ifc4" 
+                                    "geometry_mapping_ifc4x1" 
+                                    "geometry_mapping_ifc4x2"
+                                    "geometry_mapping_ifc4x3_add1"
+                                    "geometry_mapping_ifc4x3_add2"
+                                    "geometry_mapping_ifc4x3_tc1"
+                                    "geometry_mapping_ifc4x3"
+                                    "geometry_serializer_ifc2x3"
+                                    "geometry_serializer_ifc4"
+                                    "geometry_serializer_ifc4x1"
+                                    "geometry_serializer_ifc4x2"
+                                    "geometry_serializer_ifc4x3_add1"
+                                    "geometry_serializer_ifc4x3_add2"
+                                    "geometry_serializer_ifc4x3_tc1"
+                                    "geometry_serializer_ifc4x3")
   SET(IFC_INCLUDE YES)
 ENDIF()
 

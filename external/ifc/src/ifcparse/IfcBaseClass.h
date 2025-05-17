@@ -20,94 +20,209 @@
 #ifndef IFCBASECLASS_H
 #define IFCBASECLASS_H
 
-#include "ifc_parse_api.h"
+#include <ifcparse/Argument.h>
+#include <ifcparse/ifc_parse_api.h>
+#include <ifcparse/IfcEntityInstanceData.h>
+#include <ifcparse/IfcSchema.h>
+#include <ifcparse/utils.h>
 
-#include "../ifcparse/IfcEntityInstanceData.h"
-#include "../ifcparse/IfcSchema.h"
-#include "../ifcparse/utils.h"
-
+#include <atomic>
 #include <boost/shared_ptr.hpp>
 
-namespace IFC_NAMESPACE{
-class Argument;
-class IfcEntityList;
+class aggregate_of_instance;
+
+namespace IfcParse {
+    class IfcFile;
+}
 
 namespace IfcUtil {
 
-	class IFC_PARSE_API IfcBaseClass {
-    protected:
-		IfcEntityInstanceData* data_;
+class IFC_PARSE_API IfcBaseInterface {
+  protected:
+    static bool is_null(const IfcBaseInterface* not_this) {
+        return not_this == nullptr;
+    }
 
-		static bool is_null(const IfcBaseClass* not_this) {
-			return !not_this;
-		}
-        
-	public:
-        IfcBaseClass() : data_(0) {}
-		IfcBaseClass(IfcEntityInstanceData* d) : data_(d) {}
-		virtual ~IfcBaseClass() { delete data_; }
-        
-        const IfcEntityInstanceData& data() const { return *data_; }
-		IfcEntityInstanceData& data() { return *data_; }
-        void data(IfcEntityInstanceData* d);
-        
-        virtual const IfcParse::declaration& declaration() const = 0;
+    template <typename T>
+    std::enable_if_t<!std::is_same<IfcBaseClass, T>::value && !std::is_same<IfcBaseEntity, T>::value && !std::is_same<IfcBaseType, T>::value> raise_error_on_concrete_class() const {
+        throw IfcParse::IfcException("Instance of type " + this->declaration().name() + " cannot be cast to " + T::Class().name());
+    }
 
-		template <class T>
-		T* as() {
-			// @todo: do not allow this to be null in the first place
-			if (is_null(this)) {
-				return static_cast<T*>(0);
-			}
-			return declaration().is(T::Class())
-				? static_cast<T*>(this)
-				: static_cast<T*>(0);
-		}
+    template <typename T>
+    std::enable_if_t<std::is_same<IfcBaseClass, T>::value || std::is_same<IfcBaseEntity, T>::value || std::is_same<IfcBaseType, T>::value> raise_error_on_concrete_class() const {
+        throw IfcParse::IfcException("Instance of type " + this->declaration().name() + " cannot be cast to base class");
+    }
 
-		template <class T>
-		const T* as() const {
-			if (is_null(this)) {
-				return static_cast<const T*>(0);
-			}
-			return declaration().is(T::Class())
-				? static_cast<const T*>(this)
-				: static_cast<const T*>(0);
-		}
-	};
+  public:
+    virtual const IfcEntityInstanceData& data() const = 0;
+    virtual IfcEntityInstanceData& data() = 0;
+    virtual const IfcParse::declaration& declaration() const = 0;
+    virtual ~IfcBaseInterface() {}
 
-	class IFC_PARSE_API IfcLateBoundEntity : public IfcBaseClass {
-	private:
-		const IfcParse::declaration* decl_;
+    template <class T>
+    T* as(bool do_throw = false) {
+        // @todo: do not allow this to be null in the first place
+        if (is_null(this)) {
+            return static_cast<T*>(0);
+        }
+        auto type = dynamic_cast<T*>(this);
+        if (do_throw && !type) {
+            raise_error_on_concrete_class<T>();
+        }
+        return type;
+    }
 
-	public:
-		IfcLateBoundEntity(const IfcParse::declaration* decl, IfcEntityInstanceData* data) : IfcBaseClass(data), decl_(decl) {}
+    template <class T>
+    const T* as(bool do_throw = false) const {
+        if (is_null(this)) {
+            return static_cast<const T*>(0);
+        }
+        auto type = dynamic_cast<const T*>(this);
+        if (do_throw && !type) {
+            raise_error_on_concrete_class<T>();
+        }
+        return type;
+    }
+};
 
-		virtual const IfcParse::declaration& declaration() const {
-			return *decl_;
-		}
-	};
+class IFC_PARSE_API IfcBaseClass : public virtual IfcBaseInterface {
+ protected:
+    static std::atomic_uint32_t counter_;
 
-	class IFC_PARSE_API IfcBaseEntity : public IfcBaseClass {
-	public:
-		IfcBaseEntity() : IfcBaseClass() {}
-		IfcBaseEntity(IfcEntityInstanceData* d) : IfcBaseClass(d) {}
+    uint32_t identity_;
+public:
+    uint32_t id_;
+    IfcParse::IfcFile* file_;
+protected:
+    IfcEntityInstanceData data_;
 
-		virtual const IfcParse::entity& declaration() const = 0;
+public:
+    IfcBaseClass(IfcEntityInstanceData&& data)
+        : identity_(counter_++)
+        , id_(0)
+        , file_(nullptr)
+        , data_(std::move(data))
+    {}
 
-		Argument* get(const std::string& name) const;
+    const IfcEntityInstanceData& data() const { return data_; }
+    IfcEntityInstanceData& data() { return data_; }
 
-		boost::shared_ptr<IfcEntityList> get_inverse(const std::string& a) const;
-	};
+    virtual const IfcParse::declaration& declaration() const = 0;
 
-	// TODO: Investigate whether these should be template classes instead
-	class IFC_PARSE_API IfcBaseType : public IfcBaseClass {
-	public:
-		IfcBaseType() : IfcBaseClass() {}
-		IfcBaseType(IfcEntityInstanceData* d) : IfcBaseClass(d) {}
+    template <typename T>
+    void set_attribute_value(size_t i, const T& t);
 
-		virtual const IfcParse::type_declaration& declaration() const = 0;
-	};
+    template <typename T>
+    void set_attribute_value(const std::string& name, const T& t);
+    
+    void unset_attribute_value(size_t i);
 
+    uint32_t identity() const { return identity_; }
+
+    uint32_t id() const { return id_; }
+
+    void toString(std::ostream&, bool upper = false) const;
+
+    typedef aggregate_of_instance list;
+};
+
+class IFC_PARSE_API IfcBaseEntity : public IfcBaseClass {
+  public:
+    IfcBaseEntity(IfcEntityInstanceData&& data);
+
+    IfcBaseEntity(size_t n)
+        : IfcBaseClass(IfcEntityInstanceData(storage_t(n)))
+    {}
+
+    virtual const IfcParse::declaration& declaration() const = 0;
+
+    AttributeValue get(const std::string& name) const;
+
+    template <typename T>
+    T get_value(const std::string& name) const;
+
+    template <typename T>
+    T get_value(const std::string& name, const T& default_value) const;
+
+    boost::shared_ptr<aggregate_of_instance> get_inverse(const std::string& name) const;
+
+    unsigned set_id(const boost::optional<unsigned>& i);
+
+    void populate_derived();
+};
+
+class IFC_PARSE_API IfcLateBoundEntity : public IfcBaseEntity {
+private:
+    const IfcParse::declaration* decl_;
+
+public:
+    IfcLateBoundEntity(const IfcParse::declaration* decl, IfcEntityInstanceData&& data) : IfcBaseEntity(std::move(data)),
+        decl_(decl) {}
+
+    virtual const IfcParse::declaration& declaration() const {
+        return *decl_;
+    }
+};
+
+// TODO: Investigate whether these should be template classes instead
+class IFC_PARSE_API IfcBaseType : public IfcBaseClass {
+  public:
+    IfcBaseType(IfcEntityInstanceData&& data)\
+        : IfcBaseClass(std::move(data))
+    {}
+
+    IfcBaseType()
+        : IfcBaseClass(IfcEntityInstanceData(storage_t(1)))
+    {}
+
+    virtual const IfcParse::declaration& declaration() const = 0;
+};
+
+} // namespace IfcUtil
+
+namespace IfcUtil {
+template <typename T>
+T IfcBaseEntity::get_value(const std::string& name) const {
+    auto attr = get(name);
+    return (T) attr;
 }
+
+template <typename T>
+T IfcBaseEntity::get_value(const std::string& name, const T& default_value) const {
+    auto attr = get(name);
+    if (attr.isNull()) {
+        return default_value;
+    }
+    return (T) attr;
 }
+
+} // namespace IfcUtil
+
+template <class U>
+typename U::list::ptr aggregate_of_instance::as() {
+    typename U::list::ptr result(new typename U::list);
+    for (it i = begin(); i != end(); ++i) {
+        if ((*i)->template as<U>()) {
+            result->push((*i)->template as<U>());
+        }
+    }
+    return result;
+}
+
+template <class U>
+typename aggregate_of_aggregate_of<U>::ptr aggregate_of_aggregate_of_instance::as() {
+    typename aggregate_of_aggregate_of<U>::ptr result(new aggregate_of_aggregate_of<U>);
+    for (outer_it outer = begin(); outer != end(); ++outer) {
+        const std::vector<IfcUtil::IfcBaseClass*>& from = *outer;
+        typename std::vector<U*> to;
+        for (inner_it inner = from.begin(); inner != from.end(); ++inner) {
+            if ((*inner)->template as<U>()) {
+                to.push_back((*inner)->template as<U>());
+            }
+        }
+        result->push(to);
+    }
+    return result;
+}
+
 #endif
