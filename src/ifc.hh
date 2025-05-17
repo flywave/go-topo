@@ -173,7 +173,7 @@ inline std::string get_version(const std::string &f) {
   IfcParse::IfcFile fl{f};
   return fl.good() == IfcParse::file_open_status::SUCCESS
              ? fl.header().file_description().implementation_level()
-             : "";
+             : std::string();
 }
 
 inline std::unique_ptr<base_convert> get_convert(const std::string &f) {
