@@ -38,7 +38,7 @@ enum class Mode { ADD, SUBTRACT, INTERSECT, CONSTRUCT, REPLACE };
 
 class sketch;
 
-class sketch {
+class sketch : public std::enable_shared_from_this<sketch> {
 public:
   sketch();
   sketch(std::shared_ptr<workplane> inPlane,
