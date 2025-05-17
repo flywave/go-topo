@@ -10,7 +10,6 @@
 #include <ifcgeom/IfcGeomRenderStyles.h>
 #include <ifcgeom/Iterator.h>
 #include <ifcparse/IfcFile.h>
-#include <serializers/OpenCascadeBasedSerializer.h>
 
 #include <array>
 
