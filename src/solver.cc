@@ -1,7 +1,9 @@
 #include "solver.hh"
+#ifndef __EMSCRIPTEN__
 #include <IpIpoptApplication.hpp>
 #include <IpSolveStatistics.hpp>
 #include <IpTNLP.hpp>
+#endif
 #include <boost/variant.hpp>
 #include <gp_Dir.hxx>
 #include <gp_Lin.hxx>
@@ -34,6 +36,8 @@ DOF6 location_to_dof6(const gp_Trsf &loc) {
   return {T, R};
 }
 } // namespace
+
+#ifndef __EMSCRIPTEN__
 
 class constraint_problem : public TNLP {
 private:
@@ -873,6 +877,7 @@ private:
     return dummy;
   }
 };
+#endif
 
 constraint_solver::constraint_solver(
     const std::vector<gp_Trsf> &entities,
@@ -904,6 +909,14 @@ constraint_solver::constraint_solver(
   }
 }
 
+#ifdef __EMSCRIPTEN__
+std::pair<std::vector<gp_Trsf>, std::map<std::string, double>>
+constraint_solver::solve(int verbosity) {
+  std::vector<gp_Trsf> emptyTransforms;
+  std::map<std::string, double> emptyStats;
+  return std::make_pair(emptyTransforms, emptyStats);
+}
+#else
 std::pair<std::vector<gp_Trsf>, std::map<std::string, double>>
 constraint_solver::solve(int verbosity) {
   Ipopt::SmartPtr<Ipopt::IpoptApplication> app = IpoptApplicationFactory();
@@ -938,6 +951,6 @@ constraint_solver::solve(int verbosity) {
 
   return std::make_pair(trans, stats);
 }
-
+#endif
 } // namespace topo
 } // namespace flywave

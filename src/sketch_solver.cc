@@ -1,5 +1,9 @@
 #include "sketch_solver.hh"
 
+#ifndef __EMSCRIPTEN__
+#include <nlopt.hpp>
+#endif
+
 namespace flywave {
 namespace topo {
 
@@ -455,6 +459,15 @@ sketch_solver::sketch_solver(const std::vector<sketch_dof> &entities,
   }
 }
 
+#ifdef __EMSCRIPTEN__
+std::pair<std::vector<std::vector<double>>,
+          std::map<std::string, boost::variant<double, int, std::string>>>
+sketch_solver::solve() {
+  std::vector<std::vector<double>> solution;
+  std::map<std::string, boost::variant<double, int, std::string>> status;
+  return std::make_pair(solution, status);
+}
+#else
 std::pair<std::vector<std::vector<double>>,
           std::map<std::string, boost::variant<double, int, std::string>>>
 sketch_solver::solve() {
@@ -498,6 +511,6 @@ sketch_solver::solve() {
 
   return std::make_pair(solution, status);
 }
-
+#endif
 } // namespace topo
 } // namespace flywave

@@ -3,7 +3,6 @@
 #include <array>
 #include <map>
 #include <memory>
-#include <nlopt.hpp>
 #include <stdexcept>
 #include <string>
 #include <utility>
