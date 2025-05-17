@@ -1418,6 +1418,8 @@ boost::optional<shape> shape::auto_cast() const {
       return solid(*this, _shape);
     case TopAbs_COMPOUND:
       return compound(*this, _shape);
+    case TopAbs_COMPSOLID:
+      return comp_solid(*this, _shape);
     default:
       break;
     }

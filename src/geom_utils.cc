@@ -1,4 +1,3 @@
-
 #include "geom_utils.hh"
 #include "math_utils.hh"
 

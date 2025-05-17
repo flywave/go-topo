@@ -3,6 +3,7 @@
 
 #include <Quantity_Color.hxx>
 #include <gp_Pnt.hxx>
+
 namespace flywave {
 namespace topo {
 
@@ -39,7 +40,6 @@ public:
 
   virtual void append_point(int edge, gp_Pnt p) = 0;
 };
-
 } // namespace topo
 } // namespace flywave
 

@@ -130,15 +130,13 @@ boost::optional<shape> loft(const std::vector<face> &faceProfiles,
                             const std::string &continuity = "C2");
 
 boost::optional<shape>
-dprism(const shape &shp, const face &basis,
-       const std::vector<wire> &profiles,
+dprism(const shape &shp, const face &basis, const std::vector<wire> &profiles,
        const boost::optional<double> &depth = boost::none, double taper = 0,
        const face *upToFace = nullptr, bool thruAll = true,
        bool additive = true);
 
 boost::optional<shape>
-dprism(const shape &shp, const face &basis,
-       const std::vector<face> &faces,
+dprism(const shape &shp, const face &basis, const std::vector<face> &faces,
        const boost::optional<double> &depth = boost::none, double taper = 0,
        const face *upToFace = nullptr, bool thruAll = true,
        bool additive = true);

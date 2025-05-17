@@ -536,7 +536,8 @@ face face::make_spline_approx(
   }
 
   TColgp_Array2OfPnt pointsArray =
-      TColgp_Array2OfPnt(1, static_cast<int>(points.size()), 1, static_cast<int>(points[0].size()));
+      TColgp_Array2OfPnt(1, static_cast<int>(points.size()), 1,
+                         static_cast<int>(points[0].size()));
 
   for (size_t i = 0; i < points.size(); ++i) {
     for (size_t j = 0; j < points[i].size(); ++j) {

@@ -1,4 +1,3 @@
-// ShapeOperations.h
 #pragma once
 
 #include <gp.hxx>

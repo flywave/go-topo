@@ -963,7 +963,7 @@ struct insulator_params {
   double weight; // 重量(kg)
 
   // 金具尺寸
-  struct {
+  struct fitting_lengths {
     double leftUpper;  // 左上金具长度(mm)
     double rightUpper; // 右上
     double leftLower;  // 左下
@@ -971,14 +971,14 @@ struct insulator_params {
   } fittingLengths;
 
   // 多联配置
-  struct {
+  struct multi_link {
     int count;                    // 联数
     double spacing;               // 联间距(mm)
     arrangement_type arrangement; // 排列方式
   } multiLink;
 
   // 绝缘子参数
-  struct {
+  struct insulator_ {
     boost::variant<double, composite_insulator_params> radius; // 半径或复合参数
     double height;                                             // 结构高度(mm)
     int leftCount;                                             // 左侧片数
@@ -987,7 +987,7 @@ struct insulator_params {
   } insulator;
 
   // 均压环配置
-  struct {
+  struct grading_ring {
     int count;       // 个数
     double position; // 安装位置(mm)
     double height;   // 环高度(mm)
@@ -1287,7 +1287,7 @@ TopoDS_Shape create_stub_tube(const stub_tube_params &params,
 
 struct cable_wire_params {
   std::vector<gp_Pnt> points; // 电缆路径点集
-  double outsideDiameter;    // 电缆外径(mm)
+  double outsideDiameter;     // 电缆外径(mm)
 };
 
 TopoDS_Shape create_cable_wire(const cable_wire_params &params);
