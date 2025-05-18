@@ -58,8 +58,10 @@ ifc_convert::setup_filters(const std::vector<geom_filter> &filters) {
 }
 
 std::vector<ifc_element_info> ifc_convert::get_shape() {
-  IfcParse::IfcFile fl{_file_name};
-  IfcGeom::Iterator iter{settings, &fl, this->filter_funcs, 1};
+  if (!_file && !this->load()) {
+    return {};
+  }
+  IfcGeom::Iterator iter{settings, _file.get(), this->filter_funcs, 1};
   std::vector<ifc_element_info> shps;
   if (iter.initialize()) {
     do {
@@ -80,16 +82,40 @@ std::vector<ifc_element_info> ifc_convert::get_shape() {
   return shps;
 }
 
-void ifc_convert::process_with_callback(visitor *vst) {
-  IfcParse::IfcFile fl{_file_name};
-  IfcGeom::Iterator iter{settings, &fl, filter_funcs, 1};
-  unsigned int vcount_total = 0;
+std::vector<ifc_convert::triangulation_ptr> ifc_convert::get_geometry() {
+  if (!_file && !this->load()) {
+    return {};
+  }
+  IfcGeom::Iterator iter{settings, _file.get(), this->filter_funcs, 1};
+  std::vector<boost::shared_ptr<IfcGeom::Representation::Triangulation>> shps;
   if (iter.initialize()) {
     do {
       auto ptr = reinterpret_cast<IfcGeom::TriangulationElement *>(iter.get());
-      vst->apply(ptr);
+      shps.push_back(ptr->geometry_pointer());
     } while (iter.next());
   }
 }
+
+bool ifc_convert::load() {
+  try {
+    _file = std::make_unique<IfcParse::IfcFile>(_file_name);
+    if (!_file || !_file->good()) {
+      return false;
+    }
+    return true;
+  } catch (const std::exception &e) {
+    return false;
+  }
+}
+
+std::string ifc_convert::get_version() {
+  if (!_file) {
+    return nullptr;
+  }
+  return _file->good() == IfcParse::file_open_status::SUCCESS
+             ? _file->header().file_description().implementation_level()
+             : std::string();
+}
+
 } // namespace ifc
 } // namespace flywave

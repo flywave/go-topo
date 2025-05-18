@@ -24,21 +24,6 @@ struct ifc_element_info {
   std::string guid;
 };
 
-class visitor {
-public:
-  virtual ~visitor() {}
-  virtual void apply(const IfcGeom::TriangulationElement *element) = 0;
-};
-
-class base_convert {
-public:
-  virtual std::vector<ifc_element_info> get_shape() = 0;
-
-  virtual void process_with_callback(visitor *vst) = 0;
-
-  virtual ~base_convert() = default;
-};
-
 struct geom_filter {
   geom_filter(bool include, bool traverse)
       : type(UNUSED), include(include), traverse(traverse) {}
@@ -118,11 +103,13 @@ struct filter_settings {
   }
 };
 
-class ifc_convert : public base_convert {
+class ifc_convert {
 protected:
   IfcGeom::entity_filter entity_filter;
   IfcGeom::layer_filter layer_filter;
   IfcGeom::attribute_filter attribute_filter;
+
+  std::unique_ptr<IfcParse::IfcFile> _file;
 
   std::vector<IfcGeom::filter_t>
   setup_filters(const std::vector<geom_filter> &);
@@ -160,9 +147,16 @@ public:
   }
   ~ifc_convert() {}
 
+  bool load();
+
   std::vector<ifc_element_info> get_shape();
 
-  void process_with_callback(visitor *vst);
+  using triangulation_ptr =
+      boost::shared_ptr<IfcGeom::Representation::Triangulation>;
+
+  std::vector<triangulation_ptr> get_geometry();
+
+  std::string get_version();
 
   const std::vector<IfcGeom::filter_t> &get_filter_funcs() {
     return filter_funcs;
@@ -176,11 +170,9 @@ inline std::string get_version(const std::string &f) {
              : std::string();
 }
 
-inline std::unique_ptr<base_convert> get_convert(const std::string &f) {
+inline std::unique_ptr<ifc_convert> get_convert(const std::string &f) {
   return std::unique_ptr<ifc_convert>(new ifc_convert{f});
 }
-
-inline void ifc_register_schema() {}
 
 } // namespace ifc
 } // namespace flywave

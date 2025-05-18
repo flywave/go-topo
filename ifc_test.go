@@ -8,7 +8,7 @@ import (
 const TOLERANCE = 1e-8
 
 func TestIfc(t *testing.T) {
-	ts := IfcToTopoShape("tests/buildingElementProxy.ifc")
+	ts := IfcToElements("tests/buildingElementProxy.ifc")
 	for _, sh := range ts {
 		fmt.Println(sh.Name)
 	}
