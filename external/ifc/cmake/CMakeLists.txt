@@ -42,7 +42,7 @@ add_definitions(-DSCHEMA_SEQ=${schema_version_seq})
 
 # Source files
 file(GLOB SRC_FILES_GEOM ../src/ifcgeom/*.cpp)
-file(GLOB SRC_FILES_GEOM_KERNEL ../src/ifcgeom/kernel/*.cpp)
+file(GLOB SRC_FILES_GEOM_KERNEL ../src/ifcgeom/kernels/*.cpp)
 set(SRC_FILES_GEOM_SERIALIZE ../src/ifcgeom/Serialization/Serialization.cpp)
 file(GLOB SRC_FILES_PARSER ../src/ifcparse/*.cpp)
 

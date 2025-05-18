@@ -7,6 +7,10 @@
 #include <string>
 
 namespace IfcGeom {
-	IFC_GEOM_API IfcUtil::IfcBaseClass* tesselate(const std::string& schema_name, const TopoDS_Shape& shape, double deflection);
-	IFC_GEOM_API IfcUtil::IfcBaseClass* serialise(const std::string& schema_name, const TopoDS_Shape& shape, bool advanced);
-}
+IFC_GEOM_API IfcUtil::IfcBaseClass *tesselate(const std::string &schema_name,
+                                              const TopoDS_Shape &shape,
+                                              double deflection);
+IFC_GEOM_API IfcUtil::IfcBaseClass *serialise(const std::string &schema_name,
+                                              const TopoDS_Shape &shape,
+                                              bool advanced);
+} // namespace IfcGeom
