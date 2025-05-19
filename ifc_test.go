@@ -12,4 +12,9 @@ func TestIfc(t *testing.T) {
 	for _, sh := range ts {
 		fmt.Println(sh.Name)
 	}
+
+	tris := IfcToTriangulations("tests/buildingElementProxy.ifc")
+	for _, tri := range tris {
+		fmt.Println(len(tri.GetVerts()))
+	}
 }

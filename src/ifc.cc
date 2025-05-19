@@ -94,6 +94,7 @@ std::vector<ifc_convert::triangulation_ptr> ifc_convert::get_geometry() {
       shps.push_back(ptr->geometry_pointer());
     } while (iter.next());
   }
+  return shps;
 }
 
 bool ifc_convert::load() {
