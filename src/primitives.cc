@@ -17189,6 +17189,28 @@ TopoDS_Shape create_pipe_joint(const pipe_joint_params &params) {
   return result;
 }
 
+TopoDS_Shape create_pipe_joint(const pipe_joint_params &params,
+                               const gp_Pnt &position, const gp_Dir &direction,
+                               const gp_Dir &xDir) {
+  // 正交性校验
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  // 创建标准方向的管道连接件
+  TopoDS_Shape joint = create_pipe_joint(params);
+
+  // 创建坐标系变换
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(joint, transformation);
+  return transform.Shape();
+}
+
 TopoDS_Shape create_catenary(const catenary_params &params) {
   // 参数验证
   if (params.slack <= 0) {

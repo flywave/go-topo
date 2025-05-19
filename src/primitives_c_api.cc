@@ -3937,6 +3937,2172 @@ create_cable_ray_with_place(cable_ray_params_t params, pnt3d_t position,
     return nullptr;
   }
 }
+
+topo_shape_t *create_revol(revol_params_t params) {
+  // 将C结构体转换为C++参数
+  revol_params cpp_params;
+  cpp_params.angle = params.angle;
+  cpp_params.axis = gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)); // 默认轴
+
+  // 根据类型转换剖面
+  switch (params.profile.type_) {
+  case PROFILE_TYPE_TRIANGLE: {
+    auto &tri = params.profile.triangle;
+    cpp_params.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                                          gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                                          gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+    break;
+  }
+  case PROFILE_TYPE_RECTANGLE: {
+    auto &rect = params.profile.rectangle;
+    cpp_params.profile =
+        rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                          gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+    break;
+  }
+  case PROFILE_TYPE_CIRC: {
+    auto &circ = params.profile.circ;
+    cpp_params.profile = circ_profile(
+        gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+    break;
+  }
+  case PROFILE_TYPE_ELIPS: {
+    auto &elips = params.profile.elips;
+    cpp_params.profile =
+        elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                      gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                      gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+    break;
+  }
+  case PROFILE_TYPE_POLYGON: {
+    auto &poly = params.profile.polygon;
+    std::vector<gp_Pnt> edges;
+    for (int i = 0; i < poly.edgeCount; i++) {
+      edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+    }
+
+    std::vector<std::vector<gp_Pnt>> inners;
+    for (int i = 0; i < poly.innerArrayCount; i++) {
+      std::vector<gp_Pnt> inner;
+      for (int j = 0; j < poly.innerCounts[i]; j++) {
+        inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
+                           poly.inners[i][j].z);
+      }
+      inners.push_back(inner);
+    }
+
+    cpp_params.profile = polygon_profile(edges, inners);
+    break;
+  }
+  default:
+    return nullptr;
+  }
+
+  // 转换旋转轴
+  cpp_params.axis =
+      gp_Ax1(gp_Pnt(params.axis.p.x, params.axis.p.y, params.axis.p.z),
+             gp_Dir(params.axis.d.x, params.axis.d.y, params.axis.d.z));
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_revol(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+topo_shape_t *create_revol_with_place(revol_params_t params, pnt3d_t position,
+                                      dir3d_t direction, dir3d_t xDir) {
+  revol_params cpp_params;
+  cpp_params.angle = params.angle;
+  cpp_params.axis = gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)); // 默认轴
+
+  // 根据类型转换剖面
+  switch (params.profile.type_) {
+  case PROFILE_TYPE_TRIANGLE: {
+    auto &tri = params.profile.triangle;
+    cpp_params.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                                          gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                                          gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+    break;
+  }
+  case PROFILE_TYPE_RECTANGLE: {
+    auto &rect = params.profile.rectangle;
+    cpp_params.profile =
+        rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                          gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+    break;
+  }
+  case PROFILE_TYPE_CIRC: {
+    auto &circ = params.profile.circ;
+    cpp_params.profile = circ_profile(
+        gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+    break;
+  }
+  case PROFILE_TYPE_ELIPS: {
+    auto &elips = params.profile.elips;
+    cpp_params.profile =
+        elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                      gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                      gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+    break;
+  }
+  case PROFILE_TYPE_POLYGON: {
+    auto &poly = params.profile.polygon;
+    std::vector<gp_Pnt> edges;
+    for (int i = 0; i < poly.edgeCount; i++) {
+      edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+    }
+
+    std::vector<std::vector<gp_Pnt>> inners;
+    for (int i = 0; i < poly.innerArrayCount; i++) {
+      std::vector<gp_Pnt> inner;
+      for (int j = 0; j < poly.innerCounts[i]; j++) {
+        inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
+                           poly.inners[i][j].z);
+      }
+      inners.push_back(inner);
+    }
+
+    cpp_params.profile = polygon_profile(edges, inners);
+    break;
+  }
+  default:
+    return nullptr;
+  }
+
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(
+            create_revol(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_prism(prism_params_t params) {
+  prism_params cpp_params;
+
+  // 根据剖面类型转换剖面
+  switch (params.profile.type_) {
+  case PROFILE_TYPE_TRIANGLE: {
+    auto &tri = params.profile.triangle;
+    cpp_params.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                                          gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                                          gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+    break;
+  }
+  case PROFILE_TYPE_RECTANGLE: {
+    auto &rect = params.profile.rectangle;
+    cpp_params.profile =
+        rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                          gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+    break;
+  }
+  case PROFILE_TYPE_CIRC: {
+    auto &circ = params.profile.circ;
+    cpp_params.profile = circ_profile(
+        gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+    break;
+  }
+  case PROFILE_TYPE_ELIPS: {
+    auto &elips = params.profile.elips;
+    cpp_params.profile =
+        elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                      gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                      gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+    break;
+  }
+  case PROFILE_TYPE_POLYGON: {
+    auto &poly = params.profile.polygon;
+    std::vector<gp_Pnt> edges;
+    for (int i = 0; i < poly.edgeCount; i++) {
+      edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+    }
+
+    std::vector<std::vector<gp_Pnt>> inners;
+    for (int i = 0; i < poly.innerArrayCount; i++) {
+      std::vector<gp_Pnt> inner;
+      for (int j = 0; j < poly.innerCounts[i]; j++) {
+        inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
+                           poly.inners[i][j].z);
+      }
+      inners.push_back(inner);
+    }
+
+    cpp_params.profile = polygon_profile(edges, inners);
+    break;
+  }
+  default:
+    return nullptr;
+  }
+
+  // 设置拉伸方向
+  cpp_params.dir = gp_Dir(params.dir.x, params.dir.y, params.dir.z);
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_prism(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_prism_with_place(prism_params_t params,
+                                                   pnt3d_t position,
+                                                   dir3d_t direction,
+                                                   dir3d_t xDir) {
+  prism_params cpp_params;
+
+  // 根据剖面类型转换剖面
+  switch (params.profile.type_) {
+  case PROFILE_TYPE_TRIANGLE: {
+    auto &tri = params.profile.triangle;
+    cpp_params.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                                          gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                                          gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+    break;
+  }
+  case PROFILE_TYPE_RECTANGLE: {
+    auto &rect = params.profile.rectangle;
+    cpp_params.profile =
+        rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                          gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+    break;
+  }
+  case PROFILE_TYPE_CIRC: {
+    auto &circ = params.profile.circ;
+    cpp_params.profile = circ_profile(
+        gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+    break;
+  }
+  case PROFILE_TYPE_ELIPS: {
+    auto &elips = params.profile.elips;
+    cpp_params.profile =
+        elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                      gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                      gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+    break;
+  }
+  case PROFILE_TYPE_POLYGON: {
+    auto &poly = params.profile.polygon;
+    std::vector<gp_Pnt> edges;
+    for (int i = 0; i < poly.edgeCount; i++) {
+      edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+    }
+
+    std::vector<std::vector<gp_Pnt>> inners;
+    for (int i = 0; i < poly.innerArrayCount; i++) {
+      std::vector<gp_Pnt> inner;
+      for (int j = 0; j < poly.innerCounts[i]; j++) {
+        inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
+                           poly.inners[i][j].z);
+      }
+      inners.push_back(inner);
+    }
+
+    cpp_params.profile = polygon_profile(edges, inners);
+    break;
+  }
+  default:
+    return nullptr;
+  }
+
+  // 设置拉伸方向
+  cpp_params.dir = gp_Dir(params.dir.x, params.dir.y, params.dir.z);
+
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(
+            create_prism(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params) {
+  pipe_params cpp_params;
+
+  // 转换路径点
+  std::vector<gp_Pnt> wire;
+  for (int i = 0; i < params.wire_count; i++) {
+    wire.emplace_back(params.wire[i].x, params.wire[i].y, params.wire[i].z);
+  }
+  cpp_params.wire = wire;
+
+  // 转换剖面类型
+  switch (params.profile.type_) {
+  case PROFILE_TYPE_TRIANGLE: {
+    auto &tri = params.profile.triangle;
+    cpp_params.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                                          gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                                          gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+    break;
+  }
+  case PROFILE_TYPE_RECTANGLE: {
+    auto &rect = params.profile.rectangle;
+    cpp_params.profile =
+        rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                          gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+    break;
+  }
+  case PROFILE_TYPE_CIRC: {
+    auto &circ = params.profile.circ;
+    cpp_params.profile = circ_profile(
+        gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+    break;
+  }
+  case PROFILE_TYPE_ELIPS: {
+    auto &elips = params.profile.elips;
+    cpp_params.profile =
+        elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                      gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                      gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+    break;
+  }
+  case PROFILE_TYPE_POLYGON: {
+    auto &poly = params.profile.polygon;
+    std::vector<gp_Pnt> edges;
+    for (int i = 0; i < poly.edgeCount; i++) {
+      edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+    }
+
+    std::vector<std::vector<gp_Pnt>> inners;
+    for (int i = 0; i < poly.innerArrayCount; i++) {
+      std::vector<gp_Pnt> inner;
+      for (int j = 0; j < poly.innerCounts[i]; j++) {
+        inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
+                           poly.inners[i][j].z);
+      }
+      inners.push_back(inner);
+    }
+
+    cpp_params.profile = polygon_profile(edges, inners);
+    break;
+  }
+  default:
+    return nullptr;
+  }
+
+  // 转换内剖面(如果有)
+  if (params.inner_profile != nullptr) {
+    switch (params.inner_profile->type_) {
+    case PROFILE_TYPE_TRIANGLE: {
+      auto &tri = params.inner_profile->triangle;
+      cpp_params.inner_profile =
+          triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                           gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                           gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+      break;
+    }
+    case PROFILE_TYPE_RECTANGLE: {
+      auto &rect = params.inner_profile->rectangle;
+      cpp_params.inner_profile =
+          rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                            gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+      break;
+    }
+    case PROFILE_TYPE_CIRC: {
+      auto &circ = params.inner_profile->circ;
+      cpp_params.inner_profile = circ_profile(
+          gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+      break;
+    }
+    case PROFILE_TYPE_ELIPS: {
+      auto &elips = params.inner_profile->elips;
+      cpp_params.inner_profile =
+          elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                        gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                        gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+      break;
+    }
+    case PROFILE_TYPE_POLYGON: {
+      auto &poly = params.inner_profile->polygon;
+      std::vector<gp_Pnt> edges;
+      for (int i = 0; i < poly.edgeCount; i++) {
+        edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+      }
+
+      std::vector<std::vector<gp_Pnt>> inners;
+      for (int i = 0; i < poly.innerArrayCount; i++) {
+        std::vector<gp_Pnt> inner;
+        for (int j = 0; j < poly.innerCounts[i]; j++) {
+          inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
+                             poly.inners[i][j].z);
+        }
+        inners.push_back(inner);
+      }
+
+      cpp_params.inner_profile = polygon_profile(edges, inners);
+      break;
+    }
+    default:
+      return nullptr;
+    }
+  }
+
+  // 转换线段类型
+  switch (params.segment_type) {
+  case SEGMENT_TYPE_LINE:
+    cpp_params.segment_type = segment_type::LINE;
+    break;
+  case SEGMENT_TYPE_THREE_POINT_ARC:
+    cpp_params.segment_type = segment_type::THREE_POINT_ARC;
+    break;
+  case SEGMENT_TYPE_CIRCLE_CENTER_ARC:
+    cpp_params.segment_type = segment_type::CIRCLE_CENTER_ARC;
+    break;
+  case SEGMENT_TYPE_SPLINE:
+    cpp_params.segment_type = segment_type::SPLINE;
+    break;
+  default:
+    return nullptr;
+  }
+
+  // 转换过渡模式
+  switch (params.transition_mode) {
+  case TRANSITION_RIGHT:
+    cpp_params.transition_mode = transition_mode::RIGHT;
+    break;
+  case TRANSITION_ROUND:
+    cpp_params.transition_mode = transition_mode::ROUND;
+    break;
+  case TRANSITION_TRANSFORMED:
+    cpp_params.transition_mode = transition_mode::TRANS;
+    break;
+  default:
+    return nullptr;
+  }
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_pipe(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_pipe_with_place(pipe_params_t params,
+                                                  pnt3d_t position,
+                                                  dir3d_t direction,
+                                                  dir3d_t xDir) {
+  pipe_params cpp_params;
+
+  // 转换路径点
+  std::vector<gp_Pnt> wire;
+  for (int i = 0; i < params.wire_count; i++) {
+    wire.emplace_back(params.wire[i].x, params.wire[i].y, params.wire[i].z);
+  }
+  cpp_params.wire = wire;
+
+  // 转换剖面类型
+  switch (params.profile.type_) {
+  case PROFILE_TYPE_TRIANGLE: {
+    auto &tri = params.profile.triangle;
+    cpp_params.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                                          gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                                          gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+    break;
+  }
+  case PROFILE_TYPE_RECTANGLE: {
+    auto &rect = params.profile.rectangle;
+    cpp_params.profile =
+        rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                          gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+    break;
+  }
+  case PROFILE_TYPE_CIRC: {
+    auto &circ = params.profile.circ;
+    cpp_params.profile = circ_profile(
+        gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+    break;
+  }
+  case PROFILE_TYPE_ELIPS: {
+    auto &elips = params.profile.elips;
+    cpp_params.profile =
+        elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                      gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                      gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+    break;
+  }
+  case PROFILE_TYPE_POLYGON: {
+    auto &poly = params.profile.polygon;
+    std::vector<gp_Pnt> edges;
+    for (int i = 0; i < poly.edgeCount; i++) {
+      edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+    }
+
+    std::vector<std::vector<gp_Pnt>> inners;
+    for (int i = 0; i < poly.innerArrayCount; i++) {
+      std::vector<gp_Pnt> inner;
+      for (int j = 0; j < poly.innerCounts[i]; j++) {
+        inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
+                           poly.inners[i][j].z);
+      }
+      inners.push_back(inner);
+    }
+
+    cpp_params.profile = polygon_profile(edges, inners);
+    break;
+  }
+  default:
+    return nullptr;
+  }
+
+  // 转换内剖面(如果有)
+  if (params.inner_profile != nullptr) {
+    switch (params.inner_profile->type_) {
+    case PROFILE_TYPE_TRIANGLE: {
+      auto &tri = params.inner_profile->triangle;
+      cpp_params.inner_profile =
+          triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                           gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                           gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+      break;
+    }
+    case PROFILE_TYPE_RECTANGLE: {
+      auto &rect = params.inner_profile->rectangle;
+      cpp_params.inner_profile =
+          rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                            gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+      break;
+    }
+    case PROFILE_TYPE_CIRC: {
+      auto &circ = params.inner_profile->circ;
+      cpp_params.inner_profile = circ_profile(
+          gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+      break;
+    }
+    case PROFILE_TYPE_ELIPS: {
+      auto &elips = params.inner_profile->elips;
+      cpp_params.inner_profile =
+          elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                        gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                        gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+      break;
+    }
+    case PROFILE_TYPE_POLYGON: {
+      auto &poly = params.inner_profile->polygon;
+      std::vector<gp_Pnt> edges;
+      for (int i = 0; i < poly.edgeCount; i++) {
+        edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+      }
+
+      std::vector<std::vector<gp_Pnt>> inners;
+      for (int i = 0; i < poly.innerArrayCount; i++) {
+        std::vector<gp_Pnt> inner;
+        for (int j = 0; j < poly.innerCounts[i]; j++) {
+          inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
+                             poly.inners[i][j].z);
+        }
+        inners.push_back(inner);
+      }
+
+      cpp_params.inner_profile = polygon_profile(edges, inners);
+      break;
+    }
+    default:
+      return nullptr;
+    }
+  }
+
+  // 转换线段类型
+  switch (params.segment_type) {
+  case SEGMENT_TYPE_LINE:
+    cpp_params.segment_type = segment_type::LINE;
+    break;
+  case SEGMENT_TYPE_THREE_POINT_ARC:
+    cpp_params.segment_type = segment_type::THREE_POINT_ARC;
+    break;
+  case SEGMENT_TYPE_CIRCLE_CENTER_ARC:
+    cpp_params.segment_type = segment_type::CIRCLE_CENTER_ARC;
+    break;
+  case SEGMENT_TYPE_SPLINE:
+    cpp_params.segment_type = segment_type::SPLINE;
+    break;
+  default:
+    return nullptr;
+  }
+
+  // 转换过渡模式
+  switch (params.transition_mode) {
+  case TRANSITION_RIGHT:
+    cpp_params.transition_mode = transition_mode::RIGHT;
+    break;
+  case TRANSITION_ROUND:
+    cpp_params.transition_mode = transition_mode::ROUND;
+    break;
+  case TRANSITION_TRANSFORMED:
+    cpp_params.transition_mode = transition_mode::TRANS;
+    break;
+  default:
+    return nullptr;
+  }
+
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(
+            create_pipe(cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_multi_segment_pipe(multi_segment_pipe_params_t params) {
+  multi_segment_pipe_params cpp_params;
+
+  // 转换路径点
+  std::vector<std::vector<gp_Pnt>> wires;
+  for (int i = 0; i < params.wire_array_count; i++) {
+    std::vector<gp_Pnt> wire;
+    for (int j = 0; j < params.wire_counts[i]; j++) {
+      wire.emplace_back(params.wires[i][j].x, params.wires[i][j].y,
+                        params.wires[i][j].z);
+    }
+    wires.push_back(wire);
+  }
+  cpp_params.wires = wires;
+
+  // 转换剖面类型
+  std::vector<shape_profile> profiles;
+  for (int i = 0; i < params.profile_count; i++) {
+    switch (params.profiles[i].type_) {
+    case PROFILE_TYPE_TRIANGLE: {
+      auto &tri = params.profiles[i].triangle;
+      profiles.emplace_back(
+          triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                           gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                           gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z)));
+      break;
+    }
+    case PROFILE_TYPE_RECTANGLE: {
+      auto &rect = params.profiles[i].rectangle;
+      profiles.emplace_back(
+          rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                            gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
+      break;
+    }
+    case PROFILE_TYPE_CIRC: {
+      auto &circ = params.profiles[i].circ;
+      profiles.emplace_back(circ_profile(
+          gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
+      break;
+    }
+    case PROFILE_TYPE_ELIPS: {
+      auto &elips = params.profiles[i].elips;
+      profiles.emplace_back(elips_profile(
+          gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+          gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+          gp_Pnt(elips.center.x, elips.center.y, elips.center.z)));
+      break;
+    }
+    case PROFILE_TYPE_POLYGON: {
+      auto &poly = params.profiles[i].polygon;
+      std::vector<gp_Pnt> edges;
+      for (int j = 0; j < poly.edgeCount; j++) {
+        edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+      }
+
+      std::vector<std::vector<gp_Pnt>> inners;
+      for (int j = 0; j < poly.innerArrayCount; j++) {
+        std::vector<gp_Pnt> inner;
+        for (int k = 0; k < poly.innerCounts[j]; k++) {
+          inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                             poly.inners[j][k].z);
+        }
+        inners.push_back(inner);
+      }
+
+      profiles.emplace_back(polygon_profile(edges, inners));
+      break;
+    }
+    default:
+      return nullptr;
+    }
+  }
+  cpp_params.profiles = profiles;
+
+  // 转换内剖面(如果有)
+  if (params.inner_profiles != nullptr) {
+    std::vector<shape_profile> inner_profiles;
+    for (int i = 0; i < params.inner_profile_counts[0]; i++) {
+      switch (params.inner_profiles[0][i].type_) {
+      case PROFILE_TYPE_TRIANGLE: {
+        auto &tri = params.inner_profiles[0][i].triangle;
+        inner_profiles.emplace_back(
+            triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                             gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                             gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z)));
+        break;
+      }
+      case PROFILE_TYPE_RECTANGLE: {
+        auto &rect = params.inner_profiles[0][i].rectangle;
+        inner_profiles.emplace_back(
+            rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                              gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
+        break;
+      }
+      case PROFILE_TYPE_CIRC: {
+        auto &circ = params.inner_profiles[0][i].circ;
+        inner_profiles.emplace_back(circ_profile(
+            gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+            gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
+        break;
+      }
+      case PROFILE_TYPE_ELIPS: {
+        auto &elips = params.inner_profiles[0][i].elips;
+        inner_profiles.emplace_back(elips_profile(
+            gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+            gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+            gp_Pnt(elips.center.x, elips.center.y, elips.center.z)));
+        break;
+      }
+      case PROFILE_TYPE_POLYGON: {
+        auto &poly = params.inner_profiles[0][i].polygon;
+        std::vector<gp_Pnt> edges;
+        for (int j = 0; j < poly.edgeCount; j++) {
+          edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+        }
+
+        std::vector<std::vector<gp_Pnt>> inners;
+        for (int j = 0; j < poly.innerArrayCount; j++) {
+          std::vector<gp_Pnt> inner;
+          for (int k = 0; k < poly.innerCounts[j]; k++) {
+            inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                               poly.inners[j][k].z);
+          }
+          inners.push_back(inner);
+        }
+
+        inner_profiles.emplace_back(polygon_profile(edges, inners));
+        break;
+      }
+      default:
+        return nullptr;
+      }
+    }
+    cpp_params.inner_profiles = inner_profiles;
+  }
+
+  // 转换线段类型
+  if (params.segment_types != nullptr) {
+    std::vector<segment_type> segment_types;
+    for (int i = 0; i < params.segment_type_count; i++) {
+      switch (params.segment_types[i]) {
+      case SEGMENT_TYPE_LINE:
+        segment_types.push_back(segment_type::LINE);
+        break;
+      case SEGMENT_TYPE_THREE_POINT_ARC:
+        segment_types.push_back(segment_type::THREE_POINT_ARC);
+        break;
+      case SEGMENT_TYPE_CIRCLE_CENTER_ARC:
+        segment_types.push_back(segment_type::CIRCLE_CENTER_ARC);
+        break;
+      case SEGMENT_TYPE_SPLINE:
+        segment_types.push_back(segment_type::SPLINE);
+        break;
+      default:
+        return nullptr;
+      }
+    }
+    cpp_params.segment_types = segment_types;
+  }
+
+  // 转换过渡模式
+  switch (params.transition_mode) {
+  case TRANSITION_RIGHT:
+    cpp_params.transition_mode = transition_mode::RIGHT;
+    break;
+  case TRANSITION_ROUND:
+    cpp_params.transition_mode = transition_mode::ROUND;
+    break;
+  case TRANSITION_TRANSFORMED:
+    cpp_params.transition_mode = transition_mode::TRANS;
+    break;
+  default:
+    return nullptr;
+  }
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_multi_segment_pipe(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
+                                     pnt3d_t position, dir3d_t direction,
+                                     dir3d_t xDir) {
+  multi_segment_pipe_params cpp_params;
+
+  // 转换路径点
+  std::vector<std::vector<gp_Pnt>> wires;
+  for (int i = 0; i < params.wire_array_count; i++) {
+    std::vector<gp_Pnt> wire;
+    for (int j = 0; j < params.wire_counts[i]; j++) {
+      wire.emplace_back(params.wires[i][j].x, params.wires[i][j].y,
+                        params.wires[i][j].z);
+    }
+    wires.push_back(wire);
+  }
+  cpp_params.wires = wires;
+
+  // 转换剖面类型
+  std::vector<shape_profile> profiles;
+  for (int i = 0; i < params.profile_count; i++) {
+    switch (params.profiles[i].type_) {
+    case PROFILE_TYPE_TRIANGLE: {
+      auto &tri = params.profiles[i].triangle;
+      profiles.emplace_back(
+          triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                           gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                           gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z)));
+      break;
+    }
+    case PROFILE_TYPE_RECTANGLE: {
+      auto &rect = params.profiles[i].rectangle;
+      profiles.emplace_back(
+          rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                            gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
+      break;
+    }
+    case PROFILE_TYPE_CIRC: {
+      auto &circ = params.profiles[i].circ;
+      profiles.emplace_back(circ_profile(
+          gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
+      break;
+    }
+    case PROFILE_TYPE_ELIPS: {
+      auto &elips = params.profiles[i].elips;
+      profiles.emplace_back(elips_profile(
+          gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+          gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+          gp_Pnt(elips.center.x, elips.center.y, elips.center.z)));
+      break;
+    }
+    case PROFILE_TYPE_POLYGON: {
+      auto &poly = params.profiles[i].polygon;
+      std::vector<gp_Pnt> edges;
+      for (int j = 0; j < poly.edgeCount; j++) {
+        edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+      }
+
+      std::vector<std::vector<gp_Pnt>> inners;
+      for (int j = 0; j < poly.innerArrayCount; j++) {
+        std::vector<gp_Pnt> inner;
+        for (int k = 0; k < poly.innerCounts[j]; k++) {
+          inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                             poly.inners[j][k].z);
+        }
+        inners.push_back(inner);
+      }
+
+      profiles.emplace_back(polygon_profile(edges, inners));
+      break;
+    }
+    default:
+      return nullptr;
+    }
+  }
+  cpp_params.profiles = profiles;
+
+  // 转换内剖面(如果有)
+  if (params.inner_profiles != nullptr) {
+    std::vector<shape_profile> inner_profiles;
+    for (int i = 0; i < params.inner_profile_counts[0]; i++) {
+      switch (params.inner_profiles[0][i].type_) {
+      case PROFILE_TYPE_TRIANGLE: {
+        auto &tri = params.inner_profiles[0][i].triangle;
+        inner_profiles.emplace_back(
+            triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                             gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                             gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z)));
+        break;
+      }
+      case PROFILE_TYPE_RECTANGLE: {
+        auto &rect = params.inner_profiles[0][i].rectangle;
+        inner_profiles.emplace_back(
+            rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                              gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
+        break;
+      }
+      case PROFILE_TYPE_CIRC: {
+        auto &circ = params.inner_profiles[0][i].circ;
+        inner_profiles.emplace_back(circ_profile(
+            gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+            gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
+        break;
+      }
+      case PROFILE_TYPE_ELIPS: {
+        auto &elips = params.inner_profiles[0][i].elips;
+        inner_profiles.emplace_back(elips_profile(
+            gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+            gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+            gp_Pnt(elips.center.x, elips.center.y, elips.center.z)));
+        break;
+      }
+      case PROFILE_TYPE_POLYGON: {
+        auto &poly = params.inner_profiles[0][i].polygon;
+        std::vector<gp_Pnt> edges;
+        for (int j = 0; j < poly.edgeCount; j++) {
+          edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+        }
+
+        std::vector<std::vector<gp_Pnt>> inners;
+        for (int j = 0; j < poly.innerArrayCount; j++) {
+          std::vector<gp_Pnt> inner;
+          for (int k = 0; k < poly.innerCounts[j]; k++) {
+            inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                               poly.inners[j][k].z);
+          }
+          inners.push_back(inner);
+        }
+
+        inner_profiles.emplace_back(polygon_profile(edges, inners));
+        break;
+      }
+      default:
+        return nullptr;
+      }
+    }
+    cpp_params.inner_profiles = inner_profiles;
+  }
+
+  // 转换线段类型
+  if (params.segment_types != nullptr) {
+    std::vector<segment_type> segment_types;
+    for (int i = 0; i < params.segment_type_count; i++) {
+      switch (params.segment_types[i]) {
+      case SEGMENT_TYPE_LINE:
+        segment_types.push_back(segment_type::LINE);
+        break;
+      case SEGMENT_TYPE_THREE_POINT_ARC:
+        segment_types.push_back(segment_type::THREE_POINT_ARC);
+        break;
+      case SEGMENT_TYPE_CIRCLE_CENTER_ARC:
+        segment_types.push_back(segment_type::CIRCLE_CENTER_ARC);
+        break;
+      case SEGMENT_TYPE_SPLINE:
+        segment_types.push_back(segment_type::SPLINE);
+        break;
+      default:
+        return nullptr;
+      }
+    }
+    cpp_params.segment_types = segment_types;
+  }
+
+  // 转换过渡模式
+  switch (params.transition_mode) {
+  case TRANSITION_RIGHT:
+    cpp_params.transition_mode = transition_mode::RIGHT;
+    break;
+  case TRANSITION_ROUND:
+    cpp_params.transition_mode = transition_mode::ROUND;
+    break;
+  case TRANSITION_TRANSFORMED:
+    cpp_params.transition_mode = transition_mode::TRANS;
+    break;
+  default:
+    return nullptr;
+  }
+
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_multi_segment_pipe(
+            cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params) {
+  pipe_joint_params cpp_params;
+
+  // 转换输入端点
+  std::vector<pipe_endpoint> ins;
+  for (int i = 0; i < params.in_count; i++) {
+    pipe_endpoint_t &ep = params.ins[i];
+    pipe_endpoint cpp_ep;
+    cpp_ep.offset = gp_Pnt(ep.offset.x, ep.offset.y, ep.offset.z);
+    cpp_ep.normal = gp_Dir(ep.normal.x, ep.normal.y, ep.normal.z);
+
+    // 转换剖面类型
+    switch (ep.profile.type_) {
+    case PROFILE_TYPE_TRIANGLE: {
+      auto &tri = ep.profile.triangle;
+      cpp_ep.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                                        gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                                        gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+      break;
+    }
+    case PROFILE_TYPE_RECTANGLE: {
+      auto &rect = ep.profile.rectangle;
+      cpp_ep.profile =
+          rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                            gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+      break;
+    }
+    case PROFILE_TYPE_CIRC: {
+      auto &circ = ep.profile.circ;
+      cpp_ep.profile = circ_profile(
+          gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+      break;
+    }
+    case PROFILE_TYPE_ELIPS: {
+      auto &elips = ep.profile.elips;
+      cpp_ep.profile =
+          elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                        gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                        gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+      break;
+    }
+    case PROFILE_TYPE_POLYGON: {
+      auto &poly = ep.profile.polygon;
+      std::vector<gp_Pnt> edges;
+      for (int j = 0; j < poly.edgeCount; j++) {
+        edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+      }
+
+      std::vector<std::vector<gp_Pnt>> inners;
+      for (int j = 0; j < poly.innerArrayCount; j++) {
+        std::vector<gp_Pnt> inner;
+        for (int k = 0; k < poly.innerCounts[j]; k++) {
+          inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                             poly.inners[j][k].z);
+        }
+        inners.push_back(inner);
+      }
+
+      cpp_ep.profile = polygon_profile(edges, inners);
+      break;
+    }
+    default:
+      return nullptr;
+    }
+
+    // 转换内剖面(如果有)
+    if (ep.inner_profile != nullptr) {
+      switch (ep.inner_profile->type_) {
+      case PROFILE_TYPE_TRIANGLE: {
+        auto &tri = ep.inner_profile->triangle;
+        cpp_ep.inner_profile =
+            triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                             gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                             gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+        break;
+      }
+      case PROFILE_TYPE_RECTANGLE: {
+        auto &rect = ep.inner_profile->rectangle;
+        cpp_ep.inner_profile =
+            rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                              gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+        break;
+      }
+      case PROFILE_TYPE_CIRC: {
+        auto &circ = ep.inner_profile->circ;
+        cpp_ep.inner_profile = circ_profile(
+            gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+            gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+        break;
+      }
+      case PROFILE_TYPE_ELIPS: {
+        auto &elips = ep.inner_profile->elips;
+        cpp_ep.inner_profile = elips_profile(
+            gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+            gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+            gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+        break;
+      }
+      case PROFILE_TYPE_POLYGON: {
+        auto &poly = ep.inner_profile->polygon;
+        std::vector<gp_Pnt> edges;
+        for (int j = 0; j < poly.edgeCount; j++) {
+          edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+        }
+
+        std::vector<std::vector<gp_Pnt>> inners;
+        for (int j = 0; j < poly.innerArrayCount; j++) {
+          std::vector<gp_Pnt> inner;
+          for (int k = 0; k < poly.innerCounts[j]; k++) {
+            inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                               poly.inners[j][k].z);
+          }
+          inners.push_back(inner);
+        }
+
+        cpp_ep.inner_profile = polygon_profile(edges, inners);
+        break;
+      }
+      default:
+        return nullptr;
+      }
+    }
+
+    ins.push_back(cpp_ep);
+  }
+  cpp_params.ins = ins;
+
+  // 转换输出端点
+  std::vector<pipe_endpoint> outs;
+  for (int i = 0; i < params.out_count; i++) {
+    pipe_endpoint_t &ep = params.outs[i];
+    pipe_endpoint cpp_ep;
+    cpp_ep.offset = gp_Pnt(ep.offset.x, ep.offset.y, ep.offset.z);
+    cpp_ep.normal = gp_Dir(ep.normal.x, ep.normal.y, ep.normal.z);
+
+    // 转换剖面类型
+    switch (ep.profile.type_) {
+    case PROFILE_TYPE_TRIANGLE: {
+      auto &tri = ep.profile.triangle;
+      cpp_ep.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                                        gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                                        gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+      break;
+    }
+    case PROFILE_TYPE_RECTANGLE: {
+      auto &rect = ep.profile.rectangle;
+      cpp_ep.profile =
+          rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                            gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+      break;
+    }
+    case PROFILE_TYPE_CIRC: {
+      auto &circ = ep.profile.circ;
+      cpp_ep.profile = circ_profile(
+          gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+      break;
+    }
+    case PROFILE_TYPE_ELIPS: {
+      auto &elips = ep.profile.elips;
+      cpp_ep.profile =
+          elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                        gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                        gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+      break;
+    }
+    case PROFILE_TYPE_POLYGON: {
+      auto &poly = ep.profile.polygon;
+      std::vector<gp_Pnt> edges;
+      for (int j = 0; j < poly.edgeCount; j++) {
+        edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+      }
+
+      std::vector<std::vector<gp_Pnt>> inners;
+      for (int j = 0; j < poly.innerArrayCount; j++) {
+        std::vector<gp_Pnt> inner;
+        for (int k = 0; k < poly.innerCounts[j]; k++) {
+          inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                             poly.inners[j][k].z);
+        }
+        inners.push_back(inner);
+      }
+
+      cpp_ep.profile = polygon_profile(edges, inners);
+      break;
+    }
+    default:
+      throw Standard_ConstructionError("Invalid profile type");
+    }
+
+    // 转换内剖面(如果有)
+    if (ep.inner_profile != nullptr) {
+      switch (ep.inner_profile->type_) {
+      case PROFILE_TYPE_TRIANGLE: {
+        auto &tri = ep.inner_profile->triangle;
+        cpp_ep.inner_profile =
+            triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                             gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                             gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+        break;
+      }
+      case PROFILE_TYPE_RECTANGLE: {
+        auto &rect = ep.inner_profile->rectangle;
+        cpp_ep.inner_profile =
+            rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                              gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+        break;
+      }
+      case PROFILE_TYPE_CIRC: {
+        auto &circ = ep.inner_profile->circ;
+        cpp_ep.inner_profile = circ_profile(
+            gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+            gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+        break;
+      }
+      case PROFILE_TYPE_ELIPS: {
+        auto &elips = ep.inner_profile->elips;
+        cpp_ep.inner_profile = elips_profile(
+            gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+            gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+            gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+        break;
+      }
+      case PROFILE_TYPE_POLYGON: {
+        auto &poly = ep.inner_profile->polygon;
+        std::vector<gp_Pnt> edges;
+        for (int j = 0; j < poly.edgeCount; j++) {
+          edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+        }
+
+        std::vector<std::vector<gp_Pnt>> inners;
+        for (int j = 0; j < poly.innerArrayCount; j++) {
+          std::vector<gp_Pnt> inner;
+          for (int k = 0; k < poly.innerCounts[j]; k++) {
+            inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                               poly.inners[j][k].z);
+          }
+          inners.push_back(inner);
+        }
+
+        cpp_ep.inner_profile = polygon_profile(edges, inners);
+        break;
+      }
+      default:
+        return nullptr;
+      }
+    }
+
+    outs.push_back(cpp_ep);
+  }
+  cpp_params.outs = outs;
+
+  // 转换连接模式
+  switch (params.mode) {
+  case JOINT_SHAPE_MODE_SPHERE:
+    cpp_params.mode = joint_shape_mode::SPHERE;
+    break;
+  case JOINT_SHAPE_MODE_BOX:
+    cpp_params.mode = joint_shape_mode::BOX;
+    break;
+  default:
+    return nullptr;
+  }
+
+  cpp_params.smooth_edge = params.smooth_edge;
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_pipe_joint(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_pipe_joint_with_place(pipe_joint_params_t params, pnt3d_t position,
+                             dir3d_t direction, dir3d_t xDir) {
+  pipe_joint_params cpp_params;
+
+  // 转换输入端点
+  std::vector<pipe_endpoint> ins;
+  for (int i = 0; i < params.in_count; i++) {
+    pipe_endpoint_t &ep = params.ins[i];
+    pipe_endpoint cpp_ep;
+    cpp_ep.offset = gp_Pnt(ep.offset.x, ep.offset.y, ep.offset.z);
+    cpp_ep.normal = gp_Dir(ep.normal.x, ep.normal.y, ep.normal.z);
+
+    // 转换剖面类型
+    switch (ep.profile.type_) {
+    case PROFILE_TYPE_TRIANGLE: {
+      auto &tri = ep.profile.triangle;
+      cpp_ep.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                                        gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                                        gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+      break;
+    }
+    case PROFILE_TYPE_RECTANGLE: {
+      auto &rect = ep.profile.rectangle;
+      cpp_ep.profile =
+          rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                            gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+      break;
+    }
+    case PROFILE_TYPE_CIRC: {
+      auto &circ = ep.profile.circ;
+      cpp_ep.profile = circ_profile(
+          gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+      break;
+    }
+    case PROFILE_TYPE_ELIPS: {
+      auto &elips = ep.profile.elips;
+      cpp_ep.profile =
+          elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                        gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                        gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+      break;
+    }
+    case PROFILE_TYPE_POLYGON: {
+      auto &poly = ep.profile.polygon;
+      std::vector<gp_Pnt> edges;
+      for (int j = 0; j < poly.edgeCount; j++) {
+        edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+      }
+
+      std::vector<std::vector<gp_Pnt>> inners;
+      for (int j = 0; j < poly.innerArrayCount; j++) {
+        std::vector<gp_Pnt> inner;
+        for (int k = 0; k < poly.innerCounts[j]; k++) {
+          inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                             poly.inners[j][k].z);
+        }
+        inners.push_back(inner);
+      }
+
+      cpp_ep.profile = polygon_profile(edges, inners);
+      break;
+    }
+    default:
+      return nullptr;
+    }
+
+    // 转换内剖面(如果有)
+    if (ep.inner_profile != nullptr) {
+      switch (ep.inner_profile->type_) {
+      case PROFILE_TYPE_TRIANGLE: {
+        auto &tri = ep.inner_profile->triangle;
+        cpp_ep.inner_profile =
+            triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                             gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                             gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+        break;
+      }
+      case PROFILE_TYPE_RECTANGLE: {
+        auto &rect = ep.inner_profile->rectangle;
+        cpp_ep.inner_profile =
+            rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                              gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+        break;
+      }
+      case PROFILE_TYPE_CIRC: {
+        auto &circ = ep.inner_profile->circ;
+        cpp_ep.inner_profile = circ_profile(
+            gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+            gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+        break;
+      }
+      case PROFILE_TYPE_ELIPS: {
+        auto &elips = ep.inner_profile->elips;
+        cpp_ep.inner_profile = elips_profile(
+            gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+            gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+            gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+        break;
+      }
+      case PROFILE_TYPE_POLYGON: {
+        auto &poly = ep.inner_profile->polygon;
+        std::vector<gp_Pnt> edges;
+        for (int j = 0; j < poly.edgeCount; j++) {
+          edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+        }
+
+        std::vector<std::vector<gp_Pnt>> inners;
+        for (int j = 0; j < poly.innerArrayCount; j++) {
+          std::vector<gp_Pnt> inner;
+          for (int k = 0; k < poly.innerCounts[j]; k++) {
+            inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                               poly.inners[j][k].z);
+          }
+          inners.push_back(inner);
+        }
+
+        cpp_ep.inner_profile = polygon_profile(edges, inners);
+        break;
+      }
+      default:
+        return nullptr;
+      }
+    }
+
+    ins.push_back(cpp_ep);
+  }
+  cpp_params.ins = ins;
+
+  // 转换输出端点
+  std::vector<pipe_endpoint> outs;
+  for (int i = 0; i < params.out_count; i++) {
+    pipe_endpoint_t &ep = params.outs[i];
+    pipe_endpoint cpp_ep;
+    cpp_ep.offset = gp_Pnt(ep.offset.x, ep.offset.y, ep.offset.z);
+    cpp_ep.normal = gp_Dir(ep.normal.x, ep.normal.y, ep.normal.z);
+
+    // 转换剖面类型
+    switch (ep.profile.type_) {
+    case PROFILE_TYPE_TRIANGLE: {
+      auto &tri = ep.profile.triangle;
+      cpp_ep.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                                        gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                                        gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+      break;
+    }
+    case PROFILE_TYPE_RECTANGLE: {
+      auto &rect = ep.profile.rectangle;
+      cpp_ep.profile =
+          rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                            gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+      break;
+    }
+    case PROFILE_TYPE_CIRC: {
+      auto &circ = ep.profile.circ;
+      cpp_ep.profile = circ_profile(
+          gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+      break;
+    }
+    case PROFILE_TYPE_ELIPS: {
+      auto &elips = ep.profile.elips;
+      cpp_ep.profile =
+          elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                        gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                        gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+      break;
+    }
+    case PROFILE_TYPE_POLYGON: {
+      auto &poly = ep.profile.polygon;
+      std::vector<gp_Pnt> edges;
+      for (int j = 0; j < poly.edgeCount; j++) {
+        edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+      }
+
+      std::vector<std::vector<gp_Pnt>> inners;
+      for (int j = 0; j < poly.innerArrayCount; j++) {
+        std::vector<gp_Pnt> inner;
+        for (int k = 0; k < poly.innerCounts[j]; k++) {
+          inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                             poly.inners[j][k].z);
+        }
+        inners.push_back(inner);
+      }
+
+      cpp_ep.profile = polygon_profile(edges, inners);
+      break;
+    }
+    default:
+      return nullptr;
+    }
+
+    // 转换内剖面(如果有)
+    if (ep.inner_profile != nullptr) {
+      switch (ep.inner_profile->type_) {
+      case PROFILE_TYPE_TRIANGLE: {
+        auto &tri = ep.inner_profile->triangle;
+        cpp_ep.inner_profile =
+            triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                             gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                             gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+        break;
+      }
+      case PROFILE_TYPE_RECTANGLE: {
+        auto &rect = ep.inner_profile->rectangle;
+        cpp_ep.inner_profile =
+            rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                              gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+        break;
+      }
+      case PROFILE_TYPE_CIRC: {
+        auto &circ = ep.inner_profile->circ;
+        cpp_ep.inner_profile = circ_profile(
+            gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+            gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+        break;
+      }
+      case PROFILE_TYPE_ELIPS: {
+        auto &elips = ep.inner_profile->elips;
+        cpp_ep.inner_profile = elips_profile(
+            gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+            gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+            gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+        break;
+      }
+      case PROFILE_TYPE_POLYGON: {
+        auto &poly = ep.inner_profile->polygon;
+        std::vector<gp_Pnt> edges;
+        for (int j = 0; j < poly.edgeCount; j++) {
+          edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+        }
+
+        std::vector<std::vector<gp_Pnt>> inners;
+        for (int j = 0; j < poly.innerArrayCount; j++) {
+          std::vector<gp_Pnt> inner;
+          for (int k = 0; k < poly.innerCounts[j]; k++) {
+            inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                               poly.inners[j][k].z);
+          }
+          inners.push_back(inner);
+        }
+
+        cpp_ep.inner_profile = polygon_profile(edges, inners);
+        break;
+      }
+      default:
+        return nullptr;
+      }
+    }
+
+    outs.push_back(cpp_ep);
+  }
+  cpp_params.outs = outs;
+
+  // 转换连接模式
+  switch (params.mode) {
+  case JOINT_SHAPE_MODE_SPHERE:
+    cpp_params.mode = joint_shape_mode::SPHERE;
+    break;
+  case JOINT_SHAPE_MODE_BOX:
+    cpp_params.mode = joint_shape_mode::BOX;
+    break;
+  default:
+    return nullptr;
+  }
+
+  cpp_params.smooth_edge = params.smooth_edge;
+
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_pipe_joint(
+            cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_catenary(catenary_params_t params) {
+  catenary_params cpp_params;
+
+  // 转换端点
+  cpp_params.p1 = gp_Pnt(params.p1.x, params.p1.y, params.p1.z);
+  cpp_params.p2 = gp_Pnt(params.p2.x, params.p2.y, params.p2.z);
+
+  // 转换剖面类型
+  switch (params.profile.type_) {
+  case PROFILE_TYPE_TRIANGLE: {
+    auto &tri = params.profile.triangle;
+    cpp_params.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                                          gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                                          gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+    break;
+  }
+  case PROFILE_TYPE_RECTANGLE: {
+    auto &rect = params.profile.rectangle;
+    cpp_params.profile =
+        rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                          gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+    break;
+  }
+  case PROFILE_TYPE_CIRC: {
+    auto &circ = params.profile.circ;
+    cpp_params.profile = circ_profile(
+        gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+    break;
+  }
+  case PROFILE_TYPE_ELIPS: {
+    auto &elips = params.profile.elips;
+    cpp_params.profile =
+        elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                      gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                      gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+    break;
+  }
+  case PROFILE_TYPE_POLYGON: {
+    auto &poly = params.profile.polygon;
+    std::vector<gp_Pnt> edges;
+    for (int i = 0; i < poly.edgeCount; i++) {
+      edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+    }
+
+    std::vector<std::vector<gp_Pnt>> inners;
+    for (int i = 0; i < poly.innerArrayCount; i++) {
+      std::vector<gp_Pnt> inner;
+      for (int j = 0; j < poly.innerCounts[i]; j++) {
+        inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
+                           poly.inners[i][j].z);
+      }
+      inners.push_back(inner);
+    }
+
+    cpp_params.profile = polygon_profile(edges, inners);
+    break;
+  }
+  default:
+    return nullptr;
+  }
+
+  cpp_params.slack = params.slack;
+  cpp_params.max_sag = params.max_sag;
+  cpp_params.tessellation = params.tessellation;
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_catenary(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_catenary_with_place(catenary_params_t params,
+                                                      pnt3d_t position,
+                                                      dir3d_t direction,
+                                                      dir3d_t xDir) {
+  catenary_params cpp_params;
+
+  // 转换端点
+  cpp_params.p1 = gp_Pnt(params.p1.x, params.p1.y, params.p1.z);
+  cpp_params.p2 = gp_Pnt(params.p2.x, params.p2.y, params.p2.z);
+
+  // 转换剖面类型
+  switch (params.profile.type_) {
+  case PROFILE_TYPE_TRIANGLE: {
+    auto &tri = params.profile.triangle;
+    cpp_params.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                                          gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                                          gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+    break;
+  }
+  case PROFILE_TYPE_RECTANGLE: {
+    auto &rect = params.profile.rectangle;
+    cpp_params.profile =
+        rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                          gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+    break;
+  }
+  case PROFILE_TYPE_CIRC: {
+    auto &circ = params.profile.circ;
+    cpp_params.profile = circ_profile(
+        gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+    break;
+  }
+  case PROFILE_TYPE_ELIPS: {
+    auto &elips = params.profile.elips;
+    cpp_params.profile =
+        elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                      gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                      gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+    break;
+  }
+  case PROFILE_TYPE_POLYGON: {
+    auto &poly = params.profile.polygon;
+    std::vector<gp_Pnt> edges;
+    for (int i = 0; i < poly.edgeCount; i++) {
+      edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+    }
+
+    std::vector<std::vector<gp_Pnt>> inners;
+    for (int i = 0; i < poly.innerArrayCount; i++) {
+      std::vector<gp_Pnt> inner;
+      for (int j = 0; j < poly.innerCounts[i]; j++) {
+        inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
+                           poly.inners[i][j].z);
+      }
+      inners.push_back(inner);
+    }
+
+    cpp_params.profile = polygon_profile(edges, inners);
+    break;
+  }
+  default:
+    throw Standard_ConstructionError("Invalid profile type");
+  }
+
+  cpp_params.slack = params.slack;
+  cpp_params.max_sag = params.max_sag;
+  cpp_params.tessellation = params.tessellation;
+
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_catenary(
+            cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_box_shape(box_shape_params_t params) {
+  box_shape_params cpp_params{
+      gp_Pnt(params.point1.x, params.point1.y, params.point1.z),
+      gp_Pnt(params.point2.x, params.point2.y, params.point2.z)};
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_box_shape(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_box_shape_with_place(box_shape_params_t params, pnt3d_t position,
+                            dir3d_t direction, dir3d_t xDir) {
+  box_shape_params cpp_params{
+      gp_Pnt(params.point1.x, params.point1.y, params.point1.z),
+      gp_Pnt(params.point2.x, params.point2.y, params.point2.z)};
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_box_shape(
+            cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_cone_shape(cone_shape_params_t params) {
+  cone_shape_params cpp_params{
+      params.radius1, params.radius2, params.height,
+      params.angle ? boost::optional<double>(*params.angle) : boost::none};
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_cone_shape(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_cone_shape_with_place(cone_shape_params_t params, pnt3d_t position,
+                             dir3d_t direction, dir3d_t xDir) {
+  cone_shape_params cpp_params{
+      params.radius1, params.radius2, params.height,
+      params.angle ? boost::optional<double>(*params.angle) : boost::none};
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_cone_shape(
+            cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_cylinder_shape(cylinder_shape_params_t params) {
+  cylinder_shape_params cpp_params{
+      params.radius, params.height,
+      params.angle ? boost::optional<double>(*params.angle) : boost::none};
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_cylinder_shape(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_cylinder_shape_with_place(cylinder_shape_params_t params,
+                                 pnt3d_t position, dir3d_t direction,
+                                 dir3d_t xDir) {
+  cylinder_shape_params cpp_params{
+      params.radius, params.height,
+      params.angle ? boost::optional<double>(*params.angle) : boost::none};
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_cylinder_shape(
+            cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_revolution_shape(revolution_shape_params_t params) {
+  revolution_shape_params cpp_params;
+
+  // 转换子午线点
+  std::vector<gp_Pnt> meridian;
+  for (int i = 0; i < params.meridian_count; i++) {
+    meridian.emplace_back(params.meridian[i].x, params.meridian[i].y,
+                          params.meridian[i].z);
+  }
+  cpp_params.meridian = meridian;
+
+  // 设置可选参数
+  if (params.angle)
+    cpp_params.angle = *params.angle;
+  if (params.max)
+    cpp_params.max = *params.max;
+  if (params.min)
+    cpp_params.min = *params.min;
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_revolution_shape(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_revolution_shape_with_place(revolution_shape_params_t params,
+                                   pnt3d_t position, dir3d_t direction,
+                                   dir3d_t xDir) {
+  revolution_shape_params cpp_params;
+
+  // 转换子午线点
+  std::vector<gp_Pnt> meridian;
+  for (int i = 0; i < params.meridian_count; i++) {
+    meridian.emplace_back(params.meridian[i].x, params.meridian[i].y,
+                          params.meridian[i].z);
+  }
+  cpp_params.meridian = meridian;
+
+  // 设置可选参数
+  if (params.angle)
+    cpp_params.angle = *params.angle;
+  if (params.max)
+    cpp_params.max = *params.max;
+  if (params.min)
+    cpp_params.min = *params.min;
+
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_revolution_shape(
+            cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_sphere_shape(sphere_shape_params_t params) {
+  sphere_shape_params cpp_params{
+      params.center ? boost::optional<gp_Pnt>(gp_Pnt(
+                          params.center->x, params.center->y, params.center->z))
+                    : boost::none,
+      params.radius,
+      params.angle1 ? boost::optional<double>(*params.angle1) : boost::none,
+      params.angle2 ? boost::optional<double>(*params.angle2) : boost::none,
+      params.angle ? boost::optional<double>(*params.angle) : boost::none};
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_sphere_shape(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_sphere_shape_with_place(sphere_shape_params_t params, pnt3d_t position,
+                               dir3d_t direction, dir3d_t xDir) {
+  sphere_shape_params cpp_params{
+      params.center ? boost::optional<gp_Pnt>(gp_Pnt(
+                          params.center->x, params.center->y, params.center->z))
+                    : boost::none,
+      params.radius,
+      params.angle1 ? boost::optional<double>(*params.angle1) : boost::none,
+      params.angle2 ? boost::optional<double>(*params.angle2) : boost::none,
+      params.angle ? boost::optional<double>(*params.angle) : boost::none};
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_sphere_shape(
+            cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_torus_shape(torus_shape_params_t params) {
+  torus_shape_params cpp_params{
+      params.radius1, params.radius2,
+      params.angle1 ? boost::optional<double>(*params.angle1) : boost::none,
+      params.angle2 ? boost::optional<double>(*params.angle2) : boost::none,
+      params.angle ? boost::optional<double>(*params.angle) : boost::none};
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_torus_shape(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_torus_shape_with_place(torus_shape_params_t params, pnt3d_t position,
+                              dir3d_t direction, dir3d_t xDir) {
+  torus_shape_params cpp_params{
+      params.radius1, params.radius2,
+      params.angle1 ? boost::optional<double>(*params.angle1) : boost::none,
+      params.angle2 ? boost::optional<double>(*params.angle2) : boost::none,
+      params.angle ? boost::optional<double>(*params.angle) : boost::none};
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_torus_shape(
+            cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_wedge_shape(wedge_shape_params_t params) {
+  wedge_shape_params cpp_params;
+  cpp_params.edge = gp_Pnt(params.edge.x, params.edge.y, params.edge.z);
+
+  // 转换楔形面限制
+  if (params.limit != nullptr) {
+    wedge_face_limit limit;
+    limit[0] = params.limit->values[0];
+    limit[1] = params.limit->values[1];
+    limit[2] = params.limit->values[2];
+    limit[3] = params.limit->values[3];
+    cpp_params.limit = limit;
+  }
+
+  // 转换ltx参数
+  if (params.ltx != nullptr) {
+    cpp_params.ltx = *params.ltx;
+  }
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_wedge_shape(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_wedge_shape_with_place(wedge_shape_params_t params, pnt3d_t position,
+                              dir3d_t direction, dir3d_t xDir) {
+  wedge_shape_params cpp_params;
+  cpp_params.edge = gp_Pnt(params.edge.x, params.edge.y, params.edge.z);
+
+  // 转换楔形面限制
+  if (params.limit != nullptr) {
+    wedge_face_limit limit;
+    limit[0] = params.limit->values[0];
+    limit[1] = params.limit->values[1];
+    limit[2] = params.limit->values[2];
+    limit[3] = params.limit->values[3];
+    cpp_params.limit = limit;
+  }
+
+  // 转换ltx参数
+  if (params.ltx != nullptr) {
+    cpp_params.ltx = *params.ltx;
+  }
+
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_wedge_shape(
+            cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_pipe_shape(pipe_shape_params_t params) {
+  pipe_shape_params cpp_params;
+
+  // 转换管道线
+  cpp_params.wire[0] =
+      gp_Pnt(params.wire[0].x, params.wire[0].y, params.wire[0].z);
+  cpp_params.wire[1] =
+      gp_Pnt(params.wire[1].x, params.wire[1].y, params.wire[1].z);
+
+  // 转换剖面类型
+  switch (params.profile.type_) {
+  case PROFILE_TYPE_TRIANGLE: {
+    auto &tri = params.profile.triangle;
+    cpp_params.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                                          gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                                          gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+    break;
+  }
+  case PROFILE_TYPE_RECTANGLE: {
+    auto &rect = params.profile.rectangle;
+    cpp_params.profile =
+        rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                          gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+    break;
+  }
+  case PROFILE_TYPE_CIRC: {
+    auto &circ = params.profile.circ;
+    cpp_params.profile = circ_profile(
+        gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+    break;
+  }
+  case PROFILE_TYPE_ELIPS: {
+    auto &elips = params.profile.elips;
+    cpp_params.profile =
+        elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                      gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                      gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+    break;
+  }
+  case PROFILE_TYPE_POLYGON: {
+    auto &poly = params.profile.polygon;
+    std::vector<gp_Pnt> edges;
+    for (int i = 0; i < poly.edgeCount; i++) {
+      edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+    }
+
+    std::vector<std::vector<gp_Pnt>> inners;
+    for (int i = 0; i < poly.innerArrayCount; i++) {
+      std::vector<gp_Pnt> inner;
+      for (int j = 0; j < poly.innerCounts[i]; j++) {
+        inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
+                           poly.inners[i][j].z);
+      }
+      inners.push_back(inner);
+    }
+
+    cpp_params.profile = polygon_profile(edges, inners);
+    break;
+  }
+  default:
+    return nullptr;
+  }
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_pipe_shape(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_pipe_shape_with_place(pipe_shape_params_t params, pnt3d_t position,
+                             dir3d_t direction, dir3d_t xDir) {
+  pipe_shape_params cpp_params;
+
+  // 转换管道线
+  cpp_params.wire[0] =
+      gp_Pnt(params.wire[0].x, params.wire[0].y, params.wire[0].z);
+  cpp_params.wire[1] =
+      gp_Pnt(params.wire[1].x, params.wire[1].y, params.wire[1].z);
+
+  // 转换剖面类型
+  switch (params.profile.type_) {
+  case PROFILE_TYPE_TRIANGLE: {
+    auto &tri = params.profile.triangle;
+    cpp_params.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                                          gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                                          gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+    break;
+  }
+  case PROFILE_TYPE_RECTANGLE: {
+    auto &rect = params.profile.rectangle;
+    cpp_params.profile =
+        rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                          gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+    break;
+  }
+  case PROFILE_TYPE_CIRC: {
+    auto &circ = params.profile.circ;
+    cpp_params.profile = circ_profile(
+        gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+    break;
+  }
+  case PROFILE_TYPE_ELIPS: {
+    auto &elips = params.profile.elips;
+    cpp_params.profile =
+        elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                      gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                      gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+    break;
+  }
+  case PROFILE_TYPE_POLYGON: {
+    auto &poly = params.profile.polygon;
+    std::vector<gp_Pnt> edges;
+    for (int i = 0; i < poly.edgeCount; i++) {
+      edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+    }
+
+    std::vector<std::vector<gp_Pnt>> inners;
+    for (int i = 0; i < poly.innerArrayCount; i++) {
+      std::vector<gp_Pnt> inner;
+      for (int j = 0; j < poly.innerCounts[i]; j++) {
+        inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
+                           poly.inners[i][j].z);
+      }
+      inners.push_back(inner);
+    }
+
+    cpp_params.profile = polygon_profile(edges, inners);
+    break;
+  }
+  default:
+    return nullptr;
+  }
+
+  gp_Pnt cpp_position(position.x, position.y, position.z);
+  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_pipe_shape(
+            cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
 #ifdef __cplusplus
 }
 #endif

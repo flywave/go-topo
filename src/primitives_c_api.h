@@ -1833,7 +1833,289 @@ PRIMCAPICALL topo_shape_t *
 create_cable_ray_with_place(cable_ray_params_t params, pnt3d_t position,
                             dir3d_t direction, dir3d_t xDir);
 
- 
+// 剖面类型枚举
+typedef enum {
+  PROFILE_TYPE_NONE = 0,
+  PROFILE_TYPE_TRIANGLE,
+  PROFILE_TYPE_RECTANGLE,
+  PROFILE_TYPE_CIRC,
+  PROFILE_TYPE_ELIPS,
+  PROFILE_TYPE_POLYGON
+} profile_type_t;
+
+// 三角形剖面
+typedef struct {
+  pnt3d_t p1;
+  pnt3d_t p2;
+  pnt3d_t p3;
+} triangle_profile_t;
+
+// 矩形剖面
+typedef struct {
+  pnt3d_t p1;
+  pnt3d_t p2;
+} rectangle_profile_t;
+
+// 圆形剖面
+typedef struct {
+  pnt3d_t center;
+  dir3d_t norm;
+  double radius;
+} circ_profile_t;
+
+// 椭圆剖面
+typedef struct {
+  pnt3d_t s1;
+  pnt3d_t s2;
+  pnt3d_t center;
+} elips_profile_t;
+
+// 多边形剖面
+typedef struct {
+  pnt3d_t *edges;
+  int edgeCount;
+  pnt3d_t **inners;
+  int *innerCounts;
+  int innerArrayCount;
+} polygon_profile_t;
+
+// 剖面结构体
+typedef struct {
+  profile_type_t type_;
+  triangle_profile_t triangle;
+  rectangle_profile_t rectangle;
+  circ_profile_t circ;
+  elips_profile_t elips;
+  polygon_profile_t polygon;
+} shape_profile_t;
+
+// 旋转参数
+typedef struct {
+  shape_profile_t profile;
+  axis1_t axis;
+  double angle;
+} revol_params_t;
+
+PRIMCAPICALL topo_shape_t *create_revol(revol_params_t params);
+PRIMCAPICALL topo_shape_t *create_revol_with_place(revol_params_t params,
+                                                   pnt3d_t position,
+                                                   dir3d_t direction,
+                                                   dir3d_t xDir);
+
+// 拉伸参数
+typedef struct {
+  shape_profile_t profile;
+  dir3d_t dir;
+} prism_params_t;
+
+PRIMCAPICALL topo_shape_t *create_prism(prism_params_t params);
+PRIMCAPICALL topo_shape_t *create_prism_with_place(prism_params_t params,
+                                                   pnt3d_t position,
+                                                   dir3d_t direction,
+                                                   dir3d_t xDir);
+// 线段类型枚举
+typedef enum {
+  SEGMENT_TYPE_LINE = 0,              // 直线
+  SEGMENT_TYPE_THREE_POINT_ARC = 1,   // 弧线
+  SEGMENT_TYPE_CIRCLE_CENTER_ARC = 2, // 圆心角
+  SEGMENT_TYPE_SPLINE = 3             // 样条曲线
+} segment_type_t;
+
+// 管道端点参数
+typedef struct {
+  pnt3d_t offset;
+  dir3d_t normal;
+  shape_profile_t profile;
+  shape_profile_t *inner_profile; // 可为NULL
+} pipe_endpoint_t;
+
+// 连接形状模式枚举
+typedef enum {
+  JOINT_SHAPE_MODE_SPHERE = 0,
+  JOINT_SHAPE_MODE_BOX = 1
+} joint_shape_mode_t;
+
+// 管道参数
+typedef struct {
+  pnt3d_t *wire;
+  int wire_count;
+  shape_profile_t profile;
+  shape_profile_t *inner_profile; // 可为NULL
+  segment_type_t segment_type;
+  transition_mode_t transition_mode;
+} pipe_params_t;
+
+// 创建管道
+PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params);
+PRIMCAPICALL topo_shape_t *create_pipe_with_place(pipe_params_t params,
+                                                  pnt3d_t position,
+                                                  dir3d_t direction,
+                                                  dir3d_t xDir);
+// 多段管道参数
+typedef struct {
+  pnt3d_t **wires;
+  int *wire_counts;
+  int wire_array_count;
+  shape_profile_t *profiles;
+  int profile_count;
+  shape_profile_t **inner_profiles; // 可为NULL
+  int *inner_profile_counts;
+  segment_type_t *segment_types;
+  int segment_type_count;
+  transition_mode_t transition_mode;
+} multi_segment_pipe_params_t;
+
+// 创建多段管道
+PRIMCAPICALL topo_shape_t *
+create_multi_segment_pipe(multi_segment_pipe_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
+                                     pnt3d_t position, dir3d_t direction,
+                                     dir3d_t xDir);
+
+// 管道连接参数
+typedef struct {
+  pipe_endpoint_t *ins;
+  int in_count;
+  pipe_endpoint_t *outs;
+  int out_count;
+  joint_shape_mode_t mode;
+  bool smooth_edge;
+} pipe_joint_params_t;
+
+// 创建管道连接
+PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_pipe_joint_with_place(pipe_joint_params_t params, pnt3d_t position,
+                             dir3d_t direction, dir3d_t xDir);
+
+// 悬链线参数
+typedef struct {
+  pnt3d_t p1;
+  pnt3d_t p2;
+  shape_profile_t profile;
+  double slack;
+  double max_sag;
+  double tessellation;
+} catenary_params_t;
+
+// 创建悬链线
+PRIMCAPICALL topo_shape_t *create_catenary(catenary_params_t params);
+PRIMCAPICALL topo_shape_t *create_catenary_with_place(catenary_params_t params,
+                                                      pnt3d_t position,
+                                                      dir3d_t direction,
+                                                      dir3d_t xDir);
+
+// 长方体参数
+typedef struct {
+  pnt3d_t point1;
+  pnt3d_t point2;
+} box_shape_params_t;
+
+PRIMCAPICALL topo_shape_t *create_box_shape(box_shape_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_box_shape_with_place(box_shape_params_t params, pnt3d_t position,
+                            dir3d_t direction, dir3d_t xDir);
+
+// 圆锥参数
+typedef struct {
+  double radius1;
+  double radius2;
+  double height;
+  double *angle; // 可为NULL
+} cone_shape_params_t;
+
+PRIMCAPICALL topo_shape_t *create_cone_shape(cone_shape_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_cone_shape_with_place(cone_shape_params_t params, pnt3d_t position,
+                             dir3d_t direction, dir3d_t xDir);
+
+// 圆柱参数
+typedef struct {
+  double radius;
+  double height;
+  double *angle; // 可为NULL
+} cylinder_shape_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_cylinder_shape(cylinder_shape_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_cylinder_shape_with_place(cylinder_shape_params_t params,
+                                 pnt3d_t position, dir3d_t direction,
+                                 dir3d_t xDir);
+
+// 旋转体参数
+typedef struct {
+  pnt3d_t *meridian;
+  int meridian_count;
+  double *angle; // 可为NULL
+  double *max;   // 可为NULL
+  double *min;   // 可为NULL
+} revolution_shape_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_revolution_shape(revolution_shape_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_revolution_shape_with_place(revolution_shape_params_t params,
+                                   pnt3d_t position, dir3d_t direction,
+                                   dir3d_t xDir);
+
+// 球体参数
+typedef struct {
+  pnt3d_t *center; // 可为NULL
+  double radius;
+  double *angle1; // 可为NULL
+  double *angle2; // 可为NULL
+  double *angle;  // 可为NULL
+} sphere_shape_params_t;
+
+PRIMCAPICALL topo_shape_t *create_sphere_shape(sphere_shape_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_sphere_shape_with_place(sphere_shape_params_t params, pnt3d_t position,
+                               dir3d_t direction, dir3d_t xDir);
+
+// 圆环参数
+typedef struct {
+  double radius1;
+  double radius2;
+  double *angle1; // 可为NULL
+  double *angle2; // 可为NULL
+  double *angle;  // 可为NULL
+} torus_shape_params_t;
+
+PRIMCAPICALL topo_shape_t *create_torus_shape(torus_shape_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_torus_shape_with_place(torus_shape_params_t params, pnt3d_t position,
+                              dir3d_t direction, dir3d_t xDir);
+
+// 楔形面限制
+typedef struct {
+  double values[4];
+} wedge_face_limit_t;
+
+// 楔形体参数
+typedef struct {
+  pnt3d_t edge;
+  wedge_face_limit_t *limit; // 可为NULL
+  double *ltx;               // 可为NULL
+} wedge_shape_params_t;
+
+PRIMCAPICALL topo_shape_t *create_wedge_shape(wedge_shape_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_wedge_shape_with_place(wedge_shape_params_t params, pnt3d_t position,
+                              dir3d_t direction, dir3d_t xDir);
+
+// 管道参数
+typedef struct {
+  pnt3d_t wire[2];
+  shape_profile_t profile;
+} pipe_shape_params_t;
+
+PRIMCAPICALL topo_shape_t *create_pipe_shape(pipe_shape_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_pipe_shape_with_place(pipe_shape_params_t params, pnt3d_t position,
+                             dir3d_t direction, dir3d_t xDir);
+
 #ifdef __cplusplus
 }
 #endif
