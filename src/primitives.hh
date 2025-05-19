@@ -6,6 +6,7 @@
 #include <gp_Pnt.hxx>
 #include <vector>
 
+#include <boost/optional.hpp>
 #include <boost/variant.hpp>
 
 namespace flywave {
@@ -2181,6 +2182,292 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params,
                                  const gp_Pnt &position,
                                  const gp_Dir &direction = gp::DZ(),
                                  const gp_Dir &xDir = gp::DX());
+
+enum profile_type {
+  TYPE_NONE = 0,
+  TYPE_TRIANGLE,
+  TYPE_RECTANGLE,
+  TYPE_CIRC,
+  TYPE_ELIPS,
+  TYPE_POLYGON
+};
+
+struct base_profile {
+  virtual ~base_profile() = default;
+  profile_type type;
+};
+
+struct triangle_profile : public base_profile {
+  profile_type type;
+  gp_Pnt p1;
+  gp_Pnt p2;
+  gp_Pnt p3;
+
+  triangle_profile() { type = TYPE_TRIANGLE; }
+  triangle_profile(gp_Pnt _p1, gp_Pnt _p2, gp_Pnt _p3)
+      : p1(_p1), p2(_p2), p3(_p3) {
+    type = TYPE_TRIANGLE;
+  }
+};
+
+struct rectangle_profile : public base_profile {
+  profile_type type;
+  gp_Pnt p1;
+  gp_Pnt p2;
+
+  rectangle_profile() { type = TYPE_RECTANGLE; }
+  rectangle_profile(gp_Pnt _p1, gp_Pnt _p2) : p1(_p1), p2(_p2) {
+    type = TYPE_RECTANGLE;
+  }
+};
+
+struct circ_profile : public base_profile {
+  profile_type type;
+  gp_Pnt center;
+  gp_Pnt norm;
+  double radius;
+
+  circ_profile() {
+    type = TYPE_CIRC;
+    radius = 0.0;
+  }
+  circ_profile(gp_Pnt _center, gp_Pnt _norm, double _radius)
+      : center(_center), norm(_norm), radius(_radius) {
+    type = TYPE_CIRC;
+  }
+};
+
+struct elips_profile : public base_profile {
+  profile_type type;
+  gp_Pnt s1;
+  gp_Pnt s2;
+  gp_Pnt center;
+
+  elips_profile() { type = TYPE_ELIPS; }
+  elips_profile(gp_Pnt _s1, gp_Pnt _s2, gp_Pnt _center)
+      : s1(_s1), s2(_s2), center(_center) {
+    type = TYPE_ELIPS;
+  }
+};
+
+struct polygon_profile : public base_profile {
+  profile_type type;
+  std::vector<gp_Pnt> edges;
+  std::vector<std::vector<gp_Pnt>> inners; // without pipe
+
+  polygon_profile() { type = TYPE_POLYGON; }
+  polygon_profile(std::vector<gp_Pnt> _edges,
+                  std::vector<std::vector<gp_Pnt>> _inners = {})
+      : edges(_edges), inners(_inners) {
+    type = TYPE_POLYGON;
+  }
+};
+
+using shape_profile =
+    boost::variant<triangle_profile, rectangle_profile, circ_profile,
+                   elips_profile, polygon_profile>;
+
+struct revol_params {
+  shape_profile profile;
+  gp_Ax1 axis;
+  double angle;
+};
+
+TopoDS_Shape create_revol(const revol_params &params);
+TopoDS_Shape create_revol(const revol_params &params, const gp_Pnt &position,
+                          const gp_Dir &direction = gp::DZ(),
+                          const gp_Dir &xDir = gp::DX());
+
+struct prism_params {
+  shape_profile profile;
+  gp_Dir dir;
+};
+
+TopoDS_Shape create_prism(const prism_params &params);
+TopoDS_Shape create_prism(const prism_params &params, const gp_Pnt &position,
+                          const gp_Dir &direction = gp::DZ(),
+                          const gp_Dir &xDir = gp::DX());
+
+enum class segment_type {
+  LINE = 0,              // 直线
+  THREE_POINT_ARC = 1,   // 弧线
+  CIRCLE_CENTER_ARC = 2, // 圆心角
+  SPLINE = 3             // 样条曲线
+};
+
+enum class transition_mode {
+  RIGHT = 1,
+  ROUND = 2,
+  TRANS = 3,
+};
+
+struct pipe_params {
+  std::vector<gp_Pnt> wire;
+  shape_profile profile;
+  boost::optional<shape_profile> inner_profile;
+  segment_type segment_type;
+  transition_mode transition_mode;
+};
+
+TopoDS_Shape create_pipe(const pipe_params &params);
+TopoDS_Shape create_pipe(const pipe_params &params, const gp_Pnt &position,
+                         const gp_Dir &direction = gp::DZ(),
+                         const gp_Dir &xDir = gp::DX());
+
+struct multi_segment_pipe_params {
+  std::vector<std::vector<gp_Pnt>> wires;
+  std::vector<shape_profile> profiles;
+  boost::optional<std::vector<shape_profile>> inner_profiles;
+  boost::optional<std::vector<segment_type>> segment_types;
+  transition_mode transition_mode;
+};
+
+TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params);
+TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params,
+                                       const gp_Pnt &position,
+                                       const gp_Dir &direction = gp::DZ(),
+                                       const gp_Dir &xDir = gp::DX());
+
+enum class joint_shape_mode {
+  SPHERE = 0,
+  BOX = 1,
+};
+
+struct pipe_endpoint {
+  gp_Pnt offset;
+  gp_Dir normal;
+  shape_profile profile;
+  boost::optional<shape_profile> inner_profile;
+};
+
+struct pipe_joint_params {
+  std::vector<pipe_endpoint> ins;
+  std::vector<pipe_endpoint> outs;
+  joint_shape_mode mode;
+  bool smooth_edge;
+};
+
+TopoDS_Shape create_pipe_joint(const pipe_joint_params &params);
+TopoDS_Shape create_pipe_joint(const pipe_joint_params &params,
+                               const gp_Pnt &position,
+                               const gp_Dir &direction = gp::DZ(),
+                               const gp_Dir &xDir = gp::DX());
+
+struct catenary_params {
+  gp_Pnt p1;
+  gp_Pnt p2;
+  shape_profile profile;
+  double slack;
+  double max_sag;
+  double tessellation;
+};
+
+TopoDS_Shape create_catenary(const catenary_params &params);
+TopoDS_Shape create_catenary(const catenary_params &params,
+                             const gp_Pnt &position,
+                             const gp_Dir &direction = gp::DZ(),
+                             const gp_Dir &xDir = gp::DX());
+
+struct box_shape_params {
+  gp_Pnt point1;
+  gp_Pnt point2;
+};
+
+TopoDS_Shape create_box_shape(const box_shape_params &params);
+TopoDS_Shape create_box_shape(const box_shape_params &params,
+                              const gp_Pnt &position,
+                              const gp_Dir &direction = gp::DZ(),
+                              const gp_Dir &xDir = gp::DX());
+
+struct cone_shape_params {
+  double radius1;
+  double radius2;
+  double height;
+  boost::optional<double> angle;
+};
+
+TopoDS_Shape create_cone_shape(const cone_shape_params &params);
+TopoDS_Shape create_cone_shape(const cone_shape_params &params,
+                               const gp_Pnt &position,
+                               const gp_Dir &direction = gp::DZ(),
+                               const gp_Dir &xDir = gp::DX());
+
+struct cylinder_shape_params {
+  double radius;
+  double height;
+  boost::optional<double> angle;
+};
+
+TopoDS_Shape create_cylinder_shape(const cylinder_shape_params &params);
+TopoDS_Shape create_cylinder_shape(const cylinder_shape_params &params,
+                                   const gp_Pnt &position,
+                                   const gp_Dir &direction = gp::DZ(),
+                                   const gp_Dir &xDir = gp::DX());
+
+struct revolution_shape_params {
+  std::vector<gp_Pnt> meridian;
+  boost::optional<double> angle;
+  boost::optional<double> max;
+  boost::optional<double> min;
+};
+
+TopoDS_Shape create_revolution_shape(const revolution_shape_params &params);
+TopoDS_Shape create_revolution_shape(const revolution_shape_params &params,
+                                     const gp_Pnt &position,
+                                     const gp_Dir &direction = gp::DZ(),
+                                     const gp_Dir &xDir = gp::DX());
+
+struct sphere_shape_params {
+  boost::optional<gp_Pnt> center;
+  double radius;
+  boost::optional<double> angle1;
+  boost::optional<double> angle2;
+  boost::optional<double> angle;
+};
+
+TopoDS_Shape create_sphere_shape(const sphere_shape_params &params);
+TopoDS_Shape create_sphere_shape(const sphere_shape_params &params,
+                                 const gp_Pnt &position,
+                                 const gp_Dir &direction = gp::DZ(),
+                                 const gp_Dir &xDir = gp::DX());
+struct torus_shape_params {
+  double radius1;
+  double radius2;
+  boost::optional<double> angle1;
+  boost::optional<double> angle2;
+  boost::optional<double> angle;
+};
+
+TopoDS_Shape create_torus_shape(const torus_shape_params &params);
+TopoDS_Shape create_torus_shape(const torus_shape_params &params,
+                                const gp_Pnt &position,
+                                const gp_Dir &direction = gp::DZ(),
+                                const gp_Dir &xDir = gp::DX());
+
+using wedge_face_limit = std::array<double, 4>;
+
+struct wedge_shape_params {
+  gp_Pnt edge;
+  boost::optional<wedge_face_limit> limit;
+  boost::optional<double> ltx;
+};
+
+TopoDS_Shape create_wedge_shape(const wedge_shape_params &params);
+TopoDS_Shape create_wedge_shape(const wedge_shape_params &params,
+                                const gp_Pnt &position,
+                                const gp_Dir &direction = gp::DZ(),
+                                const gp_Dir &xDir = gp::DX());
+
+struct pipe_shape_params {
+  std::array<gp_Pnt, 2> wire;
+  shape_profile profile;
+};
+
+TopoDS_Shape create_pipe_shape(const pipe_shape_params &params);
+TopoDS_Shape create_pipe_shape(const pipe_shape_params &params,
+                               const gp_Pnt &position,
+                               const gp_Dir &direction = gp::DZ(),
+                               const gp_Dir &xDir = gp::DX());
 
 } // namespace topo
 } // namespace flywave

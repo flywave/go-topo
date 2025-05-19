@@ -31,6 +31,7 @@
 #include <BRepPrimAPI_MakeTorus.hxx>
 #include <BRepPrimAPI_MakeWedge.hxx>
 #include <BRepTools.hxx>
+#include <BRepTools_WireExplorer.hxx>
 #include <BRep_Tool.hxx>
 #include <ChFi2d_AnaFilletAlgo.hxx>
 #include <ElCLib.hxx>
@@ -68,10 +69,19 @@
 
 namespace flywave {
 namespace topo {
+
+bool IsOuterWireCCW(const TopoDS_Wire &wire) {
+  // 计算线框的面积来确定方向
+  GProp_GProps props;
+  BRepGProp::LinearProperties(wire, props);
+  return props.Mass() > 0;
+}
+
 // 判断两个方向是否平行（考虑浮点误差）
 bool IsParallel(const gp_Dir &dir1, const gp_Dir &dir2) {
   return Abs(dir1.Dot(dir2)) > 1 - Precision::Angular();
 }
+
 TopoDS_Shape create_sphere(const sphere_params &params) {
   // 验证参数有效性
   if (params.radius <= 0.0) {
@@ -2068,7 +2078,7 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
       gp_Ax2 cylinderAxis(segment_start, gp_Dir(segment_vec));
       TopoDS_Shape cylinder =
           BRepPrimAPI_MakeCylinder(cylinderAxis,
-                                   params.radius, // 使用绝缘子半径参数
+                                   params.radius,          // 使用绝缘子半径参数
                                    segment_vec.Magnitude() // 实际长度
                                    )
               .Shape();
@@ -2132,9 +2142,9 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
 
     // 创建连接盒（参数顺序：X长度，Y长度，Z长度）
     BRepPrimAPI_MakeBox connector_box(box_axis,
-                                      box_x_length, // X方向尺寸（沿全局X轴）
+                                      box_x_length,    // X方向尺寸（沿全局X轴）
                                       box_y_thickness, // Y方向尺寸（沿全局Y轴）
-                                      box_z_height // Z方向尺寸（沿全局Z轴）
+                                      box_z_height     // Z方向尺寸（沿全局Z轴）
     );
 
     connector_box.Build();
@@ -2249,7 +2259,7 @@ TopoDS_Shape create_terminal_block(const terminal_block_params &params) {
 
       // 创建穿透孔洞（Y方向完全穿透）
       gp_Ax2 holeAxis(gp_Pnt(x, -params.thickness, z), // 起始于底面（Y=0）
-                      gp_Dir(0, 1, 0) // 沿Y轴方向（厚度方向）
+                      gp_Dir(0, 1, 0)                  // 沿Y轴方向（厚度方向）
       );
       BRepPrimAPI_MakeCylinder holeMaker(holeAxis, params.holeRadius,
                                          params.thickness * 2 // 确保完全穿透
@@ -2855,9 +2865,9 @@ TopoDS_Shape create_curve_cable(const curve_cable_params &params) {
 
   // 使用扫掠器自动计算坐标系（添加Frenet模式）
   BRepOffsetAPI_MakePipeShell pipeMaker(pathMaker.Wire());
-  pipeMaker.SetMode(true);      // 设置为实体模式
-  pipeMaker.SetMaxDegree(5);    // 提高最大阶数以适应复杂曲率
-  pipeMaker.SetTolerance(1e-5); // 放宽容差适应复杂路径
+  pipeMaker.SetMode(true);                   // 设置为实体模式
+  pipeMaker.SetMaxDegree(5);                 // 提高最大阶数以适应复杂曲率
+  pipeMaker.SetTolerance(1e-5);              // 放宽容差适应复杂路径
   pipeMaker.SetForceApproxC1(Standard_True); // 强制C1连续近似
 
   // 创建动态调整的圆形截面（直径始终垂直于路径）
@@ -3022,16 +3032,16 @@ TopoDS_Wire create_ibeam_profile(double height, double flangeWidth,
   gp_Pnt p12(0, -halfFlangeWidth, 0);
 
   // 构建轮廓线（按顺序连接所有点）
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p1).Edge()); // 下翼缘
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge()); // 右下翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge()); // 右下腹板水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge()); // 右腹板垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge()); // 右上腹板水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge()); // 右上翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge()); // 上翼缘
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge()); // 左上翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p9).Edge()); // 左上腹板水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge()); // 左腹板垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p1).Edge());  // 下翼缘
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());   // 右下翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());   // 右下腹板水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());   // 右腹板垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());   // 右上腹板水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge());   // 右上翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge());   // 上翼缘
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge());   // 左上翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p9).Edge());   // 左上腹板水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge());  // 左腹板垂直段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p11).Edge()); // 左下腹板水平段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p12).Edge()); // 左下翼缘垂直段
 
@@ -3253,17 +3263,17 @@ TopoDS_Wire create_t_steel_profile(double height, double width,
   gp_Pnt p11(0, halfWidth, 0);                // 右侧端点
 
   // 构建完整轮廓（顺时针连接）
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge()); // 底部中心→左
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge()); // 腹板左侧垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p9).Edge()); // 新增：左侧翼缘连接
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p8).Edge()); // 左侧翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p4).Edge()); // 顶部翼缘左段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge()); // 腹板顶部水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p11).Edge()); // 顶部翼缘右段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());   // 底部中心→左
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());   // 腹板左侧垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p9).Edge());   // 新增：左侧翼缘连接
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p8).Edge());   // 左侧翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p4).Edge());   // 顶部翼缘左段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());   // 腹板顶部水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p11).Edge());  // 顶部翼缘右段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p10).Edge()); // 右侧翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p6).Edge()); // 新增：右侧翼缘连接
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge()); // 腹板右侧垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p1).Edge()); // 底部右侧→中心
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p6).Edge());  // 新增：右侧翼缘连接
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge());   // 腹板右侧垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p1).Edge());   // 底部右侧→中心
 
   if (!wireMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to create T-steel profile");
@@ -6764,7 +6774,7 @@ create_single_hook_anchor(const single_hook_anchor_params &params) {
       // 定义截面坐标系：Z轴沿路径切线，Y轴垂直圆弧平面
       sectionAxis = gp_Ax2(arcStart,
                            tangent.Normalized(), // 截面Z轴沿路径方向
-                           gp_Dir(0, 0, 1)); // Y轴垂直圆弧平面（YZ平面）
+                           gp_Dir(0, 0, 1));     // Y轴垂直圆弧平面（YZ平面）
     }
 
     // 创建截面圆（直径参数验证）
@@ -10136,7 +10146,7 @@ TopoDS_Shape create_three_way_round_working_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset); // 支线段左上角点
+                  zoffset);                                  // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
 
   // 4. 计算圆弧关键点（精确几何关系）
@@ -10247,7 +10257,7 @@ TopoDS_Shape create_three_way_corner_working_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset); // 支线段左上角点
+                  zoffset);                                  // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
 
   const gp_Pnt leftStart(-halfWidth1 - cornerLength, halfWidth, zoffset);
@@ -10867,10 +10877,10 @@ TopoDS_Shape create_three_way_circle_well_part(double length, double width,
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset); // 支线段左上角点
+                  zoffset);                                  // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
-  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset); // 支线段左下角点
-  const gp_Pnt p10(halfWidth1, halfWidth, zoffset); // 支线段右下角点
+  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset);          // 支线段左下角点
+  const gp_Pnt p10(halfWidth1, halfWidth, zoffset);          // 支线段右下角点
 
   // 7. 构建完整线框（确保拓扑闭合）
   BRepBuilderAPI_MakeWire wireMaker;
@@ -10934,10 +10944,10 @@ TopoDS_Shape create_three_way_rectangular_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset); // 支线段左上角点
+                  zoffset);                                  // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右上角点
-  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset); // 支线段左下角点
-  const gp_Pnt p10(halfWidth1, halfWidth, zoffset); // 支线段右下角点
+  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset);          // 支线段左下角点
+  const gp_Pnt p10(halfWidth1, halfWidth, zoffset);          // 支线段右下角点
 
   // 7. 构建完整线框（确保拓扑闭合）
   BRepBuilderAPI_MakeWire wireMaker;
@@ -11673,7 +11683,7 @@ TopoDS_Shape create_four_way_round_working_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset); // 支线段左上角点
+                  zoffset);                                  // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
 
   // 4. 定义支线段2端点（下方）
@@ -16412,5 +16422,1199 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params,
   return transform.Shape();
 }
 
+TopoDS_Shape create_shape_from_profile(const shape_profile &profile,
+                                       bool isFace) {
+  struct profile_visitor : public boost::static_visitor<TopoDS_Shape> {
+    bool _is_face;
+
+    profile_visitor(bool isFace) : _is_face(isFace) {}
+
+    TopoDS_Shape operator()(const triangle_profile &prof) const {
+      BRepBuilderAPI_MakePolygon polyBuilder;
+      polyBuilder.Add(prof.p1);
+      polyBuilder.Add(prof.p2);
+      polyBuilder.Add(prof.p3);
+      polyBuilder.Add(prof.p1);
+
+      TopoDS_Wire wire = polyBuilder.Wire();
+      if (_is_face) {
+        return BRepBuilderAPI_MakeFace(wire).Face();
+      }
+      return wire;
+    }
+
+    TopoDS_Shape operator()(const rectangle_profile &prof) const {
+      BRepBuilderAPI_MakePolygon polyBuilder;
+      polyBuilder.Add(prof.p1);
+      polyBuilder.Add(gp_Pnt(prof.p2.X(), prof.p1.Y(), prof.p1.Z()));
+      polyBuilder.Add(prof.p2);
+      polyBuilder.Add(gp_Pnt(prof.p1.X(), prof.p2.Y(), prof.p1.Z()));
+      polyBuilder.Add(prof.p1);
+
+      TopoDS_Wire wire = polyBuilder.Wire();
+      if (_is_face) {
+        return BRepBuilderAPI_MakeFace(wire).Face();
+      }
+      return wire;
+    }
+
+    TopoDS_Shape operator()(const circ_profile &prof) const {
+      gp_Ax2 axis(prof.center, gp_Dir(prof.norm.XYZ()));
+      gp_Circ circle(axis, prof.radius);
+
+      TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(circle).Edge();
+      BRepBuilderAPI_MakeWire wireBuilder(edge);
+      TopoDS_Wire wire = wireBuilder.Wire();
+
+      if (_is_face) {
+        return BRepBuilderAPI_MakeFace(wire).Face();
+      }
+      return wire;
+    }
+
+    TopoDS_Shape operator()(const elips_profile &prof) const {
+      gp_Ax2 axis(prof.center, gp_Dir(prof.s2.XYZ() - prof.s1.XYZ()));
+      double majorRadius = prof.s1.Distance(prof.center);
+      double minorRadius = prof.s2.Distance(prof.center);
+      gp_Elips ellipse(axis, majorRadius, minorRadius);
+
+      TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(ellipse).Edge();
+      BRepBuilderAPI_MakeWire wireBuilder(edge);
+      TopoDS_Wire wire = wireBuilder.Wire();
+
+      if (_is_face) {
+        return BRepBuilderAPI_MakeFace(wire).Face();
+      }
+      return wire;
+    }
+
+    TopoDS_Shape operator()(const polygon_profile &prof) const {
+      // 创建外轮廓线框(应确保是逆时针方向)
+      BRepBuilderAPI_MakePolygon polyBuilder;
+      for (const auto &point : prof.edges) {
+        polyBuilder.Add(point);
+      }
+      if (!prof.edges.empty()) {
+        polyBuilder.Add(prof.edges.front());
+      }
+      TopoDS_Wire outerWire = polyBuilder.Wire();
+
+      // 检查并修正外轮廓方向
+      if (!outerWire.IsNull()) {
+        BRepTools_WireExplorer explorer(outerWire);
+        if (!explorer.More()) {
+          return TopoDS_Shape();
+        }
+        if (!IsOuterWireCCW(outerWire)) {
+          outerWire.Reverse();
+        }
+      }
+
+      if (_is_face) {
+        BRepBuilderAPI_MakeFace faceBuilder(outerWire);
+
+        // 处理内轮廓(孔)
+        for (const auto &inner : prof.inners) {
+          BRepBuilderAPI_MakePolygon innerPolyBuilder;
+          for (const auto &point : inner) {
+            innerPolyBuilder.Add(point);
+          }
+          if (!inner.empty()) {
+            innerPolyBuilder.Add(inner.front());
+          }
+          TopoDS_Wire innerWire = innerPolyBuilder.Wire();
+
+          // 检查并修正内轮廓方向(应为顺时针)
+          if (!innerWire.IsNull()) {
+            if (IsOuterWireCCW(innerWire)) {
+              innerWire.Reverse();
+            }
+            faceBuilder.Add(innerWire);
+          }
+        }
+
+        return faceBuilder.Face();
+      }
+      return outerWire;
+    }
+  };
+
+  return boost::apply_visitor(profile_visitor(isFace), profile);
+}
+
+TopoDS_Shape create_revol(const revol_params &params) {
+  TopoDS_Shape profileFace = create_shape_from_profile(params.profile, true);
+
+  if (profileFace.IsNull()) {
+    throw Standard_ConstructionError("Invalid profile for revolution");
+  }
+
+  BRepPrimAPI_MakeRevol revolMaker(profileFace, params.axis, params.angle);
+
+  if (!revolMaker.IsDone()) {
+    throw Standard_ConstructionError("Failed to create revolution shape");
+  }
+
+  return revolMaker.Shape();
+}
+
+TopoDS_Shape create_revol(const revol_params &params, const gp_Pnt &position,
+                          const gp_Dir &direction, const gp_Dir &xDir) {
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  TopoDS_Shape revolved = create_revol(params);
+
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(revolved, transformation);
+  return transform.Shape();
+}
+
+TopoDS_Shape create_prism(const prism_params &params) {
+  TopoDS_Shape profileFace = create_shape_from_profile(params.profile, true);
+
+  if (profileFace.IsNull()) {
+    throw Standard_ConstructionError("Invalid profile for prism");
+  }
+
+  BRepPrimAPI_MakePrism prismMaker(profileFace, gp_Vec(params.dir) * 1.0);
+
+  if (!prismMaker.IsDone()) {
+    throw Standard_ConstructionError("Failed to create prism");
+  }
+
+  return prismMaker.Shape();
+}
+
+TopoDS_Shape create_prism(const prism_params &params, const gp_Pnt &position,
+                          const gp_Dir &direction, const gp_Dir &xDir) {
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  TopoDS_Shape prism = create_prism(params);
+
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(prism, transformation);
+  return transform.Shape();
+}
+
+TopoDS_Wire make_wire_from_segments(
+    const std::vector<std::vector<gp_Pnt>> &wires,
+    const boost::optional<std::vector<segment_type>> &segment_types) {
+  if (wires.empty()) {
+    throw std::runtime_error("Control points cannot be empty");
+  }
+
+  try {
+    BRepBuilderAPI_MakeWire wireMaker;
+
+    for (size_t i = 0; i < wires.size(); ++i) {
+      const auto &pts = wires[i];
+      segment_type type =
+          segment_types ? (*segment_types)[i] : segment_type::LINE;
+
+      switch (type) {
+      case segment_type::LINE: {
+        if (pts.size() != 2) {
+          throw Standard_ConstructionError("Line requires exactly 2 points");
+        }
+        wireMaker.Add(BRepBuilderAPI_MakeEdge(pts[0], pts[1]));
+        break;
+      }
+      case segment_type::THREE_POINT_ARC: {
+        if (pts.size() != 3) {
+          throw Standard_ConstructionError("Three-point arc requires 3 points");
+        }
+        GC_MakeArcOfCircle arcMaker(pts[0], pts[1], pts[2]);
+        if (!arcMaker.IsDone()) {
+          throw Standard_ConstructionError("Failed to create three-point arc");
+        }
+        wireMaker.Add(BRepBuilderAPI_MakeEdge(arcMaker.Value()));
+        break;
+      }
+      case segment_type::CIRCLE_CENTER_ARC: {
+        if (pts.size() != 3) {
+          throw Standard_ConstructionError(
+              "Center arc requires [start, center, end] points");
+        }
+        gp_Circ circle(gp_Ax2(pts[1], gp_Dir(0, 0, 1)), // Default Z-up normal
+                       pts[0].Distance(pts[1]));
+        GC_MakeArcOfCircle arcMaker(circle, pts[0], pts[2], true);
+        if (!arcMaker.IsDone()) {
+          throw Standard_ConstructionError("Failed to create center arc");
+        }
+        wireMaker.Add(BRepBuilderAPI_MakeEdge(arcMaker.Value()));
+        break;
+      }
+      case segment_type::SPLINE: {
+        if (pts.size() < 2) {
+          throw Standard_ConstructionError("Spline requires at least 2 points");
+        }
+        Handle(TColgp_HArray1OfPnt) array = new TColgp_HArray1OfPnt(
+            1, static_cast<Standard_Integer>(pts.size()));
+        for (size_t j = 0; j < pts.size(); ++j) {
+          array->SetValue(static_cast<Standard_Integer>(j + 1), pts[j]);
+        }
+        GeomAPI_Interpolate interpolate(array, false, Precision::Confusion());
+        interpolate.Perform();
+        if (!interpolate.IsDone()) {
+          throw Standard_ConstructionError("Failed to create spline");
+        }
+        wireMaker.Add(BRepBuilderAPI_MakeEdge(interpolate.Curve()));
+        break;
+      }
+      default:
+        throw Standard_ConstructionError("Unknown segment type");
+      }
+    }
+
+    if (!wireMaker.IsDone()) {
+      throw Standard_ConstructionError("Failed to create wire");
+    }
+    return wireMaker.Wire();
+  } catch (const Standard_Failure &e) {
+    throw std::runtime_error(e.GetMessageString());
+  }
+}
+
+TopoDS_Shape create_pipe(const pipe_params &params) {
+  // 获取外轮廓截面形状(作为面)
+  TopoDS_Shape outerFace = create_shape_from_profile(params.profile, true);
+  if (outerFace.IsNull()) {
+    throw Standard_ConstructionError("Invalid outer profile for pipe");
+  }
+
+  // 获取内轮廓截面形状(如果有)
+  TopoDS_Shape innerFace;
+  if (params.inner_profile) {
+    innerFace = create_shape_from_profile(*params.inner_profile, true);
+    if (innerFace.IsNull()) {
+      throw Standard_ConstructionError("Invalid inner profile for pipe");
+    }
+  }
+
+  // 创建管道路径
+  TopoDS_Wire pathWire =
+      make_wire_from_segments({params.wire}, {{params.segment_type}});
+
+  // 创建管道
+  BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
+  pipeMaker.Add(outerFace);
+  if (!innerFace.IsNull()) {
+    pipeMaker.Add(innerFace);
+  }
+
+  // 设置过渡模式
+  switch (params.transition_mode) {
+  case transition_mode::RIGHT:
+    pipeMaker.SetTransitionMode(BRepBuilderAPI_RightCorner);
+    break;
+  case transition_mode::ROUND:
+    pipeMaker.SetTransitionMode(BRepBuilderAPI_RoundCorner);
+    break;
+  case transition_mode::TRANS:
+    pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
+    break;
+  }
+
+  if (!pipeMaker.IsDone()) {
+    throw Standard_ConstructionError("Failed to create pipe");
+  }
+
+  return pipeMaker.Shape();
+}
+
+TopoDS_Shape create_pipe(const pipe_params &params, const gp_Pnt &position,
+                         const gp_Dir &direction, const gp_Dir &xDir) {
+  // 正交性校验
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  // 创建标准方向的管道
+  TopoDS_Shape pipe = create_pipe(params);
+
+  // 创建坐标系变换
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(pipe, transformation);
+  return transform.Shape();
+}
+
+TopoDS_Shape
+create_multi_segment_pipe(const multi_segment_pipe_params &params) {
+  // 参数验证
+  if (params.wires.empty()) {
+    throw Standard_ConstructionError("Wire paths cannot be empty");
+  }
+  if (params.profiles.size() != params.wires.size()) {
+    throw Standard_ConstructionError("Profile count must match wire count");
+  }
+  if (params.inner_profiles &&
+      params.inner_profiles->size() != params.wires.size()) {
+    throw Standard_ConstructionError(
+        "Inner profile count must match wire count");
+  }
+
+  // 创建路径线框
+  TopoDS_Wire pathWire =
+      make_wire_from_segments(params.wires, params.segment_types);
+
+  // 创建外轮廓管道
+  BRepOffsetAPI_MakePipeShell outerPipeMaker(pathWire);
+  for (size_t i = 0; i < params.profiles.size(); ++i) {
+    TopoDS_Shape outerFace =
+        create_shape_from_profile(params.profiles[i], true);
+    if (outerFace.IsNull()) {
+      throw Standard_ConstructionError("Invalid outer profile for pipe");
+    }
+    outerPipeMaker.Add(outerFace);
+  }
+
+  // 设置过渡模式
+  switch (params.transition_mode) {
+  case transition_mode::RIGHT:
+    outerPipeMaker.SetTransitionMode(BRepBuilderAPI_RightCorner);
+    break;
+  case transition_mode::ROUND:
+    outerPipeMaker.SetTransitionMode(BRepBuilderAPI_RoundCorner);
+    break;
+  case transition_mode::TRANS:
+    outerPipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
+    break;
+  }
+
+  if (!outerPipeMaker.IsDone()) {
+    throw Standard_ConstructionError("Failed to create outer pipe");
+  }
+  TopoDS_Shape outerPipe = outerPipeMaker.Shape();
+
+  // 如果有内轮廓，创建内轮廓管道并进行布尔减操作
+  if (params.inner_profiles) {
+    BRepOffsetAPI_MakePipeShell innerPipeMaker(pathWire);
+    for (size_t i = 0; i < params.inner_profiles->size(); ++i) {
+      TopoDS_Shape innerFace =
+          create_shape_from_profile((*params.inner_profiles)[i], true);
+      if (innerFace.IsNull()) {
+        throw Standard_ConstructionError("Invalid inner profile for pipe");
+      }
+      innerPipeMaker.Add(innerFace);
+    }
+
+    if (!innerPipeMaker.IsDone()) {
+      throw Standard_ConstructionError("Failed to create inner pipe");
+    }
+    TopoDS_Shape innerPipe = innerPipeMaker.Shape();
+
+    // 从外轮廓中减去内轮廓
+    outerPipe = BRepAlgoAPI_Cut(outerPipe, innerPipe).Shape();
+  }
+
+  return outerPipe;
+}
+
+TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params,
+                                       const gp_Pnt &position,
+                                       const gp_Dir &direction,
+                                       const gp_Dir &xDir) {
+  // 正交性校验
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  // 创建标准方向的管道
+  TopoDS_Shape pipe = create_multi_segment_pipe(params);
+
+  // 创建坐标系变换
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(pipe, transformation);
+  return transform.Shape();
+}
+
+std::pair<double, gp_Pnt>
+compute_profile_radius_and_center(const shape_profile &profile) {
+  struct ProfileVisitor
+      : public boost::static_visitor<std::pair<double, gp_Pnt>> {
+
+    ProfileVisitor() {}
+
+    std::pair<double, gp_Pnt> operator()(const circ_profile &prof) const {
+      return {prof.radius, prof.center};
+    }
+
+    std::pair<double, gp_Pnt> operator()(const triangle_profile &prof) const {
+      // Calculate bounding box and center
+      double min_x = std::min({prof.p1.X(), prof.p2.X(), prof.p3.X()});
+      double min_y = std::min({prof.p1.Y(), prof.p2.Y(), prof.p3.Y()});
+      double min_z = std::min({prof.p1.Z(), prof.p2.Z(), prof.p3.Z()});
+
+      double max_x = std::max({prof.p1.X(), prof.p2.X(), prof.p3.X()});
+      double max_y = std::max({prof.p1.Y(), prof.p2.Y(), prof.p3.Y()});
+      double max_z = std::max({prof.p1.Z(), prof.p2.Z(), prof.p3.Z()});
+
+      gp_Vec size(max_x - min_x, max_y - min_y, max_z - min_z);
+      gp_Pnt center((prof.p1.X() + prof.p2.X() + prof.p3.X()) / 3,
+                    (prof.p1.Y() + prof.p2.Y() + prof.p3.Y()) / 3,
+                    (prof.p1.Z() + prof.p2.Z() + prof.p3.Z()) / 3);
+
+      return {size.Magnitude() / 2, center};
+    }
+
+    std::pair<double, gp_Pnt> operator()(const rectangle_profile &prof) const {
+      // Calculate diagonal vector and center
+      gp_Vec diagonal(prof.p1, prof.p2);
+      gp_Pnt center((prof.p1.X() + prof.p2.X()) / 2,
+                    (prof.p1.Y() + prof.p2.Y()) / 2,
+                    (prof.p1.Z() + prof.p2.Z()) / 2);
+
+      return {diagonal.Magnitude() / 2, center};
+    }
+
+    std::pair<double, gp_Pnt> operator()(const elips_profile &prof) const {
+      // Calculate major axis vector and center
+      gp_Vec major_axis(prof.s1, prof.s2);
+      return {major_axis.Magnitude() / 2, prof.center};
+    }
+
+    std::pair<double, gp_Pnt> operator()(const polygon_profile &prof) const {
+      if (prof.edges.empty()) {
+        return {0.0, gp_Pnt()};
+      }
+
+      // Calculate centroid
+      double sum_x = 0, sum_y = 0, sum_z = 0;
+      for (const auto &edge : prof.edges) {
+        sum_x += edge.X();
+        sum_y += edge.Y();
+        sum_z += edge.Z();
+      }
+      gp_Pnt center(sum_x / prof.edges.size(), sum_y / prof.edges.size(),
+                    sum_z / prof.edges.size());
+
+      // Find maximum distance from center to any vertex
+      double max_dist = 0.0;
+      for (const auto &edge : prof.edges) {
+        double dist = gp_Pnt(edge.X(), edge.Y(), edge.Z()).Distance(center);
+        if (dist > max_dist) {
+          max_dist = dist;
+        }
+      }
+
+      return {max_dist, center};
+    }
+
+    std::pair<double, gp_Pnt>
+    operator()(const std::vector<shape_profile> &profiles) const {
+      if (profiles.empty()) {
+        return {0.0, gp_Pnt()};
+      }
+      // For compound profiles, use the first profile
+      return boost::apply_visitor(*this, profiles[0]);
+    }
+  };
+
+  return boost::apply_visitor(ProfileVisitor{}, profile);
+}
+
+TopoDS_Shape create_profile_shape(const shape_profile &profile,
+                                  const gp_Ax2 &axis) {
+  struct ProfileCreator : public boost::static_visitor<TopoDS_Shape> {
+    gp_Ax2 axis;
+
+    ProfileCreator(const gp_Ax2 &ax) : axis(ax) {}
+
+    TopoDS_Shape operator()(const triangle_profile &prof) const {
+      BRepBuilderAPI_MakePolygon polyBuilder;
+      polyBuilder.Add(prof.p1);
+      polyBuilder.Add(prof.p2);
+      polyBuilder.Add(prof.p3);
+      polyBuilder.Add(prof.p1); // Close the triangle
+
+      TopoDS_Wire wire = polyBuilder.Wire();
+      return BRepBuilderAPI_MakeFace(wire).Face();
+    }
+
+    TopoDS_Shape operator()(const rectangle_profile &prof) const {
+      BRepBuilderAPI_MakePolygon polyBuilder;
+      // Create rectangle from two diagonal points
+      polyBuilder.Add(prof.p1);
+      polyBuilder.Add(gp_Pnt(prof.p2.X(), prof.p1.Y(), prof.p1.Z()));
+      polyBuilder.Add(prof.p2);
+      polyBuilder.Add(gp_Pnt(prof.p1.X(), prof.p2.Y(), prof.p1.Z()));
+      polyBuilder.Add(prof.p1); // Close the rectangle
+
+      TopoDS_Wire wire = polyBuilder.Wire();
+      return BRepBuilderAPI_MakeFace(wire).Face();
+    }
+
+    TopoDS_Shape operator()(const circ_profile &prof) const {
+      gp_Circ circle(axis, prof.radius);
+      TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(circle).Edge();
+      BRepBuilderAPI_MakeWire wireBuilder(edge);
+      return BRepBuilderAPI_MakeFace(wireBuilder.Wire()).Face();
+    }
+
+    TopoDS_Shape operator()(const elips_profile &prof) const {
+      // Calculate major and minor radii
+      double majorRadius = prof.s1.Distance(prof.center);
+      double minorRadius = prof.s2.Distance(prof.center);
+
+      // Create ellipse in the given axis system
+      gp_Elips ellipse(axis, majorRadius, minorRadius);
+      TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(ellipse).Edge();
+      BRepBuilderAPI_MakeWire wireBuilder(edge);
+      return BRepBuilderAPI_MakeFace(wireBuilder.Wire()).Face();
+    }
+
+    TopoDS_Shape operator()(const polygon_profile &prof) const {
+      if (prof.edges.empty()) {
+        return TopoDS_Shape(); // Return empty shape for empty polygon
+      }
+
+      // Create outer wire
+      BRepBuilderAPI_MakePolygon outerBuilder;
+      for (const auto &point : prof.edges) {
+        outerBuilder.Add(point);
+      }
+      outerBuilder.Add(prof.edges.front()); // Close the polygon
+
+      if (!outerBuilder.IsDone()) {
+        return TopoDS_Shape();
+      }
+
+      TopoDS_Wire outerWire = outerBuilder.Wire();
+
+      // Handle inner wires if they exist
+      if (prof.inners.empty()) {
+        return BRepBuilderAPI_MakeFace(outerWire).Face();
+      }
+
+      BRepBuilderAPI_MakeFace faceBuilder(outerWire);
+
+      for (const auto &inner : prof.inners) {
+        if (inner.empty())
+          continue;
+
+        BRepBuilderAPI_MakePolygon innerBuilder;
+        for (const auto &point : inner) {
+          innerBuilder.Add(point);
+        }
+        innerBuilder.Add(inner.front()); // Close the inner polygon
+
+        if (innerBuilder.IsDone()) {
+          faceBuilder.Add(innerBuilder.Wire());
+        }
+      }
+
+      return faceBuilder.Face();
+    }
+  };
+
+  return boost::apply_visitor(ProfileCreator(axis), profile);
+}
+
+shape_profile scale_profile(const shape_profile &profile, double scale) {
+  struct ProfileVisitor : public boost::static_visitor<shape_profile> {
+    double scale;
+
+    ProfileVisitor(double s) : scale(s) {}
+
+    shape_profile operator()(const circ_profile &prof) const {
+      circ_profile scaled = prof;
+      scaled.radius *= scale;
+      return scaled;
+    }
+
+    shape_profile operator()(const triangle_profile &prof) const {
+      triangle_profile scaled = prof;
+      scaled.p1.Scale(gp_Pnt(), scale);
+      scaled.p2.Scale(gp_Pnt(), scale);
+      scaled.p3.Scale(gp_Pnt(), scale);
+      return scaled;
+    }
+
+    shape_profile operator()(const rectangle_profile &prof) const {
+      rectangle_profile scaled = prof;
+      scaled.p1.Scale(gp_Pnt(), scale);
+      scaled.p2.Scale(gp_Pnt(), scale);
+      return scaled;
+    }
+
+    shape_profile operator()(const elips_profile &prof) const {
+      elips_profile scaled = prof;
+      scaled.s1.Scale(gp_Pnt(), scale);
+      scaled.s2.Scale(gp_Pnt(), scale);
+      scaled.center.Scale(gp_Pnt(), scale);
+      return scaled;
+    }
+
+    shape_profile operator()(const polygon_profile &prof) const {
+      polygon_profile scaled = prof;
+      for (auto &point : scaled.edges) {
+        point.Scale(gp_Pnt(), scale);
+      }
+      for (auto &inner : scaled.inners) {
+        for (auto &point : inner) {
+          point.Scale(gp_Pnt(), scale);
+        }
+      }
+      return scaled;
+    }
+  };
+
+  return boost::apply_visitor(ProfileVisitor{scale}, profile);
+}
+
+TopoDS_Shape create_pipe_connection(const pipe_endpoint &endpoint,
+                                    const gp_Pnt &joint_center,
+                                    const gp_Ax3 &joint_coord, bool is_output) {
+  // Calculate direction vector from joint to pipe endpoint
+  gp_Vec direction(endpoint.offset, joint_center);
+  if (is_output) {
+    direction.Reverse();
+  }
+
+  // Create coordinate system for the pipe
+  gp_Ax2 pipe_axis(endpoint.offset, endpoint.normal);
+  if (endpoint.normal.IsParallel(direction, Precision::Angular())) {
+    // Adjust axis if normal is parallel to direction
+    gp_Dir ortho = endpoint.normal.Crossed(gp::DX());
+    if (gp_Vec(ortho).Magnitude() < Precision::Confusion()) {
+      ortho = endpoint.normal.Crossed(gp::DY());
+    }
+    pipe_axis = gp_Ax2(endpoint.offset, endpoint.normal, ortho);
+  }
+
+  // Create pipe profile shape
+  TopoDS_Shape profile_shape =
+      create_profile_shape(endpoint.profile, pipe_axis);
+
+  // Create transition from profile to joint
+  double length = direction.Magnitude();
+  gp_Vec transition_vec = direction.Normalized() * (length * 0.8);
+
+  // Create a loft (sweep) between profile and a smaller version at joint
+  BRepOffsetAPI_ThruSections generator(true, true);
+
+  // Start with original profile
+  generator.AddWire(TopoDS::Wire(profile_shape));
+
+  // Create smaller profile near joint
+  shape_profile smaller_profile = scale_profile(endpoint.profile, 0.5);
+  gp_Pnt mid_point = endpoint.offset.Translated(transition_vec);
+  TopoDS_Shape smaller_shape =
+      create_profile_shape(smaller_profile, gp_Ax2(mid_point, direction));
+  generator.AddWire(TopoDS::Wire(smaller_shape));
+
+  // Build the transition shape
+  TopoDS_Shape transition = generator.Shape();
+
+  return transition;
+}
+
+TopoDS_Shape create_pipe_joint(const pipe_joint_params &params) {
+  double max_radius = 0;
+  gp_XYZ center_sum(0, 0, 0);
+  int center_count = 0;
+
+  // Process input pipes
+  for (const auto &in : params.ins) {
+    auto [radius, center] = compute_profile_radius_and_center(in.profile);
+    max_radius = std::max(max_radius, radius);
+    center_sum += gp_XYZ(center.X(), center.Y(), center.Z());
+    center_count++;
+  }
+
+  // Process output pipes
+  for (const auto &out : params.outs) {
+    auto [radius, center] = compute_profile_radius_and_center(out.profile);
+    max_radius = std::max(max_radius, radius);
+    center_sum += gp_XYZ(center.X(), center.Y(), center.Z());
+    center_count++;
+  }
+
+  // Calculate average center point
+  gp_Pnt joint_center = gp_Pnt(0, 0, 0);
+  if (center_count > 0) {
+    joint_center.ChangeCoord() += center_sum / center_count;
+  }
+
+  // Create coordinate system for the joint
+  gp_Ax2 joint_coord(joint_center, gp::DZ(), gp::DX());
+
+  // Create center shape (sphere or box)
+  TopoDS_Shape center_shape;
+  if (params.mode == joint_shape_mode::SPHERE) {
+    center_shape =
+        BRepPrimAPI_MakeSphere(joint_coord, max_radius * 1.2).Shape();
+  } else {                          // BOX
+    double size = max_radius * 2.4; // Make box slightly larger than diameter
+    center_shape = BRepPrimAPI_MakeBox(joint_coord, size, size, size).Shape();
+  }
+
+  // Create and connect all pipes to the center
+  TopoDS_Shape result = center_shape;
+  for (const auto &in : params.ins) {
+    TopoDS_Shape pipe =
+        create_pipe_connection(in, joint_center, joint_coord, false);
+    result = BRepAlgoAPI_Fuse(result, pipe).Shape();
+  }
+  for (const auto &out : params.outs) {
+    TopoDS_Shape pipe =
+        create_pipe_connection(out, joint_center, joint_coord, true);
+    result = BRepAlgoAPI_Fuse(result, pipe).Shape();
+  }
+
+  return result;
+}
+
+TopoDS_Shape create_catenary(const catenary_params &params) {
+  // 参数验证
+  if (params.slack <= 0) {
+    throw Standard_ConstructionError("Slack must be positive");
+  }
+  if (params.p1.Distance(params.p2) < Precision::Confusion()) {
+    throw Standard_ConstructionError("Points p1 and p2 are too close");
+  }
+
+  // 获取截面形状
+  TopoDS_Shape profileFace = create_shape_from_profile(params.profile, true);
+  if (profileFace.IsNull()) {
+    throw Standard_ConstructionError("Invalid profile for catenary");
+  }
+
+  // 计算悬垂线方向向量
+  gp_Vec vec(params.p1, params.p2);
+  double span = vec.Magnitude();
+  gp_Dir dir = vec.Normalized();
+
+  // 创建悬垂线路径 - 使用样条曲线近似
+  std::vector<gp_Pnt> points;
+  int numSegments = static_cast<int>(params.tessellation);
+  if (numSegments < 2)
+    numSegments = 20; // 默认分段数
+
+  // 计算悬垂线参数
+  double a = params.slack; // 悬垂线参数
+  double x1 = params.p1.X(), y1 = params.p1.Y(), z1 = params.p1.Z();
+  double x2 = params.p2.X(), y2 = params.p2.Y(), z2 = params.p2.Z();
+
+  // 生成悬垂线点
+  for (int i = 0; i <= numSegments; ++i) {
+    double t = static_cast<double>(i) / numSegments;
+    double x = x1 + t * (x2 - x1);
+    double y = y1 + t * (y2 - y1);
+    // 悬垂线公式: z = a * cosh((x - x0)/a) + z0
+    double z = a * std::cosh((t - 0.5) * 2.0) + z1; // 简化计算
+
+    // 考虑最大垂度限制
+    if (params.max_sag > 0) {
+      z = std::min(z, params.max_sag + z1);
+    }
+
+    points.emplace_back(x, y, z);
+  }
+
+  // 创建样条曲线
+  Handle(TColgp_HArray1OfPnt) array =
+      new TColgp_HArray1OfPnt(1, static_cast<Standard_Integer>(points.size()));
+  for (size_t i = 0; i < points.size(); ++i) {
+    array->SetValue(static_cast<Standard_Integer>(i + 1), points[i]);
+  }
+
+  GeomAPI_Interpolate interpolate(array, false, Precision::Confusion());
+  interpolate.Perform();
+  if (!interpolate.IsDone()) {
+    throw Standard_ConstructionError("Failed to create catenary curve");
+  }
+  Handle_Geom_BSplineCurve curve = interpolate.Curve();
+
+  // 创建路径线框
+  TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(curve).Edge();
+  TopoDS_Wire wire = BRepBuilderAPI_MakeWire(edge).Wire();
+
+  // 创建管道
+  BRepOffsetAPI_MakePipeShell pipeMaker(wire);
+  pipeMaker.Add(profileFace);
+
+  if (!pipeMaker.IsDone()) {
+    throw Standard_ConstructionError("Failed to create catenary pipe");
+  }
+
+  return pipeMaker.Shape();
+}
+
+TopoDS_Shape create_catenary(const catenary_params &params,
+                             const gp_Pnt &position, const gp_Dir &direction,
+                             const gp_Dir &xDir) {
+  // 正交性校验
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  // 创建标准方向的悬垂线
+  TopoDS_Shape catenary = create_catenary(params);
+
+  // 创建坐标系变换
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(catenary, transformation);
+  return transform.Shape();
+}
+
+TopoDS_Shape create_box_shape(const box_shape_params &params) {
+  // 创建长方体
+  BRepPrimAPI_MakeBox boxMaker(params.point1, params.point2);
+  return boxMaker.Shape();
+}
+
+TopoDS_Shape create_box_shape(const box_shape_params &params,
+                              const gp_Pnt &position, const gp_Dir &direction,
+                              const gp_Dir &xDir) {
+  // 正交性校验
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  // 创建标准方向的长方体
+  TopoDS_Shape box = create_box_shape(params);
+
+  // 创建坐标系变换
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(box, transformation);
+  return transform.Shape();
+}
+
+TopoDS_Shape create_cone_shape(const cone_shape_params &params) {
+  // 创建圆锥或圆台
+  gp_Ax2 axis(gp::Origin(), gp::DZ());
+  if (params.angle) {
+    BRepPrimAPI_MakeCone coneMaker(axis, params.radius1, params.radius2,
+                                   params.height, *params.angle);
+    return coneMaker.Shape();
+  } else {
+    BRepPrimAPI_MakeCone coneMaker(axis, params.radius1, params.radius2,
+                                   params.height);
+    return coneMaker.Shape();
+  }
+}
+
+TopoDS_Shape create_cone_shape(const cone_shape_params &params,
+                               const gp_Pnt &position, const gp_Dir &direction,
+                               const gp_Dir &xDir) {
+  // 正交性校验
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  // 创建标准方向的圆锥
+  TopoDS_Shape cone = create_cone_shape(params);
+
+  // 创建坐标系变换
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(cone, transformation);
+  return transform.Shape();
+}
+
+TopoDS_Shape create_cylinder_shape(const cylinder_shape_params &params) {
+  // 创建圆柱或圆柱段
+  gp_Ax2 axis(gp::Origin(), gp::DZ());
+  if (params.angle) {
+    BRepPrimAPI_MakeCylinder cylMaker(axis, params.radius, params.height,
+                                      *params.angle);
+    return cylMaker.Shape();
+  } else {
+    BRepPrimAPI_MakeCylinder cylMaker(axis, params.radius, params.height);
+    return cylMaker.Shape();
+  }
+}
+
+TopoDS_Shape create_cylinder_shape(const cylinder_shape_params &params,
+                                   const gp_Pnt &position,
+                                   const gp_Dir &direction,
+                                   const gp_Dir &xDir) {
+  // 正交性校验
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  // 创建标准方向的圆柱
+  TopoDS_Shape cylinder = create_cylinder_shape(params);
+
+  // 创建坐标系变换
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(cylinder, transformation);
+  return transform.Shape();
+}
+
+TopoDS_Shape create_revolution_shape(const revolution_shape_params &params) {
+  // 创建旋转体
+  if (params.meridian.empty()) {
+    throw Standard_ConstructionError("Meridian points are empty");
+  }
+
+  // 创建旋转轴
+  gp_Ax1 axis(gp::Origin(), gp::DZ());
+
+  // 创建旋转曲线
+  BRepBuilderAPI_MakePolygon polyBuilder;
+  for (const auto &point : params.meridian) {
+    polyBuilder.Add(point);
+  }
+  TopoDS_Wire wire = polyBuilder.Wire();
+
+  // 创建旋转体
+  double angle = params.angle ? *params.angle : 2 * M_PI;
+  BRepPrimAPI_MakeRevol revMaker(wire, axis, angle);
+  return revMaker.Shape();
+}
+
+TopoDS_Shape create_revolution_shape(const revolution_shape_params &params,
+                                     const gp_Pnt &position,
+                                     const gp_Dir &direction,
+                                     const gp_Dir &xDir) {
+  // 正交性校验
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  // 创建标准方向的旋转体
+  TopoDS_Shape rev = create_revolution_shape(params);
+
+  // 创建坐标系变换
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(rev, transformation);
+  return transform.Shape();
+}
+
+TopoDS_Shape create_sphere_shape(const sphere_shape_params &params) {
+  // 创建球体或球面段
+  gp_Pnt center = params.center ? *params.center : gp::Origin();
+  gp_Ax2 axis(center, gp::DZ());
+
+  if (params.angle1 && params.angle2 && params.angle) {
+    BRepPrimAPI_MakeSphere sphereMaker(axis, params.radius, *params.angle1,
+                                       *params.angle2, *params.angle);
+    return sphereMaker.Shape();
+  } else if (params.angle1 && params.angle2) {
+    BRepPrimAPI_MakeSphere sphereMaker(axis, params.radius, *params.angle1,
+                                       *params.angle2);
+    return sphereMaker.Shape();
+  } else if (params.angle) {
+    BRepPrimAPI_MakeSphere sphereMaker(axis, params.radius, *params.angle);
+    return sphereMaker.Shape();
+  } else {
+    BRepPrimAPI_MakeSphere sphereMaker(axis, params.radius);
+    return sphereMaker.Shape();
+  }
+}
+
+TopoDS_Shape create_sphere_shape(const sphere_shape_params &params,
+                                 const gp_Pnt &position,
+                                 const gp_Dir &direction, const gp_Dir &xDir) {
+  // 正交性校验
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  // 创建标准方向的球体
+  TopoDS_Shape sphere = create_sphere_shape(params);
+
+  // 创建坐标系变换
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(sphere, transformation);
+  return transform.Shape();
+}
+
+TopoDS_Shape create_torus_shape(const torus_shape_params &params) {
+  // 创建圆环或圆环段
+  gp_Ax2 axis(gp::Origin(), gp::DZ());
+
+  if (params.angle1 && params.angle2 && params.angle) {
+    BRepPrimAPI_MakeTorus torusMaker(axis, params.radius1, params.radius2,
+                                     *params.angle1, *params.angle2,
+                                     *params.angle);
+    return torusMaker.Shape();
+  } else if (params.angle1 && params.angle2) {
+    BRepPrimAPI_MakeTorus torusMaker(axis, params.radius1, params.radius2,
+                                     *params.angle1, *params.angle2);
+    return torusMaker.Shape();
+  } else if (params.angle) {
+    BRepPrimAPI_MakeTorus torusMaker(axis, params.radius1, params.radius2,
+                                     *params.angle);
+    return torusMaker.Shape();
+  } else {
+    BRepPrimAPI_MakeTorus torusMaker(axis, params.radius1, params.radius2);
+    return torusMaker.Shape();
+  }
+}
+
+TopoDS_Shape create_torus_shape(const torus_shape_params &params,
+                                const gp_Pnt &position, const gp_Dir &direction,
+                                const gp_Dir &xDir) {
+  // 正交性校验
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  // 创建标准方向的圆环体
+  TopoDS_Shape torus = create_torus_shape(params);
+
+  // 创建坐标系变换
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(torus, transformation);
+  return transform.Shape();
+}
+
+TopoDS_Shape create_wedge_shape(const wedge_shape_params &params) {
+  // 创建楔形体
+  gp_Ax2 axis(gp::Origin(), gp::DZ());
+
+  if (params.limit) {
+    const auto &limit = *params.limit;
+    BRepPrimAPI_MakeWedge wedgeMaker(axis, params.edge.X(), params.edge.Y(),
+                                     params.edge.Z(),    // dx, dy, dz
+                                     limit[0], limit[1], // xmin, zmin
+                                     limit[2], limit[3]  // xmax, zmax
+    );
+    return wedgeMaker.Shape();
+  } else {
+    double ltx = params.edge.X() / 2.0;
+    if (params.ltx) {
+      ltx = *params.ltx;
+    }
+    BRepPrimAPI_MakeWedge wedgeMaker(axis, params.edge.X(), params.edge.Y(),
+                                     params.edge.Z(), // dx, dy, dz
+                                     ltx);            // ltx
+    return wedgeMaker.Shape();
+  }
+}
+
+TopoDS_Shape create_wedge_shape(const wedge_shape_params &params,
+                                const gp_Pnt &position, const gp_Dir &direction,
+                                const gp_Dir &xDir) {
+  // 正交性校验
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  // 创建标准方向的楔形体
+  TopoDS_Shape wedge = create_wedge_shape(params);
+
+  // 创建坐标系变换
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(wedge, transformation);
+  return transform.Shape();
+}
+
+TopoDS_Shape create_pipe_shape(const pipe_shape_params &params) {
+  // 参数验证
+  if (params.wire.size() != 2) {
+    throw Standard_ConstructionError("Pipe wire must have 2 points");
+  }
+
+  // 创建路径线框
+  TopoDS_Edge edge =
+      BRepBuilderAPI_MakeEdge(params.wire[0], params.wire[1]).Edge();
+  BRepBuilderAPI_MakeWire wireBuilder(edge);
+  TopoDS_Wire pathWire = wireBuilder.Wire();
+
+  // 创建截面形状
+  gp_Ax2 pipeAxis(params.wire.front(),
+                  gp_Dir(params.wire[1].XYZ() - params.wire[0].XYZ()));
+  TopoDS_Shape profileShape = create_profile_shape(params.profile, pipeAxis);
+
+  // 创建管道
+  BRepOffsetAPI_MakePipe pipeMaker(pathWire, profileShape);
+  pipeMaker.Build();
+
+  if (!pipeMaker.IsDone()) {
+    throw Standard_ConstructionError("Failed to create pipe");
+  }
+
+  return pipeMaker.Shape();
+}
+
+TopoDS_Shape create_pipe_shape(const pipe_shape_params &params,
+                               const gp_Pnt &position, const gp_Dir &direction,
+                               const gp_Dir &xDir) {
+  // 正交性校验
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  // 创建标准方向的管道
+  TopoDS_Shape pipe = create_pipe_shape(params);
+
+  // 创建坐标系变换
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(pipe, transformation);
+  return transform.Shape();
+}
 } // namespace topo
 } // namespace flywave

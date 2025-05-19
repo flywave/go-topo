@@ -1833,6 +1833,7 @@ PRIMCAPICALL topo_shape_t *
 create_cable_ray_with_place(cable_ray_params_t params, pnt3d_t position,
                             dir3d_t direction, dir3d_t xDir);
 
+ 
 #ifdef __cplusplus
 }
 #endif
