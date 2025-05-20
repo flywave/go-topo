@@ -2302,8 +2302,8 @@ struct pipe_params {
   std::vector<gp_Pnt> wire;
   std::vector<shape_profile> profiles;
   boost::optional<std::vector<shape_profile>> inner_profiles;
-  segment_type segment_type;
-  transition_mode transition_mode;
+  topo::segment_type segment_type;
+  topo::transition_mode transition_mode;
   boost::optional<gp_Dir> up_dir;
 };
 
@@ -2317,7 +2317,7 @@ struct multi_segment_pipe_params {
   std::vector<shape_profile> profiles;
   boost::optional<std::vector<shape_profile>> inner_profiles;
   boost::optional<std::vector<segment_type>> segment_types;
-  transition_mode transition_mode;
+  topo::transition_mode transition_mode;
   boost::optional<gp_Dir> up_dir;
 };
 
