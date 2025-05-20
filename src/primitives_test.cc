@@ -4375,7 +4375,433 @@ void test_water_tunnel() {
   }
 }
 
+void test_revol() {
+  std::cout << "\n=== Testing Profile Types ===" << std::endl;
+
+  // 测试三角形剖面
+  triangle_profile tri_prof{gp_Pnt(0, 0, 0), gp_Pnt(10, 0, 0), gp_Pnt(5, 0, 8)};
+  revol_params tri_params{tri_prof, gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)),
+                          M_PI / 4};
+  auto tri_shp = create_revol(tri_params);
+  if (tri_shp.IsNull()) {
+    std::cerr << "Error: Failed to create triangle profile revolved shape"
+              << std::endl;
+    return;
+  }
+  test_export_shape(tri_shp, "./triangle_profile_revol.stl");
+
+  // 测试矩形剖面
+  rectangle_profile rect_prof{gp_Pnt(0, 0, 5), gp_Pnt(10, 0, 5)};
+  revol_params rect_params{rect_prof, gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)),
+                           M_PI / 4};
+  auto rect_shp = create_revol(rect_params);
+  if (rect_shp.IsNull()) {
+    std::cerr << "Error: Failed to create rectangle profile revolved shape"
+              << std::endl;
+    return;
+  }
+  test_export_shape(rect_shp, "./rectangle_profile_revol.stl");
+
+  // 测试圆形剖面
+  circ_profile circ_prof{gp_Pnt(10, 0, 0), gp_Dir(0, 1, 0), 5.0};
+  revol_params circ_params{circ_prof, gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)),
+                           M_PI / 4};
+  auto circ_shp = create_revol(circ_params);
+  if (circ_shp.IsNull()) {
+    std::cerr << "Error: Failed to create circle profile revolved shape"
+              << std::endl;
+    return;
+  }
+  test_export_shape(circ_shp, "./circle_profile_revol.stl");
+
+  // 测试椭圆剖面
+  elips_profile elips_prof{
+      gp_Pnt(20, 0, 0), // 长轴端点1 (X轴方向)
+      gp_Pnt(10, 0, 5), // 短轴端点1 (Z轴方向)
+      gp_Pnt(10, 0, 0)  // 中心点
+  };
+  revol_params elips_params{elips_prof,
+                            gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)), M_PI / 4};
+  auto elips_shp = create_revol(elips_params);
+  if (elips_shp.IsNull()) {
+    std::cerr << "Error: Failed to create ellipse profile revolved shape"
+              << std::endl;
+    return;
+  }
+  test_export_shape(elips_shp, "./ellipse_profile_revol.stl");
+
+  // 测试多边形剖面
+  polygon_profile poly_prof{
+      {gp_Pnt(0, 0, 0),   // 左下角
+       gp_Pnt(10, 0, 0),  // 右下角
+       gp_Pnt(15, 0, 5),  // 右顶点
+       gp_Pnt(10, 0, 10), // 上顶点
+       gp_Pnt(0, 0, 10)}  // 左上角
+  };
+  revol_params poly_params{poly_prof, gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)),
+                           M_PI / 4};
+  auto poly_shp = create_revol(poly_params);
+  if (poly_shp.IsNull()) {
+    std::cerr << "Error: Failed to create polygon profile revolved shape"
+              << std::endl;
+    return;
+  }
+  test_export_shape(poly_shp, "./polygon_profile_revol.stl");
+}
+
+void test_make_prism() {
+  std::cout << "\n=== Testing Prism ===" << std::endl;
+
+  try {
+    // 测试三角形剖面棱柱
+    triangle_profile tri_prof{gp_Pnt(0, 0, 0), gp_Pnt(10, 0, 0),
+                              gp_Pnt(5, 8, 0)};
+    prism_params tri_params{tri_prof, gp_Dir(0, 0, 20)};
+    auto tri_shp = create_prism(tri_params);
+    if (tri_shp.IsNull()) {
+      std::cerr << "Error: Failed to create triangle profile prism"
+                << std::endl;
+    } else {
+      test_export_shape(tri_shp, "./triangle_profile_prism.stl");
+    }
+
+    // 测试矩形剖面棱柱
+    rectangle_profile rect_prof{gp_Pnt(0, 0, 0), gp_Pnt(10, 5, 0)};
+    prism_params rect_params{rect_prof, gp_Dir(0, 0, 20)};
+    auto rect_shp = create_prism(rect_params);
+    if (rect_shp.IsNull()) {
+      std::cerr << "Error: Failed to create rectangle profile prism"
+                << std::endl;
+    } else {
+      test_export_shape(rect_shp, "./rectangle_profile_prism.stl");
+    }
+
+    // 测试圆形剖面棱柱
+    circ_profile circ_prof{gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 5.0};
+    prism_params circ_params{circ_prof, gp_Dir(0, 0, 20)};
+    auto circ_shp = create_prism(circ_params);
+    if (circ_shp.IsNull()) {
+      std::cerr << "Error: Failed to create circle profile prism" << std::endl;
+    } else {
+      test_export_shape(circ_shp, "./circle_profile_prism.stl");
+    }
+
+    // 测试椭圆剖面棱柱
+    elips_profile elips_prof{gp_Pnt(10, 0, 0), gp_Pnt(0, 5, 0),
+                             gp_Pnt(0, 0, 0)};
+    prism_params elips_params{elips_prof, gp_Dir(0, 0, 1)};
+    auto elips_shp = create_prism(elips_params);
+    if (elips_shp.IsNull()) {
+      std::cerr << "Error: Failed to create ellipse profile prism" << std::endl;
+    } else {
+      test_export_shape(elips_shp, "./ellipse_profile_prism.stl");
+    }
+
+    // 测试多边形剖面棱柱
+    polygon_profile poly_prof{{gp_Pnt(0, 0, 0), gp_Pnt(10, 0, 0),
+                               gp_Pnt(15, 5, 0), gp_Pnt(10, 10, 0),
+                               gp_Pnt(0, 10, 0)}};
+    prism_params poly_params{poly_prof, gp_Dir(0, 0, 1)};
+    auto poly_shp = create_prism(poly_params);
+    if (poly_shp.IsNull()) {
+      std::cerr << "Error: Failed to create polygon profile prism" << std::endl;
+    } else {
+      test_export_shape(poly_shp, "./polygon_profile_prism.stl");
+    }
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_pipe() {
+  std::cout << "\n=== Testing Pipe Creation ===" << std::endl;
+  try {
+    // 测试圆形截面直线管道
+    {
+      std::vector<gp_Pnt> wire = {gp_Pnt(0, 0, 0), gp_Pnt(100, 0, 0)};
+      circ_profile profile(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 5.0);
+      circ_profile profile2(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 10.0);
+
+      pipe_params params{.wire = wire,
+                         .profiles = {profile, profile2},
+                         .segment_type = segment_type::LINE,
+                         .transition_mode = transition_mode::TRANSFORMED};
+
+      auto shp = create_pipe(params);
+      if (shp.IsNull()) {
+        std::cerr << "Error: Failed to create circular line pipe" << std::endl;
+        return;
+      }
+      test_export_shape(shp, "./circular_line_pipe.stl");
+    }
+
+    // 测试圆形截面三点弧线管道
+    {
+      std::vector<gp_Pnt> wire = {gp_Pnt(0, 0, 0), gp_Pnt(50, 50, 0),
+                                  gp_Pnt(100, 0, 0)};
+      circ_profile profile(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 5.0);
+      circ_profile profile2(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 10.0);
+
+      pipe_params params{.wire = wire,
+                         .profiles = {profile, profile2},
+                         .segment_type = segment_type::THREE_POINT_ARC,
+                         .transition_mode = transition_mode::TRANSFORMED};
+
+      auto shp = create_pipe(params);
+      if (shp.IsNull()) {
+        std::cerr << "Error: Failed to create circular arc pipe" << std::endl;
+        return;
+      }
+      test_export_shape(shp, "./circular_arc_pipe.stl");
+    }
+
+    // 测试圆形截面圆心弧线管道
+    {
+      std::vector<gp_Pnt> wire = {
+          gp_Pnt(0, 0, 0),  // 起点
+          gp_Pnt(50, 0, 0), // 圆心
+          gp_Pnt(100, 0, 0) // 终点
+      };
+      circ_profile profile(gp_Pnt(50, 0, 0), gp_Dir(0, 0, 1), 6.0);
+      circ_profile profile2(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 10.0);
+
+      pipe_params params{.wire = wire,
+                         .profiles = {profile, profile2},
+                         .segment_type = segment_type::CIRCLE_CENTER_ARC,
+                         .transition_mode = transition_mode::TRANSFORMED};
+
+      auto shp = create_pipe(params);
+      if (shp.IsNull()) {
+        std::cerr << "Error: Failed to create circular center arc pipe"
+                  << std::endl;
+        return;
+      }
+      test_export_shape(shp, "./circular_center_arc_pipe.stl");
+    }
+
+    // 测试圆形截面样条曲线管道
+    {
+      std::vector<gp_Pnt> wire = {gp_Pnt(0, 0, 0), gp_Pnt(30, 30, 20),
+                                  gp_Pnt(70, 30, 40), gp_Pnt(100, 0, 50)};
+      circ_profile profile(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 5.0);
+      circ_profile profile2(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 10.0);
+
+      pipe_params params{.wire = wire,
+                         .profiles = {profile, profile2},
+                         .segment_type = segment_type::SPLINE,
+                         .transition_mode = transition_mode::TRANSFORMED};
+
+      auto shp = create_pipe(params);
+      if (shp.IsNull()) {
+        std::cerr << "Error: Failed to create circular spline pipe"
+                  << std::endl;
+        return;
+      }
+      test_export_shape(shp, "./circular_spline_pipe.stl");
+    }
+
+    // 测试多边形截面直线管道
+    {
+      std::vector<gp_Pnt> wire = {gp_Pnt(0, 0, 0), gp_Pnt(100, 0, 0)};
+      std::vector<gp_Pnt> edges = {gp_Pnt(0, 0, 0), gp_Pnt(10, 0, 0),
+                                   gp_Pnt(10, 5, 0), gp_Pnt(0, 5, 0)};
+      polygon_profile profile(edges);
+      pipe_params params{.wire = wire,
+                         .profiles = {profile},
+                         .segment_type = segment_type::LINE,
+                         .transition_mode = transition_mode::TRANSFORMED};
+
+      auto shp = create_pipe(params);
+      if (shp.IsNull()) {
+        std::cerr << "Error: Failed to create polygon line pipe" << std::endl;
+        return;
+      }
+      test_export_shape(shp, "./polygon_line_pipe.stl");
+    }
+
+    // 测试圆形截面样条曲线管道
+    {
+      std::vector<gp_Pnt> wire = {gp_Pnt(0, 0, 0), gp_Pnt(30, 30, 20),
+                                  gp_Pnt(70, 30, 40), gp_Pnt(100, 0, 50)};
+      circ_profile profile(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 5.0);
+      circ_profile innerProfile(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 3.0);
+
+      pipe_params params{.wire = wire,
+                         .profiles = {profile},
+                         .inner_profiles = {{innerProfile}},
+                         .segment_type = segment_type::SPLINE,
+                         .transition_mode = transition_mode::TRANSFORMED};
+
+      auto shp = create_pipe(params);
+      if (shp.IsNull()) {
+        std::cerr << "Error: Failed to create circular spline pipe"
+                  << std::endl;
+        return;
+      }
+      test_export_shape(shp, "./circular_spline_inner_pipe.stl");
+    }
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_multi_segment_pipe() {
+  std::cout << "\n=== Testing Multi-Segment Pipe Creation ===" << std::endl;
+  try {
+    // 准备测试数据 - 直线段
+    std::vector<gp_Pnt> linePoints = {gp_Pnt(0, 0, 0), gp_Pnt(100, 0, 0)};
+
+    // 准备测试数据 - 三点圆弧
+    std::vector<gp_Pnt> arcPoints = {gp_Pnt(100, 0, 0), gp_Pnt(150, 50, 0),
+                                     gp_Pnt(200, 0, 0)};
+
+    // 准备测试数据 - 圆心弧线
+    std::vector<gp_Pnt> centerArcPoints = {gp_Pnt(200, 0, 0),
+                                           gp_Pnt(250, 0, 0), // 圆心
+                                           gp_Pnt(300, 0, 0)};
+
+    // 准备测试数据 - 样条曲线
+    std::vector<gp_Pnt> splinePoints = {gp_Pnt(300, 0, 0), gp_Pnt(350, 50, 50),
+                                        gp_Pnt(400, 0, 100)};
+
+    // 创建圆形剖面
+    circ_profile profile(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 10.0);
+
+    // 创建内孔剖面
+    circ_profile innerProfile(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 8.0);
+
+    // 设置多段管道参数
+    multi_segment_pipe_params params{
+        .wires = {linePoints, arcPoints, centerArcPoints, splinePoints},
+        .profiles = {profile, profile, profile, profile},
+        .inner_profiles = {{innerProfile, innerProfile, innerProfile,
+                            innerProfile}},
+        .segment_types = {{segment_type::LINE, segment_type::THREE_POINT_ARC,
+                           segment_type::CIRCLE_CENTER_ARC,
+                           segment_type::SPLINE}},
+        .transition_mode = transition_mode::ROUND};
+
+    auto shp = create_multi_segment_pipe(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create multi-segment pipe" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./multi_segment_pipe.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_pipe_joint() {
+  std::cout << "\n=== Testing Pipe Joint Creation ===" << std::endl;
+
+  try {
+    // 创建圆形剖面
+    circ_profile profile(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 10.0);
+    circ_profile innerProfile(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 8.0);
+
+    circ_profile profile2(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 8.0);
+    circ_profile innerProfile2(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 4.0);
+
+    // 1. 测试两根管子的连接(直通接头)
+    {
+      pipe_joint_params params{.ins = {{.offset = gp_Pnt(-50, 0, 0),
+                                        .normal = gp_Dir(1, 0, 0),
+                                        .profile = {profile},
+                                        .inner_profile = {{innerProfile}}}},
+                               .outs = {{.offset = gp_Pnt(50, 0, 0),
+                                         .normal = gp_Dir(-1, 0, 0),
+                                         .profile = {profile},
+                                         .inner_profile = {{innerProfile}}}},
+                               .mode = joint_shape_mode::SPHERE,
+                               .smooth_edge = true};
+
+      auto shp = create_pipe_joint(params);
+      test_export_shape(shp, "./pipe_joint_2.stl");
+    }
+
+    // 2. 测试三根T型管子的连接
+    {
+      pipe_joint_params params{.ins = {{.offset = gp_Pnt(-50, 0, 0),
+                                        .normal = gp_Dir(1, 0, 0),
+                                        .profile = {profile},
+                                        .inner_profile = {{innerProfile}}},
+                                       {.offset = gp_Pnt(0, -50, 0),
+                                        .normal = gp_Dir(0, 1, 0),
+                                        .profile = {profile},
+                                        .inner_profile = {{innerProfile}}}},
+                               .outs = {{.offset = gp_Pnt(50, 0, 0),
+                                         .normal = gp_Dir(-1, 0, 0),
+                                         .profile = {profile2},
+                                         .inner_profile = {{innerProfile2}}}},
+                               .mode = joint_shape_mode::BOX,
+                               .smooth_edge = true};
+
+      auto shp = create_pipe_joint(params);
+      test_export_shape(shp, "./pipe_joint_T.stl");
+    }
+
+    // 3. 测试四根管子的连接(十字接头)
+    {
+      pipe_joint_params params{.ins = {{.offset = gp_Pnt(-50, 0, 0),
+                                        .normal = gp_Dir(1, 0, 0),
+                                        .profile = {profile},
+                                        .inner_profile = {{innerProfile}}},
+                                       {.offset = gp_Pnt(0, -50, 0),
+                                        .normal = gp_Dir(0, 1, 0),
+                                        .profile = {profile2},
+                                        .inner_profile = {{innerProfile2}}}},
+                               .outs = {{.offset = gp_Pnt(50, 0, 0),
+                                         .normal = gp_Dir(-1, 0, 0),
+                                         .profile = {profile},
+                                         .inner_profile = {{innerProfile}}},
+                                        {.offset = gp_Pnt(0, 50, 0),
+                                         .normal = gp_Dir(0, -1, 0),
+                                         .profile = {profile2},
+                                         .inner_profile = {{innerProfile2}}}},
+                               .mode = joint_shape_mode::SPHERE,
+                               .smooth_edge = false};
+
+      auto shp = create_pipe_joint(params);
+      test_export_shape(shp, "./pipe_joint_4.stl");
+    }
+
+    // 4. 测试三根Y型管子的连接
+    {
+      pipe_joint_params params{.ins = {{.offset = gp_Pnt(-50, -50, 0),
+                                        .normal = gp_Vec(1, 1, 0).Normalized(),
+                                        .profile = {profile2},
+                                        .inner_profile = {{innerProfile2}}},
+                                       {.offset = gp_Pnt(-50, 50, 0),
+                                        .normal = gp_Vec(1, -1, 0).Normalized(),
+                                        .profile = {profile2},
+                                        .inner_profile = {{innerProfile2}}}},
+                               .outs = {{.offset = gp_Pnt(50, 0, 0),
+                                         .normal = gp_Dir(-1, 0, 0),
+                                         .profile = {profile},
+                                         .inner_profile = {{innerProfile}}}},
+                               .mode = joint_shape_mode::SPHERE,
+                               .smooth_edge = true};
+
+      auto shp = create_pipe_joint(params);
+      test_export_shape(shp, "./pipe_joint_Y.stl");
+    }
+
+  } catch (const Standard_Failure &e) {
+    std::cerr << "Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
 int main() {
+  // 基础图形
+  test_revol();
+  test_make_prism();
+  test_make_pipe();
+  test_make_multi_segment_pipe();
+  test_make_pipe_joint();
   // 变电
   test_make_sphere();
   test_make_rotational_ellipsoid();

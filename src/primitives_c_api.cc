@@ -3964,7 +3964,7 @@ topo_shape_t *create_revol(revol_params_t params) {
     auto &circ = params.profile.circ;
     cpp_params.profile = circ_profile(
         gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+        gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
     break;
   }
   case PROFILE_TYPE_ELIPS: {
@@ -4038,7 +4038,7 @@ topo_shape_t *create_revol_with_place(revol_params_t params, pnt3d_t position,
     auto &circ = params.profile.circ;
     cpp_params.profile = circ_profile(
         gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+        gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
     break;
   }
   case PROFILE_TYPE_ELIPS: {
@@ -4108,7 +4108,7 @@ PRIMCAPICALL topo_shape_t *create_prism(prism_params_t params) {
     auto &circ = params.profile.circ;
     cpp_params.profile = circ_profile(
         gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+        gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
     break;
   }
   case PROFILE_TYPE_ELIPS: {
@@ -4180,7 +4180,7 @@ PRIMCAPICALL topo_shape_t *create_prism_with_place(prism_params_t params,
     auto &circ = params.profile.circ;
     cpp_params.profile = circ_profile(
         gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+        gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
     break;
   }
   case PROFILE_TYPE_ELIPS: {
@@ -4242,116 +4242,125 @@ PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params) {
   cpp_params.wire = wire;
 
   // 转换剖面类型
-  switch (params.profile.type_) {
-  case PROFILE_TYPE_TRIANGLE: {
-    auto &tri = params.profile.triangle;
-    cpp_params.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
-                                          gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
-                                          gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
-    break;
-  }
-  case PROFILE_TYPE_RECTANGLE: {
-    auto &rect = params.profile.rectangle;
-    cpp_params.profile =
-        rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
-                          gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
-    break;
-  }
-  case PROFILE_TYPE_CIRC: {
-    auto &circ = params.profile.circ;
-    cpp_params.profile = circ_profile(
-        gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
-    break;
-  }
-  case PROFILE_TYPE_ELIPS: {
-    auto &elips = params.profile.elips;
-    cpp_params.profile =
-        elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
-                      gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
-                      gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
-    break;
-  }
-  case PROFILE_TYPE_POLYGON: {
-    auto &poly = params.profile.polygon;
-    std::vector<gp_Pnt> edges;
-    for (int i = 0; i < poly.edgeCount; i++) {
-      edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
-    }
-
-    std::vector<std::vector<gp_Pnt>> inners;
-    for (int i = 0; i < poly.innerArrayCount; i++) {
-      std::vector<gp_Pnt> inner;
-      for (int j = 0; j < poly.innerCounts[i]; j++) {
-        inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
-                           poly.inners[i][j].z);
-      }
-      inners.push_back(inner);
-    }
-
-    cpp_params.profile = polygon_profile(edges, inners);
-    break;
-  }
-  default:
-    return nullptr;
-  }
-
-  // 转换内剖面(如果有)
-  if (params.inner_profile != nullptr) {
-    switch (params.inner_profile->type_) {
+  std::vector<shape_profile> profiles;
+  for (int i = 0; i < params.profile_count; i++) {
+    switch (params.profiles[i].type_) {
     case PROFILE_TYPE_TRIANGLE: {
-      auto &tri = params.inner_profile->triangle;
-      cpp_params.inner_profile =
+      auto &tri = params.profiles[i].triangle;
+      profiles.emplace_back(
           triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
                            gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
-                           gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+                           gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z)));
       break;
     }
     case PROFILE_TYPE_RECTANGLE: {
-      auto &rect = params.inner_profile->rectangle;
-      cpp_params.inner_profile =
+      auto &rect = params.profiles[i].rectangle;
+      profiles.emplace_back(
           rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
-                            gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+                            gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
       break;
     }
     case PROFILE_TYPE_CIRC: {
-      auto &circ = params.inner_profile->circ;
-      cpp_params.inner_profile = circ_profile(
+      auto &circ = params.profiles[i].circ;
+      profiles.emplace_back(circ_profile(
           gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+          gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
       break;
     }
     case PROFILE_TYPE_ELIPS: {
-      auto &elips = params.inner_profile->elips;
-      cpp_params.inner_profile =
-          elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
-                        gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
-                        gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+      auto &elips = params.profiles[i].elips;
+      profiles.emplace_back(elips_profile(
+          gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+          gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+          gp_Pnt(elips.center.x, elips.center.y, elips.center.z)));
       break;
     }
     case PROFILE_TYPE_POLYGON: {
-      auto &poly = params.inner_profile->polygon;
+      auto &poly = params.profiles[i].polygon;
       std::vector<gp_Pnt> edges;
-      for (int i = 0; i < poly.edgeCount; i++) {
-        edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+      for (int j = 0; j < poly.edgeCount; j++) {
+        edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
       }
 
       std::vector<std::vector<gp_Pnt>> inners;
-      for (int i = 0; i < poly.innerArrayCount; i++) {
+      for (int j = 0; j < poly.innerArrayCount; j++) {
         std::vector<gp_Pnt> inner;
-        for (int j = 0; j < poly.innerCounts[i]; j++) {
-          inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
-                             poly.inners[i][j].z);
+        for (int k = 0; k < poly.innerCounts[j]; k++) {
+          inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                             poly.inners[j][k].z);
         }
         inners.push_back(inner);
       }
 
-      cpp_params.inner_profile = polygon_profile(edges, inners);
+      profiles.emplace_back(polygon_profile(edges, inners));
       break;
     }
     default:
       return nullptr;
     }
+  }
+  cpp_params.profiles = profiles;
+
+  // 转换内剖面(如果有)
+  if (params.inner_profiles != nullptr) {
+    std::vector<shape_profile> inner_profiles;
+    for (int i = 0; i < params.inner_profile_counts[0]; i++) {
+      switch (params.inner_profiles[0][i].type_) {
+      case PROFILE_TYPE_TRIANGLE: {
+        auto &tri = params.inner_profiles[0][i].triangle;
+        inner_profiles.emplace_back(
+            triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                             gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                             gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z)));
+        break;
+      }
+      case PROFILE_TYPE_RECTANGLE: {
+        auto &rect = params.inner_profiles[0][i].rectangle;
+        inner_profiles.emplace_back(
+            rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                              gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
+        break;
+      }
+      case PROFILE_TYPE_CIRC: {
+        auto &circ = params.inner_profiles[0][i].circ;
+        inner_profiles.emplace_back(circ_profile(
+            gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+            gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
+        break;
+      }
+      case PROFILE_TYPE_ELIPS: {
+        auto &elips = params.inner_profiles[0][i].elips;
+        inner_profiles.emplace_back(elips_profile(
+            gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+            gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+            gp_Pnt(elips.center.x, elips.center.y, elips.center.z)));
+        break;
+      }
+      case PROFILE_TYPE_POLYGON: {
+        auto &poly = params.inner_profiles[0][i].polygon;
+        std::vector<gp_Pnt> edges;
+        for (int j = 0; j < poly.edgeCount; j++) {
+          edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+        }
+
+        std::vector<std::vector<gp_Pnt>> inners;
+        for (int j = 0; j < poly.innerArrayCount; j++) {
+          std::vector<gp_Pnt> inner;
+          for (int k = 0; k < poly.innerCounts[j]; k++) {
+            inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                               poly.inners[j][k].z);
+          }
+          inners.push_back(inner);
+        }
+
+        inner_profiles.emplace_back(polygon_profile(edges, inners));
+        break;
+      }
+      default:
+        return nullptr;
+      }
+    }
+    cpp_params.inner_profiles = inner_profiles;
   }
 
   // 转换线段类型
@@ -4381,10 +4390,15 @@ PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params) {
     cpp_params.transition_mode = transition_mode::ROUND;
     break;
   case TRANSITION_TRANSFORMED:
-    cpp_params.transition_mode = transition_mode::TRANS;
+    cpp_params.transition_mode = transition_mode::TRANSFORMED;
     break;
   default:
     return nullptr;
+  }
+
+  if (params.up_dir != nullptr) {
+    cpp_params.up_dir = gp_Dir(params.up_dir->x, params.up_dir->y,
+                               params.up_dir->z);
   }
 
   try {
@@ -4409,116 +4423,125 @@ PRIMCAPICALL topo_shape_t *create_pipe_with_place(pipe_params_t params,
   cpp_params.wire = wire;
 
   // 转换剖面类型
-  switch (params.profile.type_) {
-  case PROFILE_TYPE_TRIANGLE: {
-    auto &tri = params.profile.triangle;
-    cpp_params.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
-                                          gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
-                                          gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
-    break;
-  }
-  case PROFILE_TYPE_RECTANGLE: {
-    auto &rect = params.profile.rectangle;
-    cpp_params.profile =
-        rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
-                          gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
-    break;
-  }
-  case PROFILE_TYPE_CIRC: {
-    auto &circ = params.profile.circ;
-    cpp_params.profile = circ_profile(
-        gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
-    break;
-  }
-  case PROFILE_TYPE_ELIPS: {
-    auto &elips = params.profile.elips;
-    cpp_params.profile =
-        elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
-                      gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
-                      gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
-    break;
-  }
-  case PROFILE_TYPE_POLYGON: {
-    auto &poly = params.profile.polygon;
-    std::vector<gp_Pnt> edges;
-    for (int i = 0; i < poly.edgeCount; i++) {
-      edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
-    }
-
-    std::vector<std::vector<gp_Pnt>> inners;
-    for (int i = 0; i < poly.innerArrayCount; i++) {
-      std::vector<gp_Pnt> inner;
-      for (int j = 0; j < poly.innerCounts[i]; j++) {
-        inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
-                           poly.inners[i][j].z);
-      }
-      inners.push_back(inner);
-    }
-
-    cpp_params.profile = polygon_profile(edges, inners);
-    break;
-  }
-  default:
-    return nullptr;
-  }
-
-  // 转换内剖面(如果有)
-  if (params.inner_profile != nullptr) {
-    switch (params.inner_profile->type_) {
+  std::vector<shape_profile> profiles;
+  for (int i = 0; i < params.profile_count; i++) {
+    switch (params.profiles[i].type_) {
     case PROFILE_TYPE_TRIANGLE: {
-      auto &tri = params.inner_profile->triangle;
-      cpp_params.inner_profile =
+      auto &tri = params.profiles[i].triangle;
+      profiles.emplace_back(
           triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
                            gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
-                           gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+                           gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z)));
       break;
     }
     case PROFILE_TYPE_RECTANGLE: {
-      auto &rect = params.inner_profile->rectangle;
-      cpp_params.inner_profile =
+      auto &rect = params.profiles[i].rectangle;
+      profiles.emplace_back(
           rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
-                            gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+                            gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
       break;
     }
     case PROFILE_TYPE_CIRC: {
-      auto &circ = params.inner_profile->circ;
-      cpp_params.inner_profile = circ_profile(
+      auto &circ = params.profiles[i].circ;
+      profiles.emplace_back(circ_profile(
           gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+          gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
       break;
     }
     case PROFILE_TYPE_ELIPS: {
-      auto &elips = params.inner_profile->elips;
-      cpp_params.inner_profile =
-          elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
-                        gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
-                        gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+      auto &elips = params.profiles[i].elips;
+      profiles.emplace_back(elips_profile(
+          gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+          gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+          gp_Pnt(elips.center.x, elips.center.y, elips.center.z)));
       break;
     }
     case PROFILE_TYPE_POLYGON: {
-      auto &poly = params.inner_profile->polygon;
+      auto &poly = params.profiles[i].polygon;
       std::vector<gp_Pnt> edges;
-      for (int i = 0; i < poly.edgeCount; i++) {
-        edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+      for (int j = 0; j < poly.edgeCount; j++) {
+        edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
       }
 
       std::vector<std::vector<gp_Pnt>> inners;
-      for (int i = 0; i < poly.innerArrayCount; i++) {
+      for (int j = 0; j < poly.innerArrayCount; j++) {
         std::vector<gp_Pnt> inner;
-        for (int j = 0; j < poly.innerCounts[i]; j++) {
-          inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
-                             poly.inners[i][j].z);
+        for (int k = 0; k < poly.innerCounts[j]; k++) {
+          inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                             poly.inners[j][k].z);
         }
         inners.push_back(inner);
       }
 
-      cpp_params.inner_profile = polygon_profile(edges, inners);
+      profiles.emplace_back(polygon_profile(edges, inners));
       break;
     }
     default:
       return nullptr;
     }
+  }
+  cpp_params.profiles = profiles;
+
+  // 转换内剖面(如果有)
+  if (params.inner_profiles != nullptr) {
+    std::vector<shape_profile> inner_profiles;
+    for (int i = 0; i < params.inner_profile_counts[0]; i++) {
+      switch (params.inner_profiles[0][i].type_) {
+      case PROFILE_TYPE_TRIANGLE: {
+        auto &tri = params.inner_profiles[0][i].triangle;
+        inner_profiles.emplace_back(
+            triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                             gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                             gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z)));
+        break;
+      }
+      case PROFILE_TYPE_RECTANGLE: {
+        auto &rect = params.inner_profiles[0][i].rectangle;
+        inner_profiles.emplace_back(
+            rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                              gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
+        break;
+      }
+      case PROFILE_TYPE_CIRC: {
+        auto &circ = params.inner_profiles[0][i].circ;
+        inner_profiles.emplace_back(circ_profile(
+            gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+            gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
+        break;
+      }
+      case PROFILE_TYPE_ELIPS: {
+        auto &elips = params.inner_profiles[0][i].elips;
+        inner_profiles.emplace_back(elips_profile(
+            gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+            gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+            gp_Pnt(elips.center.x, elips.center.y, elips.center.z)));
+        break;
+      }
+      case PROFILE_TYPE_POLYGON: {
+        auto &poly = params.inner_profiles[0][i].polygon;
+        std::vector<gp_Pnt> edges;
+        for (int j = 0; j < poly.edgeCount; j++) {
+          edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+        }
+
+        std::vector<std::vector<gp_Pnt>> inners;
+        for (int j = 0; j < poly.innerArrayCount; j++) {
+          std::vector<gp_Pnt> inner;
+          for (int k = 0; k < poly.innerCounts[j]; k++) {
+            inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                               poly.inners[j][k].z);
+          }
+          inners.push_back(inner);
+        }
+
+        inner_profiles.emplace_back(polygon_profile(edges, inners));
+        break;
+      }
+      default:
+        return nullptr;
+      }
+    }
+    cpp_params.inner_profiles = inner_profiles;
   }
 
   // 转换线段类型
@@ -4548,10 +4571,15 @@ PRIMCAPICALL topo_shape_t *create_pipe_with_place(pipe_params_t params,
     cpp_params.transition_mode = transition_mode::ROUND;
     break;
   case TRANSITION_TRANSFORMED:
-    cpp_params.transition_mode = transition_mode::TRANS;
+    cpp_params.transition_mode = transition_mode::TRANSFORMED;
     break;
   default:
     return nullptr;
+  }
+
+  if (params.up_dir != nullptr) {
+    cpp_params.up_dir = gp_Dir(params.up_dir->x, params.up_dir->y,
+                               params.up_dir->z);
   }
 
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -4606,7 +4634,7 @@ create_multi_segment_pipe(multi_segment_pipe_params_t params) {
       auto &circ = params.profiles[i].circ;
       profiles.emplace_back(circ_profile(
           gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
+          gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
       break;
     }
     case PROFILE_TYPE_ELIPS: {
@@ -4667,7 +4695,7 @@ create_multi_segment_pipe(multi_segment_pipe_params_t params) {
         auto &circ = params.inner_profiles[0][i].circ;
         inner_profiles.emplace_back(circ_profile(
             gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-            gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
+            gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
         break;
       }
       case PROFILE_TYPE_ELIPS: {
@@ -4738,10 +4766,15 @@ create_multi_segment_pipe(multi_segment_pipe_params_t params) {
     cpp_params.transition_mode = transition_mode::ROUND;
     break;
   case TRANSITION_TRANSFORMED:
-    cpp_params.transition_mode = transition_mode::TRANS;
+    cpp_params.transition_mode = transition_mode::TRANSFORMED;
     break;
   default:
     return nullptr;
+  }
+
+  if (params.up_dir != nullptr) {
+    cpp_params.up_dir = gp_Dir(params.up_dir->x, params.up_dir->y,
+                               params.up_dir->z);
   }
 
   try {
@@ -4793,7 +4826,7 @@ create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
       auto &circ = params.profiles[i].circ;
       profiles.emplace_back(circ_profile(
           gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
+          gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
       break;
     }
     case PROFILE_TYPE_ELIPS: {
@@ -4854,7 +4887,7 @@ create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
         auto &circ = params.inner_profiles[0][i].circ;
         inner_profiles.emplace_back(circ_profile(
             gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-            gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
+            gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
         break;
       }
       case PROFILE_TYPE_ELIPS: {
@@ -4925,10 +4958,15 @@ create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
     cpp_params.transition_mode = transition_mode::ROUND;
     break;
   case TRANSITION_TRANSFORMED:
-    cpp_params.transition_mode = transition_mode::TRANS;
+    cpp_params.transition_mode = transition_mode::TRANSFORMED;
     break;
   default:
     return nullptr;
+  }
+
+  if (params.up_dir != nullptr) {
+    cpp_params.up_dir = gp_Dir(params.up_dir->x, params.up_dir->y,
+                               params.up_dir->z);
   }
 
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -4975,7 +5013,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params) {
       auto &circ = ep.profile.circ;
       cpp_ep.profile = circ_profile(
           gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+          gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
       break;
     }
     case PROFILE_TYPE_ELIPS: {
@@ -5032,7 +5070,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params) {
         auto &circ = ep.inner_profile->circ;
         cpp_ep.inner_profile = circ_profile(
             gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-            gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+            gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
         break;
       }
       case PROFILE_TYPE_ELIPS: {
@@ -5100,7 +5138,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params) {
       auto &circ = ep.profile.circ;
       cpp_ep.profile = circ_profile(
           gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+          gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
       break;
     }
     case PROFILE_TYPE_ELIPS: {
@@ -5157,7 +5195,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params) {
         auto &circ = ep.inner_profile->circ;
         cpp_ep.inner_profile = circ_profile(
             gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-            gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+            gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
         break;
       }
       case PROFILE_TYPE_ELIPS: {
@@ -5252,7 +5290,7 @@ create_pipe_joint_with_place(pipe_joint_params_t params, pnt3d_t position,
       auto &circ = ep.profile.circ;
       cpp_ep.profile = circ_profile(
           gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+          gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
       break;
     }
     case PROFILE_TYPE_ELIPS: {
@@ -5309,7 +5347,7 @@ create_pipe_joint_with_place(pipe_joint_params_t params, pnt3d_t position,
         auto &circ = ep.inner_profile->circ;
         cpp_ep.inner_profile = circ_profile(
             gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-            gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+            gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
         break;
       }
       case PROFILE_TYPE_ELIPS: {
@@ -5377,7 +5415,7 @@ create_pipe_joint_with_place(pipe_joint_params_t params, pnt3d_t position,
       auto &circ = ep.profile.circ;
       cpp_ep.profile = circ_profile(
           gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-          gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+          gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
       break;
     }
     case PROFILE_TYPE_ELIPS: {
@@ -5434,7 +5472,7 @@ create_pipe_joint_with_place(pipe_joint_params_t params, pnt3d_t position,
         auto &circ = ep.inner_profile->circ;
         cpp_ep.inner_profile = circ_profile(
             gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-            gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+            gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
         break;
       }
       case PROFILE_TYPE_ELIPS: {
@@ -5528,7 +5566,7 @@ PRIMCAPICALL topo_shape_t *create_catenary(catenary_params_t params) {
     auto &circ = params.profile.circ;
     cpp_params.profile = circ_profile(
         gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+        gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
     break;
   }
   case PROFILE_TYPE_ELIPS: {
@@ -5605,7 +5643,7 @@ PRIMCAPICALL topo_shape_t *create_catenary_with_place(catenary_params_t params,
     auto &circ = params.profile.circ;
     cpp_params.profile = circ_profile(
         gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+        gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
     break;
   }
   case PROFILE_TYPE_ELIPS: {
@@ -5981,7 +6019,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_shape(pipe_shape_params_t params) {
     auto &circ = params.profile.circ;
     cpp_params.profile = circ_profile(
         gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+        gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
     break;
   }
   case PROFILE_TYPE_ELIPS: {
@@ -6016,6 +6054,11 @@ PRIMCAPICALL topo_shape_t *create_pipe_shape(pipe_shape_params_t params) {
     return nullptr;
   }
 
+  if (params.up_dir != nullptr) {
+    cpp_params.up_dir = gp_Dir(params.up_dir->x, params.up_dir->y,
+                               params.up_dir->z);
+  }
+  
   try {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_pipe_shape(cpp_params))};
@@ -6055,7 +6098,7 @@ create_pipe_shape_with_place(pipe_shape_params_t params, pnt3d_t position,
     auto &circ = params.profile.circ;
     cpp_params.profile = circ_profile(
         gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-        gp_Pnt(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+        gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
     break;
   }
   case PROFILE_TYPE_ELIPS: {
@@ -6090,6 +6133,11 @@ create_pipe_shape_with_place(pipe_shape_params_t params, pnt3d_t position,
     return nullptr;
   }
 
+  if (params.up_dir != nullptr) {
+    cpp_params.up_dir = gp_Dir(params.up_dir->x, params.up_dir->y,
+                               params.up_dir->z);
+  }
+  
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);

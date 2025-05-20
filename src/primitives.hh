@@ -4,10 +4,13 @@
 #include <gp_Ax2.hxx>
 #include <gp_Dir.hxx>
 #include <gp_Pnt.hxx>
+
 #include <vector>
 
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
+
+#include "transition_mode.hh"
 
 namespace flywave {
 namespace topo {
@@ -2224,14 +2227,14 @@ struct rectangle_profile : public base_profile {
 struct circ_profile : public base_profile {
   profile_type type;
   gp_Pnt center;
-  gp_Pnt norm;
+  gp_Dir norm;
   double radius;
 
   circ_profile() {
     type = TYPE_CIRC;
     radius = 0.0;
   }
-  circ_profile(gp_Pnt _center, gp_Pnt _norm, double _radius)
+  circ_profile(gp_Pnt _center, gp_Dir _norm, double _radius)
       : center(_center), norm(_norm), radius(_radius) {
     type = TYPE_CIRC;
   }
@@ -2295,18 +2298,13 @@ enum class segment_type {
   SPLINE = 3             // 样条曲线
 };
 
-enum class transition_mode {
-  RIGHT = 1,
-  ROUND = 2,
-  TRANS = 3,
-};
-
 struct pipe_params {
   std::vector<gp_Pnt> wire;
-  shape_profile profile;
-  boost::optional<shape_profile> inner_profile;
+  std::vector<shape_profile> profiles;
+  boost::optional<std::vector<shape_profile>> inner_profiles;
   segment_type segment_type;
   transition_mode transition_mode;
+  boost::optional<gp_Dir> up_dir;
 };
 
 TopoDS_Shape create_pipe(const pipe_params &params);
@@ -2320,6 +2318,7 @@ struct multi_segment_pipe_params {
   boost::optional<std::vector<shape_profile>> inner_profiles;
   boost::optional<std::vector<segment_type>> segment_types;
   transition_mode transition_mode;
+  boost::optional<gp_Dir> up_dir;
 };
 
 TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params);
@@ -2461,6 +2460,7 @@ TopoDS_Shape create_wedge_shape(const wedge_shape_params &params,
 struct pipe_shape_params {
   std::array<gp_Pnt, 2> wire;
   shape_profile profile;
+  boost::optional<gp_Dir> up_dir;
 };
 
 TopoDS_Shape create_pipe_shape(const pipe_shape_params &params);

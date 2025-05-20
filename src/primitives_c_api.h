@@ -1939,10 +1939,13 @@ typedef enum {
 typedef struct {
   pnt3d_t *wire;
   int wire_count;
-  shape_profile_t profile;
-  shape_profile_t *inner_profile; // 可为NULL
+  shape_profile_t *profiles;
+  int profile_count;
+  shape_profile_t **inner_profiles; // 可为NULL
+  int *inner_profile_counts;
   segment_type_t segment_type;
   transition_mode_t transition_mode;
+  dir3d_t *up_dir;
 } pipe_params_t;
 
 // 创建管道
@@ -1963,6 +1966,7 @@ typedef struct {
   segment_type_t *segment_types;
   int segment_type_count;
   transition_mode_t transition_mode;
+  dir3d_t *up_dir;
 } multi_segment_pipe_params_t;
 
 // 创建多段管道
@@ -2109,6 +2113,7 @@ create_wedge_shape_with_place(wedge_shape_params_t params, pnt3d_t position,
 typedef struct {
   pnt3d_t wire[2];
   shape_profile_t profile;
+  dir3d_t *up_dir;
 } pipe_shape_params_t;
 
 PRIMCAPICALL topo_shape_t *create_pipe_shape(pipe_shape_params_t params);

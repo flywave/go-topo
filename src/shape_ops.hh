@@ -8,6 +8,7 @@
 #include "shell.hh"
 #include "vertex.hh"
 #include "wire.hh"
+#include "transition_mode.hh"
 
 #include <BOPAlgo_CheckStatus.hxx>
 #include <BRepCheck.hxx>
@@ -101,7 +102,6 @@ boost::optional<shape> revolve(const face &f, double angleDegrees,
 boost::optional<shape> offset(const shape &shape, double offset,
                               bool cap = true, bool both = false,
                               double tol = 1e-6);
-enum class transition_mode { TRANSFORMED, ROUND, RIGHT };
 
 boost::optional<shape>
 sweep(const wire &outerWire, const std::vector<wire> &innerWires,

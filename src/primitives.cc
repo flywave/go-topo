@@ -4,6 +4,7 @@
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepBndLib.hxx>
+#include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakePolygon.hxx>
@@ -35,6 +36,7 @@
 #include <BRep_Tool.hxx>
 #include <ChFi2d_AnaFilletAlgo.hxx>
 #include <ElCLib.hxx>
+#include <GCPnts_UniformAbscissa.hxx>
 #include <GC_MakeArcOfCircle.hxx>
 #include <GC_MakeCircle.hxx>
 #include <GC_MakeSegment.hxx>
@@ -16423,19 +16425,28 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params,
 }
 
 TopoDS_Shape create_shape_from_profile(const shape_profile &profile,
-                                       bool isFace) {
+                                       bool isFace,
+                                       gp_Ax2 *sectionAxes = nullptr) {
   struct profile_visitor : public boost::static_visitor<TopoDS_Shape> {
     bool _is_face;
+    gp_Trsf _transform;
+    gp_Ax2 *_axes;
 
-    profile_visitor(bool isFace) : _is_face(isFace) {}
+    profile_visitor(bool isFace, gp_Ax2 *sectionAxes)
+        : _is_face(isFace), _transform(), _axes(nullptr) {
+      if (sectionAxes != nullptr) {
+        _transform.SetTransformation(*sectionAxes,
+                                     gp_Ax2(gp::Origin(), gp::DZ()));
+        _axes = sectionAxes;
+      }
+    }
 
     TopoDS_Shape operator()(const triangle_profile &prof) const {
       BRepBuilderAPI_MakePolygon polyBuilder;
-      polyBuilder.Add(prof.p1);
-      polyBuilder.Add(prof.p2);
-      polyBuilder.Add(prof.p3);
-      polyBuilder.Add(prof.p1);
-
+      polyBuilder.Add(prof.p1.Transformed(_transform));
+      polyBuilder.Add(prof.p2.Transformed(_transform));
+      polyBuilder.Add(prof.p3.Transformed(_transform));
+      polyBuilder.Add(prof.p1.Transformed(_transform));
       TopoDS_Wire wire = polyBuilder.Wire();
       if (_is_face) {
         return BRepBuilderAPI_MakeFace(wire).Face();
@@ -16445,11 +16456,21 @@ TopoDS_Shape create_shape_from_profile(const shape_profile &profile,
 
     TopoDS_Shape operator()(const rectangle_profile &prof) const {
       BRepBuilderAPI_MakePolygon polyBuilder;
-      polyBuilder.Add(prof.p1);
-      polyBuilder.Add(gp_Pnt(prof.p2.X(), prof.p1.Y(), prof.p1.Z()));
-      polyBuilder.Add(prof.p2);
-      polyBuilder.Add(gp_Pnt(prof.p1.X(), prof.p2.Y(), prof.p1.Z()));
-      polyBuilder.Add(prof.p1);
+      gp_Pnt p1 = prof.p1;
+      gp_Pnt p2 = prof.p2;
+      gp_Pnt p3 = gp_Pnt(p2.X(), p1.Y(), p1.Z());
+      gp_Pnt p4 = gp_Pnt(p1.X(), p2.Y(), p1.Z());
+
+      p1 = p1.Transformed(_transform);
+      p2 = p2.Transformed(_transform);
+      p3 = p3.Transformed(_transform);
+      p4 = p4.Transformed(_transform);
+
+      polyBuilder.Add(p1);
+      polyBuilder.Add(p3);
+      polyBuilder.Add(p2);
+      polyBuilder.Add(p4);
+      polyBuilder.Add(p1);
 
       TopoDS_Wire wire = polyBuilder.Wire();
       if (_is_face) {
@@ -16459,7 +16480,10 @@ TopoDS_Shape create_shape_from_profile(const shape_profile &profile,
     }
 
     TopoDS_Shape operator()(const circ_profile &prof) const {
-      gp_Ax2 axis(prof.center, gp_Dir(prof.norm.XYZ()));
+      gp_Pnt center = prof.center.Transformed(_transform);
+
+      gp_Ax2 axis(center, this->_axes != nullptr ? this->_axes->Direction()
+                                                 : prof.norm);
       gp_Circ circle(axis, prof.radius);
 
       TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(circle).Edge();
@@ -16473,9 +16497,17 @@ TopoDS_Shape create_shape_from_profile(const shape_profile &profile,
     }
 
     TopoDS_Shape operator()(const elips_profile &prof) const {
-      gp_Ax2 axis(prof.center, gp_Dir(prof.s2.XYZ() - prof.s1.XYZ()));
-      double majorRadius = prof.s1.Distance(prof.center);
-      double minorRadius = prof.s2.Distance(prof.center);
+      gp_Pnt center = prof.center.Transformed(_transform);
+      gp_Pnt s1 = prof.s1.Transformed(_transform);
+      gp_Pnt s2 = prof.s2.Transformed(_transform);
+
+      gp_Dir majorDir = gp_Dir(s1.XYZ() - center.XYZ());
+      gp_Dir minorDir = gp_Dir(s2.XYZ() - center.XYZ());
+      gp_Dir normal = majorDir.Crossed(minorDir);
+
+      gp_Ax2 axis(center, normal);
+      double majorRadius = s1.Distance(center);
+      double minorRadius = s2.Distance(center);
       gp_Elips ellipse(axis, majorRadius, minorRadius);
 
       TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(ellipse).Edge();
@@ -16492,10 +16524,10 @@ TopoDS_Shape create_shape_from_profile(const shape_profile &profile,
       // 创建外轮廓线框(应确保是逆时针方向)
       BRepBuilderAPI_MakePolygon polyBuilder;
       for (const auto &point : prof.edges) {
-        polyBuilder.Add(point);
+        polyBuilder.Add(point.Transformed(_transform));
       }
       if (!prof.edges.empty()) {
-        polyBuilder.Add(prof.edges.front());
+        polyBuilder.Add(prof.edges.front().Transformed(_transform));
       }
       TopoDS_Wire outerWire = polyBuilder.Wire();
 
@@ -16517,10 +16549,10 @@ TopoDS_Shape create_shape_from_profile(const shape_profile &profile,
         for (const auto &inner : prof.inners) {
           BRepBuilderAPI_MakePolygon innerPolyBuilder;
           for (const auto &point : inner) {
-            innerPolyBuilder.Add(point);
+            innerPolyBuilder.Add(point.Transformed(_transform));
           }
           if (!inner.empty()) {
-            innerPolyBuilder.Add(inner.front());
+            innerPolyBuilder.Add(inner.front().Transformed(_transform));
           }
           TopoDS_Wire innerWire = innerPolyBuilder.Wire();
 
@@ -16539,10 +16571,11 @@ TopoDS_Shape create_shape_from_profile(const shape_profile &profile,
     }
   };
 
-  return boost::apply_visitor(profile_visitor(isFace), profile);
+  return boost::apply_visitor(profile_visitor(isFace, sectionAxes), profile);
 }
 
 TopoDS_Shape create_revol(const revol_params &params) {
+  gp_Ax2 sectionAxes(gp::Origin(), gp::DY());
   TopoDS_Shape profileFace = create_shape_from_profile(params.profile, true);
 
   if (profileFace.IsNull()) {
@@ -16690,31 +16723,64 @@ TopoDS_Wire make_wire_from_segments(
 }
 
 TopoDS_Shape create_pipe(const pipe_params &params) {
-  // 获取外轮廓截面形状(作为面)
-  TopoDS_Shape outerFace = create_shape_from_profile(params.profile, true);
-  if (outerFace.IsNull()) {
-    throw Standard_ConstructionError("Invalid outer profile for pipe");
+  if (params.profiles.size() != 1 && params.profiles.size() != 2) {
+    throw Standard_ConstructionError("Pipe requires exactly 1 or 2 profiles");
   }
-
-  // 获取内轮廓截面形状(如果有)
-  TopoDS_Shape innerFace;
-  if (params.inner_profile) {
-    innerFace = create_shape_from_profile(*params.inner_profile, true);
-    if (innerFace.IsNull()) {
-      throw Standard_ConstructionError("Invalid inner profile for pipe");
-    }
+  if (params.inner_profiles &&
+      params.inner_profiles->size() != params.profiles.size()) {
+    throw Standard_ConstructionError(
+        "Inner profiles must match the number of profiles");
   }
 
   // 创建管道路径
   TopoDS_Wire pathWire =
       make_wire_from_segments({params.wire}, {{params.segment_type}});
+  TopExp_Explorer edgeExplorer(pathWire, TopAbs_EDGE);
+  TopoDS_Edge edge = TopoDS::Edge(edgeExplorer.Current());
 
   // 创建管道
   BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
-  pipeMaker.Add(outerFace);
-  if (!innerFace.IsNull()) {
-    pipeMaker.Add(innerFace);
+  auto addOuterProfileAtVertex =
+      [&](const TopoDS_Edge &edge, const shape_profile &profile,
+          const TopoDS_Vertex &vertex, bool isFirst) {
+        gp_Pnt point = BRep_Tool::Pnt(vertex);
+        gp_Pnt pt = point;
+
+        // 获取边在顶点处的切向量
+        Standard_Real first, last;
+        Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, first, last);
+        gp_Vec tangent;
+        curve->D1(isFirst ? first : last, pt, tangent);
+
+        gp_Dir tanDir = tangent.Normalized();
+        gp_Dir upDir = params.up_dir ? *params.up_dir : gp::DZ();
+        gp_Dir refDir = gp_Vec(upDir.Crossed(tanDir)).Normalized();
+        if (gp_Vec(refDir).SquareMagnitude() < Precision::SquareConfusion()) {
+          refDir = gp::DY();
+        }
+
+        // 创建局部坐标系并添加截面
+        gp_Ax2 localAxes(point, tanDir, refDir);
+
+        TopoDS_Shape profileFace =
+            create_shape_from_profile(profile, false, &localAxes);
+        if (profileFace.IsNull()) {
+          throw Standard_ConstructionError("Invalid outer profile for pipe");
+        }
+        pipeMaker.Add(profileFace, vertex);
+      };
+
+  TopoDS_Vertex v1, v2;
+  TopExp::Vertices(edge, v1, v2);
+
+  // 获取外轮廓截面形状(作为面)
+
+  addOuterProfileAtVertex(edge, params.profiles[0], v1, true);
+  if (params.profiles.size() == 2) {
+    addOuterProfileAtVertex(edge, params.profiles[1], v2, true);
   }
+
+  pipeMaker.SetMode(Standard_True);
 
   // 设置过渡模式
   switch (params.transition_mode) {
@@ -16724,16 +16790,95 @@ TopoDS_Shape create_pipe(const pipe_params &params) {
   case transition_mode::ROUND:
     pipeMaker.SetTransitionMode(BRepBuilderAPI_RoundCorner);
     break;
-  case transition_mode::TRANS:
+  case transition_mode::TRANSFORMED:
     pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
     break;
   }
+
+  pipeMaker.Build();
 
   if (!pipeMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to create pipe");
   }
 
-  return pipeMaker.Shape();
+  if (!pipeMaker.MakeSolid()) {
+    throw Standard_ConstructionError("Failed to make pipe solid");
+  }
+
+  TopoDS_Shape outerShape = pipeMaker.Shape();
+
+  if (params.inner_profiles) {
+    BRepOffsetAPI_MakePipeShell innerMaker(pathWire);
+    auto addProfileAtVertex = [&](const TopoDS_Edge &edge,
+                                  const shape_profile &profile,
+                                  const TopoDS_Vertex &vertex, bool isFirst) {
+      gp_Pnt point = BRep_Tool::Pnt(vertex);
+      gp_Pnt pt = point;
+
+      // 获取边在顶点处的切向量
+      Standard_Real first, last;
+      Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, first, last);
+      gp_Vec tangent;
+      curve->D1(isFirst ? first : last, pt, tangent);
+
+      gp_Dir tanDir = tangent.Normalized();
+      gp_Dir upDir = params.up_dir ? *params.up_dir : gp::DZ();
+      gp_Dir refDir = gp_Vec(upDir.Crossed(tanDir)).Normalized();
+      if (gp_Vec(refDir).SquareMagnitude() < Precision::SquareConfusion()) {
+        refDir = gp::DY();
+      }
+
+      // 创建局部坐标系并添加截面
+      gp_Ax2 localAxes(point, tanDir, refDir);
+
+      TopoDS_Shape profileFace =
+          create_shape_from_profile(profile, false, &localAxes);
+      if (profileFace.IsNull()) {
+        throw Standard_ConstructionError("Invalid outer profile for pipe");
+      }
+
+      innerMaker.Add(profileFace, vertex);
+    };
+
+    TopoDS_Vertex v1, v2;
+    TopExp::Vertices(edge, v1, v2);
+
+    addProfileAtVertex(edge, (*params.inner_profiles)[0], v1, true);
+    if (params.inner_profiles->size() == 2) {
+      addProfileAtVertex(edge, (*params.inner_profiles)[1], v2, true);
+    }
+    innerMaker.SetMode(Standard_True);
+
+    // 设置过渡模式
+    switch (params.transition_mode) {
+    case transition_mode::RIGHT:
+      innerMaker.SetTransitionMode(BRepBuilderAPI_RightCorner);
+      break;
+    case transition_mode::ROUND:
+      innerMaker.SetTransitionMode(BRepBuilderAPI_RoundCorner);
+      break;
+    case transition_mode::TRANSFORMED:
+      innerMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
+      break;
+    }
+
+    innerMaker.Build();
+
+    if (!innerMaker.IsDone()) {
+      throw Standard_ConstructionError("Failed to create pipe");
+    }
+
+    if (!innerMaker.MakeSolid()) {
+      throw Standard_ConstructionError("Failed to make pipe solid");
+    }
+
+    TopoDS_Shape innerPipe = innerMaker.Shape();
+
+    TopoDS_Shape result = BRepAlgoAPI_Cut(outerShape, innerPipe).Shape();
+    return result;
+  }
+
+  return outerShape;
 }
 
 TopoDS_Shape create_pipe(const pipe_params &params, const gp_Pnt &position,
@@ -16763,70 +16908,61 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
   if (params.wires.empty()) {
     throw Standard_ConstructionError("Wire paths cannot be empty");
   }
-  if (params.profiles.size() != params.wires.size()) {
+  if (params.profiles.size() != params.wires.size() &&
+      params.profiles.size() != params.wires.size() + 1 &&
+      params.profiles.size() != 1) {
     throw Standard_ConstructionError("Profile count must match wire count");
   }
   if (params.inner_profiles &&
-      params.inner_profiles->size() != params.wires.size()) {
+      (params.inner_profiles->size() != params.profiles.size())) {
     throw Standard_ConstructionError(
         "Inner profile count must match wire count");
   }
 
-  // 创建路径线框
-  TopoDS_Wire pathWire =
-      make_wire_from_segments(params.wires, params.segment_types);
+  TopoDS_Shape result;
+  BRep_Builder builder;
+  builder.MakeCompound(TopoDS::Compound(result));
 
-  // 创建外轮廓管道
-  BRepOffsetAPI_MakePipeShell outerPipeMaker(pathWire);
-  for (size_t i = 0; i < params.profiles.size(); ++i) {
-    TopoDS_Shape outerFace =
-        create_shape_from_profile(params.profiles[i], true);
-    if (outerFace.IsNull()) {
-      throw Standard_ConstructionError("Invalid outer profile for pipe");
-    }
-    outerPipeMaker.Add(outerFace);
-  }
+  // 逐个创建每段管道
+  for (size_t i = 0; i < params.wires.size(); i++) {
+    // 创建当前段的管道参数
+    pipe_params seg_params{.wire = params.wires[i],
+                           .segment_type = params.segment_types
+                                               ? (*params.segment_types)[i]
+                                               : segment_type::LINE,
+                           .transition_mode = params.transition_mode};
 
-  // 设置过渡模式
-  switch (params.transition_mode) {
-  case transition_mode::RIGHT:
-    outerPipeMaker.SetTransitionMode(BRepBuilderAPI_RightCorner);
-    break;
-  case transition_mode::ROUND:
-    outerPipeMaker.SetTransitionMode(BRepBuilderAPI_RoundCorner);
-    break;
-  case transition_mode::TRANS:
-    outerPipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
-    break;
-  }
-
-  if (!outerPipeMaker.IsDone()) {
-    throw Standard_ConstructionError("Failed to create outer pipe");
-  }
-  TopoDS_Shape outerPipe = outerPipeMaker.Shape();
-
-  // 如果有内轮廓，创建内轮廓管道并进行布尔减操作
-  if (params.inner_profiles) {
-    BRepOffsetAPI_MakePipeShell innerPipeMaker(pathWire);
-    for (size_t i = 0; i < params.inner_profiles->size(); ++i) {
-      TopoDS_Shape innerFace =
-          create_shape_from_profile((*params.inner_profiles)[i], true);
-      if (innerFace.IsNull()) {
-        throw Standard_ConstructionError("Invalid inner profile for pipe");
+    if (params.profiles.size() == 1) {
+      seg_params.profiles = {params.profiles[0]};
+    } else {
+      int nextId = i + 1;
+      if (nextId == params.profiles.size()) {
+        nextId = i;
       }
-      innerPipeMaker.Add(innerFace);
+      seg_params.profiles = {params.profiles[i], params.profiles[nextId]};
     }
 
-    if (!innerPipeMaker.IsDone()) {
-      throw Standard_ConstructionError("Failed to create inner pipe");
+    // 如果有内轮廓，设置内轮廓
+    if (params.inner_profiles) {
+      if (params.inner_profiles->size() == 1) {
+        seg_params.inner_profiles = {{(*params.inner_profiles)[0]}};
+      } else {
+        int nextId = i + 1;
+        if (nextId == params.inner_profiles->size()) {
+          nextId = i;
+        }
+        seg_params.inner_profiles = {
+            {(*params.inner_profiles)[i], (*params.inner_profiles)[nextId]}};
+      }
     }
-    TopoDS_Shape innerPipe = innerPipeMaker.Shape();
 
-    // 从外轮廓中减去内轮廓
-    outerPipe = BRepAlgoAPI_Cut(outerPipe, innerPipe).Shape();
+    // 创建当前段管道
+    TopoDS_Shape segment = create_pipe(seg_params);
+
+    // 添加到结果中
+    builder.Add(result, segment);
   }
-
-  return outerPipe;
+  return result;
 }
 
 TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params,
@@ -16937,103 +17073,6 @@ compute_profile_radius_and_center(const shape_profile &profile) {
   return boost::apply_visitor(ProfileVisitor{}, profile);
 }
 
-TopoDS_Shape create_profile_shape(const shape_profile &profile,
-                                  const gp_Ax2 &axis) {
-  struct ProfileCreator : public boost::static_visitor<TopoDS_Shape> {
-    gp_Ax2 axis;
-
-    ProfileCreator(const gp_Ax2 &ax) : axis(ax) {}
-
-    TopoDS_Shape operator()(const triangle_profile &prof) const {
-      BRepBuilderAPI_MakePolygon polyBuilder;
-      polyBuilder.Add(prof.p1);
-      polyBuilder.Add(prof.p2);
-      polyBuilder.Add(prof.p3);
-      polyBuilder.Add(prof.p1); // Close the triangle
-
-      TopoDS_Wire wire = polyBuilder.Wire();
-      return BRepBuilderAPI_MakeFace(wire).Face();
-    }
-
-    TopoDS_Shape operator()(const rectangle_profile &prof) const {
-      BRepBuilderAPI_MakePolygon polyBuilder;
-      // Create rectangle from two diagonal points
-      polyBuilder.Add(prof.p1);
-      polyBuilder.Add(gp_Pnt(prof.p2.X(), prof.p1.Y(), prof.p1.Z()));
-      polyBuilder.Add(prof.p2);
-      polyBuilder.Add(gp_Pnt(prof.p1.X(), prof.p2.Y(), prof.p1.Z()));
-      polyBuilder.Add(prof.p1); // Close the rectangle
-
-      TopoDS_Wire wire = polyBuilder.Wire();
-      return BRepBuilderAPI_MakeFace(wire).Face();
-    }
-
-    TopoDS_Shape operator()(const circ_profile &prof) const {
-      gp_Circ circle(axis, prof.radius);
-      TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(circle).Edge();
-      BRepBuilderAPI_MakeWire wireBuilder(edge);
-      return BRepBuilderAPI_MakeFace(wireBuilder.Wire()).Face();
-    }
-
-    TopoDS_Shape operator()(const elips_profile &prof) const {
-      // Calculate major and minor radii
-      double majorRadius = prof.s1.Distance(prof.center);
-      double minorRadius = prof.s2.Distance(prof.center);
-
-      // Create ellipse in the given axis system
-      gp_Elips ellipse(axis, majorRadius, minorRadius);
-      TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(ellipse).Edge();
-      BRepBuilderAPI_MakeWire wireBuilder(edge);
-      return BRepBuilderAPI_MakeFace(wireBuilder.Wire()).Face();
-    }
-
-    TopoDS_Shape operator()(const polygon_profile &prof) const {
-      if (prof.edges.empty()) {
-        return TopoDS_Shape(); // Return empty shape for empty polygon
-      }
-
-      // Create outer wire
-      BRepBuilderAPI_MakePolygon outerBuilder;
-      for (const auto &point : prof.edges) {
-        outerBuilder.Add(point);
-      }
-      outerBuilder.Add(prof.edges.front()); // Close the polygon
-
-      if (!outerBuilder.IsDone()) {
-        return TopoDS_Shape();
-      }
-
-      TopoDS_Wire outerWire = outerBuilder.Wire();
-
-      // Handle inner wires if they exist
-      if (prof.inners.empty()) {
-        return BRepBuilderAPI_MakeFace(outerWire).Face();
-      }
-
-      BRepBuilderAPI_MakeFace faceBuilder(outerWire);
-
-      for (const auto &inner : prof.inners) {
-        if (inner.empty())
-          continue;
-
-        BRepBuilderAPI_MakePolygon innerBuilder;
-        for (const auto &point : inner) {
-          innerBuilder.Add(point);
-        }
-        innerBuilder.Add(inner.front()); // Close the inner polygon
-
-        if (innerBuilder.IsDone()) {
-          faceBuilder.Add(innerBuilder.Wire());
-        }
-      }
-
-      return faceBuilder.Face();
-    }
-  };
-
-  return boost::apply_visitor(ProfileCreator(axis), profile);
-}
-
 shape_profile scale_profile(const shape_profile &profile, double scale) {
   struct ProfileVisitor : public boost::static_visitor<shape_profile> {
     double scale;
@@ -17086,51 +17125,88 @@ shape_profile scale_profile(const shape_profile &profile, double scale) {
   return boost::apply_visitor(ProfileVisitor{scale}, profile);
 }
 
-TopoDS_Shape create_pipe_connection(const pipe_endpoint &endpoint,
-                                    const gp_Pnt &joint_center,
-                                    const gp_Ax3 &joint_coord, bool is_output) {
+// 辅助函数：创建过渡形状
+TopoDS_Shape create_transition_shape(const TopoDS_Shape &profile,
+                                     const pipe_endpoint &endpoint,
+                                     const gp_Vec &direction, double scale) {
+  // 计算过渡向量
+  double length = direction.Magnitude();
+  gp_Vec transition_vec = direction.Normalized() * (length * 0.98);
+
+  // 创建放样生成器
+  BRepOffsetAPI_ThruSections generator(true, true);
+
+  // 添加原始剖面
+  generator.AddWire(TopoDS::Wire(profile));
+
+  // 创建缩放后的剖面
+  shape_profile smaller_profile = scale_profile(endpoint.profile, scale);
+  gp_Pnt mid_point = endpoint.offset.Translated(transition_vec);
+  gp_Ax2 midAxis(mid_point, direction);
+  TopoDS_Shape smaller_shape =
+      create_shape_from_profile(smaller_profile, false, &midAxis);
+  generator.AddWire(TopoDS::Wire(smaller_shape));
+
+  return generator.Shape();
+}
+
+std::pair<TopoDS_Shape, TopoDS_Shape>
+create_pipe_connection(const pipe_endpoint &endpoint,
+                       const gp_Pnt &joint_center, const gp_Ax3 &joint_coord,
+                       bool is_output, double scale) {
   // Calculate direction vector from joint to pipe endpoint
   gp_Vec direction(endpoint.offset, joint_center);
-  if (is_output) {
-    direction.Reverse();
-  }
 
   // Create coordinate system for the pipe
-  gp_Ax2 pipe_axis(endpoint.offset, endpoint.normal);
+  gp_Ax2 pipe_axis;
+  if (endpoint.normal.IsParallel(gp::DX(), Precision::Angular())) {
+    // 如果法线平行于X轴，使用Y轴作为参考方向
+    pipe_axis = gp_Ax2(endpoint.offset, endpoint.normal, gp::DY());
+  } else if (endpoint.normal.IsParallel(gp::DY(), Precision::Angular())) {
+    // 如果法线平行于Y轴，使用Z轴作为参考方向
+    pipe_axis = gp_Ax2(endpoint.offset, endpoint.normal, gp::DZ());
+  } else {
+    // 默认情况，使用X轴作为参考方向
+    pipe_axis = gp_Ax2(endpoint.offset, endpoint.normal, gp::DX());
+  }
+
   if (endpoint.normal.IsParallel(direction, Precision::Angular())) {
     // Adjust axis if normal is parallel to direction
-    gp_Dir ortho = endpoint.normal.Crossed(gp::DX());
-    if (gp_Vec(ortho).Magnitude() < Precision::Confusion()) {
-      ortho = endpoint.normal.Crossed(gp::DY());
+    gp_Vec ortho = endpoint.normal.Crossed(pipe_axis.XDirection());
+    if (ortho.Magnitude() < Precision::Confusion()) {
+      ortho = endpoint.normal.Crossed(pipe_axis.YDirection());
     }
     pipe_axis = gp_Ax2(endpoint.offset, endpoint.normal, ortho);
   }
 
-  // Create pipe profile shape
-  TopoDS_Shape profile_shape =
-      create_profile_shape(endpoint.profile, pipe_axis);
+  // 创建外径管道形状
+  TopoDS_Shape outer_profile =
+      create_shape_from_profile(endpoint.profile, false, &pipe_axis);
 
-  // Create transition from profile to joint
-  double length = direction.Magnitude();
-  gp_Vec transition_vec = direction.Normalized() * (length * 0.8);
+  // 创建过渡形状
+  TopoDS_Shape outer_transition =
+      create_transition_shape(outer_profile, endpoint, direction, scale);
 
-  // Create a loft (sweep) between profile and a smaller version at joint
-  BRepOffsetAPI_ThruSections generator(true, true);
+  TopoDS_Shape cut_shape;
 
-  // Start with original profile
-  generator.AddWire(TopoDS::Wire(profile_shape));
+  // 如果有内径，创建内径管道并做布尔减
+  if (endpoint.inner_profile) {
+    // 创建内径管道形状
+    TopoDS_Shape inner_profile =
+        create_shape_from_profile(*endpoint.inner_profile, false, &pipe_axis);
 
-  // Create smaller profile near joint
-  shape_profile smaller_profile = scale_profile(endpoint.profile, 0.5);
-  gp_Pnt mid_point = endpoint.offset.Translated(transition_vec);
-  TopoDS_Shape smaller_shape =
-      create_profile_shape(smaller_profile, gp_Ax2(mid_point, direction));
-  generator.AddWire(TopoDS::Wire(smaller_shape));
+    // 创建内径过渡形状
+    TopoDS_Shape inner_transition =
+        create_transition_shape(inner_profile, endpoint, direction, scale);
 
-  // Build the transition shape
-  TopoDS_Shape transition = generator.Shape();
+    cut_shape = inner_transition;
 
-  return transition;
+    // 从外径中减去内径
+    outer_transition =
+        BRepAlgoAPI_Cut(outer_transition, inner_transition).Shape();
+  }
+
+  return {outer_transition, cut_shape};
 }
 
 TopoDS_Shape create_pipe_joint(const pipe_joint_params &params) {
@@ -17138,13 +17214,22 @@ TopoDS_Shape create_pipe_joint(const pipe_joint_params &params) {
   gp_XYZ center_sum(0, 0, 0);
   int center_count = 0;
 
+  std::vector<double> inscales;
+
   // Process input pipes
   for (const auto &in : params.ins) {
     auto [radius, center] = compute_profile_radius_and_center(in.profile);
     max_radius = std::max(max_radius, radius);
     center_sum += gp_XYZ(center.X(), center.Y(), center.Z());
     center_count++;
+    inscales.push_back(radius);
   }
+
+  for (size_t i = 0; i < inscales.size(); i++) {
+    inscales[i] = max_radius / inscales[i];
+  }
+
+  std::vector<double> outscales;
 
   // Process output pipes
   for (const auto &out : params.outs) {
@@ -17152,6 +17237,11 @@ TopoDS_Shape create_pipe_joint(const pipe_joint_params &params) {
     max_radius = std::max(max_radius, radius);
     center_sum += gp_XYZ(center.X(), center.Y(), center.Z());
     center_count++;
+    outscales.push_back(radius);
+  }
+
+  for (size_t i = 0; i < outscales.size(); i++) {
+    outscales[i] = max_radius / outscales[i];
   }
 
   // Calculate average center point
@@ -17165,25 +17255,97 @@ TopoDS_Shape create_pipe_joint(const pipe_joint_params &params) {
 
   // Create center shape (sphere or box)
   TopoDS_Shape center_shape;
+  std::vector<TopoDS_Shape> cutShapes;
+
   if (params.mode == joint_shape_mode::SPHERE) {
+    // 创建外球体
     center_shape =
-        BRepPrimAPI_MakeSphere(joint_coord, max_radius * 1.2).Shape();
-  } else {                          // BOX
-    double size = max_radius * 2.4; // Make box slightly larger than diameter
-    center_shape = BRepPrimAPI_MakeBox(joint_coord, size, size, size).Shape();
+        BRepPrimAPI_MakeSphere(joint_coord, max_radius * 1.04).Shape();
+    // 创建内球体 (厚度为半径的20%)
+    TopoDS_Shape inner_sphere =
+        BRepPrimAPI_MakeSphere(joint_coord, max_radius * 0.84).Shape();
+    cutShapes.push_back(inner_sphere);
+  } else {                           // BOX
+    double size = max_radius * 2.04; // 外盒尺寸
+    double inner_size = size * 0.84; // 内盒尺寸 (厚度为外盒的20%)
+
+    // 创建内盒
+    TopoDS_Shape inner_box =
+        BRepPrimAPI_MakeBox(
+            joint_coord.Translated(
+                gp_Vec(-inner_size / 2, -inner_size / 2, -inner_size / 2)),
+            inner_size, inner_size, inner_size)
+            .Shape();
+    {
+      // 添加圆角
+      BRepFilletAPI_MakeFillet filletMaker(inner_box);
+      TopExp_Explorer explorer(inner_box, TopAbs_EDGE);
+      double filletRadius = max_radius * 0.5;
+
+      while (explorer.More()) {
+        TopoDS_Edge edge = TopoDS::Edge(explorer.Current());
+        filletMaker.Add(filletRadius, edge);
+        explorer.Next();
+      }
+      
+      filletMaker.Build();
+
+      if (filletMaker.IsDone()) {
+        inner_box = filletMaker.Shape();
+      }
+    }
+    cutShapes.push_back(inner_box);
+
+    // 从外盒中减去内盒
+    TopoDS_Shape outer_shape =
+        BRepPrimAPI_MakeBox(
+            joint_coord.Translated(gp_Vec(-size / 2, -size / 2, -size / 2)),
+            size, size, size)
+            .Shape();
+
+    // 添加圆角
+    {
+      BRepFilletAPI_MakeFillet filletMaker2(outer_shape);
+      TopExp_Explorer explorer2(outer_shape, TopAbs_EDGE);
+      double filletRadius = max_radius * 0.5;
+
+      while (explorer2.More()) {
+        TopoDS_Edge edge = TopoDS::Edge(explorer2.Current());
+        filletMaker2.Add(filletRadius, edge);
+        explorer2.Next();
+      }
+
+      filletMaker2.Build();
+
+      if (filletMaker2.IsDone()) {
+        center_shape = filletMaker2.Shape();
+      }
+    }
   }
 
   // Create and connect all pipes to the center
   TopoDS_Shape result = center_shape;
-  for (const auto &in : params.ins) {
-    TopoDS_Shape pipe =
-        create_pipe_connection(in, joint_center, joint_coord, false);
+
+  for (size_t i = 0; i < params.ins.size(); i++) {
+    auto pair = create_pipe_connection(params.ins[i], joint_center, joint_coord,
+                                       false, inscales[i]);
+    TopoDS_Shape pipe = pair.first;
+    cutShapes.push_back(pair.second);
     result = BRepAlgoAPI_Fuse(result, pipe).Shape();
   }
-  for (const auto &out : params.outs) {
-    TopoDS_Shape pipe =
-        create_pipe_connection(out, joint_center, joint_coord, true);
+  for (size_t i = 0; i < params.outs.size(); i++) {
+    auto pair = create_pipe_connection(params.outs[i], joint_center,
+                                       joint_coord, true, outscales[i]);
+    TopoDS_Shape pipe = pair.first;
+    cutShapes.push_back(pair.second);
     result = BRepAlgoAPI_Fuse(result, pipe).Shape();
+  }
+
+  for (const auto &cutShape : cutShapes) {
+    if (cutShape.IsNull()) {
+      continue;
+    }
+    result = BRepAlgoAPI_Cut(result, cutShape).Shape();
   }
 
   return result;
@@ -17604,7 +17766,8 @@ TopoDS_Shape create_pipe_shape(const pipe_shape_params &params) {
   // 创建截面形状
   gp_Ax2 pipeAxis(params.wire.front(),
                   gp_Dir(params.wire[1].XYZ() - params.wire[0].XYZ()));
-  TopoDS_Shape profileShape = create_profile_shape(params.profile, pipeAxis);
+  TopoDS_Shape profileShape =
+      create_shape_from_profile(params.profile, false, &pipeAxis);
 
   // 创建管道
   BRepOffsetAPI_MakePipe pipeMaker(pathWire, profileShape);
