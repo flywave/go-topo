@@ -4651,7 +4651,7 @@ void test_make_multi_segment_pipe() {
   std::cout << "\n=== Testing Multi-Segment Pipe Creation ===" << std::endl;
   try {
     // 准备测试数据 - 直线段
-    std::vector<gp_Pnt> linePoints = {gp_Pnt(0, 0, 0), gp_Pnt(100, 0, 0)};
+    std::vector<gp_Pnt> linePoints = {gp_Pnt(50, -50, 0), gp_Pnt(100, 0, 0)};
 
     // 准备测试数据 - 三点圆弧
     std::vector<gp_Pnt> arcPoints = {gp_Pnt(100, 0, 0), gp_Pnt(150, 50, 0),

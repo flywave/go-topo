@@ -2080,7 +2080,7 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
       gp_Ax2 cylinderAxis(segment_start, gp_Dir(segment_vec));
       TopoDS_Shape cylinder =
           BRepPrimAPI_MakeCylinder(cylinderAxis,
-                                   params.radius,          // 使用绝缘子半径参数
+                                   params.radius, // 使用绝缘子半径参数
                                    segment_vec.Magnitude() // 实际长度
                                    )
               .Shape();
@@ -2144,9 +2144,9 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
 
     // 创建连接盒（参数顺序：X长度，Y长度，Z长度）
     BRepPrimAPI_MakeBox connector_box(box_axis,
-                                      box_x_length,    // X方向尺寸（沿全局X轴）
+                                      box_x_length, // X方向尺寸（沿全局X轴）
                                       box_y_thickness, // Y方向尺寸（沿全局Y轴）
-                                      box_z_height     // Z方向尺寸（沿全局Z轴）
+                                      box_z_height // Z方向尺寸（沿全局Z轴）
     );
 
     connector_box.Build();
@@ -2261,7 +2261,7 @@ TopoDS_Shape create_terminal_block(const terminal_block_params &params) {
 
       // 创建穿透孔洞（Y方向完全穿透）
       gp_Ax2 holeAxis(gp_Pnt(x, -params.thickness, z), // 起始于底面（Y=0）
-                      gp_Dir(0, 1, 0)                  // 沿Y轴方向（厚度方向）
+                      gp_Dir(0, 1, 0) // 沿Y轴方向（厚度方向）
       );
       BRepPrimAPI_MakeCylinder holeMaker(holeAxis, params.holeRadius,
                                          params.thickness * 2 // 确保完全穿透
@@ -2867,9 +2867,9 @@ TopoDS_Shape create_curve_cable(const curve_cable_params &params) {
 
   // 使用扫掠器自动计算坐标系（添加Frenet模式）
   BRepOffsetAPI_MakePipeShell pipeMaker(pathMaker.Wire());
-  pipeMaker.SetMode(true);                   // 设置为实体模式
-  pipeMaker.SetMaxDegree(5);                 // 提高最大阶数以适应复杂曲率
-  pipeMaker.SetTolerance(1e-5);              // 放宽容差适应复杂路径
+  pipeMaker.SetMode(true);      // 设置为实体模式
+  pipeMaker.SetMaxDegree(5);    // 提高最大阶数以适应复杂曲率
+  pipeMaker.SetTolerance(1e-5); // 放宽容差适应复杂路径
   pipeMaker.SetForceApproxC1(Standard_True); // 强制C1连续近似
 
   // 创建动态调整的圆形截面（直径始终垂直于路径）
@@ -3034,16 +3034,16 @@ TopoDS_Wire create_ibeam_profile(double height, double flangeWidth,
   gp_Pnt p12(0, -halfFlangeWidth, 0);
 
   // 构建轮廓线（按顺序连接所有点）
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p1).Edge());  // 下翼缘
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());   // 右下翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());   // 右下腹板水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge());   // 右腹板垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());   // 右上腹板水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge());   // 右上翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge());   // 上翼缘
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge());   // 左上翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p9).Edge());   // 左上腹板水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge());  // 左腹板垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p12, p1).Edge()); // 下翼缘
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge()); // 右下翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge()); // 右下腹板水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p4).Edge()); // 右腹板垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge()); // 右上腹板水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p6).Edge()); // 右上翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge()); // 上翼缘
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p8).Edge()); // 左上翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p9).Edge()); // 左上腹板水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p10).Edge()); // 左腹板垂直段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p11).Edge()); // 左下腹板水平段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p12).Edge()); // 左下翼缘垂直段
 
@@ -3265,17 +3265,17 @@ TopoDS_Wire create_t_steel_profile(double height, double width,
   gp_Pnt p11(0, halfWidth, 0);                // 右侧端点
 
   // 构建完整轮廓（顺时针连接）
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge());   // 底部中心→左
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge());   // 腹板左侧垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p9).Edge());   // 新增：左侧翼缘连接
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p8).Edge());   // 左侧翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p4).Edge());   // 顶部翼缘左段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge());   // 腹板顶部水平段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p11).Edge());  // 顶部翼缘右段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge()); // 底部中心→左
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p2, p3).Edge()); // 腹板左侧垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p3, p9).Edge()); // 新增：左侧翼缘连接
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p9, p8).Edge()); // 左侧翼缘垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p8, p4).Edge()); // 顶部翼缘左段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p4, p5).Edge()); // 腹板顶部水平段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p5, p11).Edge()); // 顶部翼缘右段
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p11, p10).Edge()); // 右侧翼缘垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p6).Edge());  // 新增：右侧翼缘连接
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge());   // 腹板右侧垂直段
-  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p1).Edge());   // 底部右侧→中心
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p10, p6).Edge()); // 新增：右侧翼缘连接
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p6, p7).Edge()); // 腹板右侧垂直段
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(p7, p1).Edge()); // 底部右侧→中心
 
   if (!wireMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to create T-steel profile");
@@ -6776,7 +6776,7 @@ create_single_hook_anchor(const single_hook_anchor_params &params) {
       // 定义截面坐标系：Z轴沿路径切线，Y轴垂直圆弧平面
       sectionAxis = gp_Ax2(arcStart,
                            tangent.Normalized(), // 截面Z轴沿路径方向
-                           gp_Dir(0, 0, 1));     // Y轴垂直圆弧平面（YZ平面）
+                           gp_Dir(0, 0, 1)); // Y轴垂直圆弧平面（YZ平面）
     }
 
     // 创建截面圆（直径参数验证）
@@ -10148,7 +10148,7 @@ TopoDS_Shape create_three_way_round_working_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset);                                  // 支线段左上角点
+                  zoffset); // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
 
   // 4. 计算圆弧关键点（精确几何关系）
@@ -10259,7 +10259,7 @@ TopoDS_Shape create_three_way_corner_working_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset);                                  // 支线段左上角点
+                  zoffset); // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
 
   const gp_Pnt leftStart(-halfWidth1 - cornerLength, halfWidth, zoffset);
@@ -10879,10 +10879,10 @@ TopoDS_Shape create_three_way_circle_well_part(double length, double width,
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset);                                  // 支线段左上角点
+                  zoffset); // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
-  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset);          // 支线段左下角点
-  const gp_Pnt p10(halfWidth1, halfWidth, zoffset);          // 支线段右下角点
+  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset); // 支线段左下角点
+  const gp_Pnt p10(halfWidth1, halfWidth, zoffset); // 支线段右下角点
 
   // 7. 构建完整线框（确保拓扑闭合）
   BRepBuilderAPI_MakeWire wireMaker;
@@ -10946,10 +10946,10 @@ TopoDS_Shape create_three_way_rectangular_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset);                                  // 支线段左上角点
+                  zoffset); // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右上角点
-  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset);          // 支线段左下角点
-  const gp_Pnt p10(halfWidth1, halfWidth, zoffset);          // 支线段右下角点
+  const gp_Pnt p9(-halfWidth1, halfWidth, zoffset); // 支线段左下角点
+  const gp_Pnt p10(halfWidth1, halfWidth, zoffset); // 支线段右下角点
 
   // 7. 构建完整线框（确保拓扑闭合）
   BRepBuilderAPI_MakeWire wireMaker;
@@ -11685,7 +11685,7 @@ TopoDS_Shape create_four_way_round_working_well_part(
 
   // 3. 定义支线段端点
   const gp_Pnt p7(-halfWidth1, halfWidth + length1,
-                  zoffset);                                  // 支线段左上角点
+                  zoffset); // 支线段左上角点
   const gp_Pnt p8(halfWidth1, halfWidth + length1, zoffset); // 支线段右下角点
 
   // 4. 定义支线段2端点（下方）
@@ -12797,6 +12797,7 @@ TopoDS_Shape create_four_way_well(const four_way_well_params &params) {
   default:
     break;
   }
+  throw Standard_ConstructionError("Unsupported four_way_well_type");
 }
 
 TopoDS_Shape create_four_way_well(const four_way_well_params &params,
@@ -16722,7 +16723,8 @@ TopoDS_Wire make_wire_from_segments(
   }
 }
 
-TopoDS_Shape create_pipe(const pipe_params &params) {
+std::pair<TopoDS_Shape, std::pair<gp_Dir, gp_Dir>>
+create_pipe_helper(const pipe_params &params) {
   if (params.profiles.size() != 1 && params.profiles.size() != 2) {
     throw Standard_ConstructionError("Pipe requires exactly 1 or 2 profiles");
   }
@@ -16738,19 +16740,22 @@ TopoDS_Shape create_pipe(const pipe_params &params) {
   TopExp_Explorer edgeExplorer(pathWire, TopAbs_EDGE);
   TopoDS_Edge edge = TopoDS::Edge(edgeExplorer.Current());
 
+  Standard_Real first, last;
+  Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, first, last);
+  gp_Pnt pt;
+  gp_Vec firstTangent;
+  curve->D1(first, pt, firstTangent);
+  gp_Vec lastTangent;
+  curve->D1(last, pt, lastTangent);
+
   // 创建管道
   BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
   auto addOuterProfileAtVertex =
       [&](const TopoDS_Edge &edge, const shape_profile &profile,
           const TopoDS_Vertex &vertex, bool isFirst) {
         gp_Pnt point = BRep_Tool::Pnt(vertex);
-        gp_Pnt pt = point;
 
-        // 获取边在顶点处的切向量
-        Standard_Real first, last;
-        Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, first, last);
-        gp_Vec tangent;
-        curve->D1(isFirst ? first : last, pt, tangent);
+        gp_Vec tangent = isFirst ? firstTangent : lastTangent;
 
         gp_Dir tanDir = tangent.Normalized();
         gp_Dir upDir = params.up_dir ? *params.up_dir : gp::DZ();
@@ -16774,7 +16779,6 @@ TopoDS_Shape create_pipe(const pipe_params &params) {
   TopExp::Vertices(edge, v1, v2);
 
   // 获取外轮廓截面形状(作为面)
-
   addOuterProfileAtVertex(edge, params.profiles[0], v1, true);
   if (params.profiles.size() == 2) {
     addOuterProfileAtVertex(edge, params.profiles[1], v2, true);
@@ -16813,13 +16817,8 @@ TopoDS_Shape create_pipe(const pipe_params &params) {
                                   const shape_profile &profile,
                                   const TopoDS_Vertex &vertex, bool isFirst) {
       gp_Pnt point = BRep_Tool::Pnt(vertex);
-      gp_Pnt pt = point;
 
-      // 获取边在顶点处的切向量
-      Standard_Real first, last;
-      Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, first, last);
-      gp_Vec tangent;
-      curve->D1(isFirst ? first : last, pt, tangent);
+      gp_Vec tangent = isFirst ? firstTangent : lastTangent;
 
       gp_Dir tanDir = tangent.Normalized();
       gp_Dir upDir = params.up_dir ? *params.up_dir : gp::DZ();
@@ -16875,10 +16874,14 @@ TopoDS_Shape create_pipe(const pipe_params &params) {
     TopoDS_Shape innerPipe = innerMaker.Shape();
 
     TopoDS_Shape result = BRepAlgoAPI_Cut(outerShape, innerPipe).Shape();
-    return result;
+    return {result, {firstTangent, lastTangent}};
   }
+  return {outerShape, {firstTangent, lastTangent}};
+}
 
-  return outerShape;
+TopoDS_Shape create_pipe(const pipe_params &params) {
+  auto pair = create_pipe_helper(params);
+  return pair.first;
 }
 
 TopoDS_Shape create_pipe(const pipe_params &params, const gp_Pnt &position,
@@ -16902,6 +16905,43 @@ TopoDS_Shape create_pipe(const pipe_params &params, const gp_Pnt &position,
   return transform.Shape();
 }
 
+// 新增辅助函数：创建两个截面之间的过渡面
+TopoDS_Shape create_pipe_transition(const shape_profile &profile1,
+                                    const gp_Dir &normal1,
+                                    const shape_profile &profile2,
+                                    const gp_Dir &normal2,
+                                    const gp_Pnt &position) {
+  // 计算两个法向量的夹角
+  double angle = normal1.Angle(normal2);
+  if (angle < Precision::Angular()) {
+    return TopoDS_Shape(); // 角度太小不需要过渡
+  }
+
+  // 创建两个截面的局部坐标系
+  gp_Ax2 ax1(position, normal1);
+  gp_Ax2 ax2(position, normal2.Reversed());
+
+  TopoDS_Shape shape1 = create_shape_from_profile(profile1, false, &ax1);
+  TopoDS_Shape shape2 = create_shape_from_profile(profile2, false, &ax2);
+
+  // 使用放样操作创建过渡面
+  BRepOffsetAPI_ThruSections generator(true); // 设置为创建实体
+  generator.AddWire(TopoDS::Wire(shape2));
+  generator.AddWire(TopoDS::Wire(shape1));
+
+  // 设置平滑过渡
+  generator.SetSmoothing(true);
+  generator.SetMaxDegree(5); // 设置最大阶数以获得更平滑的过渡
+
+  generator.Build();
+
+  if (!generator.IsDone()) {
+    throw Standard_ConstructionError("Failed to create transition surface");
+  }
+
+  return generator.Shape();
+}
+
 TopoDS_Shape
 create_multi_segment_pipe(const multi_segment_pipe_params &params) {
   // 参数验证
@@ -16922,6 +16962,11 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
   TopoDS_Shape result;
   BRep_Builder builder;
   builder.MakeCompound(TopoDS::Compound(result));
+
+  // 保存上一段的末端截面信息
+  shape_profile prev_profile;
+  gp_Dir prev_normal;
+  bool has_prev = false;
 
   // 逐个创建每段管道
   for (size_t i = 0; i < params.wires.size(); i++) {
@@ -16957,10 +17002,33 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
     }
 
     // 创建当前段管道
-    TopoDS_Shape segment = create_pipe(seg_params);
+    auto pair = create_pipe_helper(seg_params);
+    TopoDS_Shape segment = pair.first;
+    gp_Dir start_normal = pair.second.first;
+    gp_Dir end_normal = pair.second.second;
 
     // 添加到结果中
     builder.Add(result, segment);
+
+    // 获取当前段的末端截面信息
+
+    // 如果有上一段，创建过渡面
+    if (has_prev) {
+      const auto &wire = params.wires[i - 1];
+
+      TopoDS_Shape transition =
+          create_pipe_transition(prev_profile, prev_normal, params.profiles[i],
+                                 start_normal, wire.back());
+
+      if (!transition.IsNull()) {
+        builder.Add(result, transition);
+      }
+    }
+
+    // 保存当前段信息供下一段使用
+    prev_profile = params.profiles[i];
+    prev_normal = end_normal;
+    has_prev = true;
   }
   return result;
 }
@@ -17287,7 +17355,7 @@ TopoDS_Shape create_pipe_joint(const pipe_joint_params &params) {
         filletMaker.Add(filletRadius, edge);
         explorer.Next();
       }
-      
+
       filletMaker.Build();
 
       if (filletMaker.IsDone()) {
