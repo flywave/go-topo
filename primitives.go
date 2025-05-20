@@ -5032,10 +5032,11 @@ func CreateMultiSegmentPipeWithPlace(params MultiSegmentPipeParams, position Poi
 
 // 管道连接参数
 type PipeJointParams struct {
-	Ins        []PipeEndpoint
-	Outs       []PipeEndpoint
-	Mode       JointShapeMode
-	SmoothEdge bool
+	Ins     []PipeEndpoint
+	Outs    []PipeEndpoint
+	Mode    JointShapeMode
+	Flanged bool
+	UpDir   *Dir3
 }
 
 func (p *PipeJointParams) to_struct() C.pipe_joint_params_t {
@@ -5297,12 +5298,17 @@ func (p *PipeJointParams) to_struct() C.pipe_joint_params_t {
 
 	// 转换连接模式和边缘平滑
 	c.mode = C.joint_shape_mode_t(p.Mode)
-	if p.SmoothEdge {
-		c.smooth_edge = C.bool(true)
+	if p.Flanged {
+		c.flanged = C.bool(true)
 	} else {
-		c.smooth_edge = C.bool(false)
+		c.flanged = C.bool(false)
 	}
 
+	if p.UpDir != nil {
+		c.up_dir = &p.UpDir.val
+	} else {
+		c.up_dir = nil
+	}
 	return c
 }
 

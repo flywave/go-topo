@@ -1984,7 +1984,8 @@ typedef struct {
   pipe_endpoint_t *outs;
   int out_count;
   joint_shape_mode_t mode;
-  bool smooth_edge;
+  bool flanged;
+  dir3d_t *up_dir;
 } pipe_joint_params_t;
 
 // 创建管道连接

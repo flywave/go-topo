@@ -4717,7 +4717,7 @@ void test_make_pipe_joint() {
                                          .profile = {profile},
                                          .inner_profile = {{innerProfile}}}},
                                .mode = joint_shape_mode::SPHERE,
-                               .smooth_edge = true};
+                               .flanged = true};
 
       auto shp = create_pipe_joint(params);
       test_export_shape(shp, "./pipe_joint_2.stl");
@@ -4738,7 +4738,7 @@ void test_make_pipe_joint() {
                                          .profile = {profile2},
                                          .inner_profile = {{innerProfile2}}}},
                                .mode = joint_shape_mode::BOX,
-                               .smooth_edge = true};
+                               .flanged = true};
 
       auto shp = create_pipe_joint(params);
       test_export_shape(shp, "./pipe_joint_T.stl");
@@ -4763,7 +4763,7 @@ void test_make_pipe_joint() {
                                          .profile = {profile2},
                                          .inner_profile = {{innerProfile2}}}},
                                .mode = joint_shape_mode::SPHERE,
-                               .smooth_edge = false};
+                               .flanged = false};
 
       auto shp = create_pipe_joint(params);
       test_export_shape(shp, "./pipe_joint_4.stl");
@@ -4784,7 +4784,7 @@ void test_make_pipe_joint() {
                                          .profile = {profile},
                                          .inner_profile = {{innerProfile}}}},
                                .mode = joint_shape_mode::SPHERE,
-                               .smooth_edge = true};
+                               .flanged = true};
 
       auto shp = create_pipe_joint(params);
       test_export_shape(shp, "./pipe_joint_Y.stl");

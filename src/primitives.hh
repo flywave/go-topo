@@ -2343,7 +2343,8 @@ struct pipe_joint_params {
   std::vector<pipe_endpoint> ins;
   std::vector<pipe_endpoint> outs;
   joint_shape_mode mode;
-  bool smooth_edge;
+  bool flanged; // 新增参数，表示是否为法兰连接
+  boost::optional<gp_Dir> up_dir;
 };
 
 TopoDS_Shape create_pipe_joint(const pipe_joint_params &params);

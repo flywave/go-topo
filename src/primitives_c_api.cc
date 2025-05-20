@@ -4397,8 +4397,8 @@ PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params) {
   }
 
   if (params.up_dir != nullptr) {
-    cpp_params.up_dir = gp_Dir(params.up_dir->x, params.up_dir->y,
-                               params.up_dir->z);
+    cpp_params.up_dir =
+        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
   }
 
   try {
@@ -4578,8 +4578,8 @@ PRIMCAPICALL topo_shape_t *create_pipe_with_place(pipe_params_t params,
   }
 
   if (params.up_dir != nullptr) {
-    cpp_params.up_dir = gp_Dir(params.up_dir->x, params.up_dir->y,
-                               params.up_dir->z);
+    cpp_params.up_dir =
+        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
   }
 
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -4773,8 +4773,8 @@ create_multi_segment_pipe(multi_segment_pipe_params_t params) {
   }
 
   if (params.up_dir != nullptr) {
-    cpp_params.up_dir = gp_Dir(params.up_dir->x, params.up_dir->y,
-                               params.up_dir->z);
+    cpp_params.up_dir =
+        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
   }
 
   try {
@@ -4965,8 +4965,8 @@ create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
   }
 
   if (params.up_dir != nullptr) {
-    cpp_params.up_dir = gp_Dir(params.up_dir->x, params.up_dir->y,
-                               params.up_dir->z);
+    cpp_params.up_dir =
+        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
   }
 
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -5247,7 +5247,12 @@ PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params) {
     return nullptr;
   }
 
-  cpp_params.smooth_edge = params.smooth_edge;
+  cpp_params.flanged = params.flanged;
+
+  if (params.up_dir != nullptr) {
+    cpp_params.up_dir =
+        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
+  }
 
   try {
     return new topo_shape_t{
@@ -5524,7 +5529,12 @@ create_pipe_joint_with_place(pipe_joint_params_t params, pnt3d_t position,
     return nullptr;
   }
 
-  cpp_params.smooth_edge = params.smooth_edge;
+  cpp_params.flanged = params.flanged;
+
+  if (params.up_dir != nullptr) {
+    cpp_params.up_dir =
+        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
+  }
 
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
@@ -6055,10 +6065,10 @@ PRIMCAPICALL topo_shape_t *create_pipe_shape(pipe_shape_params_t params) {
   }
 
   if (params.up_dir != nullptr) {
-    cpp_params.up_dir = gp_Dir(params.up_dir->x, params.up_dir->y,
-                               params.up_dir->z);
+    cpp_params.up_dir =
+        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
   }
-  
+
   try {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_pipe_shape(cpp_params))};
@@ -6134,10 +6144,10 @@ create_pipe_shape_with_place(pipe_shape_params_t params, pnt3d_t position,
   }
 
   if (params.up_dir != nullptr) {
-    cpp_params.up_dir = gp_Dir(params.up_dir->x, params.up_dir->y,
-                               params.up_dir->z);
+    cpp_params.up_dir =
+        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
   }
-  
+
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
