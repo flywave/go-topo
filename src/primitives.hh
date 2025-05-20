@@ -2305,8 +2305,8 @@ struct pipe_params {
   std::vector<gp_Pnt> wire;
   shape_profile profile;
   boost::optional<shape_profile> inner_profile;
-  segment_type segment_type;
-  transition_mode transition_mode;
+  flywave::topo::segment_type segment_type;
+  flywave::topo::transition_mode transition_mode;
 };
 
 TopoDS_Shape create_pipe(const pipe_params &params);
@@ -2318,8 +2318,8 @@ struct multi_segment_pipe_params {
   std::vector<std::vector<gp_Pnt>> wires;
   std::vector<shape_profile> profiles;
   boost::optional<std::vector<shape_profile>> inner_profiles;
-  boost::optional<std::vector<segment_type>> segment_types;
-  transition_mode transition_mode;
+  boost::optional<std::vector<flywave::topo::segment_type>> segment_types;
+  flywave::topo::transition_mode transition_mode;
 };
 
 TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params);
