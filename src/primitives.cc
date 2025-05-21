@@ -16886,7 +16886,7 @@ TopoDS_Shape create_pipe(const pipe_params &params) {
 }
 
 TopoDS_Shape create_simple_pipe(flywave::topo::circ_profile maxProfile,
-                                TopoDS_Wire pathWire) {
+                                TopoDS_Wire pathWire, const gp_Dir &upDir) {
   // 获取路径起始点和切线方向
   gp_Pnt startPoint, endPoint;
   gp_Vec startTangent, endTangent;
@@ -16900,7 +16900,7 @@ TopoDS_Shape create_simple_pipe(flywave::topo::circ_profile maxProfile,
 
   // 创建起始端截面
   gp_Dir startTanDir = startTangent.Normalized();
-  gp_Dir startRefDir = gp_Vec(gp::DZ().Crossed(startTanDir)).Normalized();
+  gp_Dir startRefDir = gp_Vec(upDir.Crossed(startTanDir)).Normalized();
   gp_Ax2 startAxis(startPoint, startTanDir, startRefDir);
   gp_Circ startCircle(startAxis, maxProfile.radius);
   TopoDS_Edge startEdge = BRepBuilderAPI_MakeEdge(startCircle).Edge();
@@ -16908,7 +16908,7 @@ TopoDS_Shape create_simple_pipe(flywave::topo::circ_profile maxProfile,
 
   // 创建结束端截面
   gp_Dir endTanDir = endTangent.Normalized();
-  gp_Dir endRefDir = gp_Vec(gp::DZ().Crossed(endTanDir)).Normalized();
+  gp_Dir endRefDir = gp_Vec(upDir.Crossed(endTanDir)).Normalized();
   gp_Ax2 endAxis(endPoint, endTanDir, endRefDir);
   gp_Circ endCircle(endAxis, maxProfile.radius);
   TopoDS_Edge endEdge = BRepBuilderAPI_MakeEdge(endCircle).Edge();
@@ -17179,7 +17179,9 @@ create_pipe_with_split_distances(const pipe_params &params,
 
     if (!frontWire.IsNull()) {
       // 使用最大圆形截面创建裁切体
-      frontCut = create_simple_pipe(maxProfile, frontWire);
+      frontCut =
+          create_simple_pipe(maxProfile, frontWire,
+                             params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
     }
   }
 
@@ -17191,7 +17193,8 @@ create_pipe_with_split_distances(const pipe_params &params,
 
     if (!backWire.IsNull()) {
       // 使用最大圆形截面创建裁切体
-      backCut = create_simple_pipe(maxProfile, backWire);
+      backCut = create_simple_pipe(
+          maxProfile, backWire, params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
     }
   }
 
@@ -17548,13 +17551,17 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
         // 仅前部裁切
         TopoDS_Wire frontWire = clip_wire_between_distances_helper(
             currentWire, 0, splitDistances[0] - segmentStart);
-        cutterFront = create_simple_pipe(maxProfile, frontWire);
+        cutterFront =
+            create_simple_pipe(maxProfile, frontWire,
+                               params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
       }
       if (needBackCut) {
         // 仅后部裁切
         TopoDS_Wire backWire = clip_wire_between_distances_helper(
             currentWire, splitDistances[1] - segmentStart, segmentLength);
-        cutterBack = create_simple_pipe(maxProfile, backWire);
+        cutterBack =
+            create_simple_pipe(maxProfile, backWire,
+                               params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
       }
 
       if (!cutterFront.IsNull()) {
