@@ -5060,7 +5060,7 @@ void test_make_revolution_shape() {
 
     // 测试带VMin/VMax参数的旋转体
     auto rangedShp = create_revolution_shape(revolution_shape_params{
-        .meridian = meridian, .min = 0.0, .max = 8.0, .angle = 180.0});
+        .meridian = meridian, .angle = 180.0, .max = 8.0,.min = 0.0});
     if (rangedShp.IsNull()) {
       std::cerr << "Error: Failed to create ranged revolution shape"
                 << std::endl;
