@@ -17229,20 +17229,34 @@ TopoDS_Shape create_pipe(const pipe_params &params, const gp_Pnt &position,
 }
 
 // 新增辅助函数：创建两个截面之间的过渡面
-TopoDS_Shape create_pipe_transition(const shape_profile &profile1,
-                                    const gp_Dir &normal1,
-                                    const shape_profile &profile2,
-                                    const gp_Dir &normal2,
-                                    const gp_Pnt &position) {
+TopoDS_Shape
+create_pipe_transition(const shape_profile &profile1, const gp_Dir &normal1,
+                       const shape_profile &profile2, const gp_Dir &normal2,
+                       const gp_Pnt &position, const gp_Dir &upDir) {
   // 计算两个法向量的夹角
   double angle = normal1.Angle(normal2);
   if (angle < Precision::Angular()) {
     return TopoDS_Shape(); // 角度太小不需要过渡
   }
 
+  gp_Dir tan1Dir = gp_Vec(normal1).Normalized();
+  gp_Dir ref1Dir = gp_Vec(upDir.Crossed(tan1Dir)).Normalized();
+
+  // 如果参考方向长度接近0(切线几乎与径向平行)，使用全局Y轴作为备用
+  if (gp_Vec(ref1Dir).SquareMagnitude() < Precision::SquareConfusion()) {
+    ref1Dir = gp::DY();
+  }
+
+  gp_Dir tan2Dir = gp_Vec(normal2).Normalized();
+  gp_Dir ref2Dir = gp_Vec(upDir.Crossed(tan2Dir)).Normalized();
+  // 如果参考方向长度接近0(切线几乎与径向平行)，使用全局Y轴作为备用
+  if (gp_Vec(ref2Dir).SquareMagnitude() < Precision::SquareConfusion()) {
+    ref2Dir = gp::DY();
+  }
+
   // 创建两个截面的局部坐标系
-  gp_Ax2 ax1(position, normal1);
-  gp_Ax2 ax2(position, normal2.Reversed());
+  gp_Ax2 ax1(position, normal1, ref1Dir);
+  gp_Ax2 ax2(position, normal2.Reversed(), ref2Dir);
 
   TopoDS_Shape shape1 = create_shape_from_profile(profile1, false, &ax1);
   TopoDS_Shape shape2 = create_shape_from_profile(profile2, false, &ax2);
@@ -17338,9 +17352,9 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
     // 如果有上一段，创建过渡面
     if (has_prev) {
       const auto &wire = params.wires[i - 1];
-      TopoDS_Shape transition =
-          create_pipe_transition(prev_profile, prev_normal, params.profiles[i],
-                                 start_normal, wire.back());
+      TopoDS_Shape transition = create_pipe_transition(
+          prev_profile, prev_normal, params.profiles[i], start_normal,
+          wire.back(), params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
 
       if (!transition.IsNull()) {
         builder.Add(result, transition);
@@ -17512,7 +17526,7 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
           const auto &wire = params.wires[i - 1];
           TopoDS_Shape transition = create_pipe_transition(
               prev_profile, prev_normal, params.profiles[i], start_normal,
-              wire.back());
+              wire.back(), params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
 
           if (!transition.IsNull()) {
             builder.Add(finalPipe, transition);
