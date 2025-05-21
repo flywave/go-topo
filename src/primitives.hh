@@ -2308,6 +2308,9 @@ struct pipe_params {
 };
 
 TopoDS_Shape create_pipe(const pipe_params &params);
+TopoDS_Shape create_pipe_with_split_distances(
+    const pipe_params &params,
+    std::array<double, 2> splitDistances = {0.0, -1});
 TopoDS_Shape create_pipe(const pipe_params &params, const gp_Pnt &position,
                          const gp_Dir &direction = gp::DZ(),
                          const gp_Dir &xDir = gp::DX());
@@ -2322,6 +2325,9 @@ struct multi_segment_pipe_params {
 };
 
 TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params);
+TopoDS_Shape create_multi_segment_pipe_with_split_distances(
+    const multi_segment_pipe_params &params,
+    std::array<double, 2> splitDistances = {0.0, -1});
 TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params,
                                        const gp_Pnt &position,
                                        const gp_Dir &direction = gp::DZ(),

@@ -1950,6 +1950,9 @@ typedef struct {
 
 // 创建管道
 PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_pipe_with_split_distances(pipe_params_t params, double start_distance,
+                                 double end_distance);
 PRIMCAPICALL topo_shape_t *create_pipe_with_place(pipe_params_t params,
                                                   pnt3d_t position,
                                                   dir3d_t direction,
@@ -1972,6 +1975,9 @@ typedef struct {
 // 创建多段管道
 PRIMCAPICALL topo_shape_t *
 create_multi_segment_pipe(multi_segment_pipe_params_t params);
+PRIMCAPICALL topo_shape_t *create_multi_segment_pipe_with_split_distances(
+    multi_segment_pipe_params_t params, double start_distance,
+    double end_distance);
 PRIMCAPICALL topo_shape_t *
 create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
                                      pnt3d_t position, dir3d_t direction,

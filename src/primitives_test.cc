@@ -4695,6 +4695,98 @@ void test_make_multi_segment_pipe() {
   }
 }
 
+void test_multi_segment_pipe_with_split_distances() {
+  std::cout << "\n=== Testing Multi-Segment Pipe with Split Distances ==="
+            << std::endl;
+
+  try {
+    // 准备测试数据 - 直线段
+    std::vector<gp_Pnt> linePoints = {gp_Pnt(50, -50, 0), gp_Pnt(100, 0, 0)};
+
+    // 准备测试数据 - 三点圆弧
+    std::vector<gp_Pnt> arcPoints = {gp_Pnt(100, 0, 0), gp_Pnt(150, 50, 0),
+                                     gp_Pnt(200, 0, 0)};
+
+    // 准备测试数据 - 圆心弧线
+    std::vector<gp_Pnt> centerArcPoints = {gp_Pnt(200, 0, 0),
+                                           gp_Pnt(250, 0, 0), // 圆心
+                                           gp_Pnt(300, 0, 0)};
+
+    // 准备测试数据 - 样条曲线
+    std::vector<gp_Pnt> splinePoints = {gp_Pnt(300, 0, 0), gp_Pnt(350, 50, 50),
+                                        gp_Pnt(400, 0, 100)};
+
+    // 创建圆形剖面
+    circ_profile profile(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 10.0);
+
+    // 创建内孔剖面
+    circ_profile innerProfile(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 8.0);
+
+    // 设置多段管道参数
+    multi_segment_pipe_params params{
+        .wires = {linePoints, arcPoints, centerArcPoints, splinePoints},
+        .profiles = {profile, profile, profile, profile},
+        .inner_profiles = {{innerProfile, innerProfile, innerProfile,
+                            innerProfile}},
+        .segment_types = {{segment_type::LINE, segment_type::THREE_POINT_ARC,
+                           segment_type::CIRCLE_CENTER_ARC,
+                           segment_type::SPLINE}},
+        .transition_mode = transition_mode::ROUND};
+
+    // 测试2: 前部裁切(needFrontCut)
+    std::cout << "\nTest Case 2: Front Cut (splitDistances = {50, -1})"
+              << std::endl;
+    auto shp2 =
+        create_multi_segment_pipe_with_split_distances(params, {50.0, -1});
+    if (shp2.IsNull()) {
+      std::cerr << "Error: Failed to create pipe with front cut" << std::endl;
+    } else {
+      test_export_shape(shp2, "./multi_segment_pipe_front_cut.stl");
+    }
+
+    // 测试3: 后部裁切(needBackCut)
+    std::cout << "\nTest Case 3: Back Cut (splitDistances = {0, 250})"
+              << std::endl;
+    auto shp3 =
+        create_multi_segment_pipe_with_split_distances(params, {0.0, 250.0});
+    if (shp3.IsNull()) {
+      std::cerr << "Error: Failed to create pipe with back cut" << std::endl;
+    } else {
+      test_export_shape(shp3, "./multi_segment_pipe_back_cut.stl");
+    }
+
+    // 测试4: 前后都裁切(needFrontCut && needBackCut)
+    std::cout
+        << "\nTest Case 4: Both Front and Back Cut (splitDistances = {50, 250})"
+        << std::endl;
+    auto shp4 =
+        create_multi_segment_pipe_with_split_distances(params, {50.0, 250.0});
+    if (shp4.IsNull()) {
+      std::cerr << "Error: Failed to create pipe with both cuts" << std::endl;
+    } else {
+      test_export_shape(shp4, "./multi_segment_pipe_both_cuts.stl");
+    }
+
+    // 测试5: 中间段裁切(裁切范围在第二段)
+    std::cout
+        << "\nTest Case 5: Middle Segment Cut (splitDistances = {120, 180})"
+        << std::endl;
+    auto shp5 =
+        create_multi_segment_pipe_with_split_distances(params, {120.0, 180.0});
+    if (shp5.IsNull()) {
+      std::cerr << "Error: Failed to create pipe with middle segment cut"
+                << std::endl;
+    } else {
+      test_export_shape(shp5, "./multi_segment_pipe_middle_cut.stl");
+    }
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  } catch (const std::exception &e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+  }
+}
+
 void test_make_pipe_joint() {
   std::cout << "\n=== Testing Pipe Joint Creation ===" << std::endl;
 
@@ -4807,7 +4899,7 @@ void test_make_catenary() {
         .p2 = gp_Pnt(100, 0, 0), // 终点
         .profile = circ_prof,    // 圆形剖面
         .slack = 1.5,            // 悬垂度
-        .maxSag = 5.0,          // 最大垂度
+        .maxSag = 5.0,           // 最大垂度
         .tessellation = 0.0      // 分段数
     };
 
@@ -4844,6 +4936,7 @@ int main() {
   test_make_prism();
   test_make_pipe();
   test_make_multi_segment_pipe();
+  test_multi_segment_pipe_with_split_distances();
   test_make_pipe_joint();
   test_make_catenary();
   // 变电

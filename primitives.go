@@ -4823,6 +4823,14 @@ func CreatePipe(params PipeParams) *Shape {
 	return s
 }
 
+func CreatePipeWithSplitDistances(params PipeParams, startDistance, endDistance float64) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_pipe_with_split_distances(cParams, C.double(startDistance), C.double(endDistance))
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
 func CreatePipeWithPlace(params PipeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
 	cParams := params.to_struct()
 	shp := C.create_pipe_with_place(cParams, position.val, direction.val, xDir.val)
@@ -5022,6 +5030,13 @@ func CreateMultiSegmentPipe(params MultiSegmentPipeParams) *Shape {
 	return s
 }
 
+func CreateMultiSegmentPipeWithSplitDistances(params MultiSegmentPipeParams, startDistance, endDistance float64) *Shape {
+	cParams := params.to_struct()
+	shp := C.create_multi_segment_pipe_with_split_distances(cParams, C.double(startDistance), C.double(endDistance))
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
 func CreateMultiSegmentPipeWithPlace(params MultiSegmentPipeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
 	cParams := params.to_struct()
 	shp := C.create_multi_segment_pipe_with_place(cParams, position.val, direction.val, xDir.val)

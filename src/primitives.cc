@@ -16723,7 +16723,7 @@ TopoDS_Wire make_wire_from_segments(
   }
 }
 
-std::pair<TopoDS_Shape, std::pair<gp_Dir, gp_Dir>>
+std::tuple<TopoDS_Shape, TopoDS_Wire, std::pair<gp_Dir, gp_Dir>>
 create_pipe_helper(const pipe_params &params) {
   if (params.profiles.size() != 1 && params.profiles.size() != 2) {
     throw Standard_ConstructionError("Pipe requires exactly 1 or 2 profiles");
@@ -16874,14 +16874,336 @@ create_pipe_helper(const pipe_params &params) {
     TopoDS_Shape innerPipe = innerMaker.Shape();
 
     TopoDS_Shape result = BRepAlgoAPI_Cut(outerShape, innerPipe).Shape();
-    return {result, {firstTangent, lastTangent}};
+    return {result, pathWire, {firstTangent, lastTangent}};
   }
-  return {outerShape, {firstTangent, lastTangent}};
+  return {outerShape, pathWire, {firstTangent, lastTangent}};
 }
 
 TopoDS_Shape create_pipe(const pipe_params &params) {
   auto pair = create_pipe_helper(params);
-  return pair.first;
+  return std::get<0>(pair);
+}
+
+TopoDS_Shape create_simple_pipe(flywave::topo::circ_profile maxProfile,
+                                TopoDS_Wire pathWire) {
+  // 获取路径起始点和切线方向
+  gp_Pnt startPoint, endPoint;
+  gp_Vec startTangent, endTangent;
+
+  // 获取起始点信息
+  BRepAdaptor_CompCurve curveAdaptor(pathWire);
+  curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
+
+  // 获取结束点信息
+  curveAdaptor.D1(curveAdaptor.LastParameter(), endPoint, endTangent);
+
+  // 创建起始端截面
+  gp_Dir startTanDir = startTangent.Normalized();
+  gp_Dir startRefDir = gp_Vec(gp::DZ().Crossed(startTanDir)).Normalized();
+  gp_Ax2 startAxis(startPoint, startTanDir, startRefDir);
+  gp_Circ startCircle(startAxis, maxProfile.radius);
+  TopoDS_Edge startEdge = BRepBuilderAPI_MakeEdge(startCircle).Edge();
+  TopoDS_Wire startWire = BRepBuilderAPI_MakeWire(startEdge).Wire();
+
+  // 创建结束端截面
+  gp_Dir endTanDir = endTangent.Normalized();
+  gp_Dir endRefDir = gp_Vec(gp::DZ().Crossed(endTanDir)).Normalized();
+  gp_Ax2 endAxis(endPoint, endTanDir, endRefDir);
+  gp_Circ endCircle(endAxis, maxProfile.radius);
+  TopoDS_Edge endEdge = BRepBuilderAPI_MakeEdge(endCircle).Edge();
+  TopoDS_Wire endWire = BRepBuilderAPI_MakeWire(endEdge).Wire();
+
+  // 创建管道
+  BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
+  pipeMaker.Add(startWire, false, true); // 添加起始端截面
+  pipeMaker.Add(endWire, false, true);   // 添加结束端截面
+  pipeMaker.SetMode(true);
+  pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
+
+  pipeMaker.Build();
+
+  if (!pipeMaker.IsDone()) {
+    throw Standard_ConstructionError("Failed to create simple pipe");
+  }
+
+  if (!pipeMaker.MakeSolid()) {
+    throw Standard_ConstructionError("Failed to make simple pipe solid");
+  }
+
+  return pipeMaker.Shape();
+}
+
+TopoDS_Wire clip_wire_between_distances_helper(const TopoDS_Wire &wire_path,
+                                               double start_distance,
+                                               double end_distance) {
+  if (start_distance < 0 || end_distance < 0 ||
+      start_distance >= end_distance) {
+    throw std::invalid_argument("Invalid distance range");
+  }
+
+  // 计算路径总长度
+  GProp_GProps props;
+  BRepGProp::LinearProperties(wire_path, props);
+  double totalLength = props.Mass();
+
+  if (end_distance > totalLength) {
+    end_distance = totalLength;
+  }
+
+  if (start_distance >= totalLength) {
+    throw std::invalid_argument("start_distance exceeds total wire length");
+  }
+  if (end_distance >= totalLength) {
+    end_distance = totalLength;
+  }
+
+  BRepBuilderAPI_MakeWire wireBuilder;
+  double accumulatedLength = 0;
+  bool inRange = false;
+
+  TopExp_Explorer edgeExplorer(wire_path, TopAbs_EDGE);
+  for (; edgeExplorer.More(); edgeExplorer.Next()) {
+    const TopoDS_Edge &edge = TopoDS::Edge(edgeExplorer.Current());
+
+    // 获取原始边的定位和方向
+    const TopLoc_Location &edgeLoc = edge.Location();
+    TopAbs_Orientation edgeOrientation = edge.Orientation();
+
+    // 计算当前边的长度
+    GProp_GProps edgeProps;
+    BRepGProp::LinearProperties(edge, edgeProps);
+    double edgeLength = edgeProps.Mass();
+
+    double edgeStart = accumulatedLength;
+    double edgeEnd = accumulatedLength + edgeLength;
+
+    // 检查边是否在区间内
+    if (edgeEnd <= start_distance) {
+      accumulatedLength += edgeLength;
+      continue;
+    }
+
+    if (edgeStart >= end_distance) {
+      break;
+    }
+
+    // 获取边的几何曲线
+    BRepAdaptor_Curve curveAdaptor(edge);
+    Handle(Geom_Curve) curve = curveAdaptor.Curve().Curve();
+
+    // 检查曲线是否是周期性的(如圆弧)
+    bool isPeriodic = curve->IsPeriodic();
+    double period = isPeriodic ? curve->Period() : 0.0;
+
+    // 计算截取参数
+    double param1 = curveAdaptor.FirstParameter();
+    double param2 = curveAdaptor.LastParameter();
+
+    if (edgeStart < start_distance && edgeEnd > start_distance) {
+      double ratio = (start_distance - edgeStart) / edgeLength;
+      param1 = curveAdaptor.FirstParameter() +
+               ratio * (curveAdaptor.LastParameter() -
+                        curveAdaptor.FirstParameter());
+    }
+
+    if (edgeStart < end_distance && edgeEnd > end_distance) {
+      double ratio = (end_distance - edgeStart) / edgeLength;
+      param2 = curveAdaptor.FirstParameter() +
+               ratio * (curveAdaptor.LastParameter() -
+                        curveAdaptor.FirstParameter());
+    }
+
+    // 创建截取后的曲线
+    Handle(Geom_TrimmedCurve) trimmedCurve =
+        new Geom_TrimmedCurve(curve, param1, param2);
+
+    BRepBuilderAPI_MakeEdge makeEdge(trimmedCurve);
+    if (!makeEdge.IsDone())
+      continue;
+
+    TopoDS_Edge newEdge = makeEdge.Edge();
+    newEdge.Location(edgeLoc);
+    newEdge.Orientation(edgeOrientation);
+
+    wireBuilder.Add(newEdge);
+
+    accumulatedLength += edgeLength;
+  }
+
+  if (!wireBuilder.IsDone()) {
+    throw std::runtime_error("Failed to create sub wire");
+  }
+
+  return wireBuilder.Wire();
+}
+
+std::pair<double, gp_Pnt>
+compute_profile_radius_and_center(const shape_profile &profile) {
+  struct ProfileVisitor
+      : public boost::static_visitor<std::pair<double, gp_Pnt>> {
+
+    ProfileVisitor() {}
+
+    std::pair<double, gp_Pnt> operator()(const circ_profile &prof) const {
+      return {prof.radius, prof.center};
+    }
+
+    std::pair<double, gp_Pnt> operator()(const triangle_profile &prof) const {
+      // Calculate bounding box and center
+      double min_x = std::min({prof.p1.X(), prof.p2.X(), prof.p3.X()});
+      double min_y = std::min({prof.p1.Y(), prof.p2.Y(), prof.p3.Y()});
+      double min_z = std::min({prof.p1.Z(), prof.p2.Z(), prof.p3.Z()});
+
+      double max_x = std::max({prof.p1.X(), prof.p2.X(), prof.p3.X()});
+      double max_y = std::max({prof.p1.Y(), prof.p2.Y(), prof.p3.Y()});
+      double max_z = std::max({prof.p1.Z(), prof.p2.Z(), prof.p3.Z()});
+
+      gp_Vec size(max_x - min_x, max_y - min_y, max_z - min_z);
+      gp_Pnt center((prof.p1.X() + prof.p2.X() + prof.p3.X()) / 3,
+                    (prof.p1.Y() + prof.p2.Y() + prof.p3.Y()) / 3,
+                    (prof.p1.Z() + prof.p2.Z() + prof.p3.Z()) / 3);
+
+      return {size.Magnitude() / 2, center};
+    }
+
+    std::pair<double, gp_Pnt> operator()(const rectangle_profile &prof) const {
+      // Calculate diagonal vector and center
+      gp_Vec diagonal(prof.p1, prof.p2);
+      gp_Pnt center((prof.p1.X() + prof.p2.X()) / 2,
+                    (prof.p1.Y() + prof.p2.Y()) / 2,
+                    (prof.p1.Z() + prof.p2.Z()) / 2);
+
+      return {diagonal.Magnitude() / 2, center};
+    }
+
+    std::pair<double, gp_Pnt> operator()(const elips_profile &prof) const {
+      // Calculate major axis vector and center
+      gp_Vec major_axis(prof.s1, prof.s2);
+      return {major_axis.Magnitude() / 2, prof.center};
+    }
+
+    std::pair<double, gp_Pnt> operator()(const polygon_profile &prof) const {
+      if (prof.edges.empty()) {
+        return {0.0, gp_Pnt()};
+      }
+
+      // Calculate centroid
+      double sum_x = 0, sum_y = 0, sum_z = 0;
+      for (const auto &edge : prof.edges) {
+        sum_x += edge.X();
+        sum_y += edge.Y();
+        sum_z += edge.Z();
+      }
+      gp_Pnt center(sum_x / prof.edges.size(), sum_y / prof.edges.size(),
+                    sum_z / prof.edges.size());
+
+      // Find maximum distance from center to any vertex
+      double max_dist = 0.0;
+      for (const auto &edge : prof.edges) {
+        double dist = gp_Pnt(edge.X(), edge.Y(), edge.Z()).Distance(center);
+        if (dist > max_dist) {
+          max_dist = dist;
+        }
+      }
+
+      return {max_dist, center};
+    }
+
+    std::pair<double, gp_Pnt>
+    operator()(const std::vector<shape_profile> &profiles) const {
+      if (profiles.empty()) {
+        return {0.0, gp_Pnt()};
+      }
+      // For compound profiles, use the first profile
+      return boost::apply_visitor(*this, profiles[0]);
+    }
+  };
+
+  return boost::apply_visitor(ProfileVisitor{}, profile);
+}
+
+TopoDS_Shape
+create_pipe_with_split_distances(const pipe_params &params,
+                                 std::array<double, 2> splitDistances) {
+  // 参数验证
+  if (splitDistances[0] < 0) {
+    throw Standard_ConstructionError("First split distance must be >= 0");
+  }
+
+  // 创建完整管道
+  auto pair = create_pipe_helper(params);
+
+  TopoDS_Shape fullPipe = std::get<0>(pair);
+  TopoDS_Wire pathWire = std::get<1>(pair);
+
+  // 计算路径总长度
+  GProp_GProps lengthProps;
+  BRepGProp::LinearProperties(pathWire, lengthProps);
+  double totalLength = lengthProps.Mass();
+
+  // 处理第二个分割距离
+  if (splitDistances[1] == -1) {
+    splitDistances[1] = totalLength;
+  } else if (splitDistances[1] <= splitDistances[0] ||
+             splitDistances[1] > totalLength) {
+    throw Standard_ConstructionError("Invalid second split distance");
+  }
+
+  // 如果不需要分割，直接返回完整管道
+  if (splitDistances[0] == 0 && splitDistances[1] >= totalLength) {
+    return fullPipe;
+  }
+
+  // 计算管道最大半径
+  double maxRadius = 0;
+  auto pair0 = compute_profile_radius_and_center(params.profiles[0]);
+  maxRadius = std::max(maxRadius, pair0.first);
+
+  if (params.profiles.size() == 2) {
+    auto pair1 = compute_profile_radius_and_center(params.profiles[1]);
+    maxRadius = std::max(maxRadius, pair1.first);
+  }
+
+  // 创建圆形截面
+  circ_profile maxProfile;
+  maxProfile.radius = maxRadius * 1.2;
+  maxProfile.center = gp_Pnt(0, 0, 0);
+  maxProfile.norm = gp_Dir(0, 0, 1);
+
+  // 创建前段裁切体
+  TopoDS_Shape frontCut;
+  if (splitDistances[0] > 0) {
+    TopoDS_Wire frontWire =
+        clip_wire_between_distances_helper(pathWire, 0, splitDistances[0]);
+
+    if (!frontWire.IsNull()) {
+      // 使用最大圆形截面创建裁切体
+      frontCut = create_simple_pipe(maxProfile, frontWire);
+    }
+  }
+
+  // 创建后段裁切体
+  TopoDS_Shape backCut;
+  if (splitDistances[1] < totalLength) {
+    TopoDS_Wire backWire = clip_wire_between_distances_helper(
+        pathWire, splitDistances[1], totalLength);
+
+    if (!backWire.IsNull()) {
+      // 使用最大圆形截面创建裁切体
+      backCut = create_simple_pipe(maxProfile, backWire);
+    }
+  }
+
+  // 执行裁切操作
+  TopoDS_Shape result = fullPipe;
+  if (!frontCut.IsNull()) {
+    result = BRepAlgoAPI_Cut(result, frontCut).Shape();
+  }
+  if (!backCut.IsNull()) {
+    result = BRepAlgoAPI_Cut(result, backCut).Shape();
+  }
+
+  return result;
 }
 
 TopoDS_Shape create_pipe(const pipe_params &params, const gp_Pnt &position,
@@ -17003,9 +17325,9 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
 
     // 创建当前段管道
     auto pair = create_pipe_helper(seg_params);
-    TopoDS_Shape segment = pair.first;
-    gp_Dir start_normal = pair.second.first;
-    gp_Dir end_normal = pair.second.second;
+    TopoDS_Shape segment = std::get<0>(pair);
+    gp_Dir start_normal = std::get<2>(pair).first;
+    gp_Dir end_normal = std::get<2>(pair).second;
 
     // 添加到结果中
     builder.Add(result, segment);
@@ -17055,89 +17377,193 @@ TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params,
   return transform.Shape();
 }
 
-std::pair<double, gp_Pnt>
-compute_profile_radius_and_center(const shape_profile &profile) {
-  struct ProfileVisitor
-      : public boost::static_visitor<std::pair<double, gp_Pnt>> {
+TopoDS_Shape create_multi_segment_pipe_with_split_distances(
+    const multi_segment_pipe_params &params,
+    std::array<double, 2> splitDistances) {
+  // 参数验证
+  if (splitDistances[0] < 0) {
+    throw Standard_ConstructionError("First split distance must be >= 0");
+  }
 
-    ProfileVisitor() {}
+  // 获取路径线框
+  TopoDS_Wire pathWire =
+      make_wire_from_segments(params.wires, params.segment_types);
 
-    std::pair<double, gp_Pnt> operator()(const circ_profile &prof) const {
-      return {prof.radius, prof.center};
+  // 计算路径总长度
+  GProp_GProps lengthProps;
+  BRepGProp::LinearProperties(pathWire, lengthProps);
+  double totalLength = lengthProps.Mass();
+
+  // 处理第二个分割距离
+  if (splitDistances[1] == -1) {
+    splitDistances[1] = totalLength;
+  } else if (splitDistances[1] <= splitDistances[0] ||
+             splitDistances[1] > totalLength) {
+    throw Standard_ConstructionError("Invalid second split distance");
+  }
+
+  // 如果不需要分割，直接返回完整管道
+  if (splitDistances[0] == 0 && splitDistances[1] >= totalLength) {
+    return create_multi_segment_pipe(params);
+  }
+
+  // 计算管道最大半径
+  double maxRadius = 0;
+  for (const auto &profile : params.profiles) {
+    auto [radius, _] = compute_profile_radius_and_center(profile);
+    maxRadius = std::max(maxRadius, radius);
+  }
+  if (params.inner_profiles) {
+    for (const auto &profile : *params.inner_profiles) {
+      auto [radius, _] = compute_profile_radius_and_center(profile);
+      maxRadius = std::max(maxRadius, radius);
     }
+  }
 
-    std::pair<double, gp_Pnt> operator()(const triangle_profile &prof) const {
-      // Calculate bounding box and center
-      double min_x = std::min({prof.p1.X(), prof.p2.X(), prof.p3.X()});
-      double min_y = std::min({prof.p1.Y(), prof.p2.Y(), prof.p3.Y()});
-      double min_z = std::min({prof.p1.Z(), prof.p2.Z(), prof.p3.Z()});
+  // 创建圆形截面
+  circ_profile maxProfile;
+  maxProfile.radius = maxRadius * 1.1; // 增加10%余量确保完全包裹
+  maxProfile.center = gp_Pnt(0, 0, 0);
+  maxProfile.norm = gp_Dir(0, 0, 1);
 
-      double max_x = std::max({prof.p1.X(), prof.p2.X(), prof.p3.X()});
-      double max_y = std::max({prof.p1.Y(), prof.p2.Y(), prof.p3.Y()});
-      double max_z = std::max({prof.p1.Z(), prof.p2.Z(), prof.p3.Z()});
+  TopoDS_Shape result;
+  double accumulatedLength = 0;
+  shape_profile prev_profile;
+  gp_Dir prev_normal;
+  bool has_prev = false;
 
-      gp_Vec size(max_x - min_x, max_y - min_y, max_z - min_z);
-      gp_Pnt center((prof.p1.X() + prof.p2.X() + prof.p3.X()) / 3,
-                    (prof.p1.Y() + prof.p2.Y() + prof.p3.Y()) / 3,
-                    (prof.p1.Z() + prof.p2.Z() + prof.p3.Z()) / 3);
+  TopoDS_Shape finalPipe;
+  BRep_Builder builder;
+  builder.MakeCompound(TopoDS::Compound(finalPipe));
 
-      return {size.Magnitude() / 2, center};
-    }
+  for (size_t i = 0; i < params.wires.size(); i++) {
+    // 创建当前段的路径线框
+    TopoDS_Wire currentWire = make_wire_from_segments(
+        {params.wires[i]},
+        params.segment_types
+            ? boost::optional<std::vector<segment_type>>(
+                  std::vector<segment_type>{(*params.segment_types)[i]})
+            : boost::none);
 
-    std::pair<double, gp_Pnt> operator()(const rectangle_profile &prof) const {
-      // Calculate diagonal vector and center
-      gp_Vec diagonal(prof.p1, prof.p2);
-      gp_Pnt center((prof.p1.X() + prof.p2.X()) / 2,
-                    (prof.p1.Y() + prof.p2.Y()) / 2,
-                    (prof.p1.Z() + prof.p2.Z()) / 2);
+    // 计算当前段长度
+    GProp_GProps lengthProps;
+    BRepGProp::LinearProperties(currentWire, lengthProps);
+    double segmentLength = lengthProps.Mass();
 
-      return {diagonal.Magnitude() / 2, center};
-    }
+    // 计算当前段的起始和结束距离
+    double segmentStart = accumulatedLength;
+    double segmentEnd = accumulatedLength + segmentLength;
 
-    std::pair<double, gp_Pnt> operator()(const elips_profile &prof) const {
-      // Calculate major axis vector and center
-      gp_Vec major_axis(prof.s1, prof.s2);
-      return {major_axis.Magnitude() / 2, prof.center};
-    }
+    // 判断当前段是否需要裁切
+    bool noCut =
+        (splitDistances[0] <= segmentStart && splitDistances[1] >= segmentEnd);
+    bool needFrontCut =
+        (splitDistances[0] > segmentStart && splitDistances[0] < segmentEnd);
+    bool needBackCut =
+        (splitDistances[1] > segmentStart && splitDistances[1] < segmentEnd);
 
-    std::pair<double, gp_Pnt> operator()(const polygon_profile &prof) const {
-      if (prof.edges.empty()) {
-        return {0.0, gp_Pnt()};
+    TopoDS_Shape segment;
+    if (noCut || needFrontCut || needBackCut) {
+      pipe_params seg_params{.wire = params.wires[i],
+                             .segment_type = params.segment_types
+                                                 ? (*params.segment_types)[i]
+                                                 : segment_type::LINE,
+                             .transition_mode = params.transition_mode};
+
+      if (params.profiles.size() == 1) {
+        seg_params.profiles = {params.profiles[0]};
+      } else {
+        int nextId = i + 1;
+        if (nextId == params.profiles.size()) {
+          nextId = i;
+        }
+        seg_params.profiles = {params.profiles[i], params.profiles[nextId]};
       }
 
-      // Calculate centroid
-      double sum_x = 0, sum_y = 0, sum_z = 0;
-      for (const auto &edge : prof.edges) {
-        sum_x += edge.X();
-        sum_y += edge.Y();
-        sum_z += edge.Z();
-      }
-      gp_Pnt center(sum_x / prof.edges.size(), sum_y / prof.edges.size(),
-                    sum_z / prof.edges.size());
-
-      // Find maximum distance from center to any vertex
-      double max_dist = 0.0;
-      for (const auto &edge : prof.edges) {
-        double dist = gp_Pnt(edge.X(), edge.Y(), edge.Z()).Distance(center);
-        if (dist > max_dist) {
-          max_dist = dist;
+      // 如果有内轮廓，设置内轮廓
+      if (params.inner_profiles) {
+        if (params.inner_profiles->size() == 1) {
+          seg_params.inner_profiles = {{(*params.inner_profiles)[0]}};
+        } else {
+          int nextId = i + 1;
+          if (nextId == params.inner_profiles->size()) {
+            nextId = i;
+          }
+          seg_params.inner_profiles = {
+              {(*params.inner_profiles)[i], (*params.inner_profiles)[nextId]}};
         }
       }
 
-      return {max_dist, center};
-    }
+      // 创建当前段管道
+      auto pair = create_pipe_helper(seg_params);
+      segment = std::get<0>(pair);
+      gp_Dir start_normal = std::get<2>(pair).first;
+      gp_Dir end_normal = std::get<2>(pair).second;
 
-    std::pair<double, gp_Pnt>
-    operator()(const std::vector<shape_profile> &profiles) const {
-      if (profiles.empty()) {
-        return {0.0, gp_Pnt()};
+      if (has_prev) {
+        bool needTransition = false;
+        if (noCut || needFrontCut) {
+          needTransition = true;
+        } else if (needBackCut && splitDistances[0] > segmentStart) {
+          needTransition = true;
+        }
+        if (needTransition) {
+          const auto &wire = params.wires[i - 1];
+          TopoDS_Shape transition = create_pipe_transition(
+              prev_profile, prev_normal, params.profiles[i], start_normal,
+              wire.back());
+
+          if (!transition.IsNull()) {
+            builder.Add(finalPipe, transition);
+          }
+        }
       }
-      // For compound profiles, use the first profile
-      return boost::apply_visitor(*this, profiles[0]);
-    }
-  };
 
-  return boost::apply_visitor(ProfileVisitor{}, profile);
+      // 保存当前段信息供下一段使用
+      prev_profile = params.profiles[i];
+      prev_normal = end_normal;
+      has_prev = true;
+    }
+
+    if (!segment.IsNull() && (needFrontCut || needBackCut)) {
+      TopoDS_Shape cutterFront;
+      TopoDS_Shape cutterBack;
+      if (needFrontCut) {
+        // 仅前部裁切
+        TopoDS_Wire frontWire = clip_wire_between_distances_helper(
+            currentWire, 0, splitDistances[0] - segmentStart);
+        cutterFront = create_simple_pipe(maxProfile, frontWire);
+      }
+      if (needBackCut) {
+        // 仅后部裁切
+        TopoDS_Wire backWire = clip_wire_between_distances_helper(
+            currentWire, splitDistances[1] - segmentStart, segmentLength);
+        cutterBack = create_simple_pipe(maxProfile, backWire);
+      }
+
+      if (!cutterFront.IsNull()) {
+        segment = BRepAlgoAPI_Cut(segment, cutterFront).Shape();
+      }
+
+      if (!cutterBack.IsNull()) {
+        segment = BRepAlgoAPI_Cut(segment, cutterBack).Shape();
+      }
+    }
+
+    if (!segment.IsNull()) {
+      if (result.IsNull()) {
+        result = segment;
+      } else {
+        result = BRepAlgoAPI_Fuse(result, segment).Shape();
+      }
+    }
+
+    accumulatedLength += segmentLength;
+  }
+
+  builder.Add(finalPipe, result);
+
+  return finalPipe;
 }
 
 shape_profile scale_profile(const shape_profile &profile, double scale) {
