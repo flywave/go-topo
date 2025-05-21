@@ -813,10 +813,10 @@ void test_make_wire() {
     auto shp2 = create_wire(
         wire_params{.startPoint = gp_Pnt(0, 0, 0),
                     .endPoint = gp_Pnt(300, 0, 150), // 与最后一个拟合点一致
-                    .startDir = gp_Dir(1, 0, 0),     // 初始方向沿X轴
-                    .endDir = gp_Dir(0, 0, 1),       // 结束方向沿Z轴
-                    .sag = 25.0,                     // 合理弧垂值
-                    .diameter = 8.0,                 // 典型导线直径
+                    .startDir = gp_Dir(1, 0, 0), // 初始方向沿X轴
+                    .endDir = gp_Dir(0, 0, 1),   // 结束方向沿Z轴
+                    .sag = 25.0,                 // 合理弧垂值
+                    .diameter = 8.0,             // 典型导线直径
                     .fitPoints = fitPoints});
 
     if (shp2.IsNull()) {
@@ -2225,17 +2225,17 @@ void test_make_ribbed_anchor() {
 void test_make_nut_anchor() {
   std::cout << "\n=== Testing Nut Anchor ===" << std::endl;
   try {
-    nut_anchor_params params{                       // 基础参数
-                             .boltDiameter = 0.2,   // 地脚螺栓直径 20mm → 0.02m
+    nut_anchor_params params{                     // 基础参数
+                             .boltDiameter = 0.2, // 地脚螺栓直径 20mm → 0.02m
                              .exposedLength = 0.40, // 露头长度 100mm → 0.1m
                              .nutCount = 2,         // 蝶帽数量保持不变
-                             .nutHeight = 0.1,      // 蝶帽高度 10mm → 0.01m
-                             .nutOD = 0.6,          // 蝶帽外径 40mm → 0.04m
-                             .washerCount = 2,      // 垫片数量保持不变
-                             .washerShape = 2,      // 圆形垫片
-                             .washerSize = 0.65,    // 垫片直径 30mm → 0.03m
+                             .nutHeight = 0.1,   // 蝶帽高度 10mm → 0.01m
+                             .nutOD = 0.6,       // 蝶帽外径 40mm → 0.04m
+                             .washerCount = 2,   // 垫片数量保持不变
+                             .washerShape = 2,   // 圆形垫片
+                             .washerSize = 0.65, // 垫片直径 30mm → 0.03m
                              .washerThickness = 0.015, // 垫片厚度 5mm → 0.005m
-                             .anchorLength = 1.5,      // 锚固长度 500mm → 0.5m
+                             .anchorLength = 1.5, // 锚固长度 500mm → 0.5m
 
                              // 螺帽锚固特有参数
                              .basePlateSize = 0.60,
@@ -3630,9 +3630,9 @@ void test_make_cable_tunnel() {
   try {
     cable_tunnel_params circular_params{.style =
                                             connection_section_style::CIRCULAR,
-                                        .width = 60.0,                // 600→60
-                                        .height = 60.0,               // 600→60
-                                        .outerWallThickness = 7.0,    // 70→7
+                                        .width = 60.0,             // 600→60
+                                        .height = 60.0,            // 600→60
+                                        .outerWallThickness = 7.0, // 70→7
                                         .bottomPlatformHeight = 10.0, // 100→10
                                         .cushionExtension = 0.0,      // 80→8
                                         .cushionThickness = 0.0,      // 60→6
@@ -4743,6 +4743,52 @@ void test_make_multi_segment_pipe() {
   }
 
   try {
+    std::vector<std::vector<gp_Pnt>> points = {
+        {gp_Pnt(0, 0, 0),
+         gp_Pnt(13.363751136232167, -26.227833716198802, 40.422308564186096)},
+        {gp_Pnt(13.363751136232167, -26.227833716198802, 40.422308564186096),
+         gp_Pnt(46.29231750732288, -90.69991450663656, 108.94551491551101)},
+        {gp_Pnt(46.29231750732288, -90.69991450663656, 108.94551491551101),
+         gp_Pnt(132.02422594139352, -257.1274096108973, -1.525045077316463)},
+        {gp_Pnt(132.02422594139352, -257.1274096108973, -1.525045077316463),
+         gp_Pnt(155.7862730268389, -461.9796159574762, 275.57995436759666)},
+        {gp_Pnt(155.7862730268389, -461.9796159574762, 275.57995436759666),
+         gp_Pnt(277.5595232350752, -1029.277987377718, 560.3984563779086)}};
+    gp_Dir upDir =
+        gp_Vec(-2365550.686973459, 4588616.347934356, 3734082.7681595744)
+            .Normalized();
+    std::vector<gp_Pnt> polygons = {
+        gp_Pnt(-3.171, 2.538, 0), gp_Pnt(-3.136, 3.954, 0),
+        gp_Pnt(-2.498, 5.219, 0), gp_Pnt(-1.382, 6.09, 0),
+        gp_Pnt(0, 6.4, 0),        gp_Pnt(1.382, 6.09, 0),
+        gp_Pnt(2.498, 5.219, 0),  gp_Pnt(3.136, 3.954, 0),
+        gp_Pnt(3.171, 2.538, 0),  gp_Pnt(2.5, 0, 0),
+        gp_Pnt(-2.5, 0, 0),       gp_Pnt(-3.171, 2.538, 0)};
+
+    // 创建多边形剖面
+    polygon_profile profile(polygons);
+
+    // 设置多段管道参数
+    multi_segment_pipe_params params{
+        .wires = points,
+        .profiles = {profile, profile, profile, profile, profile},
+        .segment_types = {{segment_type::LINE, segment_type::LINE,
+                           segment_type::LINE, segment_type::LINE,
+                           segment_type::LINE}},
+        .transition_mode = transition_mode::TRANSFORMED,
+        .upDir = upDir};
+
+    auto shp = create_multi_segment_pipe(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create multi-segment pipe" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./multi_segment_bug.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+
+  try {
     // 准备测试数据 - 直线段
     std::vector<gp_Pnt> linePoints = {gp_Pnt(50, -50, 0), gp_Pnt(100, 0, 0)};
 
@@ -5065,7 +5111,7 @@ void test_make_revolution_shape() {
 
     // 测试带VMin/VMax参数的旋转体
     auto rangedShp = create_revolution_shape(revolution_shape_params{
-        .meridian = meridian, .min = 0.0, .max = 8.0, .angle = 180.0});
+        .meridian = meridian, .angle = 180.0, .max = 8.0, .min = 0.0});
     if (rangedShp.IsNull()) {
       std::cerr << "Error: Failed to create ranged revolution shape"
                 << std::endl;
