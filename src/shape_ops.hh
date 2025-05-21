@@ -6,9 +6,9 @@
 #include "face.hh"
 #include "shape.hh"
 #include "shell.hh"
+#include "transition_mode.hh"
 #include "vertex.hh"
 #include "wire.hh"
-#include "transition_mode.hh"
 
 #include <BOPAlgo_CheckStatus.hxx>
 #include <BRepCheck.hxx>

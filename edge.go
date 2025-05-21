@@ -1029,6 +1029,15 @@ func TopoMakeSplineApprox(points []Point3, tolerance float64, smoothing []float6
 	return p
 }
 
+func TopoMakeCatenary(p1, p2 Point3, orientation Axis3,
+	slack, maxSag, tessellation float64) *Edge {
+	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_catenary(
+		p1.val, p2.val, orientation.val, C.double(slack),
+		C.double(maxSag), C.double(tessellation))}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
 func TopoMakeCircle(radius float64, center Point3, normal Vector3,
 	angle1, angle2 float64, orientation bool) *Edge {
 	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_circle(

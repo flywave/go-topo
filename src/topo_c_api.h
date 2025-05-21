@@ -601,6 +601,10 @@ TOPOCAPICALL topo_edge_t topo_edge_make_spline_from_tangents_and_parameters(
 TOPOCAPICALL topo_edge_t
 topo_edge_make_spline_approx(pnt3d_t *points, int pntcount, double tolerance,
                              double *smoothing, int minDegree, int maxDegree);
+TOPOCAPICALL topo_edge_t topo_edge_make_catenary(pnt3d_t p1, pnt3d_t p2,
+                                                 axis3_t orientation,
+                                                 double slack, double maxSag,
+                                                 double tessellation);
 TOPOCAPICALL topo_edge_t topo_edge_make_circle(double radius, pnt3d_t center,
                                                vec3d_t normal, double angle1,
                                                double angle2, bool orientation);

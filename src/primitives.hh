@@ -2304,7 +2304,7 @@ struct pipe_params {
   boost::optional<std::vector<shape_profile>> inner_profiles;
   topo::segment_type segment_type;
   topo::transition_mode transition_mode;
-  boost::optional<gp_Dir> up_dir;
+  boost::optional<gp_Dir> upDir;
 };
 
 TopoDS_Shape create_pipe(const pipe_params &params);
@@ -2318,7 +2318,7 @@ struct multi_segment_pipe_params {
   boost::optional<std::vector<shape_profile>> inner_profiles;
   boost::optional<std::vector<segment_type>> segment_types;
   topo::transition_mode transition_mode;
-  boost::optional<gp_Dir> up_dir;
+  boost::optional<gp_Dir> upDir;
 };
 
 TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params);
@@ -2344,7 +2344,7 @@ struct pipe_joint_params {
   std::vector<pipe_endpoint> outs;
   joint_shape_mode mode;
   bool flanged; // 新增参数，表示是否为法兰连接
-  boost::optional<gp_Dir> up_dir;
+  boost::optional<gp_Dir> upDir;
 };
 
 TopoDS_Shape create_pipe_joint(const pipe_joint_params &params);
@@ -2358,7 +2358,7 @@ struct catenary_params {
   gp_Pnt p2;
   shape_profile profile;
   double slack;
-  double max_sag;
+  double maxSag;
   double tessellation;
 };
 
@@ -2461,7 +2461,7 @@ TopoDS_Shape create_wedge_shape(const wedge_shape_params &params,
 struct pipe_shape_params {
   std::array<gp_Pnt, 2> wire;
   shape_profile profile;
-  boost::optional<gp_Dir> up_dir;
+  boost::optional<gp_Dir> upDir;
 };
 
 TopoDS_Shape create_pipe_shape(const pipe_shape_params &params);

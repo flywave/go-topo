@@ -1218,10 +1218,11 @@ std::pair<gp_Pnt, gp_Pnt> closest(const shape &shape1, const shape &shape2) {
   return {distCalculator.PointOnShape1(1), distCalculator.PointOnShape2(1)};
 }
 
-boost::optional<shape>
-dprism(const shape &shp, const face &basis,
-       const std::vector<wire> &profiles, const boost::optional<double> &depth,
-       double taper, const face *upToFace, bool thruAll, bool additive) {
+boost::optional<shape> dprism(const shape &shp, const face &basis,
+                              const std::vector<wire> &profiles,
+                              const boost::optional<double> &depth,
+                              double taper, const face *upToFace, bool thruAll,
+                              bool additive) {
   auto sortedProfiles = sort_wires_by_build_order(profiles);
   std::vector<face> faces;
 
@@ -1237,10 +1238,11 @@ dprism(const shape &shp, const face &basis,
   return dprism(shp, basis, faces, depth, taper, upToFace, thruAll, additive);
 }
 
-boost::optional<shape>
-dprism(const shape &shp, const face &basis,
-       const std::vector<face> &faces, const boost::optional<double> &depth,
-       double taper, const face *upToFace, bool thruAll, bool additive) {
+boost::optional<shape> dprism(const shape &shp, const face &basis,
+                              const std::vector<face> &faces,
+                              const boost::optional<double> &depth,
+                              double taper, const face *upToFace, bool thruAll,
+                              bool additive) {
   TopoDS_Shape shape_ = shp.value();
   const TopoDS_Face basisFace = basis ? basis.value() : TopoDS_Face();
   const double taperRad = taper * M_PI / 180.0;
@@ -1589,6 +1591,7 @@ double wrie_length(wire path) {
     return 0.0;
   }
 }
+
 
 } // namespace topo
 } // namespace flywave

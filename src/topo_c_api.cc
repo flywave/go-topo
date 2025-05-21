@@ -2115,9 +2115,9 @@ topo_edge_t topo_edge_make_polygon_from_vertices(topo_vertex_t *vertices,
                                                  int vertcount, _Bool Close) {
   std::vector<flywave::topo::vertex> oes;
   for (int i = 0; i < vertcount; i++) {
-    oes.emplace_back(*
-        std::dynamic_pointer_cast<flywave::topo::vertex>(vertices[i].shp->shp)
-            .get());
+    oes.emplace_back(
+        *std::dynamic_pointer_cast<flywave::topo::vertex>(vertices[i].shp->shp)
+             .get());
   }
   try {
     return topo_edge_t{.shp = new topo_shape_t{
@@ -2214,6 +2214,21 @@ topo_edge_t topo_edge_make_spline_approx(pnt3d_t *points, int pntcount,
             .shp = std::make_shared<flywave::topo::edge>(
                 flywave::topo::edge::make_spline_approx(
                     oes, tolerance, osmoothing, minDegree, maxDegree))}};
+  } catch (...) {
+    return topo_edge_t{};
+  }
+}
+
+topo_edge_t topo_edge_make_catenary(pnt3d_t p1, pnt3d_t p2, axis3_t orientation,
+                                    double slack, double maxSag,
+                                    double tessellation) {
+  try {
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_catenary(
+                    cast_to_gp(p1), cast_to_gp(p2), cast_to_gp(orientation),
+                    slack, maxSag, tessellation))}};
   } catch (...) {
     return topo_edge_t{};
   }

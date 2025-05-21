@@ -4795,6 +4795,49 @@ void test_make_pipe_joint() {
   }
 }
 
+void test_make_catenary() {
+  std::cout << "\n=== Testing Catenary ===" << std::endl;
+  try {
+    // 创建圆形剖面
+    circ_profile circ_prof{gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 2.0};
+
+    // 测试标准悬垂线
+    catenary_params params{
+        .p1 = gp_Pnt(0, 0, 0),   // 起点
+        .p2 = gp_Pnt(100, 0, 0), // 终点
+        .profile = circ_prof,    // 圆形剖面
+        .slack = 1.5,            // 悬垂度
+        .maxSag = 5.0,          // 最大垂度
+        .tessellation = 0.0      // 分段数
+    };
+
+    auto shp = create_catenary(params);
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create catenary" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./catenary.stl");
+
+    // 测试带高度的悬垂线
+    catenary_params height_params{.p1 = gp_Pnt(0, 0, 0),     // 起点高度10
+                                  .p2 = gp_Pnt(100, 50, 40), // 终点高度20
+                                  .profile = circ_prof,
+                                  .slack = 2.0,
+                                  .maxSag = 10.0,
+                                  .tessellation = 0.0};
+
+    auto height_shp = create_catenary(height_params);
+    if (height_shp.IsNull()) {
+      std::cerr << "Error: Failed to create height catenary" << std::endl;
+      return;
+    }
+    test_export_shape(height_shp, "./height_catenary.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
 int main() {
   // 基础图形
   test_revol();
@@ -4802,6 +4845,7 @@ int main() {
   test_make_pipe();
   test_make_multi_segment_pipe();
   test_make_pipe_joint();
+  test_make_catenary();
   // 变电
   test_make_sphere();
   test_make_rotational_ellipsoid();

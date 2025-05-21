@@ -1,4 +1,5 @@
 #include "edge.hh"
+#include "catenary.hh"
 #include "face.hh"
 #include "vertex.hh"
 #include "wire.hh"
@@ -682,6 +683,22 @@ edge edge::make_spline_approx(
     throw std::runtime_error("Edge creation from spline failed");
   }
 
+  return edge(edgeMaker.Edge());
+}
+
+edge edge::make_catenary(const gp_Pnt &p1, const gp_Pnt &p2,
+                         const gp_Ax3 &orientation, double slack, double maxSag,
+                         double tessellation) {
+  Handle(Geom_BSplineCurve) catenaryCurves =
+      makeCatenaryCurve(p1, p2, orientation, slack, maxSag, tessellation);
+  if (!catenaryCurves) {
+    throw std::runtime_error("Failed to generate catenary curves");
+  }
+  TopoDS_Wire wire;
+  BRepBuilderAPI_MakeEdge edgeMaker(catenaryCurves);
+  if (!edgeMaker.IsDone()) {
+    throw std::runtime_error("Failed to create edge from catenary curves");
+  }
   return edge(edgeMaker.Edge());
 }
 
