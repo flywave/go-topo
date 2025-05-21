@@ -475,3 +475,29 @@ func ProfileProjectPointList(proj *ProfileProjection, points []Point3) []Point3 
 func WireLength(wire *Wire) float64 {
 	return float64(C.topo_wrie_length(wire.inner.val))
 }
+
+func MakeCatenary(p1, p2 Point3, slack, maxSag float64, orientation Axis3, tessellation float64) []Point3 {
+	var count C.int
+	cPoints := C.topo_make_catenary(
+		p1.val,
+		p2.val,
+		C.double(slack),
+		C.double(maxSag),
+		orientation.val,
+		C.double(tessellation),
+		&count,
+	)
+	defer C.topo_free_catenary_points(cPoints)
+
+	if cPoints == nil || count == 0 {
+		return nil
+	}
+
+	points := make([]Point3, int(count))
+	pointsSlice := (*[1 << 30]C.pnt3d_t)(unsafe.Pointer(cPoints))[:count:count]
+	for i := 0; i < int(count); i++ {
+		points[i] = Point3{val: pointsSlice[i]}
+	}
+
+	return points
+}

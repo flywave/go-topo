@@ -93,25 +93,25 @@ struct CatenaryFunc {
 
     GFunc gfunc(d, L, h);
     math_BissecNewton solver(1e-6);
-    
+
     // 改进求解器参数范围
     double lower = 0.1 * d;  // 原d/2.0可能范围过小
     double upper = 2.0 * d;  // 原d可能范围不足
     int maxIterations = 200; // 增加最大迭代次数
-    
+
     // 验证函数值符号变化
     double flow = 0.0, fupp = 0.0;
     gfunc.Value(lower, flow);
     gfunc.Value(upper, fupp);
-    
+
     // 自动扩展搜索范围直到找到有效区间
     while (flow * fupp > 0 && upper < 1e6) {
-        upper *= 2.0;
-        gfunc.Value(upper, fupp);
+      upper *= 2.0;
+      gfunc.Value(upper, fupp);
     }
-    
+
     solver.Perform(gfunc, lower, upper, maxIterations);
-    
+
     if (!solver.IsDone()) {
       throw Standard_ConstructionError(
           "Failed to converge in parameter solving");
@@ -151,7 +151,7 @@ public:
 };
 } // namespace
 
-Handle(Geom_BSplineCurve)
+inline Handle(Geom_BSplineCurve)
     makeCatenaryCurve(const gp_Pnt &p1, const gp_Pnt &p2,
                       const gp_Ax3 &orientation, double slack, double maxSag,
                       double tessellation = 0.0) {
@@ -274,5 +274,124 @@ Handle(Geom_BSplineCurve)
   curve->Transform(catToWorld);
 
   return curve;
+}
+
+inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
+                         const gp_Ax3 &orientation, double slack, double maxSag,
+                         std::vector<gp_Pnt> &result, double tessellation) {
+  // 增强参数验证
+  if (slack <= 1.0 || slack > 100.0) {
+    throw Standard_ConstructionError("Slack must be in range (1.0, 100.0]");
+  }
+  if (maxSag <= 0.0 || maxSag > 1e6) {
+    throw Standard_ConstructionError("Max sag must be in range (0.0, 1e6]");
+  }
+  double dist = p1.Distance(p2);
+  if (dist < Precision::Confusion()) {
+    throw Standard_ConstructionError("Points p1 and p2 are too close");
+  }
+  if (dist > 1e6) {
+    throw Standard_ConstructionError("Distance between points is too large");
+  }
+
+  // Create transformation to local frame at p1
+  gp_Trsf trsf;
+  if (p1.IsEqual(gp::Origin(), Precision::Confusion()) &&
+      orientation.IsCoplanar(gp_Ax3(), Precision::Confusion(),
+                             Precision::Angular())) {
+    // nothing to do
+  } else if (orientation.IsCoplanar(gp_Ax3(), Precision::Confusion(),
+                                    Precision::Angular())) {
+    // Ident坐标系特殊处理：构建以p1为原点的新坐标系
+    gp_Ax3 localFrame(p1, gp_Dir(0, 0, 1), gp_Dir(1, 0, 0));
+    trsf.SetTransformation(localFrame, gp_Ax3());
+  } else {
+    // 常规坐标系转换
+    trsf.SetTransformation(orientation,
+                           gp_Ax3(p1, gp_Dir(0, 0, 1), gp_Dir(1, 0, 0)));
+  }
+
+  // Transform p2 to local frame
+  gp_Pnt p2local = p2.Transformed(trsf);
+
+  // Determine if we need to swap points
+  bool swapped = (p2local.Z() < 0.0);
+  gp_Vec Xaxis;
+  if (swapped) {
+    Xaxis = gp_Vec(-p2local.X(), -p2local.Y(), 0.0);
+  } else {
+    Xaxis = gp_Vec(p2local.X(), p2local.Y(), 0.0);
+  }
+
+  // Horizontal distance and height difference
+  double d = Xaxis.Magnitude();
+  Xaxis.Normalize();
+  gp_Vec Yaxis = gp_Dir(0, 0, 1).Crossed(Xaxis);
+
+  // Create catenary frame
+  gp_Ax3 catFrame(p1, gp_Dir(0, 0, 1), Xaxis);
+  if (swapped) {
+    catFrame.SetLocation(p2);
+  }
+
+  double h = swapped ? -p2local.Z() : p2local.Z();
+  double straightDist = p2local.Distance(gp_Pnt(0, 0, 0));
+
+  // Solve for catenary parameters
+  CatenaryFunc func = CatenaryFunc::solveIt(straightDist * slack, d, h);
+
+  // Check for excessive sag
+  double xMin = -func.x1;
+  double yMin = func(xMin);
+  if (0.0 < xMin && yMin < -maxSag) {
+    MinCatHeight minimum(d, h, -maxSag);
+    double newGuess = ((slack - 1.0) * 0.01 + 1.0) * straightDist;
+    double Lmin = solveBisect(minimum, newGuess, straightDist * slack, 0.01, 8);
+    func = CatenaryFunc::solveIt(Lmin, d, h);
+  }
+
+  // 自动计算最优细分尺寸
+  if (tessellation <= 0.0 || tessellation > straightDist / 20 ||
+      tessellation < straightDist / 1000.0) {
+    // 基础细分尺寸基于距离和松弛度
+    double baseTess = straightDist / 20.0; // 基础细分尺寸为距离的1/20
+    // 考虑松弛度影响 - 松弛度越大，需要更细的细分
+    double slackFactor = 1.0 + (slack - 1.0) * 0.5;
+    // 考虑高度差影响 - 高度差越大，需要更细的细分
+    double heightFactor = 1.0 + std::abs(h) / (straightDist + 1e-12) * 2.0;
+    // 计算最终细分尺寸
+    tessellation = baseTess / (slackFactor * heightFactor);
+    // 确保在合理范围内 (不小于1mm)
+    tessellation = std::max(1.0, tessellation);
+  }
+
+  // Generate points along the catenary
+  std::vector<gp_Pnt> cablePts;
+  int numSteps = ceil(straightDist / tessellation);
+  double begin, inc;
+
+  if (swapped) {
+    inc = -d / numSteps;
+    begin = d + inc;
+    cablePts.push_back(gp_Pnt(d, 0, h));
+  } else {
+    inc = d / numSteps;
+    begin = inc;
+    cablePts.push_back(gp_Pnt(0, 0, 0));
+  }
+
+  double x = begin;
+  for (int i = 1; i <= numSteps; ++i, x += inc) {
+    double z = func(x);
+    cablePts.push_back(gp_Pnt(x, 0, z));
+  }
+
+  // Transform points back to world coordinates
+  gp_Trsf catToWorld;
+  catToWorld.SetTransformation(catFrame, gp_Ax3());
+
+  for (auto &pt : cablePts) {
+    result.push_back(pt.Transformed(catToWorld));
+  }
 }
 } // namespace flywave

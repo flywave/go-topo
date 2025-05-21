@@ -1569,6 +1569,12 @@ TOPOCAPICALL void topo_profile_project_point_list_free(pnt3d_t *points);
 
 TOPOCAPICALL double topo_wrie_length(topo_wire_t wire);
 
+TOPOCAPICALL pnt3d_t *topo_make_catenary(pnt3d_t p1, pnt3d_t p2, double slack,
+                                    double maxSag, axis3_t orientation,
+                                    double tessellation, int *point_count);
+
+TOPOCAPICALL void topo_free_catenary_points(pnt3d_t *points);
+
 #ifdef __cplusplus
 }
 #endif

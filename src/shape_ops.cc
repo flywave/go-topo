@@ -1,4 +1,5 @@
 #include "shape_ops.hh"
+#include "catenary.hh"
 #include <BOPAlgo_BOP.hxx>
 #include <BOPAlgo_Builder.hxx>
 #include <BOPAlgo_GlueEnum.hxx>
@@ -1592,6 +1593,14 @@ double wrie_length(wire path) {
   }
 }
 
+std::vector<gp_Pnt> make_catenary(const gp_Pnt &p1, const gp_Pnt &p2,
+                                  double slack, double maxSag,
+                                  const gp_Ax3 &orientation,
+                                  double tessellation) {
+  std::vector<gp_Pnt> points;
+  makeCatenary(p1, p2, orientation, slack, maxSag, points, tessellation);
+  return points;
+}
 
 } // namespace topo
 } // namespace flywave

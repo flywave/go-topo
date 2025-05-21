@@ -6024,6 +6024,38 @@ double topo_wrie_length(topo_wire_t wire) {
   return flywave::topo::wrie_length(*cast_to_topo(wire));
 }
 
+pnt3d_t *topo_make_catenary(pnt3d_t p1, pnt3d_t p2, double slack, double maxSag,
+                            axis3_t orientation, double tessellation,
+                            int *point_count) {
+  try {
+    gp_Pnt gp_p1(p1.x, p1.y, p1.z);
+    gp_Pnt gp_p2(p2.x, p2.y, p2.z);
+    gp_Ax3 ax3 = cast_to_gp(orientation);
+
+    auto points = flywave::topo::make_catenary(gp_p1, gp_p2, slack, maxSag, ax3,
+                                               tessellation);
+
+    pnt3d_t *result = (pnt3d_t *)malloc(sizeof(pnt3d_t) * points.size());
+    for (size_t i = 0; i < points.size(); i++) {
+      result[i].x = points[i].X();
+      result[i].y = points[i].Y();
+      result[i].z = points[i].Z();
+    }
+
+    *point_count = static_cast<int>(points.size());
+    return result;
+  } catch (...) {
+    *point_count = 0;
+    return nullptr;
+  }
+}
+
+void topo_free_catenary_points(pnt3d_t *points) {
+  if (points) {
+    free(points);
+  }
+}
+
 #ifdef __cplusplus
 }
 #endif

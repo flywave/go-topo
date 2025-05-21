@@ -1,6 +1,5 @@
 #include "shape.hh"
 #include "point3d_with_tolerance.hh"
-
 #include "comp_solid.hh"
 #include "compound.hh"
 #include "edge.hh"

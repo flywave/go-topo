@@ -187,5 +187,10 @@ gp_Pnt profile_project_point(profile_projection *proj, gp_Pnt point);
 
 double wrie_length(wire path);
 
+std::vector<gp_Pnt> make_catenary(const gp_Pnt &p1, const gp_Pnt &p2,
+                                  double slack, double maxSag,
+                                  const gp_Ax3 &orientation = gp_Ax3(),
+                                  double tessellation = 0);
+
 } // namespace topo
 } // namespace flywave
