@@ -17249,14 +17249,15 @@ create_pipe_transition(const shape_profile &profile1, const gp_Dir &normal1,
 
   gp_Dir tan2Dir = gp_Vec(normal2).Normalized();
   gp_Dir ref2Dir = gp_Vec(upDir.Crossed(tan2Dir)).Normalized();
+
   // 如果参考方向长度接近0(切线几乎与径向平行)，使用全局Y轴作为备用
   if (gp_Vec(ref2Dir).SquareMagnitude() < Precision::SquareConfusion()) {
     ref2Dir = gp::DY();
   }
 
   // 创建两个截面的局部坐标系
-  gp_Ax2 ax1(position, normal1, ref1Dir);
-  gp_Ax2 ax2(position, normal2.Reversed(), ref2Dir);
+  gp_Ax2 ax1(position, tan1Dir, ref1Dir);
+  gp_Ax2 ax2(position, tan2Dir.Reversed(), ref2Dir);
 
   TopoDS_Shape shape1 = create_shape_from_profile(profile1, false, &ax1);
   TopoDS_Shape shape2 = create_shape_from_profile(profile2, false, &ax2);
