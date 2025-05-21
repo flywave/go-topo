@@ -4642,6 +4642,49 @@ void test_make_pipe() {
       test_export_shape(shp, "./circular_spline_inner_pipe.stl");
     }
 
+    {
+      std::vector<gp_Pnt> wire = {gp_Pnt(0, 0, 0), gp_Pnt(100, 0, 0)};
+      circ_profile profile(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 5.0);
+      circ_profile profile2(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 10.0);
+
+      pipe_params params{.wire = wire,
+                         .profiles = {profile, profile2},
+                         .segment_type = segment_type::LINE,
+                         .transition_mode = transition_mode::TRANSFORMED};
+
+      // 测试从20mm到80mm的分割
+      auto shp = create_pipe_with_split_distances(params, {20.0, 80.0});
+      if (shp.IsNull()) {
+        std::cerr
+            << "Error: Failed to create circular line pipe with split distances"
+            << std::endl;
+        return;
+      }
+      test_export_shape(shp, "./circular_line_pipe_split.stl");
+    }
+
+    {
+      std::vector<gp_Pnt> wire = {gp_Pnt(0, 0, 0), gp_Pnt(30, 30, 20),
+                                  gp_Pnt(70, 30, 40), gp_Pnt(100, 0, 50)};
+      circ_profile profile(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 5.0);
+      circ_profile innerProfile(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 3.0);
+
+      pipe_params params{.wire = wire,
+                         .profiles = {profile},
+                         .inner_profiles = {{innerProfile}},
+                         .segment_type = segment_type::SPLINE,
+                         .transition_mode = transition_mode::TRANSFORMED};
+
+      // 测试从10mm到80mm的分割
+      auto splitShp = create_pipe_with_split_distances(params, {10.0, 80.0});
+      if (splitShp.IsNull()) {
+        std::cerr << "Error: Failed to create split circular spline pipe"
+                  << std::endl;
+        return;
+      }
+      test_export_shape(splitShp, "./circular_spline_inner_pipe_split.stl");
+    }
+
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
   }
@@ -4693,11 +4736,6 @@ void test_make_multi_segment_pipe() {
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
   }
-}
-
-void test_multi_segment_pipe_with_split_distances() {
-  std::cout << "\n=== Testing Multi-Segment Pipe with Split Distances ==="
-            << std::endl;
 
   try {
     // 准备测试数据 - 直线段
@@ -4930,15 +4968,250 @@ void test_make_catenary() {
   }
 }
 
+void test_make_box_shape() {
+  std::cout << "\n=== Testing Box Shape ===" << std::endl;
+  try {
+    auto shp = create_box_shape(box_shape_params{
+        .point1 = gp_Pnt(0, 0, 0), .point2 = gp_Pnt(100, 50, 30)});
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create box shape" << std::endl;
+      return;
+    }
+    test_export_shape(shp, "./box_shape.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_cone_shape() {
+  std::cout << "\n=== Testing Cone Shape ===" << std::endl;
+  try {
+    // 测试完整圆锥
+    auto fullShp = create_cone_shape(
+        cone_shape_params{.radius1 = 20.0, .radius2 = 10.0, .height = 30.0});
+    if (fullShp.IsNull()) {
+      std::cerr << "Error: Failed to create full cone" << std::endl;
+      return;
+    }
+    test_export_shape(fullShp, "./full_cone_shape.stl");
+
+    // 测试部分圆锥
+    auto partialShp = create_cone_shape(cone_shape_params{
+        .radius1 = 15.0, .radius2 = 5.0, .height = 25.0, .angle = 270.0});
+    if (partialShp.IsNull()) {
+      std::cerr << "Error: Failed to create partial cone" << std::endl;
+      return;
+    }
+    test_export_shape(partialShp, "./partial_cone_shape.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_cylinder_shape() {
+  std::cout << "\n=== Testing Cylinder Shape ===" << std::endl;
+  try {
+    // 测试完整圆柱
+    auto fullShp = create_cylinder_shape(
+        cylinder_shape_params{.radius = 15.0, .height = 25.0});
+    if (fullShp.IsNull()) {
+      std::cerr << "Error: Failed to create full cylinder" << std::endl;
+      return;
+    }
+    test_export_shape(fullShp, "./full_cylinder_shape.stl");
+
+    // 测试部分圆柱
+    auto partialShp = create_cylinder_shape(
+        cylinder_shape_params{.radius = 10.0, .height = 20.0, .angle = 270.0});
+    if (partialShp.IsNull()) {
+      std::cerr << "Error: Failed to create partial cylinder" << std::endl;
+      return;
+    }
+    test_export_shape(partialShp, "./partial_cylinder_shape.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_revolution_shape() {
+  std::cout << "\n=== Testing Revolution Shape ===" << std::endl;
+  try {
+    std::vector<gp_Pnt> meridian = {gp_Pnt(0, 0, 0), gp_Pnt(10, 0, 0),
+                                    gp_Pnt(15, 5, 0), gp_Pnt(10, 10, 0),
+                                    gp_Pnt(0, 10, 0)};
+    // 测试完整旋转体(360度)
+    auto fullShp =
+        create_revolution_shape(revolution_shape_params{.meridian = meridian});
+    if (fullShp.IsNull()) {
+      std::cerr << "Error: Failed to create full revolution shape" << std::endl;
+      return;
+    }
+    test_export_shape(fullShp, "./full_revolution_shape.stl");
+
+    // 测试部分旋转体(270度)
+    auto partialShp = create_revolution_shape(
+        revolution_shape_params{.meridian = meridian, .angle = 270.0});
+    if (partialShp.IsNull()) {
+      std::cerr << "Error: Failed to create partial revolution shape"
+                << std::endl;
+      return;
+    }
+    test_export_shape(partialShp, "./partial_revolution_shape.stl");
+
+    // 测试带VMin/VMax参数的旋转体
+    auto rangedShp = create_revolution_shape(revolution_shape_params{
+        .meridian = meridian, .min = 0.0, .max = 8.0, .angle = 180.0});
+    if (rangedShp.IsNull()) {
+      std::cerr << "Error: Failed to create ranged revolution shape"
+                << std::endl;
+      return;
+    }
+    test_export_shape(rangedShp, "./ranged_revolution_shape.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_sphere_shape() {
+  std::cout << "\n=== Testing Sphere Shape ===" << std::endl;
+  try {
+    // 测试完整球体
+    auto fullShp = create_sphere_shape(sphere_shape_params{.radius = 20.0});
+    if (fullShp.IsNull()) {
+      std::cerr << "Error: Failed to create full sphere" << std::endl;
+      return;
+    }
+    test_export_shape(fullShp, "./full_sphere_shape.stl");
+
+    // 测试部分球体
+    auto partialShp = create_sphere_shape(sphere_shape_params{
+        .radius = 15.0, .angle1 = 45.0, .angle2 = 135.0, .angle = 270.0});
+    if (partialShp.IsNull()) {
+      std::cerr << "Error: Failed to create partial sphere" << std::endl;
+      return;
+    }
+    test_export_shape(partialShp, "./partial_sphere_shape.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_torus_shape() {
+  std::cout << "\n=== Testing Torus Shape ===" << std::endl;
+  try {
+    // 测试完整圆环
+    auto fullShp = create_torus_shape(
+        torus_shape_params{.radius1 = 30.0, .radius2 = 10.0});
+    if (fullShp.IsNull()) {
+      std::cerr << "Error: Failed to create full torus" << std::endl;
+      return;
+    }
+    test_export_shape(fullShp, "./full_torus_shape.stl");
+
+    // 测试部分圆环
+    auto partialShp = create_torus_shape(torus_shape_params{.radius1 = 25.0,
+                                                            .radius2 = 8.0,
+                                                            .angle1 = 45.0,
+                                                            .angle2 = 315.0,
+                                                            .angle = 270.0});
+    if (partialShp.IsNull()) {
+      std::cerr << "Error: Failed to create partial torus" << std::endl;
+      return;
+    }
+    test_export_shape(partialShp, "./partial_torus_shape.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_wedge_shape() {
+  std::cout << "\n=== Testing Wedge Shape ===" << std::endl;
+  try {
+    // 测试完整楔形
+    auto fullShp =
+        create_wedge_shape(wedge_shape_params{.edge = gp_Pnt(30, 20, 10)});
+    if (fullShp.IsNull()) {
+      std::cerr << "Error: Failed to create full wedge" << std::endl;
+      return;
+    }
+    test_export_shape(fullShp, "./full_wedge_shape.stl");
+
+    // 测试有限制面的楔形
+    auto limitedShp = create_wedge_shape(
+        wedge_shape_params{.edge = gp_Pnt(25, 15, 8),
+                           .limit = wedge_face_limit{10.0, 5.0, 15.0, 7.0},
+                           .ltx = 12.0});
+    if (limitedShp.IsNull()) {
+      std::cerr << "Error: Failed to create limited wedge" << std::endl;
+      return;
+    }
+    test_export_shape(limitedShp, "./limited_wedge_shape.stl");
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
+void test_make_pipe_shape() {
+  std::cout << "\n=== Testing Pipe Shape ===" << std::endl;
+
+  try {
+    // 测试基本管道形状
+    auto basicShp = create_pipe_shape(pipe_shape_params{
+        .wire = {gp_Pnt(0, 0, 0), gp_Pnt(100, 0, 0)},
+        .profile = circ_profile{gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 10.0}});
+    if (basicShp.IsNull()) {
+      std::cerr << "Error: Failed to create basic pipe shape" << std::endl;
+      return;
+    }
+    test_export_shape(basicShp, "./basic_pipe_shape.stl");
+
+    // 测试带方向的管道形状
+    auto dirShp = create_pipe_shape(pipe_shape_params{
+        .wire = {gp_Pnt(0, 0, 0), gp_Pnt(0, 100, 50)},
+        .profile = circ_profile{gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 8.0},
+        .upDir = gp_Dir(1, 0, 0)});
+    if (dirShp.IsNull()) {
+      std::cerr << "Error: Failed to create pipe shape with direction"
+                << std::endl;
+      return;
+    }
+    test_export_shape(dirShp, "./directed_pipe_shape.stl");
+
+    // 测试复杂剖面管道形状
+    auto complexShp = create_pipe_shape(pipe_shape_params{
+        .wire = {gp_Pnt(0, 0, 0), gp_Pnt(50, 50, 30)},
+        .profile = polygon_profile{{gp_Pnt(0, 0, 0), gp_Pnt(10, 0, 0),
+                                    gp_Pnt(15, 5, 0), gp_Pnt(10, 10, 0),
+                                    gp_Pnt(0, 10, 0)}}});
+    if (complexShp.IsNull()) {
+      std::cerr << "Error: Failed to create complex profile pipe shape"
+                << std::endl;
+      return;
+    }
+    test_export_shape(complexShp, "./complex_profile_pipe_shape.stl");
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
 int main() {
   // 基础图形
   test_revol();
   test_make_prism();
   test_make_pipe();
   test_make_multi_segment_pipe();
-  test_multi_segment_pipe_with_split_distances();
   test_make_pipe_joint();
   test_make_catenary();
+  test_make_box_shape();
+  test_make_cone_shape();
+  test_make_cylinder_shape();
+  test_make_revolution_shape();
+  test_make_sphere_shape();
+  test_make_torus_shape();
+  test_make_wedge_shape();
+  test_make_pipe_shape();
   // 变电
   test_make_sphere();
   test_make_rotational_ellipsoid();

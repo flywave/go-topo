@@ -29,6 +29,7 @@
 #include <BRepPrimAPI_MakeCylinder.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepPrimAPI_MakeRevol.hxx>
+#include <BRepPrimAPI_MakeRevolution.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
 #include <BRepPrimAPI_MakeTorus.hxx>
 #include <BRepPrimAPI_MakeWedge.hxx>
@@ -17965,7 +17966,7 @@ TopoDS_Shape create_cone_shape(const cone_shape_params &params) {
   gp_Ax2 axis(gp::Origin(), gp::DZ());
   if (params.angle) {
     BRepPrimAPI_MakeCone coneMaker(axis, params.radius1, params.radius2,
-                                   params.height, *params.angle);
+                                   params.height, *params.angle * M_PI / 180.0);
     return coneMaker.Shape();
   } else {
     BRepPrimAPI_MakeCone coneMaker(axis, params.radius1, params.radius2,
@@ -18001,7 +18002,7 @@ TopoDS_Shape create_cylinder_shape(const cylinder_shape_params &params) {
   gp_Ax2 axis(gp::Origin(), gp::DZ());
   if (params.angle) {
     BRepPrimAPI_MakeCylinder cylMaker(axis, params.radius, params.height,
-                                      *params.angle);
+                                      *params.angle * M_PI / 180.0);
     return cylMaker.Shape();
   } else {
     BRepPrimAPI_MakeCylinder cylMaker(axis, params.radius, params.height);
@@ -18038,20 +18039,63 @@ TopoDS_Shape create_revolution_shape(const revolution_shape_params &params) {
     throw Standard_ConstructionError("Meridian points are empty");
   }
 
-  // 创建旋转轴
-  gp_Ax1 axis(gp::Origin(), gp::DZ());
+  if (params.meridian.size() == 1) {
+    throw Standard_ConstructionError("Meridian points must be at least two");
+  }
 
   // 创建旋转曲线
-  BRepBuilderAPI_MakePolygon polyBuilder;
-  for (const auto &point : params.meridian) {
-    polyBuilder.Add(point);
+  Handle(Geom_Curve) curve;
+
+  // 创建样条曲线
+  Handle(TColgp_HArray1OfPnt) points =
+      new TColgp_HArray1OfPnt(1, params.meridian.size());
+  for (int i = 0; i < params.meridian.size(); ++i) {
+    points->SetValue(i + 1,
+                     gp_Pnt(params.meridian[i].X(), params.meridian[i].Z(),
+                            params.meridian[i].Y()));
   }
-  TopoDS_Wire wire = polyBuilder.Wire();
+
+  GeomAPI_Interpolate interpolate(points, false, Precision::Confusion());
+  interpolate.Perform();
+  if (!interpolate.IsDone()) {
+    throw Standard_ConstructionError("Failed to create meridian curve");
+  }
+  curve = interpolate.Curve();
+
+  // 创建旋转轴
+  gp_Vec normal(0, 0, 0);
+  for (size_t i = 0; i < params.meridian.size() - 1; ++i) {
+    gp_Vec v1(params.meridian[i], params.meridian[i + 1]);
+    if (i < params.meridian.size() - 2) {
+      gp_Vec v2(params.meridian[i + 1], params.meridian[i + 2]);
+      normal += v1.Crossed(v2);
+    }
+  }
+
+  // 如果法向长度过小，使用默认Z轴
+  gp_Dir axisDir =
+      normal.Magnitude() < Precision::Confusion() ? gp::DZ() : gp_Dir(normal);
+
+  // 创建旋转轴(使用点集第一个点作为轴位置)
+  gp_Ax2 axis(params.meridian.front(), axisDir);
 
   // 创建旋转体
-  double angle = params.angle ? *params.angle : 2 * M_PI;
-  BRepPrimAPI_MakeRevol revMaker(wire, axis, angle);
-  return revMaker.Shape();
+  double angle = params.angle ? *params.angle * M_PI / 180.0 : 2 * M_PI;
+
+  if (params.max && params.min) {
+    // 使用VMin和VMax版本
+    BRepPrimAPI_MakeRevolution revMaker(axis, curve, *params.min, *params.max,
+                                        angle);
+    return revMaker.Shape();
+  } else if (params.max) {
+    // 使用VMax版本
+    BRepPrimAPI_MakeRevolution revMaker(axis, curve, 0, *params.max, angle);
+    return revMaker.Shape();
+  } else {
+    // 基本版本
+    BRepPrimAPI_MakeRevolution revMaker(axis, curve, angle);
+    return revMaker.Shape();
+  }
 }
 
 TopoDS_Shape create_revolution_shape(const revolution_shape_params &params,
@@ -18083,15 +18127,18 @@ TopoDS_Shape create_sphere_shape(const sphere_shape_params &params) {
   gp_Ax2 axis(center, gp::DZ());
 
   if (params.angle1 && params.angle2 && params.angle) {
-    BRepPrimAPI_MakeSphere sphereMaker(axis, params.radius, *params.angle1,
-                                       *params.angle2, *params.angle);
+    BRepPrimAPI_MakeSphere sphereMaker(
+        axis, params.radius, *params.angle1 * M_PI / 180.0,
+        *params.angle2 * M_PI / 180.0, *params.angle * M_PI / 180.0);
     return sphereMaker.Shape();
   } else if (params.angle1 && params.angle2) {
-    BRepPrimAPI_MakeSphere sphereMaker(axis, params.radius, *params.angle1,
-                                       *params.angle2);
+    BRepPrimAPI_MakeSphere sphereMaker(axis, params.radius,
+                                       *params.angle1 * M_PI / 180.0,
+                                       *params.angle2 * M_PI / 180.0);
     return sphereMaker.Shape();
   } else if (params.angle) {
-    BRepPrimAPI_MakeSphere sphereMaker(axis, params.radius, *params.angle);
+    BRepPrimAPI_MakeSphere sphereMaker(axis, params.radius,
+                                       *params.angle * M_PI / 180.0);
     return sphereMaker.Shape();
   } else {
     BRepPrimAPI_MakeSphere sphereMaker(axis, params.radius);
@@ -18126,17 +18173,18 @@ TopoDS_Shape create_torus_shape(const torus_shape_params &params) {
   gp_Ax2 axis(gp::Origin(), gp::DZ());
 
   if (params.angle1 && params.angle2 && params.angle) {
-    BRepPrimAPI_MakeTorus torusMaker(axis, params.radius1, params.radius2,
-                                     *params.angle1, *params.angle2,
-                                     *params.angle);
+    BRepPrimAPI_MakeTorus torusMaker(
+        axis, params.radius1, params.radius2, *params.angle1 * M_PI / 180.0,
+        *params.angle2 * M_PI / 180.0, *params.angle * M_PI / 180.0);
     return torusMaker.Shape();
   } else if (params.angle1 && params.angle2) {
     BRepPrimAPI_MakeTorus torusMaker(axis, params.radius1, params.radius2,
-                                     *params.angle1, *params.angle2);
+                                     *params.angle1 * M_PI / 180.0,
+                                     *params.angle2 * M_PI / 180.0);
     return torusMaker.Shape();
   } else if (params.angle) {
     BRepPrimAPI_MakeTorus torusMaker(axis, params.radius1, params.radius2,
-                                     *params.angle);
+                                     *params.angle * M_PI / 180.0);
     return torusMaker.Shape();
   } else {
     BRepPrimAPI_MakeTorus torusMaker(axis, params.radius1, params.radius2);
@@ -18231,10 +18279,16 @@ TopoDS_Shape create_pipe_shape(const pipe_shape_params &params) {
       create_shape_from_profile(params.profile, false, &pipeAxis);
 
   // 创建管道
-  BRepOffsetAPI_MakePipe pipeMaker(pathWire, profileShape);
+  BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
+  pipeMaker.Add(profileShape, false, true);
+  pipeMaker.SetMode(true);
   pipeMaker.Build();
 
   if (!pipeMaker.IsDone()) {
+    throw Standard_ConstructionError("Failed to create pipe");
+  }
+
+  if (!pipeMaker.MakeSolid()) {
     throw Standard_ConstructionError("Failed to create pipe");
   }
 
