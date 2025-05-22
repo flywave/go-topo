@@ -10169,6 +10169,12 @@ TopoDS_Shape create_corner_well(double leftLength, double rightLength,
 }
 
 TopoDS_Shape create_corner_well(const corner_well_params &params) {
+  if (params.cornerRadius <= 0 || params.width <= 0 || params.height <= 0 ||
+      params.angle <= 0) {
+    throw Standard_ConstructionError(
+        "Corner radius, width, height, and angle must be positive");
+  }
+  
   const double R = params.cornerRadius + params.width / 2;
   const double theta = params.angle * M_PI / 180.0 / 2; // 转换为半角弧度
 
