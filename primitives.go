@@ -5648,6 +5648,69 @@ func CreateTorusShapeWithPlace(params TorusShapeParams, position Point3, directi
 	return s
 }
 
+// 旋转体参数
+type RevolutionShapeParams struct {
+	Meridian []Point3
+	Angle    *float64 // 可为nil
+	Max      *float64 // 可为nil
+	Min      *float64 // 可为nil
+}
+
+func (p *RevolutionShapeParams) to_struct() C.revolution_shape_params_t {
+	var c C.revolution_shape_params_t
+
+	// 转换母线点数组
+	if len(p.Meridian) > 0 {
+		c.meridian = (*C.pnt3d_t)(C.malloc(C.size_t(len(p.Meridian)) * C.sizeof_pnt3d_t))
+		meridianSlice := (*[1 << 30]C.pnt3d_t)(unsafe.Pointer(c.meridian))[:len(p.Meridian):len(p.Meridian)]
+		for i, pt := range p.Meridian {
+			meridianSlice[i] = pt.val // 直接赋值
+		}
+		c.meridian_count = C.int(len(p.Meridian))
+	}
+
+	// 转换可选参数
+	if p.Angle != nil {
+		c.angle = (*C.double)(unsafe.Pointer(p.Angle))
+	}
+	if p.Max != nil {
+		c.max = (*C.double)(unsafe.Pointer(p.Max))
+	}
+	if p.Min != nil {
+		c.min = (*C.double)(unsafe.Pointer(p.Min))
+	}
+
+	return c
+}
+
+func CreateRevolutionShape(params RevolutionShapeParams) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.meridian != nil {
+			C.free(unsafe.Pointer(cParams.meridian))
+		}
+	}()
+
+	shp := C.create_revolution_shape(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateRevolutionShapeWithPlace(params RevolutionShapeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.meridian != nil {
+			C.free(unsafe.Pointer(cParams.meridian))
+		}
+	}()
+
+	shp := C.create_revolution_shape_with_place(cParams, position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
 // 楔形面限制
 type WedgeFaceLimit struct {
 	Values [4]float64
