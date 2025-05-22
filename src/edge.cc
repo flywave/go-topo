@@ -686,11 +686,11 @@ edge edge::make_spline_approx(
   return edge(edgeMaker.Edge());
 }
 
-edge edge::make_catenary(const gp_Pnt &p1, const gp_Pnt &p2,
-                         const gp_Ax3 &orientation, double slack, double maxSag,
-                         double tessellation) {
+edge edge::make_catenary(const gp_Pnt &p1, const gp_Pnt &p2, double slack,
+                         double maxSag, const gp_Dir &up, double tessellation) {
+  gp_Ax3 rot = createOrientation(p1, p2, up);
   Handle(Geom_BSplineCurve) catenaryCurves =
-      makeCatenaryCurve(p1, p2, orientation, slack, maxSag, tessellation);
+      makeCatenaryCurve(p1, p2, rot, slack, maxSag, tessellation);
   if (!catenaryCurves) {
     throw std::runtime_error("Failed to generate catenary curves");
   }

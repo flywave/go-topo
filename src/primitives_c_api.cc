@@ -5990,6 +5990,11 @@ PRIMCAPICALL topo_shape_t *create_catenary(catenary_params_t params) {
   cpp_params.maxSag = params.max_sag;
   cpp_params.tessellation = params.tessellation;
 
+  if (params.up_dir != nullptr) {
+    cpp_params.upDir =
+        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
+  }
+
   try {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_catenary(cpp_params))};
@@ -6066,6 +6071,11 @@ PRIMCAPICALL topo_shape_t *create_catenary_with_place(catenary_params_t params,
   cpp_params.slack = params.slack;
   cpp_params.maxSag = params.max_sag;
   cpp_params.tessellation = params.tessellation;
+
+  if (params.up_dir != nullptr) {
+    cpp_params.upDir =
+        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
+  }
 
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);

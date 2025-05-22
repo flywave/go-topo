@@ -2366,6 +2366,7 @@ struct catenary_params {
   double slack;
   double maxSag;
   double tessellation;
+  boost::optional<gp_Dir> upDir;
 };
 
 TopoDS_Shape create_catenary(const catenary_params &params);

@@ -189,7 +189,7 @@ double wrie_length(wire path);
 
 std::vector<gp_Pnt> make_catenary(const gp_Pnt &p1, const gp_Pnt &p2,
                                   double slack, double maxSag,
-                                  const gp_Ax3 &orientation = gp_Ax3(),
+                                  const gp_Dir &up = gp_Dir(0, 0, 1),
                                   double tessellation = 0);
 
 } // namespace topo

@@ -1594,11 +1594,11 @@ double wrie_length(wire path) {
 }
 
 std::vector<gp_Pnt> make_catenary(const gp_Pnt &p1, const gp_Pnt &p2,
-                                  double slack, double maxSag,
-                                  const gp_Ax3 &orientation,
+                                  double slack, double maxSag, const gp_Dir &up,
                                   double tessellation) {
   std::vector<gp_Pnt> points;
-  makeCatenary(p1, p2, orientation, slack, maxSag, points, tessellation);
+  gp_Ax3 rot = createOrientation(p1, p2, up);
+  makeCatenary(p1, p2, rot, slack, maxSag, points, tessellation);
   return points;
 }
 

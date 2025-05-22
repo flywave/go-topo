@@ -2219,16 +2219,15 @@ topo_edge_t topo_edge_make_spline_approx(pnt3d_t *points, int pntcount,
   }
 }
 
-topo_edge_t topo_edge_make_catenary(pnt3d_t p1, pnt3d_t p2, axis3_t orientation,
-                                    double slack, double maxSag,
+topo_edge_t topo_edge_make_catenary(pnt3d_t p1, pnt3d_t p2, double slack,
+                                    double maxSag, dir3d_t up,
                                     double tessellation) {
   try {
-    return topo_edge_t{
-        .shp = new topo_shape_t{
-            .shp = std::make_shared<flywave::topo::edge>(
-                flywave::topo::edge::make_catenary(
-                    cast_to_gp(p1), cast_to_gp(p2), cast_to_gp(orientation),
-                    slack, maxSag, tessellation))}};
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(
+                               flywave::topo::edge::make_catenary(
+                                   cast_to_gp(p1), cast_to_gp(p2), slack,
+                                   maxSag, cast_to_gp(up), tessellation))}};
   } catch (...) {
     return topo_edge_t{};
   }
@@ -6025,15 +6024,14 @@ double topo_wrie_length(topo_wire_t wire) {
 }
 
 pnt3d_t *topo_make_catenary(pnt3d_t p1, pnt3d_t p2, double slack, double maxSag,
-                            axis3_t orientation, double tessellation,
-                            int *point_count) {
+                            dir3d_t up, double tessellation, int *point_count) {
   try {
     gp_Pnt gp_p1(p1.x, p1.y, p1.z);
     gp_Pnt gp_p2(p2.x, p2.y, p2.z);
-    gp_Ax3 ax3 = cast_to_gp(orientation);
+    gp_Dir up_dir = cast_to_gp(up);
 
-    auto points = flywave::topo::make_catenary(gp_p1, gp_p2, slack, maxSag, ax3,
-                                               tessellation);
+    auto points = flywave::topo::make_catenary(gp_p1, gp_p2, slack, maxSag,
+                                               up_dir, tessellation);
 
     pnt3d_t *result = (pnt3d_t *)malloc(sizeof(pnt3d_t) * points.size());
     for (size_t i = 0; i < points.size(); i++) {

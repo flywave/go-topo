@@ -2008,6 +2008,7 @@ typedef struct {
   double slack;
   double max_sag;
   double tessellation;
+  dir3d_t *up_dir;
 } catenary_params_t;
 
 // 创建悬链线

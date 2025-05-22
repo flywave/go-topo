@@ -476,14 +476,14 @@ func WireLength(wire *Wire) float64 {
 	return float64(C.topo_wrie_length(wire.inner.val))
 }
 
-func MakeCatenary(p1, p2 Point3, slack, maxSag float64, orientation Axis3, tessellation float64) []Point3 {
+func MakeCatenary(p1, p2 Point3, slack, maxSag float64, up Dir3, tessellation float64) []Point3 {
 	var count C.int
 	cPoints := C.topo_make_catenary(
 		p1.val,
 		p2.val,
 		C.double(slack),
 		C.double(maxSag),
-		orientation.val,
+		up.val,
 		C.double(tessellation),
 		&count,
 	)

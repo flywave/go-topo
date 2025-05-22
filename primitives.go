@@ -5350,6 +5350,7 @@ type CatenaryParams struct {
 	Profile      ShapeProfile
 	Slack        float64
 	MaxSag       float64
+	UpDir        *Dir3
 	Tessellation float64
 }
 
@@ -5421,6 +5422,11 @@ func (p *CatenaryParams) to_struct() C.catenary_params_t {
 	c.max_sag = C.double(p.MaxSag)
 	c.tessellation = C.double(p.Tessellation)
 
+	if p.UpDir != nil {
+		c.up_dir = &p.UpDir.val
+	} else {
+		c.up_dir = nil
+	}
 	return c
 }
 

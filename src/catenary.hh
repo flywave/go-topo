@@ -394,4 +394,28 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
     result.push_back(pt.Transformed(catToWorld));
   }
 }
+
+inline gp_Ax3 createOrientation(const gp_Pnt &p1, const gp_Pnt &p2,
+                                const gp_Dir &upDir) {
+  // 计算从p1到p2的方向向量
+  gp_Vec dirVec(p1, p2);
+  if (dirVec.Magnitude() < Precision::Confusion()) {
+    throw Standard_ConstructionError("Points are too close");
+  }
+  dirVec.Normalize();
+
+  // 计算X轴方向
+  gp_Vec xVec = gp_Vec(upDir).Crossed(dirVec);
+  if (xVec.Magnitude() < Precision::Confusion()) {
+    // 如果upDir与dirVec平行，使用备用X轴
+    xVec = gp_Vec(1, 0, 0);
+  }
+  xVec.Normalize();
+
+  // 重新计算Z轴确保正交
+  gp_Vec zVec = xVec.Crossed(dirVec);
+  zVec.Normalize();
+
+  return gp_Ax3(p1, dirVec, xVec);
+}
 } // namespace flywave

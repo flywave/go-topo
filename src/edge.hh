@@ -256,9 +256,9 @@ public:
           boost::none,
       int minDegree = 1, int maxDegree = 6);
 
-  static edge make_catenary(const gp_Pnt &p1, const gp_Pnt &p2,
-                            const gp_Ax3 &orientation, double slack,
-                            double maxSag, double tessellation = 0.0);
+  static edge make_catenary(const gp_Pnt &p1, const gp_Pnt &p2, double slack,
+                            double maxSag, const gp_Dir &up = gp_Dir(0, 0, 1),
+                            double tessellation = 0.0);
 
   static edge make_circle(double radius, const gp_Pnt &center = gp_Pnt(0, 0, 0),
                           const gp_Dir &normal = gp_Dir(0, 0, 1),
