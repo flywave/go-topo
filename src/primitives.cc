@@ -17244,7 +17244,7 @@ create_pipe_transition(const shape_profile &profile1, const gp_Dir &normal1,
 
   auto pair2 = compute_profile_radius_and_center(profile2);
   double radius2 = pair2.first;
-  double maxRadius = std::max(radius1 * 2, radius2 * 2);
+  double maxRadius = std::max(radius1 * 2.2, radius2 * 2.2);
 
   gp_Dir tan1Dir = gp_Vec(normal1).Normalized();
   gp_Dir ref1Dir = gp_Vec(upDir.Crossed(tan1Dir)).Normalized();
