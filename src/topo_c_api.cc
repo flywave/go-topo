@@ -5914,7 +5914,7 @@ TOPOCAPICALL pnt3d_t topo_combined_center_of_bound_box(topo_shape_t **objects,
   }
 }
 
-topo_shape_t *step_get_topo_shape(const char *filename) {
+topo_shape_t *read_shape_from_step_file(const char *filename) {
   std::string f{filename};
   auto res = flywave::topo::read_shape_from_step(f);
   auto shp = std::make_shared<flywave::topo::shape>(res);
