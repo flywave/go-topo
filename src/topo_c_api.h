@@ -1534,7 +1534,7 @@ TOPOCAPICALL pnt3d_t topo_combined_center(topo_shape_t **objects, int count);
 TOPOCAPICALL pnt3d_t topo_combined_center_of_bound_box(topo_shape_t **objects,
                                                        int count);
 
-TOPOCAPICALL topo_shape_t *step_get_topo_shape(const char *filename);
+TOPOCAPICALL topo_shape_t *read_shape_from_step_file(const char *filename);
 
 typedef struct {
   pnt3d_t position;
