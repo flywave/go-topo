@@ -17352,7 +17352,8 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
                            .segment_type = params.segment_types
                                                ? (*params.segment_types)[i]
                                                : segment_type::LINE,
-                           .transition_mode = params.transition_mode};
+                           .transition_mode = params.transition_mode,
+                          .upDir = params.upDir};
 
     if (params.profiles.size() == 1) {
       seg_params.profiles = {params.profiles[0]};
@@ -17521,7 +17522,8 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
                              .segment_type = params.segment_types
                                                  ? (*params.segment_types)[i]
                                                  : segment_type::LINE,
-                             .transition_mode = params.transition_mode};
+                             .transition_mode = params.transition_mode,
+                            .upDir = params.upDir};
 
       if (params.profiles.size() == 1) {
         seg_params.profiles = {params.profiles[0]};
