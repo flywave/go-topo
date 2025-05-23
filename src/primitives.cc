@@ -16908,7 +16908,7 @@ create_pipe_helper(const pipe_params &params) {
   // 获取外轮廓截面形状(作为面)
   addOuterProfileAtVertex(edge, params.profiles[0], v1, true);
   if (params.profiles.size() == 2) {
-    addOuterProfileAtVertex(edge, params.profiles[1], v2, true);
+    addOuterProfileAtVertex(edge, params.profiles[1], v2, false);
   }
 
   pipeMaker.SetMode(Standard_True);
@@ -16971,7 +16971,7 @@ create_pipe_helper(const pipe_params &params) {
 
     addProfileAtVertex(edge, (*params.inner_profiles)[0], v1, true);
     if (params.inner_profiles->size() == 2) {
-      addProfileAtVertex(edge, (*params.inner_profiles)[1], v2, true);
+      addProfileAtVertex(edge, (*params.inner_profiles)[1], v2, false);
     }
     innerMaker.SetMode(Standard_True);
 
@@ -17293,7 +17293,7 @@ create_pipe_with_split_distances(const pipe_params &params,
 
   // 创建圆形截面
   circ_profile maxProfile;
-  maxProfile.radius = maxRadius * 1.2;
+  maxProfile.radius = maxRadius * 1.5;
   maxProfile.center = gp_Pnt(0, 0, 0);
   maxProfile.norm = gp_Dir(0, 0, 1);
 
@@ -17610,7 +17610,7 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
 
   // 创建圆形截面
   circ_profile maxProfile;
-  maxProfile.radius = maxRadius * 1.1; // 增加10%余量确保完全包裹
+  maxProfile.radius = maxRadius * 1.5; // 增加50%余量确保完全包裹
   maxProfile.center = gp_Pnt(0, 0, 0);
   maxProfile.norm = gp_Dir(0, 0, 1);
 
@@ -17637,6 +17637,11 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
     // 计算当前段的起始和结束距离
     double segmentStart = accumulatedLength;
     double segmentEnd = accumulatedLength + segmentLength;
+
+    if(splitDistances[0]>segmentEnd || splitDistances[1]<segmentStart){
+      accumulatedLength += segmentLength;
+      continue;
+    }
 
     // 判断当前段是否需要裁切
     bool noCut =
@@ -17686,13 +17691,6 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
       gp_Dir end_normal = std::get<2>(pair).second;
 
       if (has_prev) {
-        bool needTransition = false;
-        if (noCut || needFrontCut) {
-          needTransition = true;
-        } else if (needBackCut && splitDistances[0] > segmentStart) {
-          needTransition = true;
-        }
-        if (needTransition) {
           const auto &wire = params.wires[i - 1];
           TopoDS_Shape transition = create_pipe_transition(
               prev_profile, prev_normal, params.profiles[i], start_normal,
@@ -17701,8 +17699,7 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
           if (!transition.IsNull()) {
             segment = BRepAlgoAPI_Fuse(segment, transition).Shape();
           }
-        }
-      }
+       }
 
       // 保存当前段信息供下一段使用
       prev_profile = params.profiles[i];
