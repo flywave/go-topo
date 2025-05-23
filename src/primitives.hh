@@ -2336,6 +2336,7 @@ TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params,
 enum class joint_shape_mode {
   SPHERE = 0,
   BOX = 1,
+  CYLINDER = 2,
 };
 
 struct pipe_endpoint {

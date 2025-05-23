@@ -5618,6 +5618,9 @@ PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params) {
   case JOINT_SHAPE_MODE_BOX:
     cpp_params.mode = joint_shape_mode::BOX;
     break;
+  case JOINT_SHAPE_MODE_CYLINDER:
+    cpp_params.mode = joint_shape_mode::CYLINDER;
+    break;
   default:
     return nullptr;
   }
@@ -5900,6 +5903,8 @@ create_pipe_joint_with_place(pipe_joint_params_t params, pnt3d_t position,
   case JOINT_SHAPE_MODE_BOX:
     cpp_params.mode = joint_shape_mode::BOX;
     break;
+  case JOINT_SHAPE_MODE_CYLINDER:
+    cpp_params.mode = joint_shape_mode::CYLINDER;
   default:
     return nullptr;
   }
