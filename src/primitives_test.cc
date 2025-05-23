@@ -4939,7 +4939,7 @@ void test_make_pipe_joint() {
                                          .normal = gp_Dir(0, -1, 0),
                                          .profile = {profile2},
                                          .inner_profile = {{innerProfile2}}}},
-                               .mode = joint_shape_mode::SPHERE,
+                               .mode = joint_shape_mode::CYLINDER,
                                .flanged = false};
 
       auto shp = create_pipe_joint(params);

@@ -4640,6 +4640,7 @@ type JointShapeMode int
 const (
 	JointShapeModeSphere JointShapeMode = iota
 	JointShapeModeBox
+	JointShapeModeCylinder
 )
 
 // 管道端点参数

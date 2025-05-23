@@ -10169,6 +10169,12 @@ TopoDS_Shape create_corner_well(double leftLength, double rightLength,
 }
 
 TopoDS_Shape create_corner_well(const corner_well_params &params) {
+  if (params.cornerRadius <= 0 || params.width <= 0 || params.height <= 0 ||
+      params.angle <= 0) {
+    throw Standard_ConstructionError(
+        "Corner radius, width, height, and angle must be positive");
+  }
+
   const double R = params.cornerRadius + params.width / 2;
   const double theta = params.angle * M_PI / 180.0 / 2; // 转换为半角弧度
 
@@ -17942,6 +17948,24 @@ TopoDS_Shape create_pipe_joint(const pipe_joint_params &params) {
     TopoDS_Shape inner_sphere =
         BRepPrimAPI_MakeSphere(joint_coord, max_radius * 0.84).Shape();
     cutShapes.push_back(inner_sphere);
+  } else if (params.mode == joint_shape_mode::CYLINDER) {
+    double size = max_radius * 1.04;      // 外盒尺寸
+    double height = size * 2;             // 外盒高度
+    double inner_size = size * 0.84;      // 内盒尺寸
+    double inner_height = inner_size * 2; // 内盒高度
+
+    // 创建外圆柱
+    center_shape =
+        BRepPrimAPI_MakeCylinder(
+            joint_coord.Translated(gp_Vec(0, 0, -height / 2)), size, height)
+            .Shape();
+    // 创建内圆柱 (厚度为半径的20%)
+    TopoDS_Shape inner_cylinder =
+        BRepPrimAPI_MakeCylinder(
+            joint_coord.Translated(gp_Vec(0, 0, -inner_height / 2)), inner_size,
+            inner_height)
+            .Shape();
+    cutShapes.push_back(inner_cylinder);
   } else {                           // BOX
     double size = max_radius * 2.04; // 外盒尺寸
     double inner_size = size * 0.84; // 内盒尺寸 (厚度为外盒的20%)

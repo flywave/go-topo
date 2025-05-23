@@ -1932,7 +1932,8 @@ typedef struct {
 // 连接形状模式枚举
 typedef enum {
   JOINT_SHAPE_MODE_SPHERE = 0,
-  JOINT_SHAPE_MODE_BOX = 1
+  JOINT_SHAPE_MODE_BOX = 1,
+  JOINT_SHAPE_MODE_CYLINDER = 2,
 } joint_shape_mode_t;
 
 // 管道参数
