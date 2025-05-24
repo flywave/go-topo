@@ -4645,6 +4645,7 @@ const (
 
 // 管道端点参数
 type PipeEndpoint struct {
+	Id           string
 	Offset       Point3
 	Normal       Dir3
 	Profile      ShapeProfile
@@ -5062,6 +5063,7 @@ func (p *PipeJointParams) to_struct() C.pipe_joint_params_t {
 	if len(p.Ins) > 0 {
 		ins := make([]C.pipe_endpoint_t, len(p.Ins))
 		for i, in := range p.Ins {
+			ins[i].id = C.CString(in.Id)
 			ins[i].offset = in.Offset.val
 			ins[i].normal = in.Normal.val
 
@@ -5189,6 +5191,7 @@ func (p *PipeJointParams) to_struct() C.pipe_joint_params_t {
 	if len(p.Outs) > 0 {
 		outs := make([]C.pipe_endpoint_t, len(p.Outs))
 		for i, out := range p.Outs {
+			outs[i].id = C.CString(out.Id)
 			outs[i].offset = out.Offset.val
 			outs[i].normal = out.Normal.val
 

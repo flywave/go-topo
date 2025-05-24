@@ -2340,6 +2340,7 @@ enum class joint_shape_mode {
 };
 
 struct pipe_endpoint {
+  std::string id;
   gp_Pnt offset;
   gp_Dir normal;
   shape_profile profile;

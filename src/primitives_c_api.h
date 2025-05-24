@@ -1923,6 +1923,7 @@ typedef enum {
 
 // 管道端点参数
 typedef struct {
+  char *id;
   pnt3d_t offset;
   dir3d_t normal;
   shape_profile_t profile;

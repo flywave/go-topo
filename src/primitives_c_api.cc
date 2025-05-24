@@ -5367,6 +5367,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params) {
   for (int i = 0; i < params.in_count; i++) {
     pipe_endpoint_t &ep = params.ins[i];
     pipe_endpoint cpp_ep;
+    cpp_ep.id = ep.id;
     cpp_ep.offset = gp_Pnt(ep.offset.x, ep.offset.y, ep.offset.z);
     cpp_ep.normal = gp_Dir(ep.normal.x, ep.normal.y, ep.normal.z);
 
@@ -5492,6 +5493,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params) {
   for (int i = 0; i < params.out_count; i++) {
     pipe_endpoint_t &ep = params.outs[i];
     pipe_endpoint cpp_ep;
+    cpp_ep.id = ep.id;
     cpp_ep.offset = gp_Pnt(ep.offset.x, ep.offset.y, ep.offset.z);
     cpp_ep.normal = gp_Dir(ep.normal.x, ep.normal.y, ep.normal.z);
 
