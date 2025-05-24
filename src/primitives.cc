@@ -17478,6 +17478,7 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
 
   // 保存上一段的末端截面信息
   shape_profile prev_profile;
+  boost::optional<shape_profile> prev_inner_profile;
   gp_Dir prev_normal;
   bool has_prev = false;
 
@@ -17504,8 +17505,9 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
     // 如果有内轮廓，设置内轮廓
     if (params.inner_profiles) {
       if (params.inner_profiles->size() == 1) {
-        seg_params.inner_profiles = {{(*params.inner_profiles)[0]}};
-      } else {
+         seg_params.inner_profiles = {
+              {(*params.inner_profiles)[0], (*params.inner_profiles)[0]}};  
+       } else {
         int nextId = i + 1;
         if (nextId == params.inner_profiles->size()) {
           nextId = i;
@@ -17532,16 +17534,25 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
     if (has_prev) {
       const auto &wire = params.wires[i - 1];
       TopoDS_Shape transition = create_pipe_transition(
-          prev_profile, prev_normal, params.profiles[i], start_normal,
+          prev_profile, prev_normal, seg_params.profiles[0], start_normal,
           wire.back(), params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
 
+        if(prev_inner_profile){
+           TopoDS_Shape inner_transition = create_pipe_transition(
+          prev_inner_profile.get(), prev_normal, seg_params.inner_profiles.get()[0], start_normal,
+          wire.back(), params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
+          transition=  BRepAlgoAPI_Cut(transition, inner_transition).Shape();
+        }
       if (!transition.IsNull()) {
         result = BRepAlgoAPI_Fuse(result, transition).Shape();
       }
     }
 
     // 保存当前段信息供下一段使用
-    prev_profile = params.profiles[i];
+    prev_profile = seg_params.profiles[1];
+    if(seg_params.inner_profiles) {
+      prev_inner_profile = seg_params.inner_profiles.get()[1];
+    }
     prev_normal = end_normal;
     has_prev = true;
   }
@@ -17623,6 +17634,8 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
   TopoDS_Shape result;
   double accumulatedLength = 0;
   shape_profile prev_profile;
+  boost::optional<shape_profile> prev_inner_profile;
+
   gp_Dir prev_normal;
   bool has_prev = false;
 
@@ -17662,8 +17675,8 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
                              .upDir = params.upDir};
 
       if (params.profiles.size() == 1) {
-        seg_params.profiles = {params.profiles[0]};
-      } else {
+        seg_params.profiles = {params.profiles[0],params.profiles[0]};
+       } else {
         int nextId = i + 1;
         if (nextId == params.profiles.size()) {
           nextId = i;
@@ -17674,15 +17687,16 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
       // 如果有内轮廓，设置内轮廓
       if (params.inner_profiles) {
         if (params.inner_profiles->size() == 1) {
-          seg_params.inner_profiles = {{(*params.inner_profiles)[0]}};
-        } else {
+          seg_params.inner_profiles = {
+              {(*params.inner_profiles)[0], (*params.inner_profiles)[0]}};  
+       } else {
           int nextId = i + 1;
           if (nextId == params.inner_profiles->size()) {
             nextId = i;
           }
           seg_params.inner_profiles = {
               {(*params.inner_profiles)[i], (*params.inner_profiles)[nextId]}};
-        }
+         }
       }
 
       // 创建当前段管道
@@ -17693,15 +17707,20 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
 
       if (has_prev) {
         bool needTransition = false;
-        if (noCut || (needBackCut && splitDistances[0] > segmentStart)) {
+        if (noCut || needBackCut || needFrontCut) {
           needTransition = true;
         }
         if (needTransition) {
           const auto &wire = params.wires[i - 1];
           TopoDS_Shape transition = create_pipe_transition(
-              prev_profile, prev_normal, params.profiles[i], start_normal,
+              prev_profile, prev_normal, seg_params.profiles[0], start_normal,
               wire.back(), params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
-
+          if(prev_inner_profile){
+              TopoDS_Shape inner_transition = create_pipe_transition(
+              prev_inner_profile.value(), prev_normal, seg_params.inner_profiles.get()[0], start_normal,
+              wire.back(), params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
+             transition=  BRepAlgoAPI_Cut(transition, inner_transition).Shape();
+          }
           if (!transition.IsNull()) {
             segment = BRepAlgoAPI_Fuse(segment, transition).Shape();
           }
@@ -17709,7 +17728,10 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
       }
 
       // 保存当前段信息供下一段使用
-      prev_profile = params.profiles[i];
+      prev_profile = seg_params.profiles[1];
+      if (seg_params.inner_profiles) {
+        prev_inner_profile = seg_params.inner_profiles.get()[1];
+      }
       prev_normal = end_normal;
       has_prev = true;
     }
