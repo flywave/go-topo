@@ -1905,7 +1905,7 @@ PRIMCAPICALL topo_shape_t *create_revol_with_place(revol_params_t params,
 // 拉伸参数
 typedef struct {
   shape_profile_t profile;
-  dir3d_t dir;
+  dir3d_t direction;
 } prism_params_t;
 
 PRIMCAPICALL topo_shape_t *create_prism(prism_params_t params);

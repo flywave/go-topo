@@ -16750,7 +16750,7 @@ TopoDS_Shape create_prism(const prism_params &params) {
     throw Standard_ConstructionError("Invalid profile for prism");
   }
 
-  BRepPrimAPI_MakePrism prismMaker(profileFace, gp_Vec(params.dir) * 1.0);
+  BRepPrimAPI_MakePrism prismMaker(profileFace, gp_Vec(params.direction) * 1.0);
 
   if (!prismMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to create prism");
