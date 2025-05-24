@@ -5043,8 +5043,11 @@ void test_make_cone_shape() {
     test_export_shape(fullShp, "./full_cone_shape.stl");
 
     // 测试部分圆锥
-    auto partialShp = create_cone_shape(cone_shape_params{
-        .radius1 = 15.0, .radius2 = 5.0, .height = 25.0, .angle = 270.0});
+    auto partialShp =
+        create_cone_shape(cone_shape_params{.radius1 = 15.0,
+                                            .radius2 = 5.0,
+                                            .height = 25.0,
+                                            .angle = 270.0 * M_PI / 180});
     if (partialShp.IsNull()) {
       std::cerr << "Error: Failed to create partial cone" << std::endl;
       return;
@@ -5068,8 +5071,8 @@ void test_make_cylinder_shape() {
     test_export_shape(fullShp, "./full_cylinder_shape.stl");
 
     // 测试部分圆柱
-    auto partialShp = create_cylinder_shape(
-        cylinder_shape_params{.radius = 10.0, .height = 20.0, .angle = 270.0});
+    auto partialShp = create_cylinder_shape(cylinder_shape_params{
+        .radius = 10.0, .height = 20.0, .angle = 270.0 * M_PI / 180});
     if (partialShp.IsNull()) {
       std::cerr << "Error: Failed to create partial cylinder" << std::endl;
       return;
@@ -5096,8 +5099,8 @@ void test_make_revolution_shape() {
     test_export_shape(fullShp, "./full_revolution_shape.stl");
 
     // 测试部分旋转体(270度)
-    auto partialShp = create_revolution_shape(
-        revolution_shape_params{.meridian = meridian, .angle = 270.0});
+    auto partialShp = create_revolution_shape(revolution_shape_params{
+        .meridian = meridian, .angle = 270.0 * M_PI / 180});
     if (partialShp.IsNull()) {
       std::cerr << "Error: Failed to create partial revolution shape"
                 << std::endl;
@@ -5106,8 +5109,11 @@ void test_make_revolution_shape() {
     test_export_shape(partialShp, "./partial_revolution_shape.stl");
 
     // 测试带VMin/VMax参数的旋转体
-    auto rangedShp = create_revolution_shape(revolution_shape_params{
-        .meridian = meridian, .angle = 180.0, .max = 8.0, .min = 0.0});
+    auto rangedShp = create_revolution_shape(
+        revolution_shape_params{.meridian = meridian,
+                                .angle = 180.0 * M_PI / 180,
+                                .max = 8.0,
+                                .min = 0.0});
     if (rangedShp.IsNull()) {
       std::cerr << "Error: Failed to create ranged revolution shape"
                 << std::endl;
@@ -5132,8 +5138,11 @@ void test_make_sphere_shape() {
     test_export_shape(fullShp, "./full_sphere_shape.stl");
 
     // 测试部分球体
-    auto partialShp = create_sphere_shape(sphere_shape_params{
-        .radius = 15.0, .angle1 = 45.0, .angle2 = 135.0, .angle = 270.0});
+    auto partialShp =
+        create_sphere_shape(sphere_shape_params{.radius = 15.0,
+                                                .angle1 = 45.0 * M_PI / 180,
+                                                .angle2 = 135.0 * M_PI / 180,
+                                                .angle = 270.0 * M_PI / 180});
     if (partialShp.IsNull()) {
       std::cerr << "Error: Failed to create partial sphere" << std::endl;
       return;
@@ -5157,11 +5166,12 @@ void test_make_torus_shape() {
     test_export_shape(fullShp, "./full_torus_shape.stl");
 
     // 测试部分圆环
-    auto partialShp = create_torus_shape(torus_shape_params{.radius1 = 25.0,
-                                                            .radius2 = 8.0,
-                                                            .angle1 = 45.0,
-                                                            .angle2 = 315.0,
-                                                            .angle = 270.0});
+    auto partialShp =
+        create_torus_shape(torus_shape_params{.radius1 = 25.0,
+                                              .radius2 = 8.0,
+                                              .angle1 = 45.0 * M_PI / 180,
+                                              .angle2 = 315.0 * M_PI / 180,
+                                              .angle = 270.0 * M_PI / 180});
     if (partialShp.IsNull()) {
       std::cerr << "Error: Failed to create partial torus" << std::endl;
       return;
