@@ -17493,7 +17493,7 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
                            .upDir = params.upDir};
 
     if (params.profiles.size() == 1) {
-      seg_params.profiles = {params.profiles[0]};
+      seg_params.profiles = {params.profiles[0],params.profiles[0]};
     } else {
       int nextId = i + 1;
       if (nextId == params.profiles.size()) {
