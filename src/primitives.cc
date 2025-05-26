@@ -9379,9 +9379,9 @@ TopoDS_Shape create_embedded_part(const embedded_part_params &params) {
         "Material radius must be less than hook radius");
 
   // 创建伸部分
-  gp_Pnt pathStart(0, -params.materialRadius / 2, -params.height);
-  gp_Pnt pathMid(0, -params.materialRadius / 2, 0);              // 路径起点
-  gp_Pnt arcStart(params.length, -params.materialRadius / 2, 0); // 路径终点
+  gp_Pnt pathStart(0, 0, -params.height);
+  gp_Pnt pathMid(0, 0, 0);              // 路径起点
+  gp_Pnt arcStart(params.length, 0, 0); // 路径终点
 
   gp_Pnt arcEnd(arcStart.X(), arcStart.Y(), arcStart.Z() - params.radius * 2);
   gp_Pnt arcCenter(arcStart.X() + params.radius, arcStart.Y(),
@@ -9464,8 +9464,8 @@ TopoDS_Shape create_u_shaped_ring(const u_shaped_ring_params &params) {
       params.radius - sqrt(pow(params.radius, 2) - pow(half_chord, 2));
 
   // 创建伸部分
-  gp_Pnt pathStart(0, -params.radius / 2, half_chord);
-  gp_Pnt arcStart(params.length - arcHeight, -params.radius / 2,
+  gp_Pnt pathStart(0, 0, half_chord);
+  gp_Pnt arcStart(params.length - arcHeight, 0,
                   half_chord); // 路径起点
 
   gp_Pnt arcEnd(arcStart.X(), arcStart.Y(), -half_chord);
