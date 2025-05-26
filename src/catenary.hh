@@ -95,9 +95,9 @@ struct CatenaryFunc {
     math_BissecNewton solver(1e-6);
 
     // 改进求解器参数范围
-    double lower = 0.1 * d;  // 原d/2.0可能范围过小
-    double upper = 2.0 * d;  // 原d可能范围不足
-    int maxIterations = 200; // 增加最大迭代次数
+    double lower = std::max(0.1 * d, 1e-3); // 防止极小值
+    double upper = std::min(2.0 * d, 1e5);  // 限制最大搜索范围
+    int maxIterations = 200;                // 增加最大迭代次数
 
     // 验证函数值符号变化
     double flow = 0.0, fupp = 0.0;
@@ -201,14 +201,21 @@ inline Handle(Geom_BSplineCurve)
 
   // Horizontal distance and height difference
   double d = Xaxis.Magnitude();
+
+  // 修改为设置默认X轴方向
+  if (d < Precision::Confusion()) {
+    // 当水平距离接近零时，使用默认X轴方向
+    Xaxis = gp_Vec(1.0, 0.0, 0.0); // 默认X轴方向
+    d = 1.0; // 设置最小有效距离
+    swapped = false; // 重置交换状态
+  }
+
   Xaxis.Normalize();
   gp_Vec Yaxis = gp_Dir(0, 0, 1).Crossed(Xaxis);
 
   // Create catenary frame
-  gp_Ax3 catFrame(p1, gp_Dir(0, 0, 1), Xaxis);
-  if (swapped) {
-    catFrame.SetLocation(p2);
-  }
+  gp_Pnt frameOrigin = swapped ? p2 : p1;
+  gp_Ax3 catFrame(frameOrigin, gp_Dir(0, 0, 1), Xaxis);
 
   double h = swapped ? -p2local.Z() : p2local.Z();
   double straightDist = p2local.Distance(gp_Pnt(0, 0, 0));
@@ -260,6 +267,14 @@ inline Handle(Geom_BSplineCurve)
     poles.SetValue(i, gp_Pnt(x, 0, z));
   }
 
+  if (swapped) {
+    poles.SetValue(1, gp_Pnt(d, 0, h));             // 起点对应p2位置
+    poles.SetValue(poles.Upper(), gp_Pnt(0, 0, 0)); // 终点对应p1位置
+  } else {
+    poles.SetValue(1, gp_Pnt(0, 0, 0));             // 起点对应p1位置
+    poles.SetValue(poles.Upper(), gp_Pnt(d, 0, h)); // 终点对应p2位置
+  }
+
   // 创建BSpline曲线
   GeomAPI_PointsToBSpline approx(poles);
   if (!approx.IsDone()) {
@@ -268,7 +283,7 @@ inline Handle(Geom_BSplineCurve)
 
   // 应用坐标系变换
   gp_Trsf catToWorld;
-  catToWorld.SetTransformation(catFrame, gp_Ax3());
+  catToWorld.SetTransformation(gp_Ax3(), catFrame);
 
   Handle(Geom_BSplineCurve) curve = approx.Curve();
   curve->Transform(catToWorld);
@@ -329,10 +344,8 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
   gp_Vec Yaxis = gp_Dir(0, 0, 1).Crossed(Xaxis);
 
   // Create catenary frame
-  gp_Ax3 catFrame(p1, gp_Dir(0, 0, 1), Xaxis);
-  if (swapped) {
-    catFrame.SetLocation(p2);
-  }
+  gp_Pnt frameOrigin = swapped ? p2 : p1;
+  gp_Ax3 catFrame(frameOrigin, gp_Dir(0, 0, 1), Xaxis);
 
   double h = swapped ? -p2local.Z() : p2local.Z();
   double straightDist = p2local.Distance(gp_Pnt(0, 0, 0));
@@ -386,9 +399,18 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
     cablePts.push_back(gp_Pnt(x, 0, z));
   }
 
+  // 生成悬垂线控制点时添加端点修正
+  if (swapped) {
+    cablePts.front() = gp_Pnt(d, 0, h); // 强制设置起点为p2位置
+    cablePts.back() = gp_Pnt(0, 0, 0);  // 强制设置终点为p1位置
+  } else {
+    cablePts.front() = gp_Pnt(0, 0, 0); // 强制设置起点为p1位置
+    cablePts.back() = gp_Pnt(d, 0, h);  // 强制设置终点为p2位置
+  }
+
   // Transform points back to world coordinates
   gp_Trsf catToWorld;
-  catToWorld.SetTransformation(catFrame, gp_Ax3());
+  catToWorld.SetTransformation(gp_Ax3(), catFrame); // 反转转换方向
 
   for (auto &pt : cablePts) {
     result.push_back(pt.Transformed(catToWorld));
@@ -397,6 +419,10 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
 
 inline gp_Ax3 createOrientation(const gp_Pnt &p1, const gp_Pnt &p2,
                                 const gp_Dir &upDir) {
+  if (upDir.IsEqual(gp_Dir(0, 0, 1), Precision::Angular())) {
+    return gp_Ax3(p1, gp_Dir(0, 0, 1), gp_Dir(1, 0, 0));
+  }
+
   // 计算从p1到p2的方向向量
   gp_Vec dirVec(p1, p2);
   if (dirVec.Magnitude() < Precision::Confusion()) {
@@ -405,7 +431,7 @@ inline gp_Ax3 createOrientation(const gp_Pnt &p1, const gp_Pnt &p2,
   dirVec.Normalize();
 
   // 计算X轴方向
-  gp_Vec xVec = gp_Vec(upDir).Crossed(dirVec);
+  gp_Vec xVec = gp_Vec(dirVec).Crossed(upDir);
   if (xVec.Magnitude() < Precision::Confusion()) {
     // 如果upDir与dirVec平行，使用备用X轴
     xVec = gp_Vec(1, 0, 0);

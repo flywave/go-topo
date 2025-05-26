@@ -17560,7 +17560,7 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
   }
   return result;
 }
-
+ 
 TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params,
                                        const gp_Pnt &position,
                                        const gp_Dir &direction,
@@ -18099,7 +18099,7 @@ TopoDS_Shape create_pipe_joint(const pipe_joint_params &params,
   BRepBuilderAPI_Transform transform(joint, transformation);
   return transform.Shape();
 }
-
+ 
 TopoDS_Shape create_catenary(const catenary_params &params) {
   // 参数验证
   if (params.slack <= 0) {
