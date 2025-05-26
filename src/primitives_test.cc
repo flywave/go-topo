@@ -4391,7 +4391,7 @@ void test_revol() {
   test_export_shape(tri_shp, "./triangle_profile_revol.stl");
 
   // 测试矩形剖面
-  rectangle_profile rect_prof{gp_Pnt(0, 0, 5), gp_Pnt(10, 0, 5)};
+  rectangle_profile rect_prof{gp_Pnt(0, 0, 0), gp_Pnt(10, 0, 5)};
   revol_params rect_params{rect_prof, gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)),
                            M_PI / 4};
   auto rect_shp = create_revol(rect_params);
@@ -4456,7 +4456,7 @@ void test_make_prism() {
     // 测试三角形剖面棱柱
     triangle_profile tri_prof{gp_Pnt(0, 0, 0), gp_Pnt(10, 0, 0),
                               gp_Pnt(5, 8, 0)};
-    prism_params tri_params{tri_prof, gp_Dir(0, 0, 20)};
+    prism_params tri_params{tri_prof, gp_Dir(0, 0, 1), 20};
     auto tri_shp = create_prism(tri_params);
     if (tri_shp.IsNull()) {
       std::cerr << "Error: Failed to create triangle profile prism"
@@ -4467,7 +4467,7 @@ void test_make_prism() {
 
     // 测试矩形剖面棱柱
     rectangle_profile rect_prof{gp_Pnt(0, 0, 0), gp_Pnt(10, 5, 0)};
-    prism_params rect_params{rect_prof, gp_Dir(0, 0, 20)};
+    prism_params rect_params{rect_prof, gp_Dir(0, 0, 1), 20};
     auto rect_shp = create_prism(rect_params);
     if (rect_shp.IsNull()) {
       std::cerr << "Error: Failed to create rectangle profile prism"
@@ -4478,7 +4478,7 @@ void test_make_prism() {
 
     // 测试圆形剖面棱柱
     circ_profile circ_prof{gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 5.0};
-    prism_params circ_params{circ_prof, gp_Dir(0, 0, 20)};
+    prism_params circ_params{circ_prof, gp_Dir(0, 0, 1), 20};
     auto circ_shp = create_prism(circ_params);
     if (circ_shp.IsNull()) {
       std::cerr << "Error: Failed to create circle profile prism" << std::endl;
@@ -4489,7 +4489,7 @@ void test_make_prism() {
     // 测试椭圆剖面棱柱
     elips_profile elips_prof{gp_Pnt(10, 0, 0), gp_Pnt(0, 5, 0),
                              gp_Pnt(0, 0, 0)};
-    prism_params elips_params{elips_prof, gp_Dir(0, 0, 1)};
+    prism_params elips_params{elips_prof, gp_Dir(0, 0, 1), 20};
     auto elips_shp = create_prism(elips_params);
     if (elips_shp.IsNull()) {
       std::cerr << "Error: Failed to create ellipse profile prism" << std::endl;
@@ -4501,7 +4501,7 @@ void test_make_prism() {
     polygon_profile poly_prof{{gp_Pnt(0, 0, 0), gp_Pnt(10, 0, 0),
                                gp_Pnt(15, 5, 0), gp_Pnt(10, 10, 0),
                                gp_Pnt(0, 10, 0)}};
-    prism_params poly_params{poly_prof, gp_Dir(0, 0, 1)};
+    prism_params poly_params{poly_prof, gp_Dir(0, 0, 1), 20};
     auto poly_shp = create_prism(poly_params);
     if (poly_shp.IsNull()) {
       std::cerr << "Error: Failed to create polygon profile prism" << std::endl;

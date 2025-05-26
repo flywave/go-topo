@@ -16590,7 +16590,7 @@ TopoDS_Shape create_shape_from_profile(const shape_profile &profile,
       gp_Pnt p1 = prof.p1;
       gp_Pnt p2 = prof.p2;
       gp_Pnt p3 = gp_Pnt(p2.X(), p1.Y(), p1.Z());
-      gp_Pnt p4 = gp_Pnt(p1.X(), p2.Y(), p1.Z());
+      gp_Pnt p4 = gp_Pnt(p1.X(), p2.Y(), p2.Z());
 
       p1 = p1.Transformed(_transform);
       p2 = p2.Transformed(_transform);
@@ -16709,7 +16709,6 @@ TopoDS_Shape create_shape_from_profile(const shape_profile &profile,
 }
 
 TopoDS_Shape create_revol(const revol_params &params) {
-  gp_Ax2 sectionAxes(gp::Origin(), gp::DY());
   TopoDS_Shape profileFace = create_shape_from_profile(params.profile, true);
 
   if (profileFace.IsNull()) {
@@ -16750,7 +16749,9 @@ TopoDS_Shape create_prism(const prism_params &params) {
     throw Standard_ConstructionError("Invalid profile for prism");
   }
 
-  BRepPrimAPI_MakePrism prismMaker(profileFace, gp_Vec(params.direction) * 1.0);
+  gp_Vec extVec = gp_Vec(params.direction).Multiplied(params.height);
+
+  BRepPrimAPI_MakePrism prismMaker(profileFace, extVec);
 
   if (!prismMaker.IsDone()) {
     throw Standard_ConstructionError("Failed to create prism");
@@ -18446,8 +18447,9 @@ TopoDS_Shape create_torus_shape(const torus_shape_params &params,
 
 TopoDS_Shape create_wedge_shape(const wedge_shape_params &params) {
   // 创建楔形体
-  gp_Ax2 axis(gp::Origin(), gp::DZ());
+  gp_Ax2 axis(gp_Pnt(-params.edge.X() / 2, 0, -params.edge.Z() / 2), gp::DZ());
 
+  TopoDS_Shape wedgeShape;
   if (params.limit) {
     const auto &limit = *params.limit;
     BRepPrimAPI_MakeWedge wedgeMaker(axis, params.edge.X(), params.edge.Y(),
@@ -18455,7 +18457,7 @@ TopoDS_Shape create_wedge_shape(const wedge_shape_params &params) {
                                      limit[0], limit[1], // xmin, zmin
                                      limit[2], limit[3]  // xmax, zmax
     );
-    return wedgeMaker.Shape();
+    wedgeShape = wedgeMaker.Shape();
   } else {
     double ltx = params.edge.X() / 2.0;
     if (params.ltx) {
@@ -18464,8 +18466,11 @@ TopoDS_Shape create_wedge_shape(const wedge_shape_params &params) {
     BRepPrimAPI_MakeWedge wedgeMaker(axis, params.edge.X(), params.edge.Y(),
                                      params.edge.Z(), // dx, dy, dz
                                      ltx);            // ltx
-    return wedgeMaker.Shape();
+    wedgeShape = wedgeMaker.Shape();
   }
+  gp_Trsf rotation;
+  rotation.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), M_PI / 2);
+  return BRepBuilderAPI_Transform(wedgeShape, rotation).Shape();
 }
 
 TopoDS_Shape create_wedge_shape(const wedge_shape_params &params,

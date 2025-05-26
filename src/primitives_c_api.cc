@@ -4146,6 +4146,7 @@ PRIMCAPICALL topo_shape_t *create_prism(prism_params_t params) {
   // 设置拉伸方向
   cpp_params.direction =
       gp_Dir(params.direction.x, params.direction.y, params.direction.z);
+  cpp_params.height = params.height;
 
   try {
     return new topo_shape_t{
@@ -4219,6 +4220,7 @@ PRIMCAPICALL topo_shape_t *create_prism_with_place(prism_params_t params,
   // 设置拉伸方向
   cpp_params.direction =
       gp_Dir(params.direction.x, params.direction.y, params.direction.z);
+  cpp_params.height = params.height;
 
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);

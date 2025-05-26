@@ -4539,6 +4539,7 @@ func CreateRevolWithPlace(params RevolParams, position Point3, direction Dir3, x
 type PrismParams struct {
 	Profile   ShapeProfile
 	Direction Dir3
+	Height    float64
 }
 
 func (p *PrismParams) to_struct() C.prism_params_t {
@@ -4604,6 +4605,7 @@ func (p *PrismParams) to_struct() C.prism_params_t {
 
 	// 转换拉伸方向
 	c.direction = p.Direction.val
+	c.height = C.double(p.Height)
 
 	return c
 }

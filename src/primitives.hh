@@ -2295,6 +2295,7 @@ TopoDS_Shape create_revol(const revol_params &params, const gp_Pnt &position,
 struct prism_params {
   shape_profile profile;
   gp_Dir direction;
+  double height;
 };
 
 TopoDS_Shape create_prism(const prism_params &params);
