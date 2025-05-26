@@ -172,9 +172,7 @@ inline Handle(Geom_BSplineCurve)
 
   // Create transformation to local frame at p1
   gp_Trsf trsf;
-  if (p1.IsEqual(gp::Origin(), Precision::Confusion()) &&
-      orientation.IsCoplanar(gp_Ax3(), Precision::Confusion(),
-                             Precision::Angular())) {
+  if (p1.IsEqual(gp::Origin(), Precision::Confusion())) {
     // nothing to do
   } else if (orientation.IsCoplanar(gp_Ax3(), Precision::Confusion(),
                                     Precision::Angular())) {
@@ -206,12 +204,12 @@ inline Handle(Geom_BSplineCurve)
   if (d < Precision::Confusion()) {
     // 当水平距离接近零时，使用默认X轴方向
     Xaxis = gp_Vec(1.0, 0.0, 0.0); // 默认X轴方向
-    d = 1.0; // 设置最小有效距离
-    swapped = false; // 重置交换状态
+    d = 1.0;                       // 设置最小有效距离
+    swapped = false;               // 重置交换状态
   }
 
   Xaxis.Normalize();
-  gp_Vec Yaxis = gp_Dir(0, 0, 1).Crossed(Xaxis);
+  gp_Vec Yaxis = Xaxis.Crossed(gp_Dir(0, 0, 1));
 
   // Create catenary frame
   gp_Pnt frameOrigin = swapped ? p2 : p1;
@@ -341,7 +339,7 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
   // Horizontal distance and height difference
   double d = Xaxis.Magnitude();
   Xaxis.Normalize();
-  gp_Vec Yaxis = gp_Dir(0, 0, 1).Crossed(Xaxis);
+  gp_Vec Yaxis = Xaxis.Crossed(gp_Dir(0, 0, 1));
 
   // Create catenary frame
   gp_Pnt frameOrigin = swapped ? p2 : p1;
