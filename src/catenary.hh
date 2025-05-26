@@ -209,11 +209,10 @@ inline Handle(Geom_BSplineCurve)
   }
 
   Xaxis.Normalize();
-  gp_Vec Yaxis = Xaxis.Crossed(gp_Dir(0, 0, 1));
+  gp_Vec Yaxis = gp_Dir(0, 0, 1).Crossed(Xaxis); 
 
   // Create catenary frame
-  gp_Pnt frameOrigin = swapped ? p2 : p1;
-  gp_Ax3 catFrame(frameOrigin, gp_Dir(0, 0, 1), Xaxis);
+  gp_Ax3 catFrame(p1, gp_Dir(0, 0, 1),  gp_Dir(Xaxis.X(), Xaxis.Y(), 0));
 
   double h = swapped ? -p2local.Z() : p2local.Z();
   double straightDist = p2local.Distance(gp_Pnt(0, 0, 0));
@@ -266,7 +265,7 @@ inline Handle(Geom_BSplineCurve)
   }
 
   if (swapped) {
-    poles.SetValue(1, gp_Pnt(d, 0, h));             // 起点对应p2位置
+    poles.SetValue(1, gp_Pnt(d, 0, -h));             // 起点对应p2位置
     poles.SetValue(poles.Upper(), gp_Pnt(0, 0, 0)); // 终点对应p1位置
   } else {
     poles.SetValue(1, gp_Pnt(0, 0, 0));             // 起点对应p1位置
@@ -281,7 +280,7 @@ inline Handle(Geom_BSplineCurve)
 
   // 应用坐标系变换
   gp_Trsf catToWorld;
-  catToWorld.SetTransformation(gp_Ax3(), catFrame);
+  catToWorld.SetTransformation(catFrame, gp_Ax3()); 
 
   Handle(Geom_BSplineCurve) curve = approx.Curve();
   curve->Transform(catToWorld);
@@ -339,11 +338,10 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
   // Horizontal distance and height difference
   double d = Xaxis.Magnitude();
   Xaxis.Normalize();
-  gp_Vec Yaxis = Xaxis.Crossed(gp_Dir(0, 0, 1));
+  gp_Vec Yaxis = gp_Dir(0, 0, 1).Crossed(Xaxis); 
 
   // Create catenary frame
-  gp_Pnt frameOrigin = swapped ? p2 : p1;
-  gp_Ax3 catFrame(frameOrigin, gp_Dir(0, 0, 1), Xaxis);
+  gp_Ax3 catFrame(p1, gp_Dir(0, 0, 1), gp_Dir(Xaxis.X(), Xaxis.Y(), 0));
 
   double h = swapped ? -p2local.Z() : p2local.Z();
   double straightDist = p2local.Distance(gp_Pnt(0, 0, 0));
@@ -399,7 +397,7 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
 
   // 生成悬垂线控制点时添加端点修正
   if (swapped) {
-    cablePts.front() = gp_Pnt(d, 0, h); // 强制设置起点为p2位置
+    cablePts.front() = gp_Pnt(d, 0, -h); // 强制设置起点为p2位置
     cablePts.back() = gp_Pnt(0, 0, 0);  // 强制设置终点为p1位置
   } else {
     cablePts.front() = gp_Pnt(0, 0, 0); // 强制设置起点为p1位置
@@ -408,7 +406,7 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
 
   // Transform points back to world coordinates
   gp_Trsf catToWorld;
-  catToWorld.SetTransformation(gp_Ax3(), catFrame); // 反转转换方向
+  catToWorld.SetTransformation(catFrame, gp_Ax3()); 
 
   for (auto &pt : cablePts) {
     result.push_back(pt.Transformed(catToWorld));
