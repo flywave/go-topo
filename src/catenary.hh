@@ -172,17 +172,18 @@ inline Handle(Geom_BSplineCurve)
 
   // Create transformation to local frame at p1
   gp_Trsf trsf;
-  if (p1.IsEqual(gp::Origin(), Precision::Confusion())) {
-    // nothing to do
-  } else if (orientation.IsCoplanar(gp_Ax3(), Precision::Confusion(),
-                                    Precision::Angular())) {
-    // Ident坐标系特殊处理：构建以p1为原点的新坐标系
-    gp_Ax3 localFrame(p1, gp_Dir(0, 0, 1), gp_Dir(1, 0, 0));
-    trsf.SetTransformation(localFrame, gp_Ax3());
+  const gp_Ax3 worldAx3;
+
+  // 修改判断逻辑：即使p1是原点，只要orientation与默认坐标系不一致就需要创建变换
+  if (orientation.IsCoplanar(worldAx3, Precision::Confusion(),
+                             Precision::Angular())) {
+    // 当orientation与世界坐标系一致时，仅平移原点
+    gp_Ax3 localFrame(p1, worldAx3.Direction(), worldAx3.XDirection());
+    trsf.SetTransformation(localFrame, worldAx3);
   } else {
-    // 常规坐标系转换
-    trsf.SetTransformation(orientation,
-                           gp_Ax3(p1, gp_Dir(0, 0, 1), gp_Dir(1, 0, 0)));
+    // 自定义orientation时，总是需要创建变换
+    gp_Ax3 targetFrame(p1, orientation.Direction(), orientation.XDirection());
+    trsf.SetTransformation(orientation, targetFrame);
   }
 
   // Transform p2 to local frame
@@ -209,10 +210,9 @@ inline Handle(Geom_BSplineCurve)
   }
 
   Xaxis.Normalize();
-  gp_Vec Yaxis = gp_Dir(0, 0, 1).Crossed(Xaxis); 
 
   // Create catenary frame
-  gp_Ax3 catFrame(p1, gp_Dir(0, 0, 1),  gp_Dir(Xaxis.X(), Xaxis.Y(), 0));
+  gp_Ax3 catFrame(p1, gp_Dir(0, 0, 1), gp_Dir(Xaxis.X(), Xaxis.Y(), 0));
 
   double h = swapped ? -p2local.Z() : p2local.Z();
   double straightDist = p2local.Distance(gp_Pnt(0, 0, 0));
@@ -265,7 +265,7 @@ inline Handle(Geom_BSplineCurve)
   }
 
   if (swapped) {
-    poles.SetValue(1, gp_Pnt(d, 0, -h));             // 起点对应p2位置
+    poles.SetValue(1, gp_Pnt(d, 0, -h));            // 起点对应p2位置
     poles.SetValue(poles.Upper(), gp_Pnt(0, 0, 0)); // 终点对应p1位置
   } else {
     poles.SetValue(1, gp_Pnt(0, 0, 0));             // 起点对应p1位置
@@ -280,7 +280,7 @@ inline Handle(Geom_BSplineCurve)
 
   // 应用坐标系变换
   gp_Trsf catToWorld;
-  catToWorld.SetTransformation(catFrame, gp_Ax3()); 
+  catToWorld.SetTransformation(catFrame, gp_Ax3());
 
   Handle(Geom_BSplineCurve) curve = approx.Curve();
   curve->Transform(catToWorld);
@@ -308,19 +308,18 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
 
   // Create transformation to local frame at p1
   gp_Trsf trsf;
-  if (p1.IsEqual(gp::Origin(), Precision::Confusion()) &&
-      orientation.IsCoplanar(gp_Ax3(), Precision::Confusion(),
+  const gp_Ax3 worldAx3;
+
+  // 修改判断逻辑：即使p1是原点，只要orientation与默认坐标系不一致就需要创建变换
+  if (orientation.IsCoplanar(worldAx3, Precision::Confusion(),
                              Precision::Angular())) {
-    // nothing to do
-  } else if (orientation.IsCoplanar(gp_Ax3(), Precision::Confusion(),
-                                    Precision::Angular())) {
-    // Ident坐标系特殊处理：构建以p1为原点的新坐标系
-    gp_Ax3 localFrame(p1, gp_Dir(0, 0, 1), gp_Dir(1, 0, 0));
-    trsf.SetTransformation(localFrame, gp_Ax3());
+    // 当orientation与世界坐标系一致时，仅平移原点
+    gp_Ax3 localFrame(p1, worldAx3.Direction(), worldAx3.XDirection());
+    trsf.SetTransformation(localFrame, worldAx3);
   } else {
-    // 常规坐标系转换
-    trsf.SetTransformation(orientation,
-                           gp_Ax3(p1, gp_Dir(0, 0, 1), gp_Dir(1, 0, 0)));
+    // 自定义orientation时，总是需要创建变换
+    gp_Ax3 targetFrame(p1, orientation.Direction(), orientation.XDirection());
+    trsf.SetTransformation(orientation, targetFrame);
   }
 
   // Transform p2 to local frame
@@ -338,7 +337,7 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
   // Horizontal distance and height difference
   double d = Xaxis.Magnitude();
   Xaxis.Normalize();
-  gp_Vec Yaxis = gp_Dir(0, 0, 1).Crossed(Xaxis); 
+  gp_Vec Yaxis = gp_Dir(0, 0, 1).Crossed(Xaxis);
 
   // Create catenary frame
   gp_Ax3 catFrame(p1, gp_Dir(0, 0, 1), gp_Dir(Xaxis.X(), Xaxis.Y(), 0));
@@ -398,7 +397,7 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
   // 生成悬垂线控制点时添加端点修正
   if (swapped) {
     cablePts.front() = gp_Pnt(d, 0, -h); // 强制设置起点为p2位置
-    cablePts.back() = gp_Pnt(0, 0, 0);  // 强制设置终点为p1位置
+    cablePts.back() = gp_Pnt(0, 0, 0);   // 强制设置终点为p1位置
   } else {
     cablePts.front() = gp_Pnt(0, 0, 0); // 强制设置起点为p1位置
     cablePts.back() = gp_Pnt(d, 0, h);  // 强制设置终点为p2位置
@@ -406,7 +405,7 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
 
   // Transform points back to world coordinates
   gp_Trsf catToWorld;
-  catToWorld.SetTransformation(catFrame, gp_Ax3()); 
+  catToWorld.SetTransformation(catFrame, gp_Ax3());
 
   for (auto &pt : cablePts) {
     result.push_back(pt.Transformed(catToWorld));
@@ -415,10 +414,6 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
 
 inline gp_Ax3 createOrientation(const gp_Pnt &p1, const gp_Pnt &p2,
                                 const gp_Dir &upDir) {
-  if (upDir.IsEqual(gp_Dir(0, 0, 1), Precision::Angular())) {
-    return gp_Ax3(p1, gp_Dir(0, 0, 1), gp_Dir(1, 0, 0));
-  }
-
   // 计算从p1到p2的方向向量
   gp_Vec dirVec(p1, p2);
   if (dirVec.Magnitude() < Precision::Confusion()) {
@@ -426,18 +421,15 @@ inline gp_Ax3 createOrientation(const gp_Pnt &p1, const gp_Pnt &p2,
   }
   dirVec.Normalize();
 
-  // 计算X轴方向
-  gp_Vec xVec = gp_Vec(dirVec).Crossed(upDir);
-  if (xVec.Magnitude() < Precision::Confusion()) {
-    // 如果upDir与dirVec平行，使用备用X轴
-    xVec = gp_Vec(1, 0, 0);
+  // Z轴方向为指定的upDir
+  gp_Dir zAxis = upDir; 
+
+  // 计算X轴方向（与p1-p2方向正交）
+  if (dirVec.Magnitude() < Precision::Confusion()) {
+    // 当p1-p2方向与upDir平行时，使用默认X轴
+    dirVec = gp_Vec(1, 0, 0);
   }
-  xVec.Normalize();
 
-  // 重新计算Z轴确保正交
-  gp_Vec zVec = xVec.Crossed(dirVec);
-  zVec.Normalize();
-
-  return gp_Ax3(p1, dirVec, xVec);
+  return gp_Ax3(p1, zAxis, dirVec);
 }
 } // namespace flywave
