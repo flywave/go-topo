@@ -2022,7 +2022,8 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
   double hypotenuse =
       params.frontLength + params.backLength + total_insulator_height;
   double actual_height =
-      sqrt(pow(hypotenuse, 2) - pow(half_front_spacing, 2)); // 已有计算
+      sqrt(pow(hypotenuse, 2) -
+           pow(half_front_spacing - half_back_spacing, 2)); // 已有计算
 
   // 创建原点坐标系 (原点在V型张开端两前段连线中点)
   gp_Pnt origin(0, 0, 0);
@@ -2033,26 +2034,33 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
   // 创建绝缘子串 (两侧各一串)
   for (int side = -1; side <= 1; side += 2) {
     // 计算绝缘子串起点和终点
-    gp_Pnt start_point(0, side * half_front_spacing, 0);
+    gp_Pnt front_point(0, side * half_front_spacing, 0);
     gp_Pnt end_point(actual_height, side * half_back_spacing, 0);
 
     // 创建绝缘子串路径
-    gp_Vec insulator_dir(end_point.X() - start_point.X(),
-                         end_point.Y() - start_point.Y(),
-                         end_point.Z() - start_point.Z());
-    gp_Vec front_dir(start_point.X() - end_point.X(),
-                     start_point.Y() - end_point.Y(),
-                     start_point.Z() - end_point.Z());
+    gp_XYZ insulator_dir(end_point.X() - front_point.X(),
+                         end_point.Y() - front_point.Y(),
+                         end_point.Z() - front_point.Z());
+    gp_XYZ front_dir(front_point.X() - end_point.X(),
+                     front_point.Y() - end_point.Y(),
+                     front_point.Z() - end_point.Z());
 
+    gp_Vec front_dir_normalized = gp_Vec(insulator_dir).Normalized(); // 归一化方向向量
+    gp_Pnt start_point =
+        front_point.Translated(front_dir_normalized * params.frontLength);
+
+    gp_XYZ insulator_len(end_point.X() - start_point.X(),
+                           end_point.Y() - start_point.Y(),
+                           end_point.Z() - start_point.Z());
     // 前端连接
     BRepPrimAPI_MakeCylinder frontCyl(
-        gp_Ax2(start_point, gp_Dir(front_dir.Normalized())), params.radius / 4,
+        gp_Ax2(front_point, gp_Dir(gp_Vec(insulator_dir).Normalized())), params.radius / 4,
         params.frontLength);
     builder.Add(result, frontCyl.Shape());
 
     // 后端连接
     BRepPrimAPI_MakeCylinder backCyl(
-        gp_Ax2(end_point, gp_Dir(insulator_dir.Normalized())),
+        gp_Ax2(end_point, gp_Dir(gp_Vec(insulator_dir).Normalized())),
         params.radius / 4, params.backLength);
     builder.Add(result, backCyl.Shape());
 
@@ -2061,13 +2069,13 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
       double ratio_start = (double)i / params.insulatorCount;
       double ratio_end = (double)(i + 1) / params.insulatorCount;
 
-      gp_Pnt segment_start(start_point.X() + insulator_dir.X() * ratio_start,
-                           start_point.Y() + insulator_dir.Y() * ratio_start,
-                           start_point.Z() + insulator_dir.Z() * ratio_start);
+      gp_Pnt segment_start(start_point.X() + insulator_len.X() * ratio_start,
+                           start_point.Y() + insulator_len.Y() * ratio_start,
+                           start_point.Z() + insulator_len.Z() * ratio_start);
 
-      gp_Pnt segment_end(start_point.X() + insulator_dir.X() * ratio_end,
-                         start_point.Y() + insulator_dir.Y() * ratio_end,
-                         start_point.Z() + insulator_dir.Z() * ratio_end);
+      gp_Pnt segment_end(start_point.X() + insulator_len.X() * ratio_end,
+                         start_point.Y() + insulator_len.Y() * ratio_end,
+                         start_point.Z() + insulator_len.Z() * ratio_end);
 
       // 创建绝缘子柱体
       gp_Vec segment_vec(segment_end.X() - segment_start.X(),
