@@ -16847,6 +16847,30 @@ TopoDS_Wire make_wire_from_segments(
         wireMaker.Add(BRepBuilderAPI_MakeEdge(interpolate.Curve()));
         break;
       }
+      case segment_type::BEZIER: {
+        if (pts.size() < 3) { // 贝塞尔曲线至少需要起点、控制点和终点
+          throw Standard_ConstructionError(
+              "Bezier segment requires at least 3 points");
+        }
+
+        // 创建贝塞尔曲线控制点数组
+        TColgp_Array1OfPnt poles(1, pts.size());
+        for (size_t j = 0; j < pts.size(); ++j) {
+          poles.SetValue(j + 1, pts[j]);
+        }
+
+        // 创建二次或三次贝塞尔曲线
+        Handle(Geom_BezierCurve) bezierCurve;
+        if (pts.size() == 3) { // 二次贝塞尔曲线
+          bezierCurve = new Geom_BezierCurve(poles);
+        } else { // 三次或更高阶贝塞尔曲线
+          bezierCurve = new Geom_BezierCurve(poles);
+        }
+
+        // 创建边并添加到线框
+        wireMaker.Add(BRepBuilderAPI_MakeEdge(bezierCurve).Edge());
+        break;
+      }
       default:
         throw Standard_ConstructionError("Unknown segment type");
       }

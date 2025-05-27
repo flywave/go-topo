@@ -4634,6 +4634,7 @@ const (
 	SegmentTypeThreePointArc
 	SegmentTypeCircleCenterArc
 	SegmentTypeSpline
+	SegmentTypeBezier
 )
 
 // 连接形状模式枚举

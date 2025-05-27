@@ -2307,7 +2307,8 @@ enum class segment_type {
   LINE = 0,              // 直线
   THREE_POINT_ARC = 1,   // 弧线
   CIRCLE_CENTER_ARC = 2, // 圆心角
-  SPLINE = 3             // 样条曲线
+  SPLINE = 3,            // 样条曲线
+  BEZIER = 4             // 贝塞尔曲线
 };
 
 struct pipe_params {

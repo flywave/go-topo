@@ -13,6 +13,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 enum {
   GeomAxis1Placement,
   GeomAxis2Placement,

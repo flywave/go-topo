@@ -1919,7 +1919,8 @@ typedef enum {
   SEGMENT_TYPE_LINE = 0,              // 直线
   SEGMENT_TYPE_THREE_POINT_ARC = 1,   // 弧线
   SEGMENT_TYPE_CIRCLE_CENTER_ARC = 2, // 圆心角
-  SEGMENT_TYPE_SPLINE = 3             // 样条曲线
+  SEGMENT_TYPE_SPLINE = 3,            // 样条曲线
+  SEGMENT_TYPE_BEZIER = 4             // 贝塞尔曲线
 } segment_type_t;
 
 // 管道端点参数

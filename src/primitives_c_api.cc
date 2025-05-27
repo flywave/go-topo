@@ -4381,6 +4381,9 @@ PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params) {
   case SEGMENT_TYPE_SPLINE:
     cpp_params.segment_type = segment_type::SPLINE;
     break;
+  case SEGMENT_TYPE_BEZIER:
+    cpp_params.segment_type = segment_type::BEZIER;
+    break;
   default:
     return nullptr;
   }
@@ -4560,6 +4563,9 @@ topo_shape_t *create_pipe_with_split_distances(pipe_params_t params,
     break;
   case SEGMENT_TYPE_SPLINE:
     cpp_params.segment_type = segment_type::SPLINE;
+    break;
+  case SEGMENT_TYPE_BEZIER:
+    cpp_params.segment_type = segment_type::BEZIER;
     break;
   default:
     return nullptr;
@@ -4743,6 +4749,9 @@ PRIMCAPICALL topo_shape_t *create_pipe_with_place(pipe_params_t params,
     break;
   case SEGMENT_TYPE_SPLINE:
     cpp_params.segment_type = segment_type::SPLINE;
+    break;
+  case SEGMENT_TYPE_BEZIER:
+    cpp_params.segment_type = segment_type::BEZIER;
     break;
   default:
     return nullptr;
@@ -4936,6 +4945,9 @@ create_multi_segment_pipe(multi_segment_pipe_params_t params) {
       case SEGMENT_TYPE_SPLINE:
         segment_types.push_back(segment_type::SPLINE);
         break;
+      case SEGMENT_TYPE_BEZIER:
+        segment_types.push_back(segment_type::BEZIER);
+        break;
       default:
         return nullptr;
       }
@@ -5126,6 +5138,9 @@ topo_shape_t *create_multi_segment_pipe_with_split_distances(
         break;
       case SEGMENT_TYPE_SPLINE:
         segment_types.push_back(segment_type::SPLINE);
+        break;
+      case SEGMENT_TYPE_BEZIER:
+        segment_types.push_back(segment_type::BEZIER);
         break;
       default:
         return nullptr;
@@ -5320,6 +5335,9 @@ create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
         break;
       case SEGMENT_TYPE_SPLINE:
         segment_types.push_back(segment_type::SPLINE);
+        break;
+      case SEGMENT_TYPE_BEZIER:
+        segment_types.push_back(segment_type::BEZIER);
         break;
       default:
         return nullptr;

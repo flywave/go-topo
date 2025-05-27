@@ -40,14 +40,13 @@
 #include <gp_Pnt.hxx>
 #include <gp_Trsf.hxx>
 
+#include "version.hh"
 #include <algorithm>
 #include <array>
 #include <functional>
 #include <iostream>
 #include <optional>
 #include <sstream>
-#include "version.hh"
-
 
 namespace flywave {
 namespace dxf {
