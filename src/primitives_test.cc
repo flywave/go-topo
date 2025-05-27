@@ -4980,12 +4980,12 @@ void test_make_catenary() {
 
     // 测试标准悬垂线
     catenary_params params{
-        .p1 = gp_Pnt(0, 0, 0),   // 起点
+        .p1 = gp_Pnt(0, 0, 0),     // 起点
         .p2 = gp_Pnt(100, 100, 0), // 终点
-        .profile = circ_prof,    // 圆形剖面
-        .slack = 2,            // 悬垂度
-        .maxSag = 10.0,           // 最大垂度
-        .tessellation = 0.0      // 分段数
+        .profile = circ_prof,      // 圆形剖面
+        .slack = 2,                // 悬垂度
+        .maxSag = 10.0,            // 最大垂度
+        .tessellation = 0.0        // 分段数
     };
 
     auto shp = create_catenary(params);
@@ -5009,6 +5009,27 @@ void test_make_catenary() {
       return;
     }
     test_export_shape(height_shp, "./height_catenary.stl");
+
+    gp_Dir upDir =
+        gp_Vec(-2365550.686973459, 4588616.347934356, 3734082.7681595744)
+            .Normalized();
+    // 测试标准悬垂线
+    catenary_params bug_params{.p1 = gp_Pnt(0, 0, 0), // 起点
+                               .p2 = gp_Pnt(13.363751136232167,
+                                            -26.227833716198802,
+                                            10.422308564186096), // 终点
+                               .profile = circ_prof,             // 圆形剖面
+                               .slack = 2,                       // 悬垂度
+                               .maxSag = 10.0,                   // 最大垂度
+                               .tessellation = 0.0,              // 分段数
+                               .upDir = upDir};
+
+    auto bug_shp = create_catenary(bug_params);
+    if (bug_shp.IsNull()) {
+      std::cerr << "Error: Failed to create catenary" << std::endl;
+      return;
+    }
+    test_export_shape(bug_shp, "./catenary_bug.stl");
 
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;

@@ -422,14 +422,15 @@ inline gp_Ax3 createOrientation(const gp_Pnt &p1, const gp_Pnt &p2,
   dirVec.Normalize();
 
   // Z轴方向为指定的upDir
-  gp_Dir zAxis = upDir; 
+  gp_Dir zAxis = upDir;
 
+  gp_Vec xVector = dirVec.Crossed(zAxis);
   // 计算X轴方向（与p1-p2方向正交）
-  if (dirVec.Magnitude() < Precision::Confusion()) {
+  if (xVector.Magnitude() < Precision::Confusion()) {
     // 当p1-p2方向与upDir平行时，使用默认X轴
-    dirVec = gp_Vec(1, 0, 0);
+    xVector = gp_Vec(1, 0, 0);
   }
 
-  return gp_Ax3(p1, zAxis, dirVec);
+  return gp_Ax3(p1, zAxis, xVector);
 }
 } // namespace flywave
