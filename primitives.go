@@ -3582,6 +3582,11 @@ const (
 	TunnelSectionCircular    = 3
 )
 
+const (
+	CableTunnelTypeLine = 0 // 直道
+	CableTunnelTypeArc  = 1 // 弧形
+)
+
 type ChannelPoint struct {
 	Position Point3
 	Ctype    int

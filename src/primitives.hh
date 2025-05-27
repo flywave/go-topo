@@ -1765,6 +1765,11 @@ TopoDS_Shape create_four_way_well(const four_way_well_params &params,
                                   const gp_Dir &direction = gp::DZ(),
                                   const gp_Dir &xDirection = gp::DX());
 
+enum class cable_tunnel_type {
+  LINE = 0, // 直道
+  ARC = 1   // 弧形
+}
+
 struct channel_point {
   gp_Pnt position; // 点坐标
   int type;        // 点类型 (0-普通节点
