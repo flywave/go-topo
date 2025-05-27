@@ -1768,7 +1768,7 @@ TopoDS_Shape create_four_way_well(const four_way_well_params &params,
 enum class cable_tunnel_type {
   LINE = 0, // 直道
   ARC = 1   // 弧形
-}
+};
 
 struct channel_point {
   gp_Pnt position; // 点坐标
@@ -2128,6 +2128,9 @@ TopoDS_Shape create_drainage_well(const drainage_well_params &params,
                                   const gp_Pnt &position,
                                   const gp_Dir &direction = gp::DZ(),
                                   const gp_Dir &xDir = gp::DX());
+
+enum class pipe_support_style { SINGLE_SIDED = 1, DOUBLE_SIDED = 2 };
+
 // GZW_GZ
 struct pipe_support_params {
   int style;                       // 管枕形式 (1-单侧管枕, 2-两侧管枕)
@@ -2144,6 +2147,11 @@ TopoDS_Shape create_pipe_support(const pipe_support_params &params,
                                  const gp_Pnt &position,
                                  const gp_Dir &direction = gp::DZ(),
                                  const gp_Dir &xDir = gp::DX());
+
+enum class cover_plate_style {
+  RECTANGULAR = 1, // 长方形
+  SECTOR = 2       // 扇形
+};
 
 // GZW_GB
 struct cover_plate_params {
