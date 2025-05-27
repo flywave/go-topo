@@ -71,6 +71,7 @@
 #include <gp_Pln.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Vec.hxx>
+#include <GCPnts_AbscissaPoint.hxx>
 
 namespace flywave {
 namespace topo {
@@ -2022,7 +2023,8 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
   double hypotenuse =
       params.frontLength + params.backLength + total_insulator_height;
   double actual_height =
-      sqrt(pow(hypotenuse, 2) - pow(half_front_spacing, 2)); // 已有计算
+      sqrt(pow(hypotenuse, 2) -
+           pow(half_front_spacing - half_back_spacing, 2)); // 已有计算
 
   // 创建原点坐标系 (原点在V型张开端两前段连线中点)
   gp_Pnt origin(0, 0, 0);
@@ -2033,26 +2035,34 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
   // 创建绝缘子串 (两侧各一串)
   for (int side = -1; side <= 1; side += 2) {
     // 计算绝缘子串起点和终点
-    gp_Pnt start_point(0, side * half_front_spacing, 0);
+    gp_Pnt front_point(0, side * half_front_spacing, 0);
     gp_Pnt end_point(actual_height, side * half_back_spacing, 0);
 
     // 创建绝缘子串路径
-    gp_Vec insulator_dir(end_point.X() - start_point.X(),
+    gp_XYZ insulator_dir(end_point.X() - front_point.X(),
+                         end_point.Y() - front_point.Y(),
+                         end_point.Z() - front_point.Z());
+    gp_XYZ front_dir(front_point.X() - end_point.X(),
+                     front_point.Y() - end_point.Y(),
+                     front_point.Z() - end_point.Z());
+
+    gp_Vec front_dir_normalized =
+        gp_Vec(insulator_dir).Normalized(); // 归一化方向向量
+    gp_Pnt start_point =
+        front_point.Translated(front_dir_normalized * params.frontLength);
+
+    gp_XYZ insulator_len(end_point.X() - start_point.X(),
                          end_point.Y() - start_point.Y(),
                          end_point.Z() - start_point.Z());
-    gp_Vec front_dir(start_point.X() - end_point.X(),
-                     start_point.Y() - end_point.Y(),
-                     start_point.Z() - end_point.Z());
-
     // 前端连接
     BRepPrimAPI_MakeCylinder frontCyl(
-        gp_Ax2(start_point, gp_Dir(front_dir.Normalized())), params.radius / 4,
-        params.frontLength);
+        gp_Ax2(front_point, gp_Dir(gp_Vec(insulator_dir).Normalized())),
+        params.radius / 4, params.frontLength);
     builder.Add(result, frontCyl.Shape());
 
     // 后端连接
     BRepPrimAPI_MakeCylinder backCyl(
-        gp_Ax2(end_point, gp_Dir(insulator_dir.Normalized())),
+        gp_Ax2(end_point, gp_Dir(gp_Vec(insulator_dir).Normalized())),
         params.radius / 4, params.backLength);
     builder.Add(result, backCyl.Shape());
 
@@ -2061,13 +2071,13 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
       double ratio_start = (double)i / params.insulatorCount;
       double ratio_end = (double)(i + 1) / params.insulatorCount;
 
-      gp_Pnt segment_start(start_point.X() + insulator_dir.X() * ratio_start,
-                           start_point.Y() + insulator_dir.Y() * ratio_start,
-                           start_point.Z() + insulator_dir.Z() * ratio_start);
+      gp_Pnt segment_start(start_point.X() + insulator_len.X() * ratio_start,
+                           start_point.Y() + insulator_len.Y() * ratio_start,
+                           start_point.Z() + insulator_len.Z() * ratio_start);
 
-      gp_Pnt segment_end(start_point.X() + insulator_dir.X() * ratio_end,
-                         start_point.Y() + insulator_dir.Y() * ratio_end,
-                         start_point.Z() + insulator_dir.Z() * ratio_end);
+      gp_Pnt segment_end(start_point.X() + insulator_len.X() * ratio_end,
+                         start_point.Y() + insulator_len.Y() * ratio_end,
+                         start_point.Z() + insulator_len.Z() * ratio_end);
 
       // 创建绝缘子柱体
       gp_Vec segment_vec(segment_end.X() - segment_start.X(),
@@ -3035,6 +3045,115 @@ TopoDS_Shape create_curve_cable(const curve_cable_params &params,
 
   BRepBuilderAPI_Transform transform(cable, transformation);
   return transform.Shape();
+}
+
+std::vector<gp_Pnt>
+sample_curve_points(const std::vector<std::vector<gp_Pnt>> &controlPoints,
+                    std::vector<curve_type> segments, double tessellation) {
+  // 参数验证
+  if (controlPoints.size() != segments.size()) {
+    throw Standard_ConstructionError(
+        "Control points and segments count mismatch");
+  }
+
+  std::vector<gp_Pnt> points;
+
+  // 处理每条曲线段
+  for (size_t i = 0; i < controlPoints.size(); ++i) {
+    const auto &pointsGroup = controlPoints[i];
+    curve_type type = segments[i];
+
+    switch (type) {
+    case curve_type::LINE: {
+      // 直线直接采样起点和终点
+      if (pointsGroup.size() != 2) {
+        throw Standard_ConstructionError(
+            "Line segment requires exactly 2 points");
+      }
+      points.push_back(pointsGroup[0]);
+      points.push_back(pointsGroup[1]);
+      break;
+    }
+    case curve_type::ARC: {
+      // 圆弧采样
+      if (pointsGroup.size() != 3) {
+        throw Standard_ConstructionError(
+            "Arc segment requires exactly 3 points");
+      }
+
+      // 创建圆弧
+      GC_MakeArcOfCircle arcMaker(pointsGroup[0], pointsGroup[1],
+                                  pointsGroup[2]);
+      if (!arcMaker.IsDone()) {
+        throw Standard_ConstructionError("Failed to create arc segment");
+      }
+
+      // 计算默认采样数
+      Handle(Geom_TrimmedCurve) arc = arcMaker.Value();
+      GeomAdaptor_Curve curveAdaptor(arc);
+      double arcLength = GCPnts_AbscissaPoint::Length(curveAdaptor);
+      int sampleCount = tessellation > 0
+                            ? tessellation
+                            : std::max(8, static_cast<int>(arcLength * 10));
+
+      // 均匀采样圆弧
+      double first = arcMaker.Value()->FirstParameter();
+      double last = arcMaker.Value()->LastParameter();
+      double step = (last - first) / sampleCount;
+
+      for (int j = 0; j <= sampleCount; ++j) {
+        double param = first + j * step;
+        points.push_back(arcMaker.Value()->Value(param));
+      }
+      break;
+    }
+    case curve_type::BEZIER: {
+      // 贝塞尔曲线采样
+      if (pointsGroup.size() < 3) {
+        throw Standard_ConstructionError(
+            "Bezier segment requires at least 3 points");
+      }
+
+      // 创建贝塞尔曲线
+      TColgp_Array1OfPnt poles(1, pointsGroup.size());
+      for (size_t j = 0; j < pointsGroup.size(); ++j) {
+        poles.SetValue(j + 1, pointsGroup[j]);
+      }
+      Handle(Geom_BezierCurve) curve = new Geom_BezierCurve(poles);
+
+      // 计算默认采样数
+      double approxLength = 0;
+      for (size_t j = 1; j < pointsGroup.size(); ++j) {
+        approxLength += pointsGroup[j - 1].Distance(pointsGroup[j]);
+      }
+      int sampleCount = tessellation > 0
+                            ? tessellation
+                            : std::max(12, static_cast<int>(approxLength * 15));
+
+      // 均匀采样贝塞尔曲线
+      double first = curve->FirstParameter();
+      double last = curve->LastParameter();
+      double step = (last - first) / sampleCount;
+
+      for (int j = 0; j <= sampleCount; ++j) {
+        double param = first + j * step;
+        points.push_back(curve->Value(param));
+      }
+      break;
+    }
+    default:
+      throw Standard_ConstructionError("Unknown curve type");
+    }
+  }
+
+  // 去除连续重复点
+  auto last = std::unique(points.begin(), points.end(),
+                          [](const gp_Pnt &a, const gp_Pnt &b) {
+                            return a.Distance(b) < Precision::Confusion();
+                          });
+  points.erase(last, points.end());
+
+  return points;
 }
 
 /**
@@ -12952,6 +13071,83 @@ TopoDS_Shape create_four_way_well(const four_way_well_params &params,
   return transform.Shape();
 }
 
+std::vector<gp_Pnt>
+sample_channel_points(const std::vector<channel_point> &points,
+                      double tessellation) {
+  if (points.size() < 2) {
+    throw Standard_ConstructionError("At least 2 points are required");
+  }
+
+  std::vector<gp_Pnt> sampledPoints;
+
+  // 处理点序列
+  for (size_t i = 0; i < points.size() - 1; i++) {
+    const gp_Pnt &current = points[i].position;
+    const gp_Pnt &next = points[i + 1].position;
+
+    if (points[i].type == 0 && points[i + 1].type == 0) { // 直线段
+      // 计算默认采样数
+      double length = current.Distance(next);
+      int sampleCount = tessellation > 0
+                            ? tessellation
+                            : std::max(2, static_cast<int>(length * 10));
+
+      // 直线均匀采样
+      for (int j = 0; j <= sampleCount; j++) {
+        double ratio = static_cast<double>(j) / sampleCount;
+        sampledPoints.push_back(
+            gp_Pnt(current.X() * (1 - ratio) + next.X() * ratio,
+                   current.Y() * (1 - ratio) + next.Y() * ratio,
+                   current.Z() * (1 - ratio) + next.Z() * ratio));
+      }
+    } else if (points[i].type == 1) { // 弧线段
+      // 验证弧线点位置
+      if (i == 0 || i == points.size() - 1) {
+        throw Standard_ConstructionError(
+            "Arc point must have both previous and next points");
+      }
+
+      const gp_Pnt &prev = points[i - 1].position;
+
+      // 创建三点圆弧
+      GC_MakeArcOfCircle arcMaker(prev, current, next);
+      if (!arcMaker.IsDone()) {
+        throw Standard_ConstructionError("Failed to create arc segment");
+      }
+
+      // 计算默认采样数
+      Handle(Geom_TrimmedCurve) arc = arcMaker.Value();
+
+      // Create adaptor for the arc
+      GeomAdaptor_Curve curveAdaptor(arc);
+
+      double arcLength = GCPnts_AbscissaPoint::Length(curveAdaptor);
+      int sampleCount = tessellation > 0
+                            ? tessellation
+                            : std::max(8, static_cast<int>(arcLength * 15));
+
+      // 均匀采样圆弧
+      double first = arcMaker.Value()->FirstParameter();
+      double last = arcMaker.Value()->LastParameter();
+      double step = (last - first) / sampleCount;
+
+      for (int j = 0; j <= sampleCount; j++) {
+        double param = first + j * step;
+        sampledPoints.push_back(arcMaker.Value()->Value(param));
+      }
+    }
+  }
+
+  // 去除连续重复点
+  auto last = std::unique(sampledPoints.begin(), sampledPoints.end(),
+                          [](const gp_Pnt &a, const gp_Pnt &b) {
+                            return a.Distance(b) < Precision::Confusion();
+                          });
+  sampledPoints.erase(last, sampledPoints.end());
+
+  return sampledPoints;
+}
+
 TopoDS_Shape create_channel_shape(TopoDS_Shape section, TopoDS_Wire pathWire) {
   // 参数校验
   if (section.IsNull()) {
@@ -17479,6 +17675,87 @@ create_pipe_transition(const shape_profile &profile1, const gp_Dir &normal1,
   }
 
   return BRepAlgoAPI_Common(part1, part2).Shape();
+}
+
+std::vector<gp_Pnt>
+sample_segment_points(const std::vector<std::vector<gp_Pnt>> &wires,
+                      std::vector<segment_type> segments, double tessellation) {
+  // 创建线框
+  TopoDS_Wire wire = make_wire_from_segments(wires, segments);
+
+  // 计算线框长度和复杂度
+  GProp_GProps props;
+  BRepGProp::LinearProperties(wire, props);
+  double wireLength = props.Mass();
+
+  // 自动计算采样数
+  if (tessellation <= 0) {
+    int edgeCount = 0;
+    int curveCount = 0;
+    double totalCurvature = 0.0;
+
+    // 分析线框中的边类型
+    for (TopExp_Explorer explorer(wire, TopAbs_EDGE); explorer.More();
+         explorer.Next()) {
+      const TopoDS_Edge &edge = TopoDS::Edge(explorer.Current());
+      BRepAdaptor_Curve curve(edge);
+
+      edgeCount++;
+      if (curve.GetType() != GeomAbs_Line) {
+        curveCount++;
+        // 估算曲率变化
+        double edgeLength = GCPnts_AbscissaPoint::Length(curve);
+        totalCurvature += edgeLength * 2; // 曲线权重加倍
+      }
+    }
+
+    // 基础采样数 + 曲线额外采样 + 长度比例采样
+    tessellation = 8 + curveCount * 3 + static_cast<int>(wireLength * 10);
+
+    // 如果总曲率较大，增加采样点
+    if (totalCurvature > wireLength * 1.5) {
+      tessellation += static_cast<int>(totalCurvature / wireLength * 5);
+    }
+  }
+
+  std::vector<gp_Pnt> points;
+
+  // 遍历所有边进行采样
+  for (TopExp_Explorer explorer(wire, TopAbs_EDGE); explorer.More();
+       explorer.Next()) {
+    const TopoDS_Edge &edge = TopoDS::Edge(explorer.Current());
+
+    BRepAdaptor_Curve curve(edge);
+    double first = curve.FirstParameter();
+    double last = curve.LastParameter();
+
+    // 根据曲线类型调整采样密度
+    if (curve.GetType() == GeomAbs_Line) {
+      // 直线只需首尾点
+      points.push_back(curve.Value(first));
+      points.push_back(curve.Value(last));
+    } else {
+      // 曲线增加采样点
+      int edgeTessellation = static_cast<int>(
+          tessellation * (GCPnts_AbscissaPoint::Length(curve) / wireLength));
+      edgeTessellation = std::max(3, edgeTessellation); // 每条曲线至少3个点
+
+      double step = (last - first) / edgeTessellation;
+      for (int i = 0; i <= edgeTessellation; i++) {
+        double param = first + i * step;
+        points.push_back(curve.Value(param));
+      }
+    }
+  }
+
+  // 去除连续重复点
+  auto last = std::unique(points.begin(), points.end(),
+                          [](const gp_Pnt &a, const gp_Pnt &b) {
+                            return a.Distance(b) < Precision::Confusion();
+                          });
+  points.erase(last, points.end());
+
+  return points;
 }
 
 TopoDS_Shape

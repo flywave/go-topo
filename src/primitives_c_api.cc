@@ -820,6 +820,52 @@ PRIMCAPICALL topo_shape_t *create_cable_with_place(cable_params_t params,
   }
 }
 
+// 曲线采样函数实现
+PRIMCAPICALL pnt3d_t *
+sample_curve_points(const pnt3d_t *control_points, const int *point_counts,
+                    int array_count, const curve_type_t *curve_types,
+                    int curve_type_count, double tessellation, int *out_count) {
+  // 参数检查
+  if (!control_points || !point_counts || !curve_types || !out_count ||
+      array_count <= 0 || curve_type_count <= 0) {
+    return nullptr;
+  }
+
+  // 转换输入数据
+  std::vector<std::vector<gp_Pnt>> cpp_control_points;
+  std::vector<curve_type> cpp_curve_types;
+
+  const pnt3d_t *current_points = control_points;
+  for (int i = 0; i < array_count; ++i) {
+    std::vector<gp_Pnt> points;
+    for (int j = 0; j < point_counts[i]; ++j) {
+      points.push_back(
+          gp_Pnt(current_points->x, current_points->y, current_points->z));
+      ++current_points;
+    }
+    cpp_control_points.push_back(points);
+  }
+
+  for (int i = 0; i < curve_type_count; ++i) {
+    cpp_curve_types.push_back(static_cast<curve_type>(curve_types[i]));
+  }
+
+  // 调用C++函数
+  auto points =
+      sample_curve_points(cpp_control_points, cpp_curve_types, tessellation);
+
+  // 转换输出结果
+  *out_count = static_cast<int>(points.size());
+  pnt3d_t *result = new pnt3d_t[points.size()];
+  for (size_t i = 0; i < points.size(); ++i) {
+    result[i].x = points[i].X();
+    result[i].y = points[i].Y();
+    result[i].z = points[i].Z();
+  }
+
+  return result;
+}
+
 PRIMCAPICALL topo_shape_t *create_curve_cable(curve_cable_params_t params) {
   try {
     std::vector<std::vector<gp_Pnt>> cpp_controlPoints;
@@ -3038,6 +3084,41 @@ create_four_way_well_with_place(four_way_well_params_t params, pnt3d_t position,
   }
 }
 
+// 通道采样函数实现
+PRIMCAPICALL pnt3d_t *sample_channel_points(const channel_point_t *points,
+                                            int point_count,
+                                            double tessellation,
+                                            int *out_count) {
+  // 参数检查
+  if (!points || !out_count || point_count <= 0) {
+    return nullptr;
+  }
+
+  // 转换输入数据
+  std::vector<channel_point> cpp_points;
+  for (int i = 0; i < point_count; ++i) {
+    channel_point pt;
+    pt.position = gp_Pnt(points[i].position.x, points[i].position.y,
+                         points[i].position.z);
+    pt.type = points[i].ctype;
+    cpp_points.push_back(pt);
+  }
+
+  // 调用C++函数
+  auto sampled_points = sample_channel_points(cpp_points, tessellation);
+
+  // 转换输出结果
+  *out_count = static_cast<int>(sampled_points.size());
+  pnt3d_t *result = new pnt3d_t[sampled_points.size()];
+  for (size_t i = 0; i < sampled_points.size(); ++i) {
+    result[i].x = sampled_points[i].X();
+    result[i].y = sampled_points[i].Y();
+    result[i].z = sampled_points[i].Z();
+  }
+
+  return result;
+}
+
 PRIMCAPICALL topo_shape_t *create_pipe_row(pipe_row_params_t params) {
   pipe_row_params cpp_params{params.pipeType,
                              params.hasEnclosure,
@@ -4233,6 +4314,50 @@ PRIMCAPICALL topo_shape_t *create_prism_with_place(prism_params_t params,
   } catch (...) {
     return nullptr;
   }
+}
+
+// 线段采样函数实现
+PRIMCAPICALL pnt3d_t *
+sample_segment_points(const pnt3d_t *wires, const int *wire_counts,
+                      int wire_array_count, const segment_type_t *segments,
+                      int segment_count, double tessellation, int *out_count) {
+  // 参数检查
+  if (!wires || !wire_counts || !segments || !out_count ||
+      wire_array_count <= 0 || segment_count <= 0) {
+    return nullptr;
+  }
+
+  // 转换输入数据
+  std::vector<std::vector<gp_Pnt>> cpp_wires;
+  std::vector<segment_type> cpp_segments;
+
+  const pnt3d_t *current_wire = wires;
+  for (int i = 0; i < wire_array_count; ++i) {
+    std::vector<gp_Pnt> wire;
+    for (int j = 0; j < wire_counts[i]; ++j) {
+      wire.push_back(gp_Pnt(current_wire->x, current_wire->y, current_wire->z));
+      ++current_wire;
+    }
+    cpp_wires.push_back(wire);
+  }
+
+  for (int i = 0; i < segment_count; ++i) {
+    cpp_segments.push_back(static_cast<segment_type>(segments[i]));
+  }
+
+  // 调用C++函数
+  auto points = sample_segment_points(cpp_wires, cpp_segments, tessellation);
+
+  // 转换输出结果
+  *out_count = static_cast<int>(points.size());
+  pnt3d_t *result = new pnt3d_t[points.size()];
+  for (size_t i = 0; i < points.size(); ++i) {
+    result[i].x = points[i].X();
+    result[i].y = points[i].Y();
+    result[i].z = points[i].Z();
+  }
+
+  return result;
 }
 
 PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params) {
