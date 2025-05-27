@@ -405,6 +405,9 @@ TopoDS_Shape create_curve_cable(const curve_cable_params &params,
                                 const gp_Pnt &position,
                                 const gp_Dir &direction = gp_Dir(0, 1, 0),
                                 const gp_Dir &upDirection = gp_Dir(1, 0, 0));
+std::vector<gp_Pnt>
+sample_curve_points(const std::vector<std::vector<gp_Pnt>> &controlPoints,
+                    std::vector<curve_type> segments, double tessellation = 0);
 
 /**
  * @brief 角钢参数结构体
@@ -1759,6 +1762,10 @@ struct channel_point {
                    // 1-弧形节点（弧形节点为圆弧顶点，与前后点三点成弧）)
 };
 
+std::vector<gp_Pnt>
+sample_channel_points(const std::vector<channel_point> &points,
+                      double tessellation = 0);
+
 // TD_PG
 struct pipe_row_params {
   int pipeType;            // 1=普通排管, 2=拉管
@@ -2345,6 +2352,11 @@ TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params,
                                        const gp_Pnt &position,
                                        const gp_Dir &direction = gp::DZ(),
                                        const gp_Dir &xDir = gp::DX());
+
+std::vector<gp_Pnt>
+sample_segment_points(const std::vector<std::vector<gp_Pnt>> &wires,
+                      std::vector<segment_type> segments,
+                      double tessellation = 0);
 
 enum class joint_shape_mode {
   SPHERE = 0,

@@ -779,6 +779,41 @@ func CreateCurveCableWithPlace(params CurveCableParams, position Point3, directi
 	return s
 }
 
+func SampleCurvePoints(controlPoints [][]Point3, curveTypes []CurveType, tessellation float64) []Point3 {
+	var pointCounts []C.int
+	var allPoints []C.pnt3d_t
+	for _, points := range controlPoints {
+		pointCounts = append(pointCounts, C.int(len(points)))
+		for _, pt := range points {
+			allPoints = append(allPoints, pt.val)
+		}
+	}
+
+	var cCurveTypes []C.curve_type_t
+	for _, t := range curveTypes {
+		cCurveTypes = append(cCurveTypes, C.curve_type_t(t))
+	}
+
+	var outCount C.int
+	cPoints := C.sample_curve_points(
+		&allPoints[0],
+		&pointCounts[0],
+		C.int(len(controlPoints)),
+		&cCurveTypes[0],
+		C.int(len(curveTypes)),
+		C.double(tessellation),
+		&outCount,
+	)
+	defer C.free(unsafe.Pointer(cPoints))
+
+	result := make([]Point3, outCount)
+	for i := 0; i < int(outCount); i++ {
+		result[i] = Point3{val: *(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cPoints)) + uintptr(i)*C.sizeof_pnt3d_t))}
+	}
+
+	return result
+}
+
 type AngleSteelParams struct {
 	L1     float32
 	L2     float32
@@ -3493,6 +3528,33 @@ type ChannelPoint struct {
 	Ctype    int
 }
 
+func SampleChannelPoints(points []ChannelPoint, tessellation float64) []Point3 {
+	cPoints := make([]C.channel_point_t, len(points))
+	for i, pt := range points {
+		cPoints[i] = C.channel_point_t{
+			position: pt.Position.val,
+			ctype:    C.int(pt.Ctype),
+		}
+	}
+
+	var outCount C.int
+	cResult := C.sample_channel_points(
+		&cPoints[0],
+		C.int(len(points)),
+		C.double(tessellation),
+		&outCount,
+	)
+	defer C.free(unsafe.Pointer(cResult))
+
+	// 转换结果
+	result := make([]Point3, outCount)
+	for i := 0; i < int(outCount); i++ {
+		result[i] = Point3{val: *(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cResult)) + uintptr(i)*C.sizeof_pnt3d_t))}
+	}
+
+	return result
+}
+
 type PipeRowParams struct {
 	PipeType              int
 	HasEnclosure          bool
@@ -4636,6 +4698,41 @@ const (
 	SegmentTypeSpline
 	SegmentTypeBezier
 )
+
+func SampleSegmentPoints(wires [][]Point3, segments []SegmentType, tessellation float64) []Point3 {
+	var wireCounts []C.int
+	var allPoints []C.pnt3d_t
+	for _, wire := range wires {
+		wireCounts = append(wireCounts, C.int(len(wire)))
+		for _, pt := range wire {
+			allPoints = append(allPoints, pt.val)
+		}
+	}
+
+	var cSegments []C.segment_type_t
+	for _, seg := range segments {
+		cSegments = append(cSegments, C.segment_type_t(seg))
+	}
+
+	var outCount C.int
+	cPoints := C.sample_segment_points(
+		&allPoints[0],
+		&wireCounts[0],
+		C.int(len(wires)),
+		&cSegments[0],
+		C.int(len(segments)),
+		C.double(tessellation),
+		&outCount,
+	)
+	defer C.free(unsafe.Pointer(cPoints))
+
+	result := make([]Point3, outCount)
+	for i := 0; i < int(outCount); i++ {
+		result[i] = Point3{val: *(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cPoints)) + uintptr(i)*C.sizeof_pnt3d_t))}
+	}
+
+	return result
+}
 
 // 连接形状模式枚举
 type JointShapeMode int

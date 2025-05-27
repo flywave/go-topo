@@ -383,6 +383,11 @@ typedef struct {
   int numPoints;
 } curve_segment_t;
 
+PRIMCAPICALL pnt3d_t *
+sample_curve_points(const pnt3d_t *control_points, const int *point_counts,
+                    int array_count, const curve_type_t *curve_types,
+                    int curve_type_count, double tessellation, int *out_count);
+
 typedef struct {
   curve_segment_t *segments;
   curve_type_t *curveTypes;
@@ -1496,6 +1501,11 @@ typedef struct {
   int ctype;
 } channel_point_t;
 
+PRIMCAPICALL pnt3d_t *sample_channel_points(const channel_point_t *points,
+                                            int point_count,
+                                            double tessellation,
+                                            int *out_count);
+
 typedef struct {
   int pipeType;
   bool hasEnclosure;
@@ -1922,6 +1932,11 @@ typedef enum {
   SEGMENT_TYPE_SPLINE = 3,            // 样条曲线
   SEGMENT_TYPE_BEZIER = 4             // 贝塞尔曲线
 } segment_type_t;
+
+PRIMCAPICALL pnt3d_t *
+sample_segment_points(const pnt3d_t *wires, const int *wire_counts,
+                      int wire_array_count, const segment_type_t *segments,
+                      int segment_count, double tessellation, int *out_count);
 
 // 管道端点参数
 typedef struct {
