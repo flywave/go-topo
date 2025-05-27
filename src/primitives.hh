@@ -1780,6 +1780,11 @@ std::vector<gp_Pnt>
 sample_channel_points(const std::vector<channel_point> &points,
                       double tessellation = 0);
 
+enum class pipe_row_type {
+  NORMAL = 1, // 普通排管
+  PULL = 2    // 拉管
+};
+
 // TD_PG
 struct pipe_row_params {
   int pipeType;            // 1=普通排管, 2=拉管

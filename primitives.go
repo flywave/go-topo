@@ -3619,6 +3619,11 @@ func SampleChannelPoints(points []ChannelPoint, tessellation float64) []Point3 {
 	return result
 }
 
+const (
+	PipeRowTypeNormal = 1 // 普通排管
+	PipeRowTypePull   = 2 // 拉管
+)
+
 type PipeRowParams struct {
 	PipeType              int
 	HasEnclosure          bool

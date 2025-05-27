@@ -1520,6 +1520,11 @@ PRIMCAPICALL pnt3d_t *sample_channel_points(const channel_point_t *points,
                                             double tessellation,
                                             int *out_count);
 
+enum pipe_row_type {
+  PIPE_ROW_TYPE_NORMAL = 0, // 普通排管
+  PIPE_ROW_TYPE_PULL = 1    // 拉管
+};
+
 typedef struct {
   int pipeType;
   bool hasEnclosure;
