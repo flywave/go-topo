@@ -6996,6 +6996,11 @@ TopoDS_Shape create_pole_tower(const pole_tower_params &params) {
         double thickness = std::stod(
             member.specification.substr(member.specification.find('x') + 1));
 
+        // 检查起点和终点是否相同
+        if (startPos.IsEqual(endPos, Precision::Confusion())) {
+          continue; // 跳过相同位置的杆件
+        }
+
         // 计算杆件方向向量
         gp_Vec directionVec(startPos, endPos);
         double length = directionVec.Magnitude();
@@ -7004,6 +7009,12 @@ TopoDS_Shape create_pole_tower(const pole_tower_params &params) {
         gp_Dir Z = directionVec.Normalized();
         gp_Dir X = member.xDirection;
 
+        // 检查X方向是否与Z方向平行
+        if (X.IsParallel(Z, Precision::Angular())) {
+          // 如果平行，使用默认正交方向
+          X = Z.IsParallel(gp::DX(), Precision::Angular()) ? gp::DY()
+                                                           : gp::DX();
+        }
         // 计算两种可能的Y方向
         gp_Dir Y1 = gp_Vec(Z.Crossed(X)).Normalized();
         gp_Dir Y2 = -Y1;
@@ -7042,7 +7053,7 @@ TopoDS_Shape create_pole_tower(const pole_tower_params &params) {
 
         BRepBuilderAPI_Transform transform(face, transformation, true);
         memberShape =
-            BRepPrimAPI_MakePrism(transform.Shape(), gp_Vec(0, 0, length))
+            BRepPrimAPI_MakePrism(transform.Shape(), directionVec)
                 .Shape();
         break;
       }
@@ -7052,9 +7063,12 @@ TopoDS_Shape create_pole_tower(const pole_tower_params &params) {
         double thickness = std::stod(
             member.specification.substr(member.specification.find('x') + 1));
 
-        gp_Pnt midPoint((startPos.X() + endPos.X()) / 2,
-                        (startPos.Y() + endPos.Y()) / 2,
-                        (startPos.Z() + endPos.Z()) / 2);
+        // 检查起点和终点是否相同
+        if (startPos.IsEqual(endPos, Precision::Confusion())) {
+          continue; // 跳过相同位置的杆件
+        }
+
+        gp_Pnt midPoint(endPos.X(), endPos.Y(), endPos.Z());
 
         gp_Dir axisDir(startPos.X() - endPos.X(), startPos.Y() - endPos.Y(),
                        startPos.Z() - endPos.Z());
@@ -7068,6 +7082,12 @@ TopoDS_Shape create_pole_tower(const pole_tower_params &params) {
       case member_type::TAPERED_TUBE: {
         // 创建锥形钢管
         double length = startPos.Distance(endPos);
+
+        // 检查起点和终点是否相同
+        if (startPos.IsEqual(endPos, Precision::Confusion())) {
+          continue; // 跳过相同位置的杆件
+        }
+
         gp_Dir axisDir(startPos.X() - endPos.X(), startPos.Y() - endPos.Y(),
                        startPos.Z() - endPos.Z());
 
