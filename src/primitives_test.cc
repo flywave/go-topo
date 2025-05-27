@@ -816,10 +816,10 @@ void test_make_wire() {
     auto shp2 = create_wire(
         wire_params{.startPoint = gp_Pnt(0, 0, 0),
                     .endPoint = gp_Pnt(300, 0, 150), // 与最后一个拟合点一致
-                    .startDir = gp_Dir(1, 0, 0),     // 初始方向沿X轴
-                    .endDir = gp_Dir(0, 0, 1),       // 结束方向沿Z轴
-                    .sag = 25.0,                     // 合理弧垂值
-                    .diameter = 8.0,                 // 典型导线直径
+                    .startDir = gp_Dir(1, 0, 0), // 初始方向沿X轴
+                    .endDir = gp_Dir(0, 0, 1),   // 结束方向沿Z轴
+                    .sag = 25.0,                 // 合理弧垂值
+                    .diameter = 8.0,             // 典型导线直径
                     .fitPoints = fitPoints});
 
     if (shp2.IsNull()) {
@@ -2100,7 +2100,7 @@ organizeNodes(const std::vector<std::vector<std::array<double, 3>>> &nodes) {
 void test_make_pole_tower() {
   std::cout << "\n=== Testing Pole Tower ===" << std::endl;
   try {
-    
+
     std::vector<std::vector<std::array<double, 3>>> nodes = {
         {{-2.0265226742107814, -9.382245879547408, -0.015621793753579638},
          {-0.6267873559426036, -2.82250799450396, 38.558215350489895}},
@@ -3009,17 +3009,17 @@ void test_make_ribbed_anchor() {
 void test_make_nut_anchor() {
   std::cout << "\n=== Testing Nut Anchor ===" << std::endl;
   try {
-    nut_anchor_params params{                       // 基础参数
-                             .boltDiameter = 0.2,   // 地脚螺栓直径 20mm → 0.02m
+    nut_anchor_params params{                     // 基础参数
+                             .boltDiameter = 0.2, // 地脚螺栓直径 20mm → 0.02m
                              .exposedLength = 0.40, // 露头长度 100mm → 0.1m
                              .nutCount = 2,         // 蝶帽数量保持不变
-                             .nutHeight = 0.1,      // 蝶帽高度 10mm → 0.01m
-                             .nutOD = 0.6,          // 蝶帽外径 40mm → 0.04m
-                             .washerCount = 2,      // 垫片数量保持不变
-                             .washerShape = 2,      // 圆形垫片
-                             .washerSize = 0.65,    // 垫片直径 30mm → 0.03m
+                             .nutHeight = 0.1,   // 蝶帽高度 10mm → 0.01m
+                             .nutOD = 0.6,       // 蝶帽外径 40mm → 0.04m
+                             .washerCount = 2,   // 垫片数量保持不变
+                             .washerShape = 2,   // 圆形垫片
+                             .washerSize = 0.65, // 垫片直径 30mm → 0.03m
                              .washerThickness = 0.015, // 垫片厚度 5mm → 0.005m
-                             .anchorLength = 1.5,      // 锚固长度 500mm → 0.5m
+                             .anchorLength = 1.5, // 锚固长度 500mm → 0.5m
 
                              // 螺帽锚固特有参数
                              .basePlateSize = 0.60,
@@ -4234,17 +4234,17 @@ void test_make_pipe_row() {
 
   // 创建测试点集
   std::vector<channel_point> points = {
-      {gp_Pnt(0, 0, 0), 0},      // 起点
-      {gp_Pnt(300, 0, 30), 0},   // 开始右转
-      {gp_Pnt(500, 300, 50), 1}, // 过渡点(最高点)
-      {gp_Pnt(300, 600, 20), 0}, // 开始左转
-      {gp_Pnt(300, 800, 0), 0}   // 终点
+      {gp_Pnt(0, 0, 0), channel_point_type::LINE},      // 起点
+      {gp_Pnt(300, 0, 30), channel_point_type::LINE},   // 开始右转
+      {gp_Pnt(500, 300, 50), channel_point_type::ARC},  // 过渡点(最高点)
+      {gp_Pnt(300, 600, 20), channel_point_type::LINE}, // 开始左转
+      {gp_Pnt(300, 800, 0), channel_point_type::LINE}   // 终点
   };
 
   // 测试普通排管无封包
   try {
     pipe_row_params params{
-        .pipeType = 1,
+        .pipeType = pipe_row_type::NORMAL,
         .hasEnclosure = false,
         .baseExtension = 20,
         .baseThickness = 5,
@@ -4267,7 +4267,7 @@ void test_make_pipe_row() {
   // 测试普通排管有封包
   try {
     pipe_row_params params{
-        .pipeType = 1,
+        .pipeType = pipe_row_type::NORMAL,
         .hasEnclosure = true,
         .enclosureWidth = 200,
         .enclosureHeight = 200,
@@ -4294,7 +4294,7 @@ void test_make_pipe_row() {
   // 测试拉管
   try {
     pipe_row_params params{
-        .pipeType = 2,
+        .pipeType = pipe_row_type::PULL,
         .pipePositions = {gp_Pnt2d(-50, 40), gp_Pnt2d(50, 40)},
         .pipeInnerDiameters = {50, 50},
         .pipeWallThicknesses = {6, 6},
@@ -4318,11 +4318,11 @@ void test_make_cable_trench() {
 
   // 创建测试点集
   std::vector<channel_point> points = {
-      {gp_Pnt(0, 0, 0), 0},      // 起点
-      {gp_Pnt(300, 0, 30), 0},   // 开始右转
-      {gp_Pnt(500, 300, 50), 1}, // 过渡点(最高点)
-      {gp_Pnt(300, 600, 20), 0}, // 开始左转
-      {gp_Pnt(300, 800, 0), 0}   // 终点
+      {gp_Pnt(0, 0, 0), channel_point_type::LINE},      // 起点
+      {gp_Pnt(300, 0, 30), channel_point_type::LINE},   // 开始右转
+      {gp_Pnt(500, 300, 50), channel_point_type::ARC},  // 过渡点(最高点)
+      {gp_Pnt(300, 600, 20), channel_point_type::LINE}, // 开始左转
+      {gp_Pnt(300, 800, 0), channel_point_type::LINE}   // 终点
   };
 
   // 测试标准参数
@@ -4355,11 +4355,11 @@ void test_make_cable_tunnel() {
 
   // 创建测试点集
   std::vector<channel_point> points = {
-      {gp_Pnt(0, 0, 0), 0},      // 起点
-      {gp_Pnt(300, 0, 30), 0},   // 开始右转
-      {gp_Pnt(500, 300, 50), 1}, // 过渡点(最高点)
-      {gp_Pnt(300, 600, 20), 0}, // 开始左转
-      {gp_Pnt(300, 800, 0), 0}   // 终点
+      {gp_Pnt(0, 0, 0), channel_point_type::LINE},      // 起点
+      {gp_Pnt(300, 0, 30), channel_point_type::LINE},   // 开始右转
+      {gp_Pnt(500, 300, 50), channel_point_type::ARC},  // 过渡点(最高点)
+      {gp_Pnt(300, 600, 20), channel_point_type::LINE}, // 开始左转
+      {gp_Pnt(300, 800, 0), channel_point_type::LINE}   // 终点
   };
 
   // 测试矩形截面隧道 (所有尺寸参数缩小10倍)
@@ -4414,9 +4414,9 @@ void test_make_cable_tunnel() {
   try {
     cable_tunnel_params circular_params{.style =
                                             connection_section_style::CIRCULAR,
-                                        .width = 60.0,                // 600→60
-                                        .height = 60.0,               // 600→60
-                                        .outerWallThickness = 7.0,    // 70→7
+                                        .width = 60.0,             // 600→60
+                                        .height = 60.0,            // 600→60
+                                        .outerWallThickness = 7.0, // 70→7
                                         .bottomPlatformHeight = 10.0, // 100→10
                                         .cushionExtension = 0.0,      // 80→8
                                         .cushionThickness = 0.0,      // 60→6
@@ -4438,8 +4438,8 @@ void test_make_cable_tray() {
 
   // 创建测试点集
   std::vector<channel_point> arcPoints = {
-      {gp_Pnt(0, 0, 0), 0},    // 起点
-      {gp_Pnt(900, 500, 0), 0} // 终点
+      {gp_Pnt(0, 0, 0), channel_point_type::LINE},    // 起点
+      {gp_Pnt(900, 500, 0), channel_point_type::LINE} // 终点
   };
 
   // 测试拱形桥架
@@ -4473,11 +4473,11 @@ void test_make_cable_tray() {
 
   // 创建测试点集
   std::vector<channel_point> points = {
-      {gp_Pnt(0, 0, 0), 0},      // 起点
-      {gp_Pnt(300, 0, 30), 0},   // 开始右转
-      {gp_Pnt(500, 300, 50), 1}, // 过渡点(最高点)
-      {gp_Pnt(300, 600, 20), 0}, // 开始左转
-      {gp_Pnt(300, 800, 0), 0}   // 终点
+      {gp_Pnt(0, 0, 0), channel_point_type::LINE},      // 起点
+      {gp_Pnt(300, 0, 30), channel_point_type::LINE},   // 开始右转
+      {gp_Pnt(500, 300, 50), channel_point_type::ARC},  // 过渡点(最高点)
+      {gp_Pnt(300, 600, 20), channel_point_type::LINE}, // 开始左转
+      {gp_Pnt(300, 800, 0), channel_point_type::LINE}   // 终点
   };
 
   // 测试平形桥架
@@ -4686,16 +4686,16 @@ void test_make_footpath() {
 
   // 创建测试点集
   std::vector<channel_point> points1 = {
-      {gp_Pnt(0, 0, 0), 0},    // 起点
-      {gp_Pnt(900, 500, 0), 0} // 终点
+      {gp_Pnt(0, 0, 0), channel_point_type::LINE},    // 起点
+      {gp_Pnt(900, 500, 0), channel_point_type::LINE} // 终点
   };
 
   // 创建测试点集
   std::vector<channel_point> points = {
-      {gp_Pnt(0, 0, 0), 0},    // 起点
-      {gp_Pnt(100, 0, 0), 0},  // 直线段
-      {gp_Pnt(150, 50, 0), 1}, // 转弯点
-      {gp_Pnt(150, 100, 0), 0} // 终点
+      {gp_Pnt(0, 0, 0), channel_point_type::LINE},    // 起点
+      {gp_Pnt(100, 0, 0), channel_point_type::LINE},  // 直线段
+      {gp_Pnt(150, 50, 0), channel_point_type::ARC},  // 转弯点
+      {gp_Pnt(150, 100, 0), channel_point_type::LINE} // 终点
   };
 
   // 测试标准步道
@@ -4936,13 +4936,13 @@ void test_make_pipe_support() {
   try {
     // 测试单侧管枕
     auto shp = create_pipe_support(pipe_support_params{
-        .style = 1,                         // 单侧管枕
-        .count = 2,                         // 2个管枕
-        .positions = {{-20, 16}, {20, 16}}, // 管枕中心坐标
-        .radii = {8, 8},                    // 管枕半径30mm
-        .length = 100,                      // 管枕长100mm
-        .width = 18,                        // 管枕宽18mm
-        .height = 20                        // 管枕高20mm
+        .style = pipe_support_style::SINGLE_SIDED, // 单侧管枕
+        .count = 2,                                // 2个管枕
+        .positions = {{-20, 16}, {20, 16}},        // 管枕中心坐标
+        .radii = {8, 8},                           // 管枕半径30mm
+        .length = 100,                             // 管枕长100mm
+        .width = 18,                               // 管枕宽18mm
+        .height = 20                               // 管枕高20mm
     });
 
     if (shp.IsNull()) {
@@ -4953,8 +4953,8 @@ void test_make_pipe_support() {
 
     // 测试双侧管枕
     auto shp1 = create_pipe_support(pipe_support_params{
-        .style = 2, // 双侧管枕
-        .count = 8, // 8个管枕
+        .style = pipe_support_style::DOUBLE_SIDED, // 双侧管枕
+        .count = 8,                                // 8个管枕
         .positions = {{-10, 12},
                       {-30, 12},
                       {10, 12},
@@ -4986,12 +4986,12 @@ void test_make_cover_plate() {
   try {
     // 测试长方形盖板
     auto rectShp = create_cover_plate(cover_plate_params{
-        .style = 0,       // 长方形
-        .length = 200.0,  // 长度200mm
-        .width = 100.0,   // 宽度100mm
-        .smallRadius = 0, // 不适用
-        .largeRadius = 0, // 不适用
-        .thickness = 10.0 // 厚度10mm
+        .style = cover_plate_style::RECTANGULAR, // 长方形
+        .length = 200.0,                         // 长度200mm
+        .width = 100.0,                          // 宽度100mm
+        .smallRadius = 0,                        // 不适用
+        .largeRadius = 0,                        // 不适用
+        .thickness = 10.0                        // 厚度10mm
     });
 
     if (rectShp.IsNull()) {
@@ -5003,12 +5003,12 @@ void test_make_cover_plate() {
 
     // 测试扇形盖板
     auto sectorShp = create_cover_plate(cover_plate_params{
-        .style = 1,           // 扇形
-        .length = 250.0,      // 扇形边长150mm
-        .width = 0,           // 不适用
-        .smallRadius = 20.0,  // 小半径50mm
-        .largeRadius = 100.0, // 大半径100mm
-        .thickness = 8.0      // 厚度8mm
+        .style = cover_plate_style::SECTOR, // 扇形
+        .length = 250.0,                    // 扇形边长150mm
+        .width = 0,                         // 不适用
+        .smallRadius = 20.0,                // 小半径50mm
+        .largeRadius = 100.0,               // 大半径100mm
+        .thickness = 8.0                    // 厚度8mm
     });
 
     if (sectorShp.IsNull()) {
@@ -5051,16 +5051,16 @@ void test_water_tunnel() {
 
   // 创建测试点集
   std::vector<channel_point> points = {
-      {gp_Pnt(0, 0, 0), 0},    // 起点
-      {gp_Pnt(100, 0, 0), 0},  // 直线段
-      {gp_Pnt(150, 50, 0), 1}, // 转弯点
-      {gp_Pnt(150, 100, 0), 0} // 终点
+      {gp_Pnt(0, 0, 0), channel_point_type::LINE},    // 起点
+      {gp_Pnt(100, 0, 0), channel_point_type::LINE},  // 直线段
+      {gp_Pnt(150, 50, 0), channel_point_type::ARC},  // 转弯点
+      {gp_Pnt(150, 100, 0), channel_point_type::LINE} // 终点
   };
 
   // 创建测试点集
   std::vector<channel_point> points1 = {
-      {gp_Pnt(0, 0, 0), 0},    // 起点
-      {gp_Pnt(900, 500, 0), 0} // 终点
+      {gp_Pnt(0, 0, 0), channel_point_type::LINE},    // 起点
+      {gp_Pnt(900, 500, 0), channel_point_type::LINE} // 终点
   };
 
   // 测试矩形截面隧道 (所有尺寸参数缩小10倍)

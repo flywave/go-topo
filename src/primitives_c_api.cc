@@ -1717,12 +1717,12 @@ sample_transmission_line_points(transmission_line_params_t params,
                                 pnt3d_t startPoint, pnt3d_t endPoint,
                                 double tessellation, int *out_count) {
   transmission_line_params cppParams{params.ctype,
-                                      params.sectionalArea,
-                                      params.outsideDiameter,
-                                      params.wireWeight,
-                                      params.coefficientOfElasticity,
-                                      params.expansionCoefficient,
-                                      params.ratedStrength};
+                                     params.sectionalArea,
+                                     params.outsideDiameter,
+                                     params.wireWeight,
+                                     params.coefficientOfElasticity,
+                                     params.expansionCoefficient,
+                                     params.ratedStrength};
   gp_Pnt cppStart(startPoint.x, startPoint.y, startPoint.z);
   gp_Pnt cppEnd(endPoint.x, endPoint.y, endPoint.z);
 
@@ -3169,7 +3169,7 @@ PRIMCAPICALL pnt3d_t *sample_channel_points(const channel_point_t *points,
     channel_point pt;
     pt.position = gp_Pnt(points[i].position.x, points[i].position.y,
                          points[i].position.z);
-    pt.type = points[i].ctype;
+    pt.type = static_cast<channel_point_type>(points[i].ctype);
     cpp_points.push_back(pt);
   }
 
@@ -3189,7 +3189,7 @@ PRIMCAPICALL pnt3d_t *sample_channel_points(const channel_point_t *points,
 }
 
 PRIMCAPICALL topo_shape_t *create_pipe_row(pipe_row_params_t params) {
-  pipe_row_params cpp_params{params.pipeType,
+  pipe_row_params cpp_params{static_cast<pipe_row_type>(params.pipeType),
                              params.hasEnclosure,
                              params.enclosureWidth,
                              params.enclosureHeight,
@@ -3218,7 +3218,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_row(pipe_row_params_t params) {
       cpp_params.points.push_back(
           {gp_Pnt(params.points[i].position.x, params.points[i].position.y,
                   params.points[i].position.z),
-           params.points[i].ctype});
+           static_cast<channel_point_type>(params.points[i].ctype)});
     }
   }
   try {
@@ -3234,7 +3234,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_row_with_place(pipe_row_params_t params,
                                                       pnt3d_t position,
                                                       dir3d_t normal,
                                                       dir3d_t xDir) {
-  pipe_row_params cpp_params{params.pipeType,
+  pipe_row_params cpp_params{static_cast<pipe_row_type>(params.pipeType),
                              params.hasEnclosure,
                              params.enclosureWidth,
                              params.enclosureHeight,
@@ -3263,7 +3263,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_row_with_place(pipe_row_params_t params,
       cpp_params.points.push_back(
           {gp_Pnt(params.points[i].position.x, params.points[i].position.y,
                   params.points[i].position.z),
-           params.points[i].ctype});
+           static_cast<channel_point_type>(params.points[i].ctype)});
     }
   }
 
@@ -3297,7 +3297,7 @@ PRIMCAPICALL topo_shape_t *create_cable_trench(cable_trench_params_t params) {
       cpp_params.points.push_back(
           {gp_Pnt(params.points[i].position.x, params.points[i].position.y,
                   params.points[i].position.z),
-           params.points[i].ctype});
+           static_cast<channel_point_type>(params.points[i].ctype)});
     }
   }
   try {
@@ -3328,7 +3328,7 @@ create_cable_trench_with_place(cable_trench_params_t params, pnt3d_t position,
       cpp_params.points.push_back(
           {gp_Pnt(params.points[i].position.x, params.points[i].position.y,
                   params.points[i].position.z),
-           params.points[i].ctype});
+           static_cast<channel_point_type>(params.points[i].ctype)});
     }
   }
 
@@ -3364,7 +3364,7 @@ PRIMCAPICALL topo_shape_t *create_cable_tunnel(cable_tunnel_params_t params) {
       cpp_params.points.push_back(
           {gp_Pnt(params.points[i].position.x, params.points[i].position.y,
                   params.points[i].position.z),
-           params.points[i].ctype});
+           static_cast<channel_point_type>(params.points[i].ctype)});
     }
   }
   try {
@@ -3397,7 +3397,7 @@ create_cable_tunnel_with_place(cable_tunnel_params_t params, pnt3d_t position,
       cpp_params.points.push_back(
           {gp_Pnt(params.points[i].position.x, params.points[i].position.y,
                   params.points[i].position.z),
-           params.points[i].ctype});
+           static_cast<channel_point_type>(params.points[i].ctype)});
     }
   }
 
@@ -3439,7 +3439,7 @@ PRIMCAPICALL topo_shape_t *create_cable_tray(cable_tray_params_t params) {
       channel_point_t point = params.points[i];
       cpp_params.points.push_back(channel_point{
           gp_Pnt(point.position.x, point.position.y, point.position.z),
-          point.ctype});
+          static_cast<channel_point_type>(point.ctype)});
     }
   }
   try {
@@ -3478,7 +3478,7 @@ create_cable_tray_with_place(cable_tray_params_t params, pnt3d_t position,
       channel_point_t point = params.points[i];
       cpp_params.points.push_back(
           {gp_Pnt(point.position.x, point.position.y, point.position.z),
-           point.ctype});
+           static_cast<channel_point_type>(point.ctype)});
     }
   }
 
@@ -3649,7 +3649,7 @@ PRIMCAPICALL topo_shape_t *create_footpath(footpath_params_t params) {
       cpp_params.points.push_back(
           {gp_Pnt(params.points[i].position.x, params.points[i].position.y,
                   params.points[i].position.z),
-           params.points[i].ctype});
+           static_cast<channel_point_type>(params.points[i].ctype)});
     }
   }
   try {
@@ -3671,7 +3671,7 @@ PRIMCAPICALL topo_shape_t *create_footpath_with_place(footpath_params_t params,
       cpp_params.points.push_back(
           {gp_Pnt(params.points[i].position.x, params.points[i].position.y,
                   params.points[i].position.z),
-           params.points[i].ctype});
+           static_cast<channel_point_type>(params.points[i].ctype)});
     }
   }
 
@@ -3980,7 +3980,8 @@ PRIMCAPICALL void double_array_set(double *array, int index, double value) {
 }
 
 PRIMCAPICALL topo_shape_t *create_pipe_support(pipe_support_params_t params) {
-  pipe_support_params cpp_params{params.style, params.count};
+  pipe_support_params cpp_params{static_cast<pipe_support_style>(params.style),
+                                 params.count};
 
   if (params.count > 0 && params.positions != nullptr &&
       params.radii != nullptr) {
@@ -4003,7 +4004,8 @@ PRIMCAPICALL topo_shape_t *create_pipe_support(pipe_support_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_pipe_support_with_place(pipe_support_params_t params, pnt3d_t position,
                                dir3d_t direction, dir3d_t xDir) {
-  pipe_support_params cpp_params{params.style, params.count};
+  pipe_support_params cpp_params{static_cast<pipe_support_style>(params.style),
+                                 params.count};
 
   if (params.count > 0 && params.positions != nullptr &&
       params.radii != nullptr) {
@@ -4029,9 +4031,12 @@ create_pipe_support_with_place(pipe_support_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_cover_plate(cover_plate_params_t params) {
-  cover_plate_params cpp_params{params.style,       params.length,
-                                params.width,       params.smallRadius,
-                                params.largeRadius, params.thickness};
+  cover_plate_params cpp_params{static_cast<cover_plate_style>(params.style),
+                                params.length,
+                                params.width,
+                                params.smallRadius,
+                                params.largeRadius,
+                                params.thickness};
   try {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_cover_plate(cpp_params))};
@@ -4043,9 +4048,12 @@ PRIMCAPICALL topo_shape_t *create_cover_plate(cover_plate_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cover_plate_with_place(cover_plate_params_t params, pnt3d_t position,
                               dir3d_t normal, dir3d_t xDir) {
-  cover_plate_params cpp_params{params.style,       params.length,
-                                params.width,       params.smallRadius,
-                                params.largeRadius, params.thickness};
+  cover_plate_params cpp_params{static_cast<cover_plate_style>(params.style),
+                                params.length,
+                                params.width,
+                                params.smallRadius,
+                                params.largeRadius,
+                                params.thickness};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);

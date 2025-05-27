@@ -1765,14 +1765,14 @@ TopoDS_Shape create_four_way_well(const four_way_well_params &params,
                                   const gp_Dir &direction = gp::DZ(),
                                   const gp_Dir &xDirection = gp::DX());
 
-enum class cable_tunnel_type {
+enum class channel_point_type {
   LINE = 0, // 直道
   ARC = 1   // 弧形
 };
 
 struct channel_point {
   gp_Pnt position; // 点坐标
-  int type;        // 点类型 (0-普通节点
+  channel_point_type type;        // 点类型 (0-普通节点
                    // 1-弧形节点（弧形节点为圆弧顶点，与前后点三点成弧）)
 };
 
@@ -1787,7 +1787,7 @@ enum class pipe_row_type {
 
 // TD_PG
 struct pipe_row_params {
-  int pipeType;            // 1=普通排管, 2=拉管
+  pipe_row_type pipeType;            // 1=普通排管, 2=拉管
   bool hasEnclosure;       // 是否有包封
   double enclosureWidth;   // 包封宽 W (mm)
   double enclosureHeight;  // 包封高 H (mm)
@@ -2133,7 +2133,7 @@ enum class pipe_support_style { SINGLE_SIDED = 1, DOUBLE_SIDED = 2 };
 
 // GZW_GZ
 struct pipe_support_params {
-  int style;                       // 管枕形式 (1-单侧管枕, 2-两侧管枕)
+  pipe_support_style style;                       // 管枕形式 (1-单侧管枕, 2-两侧管枕)
   int count;                       // 管枕数量 N
   std::vector<gp_Pnt2d> positions; // 管枕中心坐标 POS (mm)
   std::vector<double> radii;       // 管枕半径 R (mm)
@@ -2149,13 +2149,13 @@ TopoDS_Shape create_pipe_support(const pipe_support_params &params,
                                  const gp_Dir &xDir = gp::DX());
 
 enum class cover_plate_style {
-  RECTANGULAR = 1, // 长方形
-  SECTOR = 2       // 扇形
+  RECTANGULAR = 0, // 长方形
+  SECTOR = 1       // 扇形
 };
 
 // GZW_GB
 struct cover_plate_params {
-  int style;          // 盖板形式 (0-长方形, 1-扇形)
+  cover_plate_style style;          // 盖板形式 (0-长方形, 1-扇形)
   double length;      // 盖板长度/扇形边长 L (mm)
   double width;       // 盖板宽度 W (mm)
   double smallRadius; // 扇形小半径 A (mm)

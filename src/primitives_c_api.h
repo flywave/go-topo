@@ -1505,7 +1505,7 @@ PRIMCAPICALL topo_shape_t *
 create_four_way_well_with_place(four_way_well_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t xDirection);
 
-enum cable_tunnel_type {
+enum cable_tunnel_type_t {
   CABLE_TUNNEL_TYPE_LINE = 0, // 直道
   CABLE_TUNNEL_TYPE_ARC = 1   // 弧形
 };
@@ -1520,7 +1520,7 @@ PRIMCAPICALL pnt3d_t *sample_channel_points(const channel_point_t *points,
                                             double tessellation,
                                             int *out_count);
 
-enum pipe_row_type {
+enum pipe_row_type_t {
   PIPE_ROW_TYPE_NORMAL = 0, // 普通排管
   PIPE_ROW_TYPE_PULL = 1    // 拉管
 };
