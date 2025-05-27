@@ -20,8 +20,7 @@ double solveBisect(const Func &func, double x0, double x1, double tolerance,
                    int maxIterations = 8) {
   double f0 = func(x0);
   double f1 = func(x1);
-  if (f0 * f1 > 0) // same sign
-  {
+  if (f0 * f1 > 0) {
     return x0;
   }
 
@@ -95,9 +94,9 @@ struct CatenaryFunc {
     math_BissecNewton solver(1e-6);
 
     // 改进求解器参数范围
-    double lower = 0.1 * d;  // 原d/2.0可能范围过小
-    double upper = 2.0 * d;  // 原d可能范围不足
-    int maxIterations = 200; // 增加最大迭代次数
+    double lower = std::max(0.1 * d, 1e-3); // 防止极小值
+    double upper = std::min(2.0 * d, 1e5);  // 限制最大搜索范围
+    int maxIterations = 200;                // 增加最大迭代次数
 
     // 验证函数值符号变化
     double flow = 0.0, fupp = 0.0;
@@ -172,19 +171,18 @@ inline Handle(Geom_BSplineCurve)
 
   // Create transformation to local frame at p1
   gp_Trsf trsf;
-  if (p1.IsEqual(gp::Origin(), Precision::Confusion()) &&
-      orientation.IsCoplanar(gp_Ax3(), Precision::Confusion(),
+  const gp_Ax3 worldAx3;
+
+  // 修改判断逻辑：即使p1是原点，只要orientation与默认坐标系不一致就需要创建变换
+  if (orientation.IsCoplanar(worldAx3, Precision::Confusion(),
                              Precision::Angular())) {
-    // nothing to do
-  } else if (orientation.IsCoplanar(gp_Ax3(), Precision::Confusion(),
-                                    Precision::Angular())) {
-    // Ident坐标系特殊处理：构建以p1为原点的新坐标系
-    gp_Ax3 localFrame(p1, gp_Dir(0, 0, 1), gp_Dir(1, 0, 0));
-    trsf.SetTransformation(localFrame, gp_Ax3());
+    // 当orientation与世界坐标系一致时，仅平移原点
+    gp_Ax3 localFrame(p1, worldAx3.Direction(), worldAx3.XDirection());
+    trsf.SetTransformation(localFrame, worldAx3);
   } else {
-    // 常规坐标系转换
-    trsf.SetTransformation(orientation,
-                           gp_Ax3(p1, gp_Dir(0, 0, 1), gp_Dir(1, 0, 0)));
+    // 自定义orientation时，总是需要创建变换
+    gp_Ax3 targetFrame(p1, orientation.Direction(), orientation.XDirection());
+    trsf.SetTransformation(orientation, targetFrame);
   }
 
   // Transform p2 to local frame
@@ -201,14 +199,19 @@ inline Handle(Geom_BSplineCurve)
 
   // Horizontal distance and height difference
   double d = Xaxis.Magnitude();
+
+  // 修改为设置默认X轴方向
+  if (d < Precision::Confusion()) {
+    // 当水平距离接近零时，使用默认X轴方向
+    Xaxis = gp_Vec(1.0, 0.0, 0.0); // 默认X轴方向
+    d = 1.0;                       // 设置最小有效距离
+    swapped = false;               // 重置交换状态
+  }
+
   Xaxis.Normalize();
-  gp_Vec Yaxis = gp_Dir(0, 0, 1).Crossed(Xaxis);
 
   // Create catenary frame
-  gp_Ax3 catFrame(p1, gp_Dir(0, 0, 1), Xaxis);
-  if (swapped) {
-    catFrame.SetLocation(p2);
-  }
+  gp_Ax3 catFrame(p1, gp_Dir(0, 0, 1), gp_Dir(Xaxis.X(), Xaxis.Y(), 0));
 
   double h = swapped ? -p2local.Z() : p2local.Z();
   double straightDist = p2local.Distance(gp_Pnt(0, 0, 0));
@@ -260,6 +263,14 @@ inline Handle(Geom_BSplineCurve)
     poles.SetValue(i, gp_Pnt(x, 0, z));
   }
 
+  if (swapped) {
+    poles.SetValue(1, gp_Pnt(d, 0, -h));            // 起点对应p2位置
+    poles.SetValue(poles.Upper(), gp_Pnt(0, 0, 0)); // 终点对应p1位置
+  } else {
+    poles.SetValue(1, gp_Pnt(0, 0, 0));             // 起点对应p1位置
+    poles.SetValue(poles.Upper(), gp_Pnt(d, 0, h)); // 终点对应p2位置
+  }
+
   // 创建BSpline曲线
   GeomAPI_PointsToBSpline approx(poles);
   if (!approx.IsDone()) {
@@ -296,19 +307,18 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
 
   // Create transformation to local frame at p1
   gp_Trsf trsf;
-  if (p1.IsEqual(gp::Origin(), Precision::Confusion()) &&
-      orientation.IsCoplanar(gp_Ax3(), Precision::Confusion(),
+  const gp_Ax3 worldAx3;
+
+  // 修改判断逻辑：即使p1是原点，只要orientation与默认坐标系不一致就需要创建变换
+  if (orientation.IsCoplanar(worldAx3, Precision::Confusion(),
                              Precision::Angular())) {
-    // nothing to do
-  } else if (orientation.IsCoplanar(gp_Ax3(), Precision::Confusion(),
-                                    Precision::Angular())) {
-    // Ident坐标系特殊处理：构建以p1为原点的新坐标系
-    gp_Ax3 localFrame(p1, gp_Dir(0, 0, 1), gp_Dir(1, 0, 0));
-    trsf.SetTransformation(localFrame, gp_Ax3());
+    // 当orientation与世界坐标系一致时，仅平移原点
+    gp_Ax3 localFrame(p1, worldAx3.Direction(), worldAx3.XDirection());
+    trsf.SetTransformation(localFrame, worldAx3);
   } else {
-    // 常规坐标系转换
-    trsf.SetTransformation(orientation,
-                           gp_Ax3(p1, gp_Dir(0, 0, 1), gp_Dir(1, 0, 0)));
+    // 自定义orientation时，总是需要创建变换
+    gp_Ax3 targetFrame(p1, orientation.Direction(), orientation.XDirection());
+    trsf.SetTransformation(orientation, targetFrame);
   }
 
   // Transform p2 to local frame
@@ -329,10 +339,7 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
   gp_Vec Yaxis = gp_Dir(0, 0, 1).Crossed(Xaxis);
 
   // Create catenary frame
-  gp_Ax3 catFrame(p1, gp_Dir(0, 0, 1), Xaxis);
-  if (swapped) {
-    catFrame.SetLocation(p2);
-  }
+  gp_Ax3 catFrame(p1, gp_Dir(0, 0, 1), gp_Dir(Xaxis.X(), Xaxis.Y(), 0));
 
   double h = swapped ? -p2local.Z() : p2local.Z();
   double straightDist = p2local.Distance(gp_Pnt(0, 0, 0));
@@ -386,6 +393,15 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
     cablePts.push_back(gp_Pnt(x, 0, z));
   }
 
+  // 生成悬垂线控制点时添加端点修正
+  if (swapped) {
+    cablePts.front() = gp_Pnt(d, 0, -h); // 强制设置起点为p2位置
+    cablePts.back() = gp_Pnt(0, 0, 0);   // 强制设置终点为p1位置
+  } else {
+    cablePts.front() = gp_Pnt(0, 0, 0); // 强制设置起点为p1位置
+    cablePts.back() = gp_Pnt(d, 0, h);  // 强制设置终点为p2位置
+  }
+
   // Transform points back to world coordinates
   gp_Trsf catToWorld;
   catToWorld.SetTransformation(catFrame, gp_Ax3());
@@ -397,25 +413,17 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
 
 inline gp_Ax3 createOrientation(const gp_Pnt &p1, const gp_Pnt &p2,
                                 const gp_Dir &upDir) {
-  // 计算从p1到p2的方向向量
   gp_Vec dirVec(p1, p2);
   if (dirVec.Magnitude() < Precision::Confusion()) {
     throw Standard_ConstructionError("Points are too close");
   }
   dirVec.Normalize();
 
-  // 计算X轴方向
-  gp_Vec xVec = gp_Vec(upDir).Crossed(dirVec);
-  if (xVec.Magnitude() < Precision::Confusion()) {
-    // 如果upDir与dirVec平行，使用备用X轴
-    xVec = gp_Vec(1, 0, 0);
+  gp_Vec xVector = dirVec.Crossed(upDir);
+  if (xVector.Magnitude() < Precision::Confusion()) {
+    xVector = gp_Vec(1, 0, 0);
   }
-  xVec.Normalize();
 
-  // 重新计算Z轴确保正交
-  gp_Vec zVec = xVec.Crossed(dirVec);
-  zVec.Normalize();
-
-  return gp_Ax3(p1, dirVec, xVec);
+  return gp_Ax3(p1, upDir, xVector);
 }
 } // namespace flywave

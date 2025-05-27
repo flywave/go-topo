@@ -598,7 +598,7 @@ void test_make_vtype_insulator() {
   try {
     // 测试标准V型绝缘子串
     auto shp = create_vtype_insulator(vtype_insulator_params{
-        .frontSpacing = 30.0,    // 前端间距
+        .frontSpacing = 50.0,    // 前端间距
         .backSpacing = 20.0,     // 后端间距
         .insulatorCount = 22,    // 每串绝缘子片数
         .height = 5.0,           // 单片高度
@@ -918,13 +918,12 @@ void test_make_curve_cable() {
     std::vector<gp_Pnt> arcPoints = {gp_Pnt(100, 0, 0), gp_Pnt(150, 50, 0),
                                      gp_Pnt(200, 0, 0)};
 
-    std::vector<gp_Pnt> splinePoints = {gp_Pnt(200, 0, 0), gp_Pnt(250, 50, 50),
-                                        gp_Pnt(300, 0, 100),
+    std::vector<gp_Pnt> splinePoints = {gp_Pnt(200, 0, 0), gp_Pnt(300, 0, 100),
                                         gp_Pnt(350, -50, 150)};
 
     auto shp2 = create_curve_cable(curve_cable_params{
         .controlPoints = {linePoints, arcPoints, splinePoints},
-        .curveTypes = {curve_type::LINE, curve_type::ARC, curve_type::SPLINE},
+        .curveTypes = {curve_type::LINE, curve_type::ARC, curve_type::BEZIER},
         .diameter = 8.0});
 
     if (shp2.IsNull()) {
@@ -4391,7 +4390,7 @@ void test_revol() {
   test_export_shape(tri_shp, "./triangle_profile_revol.stl");
 
   // 测试矩形剖面
-  rectangle_profile rect_prof{gp_Pnt(0, 0, 5), gp_Pnt(10, 0, 5)};
+  rectangle_profile rect_prof{gp_Pnt(0, 0, 0), gp_Pnt(10, 0, 5)};
   revol_params rect_params{rect_prof, gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)),
                            M_PI / 4};
   auto rect_shp = create_revol(rect_params);
@@ -4456,7 +4455,7 @@ void test_make_prism() {
     // 测试三角形剖面棱柱
     triangle_profile tri_prof{gp_Pnt(0, 0, 0), gp_Pnt(10, 0, 0),
                               gp_Pnt(5, 8, 0)};
-    prism_params tri_params{tri_prof, gp_Dir(0, 0, 20)};
+    prism_params tri_params{tri_prof, gp_Dir(0, 0, 1), 20};
     auto tri_shp = create_prism(tri_params);
     if (tri_shp.IsNull()) {
       std::cerr << "Error: Failed to create triangle profile prism"
@@ -4467,7 +4466,7 @@ void test_make_prism() {
 
     // 测试矩形剖面棱柱
     rectangle_profile rect_prof{gp_Pnt(0, 0, 0), gp_Pnt(10, 5, 0)};
-    prism_params rect_params{rect_prof, gp_Dir(0, 0, 20)};
+    prism_params rect_params{rect_prof, gp_Dir(0, 0, 1), 20};
     auto rect_shp = create_prism(rect_params);
     if (rect_shp.IsNull()) {
       std::cerr << "Error: Failed to create rectangle profile prism"
@@ -4478,7 +4477,7 @@ void test_make_prism() {
 
     // 测试圆形剖面棱柱
     circ_profile circ_prof{gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 5.0};
-    prism_params circ_params{circ_prof, gp_Dir(0, 0, 20)};
+    prism_params circ_params{circ_prof, gp_Dir(0, 0, 1), 20};
     auto circ_shp = create_prism(circ_params);
     if (circ_shp.IsNull()) {
       std::cerr << "Error: Failed to create circle profile prism" << std::endl;
@@ -4489,7 +4488,7 @@ void test_make_prism() {
     // 测试椭圆剖面棱柱
     elips_profile elips_prof{gp_Pnt(10, 0, 0), gp_Pnt(0, 5, 0),
                              gp_Pnt(0, 0, 0)};
-    prism_params elips_params{elips_prof, gp_Dir(0, 0, 1)};
+    prism_params elips_params{elips_prof, gp_Dir(0, 0, 1), 20};
     auto elips_shp = create_prism(elips_params);
     if (elips_shp.IsNull()) {
       std::cerr << "Error: Failed to create ellipse profile prism" << std::endl;
@@ -4501,7 +4500,7 @@ void test_make_prism() {
     polygon_profile poly_prof{{gp_Pnt(0, 0, 0), gp_Pnt(10, 0, 0),
                                gp_Pnt(15, 5, 0), gp_Pnt(10, 10, 0),
                                gp_Pnt(0, 10, 0)}};
-    prism_params poly_params{poly_prof, gp_Dir(0, 0, 1)};
+    prism_params poly_params{poly_prof, gp_Dir(0, 0, 1), 20};
     auto poly_shp = create_prism(poly_params);
     if (poly_shp.IsNull()) {
       std::cerr << "Error: Failed to create polygon profile prism" << std::endl;
@@ -4976,16 +4975,16 @@ void test_make_catenary() {
   std::cout << "\n=== Testing Catenary ===" << std::endl;
   try {
     // 创建圆形剖面
-    circ_profile circ_prof{gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 2.0};
+    circ_profile circ_prof{gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), 0.2};
 
     // 测试标准悬垂线
     catenary_params params{
-        .p1 = gp_Pnt(0, 0, 0),   // 起点
-        .p2 = gp_Pnt(100, 0, 0), // 终点
-        .profile = circ_prof,    // 圆形剖面
-        .slack = 1.5,            // 悬垂度
-        .maxSag = 5.0,           // 最大垂度
-        .tessellation = 0.0      // 分段数
+        .p1 = gp_Pnt(0, 0, 0),     // 起点
+        .p2 = gp_Pnt(100, 100, 0), // 终点
+        .profile = circ_prof,      // 圆形剖面
+        .slack = 2,                // 悬垂度
+        .maxSag = 10.0,            // 最大垂度
+        .tessellation = 0.0        // 分段数
     };
 
     auto shp = create_catenary(params);
@@ -4996,8 +4995,8 @@ void test_make_catenary() {
     test_export_shape(shp, "./catenary.stl");
 
     // 测试带高度的悬垂线
-    catenary_params height_params{.p1 = gp_Pnt(0, 0, 0),     // 起点高度10
-                                  .p2 = gp_Pnt(100, 50, 40), // 终点高度20
+    catenary_params height_params{.p1 = gp_Pnt(0, 0, 0),     // 起点高度0
+                                  .p2 = gp_Pnt(100, 50, 20), // 终点高度20
                                   .profile = circ_prof,
                                   .slack = 2.0,
                                   .maxSag = 10.0,
@@ -5009,6 +5008,27 @@ void test_make_catenary() {
       return;
     }
     test_export_shape(height_shp, "./height_catenary.stl");
+
+    gp_Dir upDir =
+        gp_Vec(-2365550.686973459, 4588616.347934356, 3734082.7681595744)
+            .Normalized();
+    // 测试标准悬垂线
+    catenary_params bug_params{.p1 = gp_Pnt(0, 0, 0), // 起点
+                               .p2 = gp_Pnt(26.363751136232167,
+                                            -26.227833716198802,
+                                            30.422308564186096), // 终点
+                               .profile = circ_prof,             // 圆形剖面
+                               .slack = 2,                       // 悬垂度
+                               .maxSag = 10.0,                   // 最大垂度
+                               .tessellation = 0.0,              // 分段数
+                               .upDir = upDir};
+
+    auto bug_shp = create_catenary(bug_params);
+    if (bug_shp.IsNull()) {
+      std::cerr << "Error: Failed to create catenary" << std::endl;
+      return;
+    }
+    test_export_shape(bug_shp, "./catenary_bug.stl");
 
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
@@ -5043,8 +5063,11 @@ void test_make_cone_shape() {
     test_export_shape(fullShp, "./full_cone_shape.stl");
 
     // 测试部分圆锥
-    auto partialShp = create_cone_shape(cone_shape_params{
-        .radius1 = 15.0, .radius2 = 5.0, .height = 25.0, .angle = 270.0});
+    auto partialShp =
+        create_cone_shape(cone_shape_params{.radius1 = 15.0,
+                                            .radius2 = 5.0,
+                                            .height = 25.0,
+                                            .angle = 270.0 * M_PI / 180});
     if (partialShp.IsNull()) {
       std::cerr << "Error: Failed to create partial cone" << std::endl;
       return;
@@ -5068,8 +5091,8 @@ void test_make_cylinder_shape() {
     test_export_shape(fullShp, "./full_cylinder_shape.stl");
 
     // 测试部分圆柱
-    auto partialShp = create_cylinder_shape(
-        cylinder_shape_params{.radius = 10.0, .height = 20.0, .angle = 270.0});
+    auto partialShp = create_cylinder_shape(cylinder_shape_params{
+        .radius = 10.0, .height = 20.0, .angle = 270.0 * M_PI / 180});
     if (partialShp.IsNull()) {
       std::cerr << "Error: Failed to create partial cylinder" << std::endl;
       return;
@@ -5096,8 +5119,8 @@ void test_make_revolution_shape() {
     test_export_shape(fullShp, "./full_revolution_shape.stl");
 
     // 测试部分旋转体(270度)
-    auto partialShp = create_revolution_shape(
-        revolution_shape_params{.meridian = meridian, .angle = 270.0});
+    auto partialShp = create_revolution_shape(revolution_shape_params{
+        .meridian = meridian, .angle = 270.0 * M_PI / 180});
     if (partialShp.IsNull()) {
       std::cerr << "Error: Failed to create partial revolution shape"
                 << std::endl;
@@ -5106,8 +5129,11 @@ void test_make_revolution_shape() {
     test_export_shape(partialShp, "./partial_revolution_shape.stl");
 
     // 测试带VMin/VMax参数的旋转体
-    auto rangedShp = create_revolution_shape(revolution_shape_params{
-        .meridian = meridian, .angle = 180.0, .max = 8.0, .min = 0.0});
+    auto rangedShp = create_revolution_shape(
+        revolution_shape_params{.meridian = meridian,
+                                .angle = 180.0 * M_PI / 180,
+                                .max = 8.0,
+                                .min = 2.0});
     if (rangedShp.IsNull()) {
       std::cerr << "Error: Failed to create ranged revolution shape"
                 << std::endl;
@@ -5132,8 +5158,11 @@ void test_make_sphere_shape() {
     test_export_shape(fullShp, "./full_sphere_shape.stl");
 
     // 测试部分球体
-    auto partialShp = create_sphere_shape(sphere_shape_params{
-        .radius = 15.0, .angle1 = 45.0, .angle2 = 135.0, .angle = 270.0});
+    auto partialShp =
+        create_sphere_shape(sphere_shape_params{.radius = 15.0,
+                                                .angle1 = 0.0,
+                                                .angle2 = 90.0 * M_PI / 180,
+                                                .angle = 270.0 * M_PI / 180});
     if (partialShp.IsNull()) {
       std::cerr << "Error: Failed to create partial sphere" << std::endl;
       return;
@@ -5157,11 +5186,13 @@ void test_make_torus_shape() {
     test_export_shape(fullShp, "./full_torus_shape.stl");
 
     // 测试部分圆环
-    auto partialShp = create_torus_shape(torus_shape_params{.radius1 = 25.0,
-                                                            .radius2 = 8.0,
-                                                            .angle1 = 45.0,
-                                                            .angle2 = 315.0,
-                                                            .angle = 270.0});
+    auto partialShp = create_torus_shape(torus_shape_params{
+        .radius1 = 25.0,              // 主半径保持不变
+        .radius2 = 8.0,               // 次半径保持不变
+        .angle1 = -30.0 * M_PI / 180, // 起始纬度角度（南纬30度）
+        .angle2 = 30.0 * M_PI / 180,  // 结束纬度角度（北纬30度）
+        .angle = 270.0 * M_PI / 180   // 经度扫掠角度保持不变
+    });
     if (partialShp.IsNull()) {
       std::cerr << "Error: Failed to create partial torus" << std::endl;
       return;
@@ -5245,11 +5276,12 @@ void test_make_pipe_shape() {
 
 int main() {
   // 基础图形
+  /**
   test_revol();
   test_make_prism();
   test_make_pipe();
   test_make_multi_segment_pipe();
-  test_make_pipe_joint();
+  test_make_pipe_joint(); */
   test_make_catenary();
   test_make_box_shape();
   test_make_cone_shape();

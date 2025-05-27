@@ -384,7 +384,7 @@ TopoDS_Shape create_cable(const cable_params &params, const gp_Pnt &position,
 enum class curve_type {
   LINE = 0,  // 直线
   ARC = 1,   // 弧线
-  SPLINE = 2 // 样条曲线
+  BEZIER = 2 // 样条曲线
 };
 
 // 曲线电缆参数结构体
@@ -1610,6 +1610,14 @@ enum class shaft_style {
   RECTANGULAR = 2 // 矩形竖井
 };
 
+struct three_way_well_section {
+  connection_section_style sectionType; // 截面样式
+  double length;                        // 连接段长
+  double width;                         // 连接段宽
+  double height;                        // 高度/半径
+  double arcHeight;                     // 拱高
+};
+
 /**
  * @brief 三通井参数结构体 DLJ_3T/DLJ_3TMS/DLJ_3TAS
  */
@@ -1692,6 +1700,14 @@ enum class four_way_well_type {
   UNDERGROUND_TUNNEL = 3 // 暗挖隧道井
 };
 
+struct four_way_well_section {
+  connection_section_style sectionType; // 截面样式
+  double length;                        // 连接段长
+  double width;                         // 连接段宽
+  double height;                        // 高度/半径
+  double arcHeight;                     // 拱高
+};
+
 // DLJ_4T/DLJ_4TMS/DLJ_4TAS
 struct four_way_well_params {
   four_way_well_type type; // 四通井类型
@@ -1719,13 +1735,8 @@ struct four_way_well_params {
   double bottomThickness; // 底板厚 H2 (mm)
 
   // 连接段参数
-  struct {
-    connection_section_style sectionType; // 截面样式
-    double length;                        // 连接段长
-    double width;                         // 连接段宽
-    double height;                        // 高度/半径
-    double arcHeight;                     // 拱高
-  } leftSection, rightSection, branchSection1, branchSection2;
+  four_way_well_section leftSection, rightSection, branchSection1,
+      branchSection2;
 
   // 壁厚参数
   double outerWallThickness; // 外壁厚 T1 (mm)
@@ -2283,7 +2294,8 @@ TopoDS_Shape create_revol(const revol_params &params, const gp_Pnt &position,
 
 struct prism_params {
   shape_profile profile;
-  gp_Dir dir;
+  gp_Dir direction;
+  double height;
 };
 
 TopoDS_Shape create_prism(const prism_params &params);
@@ -2295,7 +2307,8 @@ enum class segment_type {
   LINE = 0,              // 直线
   THREE_POINT_ARC = 1,   // 弧线
   CIRCLE_CENTER_ARC = 2, // 圆心角
-  SPLINE = 3             // 样条曲线
+  SPLINE = 3,            // 样条曲线
+  BEZIER = 4             // 贝塞尔曲线
 };
 
 struct pipe_params {
@@ -2340,6 +2353,7 @@ enum class joint_shape_mode {
 };
 
 struct pipe_endpoint {
+  std::string id;
   gp_Pnt offset;
   gp_Dir normal;
   shape_profile profile;

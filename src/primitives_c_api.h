@@ -375,7 +375,7 @@ PRIMCAPICALL topo_shape_t *create_cable_with_place(cable_params_t params,
 typedef enum {
   CURVE_TYPE_LINE = 0,
   CURVE_TYPE_ARC = 1,
-  CURVE_TYPE_SPLINE = 2
+  CURVE_TYPE_BEZIER = 2
 } curve_type_t;
 
 typedef struct {
@@ -1905,7 +1905,8 @@ PRIMCAPICALL topo_shape_t *create_revol_with_place(revol_params_t params,
 // 拉伸参数
 typedef struct {
   shape_profile_t profile;
-  dir3d_t dir;
+  dir3d_t direction;
+  double height;
 } prism_params_t;
 
 PRIMCAPICALL topo_shape_t *create_prism(prism_params_t params);
@@ -1918,11 +1919,13 @@ typedef enum {
   SEGMENT_TYPE_LINE = 0,              // 直线
   SEGMENT_TYPE_THREE_POINT_ARC = 1,   // 弧线
   SEGMENT_TYPE_CIRCLE_CENTER_ARC = 2, // 圆心角
-  SEGMENT_TYPE_SPLINE = 3             // 样条曲线
+  SEGMENT_TYPE_SPLINE = 3,            // 样条曲线
+  SEGMENT_TYPE_BEZIER = 4             // 贝塞尔曲线
 } segment_type_t;
 
 // 管道端点参数
 typedef struct {
+  char *id;
   pnt3d_t offset;
   dir3d_t normal;
   shape_profile_t profile;

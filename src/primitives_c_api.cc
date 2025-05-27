@@ -840,8 +840,8 @@ PRIMCAPICALL topo_shape_t *create_curve_cable(curve_cable_params_t params) {
       case CURVE_TYPE_ARC:
         cpp_curveTypes.push_back(curve_type::ARC);
         break;
-      case CURVE_TYPE_SPLINE:
-        cpp_curveTypes.push_back(curve_type::SPLINE);
+      case CURVE_TYPE_BEZIER:
+        cpp_curveTypes.push_back(curve_type::BEZIER);
         break;
       }
     }
@@ -877,8 +877,8 @@ create_curve_cable_with_place(curve_cable_params_t params, pnt3d_t position,
       case CURVE_TYPE_ARC:
         cpp_curveTypes.push_back(curve_type::ARC);
         break;
-      case CURVE_TYPE_SPLINE:
-        cpp_curveTypes.push_back(curve_type::SPLINE);
+      case CURVE_TYPE_BEZIER:
+        cpp_curveTypes.push_back(curve_type::BEZIER);
         break;
       }
     }
@@ -4144,7 +4144,9 @@ PRIMCAPICALL topo_shape_t *create_prism(prism_params_t params) {
   }
 
   // 设置拉伸方向
-  cpp_params.dir = gp_Dir(params.dir.x, params.dir.y, params.dir.z);
+  cpp_params.direction =
+      gp_Dir(params.direction.x, params.direction.y, params.direction.z);
+  cpp_params.height = params.height;
 
   try {
     return new topo_shape_t{
@@ -4216,7 +4218,9 @@ PRIMCAPICALL topo_shape_t *create_prism_with_place(prism_params_t params,
   }
 
   // 设置拉伸方向
-  cpp_params.dir = gp_Dir(params.dir.x, params.dir.y, params.dir.z);
+  cpp_params.direction =
+      gp_Dir(params.direction.x, params.direction.y, params.direction.z);
+  cpp_params.height = params.height;
 
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_direction(direction.x, direction.y, direction.z);
@@ -4376,6 +4380,9 @@ PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params) {
     break;
   case SEGMENT_TYPE_SPLINE:
     cpp_params.segment_type = segment_type::SPLINE;
+    break;
+  case SEGMENT_TYPE_BEZIER:
+    cpp_params.segment_type = segment_type::BEZIER;
     break;
   default:
     return nullptr;
@@ -4556,6 +4563,9 @@ topo_shape_t *create_pipe_with_split_distances(pipe_params_t params,
     break;
   case SEGMENT_TYPE_SPLINE:
     cpp_params.segment_type = segment_type::SPLINE;
+    break;
+  case SEGMENT_TYPE_BEZIER:
+    cpp_params.segment_type = segment_type::BEZIER;
     break;
   default:
     return nullptr;
@@ -4739,6 +4749,9 @@ PRIMCAPICALL topo_shape_t *create_pipe_with_place(pipe_params_t params,
     break;
   case SEGMENT_TYPE_SPLINE:
     cpp_params.segment_type = segment_type::SPLINE;
+    break;
+  case SEGMENT_TYPE_BEZIER:
+    cpp_params.segment_type = segment_type::BEZIER;
     break;
   default:
     return nullptr;
@@ -4932,6 +4945,9 @@ create_multi_segment_pipe(multi_segment_pipe_params_t params) {
       case SEGMENT_TYPE_SPLINE:
         segment_types.push_back(segment_type::SPLINE);
         break;
+      case SEGMENT_TYPE_BEZIER:
+        segment_types.push_back(segment_type::BEZIER);
+        break;
       default:
         return nullptr;
       }
@@ -5122,6 +5138,9 @@ topo_shape_t *create_multi_segment_pipe_with_split_distances(
         break;
       case SEGMENT_TYPE_SPLINE:
         segment_types.push_back(segment_type::SPLINE);
+        break;
+      case SEGMENT_TYPE_BEZIER:
+        segment_types.push_back(segment_type::BEZIER);
         break;
       default:
         return nullptr;
@@ -5317,6 +5336,9 @@ create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
       case SEGMENT_TYPE_SPLINE:
         segment_types.push_back(segment_type::SPLINE);
         break;
+      case SEGMENT_TYPE_BEZIER:
+        segment_types.push_back(segment_type::BEZIER);
+        break;
       default:
         return nullptr;
       }
@@ -5365,6 +5387,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params) {
   for (int i = 0; i < params.in_count; i++) {
     pipe_endpoint_t &ep = params.ins[i];
     pipe_endpoint cpp_ep;
+    cpp_ep.id = ep.id;
     cpp_ep.offset = gp_Pnt(ep.offset.x, ep.offset.y, ep.offset.z);
     cpp_ep.normal = gp_Dir(ep.normal.x, ep.normal.y, ep.normal.z);
 
@@ -5490,6 +5513,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params) {
   for (int i = 0; i < params.out_count; i++) {
     pipe_endpoint_t &ep = params.outs[i];
     pipe_endpoint cpp_ep;
+    cpp_ep.id = ep.id;
     cpp_ep.offset = gp_Pnt(ep.offset.x, ep.offset.y, ep.offset.z);
     cpp_ep.normal = gp_Dir(ep.normal.x, ep.normal.y, ep.normal.z);
 
