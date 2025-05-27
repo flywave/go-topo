@@ -5015,9 +5015,9 @@ void test_make_catenary() {
             .Normalized();
     // 测试标准悬垂线
     catenary_params bug_params{.p1 = gp_Pnt(0, 0, 0), // 起点
-                               .p2 = gp_Pnt(13.363751136232167,
+                               .p2 = gp_Pnt(26.363751136232167,
                                             -26.227833716198802,
-                                            10.422308564186096), // 终点
+                                            30.422308564186096), // 终点
                                .profile = circ_prof,             // 圆形剖面
                                .slack = 2,                       // 悬垂度
                                .maxSag = 10.0,                   // 最大垂度

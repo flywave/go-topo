@@ -20,8 +20,7 @@ double solveBisect(const Func &func, double x0, double x1, double tolerance,
                    int maxIterations = 8) {
   double f0 = func(x0);
   double f1 = func(x1);
-  if (f0 * f1 > 0) // same sign
-  {
+  if (f0 * f1 > 0) {
     return x0;
   }
 
@@ -414,23 +413,17 @@ inline void makeCatenary(const gp_Pnt &p1, const gp_Pnt &p2,
 
 inline gp_Ax3 createOrientation(const gp_Pnt &p1, const gp_Pnt &p2,
                                 const gp_Dir &upDir) {
-  // 计算从p1到p2的方向向量
   gp_Vec dirVec(p1, p2);
   if (dirVec.Magnitude() < Precision::Confusion()) {
     throw Standard_ConstructionError("Points are too close");
   }
   dirVec.Normalize();
 
-  // Z轴方向为指定的upDir
-  gp_Dir zAxis = upDir;
-
-  gp_Vec xVector = dirVec.Crossed(zAxis);
-  // 计算X轴方向（与p1-p2方向正交）
+  gp_Vec xVector = dirVec.Crossed(upDir);
   if (xVector.Magnitude() < Precision::Confusion()) {
-    // 当p1-p2方向与upDir平行时，使用默认X轴
     xVector = gp_Vec(1, 0, 0);
   }
 
-  return gp_Ax3(p1, zAxis, xVector);
+  return gp_Ax3(p1, upDir, xVector);
 }
 } // namespace flywave
