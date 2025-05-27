@@ -9,6 +9,18 @@ using namespace flywave::topo;
 extern "C" {
 #endif
 
+pnt3d_t *convert_points_to_capi(const std::vector<gp_Pnt> &points,
+                                int *out_count) {
+  *out_count = static_cast<int>(points.size());
+  pnt3d_t *result = (pnt3d_t *)malloc(*out_count * sizeof(pnt3d_t));
+  for (int i = 0; i < *out_count; ++i) {
+    result[i].x = points[i].X();
+    result[i].y = points[i].Y();
+    result[i].z = points[i].Z();
+  }
+  return result;
+}
+
 PRIMCAPICALL topo_shape_t *create_sphere(sphere_params_t params) {
   sphere_params cpp_params{params.radius};
   try {
@@ -773,6 +785,27 @@ PRIMCAPICALL topo_shape_t *create_wire_with_place(wire_params_t params,
   }
 }
 
+PRIMCAPICALL pnt3d_t *sample_wire_points(wire_params_t params,
+                                         double tessellation, int *out_count) {
+  std::vector<gp_Pnt> points;
+  for (int i = 0; i < params.numFitPoints; i++) {
+    points.push_back(gp_Pnt(params.fitPoints[i].x, params.fitPoints[i].y,
+                            params.fitPoints[i].z));
+  }
+
+  wire_params cppParams{
+      gp_Pnt(params.startPoint.x, params.startPoint.y, params.startPoint.z),
+      gp_Pnt(params.endPoint.x, params.endPoint.y, params.endPoint.z),
+      gp_Dir(params.startDir.x, params.startDir.y, params.startDir.z),
+      gp_Dir(params.endDir.x, params.endDir.y, params.endDir.z),
+      params.sag,
+      params.diameter,
+      points,
+  };
+  auto spoints = sample_wire(cppParams, tessellation);
+  return convert_points_to_capi(spoints, out_count);
+}
+
 PRIMCAPICALL topo_shape_t *create_cable(cable_params_t params) {
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.numInflectionPoints; i++) {
@@ -791,6 +824,23 @@ PRIMCAPICALL topo_shape_t *create_cable(cable_params_t params) {
   } catch (...) {
     return nullptr;
   }
+}
+
+PRIMCAPICALL pnt3d_t *sample_cable_points(cable_params_t params,
+                                          double tessellation, int *out_count) {
+  std::vector<gp_Pnt> points;
+  for (int i = 0; i < params.numInflectionPoints; i++) {
+    points.push_back(gp_Pnt(params.inflectionPoints[i].x,
+                            params.inflectionPoints[i].y,
+                            params.inflectionPoints[i].z));
+  }
+  cable_params cppParams{
+      gp_Pnt(params.startPoint.x, params.startPoint.y, params.startPoint.z),
+      gp_Pnt(params.endPoint.x, params.endPoint.y, params.endPoint.z), points,
+      std::vector<double>(params.radii, params.radii + params.numRadii),
+      params.diameter};
+  auto spoints = sample_cable(cppParams, tessellation);
+  return convert_points_to_capi(spoints, out_count);
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_with_place(cable_params_t params,
@@ -1660,6 +1710,25 @@ create_transmission_line(transmission_line_params_t params, pnt3d_t startPoint,
   } catch (...) {
     return nullptr;
   }
+}
+
+PRIMCAPICALL pnt3d_t *
+sample_transmission_line_points(transmission_line_params_t params,
+                                pnt3d_t startPoint, pnt3d_t endPoint,
+                                double tessellation, int *out_count) {
+  transmission_line_params cppParams{params.ctype,
+                                      params.sectionalArea,
+                                      params.outsideDiameter,
+                                      params.wireWeight,
+                                      params.coefficientOfElasticity,
+                                      params.expansionCoefficient,
+                                      params.ratedStrength};
+  gp_Pnt cppStart(startPoint.x, startPoint.y, startPoint.z);
+  gp_Pnt cppEnd(endPoint.x, endPoint.y, endPoint.z);
+
+  auto spoints =
+      sample_transmission_line(cppParams, cppStart, cppEnd, tessellation);
+  return convert_points_to_capi(spoints, out_count);
 }
 
 PRIMCAPICALL topo_shape_t *

@@ -38,6 +38,7 @@
 #include <BRep_Tool.hxx>
 #include <ChFi2d_AnaFilletAlgo.hxx>
 #include <ElCLib.hxx>
+#include <GCPnts_AbscissaPoint.hxx>
 #include <GCPnts_UniformAbscissa.hxx>
 #include <GC_MakeArcOfCircle.hxx>
 #include <GC_MakeCircle.hxx>
@@ -71,7 +72,6 @@
 #include <gp_Pln.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Vec.hxx>
-#include <GCPnts_AbscissaPoint.hxx>
 
 namespace flywave {
 namespace topo {
@@ -2671,6 +2671,68 @@ TopoDS_Shape create_wire(const wire_params &params, const gp_Pnt &position,
   return transform.Shape();
 }
 
+std::vector<gp_Pnt> sample_wire(const wire_params &params,
+                                double tessellation) {
+  // 参数验证
+  if (params.diameter <= 0) {
+    throw Standard_ConstructionError("导线直径必须为正数");
+  }
+  if (params.sag <= 0) {
+    throw Standard_ConstructionError("导线弧垂必须为正数");
+  }
+
+  std::vector<gp_Pnt> samples;
+  Handle(Geom_BSplineCurve) curve;
+
+  if (!params.fitPoints.empty()) {
+    // 使用拟合点集创建样条曲线
+    Handle(TColgp_HArray1OfPnt) points =
+        new TColgp_HArray1OfPnt(1, params.fitPoints.size());
+    for (int i = 0; i < params.fitPoints.size(); ++i) {
+      points->SetValue(i + 1, params.fitPoints[i]);
+    }
+
+    GeomAPI_Interpolate interpolate(points, false, Precision::Confusion());
+    interpolate.Load(gp_Vec(0, 0, 1), gp_Vec(0, 0, 1), true);
+    interpolate.Perform();
+
+    if (!interpolate.IsDone()) {
+      throw Standard_ConstructionError("Failed to create interpolated curve");
+    }
+
+    curve = interpolate.Curve();
+    if (curve.IsNull()) {
+      throw Standard_ConstructionError("Failed to create curve");
+    }
+
+    // 计算采样点数量
+    double length = 0.0;
+    for (size_t i = 1; i < params.fitPoints.size(); ++i) {
+      length += params.fitPoints[i - 1].Distance(params.fitPoints[i]);
+    }
+
+    int sampleCount =
+        tessellation > 0 ? static_cast<int>(length / tessellation) : 20;
+    sampleCount = std::max(sampleCount, 2); // 至少2个点
+
+    samples.reserve(sampleCount);
+
+    // 曲线参数化采样
+    for (int i = 0; i < sampleCount; ++i) {
+      double t = static_cast<double>(i) / (sampleCount - 1);
+      gp_Pnt point;
+      curve->D0(t * curve->LastParameter(), point);
+      samples.push_back(point);
+    }
+  } else {
+    // 直线采样
+    samples.push_back(params.startPoint);
+    samples.push_back(params.endPoint);
+  }
+
+  return samples;
+}
+
 TopoDS_Shape create_cable(const cable_params &params) {
   // 参数验证
   if (params.diameter <= 0.0) {
@@ -2759,6 +2821,66 @@ TopoDS_Shape create_cable(const cable_params &params) {
   }
 
   return pipeMaker.Shape();
+}
+
+std::vector<gp_Pnt> sample_cable(const cable_params &params,
+                                 double tessellation) {
+  // 参数验证
+  if (params.diameter <= 0.0) {
+    throw Standard_ConstructionError("Diameter must be positive");
+  }
+
+  // 收集所有路径点
+  std::vector<gp_Pnt> allPoints;
+  allPoints.push_back(params.startPoint);
+  allPoints.insert(allPoints.end(), params.inflectionPoints.begin(),
+                   params.inflectionPoints.end());
+  allPoints.push_back(params.endPoint);
+
+  // 计算采样点数量
+  double totalLength = 0.0;
+  for (size_t i = 1; i < allPoints.size(); ++i) {
+    totalLength += allPoints[i - 1].Distance(allPoints[i]);
+  }
+
+  int sampleCount =
+      tessellation > 0 ? static_cast<int>(totalLength / tessellation) : 20;
+  sampleCount = std::max(sampleCount, 2); // 至少2个点
+
+  std::vector<gp_Pnt> samples;
+  samples.reserve(sampleCount);
+
+  if (allPoints.size() == 2) {
+    samples.push_back(allPoints[0]);
+    samples.push_back(allPoints[1]);
+  } else {
+    // 曲线采样
+    Handle(TColgp_HArray1OfPnt) points =
+        new TColgp_HArray1OfPnt(1, allPoints.size());
+    for (int i = 0; i < allPoints.size(); ++i) {
+      points->SetValue(i + 1, allPoints[i]);
+    }
+
+    GeomAPI_Interpolate interpolate(points, false, Precision::Confusion());
+    interpolate.Load(gp_Vec(0, 0, 1), gp_Vec(0, 0, 1), true);
+    interpolate.Perform();
+
+    if (!interpolate.IsDone()) {
+      throw Standard_ConstructionError("Failed to create interpolated curve");
+    }
+
+    Handle(Geom_BSplineCurve) curve = interpolate.Curve();
+
+    // 曲线参数化采样
+    for (int i = 0; i < sampleCount; ++i) {
+      double t = static_cast<double>(i) / (sampleCount - 1);
+      gp_Pnt point;
+      curve->D0(t * curve->LastParameter(), point);
+      samples.push_back(point);
+    }
+  }
+
+  return samples;
 }
 
 TopoDS_Shape create_cable(const cable_params &params, const gp_Pnt &position,
@@ -6204,6 +6326,71 @@ TopoDS_Shape create_transmission_line(const transmission_line_params &params,
     throw std::runtime_error("Failed to create a solid object from sweep");
   }
   return pipeMaker.Shape();
+}
+
+std::vector<gp_Pnt>
+sample_transmission_line(const transmission_line_params &params,
+                         const gp_Pnt &startPoint, const gp_Pnt &endPoint,
+                         double tessellation) {
+  // 参数验证
+  if (params.sectionalArea <= 0) {
+    throw Standard_ConstructionError("截面积必须为正数");
+  }
+  if (params.outsideDiameter <= 0) {
+    throw Standard_ConstructionError("外径必须为正数");
+  }
+  if (params.wireWeight <= 0) {
+    throw Standard_ConstructionError("单位长度质量必须为正数");
+  }
+
+  // 计算导地线长度
+  double length = startPoint.Distance(endPoint);
+  if (length <= Precision::Confusion()) {
+    throw Standard_ConstructionError("起点和终点距离过小");
+  }
+
+  // 计算悬垂度 (带高差修正)
+  double weightPerMeter = params.wireWeight / 1000.0; // kg/m
+  double tension = params.ratedStrength * 0.25;       // (25%额定强度)
+
+  // 计算高差修正系数
+  double heightDiff = endPoint.Z() - startPoint.Z();
+  double lengthHorizontal = sqrt(pow(endPoint.X() - startPoint.X(), 2) +
+                                 pow(endPoint.Y() - startPoint.Y(), 2));
+  double beta = heightDiff / lengthHorizontal;
+  double coshBeta = std::cosh(beta);
+  double sag = (weightPerMeter * 9.8 * lengthHorizontal * lengthHorizontal) /
+               (8 * tension * coshBeta);
+  double sagAtMid = sag * (1 - pow(heightDiff / (2 * lengthHorizontal), 2));
+
+  // 计算采样点数量
+  int sampleCount =
+      tessellation > 0 ? static_cast<int>(length / tessellation) : 20;
+  sampleCount = std::max(sampleCount, 2); // 至少2个点
+
+  // 创建采样点
+  std::vector<gp_Pnt> points;
+  points.reserve(sampleCount);
+
+  // 计算中间点(悬垂最低点)
+  gp_Pnt midPoint((startPoint.X() + endPoint.X()) / 2,
+                  (startPoint.Y() + endPoint.Y()) / 2,
+                  (startPoint.Z() + endPoint.Z()) / 2 - sagAtMid);
+
+  // 生成采样点(二次贝塞尔曲线)
+  for (int i = 0; i < sampleCount; ++i) {
+    double t = static_cast<double>(i) / (sampleCount - 1);
+    // 二次贝塞尔曲线公式: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
+    double x = (1 - t) * (1 - t) * startPoint.X() +
+               2 * (1 - t) * t * midPoint.X() + t * t * endPoint.X();
+    double y = (1 - t) * (1 - t) * startPoint.Y() +
+               2 * (1 - t) * t * midPoint.Y() + t * t * endPoint.Y();
+    double z = (1 - t) * (1 - t) * startPoint.Z() +
+               2 * (1 - t) * t * midPoint.Z() + t * t * endPoint.Z();
+    points.emplace_back(x, y, z);
+  }
+
+  return points;
 }
 
 // 创建绝缘子串

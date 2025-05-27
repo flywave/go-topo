@@ -355,6 +355,8 @@ PRIMCAPICALL topo_shape_t *create_wire_with_place(wire_params_t params,
                                                   pnt3d_t position,
                                                   dir3d_t direction,
                                                   dir3d_t upDirection);
+PRIMCAPICALL pnt3d_t *sample_wire_points(wire_params_t params,
+                                         double tessellation, int *out_count);
 
 typedef struct {
   pnt3d_t startPoint;
@@ -371,6 +373,8 @@ PRIMCAPICALL topo_shape_t *create_cable_with_place(cable_params_t params,
                                                    pnt3d_t position,
                                                    dir3d_t direction,
                                                    dir3d_t upDirection);
+PRIMCAPICALL pnt3d_t *sample_cable_points(cable_params_t params,
+                                          double tessellation, int *out_count);
 
 typedef enum {
   CURVE_TYPE_LINE = 0,
@@ -809,6 +813,11 @@ typedef struct {
 PRIMCAPICALL topo_shape_t *
 create_transmission_line(transmission_line_params_t params, pnt3d_t startPoint,
                          pnt3d_t endPoint);
+
+PRIMCAPICALL pnt3d_t *
+sample_transmission_line_points(transmission_line_params_t params,
+                                pnt3d_t startPoint, pnt3d_t endPoint,
+                                double tessellation, int *out_count);
 
 typedef enum {
   INSULATOR_MATERIAL_CERAMIC = 1,

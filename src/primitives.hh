@@ -356,6 +356,8 @@ TopoDS_Shape create_wire(const wire_params &params);
 TopoDS_Shape create_wire(const wire_params &params, const gp_Pnt &position,
                          const gp_Dir &direction = gp_Dir(0, 1, 0),
                          const gp_Dir &upDirection = gp_Dir(1, 0, 0));
+std::vector<gp_Pnt> sample_wire(const wire_params &params,
+                                double tessellation = 0);
 
 /**
  * @brief 创建电缆图元
@@ -379,6 +381,8 @@ TopoDS_Shape create_cable(const cable_params &params);
 TopoDS_Shape create_cable(const cable_params &params, const gp_Pnt &position,
                           const gp_Dir &direction = gp_Dir(0, 1, 0),
                           const gp_Dir &upDirection = gp_Dir(1, 0, 0));
+std::vector<gp_Pnt> sample_cable(const cable_params &params,
+                                 double tessellation = 0);
 
 // 曲线类型枚举
 enum class curve_type {
@@ -920,6 +924,11 @@ struct transmission_line_params {
 TopoDS_Shape create_transmission_line(const transmission_line_params &params,
                                       const gp_Pnt &startPoint,
                                       const gp_Pnt &endPoint);
+
+std::vector<gp_Pnt>
+sample_transmission_line(const transmission_line_params &params,
+                         const gp_Pnt &startPoint, const gp_Pnt &endPoint,
+                         double tessellation = 0);
 
 // 绝缘子材质
 enum class insulator_material {

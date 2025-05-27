@@ -633,6 +633,23 @@ func CreateWireWithPlace(params WireParams, position Point3, direction Dir3, upD
 	return s
 }
 
+func SampleWirePoints(params WireParams, tessellation float64) []Point3 {
+	cParams := params.to_struct()
+	defer freeWireParams(cParams)
+
+	var outCount C.int
+	cPoints := C.sample_wire_points(cParams, C.double(tessellation), &outCount)
+	defer C.free(unsafe.Pointer(cPoints))
+
+	points := make([]Point3, outCount)
+	for i := 0; i < int(outCount); i++ {
+		points[i] = Point3{
+			val: *(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cPoints)) + uintptr(i)*C.sizeof_pnt3d_t)),
+		}
+	}
+	return points
+}
+
 type CableParams struct {
 	StartPoint       Point3
 	EndPoint         Point3
@@ -693,6 +710,23 @@ func CreateCableWithPlace(params CableParams, position Point3, direction Dir3, u
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
+}
+
+func SampleCablePoints(params CableParams, tessellation float64) []Point3 {
+	cParams := params.to_struct()
+	defer freeCableParams(cParams)
+
+	var outCount C.int
+	cPoints := C.sample_cable_points(cParams, C.double(tessellation), &outCount)
+	defer C.free(unsafe.Pointer(cPoints))
+
+	points := make([]Point3, outCount)
+	for i := 0; i < int(outCount); i++ {
+		points[i] = Point3{
+			val: *(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cPoints)) + uintptr(i)*C.sizeof_pnt3d_t)),
+		}
+	}
+	return points
 }
 
 type CurveType int
@@ -1807,6 +1841,29 @@ func CreateTransmissionLine(params TransmissionLineParams, startPoint Point3, en
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
+}
+
+func SampleTransmissionLinePoints(params TransmissionLineParams, startPoint, endPoint Point3, tessellation float64) []Point3 {
+	cParams := params.to_struct()
+	defer C.free(unsafe.Pointer(cParams.ctype))
+
+	var outCount C.int
+	cPoints := C.sample_transmission_line_points(
+		cParams,
+		startPoint.val,
+		endPoint.val,
+		C.double(tessellation),
+		&outCount,
+	)
+	defer C.free(unsafe.Pointer(cPoints))
+
+	points := make([]Point3, outCount)
+	for i := 0; i < int(outCount); i++ {
+		points[i] = Point3{
+			val: *(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cPoints)) + uintptr(i)*C.sizeof_pnt3d_t)),
+		}
+	}
+	return points
 }
 
 type InsulatorMaterial int
