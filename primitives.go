@@ -1493,14 +1493,15 @@ func CreateCompositeCaissonBaseWithPlace(params CompositeCaissonBaseParams, posi
 }
 
 type RaftBaseParams struct {
-	H1 float32
-	H2 float32
-	H3 float32
-	B1 float32
-	B2 float32
-	B  float32
-	L1 float32
-	L2 float32
+	H1    float32
+	H2    float32
+	H3    float32
+	Beam1 float32
+	Beam2 float32
+	B1    float32
+	B2    float32
+	L1    float32
+	L2    float32
 }
 
 func (p *RaftBaseParams) to_struct() C.raft_base_params_t {
@@ -1508,9 +1509,9 @@ func (p *RaftBaseParams) to_struct() C.raft_base_params_t {
 	c.H1 = C.double(p.H1)
 	c.H2 = C.double(p.H2)
 	c.H3 = C.double(p.H3)
-	c.b1 = C.double(p.B1)
-	c.b2 = C.double(p.B2)
-	c.B1 = C.double(p.B)
+	c.b1 = C.double(p.Beam1)
+	c.b2 = C.double(p.Beam2)
+	c.B1 = C.double(p.B1)
 	c.B2 = C.double(p.B2)
 	c.L1 = C.double(p.L1)
 	c.L2 = C.double(p.L2)
@@ -1690,20 +1691,21 @@ func CreatePrecastPinnedBaseWithPlace(params PrecastPinnedBaseParams, position P
 }
 
 type PrecastMetalSupportBaseParams struct {
-	H1 float32
-	H2 float32
-	H3 float32
-	H4 float32
-	B1 float32
-	B2 float32
-	B  float32
-	L1 float32
-	L2 float32
-	S1 float32
-	S2 float32
-	N1 int32
-	N2 int32
-	HX []float32
+	H1    float32
+	H2    float32
+	H3    float32
+	H4    float32
+	B1    float32
+	B2    float32
+	Beam1 float32
+	Beam2 float32
+	L1    float32
+	L2    float32
+	S1    float32
+	S2    float32
+	N1    int32
+	N2    int32
+	HX    []float32
 }
 
 func (p *PrecastMetalSupportBaseParams) to_struct() C.precast_metal_support_base_params_t {
@@ -1712,9 +1714,9 @@ func (p *PrecastMetalSupportBaseParams) to_struct() C.precast_metal_support_base
 	c.H2 = C.double(p.H2)
 	c.H3 = C.double(p.H3)
 	c.H4 = C.double(p.H4)
-	c.b1 = C.double(p.B1)
-	c.b2 = C.double(p.B2)
-	c.B1 = C.double(p.B)
+	c.b1 = C.double(p.Beam1)
+	c.b2 = C.double(p.Beam2)
+	c.B1 = C.double(p.B1)
 	c.B2 = C.double(p.B2)
 	c.L1 = C.double(p.L1)
 	c.L2 = C.double(p.L2)
@@ -1762,20 +1764,20 @@ func CreatePrecastMetalSupportBaseWithPlace(params PrecastMetalSupportBaseParams
 }
 
 type PrecastConcreteSupportBaseParams struct {
-	H1 float32
-	H2 float32
-	H3 float32
-	H4 float32
-	H5 float32
-	B1 float32
-	b2 float32
-	B3 float32
-	B  float32
-	B2 float32
-	L1 float32
-	L2 float32
-	S1 float32
-	N1 int32
+	H1    float32
+	H2    float32
+	H3    float32
+	H4    float32
+	H5    float32
+	Beam1 float32
+	Beam2 float32
+	Beam3 float32
+	B1    float32
+	B2    float32
+	L1    float32
+	L2    float32
+	S1    float32
+	N1    int32
 }
 
 func (p *PrecastConcreteSupportBaseParams) to_struct() C.precast_concrete_support_base_params_t {
@@ -1785,10 +1787,10 @@ func (p *PrecastConcreteSupportBaseParams) to_struct() C.precast_concrete_suppor
 	c.H3 = C.double(p.H3)
 	c.H4 = C.double(p.H4)
 	c.H5 = C.double(p.H5)
-	c.b1 = C.double(p.B1)
-	c.b2 = C.double(p.B2)
-	c.b3 = C.double(p.B3)
-	c.B1 = C.double(p.B)
+	c.b1 = C.double(p.Beam1)
+	c.b2 = C.double(p.Beam2)
+	c.b3 = C.double(p.Beam3)
+	c.B1 = C.double(p.B1)
 	c.B2 = C.double(p.B2)
 	c.L1 = C.double(p.L1)
 	c.L2 = C.double(p.L2)
