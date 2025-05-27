@@ -918,13 +918,13 @@ void test_make_curve_cable() {
     std::vector<gp_Pnt> arcPoints = {gp_Pnt(100, 0, 0), gp_Pnt(150, 50, 0),
                                      gp_Pnt(200, 0, 0)};
 
-    std::vector<gp_Pnt> splinePoints = {gp_Pnt(200, 0, 0), gp_Pnt(250, 50, 50),
+    std::vector<gp_Pnt> splinePoints = {gp_Pnt(200, 0, 0), 
                                         gp_Pnt(300, 0, 100),
                                         gp_Pnt(350, -50, 150)};
 
     auto shp2 = create_curve_cable(curve_cable_params{
         .controlPoints = {linePoints, arcPoints, splinePoints},
-        .curveTypes = {curve_type::LINE, curve_type::ARC, curve_type::SPLINE},
+        .curveTypes = {curve_type::LINE, curve_type::ARC, curve_type::BEZIER},
         .diameter = 8.0});
 
     if (shp2.IsNull()) {

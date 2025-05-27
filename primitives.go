@@ -700,7 +700,7 @@ type CurveType int
 const (
 	CurveTypeLine   CurveType = 0
 	CurveTypeArc    CurveType = 1
-	CurveTypeSpline CurveType = 2
+	CurveTypeBezier CurveType = 2
 )
 
 type CurveSegment struct {

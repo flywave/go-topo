@@ -384,7 +384,7 @@ TopoDS_Shape create_cable(const cable_params &params, const gp_Pnt &position,
 enum class curve_type {
   LINE = 0,  // 直线
   ARC = 1,   // 弧线
-  SPLINE = 2 // 样条曲线
+  BEZIER = 2 // 样条曲线
 };
 
 // 曲线电缆参数结构体

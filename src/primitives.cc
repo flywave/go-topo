@@ -47,6 +47,7 @@
 #include <GeomAPI_Interpolate.hxx>
 #include <GeomAPI_PointsToBSpline.hxx>
 #include <GeomFill_Pipe.hxx>
+#include <Geom_BezierCurve.hxx>
 #include <Geom_Circle.hxx>
 #include <Geom_Line.hxx>
 #include <Geom_Plane.hxx>
@@ -70,6 +71,7 @@
 #include <gp_Pln.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Vec.hxx>
+
 namespace flywave {
 namespace topo {
 
@@ -2030,8 +2032,8 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
   // 创建绝缘子串 (两侧各一串)
   for (int side = -1; side <= 1; side += 2) {
     // 计算绝缘子串起点和终点
-    gp_Pnt start_point(side * half_front_spacing, 0, 0);
-    gp_Pnt end_point(side * half_back_spacing / 2, actual_height, 0);
+    gp_Pnt start_point(0, side * half_front_spacing, 0);
+    gp_Pnt end_point(actual_height, side * half_back_spacing / 2, 0);
 
     // 创建绝缘子串路径
     gp_Vec insulator_dir(end_point.X() - start_point.X(),
@@ -2041,7 +2043,7 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
                      start_point.Y() - end_point.Y(),
                      start_point.Z() - end_point.Z());
 
-    gp_Pnt front(side * half_front_spacing, 0, 0);
+    gp_Pnt front(0, side * half_front_spacing, 0);
 
     // 前端连接
     BRepPrimAPI_MakeCylinder frontCyl(gp_Ax2(front, front_dir),
@@ -2050,7 +2052,7 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
     );
     builder.Add(result, frontCyl.Shape());
 
-    gp_Pnt back(side * half_back_spacing / 2, actual_height, 0);
+    gp_Pnt back(actual_height, side * half_back_spacing / 2, 0);
 
     // 后端连接
     BRepPrimAPI_MakeCylinder backCyl(gp_Ax2(back, insulator_dir),
@@ -2094,17 +2096,17 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
       // 在绝缘子轴线坐标系中创建剖面线
       BRepBuilderAPI_MakeWire skirtWire;
 
-      gp_Pnt basePoint(segment_start.X(),
-                       segment_start.Y() + params.height * 0.8,
+      gp_Pnt basePoint(segment_start.X() + params.height * 0.8,
+                       segment_start.Y(),
                        params.radius); // 外缘点
-      gp_Pnt p1(segment_start.X(), segment_start.Y() + params.height * 0.8,
+      gp_Pnt p1(segment_start.X() + params.height * 0.8, segment_start.Y(),
                 skirtRadius); // 外缘点
-      gp_Pnt p2(segment_start.X(), segment_start.Y() + params.height * 0.7,
+      gp_Pnt p2(segment_start.X() + params.height * 0.7, segment_start.Y(),
                 skirtRadius * 0.95); // 上翘
-      gp_Pnt p3(segment_start.X(), segment_start.Y() + params.height * 0.5,
+      gp_Pnt p3(segment_start.X() + params.height * 0.5, segment_start.Y(),
                 skirtRadius * 0.7); // 下凹
-      gp_Pnt endPoint(segment_start.X(),
-                      segment_start.Y() + params.height * 0.5,
+      gp_Pnt endPoint(segment_start.X() + params.height * 0.5,
+                      segment_start.Y(),
                       params.radius); // 外缘点
 
       skirtWire.Add(BRepBuilderAPI_MakeEdge(basePoint, p1));
@@ -2134,13 +2136,13 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
     double box_z_height = params.radius * 0.8;      // Z方向高度
 
     // 计算连接盒参数
-    gp_Pnt box_center(-box_x_length / 2,
-                      actual_height + params.radius * 2, // 使用计算后的实际高度
-                      box_z_height / 2);
+    gp_Pnt box_center(actual_height + params.radius * 2,
+                      -box_x_length / 2, // 使用计算后的实际高度
+                      -box_z_height / 2);
 
     // 创建连接盒坐标系（Y轴保持与绝缘子走向一致）
-    gp_Ax2 box_axis(box_center, gp_Dir(0, 1, 0), // 主方向(Y)与绝缘子走向一致
-                    gp_Dir(1, 0, 0)              // Z轴保持垂直
+    gp_Ax2 box_axis(box_center, gp_Dir(1, 0, 0), // 主方向(Y)与绝缘子走向一致
+                    gp_Dir(0, 1, 0)              // Z轴保持垂直
     );
 
     // 创建连接盒（参数顺序：X长度，Y长度，Z长度）
@@ -2904,26 +2906,28 @@ TopoDS_Shape create_curve_cable(const curve_cable_params &params) {
       allWires.push_back(BRepBuilderAPI_MakeWire(edge).Wire());
       break;
     }
-    case curve_type::SPLINE: {
-      if (points.size() < 2) {
+    case curve_type::BEZIER: {
+      if (points.size() < 3) { // 贝塞尔曲线至少需要起点、控制点和终点
         throw Standard_ConstructionError(
-            "Spline segment requires at least 2 points");
+            "Bezier segment requires at least 3 points");
       }
 
-      // 创建样条曲线
-      Handle(TColgp_HArray1OfPnt) array =
-          new TColgp_HArray1OfPnt(1, points.size());
+      // 创建贝塞尔曲线控制点数组
+      TColgp_Array1OfPnt poles(1, points.size());
       for (size_t j = 0; j < points.size(); ++j) {
-        array->SetValue(j + 1, points[j]);
+        poles.SetValue(j + 1, points[j]);
       }
-      GeomAPI_Interpolate interpolate(array, false, Precision::Confusion());
-      interpolate.Load(gp_Vec(0, 0, 1), gp_Vec(0, 0, 1),
-                       true); // 添加首末端导数约束
-      interpolate.Perform();
-      if (!interpolate.IsDone()) {
-        throw Standard_ConstructionError("Failed to create spline segment");
+
+      // 创建二次或三次贝塞尔曲线
+      Handle(Geom_BezierCurve) bezierCurve;
+      if (points.size() == 3) { // 二次贝塞尔曲线
+        bezierCurve = new Geom_BezierCurve(poles);
+      } else { // 三次或更高阶贝塞尔曲线
+        bezierCurve = new Geom_BezierCurve(poles);
       }
-      TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(interpolate.Curve()).Edge();
+
+      // 创建边并添加到线框
+      TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(bezierCurve).Edge();
       allWires.push_back(BRepBuilderAPI_MakeWire(edge).Wire());
       break;
     }
@@ -17560,7 +17564,7 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
   }
   return result;
 }
- 
+
 TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params,
                                        const gp_Pnt &position,
                                        const gp_Dir &direction,
@@ -18099,7 +18103,7 @@ TopoDS_Shape create_pipe_joint(const pipe_joint_params &params,
   BRepBuilderAPI_Transform transform(joint, transformation);
   return transform.Shape();
 }
- 
+
 TopoDS_Shape create_catenary(const catenary_params &params) {
   // 参数验证
   if (params.slack <= 0) {

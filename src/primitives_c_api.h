@@ -375,7 +375,7 @@ PRIMCAPICALL topo_shape_t *create_cable_with_place(cable_params_t params,
 typedef enum {
   CURVE_TYPE_LINE = 0,
   CURVE_TYPE_ARC = 1,
-  CURVE_TYPE_SPLINE = 2
+  CURVE_TYPE_BEZIER = 2
 } curve_type_t;
 
 typedef struct {

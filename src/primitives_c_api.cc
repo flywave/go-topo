@@ -840,8 +840,8 @@ PRIMCAPICALL topo_shape_t *create_curve_cable(curve_cable_params_t params) {
       case CURVE_TYPE_ARC:
         cpp_curveTypes.push_back(curve_type::ARC);
         break;
-      case CURVE_TYPE_SPLINE:
-        cpp_curveTypes.push_back(curve_type::SPLINE);
+      case CURVE_TYPE_BEZIER:
+        cpp_curveTypes.push_back(curve_type::BEZIER);
         break;
       }
     }
@@ -877,8 +877,8 @@ create_curve_cable_with_place(curve_cable_params_t params, pnt3d_t position,
       case CURVE_TYPE_ARC:
         cpp_curveTypes.push_back(curve_type::ARC);
         break;
-      case CURVE_TYPE_SPLINE:
-        cpp_curveTypes.push_back(curve_type::SPLINE);
+      case CURVE_TYPE_BEZIER:
+        cpp_curveTypes.push_back(curve_type::BEZIER);
         break;
       }
     }
