@@ -598,7 +598,7 @@ void test_make_vtype_insulator() {
   try {
     // 测试标准V型绝缘子串
     auto shp = create_vtype_insulator(vtype_insulator_params{
-        .frontSpacing = 30.0,    // 前端间距
+        .frontSpacing = 50.0,    // 前端间距
         .backSpacing = 20.0,     // 后端间距
         .insulatorCount = 22,    // 每串绝缘子片数
         .height = 5.0,           // 单片高度
@@ -918,8 +918,7 @@ void test_make_curve_cable() {
     std::vector<gp_Pnt> arcPoints = {gp_Pnt(100, 0, 0), gp_Pnt(150, 50, 0),
                                      gp_Pnt(200, 0, 0)};
 
-    std::vector<gp_Pnt> splinePoints = {gp_Pnt(200, 0, 0), 
-                                        gp_Pnt(300, 0, 100),
+    std::vector<gp_Pnt> splinePoints = {gp_Pnt(200, 0, 0), gp_Pnt(300, 0, 100),
                                         gp_Pnt(350, -50, 150)};
 
     auto shp2 = create_curve_cable(curve_cable_params{
@@ -5134,7 +5133,7 @@ void test_make_revolution_shape() {
         revolution_shape_params{.meridian = meridian,
                                 .angle = 180.0 * M_PI / 180,
                                 .max = 8.0,
-                                .min = 0.0});
+                                .min = 2.0});
     if (rangedShp.IsNull()) {
       std::cerr << "Error: Failed to create ranged revolution shape"
                 << std::endl;
@@ -5161,8 +5160,8 @@ void test_make_sphere_shape() {
     // 测试部分球体
     auto partialShp =
         create_sphere_shape(sphere_shape_params{.radius = 15.0,
-                                                .angle1 = 45.0 * M_PI / 180,
-                                                .angle2 = 135.0 * M_PI / 180,
+                                                .angle1 = 0.0,
+                                                .angle2 = 90.0 * M_PI / 180,
                                                 .angle = 270.0 * M_PI / 180});
     if (partialShp.IsNull()) {
       std::cerr << "Error: Failed to create partial sphere" << std::endl;
@@ -5187,12 +5186,13 @@ void test_make_torus_shape() {
     test_export_shape(fullShp, "./full_torus_shape.stl");
 
     // 测试部分圆环
-    auto partialShp =
-        create_torus_shape(torus_shape_params{.radius1 = 25.0,
-                                              .radius2 = 8.0,
-                                              .angle1 = 45.0 * M_PI / 180,
-                                              .angle2 = 315.0 * M_PI / 180,
-                                              .angle = 270.0 * M_PI / 180});
+    auto partialShp = create_torus_shape(torus_shape_params{
+        .radius1 = 25.0,              // 主半径保持不变
+        .radius2 = 8.0,               // 次半径保持不变
+        .angle1 = -30.0 * M_PI / 180, // 起始纬度角度（南纬30度）
+        .angle2 = 30.0 * M_PI / 180,  // 结束纬度角度（北纬30度）
+        .angle = 270.0 * M_PI / 180   // 经度扫掠角度保持不变
+    });
     if (partialShp.IsNull()) {
       std::cerr << "Error: Failed to create partial torus" << std::endl;
       return;

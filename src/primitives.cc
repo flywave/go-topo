@@ -2021,7 +2021,8 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
 
   double hypotenuse =
       params.frontLength + params.backLength + total_insulator_height;
-  double actual_height = sqrt(pow(hypotenuse, 2) - pow(half_front_spacing, 2));
+  double actual_height =
+      sqrt(pow(hypotenuse, 2) - pow(half_front_spacing, 2)); // 已有计算
 
   // 创建原点坐标系 (原点在V型张开端两前段连线中点)
   gp_Pnt origin(0, 0, 0);
@@ -2033,7 +2034,7 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
   for (int side = -1; side <= 1; side += 2) {
     // 计算绝缘子串起点和终点
     gp_Pnt start_point(0, side * half_front_spacing, 0);
-    gp_Pnt end_point(actual_height, side * half_back_spacing / 2, 0);
+    gp_Pnt end_point(actual_height, side * half_back_spacing, 0);
 
     // 创建绝缘子串路径
     gp_Vec insulator_dir(end_point.X() - start_point.X(),
@@ -2043,22 +2044,16 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
                      start_point.Y() - end_point.Y(),
                      start_point.Z() - end_point.Z());
 
-    gp_Pnt front(0, side * half_front_spacing, 0);
-
     // 前端连接
-    BRepPrimAPI_MakeCylinder frontCyl(gp_Ax2(front, front_dir),
-                                      params.radius / 4, // 使用1/4半径
-                                      params.frontLength // 实际长度
-    );
+    BRepPrimAPI_MakeCylinder frontCyl(
+        gp_Ax2(start_point, gp_Dir(front_dir.Normalized())), params.radius / 4,
+        params.frontLength);
     builder.Add(result, frontCyl.Shape());
 
-    gp_Pnt back(actual_height, side * half_back_spacing / 2, 0);
-
     // 后端连接
-    BRepPrimAPI_MakeCylinder backCyl(gp_Ax2(back, insulator_dir),
-                                     params.radius / 4, // 使用1/4半径
-                                     params.backLength  // 实际长度
-    );
+    BRepPrimAPI_MakeCylinder backCyl(
+        gp_Ax2(end_point, gp_Dir(insulator_dir.Normalized())),
+        params.radius / 4, params.backLength);
     builder.Add(result, backCyl.Shape());
 
     // 创建每片绝缘子
@@ -2131,9 +2126,9 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params) {
   }
   {
     // 计算盒体尺寸（需覆盖两后端连接点间距）
-    double box_x_length = params.backSpacing / 2.0; // X方向覆盖间距
-    double box_y_thickness = params.radius * 0.8;   // Y方向厚度
-    double box_z_height = params.radius * 0.8;      // Z方向高度
+    double box_x_length = params.backSpacing;     // X方向覆盖间距
+    double box_y_thickness = params.radius * 0.8; // Y方向厚度
+    double box_z_height = params.radius * 0.8;    // Z方向高度
 
     // 计算连接盒参数
     gp_Pnt box_center(actual_height + params.radius * 2,
