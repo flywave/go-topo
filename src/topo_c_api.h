@@ -616,6 +616,10 @@ TOPOCAPICALL topo_edge_t topo_edge_make_ellipse(double majorRadius,
 TOPOCAPICALL topo_edge_t topo_edge_make_bezier(pnt3d_t *points, int pntcount);
 TOPOCAPICALL topo_edge_t topo_edge_make_three_point_arc(pnt3d_t v1, pnt3d_t v2,
                                                         pnt3d_t v3);
+TOPOCAPICALL topo_edge_t topo_edge_make_circle_center_arc(pnt3d_t v1,
+                                                          pnt3d_t center,
+                                                          pnt3d_t v2);
+
 TOPOCAPICALL topo_edge_t topo_edge_make_tangent_arc(pnt3d_t v1, vec3d_t tangent,
                                                     pnt3d_t v3);
 TOPOCAPICALL bool topo_edge_is_seam(topo_edge_t e, topo_face_t f);

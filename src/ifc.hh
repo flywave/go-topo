@@ -5,6 +5,7 @@
 #include <Standard_Version.hxx>
 #include <TopoDS_Shape.hxx>
 
+#include <ifcdata/ifc_data.h>
 #include <ifcgeom/IfcGeomElement.h>
 #include <ifcgeom/IfcGeomFilter.h>
 #include <ifcgeom/IfcGeomRenderStyles.h>
@@ -157,6 +158,8 @@ public:
   std::vector<triangulation_ptr> get_geometry();
 
   std::string get_version();
+
+  std::unique_ptr<ifcopenshell::data::IfcData> get_data();
 
   const std::vector<IfcGeom::filter_t> &get_filter_funcs() {
     return filter_funcs;

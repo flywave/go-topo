@@ -247,7 +247,15 @@ IF(NOT IFC_INCLUDE)
                                     "geometry_serializer_ifc4x3_add1"
                                     "geometry_serializer_ifc4x3_add2"
                                     "geometry_serializer_ifc4x3_tc1"
-                                    "geometry_serializer_ifc4x3")
+                                    "geometry_serializer_ifc4x3"
+                                    "read_data_ifc2x3"
+                                    "read_data_ifc4"
+                                    "read_data_ifc4x1"
+                                    "read_data_ifc4x2"
+                                    "read_data_ifc4x3_add1"
+                                    "read_data_ifc4x3_add2"
+                                    "read_data_ifc4x3_tc1"
+                                    "read_data_ifc4x3")
   SET(IFC_INCLUDE YES)
 ENDIF()
 

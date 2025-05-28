@@ -2274,6 +2274,19 @@ topo_edge_t topo_edge_make_three_point_arc(pnt3d_t v1, pnt3d_t v2, pnt3d_t v3) {
   }
 }
 
+topo_edge_t topo_edge_make_circle_center_arc(pnt3d_t v1, pnt3d_t center,
+                                             pnt3d_t v2) {
+  try {
+    return topo_edge_t{
+        .shp = new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::edge>(
+                flywave::topo::edge::make_circle_center_arc(
+                    cast_to_gp(v1), cast_to_gp(center), cast_to_gp(v2)))}};
+  } catch (...) {
+    return topo_edge_t{};
+  }
+}
+
 topo_edge_t topo_edge_make_tangent_arc(pnt3d_t v1, vec3d_t tangent,
                                        pnt3d_t v3) {
   try {

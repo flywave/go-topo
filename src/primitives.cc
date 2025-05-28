@@ -17198,8 +17198,18 @@ TopoDS_Wire make_wire_from_segments(
           throw Standard_ConstructionError(
               "Center arc requires [start, center, end] points");
         }
-        gp_Circ circle(gp_Ax2(pts[1], gp_Dir(0, 0, 1)), // Default Z-up normal
-                       pts[0].Distance(pts[1]));
+        gp_Vec vec1(pts[0], pts[1]);
+        gp_Vec vec2(pts[1], pts[2]);
+
+        gp_Dir upDir = gp::DZ();
+        gp_Vec cross = vec1.Crossed(vec2);
+        // 检查叉积结果是否有效
+        if (cross.Magnitude() < Precision::Confusion()) {
+          upDir = gp::DZ();
+        } else {
+          upDir = cross.Normalized();
+        }
+        gp_Circ circle(gp_Ax2(pts[1], upDir), pts[0].Distance(pts[1]));
         GC_MakeArcOfCircle arcMaker(circle, pts[0], pts[2], true);
         if (!arcMaker.IsDone()) {
           throw Standard_ConstructionError("Failed to create center arc");

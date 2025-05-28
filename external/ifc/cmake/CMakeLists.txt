@@ -45,6 +45,7 @@ file(GLOB SRC_FILES_GEOM ../src/ifcgeom/*.cpp)
 file(GLOB SRC_FILES_GEOM_KERNEL ../src/ifcgeom/kernels/*.cpp)
 set(SRC_FILES_GEOM_SERIALIZE ../src/ifcgeom/Serialization/Serialization.cpp)
 file(GLOB SRC_FILES_PARSER ../src/ifcparse/*.cpp)
+set(SRC_FILES_READ_DATA ../src/ifcdata/ifc_data.cpp)
 
 # Filter parser files
 foreach(file ${SRC_FILES_PARSER})
@@ -106,12 +107,33 @@ endforeach()
         )
     endforeach()
 
+# Create data libraries
+foreach(schema ${SCHEMA_VERSIONS})
+    add_library(read_data_ifc${schema} STATIC ../src/ifcdata/read_data.cpp)
+    set_target_properties(read_data_ifc${schema} PROPERTIES 
+        COMPILE_FLAGS "-DIFC_GEOM_EXPORTS -DIfcSchema=Ifc${schema}"
+    )
+    list(APPEND ifc_data_libraries read_data_ifc${schema})
+    target_compile_features(read_data_ifc${schema} PRIVATE cxx_std_17)
+
+    # Output directories
+    set_target_properties(read_data_ifc${schema} PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR}/../
+        ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_BINARY_DIR}/../
+        LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR}/../
+        LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_BINARY_DIR}/../
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_BINARY_DIR}/../
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_BINARY_DIR}/../
+    )
+endforeach()
+
 # Main library
 add_library(ifc STATIC
     ${SRC_FILES_GEOM}
     ${SRC_FILES_GEOM_KERNEL}
     ${SRC_FILES_GEOM_SERIALIZE}
     ${SRC_FILES_PARSE}
+    ${SRC_FILES_READ_DATA}
 )
 target_compile_features(ifc PRIVATE cxx_std_17)
 

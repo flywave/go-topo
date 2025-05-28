@@ -1075,6 +1075,16 @@ func TopoMakeThreePointArc(v1, v2, v3 Point3) *Edge {
 	return p
 }
 
+func TopoMakeEdgeCircleCenterArc(v1, center, v2 Point3) *Edge {
+	p := &Edge{
+		inner: &innerEdge{
+			val: C.topo_edge_make_circle_center_arc(v1.val, center.val, v2.val),
+		},
+	}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
 func TopoMakeTangentArc(v1 Point3, tangent Vector3, v3 Point3) *Edge {
 	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_tangent_arc(
 		v1.val, tangent.val, v3.val)}}

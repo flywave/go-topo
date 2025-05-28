@@ -118,5 +118,13 @@ std::string ifc_convert::get_version() {
              : std::string();
 }
 
+std::unique_ptr<ifcopenshell::data::IfcData> ifc_convert::get_data() {
+  if (!_file) {
+    return nullptr;
+  }
+  return std::make_unique<ifcopenshell::data::IfcData>(
+      ifcopenshell::data::read_data(_file.get()));
+}
+
 } // namespace ifc
 } // namespace flywave

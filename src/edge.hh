@@ -275,6 +275,9 @@ public:
   static edge make_three_point_arc(const gp_Pnt &v1, const gp_Pnt &v2,
                                    const gp_Pnt &v3);
 
+  static edge make_circle_center_arc(const gp_Pnt &v1, const gp_Pnt &center,
+                                     const gp_Pnt &v2);
+
   static edge make_tangent_arc(const gp_Pnt &v1, const gp_Vec &tangent,
                                const gp_Pnt &v3);
 

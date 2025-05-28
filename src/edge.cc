@@ -733,7 +733,6 @@ edge edge::make_ellipse(double majorRadius, double minorRadius,
   if (majorRadius <= 0 || minorRadius <= 0) {
     throw std::invalid_argument("Radii must be positive");
   }
-
   gp_Ax1 axis1(center, normal);
   gp_Ax2 axis2(center, normal, xnormal);
 
@@ -772,6 +771,24 @@ edge edge::make_tangent_arc(const gp_Pnt &v1, const gp_Vec &tangent,
                             const gp_Pnt &v3) {
   Handle(Geom_TrimmedCurve) circleGeom =
       GC_MakeArcOfCircle(v1, tangent, v3).Value();
+  return edge(BRepBuilderAPI_MakeEdge(circleGeom).Edge());
+}
+
+edge edge::make_circle_center_arc(const gp_Pnt &v1, const gp_Pnt &center,
+                                  const gp_Pnt &v2) {
+  gp_Vec vec1(v1, center);
+  gp_Vec vec2(center, v2);
+
+  gp_Dir upDir = gp::DZ();
+  gp_Vec cross = vec1.Crossed(vec2);
+  if (cross.Magnitude() < Precision::Confusion()) {
+    upDir = gp::DZ();
+  } else {
+    upDir = cross.Normalized();
+  }
+  gp_Circ circle(gp_Ax2(center, upDir), v1.Distance(center));
+  Handle(Geom_TrimmedCurve) circleGeom =
+      GC_MakeArcOfCircle(circle, v1, v2, true).Value();
   return edge(BRepBuilderAPI_MakeEdge(circleGeom).Edge());
 }
 
