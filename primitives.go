@@ -2883,10 +2883,9 @@ func CreateCableTerminalWithPlace(params CableTerminalParams, position Point3, d
 type CableAccessoryType int
 
 const (
-	CableAccessoryTypeSingle         CableAccessoryType = 1
-	CableAccessoryTypeLinear         CableAccessoryType = 2
-	CableAccessoryTypeContactTriple  CableAccessoryType = 3
-	CableAccessoryTypeSeparateTriple CableAccessoryType = 4
+	CableAccessoryTypeDirectGround      CableAccessoryType = 1
+	CableAccessoryTypeProtectiveGround  CableAccessoryType = 2
+	CableAccessoryTypeCrossInterconnect CableAccessoryType = 3
 )
 
 type CableAccessoryParams struct {
