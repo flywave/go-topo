@@ -43,12 +43,6 @@ const char **get_string_vector(const std::vector<T> &vec, int *count) {
 template <typename T> void free_object_vector(T **objects) {
   if (!objects)
     return;
-
-  int count = 0;
-  while (objects[count] != nullptr) {
-    delete objects[count];
-    count++;
-  }
   delete[] objects;
 }
 
@@ -271,8 +265,8 @@ const int *ifc_triangulation_get_edges_item_ids(ifc_triangulation_t *p,
   return tri->edges_item_ids().data();
 }
 
-ifc_triangulation_material_t *ifc_triangulation_get_materials(ifc_triangulation_t *p,
-                                                 int *count) {
+ifc_triangulation_material_t *
+ifc_triangulation_get_materials(ifc_triangulation_t *p, int *count) {
   auto &tri = p->tri;
   auto &materials = tri->materials();
   *count = static_cast<int>(materials.size());
@@ -289,30 +283,36 @@ void ifc_triangulation_materials_free(ifc_triangulation_material_t *mtls) {
   }
 }
 
-const char *ifc_triangulation_material_get_name(ifc_triangulation_material_t *mtl) {
+const char *
+ifc_triangulation_material_get_name(ifc_triangulation_material_t *mtl) {
   return mtl->mtl->name.c_str();
 }
 
-ifc_color_t ifc_triangulation_material_get_diffuse(ifc_triangulation_material_t *mtl) {
+ifc_color_t
+ifc_triangulation_material_get_diffuse(ifc_triangulation_material_t *mtl) {
   const auto &c = mtl->mtl->diffuse;
   return ifc_color_t{c.r(), c.g(), c.b()};
 }
 
-ifc_color_t ifc_triangulation_material_get_surface(ifc_triangulation_material_t *mtl) {
+ifc_color_t
+ifc_triangulation_material_get_surface(ifc_triangulation_material_t *mtl) {
   const auto &c = mtl->mtl->surface;
   return ifc_color_t{c.r(), c.g(), c.b()};
 }
 
-ifc_color_t ifc_triangulation_material_get_specular(ifc_triangulation_material_t *mtl) {
+ifc_color_t
+ifc_triangulation_material_get_specular(ifc_triangulation_material_t *mtl) {
   const auto &c = mtl->mtl->specular;
   return ifc_color_t{c.r(), c.g(), c.b()};
 }
 
-double ifc_triangulation_material_get_specularity(ifc_triangulation_material_t *mtl) {
+double
+ifc_triangulation_material_get_specularity(ifc_triangulation_material_t *mtl) {
   return mtl->mtl->specularity;
 }
 
-double ifc_triangulation_material_get_transparency(ifc_triangulation_material_t *mtl) {
+double
+ifc_triangulation_material_get_transparency(ifc_triangulation_material_t *mtl) {
   return mtl->mtl->transparency;
 }
 
@@ -732,21 +732,6 @@ ifc_property_set_get_properties(ifc_property_set_t *ps, int *count) {
 IFCCAPICALL void ifc_property_set_free_properties(ifc_property_t **properties) {
   if (!properties)
     return;
-
-  // 先获取数组长度
-  int count = 0;
-  while (properties[count] != nullptr) {
-    count++;
-  }
-
-  // 释放每个属性对象
-  for (int i = 0; i < count; ++i) {
-    if (properties[i]) {
-      ifc_property_free(properties[i]);
-    }
-  }
-
-  // 释放数组本身
   delete[] properties;
 }
 
@@ -808,21 +793,6 @@ IFCCAPICALL void
 ifc_element_quantity_free_quantities(ifc_quantity_t **quantities) {
   if (!quantities)
     return;
-
-  // 先获取数组长度
-  int count = 0;
-  while (quantities[count] != nullptr) {
-    count++;
-  }
-
-  // 释放每个数量对象
-  for (int i = 0; i < count; ++i) {
-    if (quantities[i]) {
-      ifc_quantity_free(quantities[i]);
-    }
-  }
-
-  // 释放数组本身
   delete[] quantities;
 }
 
@@ -970,11 +940,6 @@ IFCCAPICALL void ifc_task_free_subtasks(ifc_task_t **subtasks) {
   if (!subtasks)
     return;
 
-  int count = 0;
-  while (subtasks[count] != nullptr) {
-    ifc_task_free(subtasks[count]);
-    count++;
-  }
   delete[] subtasks;
 }
 
@@ -1030,12 +995,6 @@ IFCCAPICALL void
 ifc_work_calendar_free_working_times(ifc_work_time_t **working_times) {
   if (!working_times)
     return;
-
-  int count = 0;
-  while (working_times[count] != nullptr) {
-    ifc_work_time_free(working_times[count]);
-    count++;
-  }
   delete[] working_times;
 }
 
@@ -1073,11 +1032,6 @@ IFCCAPICALL void ifc_work_schedule_free_tasks(ifc_task_t **tasks) {
   if (!tasks)
     return;
 
-  int count = 0;
-  while (tasks[count] != nullptr) {
-    ifc_task_free(tasks[count]);
-    count++;
-  }
   delete[] tasks;
 }
 
@@ -1171,12 +1125,6 @@ IFCCAPICALL void
 ifc_type_object_free_property_sets(ifc_property_set_t **psets) {
   if (!psets)
     return;
-
-  int count = 0;
-  while (psets[count] != nullptr) {
-    ifc_property_set_free(psets[count]);
-    count++;
-  }
   delete[] psets;
 }
 
