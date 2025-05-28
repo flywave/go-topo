@@ -1109,19 +1109,24 @@ TopoDS_Shape create_pole_tower(const pole_tower_params &params,
                                const gp_Dir &normal = gp::DX(),
                                const gp_Dir &xDirection = gp::DZ());
 
+enum class washer_shape_type {
+  SQUARE = 1, // 方形垫片
+  ROUND = 2   // 圆形垫片
+};
+
 // 单钩锚固参数结构体
 struct single_hook_anchor_params {
   // 基础参数
-  double boltDiameter;    // 地脚螺栓直径
-  double exposedLength;   // 露头长度
-  int nutCount;           // 蝶帽数量
-  double nutHeight;       // 蝶帽高度
-  double nutOD;           // 蝶帽外径
-  int washerCount;        // 垫片数量
-  int washerShape;        // 垫片形状 (1-方形, 2-圆形)
-  double washerSize;      // 垫片长/直径
-  double washerThickness; // 垫片厚度
-  double anchorLength;    // 锚固长度
+  double boltDiameter;           // 地脚螺栓直径
+  double exposedLength;          // 露头长度
+  int nutCount;                  // 蝶帽数量
+  double nutHeight;              // 蝶帽高度
+  double nutOD;                  // 蝶帽外径
+  int washerCount;               // 垫片数量
+  washer_shape_type washerShape; // 垫片形状 (1-方形, 2-圆形)
+  double washerSize;             // 垫片长/直径
+  double washerThickness;        // 垫片厚度
+  double anchorLength;           // 锚固长度
 
   // 单钩锚固特有参数
   double hookStraightLength; // 弯钩直段长度 (B)
@@ -1137,16 +1142,16 @@ TopoDS_Shape create_single_hook_anchor(const single_hook_anchor_params &params,
 // 三钩锚固参数结构体
 struct triple_hook_anchor_params {
   // 基础参数
-  double boltDiameter;    // 地脚螺栓直径
-  double exposedLength;   // 露头长度
-  int nutCount;           // 蝶帽数量
-  double nutHeight;       // 蝶帽高度
-  double nutOD;           // 蝶帽外径
-  int washerCount;        // 垫片数量
-  int washerShape;        // 垫片形状 (1-方形, 2-圆形)
-  double washerSize;      // 垫片长/直径
-  double washerThickness; // 垫片厚度
-  double anchorLength;    // 锚固长度
+  double boltDiameter;           // 地脚螺栓直径
+  double exposedLength;          // 露头长度
+  int nutCount;                  // 蝶帽数量
+  double nutHeight;              // 蝶帽高度
+  double nutOD;                  // 蝶帽外径
+  int washerCount;               // 垫片数量
+  washer_shape_type washerShape; // 垫片形状 (1-方形, 2-圆形)
+  double washerSize;             // 垫片长/直径
+  double washerThickness;        // 垫片厚度
+  double anchorLength;           // 锚固长度
 
   // 三钩锚固特有参数
   double hookStraightLengthA; // 弯钩直段A长度
@@ -1163,16 +1168,16 @@ TopoDS_Shape create_triple_hook_anchor(const triple_hook_anchor_params &params,
 
 struct ribbed_anchor_params {
   // 基础参数
-  double boltDiameter;    // 地脚螺栓直径
-  double exposedLength;   // 露头长度
-  int nutCount;           // 蝶帽数量
-  double nutHeight;       // 蝶帽高度
-  double nutOD;           // 蝶帽外径
-  int washerCount;        // 垫片数量
-  int washerShape;        // 垫片形状 (1-方形, 2-圆形)
-  double washerSize;      // 垫片长/直径
-  double washerThickness; // 垫片厚度
-  double anchorLength;    // 锚固长度
+  double boltDiameter;           // 地脚螺栓直径
+  double exposedLength;          // 露头长度
+  int nutCount;                  // 蝶帽数量
+  double nutHeight;              // 蝶帽高度
+  double nutOD;                  // 蝶帽外径
+  int washerCount;               // 垫片数量
+  washer_shape_type washerShape; // 垫片形状 (1-方形, 2-圆形)
+  double washerSize;             // 垫片长/直径
+  double washerThickness;        // 垫片厚度
+  double anchorLength;           // 锚固长度
 
   // 肋板锚固特有参数
   double basePlateSize;      // 下锚板边长 (B)
@@ -1191,16 +1196,16 @@ TopoDS_Shape create_ribbed_anchor(const ribbed_anchor_params &params,
 // 螺帽锚固参数结构体
 struct nut_anchor_params {
   // 基础参数
-  double boltDiameter;    // 地脚螺栓直径
-  double exposedLength;   // 露头长度
-  int nutCount;           // 蝶帽数量
-  double nutHeight;       // 蝶帽高度 (T2)
-  double nutOD;           // 蝶帽外接圆直径 (D)
-  int washerCount;        // 垫片数量
-  int washerShape;        // 垫片形状 (1-方形, 2-圆形)
-  double washerSize;      // 垫片长度/直径 (B2)
-  double washerThickness; // 垫片厚度 (T3)
-  double anchorLength;    // 锚固长度
+  double boltDiameter;           // 地脚螺栓直径
+  double exposedLength;          // 露头长度
+  int nutCount;                  // 蝶帽数量
+  double nutHeight;              // 蝶帽高度 (T2)
+  double nutOD;                  // 蝶帽外接圆直径 (D)
+  int washerCount;               // 垫片数量
+  washer_shape_type washerShape; // 垫片形状 (1-方形, 2-圆形)
+  double washerSize;             // 垫片长度/直径 (B2)
+  double washerThickness;        // 垫片厚度 (T3)
+  double anchorLength;           // 锚固长度
 
   // 螺帽锚固特有参数
   double basePlateSize;       // 下锚板边长 (B1)
@@ -1217,16 +1222,16 @@ TopoDS_Shape create_nut_anchor(const nut_anchor_params &params,
 // 三支锚固参数结构体
 struct triple_arm_anchor_params {
   // 基础参数
-  double boltDiameter;    // 地脚螺栓直径
-  double exposedLength;   // 露头长度
-  int nutCount;           // 蝶帽数量
-  double nutHeight;       // 蝶帽高度
-  double nutOD;           // 蝶帽外径
-  int washerCount;        // 垫片数量
-  int washerShape;        // 垫片形状 (1-方形, 2-圆形)
-  double washerSize;      // 垫片长/直径
-  double washerThickness; // 垫片厚度
-  double anchorLength;    // 锚固长度
+  double boltDiameter;           // 地脚螺栓直径
+  double exposedLength;          // 露头长度
+  int nutCount;                  // 蝶帽数量
+  double nutHeight;              // 蝶帽高度
+  double nutOD;                  // 蝶帽外径
+  int washerCount;               // 垫片数量
+  washer_shape_type washerShape; // 垫片形状 (1-方形, 2-圆形)
+  double washerSize;             // 垫片长/直径
+  double washerThickness;        // 垫片厚度
+  double anchorLength;           // 锚固长度
 
   // 三支锚固特有参数
   double armDiameter;       // 弯支规格 (D)
@@ -1244,16 +1249,16 @@ TopoDS_Shape create_triple_arm_anchor(const triple_arm_anchor_params &params,
 // 定位板锚固参数结构体
 struct positioning_plate_anchor_params {
   // 基础参数
-  double boltDiameter;    // 地脚螺栓直径
-  double exposedLength;   // 露头长度
-  int nutCount;           // 蝶帽数量
-  double nutHeight;       // 蝶帽高度
-  double nutOD;           // 蝶帽外径
-  int washerCount;        // 垫片数量
-  int washerShape;        // 垫片形状 (1-方形, 2-圆形)
-  double washerSize;      // 垫片长/直径
-  double washerThickness; // 垫片厚度
-  double anchorLength;    // 锚固长度
+  double boltDiameter;           // 地脚螺栓直径
+  double exposedLength;          // 露头长度
+  int nutCount;                  // 蝶帽数量
+  double nutHeight;              // 蝶帽高度
+  double nutOD;                  // 蝶帽外径
+  int washerCount;               // 垫片数量
+  washer_shape_type washerShape; // 垫片形状 (1-方形, 2-圆形)
+  double washerSize;             // 垫片长/直径
+  double washerThickness;        // 垫片厚度
+  double anchorLength;           // 锚固长度
 
   // 定位板锚固特有参数
   double plateLength;       // 定位板长度 (B)
@@ -1341,16 +1346,22 @@ TopoDS_Shape create_optical_fiber_box(const optical_fiber_box_params &params,
                                       const gp_Pnt &position,
                                       const gp_Dir &direction = gp::DZ(),
                                       const gp_Dir &xDir = gp::DX());
+enum class cable_terminal_type {
+  OUTDOOR = 1, // 户外
+  GIS = 2,     // 户内
+  DRY = 3      // 干式
+};
+
 /**
  * @brief 电缆终端类型参数结构体 DL_ZDJT
  */
 struct cable_terminal_params {
-  int sort;              // 类型 SORT: 1-户外, 2-户内(GIS), 3-干式
-  double height;         // 总高度 H (mm)
-  double topDiameter;    // 上部直径 L1 (mm)
-  double bottomDiameter; // 下部直径 d (mm)
-  double tailDiameter;   // 尾管直径 D3 (mm)
-  double tailHeight;     // 尾管高度 WH (mm)
+  cable_terminal_type sort; // 类型 SORT: 1-户外, 2-户内(GIS), 3-干式
+  double height;            // 总高度 H (mm)
+  double topDiameter;       // 上部直径 L1 (mm)
+  double bottomDiameter;    // 下部直径 d (mm)
+  double tailDiameter;      // 尾管直径 D3 (mm)
+  double tailHeight;        // 尾管高度 WH (mm)
 
   // 伞裙参数 (仅户外和干式终端使用)
   int skirtCount;                  // 伞裙片数 N
@@ -1772,8 +1783,9 @@ enum class channel_point_type {
 
 struct channel_point {
   gp_Pnt position; // 点坐标
-  channel_point_type type;        // 点类型 (0-普通节点
-                   // 1-弧形节点（弧形节点为圆弧顶点，与前后点三点成弧）)
+  channel_point_type
+      type; // 点类型 (0-普通节点
+            // 1-弧形节点（弧形节点为圆弧顶点，与前后点三点成弧）)
 };
 
 std::vector<gp_Pnt>
@@ -1787,7 +1799,7 @@ enum class pipe_row_type {
 
 // TD_PG
 struct pipe_row_params {
-  pipe_row_type pipeType;            // 1=普通排管, 2=拉管
+  pipe_row_type pipeType;  // 1=普通排管, 2=拉管
   bool hasEnclosure;       // 是否有包封
   double enclosureWidth;   // 包封宽 W (mm)
   double enclosureHeight;  // 包封高 H (mm)
@@ -2033,9 +2045,14 @@ TopoDS_Shape create_tunnel_compartment_partition(
     const tunnel_compartment_partition_params &params, const gp_Pnt &position,
     const gp_Dir &normal = gp::DZ(), const gp_Dir &xDir = gp::DX());
 
+enum class tunnel_partition_board_style {
+  CIRCULAR = 1,   // 圆形
+  RECTANGULAR = 2 // 方形
+};
+
 // GZW_SDJGB
 struct tunnel_partition_board_params {
-  int style;                           // 样式 (1-圆形, 2-方形)
+  tunnel_partition_board_style style;      // 样式 (1-圆形, 2-方形)
   double length;                       // 隔板长/直径 L (mm)
   double width;                        // 隔板宽 W (mm)
   double thickness;                    // 隔板厚 T (mm)
@@ -2133,7 +2150,7 @@ enum class pipe_support_style { SINGLE_SIDED = 1, DOUBLE_SIDED = 2 };
 
 // GZW_GZ
 struct pipe_support_params {
-  pipe_support_style style;                       // 管枕形式 (1-单侧管枕, 2-两侧管枕)
+  pipe_support_style style;        // 管枕形式 (1-单侧管枕, 2-两侧管枕)
   int count;                       // 管枕数量 N
   std::vector<gp_Pnt2d> positions; // 管枕中心坐标 POS (mm)
   std::vector<double> radii;       // 管枕半径 R (mm)
@@ -2155,12 +2172,12 @@ enum class cover_plate_style {
 
 // GZW_GB
 struct cover_plate_params {
-  cover_plate_style style;          // 盖板形式 (0-长方形, 1-扇形)
-  double length;      // 盖板长度/扇形边长 L (mm)
-  double width;       // 盖板宽度 W (mm)
-  double smallRadius; // 扇形小半径 A (mm)
-  double largeRadius; // 扇形大半径 B (mm)
-  double thickness;   // 盖板厚度 H (mm)
+  cover_plate_style style; // 盖板形式 (0-长方形, 1-扇形)
+  double length;           // 盖板长度/扇形边长 L (mm)
+  double width;            // 盖板宽度 W (mm)
+  double smallRadius;      // 扇形小半径 A (mm)
+  double largeRadius;      // 扇形大半径 B (mm)
+  double thickness;        // 盖板厚度 H (mm)
 };
 
 TopoDS_Shape create_cover_plate(const cover_plate_params &params);

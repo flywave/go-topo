@@ -2016,6 +2016,13 @@ func CreateCompositeInsulatorWithPlace(params InsulatorCompositeParams, position
 	return s
 }
 
+type WasherShapeType int32
+
+const (
+	WasherShapeTypeSquare WasherShapeType = 1 // 方形垫片
+	WasherShapeTypeRound  WasherShapeType = 2 // 圆形垫片
+)
+
 type SingleHookAnchorParams struct {
 	BoltDiameter       float32
 	ExposedLength      float32
@@ -2023,7 +2030,7 @@ type SingleHookAnchorParams struct {
 	NutHeight          float32
 	NutOD              float32
 	WasherCount        int32
-	WasherShape        int32
+	WasherShape        WasherShapeType
 	WasherSize         float32
 	WasherThickness    float32
 	AnchorLength       float32
@@ -2069,7 +2076,7 @@ type TripleHookAnchorParams struct {
 	NutHeight           float32
 	NutOD               float32
 	WasherCount         int32
-	WasherShape         int32
+	WasherShape         WasherShapeType
 	WasherSize          float32
 	WasherThickness     float32
 	AnchorLength        float32
@@ -2119,7 +2126,7 @@ type RibbedAnchorParams struct {
 	NutHeight          float32
 	NutOD              float32
 	WasherCount        int32
-	WasherShape        int32
+	WasherShape        WasherShapeType
 	WasherSize         float32
 	WasherThickness    float32
 	AnchorLength       float32
@@ -2173,7 +2180,7 @@ type NutAnchorParams struct {
 	NutHeight           float32
 	NutOD               float32
 	WasherCount         int32
-	WasherShape         int32
+	WasherShape         WasherShapeType
 	WasherSize          float32
 	WasherThickness     float32
 	AnchorLength        float32
@@ -2221,7 +2228,7 @@ type TripleArmAnchorParams struct {
 	NutHeight         float32
 	NutOD             float32
 	WasherCount       int32
-	WasherShape       int32
+	WasherShape       WasherShapeType
 	WasherSize        float32
 	WasherThickness   float32
 	AnchorLength      float32
@@ -2271,7 +2278,7 @@ type PositioningPlateAnchorParams struct {
 	NutHeight         float32
 	NutOD             float32
 	WasherCount       int32
-	WasherShape       int32
+	WasherShape       WasherShapeType
 	WasherSize        float32
 	WasherThickness   float32
 	AnchorLength      float32
@@ -2781,19 +2788,21 @@ func CreateOpticalFiberBoxWithPlace(params OpticalFiberBoxParams, position Point
 	return s
 }
 
+type CableTerminalType int
+
 const (
-	CableBoxDirectGround      = 1
-	CableBoxProtectiveGround  = 2
-	CableBoxCrossInterconnect = 3
+	CableTerminalTypeOutdoor CableTerminalType = 1 // 户外
+	CableTerminalTypeGIS     CableTerminalType = 2 // 户内
+	CableTerminalTypeDry     CableTerminalType = 3 // 干式
 )
 
 type CableTerminalParams struct {
-	Sort           int32   // 类型 SORT: 1-户外, 2-户内(GIS), 3-干式
-	Height         float32 // 总高度 H (mm)
-	TopDiameter    float32 // 上部直径 L1 (mm)
-	BottomDiameter float32 // 下部直径 d (mm)
-	TailDiameter   float32 // 尾管直径 D3 (mm)
-	TailHeight     float32 // 尾管高度 WH (mm)
+	Sort           CableTerminalType // 类型 SORT: 1-户外, 2-户内(GIS), 3-干式
+	Height         float32           // 总高度 H (mm)
+	TopDiameter    float32           // 上部直径 L1 (mm)
+	BottomDiameter float32           // 下部直径 d (mm)
+	TailDiameter   float32           // 尾管直径 D3 (mm)
+	TailHeight     float32           // 尾管高度 WH (mm)
 
 	// 伞裙参数 (仅户外和干式终端使用)
 	SkirtCount               int32   // 伞裙片数 N
@@ -4187,8 +4196,15 @@ func CreateTunnelCompartmentPartitionWithPlace(params TunnelCompartmentPartition
 	return s
 }
 
+type TunnelPartitionBoardStyle int32
+
+const (
+	TunnelPartitionBoardStyleCircular    TunnelPartitionBoardStyle = 1 // 圆形
+	TunnelPartitionBoardStyleRectangular TunnelPartitionBoardStyle = 2 // 方形
+)
+
 type TunnelPartitionBoardParams struct {
-	Style         int32
+	Style         TunnelPartitionBoardStyle
 	Length        float32
 	Width         float32
 	Thickness     float32

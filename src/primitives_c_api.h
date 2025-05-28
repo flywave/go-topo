@@ -892,6 +892,11 @@ PRIMCAPICALL topo_shape_t *
 create_composite_insulator_with_place(insulator_composite_params_t params,
                                       pnt3d_t position, dir3d_t direction);
 
+enum washer_shape_type_t {
+  WASHER_SHAPE_TYPE_SQUARE = 1, // 方形垫片
+  WASHER_SHAPE_TYPE_ROUND = 2   // 圆形垫片
+};
+
 // 单钩锚固参数结构体
 typedef struct {
   double boltDiameter;
@@ -1182,6 +1187,12 @@ enum {
   CABLE_BOX_DIRECT_GROUND = 1,
   CABLE_BOX_PROTECTIVE_GROUND = 2,
   CABLE_BOX_CROSS_INTERCONNECT = 3
+};
+
+enum {
+  CABLE_TERMINAL_TYPE_OUTDOOR = 1, // 户外
+  CABLE_TERMINAL_TYPE_GIS = 2,     // 户内
+  CABLE_TERMINAL_TYPE_DRY = 3      // 干式
 };
 
 typedef struct {
@@ -1721,6 +1732,11 @@ PRIMCAPICALL topo_shape_t *create_tunnel_compartment_partition(
 PRIMCAPICALL topo_shape_t *create_tunnel_compartment_partition_with_place(
     tunnel_compartment_partition_params_t params, pnt3d_t position,
     dir3d_t normal, dir3d_t xDir);
+
+enum {
+  TUNNEL_PARTITION_STYLE_CIRCULAR = 1,   // 圆形
+  TUNNEL_PARTITION_STYLE_RECTANGULAR = 2 // 方形
+};
 
 typedef struct {
   int style;

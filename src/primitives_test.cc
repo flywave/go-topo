@@ -816,10 +816,10 @@ void test_make_wire() {
     auto shp2 = create_wire(
         wire_params{.startPoint = gp_Pnt(0, 0, 0),
                     .endPoint = gp_Pnt(300, 0, 150), // 与最后一个拟合点一致
-                    .startDir = gp_Dir(1, 0, 0), // 初始方向沿X轴
-                    .endDir = gp_Dir(0, 0, 1),   // 结束方向沿Z轴
-                    .sag = 25.0,                 // 合理弧垂值
-                    .diameter = 8.0,             // 典型导线直径
+                    .startDir = gp_Dir(1, 0, 0),     // 初始方向沿X轴
+                    .endDir = gp_Dir(0, 0, 1),       // 结束方向沿Z轴
+                    .sag = 25.0,                     // 合理弧垂值
+                    .diameter = 8.0,                 // 典型导线直径
                     .fitPoints = fitPoints});
 
     if (shp2.IsNull()) {
@@ -2916,10 +2916,10 @@ void test_make_single_hook_anchor() {
         .nutHeight = 0.075, // 15mm → 0.015m
         .nutOD = 0.6,       // 40mm → 0.04m
         .washerCount = 2,
-        .washerShape = 2,         // 圆形垫片
-        .washerSize = 0.65,       // 50mm → 0.05m
-        .washerThickness = 0.015, // 5mm → 0.005m
-        .anchorLength = 1.5,      // 800mm → 0.8m
+        .washerShape = washer_shape_type::ROUND, // 圆形垫片
+        .washerSize = 0.65,                      // 50mm → 0.05m
+        .washerThickness = 0.015,                // 5mm → 0.005m
+        .anchorLength = 1.5,                     // 800mm → 0.8m
 
         // 单钩锚固特有参数 (单位:米)
         .hookStraightLength = 0.6, // 150mm → 0.15m
@@ -2947,10 +2947,10 @@ void test_make_triple_hook_anchor() {
         .nutHeight = 0.1, // 15mm → 0.015m
         .nutOD = 0.6,     // 40mm → 0.04m
         .washerCount = 2,
-        .washerShape = 2,         // 圆形垫片
-        .washerSize = 0.65,       // 50mm → 0.05m
-        .washerThickness = 0.015, // 5mm → 0.005m
-        .anchorLength = 1.5,      // 1000mm → 1.0m
+        .washerShape = washer_shape_type::ROUND, // 圆形垫片
+        .washerSize = 0.65,                      // 50mm → 0.05m
+        .washerThickness = 0.015,                // 5mm → 0.005m
+        .anchorLength = 1.5,                     // 1000mm → 1.0m
 
         // 三钩锚固特有参数 (单位:米)
         .hookStraightLengthA = 0.6,  // 100mm → 0.1m
@@ -2975,16 +2975,16 @@ void test_make_ribbed_anchor() {
   try {
     ribbed_anchor_params params{
         // 基础参数（单位：米）
-        .boltDiameter = 0.2,      // 地脚螺栓直径 20mm → 0.02m
-        .exposedLength = 0.40,    // 露头长度 100mm → 0.1m
-        .nutCount = 0,            // 蝶帽数量保持不变
-        .nutHeight = 0.1,         // 蝶帽高度 10mm → 0.01m
-        .nutOD = 0.6,             // 蝶帽外径 40mm → 0.04m
-        .washerCount = 0,         // 垫片数量保持不变
-        .washerShape = 2,         // 圆形垫片
-        .washerSize = 0.65,       // 垫片直径 30mm → 0.03m
-        .washerThickness = 0.015, // 垫片厚度 5mm → 0.005m
-        .anchorLength = 1.5,      // 锚固长度 500mm → 0.5m
+        .boltDiameter = 0.2,                     // 地脚螺栓直径 20mm → 0.02m
+        .exposedLength = 0.40,                   // 露头长度 100mm → 0.1m
+        .nutCount = 0,                           // 蝶帽数量保持不变
+        .nutHeight = 0.1,                        // 蝶帽高度 10mm → 0.01m
+        .nutOD = 0.6,                            // 蝶帽外径 40mm → 0.04m
+        .washerCount = 0,                        // 垫片数量保持不变
+        .washerShape = washer_shape_type::ROUND, // 圆形垫片
+        .washerSize = 0.65,                      // 垫片直径 30mm → 0.03m
+        .washerThickness = 0.015,                // 垫片厚度 5mm → 0.005m
+        .anchorLength = 1.5,                     // 锚固长度 500mm → 0.5m
 
         // 肋板锚固特有参数（单位：米）
         .basePlateSize = 0.60,       // 底板尺寸 200mm → 0.2m
@@ -3009,17 +3009,18 @@ void test_make_ribbed_anchor() {
 void test_make_nut_anchor() {
   std::cout << "\n=== Testing Nut Anchor ===" << std::endl;
   try {
-    nut_anchor_params params{                     // 基础参数
-                             .boltDiameter = 0.2, // 地脚螺栓直径 20mm → 0.02m
+    nut_anchor_params params{                       // 基础参数
+                             .boltDiameter = 0.2,   // 地脚螺栓直径 20mm → 0.02m
                              .exposedLength = 0.40, // 露头长度 100mm → 0.1m
                              .nutCount = 2,         // 蝶帽数量保持不变
-                             .nutHeight = 0.1,   // 蝶帽高度 10mm → 0.01m
-                             .nutOD = 0.6,       // 蝶帽外径 40mm → 0.04m
-                             .washerCount = 2,   // 垫片数量保持不变
-                             .washerShape = 2,   // 圆形垫片
-                             .washerSize = 0.65, // 垫片直径 30mm → 0.03m
+                             .nutHeight = 0.1,      // 蝶帽高度 10mm → 0.01m
+                             .nutOD = 0.6,          // 蝶帽外径 40mm → 0.04m
+                             .washerCount = 2,      // 垫片数量保持不变
+                             .washerShape =
+                                 washer_shape_type::ROUND, // 圆形垫片
+                             .washerSize = 0.65,       // 垫片直径 30mm → 0.03m
                              .washerThickness = 0.015, // 垫片厚度 5mm → 0.005m
-                             .anchorLength = 1.5, // 锚固长度 500mm → 0.5m
+                             .anchorLength = 1.5,      // 锚固长度 500mm → 0.5m
 
                              // 螺帽锚固特有参数
                              .basePlateSize = 0.60,
@@ -3042,16 +3043,16 @@ void test_make_triple_arm_anchor() {
   try {
     triple_arm_anchor_params params{
         // 基础参数
-        .boltDiameter = 0.2,      // 地脚螺栓直径 20mm → 0.02m
-        .exposedLength = 0.40,    // 露头长度 100mm → 0.1m
-        .nutCount = 2,            // 蝶帽数量保持不变
-        .nutHeight = 0.1,         // 蝶帽高度 10mm → 0.01m
-        .nutOD = 0.6,             // 蝶帽外径 40mm → 0.04m
-        .washerCount = 2,         // 垫片数量保持不变
-        .washerShape = 2,         // 圆形垫片
-        .washerSize = 0.65,       // 垫片直径 30mm → 0.03m
-        .washerThickness = 0.015, // 垫片厚度 5mm → 0.005m
-        .anchorLength = 1.5,      // 锚固长度 500mm → 0.5m
+        .boltDiameter = 0.2,                     // 地脚螺栓直径 20mm → 0.02m
+        .exposedLength = 0.40,                   // 露头长度 100mm → 0.1m
+        .nutCount = 2,                           // 蝶帽数量保持不变
+        .nutHeight = 0.1,                        // 蝶帽高度 10mm → 0.01m
+        .nutOD = 0.6,                            // 蝶帽外径 40mm → 0.04m
+        .washerCount = 2,                        // 垫片数量保持不变
+        .washerShape = washer_shape_type::ROUND, // 圆形垫片
+        .washerSize = 0.65,                      // 垫片直径 30mm → 0.03m
+        .washerThickness = 0.015,                // 垫片厚度 5mm → 0.005m
+        .anchorLength = 1.5,                     // 锚固长度 500mm → 0.5m
 
         // 三支锚固特有参数
         .armDiameter = 0.12,      // 弯支规格16mm
@@ -3077,16 +3078,16 @@ void test_make_positioning_plate_anchor() {
   try {
     positioning_plate_anchor_params params{
         // 基础参数
-        .boltDiameter = 0.2,      // 地脚螺栓直径 20mm → 0.02m
-        .exposedLength = 0.40,    // 露头长度 100mm → 0.1m
-        .nutCount = 2,            // 蝶帽数量保持不变
-        .nutHeight = 0.1,         // 蝶帽高度 10mm → 0.01m
-        .nutOD = 0.6,             // 蝶帽外径 40mm → 0.04m
-        .washerCount = 2,         // 垫片数量保持不变
-        .washerShape = 2,         // 圆形垫片
-        .washerSize = 0.65,       // 垫片直径 30mm → 0.03m
-        .washerThickness = 0.015, // 垫片厚度 5mm → 0.005m
-        .anchorLength = 1.5,      // 锚固长度 500mm → 0.5m
+        .boltDiameter = 0.2,                     // 地脚螺栓直径 20mm → 0.02m
+        .exposedLength = 0.40,                   // 露头长度 100mm → 0.1m
+        .nutCount = 2,                           // 蝶帽数量保持不变
+        .nutHeight = 0.1,                        // 蝶帽高度 10mm → 0.01m
+        .nutOD = 0.6,                            // 蝶帽外径 40mm → 0.04m
+        .washerCount = 2,                        // 垫片数量保持不变
+        .washerShape = washer_shape_type::ROUND, // 圆形垫片
+        .washerSize = 0.65,                      // 垫片直径 30mm → 0.03m
+        .washerThickness = 0.015,                // 垫片厚度 5mm → 0.005m
+        .anchorLength = 1.5,                     // 锚固长度 500mm → 0.5m
 
         // 定位板锚固特有参数
         .plateLength = 0.60,     // 定位板长度200mm
@@ -3325,33 +3326,34 @@ void test_make_cable_terminal() {
 
   try {
     // 测试户外终端
-    cable_terminal_params outdoor_params{.sort = 1, // 户外终端
-                                         .height = 1000,
-                                         .topDiameter = 200,
-                                         .bottomDiameter = 300,
-                                         .tailDiameter = 350,
-                                         .tailHeight = 50,
-                                         .skirtCount = 18,
-                                         .upperSkirtTopDiameter = 330,
-                                         .upperSkirtBottomDiameter = 340,
-                                         .lowerSkirtTopDiameter = 380,
-                                         .lowerSkirtBottomDiameter = 400,
-                                         .skirtSectionHeight = 40,
-                                         .upperTerminalLength = 100,
-                                         .upperTerminalDiameter = 80,
-                                         .lowerTerminalLength = 120,
-                                         .lowerTerminalDiameter = 100,
-                                         .hole1Diameter = 20,
-                                         .hole2Diameter = 20,
-                                         .hole1Distance = 30,
-                                         .holeSpacing = 40,
-                                         .flangeHoleDiameter = 25,
-                                         .flangeHoleSpacing = 400,
-                                         .flangeWidth = 450,
-                                         .flangeCenterHoleRadius = 75,
-                                         .flangeChamferRadius = 10,
-                                         .flangeOpeningWidth = 120,
-                                         .flangeBoltHeight = 40};
+    cable_terminal_params outdoor_params{
+        .sort = cable_terminal_type::OUTDOOR, // 户外终端
+        .height = 1000,
+        .topDiameter = 200,
+        .bottomDiameter = 300,
+        .tailDiameter = 350,
+        .tailHeight = 50,
+        .skirtCount = 18,
+        .upperSkirtTopDiameter = 330,
+        .upperSkirtBottomDiameter = 340,
+        .lowerSkirtTopDiameter = 380,
+        .lowerSkirtBottomDiameter = 400,
+        .skirtSectionHeight = 40,
+        .upperTerminalLength = 100,
+        .upperTerminalDiameter = 80,
+        .lowerTerminalLength = 120,
+        .lowerTerminalDiameter = 100,
+        .hole1Diameter = 20,
+        .hole2Diameter = 20,
+        .hole1Distance = 30,
+        .holeSpacing = 40,
+        .flangeHoleDiameter = 25,
+        .flangeHoleSpacing = 400,
+        .flangeWidth = 450,
+        .flangeCenterHoleRadius = 75,
+        .flangeChamferRadius = 10,
+        .flangeOpeningWidth = 120,
+        .flangeBoltHeight = 40};
 
     auto outdoor_terminal = create_cable_terminal(outdoor_params);
     if (outdoor_terminal.IsNull()) {
@@ -3361,16 +3363,17 @@ void test_make_cable_terminal() {
     test_export_shape(outdoor_terminal, "./outdoor_terminal.stl");
 
     // 测试户内终端
-    cable_terminal_params indoor_params{.sort = 2, // 户内终端
-                                        .height = 800,
-                                        .topDiameter = 180,
-                                        .bottomDiameter = 220,
-                                        .tailDiameter = 0, // 户内无尾管
-                                        .tailHeight = 0,
-                                        .upperTerminalLength = 80,
-                                        .upperTerminalDiameter = 70,
-                                        .lowerTerminalLength = 100,
-                                        .lowerTerminalDiameter = 90};
+    cable_terminal_params indoor_params{
+        .sort = cable_terminal_type::GIS, // 户内终端
+        .height = 800,
+        .topDiameter = 180,
+        .bottomDiameter = 220,
+        .tailDiameter = 0, // 户内无尾管
+        .tailHeight = 0,
+        .upperTerminalLength = 80,
+        .upperTerminalDiameter = 70,
+        .lowerTerminalLength = 100,
+        .lowerTerminalDiameter = 90};
 
     auto indoor_terminal = create_cable_terminal(indoor_params);
     if (indoor_terminal.IsNull()) {
@@ -4414,9 +4417,9 @@ void test_make_cable_tunnel() {
   try {
     cable_tunnel_params circular_params{.style =
                                             connection_section_style::CIRCULAR,
-                                        .width = 60.0,             // 600→60
-                                        .height = 60.0,            // 600→60
-                                        .outerWallThickness = 7.0, // 70→7
+                                        .width = 60.0,                // 600→60
+                                        .height = 60.0,               // 600→60
+                                        .outerWallThickness = 7.0,    // 70→7
                                         .bottomPlatformHeight = 10.0, // 100→10
                                         .cushionExtension = 0.0,      // 80→8
                                         .cushionThickness = 0.0,      // 60→6
@@ -4769,10 +4772,10 @@ void test_make_tunnel_partition_board() {
   try {
     // 测试圆形隔板
     auto shp1 = create_tunnel_partition_board(tunnel_partition_board_params{
-        .style = 1,        // 圆形
-        .length = 200.0,   // 直径200mm
-        .width = 0.0,      // 圆形不需要宽度
-        .thickness = 10.0, // 厚度10mm
+        .style = tunnel_partition_board_style::CIRCULAR, // 圆形
+        .length = 200.0,                                 // 直径200mm
+        .width = 0.0,                                    // 圆形不需要宽度
+        .thickness = 10.0,                               // 厚度10mm
         .holeCount = 4,
         .holePositions = {gp_Pnt2d(50, 50), gp_Pnt2d(-50, 50),
                           gp_Pnt2d(-50, -50), gp_Pnt2d(50, -50)},
@@ -4790,10 +4793,10 @@ void test_make_tunnel_partition_board() {
 
     // 测试方形隔板
     auto shp2 = create_tunnel_partition_board(tunnel_partition_board_params{
-        .style = 2,        // 方形
-        .length = 300.0,   // 长度300mm
-        .width = 200.0,    // 宽度200mm
-        .thickness = 15.0, // 厚度15mm
+        .style = tunnel_partition_board_style::RECTANGULAR, // 方形
+        .length = 300.0,                                    // 长度300mm
+        .width = 200.0,                                     // 宽度200mm
+        .thickness = 15.0,                                  // 厚度15mm
         .holeCount = 3,
         .holePositions = {gp_Pnt2d(100, 50), gp_Pnt2d(-100, 50),
                           gp_Pnt2d(0, -50)},
