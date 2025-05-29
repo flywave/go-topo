@@ -689,7 +689,21 @@ void test_profile_projection() {
               << std::endl;
 }
 
+void test_edge_spline() {
+  std::vector<gp_Pnt> points = {
+    gp_Pnt(0, 0, 0),
+    gp_Pnt(52.78164688870311, 59.195349629968405, -37.40780537482351),
+    gp_Pnt(-17.32372961891815, 73.13395502977073, -97.36982350004837),
+    gp_Pnt(45.607606910169125, 140.1405232809484, -137.74216024577618),
+    gp_Pnt(88.24622735986486, 177.25549516826868, -155.28305072896183)
+};
+  auto e = flywave::topo::edge::make_spline(points, 1e-6, false);
+
+  auto l = e.length();
+  std::cout << "length: " << l << std::endl;
+}
+
 int main() {
-    test_profile_projection();
+    test_edge_spline();
   return 0;
 }

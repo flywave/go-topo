@@ -6062,12 +6062,11 @@ void test_make_pipe_shape() {
 
 int main() {
   // 基础图形
-  /**
   test_revol();
   test_make_prism();
   test_make_pipe();
   test_make_multi_segment_pipe();
-  test_make_pipe_joint(); */
+  test_make_pipe_joint();
   test_make_catenary();
   test_make_box_shape();
   test_make_cone_shape();
