@@ -1838,6 +1838,7 @@ typedef struct {
   pnt2d_t *positions;
   double *radii;
   double length;
+  double width;
   double height;
 } pipe_support_params_t;
 
