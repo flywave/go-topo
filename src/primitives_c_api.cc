@@ -666,8 +666,8 @@ create_terminal_block_with_place(terminal_block_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *
-create_rectangular_fixed_plate(rectangular_hole_plate_params_t params) {
-  rectangular_hole_plate_params cpp_params{
+create_rectangular_fixed_plate(rectangular_fixed_plate_params_t params) {
+  rectangular_fixed_plate_params cpp_params{
       params.length,        params.width,         params.thickness,
       params.columnSpacing, params.rowSpacing,    params.columnCount,
       params.rowCount,      params.hasMiddleHole, params.holeDiameter};
@@ -680,9 +680,9 @@ create_rectangular_fixed_plate(rectangular_hole_plate_params_t params) {
 }
 
 PRIMCAPICALL topo_shape_t *create_rectangular_fixed_plate_with_place(
-    rectangular_hole_plate_params_t params, pnt3d_t position, dir3d_t lengthDir,
+    rectangular_fixed_plate_params_t params, pnt3d_t position, dir3d_t lengthDir,
     dir3d_t widthDir) {
-  rectangular_hole_plate_params cpp_params{
+  rectangular_fixed_plate_params cpp_params{
       params.length,        params.width,         params.thickness,
       params.columnSpacing, params.rowSpacing,    params.columnCount,
       params.rowCount,      params.hasMiddleHole, params.holeDiameter};

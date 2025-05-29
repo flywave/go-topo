@@ -314,12 +314,12 @@ typedef struct {
   int rowCount;
   bool hasMiddleHole;
   double holeDiameter;
-} rectangular_hole_plate_params_t;
+} rectangular_fixed_plate_params_t;
 
 PRIMCAPICALL topo_shape_t *
-create_rectangular_fixed_plate(rectangular_hole_plate_params_t params);
+create_rectangular_fixed_plate(rectangular_fixed_plate_params_t params);
 PRIMCAPICALL topo_shape_t *create_rectangular_fixed_plate_with_place(
-    rectangular_hole_plate_params_t params, pnt3d_t position, dir3d_t lengthDir,
+    rectangular_fixed_plate_params_t params, pnt3d_t position, dir3d_t lengthDir,
     dir3d_t widthDir);
 
 typedef struct {

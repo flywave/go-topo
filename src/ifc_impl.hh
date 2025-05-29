@@ -102,4 +102,12 @@ struct _ifc_group_t {
   ifcopenshell::data::IfcGroup group;
 };
 
+struct _ifc_time_period_t {
+  ifcopenshell::data::IfcTimePeriod tp;
+};
+
+struct _ifc_recurrence_pattern_t {
+  ifcopenshell::data::IfcRecurrencePattern rp;
+};
+
 #endif

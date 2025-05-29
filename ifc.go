@@ -38,28 +38,38 @@ type IfcTriangulationMaterial struct {
 }
 
 type IfcConverter struct {
+	inner *innerIfcConverter
+}
+
+type innerIfcConverter struct {
 	ptr *C.ifc_convert_t
 }
 
-func NewIfcConverter() *IfcConverter {
-	return &IfcConverter{ptr: C.ifc_convert_new()}
-}
-
-func (c *IfcConverter) Free() {
+func (c *innerIfcConverter) free() {
 	if c.ptr != nil {
 		C.ifc_convert_free(c.ptr)
 		c.ptr = nil
 	}
 }
 
+func NewIfcConverter() *IfcConverter {
+	converter := &IfcConverter{
+		inner: &innerIfcConverter{
+			ptr: C.ifc_convert_new(),
+		},
+	}
+	runtime.SetFinalizer(converter.inner, (*innerIfcConverter).free)
+	return converter
+}
+
 func (c *IfcConverter) Load(filename string) bool {
 	fl := C.CString(filename)
 	defer C.free(unsafe.Pointer(fl))
-	return bool(C.ifc_convert_load(c.ptr, fl))
+	return bool(C.ifc_convert_load(c.inner.ptr, fl))
 }
 
 func (c *IfcConverter) GetVersion() string {
-	ver := C.ifc_convert_get_version(c.ptr)
+	ver := C.ifc_convert_get_version(c.inner.ptr)
 	defer C.free(unsafe.Pointer(ver))
 	return C.GoString(ver)
 }
@@ -67,7 +77,7 @@ func (c *IfcConverter) GetVersion() string {
 func (c *IfcConverter) GetElements() []*IfcElement {
 	count := 0
 	elements := []*IfcElement{}
-	res := C.ifc_convert_get_elements(c.ptr, (*C.int)(unsafe.Pointer(&count)))
+	res := C.ifc_convert_get_elements(c.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
 	if count == 0 {
 		return elements
 	}
@@ -90,7 +100,7 @@ func (c *IfcConverter) GetElements() []*IfcElement {
 func (c *IfcConverter) GetTriangulations() []*IfcTriangulation {
 	count := 0
 	tris := []*IfcTriangulation{}
-	res := C.ifc_convert_get_triangulations(c.ptr, (*C.int)(unsafe.Pointer(&count)))
+	res := C.ifc_convert_get_triangulations(c.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
 	if count == 0 {
 		return tris
 	}
@@ -108,7 +118,7 @@ func (c *IfcConverter) GetTriangulations() []*IfcTriangulation {
 func (c *IfcConverter) GetData() *IfcData {
 	data := &IfcData{
 		inner: &innerIfcData{
-			ptr: C.ifc_convert_get_data(c.ptr),
+			ptr: C.ifc_convert_get_data(c.inner.ptr),
 		},
 	}
 	runtime.SetFinalizer(data.inner, (*innerIfcData).free)
@@ -1098,21 +1108,6 @@ func (t *IfcTask) GetObjectType() string {
 	return C.GoString(objType)
 }
 
-func (t *IfcTask) GetStartTime() string {
-	start := C.ifc_task_get_start_time(t.inner.ptr)
-	return C.GoString(start)
-}
-
-func (t *IfcTask) GetEndTime() string {
-	end := C.ifc_task_get_end_time(t.inner.ptr)
-	return C.GoString(end)
-}
-
-func (t *IfcTask) GetDuration() string {
-	duration := C.ifc_task_get_duration(t.inner.ptr)
-	return C.GoString(duration)
-}
-
 // 任务时间
 func (t *IfcTask) GetTaskTime() *IfcTaskTime {
 	tt := &IfcTaskTime{
@@ -1122,6 +1117,19 @@ func (t *IfcTask) GetTaskTime() *IfcTaskTime {
 	}
 	runtime.SetFinalizer(tt.inner, (*innerIfcTaskTime).free)
 	return tt
+}
+
+func (t *IfcTask) GetWorkMethod() string {
+	method := C.ifc_task_get_work_method(t.inner.ptr)
+	return C.GoString(method)
+}
+
+func (t *IfcTask) GetPriority() int {
+	return int(C.ifc_task_get_priority(t.inner.ptr))
+}
+
+func (t *IfcTask) IsMilestone() bool {
+	return bool(C.ifc_task_is_milestone(t.inner.ptr))
 }
 
 // 列表属性方法
@@ -1140,54 +1148,6 @@ func (t *IfcTask) GetPredecessors() []string {
 func (t *IfcTask) GetSuccessors() []string {
 	count := 0
 	list := C.ifc_task_get_successors(t.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
-	defer C.ifc_task_free_string_list(list)
-
-	result := make([]string, count)
-	for i := 0; i < count; i++ {
-		result[i] = C.GoString(*(**C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(list)) + uintptr(i)*unsafe.Sizeof(*list))))
-	}
-	return result
-}
-
-func (t *IfcTask) GetInputObjects() []string {
-	count := 0
-	list := C.ifc_task_get_input_objects(t.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
-	defer C.ifc_task_free_string_list(list)
-
-	result := make([]string, count)
-	for i := 0; i < count; i++ {
-		result[i] = C.GoString(*(**C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(list)) + uintptr(i)*unsafe.Sizeof(*list))))
-	}
-	return result
-}
-
-func (t *IfcTask) GetOutputObjects() []string {
-	count := 0
-	list := C.ifc_task_get_output_objects(t.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
-	defer C.ifc_task_free_string_list(list)
-
-	result := make([]string, count)
-	for i := 0; i < count; i++ {
-		result[i] = C.GoString(*(**C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(list)) + uintptr(i)*unsafe.Sizeof(*list))))
-	}
-	return result
-}
-
-func (t *IfcTask) GetResources() []string {
-	count := 0
-	list := C.ifc_task_get_resources(t.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
-	defer C.ifc_task_free_string_list(list)
-
-	result := make([]string, count)
-	for i := 0; i < count; i++ {
-		result[i] = C.GoString(*(**C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(list)) + uintptr(i)*unsafe.Sizeof(*list))))
-	}
-	return result
-}
-
-func (t *IfcTask) GetControls() []string {
-	count := 0
-	list := C.ifc_task_get_controls(t.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
 	defer C.ifc_task_free_string_list(list)
 
 	result := make([]string, count)
@@ -1243,9 +1203,19 @@ func (wt *IfcWorkTime) GetStartTime() string {
 	return C.GoString(start)
 }
 
-func (wt *IfcWorkTime) GetEndTime() string {
-	end := C.ifc_work_time_get_end_time(wt.inner.ptr)
+func (wt *IfcWorkTime) GetFinishTime() string {
+	end := C.ifc_work_time_get_finish_time(wt.inner.ptr)
 	return C.GoString(end)
+}
+
+func (wt *IfcWorkTime) GetRecurrencePattern() *IfcRecurrencePattern {
+	rp := &IfcRecurrencePattern{
+		inner: &innerIfcRecurrencePattern{
+			ptr: C.ifc_work_time_get_recurrence_pattern(wt.inner.ptr),
+		},
+	}
+	runtime.SetFinalizer(rp.inner, (*innerIfcRecurrencePattern).free)
+	return rp
 }
 
 type IfcWorkCalendar struct {
@@ -1340,6 +1310,41 @@ func (ws *IfcWorkSchedule) GetTasks() []*IfcTask {
 	return tasks
 }
 
+func (ws *IfcWorkSchedule) GetPurpose() string {
+	purpose := C.ifc_work_schedule_get_purpose(ws.inner.ptr)
+	return C.GoString(purpose)
+}
+
+func (ws *IfcWorkSchedule) GetStartTime() string {
+	start := C.ifc_work_schedule_get_start_time(ws.inner.ptr)
+	return C.GoString(start)
+}
+
+func (ws *IfcWorkSchedule) GetFinishTime() string {
+	finish := C.ifc_work_schedule_get_finish_time(ws.inner.ptr)
+	return C.GoString(finish)
+}
+
+func (ws *IfcWorkSchedule) GetDuration() float64 {
+	return float64(C.ifc_work_schedule_get_duration(ws.inner.ptr))
+}
+
+func (ws *IfcWorkSchedule) GetTotalFloat() float64 {
+	return float64(C.ifc_work_schedule_get_total_float(ws.inner.ptr))
+}
+
+func (ws *IfcWorkSchedule) GetCreators() []string {
+	count := 0
+	creators := C.ifc_work_schedule_get_creators(ws.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
+	defer C.ifc_work_schedule_free_creators(creators)
+
+	result := make([]string, count)
+	for i := 0; i < count; i++ {
+		result[i] = C.GoString(*(**C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(creators)) + uintptr(i)*unsafe.Sizeof(*creators))))
+	}
+	return result
+}
+
 type IfcWorkPlan struct {
 	inner *innerIfcWorkPlan
 }
@@ -1373,6 +1378,41 @@ func (wp *IfcWorkPlan) GetWorkScheduleIDs() []string {
 	result := make([]string, count)
 	for i := 0; i < count; i++ {
 		result[i] = C.GoString(*(**C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(ids)) + uintptr(i)*unsafe.Sizeof(*ids))))
+	}
+	return result
+}
+
+func (wp *IfcWorkPlan) GetPurpose() string {
+	purpose := C.ifc_work_plan_get_purpose(wp.inner.ptr)
+	return C.GoString(purpose)
+}
+
+func (wp *IfcWorkPlan) GetStartTime() string {
+	start := C.ifc_work_plan_get_start_time(wp.inner.ptr)
+	return C.GoString(start)
+}
+
+func (wp *IfcWorkPlan) GetFinishTime() string {
+	finish := C.ifc_work_plan_get_finish_time(wp.inner.ptr)
+	return C.GoString(finish)
+}
+
+func (wp *IfcWorkPlan) GetDuration() float64 {
+	return float64(C.ifc_work_plan_get_duration(wp.inner.ptr))
+}
+
+func (wp *IfcWorkPlan) GetTotalFloat() float64 {
+	return float64(C.ifc_work_plan_get_total_float(wp.inner.ptr))
+}
+
+func (wp *IfcWorkPlan) GetCreators() []string {
+	count := 0
+	creators := C.ifc_work_plan_get_creators(wp.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
+	defer C.ifc_work_plan_free_creators(creators)
+
+	result := make([]string, count)
+	for i := 0; i < count; i++ {
+		result[i] = C.GoString(*(**C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(creators)) + uintptr(i)*unsafe.Sizeof(*creators))))
 	}
 	return result
 }
@@ -1565,4 +1605,101 @@ func (g *IfcGroup) GetMemberIDs() []string {
 		result[i] = C.GoString(*(**C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(ids)) + uintptr(i)*unsafe.Sizeof(*ids))))
 	}
 	return result
+}
+
+type IfcTimePeriod struct {
+	inner *innerIfcTimePeriod
+}
+
+type innerIfcTimePeriod struct {
+	ptr *C.ifc_time_period_t
+}
+
+func (tp *innerIfcTimePeriod) free() {
+	if tp.ptr != nil {
+		C.ifc_time_period_free(tp.ptr)
+		tp.ptr = nil
+	}
+}
+
+func (tp *IfcTimePeriod) GetStartTime() string {
+	start := C.ifc_time_period_get_start_time(tp.inner.ptr)
+	return C.GoString(start)
+}
+
+func (tp *IfcTimePeriod) GetEndTime() string {
+	end := C.ifc_time_period_get_end_time(tp.inner.ptr)
+	return C.GoString(end)
+}
+
+type IfcRecurrencePattern struct {
+	inner *innerIfcRecurrencePattern
+}
+
+type innerIfcRecurrencePattern struct {
+	ptr *C.ifc_recurrence_pattern_t
+}
+
+func (rp *innerIfcRecurrencePattern) free() {
+	if rp.ptr != nil {
+		C.ifc_recurrence_pattern_free(rp.ptr)
+		rp.ptr = nil
+	}
+}
+
+func (rp *IfcRecurrencePattern) GetPosition() int {
+	return int(C.ifc_recurrence_pattern_get_position(rp.inner.ptr))
+}
+
+func (rp *IfcRecurrencePattern) GetInterval() int {
+	return int(C.ifc_recurrence_pattern_get_interval(rp.inner.ptr))
+}
+
+func (rp *IfcRecurrencePattern) GetOccurrences() int {
+	return int(C.ifc_recurrence_pattern_get_occurrences(rp.inner.ptr))
+}
+
+func (rp *IfcRecurrencePattern) GetDayComponents() []float64 {
+	count := 0
+	components := C.ifc_recurrence_pattern_get_day_components(rp.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
+	result := make([]float64, count)
+	copy(result, (*[1 << 30]float64)(unsafe.Pointer(components))[:count:count])
+	return result
+}
+
+func (rp *IfcRecurrencePattern) GetWeekdayComponents() []float64 {
+	count := 0
+	components := C.ifc_recurrence_pattern_get_weekday_components(rp.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
+	result := make([]float64, count)
+	copy(result, (*[1 << 30]float64)(unsafe.Pointer(components))[:count:count])
+	return result
+}
+
+func (rp *IfcRecurrencePattern) GetMonthComponents() []float64 {
+	count := 0
+	components := C.ifc_recurrence_pattern_get_month_components(rp.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
+	result := make([]float64, count)
+	copy(result, (*[1 << 30]float64)(unsafe.Pointer(components))[:count:count])
+	return result
+}
+
+func (rp *IfcRecurrencePattern) GetTimePeriods() []*IfcTimePeriod {
+	count := 0
+	periods := []*IfcTimePeriod{}
+	res := C.ifc_recurrence_pattern_get_time_periods(rp.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
+	if count == 0 {
+		return periods
+	}
+	defer C.ifc_recurrence_pattern_free_time_periods(res)
+
+	for i := 0; i < count; i++ {
+		tp := &IfcTimePeriod{
+			inner: &innerIfcTimePeriod{
+				ptr: *(**C.ifc_time_period_t)(unsafe.Pointer(uintptr(unsafe.Pointer(res)) + uintptr(i)*unsafe.Sizeof(*res))),
+			},
+		}
+		runtime.SetFinalizer(tp.inner, (*innerIfcTimePeriod).free)
+		periods = append(periods, tp)
+	}
+	return periods
 }

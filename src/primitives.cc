@@ -2343,7 +2343,7 @@ TopoDS_Shape create_terminal_block(const terminal_block_params &params,
 }
 
 TopoDS_Shape
-create_rectangular_fixed_plate(const rectangular_hole_plate_params &params) {
+create_rectangular_fixed_plate(const rectangular_fixed_plate_params &params) {
   // 参数验证
   if (params.length <= 0.0 || params.width <= 0.0) {
     throw Standard_ConstructionError("Dimensions must be positive");
@@ -2437,7 +2437,7 @@ create_rectangular_fixed_plate(const rectangular_hole_plate_params &params) {
 }
 
 TopoDS_Shape
-create_rectangular_fixed_plate(const rectangular_hole_plate_params &params,
+create_rectangular_fixed_plate(const rectangular_fixed_plate_params &params,
                                const gp_Pnt &position, const gp_Dir &lengthDir,
                                const gp_Dir &widthDir) {
   // 首先创建标准方向的矩形开孔板
@@ -17202,7 +17202,7 @@ TopoDS_Wire make_wire_from_segments(
         gp_Vec vec2(pts[1], pts[2]);
 
         gp_Dir upDir = gp::DZ();
-        gp_Vec cross = vec1.Crossed(vec2);
+        gp_Vec cross = vec2.Crossed(vec1);
         // 检查叉积结果是否有效
         if (cross.Magnitude() < Precision::Confusion()) {
           upDir = gp::DZ();

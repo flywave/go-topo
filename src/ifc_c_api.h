@@ -35,6 +35,8 @@ typedef struct _ifc_type_object_t ifc_type_object_t;
 typedef struct _ifc_layer_t ifc_layer_t;
 typedef struct _ifc_material_t ifc_material_t;
 typedef struct _ifc_group_t ifc_group_t;
+typedef struct _ifc_time_period_t ifc_time_period_t;
+typedef struct _ifc_recurrence_pattern_t ifc_recurrence_pattern_t;
 typedef struct _ifc_color_t {
   double r;
   double g;
@@ -89,14 +91,21 @@ ifc_triangulation_get_edges_item_ids(ifc_triangulation_t *p, int *count);
 
 IFCCAPICALL ifc_triangulation_material_t *
 ifc_triangulation_get_materials(ifc_triangulation_t *p, int *count);
-IFCCAPICALL void ifc_triangulation_materials_free(ifc_triangulation_material_t *mtls);
+IFCCAPICALL void
+ifc_triangulation_materials_free(ifc_triangulation_material_t *mtls);
 
-IFCCAPICALL const char *ifc_triangulation_material_get_name(ifc_triangulation_material_t *mtl);
-IFCCAPICALL ifc_color_t ifc_triangulation_material_get_diffuse(ifc_triangulation_material_t *mtl);
-IFCCAPICALL ifc_color_t ifc_triangulation_material_get_surface(ifc_triangulation_material_t *mtl);
-IFCCAPICALL ifc_color_t ifc_triangulation_material_get_specular(ifc_triangulation_material_t *mtl);
-IFCCAPICALL double ifc_triangulation_material_get_specularity(ifc_triangulation_material_t *mtl);
-IFCCAPICALL double ifc_triangulation_material_get_transparency(ifc_triangulation_material_t *mtl);
+IFCCAPICALL const char *
+ifc_triangulation_material_get_name(ifc_triangulation_material_t *mtl);
+IFCCAPICALL ifc_color_t
+ifc_triangulation_material_get_diffuse(ifc_triangulation_material_t *mtl);
+IFCCAPICALL ifc_color_t
+ifc_triangulation_material_get_surface(ifc_triangulation_material_t *mtl);
+IFCCAPICALL ifc_color_t
+ifc_triangulation_material_get_specular(ifc_triangulation_material_t *mtl);
+IFCCAPICALL double
+ifc_triangulation_material_get_specularity(ifc_triangulation_material_t *mtl);
+IFCCAPICALL double
+ifc_triangulation_material_get_transparency(ifc_triangulation_material_t *mtl);
 
 IFCCAPICALL void ifc_header_free(ifc_header_t *header);
 
@@ -219,9 +228,9 @@ IFCCAPICALL const char *ifc_task_get_name(ifc_task_t *task);
 IFCCAPICALL const char *ifc_task_get_status(ifc_task_t *task);
 IFCCAPICALL const char *ifc_task_get_description(ifc_task_t *task);
 IFCCAPICALL const char *ifc_task_get_object_type(ifc_task_t *task);
-IFCCAPICALL const char *ifc_task_get_start_time(ifc_task_t *task);
-IFCCAPICALL const char *ifc_task_get_end_time(ifc_task_t *task);
-IFCCAPICALL const char *ifc_task_get_duration(ifc_task_t *task);
+IFCCAPICALL const char *ifc_task_get_work_method(ifc_task_t *task);
+IFCCAPICALL int ifc_task_get_priority(ifc_task_t *task);
+IFCCAPICALL _Bool ifc_task_is_milestone(ifc_task_t *task);
 
 // 任务时间
 IFCCAPICALL ifc_task_time_t *ifc_task_get_task_time(ifc_task_t *task);
@@ -230,14 +239,6 @@ IFCCAPICALL ifc_task_time_t *ifc_task_get_task_time(ifc_task_t *task);
 IFCCAPICALL const char **ifc_task_get_predecessors(ifc_task_t *task,
                                                    int *count);
 IFCCAPICALL const char **ifc_task_get_successors(ifc_task_t *task, int *count);
-IFCCAPICALL const char **ifc_task_get_input_objects(ifc_task_t *task,
-                                                    int *count);
-IFCCAPICALL const char **ifc_task_get_output_objects(ifc_task_t *task,
-                                                     int *count);
-IFCCAPICALL const char **ifc_task_get_resources(ifc_task_t *task, int *count);
-IFCCAPICALL const char **ifc_task_get_controls(ifc_task_t *task, int *count);
-
-// 子任务
 IFCCAPICALL ifc_task_t **ifc_task_get_subtasks(ifc_task_t *task, int *count);
 
 // 列表释放函数
@@ -248,7 +249,9 @@ IFCCAPICALL void ifc_work_time_free(ifc_work_time_t *wt);
 
 IFCCAPICALL const char *ifc_work_time_get_name(ifc_work_time_t *wt);
 IFCCAPICALL const char *ifc_work_time_get_start_time(ifc_work_time_t *wt);
-IFCCAPICALL const char *ifc_work_time_get_end_time(ifc_work_time_t *wt);
+IFCCAPICALL const char *ifc_work_time_get_finish_time(ifc_work_time_t *wt);
+IFCCAPICALL ifc_recurrence_pattern_t *
+ifc_work_time_get_recurrence_pattern(ifc_work_time_t *wt);
 
 IFCCAPICALL void ifc_work_calendar_free(ifc_work_calendar_t *wc);
 
@@ -267,6 +270,17 @@ IFCCAPICALL ifc_task_t **ifc_work_schedule_get_tasks(ifc_work_schedule_t *ws,
                                                      int *count);
 IFCCAPICALL void ifc_work_schedule_free_tasks(ifc_task_t **tasks);
 
+IFCCAPICALL const char *ifc_work_schedule_get_purpose(ifc_work_schedule_t *ws);
+IFCCAPICALL const char *
+ifc_work_schedule_get_start_time(ifc_work_schedule_t *ws);
+IFCCAPICALL const char *
+ifc_work_schedule_get_finish_time(ifc_work_schedule_t *ws);
+IFCCAPICALL double ifc_work_schedule_get_duration(ifc_work_schedule_t *ws);
+IFCCAPICALL double ifc_work_schedule_get_total_float(ifc_work_schedule_t *ws);
+IFCCAPICALL const char **ifc_work_schedule_get_creators(ifc_work_schedule_t *ws,
+                                                        int *count);
+IFCCAPICALL void ifc_work_schedule_free_creators(const char **creators);
+
 IFCCAPICALL void ifc_work_plan_free(ifc_work_plan_t *wp);
 
 IFCCAPICALL const char *ifc_work_plan_get_id(ifc_work_plan_t *wp);
@@ -274,6 +288,15 @@ IFCCAPICALL const char *ifc_work_plan_get_name(ifc_work_plan_t *wp);
 IFCCAPICALL const char **
 ifc_work_plan_get_work_schedule_ids(ifc_work_plan_t *wp, int *count);
 IFCCAPICALL void ifc_work_plan_free_work_schedule_ids(const char **ids);
+
+IFCCAPICALL const char *ifc_work_plan_get_purpose(ifc_work_plan_t *wp);
+IFCCAPICALL const char *ifc_work_plan_get_start_time(ifc_work_plan_t *wp);
+IFCCAPICALL const char *ifc_work_plan_get_finish_time(ifc_work_plan_t *wp);
+IFCCAPICALL double ifc_work_plan_get_duration(ifc_work_plan_t *wp);
+IFCCAPICALL double ifc_work_plan_get_total_float(ifc_work_plan_t *wp);
+IFCCAPICALL const char **ifc_work_plan_get_creators(ifc_work_plan_t *wp,
+                                                    int *count);
+IFCCAPICALL void ifc_work_plan_free_creators(const char **creators);
 
 IFCCAPICALL void ifc_connection_free(ifc_connection_t *conn);
 
@@ -338,6 +361,39 @@ IFCCAPICALL ifc_layer_t **ifc_data_get_layers(ifc_data_t *data, int *count);
 IFCCAPICALL ifc_material_t **ifc_data_get_materials(ifc_data_t *data,
                                                     int *count);
 IFCCAPICALL ifc_group_t **ifc_data_get_groups(ifc_data_t *data, int *count);
+
+// IfcTimePeriod 相关函数
+IFCCAPICALL const char *ifc_time_period_get_start_time(ifc_time_period_t *tp);
+IFCCAPICALL const char *ifc_time_period_get_end_time(ifc_time_period_t *tp);
+
+IFCCAPICALL void ifc_time_period_free(ifc_time_period_t *tp);
+
+// IfcRecurrencePattern 相关函数
+IFCCAPICALL int
+ifc_recurrence_pattern_get_position(ifc_recurrence_pattern_t *rp);
+IFCCAPICALL int
+ifc_recurrence_pattern_get_interval(ifc_recurrence_pattern_t *rp);
+IFCCAPICALL int
+ifc_recurrence_pattern_get_occurrences(ifc_recurrence_pattern_t *rp);
+
+IFCCAPICALL const double *
+ifc_recurrence_pattern_get_day_components(ifc_recurrence_pattern_t *rp,
+                                          int *count);
+IFCCAPICALL const double *
+ifc_recurrence_pattern_get_weekday_components(ifc_recurrence_pattern_t *rp,
+                                              int *count);
+IFCCAPICALL const double *
+ifc_recurrence_pattern_get_month_components(ifc_recurrence_pattern_t *rp,
+                                            int *count);
+IFCCAPICALL ifc_time_period_t **
+ifc_recurrence_pattern_get_time_periods(ifc_recurrence_pattern_t *rp,
+                                        int *count);
+
+IFCCAPICALL void ifc_recurrence_pattern_free(ifc_recurrence_pattern_t *rp);
+
+// 列表释放函数
+IFCCAPICALL void
+ifc_recurrence_pattern_free_time_periods(ifc_time_period_t **periods);
 
 // 列表释放函数
 IFCCAPICALL void ifc_data_free_units(ifc_unit_t **units);
