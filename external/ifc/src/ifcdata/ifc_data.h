@@ -1,8 +1,8 @@
 #ifndef IFC_DATA_STRUCTS_HH
 #define IFC_DATA_STRUCTS_HH
 
-#include <ifcparse/IfcFile.h>
 #include <ifcdata/ifc_data.h>
+#include <ifcparse/IfcFile.h>
 
 #include <boost/dynamic_bitset.hpp>
 #include <boost/optional.hpp>
@@ -88,24 +88,36 @@ struct IfcTask {
   std::string status;
   std::string description;
   std::string object_type;
-  std::string start_time;
-  std::string end_time;
-  std::string duration;
+  std::string work_method;
+  int priority;
+  bool is_milestone;
 
   boost::optional<IfcTaskTime> task_time;
   std::vector<std::string> predecessor_tasks;
   std::vector<std::string> successor_tasks;
-  std::vector<std::string> input_objects;
-  std::vector<std::string> output_objects;
-  std::vector<std::string> resources;
-  std::vector<std::string> controls;
   std::vector<IfcTask> subtasks;
+};
+
+struct IfcTimePeriod {
+  std::string start_time;
+  std::string end_time;
+};
+
+struct IfcRecurrencePattern {
+  int position;
+  int interval;
+  int occurrences;
+  std::vector<double> day_component;
+  std::vector<double> weekday_component;
+  std::vector<double> month_component;
+  std::vector<IfcTimePeriod> time_periods;
 };
 
 struct IfcWorkTime {
   std::string name;
   std::string start_time;
-  std::string end_time;
+  std::string finish_time;
+  IfcRecurrencePattern recurrence_pattern;
 };
 
 struct IfcWorkCalendar {
@@ -117,12 +129,24 @@ struct IfcWorkCalendar {
 struct IfcWorkSchedule {
   std::string id;
   std::string name;
+  std::string purpose;
+  std::string start_time;
+  std::string finish_time;
+  double duration;
+  double total_float;
+  std::vector<std::string> creators;
   std::vector<IfcTask> tasks;
 };
 
 struct IfcWorkPlan {
   std::string id;
   std::string name;
+  std::string purpose;
+  std::string start_time;
+  std::string finish_time;
+  double duration;
+  double total_float;
+  std::vector<std::string> creators;
   std::vector<std::string> work_schedule_ids;
 };
 
@@ -174,7 +198,6 @@ struct IfcData {
 };
 
 IfcData read_data(IfcParse::IfcFile *file);
-
 
 } // namespace data
 } // namespace ifcopenshell

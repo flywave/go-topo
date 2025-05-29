@@ -575,7 +575,7 @@ func CreateTerminalBlockWithPlace(params TerminalBlockParams, position Point3, l
 	return s
 }
 
-type RectangularHolePlateParams struct {
+type RectangularFixedPlateParams struct {
 	Length        float32
 	Width         float32
 	Thickness     float32
@@ -587,8 +587,8 @@ type RectangularHolePlateParams struct {
 	HoleDiameter  float32
 }
 
-func (p *RectangularHolePlateParams) to_struct() C.rectangular_hole_plate_params_t {
-	var c C.rectangular_hole_plate_params_t
+func (p *RectangularFixedPlateParams) to_struct() C.rectangular_fixed_plate_params_t {
+	var c C.rectangular_fixed_plate_params_t
 	c.length = C.double(p.Length)
 	c.width = C.double(p.Width)
 	c.thickness = C.double(p.Thickness)
@@ -601,14 +601,14 @@ func (p *RectangularHolePlateParams) to_struct() C.rectangular_hole_plate_params
 	return c
 }
 
-func CreateRectangularFixedPlate(params RectangularHolePlateParams) *Shape {
+func CreateRectangularFixedPlate(params RectangularFixedPlateParams) *Shape {
 	shp := C.create_rectangular_fixed_plate(params.to_struct())
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
-func CreateRectangularFixedPlateWithPlace(params RectangularHolePlateParams, position Point3, lengthDir Dir3, widthDir Dir3) *Shape {
+func CreateRectangularFixedPlateWithPlace(params RectangularFixedPlateParams, position Point3, lengthDir Dir3, widthDir Dir3) *Shape {
 	shp := C.create_rectangular_fixed_plate_with_place(params.to_struct(), position.val, lengthDir.val, widthDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)

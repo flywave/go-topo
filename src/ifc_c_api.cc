@@ -857,16 +857,16 @@ IFCCAPICALL const char *ifc_task_get_object_type(ifc_task_t *task) {
   return task ? task->task.object_type.c_str() : nullptr;
 }
 
-IFCCAPICALL const char *ifc_task_get_start_time(ifc_task_t *task) {
-  return task ? task->task.start_time.c_str() : nullptr;
+IFCCAPICALL const char *ifc_task_get_work_method(ifc_task_t *task) {
+  return task ? task->task.work_method.c_str() : nullptr;
 }
 
-IFCCAPICALL const char *ifc_task_get_end_time(ifc_task_t *task) {
-  return task ? task->task.end_time.c_str() : nullptr;
+IFCCAPICALL int ifc_task_get_priority(ifc_task_t *task) {
+  return task ? task->task.priority : 0;
 }
 
-IFCCAPICALL const char *ifc_task_get_duration(ifc_task_t *task) {
-  return task ? task->task.duration.c_str() : nullptr;
+IFCCAPICALL _Bool ifc_task_is_milestone(ifc_task_t *task) {
+  return task ? task->task.is_milestone : false;
 }
 
 IFCCAPICALL ifc_task_time_t *ifc_task_get_task_time(ifc_task_t *task) {
@@ -886,32 +886,6 @@ IFCCAPICALL const char **ifc_task_get_successors(ifc_task_t *task, int *count) {
   if (!task || !count)
     return nullptr;
   return get_string_vector(task->task.successor_tasks, count);
-}
-
-IFCCAPICALL const char **ifc_task_get_input_objects(ifc_task_t *task,
-                                                    int *count) {
-  if (!task || !count)
-    return nullptr;
-  return get_string_vector(task->task.input_objects, count);
-}
-
-IFCCAPICALL const char **ifc_task_get_output_objects(ifc_task_t *task,
-                                                     int *count) {
-  if (!task || !count)
-    return nullptr;
-  return get_string_vector(task->task.output_objects, count);
-}
-
-IFCCAPICALL const char **ifc_task_get_resources(ifc_task_t *task, int *count) {
-  if (!task || !count)
-    return nullptr;
-  return get_string_vector(task->task.resources, count);
-}
-
-IFCCAPICALL const char **ifc_task_get_controls(ifc_task_t *task, int *count) {
-  if (!task || !count)
-    return nullptr;
-  return get_string_vector(task->task.controls, count);
 }
 
 // 子任务
@@ -957,8 +931,8 @@ IFCCAPICALL const char *ifc_work_time_get_start_time(ifc_work_time_t *wt) {
   return wt ? wt->tm.start_time.c_str() : nullptr;
 }
 
-IFCCAPICALL const char *ifc_work_time_get_end_time(ifc_work_time_t *wt) {
-  return wt ? wt->tm.end_time.c_str() : nullptr;
+IFCCAPICALL const char *ifc_work_time_get_finish_time(ifc_work_time_t *wt) {
+  return wt ? wt->tm.finish_time.c_str() : nullptr;
 }
 
 IFCCAPICALL void ifc_work_calendar_free(ifc_work_calendar_t *wc) {
@@ -1035,6 +1009,59 @@ IFCCAPICALL void ifc_work_schedule_free_tasks(ifc_task_t **tasks) {
   delete[] tasks;
 }
 
+IFCCAPICALL const char *ifc_work_schedule_get_purpose(ifc_work_schedule_t *ws) {
+  if (!ws)
+    return NULL;
+  return ws->ws.purpose.c_str();
+}
+
+IFCCAPICALL const char *
+ifc_work_schedule_get_start_time(ifc_work_schedule_t *ws) {
+  if (!ws)
+    return NULL;
+  return ws->ws.start_time.c_str();
+}
+
+IFCCAPICALL const char *
+ifc_work_schedule_get_finish_time(ifc_work_schedule_t *ws) {
+  if (!ws)
+    return NULL;
+  return ws->ws.finish_time.c_str();
+}
+
+IFCCAPICALL double ifc_work_schedule_get_duration(ifc_work_schedule_t *ws) {
+  if (!ws)
+    return 0.0;
+  return ws->ws.duration;
+}
+
+IFCCAPICALL double ifc_work_schedule_get_total_float(ifc_work_schedule_t *ws) {
+  if (!ws)
+    return 0.0;
+  return ws->ws.total_float;
+}
+
+IFCCAPICALL const char **ifc_work_schedule_get_creators(ifc_work_schedule_t *ws,
+                                                        int *count) {
+  if (!ws || !count)
+    return NULL;
+
+  *count = ws->ws.creators.size();
+  if (*count == 0)
+    return NULL;
+
+  const char **result = (const char **)malloc(*count * sizeof(const char *));
+  for (int i = 0; i < *count; i++) {
+    result[i] = ws->ws.creators[i].c_str();
+  }
+  return result;
+}
+
+IFCCAPICALL void ifc_work_schedule_free_creators(const char **creators) {
+  if (creators) {
+    free(creators);
+  }
+}
 IFCCAPICALL void ifc_work_plan_free(ifc_work_plan_t *wp) {
   if (wp) {
     delete wp;
@@ -1071,6 +1098,57 @@ IFCCAPICALL void ifc_work_plan_free_work_schedule_ids(const char **ids) {
   }
 }
 
+IFCCAPICALL const char *ifc_work_plan_get_purpose(ifc_work_plan_t *wp) {
+  if (!wp)
+    return NULL;
+  return wp->wp.purpose.c_str();
+}
+
+IFCCAPICALL const char *ifc_work_plan_get_start_time(ifc_work_plan_t *wp) {
+  if (!wp)
+    return NULL;
+  return wp->wp.start_time.c_str();
+}
+
+IFCCAPICALL const char *ifc_work_plan_get_finish_time(ifc_work_plan_t *wp) {
+  if (!wp)
+    return NULL;
+  return wp->wp.finish_time.c_str();
+}
+
+IFCCAPICALL double ifc_work_plan_get_duration(ifc_work_plan_t *wp) {
+  if (!wp)
+    return 0.0;
+  return wp->wp.duration;
+}
+
+IFCCAPICALL double ifc_work_plan_get_total_float(ifc_work_plan_t *wp) {
+  if (!wp)
+    return 0.0;
+  return wp->wp.total_float;
+}
+
+IFCCAPICALL const char **ifc_work_plan_get_creators(ifc_work_plan_t *wp,
+                                                    int *count) {
+  if (!wp || !count)
+    return NULL;
+
+  *count = wp->wp.creators.size();
+  if (*count == 0)
+    return NULL;
+
+  const char **result = (const char **)malloc(*count * sizeof(const char *));
+  for (int i = 0; i < *count; i++) {
+    result[i] = wp->wp.creators[i].c_str();
+  }
+  return result;
+}
+
+IFCCAPICALL void ifc_work_plan_free_creators(const char **creators) {
+  if (creators) {
+    free(creators);
+  }
+}
 IFCCAPICALL void ifc_connection_free(ifc_connection_t *conn) {
   if (conn) {
     delete conn;
@@ -1372,7 +1450,95 @@ IFCCAPICALL void ifc_data_free_materials(ifc_material_t **materials) {
 IFCCAPICALL void ifc_data_free_groups(ifc_group_t **groups) {
   free_object_vector(groups);
 }
+// IfcTimePeriod 相关函数实现
+IFCCAPICALL const char *ifc_time_period_get_start_time(ifc_time_period_t *tp) {
+  return tp->tp.start_time.c_str();
+}
 
+IFCCAPICALL const char *ifc_time_period_get_end_time(ifc_time_period_t *tp) {
+  return tp->tp.end_time.c_str();
+}
+
+IFCCAPICALL void ifc_time_period_free(ifc_time_period_t *tp) {
+  if (tp) {
+    delete tp;
+  }
+}
+
+// IfcRecurrencePattern 基本属性函数实现
+IFCCAPICALL int
+ifc_recurrence_pattern_get_position(ifc_recurrence_pattern_t *rp) {
+  return rp->rp.position;
+}
+
+IFCCAPICALL int
+ifc_recurrence_pattern_get_interval(ifc_recurrence_pattern_t *rp) {
+  return rp->rp.interval;
+}
+
+IFCCAPICALL int
+ifc_recurrence_pattern_get_occurrences(ifc_recurrence_pattern_t *rp) {
+  return rp->rp.occurrences;
+}
+
+// IfcRecurrencePattern 数组属性函数实现
+IFCCAPICALL const double *
+ifc_recurrence_pattern_get_day_components(ifc_recurrence_pattern_t *rp,
+                                          int *count) {
+  *count = rp->rp.day_component.size();
+  return rp->rp.day_component.data();
+}
+
+IFCCAPICALL const double *
+ifc_recurrence_pattern_get_weekday_components(ifc_recurrence_pattern_t *rp,
+                                              int *count) {
+  *count = rp->rp.weekday_component.size();
+  return rp->rp.weekday_component.data();
+}
+
+IFCCAPICALL const double *
+ifc_recurrence_pattern_get_month_components(ifc_recurrence_pattern_t *rp,
+                                            int *count) {
+  *count = rp->rp.month_component.size();
+  return rp->rp.month_component.data();
+}
+
+IFCCAPICALL ifc_time_period_t **
+ifc_recurrence_pattern_get_time_periods(ifc_recurrence_pattern_t *rp,
+                                        int *count) {
+  *count = rp->rp.time_periods.size();
+  ifc_time_period_t **result =
+      (ifc_time_period_t **)malloc(*count * sizeof(ifc_time_period_t *));
+  for (int i = 0; i < *count; i++) {
+    result[i] = (ifc_time_period_t *)malloc(sizeof(ifc_time_period_t));
+    result[i]->tp = rp->rp.time_periods[i];
+  }
+  return result;
+}
+
+IFCCAPICALL void ifc_recurrence_pattern_free(ifc_recurrence_pattern_t *rp) {
+  if (rp) {
+    delete rp;
+  }
+}
+
+IFCCAPICALL void
+ifc_recurrence_pattern_free_time_periods(ifc_time_period_t **periods) {
+  if (periods) {
+    free(periods);
+  }
+}
+
+IFCCAPICALL ifc_recurrence_pattern_t *
+ifc_work_time_get_recurrence_pattern(ifc_work_time_t *wt) {
+  if (!wt)
+    return NULL;
+
+  _ifc_recurrence_pattern_t *rp =
+      (_ifc_recurrence_pattern_t *)malloc(sizeof(_ifc_recurrence_pattern_t));
+  rp->rp = wt->tm.recurrence_pattern;
+  return rp;
+}
 #ifdef __cplusplus
 }
 #endif

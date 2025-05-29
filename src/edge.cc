@@ -780,7 +780,7 @@ edge edge::make_circle_center_arc(const gp_Pnt &v1, const gp_Pnt &center,
   gp_Vec vec2(center, v2);
 
   gp_Dir upDir = gp::DZ();
-  gp_Vec cross = vec1.Crossed(vec2);
+  gp_Vec cross = vec2.Crossed(vec1);
   if (cross.Magnitude() < Precision::Confusion()) {
     upDir = gp::DZ();
   } else {

@@ -294,7 +294,7 @@ TopoDS_Shape create_terminal_block(const terminal_block_params &params,
                                    const gp_Dir &lengthDir = gp_Dir(0, 0, 1),
                                    const gp_Dir &widthDir = gp_Dir(1, 0, 0));
 
-struct rectangular_hole_plate_params {
+struct rectangular_fixed_plate_params {
   double length;        // 长度 (L > 0)
   double width;         // 宽度 (W > 0)
   double thickness;     // 厚度 (T > 0)
@@ -306,9 +306,9 @@ struct rectangular_hole_plate_params {
   double holeDiameter;  // 孔直径 (D > 0)
 };
 TopoDS_Shape
-create_rectangular_fixed_plate(const rectangular_hole_plate_params &params);
+create_rectangular_fixed_plate(const rectangular_fixed_plate_params &params);
 TopoDS_Shape
-create_rectangular_fixed_plate(const rectangular_hole_plate_params &params,
+create_rectangular_fixed_plate(const rectangular_fixed_plate_params &params,
                                const gp_Pnt &position,
                                const gp_Dir &lengthDir = gp_Dir(1, 0, 0),
                                const gp_Dir &widthDir = gp_Dir(0, 1, 0));
@@ -1904,7 +1904,6 @@ struct cable_tray_params {
   double wallThickness;  // 桥架壁厚 TQ (mm)
 
   // 排管参数
-  int pipeCount;                           // 排管数 N
   std::vector<gp_Pnt2d> pipePositions;     // 排管坐标 POS
   std::vector<double> pipeInnerDiameters;  // 排管内径 DI (mm)
   std::vector<double> pipeWallThicknesses; // 排管壁厚 T1 (mm)

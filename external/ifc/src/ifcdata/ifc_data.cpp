@@ -16,7 +16,7 @@ static_assert(false, "A boost preprocessor sequence of schema identifiers is "
   extern IfcData BOOST_PP_CAT(read_data_Ifc, elem)(IfcParse::IfcFile *);
 
 #define CALL_FUNCS(r, data, elem)                                              \
-  if (schema == BOOST_PP_STRINGIZE(BOOST_PP_CAT(ifc, elem))) {             \
+  if (schema == BOOST_PP_STRINGIZE(BOOST_PP_CAT(ifc, elem))) {                  \
     return BOOST_PP_CAT(read_data_Ifc, elem)(file);                            \
   }
 

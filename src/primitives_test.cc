@@ -692,7 +692,7 @@ void test_make_terminal_block() {
 void test_make_rectangular_fixed_plate() {
   std::cout << "\n=== Testing Rectangular Fixed Plate ===" << std::endl;
   try {
-    auto shp = create_rectangular_fixed_plate(rectangular_hole_plate_params{
+    auto shp = create_rectangular_fixed_plate(rectangular_fixed_plate_params{
         .length = 100.0,       // 长度
         .width = 80.0,         // 宽度
         .thickness = 10.0,     // 厚度
@@ -712,7 +712,7 @@ void test_make_rectangular_fixed_plate() {
 
     // 测试无中间孔的情况
     auto shp2 = create_rectangular_fixed_plate(
-        rectangular_hole_plate_params{.length = 120.0,
+        rectangular_fixed_plate_params{.length = 120.0,
                                       .width = 120.0,
                                       .thickness = 8.0,
                                       .columnSpacing = 25.0,

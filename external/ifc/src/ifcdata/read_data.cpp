@@ -172,6 +172,35 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
     plan.id = (*it)->GlobalId();
     plan.name = (*it)->Name().get_value_or("");
 
+#ifdef SCHEMA_IfcWorkControl_HAS_Purpose
+    plan.purpose = (*it)->Purpose().get_value_or("");
+#endif
+
+#ifdef SCHEMA_IfcWorkPlan_HAS_StartTime
+    plan.start_time = (*it)->StartTime().get_value_or("");
+#endif
+
+#ifdef SCHEMA_IfcWorkPlan_HAS_FinishTime
+    plan.finish_time = (*it)->FinishTime().get_value_or("");
+#endif
+
+#ifdef SCHEMA_IfcWorkPlan_HAS_Duration
+    plan.duration = (*it)->Duration().get_value_or(0.0);
+#endif
+
+#ifdef SCHEMA_IfcWorkPlan_HAS_TotalFloat
+    plan.total_float = (*it)->TotalFloat().get_value_or(0.0);
+#endif
+
+#ifdef SCHEMA_IfcWorkPlan_HAS_Creators
+    auto creators = (*it)->Creators();
+    if (creators) {
+      for (auto creator : *creators) {
+        plan.creators.push_back(creator);
+      }
+    }
+#endif
+
 #ifdef SCHEMA_IfcObjectDefinition_HAS_IsDecomposedBy
     auto decomposed_by = (*it)->IsDecomposedBy();
     for (auto rel_it = decomposed_by->begin(); rel_it != decomposed_by->end();
@@ -196,6 +225,35 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
     schedule.id = (*it)->GlobalId();
     schedule.name = (*it)->Name().get_value_or("");
 
+#ifdef SCHEMA_IfcWorkControl_HAS_Purpose
+    schedule.purpose = (*it)->Purpose().get_value_or("");
+#endif
+
+#ifdef SCHEMA_IfcWorkSchedule_HAS_StartTime
+    schedule.start_time = (*it)->StartTime().get_value_or("");
+#endif
+
+#ifdef SCHEMA_IfcWorkSchedule_HAS_FinishTime
+    schedule.finish_time = (*it)->FinishTime().get_value_or("");
+#endif
+
+#ifdef SCHEMA_IfcWorkSchedule_HAS_Duration
+    schedule.duration = (*it)->Duration().get_value_or(0.0);
+#endif
+
+#ifdef SCHEMA_IfcWorkSchedule_HAS_TotalFloat
+    schedule.total_float = (*it)->TotalFloat().get_value_or(0.0);
+#endif
+
+#ifdef SCHEMA_IfcWorkSchedule_HAS_Creators
+    auto creators = (*it)->Creators();
+    if (creators) {
+      for (auto creator : *creators) {
+        schedule.creators.push_back(creator);
+      }
+    }
+#endif
+
 #ifdef SCHEMA_IfcControl_HAS_Controls
     auto controls = (*it)->Controls();
     for (auto rel_it = controls->begin(); rel_it != controls->end(); ++rel_it) {
@@ -210,6 +268,19 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
           task.status = task_obj->Status().get_value_or("");
           task.description = task_obj->Description().get_value_or("");
           task.object_type = task_obj->ObjectType().get_value_or("");
+          task.work_method = task_obj->WorkMethod().get_value_or("");
+          task.priority = task_obj->Priority().get_value_or(0);
+          task.is_milestone = task_obj->IsMilestone();
+
+          auto predecessors = task_obj->IsPredecessorTo();
+          for (auto rel : *predecessors) {
+            task.predecessor_tasks.push_back(rel->RelatedProcess()->GlobalId());
+          }
+
+          auto successors = task_obj->IsSuccessorFrom();
+          for (auto rel : *successors) {
+            task.successor_tasks.push_back(rel->RelatingProcess()->GlobalId());
+          }
 
 #ifdef SCHEMA_IfcTask_HAS_TaskTime
           if (task_obj->TaskTime()) {
@@ -250,12 +321,61 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
            ++wt_it) {
         IfcWorkTime wt;
         wt.name = (*wt_it)->Name().get_value_or("");
+        // RecurrencePattern
+
 #ifdef SCHEMA_IfcWorkTime_HAS_Start
         wt.start_time = (*wt_it)->Start().get_value_or("");
 #endif
 #ifdef SCHEMA_IfcWorkTime_HAS_Finish
-        wt.end_time = (*wt_it)->Finish().get_value_or("");
+        wt.finish_time = (*wt_it)->Finish().get_value_or("");
 #endif
+
+#ifdef SCHEMA_IfcWorkTime_HAS_RecurrencePattern
+        if ((*wt_it)->RecurrencePattern()) {
+          auto pattern = (*wt_it)->RecurrencePattern();
+          IfcRecurrencePattern rp;
+          rp.position = pattern->Position().get_value_or(0);
+          rp.interval = pattern->Interval().get_value_or(1);
+          rp.occurrences = pattern->Occurrences().get_value_or(0);
+
+          // 读取日、工作日和月组件
+          auto day_comp = pattern->DayComponent();
+          if (day_comp) {
+            for (auto day : *day_comp) {
+              rp.day_component.push_back(day);
+            }
+          }
+
+          auto weekday_comp = pattern->WeekdayComponent();
+          if (weekday_comp) {
+            for (auto weekday : *weekday_comp) {
+              rp.weekday_component.push_back(weekday);
+            }
+          }
+
+          auto month_comp = pattern->MonthComponent();
+          if (month_comp) {
+            for (auto month : *month_comp) {
+              rp.month_component.push_back(month);
+            }
+          }
+#ifdef SCHEMA_IfcRecurrencePattern_HAS_TimePeriods
+          if (pattern->TimePeriods()) {
+            auto tps = pattern->TimePeriods();
+            auto tps_ptr = tps->get(); // 获取shared_ptr指向的实际对象
+            for (auto tp_it = tps_ptr->begin(); tp_it != tps_ptr->end();
+                 ++tp_it) {
+              IfcTimePeriod tp;
+              tp.start_time = (*tp_it)->StartTime();
+              tp.end_time = (*tp_it)->EndTime();
+              rp.time_periods.push_back(tp);
+            }
+          }
+#endif
+          wt.recurrence_pattern = rp;
+        }
+#endif
+
         calendar.working_times.push_back(wt);
       }
     }
@@ -361,7 +481,7 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
       file->instances_by_type<IfcSchema::IfcPresentationLayerAssignment>();
   for (auto it = layers->begin(); it != layers->end(); ++it) {
     IfcLayer layer;
-    layer.id = (*it)->Name();
+    layer.id = (*it)->Identifier().get_value_or("");
     layer.name = (*it)->Name();
     layer.description = (*it)->Description().get_value_or("");
 
@@ -392,6 +512,20 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
       material.description = mat->Description().get_value_or("");
 #endif
 #ifdef SCHEMA_IfcMaterial_HAS_Category
+      material.category = mat->Category().get_value_or("");
+#endif
+      data.materials.push_back(material);
+    } else if (mat_select->as<IfcSchema::IfcMaterialLayer>()) {
+      auto mat = mat_select->as<IfcSchema::IfcMaterialLayer>();
+      IfcMaterial material;
+      material.id = qualify_unrooted_instance(mat);
+#ifdef SCHEMA_IfcMaterialLayer_HAS_Name
+      material.name = mat->Name().get_value_or("");
+#endif
+#ifdef SCHEMA_IfcMaterialLayer_HAS_Description
+      material.description = mat->Description().get_value_or("");
+#endif
+#ifdef SCHEMA_IfcMaterialLayer_HAS_Category
       material.category = mat->Category().get_value_or("");
 #endif
       data.materials.push_back(material);
