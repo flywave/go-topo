@@ -450,16 +450,16 @@ func CreateConePorcelainBushingWithPlace(params ConePorcelainBushingParams, base
 }
 
 type InsulatorStringParams struct {
-	Count            int
-	Spacing          float64
-	InsulatorCount   int
-	Height           float64
-	BigSkirtRadius   float64
-	SmallSkirtRadius float64
-	Radius           float64
-	FrontLength      float64
-	BackLength       float64
-	SplitCount       int
+	Count            int32
+	Spacing          float32
+	InsulatorCount   int32
+	Height           float32
+	BigSkirtRadius   float32
+	SmallSkirtRadius float32
+	Radius           float32
+	FrontLength      float32
+	BackLength       float32
+	SplitCount       int32
 }
 
 func (p *InsulatorStringParams) to_struct() C.insulator_string_params_t {
