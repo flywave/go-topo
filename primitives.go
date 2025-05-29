@@ -163,6 +163,62 @@ func CreateOffsetRectangularTableWithPlace(params OffsetRectangularTableParams, 
 	return s
 }
 
+type SharpBentCylinderParams struct {
+	Radius    float32
+	Length    float32
+	BendAngle float32
+}
+
+func (p *SharpBentCylinderParams) to_struct() C.sharp_bent_cylinder_params_t {
+	var c C.sharp_bent_cylinder_params_t
+	c.radius = C.double(p.Radius)
+	c.length = C.double(p.Length)
+	c.bendAngle = C.double(p.BendAngle)
+	return c
+}
+
+func CreateSharpBentCylinder(params SharpBentCylinderParams) *Shape {
+	shp := C.create_sharp_bent_cylinder(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateSharpBentCylinderWithPlace(params SharpBentCylinderParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_sharp_bent_cylinder_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type TruncatedConeParams struct {
+	TopRadius    float32
+	BottomRadius float32
+	Height       float32
+}
+
+func (p *TruncatedConeParams) to_struct() C.truncated_cone_params_t {
+	var c C.truncated_cone_params_t
+	c.topRadius = C.double(p.TopRadius)
+	c.bottomRadius = C.double(p.BottomRadius)
+	c.height = C.double(p.Height)
+	return c
+}
+
+func CreateTruncatedCone(params TruncatedConeParams) *Shape {
+	shp := C.create_truncated_cone(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateTruncatedConeWithPlace(params TruncatedConeParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_truncated_cone_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
 type EccentricTruncatedConeParams struct {
 	TopRadius    float32
 	BottomRadius float32
@@ -374,6 +430,40 @@ func CreateSquareGasket(params SquareGasketParams) *Shape {
 
 func CreateSquareGasketWithPlace(params SquareGasketParams, center Point3, normal Dir3, xDir Dir3) *Shape {
 	shp := C.create_square_gasket_with_place(params.to_struct(), center.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type StretchedBodyParams struct {
+	Points []Point3
+	Normal Dir3
+	Length float32
+}
+
+func (p *StretchedBodyParams) to_struct() C.stretched_body_params_t {
+	var c C.stretched_body_params_t
+	c.numPoints = C.int(len(p.Points))
+	c.normal = p.Normal.val
+	c.length = C.double(p.Length)
+	if len(p.Points) > 0 {
+		c.points = (*C.pnt3d_t)(C.malloc(C.size_t(len(p.Points)) * C.sizeof_pnt3d_t))
+		for i, pt := range p.Points {
+			*(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.fitPoints)) + uintptr(i)*C.sizeof_pnt3d_t)) = pt.val
+		}
+	}
+	return c
+}
+
+func CreateStretchedBody(params StretchedBodyParams) *Shape {
+	shp := C.create_stretched_body(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateStretchedBodyWithPlace(params StretchedBodyParams, center Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_stretched_body_with_place(params.to_struct(), center.val, normal.val, xDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
