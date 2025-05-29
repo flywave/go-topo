@@ -3464,8 +3464,9 @@ PRIMCAPICALL topo_shape_t *create_cable_tray(cable_tray_params_t params) {
                                params.height,
                                params.topPlateHeight,
                                params.arcHeight,
-                               params.wallThickness,
-                               params.hasProtectionPlate != 0};
+                               params.wallThickness};
+
+  cpp_params.hasProtectionPlate = params.hasProtectionPlate != 0;
 
   if (params.pipeCount > 0) {
     for (int i = 0; i < params.pipeCount; i++) {
@@ -3503,8 +3504,9 @@ create_cable_tray_with_place(cable_tray_params_t params, pnt3d_t position,
                                params.height,
                                params.topPlateHeight,
                                params.arcHeight,
-                               params.wallThickness,
-                               params.hasProtectionPlate != 0};
+                               params.wallThickness};
+
+  cpp_params.hasProtectionPlate = params.hasProtectionPlate != 0;
 
   if (params.pipeCount > 0) {
     for (int i = 0; i < params.pipeCount; i++) {
