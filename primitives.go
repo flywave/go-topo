@@ -163,6 +163,38 @@ func CreateOffsetRectangularTableWithPlace(params OffsetRectangularTableParams, 
 	return s
 }
 
+type EccentricTruncatedConeParams struct {
+	TopRadius    float32
+	BottomRadius float32
+	Height       float32
+	TopXOffset   float32
+	TopYOffset   float32
+}
+
+func (p *EccentricTruncatedConeParams) to_struct() C.eccentric_truncated_cone_params_t {
+	var c C.eccentric_truncated_cone_params_t
+	c.topRadius = C.double(p.TopRadius)
+	c.bottomRadius = C.double(p.BottomRadius)
+	c.height = C.double(p.Height)
+	c.topXOffset = C.double(p.TopXOffset)
+	c.topYOffset = C.double(p.TopYOffset)
+	return c
+}
+
+func CreateEccentricTruncatedCone(params EccentricTruncatedConeParams) *Shape {
+	shp := C.create_eccentric_truncated_cone(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateEccentricTruncatedConeWithPlace(params EccentricTruncatedConeParams, position Point3, normal Dir3, xDir Dir3) *Shape {
+	shp := C.create_eccentric_truncated_cone_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
 type RingParams struct {
 	RingRadius float32
 	TubeRadius float32
@@ -412,6 +444,48 @@ func CreateConePorcelainBushing(params ConePorcelainBushingParams) *Shape {
 
 func CreateConePorcelainBushingWithPlace(params ConePorcelainBushingParams, basePoint Point3, axisDir Dir3) *Shape {
 	shp := C.create_cone_porcelain_bushing_with_place(params.to_struct(), basePoint.val, axisDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type InsulatorStringParams struct {
+	Count            int
+	Spacing          float64
+	InsulatorCount   int
+	Height           float64
+	BigSkirtRadius   float64
+	SmallSkirtRadius float64
+	Radius           float64
+	FrontLength      float64
+	BackLength       float64
+	SplitCount       int
+}
+
+func (p *InsulatorStringParams) to_struct() C.insulator_string_params_t {
+	var c C.insulator_string_params_t
+	c.count = C.int(p.Count)
+	c.spacing = C.double(p.Spacing)
+	c.insulatorCount = C.int(p.InsulatorCount)
+	c.height = C.double(p.Height)
+	c.bigSkirtRadius = C.double(p.BigSkirtRadius)
+	c.smallSkirtRadius = C.double(p.SmallSkirtRadius)
+	c.radius = C.double(p.Radius)
+	c.frontLength = C.double(p.FrontLength)
+	c.backLength = C.double(p.BackLength)
+	c.splitCount = C.int(p.SplitCount)
+	return c
+}
+
+func CreateInsulatorString(params InsulatorStringParams) *Shape {
+	shp := C.create_insulator_string(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateInsulatorStringWithPlace(params InsulatorStringParams, basePoint Point3, axisDir Dir3) *Shape {
+	shp := C.create_insulator_string_with_place(params.to_struct(), basePoint.val, axisDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
@@ -3365,48 +3439,47 @@ func CreateTunnelWellWithPlace(params TunnelWellParams, position Point3, directi
 }
 
 type ThreeWayWellParams struct {
-	Ctype                   int
-	CornerType              int
-	ShaftType               int
-	Length                  float32
-	Width                   float32
-	Height                  float32
-	ShaftRadius             float32
-	CornerRadius            float32
-	CornerLength            float32
-	CornerWidth             float32
-	Angle                   float32
-	BranchLength            float32
-	BranchLeftLength        float32
-	BranchWidth             float32
-	TopThickness            float32
-	BottomThickness         float32
-	LeftSectionStyle        int
-	LeftSectionLength       float32
-	LeftSectionWidth        float32
-	LeftSectionHeight       float32
-	LeftSectionArcHeight    float32
-	RightSectionStyle       int
-	RightSectionLength      float32
-	RightSectionWidth       float32
-	RightSectionHeight      float32
-	RightSectionArcHeight   float32
-	BranchSectionStyle      int
-	BranchSectionLength     float32
-	BranchSectionWidth      float32
-	BranchSectionHeight     float32
-	BranchSectionArcHeight  float32
-	BranchSectionLeftLength float32
-	OuterWallThickness      float32
-	InnerWallThickness      float32
-	IsDoubleShaft           bool
-	DoubleShaftSpacing      float32
-	OuterWallExtension      float32
-	InnerWallExtension      float32
-	CushionExtension        float32
-	CushionThickness        float32
-	InnerBottomThickness    float32
-	OuterBottomThickness    float32
+	Ctype                  int
+	CornerType             int
+	ShaftType              int
+	Length                 float32
+	Width                  float32
+	Height                 float32
+	ShaftRadius            float32
+	CornerRadius           float32
+	CornerLength           float32
+	CornerWidth            float32
+	Angle                  float32
+	BranchLength           float32
+	BranchLeftLength       float32
+	BranchWidth            float32
+	TopThickness           float32
+	BottomThickness        float32
+	LeftSectionStyle       int
+	LeftSectionLength      float32
+	LeftSectionWidth       float32
+	LeftSectionHeight      float32
+	LeftSectionArcHeight   float32
+	RightSectionStyle      int
+	RightSectionLength     float32
+	RightSectionWidth      float32
+	RightSectionHeight     float32
+	RightSectionArcHeight  float32
+	BranchSectionStyle     int
+	BranchSectionLength    float32
+	BranchSectionWidth     float32
+	BranchSectionHeight    float32
+	BranchSectionArcHeight float32
+	OuterWallThickness     float32
+	InnerWallThickness     float32
+	IsDoubleShaft          bool
+	DoubleShaftSpacing     float32
+	OuterWallExtension     float32
+	InnerWallExtension     float32
+	CushionExtension       float32
+	CushionThickness       float32
+	InnerBottomThickness   float32
+	OuterBottomThickness   float32
 }
 
 func (p *ThreeWayWellParams) to_struct() C.three_way_well_params_t {
@@ -3475,48 +3548,32 @@ const (
 	FourWayWellUnderground = C.FOUR_WAY_WELL_UNDERGROUND
 )
 
+type FourWayWellSection struct {
+	SectionType int
+	Length      float32
+	Width       float32
+	Height      float32
+	ArcHeight   float32
+}
+
 type FourWayWellParams struct {
-	Ctype           int
-	Length          float32
-	Width           float32
-	Height          float32
-	ShaftRadius     float32
-	CornerStyle     int
-	CornerRadius    float32
-	CornerLength    float32
-	CornerWidth     float32
-	BranchLength    float32
-	BranchWidth     float32
-	TopThickness    float32
-	BottomThickness float32
-	LeftSection     struct {
-		SectionType int
-		Length      float32
-		Width       float32
-		Height      float32
-		ArcHeight   float32
-	}
-	RightSection struct {
-		SectionType int
-		Length      float32
-		Width       float32
-		Height      float32
-		ArcHeight   float32
-	}
-	BranchSection1 struct {
-		SectionType int
-		Length      float32
-		Width       float32
-		Height      float32
-		ArcHeight   float32
-	}
-	BranchSection2 struct {
-		SectionType int
-		Length      float32
-		Width       float32
-		Height      float32
-		ArcHeight   float32
-	}
+	Ctype              int
+	Length             float32
+	Width              float32
+	Height             float32
+	ShaftRadius        float32
+	CornerStyle        int
+	CornerRadius       float32
+	CornerLength       float32
+	CornerWidth        float32
+	BranchLength       float32
+	BranchWidth        float32
+	TopThickness       float32
+	BottomThickness    float32
+	LeftSection        FourWayWellSection
+	RightSection       FourWayWellSection
+	BranchSection1     FourWayWellSection
+	BranchSection2     FourWayWellSection
 	OuterWallThickness float32
 	InnerWallThickness float32
 	CushionExtension   float32
@@ -3644,11 +3701,9 @@ type PipeRowParams struct {
 	PipePositions         []Point2
 	PipeInnerDiameters    []float32
 	PipeWallThicknesses   []float32
-	PipeCount             int
 	PullPipeInnerDiameter float32
 	PullPipeThickness     float32
 	Points                []ChannelPoint
-	PointCount            int
 }
 
 func (p *PipeRowParams) to_struct() C.pipe_row_params_t {
@@ -3661,6 +3716,8 @@ func (p *PipeRowParams) to_struct() C.pipe_row_params_t {
 	c.baseThickness = C.double(p.BaseThickness)
 	c.cushionExtension = C.double(p.CushionExtension)
 	c.cushionThickness = C.double(p.CushionThickness)
+	c.pipeCount = C.int(len(p.PipePositions))
+	c.pointCount = C.int(len(p.Points))
 
 	if len(p.PipePositions) > 0 {
 		c.pipePositions = (*C.pnt2d_t)(C.malloc(C.size_t(len(p.PipePositions)) * C.sizeof_pnt2d_t))
@@ -3683,7 +3740,6 @@ func (p *PipeRowParams) to_struct() C.pipe_row_params_t {
 		}
 	}
 
-	c.pipeCount = C.int(p.PipeCount)
 	c.pullPipeInnerDiameter = C.double(p.PullPipeInnerDiameter)
 	c.pullPipeThickness = C.double(p.PullPipeThickness)
 
@@ -3698,7 +3754,6 @@ func (p *PipeRowParams) to_struct() C.pipe_row_params_t {
 		}
 	}
 
-	c.pointCount = C.int(p.PointCount)
 	return c
 }
 
@@ -3852,7 +3907,6 @@ type CableTrayParams struct {
 	TopPlateHeight      float32
 	ArcHeight           float32
 	WallThickness       float32
-	PipeCount           int32
 	PipePositions       []Point2
 	PipeInnerDiameters  []float32
 	PipeWallThicknesses []float32
@@ -3871,7 +3925,7 @@ func (p *CableTrayParams) to_struct() C.cable_tray_params_t {
 	c.topPlateHeight = C.double(p.TopPlateHeight)
 	c.arcHeight = C.double(p.ArcHeight)
 	c.wallThickness = C.double(p.WallThickness)
-	c.pipeCount = C.int(p.PipeCount)
+	c.pipeCount = C.int(len(p.PipePositions))
 
 	if len(p.PipePositions) > 0 {
 		c.pipePositions = (*C.pnt2d_t)(unsafe.Pointer(&p.PipePositions[0]))
@@ -4283,6 +4337,62 @@ func CreateTunnelPartitionBoardWithPlace(params TunnelPartitionBoardParams, posi
 	return s
 }
 
+type ObliqueVentilationDuctParams struct {
+	HoodRoomLength        float64
+	HoodRoomWidth         float64
+	HoodRoomHeight        float64
+	HoodWallThickness     float64
+	DuctCenterHeight      float64
+	DuctLeftDistance      float64
+	DuctDiameter          float64
+	DuctWallThickness     float64
+	DuctLength            float64
+	DuctHeightDifference  float64
+	BaseLength            float64
+	BaseWidth             float64
+	BaseHeight            float64
+	BaseRoomLength        float64
+	BaseRoomWallThickness float64
+	BaseRoomWidth         float64
+	BaseRoomHeight        float64
+}
+
+func (p *ObliqueVentilationDuctParams) to_struct() C.oblique_ventilation_duct_params_t {
+	var c C.oblique_ventilation_duct_params_t
+	c.hoodRoomLength = C.double(p.HoodRoomLength)
+	c.hoodRoomWidth = C.double(p.HoodRoomWidth)
+	c.hoodRoomHeight = C.double(p.HoodRoomHeight)
+	c.hoodWallThickness = C.double(p.HoodWallThickness)
+	c.ductCenterHeight = C.double(p.DuctCenterHeight)
+	c.ductLeftDistance = C.double(p.DuctLeftDistance)
+	c.ductDiameter = C.double(p.DuctDiameter)
+	c.ductWallThickness = C.double(p.DuctWallThickness)
+	c.ductLength = C.double(p.DuctLength)
+	c.ductHeightDifference = C.double(p.DuctHeightDifference)
+	c.baseLength = C.double(p.BaseLength)
+	c.baseWidth = C.double(p.BaseWidth)
+	c.baseHeight = C.double(p.BaseHeight)
+	c.baseRoomLength = C.double(p.BaseRoomLength)
+	c.baseRoomWallThickness = C.double(p.BaseRoomWallThickness)
+	c.baseRoomWidth = C.double(p.BaseRoomWidth)
+	c.baseRoomHeight = C.double(p.BaseRoomHeight)
+	return c
+}
+
+func CreateObliqueVentilationDuct(params ObliqueVentilationDuctParams) *Shape {
+	shp := C.create_oblique_ventilation_duct(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateObliqueVentilationDuctWithPlace(params ObliqueVentilationDuctParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	shp := C.create_oblique_ventilation_duct_with_place(params.to_struct(), position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
 type VentilationPavilionParams struct {
 	TopLength    float32
 	MiddleLength float32
@@ -4400,6 +4510,7 @@ type PipeSupportParams struct {
 	Positions []Point2
 	Radii     []float32
 	Length    float32
+	Width     float32
 	Height    float32
 }
 
@@ -4409,7 +4520,7 @@ func (p *PipeSupportParams) to_struct() C.pipe_support_params_t {
 	c.count = C.int(p.Count)
 	c.length = C.double(p.Length)
 	c.height = C.double(p.Height)
-
+	c.width = C.double(p.Width)
 	if len(p.Positions) > 0 {
 		c.positions = (*C.pnt2d_t)(C.malloc(C.size_t(len(p.Positions)) * C.sizeof_pnt2d_t))
 		for i, pos := range p.Positions {
