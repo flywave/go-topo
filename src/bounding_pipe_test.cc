@@ -280,7 +280,7 @@ void test_fit_centerline_from_shape() {
 
         BRepAlgoAPI_Fuse _fuse(splinePipe, newPipeShape);
 
-        if (!exportShapeToStl(_fuse.Shape(),
+        if (!exportShapeToStl(newPipeShape,
                               "./test_pipe_centerline_spline_pipe.stl")) {
           std::cerr << "Error: Failed to export centerline pipe" << std::endl;
         } else {
