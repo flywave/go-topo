@@ -72,6 +72,11 @@ extern TopoDS_Wire
 clip_wire_between_distances_helper(const TopoDS_Wire &wire_path,
                                    double start_distance, double end_distance);
 
+// 从形状中提取三角网格顶点
+extern TopoDS_Wire
+clip_wire_between_distances_helper(const TopoDS_Wire &wire_path,
+                                   double start_distance, double end_distance);
+
 // 新增方法：从形状中提取所有三角网格顶点
 std::vector<gp_Pnt> extract_shape_points(const TopoDS_Shape &shape) {
   // 1. 网格化形状（如果还不是离散形式）
@@ -414,7 +419,7 @@ Handle(Geom_Curve)
       endTangent.Normalize();
 
     // 动态延伸长度（包围盒对角线的10-15%）
-    const double extendLen = 0.13 * bboxDiag;
+    const double extendLen = 0.15 * bboxDiag;
 
     // 从端面中心点开始延伸
     const gp_Pnt newStart = startCenter.Translated(-extendLen * startTangent);
@@ -446,11 +451,11 @@ Handle(Geom_Curve)
   // 计算中心线长度
   GCPnts_AbscissaPoint abscissa;
   const double totalLength = abscissa.Length(GeomAdaptor_Curve(centerline));
-  const double extensionLength = 0.01 * totalLength;  // 延长1%的总长度
+  const double extensionLength = 0.00001 * totalLength; 
 
   // 投影所有点到中心线以找到最小和最大参数
   double t_min = DBL_MAX, t_max = -DBL_MAX;
-  for (const auto& p : points) {
+  for (const auto &p : points) {
     GeomAPI_ProjectPointOnCurve projector(p, centerline);
     if (projector.NbPoints() > 0) {
       double param = projector.LowerDistanceParameter();
@@ -460,11 +465,13 @@ Handle(Geom_Curve)
   }
 
   // 计算新的起点和终点参数（略微超出形状）
-  double t_start = std::max(centerline->FirstParameter(), t_min - extensionLength);
+  double t_start =
+      std::max(centerline->FirstParameter(), t_min - extensionLength);
   double t_end = std::min(centerline->LastParameter(), t_max + extensionLength);
 
   // 使用Geom_TrimmedCurve创建修剪后的曲线
-  Handle(Geom_TrimmedCurve) trimmedCurve = new Geom_TrimmedCurve(centerline, t_start, t_end);
+  Handle(Geom_TrimmedCurve) trimmedCurve =
+      new Geom_TrimmedCurve(centerline, t_start, t_end);
 
   return trimmedCurve;
 }
