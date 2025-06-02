@@ -10,8 +10,8 @@ namespace flywave {
 namespace topo {
 
 struct bounding_pipe {
-  double radius; // 管道截面序列
-  Handle(Geom_Curve) centerline;  // 管道中心线
+  double radius;                 // 管道截面半径
+  Handle(Geom_Curve) centerline; // 管道中心线
 };
 
 std::vector<gp_Pnt> extract_shape_points(const TopoDS_Shape &shape);
@@ -31,6 +31,9 @@ clip_with_bounding_pipe_by_ratios(const TopoDS_Shape &shape,
                                   const bounding_pipe &boundPipe,
                                   std::array<double, 2> splitRatios,
                                   TopoDS_Wire originalPathWire = TopoDS_Wire());
+std::vector<gp_Pnt> sample_centerline(Handle(Geom_Curve) centerline,
+                                      int numSamples = 100);
+
 } // namespace topo
 } // namespace flywave
 

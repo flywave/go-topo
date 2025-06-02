@@ -157,10 +157,10 @@ void test_fit_centerline_from_shape() {
         // 4. 导出管道体
         TopoDS_Shape newPipeShape = pipeMaker.Shape();
 
-        // BRepAlgoAPI_Fuse _fuse(pipeShape, newPipeShape);
+        BRepAlgoAPI_Fuse _fuse(pipeShape, newPipeShape);
 
-        if (!exportShapeToStl(newPipeShape,
-                              "./test_pipe_centerline_pipe.stl")) {
+        if (!exportShapeToStl(_fuse.Shape(),
+                              "./test_pipe_centerline_arc_pipe.stl")) {
           std::cerr << "Error: Failed to export centerline pipe" << std::endl;
         } else {
           std::cout
@@ -409,27 +409,11 @@ void test_fit_centerline_from_shape() {
         // 4. 导出管道体
         TopoDS_Shape newPipeShape = pipeMaker.Shape();
 
-        // 3. 创建管道体
-        BRepOffsetAPI_MakePipeShell pipeMaker2(splineWire);
-        pipeMaker2.Add(sectionWire, Standard_False, Standard_True);
-        pipeMaker2.SetTransitionMode(BRepBuilderAPI_Transformed);
-        pipeMaker2.Build();
-
-        if (!pipeMaker2.IsDone()) {
-          std::cerr << "Error: Failed to create complex spline pipe"
-                    << std::endl;
-          return;
-        }
-
-        BRep_Builder builder;
-        TopoDS_Compound compound;
-        builder.MakeCompound(compound);
-
-        builder.Add(compound, newPipeShape);
-        builder.Add(compound, pipeMaker2.Shape());
+        BRepAlgoAPI_Fuse _fuse(splinePipe, newPipeShape);
 
         if (!exportShapeToStl(
-                compound, "./test_pipe_centerline_complex_spline_pipe.stl")) {
+                _fuse.Shape(),
+                "./test_pipe_centerline_complex_spline_pipe.stl")) {
           std::cerr << "Error: Failed to export complex centerline pipe"
                     << std::endl;
         } else {
@@ -697,6 +681,142 @@ void test_clip_with_bounding_pipe_by_ratios() {
     std::cout << "Clipped pipe volume (by ratios): " << props.Mass()
               << std::endl;
   }
+}
+
+int main() {
+  test_fit_centerline_from_shape();
+  test_clip_with_bounding_pipe_by_ratios();
+  return 0;
+}
+gp_Vec tangent;
+splineCurve->D1(splineCurve->FirstParameter(), startPoint, tangent);
+gp_Ax2 sectionAxis(startPoint, gp_Dir(tangent));
+Handle(Geom_Circle) sectionCircle = new Geom_Circle(sectionAxis, 4.0);
+TopoDS_Edge sectionEdge = BRepBuilderAPI_MakeEdge(sectionCircle).Edge();
+TopoDS_Wire sectionWire = BRepBuilderAPI_MakeWire(sectionEdge).Wire();
+
+// 3. 创建管道体
+BRepOffsetAPI_MakePipeShell pipeMaker(splineWire);
+pipeMaker.Add(sectionWire, Standard_False, Standard_True);
+pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
+pipeMaker.Build();
+
+if (!pipeMaker.IsDone()) {
+  std::cerr << "Error: Failed to create complex spline pipe" << std::endl;
+  return;
+}
+
+if (!pipeMaker.MakeSolid()) {
+  std::cerr << "Error: Failed to make complex spline pipe solid" << std::endl;
+  return;
+}
+
+TopoDS_Shape splinePipe = pipeMaker.Shape();
+
+// 创建测试管道
+bounding_pipe pipe = extract_bounding_pipe_from_shape(splinePipe, nullptr, 100);
+
+// 测试按比例裁剪
+std::array<double, 2> ratios = {0.2, 0.8};
+TopoDS_Shape clipped =
+    clip_with_bounding_pipe_by_ratios(splinePipe, pipe, ratios);
+
+if (clipped.IsNull()) {
+  std::cerr << "Error: Failed to clip pipe by ratios" << std::endl;
+  return;
+}
+
+exportShapeToStl(clipped, "./test_complex_spline_clipped_pipe.stl");
+
+// 计算裁剪后体积
+GProp_GProps props;
+BRepGProp::VolumeProperties(clipped, props);
+std::cout << "Clipped pipe volume (by ratios): " << props.Mass() << std::endl;
+}
+
+// 测试5: 曲线+直线组成的复合线段
+{
+  std::cout << "\nTest case 5: Composite Curve (Arc + Line)" << std::endl;
+
+  // 1. 创建复合路径（圆弧+直线）
+  gp_Pnt arc_center(0, 0, 0);
+  gp_Dir normal(0, 0, 1);
+  gp_Ax2 axis(arc_center, normal);
+
+  // 创建圆弧（90度弧）
+  Handle(Geom_Circle) arcCircle = new Geom_Circle(axis, 50.0);
+  TopoDS_Edge arcEdge = BRepBuilderAPI_MakeEdge(arcCircle, 0, M_PI_2).Edge();
+
+  // 创建直线（从圆弧终点开始沿Z轴延伸）
+  gp_Pnt arc_end = arcCircle->Value(M_PI_2);
+  gp_Vec atangent;
+  arcCircle->D1(M_PI_2, arc_end, atangent); // 获取圆弧终点的切线方向
+  gp_Dir atangentDir(atangent);             // 转换为方向向量
+  gp_Pnt line_end =
+      arc_end.Translated(100 * atangentDir); // 沿切线方向延伸100单位
+  Handle(Geom_Line) line = new Geom_Line(arc_end, atangentDir);
+  TopoDS_Edge lineEdge =
+      BRepBuilderAPI_MakeEdge(line, arc_end, line_end).Edge();
+
+  // 组合成复合路径
+  BRepBuilderAPI_MakeWire wireMaker;
+  wireMaker.Add(arcEdge);
+  wireMaker.Add(lineEdge);
+  TopoDS_Wire pathWire = wireMaker.Wire();
+
+  // 2. 创建圆形截面
+  gp_Pnt startPoint = arcCircle->Value(0);
+  gp_Vec tangent;
+  arcCircle->D1(0, startPoint, tangent);
+  gp_Dir tangentDir(tangent);
+  gp_Ax2 sectionAxis(startPoint, tangentDir);
+  Handle(Geom_Circle) sectionCircle = new Geom_Circle(sectionAxis, 5.0);
+  TopoDS_Edge sectionEdge = BRepBuilderAPI_MakeEdge(sectionCircle).Edge();
+  TopoDS_Wire sectionWire = BRepBuilderAPI_MakeWire(sectionEdge).Wire();
+
+  // 3. 创建管道体
+  BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
+  pipeMaker.Add(sectionWire, Standard_False, Standard_True);
+  pipeMaker.SetMode(Standard_True);
+  pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
+  pipeMaker.Build();
+
+  if (!pipeMaker.IsDone()) {
+    std::cerr << "Error: Failed to create composite pipe" << std::endl;
+    return;
+  }
+
+  if (!pipeMaker.MakeSolid()) {
+    std::cerr << "Error: Failed to make composite pipe solid" << std::endl;
+    return;
+  }
+
+  TopoDS_Shape pipeShape = pipeMaker.Shape();
+
+  exportShapeToStl(pipeShape, "./test_composite_pipeShape_pipe.stl");
+
+  // 4. 创建测试管道
+  bounding_pipe pipe =
+      extract_bounding_pipe_from_shape(pipeShape, nullptr, 100);
+
+  // 5. 测试按比例裁剪
+  std::array<double, 2> ratios = {0.3, 0.7};
+  TopoDS_Shape clipped =
+      clip_with_bounding_pipe_by_ratios(pipeShape, pipe, ratios);
+
+  if (clipped.IsNull()) {
+    std::cerr << "Error: Failed to clip composite pipe by ratios" << std::endl;
+    return;
+  }
+
+  exportShapeToStl(clipped, "./test_composite_clipped_pipe.stl");
+
+  // 6. 计算裁剪后体积
+  GProp_GProps props;
+  BRepGProp::VolumeProperties(clipped, props);
+  std::cout << "Clipped composite pipe volume (by ratios): " << props.Mass()
+            << std::endl;
+}
 }
 
 int main() {

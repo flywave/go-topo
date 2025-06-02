@@ -72,11 +72,6 @@ extern TopoDS_Wire
 clip_wire_between_distances_helper(const TopoDS_Wire &wire_path,
                                    double start_distance, double end_distance);
 
-// 从形状中提取三角网格顶点
-extern TopoDS_Wire
-clip_wire_between_distances_helper(const TopoDS_Wire &wire_path,
-                                   double start_distance, double end_distance);
-
 // 新增方法：从形状中提取所有三角网格顶点
 std::vector<gp_Pnt> extract_shape_points(const TopoDS_Shape &shape) {
   // 1. 网格化形状（如果还不是离散形式）
@@ -451,7 +446,7 @@ Handle(Geom_Curve)
   // 计算中心线长度
   GCPnts_AbscissaPoint abscissa;
   const double totalLength = abscissa.Length(GeomAdaptor_Curve(centerline));
-  const double extensionLength = 0.00001 * totalLength; 
+  const double extensionLength = 0.00001 * totalLength;
 
   // 投影所有点到中心线以找到最小和最大参数
   double t_min = DBL_MAX, t_max = -DBL_MAX;
@@ -679,10 +674,10 @@ TopoDS_Shape clip_with_bounding_pipe_and_split_distances(
   // 执行裁切操作
   TopoDS_Shape result = fullPipe;
   if (!frontCut.IsNull()) {
-    result = BRepAlgoAPI_Cut(result, frontCut).Shape();
+    result = BRepAlgoAPI_Fuse(result, frontCut).Shape();
   }
   if (!backCut.IsNull()) {
-    result = BRepAlgoAPI_Cut(result, backCut).Shape();
+    result = BRepAlgoAPI_Fuse(result, backCut).Shape();
   }
 
   return result;
@@ -724,6 +719,31 @@ TopoDS_Shape clip_with_bounding_pipe_by_ratios(
   // 调用基于距离的版本
   return clip_with_bounding_pipe_and_split_distances(shape, boundPipe,
                                                      splitDistances, pathWire);
+}
+
+std::vector<gp_Pnt> sample_centerline(Handle(Geom_Curve) centerline,
+                                      int numSamples) {
+  std::vector<gp_Pnt> points;
+  if (centerline.IsNull() || numSamples < 1) {
+    return points;
+  }
+
+  // 创建曲线适配器以访问参数范围
+  GeomAdaptor_Curve adaptor(centerline);
+  double firstParam = adaptor.FirstParameter();
+  double lastParam = adaptor.LastParameter();
+
+  // 计算参数步长
+  double paramStep = (lastParam - firstParam) / (numSamples - 1);
+
+  // 在等间距参数点上采样
+  points.reserve(numSamples);
+  for (int i = 0; i < numSamples; ++i) {
+    double param = firstParam + i * paramStep;
+    points.push_back(centerline->Value(param));
+  }
+
+  return points;
 }
 
 } // namespace topo
