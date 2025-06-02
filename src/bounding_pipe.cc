@@ -55,6 +55,7 @@
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
 #include <algorithm>
+#include <gce_MakeLin.hxx>
 #include <gp_Ax1.hxx>
 #include <gp_Circ.hxx>
 #include <gp_Dir.hxx>
@@ -134,7 +135,7 @@ std::vector<gp_Pnt> douglas_peucker(const std::vector<gp_Pnt> &points,
 
 Handle(Geom_Curve)
     fit_centerline_from_shape(const TopoDS_Shape &shape, int numSamples,
-                              int splineDegree, double smoothingFactor) {
+                              double smoothingFactor) {
   // 1. 提取形状点
   std::vector<gp_Pnt> points = extract_shape_points(shape);
   if (points.empty())
@@ -529,6 +530,54 @@ Handle(Geom_Curve)
   return trimmedCurve;
 }
 
+bounding_pipe compute_simple_bounding_pipe_from_shape(const TopoDS_Shape &shape,
+                                                      const gp_Dir userDir) {
+  bounding_pipe result;
+
+  if (shape.IsNull()) {
+    return result;
+  }
+
+  // 1. 计算形状的包围盒
+  Bnd_Box bbox;
+  BRepBndLib::Add(shape, bbox);
+  double xmin, ymin, zmin, xmax, ymax, zmax;
+  bbox.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+  gp_Pnt minPt(xmin, ymin, zmin);
+  gp_Pnt maxPt(xmax, ymax, zmax);
+
+  // 2. 计算沿用户方向的投影范围
+  double minProj = DBL_MAX, maxProj = -DBL_MAX;
+  for (TopExp_Explorer exp(shape, TopAbs_VERTEX); exp.More(); exp.Next()) {
+    gp_Pnt p = BRep_Tool::Pnt(TopoDS::Vertex(exp.Current()));
+    double proj = p.XYZ().Dot(userDir.XYZ());
+    minProj = std::min(minProj, proj);
+    maxProj = std::max(maxProj, proj);
+  }
+
+  // 3. 创建中心线(直线)
+  gp_Pnt start = gp::Origin().Translated(userDir.XYZ() * minProj);
+  gp_Pnt end = gp::Origin().Translated(userDir.XYZ() * maxProj);
+  gp_Lin line(start, gp_Dir(userDir));
+  result.centerline = new Geom_Line(line);
+
+  // 4. 计算最大半径
+  double maxRadius = 0.0;
+  for (TopExp_Explorer exp(shape, TopAbs_VERTEX); exp.More(); exp.Next()) {
+    gp_Pnt p = BRep_Tool::Pnt(TopoDS::Vertex(exp.Current()));
+    double dist = line.Distance(p);
+    maxRadius = std::max(maxRadius, dist);
+  }
+
+  // 添加安全余量
+  result.radius = maxRadius * 1.2; // 20% 安全余量
+
+  // 5. 生成点集
+  result.points = {start, end};
+
+  return result;
+}
+
 TopoDS_Shape create_bounding_pipe_shape(double radius,
                                         const TopoDS_Wire &path) {
   if (path.IsNull()) {
@@ -603,8 +652,12 @@ bounding_pipe extract_bounding_pipe_from_shape(const TopoDS_Shape &shape,
   bool useUserDirection = (userDir != nullptr && gp_Vec(*userDir).Magnitude() >
                                                      Precision::Confusion());
 
+  if (useUserDirection) {
+    return compute_simple_bounding_pipe_from_shape(shape, *userDir);
+  }
+
   // 4. 提取中心线
-  result.centerline = fit_centerline_from_shape(shape, numSamplePoints, 3, 0.2);
+  result.centerline = fit_centerline_from_shape(shape, numSamplePoints, 0.4);
 
   // 5. 提取截面信息
   if (!result.centerline.IsNull()) {
@@ -661,9 +714,14 @@ bounding_pipe extract_bounding_pipe_from_shape(const TopoDS_Shape &shape,
 
     // 5.4 添加安全余量并保存结果
     if (maxRadius > Precision::Confusion()) {
-      maxRadius *= 1.2; // 20% 安全余量
+      maxRadius *= 2.0; // 200% 安全余量
       result.radius = maxRadius;
     }
+  }
+
+  // 6. 采样中心线
+  if (!result.centerline.IsNull()) {
+    result.points = sample_centerline(result.centerline, 200);
   }
 
   return result;
@@ -671,17 +729,23 @@ bounding_pipe extract_bounding_pipe_from_shape(const TopoDS_Shape &shape,
 
 TopoDS_Shape clip_with_bounding_pipe_and_split_distances(
     const TopoDS_Shape &shape, const bounding_pipe &boundPipe,
-    std::array<double, 2> splitDistances, TopoDS_Wire originalPathWire) {
+    const std::array<double, 2> &splitDistances, TopoDS_Wire originalPathWire) {
   // 参数验证
   if (splitDistances[0] < 0) {
     throw Standard_ConstructionError("First split distance must be >= 0");
   }
 
+  Handle(Geom_Curve) centerline;
+  if (boundPipe.centerline.IsNull() && boundPipe.points.size() > 0) {
+    centerline = centerline_to_curve(boundPipe.points);
+  } else {
+    centerline = boundPipe.centerline;
+  }
+
   TopoDS_Shape fullPipe = shape;
   TopoDS_Wire pathWire =
       originalPathWire.IsNull()
-          ? BRepLib_MakeWire(BRepLib_MakeEdge(boundPipe.centerline).Edge())
-                .Wire()
+          ? BRepLib_MakeWire(BRepLib_MakeEdge(centerline).Edge()).Wire()
           : originalPathWire;
 
   if (pathWire.IsNull()) {
@@ -694,23 +758,31 @@ TopoDS_Shape clip_with_bounding_pipe_and_split_distances(
   double totalLength = lengthProps.Mass();
 
   // 处理第二个分割距离
-  if (splitDistances[1] == -1) {
-    splitDistances[1] = totalLength;
-  } else if (splitDistances[1] <= splitDistances[0] ||
-             splitDistances[1] > totalLength) {
+  double secondSplitStart = splitDistances[0];
+  double secondSplitEnd = splitDistances[1];
+
+  if (secondSplitEnd == -1 || secondSplitEnd > totalLength * 0.99) {
+    secondSplitEnd = totalLength;
+  }
+
+  if (secondSplitStart == -1 || secondSplitStart < totalLength * 0.01) {
+    secondSplitStart = 0;
+  }
+
+  if (secondSplitEnd <= secondSplitStart || secondSplitEnd > totalLength) {
     throw Standard_ConstructionError("Invalid second split distance");
   }
 
   // 如果不需要分割，直接返回完整管道
-  if (splitDistances[0] == 0 && splitDistances[1] >= totalLength) {
+  if (secondSplitStart == 0 && secondSplitEnd >= totalLength) {
     return fullPipe;
   }
 
   // 创建前段裁切体
   TopoDS_Shape frontCut;
-  if (splitDistances[0] > 0) {
+  if (secondSplitStart > 0) {
     TopoDS_Wire frontWire =
-        clip_wire_between_distances_helper(pathWire, 0, splitDistances[0]);
+        clip_wire_between_distances_helper(pathWire, 0, secondSplitStart);
 
     if (!frontWire.IsNull()) {
       frontCut = create_bounding_pipe_shape(boundPipe.radius, frontWire);
@@ -719,9 +791,9 @@ TopoDS_Shape clip_with_bounding_pipe_and_split_distances(
 
   // 创建后段裁切体
   TopoDS_Shape backCut;
-  if (splitDistances[1] < totalLength) {
+  if (secondSplitEnd < totalLength) {
     TopoDS_Wire backWire = clip_wire_between_distances_helper(
-        pathWire, splitDistances[1], totalLength);
+        pathWire, secondSplitEnd, totalLength);
 
     if (!backWire.IsNull()) {
       // 使用最大圆形截面创建裁切体
@@ -743,7 +815,7 @@ TopoDS_Shape clip_with_bounding_pipe_and_split_distances(
 
 TopoDS_Shape clip_with_bounding_pipe_by_ratios(
     const TopoDS_Shape &shape, const bounding_pipe &boundPipe,
-    std::array<double, 2> splitRatios, TopoDS_Wire originalPathWire) {
+    const std::array<double, 2> &splitRatios, TopoDS_Wire originalPathWire) {
   // 参数验证
   if (splitRatios[0] < 0 || splitRatios[0] > 1.0) {
     throw Standard_ConstructionError(
@@ -754,11 +826,17 @@ TopoDS_Shape clip_with_bounding_pipe_by_ratios(
     throw Standard_ConstructionError("Invalid second split ratio");
   }
 
+  Handle(Geom_Curve) centerline;
+  if (boundPipe.centerline.IsNull() && boundPipe.points.size() > 0) {
+    centerline = centerline_to_curve(boundPipe.points);
+  } else {
+    centerline = boundPipe.centerline;
+  }
+
   // 计算路径总长度
   TopoDS_Wire pathWire =
       originalPathWire.IsNull()
-          ? BRepLib_MakeWire(BRepLib_MakeEdge(boundPipe.centerline).Edge())
-                .Wire()
+          ? BRepLib_MakeWire(BRepLib_MakeEdge(centerline).Edge()).Wire()
           : originalPathWire;
 
   if (pathWire.IsNull()) {
@@ -780,7 +858,7 @@ TopoDS_Shape clip_with_bounding_pipe_by_ratios(
 }
 
 std::vector<gp_Pnt> sample_centerline(Handle(Geom_Curve) centerline,
-                                      int numSamples) {
+                                      int numSamples, bool simplify) {
   std::vector<gp_Pnt> points;
   if (centerline.IsNull() || numSamples < 1) {
     return points;
@@ -791,17 +869,51 @@ std::vector<gp_Pnt> sample_centerline(Handle(Geom_Curve) centerline,
   double firstParam = adaptor.FirstParameter();
   double lastParam = adaptor.LastParameter();
 
-  // 计算参数步长
-  double paramStep = (lastParam - firstParam) / (numSamples - 1);
+  // 计算路径总长度
+  GCPnts_AbscissaPoint abscissa;
+  double totalLength = abscissa.Length(GeomAdaptor_Curve(centerline));
 
-  // 在等间距参数点上采样
-  points.reserve(numSamples);
-  for (int i = 0; i < numSamples; ++i) {
-    double param = firstParam + i * paramStep;
+  GCPnts_UniformAbscissa sampler;
+  sampler.Initialize(GeomAdaptor_Curve(centerline), numSamples);
+  for (int i = 1; i <= sampler.NbPoints(); ++i) {
+    double param = sampler.Parameter(i);
     points.push_back(centerline->Value(param));
   }
 
+  if (simplify) {
+    double epsilon = totalLength * 0.001;
+    return douglas_peucker(points, epsilon);
+  }
+
   return points;
+}
+
+Handle(Geom_Curve) centerline_to_curve(const std::vector<gp_Pnt> &points) {
+  if (points.empty()) {
+    return nullptr;
+  }
+
+  if (points.size() == 2) {
+    gp_Lin line = gce_MakeLin(points[0], points[1]);
+    return new Geom_Line(line);
+  }
+
+  // 将点集转换为TColgp_Array1OfPnt
+  TColgp_Array1OfPnt pointArray(1, static_cast<int>(points.size()));
+  for (int i = 0; i < points.size(); i++) {
+    pointArray.SetValue(i + 1, points[i]);
+  }
+
+  // 使用PointsToBSpline拟合曲线
+  GeomAPI_PointsToBSpline fitter;
+  fitter.Init(pointArray, 3, 8, GeomAbs_C2,
+              Precision::Confusion()); // 使用默认参数
+
+  if (fitter.IsDone()) {
+    return Handle_Geom_Curve(fitter.Curve());
+  }
+
+  return nullptr;
 }
 
 } // namespace topo

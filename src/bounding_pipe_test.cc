@@ -1,4 +1,5 @@
 #include "bounding_pipe.hh"
+
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
@@ -50,7 +51,7 @@ void test_fit_centerline_from_shape() {
   {
     std::cout << "\nTest case 1: Box" << std::endl;
     TopoDS_Shape box = BRepPrimAPI_MakeBox(10, 10, 100).Shape();
-    Handle(Geom_Curve) curve = fit_centerline_from_shape(box, 10, 3, 0.2);
+    Handle(Geom_Curve) curve = fit_centerline_from_shape(box, 10, 0.2);
 
     if (curve.IsNull()) {
       std::cerr << "Error: Failed to fit centerline for box" << std::endl;
@@ -103,7 +104,7 @@ void test_fit_centerline_from_shape() {
     pipeMaker.Add(sectionWire, Standard_False, Standard_True);
 
     // 设置生成模式为实体
-    pipeMaker.SetMode(Standard_True);                        // 使用Frenet标架
+    pipeMaker.SetMode(Standard_True); // 使用Frenet标架
     pipeMaker.SetTransitionMode(BRepBuilderAPI_RightCorner); // 设置过渡模式
 
     // 构建管道
@@ -282,7 +283,7 @@ void test_fit_centerline_from_shape() {
 
         BRepAlgoAPI_Fuse _fuse(splinePipe, newPipeShape);
 
-        if (!exportShapeToStl(newPipeShape,
+        if (!exportShapeToStl(_fuse.Shape(),
                               "./test_pipe_centerline_spline_pipe.stl")) {
           std::cerr << "Error: Failed to export centerline pipe" << std::endl;
         } else {
@@ -373,8 +374,7 @@ void test_fit_centerline_from_shape() {
     exportShapeToStl(splinePipe, "./test_complex_spline_pipe.stl");
 
     // 4. 拟合中心线
-    Handle(Geom_Curve) curve =
-        fit_centerline_from_shape(splinePipe, 10, 3, 0.8);
+    Handle(Geom_Curve) curve = fit_centerline_from_shape(splinePipe, 10, 0.8);
 
     if (curve.IsNull()) {
       std::cerr << "Error: Failed to fit centerline for complex spline pipe"
@@ -619,7 +619,7 @@ void test_clip_with_bounding_pipe_by_ratios() {
     pipeMaker.Add(sectionWire, Standard_False, Standard_True);
 
     // 设置生成模式为实体
-    pipeMaker.SetMode(Standard_True);                        // 使用Frenet标架
+    pipeMaker.SetMode(Standard_True); // 使用Frenet标架
     pipeMaker.SetTransitionMode(BRepBuilderAPI_RightCorner); // 设置过渡模式
 
     // 构建管道
@@ -795,7 +795,7 @@ void test_clip_with_bounding_pipe_by_ratios() {
         extract_bounding_pipe_from_shape(splinePipe, nullptr, 100);
 
     // 测试按比例裁剪
-    std::array<double, 2> ratios = {0.2, 0.8};
+    std::array<double, 2> ratios = {0.2, 0.4};
     TopoDS_Shape clipped =
         clip_with_bounding_pipe_by_ratios(splinePipe, pipe, ratios);
 
@@ -876,7 +876,7 @@ void test_clip_with_bounding_pipe_by_ratios() {
 
     // 4. 创建测试管道
     bounding_pipe pipe =
-        extract_bounding_pipe_from_shape(pipeShape, nullptr, 10);
+        extract_bounding_pipe_from_shape(pipeShape, nullptr, 20);
 
     // 5. 测试按比例裁剪
     std::array<double, 2> ratios = {0.3, 0.7};
