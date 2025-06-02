@@ -445,6 +445,137 @@ void test_fit_centerline_from_shape() {
                 << ", " << end.Z() << ")" << std::endl;
     }
   }
+
+  // 测试5: 曲线+直线组成的复合线段
+  {
+    std::cout << "\nTest case 5: Composite Curve (Arc + Line)" << std::endl;
+
+    // 1. 创建复合路径（圆弧+直线）
+    gp_Pnt arc_center(0, 0, 0);
+    gp_Dir normal(0, 0, 1);
+    gp_Ax2 axis(arc_center, normal);
+
+    // 创建圆弧（90度弧）
+    Handle(Geom_Circle) arcCircle = new Geom_Circle(axis, 50.0);
+    TopoDS_Edge arcEdge = BRepBuilderAPI_MakeEdge(arcCircle, 0, M_PI_2).Edge();
+
+    // 创建直线（从圆弧终点开始沿Z轴延伸）
+    gp_Pnt arc_end = arcCircle->Value(M_PI_2);
+    gp_Vec atangent;
+    arcCircle->D1(M_PI_2, arc_end, atangent); // 获取圆弧终点的切线方向
+    gp_Dir atangentDir(atangent);             // 转换为方向向量
+    gp_Pnt line_end =
+        arc_end.Translated(100 * atangentDir); // 沿切线方向延伸100单位
+    Handle(Geom_Line) line = new Geom_Line(arc_end, atangentDir);
+    TopoDS_Edge lineEdge =
+        BRepBuilderAPI_MakeEdge(line, arc_end, line_end).Edge();
+
+    // 组合成复合路径
+    BRepBuilderAPI_MakeWire wireMaker;
+    wireMaker.Add(arcEdge);
+    wireMaker.Add(lineEdge);
+    TopoDS_Wire pathWire = wireMaker.Wire();
+
+    // 2. 创建圆形截面
+    gp_Pnt startPoint = arcCircle->Value(0);
+    gp_Vec tangent;
+    arcCircle->D1(0, startPoint, tangent);
+    gp_Dir tangentDir(tangent);
+    gp_Ax2 sectionAxis(startPoint, tangentDir);
+    Handle(Geom_Circle) sectionCircle = new Geom_Circle(sectionAxis, 5.0);
+    TopoDS_Edge sectionEdge = BRepBuilderAPI_MakeEdge(sectionCircle).Edge();
+    TopoDS_Wire sectionWire = BRepBuilderAPI_MakeWire(sectionEdge).Wire();
+
+    // 3. 创建管道体
+    BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
+    pipeMaker.Add(sectionWire, Standard_False, Standard_True);
+    pipeMaker.SetMode(Standard_True);
+    pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
+    pipeMaker.Build();
+
+    if (!pipeMaker.IsDone()) {
+      std::cerr << "Error: Failed to create composite pipe" << std::endl;
+      return;
+    }
+
+    if (!pipeMaker.MakeSolid()) {
+      std::cerr << "Error: Failed to make composite pipe solid" << std::endl;
+      return;
+    }
+
+    TopoDS_Shape pipeShape = pipeMaker.Shape();
+    exportShapeToStl(pipeShape, "./test_arc_line_pipe.stl");
+
+    // 4. 拟合中心线
+    Handle(Geom_Curve) curve = fit_centerline_from_shape(pipeShape, 20);
+
+    if (curve.IsNull()) {
+      std::cerr << "Error: Failed to fit centerline for arc" << std::endl;
+    } else {
+      // 1. 创建圆形截面
+      gp_Pnt startPoint = curve->Value(curve->FirstParameter());
+      gp_Vec tangent;
+      curve->D1(curve->FirstParameter(), startPoint, tangent);
+      gp_Ax2 sectionAxis(startPoint, gp_Dir(tangent));
+      Handle(Geom_Circle) sectionCircle = new Geom_Circle(sectionAxis, 1.0);
+      TopoDS_Edge sectionEdge = BRepBuilderAPI_MakeEdge(sectionCircle).Edge();
+      TopoDS_Wire sectionWire = BRepBuilderAPI_MakeWire(sectionEdge).Wire();
+
+      // 2. 创建路径线
+      TopoDS_Edge pathEdge = BRepBuilderAPI_MakeEdge(curve).Edge();
+      TopoDS_Wire pathWire = BRepBuilderAPI_MakeWire(pathEdge).Wire();
+
+      // 3. 创建管道体
+      BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
+      pipeMaker.Add(sectionWire, false, true);
+      pipeMaker.SetMode(Standard_True);
+      pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
+      pipeMaker.Build();
+
+      if (!pipeMaker.IsDone()) {
+        std::cerr << "Error: Failed to create pipe from centerline"
+                  << std::endl;
+      } else {
+
+        pipeMaker.MakeSolid();
+
+        // 4. 导出管道体
+        TopoDS_Shape newPipeShape = pipeMaker.Shape();
+
+        BRepAlgoAPI_Fuse _fuse(pipeShape, newPipeShape);
+
+        if (!exportShapeToStl(_fuse.Shape(),
+                              "./test_pipe_centerline_arc_line_pipe.stl")) {
+          std::cerr << "Error: Failed to export centerline pipe" << std::endl;
+        } else {
+          std::cout
+              << "Successfully exported centerline pipe to centerline_pipe.stl"
+              << std::endl;
+        }
+      }
+    }
+
+    if (curve.IsNull()) {
+      std::cerr << "Error: Failed to fit centerline for spline pipe"
+                << std::endl;
+    } else {
+      // 打印起点、中点和终点
+      double first = curve->FirstParameter();
+      double last = curve->LastParameter();
+      double mid = (first + last) / 2;
+
+      gp_Pnt start = curve->Value(first);
+      gp_Pnt middle = curve->Value(mid);
+      gp_Pnt end = curve->Value(last);
+
+      std::cout << "Spline pipe start: (" << start.X() << ", " << start.Y()
+                << ", " << start.Z() << ")" << std::endl;
+      std::cout << "Spline pipe middle: (" << middle.X() << ", " << middle.Y()
+                << ", " << middle.Z() << ")" << std::endl;
+      std::cout << "Spline pipe end: (" << end.X() << ", " << end.Y() << ", "
+                << end.Z() << ")" << std::endl;
+    }
+  }
 }
 
 void test_clip_with_bounding_pipe_by_ratios() {
@@ -681,142 +812,91 @@ void test_clip_with_bounding_pipe_by_ratios() {
     std::cout << "Clipped pipe volume (by ratios): " << props.Mass()
               << std::endl;
   }
-}
 
-int main() {
-  test_fit_centerline_from_shape();
-  test_clip_with_bounding_pipe_by_ratios();
-  return 0;
-}
-gp_Vec tangent;
-splineCurve->D1(splineCurve->FirstParameter(), startPoint, tangent);
-gp_Ax2 sectionAxis(startPoint, gp_Dir(tangent));
-Handle(Geom_Circle) sectionCircle = new Geom_Circle(sectionAxis, 4.0);
-TopoDS_Edge sectionEdge = BRepBuilderAPI_MakeEdge(sectionCircle).Edge();
-TopoDS_Wire sectionWire = BRepBuilderAPI_MakeWire(sectionEdge).Wire();
+  // 测试5: 曲线+直线组成的复合线段
+  {
+    std::cout << "\nTest case 5: Composite Curve (Arc + Line)" << std::endl;
 
-// 3. 创建管道体
-BRepOffsetAPI_MakePipeShell pipeMaker(splineWire);
-pipeMaker.Add(sectionWire, Standard_False, Standard_True);
-pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
-pipeMaker.Build();
+    // 1. 创建复合路径（圆弧+直线）
+    gp_Pnt arc_center(0, 0, 0);
+    gp_Dir normal(0, 0, 1);
+    gp_Ax2 axis(arc_center, normal);
 
-if (!pipeMaker.IsDone()) {
-  std::cerr << "Error: Failed to create complex spline pipe" << std::endl;
-  return;
-}
+    // 创建圆弧（90度弧）
+    Handle(Geom_Circle) arcCircle = new Geom_Circle(axis, 50.0);
+    TopoDS_Edge arcEdge = BRepBuilderAPI_MakeEdge(arcCircle, 0, M_PI_2).Edge();
 
-if (!pipeMaker.MakeSolid()) {
-  std::cerr << "Error: Failed to make complex spline pipe solid" << std::endl;
-  return;
-}
+    // 创建直线（从圆弧终点开始沿Z轴延伸）
+    gp_Pnt arc_end = arcCircle->Value(M_PI_2);
+    gp_Vec atangent;
+    arcCircle->D1(M_PI_2, arc_end, atangent); // 获取圆弧终点的切线方向
+    gp_Dir atangentDir(atangent);             // 转换为方向向量
+    gp_Pnt line_end =
+        arc_end.Translated(100 * atangentDir); // 沿切线方向延伸100单位
+    Handle(Geom_Line) line = new Geom_Line(arc_end, atangentDir);
+    TopoDS_Edge lineEdge =
+        BRepBuilderAPI_MakeEdge(line, arc_end, line_end).Edge();
 
-TopoDS_Shape splinePipe = pipeMaker.Shape();
+    // 组合成复合路径
+    BRepBuilderAPI_MakeWire wireMaker;
+    wireMaker.Add(arcEdge);
+    wireMaker.Add(lineEdge);
+    TopoDS_Wire pathWire = wireMaker.Wire();
 
-// 创建测试管道
-bounding_pipe pipe = extract_bounding_pipe_from_shape(splinePipe, nullptr, 100);
+    // 2. 创建圆形截面
+    gp_Pnt startPoint = arcCircle->Value(0);
+    gp_Vec tangent;
+    arcCircle->D1(0, startPoint, tangent);
+    gp_Dir tangentDir(tangent);
+    gp_Ax2 sectionAxis(startPoint, tangentDir);
+    Handle(Geom_Circle) sectionCircle = new Geom_Circle(sectionAxis, 5.0);
+    TopoDS_Edge sectionEdge = BRepBuilderAPI_MakeEdge(sectionCircle).Edge();
+    TopoDS_Wire sectionWire = BRepBuilderAPI_MakeWire(sectionEdge).Wire();
 
-// 测试按比例裁剪
-std::array<double, 2> ratios = {0.2, 0.8};
-TopoDS_Shape clipped =
-    clip_with_bounding_pipe_by_ratios(splinePipe, pipe, ratios);
+    // 3. 创建管道体
+    BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
+    pipeMaker.Add(sectionWire, Standard_False, Standard_True);
+    pipeMaker.SetMode(Standard_True);
+    pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
+    pipeMaker.Build();
 
-if (clipped.IsNull()) {
-  std::cerr << "Error: Failed to clip pipe by ratios" << std::endl;
-  return;
-}
+    if (!pipeMaker.IsDone()) {
+      std::cerr << "Error: Failed to create composite pipe" << std::endl;
+      return;
+    }
 
-exportShapeToStl(clipped, "./test_complex_spline_clipped_pipe.stl");
+    if (!pipeMaker.MakeSolid()) {
+      std::cerr << "Error: Failed to make composite pipe solid" << std::endl;
+      return;
+    }
 
-// 计算裁剪后体积
-GProp_GProps props;
-BRepGProp::VolumeProperties(clipped, props);
-std::cout << "Clipped pipe volume (by ratios): " << props.Mass() << std::endl;
-}
+    TopoDS_Shape pipeShape = pipeMaker.Shape();
 
-// 测试5: 曲线+直线组成的复合线段
-{
-  std::cout << "\nTest case 5: Composite Curve (Arc + Line)" << std::endl;
+    exportShapeToStl(pipeShape, "./test_composite_pipeShape_pipe.stl");
 
-  // 1. 创建复合路径（圆弧+直线）
-  gp_Pnt arc_center(0, 0, 0);
-  gp_Dir normal(0, 0, 1);
-  gp_Ax2 axis(arc_center, normal);
+    // 4. 创建测试管道
+    bounding_pipe pipe =
+        extract_bounding_pipe_from_shape(pipeShape, nullptr, 10);
 
-  // 创建圆弧（90度弧）
-  Handle(Geom_Circle) arcCircle = new Geom_Circle(axis, 50.0);
-  TopoDS_Edge arcEdge = BRepBuilderAPI_MakeEdge(arcCircle, 0, M_PI_2).Edge();
+    // 5. 测试按比例裁剪
+    std::array<double, 2> ratios = {0.3, 0.7};
+    TopoDS_Shape clipped =
+        clip_with_bounding_pipe_by_ratios(pipeShape, pipe, ratios);
 
-  // 创建直线（从圆弧终点开始沿Z轴延伸）
-  gp_Pnt arc_end = arcCircle->Value(M_PI_2);
-  gp_Vec atangent;
-  arcCircle->D1(M_PI_2, arc_end, atangent); // 获取圆弧终点的切线方向
-  gp_Dir atangentDir(atangent);             // 转换为方向向量
-  gp_Pnt line_end =
-      arc_end.Translated(100 * atangentDir); // 沿切线方向延伸100单位
-  Handle(Geom_Line) line = new Geom_Line(arc_end, atangentDir);
-  TopoDS_Edge lineEdge =
-      BRepBuilderAPI_MakeEdge(line, arc_end, line_end).Edge();
+    if (clipped.IsNull()) {
+      std::cerr << "Error: Failed to clip composite pipe by ratios"
+                << std::endl;
+      return;
+    }
 
-  // 组合成复合路径
-  BRepBuilderAPI_MakeWire wireMaker;
-  wireMaker.Add(arcEdge);
-  wireMaker.Add(lineEdge);
-  TopoDS_Wire pathWire = wireMaker.Wire();
+    exportShapeToStl(clipped, "./test_composite_clipped_pipe.stl");
 
-  // 2. 创建圆形截面
-  gp_Pnt startPoint = arcCircle->Value(0);
-  gp_Vec tangent;
-  arcCircle->D1(0, startPoint, tangent);
-  gp_Dir tangentDir(tangent);
-  gp_Ax2 sectionAxis(startPoint, tangentDir);
-  Handle(Geom_Circle) sectionCircle = new Geom_Circle(sectionAxis, 5.0);
-  TopoDS_Edge sectionEdge = BRepBuilderAPI_MakeEdge(sectionCircle).Edge();
-  TopoDS_Wire sectionWire = BRepBuilderAPI_MakeWire(sectionEdge).Wire();
-
-  // 3. 创建管道体
-  BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
-  pipeMaker.Add(sectionWire, Standard_False, Standard_True);
-  pipeMaker.SetMode(Standard_True);
-  pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
-  pipeMaker.Build();
-
-  if (!pipeMaker.IsDone()) {
-    std::cerr << "Error: Failed to create composite pipe" << std::endl;
-    return;
+    // 6. 计算裁剪后体积
+    GProp_GProps props;
+    BRepGProp::VolumeProperties(clipped, props);
+    std::cout << "Clipped composite pipe volume (by ratios): " << props.Mass()
+              << std::endl;
   }
-
-  if (!pipeMaker.MakeSolid()) {
-    std::cerr << "Error: Failed to make composite pipe solid" << std::endl;
-    return;
-  }
-
-  TopoDS_Shape pipeShape = pipeMaker.Shape();
-
-  exportShapeToStl(pipeShape, "./test_composite_pipeShape_pipe.stl");
-
-  // 4. 创建测试管道
-  bounding_pipe pipe =
-      extract_bounding_pipe_from_shape(pipeShape, nullptr, 100);
-
-  // 5. 测试按比例裁剪
-  std::array<double, 2> ratios = {0.3, 0.7};
-  TopoDS_Shape clipped =
-      clip_with_bounding_pipe_by_ratios(pipeShape, pipe, ratios);
-
-  if (clipped.IsNull()) {
-    std::cerr << "Error: Failed to clip composite pipe by ratios" << std::endl;
-    return;
-  }
-
-  exportShapeToStl(clipped, "./test_composite_clipped_pipe.stl");
-
-  // 6. 计算裁剪后体积
-  GProp_GProps props;
-  BRepGProp::VolumeProperties(clipped, props);
-  std::cout << "Clipped composite pipe volume (by ratios): " << props.Mass()
-            << std::endl;
-}
 }
 
 int main() {

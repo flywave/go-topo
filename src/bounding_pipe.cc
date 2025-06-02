@@ -96,6 +96,42 @@ std::vector<gp_Pnt> extract_shape_points(const TopoDS_Shape &shape) {
   return points;
 }
 
+// 添加Douglas-Peucker算法实现
+std::vector<gp_Pnt> douglas_peucker(const std::vector<gp_Pnt> &points,
+                                    double epsilon) {
+  if (points.size() <= 2)
+    return points;
+
+  // 找到离首尾线段最远的点
+  double maxDistance = 0.0;
+  size_t index = 0;
+  gp_Lin line(points.front(), gp_Vec(points.front(), points.back()));
+
+  for (size_t i = 1; i < points.size() - 1; i++) {
+    double d = line.Distance(points[i]);
+    if (d > maxDistance) {
+      maxDistance = d;
+      index = i;
+    }
+  }
+
+  if (maxDistance <= epsilon) {
+    return {points.front(), points.back()};
+  }
+
+  std::vector<gp_Pnt> firstPart(points.begin(), points.begin() + index + 1);
+  std::vector<gp_Pnt> firstResult = douglas_peucker(firstPart, epsilon);
+
+  std::vector<gp_Pnt> secondPart(points.begin() + index, points.end());
+  std::vector<gp_Pnt> secondResult = douglas_peucker(secondPart, epsilon);
+
+  // 合并结果(避免重复点)
+  firstResult.pop_back();
+  firstResult.insert(firstResult.end(), secondResult.begin(),
+                     secondResult.end());
+  return firstResult;
+}
+
 Handle(Geom_Curve)
     fit_centerline_from_shape(const TopoDS_Shape &shape, int numSamples,
                               int splineDegree, double smoothingFactor) {
@@ -209,6 +245,11 @@ Handle(Geom_Curve)
                   });
   validCenterPoints.erase(last, validCenterPoints.end());
 
+  const double simplifyThreshold = avgSpacing;
+  if (validCenterPoints.size() > 2) {
+    validCenterPoints = douglas_peucker(validCenterPoints, simplifyThreshold);
+  }
+
   // 5. 分段拟合B样条
   if (validCenterPoints.size() < 2) {
     gp_Lin line(centroid, mainAxis);
@@ -272,6 +313,7 @@ Handle(Geom_Curve)
     return (totalWeight > 0.0) ? gp_Pnt(weightedCentroid / totalWeight)
                                : curve_point;
   };
+
   // 获取初始曲线端点
   gp_Pnt startPoint = validCenterPoints.front();
   gp_Pnt endPoint = validCenterPoints.back();
@@ -307,9 +349,25 @@ Handle(Geom_Curve)
   if (interpolator.IsDone()) {
     centerline = interpolator.Curve();
   } else {
-    // 回退：直线拟合
-    gp_Lin line(centroid, mainAxis);
-    return new Geom_Line(line);
+    // 在分段拟合前添加直线检测
+    bool isLinear = true;
+    if (validCenterPoints.size() > 2) {
+      gp_Vec baseDir(validCenterPoints[0], validCenterPoints[1]);
+      for (size_t i = 2; i < validCenterPoints.size(); i++) {
+        gp_Vec testDir(validCenterPoints[0], validCenterPoints[i]);
+        if (!testDir.IsParallel(baseDir, Precision::Angular())) {
+          isLinear = false;
+          break;
+        }
+      }
+    }
+
+    if (isLinear) {
+      gp_Lin line(
+          validCenterPoints.front(),
+          gp_Dir(gp_Vec(validCenterPoints.front(), validCenterPoints.back())));
+      return new Geom_Line(line);
+    }
   }
 
   // 6. 曲率自适应迭代优化 - 修正后的曲率计算
@@ -674,10 +732,10 @@ TopoDS_Shape clip_with_bounding_pipe_and_split_distances(
   // 执行裁切操作
   TopoDS_Shape result = fullPipe;
   if (!frontCut.IsNull()) {
-    result = BRepAlgoAPI_Fuse(result, frontCut).Shape();
+    result = BRepAlgoAPI_Cut(result, frontCut).Shape();
   }
   if (!backCut.IsNull()) {
-    result = BRepAlgoAPI_Fuse(result, backCut).Shape();
+    result = BRepAlgoAPI_Cut(result, backCut).Shape();
   }
 
   return result;
