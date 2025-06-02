@@ -4,6 +4,7 @@
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
+#include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepAlgoAPI_Section.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
@@ -23,10 +24,13 @@
 #include <GCPnts_UniformAbscissa.hxx>
 #include <GProp_GProps.hxx>
 #include <GeomAPI_ExtremaCurveCurve.hxx>
+#include <GeomAPI_Interpolate.hxx>
 #include <GeomAPI_PointsToBSpline.hxx>
 #include <GeomAPI_ProjectPointOnCurve.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
 #include <GeomAdaptor_Curve.hxx>
+#include <GeomConvert_ApproxCurve.hxx>
+#include <GeomLProp_CLProps.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_Circle.hxx>
 #include <Geom_Curve.hxx>
@@ -57,6 +61,7 @@
 #include <gp_Pln.hxx>
 #include <gp_Vec.hxx>
 #include <gp_XYZ.hxx>
+#include <map>
 #include <math_Jacobi.hxx>
 #include <math_Matrix.hxx>
 
@@ -91,229 +96,356 @@ std::vector<gp_Pnt> extract_shape_points(const TopoDS_Shape &shape) {
   return points;
 }
 
-// 从任意形状拟合中心线
 Handle(Geom_Curve)
     fit_centerline_from_shape(const TopoDS_Shape &shape, int numSamples,
                               int splineDegree, double smoothingFactor) {
   // 1. 提取形状点
   std::vector<gp_Pnt> points = extract_shape_points(shape);
-
-  // 处理空点集的情况
-  if (points.empty()) {
+  if (points.empty())
     return nullptr;
-  }
 
-  // 3. 计算点集重心
+  // 2. 计算包围盒和特征长度
+  Bnd_Box bbox;
+  for (const auto &p : points)
+    bbox.Add(p);
+
+  double xMin, yMin, zMin, xMax, yMax, zMax;
+  bbox.Get(xMin, yMin, zMin, xMax, yMax, zMax);
+  const double bboxDiag =
+      sqrt(pow(xMax - xMin, 2) + pow(yMax - yMin, 2) + pow(zMax - zMin, 2));
+  const double avgSpacing = bboxDiag / sqrt(points.size());
+
+  // 3. 改进PCA - 修正投影范围计算
   gp_XYZ centroid(0, 0, 0);
-  for (const auto &p : points) {
+  for (const auto &p : points)
     centroid += p.XYZ();
-  }
   centroid /= points.size();
 
-  // 4. 计算协方差矩阵
   math_Matrix cov(1, 3, 1, 3, 0.0);
   for (const auto &p : points) {
     gp_XYZ diff = p.XYZ() - centroid;
-    cov(1, 1) += diff.X() * diff.X();
-    cov(1, 2) += diff.X() * diff.Y();
-    cov(1, 3) += diff.X() * diff.Z();
-    cov(2, 1) += diff.Y() * diff.X();
-    cov(2, 2) += diff.Y() * diff.Y();
-    cov(2, 3) += diff.Y() * diff.Z();
-    cov(3, 1) += diff.Z() * diff.X();
-    cov(3, 2) += diff.Z() * diff.Y();
-    cov(3, 3) += diff.Z() * diff.Z();
+    for (int i = 1; i <= 3; ++i)
+      for (int j = 1; j <= 3; ++j)
+        cov(i, j) += diff.Coord(i) * diff.Coord(j);
   }
 
-  // 5. PCA（雅可比法求特征向量）
   math_Jacobi jacobi(cov);
-  math_Vector eigenValues(1, 3);
-  math_Matrix eigenVectors(1, 3, 1, 3);
+  math_Vector eigenValues = jacobi.Values();
+  math_Matrix eigenVectors = jacobi.Vectors();
 
-  eigenValues = jacobi.Values();
-  eigenVectors = jacobi.Vectors();
+  // 修正1：独立计算每个轴的投影范围
+  double bestMinProj = DBL_MAX, bestMaxProj = -DBL_MAX;
+  int bestAxis = 1;
+  double maxSpan = -DBL_MAX;
 
-  // 6. 确定最大特征值对应的主轴方向
-  int maxIndex = 1;
-  double maxEigenValue = eigenValues(1);
-  if (eigenValues(2) > maxEigenValue) {
-    maxIndex = 2;
-    maxEigenValue = eigenValues(2);
-  }
-  if (eigenValues(3) > maxEigenValue) {
-    maxIndex = 3;
-  }
+  for (int axisIdx = 1; axisIdx <= 3; ++axisIdx) {
+    // 为每个轴重置min/max
+    double axisMin = DBL_MAX, axisMax = -DBL_MAX;
+    gp_Dir axis(eigenVectors(1, axisIdx), eigenVectors(2, axisIdx),
+                eigenVectors(3, axisIdx));
 
-  gp_Dir axis(eigenVectors(1, maxIndex), eigenVectors(2, maxIndex),
-              eigenVectors(3, maxIndex));
+    for (const auto &p : points) {
+      double proj = (p.XYZ() - centroid).Dot(axis.XYZ());
+      axisMin = std::min(axisMin, proj);
+      axisMax = std::max(axisMax, proj);
+    }
 
-  // 7. 沿主轴方向投影点
-  std::vector<std::pair<double, gp_Pnt>> projectedPoints;
-  for (const auto &p : points) {
-    gp_Vec vecToPoint = p.XYZ() - centroid;
-    double projection = vecToPoint.Dot(gp_Vec(axis));
-    projectedPoints.push_back({projection, p});
-  }
-
-  // 8. 按投影值排序
-  std::sort(
-      projectedPoints.begin(), projectedPoints.end(),
-      [](const std::pair<double, gp_Pnt> &a,
-         const std::pair<double, gp_Pnt> &b) { return a.first < b.first; });
-
-  // 9. 创建初始中心线点
-  double minProjection = projectedPoints.front().first;
-  double maxProjection = projectedPoints.back().first;
-  double step = (maxProjection - minProjection) / (numSamples - 1);
-
-  TColgp_Array1OfPnt centerlinePoints(1, numSamples);
-  for (int i = 1; i <= numSamples; ++i) {
-    double proj = minProjection + (i - 1) * step;
-    gp_Pnt centerPoint = centroid + axis.XYZ() * proj;
-    centerlinePoints.SetValue(i, centerPoint);
+    const double span = axisMax - axisMin;
+    if (span > maxSpan) {
+      maxSpan = span;
+      bestAxis = axisIdx;
+      bestMinProj = axisMin;
+      bestMaxProj = axisMax;
+    }
   }
 
-  // 10. 拟合初始B样条曲线
-  Handle(Geom_BSplineCurve) centerline;
-  GeomAPI_PointsToBSpline fitter;
-  fitter.Init(centerlinePoints, splineDegree, 8); // 3阶曲线，最大分段数8
-  if (fitter.IsDone()) {
-    centerline = fitter.Curve();
-  } else {
-    // 简单回退：使用直线
-    gp_Lin line(centroid, axis);
+  gp_Dir mainAxis(eigenVectors(1, bestAxis), eigenVectors(2, bestAxis),
+                  eigenVectors(3, bestAxis));
+
+  // 4. 分段投影拟合
+  const int numSegments =
+      std::max(3, static_cast<int>(maxSpan / (2 * avgSpacing)));
+  std::vector<gp_Pnt> validCenterPoints; // 改用vector存储有效点
+
+  for (int seg = 0; seg <= numSegments; ++seg) {
+    double proj = bestMinProj + seg * (bestMaxProj - bestMinProj) / numSegments;
+    gp_Pnt basePoint = gp_Pnt(centroid).Translated(mainAxis.XYZ() * proj);
+
+    gp_Pln sectionPlane(basePoint, mainAxis);
+    gp_XYZ localCentroid(0, 0, 0);
+    int count = 0;
+
+    for (const auto &p : points) {
+      double distToPlane = fabs(sectionPlane.Distance(p));
+      if (distToPlane < 2.0 * avgSpacing) {
+        localCentroid += p.XYZ();
+        count++;
+      }
+    }
+
+    if (count > 3) {
+      localCentroid /= count;
+      validCenterPoints.push_back(gp_Pnt(localCentroid));
+    }
+  }
+
+  // 定义距离阈值，用于判断两点是否重复
+  const double distanceThreshold = Precision::Confusion();
+  // 对 validCenterPoints 进行排序
+  std::sort(validCenterPoints.begin(), validCenterPoints.end(),
+            [](const gp_Pnt &a, const gp_Pnt &b) {
+              if (a.X() != b.X())
+                return a.X() < b.X();
+              if (a.Y() != b.Y())
+                return a.Y() < b.Y();
+              return a.Z() < b.Z();
+            });
+
+  // 移除重复点
+  auto last =
+      std::unique(validCenterPoints.begin(), validCenterPoints.end(),
+                  [distanceThreshold](const gp_Pnt &a, const gp_Pnt &b) {
+                    return a.Distance(b) < distanceThreshold;
+                  });
+  validCenterPoints.erase(last, validCenterPoints.end());
+
+  // 5. 分段拟合B样条
+  if (validCenterPoints.size() < 2) {
+    gp_Lin line(centroid, mainAxis);
     return new Geom_Line(line);
   }
 
-  // 11. 迭代优化中心线
-  for (int iter = 0; iter < 5; ++iter) {
-    // 11.1 沿中心线均匀采样
+  auto compute_section_center = [&](const gp_Pnt &curve_point,
+                                    const gp_Vec &tangent) -> gp_Pnt {
+    if (tangent.Magnitude() < Precision::Confusion())
+      return curve_point;
+
+    // 从 validCenterPoints 中找到最接近 curve_point 的点及其前后点
+    size_t closestIndex = 0;
+    double minDistance = DBL_MAX;
+    for (size_t i = 0; i < validCenterPoints.size(); ++i) {
+      double dist = curve_point.Distance(validCenterPoints[i]);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestIndex = i;
+      }
+    }
+
+    // 确保有足够的点来计算曲率
+    double curvature = 0.0;
+    if (closestIndex > 0 && closestIndex < validCenterPoints.size() - 1) {
+      gp_Pnt p0 = validCenterPoints[closestIndex - 1];
+      gp_Pnt p1 = validCenterPoints[closestIndex];
+      gp_Pnt p2 = validCenterPoints[closestIndex + 1];
+
+      gp_Vec v1 = gp_Vec(p0, p1);
+      gp_Vec v2 = gp_Vec(p1, p2);
+
+      // 计算曲率的近似值
+      gp_Vec crossProduct = v1.Crossed(v2);
+      double crossMag = crossProduct.Magnitude();
+      double v1Mag = v1.Magnitude();
+      double v2Mag = v2.Magnitude();
+      if (v1Mag > Precision::Confusion() && v2Mag > Precision::Confusion()) {
+        curvature = crossMag / (v1Mag * v2Mag * (v1Mag + v2Mag));
+      }
+    }
+
+    // 动态调整搜索半径
+    double radius = (curvature > 1e-3) ? 1.5 * avgSpacing : 4.0 * avgSpacing;
+    gp_Pln section_plane(curve_point, gp_Dir(tangent));
+
+    gp_XYZ weightedCentroid(0, 0, 0);
+    double totalWeight = 0.0;
+
+    for (const auto &p : points) {
+      double distToPlane = section_plane.Distance(p);
+      double distToPoint = curve_point.Distance(p);
+      if (distToPlane < radius && distToPoint < 2.0 * radius) {
+        // 计算权重，距离越近权重越高
+        double weight = 1.0 / (1.0 + distToPoint);
+        weightedCentroid += p.XYZ() * weight;
+        totalWeight += weight;
+      }
+    }
+
+    return (totalWeight > 0.0) ? gp_Pnt(weightedCentroid / totalWeight)
+                               : curve_point;
+  };
+  // 获取初始曲线端点
+  gp_Pnt startPoint = validCenterPoints.front();
+  gp_Pnt endPoint = validCenterPoints.back();
+
+  // 改进切线计算，使用更多点
+  gp_Vec startTangent = gp_Vec(validCenterPoints[1], startPoint).Normalized();
+  gp_Vec endTangent =
+      gp_Vec(endPoint, validCenterPoints[validCenterPoints.size() - 2])
+          .Normalized();
+
+  // 计算精确端面中心
+  gp_Pnt startCenter = compute_section_center(startPoint, startTangent);
+  gp_Pnt endCenter = compute_section_center(endPoint, endTangent);
+
+  // 替换首尾点为端面中心
+  validCenterPoints.front() = startCenter;
+  validCenterPoints.back() = endCenter;
+
+  // 创建插值点集
+  Handle(TColgp_HArray1OfPnt) centerlinePoints =
+      new TColgp_HArray1OfPnt(1, validCenterPoints.size());
+  for (int i = 0; i < validCenterPoints.size(); ++i) {
+    centerlinePoints->SetValue(i + 1, validCenterPoints[i]);
+  }
+
+  Handle(Geom_BSplineCurve) centerline;
+
+  // 修正3：使用插值而非逼近
+  GeomAPI_Interpolate interpolator(centerlinePoints, Standard_False,
+                                   Precision::Confusion());
+  interpolator.Perform();
+
+  if (interpolator.IsDone()) {
+    centerline = interpolator.Curve();
+  } else {
+    // 回退：直线拟合
+    gp_Lin line(centroid, mainAxis);
+    return new Geom_Line(line);
+  }
+
+  // 6. 曲率自适应迭代优化 - 修正后的曲率计算
+  const int maxIterations = 20;
+
+  for (int iter = 0; iter < maxIterations; ++iter) {
+    bool significantChange = false;
     GeomAdaptor_Curve adaptor(centerline);
-    GCPnts_UniformAbscissa abscissa(adaptor, numSamples);
+
+    // 动态采样数
+    int adaptiveSamples = std::min(100, std::max(20, numSamples));
+    GCPnts_UniformAbscissa abscissa(adaptor, adaptiveSamples);
     if (!abscissa.IsDone())
       break;
 
-    // 11.2 更新中心线点
-    TColgp_Array1OfPnt centerlinePoints(1, abscissa.NbPoints());
-    for (int i = 1; i <= abscissa.NbPoints(); i++) {
-      double param = abscissa.Parameter(i);
-      gp_Pnt point = centerline->Value(param);
+    Handle(TColgp_HArray1OfPnt) newPoints =
+        new TColgp_HArray1OfPnt(1, abscissa.NbPoints());
 
-      // 11.3 收集附近点
-      double searchRadius = 0.1 * (maxProjection - minProjection);
+    for (int i = 1; i <= abscissa.NbPoints(); ++i) {
+      bool isStart = (i == 1);
+      bool isEnd = (i == abscissa.NbPoints());
+      if (isStart) {
+        newPoints->SetValue(i, startCenter);
+        continue;
+      }
+      if (isEnd) {
+        newPoints->SetValue(i, endCenter);
+        continue;
+      }
+      double param = abscissa.Parameter(i);
+      gp_Pnt point;
+      gp_Vec tangent, normal;
+
+      // 直接计算导矢（避免使用GeomLProp_CLProps）
+      centerline->D1(param, point, tangent);
+      centerline->D2(param, point, tangent, normal);
+
+      // 计算曲率
+      double curvature = 0.0;
+      const double tangentMag = tangent.Magnitude();
+      if (tangentMag > Precision::Confusion()) {
+        const double normalMag = normal.Magnitude();
+        curvature = normalMag / (tangentMag * tangentMag);
+      }
+
+      // 动态搜索半径
+      double searchRadius =
+          (curvature > 1e-3) ? 0.5 * avgSpacing : 2.0 * avgSpacing;
+
       gp_XYZ localCentroid(0, 0, 0);
       int count = 0;
-
+      gp_Pln plane(point, gp_Dir(tangent));
       for (const auto &p : points) {
-        if (point.Distance(p) < searchRadius) {
+        if (point.Distance(p) < searchRadius &&
+            fabs(plane.Distance(p)) < 0.5 * searchRadius) {
           localCentroid += p.XYZ();
           count++;
         }
       }
-
-      // 11.4 向局部重心方向移动
+      gp_Pnt newPoint = point;
       if (count > 0) {
         localCentroid /= count;
-        gp_Pnt newPoint = point.XYZ() * (1.0 - smoothingFactor) +
-                          localCentroid * smoothingFactor;
-        centerlinePoints.SetValue(i, newPoint);
-      } else {
-        centerlinePoints.SetValue(i, point);
+        double blendFactor =
+            smoothingFactor * exp(-iter / static_cast<double>(maxIterations));
+        newPoint = gp_Pnt(point.XYZ() * (1.0 - blendFactor) +
+                          localCentroid * blendFactor);
+        if (newPoint.Distance(point) > 0.01 * avgSpacing) {
+          significantChange = true;
+        }
       }
+      newPoints->SetValue(i, newPoint);
     }
 
-    // 11.5 重新拟合曲线
-    fitter.Init(centerlinePoints, splineDegree, 8);
-    if (fitter.IsDone()) {
-      centerline = fitter.Curve();
+    if (!significantChange)
+      break;
+
+    // 重新拟合
+    GeomAPI_Interpolate refitter(newPoints, Standard_False, 0.001 * bboxDiag);
+    refitter.Perform();
+    if (refitter.IsDone()) {
+      centerline = refitter.Curve();
     } else {
-      break; // 保持上一次拟合结果
+      break;
     }
   }
+
+  // 7. 第二阶段延伸：从端面中心点精确延伸（关键改进）
+  const auto extend_centerline = [&](Handle(Geom_BSplineCurve) & curve) {
+    if (curve.IsNull() || curve->NbPoles() < 2)
+      return;
+
+    // 获取端面中心点处的切线方向
+    gp_Vec startTangent, endTangent;
+    gp_Pnt p1, p2;
+    curve->D1(curve->FirstParameter(), p1, startTangent);
+    curve->D1(curve->LastParameter(), p2, endTangent);
+
+    // 单位化切向量
+    if (startTangent.Magnitude() > Precision::Confusion())
+      startTangent.Normalize();
+    if (endTangent.Magnitude() > Precision::Confusion())
+      endTangent.Normalize();
+
+    // 动态延伸长度（包围盒对角线的10-15%）
+    const double extendLen = 0.13 * bboxDiag;
+
+    // 从端面中心点开始延伸
+    const gp_Pnt newStart = startCenter.Translated(-extendLen * startTangent);
+    const gp_Pnt newEnd = endCenter.Translated(extendLen * endTangent);
+
+    // 创建延伸后的点集（保持内部点不变）
+    Handle(TColgp_HArray1OfPnt) newPoles =
+        new TColgp_HArray1OfPnt(1, curve->NbPoles());
+
+    for (int i = 1; i <= curve->NbPoles(); ++i) {
+      gp_Pnt p = curve->Pole(i);
+      if (i == 1)
+        p = newStart;
+      else if (i == curve->NbPoles())
+        p = newEnd;
+      newPoles->SetValue(i, p);
+    }
+
+    // 重建曲线并保持参数化
+    curve = new Geom_BSplineCurve(newPoles->Array1(), curve->Knots(),
+                                  curve->Multiplicities(), curve->Degree(),
+                                  curve->IsPeriodic());
+  };
+
+  // 应用智能延伸
+  extend_centerline(centerline);
 
   return centerline;
 }
 
-// 优化中心线（确保平滑且位于形状中心）
-Handle(Geom_Curve)
-    optimize_centerline(const Handle(Geom_Curve) & centerline,
-                        const std::vector<gp_Pnt> &points, int numIterations,
-                        double smoothingFactor) {
-  if (centerline.IsNull() || points.empty()) {
-    return centerline;
-  }
-
-  Handle(Geom_Curve) optimizedCurve = centerline;
-
-  for (int iter = 0; iter < numIterations; ++iter) {
-    // 1. 沿曲线均匀采样
-    GeomAdaptor_Curve adaptor(optimizedCurve);
-    int numSamples = 50;
-    GCPnts_UniformAbscissa abscissa(adaptor, numSamples);
-    if (!abscissa.IsDone())
-      break;
-
-    // 2. 准备新控制点
-    TColgp_Array1OfPnt newPoints(1, abscissa.NbPoints());
-    TColStd_Array1OfReal params(1, abscissa.NbPoints());
-
-    for (int i = 1; i <= abscissa.NbPoints(); i++) {
-      double param = abscissa.Parameter(i);
-      params.SetValue(i, param);
-      newPoints.SetValue(i, optimizedCurve->Value(param));
-    }
-
-    // 3. 优化每个点
-    for (int i = 1; i <= newPoints.Length(); ++i) {
-      gp_Pnt point = newPoints.Value(i);
-      double param = params.Value(i);
-
-      // 3.1 计算当前点的法向平面
-      gp_Vec tangent;
-      optimizedCurve->D1(param, point, tangent);
-      if (tangent.Magnitude() < Precision::Confusion())
-        continue;
-
-      gp_Dir normalDir(tangent);
-      gp_Pln sectionPlane(point, normalDir);
-
-      // 3.2 收集截面附近点
-      std::vector<gp_Pnt> sectionPoints;
-      for (const auto &p : points) {
-        if (sectionPlane.Distance(p) < 0.1 * tangent.Magnitude()) {
-          sectionPoints.push_back(p);
-        }
-      }
-
-      // 3.3 计算截面重心
-      if (!sectionPoints.empty()) {
-        gp_XYZ centroid(0, 0, 0);
-        for (const auto &p : sectionPoints) {
-          centroid += p.XYZ();
-        }
-        centroid /= sectionPoints.size();
-
-        // 3.4 向重心方向移动
-        gp_Pnt newPoint =
-            point.XYZ() * (1.0 - smoothingFactor) + centroid * smoothingFactor;
-        newPoints.SetValue(i, newPoint);
-      }
-    }
-
-    // 4. 重新拟合曲线
-    GeomAPI_PointsToBSpline fitter;
-    fitter.Init(newPoints, 3, 8); // 3阶B样条
-    if (fitter.IsDone()) {
-      optimizedCurve = fitter.Curve();
-    } else {
-      break; // 保持上一次拟合结果
-    }
-  }
-
-  return optimizedCurve;
-}
-
-TopoDS_Shape create_bounding_pipe_shape(const bounding_pipe_section &section,
+TopoDS_Shape create_bounding_pipe_shape(double radius,
                                         const TopoDS_Wire &path) {
   if (path.IsNull()) {
     return TopoDS_Shape();
@@ -323,10 +455,19 @@ TopoDS_Shape create_bounding_pipe_shape(const bounding_pipe_section &section,
   TopoDS_Wire wire;
   BRepBuilderAPI_MakeWire wireMaker;
 
-  gp_Ax2 axis(section.center, section.direction);
-  Handle(Geom_Circle) circle = new Geom_Circle(axis, section.radius);
-  TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(circle);
-  wireMaker.Add(edge);
+  BRepAdaptor_CompCurve curveAdaptor(path);
+
+  {
+
+    gp_Pnt startPoint;
+    gp_Vec startTangent;
+    curveAdaptor.D1(curveAdaptor.FirstParameter(), startPoint, startTangent);
+
+    gp_Ax2 axis(startPoint, startTangent);
+    Handle(Geom_Circle) circle = new Geom_Circle(axis, radius);
+    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(circle);
+    wireMaker.Add(edge);
+  }
 
   if (!wireMaker.IsDone()) {
     return TopoDS_Shape();
@@ -336,7 +477,13 @@ TopoDS_Shape create_bounding_pipe_shape(const bounding_pipe_section &section,
   // 2. 创建放样曲面
   BRepOffsetAPI_MakePipeShell pipeMaker(path);
   pipeMaker.Add(wire);
+  pipeMaker.Build();
+
   if (!pipeMaker.IsDone()) {
+    return TopoDS_Shape();
+  }
+
+  if (!pipeMaker.MakeSolid()) {
     return TopoDS_Shape();
   }
 
@@ -349,177 +496,6 @@ TopoDS_Shape create_bounding_pipe_shape(const bounding_pipe_section &section,
   return fixer.Shape();
 }
 
-// 创建边界管道形状
-TopoDS_Shape create_bounding_pipe_shape(const bounding_pipe &boundPipe) {
-  if (boundPipe.centerline.IsNull()) {
-    return TopoDS_Shape();
-  }
-
-  BRepBuilderAPI_MakeEdge edgeMaker1(boundPipe.centerline);
-  auto path = BRepBuilderAPI_MakeWire(edgeMaker1.Edge()).Wire();
-
-  return create_bounding_pipe_shape(boundPipe.sections, path);
-}
-
-// 辅助函数：提取管道的内外边界
-void extract_pipe_boundaries(const TopoDS_Shape &pipeShape,
-                             TopoDS_Shape &outerBoundary,
-                             TopoDS_Shape &innerBoundary) {
-  // 获取所有边
-  TopTools_IndexedMapOfShape edges;
-  TopExp::MapShapes(pipeShape, TopAbs_EDGE, edges);
-
-  // 按长度排序边
-  std::vector<std::pair<double, TopoDS_Edge>> sortedEdges;
-  for (int i = 1; i <= edges.Extent(); i++) {
-    TopoDS_Edge edge = TopoDS::Edge(edges(i));
-    BRepAdaptor_Curve curve(edge);
-    double length = GCPnts_AbscissaPoint::Length(curve);
-    sortedEdges.push_back(std::make_pair(length, edge));
-  }
-
-  // 按长度降序排序
-  std::sort(sortedEdges.begin(), sortedEdges.end(),
-            [](const auto &a, const auto &b) { return a.first > b.first; });
-
-  // 最长的两条边作为边界
-  if (sortedEdges.size() >= 2) {
-    outerBoundary = sortedEdges[0].second;
-    innerBoundary = sortedEdges[1].second;
-  } else if (sortedEdges.size() == 1) {
-    outerBoundary = sortedEdges[0].second;
-    innerBoundary = sortedEdges[0].second;
-  }
-}
-
-// 辅助函数：计算边的长度
-double calculate_edge_length(const TopoDS_Edge &edge) {
-  BRepAdaptor_Curve curve(edge);
-  GCPnts_UniformAbscissa abscissa(curve, 10);
-  if (!abscissa.IsDone())
-    return 0.0;
-  return abscissa.Parameter(abscissa.NbPoints());
-}
-
-// 辅助函数：计算形状的长度
-double calculate_shape_length(const TopoDS_Shape &shape) {
-  double totalLength = 0.0;
-  TopTools_IndexedMapOfShape edges;
-  TopExp::MapShapes(shape, TopAbs_EDGE, edges);
-
-  for (int i = 1; i <= edges.Extent(); i++) {
-    totalLength += calculate_edge_length(TopoDS::Edge(edges(i)));
-  }
-
-  return totalLength;
-}
-
-// 辅助函数：沿管道长度获取点
-gp_Pnt get_point_at_distance(const TopoDS_Shape &pipeShape, double distance) {
-  // 使用管道形状的线性属性
-  GProp_GProps gprops;
-  BRepGProp::LinearProperties(pipeShape, gprops);
-  gp_Pnt centroid = gprops.CentreOfMass();
-
-  // 获取主要方向
-  gp_Mat inertia = gprops.MatrixOfInertia();
-  gp_Vec principalVec = inertia.Diagonal();
-
-  // 归一化
-  if (principalVec.Magnitude() > 1e-5) {
-    principalVec.Normalize();
-  } else {
-    principalVec = gp_Vec(1, 0, 0); // 默认方向
-  }
-
-  // 沿主方向移动
-  return centroid.Translated(principalVec * distance);
-}
-
-// 辅助函数：找到中轴点（到内外边界距离相等的点）
-gp_Pnt find_medial_point(const gp_Pnt &samplePoint,
-                         const TopoDS_Shape &outerBoundary,
-                         const TopoDS_Shape &innerBoundary) {
-  // 创建采样点顶点
-  TopoDS_Vertex sampleVertex = BRepBuilderAPI_MakeVertex(samplePoint);
-
-  // 计算到外边界的最小距离 - 使用正确的初始化
-  BRepExtrema_DistShapeShape distToOuter(sampleVertex, outerBoundary,
-                                         Extrema_ExtFlag_MINMAX,
-                                         Extrema_ExtAlgo_Grad);
-  distToOuter.Perform();
-  double distOuter = distToOuter.Value();
-  gp_Pnt outerPoint = distToOuter.PointOnShape2(1);
-
-  // 计算到内边界的最小距离 - 使用正确的初始化
-  BRepExtrema_DistShapeShape distToInner(sampleVertex, innerBoundary,
-                                         Extrema_ExtFlag_MINMAX,
-                                         Extrema_ExtAlgo_Grad);
-  distToInner.Perform();
-  double distInner = distToInner.Value();
-  gp_Pnt innerPoint = distToInner.PointOnShape2(1);
-
-  // 计算中点
-  double totalDist = distOuter + distInner;
-  if (totalDist < Precision::Confusion()) {
-    return samplePoint; // 避免除零
-  }
-
-  double weightOuter = distInner / totalDist;
-  double weightInner = distOuter / totalDist;
-
-  double x = weightOuter * outerPoint.X() + weightInner * innerPoint.X();
-  double y = weightOuter * outerPoint.Y() + weightInner * innerPoint.Y();
-  double z = weightOuter * outerPoint.Z() + weightInner * innerPoint.Z();
-
-  return gp_Pnt(x, y, z);
-}
-
-// 改进的路径线提取函数
-TopoDS_Wire extract_path_wire_from_pipe_shape(const TopoDS_Shape &pipeShape) {
-  // 1. 获取管道边界
-  TopoDS_Shape outerBoundary;
-  TopoDS_Shape innerBoundary;
-  extract_pipe_boundaries(pipeShape, outerBoundary, innerBoundary);
-
-  // 2. 沿管道长度采样点
-  std::vector<gp_Pnt> centerPoints;
-  const int numSamples = 100;
-
-  // 计算管道总长度
-  GProp_GProps gprops;
-  BRepGProp::LinearProperties(pipeShape, gprops);
-  double totalLength = gprops.Mass();
-
-  // 3. 沿管道均匀采样
-  for (int i = 0; i < numSamples; i++) {
-    double param = (double)i / (numSamples - 1);
-    double distance = param * totalLength;
-
-    // 获取当前采样点的近似位置
-    gp_Pnt samplePoint = get_point_at_distance(pipeShape, distance);
-
-    // 找到到内外边界距离相等的点
-    gp_Pnt centerPoint =
-        find_medial_point(samplePoint, outerBoundary, innerBoundary);
-    centerPoints.push_back(centerPoint);
-  }
-
-  // 4. 拟合中心线曲线
-  TColgp_Array1OfPnt points(1, centerPoints.size());
-  for (size_t i = 0; i < centerPoints.size(); i++) {
-    points.SetValue(i + 1, centerPoints[i]);
-  }
-
-  GeomAPI_PointsToBSpline fitter;
-  fitter.Init(points, 3, 8, GeomAbs_C2, 1e-5);
-  Handle(Geom_BSplineCurve) centerCurve = fitter.Curve();
-
-  // 5. 创建中心线
-  TopoDS_Edge centerEdge = BRepBuilderAPI_MakeEdge(centerCurve).Edge();
-  return BRepBuilderAPI_MakeWire(centerEdge).Wire();
-}
-
 bounding_pipe extract_bounding_pipe_from_shape(const TopoDS_Shape &shape,
                                                const gp_Dir *userDir,
                                                int numSamplePoints) {
@@ -530,142 +506,82 @@ bounding_pipe extract_bounding_pipe_from_shape(const TopoDS_Shape &shape,
     return result;
   }
 
-  // 2. 检查是否使用用户指定的方向
-  bool useUserDirection =
-      (userDir != nullptr &&
-       !userDir->IsEqual(gp_Dir(0, 0, 0), Precision::Confusion()));
+  // 2. 计算包围盒用于后续参考
+  Bnd_Box bbox;
+  BRepBndLib::Add(shape, bbox);
+  double xmin, ymin, zmin, xmax, ymax, zmax;
+  bbox.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+  double bboxDiag =
+      sqrt(pow(xmax - xmin, 2) + pow(ymax - ymin, 2) + pow(zmax - zmin, 2));
+  const double avgSpacing = bboxDiag / 100.0; // 估算平均点间距
 
-  // 3. 尝试提取路径线(Wire) - 仅在未指定方向时执行
-  if (!useUserDirection) {
-    // 尝试提取路径线
-    TopoDS_Wire pathWire = extract_path_wire_from_pipe_shape(shape);
+  // 3. 检查是否使用用户指定的方向
+  bool useUserDirection = (userDir != nullptr && gp_Vec(*userDir).Magnitude() >
+                                                     Precision::Confusion());
 
-    if (!pathWire.IsNull()) {
-      // 3.1 创建复合曲线适配器
-      BRepAdaptor_CompCurve compCurve(pathWire);
-
-      // 3.2 获取参数范围
-      double first = compCurve.FirstParameter();
-      double last = compCurve.LastParameter();
-
-      // 3.3 采样点以创建B样条曲线
-      const int numSamplePoints = 50; // 适当减少点数提高性能
-      GCPnts_UniformAbscissa abscissa;
-      abscissa.Initialize(compCurve, numSamplePoints, first, last);
-
-      if (abscissa.IsDone()) {
-        TColgp_Array1OfPnt points(1, abscissa.NbPoints());
-        for (int i = 1; i <= abscissa.NbPoints(); i++) {
-          double param = abscissa.Parameter(i);
-          gp_Pnt p = compCurve.Value(param);
-          points.SetValue(i, p);
-        }
-
-        // 3.4 拟合B样条曲线
-        GeomAPI_PointsToBSpline fitter;
-        fitter.Init(points); // 使用插值而非逼近
-
-        if (fitter.IsDone()) {
-          result.centerline = fitter.Curve();
-
-          // 优化曲线参数化
-          GeomAdaptor_Curve adaptor(result.centerline);
-          GCPnts_UniformAbscissa reparam(adaptor, numSamplePoints);
-          if (reparam.IsDone()) {
-            TColgp_Array1OfPnt refinedPoints(1, reparam.NbPoints());
-            for (int i = 1; i <= reparam.NbPoints(); i++) {
-              refinedPoints.SetValue(
-                  i, result.centerline->Value(reparam.Parameter(i)));
-            }
-
-            GeomAPI_PointsToBSpline refitter;
-            refitter.Init(refinedPoints, 3, GeomAbs_C2, 1.0e-3);
-            if (refitter.IsDone()) {
-              result.centerline = refitter.Curve();
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // 4. 如果未提取到中心线，尝试使用PCA方法或用户指定方向
-  if (result.centerline.IsNull()) {
-    result.centerline =
-        fit_centerline_from_shape(shape, numSamplePoints, 3, 0.2);
-  }
+  // 4. 提取中心线
+  result.centerline = fit_centerline_from_shape(shape, numSamplePoints, 3, 0.2);
 
   // 5. 提取截面信息
   if (!result.centerline.IsNull()) {
+    // 5.1 收集所有顶点
+    std::vector<gp_Pnt> allPoints;
+    TopExp_Explorer vertexExplorer(shape, TopAbs_VERTEX);
+    for (; vertexExplorer.More(); vertexExplorer.Next()) {
+      TopoDS_Vertex vertex = TopoDS::Vertex(vertexExplorer.Current());
+      allPoints.push_back(BRep_Tool::Pnt(vertex));
+    }
+
+    // 5.2 从边采样点（如果顶点不足）
+    if (allPoints.size() < 50) {
+      TopExp_Explorer edgeExplorer(shape, TopAbs_EDGE);
+      for (; edgeExplorer.More(); edgeExplorer.Next()) {
+        TopoDS_Edge edge = TopoDS::Edge(edgeExplorer.Current());
+        BRepAdaptor_Curve curve(edge);
+        double first = curve.FirstParameter();
+        double last = curve.LastParameter();
+        int numSamplesPerEdge = 10;
+        for (int i = 0; i < numSamplesPerEdge; i++) {
+          double param = first + i * (last - first) / (numSamplesPerEdge - 1);
+          gp_Pnt point = curve.Value(param);
+          allPoints.push_back(point);
+        }
+      }
+    }
+
+    // 5.3 计算所有点到中心线的最大距离
     double maxRadius = 0.0;
     gp_Pnt maxCenterPoint;
     gp_Dir maxSectionDir;
 
-    // 5.1 沿中心线采样点
-    GeomAdaptor_Curve curveAdaptor(result.centerline);
-    int numSections = 20;
-    GCPnts_UniformAbscissa abscissa(curveAdaptor, numSections);
+    ShapeAnalysis_Curve sac;
+    for (const auto &point : allPoints) {
+      gp_Pnt nearestPoint;
+      double paramOnCurve;
+      double distance =
+          sac.Project(result.centerline, point, Precision::Confusion(),
+                      nearestPoint, paramOnCurve);
 
-    if (abscissa.IsDone()) {
-      for (int i = 1; i <= abscissa.NbPoints(); i++) {
-        double param = abscissa.Parameter(i);
-        gp_Pnt centerPoint;
+      if (distance > maxRadius) {
+        maxRadius = distance;
+        maxCenterPoint = nearestPoint;
+
+        // 获取该点的切线方向
         gp_Vec tangent;
-        result.centerline->D1(param, centerPoint, tangent);
-
-        // 5.2 确定截面方向
-        gp_Dir sectionDir;
-        if (useUserDirection) {
-          sectionDir = *userDir;
-        } else {
-          sectionDir = gp_Dir(tangent);
-        }
-
-        // 5.3 创建垂直于中心线的平面
-        gp_Pln sectionPlane(centerPoint, sectionDir);
-
-        // 5.4 计算该截面的半径
-        double currentRadius = 0.0;
-        TopExp_Explorer vertexExplorer(shape, TopAbs_VERTEX);
-        while (vertexExplorer.More()) {
-          TopoDS_Vertex vertex = TopoDS::Vertex(vertexExplorer.Current());
-          gp_Pnt point = BRep_Tool::Pnt(vertex);
-
-          double distToPlane = sectionPlane.Distance(point);
-          ShapeAnalysis_Curve sac;
-          gp_Pnt nearestPoint;
-          double paramOnCurve;
-          double distToCenter =
-              sac.Project(result.centerline, point, Precision::Confusion(),
-                          nearestPoint, paramOnCurve);
-
-          if (distToPlane < currentRadius * 0.5 || currentRadius == 0.0) {
-            double radius = centerPoint.Distance(point);
-            if (radius > currentRadius)
-              currentRadius = radius;
-          }
-
-          vertexExplorer.Next();
-        }
-
-        // 5.5 更新最大截面信息
-        if (currentRadius > maxRadius) {
-          maxRadius = currentRadius;
-          maxCenterPoint = centerPoint;
-          maxSectionDir = sectionDir;
+        result.centerline->D1(paramOnCurve, nearestPoint, tangent);
+        if (tangent.Magnitude() > Precision::Confusion()) {
+          maxSectionDir = gp_Dir(tangent);
         }
       }
     }
 
-    // 5.6 保存最大截面信息
+    // 5.4 添加安全余量并保存结果
     if (maxRadius > Precision::Confusion()) {
-      bounding_pipe_section section;
-      section.center = maxCenterPoint;
-      section.radius = maxRadius * 1.1; // 添加10%安全余量
-      section.direction = maxSectionDir;
-      result.sections = section;
+      maxRadius *= 1.2; // 20% 安全余量
+      result.radius = maxRadius;
     }
   }
+
   return result;
 }
 
@@ -680,11 +596,8 @@ TopoDS_Shape clip_with_bounding_pipe_and_split_distances(
   TopoDS_Shape fullPipe = shape;
   TopoDS_Wire pathWire =
       originalPathWire.IsNull()
-          ? boundPipe.centerline.IsNull()
-                ? extract_path_wire_from_pipe_shape(shape)
-                : BRepLib_MakeWire(
-                      BRepLib_MakeEdge(boundPipe.centerline).Edge())
-                      .Wire()
+          ? BRepLib_MakeWire(BRepLib_MakeEdge(boundPipe.centerline).Edge())
+                .Wire()
           : originalPathWire;
 
   if (pathWire.IsNull()) {
@@ -716,8 +629,7 @@ TopoDS_Shape clip_with_bounding_pipe_and_split_distances(
         clip_wire_between_distances_helper(pathWire, 0, splitDistances[0]);
 
     if (!frontWire.IsNull()) {
-      // 使用最大圆形截面创建裁切体
-      frontCut = create_bounding_pipe_shape(boundPipe.sections, frontWire);
+      frontCut = create_bounding_pipe_shape(boundPipe.radius, frontWire);
     }
   }
 
@@ -729,7 +641,7 @@ TopoDS_Shape clip_with_bounding_pipe_and_split_distances(
 
     if (!backWire.IsNull()) {
       // 使用最大圆形截面创建裁切体
-      backCut = create_bounding_pipe_shape(boundPipe.sections, backWire);
+      backCut = create_bounding_pipe_shape(boundPipe.radius, backWire);
     }
   }
 
@@ -761,11 +673,8 @@ TopoDS_Shape clip_with_bounding_pipe_by_ratios(
   // 计算路径总长度
   TopoDS_Wire pathWire =
       originalPathWire.IsNull()
-          ? boundPipe.centerline.IsNull()
-                ? extract_path_wire_from_pipe_shape(shape)
-                : BRepLib_MakeWire(
-                      BRepLib_MakeEdge(boundPipe.centerline).Edge())
-                      .Wire()
+          ? BRepLib_MakeWire(BRepLib_MakeEdge(boundPipe.centerline).Edge())
+                .Wire()
           : originalPathWire;
 
   if (pathWire.IsNull()) {
