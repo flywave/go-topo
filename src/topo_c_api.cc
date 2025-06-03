@@ -6148,7 +6148,6 @@ topo_clip_with_4d(topo_shape_t *shape, const work_progress_params_t *params) {
 
     flywave::topo::shape result = clip_with_topo4d(*shape->shp, cpp_params);
 
-    // 返回结果
     return new topo_shape_t{.shp =
                                 std::make_shared<flywave::topo::shape>(result)};
 
