@@ -1539,9 +1539,16 @@ TOPOCAPICALL pnt3d_t topo_combined_center_of_bound_box(topo_shape_t **objects,
                                                        int count);
 
 TOPOCAPICALL topo_shape_t *read_shape_from_step_file(const char *filename);
-TOPOCAPICALL topo_shape_t **read_shapes_from_step_file(const char *filename,
-                                                       int *count);
-TOPOCAPICALL void free_shapes_from_step(topo_shape_t **shapes, int count);
+
+typedef struct _topo_shape_and_location_t {
+  topo_shape_t *shape;
+  topo_location_t *location;
+} topo_shape_and_location_t;
+
+TOPOCAPICALL topo_shape_and_location_t **
+read_shapes_from_step_file(const char *filename, int *count);
+TOPOCAPICALL void free_shapes_from_step(topo_shape_and_location_t **shapes,
+                                        int count);
 
 TOPOCAPICALL char *topo_shape_write_to_step_buffer(topo_shape_t *shape,
                                                    int *buffer_size);
@@ -1589,12 +1596,12 @@ typedef enum { PROGRESS_RATIO = 0, PROGRESS_DISTANCE = 1 } progress_type_t;
 
 typedef struct {
   dir3d_t *direction;
-  double *radius;    
+  double *radius;
   topo_wire_t *original_path;
-  pnt3d_t *points; 
-  int point_count; 
+  pnt3d_t *points;
+  int point_count;
   progress_type_t _type;
-  double _range[2]; 
+  double _range[2];
 } work_progress_params_t;
 
 TOPOCAPICALL topo_shape_t *

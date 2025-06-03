@@ -1448,7 +1448,8 @@ void get_named_solids(const TopLoc_Location &location,
                       const std::string &prefix, unsigned int &id,
                       const Handle(XCAFDoc_ShapeTool) shapeTool,
                       Handle(XCAFDoc_ColorTool) colorTool,
-                      const TDF_Label label, std::vector<shape> &namedSolids) {
+                      const TDF_Label label,
+                      std::vector<shape_and_location> &namedSolids) {
   TDF_Label referredLabel{label};
   if (shapeTool->IsReference(label))
     shapeTool->GetReferredShape(label, referredLabel);
@@ -1475,9 +1476,7 @@ void get_named_solids(const TopLoc_Location &location,
     if (shape.ShapeType() == TopAbs_SOLID ||
         shape.ShapeType() == TopAbs_COMPOUND ||
         shape.ShapeType() == TopAbs_COMPSOLID) {
-      BRepBuilderAPI_Transform transform(shape, localLocation, Standard_True);
-
-      topo::shape shp(transform.Shape());
+      topo::shape shp(shape);
       std::string nname = get_shape_name(shape, shapeTool);
       std::string fullName{prefix + "/" + nname};
       shp.set_label(fullName.c_str());
@@ -1486,12 +1485,13 @@ void get_named_solids(const TopLoc_Location &location,
       get_shape_color(shape, shapeTool, colorTool, color);
       shp.set_surface_colour(color);
 
-      namedSolids.emplace_back(shp);
+      namedSolids.push_back({.shp = shp, .local = localLocation});
     }
   }
 }
 
-std::vector<shape> read_shapes_from_step(const std::string &filename) {
+std::vector<shape_and_location>
+read_shapes_from_step(const std::string &filename) {
   Handle(TDocStd_Document) doc;
   Handle(XCAFApp_Application) app = XCAFApp_Application::GetApplication();
   app->NewDocument("FWXCAF", doc);
@@ -1520,7 +1520,7 @@ std::vector<shape> read_shapes_from_step(const std::string &filename) {
   TDF_LabelSequence topLevelShapes;
   shapeTool->GetFreeShapes(topLevelShapes);
   unsigned int id{1};
-  std::vector<shape> namedSolids;
+  std::vector<shape_and_location> namedSolids;
   for (Standard_Integer iLabel = 1; iLabel <= topLevelShapes.Length();
        ++iLabel) {
     get_named_solids(TopLoc_Location{}, "", id, shapeTool, colorTool,

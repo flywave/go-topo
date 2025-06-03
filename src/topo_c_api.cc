@@ -5951,32 +5951,35 @@ TOPOCAPICALL char *topo_shape_write_to_step_buffer(topo_shape_t *shape,
   return buffer;
 }
 
-TOPOCAPICALL topo_shape_t **read_shapes_from_step_file(const char *filename,
-                                                       int *count) {
+TOPOCAPICALL topo_shape_and_location_t **
+read_shapes_from_step_file(const char *filename, int *count) {
   if (!filename || !count)
     return nullptr;
 
   if (*count == 0) {
     return nullptr;
   }
-  std::vector<flywave::topo::shape> shapes =
+  std::vector<flywave::topo::shape_and_location> shapes =
       flywave::topo::read_shapes_from_step(filename);
   *count = shapes.size();
 
-  topo_shape_t **result =
-      (topo_shape_t **)malloc(*count * sizeof(topo_shape_t *));
+  topo_shape_and_location_t **result = (topo_shape_and_location_t **)malloc(
+      *count * sizeof(topo_shape_and_location_t *));
   if (!result)
     return nullptr;
 
   for (int i = 1; i <= *count; i++) {
-    result[i - 1] = new topo_shape_t{
-        .shp = std::make_shared<flywave::topo::shape>(shapes[i - 1])};
+    result[i - 1] = new topo_shape_and_location_t{
+        .shape = new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
+                                      shapes[i - 1].shp)},
+        .location = new topo_location_t{
+            .loc = flywave::topo::topo_location(shapes[i - 1].local)}};
   }
 
   return result;
 }
 
-TOPOCAPICALL void free_shapes_from_step(topo_shape_t **shapes, int count) {
+TOPOCAPICALL void free_shapes_from_step(topo_shape_and_location_t **shapes, int count) {
   if (!shapes)
     return;
   free(shapes);
