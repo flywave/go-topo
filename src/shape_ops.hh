@@ -158,6 +158,8 @@ gp_Pnt combined_center(const std::vector<shape> &objects);
 
 gp_Pnt combined_center_of_bound_box(const std::vector<shape> &objects);
 
+std::vector<shape> read_shapes_from_step(const std::string &filename);
+
 shape read_shape_from_step(const std::string &filename);
 
 std::string write_shape_to_step(const shape &shp);

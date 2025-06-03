@@ -342,6 +342,26 @@ func ReadShapeFromStepFile(f string) *Shape {
 	return NewShape(res)
 }
 
+func ReadShapesFromStepFile(filename string) ([]*Shape, error) {
+	cFilename := C.CString(filename)
+	defer C.free(unsafe.Pointer(cFilename))
+
+	var count C.int
+	cShapes := C.read_shapes_from_step_file(cFilename, &count)
+	if cShapes == nil || count == 0 {
+		return nil, errors.New("failed to read shapes from STEP file")
+	}
+	defer C.free_shapes_from_step(cShapes, count)
+	shapesSlice := (*[1 << 30]*C.struct__topo_shape_t)(unsafe.Pointer(cShapes))[:count:count]
+
+	shapes := make([]*Shape, int(count))
+	for i := 0; i < int(count); i++ {
+		shapes[i] = NewShape(shapesSlice[i])
+	}
+
+	return shapes, nil
+}
+
 func WriteShapeToStepBuffer(shape *Shape) ([]byte, error) {
 	var bufferSize C.int
 	cBuffer := C.topo_shape_write_to_step_buffer(shape.inner.val, &bufferSize)

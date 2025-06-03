@@ -11,6 +11,7 @@
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
+#include <BRepBuilderAPI_Transform.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepFeat_MakeDPrism.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
@@ -32,9 +33,12 @@
 #include <GeomAbs_Shape.hxx>
 #include <Geom_TrimmedCurve.hxx>
 #include <LocOpe_DPrism.hxx>
+#include <STEPCAFControl_Reader.hxx>
 #include <STEPControl_Reader.hxx>
 #include <STEPControl_Writer.hxx>
 #include <ShapeUpgrade_UnifySameDomain.hxx>
+#include <TDataStd_Name.hxx>
+#include <TDocStd_Document.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <TopoDS.hxx>
@@ -45,6 +49,11 @@
 #include <TopoDS_Solid.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
+#include <XCAFApp_Application.hxx>
+#include <XCAFDoc_ColorTool.hxx>
+#include <XCAFDoc_ColorType.hxx>
+#include <XCAFDoc_DocumentTool.hxx>
+#include <XCAFDoc_ShapeTool.hxx>
 #include <algorithm>
 #include <cmath> // for M_PI
 #include <gce_MakeDir.hxx>
@@ -54,6 +63,7 @@
 #include <gp_Lin.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Vec.hxx>
+#include <iostream>
 #include <stdexcept>
 #include <vector>
 
@@ -1351,6 +1361,172 @@ gp_Pnt combined_center_of_bound_box(const std::vector<shape> &objects) {
   double xMin, yMin, zMin, xMax, yMax, zMax;
   combinedBox.Get(xMin, yMin, zMin, xMax, yMax, zMax);
   return gp_Pnt((xMin + xMax) / 2.0, (yMin + yMax) / 2.0, (zMin + zMax) / 2.0);
+}
+
+namespace {
+
+std::string get_label_name_no_ref(const TDF_Label &label) {
+  Handle(TDataStd_Name) nameAttribute = new TDataStd_Name();
+  if (!label.FindAttribute(nameAttribute->GetID(), nameAttribute)) {
+    return std::string();
+  }
+
+  Standard_Integer utf8NameLength = nameAttribute->Get().LengthOfCString();
+  char *nameBuf = new char[utf8NameLength + 1];
+  nameAttribute->Get().ToUTF8CString(nameBuf);
+  std::string name(nameBuf, utf8NameLength);
+  delete[] nameBuf;
+  return name;
+}
+
+std::string get_label_name(const TDF_Label &label,
+                           const Handle(XCAFDoc_ShapeTool) & shapeTool) {
+  if (XCAFDoc_ShapeTool::IsReference(label)) {
+    TDF_Label referredShapeLabel;
+    shapeTool->GetReferredShape(label, referredShapeLabel);
+    return get_label_name(referredShapeLabel, shapeTool);
+  }
+  return get_label_name_no_ref(label);
+}
+
+std::string get_shape_name(const TopoDS_Shape &shape,
+                           const Handle(XCAFDoc_ShapeTool) & shapeTool) {
+  TDF_Label shapeLabel;
+  if (!shapeTool->Search(shape, shapeLabel)) {
+    return std::string();
+  }
+  return get_label_name(shapeLabel, shapeTool);
+}
+
+bool get_label_color_no_ref(const TDF_Label &label,
+                            const Handle(XCAFDoc_ColorTool) & colorTool,
+                            Quantity_Color &color) {
+  static const std::vector<XCAFDoc_ColorType> colorTypes = {
+      XCAFDoc_ColorSurf, XCAFDoc_ColorCurv, XCAFDoc_ColorGen};
+
+  Quantity_Color qColor;
+  for (XCAFDoc_ColorType colorType : colorTypes) {
+    if (colorTool->GetColor(label, colorType, qColor)) {
+      color = qColor;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool get_label_color(const TDF_Label &label,
+                     const Handle(XCAFDoc_ShapeTool) & shapeTool,
+                     const Handle(XCAFDoc_ColorTool) & colorTool,
+                     Quantity_Color &color) {
+  if (get_label_color_no_ref(label, colorTool, color)) {
+    return true;
+  }
+
+  if (XCAFDoc_ShapeTool::IsReference(label)) {
+    TDF_Label referredShape;
+    shapeTool->GetReferredShape(label, referredShape);
+    return get_label_color(referredShape, shapeTool, colorTool, color);
+  }
+
+  return false;
+}
+
+bool get_shape_color(const TopoDS_Shape &shape,
+                     const Handle(XCAFDoc_ShapeTool) & shapeTool,
+                     const Handle(XCAFDoc_ColorTool) & colorTool,
+                     Quantity_Color &color) {
+  TDF_Label shapeLabel;
+  if (!shapeTool->Search(shape, shapeLabel)) {
+    return false;
+  }
+  return get_label_color(shapeLabel, shapeTool, colorTool, color);
+}
+} // namespace
+
+void get_named_solids(const TopLoc_Location &location,
+                      const std::string &prefix, unsigned int &id,
+                      const Handle(XCAFDoc_ShapeTool) shapeTool,
+                      Handle(XCAFDoc_ColorTool) colorTool,
+                      const TDF_Label label, std::vector<shape> &namedSolids) {
+  TDF_Label referredLabel{label};
+  if (shapeTool->IsReference(label))
+    shapeTool->GetReferredShape(label, referredLabel);
+  std::string name;
+  Handle(TDataStd_Name) shapeName;
+  if (referredLabel.FindAttribute(TDataStd_Name::GetID(), shapeName))
+    name = TCollection_AsciiString(shapeName->Get()).ToCString();
+  if (name == "")
+    name = std::to_string(id++);
+
+  std::string fullName{prefix + "/" + name};
+
+  TopLoc_Location localLocation = location * shapeTool->GetLocation(label);
+  TDF_LabelSequence components;
+  if (shapeTool->GetComponents(referredLabel, components)) {
+    for (Standard_Integer compIndex = 1; compIndex <= components.Length();
+         ++compIndex) {
+      get_named_solids(localLocation, fullName, id, shapeTool, colorTool,
+                       components.Value(compIndex), namedSolids);
+    }
+  } else {
+    TopoDS_Shape shape;
+    shapeTool->GetShape(referredLabel, shape);
+    if (shape.ShapeType() == TopAbs_SOLID ||
+        shape.ShapeType() == TopAbs_COMPOUND ||
+        shape.ShapeType() == TopAbs_COMPSOLID) {
+      BRepBuilderAPI_Transform transform(shape, localLocation, Standard_True);
+
+      topo::shape shp(transform.Shape());
+      std::string nname = get_shape_name(shape, shapeTool);
+      std::string fullName{prefix + "/" + nname};
+      shp.set_label(fullName.c_str());
+
+      Quantity_Color color;
+      get_shape_color(shape, shapeTool, colorTool, color);
+      shp.set_surface_colour(color);
+
+      namedSolids.emplace_back(shp);
+    }
+  }
+}
+
+std::vector<shape> read_shapes_from_step(const std::string &filename) {
+  Handle(TDocStd_Document) doc;
+  Handle(XCAFApp_Application) app = XCAFApp_Application::GetApplication();
+  app->NewDocument("FWXCAF", doc);
+
+  STEPCAFControl_Reader stepReader;
+
+  if (IFSelect_RetDone !=
+      stepReader.ReadFile((Standard_CString)filename.c_str())) {
+    doc->Close();
+    throw std::runtime_error("Failed to read STEP file");
+  }
+  stepReader.SetColorMode(true);
+  stepReader.SetNameMode(true);
+  stepReader.SetLayerMode(true);
+
+  if (!stepReader.Transfer(doc)) {
+    doc->Close();
+    throw std::runtime_error("Failed to transfer STEP file to XCAF");
+  }
+
+  Handle(XCAFDoc_ShapeTool) shapeTool =
+      XCAFDoc_DocumentTool::ShapeTool(doc->Main());
+  Handle(XCAFDoc_ColorTool) colorTool =
+      XCAFDoc_DocumentTool::ColorTool(doc->Main());
+
+  TDF_LabelSequence topLevelShapes;
+  shapeTool->GetFreeShapes(topLevelShapes);
+  unsigned int id{1};
+  std::vector<shape> namedSolids;
+  for (Standard_Integer iLabel = 1; iLabel <= topLevelShapes.Length();
+       ++iLabel) {
+    get_named_solids(TopLoc_Location{}, "", id, shapeTool, colorTool,
+                     topLevelShapes.Value(iLabel), namedSolids);
+  }
+  return namedSolids;
 }
 
 shape read_shape_from_step(const std::string &filename) {
