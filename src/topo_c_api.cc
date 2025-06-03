@@ -6115,6 +6115,47 @@ void topo_free_catenary_points(pnt3d_t *points) {
   }
 }
 
+TOPOCAPICALL topo_shape_t *
+topo_clip_with_4d(topo_shape_t *shape, const work_progress_params_t *params) {
+  try {
+    flywave::topo::work_progress_params cpp_params;
+
+    if (params->direction) {
+      cpp_params.direction = boost::make_optional(gp_Dir(
+          params->direction->x, params->direction->y, params->direction->z));
+    }
+
+    if (params->radius) {
+      cpp_params.radius = boost::make_optional(*params->radius);
+    }
+
+    if (params->original_path) {
+      cpp_params.original_path =
+          flywave::topo::wire(*params->original_path->shp->shp);
+    }
+
+    if (params->points && params->point_count > 0) {
+      cpp_params.points.reserve(params->point_count);
+      for (int i = 0; i < params->point_count; ++i) {
+        cpp_params.points.push_back(gp_Pnt(
+            params->points[i].x, params->points[i].y, params->points[i].z));
+      }
+    }
+
+    cpp_params.type = static_cast<flywave::topo::progress_type>(params->_type);
+
+    cpp_params.range = {params->_range[0], params->_range[1]};
+
+    flywave::topo::shape result = clip_with_topo4d(*shape->shp, cpp_params);
+
+    // 返回结果
+    return new topo_shape_t{.shp =
+                                std::make_shared<flywave::topo::shape>(result)};
+
+  } catch (...) {
+    return NULL;
+  }
+}
 #ifdef __cplusplus
 }
 #endif

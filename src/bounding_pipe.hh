@@ -29,7 +29,8 @@ bounding_pipe compute_simple_bounding_pipe_from_shape(const TopoDS_Shape &shape,
                                                       const gp_Dir &userDir);
 bounding_pipe extract_bounding_pipe_from_shape(const TopoDS_Shape &shape,
                                                const gp_Dir *userDir = nullptr,
-                                               int numSamplePoints = 100);
+                                               int numSamplePoints = 100,
+                                               bool fitCenterline = true);
 std::vector<gp_Pnt> sample_centerline(Handle(Geom_Curve) centerline,
                                       int numSamples = 200,
                                       bool simplify = false);

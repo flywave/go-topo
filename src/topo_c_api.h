@@ -1585,6 +1585,22 @@ TOPOCAPICALL pnt3d_t *topo_make_catenary(pnt3d_t p1, pnt3d_t p2, double slack,
 
 TOPOCAPICALL void topo_free_catenary_points(pnt3d_t *points);
 
+typedef enum { PROGRESS_RATIO = 0, PROGRESS_DISTANCE = 1 } progress_type_t;
+
+typedef struct {
+  dir3d_t *direction; // 可为NULL
+  double *radius;     // 可为NULL
+  topo_wire_t *original_path;
+  pnt3d_t *points; // 点数组
+  int point_count; // 点数
+  progress_type_t _type;
+  double _range[2]; // 范围数组
+} work_progress_params_t;
+
+// C API函数声明
+TOPOCAPICALL topo_shape_t *
+topo_clip_with_4d(topo_shape_t *shape, const work_progress_params_t *params);
+
 #ifdef __cplusplus
 }
 #endif

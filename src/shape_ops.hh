@@ -196,5 +196,21 @@ std::vector<gp_Pnt> make_catenary(const gp_Pnt &p1, const gp_Pnt &p2,
                                   const gp_Dir &up = gp_Dir(0, 0, 1),
                                   double tessellation = 0);
 
+enum class progress_type {
+  RATIO = 0,
+  DISTANCE = 1,
+};
+
+struct work_progress_params {
+  boost::optional<gp_Dir> direction;
+  boost::optional<double> radius;
+  topo::wire original_path;
+  std::vector<gp_Pnt> points;
+  progress_type type;
+  std::array<double, 2> range;
+};
+
+shape clip_with_topo4d(const shape &shape, const work_progress_params &params);
+
 } // namespace topo
 } // namespace flywave

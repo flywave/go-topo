@@ -731,7 +731,8 @@ TopoDS_Shape create_bounding_pipe_shape(double radius,
 
 bounding_pipe extract_bounding_pipe_from_shape(const TopoDS_Shape &shape,
                                                const gp_Dir *userDir,
-                                               int numSamplePoints) {
+                                               int numSamplePoints,
+                                               bool fitCenterline) {
   bounding_pipe result;
 
   // 1. 检查是否为管道形状
@@ -757,8 +758,10 @@ bounding_pipe extract_bounding_pipe_from_shape(const TopoDS_Shape &shape,
   }
 
   // 4. 提取中心线
-  result.centerline = fit_centerline_from_shape(shape, numSamplePoints, 0.4);
-
+  if (fitCenterline) {
+    result.centerline = fit_centerline_from_shape(shape, numSamplePoints, 0.4);
+  }
+  
   // 5. 提取截面信息
   if (!result.centerline.IsNull()) {
     // 5.1 收集所有顶点

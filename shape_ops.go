@@ -534,3 +534,57 @@ func MakeCatenary(p1, p2 Point3, slack, maxSag float64, up Dir3, tessellation fl
 
 	return points
 }
+
+type ProgressType int
+
+const (
+	ProgressByRatio    ProgressType = 1
+	ProgressByDistance ProgressType = 2
+)
+
+type WorkProgress struct {
+	Direction *Dir3
+	Radius    *float64
+	Original  *Wire
+	Points    *[]Point3
+	Type      ProgressType
+	Range     [2]float64
+}
+
+func ClipWithTopo4D(shape *Shape, progress WorkProgress) *Shape {
+	if shape == nil || shape.inner == nil {
+		return nil
+	}
+
+	params := C.work_progress_params_t{
+		_type:  C.progress_type_t(progress.Type),
+		_range: [2]C.double{C.double(progress.Range[0]), C.double(progress.Range[1])},
+	}
+
+	if progress.Direction != nil {
+		params.direction = &progress.Direction.val
+	}
+
+	if progress.Radius != nil {
+		params.radius = (*C.double)(progress.Radius)
+	}
+
+	if progress.Original != nil && progress.Original.inner != nil {
+		params.original_path = &progress.Original.inner.val
+	}
+
+	if progress.Points != nil {
+		points := make([]C.pnt3d_t, len((*progress.Points)))
+		for i, p := range *progress.Points {
+			points[i] = p.val
+		}
+		params.points = &points[0]
+		params.point_count = C.int(len(*progress.Points))
+	}
+
+	result := C.topo_clip_with_4d(shape.inner.val, &params)
+	if result == nil {
+		return nil
+	}
+	return NewShape(result)
+}

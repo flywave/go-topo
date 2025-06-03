@@ -1707,5 +1707,37 @@ std::vector<gp_Pnt> make_catenary(const gp_Pnt &p1, const gp_Pnt &p2,
   return points;
 }
 
+shape clip_with_topo4d(const shape &shape, const work_progress_params &params) {
+  bounding_pipe boundPipe;
+
+  TopoDS_Wire originalPathWire;
+
+  if (!params.original_path.is_null()) {
+    originalPathWire = params.original_path.value();
+    if (!params.radius) {
+      boundPipe = extract_bounding_pipe_from_shape(
+          shape, params.direction.get_ptr(), 100, false);
+    } else if (params.radius) {
+      boundPipe = bounding_pipe{.radius = *params.radius};
+    }
+  } else if (params.points.size() != 0 && params.radius) {
+    boundPipe =
+        bounding_pipe{.radius = *params.radius, .points = params.points};
+  } else {
+    boundPipe = extract_bounding_pipe_from_shape(
+        shape, params.direction.get_ptr(), 100);
+  }
+
+  if (params.type == progress_type::DISTANCE) {
+    return clip_with_bounding_pipe_and_split_distances(
+        shape, boundPipe, params.range, originalPathWire);
+  } else if (params.type == progress_type::RATIO) {
+    return clip_with_bounding_pipe_by_ratios(shape, boundPipe, params.range,
+                                             originalPathWire);
+  } else {
+    throw std::invalid_argument("Invalid progress type");
+  }
+}
+
 } // namespace topo
 } // namespace flywave
