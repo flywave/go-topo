@@ -2051,7 +2051,7 @@ enum class tunnel_partition_board_style {
 
 // GZW_SDJGB
 struct tunnel_partition_board_params {
-  tunnel_partition_board_style style;      // 样式 (1-圆形, 2-方形)
+  tunnel_partition_board_style style;  // 样式 (1-圆形, 2-方形)
   double length;                       // 隔板长/直径 L (mm)
   double width;                        // 隔板宽 W (mm)
   double thickness;                    // 隔板厚 T (mm)
@@ -2546,6 +2546,17 @@ TopoDS_Shape create_pipe_shape(const pipe_shape_params &params,
                                const gp_Pnt &position,
                                const gp_Dir &direction = gp::DZ(),
                                const gp_Dir &xDir = gp::DX());
+
+struct step_shape_params {
+  std::string name;
+  std::string step;
+};
+
+TopoDS_Shape create_step_shap(const step_shape_params &params);
+TopoDS_Shape create_step_shap(const step_shape_params &params,
+                              const gp_Pnt &position,
+                              const gp_Dir &direction = gp::DZ(),
+                              const gp_Dir &xDir = gp::DX());
 
 } // namespace topo
 } // namespace flywave

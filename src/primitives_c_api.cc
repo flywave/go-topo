@@ -680,8 +680,8 @@ create_rectangular_fixed_plate(rectangular_fixed_plate_params_t params) {
 }
 
 PRIMCAPICALL topo_shape_t *create_rectangular_fixed_plate_with_place(
-    rectangular_fixed_plate_params_t params, pnt3d_t position, dir3d_t lengthDir,
-    dir3d_t widthDir) {
+    rectangular_fixed_plate_params_t params, pnt3d_t position,
+    dir3d_t lengthDir, dir3d_t widthDir) {
   rectangular_fixed_plate_params cpp_params{
       params.length,        params.width,         params.thickness,
       params.columnSpacing, params.rowSpacing,    params.columnCount,
@@ -6818,6 +6818,38 @@ create_pipe_shape_with_place(pipe_shape_params_t params, pnt3d_t position,
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_pipe_shape(
             cpp_params, cpp_position, cpp_direction, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_step_shape(step_shape_params_t params) {
+  try {
+    step_shape_params cpp_params;
+    cpp_params.name = params.name ? std::string(params.name) : "";
+    cpp_params.step = params.step ? std::string(params.step) : "";
+
+    TopoDS_Shape shp = create_step_shap(cpp_params);
+    return new topo_shape_t{.shp = std::make_shared<shape>(shp)};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_step_shape_with_place(step_shape_params_t params, pnt3d_t position,
+                             dir3d_t direction, dir3d_t xDir) {
+  try {
+    step_shape_params cpp_params;
+    cpp_params.name = params.name ? std::string(params.name) : "";
+    cpp_params.step = params.step ? std::string(params.step) : "";
+
+    gp_Pnt pos(position.x, position.y, position.z);
+    gp_Dir dir(direction.x, direction.y, direction.z);
+    gp_Dir xdir(xDir.x, xDir.y, xDir.z);
+
+    TopoDS_Shape shp = create_step_shap(cpp_params, pos, dir, xdir);
+    return new topo_shape_t{.shp = std::make_shared<shape>(shp)};
   } catch (...) {
     return nullptr;
   }

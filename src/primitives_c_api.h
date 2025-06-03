@@ -319,8 +319,8 @@ typedef struct {
 PRIMCAPICALL topo_shape_t *
 create_rectangular_fixed_plate(rectangular_fixed_plate_params_t params);
 PRIMCAPICALL topo_shape_t *create_rectangular_fixed_plate_with_place(
-    rectangular_fixed_plate_params_t params, pnt3d_t position, dir3d_t lengthDir,
-    dir3d_t widthDir);
+    rectangular_fixed_plate_params_t params, pnt3d_t position,
+    dir3d_t lengthDir, dir3d_t widthDir);
 
 typedef struct {
   double length;
@@ -2182,6 +2182,16 @@ typedef struct {
 PRIMCAPICALL topo_shape_t *create_pipe_shape(pipe_shape_params_t params);
 PRIMCAPICALL topo_shape_t *
 create_pipe_shape_with_place(pipe_shape_params_t params, pnt3d_t position,
+                             dir3d_t direction, dir3d_t xDir);
+
+typedef struct {
+  char *name;
+  char *step;
+} step_shape_params_t;
+
+PRIMCAPICALL topo_shape_t *create_step_shape(step_shape_params_t params);
+PRIMCAPICALL topo_shape_t *
+create_step_shape_with_place(step_shape_params_t params, pnt3d_t position,
                              dir3d_t direction, dir3d_t xDir);
 
 #ifdef __cplusplus

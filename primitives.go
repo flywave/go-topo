@@ -212,8 +212,8 @@ func CreateTruncatedCone(params TruncatedConeParams) *Shape {
 	return s
 }
 
-func CreateTruncatedConeWithPlace(params TruncatedConeParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	shp := C.create_truncated_cone_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+func CreateTruncatedConeWithPlace(params TruncatedConeParams, basePoint Point3, axisDir Dir3) *Shape {
+	shp := C.create_truncated_cone_with_place(params.to_struct(), basePoint.val, axisDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
@@ -244,8 +244,8 @@ func CreateEccentricTruncatedCone(params EccentricTruncatedConeParams) *Shape {
 	return s
 }
 
-func CreateEccentricTruncatedConeWithPlace(params EccentricTruncatedConeParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	shp := C.create_eccentric_truncated_cone_with_place(params.to_struct(), position.val, normal.val, xDir.val)
+func CreateEccentricTruncatedConeWithPlace(params EccentricTruncatedConeParams, basePoint Point3, axisDir Dir3) *Shape {
+	shp := C.create_eccentric_truncated_cone_with_place(params.to_struct(), basePoint.val, axisDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
@@ -449,7 +449,7 @@ func (p *StretchedBodyParams) to_struct() C.stretched_body_params_t {
 	if len(p.Points) > 0 {
 		c.points = (*C.pnt3d_t)(C.malloc(C.size_t(len(p.Points)) * C.sizeof_pnt3d_t))
 		for i, pt := range p.Points {
-			*(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.fitPoints)) + uintptr(i)*C.sizeof_pnt3d_t)) = pt.val
+			*(*C.pnt3d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.points)) + uintptr(i)*C.sizeof_pnt3d_t)) = pt.val
 		}
 	}
 	return c
@@ -462,8 +462,8 @@ func CreateStretchedBody(params StretchedBodyParams) *Shape {
 	return s
 }
 
-func CreateStretchedBodyWithPlace(params StretchedBodyParams, center Point3, normal Dir3, xDir Dir3) *Shape {
-	shp := C.create_stretched_body_with_place(params.to_struct(), center.val, normal.val, xDir.val)
+func CreateStretchedBodyWithPlace(params StretchedBodyParams, basePoint Point3, axisDir Dir3) *Shape {
+	shp := C.create_stretched_body_with_place(params.to_struct(), basePoint.val, axisDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
@@ -574,8 +574,8 @@ func CreateInsulatorString(params InsulatorStringParams) *Shape {
 	return s
 }
 
-func CreateInsulatorStringWithPlace(params InsulatorStringParams, basePoint Point3, axisDir Dir3) *Shape {
-	shp := C.create_insulator_string_with_place(params.to_struct(), basePoint.val, axisDir.val)
+func CreateInsulatorStringWithPlace(params InsulatorStringParams, position Point3, direction Dir3, upDirection Dir3) *Shape {
+	shp := C.create_insulator_string_with_place(params.to_struct(), position.val, direction.val, upDirection.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
@@ -6241,6 +6241,43 @@ func CreatePipeShape(params PipeShapeParams) *Shape {
 func CreatePipeShapeWithPlace(params PipeShapeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
 	cParams := params.to_struct()
 	shp := C.create_pipe_shape_with_place(cParams, position.val, direction.val, xDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type StepShapeParams struct {
+	Name string
+	Step []byte
+}
+
+func (p *StepShapeParams) toStruct() C.step_shape_params_t {
+	var c C.step_shape_params_t
+	c.name = C.CString(p.Name)
+	c.step = C.CString(string(p.Step))
+	return c
+}
+
+func freeStepParams(c C.step_shape_params_t) {
+	C.free(unsafe.Pointer(c.name))
+	C.free(unsafe.Pointer(c.step))
+}
+
+func CreateStepShape(params StepShapeParams) *Shape {
+	cParams := params.toStruct()
+	defer freeStepParams(cParams)
+
+	shp := C.create_step_shape(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateStepShapeWithPlace(params StepShapeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
+	cParams := params.toStruct()
+	defer freeStepParams(cParams)
+
+	shp := C.create_step_shape_with_place(cParams, position.val, direction.val, xDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s

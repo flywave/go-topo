@@ -1,5 +1,7 @@
 #include "primitives.hh"
+#include "bounding_pipe.hh"
 #include "catenary.hh"
+
 #include <BRepAdaptor_CompCurve.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
@@ -55,6 +57,7 @@
 #include <Geom_SurfaceOfRevolution.hxx>
 #include <Law_Linear.hxx>
 #include <Precision.hxx>
+#include <STEPControl_Reader.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <Standard_ConstructionError.hxx>
 #include <TColgp_Array1OfPnt.hxx>
@@ -17482,110 +17485,6 @@ TopoDS_Shape create_simple_pipe(flywave::topo::circ_profile maxProfile,
   return pipeMaker.Shape();
 }
 
-TopoDS_Wire clip_wire_between_distances_helper(const TopoDS_Wire &wire_path,
-                                               double start_distance,
-                                               double end_distance) {
-  if (start_distance < 0 || end_distance < 0 ||
-      start_distance >= end_distance) {
-    throw std::invalid_argument("Invalid distance range");
-  }
-
-  // 计算路径总长度
-  GProp_GProps props;
-  BRepGProp::LinearProperties(wire_path, props);
-  double totalLength = props.Mass();
-
-  if (end_distance > totalLength) {
-    end_distance = totalLength;
-  }
-
-  if (start_distance >= totalLength) {
-    throw std::invalid_argument("start_distance exceeds total wire length");
-  }
-  if (end_distance >= totalLength) {
-    end_distance = totalLength;
-  }
-
-  BRepBuilderAPI_MakeWire wireBuilder;
-  double accumulatedLength = 0;
-  bool inRange = false;
-
-  TopExp_Explorer edgeExplorer(wire_path, TopAbs_EDGE);
-  for (; edgeExplorer.More(); edgeExplorer.Next()) {
-    const TopoDS_Edge &edge = TopoDS::Edge(edgeExplorer.Current());
-
-    // 获取原始边的定位和方向
-    const TopLoc_Location &edgeLoc = edge.Location();
-    TopAbs_Orientation edgeOrientation = edge.Orientation();
-
-    // 计算当前边的长度
-    GProp_GProps edgeProps;
-    BRepGProp::LinearProperties(edge, edgeProps);
-    double edgeLength = edgeProps.Mass();
-
-    double edgeStart = accumulatedLength;
-    double edgeEnd = accumulatedLength + edgeLength;
-
-    // 检查边是否在区间内
-    if (edgeEnd <= start_distance) {
-      accumulatedLength += edgeLength;
-      continue;
-    }
-
-    if (edgeStart >= end_distance) {
-      break;
-    }
-
-    // 获取边的几何曲线
-    BRepAdaptor_Curve curveAdaptor(edge);
-    Handle(Geom_Curve) curve = curveAdaptor.Curve().Curve();
-
-    // 检查曲线是否是周期性的(如圆弧)
-    bool isPeriodic = curve->IsPeriodic();
-    double period = isPeriodic ? curve->Period() : 0.0;
-
-    // 计算截取参数
-    double param1 = curveAdaptor.FirstParameter();
-    double param2 = curveAdaptor.LastParameter();
-
-    if (edgeStart < start_distance && edgeEnd > start_distance) {
-      double ratio = (start_distance - edgeStart) / edgeLength;
-      param1 = curveAdaptor.FirstParameter() +
-               ratio * (curveAdaptor.LastParameter() -
-                        curveAdaptor.FirstParameter());
-    }
-
-    if (edgeStart < end_distance && edgeEnd > end_distance) {
-      double ratio = (end_distance - edgeStart) / edgeLength;
-      param2 = curveAdaptor.FirstParameter() +
-               ratio * (curveAdaptor.LastParameter() -
-                        curveAdaptor.FirstParameter());
-    }
-
-    // 创建截取后的曲线
-    Handle(Geom_TrimmedCurve) trimmedCurve =
-        new Geom_TrimmedCurve(curve, param1, param2);
-
-    BRepBuilderAPI_MakeEdge makeEdge(trimmedCurve);
-    if (!makeEdge.IsDone())
-      continue;
-
-    TopoDS_Edge newEdge = makeEdge.Edge();
-    newEdge.Location(edgeLoc);
-    newEdge.Orientation(edgeOrientation);
-
-    wireBuilder.Add(newEdge);
-
-    accumulatedLength += edgeLength;
-  }
-
-  if (!wireBuilder.IsDone()) {
-    throw std::runtime_error("Failed to create sub wire");
-  }
-
-  return wireBuilder.Wire();
-}
-
 std::pair<double, gp_Pnt>
 compute_profile_radius_and_center(const shape_profile &profile) {
   struct ProfileVisitor
@@ -19047,5 +18946,67 @@ TopoDS_Shape create_pipe_shape(const pipe_shape_params &params,
   BRepBuilderAPI_Transform transform(pipe, transformation);
   return transform.Shape();
 }
+
+TopoDS_Shape create_step_shap(const step_shape_params &params) {
+  // 检查输入参数
+  if (params.step.empty()) {
+    throw std::runtime_error("STEP content is empty");
+  }
+
+  STEPControl_Reader reader;
+
+  try {
+    // 创建输入流并读取STEP内容
+    std::istringstream in(params.step, std::ios_base::in);
+
+    // 读取STEP流
+    IFSelect_ReturnStatus status = reader.ReadStream(params.name.c_str(), in);
+    if (status != IFSelect_RetDone) {
+      throw std::runtime_error("Failed to read STEP stream, status: " +
+                               std::to_string(static_cast<int>(status)));
+    }
+
+    // 转换根实体
+    if (!reader.TransferRoots()) {
+      throw std::runtime_error("Failed to transfer STEP roots");
+    }
+
+    // 获取合并后的形状
+    TopoDS_Shape result = reader.OneShape();
+    if (result.IsNull()) {
+      throw std::runtime_error("Resulting shape is null");
+    }
+
+    return result;
+  } catch (const Standard_Failure &e) {
+    throw std::runtime_error("OCCT error: " +
+                             std::string(e.GetMessageString()));
+  } catch (const std::exception &e) {
+    throw std::runtime_error("Error processing STEP: " + std::string(e.what()));
+  }
+}
+
+TopoDS_Shape create_step_shap(const step_shape_params &params,
+                              const gp_Pnt &position, const gp_Dir &direction,
+                              const gp_Dir &xDir) {
+  // 正交性校验
+  if (Abs(direction.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Direction and xDir must be perpendicular");
+  }
+
+  // 创建标准方向的Shape
+  TopoDS_Shape pipe = create_step_shap(params);
+
+  // 创建坐标系变换
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, direction, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  BRepBuilderAPI_Transform transform(pipe, transformation);
+  return transform.Shape();
+}
+
 } // namespace topo
 } // namespace flywave

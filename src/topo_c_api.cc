@@ -5934,6 +5934,23 @@ topo_shape_t *read_shape_from_step_file(const char *filename) {
   return new _topo_shape_t{.shp = shp};
 }
 
+TOPOCAPICALL char *topo_shape_write_to_step_buffer(topo_shape_t *shape,
+                                                   int *buffer_size) {
+  if (!shape || !buffer_size)
+    return nullptr;
+  std::string stepStr = flywave::topo::write_shape_to_step(*shape->shp);
+  *buffer_size = stepStr.size();
+
+  char *buffer = (char *)malloc(*buffer_size + 1);
+  if (!buffer)
+    return nullptr;
+
+  memcpy(buffer, stepStr.c_str(), *buffer_size);
+  buffer[*buffer_size] = '\0';
+
+  return buffer;
+}
+
 topo_wire_sample_point_t *topo_wire_sample_at_distances(topo_wire_t wire,
                                                         double *distances,
                                                         int count,

@@ -1,5 +1,7 @@
 #include "shape_ops.hh"
+#include "bounding_pipe.hh"
 #include "catenary.hh"
+
 #include <BOPAlgo_BOP.hxx>
 #include <BOPAlgo_Builder.hxx>
 #include <BOPAlgo_GlueEnum.hxx>
@@ -31,6 +33,7 @@
 #include <Geom_TrimmedCurve.hxx>
 #include <LocOpe_DPrism.hxx>
 #include <STEPControl_Reader.hxx>
+#include <STEPControl_Writer.hxx>
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_ListOfShape.hxx>
@@ -1361,6 +1364,18 @@ shape read_shape_from_step(const std::string &filename) {
   return std::move(shp);
 }
 
+std::string write_shape_to_step(const shape &shp) {
+  STEPControl_Writer writer;
+  writer.Transfer(shp, STEPControl_AsIs);
+
+  std::ostringstream stepStream;
+  if (!writer.WriteStream(stepStream)) {
+    throw std::runtime_error("Failed to write STEP data to stream");
+  }
+
+  return stepStream.str();
+}
+
 std::vector<wire_sample_point>
 sample_wire_at_distances(const wire &wire_path,
                          const std::vector<double> &distances) {
@@ -1434,100 +1449,14 @@ wire clip_wire_between_distances(const wire &wire_path, double start_distance,
     throw std::invalid_argument("Invalid distance range");
   }
 
-  // 计算路径总长度
-  GProp_GProps props;
-  BRepGProp::LinearProperties(wire_path, props);
-  double totalLength = props.Mass();
+  TopoDS_Wire path = clip_wire_between_distances_helper(
+      wire_path.value(), start_distance, end_distance);
 
-  if (end_distance > totalLength) {
-    end_distance = totalLength;
+  if (path.IsNull()) {
+    throw std::runtime_error("Failed to clip wire between distances");
   }
 
-  if (start_distance >= totalLength) {
-    throw std::invalid_argument("start_distance exceeds total wire length");
-  }
-  if (end_distance >= totalLength) {
-    end_distance = totalLength;
-  }
-
-  BRepBuilderAPI_MakeWire wireBuilder;
-  double accumulatedLength = 0;
-  bool inRange = false;
-
-  TopExp_Explorer edgeExplorer(wire_path, TopAbs_EDGE);
-  for (; edgeExplorer.More(); edgeExplorer.Next()) {
-    const TopoDS_Edge &edge = TopoDS::Edge(edgeExplorer.Current());
-
-    // 获取原始边的定位和方向
-    const TopLoc_Location &edgeLoc = edge.Location();
-    TopAbs_Orientation edgeOrientation = edge.Orientation();
-
-    // 计算当前边的长度
-    GProp_GProps edgeProps;
-    BRepGProp::LinearProperties(edge, edgeProps);
-    double edgeLength = edgeProps.Mass();
-
-    double edgeStart = accumulatedLength;
-    double edgeEnd = accumulatedLength + edgeLength;
-
-    // 检查边是否在区间内
-    if (edgeEnd <= start_distance) {
-      accumulatedLength += edgeLength;
-      continue;
-    }
-
-    if (edgeStart >= end_distance) {
-      break;
-    }
-
-    // 获取边的几何曲线
-    BRepAdaptor_Curve curveAdaptor(edge);
-    Handle(Geom_Curve) curve = curveAdaptor.Curve().Curve();
-
-    // 检查曲线是否是周期性的(如圆弧)
-    bool isPeriodic = curve->IsPeriodic();
-    double period = isPeriodic ? curve->Period() : 0.0;
-
-    // 计算截取参数
-    double param1 = curveAdaptor.FirstParameter();
-    double param2 = curveAdaptor.LastParameter();
-
-    if (edgeStart < start_distance && edgeEnd > start_distance) {
-      double ratio = (start_distance - edgeStart) / edgeLength;
-      param1 = curveAdaptor.FirstParameter() +
-               ratio * (curveAdaptor.LastParameter() -
-                        curveAdaptor.FirstParameter());
-    }
-
-    if (edgeStart < end_distance && edgeEnd > end_distance) {
-      double ratio = (end_distance - edgeStart) / edgeLength;
-      param2 = curveAdaptor.FirstParameter() +
-               ratio * (curveAdaptor.LastParameter() -
-                        curveAdaptor.FirstParameter());
-    }
-
-    // 创建截取后的曲线
-    Handle(Geom_TrimmedCurve) trimmedCurve =
-        new Geom_TrimmedCurve(curve, param1, param2);
-
-    BRepBuilderAPI_MakeEdge makeEdge(trimmedCurve);
-    if (!makeEdge.IsDone())
-      continue;
-
-    TopoDS_Edge newEdge = makeEdge.Edge();
-    newEdge.Location(edgeLoc);
-    newEdge.Orientation(edgeOrientation);
-
-    wireBuilder.Add(newEdge);
-
-    accumulatedLength += edgeLength;
-  }
-
-  if (!wireBuilder.IsDone()) {
-    throw std::runtime_error("Failed to create sub wire");
-  }
-
-  return wire(wireBuilder.Wire());
+  return path;
 }
 
 profile_projection cacl_profile_projection(wire path, gp_Dir upDir,

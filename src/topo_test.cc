@@ -14,9 +14,11 @@
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepGProp.hxx>
 #include <BRepOffsetAPI_MakePipeShell.hxx>
+#include <BRepPrimAPI_MakeSphere.hxx>
 #include <GC_MakeArcOfCircle.hxx>
 #include <GC_MakeCircle.hxx>
 #include <GProp_GProps.hxx>
+#include <STEPControl_Writer.hxx>
 #include <StlAPI_Writer.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
@@ -631,79 +633,95 @@ void test_sweep() {
   }
 }
 
-
 void test_profile_projection() {
   std::cout << "\n=== Testing Profile Projection ===" << std::endl;
 
   // 创建路径 (直线+圆弧)
-    std::vector<gp_Pnt> arcPoints = {
-        gp_Pnt(0, 0, 0),
-        gp_Pnt(-33.91682722046971, 21.064596123062074, -50.42796690296382),
-        gp_Pnt(-90.27793006412685, 13.954091574065387, -80.59269720735028)};
+  std::vector<gp_Pnt> arcPoints = {
+      gp_Pnt(0, 0, 0),
+      gp_Pnt(-33.91682722046971, 21.064596123062074, -50.42796690296382),
+      gp_Pnt(-90.27793006412685, 13.954091574065387, -80.59269720735028)};
 
-    std::vector<gp_Pnt> linePoints = {
-        gp_Pnt(-90.27793006412685, 13.954091574065387, -80.59269720735028),
-        gp_Pnt(-351.1830200678669, -87.76781802345067, -152.73005951102823)};
-    // 组合控制点
-    std::vector<std::vector<gp_Pnt>> controlPoints = {arcPoints, linePoints};
+  std::vector<gp_Pnt> linePoints = {
+      gp_Pnt(-90.27793006412685, 13.954091574065387, -80.59269720735028),
+      gp_Pnt(-351.1830200678669, -87.76781802345067, -152.73005951102823)};
+  // 组合控制点
+  std::vector<std::vector<gp_Pnt>> controlPoints = {arcPoints, linePoints};
 
-    // 指定曲线类型
-    std::vector<flywave::topo::wire::curve_type> curveTypes = {
-        flywave::topo::wire::curve_type::three_point_arc,
-        flywave::topo::wire::curve_type::line,
-    };
+  // 指定曲线类型
+  std::vector<flywave::topo::wire::curve_type> curveTypes = {
+      flywave::topo::wire::curve_type::three_point_arc,
+      flywave::topo::wire::curve_type::line,
+  };
 
-    flywave::topo::wire pathWire =
-        flywave::topo::wire::make_wire(controlPoints, curveTypes);
+  flywave::topo::wire pathWire =
+      flywave::topo::wire::make_wire(controlPoints, curveTypes);
 
-    // 计算路径总长度
-    GProp_GProps props;
-    BRepGProp::LinearProperties(pathWire, props);
-    double totalLength = props.Mass();
-    
-    double len = totalLength * 0.99;
-    
-    double ratio =  len /totalLength;
+  // 计算路径总长度
+  GProp_GProps props;
+  BRepGProp::LinearProperties(pathWire, props);
+  double totalLength = props.Mass();
 
-    BRepAdaptor_CompCurve pathAdaptor(pathWire.value());
-    gp_Pnt _pos;
-    pathAdaptor.D0(pathAdaptor.FirstParameter() + (pathAdaptor.LastParameter() - pathAdaptor.FirstParameter()) * ratio, _pos); // 获取精确终点参数
+  double len = totalLength * 0.99;
 
+  double ratio = len / totalLength;
+
+  BRepAdaptor_CompCurve pathAdaptor(pathWire.value());
+  gp_Pnt _pos;
+  pathAdaptor.D0(
+      pathAdaptor.FirstParameter() +
+          (pathAdaptor.LastParameter() - pathAdaptor.FirstParameter()) * ratio,
+      _pos); // 获取精确终点参数
 
   // 测试不同位置的投影
-  gp_Dir upDir(-0.37125487348195574,0.7200820747659262,0.5862180690806932); // Z-up方向
-//gp_Pnt(59.5161544248291,19.575167920556733,13.548451730851868)
-    
-    // 计算带位置的投影
-    auto proj = flywave::topo::cacl_profile_projection(pathWire, upDir, len );
+  gp_Dir upDir(-0.37125487348195574, 0.7200820747659262,
+               0.5862180690806932); // Z-up方向
+  // gp_Pnt(59.5161544248291,19.575167920556733,13.548451730851868)
 
-    // 测试投影点
-    gp_Pnt testPoint(59.5161544248291,19.575167920556733,13.548451730851868); // 原始点 (profile space)
-    gp_Pnt projectedPoint =
-        flywave::topo::profile_project_point(&proj, testPoint);
+  // 计算带位置的投影
+  auto proj = flywave::topo::cacl_profile_projection(pathWire, upDir, len);
 
-    std::cout << "Original point: (" << testPoint.X() << ", " << testPoint.Y()
-              << ", " << testPoint.Z() << ")" << std::endl;
-    std::cout << "Projected point: (" << projectedPoint.X() << ", "
-              << projectedPoint.Y() << ", " << projectedPoint.Z() << ")"
-              << std::endl;
+  // 测试投影点
+  gp_Pnt testPoint(59.5161544248291, 19.575167920556733,
+                   13.548451730851868); // 原始点 (profile space)
+  gp_Pnt projectedPoint =
+      flywave::topo::profile_project_point(&proj, testPoint);
+
+  std::cout << "Original point: (" << testPoint.X() << ", " << testPoint.Y()
+            << ", " << testPoint.Z() << ")" << std::endl;
+  std::cout << "Projected point: (" << projectedPoint.X() << ", "
+            << projectedPoint.Y() << ", " << projectedPoint.Z() << ")"
+            << std::endl;
 }
 
 void test_edge_spline() {
   std::vector<gp_Pnt> points = {
-    gp_Pnt(0, 0, 0),
-    gp_Pnt(52.78164688870311, 59.195349629968405, -37.40780537482351),
-    gp_Pnt(-17.32372961891815, 73.13395502977073, -97.36982350004837),
-    gp_Pnt(45.607606910169125, 140.1405232809484, -137.74216024577618),
-    gp_Pnt(88.24622735986486, 177.25549516826868, -155.28305072896183)
-};
+      gp_Pnt(0, 0, 0),
+      gp_Pnt(52.78164688870311, 59.195349629968405, -37.40780537482351),
+      gp_Pnt(-17.32372961891815, 73.13395502977073, -97.36982350004837),
+      gp_Pnt(45.607606910169125, 140.1405232809484, -137.74216024577618),
+      gp_Pnt(88.24622735986486, 177.25549516826868, -155.28305072896183)};
   auto e = flywave::topo::edge::make_spline(points, 1e-6, false);
 
   auto l = e.length();
   std::cout << "length: " << l << std::endl;
 }
 
+void test_save_step() {
+  std::cout << "\n=== Testing Save STEP Function ===" << std::endl;
+
+  BRepPrimAPI_MakeSphere sphereMaker(20);
+
+  STEPControl_Writer writer;
+  writer.Transfer(sphereMaker.Shape(), STEPControl_AsIs);
+
+  if (writer.Write("./output.stp") != IFSelect_RetDone) {
+    std::cerr << "Error: Failed to write STEP file" << std::endl;
+    return;
+  }
+}
+
 int main() {
-    test_edge_spline();
+  test_save_step();
   return 0;
 }

@@ -160,6 +160,8 @@ gp_Pnt combined_center_of_bound_box(const std::vector<shape> &objects);
 
 shape read_shape_from_step(const std::string &filename);
 
+std::string write_shape_to_step(const shape &shp);
+
 struct wire_sample_point {
   gp_Pnt position;
   gp_Vec tangent;

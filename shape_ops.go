@@ -11,6 +11,7 @@ package topo
 */
 import "C"
 import (
+	"errors"
 	"runtime"
 	"unsafe"
 )
@@ -339,6 +340,18 @@ func ReadShapeFromStepFile(f string) *Shape {
 	defer C.free(unsafe.Pointer(fl))
 	res := C.read_shape_from_step_file(fl)
 	return NewShape(res)
+}
+
+func WriteShapeToStepBuffer(shape *Shape) ([]byte, error) {
+	var bufferSize C.int
+	cBuffer := C.topo_shape_write_to_step_buffer(shape.inner.val, &bufferSize)
+	if cBuffer == nil {
+		return nil, errors.New("failed to write shape to STEP buffer")
+	}
+	defer C.free(unsafe.Pointer(cBuffer))
+
+	buffer := C.GoBytes(unsafe.Pointer(cBuffer), bufferSize)
+	return buffer, nil
 }
 
 type WireSamplePoint struct {
