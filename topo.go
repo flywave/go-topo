@@ -71,6 +71,12 @@ type innerTopoLocation struct {
 	val *C.struct__topo_location_t
 }
 
+func newTopoLocation(val *C.struct__topo_location_t) *TopoLocation {
+	p := &TopoLocation{inner: &innerTopoLocation{val: val}}
+	runtime.SetFinalizer(p.inner, (*innerTopoLocation).free)
+	return p
+}
+
 func NewTopoLocation(t Trsf) *TopoLocation {
 	p := &TopoLocation{inner: &innerTopoLocation{val: C.topo_location_new(t.val)}}
 	runtime.SetFinalizer(p.inner, (*innerTopoLocation).free)

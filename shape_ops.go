@@ -358,8 +358,7 @@ func ReadShapesFromStepFile(filename string) ([]*Shape, []*TopoLocation, error) 
 	shapes := make([]*Shape, int(count))
 	for i := 0; i < int(count); i++ {
 		shapes[i] = NewShape(shapesSlice[i].shape)
-		locatios[i] = &TopoLocation{inner: &innerTopoLocation{val: shapesSlice[i].location}}
-		runtime.SetFinalizer(locatios[i].inner, (*innerTopoLocation).free)
+		locatios[i] = newTopoLocation(shapesSlice[i].location)
 	}
 
 	return shapes, locatios, nil
