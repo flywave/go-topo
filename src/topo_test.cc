@@ -721,7 +721,120 @@ void test_save_step() {
   }
 }
 
+void test_clip_with_topo4d() {
+  std::cout << "\n=== Testing clip_with_topo4d ===" << std::endl;
+
+  // 创建一个简单的立方体作为被裁剪的形状
+  double size = 10.0;
+  gp_Pnt corner1(0, 0, 0);
+  gp_Pnt corner2(size, size, size);
+  auto cube = flywave::topo::solid::make_solid_from_box(corner1, corner2);
+
+  // 情况1: original_path 不为空，radius 为空
+  {
+    std::cout << "Case 1: original_path non-null, radius null" << std::endl;
+    work_progress_params params;
+    params.original_path = flywave::topo::wire::make_wire(
+        {flywave::topo::edge::make_edge(gp_Pnt(0, 0, 0), gp_Pnt(10, 0, 0)),
+         flywave::topo::edge::make_edge(gp_Pnt(10, 0, 0), gp_Pnt(10, 10, 0)),
+         flywave::topo::edge::make_edge(gp_Pnt(10, 10, 0), gp_Pnt(0, 10, 0)),
+         flywave::topo::edge::make_edge(gp_Pnt(0, 10, 0), gp_Pnt(0, 0, 0))});
+    params.radius = boost::none; // 显式设置为空
+    params.type = progress_type::DISTANCE;
+    params.range = {{0, 5}}; // 距离范围
+
+    try {
+      auto result = clip_with_topo4d(cube, params);
+      std::cout << "Case 1 succeeded." << std::endl;
+    } catch (const std::exception &e) {
+      std::cerr << "Error in case 1: " << e.what() << std::endl;
+    }
+  }
+
+  // 情况2: original_path 不为空，radius 不为空
+  {
+    std::cout << "Case 2: original_path non-null, radius non-null" << std::endl;
+    work_progress_params params;
+    params.original_path = flywave::topo::wire::make_wire(
+        {flywave::topo::edge::make_edge(gp_Pnt(0, 0, 0), gp_Pnt(10, 0, 0)),
+         flywave::topo::edge::make_edge(gp_Pnt(10, 0, 0), gp_Pnt(10, 10, 0)),
+         flywave::topo::edge::make_edge(gp_Pnt(10, 10, 0), gp_Pnt(0, 10, 0)),
+         flywave::topo::edge::make_edge(gp_Pnt(0, 10, 0), gp_Pnt(0, 0, 0))});
+    params.radius = 5.0; // 给定半径
+    params.type = progress_type::DISTANCE;
+    params.range = {{0, 5}};
+
+    try {
+      auto result = clip_with_topo4d(cube, params);
+      std::cout << "Case 2 succeeded." << std::endl;
+    } catch (const std::exception &e) {
+      std::cerr << "Error in case 2: " << e.what() << std::endl;
+    }
+  }
+
+  // 情况3: original_path 为空，points 不为空且 radius 不为空
+  {
+    std::cout
+        << "Case 3: original_path null, points non-empty and radius non-null"
+        << std::endl;
+    work_progress_params params;
+    params.points = {gp_Pnt(0, 0, 0), gp_Pnt(5, 0, 0), gp_Pnt(5, 5, 0),
+                     gp_Pnt(0, 5, 0)};
+    params.radius = 2.0;
+    params.type = progress_type::RATIO;
+    params.range = {{0.2, 0.8}}; // 比例范围
+
+    try {
+      auto result = clip_with_topo4d(cube, params);
+      std::cout << "Case 3 succeeded." << std::endl;
+    } catch (const std::exception &e) {
+      std::cerr << "Error in case 3: " << e.what() << std::endl;
+    }
+  }
+
+  // 情况4: 其他情况（original_path 为空，且不满足情况3的条件）
+  {
+    std::cout << "Case 4: other cases" << std::endl;
+    work_progress_params params;
+    params.points = {}; // 空点集
+    params.radius = boost::none;
+    params.direction = gp_Dir(1, 0, 0); // 需要提供方向
+    params.type = progress_type::RATIO;
+    params.range = {{0.0, 1.0}};
+
+    try {
+      auto result = clip_with_topo4d(cube, params);
+      std::cout << "Case 4 succeeded." << std::endl;
+    } catch (const std::exception &e) {
+      std::cerr << "Error in case 4: " << e.what() << std::endl;
+    }
+  }
+
+  // 情况5: 测试无效的进度类型（应抛出异常）
+  {
+    std::cout << "Case 5: invalid progress type" << std::endl;
+    work_progress_params params;
+    params.points = {};
+    params.radius = boost::none;
+    params.direction = gp_Dir(1, 0, 0);
+    params.type = static_cast<progress_type>(2); // 无效类型
+    params.range = {{0.0, 1.0}};
+
+    try {
+      auto result = clip_with_topo4d(cube, params);
+      std::cerr << "Error: expected exception not thrown in case 5."
+                << std::endl;
+    } catch (const std::invalid_argument &e) {
+      std::cout << "Case 5 succeeded with expected exception: " << e.what()
+                << std::endl;
+    } catch (const std::exception &e) {
+      std::cerr << "Unexpected exception in case 5: " << e.what() << std::endl;
+    }
+  }
+}
+
 int main() {
   test_save_step();
+  test_clip_with_topo4d();
   return 0;
 }
