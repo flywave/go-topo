@@ -1739,5 +1739,69 @@ shape clip_with_topo4d(const shape &shape, const work_progress_params &params) {
   }
 }
 
+topo::wire fit_centerline_from_shape(const shape &shape, int numSamples,
+                                     double smoothingFactor) {
+  Handle(Geom_Curve) curve =
+      fit_centerline_from_shape(shape.value(), numSamples, smoothingFactor);
+  if (!curve) {
+    throw std::runtime_error("Failed to fit centerline from shape");
+  }
+  TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(curve).Edge();
+  TopoDS_Wire w = BRepBuilderAPI_MakeWire(edge).Wire();
+  return w;
+}
+
+topo::wire centerline_points_to_wire(const std::vector<gp_Pnt> &points) {
+  if (points.size() < 2) {
+    throw std::invalid_argument("At least two points are required");
+  }
+  Handle(Geom_Curve) curve = centerline_to_curve(points);
+  TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(curve).Edge();
+  TopoDS_Wire w = BRepBuilderAPI_MakeWire(edge).Wire();
+  return w;
+}
+
+double compute_shape_max_radius_from_centerline(const shape &shp,
+                                                const topo::wire &centerline) {
+  TopoDS_Wire wire = centerline.value();
+  Handle(Geom_Curve) curve;
+  TopExp_Explorer exp(wire, TopAbs_EDGE);
+  if (exp.More()) {
+    TopoDS_Edge edge = TopoDS::Edge(exp.Current());
+    Standard_Real first, last;
+    curve = BRep_Tool::Curve(edge, first, last);
+  }
+  if (!curve) {
+    throw std::runtime_error("Failed to extract curve from wire");
+  }
+
+  double maxRadius = compute_max_radius(shp.value(), curve);
+  if (maxRadius < 0) {
+    throw std::runtime_error("Failed to compute max radius");
+  }
+  return maxRadius;
+}
+
+std::vector<gp_Pnt> sample_centerline_wire(const topo::wire &centerline,
+                                           int numSamples, bool simplify) {
+  TopoDS_Wire wire = centerline.value();
+  Handle(Geom_Curve) curve;
+  TopExp_Explorer exp(wire, TopAbs_EDGE);
+  if (exp.More()) {
+    TopoDS_Edge edge = TopoDS::Edge(exp.Current());
+    Standard_Real first, last;
+    curve = BRep_Tool::Curve(edge, first, last);
+  }
+  if (!curve) {
+    throw std::runtime_error("Failed to extract curve from wire");
+  }
+  return sample_centerline(curve, numSamples, simplify);
+}
+
+shape create_bounding_centerline_shape(double radius, const topo::wire &path) {
+  TopoDS_Wire wire = path.value();
+  return create_bounding_pipe_shape(radius, wire);
+}
+
 } // namespace topo
 } // namespace flywave

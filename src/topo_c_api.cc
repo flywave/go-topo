@@ -5979,7 +5979,8 @@ read_shapes_from_step_file(const char *filename, int *count) {
   return result;
 }
 
-TOPOCAPICALL void free_shapes_from_step(topo_shape_and_location_t **shapes, int count) {
+TOPOCAPICALL void free_shapes_from_step(topo_shape_and_location_t **shapes,
+                                        int count) {
   if (!shapes)
     return;
   free(shapes);
@@ -6158,6 +6159,84 @@ topo_clip_with_4d(topo_shape_t *shape, const work_progress_params_t *params) {
     return NULL;
   }
 }
+
+TOPOCAPICALL topo_wire_t topo_fit_centerline_from_shape(
+    topo_shape_t *shape, int numSamples, double smoothingFactor) {
+  if (!shape)
+    return {nullptr};
+  try {
+    auto w = flywave::topo::fit_centerline_from_shape(*shape->shp, numSamples,
+                                                      smoothingFactor);
+    return topo_wire_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::shape>(w)}};
+  } catch (...) {
+    return {nullptr};
+  }
+}
+
+TOPOCAPICALL topo_wire_t topo_centerline_points_to_wire(pnt3d_t *points,
+                                                        int point_count) {
+  if (!points || point_count <= 0)
+    return {nullptr};
+  std::vector<gp_Pnt> pts;
+  for (int i = 0; i < point_count; i++) {
+    pts.emplace_back(points[i].x, points[i].y, points[i].z);
+  }
+  try {
+    auto w = flywave::topo::centerline_points_to_wire(pts);
+    return topo_wire_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::shape>(w)}};
+  } catch (...) {
+    return {nullptr};
+  }
+}
+
+TOPOCAPICALL double
+topo_compute_shape_max_radius_from_centerline(topo_shape_t *shape,
+                                              topo_wire_t centerline) {
+  if (!shape || !centerline.shp)
+    return -1.0;
+  try {
+    return flywave::topo::compute_shape_max_radius_from_centerline(
+        shape->shp->value(), centerline.shp->shp->value());
+  } catch (...) {
+    return -1.0;
+  }
+}
+
+TOPOCAPICALL pnt3d_t *topo_sample_centerline_wire(topo_wire_t centerline,
+                                                  int numSamples, bool simplify,
+                                                  int *point_count) {
+  if (!centerline.shp || !point_count)
+    return;
+  try {
+    auto pts = flywave::topo::sample_centerline_wire(
+        centerline.shp->shp->value(), numSamples, simplify);
+    *point_count = static_cast<int>(pts.size());
+    pnt3d_t *points = new pnt3d_t[pts.size()];
+    for (size_t i = 0; i < pts.size(); i++) {
+      points[i] = {pts[i].X(), pts[i].Y(), pts[i].Z()};
+    }
+    return points;
+  } catch (...) {
+    *point_count = 0;
+    return nullptr;
+  }
+}
+
+TOPOCAPICALL topo_shape_t *
+topo_create_bounding_centerline_shape(double radius, topo_wire_t path) {
+  if (!path.shp)
+    return nullptr;
+  try {
+    auto s = flywave::topo::create_bounding_centerline_shape(
+        radius, path.shp->shp->value());
+    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(s)};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
 #ifdef __cplusplus
 }
 #endif

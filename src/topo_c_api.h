@@ -1607,6 +1607,20 @@ typedef struct {
 TOPOCAPICALL topo_shape_t *
 topo_clip_with_4d(topo_shape_t *shape, const work_progress_params_t *params);
 
+TOPOCAPICALL topo_wire_t topo_fit_centerline_from_shape(topo_shape_t *shape,
+                                                        int numSamples,
+                                                        double smoothingFactor);
+TOPOCAPICALL topo_wire_t topo_centerline_points_to_wire(pnt3d_t *points,
+                                                        int point_count);
+TOPOCAPICALL double
+topo_compute_shape_max_radius_from_centerline(topo_shape_t *shape,
+                                              topo_wire_t centerline);
+TOPOCAPICALL pnt3d_t *topo_sample_centerline_wire(topo_wire_t centerline,
+                                                  int numSamples, bool simplify,
+                                                  int *point_count);
+TOPOCAPICALL topo_shape_t *
+topo_create_bounding_centerline_shape(double radius, topo_wire_t path);
+
 #ifdef __cplusplus
 }
 #endif

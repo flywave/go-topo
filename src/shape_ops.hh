@@ -163,7 +163,8 @@ struct shape_and_location {
   TopLoc_Location local;
 };
 
-std::vector<shape_and_location> read_shapes_from_step(const std::string &filename);
+std::vector<shape_and_location>
+read_shapes_from_step(const std::string &filename);
 
 shape read_shape_from_step(const std::string &filename);
 
@@ -216,6 +217,16 @@ struct work_progress_params {
 };
 
 shape clip_with_topo4d(const shape &shape, const work_progress_params &params);
+
+topo::wire fit_centerline_from_shape(const shape &shape, int numSamples = 100,
+                                     double smoothingFactor = 0.99);
+topo::wire centerline_points_to_wire(const std::vector<gp_Pnt> &points);
+double compute_shape_max_radius_from_centerline(const shape &shape,
+                                                const topo::wire &centerline);
+std::vector<gp_Pnt> sample_centerline_wire(const topo::wire &centerline,
+                                           int numSamples = 200,
+                                           bool simplify = false);
+shape create_bounding_centerline_shape(double radius, const topo::wire &path);
 
 } // namespace topo
 } // namespace flywave

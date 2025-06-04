@@ -729,6 +729,54 @@ TopoDS_Shape create_bounding_pipe_shape(double radius,
   return fixer.Shape();
 }
 
+double compute_max_radius(const TopoDS_Shape &shape,
+                          const Handle(Geom_Curve) & centerline) {
+  std::vector<gp_Pnt> allPoints;
+  TopExp_Explorer vertexExplorer(shape, TopAbs_VERTEX);
+  for (; vertexExplorer.More(); vertexExplorer.Next()) {
+    TopoDS_Vertex vertex = TopoDS::Vertex(vertexExplorer.Current());
+    allPoints.push_back(BRep_Tool::Pnt(vertex));
+  }
+
+  // 2. 从边采样点（如果顶点不足）
+  if (allPoints.size() < 50) {
+    TopExp_Explorer edgeExplorer(shape, TopAbs_EDGE);
+    for (; edgeExplorer.More(); edgeExplorer.Next()) {
+      TopoDS_Edge edge = TopoDS::Edge(edgeExplorer.Current());
+      BRepAdaptor_Curve curve(edge);
+      double first = curve.FirstParameter();
+      double last = curve.LastParameter();
+      int numSamplesPerEdge = 10;
+      for (int i = 0; i < numSamplesPerEdge; i++) {
+        double param = first + i * (last - first) / (numSamplesPerEdge - 1);
+        gp_Pnt point = curve.Value(param);
+        allPoints.push_back(point);
+      }
+    }
+  }
+
+  // 3. 计算所有点到中心线的最大距离
+  double maxRadius = 0.0;
+  ShapeAnalysis_Curve sac;
+  for (const auto &point : allPoints) {
+    gp_Pnt nearestPoint;
+    double paramOnCurve;
+    double distance = sac.Project(centerline, point, Precision::Confusion(),
+                                  nearestPoint, paramOnCurve);
+
+    if (distance > maxRadius) {
+      maxRadius = distance;
+    }
+  }
+
+  // 4. 添加安全余量并保存结果
+  if (maxRadius > Precision::Confusion()) {
+    return maxRadius * 2.0; // 200% 安全余量
+  }
+
+  return maxRadius;
+}
+
 bounding_pipe extract_bounding_pipe_from_shape(const TopoDS_Shape &shape,
                                                const gp_Dir *userDir,
                                                int numSamplePoints,
@@ -761,65 +809,10 @@ bounding_pipe extract_bounding_pipe_from_shape(const TopoDS_Shape &shape,
   if (fitCenterline) {
     result.centerline = fit_centerline_from_shape(shape, numSamplePoints, 0.4);
   }
-  
+
   // 5. 提取截面信息
   if (!result.centerline.IsNull()) {
-    // 5.1 收集所有顶点
-    std::vector<gp_Pnt> allPoints;
-    TopExp_Explorer vertexExplorer(shape, TopAbs_VERTEX);
-    for (; vertexExplorer.More(); vertexExplorer.Next()) {
-      TopoDS_Vertex vertex = TopoDS::Vertex(vertexExplorer.Current());
-      allPoints.push_back(BRep_Tool::Pnt(vertex));
-    }
-
-    // 5.2 从边采样点（如果顶点不足）
-    if (allPoints.size() < 50) {
-      TopExp_Explorer edgeExplorer(shape, TopAbs_EDGE);
-      for (; edgeExplorer.More(); edgeExplorer.Next()) {
-        TopoDS_Edge edge = TopoDS::Edge(edgeExplorer.Current());
-        BRepAdaptor_Curve curve(edge);
-        double first = curve.FirstParameter();
-        double last = curve.LastParameter();
-        int numSamplesPerEdge = 10;
-        for (int i = 0; i < numSamplesPerEdge; i++) {
-          double param = first + i * (last - first) / (numSamplesPerEdge - 1);
-          gp_Pnt point = curve.Value(param);
-          allPoints.push_back(point);
-        }
-      }
-    }
-
-    // 5.3 计算所有点到中心线的最大距离
-    double maxRadius = 0.0;
-    gp_Pnt maxCenterPoint;
-    gp_Dir maxSectionDir;
-
-    ShapeAnalysis_Curve sac;
-    for (const auto &point : allPoints) {
-      gp_Pnt nearestPoint;
-      double paramOnCurve;
-      double distance =
-          sac.Project(result.centerline, point, Precision::Confusion(),
-                      nearestPoint, paramOnCurve);
-
-      if (distance > maxRadius) {
-        maxRadius = distance;
-        maxCenterPoint = nearestPoint;
-
-        // 获取该点的切线方向
-        gp_Vec tangent;
-        result.centerline->D1(paramOnCurve, nearestPoint, tangent);
-        if (tangent.Magnitude() > Precision::Confusion()) {
-          maxSectionDir = gp_Dir(tangent);
-        }
-      }
-    }
-
-    // 5.4 添加安全余量并保存结果
-    if (maxRadius > Precision::Confusion()) {
-      maxRadius *= 2.0; // 200% 安全余量
-      result.radius = maxRadius;
-    }
+    result.radius = compute_max_radius(shape, result.centerline);
   }
 
   // 6. 采样中心线

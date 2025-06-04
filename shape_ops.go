@@ -590,3 +590,63 @@ func ClipWithTopo4D(shape *Shape, progress WorkProgress) *Shape {
 	}
 	return NewShape(result)
 }
+
+func FitCenterlineFromShape(shape *Shape, numSamples int, smoothingFactor float64) *Wire {
+	result := C.topo_fit_centerline_from_shape(shape.inner.val, C.int(numSamples), C.double(smoothingFactor))
+	if result.shp == nil {
+		return nil
+	}
+	w := &Wire{inner: &innerWire{result}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
+}
+
+func CenterlinePointsToWire(points []Point3) *Wire {
+	if len(points) == 0 {
+		return nil
+	}
+	cPoints := make([]C.pnt3d_t, len(points))
+	for i, p := range points {
+		cPoints[i] = p.val
+	}
+	result := C.topo_centerline_points_to_wire(&cPoints[0], C.int(len(points)))
+	if result.shp == nil {
+		return nil
+	}
+	w := &Wire{inner: &innerWire{result}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
+}
+
+func ComputeShapeMaxRadiusFromCenterline(shape *Shape, centerline *Wire) float64 {
+	if shape == nil || centerline == nil {
+		return -1.0
+	}
+	return float64(C.topo_compute_shape_max_radius_from_centerline(shape.inner.val, centerline.inner.val))
+}
+
+func SampleCenterlineWire(centerline *Wire, numSamples int, simplify bool) []Point3 {
+	var count C.int
+	cPoints := C.topo_sample_centerline_wire(centerline.inner.val, C.int(numSamples), C.bool(simplify), &count)
+	defer C.free(unsafe.Pointer(cPoints))
+
+	if cPoints == nil || count == 0 {
+		return nil
+	}
+
+	points := make([]Point3, int(count))
+	pointsSlice := (*[1 << 30]C.pnt3d_t)(unsafe.Pointer(cPoints))[:count:count]
+	for i := 0; i < int(count); i++ {
+		points[i] = Point3{val: pointsSlice[i]}
+	}
+
+	return points
+}
+
+func CreateBoundingCenterlineShape(radius float64, path *Wire) *Shape {
+	result := C.topo_create_bounding_centerline_shape(C.double(radius), path.inner.val)
+	if result == nil {
+		return nil
+	}
+	return NewShape(result)
+}
