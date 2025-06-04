@@ -351,6 +351,7 @@ typedef struct {
 } wire_params_t;
 
 PRIMCAPICALL topo_shape_t *create_wire(wire_params_t params);
+PRIMCAPICALL topo_wire_t create_wire_centerline(wire_params_t params);
 PRIMCAPICALL topo_shape_t *create_wire_with_place(wire_params_t params,
                                                   pnt3d_t position,
                                                   dir3d_t direction,
@@ -369,6 +370,7 @@ typedef struct {
 } cable_params_t;
 
 PRIMCAPICALL topo_shape_t *create_cable(cable_params_t params);
+PRIMCAPICALL topo_wire_t create_cable_centerline(cable_params_t params);
 PRIMCAPICALL topo_shape_t *create_cable_with_place(cable_params_t params,
                                                    pnt3d_t position,
                                                    dir3d_t direction,
@@ -386,7 +388,6 @@ typedef struct {
   pnt3d_t *controlPoints;
   int numPoints;
 } curve_segment_t;
-
 PRIMCAPICALL pnt3d_t *
 sample_curve_points(const pnt3d_t *control_points, const int *point_counts,
                     int array_count, const curve_type_t *curve_types,
@@ -400,6 +401,8 @@ typedef struct {
 } curve_cable_params_t;
 
 PRIMCAPICALL topo_shape_t *create_curve_cable(curve_cable_params_t params);
+PRIMCAPICALL topo_wire_t
+create_curve_cable_centerline(curve_cable_params_t params);
 PRIMCAPICALL topo_shape_t *
 create_curve_cable_with_place(curve_cable_params_t params, pnt3d_t position,
                               dir3d_t direction, dir3d_t upDirection);
@@ -813,7 +816,8 @@ typedef struct {
 PRIMCAPICALL topo_shape_t *
 create_transmission_line(transmission_line_params_t params, pnt3d_t startPoint,
                          pnt3d_t endPoint);
-
+PRIMCAPICALL topo_wire_t create_transmission_centerline(
+    transmission_line_params_t params, pnt3d_t startPoint, pnt3d_t endPoint);
 PRIMCAPICALL pnt3d_t *
 sample_transmission_line_points(transmission_line_params_t params,
                                 pnt3d_t startPoint, pnt3d_t endPoint,
@@ -1526,6 +1530,8 @@ typedef struct {
   int ctype;
 } channel_point_t;
 
+PRIMCAPICALL topo_wire_t create_channel_centerline(channel_point_t *points,
+                                                   int pointCount);
 PRIMCAPICALL pnt3d_t *sample_channel_points(const channel_point_t *points,
                                             int point_count,
                                             double tessellation,
@@ -2008,6 +2014,7 @@ PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params);
 PRIMCAPICALL topo_shape_t *
 create_pipe_with_split_distances(pipe_params_t params, double start_distance,
                                  double end_distance);
+PRIMCAPICALL topo_wire_t create_pipe_centerline(pipe_params_t params);
 PRIMCAPICALL topo_shape_t *create_pipe_with_place(pipe_params_t params,
                                                   pnt3d_t position,
                                                   dir3d_t direction,
@@ -2033,6 +2040,8 @@ create_multi_segment_pipe(multi_segment_pipe_params_t params);
 PRIMCAPICALL topo_shape_t *create_multi_segment_pipe_with_split_distances(
     multi_segment_pipe_params_t params, double start_distance,
     double end_distance);
+PRIMCAPICALL topo_wire_t
+create_multi_segment_pipe_centerline(multi_segment_pipe_params_t params);
 PRIMCAPICALL topo_shape_t *
 create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
                                      pnt3d_t position, dir3d_t direction,
@@ -2193,8 +2202,6 @@ PRIMCAPICALL topo_shape_t *create_step_shape(step_shape_params_t params);
 PRIMCAPICALL topo_shape_t *
 create_step_shape_with_place(step_shape_params_t params, pnt3d_t position,
                              dir3d_t direction, dir3d_t xDir);
-
-
 
 #ifdef __cplusplus
 }

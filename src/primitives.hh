@@ -1,6 +1,7 @@
 #pragma once
 
 #include <TopoDS_Shape.hxx>
+#include <TopoDS_Wire.hxx>
 #include <gp_Ax2.hxx>
 #include <gp_Dir.hxx>
 #include <gp_Pnt.hxx>
@@ -356,6 +357,7 @@ TopoDS_Shape create_wire(const wire_params &params);
 TopoDS_Shape create_wire(const wire_params &params, const gp_Pnt &position,
                          const gp_Dir &direction = gp_Dir(0, 1, 0),
                          const gp_Dir &upDirection = gp_Dir(1, 0, 0));
+TopoDS_Wire create_wire_centerline(const wire_params &params);
 std::vector<gp_Pnt> sample_wire(const wire_params &params,
                                 double tessellation = 0);
 
@@ -381,6 +383,7 @@ TopoDS_Shape create_cable(const cable_params &params);
 TopoDS_Shape create_cable(const cable_params &params, const gp_Pnt &position,
                           const gp_Dir &direction = gp_Dir(0, 1, 0),
                           const gp_Dir &upDirection = gp_Dir(1, 0, 0));
+TopoDS_Wire create_cable_centerline(const cable_params &params);
 std::vector<gp_Pnt> sample_cable(const cable_params &params,
                                  double tessellation = 0);
 
@@ -409,6 +412,7 @@ TopoDS_Shape create_curve_cable(const curve_cable_params &params,
                                 const gp_Pnt &position,
                                 const gp_Dir &direction = gp_Dir(0, 1, 0),
                                 const gp_Dir &upDirection = gp_Dir(1, 0, 0));
+TopoDS_Wire create_curve_cable_centerline(const curve_cable_params &params);
 std::vector<gp_Pnt>
 sample_curve_points(const std::vector<std::vector<gp_Pnt>> &controlPoints,
                     std::vector<curve_type> segments, double tessellation = 0);
@@ -924,7 +928,9 @@ struct transmission_line_params {
 TopoDS_Shape create_transmission_line(const transmission_line_params &params,
                                       const gp_Pnt &startPoint,
                                       const gp_Pnt &endPoint);
-
+TopoDS_Wire create_transmission_centerline(const transmission_line_params &params,
+                                           const gp_Pnt &startPoint,
+                                           const gp_Pnt &endPoint);
 std::vector<gp_Pnt>
 sample_transmission_line(const transmission_line_params &params,
                          const gp_Pnt &startPoint, const gp_Pnt &endPoint,
@@ -1346,6 +1352,7 @@ TopoDS_Shape create_optical_fiber_box(const optical_fiber_box_params &params,
                                       const gp_Pnt &position,
                                       const gp_Dir &direction = gp::DZ(),
                                       const gp_Dir &xDir = gp::DX());
+
 enum class cable_terminal_type {
   OUTDOOR = 1, // 户外
   GIS = 2,     // 户内
@@ -1788,6 +1795,7 @@ struct channel_point {
             // 1-弧形节点（弧形节点为圆弧顶点，与前后点三点成弧）)
 };
 
+TopoDS_Wire create_channel_centerline(const std::vector<channel_point> &points);
 std::vector<gp_Pnt>
 sample_channel_points(const std::vector<channel_point> &points,
                       double tessellation = 0);
@@ -2374,6 +2382,7 @@ TopoDS_Shape create_pipe(const pipe_params &params);
 TopoDS_Shape create_pipe_with_split_distances(
     const pipe_params &params,
     std::array<double, 2> splitDistances = {0.0, -1});
+TopoDS_Wire create_pipe_centerline(const pipe_params &params);
 TopoDS_Shape create_pipe(const pipe_params &params, const gp_Pnt &position,
                          const gp_Dir &direction = gp::DZ(),
                          const gp_Dir &xDir = gp::DX());
@@ -2391,11 +2400,12 @@ TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params);
 TopoDS_Shape create_multi_segment_pipe_with_split_distances(
     const multi_segment_pipe_params &params,
     std::array<double, 2> splitDistances = {0.0, -1});
+TopoDS_Wire
+create_multi_segment_pipe_centerline(const multi_segment_pipe_params &params);
 TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params,
                                        const gp_Pnt &position,
                                        const gp_Dir &direction = gp::DZ(),
                                        const gp_Dir &xDir = gp::DX());
-
 std::vector<gp_Pnt>
 sample_segment_points(const std::vector<std::vector<gp_Pnt>> &wires,
                       std::vector<segment_type> segments,

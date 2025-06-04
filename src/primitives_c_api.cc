@@ -785,6 +785,31 @@ PRIMCAPICALL topo_shape_t *create_wire_with_place(wire_params_t params,
   }
 }
 
+topo_wire_t create_wire_centerline(wire_params_t params) {
+  std::vector<gp_Pnt> points;
+  for (int i = 0; i < params.numFitPoints; i++) {
+    points.push_back(gp_Pnt(params.fitPoints[i].x, params.fitPoints[i].y,
+                            params.fitPoints[i].z));
+  }
+
+  wire_params cpp_params{
+      gp_Pnt(params.startPoint.x, params.startPoint.y, params.startPoint.z),
+      gp_Pnt(params.endPoint.x, params.endPoint.y, params.endPoint.z),
+      gp_Dir(params.startDir.x, params.startDir.y, params.startDir.z),
+      gp_Dir(params.endDir.x, params.endDir.y, params.endDir.z),
+      params.sag,
+      params.diameter,
+      points,
+  };
+  try {
+    TopoDS_Wire wire = create_wire_centerline(cpp_params);
+    return topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+    return topo_wire_t{};
+  }
+}
+
 PRIMCAPICALL pnt3d_t *sample_wire_points(wire_params_t params,
                                          double tessellation, int *out_count) {
   std::vector<gp_Pnt> points;
@@ -823,6 +848,27 @@ PRIMCAPICALL topo_shape_t *create_cable(cable_params_t params) {
         .shp = std::make_shared<shape>(create_cable(cpp_params))};
   } catch (...) {
     return nullptr;
+  }
+}
+
+topo_wire_t create_cable_centerline(cable_params_t params) {
+  std::vector<gp_Pnt> points;
+  for (int i = 0; i < params.numInflectionPoints; i++) {
+    points.push_back(gp_Pnt(params.inflectionPoints[i].x,
+                            params.inflectionPoints[i].y,
+                            params.inflectionPoints[i].z));
+  }
+  cable_params cpp_params{
+      gp_Pnt(params.startPoint.x, params.startPoint.y, params.startPoint.z),
+      gp_Pnt(params.endPoint.x, params.endPoint.y, params.endPoint.z), points,
+      std::vector<double>(params.radii, params.radii + params.numRadii),
+      params.diameter};
+  try {
+    TopoDS_Wire wire = create_cable_centerline(cpp_params);
+    return topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+    return topo_wire_t{};
   }
 }
 
@@ -948,6 +994,42 @@ PRIMCAPICALL topo_shape_t *create_curve_cable(curve_cable_params_t params) {
         .shp = std::make_shared<shape>(create_curve_cable(cpp_params))};
   } catch (...) {
     return nullptr;
+  }
+}
+
+topo_wire_t create_curve_cable_centerline(curve_cable_params_t params) {
+  try {
+    std::vector<std::vector<gp_Pnt>> cpp_controlPoints;
+    std::vector<curve_type> cpp_curveTypes;
+
+    for (int i = 0; i < params.numSegments; ++i) {
+      std::vector<gp_Pnt> segmentPoints;
+      for (int j = 0; j < params.segments[i].numPoints; ++j) {
+        pnt3d_t point = params.segments[i].controlPoints[j];
+        segmentPoints.push_back(gp_Pnt(point.x, point.y, point.z));
+      }
+      cpp_controlPoints.push_back(segmentPoints);
+
+      switch (params.curveTypes[i]) {
+      case CURVE_TYPE_LINE:
+        cpp_curveTypes.push_back(curve_type::LINE);
+        break;
+      case CURVE_TYPE_ARC:
+        cpp_curveTypes.push_back(curve_type::ARC);
+        break;
+      case CURVE_TYPE_BEZIER:
+        cpp_curveTypes.push_back(curve_type::BEZIER);
+        break;
+      }
+    }
+
+    curve_cable_params cpp_params{cpp_controlPoints, cpp_curveTypes,
+                                  params.diameter};
+    TopoDS_Wire wire = create_curve_cable_centerline(cpp_params);
+    return topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+    return topo_wire_t{};
   }
 }
 
@@ -1709,6 +1791,28 @@ create_transmission_line(transmission_line_params_t params, pnt3d_t startPoint,
             create_transmission_line(cpp_params, cpp_start, cpp_end))};
   } catch (...) {
     return nullptr;
+  }
+}
+
+topo_wire_t create_transmission_centerline(transmission_line_params_t params,
+                                           pnt3d_t startPoint,
+                                           pnt3d_t endPoint) {
+  transmission_line_params cpp_params{params.ctype,
+                                      params.sectionalArea,
+                                      params.outsideDiameter,
+                                      params.wireWeight,
+                                      params.coefficientOfElasticity,
+                                      params.expansionCoefficient,
+                                      params.ratedStrength};
+  gp_Pnt cpp_start(startPoint.x, startPoint.y, startPoint.z);
+  gp_Pnt cpp_end(endPoint.x, endPoint.y, endPoint.z);
+  try {
+    TopoDS_Wire wire =
+        create_transmission_centerline(cpp_params, cpp_start, cpp_end);
+    return topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+    return topo_wire_t{};
   }
 }
 
@@ -3192,6 +3296,26 @@ create_four_way_well_with_place(four_way_well_params_t params, pnt3d_t position,
             cpp_params, cpp_position, cpp_direction, cpp_xDir))};
   } catch (...) {
     return nullptr;
+  }
+}
+
+topo_wire_t create_channel_centerline(channel_point_t *points, int pointCount) {
+  // 转换输入数据
+  std::vector<channel_point> cpp_points;
+  for (int i = 0; i < pointCount; ++i) {
+    channel_point pt;
+    pt.position = gp_Pnt(points[i].position.x, points[i].position.y,
+                         points[i].position.z);
+    pt.type = static_cast<channel_point_type>(points[i].ctype);
+    cpp_points.push_back(pt);
+  }
+
+  try {
+    TopoDS_Wire wire = create_channel_centerline(cpp_points);
+    return topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+    return topo_wire_t{};
   }
 }
 
@@ -4849,6 +4973,46 @@ topo_shape_t *create_pipe_with_split_distances(pipe_params_t params,
   }
 }
 
+topo_wire_t create_pipe_centerline(pipe_params_t params) {
+  pipe_params cpp_params;
+
+  // 转换路径点
+  std::vector<gp_Pnt> wire;
+  for (int i = 0; i < params.wire_count; i++) {
+    wire.emplace_back(params.wire[i].x, params.wire[i].y, params.wire[i].z);
+  }
+  cpp_params.wire = wire;
+
+  // 转换线段类型
+  switch (params.segment_type) {
+  case SEGMENT_TYPE_LINE:
+    cpp_params.segment_type = segment_type::LINE;
+    break;
+  case SEGMENT_TYPE_THREE_POINT_ARC:
+    cpp_params.segment_type = segment_type::THREE_POINT_ARC;
+    break;
+  case SEGMENT_TYPE_CIRCLE_CENTER_ARC:
+    cpp_params.segment_type = segment_type::CIRCLE_CENTER_ARC;
+    break;
+  case SEGMENT_TYPE_SPLINE:
+    cpp_params.segment_type = segment_type::SPLINE;
+    break;
+  case SEGMENT_TYPE_BEZIER:
+    cpp_params.segment_type = segment_type::BEZIER;
+    break;
+  default:
+    return topo_wire_t{};
+  }
+
+  try {
+    TopoDS_Wire wire = create_pipe_centerline(cpp_params);
+    return topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+    return topo_wire_t{};
+  }
+}
+
 PRIMCAPICALL topo_shape_t *create_pipe_with_place(pipe_params_t params,
                                                   pnt3d_t position,
                                                   dir3d_t direction,
@@ -5424,6 +5588,57 @@ topo_shape_t *create_multi_segment_pipe_with_split_distances(
                                     cpp_params, distances))};
   } catch (...) {
     return nullptr;
+  }
+}
+
+topo_wire_t
+create_multi_segment_pipe_centerline(multi_segment_pipe_params_t params) {
+  multi_segment_pipe_params cpp_params;
+
+  // 转换路径点
+  std::vector<std::vector<gp_Pnt>> wires;
+  for (int i = 0; i < params.wire_array_count; i++) {
+    std::vector<gp_Pnt> wire;
+    for (int j = 0; j < params.wire_counts[i]; j++) {
+      wire.emplace_back(params.wires[i][j].x, params.wires[i][j].y,
+                        params.wires[i][j].z);
+    }
+    wires.push_back(wire);
+  }
+  cpp_params.wires = wires;
+
+  // 转换线段类型
+  if (params.segment_types != nullptr) {
+    std::vector<segment_type> segment_types;
+    for (int i = 0; i < params.segment_type_count; i++) {
+      switch (params.segment_types[i]) {
+      case SEGMENT_TYPE_LINE:
+        segment_types.push_back(segment_type::LINE);
+        break;
+      case SEGMENT_TYPE_THREE_POINT_ARC:
+        segment_types.push_back(segment_type::THREE_POINT_ARC);
+        break;
+      case SEGMENT_TYPE_CIRCLE_CENTER_ARC:
+        segment_types.push_back(segment_type::CIRCLE_CENTER_ARC);
+        break;
+      case SEGMENT_TYPE_SPLINE:
+        segment_types.push_back(segment_type::SPLINE);
+        break;
+      case SEGMENT_TYPE_BEZIER:
+        segment_types.push_back(segment_type::BEZIER);
+        break;
+      default:
+        return topo_wire_t{};
+      }
+    }
+    cpp_params.segment_types = segment_types;
+  }
+  try {
+    TopoDS_Wire wire = create_multi_segment_pipe_centerline(cpp_params);
+    return topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+    return topo_wire_t{};
   }
 }
 

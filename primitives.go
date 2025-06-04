@@ -797,6 +797,16 @@ func CreateWireWithPlace(params WireParams, position Point3, direction Dir3, upD
 	return s
 }
 
+func CreateWireCenterline(params WireParams) *Wire {
+	cParams := params.to_struct()
+	defer freeWireParams(cParams)
+
+	wire := C.create_wire_centerline(cParams)
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
+}
+
 func SampleWirePoints(params WireParams, tessellation float64) []Point3 {
 	cParams := params.to_struct()
 	defer freeWireParams(cParams)
@@ -864,6 +874,15 @@ func CreateCable(params CableParams) *Shape {
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
+}
+
+func CreateCableCenterline(params CableParams) *Wire {
+	cParams := params.to_struct()
+	defer freeCableParams(cParams)
+	wire := C.create_cable_centerline(cParams)
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
 }
 
 func CreateCableWithPlace(params CableParams, position Point3, direction Dir3, upDirection Dir3) *Shape {
@@ -965,6 +984,15 @@ func CreateCurveCable(params CurveCableParams) *Shape {
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
+}
+
+func CreateCurveCableCenterline(params CurveCableParams) *Wire {
+	cParams := params.to_struct()
+	defer freeCurveCableParams(cParams)
+	wire := C.create_curve_cable_centerline(cParams)
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
 }
 
 func CreateCurveCableWithPlace(params CurveCableParams, position Point3, direction Dir3, upDirection Dir3) *Shape {
@@ -2007,6 +2035,14 @@ func CreateTransmissionLine(params TransmissionLineParams, startPoint Point3, en
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
+}
+
+func CreateTransmissionCenterline(params TransmissionLineParams, startPoint Point3, endPoint Point3) *Wire {
+	cParams := params.to_struct()
+	wire := C.create_transmission_centerline(cParams, startPoint.val, endPoint.val)
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
 }
 
 func SampleTransmissionLinePoints(params TransmissionLineParams, startPoint, endPoint Point3, tessellation float64) []Point3 {
@@ -3747,6 +3783,21 @@ type ChannelPoint struct {
 	Ctype    int
 }
 
+func CreateChannelCenterline(points []ChannelPoint) *Wire {
+	cPoints := make([]C.channel_point_t, len(points))
+	for i, pt := range points {
+		cPoints[i] = C.channel_point_t{
+			position: pt.Position.val,
+			ctype:    C.int(pt.Ctype),
+		}
+	}
+
+	wire := C.create_channel_centerline(&cPoints[0], C.int(len(points)))
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
+}
+
 func SampleChannelPoints(points []ChannelPoint, tessellation float64) []Point3 {
 	cPoints := make([]C.channel_point_t, len(points))
 	for i, pt := range points {
@@ -5218,6 +5269,14 @@ func CreatePipeWithSplitDistances(params PipeParams, startDistance, endDistance 
 	return s
 }
 
+func CreatePipeCenterline(params PipeParams) *Wire {
+	cParams := params.to_struct()
+	wire := C.create_pipe_centerline(cParams)
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
+}
+
 func CreatePipeWithPlace(params PipeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
 	cParams := params.to_struct()
 	shp := C.create_pipe_with_place(cParams, position.val, direction.val, xDir.val)
@@ -5424,6 +5483,15 @@ func CreateMultiSegmentPipeWithSplitDistances(params MultiSegmentPipeParams, sta
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
+
+func CreateMultiSegmentPipeCenterline(params MultiSegmentPipeParams) *Wire {
+	cParams := params.to_struct()
+	wire := C.create_multi_segment_pipe_centerline(cParams)
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
+}
+
 func CreateMultiSegmentPipeWithPlace(params MultiSegmentPipeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
 	cParams := params.to_struct()
 	shp := C.create_multi_segment_pipe_with_place(cParams, position.val, direction.val, xDir.val)

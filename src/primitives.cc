@@ -2674,6 +2674,49 @@ TopoDS_Shape create_wire(const wire_params &params, const gp_Pnt &position,
   return transform.Shape();
 }
 
+TopoDS_Wire create_wire_centerline(const wire_params &params) {
+  // 参数验证
+  if (params.diameter <= 0) {
+    throw Standard_ConstructionError("导线直径必须为正数");
+  }
+  if (params.sag <= 0) {
+    throw Standard_ConstructionError("导线弧垂必须为正数");
+  }
+
+  std::vector<gp_Pnt> samples;
+  Handle(Geom_BSplineCurve) curve;
+
+  if (!params.fitPoints.empty()) {
+    // 使用拟合点集创建样条曲线
+    Handle(TColgp_HArray1OfPnt) points =
+        new TColgp_HArray1OfPnt(1, params.fitPoints.size());
+    for (int i = 0; i < params.fitPoints.size(); ++i) {
+      points->SetValue(i + 1, params.fitPoints[i]);
+    }
+
+    GeomAPI_Interpolate interpolate(points, false, Precision::Confusion());
+    interpolate.Load(gp_Vec(0, 0, 1), gp_Vec(0, 0, 1), true);
+    interpolate.Perform();
+
+    if (!interpolate.IsDone()) {
+      throw Standard_ConstructionError("Failed to create interpolated curve");
+    }
+
+    curve = interpolate.Curve();
+    if (curve.IsNull()) {
+      throw Standard_ConstructionError("Failed to create curve");
+    }
+
+    return BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(curve).Edge())
+        .Wire();
+  } else {
+    return BRepBuilderAPI_MakeWire(
+               BRepBuilderAPI_MakeEdge(params.startPoint, params.endPoint)
+                   .Edge())
+        .Wire();
+  }
+}
+
 std::vector<gp_Pnt> sample_wire(const wire_params &params,
                                 double tessellation) {
   // 参数验证
@@ -2824,6 +2867,50 @@ TopoDS_Shape create_cable(const cable_params &params) {
   }
 
   return pipeMaker.Shape();
+}
+
+TopoDS_Wire create_cable_centerline(const cable_params &params) {
+  // 参数验证
+  if (params.diameter <= 0.0) {
+    throw Standard_ConstructionError("Diameter must be positive");
+  }
+
+  // 收集所有路径点
+  std::vector<gp_Pnt> allPoints;
+  allPoints.push_back(params.startPoint);
+  allPoints.insert(allPoints.end(), params.inflectionPoints.begin(),
+                   params.inflectionPoints.end());
+  allPoints.push_back(params.endPoint);
+  if (allPoints.size() == 2) {
+    return BRepBuilderAPI_MakeWire(
+               BRepBuilderAPI_MakeEdge(allPoints[0], allPoints[1]).Edge())
+        .Wire();
+  } else {
+    BRepBuilderAPI_MakeWire wireMaker;
+
+    // 创建样条曲线
+    Handle(TColgp_HArray1OfPnt) points =
+        new TColgp_HArray1OfPnt(1, allPoints.size());
+    for (int i = 0; i < allPoints.size(); ++i) {
+      points->SetValue(i + 1, allPoints[i]);
+    }
+
+    GeomAPI_Interpolate interpolate(points, false, Precision::Confusion());
+    interpolate.Load(gp_Vec(0, 0, 1), gp_Vec(0, 0, 1),
+                     true); // 添加首末端导数约束
+    interpolate.Perform();
+    if (!interpolate.IsDone()) {
+      throw Standard_ConstructionError("Failed to create interpolated curve");
+    }
+
+    Handle(Geom_BSplineCurve) curve = interpolate.Curve();
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(curve).Edge());
+
+    if (!wireMaker.IsDone()) {
+      throw Standard_ConstructionError("Failed to create cable path");
+    }
+    return wireMaker.Wire();
+  }
 }
 
 std::vector<gp_Pnt> sample_cable(const cable_params &params,
@@ -3170,6 +3257,76 @@ TopoDS_Shape create_curve_cable(const curve_cable_params &params,
 
   BRepBuilderAPI_Transform transform(cable, transformation);
   return transform.Shape();
+}
+
+TopoDS_Wire create_curve_cable_centerline(const curve_cable_params &params) {
+  // 参数验证
+  if (params.controlPoints.empty()) {
+    throw Standard_ConstructionError("Control points cannot be empty");
+  }
+  if (params.controlPoints.size() != params.curveTypes.size()) {
+    throw Standard_ConstructionError(
+        "Control points and curve types count mismatch");
+  }
+  BRepBuilderAPI_MakeWire wireMaker;
+  for (size_t i = 0; i < params.controlPoints.size(); ++i) {
+    const auto &points = params.controlPoints[i];
+    curve_type type = params.curveTypes[i];
+
+    switch (type) {
+    case curve_type::LINE: {
+      if (points.size() != 2) {
+        throw Standard_ConstructionError(
+            "Line segment requires exactly 2 points");
+      }
+      TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(points[0], points[1]).Edge();
+      wireMaker.Add(edge);
+      break;
+    }
+    case curve_type::ARC: {
+      if (points.size() != 3) {
+        throw Standard_ConstructionError(
+            "Arc segment requires exactly 3 points");
+      }
+      // 创建三点圆弧
+      GC_MakeArcOfCircle arcMaker(points[0], points[1], points[2]);
+      if (!arcMaker.IsDone()) {
+        throw Standard_ConstructionError("Failed to create arc segment");
+      }
+      TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(arcMaker.Value()).Edge();
+      wireMaker.Add(edge);
+      break;
+    }
+    case curve_type::BEZIER: {
+      if (points.size() < 3) { // 贝塞尔曲线至少需要起点、控制点和终点
+        throw Standard_ConstructionError(
+            "Bezier segment requires at least 3 points");
+      }
+
+      // 创建贝塞尔曲线控制点数组
+      TColgp_Array1OfPnt poles(1, points.size());
+      for (size_t j = 0; j < points.size(); ++j) {
+        poles.SetValue(j + 1, points[j]);
+      }
+
+      // 创建二次或三次贝塞尔曲线
+      Handle(Geom_BezierCurve) bezierCurve;
+      if (points.size() == 3) { // 二次贝塞尔曲线
+        bezierCurve = new Geom_BezierCurve(poles);
+      } else { // 三次或更高阶贝塞尔曲线
+        bezierCurve = new Geom_BezierCurve(poles);
+      }
+
+      // 创建边并添加到线框
+      TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(bezierCurve).Edge();
+      wireMaker.Add(edge);
+      break;
+    }
+    default:
+      throw Standard_ConstructionError("Unknown curve type");
+    }
+  }
+  return wireMaker.Wire();
 }
 
 std::vector<gp_Pnt>
@@ -6329,6 +6486,58 @@ TopoDS_Shape create_transmission_line(const transmission_line_params &params,
     throw std::runtime_error("Failed to create a solid object from sweep");
   }
   return pipeMaker.Shape();
+}
+
+TopoDS_Wire
+create_transmission_centerline(const transmission_line_params &params,
+                               const gp_Pnt &startPoint,
+                               const gp_Pnt &endPoint) {
+  // 参数验证
+  if (params.sectionalArea <= 0) {
+    throw Standard_ConstructionError("截面积必须为正数");
+  }
+  if (params.outsideDiameter <= 0) {
+    throw Standard_ConstructionError("外径必须为正数");
+  }
+  if (params.wireWeight <= 0) {
+    throw Standard_ConstructionError("单位长度质量必须为正数");
+  }
+
+  // 计算导地线长度和悬垂度
+  double length = startPoint.Distance(endPoint);
+  if (length <= Precision::Confusion()) {
+    throw Standard_ConstructionError("起点和终点距离过小");
+  }
+
+  // 计算悬垂度 (带高差修正)
+  double weightPerMeter = params.wireWeight / 1000.0; // kg/m
+  double tension = params.ratedStrength * 0.25;       // (25%额定强度)
+
+  // 计算高差修正系数 (cosθ ≈ 1/cosh(β), β=高差/水平档距)
+  double heightDiff = endPoint.Z() - startPoint.Z();
+  double lengthHorizontal =
+      sqrt(pow(endPoint.X() - startPoint.X(), 2) +
+           pow(endPoint.Y() - startPoint.Y(), 2)); // 水平投影档距
+  double beta = heightDiff / lengthHorizontal;
+  double coshBeta = std::cosh(beta);
+  double sag = (weightPerMeter * 9.8 * lengthHorizontal * lengthHorizontal) /
+               (8 * tension * coshBeta);
+  double sagAtMid = sag * (1 - pow(heightDiff / (2 * lengthHorizontal), 2));
+
+  // 创建导地线路径(带悬垂度)
+  gp_Pnt midPoint((startPoint.X() + endPoint.X()) / 2,
+                  (startPoint.Y() + endPoint.Y()) / 2,
+                  (startPoint.Z() + endPoint.Z()) / 2 - sagAtMid);
+
+  TColgp_Array1OfPnt points(1, 3);
+  points.SetValue(1, startPoint);
+  points.SetValue(2, midPoint);
+  points.SetValue(3, endPoint);
+
+  Handle_Geom_BSplineCurve curve = GeomAPI_PointsToBSpline(points).Curve();
+  BRepBuilderAPI_MakeWire wireMaker;
+  wireMaker.Add(BRepBuilderAPI_MakeEdge(curve).Edge());
+  return wireMaker.Wire();
 }
 
 std::vector<gp_Pnt>
@@ -13261,6 +13470,46 @@ TopoDS_Shape create_four_way_well(const four_way_well_params &params,
   return transform.Shape();
 }
 
+TopoDS_Wire
+create_channel_centerline(const std::vector<channel_point> &points) {
+  if (points.size() < 2) {
+    throw Standard_ConstructionError("At least 2 points are required");
+  }
+
+  // 创建路径线框
+  BRepBuilderAPI_MakeWire pathWire;
+
+  // 处理点序列
+  for (size_t i = 0; i < points.size() - 1; i++) {
+    const gp_Pnt &current = points[i].position;
+    const gp_Pnt &next = points[i + 1].position;
+
+    if (points[i].type == channel_point_type::LINE &&
+        points[i + 1].type == channel_point_type::LINE) { // 普通节点
+      // 创建直线段
+      pathWire.Add(BRepBuilderAPI_MakeEdge(current, next).Edge());
+    } else if (points[i].type == channel_point_type::ARC) { // 弧形节点
+      // 确保有前一个点和后一个点
+      if (i == 0 || i == points.size() - 1) {
+        throw Standard_ConstructionError("弧形节点需要前后都有节点");
+      }
+
+      const gp_Pnt &prev = points[i - 1].position;
+
+      // 创建三点圆弧
+      pathWire.Add(BRepBuilderAPI_MakeEdge(
+                       GC_MakeArcOfCircle(prev, current, next).Value())
+                       .Edge());
+    }
+  }
+
+  if (!pathWire.IsDone()) {
+    throw Standard_ConstructionError("路径线框创建失败");
+  }
+
+  return pathWire.Wire();
+}
+
 std::vector<gp_Pnt>
 sample_channel_points(const std::vector<channel_point> &points,
                       double tessellation) {
@@ -17657,6 +17906,10 @@ create_pipe_with_split_distances(const pipe_params &params,
   return result;
 }
 
+TopoDS_Wire create_pipe_centerline(const pipe_params &params) {
+  return make_wire_from_segments({params.wire}, {{params.segment_type}});
+}
+
 TopoDS_Shape create_pipe(const pipe_params &params, const gp_Pnt &position,
                          const gp_Dir &direction, const gp_Dir &xDir) {
   // 正交性校验
@@ -17977,6 +18230,11 @@ TopoDS_Shape create_multi_segment_pipe(const multi_segment_pipe_params &params,
 
   BRepBuilderAPI_Transform transform(pipe, transformation);
   return transform.Shape();
+}
+
+TopoDS_Wire
+create_multi_segment_pipe_centerline(const multi_segment_pipe_params &params) {
+  return make_wire_from_segments(params.wires, params.segment_types);
 }
 
 TopoDS_Shape create_multi_segment_pipe_with_split_distances(
