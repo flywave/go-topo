@@ -70,6 +70,7 @@ IFCCAPICALL int ifc_element_get_parent_id(ifc_element_t *p);
 IFCCAPICALL const char *ifc_element_get_name(ifc_element_t *p);
 IFCCAPICALL const char *ifc_element_get_guid(ifc_element_t *p);
 IFCCAPICALL topo_shape_t *ifc_element_get_shape(ifc_element_t *p);
+IFCCAPICALL const char *ifc_element_get_type(ifc_element_t *p);
 
 IFCCAPICALL void ifc_triangulation_free(ifc_triangulation_t *p);
 IFCCAPICALL const double *ifc_triangulation_get_verts(ifc_triangulation_t *p,

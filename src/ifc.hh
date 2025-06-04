@@ -23,6 +23,7 @@ struct ifc_element_info {
   int parent_id;
   std::string name;
   std::string guid;
+  std::string type;
 };
 
 struct geom_filter {

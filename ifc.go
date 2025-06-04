@@ -26,6 +26,7 @@ type IfcElement struct {
 	ParentId int
 	Name     string
 	Guid     string
+	Type     string
 }
 
 type IfcTriangulationMaterial struct {
@@ -92,6 +93,7 @@ func (c *IfcConverter) GetElements() []*IfcElement {
 			ParentId: int(C.ifc_element_get_parent_id(element)),
 			Name:     C.GoString(C.ifc_element_get_name(element)),
 			Guid:     C.GoString(C.ifc_element_get_guid(element)),
+			Type:     C.GoString(C.ifc_element_get_type(element)),
 		})
 	}
 	return elements
@@ -144,6 +146,7 @@ func IfcToElements(f string) []*IfcElement {
 			ParentId: int(C.ifc_element_get_parent_id(element)),
 			Name:     C.GoString(C.ifc_element_get_name(element)),
 			Guid:     C.GoString(C.ifc_element_get_guid(element)),
+			Type:     C.GoString(C.ifc_element_get_type(element)),
 		})
 	}
 	return elements

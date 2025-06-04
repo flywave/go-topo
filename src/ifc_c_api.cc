@@ -204,6 +204,8 @@ topo_shape_t *ifc_element_get_shape(ifc_element_t *p) {
   };
 }
 
+const char *ifc_element_get_type(ifc_element_t *p) { return p->type.c_str(); }
+
 ifc_element_t *ifc_get_element(ifc_element_t **elements, int index) {
   return elements[index];
 }

@@ -76,6 +76,7 @@ std::vector<ifc_element_info> ifc_convert::get_shape() {
           .parent_id = ele2->parent_id(),
           .name = ele2->name(),
           .guid = ele2->guid(),
+          .type = ele2->type()
       });
     } while (iter.next());
   }

@@ -17,6 +17,7 @@ struct _ifc_element_t {
   int parent_id;
   std::string name;
   std::string guid;
+  std::string type;
 };
 
 struct _ifc_triangulation_t {
