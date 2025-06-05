@@ -2047,6 +2047,34 @@ create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
                                      pnt3d_t position, dir3d_t direction,
                                      dir3d_t xDir);
 
+typedef struct {
+  char *name;
+  shape_profile_t *profiles;
+  int profile_count;
+  shape_profile_t *inner_profiles;
+  int inner_profile_count;
+} profile_layer_t;
+
+typedef struct {
+  pnt3d_t **wires;
+  int *wire_counts;
+  int wire_array_count;
+  segment_type_t *segment_types;
+  int segment_type_count;
+  profile_layer_t *layers;
+  int layer_count;
+  int transition_mode;
+  dir3d_t *upDir;
+} multi_layer_extrusion_structure_params_t;
+
+PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure(
+    multi_layer_extrusion_structure_params_t params, int *out_count);
+PRIMCAPICALL topo_wire_t create_multi_layer_extrusion_structure_centerline(
+    multi_layer_extrusion_structure_params_t params);
+PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure_with_place(
+    multi_layer_extrusion_structure_params_t params, pnt3d_t position,
+    dir3d_t direction, dir3d_t xDir, int *out_count);
+
 // 管道连接参数
 typedef struct {
   pipe_endpoint_t *ins;

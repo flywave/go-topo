@@ -2413,6 +2413,29 @@ sample_segment_points(const std::vector<std::vector<gp_Pnt>> &wires,
                       std::vector<segment_type> segments,
                       double tessellation = 0);
 
+struct profile_layer {
+  std::string name;
+  std::vector<shape_profile> profiles;
+  boost::optional<std::vector<shape_profile>> inner_profiles;
+};
+
+struct multi_layer_extrusion_structure_params {
+  std::vector<std::vector<gp_Pnt>> wires;
+  boost::optional<std::vector<segment_type>> segment_types;
+  std::vector<profile_layer> layers;
+  topo::transition_mode transition_mode;
+  boost::optional<gp_Dir> upDir;
+};
+
+std::map<std::string, TopoDS_Shape> create_multi_layer_extrusion_structure(
+    const multi_layer_extrusion_structure_params &params);
+TopoDS_Wire create_multi_layer_extrusion_structure_centerline(
+    const multi_layer_extrusion_structure_params &params);
+std::map<std::string, TopoDS_Shape> create_multi_layer_extrusion_structure(
+    const multi_layer_extrusion_structure_params &params,
+    const gp_Pnt &position, const gp_Dir &direction = gp::DZ(),
+    const gp_Dir &xDir = gp::DX());
+
 enum class joint_shape_mode {
   SPHERE = 0,
   BOX = 1,

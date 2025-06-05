@@ -13588,7 +13588,9 @@ sample_channel_points(const std::vector<channel_point> &points,
   return sampledPoints;
 }
 
-TopoDS_Shape create_channel_shape(TopoDS_Shape section, TopoDS_Wire pathWire) {
+TopoDS_Shape create_channel_shape(
+    TopoDS_Shape section, TopoDS_Wire pathWire,
+    BRepBuilderAPI_TransitionMode mode = BRepBuilderAPI_Transformed) {
   // 参数校验
   if (section.IsNull()) {
     throw Standard_ConstructionError("截面形状不能为空");
@@ -13603,7 +13605,7 @@ TopoDS_Shape create_channel_shape(TopoDS_Shape section, TopoDS_Wire pathWire) {
   // 创建管道形状
   BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
   pipeMaker.Add(section, Standard_False, Standard_True);
-  pipeMaker.SetTransitionMode(BRepBuilderAPI_Transformed);
+  pipeMaker.SetTransitionMode(mode);
   pipeMaker.Build();
 
   if (!pipeMaker.IsDone()) {
@@ -18433,6 +18435,74 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
   }
 
   return result;
+}
+
+std::map<std::string, TopoDS_Shape> create_multi_layer_extrusion_structure(
+    const multi_layer_extrusion_structure_params &params) {
+  // 参数验证
+  if (params.wires.empty()) {
+    throw Standard_ConstructionError("Wire paths cannot be empty");
+  }
+
+  std::map<std::string, TopoDS_Shape> results;
+
+  for (size_t i = 0; i < params.layers.size(); i++) {
+    auto layer = params.layers[i];
+    if (layer.profiles.size() != params.wires.size() &&
+        layer.profiles.size() != params.wires.size() + 1 &&
+        layer.profiles.size() != 1) {
+      throw Standard_ConstructionError("Profile count must match wire count");
+    }
+    if (layer.inner_profiles &&
+        (layer.inner_profiles->size() != layer.profiles.size())) {
+      throw Standard_ConstructionError(
+          "Inner profile count must match wire count");
+    }
+
+    auto shp =
+        create_multi_segment_pipe({.wires = params.wires,
+                                   .segment_types = params.segment_types,
+                                   .transition_mode = params.transition_mode,
+                                   .upDir = params.upDir,
+                                   .profiles = layer.profiles,
+                                   .inner_profiles = layer.inner_profiles});
+
+    results.emplace(layer.name, shp);
+  }
+
+  return results;
+}
+
+TopoDS_Wire create_multi_layer_extrusion_structure_centerline(
+    const multi_layer_extrusion_structure_params &params) {
+  return make_wire_from_segments(params.wires, params.segment_types);
+}
+
+std::map<std::string, TopoDS_Shape> create_multi_layer_extrusion_structure(
+    const multi_layer_extrusion_structure_params &params,
+    const gp_Pnt &position, const gp_Dir &normal, const gp_Dir &xDir) {
+  // 正交性校验
+  if (Abs(normal.Dot(xDir)) > Precision::Angular()) {
+    throw Standard_ConstructionError(
+        "Normal and direction must be perpendicular");
+  }
+
+  // 创建标准方向的排管
+  std::map<std::string, TopoDS_Shape> extrusionStructure =
+      create_multi_layer_extrusion_structure(params);
+
+  // 创建坐标系变换
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, normal, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  for (auto &pair : extrusionStructure) {
+    BRepBuilderAPI_Transform transform(pair.second, transformation);
+    extrusionStructure.emplace(pair.first, transform.Shape());
+  }
+
+  return extrusionStructure;
 }
 
 shape_profile scale_profile(const shape_profile &profile, double scale) {

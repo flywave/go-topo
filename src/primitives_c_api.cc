@@ -5842,6 +5842,362 @@ create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
   }
 }
 
+static std::vector<std::vector<gp_Pnt>>
+convert_wires(pnt3d_t **wires, int *wire_counts, int wire_array_count) {
+  std::vector<std::vector<gp_Pnt>> result;
+  for (int i = 0; i < wire_array_count; i++) {
+    std::vector<gp_Pnt> wire;
+    for (int j = 0; j < wire_counts[i]; j++) {
+      wire.push_back({wires[i][j].x, wires[i][j].y, wires[i][j].z});
+    }
+    result.push_back(wire);
+  }
+  return result;
+}
+
+static std::vector<profile_layer> convert_layers(profile_layer_t *layers,
+                                                 int layer_count) {
+  std::vector<profile_layer> result;
+  for (int i = 0; i < layer_count; i++) {
+    profile_layer layer;
+    layer.name = layers[i].name ? std::string(layers[i].name) : "";
+
+    // 转换剖面类型
+    for (int i = 0; i < layers[i].profile_count; i++) {
+      switch (layers[i].profiles[i].type_) {
+      case PROFILE_TYPE_TRIANGLE: {
+        auto &tri = layers[i].profiles[i].triangle;
+        layer.profiles.emplace_back(
+            triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                             gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                             gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z)));
+        break;
+      }
+      case PROFILE_TYPE_RECTANGLE: {
+        auto &rect = layers[i].profiles[i].rectangle;
+        layer.profiles.emplace_back(
+            rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                              gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
+        break;
+      }
+      case PROFILE_TYPE_CIRC: {
+        auto &circ = layers[i].profiles[i].circ;
+        layer.profiles.emplace_back(circ_profile(
+            gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+            gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
+        break;
+      }
+      case PROFILE_TYPE_ELIPS: {
+        auto &elips = layers[i].profiles[i].elips;
+        layer.profiles.emplace_back(elips_profile(
+            gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+            gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+            gp_Pnt(elips.center.x, elips.center.y, elips.center.z)));
+        break;
+      }
+      case PROFILE_TYPE_POLYGON: {
+        auto &poly = layers[i].profiles[i].polygon;
+        std::vector<gp_Pnt> edges;
+        for (int j = 0; j < poly.edgeCount; j++) {
+          edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+        }
+
+        std::vector<std::vector<gp_Pnt>> inners;
+        for (int j = 0; j < poly.innerArrayCount; j++) {
+          std::vector<gp_Pnt> inner;
+          for (int k = 0; k < poly.innerCounts[j]; k++) {
+            inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                               poly.inners[j][k].z);
+          }
+          inners.push_back(inner);
+        }
+
+        layer.profiles.emplace_back(polygon_profile(edges, inners));
+        break;
+      }
+      default:
+      }
+    }
+
+    if (layers[i].inner_profiles && layers[i].inner_profile_count > 0) {
+      std::vector<shape_profile> inner_profiles;
+      for (int i = 0; i < layers[i].inner_profile_count; i++) {
+        switch (layers[i].inner_profiles[i].type_) {
+        case PROFILE_TYPE_TRIANGLE: {
+          auto &tri = layers[i].inner_profiles[i].triangle;
+          inner_profiles.emplace_back(
+              triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                               gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                               gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z)));
+          break;
+        }
+        case PROFILE_TYPE_RECTANGLE: {
+          auto &rect = layers[i].inner_profiles[i].rectangle;
+          inner_profiles.emplace_back(
+              rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                                gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
+          break;
+        }
+        case PROFILE_TYPE_CIRC: {
+          auto &circ = layers[i].inner_profiles[i].circ;
+          inner_profiles.emplace_back(circ_profile(
+              gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+              gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
+          break;
+        }
+        case PROFILE_TYPE_ELIPS: {
+          auto &elips = layers[i].inner_profiles[i].elips;
+          inner_profiles.emplace_back(elips_profile(
+              gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+              gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+              gp_Pnt(elips.center.x, elips.center.y, elips.center.z)));
+          break;
+        }
+        case PROFILE_TYPE_POLYGON: {
+          auto &poly = layers[i].inner_profiles[i].polygon;
+          std::vector<gp_Pnt> edges;
+          for (int j = 0; j < poly.edgeCount; j++) {
+            edges.emplace_back(poly.edges[j].x, poly.edges[j].y,
+                               poly.edges[j].z);
+          }
+
+          std::vector<std::vector<gp_Pnt>> inners;
+          for (int j = 0; j < poly.innerArrayCount; j++) {
+            std::vector<gp_Pnt> inner;
+            for (int k = 0; k < poly.innerCounts[j]; k++) {
+              inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
+                                 poly.inners[j][k].z);
+            }
+            inners.push_back(inner);
+          }
+
+          inner_profiles.emplace_back(polygon_profile(edges, inners));
+          break;
+        }
+        }
+      }
+      layer.inner_profiles = inner_profiles;
+    }
+
+    result.push_back(layer);
+  }
+  return result;
+}
+
+PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure(
+    multi_layer_extrusion_structure_params_t params, int *out_count) {
+  try {
+    multi_layer_extrusion_structure_params cpp_params;
+    cpp_params.wires = convert_wires(params.wires, params.wire_counts,
+                                     params.wire_array_count);
+
+    if (params.segment_types && params.segment_type_count > 0) {
+      std::vector<segment_type> segment_types;
+      for (int i = 0; i < params.segment_type_count; i++) {
+        switch (params.segment_types[i]) {
+        case SEGMENT_TYPE_LINE:
+          segment_types.push_back(segment_type::LINE);
+          break;
+        case SEGMENT_TYPE_THREE_POINT_ARC:
+          segment_types.push_back(segment_type::THREE_POINT_ARC);
+          break;
+        case SEGMENT_TYPE_CIRCLE_CENTER_ARC:
+          segment_types.push_back(segment_type::CIRCLE_CENTER_ARC);
+          break;
+        case SEGMENT_TYPE_SPLINE:
+          segment_types.push_back(segment_type::SPLINE);
+          break;
+        case SEGMENT_TYPE_BEZIER:
+          segment_types.push_back(segment_type::BEZIER);
+          break;
+        default:
+          return nullptr;
+        }
+      }
+      cpp_params.segment_types = segment_types;
+    }
+
+    cpp_params.layers = convert_layers(params.layers, params.layer_count);
+    // 转换过渡模式
+    switch (params.transition_mode) {
+    case TRANSITION_RIGHT:
+      cpp_params.transition_mode = transition_mode::RIGHT;
+      break;
+    case TRANSITION_ROUND:
+      cpp_params.transition_mode = transition_mode::ROUND;
+      break;
+    case TRANSITION_TRANSFORMED:
+      cpp_params.transition_mode = transition_mode::TRANSFORMED;
+      break;
+    default:
+    }
+
+    if (params.upDir) {
+      cpp_params.upDir =
+          gp_Dir(params.upDir->x, params.upDir->y, params.upDir->z);
+    }
+
+    auto shapes = create_multi_layer_extrusion_structure(cpp_params);
+    *out_count = static_cast<int>(shapes.size());
+    topo_shape_t **result =
+        (topo_shape_t **)malloc(*out_count * sizeof(topo_shape_t *));
+
+    int i = 0;
+    for (auto pair : shapes) {
+      auto shp = std::make_shared<flywave::topo::shape>(pair.second);
+      shp->set_label(pair.first.c_str());
+      result[i] = new topo_shape_t{.shp = shp};
+      i++;
+    }
+
+    return result;
+  } catch (...) {
+    if (out_count)
+      *out_count = 0;
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_wire_t create_multi_layer_extrusion_structure_centerline(
+    multi_layer_extrusion_structure_params_t params) {
+  try {
+    multi_layer_extrusion_structure_params cpp_params;
+    cpp_params.wires = convert_wires(params.wires, params.wire_counts,
+                                     params.wire_array_count);
+
+    if (params.segment_types && params.segment_type_count > 0) {
+      std::vector<segment_type> segment_types;
+      for (int i = 0; i < params.segment_type_count; i++) {
+        switch (params.segment_types[i]) {
+        case SEGMENT_TYPE_LINE:
+          segment_types.push_back(segment_type::LINE);
+          break;
+        case SEGMENT_TYPE_THREE_POINT_ARC:
+          segment_types.push_back(segment_type::THREE_POINT_ARC);
+          break;
+        case SEGMENT_TYPE_CIRCLE_CENTER_ARC:
+          segment_types.push_back(segment_type::CIRCLE_CENTER_ARC);
+          break;
+        case SEGMENT_TYPE_SPLINE:
+          segment_types.push_back(segment_type::SPLINE);
+          break;
+        case SEGMENT_TYPE_BEZIER:
+          segment_types.push_back(segment_type::BEZIER);
+          break;
+        default:
+        }
+      }
+      cpp_params.segment_types = segment_types;
+    }
+
+    cpp_params.layers = convert_layers(params.layers, params.layer_count);
+    // 转换过渡模式
+    switch (params.transition_mode) {
+    case TRANSITION_RIGHT:
+      cpp_params.transition_mode = transition_mode::RIGHT;
+      break;
+    case TRANSITION_ROUND:
+      cpp_params.transition_mode = transition_mode::ROUND;
+      break;
+    case TRANSITION_TRANSFORMED:
+      cpp_params.transition_mode = transition_mode::TRANSFORMED;
+      break;
+    default:
+    }
+
+    if (params.upDir) {
+      cpp_params.upDir =
+          gp_Dir(params.upDir->x, params.upDir->y, params.upDir->z);
+    }
+
+    auto wire = create_multi_layer_extrusion_structure_centerline(cpp_params);
+    return topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+    return topo_wire_t{};
+  }
+}
+
+PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure_with_place(
+    multi_layer_extrusion_structure_params_t params, pnt3d_t position,
+    dir3d_t direction, dir3d_t xDir, int *out_count) {
+  try {
+    multi_layer_extrusion_structure_params cpp_params;
+    cpp_params.wires = convert_wires(params.wires, params.wire_counts,
+                                     params.wire_array_count);
+
+    if (params.segment_types && params.segment_type_count > 0) {
+      std::vector<segment_type> segment_types;
+      for (int i = 0; i < params.segment_type_count; i++) {
+        switch (params.segment_types[i]) {
+        case SEGMENT_TYPE_LINE:
+          segment_types.push_back(segment_type::LINE);
+          break;
+        case SEGMENT_TYPE_THREE_POINT_ARC:
+          segment_types.push_back(segment_type::THREE_POINT_ARC);
+          break;
+        case SEGMENT_TYPE_CIRCLE_CENTER_ARC:
+          segment_types.push_back(segment_type::CIRCLE_CENTER_ARC);
+          break;
+        case SEGMENT_TYPE_SPLINE:
+          segment_types.push_back(segment_type::SPLINE);
+          break;
+        case SEGMENT_TYPE_BEZIER:
+          segment_types.push_back(segment_type::BEZIER);
+          break;
+        default:
+        }
+      }
+      cpp_params.segment_types = segment_types;
+    }
+
+    cpp_params.layers = convert_layers(params.layers, params.layer_count);
+    // 转换过渡模式
+    switch (params.transition_mode) {
+    case TRANSITION_RIGHT:
+      cpp_params.transition_mode = transition_mode::RIGHT;
+      break;
+    case TRANSITION_ROUND:
+      cpp_params.transition_mode = transition_mode::ROUND;
+      break;
+    case TRANSITION_TRANSFORMED:
+      cpp_params.transition_mode = transition_mode::TRANSFORMED;
+      break;
+    default:
+    }
+
+    if (params.upDir) {
+      cpp_params.upDir =
+          gp_Dir(params.upDir->x, params.upDir->y, params.upDir->z);
+    }
+
+    gp_Pnt cpp_position(position.x, position.y, position.z);
+    gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+    gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+
+    auto shapes = create_multi_layer_extrusion_structure(
+        cpp_params, cpp_position, cpp_direction, cpp_xDir);
+
+    *out_count = static_cast<int>(shapes.size());
+    topo_shape_t **result =
+        (topo_shape_t **)malloc(*out_count * sizeof(topo_shape_t *));
+
+    int i = 0;
+    for (auto pair : shapes) {
+      auto shp = std::make_shared<flywave::topo::shape>(pair.second);
+      shp->set_label(pair.first.c_str());
+      result[i] = new topo_shape_t{.shp = shp};
+      i++;
+    }
+
+    return result;
+  } catch (...) {
+    if (out_count)
+      *out_count = 0;
+    return nullptr;
+  }
+}
+
 PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params) {
   pipe_joint_params cpp_params;
 
