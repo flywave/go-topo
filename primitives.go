@@ -11,6 +11,7 @@ package topo
 */
 import "C"
 import (
+	"errors"
 	"runtime"
 	"unsafe"
 )
@@ -6349,4 +6350,76 @@ func CreateStepShapeWithPlace(params StepShapeParams, position Point3, direction
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
+}
+
+type BoreholeSample struct {
+	Name      string
+	DepthFrom float32
+	DepthTo   float32
+}
+
+type BoreholeParams struct {
+	Samples  []BoreholeSample
+	Diameter float32
+}
+
+func (p *BoreholeSample) to_struct() C.borehole_sample_t {
+	var c C.borehole_sample_t
+	c.name = C.CString(p.Name)
+	c.depth_from = C.double(p.DepthFrom)
+	c.depth_to = C.double(p.DepthTo)
+	return c
+}
+
+func (p *BoreholeParams) to_struct() C.borehole_params_t {
+	var c C.borehole_params_t
+	c.sample_count = C.int(len(p.Samples))
+	c.diameter = C.double(p.Diameter)
+
+	if len(p.Samples) > 0 {
+		c.samples = (*C.borehole_sample_t)(C.malloc(C.size_t(len(p.Samples)) * C.sizeof_borehole_sample_t))
+		for i, sample := range p.Samples {
+			csample := sample.to_struct()
+			*(*C.borehole_sample_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.samples)) + uintptr(i)*C.sizeof_borehole_sample_t)) = csample
+		}
+	}
+
+	return c
+}
+
+func freeBoreholeParams(c C.borehole_params_t) {
+	if c.samples != nil {
+		for i := 0; i < int(c.sample_count); i++ {
+			sample := (*C.borehole_sample_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.samples)) + uintptr(i)*C.sizeof_borehole_sample_t))
+			C.free(unsafe.Pointer(sample.name))
+		}
+		C.free(unsafe.Pointer(c.samples))
+	}
+}
+
+func CreateBorehole(params BoreholeParams) (map[string]*Shape, error) {
+	cParams := params.to_struct()
+	defer freeBoreholeParams(cParams)
+
+	var outCount C.int
+	cShapes := C.create_borehole(cParams, &outCount)
+	defer C.free_borehole_results(cShapes, outCount)
+
+	if cShapes == nil || outCount == 0 {
+		return nil, errors.New("failed to create borehole")
+	}
+
+	shapes := make(map[string]*Shape)
+	for i := 0; i < int(outCount); i++ {
+		cShape := *(**C.topo_shape_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cShapes)) + uintptr(i)*unsafe.Sizeof(cShapes)))
+		if cShape != nil {
+			name := params.Samples[i].Name
+			shapes[name] = &Shape{
+				inner: &innerShape{val: cShape},
+			}
+			runtime.SetFinalizer(shapes[name].inner, (*innerShape).free)
+		}
+	}
+
+	return shapes, nil
 }

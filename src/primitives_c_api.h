@@ -2203,6 +2203,22 @@ PRIMCAPICALL topo_shape_t *
 create_step_shape_with_place(step_shape_params_t params, pnt3d_t position,
                              dir3d_t direction, dir3d_t xDir);
 
+typedef struct {
+  char *name;
+  double depth_from;
+  double depth_to;
+} borehole_sample_t;
+
+typedef struct {
+  borehole_sample_t *samples;
+  int sample_count;
+  double diameter;
+} borehole_params_t;
+
+PRIMCAPICALL topo_shape_t **create_borehole(borehole_params_t params,
+                                            int *out_count);
+PRIMCAPICALL void free_borehole_results(topo_shape_t **results, int count);
+
 #ifdef __cplusplus
 }
 #endif
