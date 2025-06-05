@@ -6208,7 +6208,7 @@ TOPOCAPICALL pnt3d_t *topo_sample_centerline_wire(topo_wire_t centerline,
                                                   int numSamples, bool simplify,
                                                   int *point_count) {
   if (!centerline.shp || !point_count)
-    return;
+    return nullptr;
   try {
     auto pts = flywave::topo::sample_centerline_wire(
         centerline.shp->shp->value(), numSamples, simplify);
