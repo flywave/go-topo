@@ -19266,5 +19266,41 @@ TopoDS_Shape create_step_shap(const step_shape_params &params,
   return transform.Shape();
 }
 
+std::map<std::string, TopoDS_Shape>
+create_borehole(const borehole_params &params) {
+  std::map<std::string, TopoDS_Shape> result;
+
+  if (params.samples.empty()) {
+    return result;
+  }
+
+  // 复制并排序samples
+  auto sorted_samples = params.samples;
+  std::sort(sorted_samples.begin(), sorted_samples.end(),
+            [](const borehole_sample &a, const borehole_sample &b) {
+              return a.depth_from < b.depth_from;
+            });
+
+  // 创建圆柱体
+  for (const auto &sample : sorted_samples) {
+    if (sample.depth_to == 0.0) {
+      result[sample.name] = TopoDS_Shape(); // 空shape
+      continue;
+    }
+
+    double height = sample.depth_to - sample.depth_from;
+    if (height <= 0.0) {
+      result[sample.name] = TopoDS_Shape(); // 空shape
+      continue;
+    }
+
+    // 创建圆柱体
+    gp_Ax2 axis(gp_Pnt(0, 0, -sample.depth_from), gp_Dir(0, 0, -1));
+    BRepPrimAPI_MakeCylinder maker(axis, params.diameter / 2.0, height);
+    result[sample.name] = maker.Shape();
+  }
+
+  return result;
+}
 } // namespace topo
 } // namespace flywave

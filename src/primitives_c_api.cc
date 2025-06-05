@@ -7070,6 +7070,47 @@ create_step_shape_with_place(step_shape_params_t params, pnt3d_t position,
   }
 }
 
+PRIMCAPICALL topo_shape_t **create_borehole(borehole_params_t params,
+                                            int *out_count) {
+  try {
+    borehole_params cpp_params;
+    cpp_params.diameter = params.diameter;
+
+    for (int i = 0; i < params.sample_count; i++) {
+      borehole_sample sample;
+      sample.name = std::string(params.samples[i].name);
+      sample.depth_from = params.samples[i].depth_from;
+      sample.depth_to = params.samples[i].depth_to;
+      cpp_params.samples.push_back(sample);
+    }
+
+    auto shapes = create_borehole(cpp_params);
+
+    *out_count = static_cast<int>(shapes.size());
+    topo_shape_t **result =
+        (topo_shape_t **)malloc(*out_count * sizeof(topo_shape_t *));
+
+    int i = 0;
+    for (auto pair : shapes) {
+      auto shp = std::make_shared<flywave::topo::shape>(pair.second);
+      shp->set_label(pair.first.c_str());
+      result[i] = new topo_shape_t{.shp = shp};
+      i++;
+    }
+
+    return result;
+  } catch (...) {
+    if (out_count)
+      *out_count = 0;
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL void free_borehole_results(topo_shape_t **results, int count) {
+  if (!results)
+    return;
+  free(results);
+}
 #ifdef __cplusplus
 }
 #endif

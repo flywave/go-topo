@@ -6,6 +6,7 @@
 #include <gp_Dir.hxx>
 #include <gp_Pnt.hxx>
 
+#include <map>
 #include <vector>
 
 #include <boost/optional.hpp>
@@ -928,9 +929,10 @@ struct transmission_line_params {
 TopoDS_Shape create_transmission_line(const transmission_line_params &params,
                                       const gp_Pnt &startPoint,
                                       const gp_Pnt &endPoint);
-TopoDS_Wire create_transmission_centerline(const transmission_line_params &params,
-                                           const gp_Pnt &startPoint,
-                                           const gp_Pnt &endPoint);
+TopoDS_Wire
+create_transmission_centerline(const transmission_line_params &params,
+                               const gp_Pnt &startPoint,
+                               const gp_Pnt &endPoint);
 std::vector<gp_Pnt>
 sample_transmission_line(const transmission_line_params &params,
                          const gp_Pnt &startPoint, const gp_Pnt &endPoint,
@@ -2567,6 +2569,20 @@ TopoDS_Shape create_step_shap(const step_shape_params &params,
                               const gp_Pnt &position,
                               const gp_Dir &direction = gp::DZ(),
                               const gp_Dir &xDir = gp::DX());
+
+struct borehole_sample {
+  std::string name;
+  double depth_from;
+  double depth_to;
+};
+
+struct borehole_params {
+  std::vector<borehole_sample> samples;
+  double diameter;
+};
+
+std::map<std::string, TopoDS_Shape>
+create_borehole(const borehole_params &params);
 
 } // namespace topo
 } // namespace flywave
