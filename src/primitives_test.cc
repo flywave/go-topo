@@ -1,5 +1,6 @@
 #include "primitives.hh"
 #include <BRepMesh_IncrementalMesh.hxx>
+#include <BRep_Builder.hxx>
 #include <Interface_Static.hxx>
 #include <Message_ProgressRange.hxx>
 #include <RWGltf_CafWriter.hxx>
@@ -713,14 +714,14 @@ void test_make_rectangular_fixed_plate() {
     // 测试无中间孔的情况
     auto shp2 = create_rectangular_fixed_plate(
         rectangular_fixed_plate_params{.length = 120.0,
-                                      .width = 120.0,
-                                      .thickness = 8.0,
-                                      .columnSpacing = 25.0,
-                                      .rowSpacing = 20.0,
-                                      .columnCount = 3,
-                                      .rowCount = 5,
-                                      .hasMiddleHole = 0,
-                                      .holeDiameter = 6.0});
+                                       .width = 120.0,
+                                       .thickness = 8.0,
+                                       .columnSpacing = 25.0,
+                                       .rowSpacing = 20.0,
+                                       .columnCount = 3,
+                                       .rowCount = 5,
+                                       .hasMiddleHole = 0,
+                                       .holeDiameter = 6.0});
     if (shp2.IsNull()) {
       std::cerr << "Error: Failed to create rectangular fixed plate without "
                    "middle hole"
@@ -5757,6 +5758,83 @@ void test_make_pipe_joint() {
   }
 }
 
+void test_make_multi_layer_extrusion_structure() {
+  std::cout << "\n=== Testing Multi-Layer Extrusion Structure ===" << std::endl;
+
+  try {
+    // 1. 创建路径线
+
+    // 准备测试数据 - 直线段
+    std::vector<gp_Pnt> linePoints = {gp_Pnt(50, -50, 0), gp_Pnt(100, 0, 0)};
+
+    // 准备测试数据 - 三点圆弧
+    std::vector<gp_Pnt> arcPoints = {gp_Pnt(100, 0, 0), gp_Pnt(150, 50, 0),
+                                     gp_Pnt(200, 0, 0)};
+
+    // 准备测试数据 - 圆心弧线
+    std::vector<gp_Pnt> centerArcPoints = {gp_Pnt(200, 0, 0),
+                                           gp_Pnt(250, 0, 0), // 圆心
+                                           gp_Pnt(300, 0, 0)};
+
+    // 准备测试数据 - 样条曲线
+    std::vector<gp_Pnt> splinePoints = {gp_Pnt(300, 0, 0), gp_Pnt(350, 50, 50),
+                                        gp_Pnt(400, 0, 100)};
+
+    // 2. 定义剖面层
+    std::vector<profile_layer> layers;
+
+    // 第一层 - 矩形剖面
+    profile_layer layer1;
+    layer1.name = "base_layer";
+    layer1.profiles.push_back(
+        rectangle_profile{gp_Pnt(-10, -50, 0), gp_Pnt(10, -30, 0)});
+    layers.push_back(layer1);
+
+    // 第二层 - 圆形剖面
+    profile_layer layer2;
+    layer2.name = "middle_layer";
+    layer2.profiles.push_back(
+        circ_profile{gp_Pnt(0, -20, 0), gp_Dir(0, 0, 1), 16.0});
+    layers.push_back(layer2);
+
+    // 第三层 - 多边形剖面
+    profile_layer layer3;
+    layer3.name = "top_layer";
+    std::vector<gp_Pnt> polygonPoints = {gp_Pnt(-5, -5, 0), gp_Pnt(5, -5, 0),
+                                         gp_Pnt(5, 5, 0), gp_Pnt(0, 8, 0),
+                                         gp_Pnt(-5, 5, 0)};
+    layer3.profiles.push_back(polygon_profile{polygonPoints});
+    layers.push_back(layer3);
+
+    // 3. 创建参数结构
+    multi_layer_extrusion_structure_params params{
+        .wires = {linePoints, arcPoints, centerArcPoints, splinePoints},
+        .segment_types = {{segment_type::LINE, segment_type::THREE_POINT_ARC,
+                           segment_type::CIRCLE_CENTER_ARC,
+                           segment_type::SPLINE}},
+        .layers = layers,
+        .transition_mode = transition_mode::TRANSFORMED,
+        .upDir = gp_Dir(0, 0, 1)};
+
+    // 4. 创建多层挤出结构
+    auto shapes = create_multi_layer_extrusion_structure(params);
+
+    BRep_Builder builder;
+    TopoDS_Compound compound;
+    builder.MakeCompound(compound);
+
+    for (const auto &[name, shape] : shapes) {
+      builder.Add(compound, shape);
+    }
+
+    std::string filename = "./multi_layer_extrusion.stl";
+    test_export_shape(compound, filename);
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
 void test_make_catenary() {
   std::cout << "\n=== Testing Catenary ===" << std::endl;
   try {
@@ -6066,6 +6144,7 @@ int main() {
   test_make_prism();
   test_make_pipe();
   test_make_multi_segment_pipe();
+  test_make_multi_layer_extrusion_structure();
   test_make_pipe_joint();
   test_make_catenary();
   test_make_box_shape();

@@ -4845,51 +4845,44 @@ type ShapeProfile struct {
 	Data ProfileData
 }
 
-// 旋转参数
-type RevolParams struct {
-	Profile ShapeProfile
-	Axis    Axis1
-	Angle   float32
-}
+func (p *ShapeProfile) toStruct() C.shape_profile_t {
+	var c C.shape_profile_t
 
-func (p *RevolParams) to_struct() C.revol_params_t {
-	var c C.revol_params_t
-
-	// 转换剖面数据
-	switch p.Profile.Type {
+	switch p.Type {
 	case ProfileTypeTriangle:
-		tri := p.Profile.Data.Triangle
-		c.profile.type_ = C.PROFILE_TYPE_TRIANGLE
-		c.profile.triangle.p1 = tri.P1.val
-		c.profile.triangle.p2 = tri.P2.val
-		c.profile.triangle.p3 = tri.P3.val
+		tri := p.Data.Triangle
+		c.type_ = C.PROFILE_TYPE_TRIANGLE
+		c.triangle.p1 = tri.P1.val
+		c.triangle.p2 = tri.P2.val
+		c.triangle.p3 = tri.P3.val
 	case ProfileTypeRectangle:
-		rect := p.Profile.Data.Rectangle
-		c.profile.rectangle.p1 = rect.P1.val
-		c.profile.rectangle.p2 = rect.P2.val
+		rect := p.Data.Rectangle
+		c.type_ = C.PROFILE_TYPE_RECTANGLE
+		c.rectangle.p1 = rect.P1.val
+		c.rectangle.p2 = rect.P2.val
 	case ProfileTypeCirc:
-		circ := p.Profile.Data.Circ
-		c.profile.type_ = C.PROFILE_TYPE_CIRC
-		c.profile.circ.center = circ.Center.val
-		c.profile.circ.norm = circ.Norm.val
-		c.profile.circ.radius = C.double(circ.Radius)
+		circ := p.Data.Circ
+		c.type_ = C.PROFILE_TYPE_CIRC
+		c.circ.center = circ.Center.val
+		c.circ.norm = circ.Norm.val
+		c.circ.radius = C.double(circ.Radius)
 	case ProfileTypeElips:
-		elips := p.Profile.Data.Elips
-		c.profile.type_ = C.PROFILE_TYPE_ELIPS
-		c.profile.elips.s1 = elips.S1.val
-		c.profile.elips.s2 = elips.S2.val
-		c.profile.elips.center = elips.Center.val
+		elips := p.Data.Elips
+		c.type_ = C.PROFILE_TYPE_ELIPS
+		c.elips.s1 = elips.S1.val
+		c.elips.s2 = elips.S2.val
+		c.elips.center = elips.Center.val
 	case ProfileTypePolygon:
-		poly := p.Profile.Data.Polygon
-		c.profile.type_ = C.PROFILE_TYPE_POLYGON
+		poly := p.Data.Polygon
+		c.type_ = C.PROFILE_TYPE_POLYGON
 
 		// 转换外边缘
 		edges := make([]C.pnt3d_t, len(poly.Edges))
 		for i, pt := range poly.Edges {
 			edges[i] = pt.val
 		}
-		c.profile.polygon.edges = &edges[0]
-		c.profile.polygon.edgeCount = C.int(len(poly.Edges))
+		c.polygon.edges = &edges[0]
+		c.polygon.edgeCount = C.int(len(poly.Edges))
 
 		// 转换内边缘
 		if len(poly.InnerEdges) > 0 {
@@ -4906,11 +4899,26 @@ func (p *RevolParams) to_struct() C.revol_params_t {
 				innerPtrs[i] = &innerArrays[i][0]
 			}
 
-			c.profile.polygon.inners = &innerPtrs[0]
-			c.profile.polygon.innerCounts = &innerCounts[0]
-			c.profile.polygon.innerArrayCount = C.int(len(poly.InnerEdges))
+			c.polygon.inners = &innerPtrs[0]
+			c.polygon.innerCounts = &innerCounts[0]
+			c.polygon.innerArrayCount = C.int(len(poly.InnerEdges))
 		}
 	}
+
+	return c
+}
+
+// 旋转参数
+type RevolParams struct {
+	Profile ShapeProfile
+	Axis    Axis1
+	Angle   float32
+}
+
+func (p *RevolParams) to_struct() C.revol_params_t {
+	var c C.revol_params_t
+
+	c.profile = p.Profile.toStruct()
 
 	// 转换旋转轴和角度
 	c.axis = p.Axis.val
@@ -4944,63 +4952,7 @@ type PrismParams struct {
 func (p *PrismParams) to_struct() C.prism_params_t {
 	var c C.prism_params_t
 
-	// 转换剖面类型
-	switch p.Profile.Type {
-	case ProfileTypeTriangle:
-		tri := p.Profile.Data.Triangle
-		c.profile.type_ = C.PROFILE_TYPE_TRIANGLE
-		c.profile.triangle.p1 = tri.P1.val
-		c.profile.triangle.p2 = tri.P2.val
-		c.profile.triangle.p3 = tri.P3.val
-	case ProfileTypeRectangle:
-		rect := p.Profile.Data.Rectangle
-		c.profile.type_ = C.PROFILE_TYPE_RECTANGLE
-		c.profile.rectangle.p1 = rect.P1.val
-		c.profile.rectangle.p2 = rect.P2.val
-	case ProfileTypeCirc:
-		circ := p.Profile.Data.Circ
-		c.profile.type_ = C.PROFILE_TYPE_CIRC
-		c.profile.circ.center = circ.Center.val
-		c.profile.circ.norm = circ.Norm.val
-		c.profile.circ.radius = C.double(circ.Radius)
-	case ProfileTypeElips:
-		elips := p.Profile.Data.Elips
-		c.profile.type_ = C.PROFILE_TYPE_ELIPS
-		c.profile.elips.s1 = elips.S1.val
-		c.profile.elips.s2 = elips.S2.val
-		c.profile.elips.center = elips.Center.val
-	case ProfileTypePolygon:
-		poly := p.Profile.Data.Polygon
-		c.profile.type_ = C.PROFILE_TYPE_POLYGON
-
-		// 转换外边缘
-		edges := make([]C.pnt3d_t, len(poly.Edges))
-		for i, pt := range poly.Edges {
-			edges[i] = pt.val
-		}
-		c.profile.polygon.edges = &edges[0]
-		c.profile.polygon.edgeCount = C.int(len(poly.Edges))
-
-		// 转换内边缘
-		if len(poly.InnerEdges) > 0 {
-			innerCounts := make([]C.int, len(poly.InnerEdges))
-			innerPtrs := make([]*C.pnt3d_t, len(poly.InnerEdges))
-			innerArrays := make([][]C.pnt3d_t, len(poly.InnerEdges))
-
-			for i, inner := range poly.InnerEdges {
-				innerCounts[i] = C.int(len(inner))
-				innerArrays[i] = make([]C.pnt3d_t, len(inner))
-				for j, pt := range inner {
-					innerArrays[i][j] = pt.val
-				}
-				innerPtrs[i] = &innerArrays[i][0]
-			}
-
-			c.profile.polygon.inners = &innerPtrs[0]
-			c.profile.polygon.innerCounts = &innerCounts[0]
-			c.profile.polygon.innerArrayCount = C.int(len(poly.InnerEdges))
-		}
-	}
+	c.profile = p.Profile.toStruct()
 
 	// 转换拉伸方向
 	c.direction = p.Direction.val
@@ -5113,60 +5065,7 @@ func (p *PipeParams) to_struct() C.pipe_params_t {
 	// 转换剖面数组
 	cProfiles := make([]C.shape_profile_t, len(p.Profiles))
 	for i, profile := range p.Profiles {
-		switch profile.Type {
-		case ProfileTypeTriangle:
-			tri := profile.Data.Triangle
-			cProfiles[i].type_ = C.PROFILE_TYPE_TRIANGLE
-			cProfiles[i].triangle.p1 = tri.P1.val
-			cProfiles[i].triangle.p2 = tri.P2.val
-			cProfiles[i].triangle.p3 = tri.P3.val
-		case ProfileTypeRectangle:
-			rect := profile.Data.Rectangle
-			cProfiles[i].type_ = C.PROFILE_TYPE_RECTANGLE
-			cProfiles[i].rectangle.p1 = rect.P1.val
-			cProfiles[i].rectangle.p2 = rect.P2.val
-		case ProfileTypeCirc:
-			circ := profile.Data.Circ
-			cProfiles[i].type_ = C.PROFILE_TYPE_CIRC
-			cProfiles[i].circ.center = circ.Center.val
-			cProfiles[i].circ.norm = circ.Norm.val
-			cProfiles[i].circ.radius = C.double(circ.Radius)
-		case ProfileTypeElips:
-			elips := profile.Data.Elips
-			cProfiles[i].type_ = C.PROFILE_TYPE_ELIPS
-			cProfiles[i].elips.s1 = elips.S1.val
-			cProfiles[i].elips.s2 = elips.S2.val
-			cProfiles[i].elips.center = elips.Center.val
-		case ProfileTypePolygon:
-			poly := profile.Data.Polygon
-			cProfiles[i].type_ = C.PROFILE_TYPE_POLYGON
-
-			edges := make([]C.pnt3d_t, len(poly.Edges))
-			for k, pt := range poly.Edges {
-				edges[k] = pt.val
-			}
-			cProfiles[i].polygon.edges = &edges[0]
-			cProfiles[i].polygon.edgeCount = C.int(len(poly.Edges))
-
-			if len(poly.InnerEdges) > 0 {
-				innerCounts := make([]C.int, len(poly.InnerEdges))
-				innerPtrs := make([]*C.pnt3d_t, len(poly.InnerEdges))
-				innerArrays := make([][]C.pnt3d_t, len(poly.InnerEdges))
-
-				for k, inner := range poly.InnerEdges {
-					innerCounts[k] = C.int(len(inner))
-					innerArrays[k] = make([]C.pnt3d_t, len(inner))
-					for l, pt := range inner {
-						innerArrays[k][l] = pt.val
-					}
-					innerPtrs[k] = &innerArrays[k][0]
-				}
-
-				cProfiles[i].polygon.inners = &innerPtrs[0]
-				cProfiles[i].polygon.innerCounts = &innerCounts[0]
-				cProfiles[i].polygon.innerArrayCount = C.int(len(poly.InnerEdges))
-			}
-		}
+		cProfiles[i] = profile.toStruct()
 	}
 
 	c.profiles = &cProfiles[0]
@@ -5179,60 +5078,7 @@ func (p *PipeParams) to_struct() C.pipe_params_t {
 		innerProfileCounts := make([]C.int, len(p.InnerProfiles))
 
 		for i, innerProfile := range p.InnerProfiles {
-			switch innerProfile.Type {
-			case ProfileTypeTriangle:
-				tri := innerProfile.Data.Triangle
-				innerProfileArrays[i].type_ = C.PROFILE_TYPE_TRIANGLE
-				innerProfileArrays[i].triangle.p1 = tri.P1.val
-				innerProfileArrays[i].triangle.p2 = tri.P2.val
-				innerProfileArrays[i].triangle.p3 = tri.P3.val
-			case ProfileTypeRectangle:
-				rect := innerProfile.Data.Rectangle
-				innerProfileArrays[i].type_ = C.PROFILE_TYPE_RECTANGLE
-				innerProfileArrays[i].rectangle.p1 = rect.P1.val
-				innerProfileArrays[i].rectangle.p2 = rect.P2.val
-			case ProfileTypeCirc:
-				circ := innerProfile.Data.Circ
-				innerProfileArrays[i].type_ = C.PROFILE_TYPE_CIRC
-				innerProfileArrays[i].circ.center = circ.Center.val
-				innerProfileArrays[i].circ.norm = circ.Norm.val
-				innerProfileArrays[i].circ.radius = C.double(circ.Radius)
-			case ProfileTypeElips:
-				elips := innerProfile.Data.Elips
-				innerProfileArrays[i].type_ = C.PROFILE_TYPE_ELIPS
-				innerProfileArrays[i].elips.s1 = elips.S1.val
-				innerProfileArrays[i].elips.s2 = elips.S2.val
-				innerProfileArrays[i].elips.center = elips.Center.val
-			case ProfileTypePolygon:
-				poly := innerProfile.Data.Polygon
-				innerProfileArrays[i].type_ = C.PROFILE_TYPE_POLYGON
-
-				edges := make([]C.pnt3d_t, len(poly.Edges))
-				for k, pt := range poly.Edges {
-					edges[k] = pt.val
-				}
-				innerProfileArrays[i].polygon.edges = &edges[0]
-				innerProfileArrays[i].polygon.edgeCount = C.int(len(poly.Edges))
-
-				if len(poly.InnerEdges) > 0 {
-					innerCounts := make([]C.int, len(poly.InnerEdges))
-					innerPtrs := make([]*C.pnt3d_t, len(poly.InnerEdges))
-					innerArrays := make([][]C.pnt3d_t, len(poly.InnerEdges))
-
-					for k, inner := range poly.InnerEdges {
-						innerCounts[k] = C.int(len(inner))
-						innerArrays[k] = make([]C.pnt3d_t, len(inner))
-						for l, pt := range inner {
-							innerArrays[k][l] = pt.val
-						}
-						innerPtrs[k] = &innerArrays[k][0]
-					}
-
-					innerProfileArrays[i].polygon.inners = &innerPtrs[0]
-					innerProfileArrays[i].polygon.innerCounts = &innerCounts[0]
-					innerProfileArrays[i].polygon.innerArrayCount = C.int(len(poly.InnerEdges))
-				}
-			}
+			innerProfileArrays[i] = innerProfile.toStruct()
 			innerProfilePtrs[i] = &innerProfileArrays[i]
 			innerProfileCounts[i] = C.int(len(p.InnerProfiles))
 		}
@@ -5319,60 +5165,7 @@ func (p *MultiSegmentPipeParams) to_struct() C.multi_segment_pipe_params_t {
 	// 转换剖面数组
 	cProfiles := make([]C.shape_profile_t, len(p.Profiles))
 	for i, profile := range p.Profiles {
-		switch profile.Type {
-		case ProfileTypeTriangle:
-			tri := profile.Data.Triangle
-			cProfiles[i].type_ = C.PROFILE_TYPE_TRIANGLE
-			cProfiles[i].triangle.p1 = tri.P1.val
-			cProfiles[i].triangle.p2 = tri.P2.val
-			cProfiles[i].triangle.p3 = tri.P3.val
-		case ProfileTypeRectangle:
-			rect := profile.Data.Rectangle
-			cProfiles[i].type_ = C.PROFILE_TYPE_RECTANGLE
-			cProfiles[i].rectangle.p1 = rect.P1.val
-			cProfiles[i].rectangle.p2 = rect.P2.val
-		case ProfileTypeCirc:
-			circ := profile.Data.Circ
-			cProfiles[i].type_ = C.PROFILE_TYPE_CIRC
-			cProfiles[i].circ.center = circ.Center.val
-			cProfiles[i].circ.norm = circ.Norm.val
-			cProfiles[i].circ.radius = C.double(circ.Radius)
-		case ProfileTypeElips:
-			elips := profile.Data.Elips
-			cProfiles[i].type_ = C.PROFILE_TYPE_ELIPS
-			cProfiles[i].elips.s1 = elips.S1.val
-			cProfiles[i].elips.s2 = elips.S2.val
-			cProfiles[i].elips.center = elips.Center.val
-		case ProfileTypePolygon:
-			poly := profile.Data.Polygon
-			cProfiles[i].type_ = C.PROFILE_TYPE_POLYGON
-
-			edges := make([]C.pnt3d_t, len(poly.Edges))
-			for k, pt := range poly.Edges {
-				edges[k] = pt.val
-			}
-			cProfiles[i].polygon.edges = &edges[0]
-			cProfiles[i].polygon.edgeCount = C.int(len(poly.Edges))
-
-			if len(poly.InnerEdges) > 0 {
-				innerCounts := make([]C.int, len(poly.InnerEdges))
-				innerPtrs := make([]*C.pnt3d_t, len(poly.InnerEdges))
-				innerArrays := make([][]C.pnt3d_t, len(poly.InnerEdges))
-
-				for k, inner := range poly.InnerEdges {
-					innerCounts[k] = C.int(len(inner))
-					innerArrays[k] = make([]C.pnt3d_t, len(inner))
-					for l, pt := range inner {
-						innerArrays[k][l] = pt.val
-					}
-					innerPtrs[k] = &innerArrays[k][0]
-				}
-
-				cProfiles[i].polygon.inners = &innerPtrs[0]
-				cProfiles[i].polygon.innerCounts = &innerCounts[0]
-				cProfiles[i].polygon.innerArrayCount = C.int(len(poly.InnerEdges))
-			}
-		}
+		cProfiles[i] = profile.toStruct()
 	}
 
 	c.profiles = &cProfiles[0]
@@ -5385,60 +5178,7 @@ func (p *MultiSegmentPipeParams) to_struct() C.multi_segment_pipe_params_t {
 		innerProfileCounts := make([]C.int, len(p.InnerProfiles))
 
 		for i, innerProfile := range p.InnerProfiles {
-			switch innerProfile.Type {
-			case ProfileTypeTriangle:
-				tri := innerProfile.Data.Triangle
-				innerProfileArrays[i].type_ = C.PROFILE_TYPE_TRIANGLE
-				innerProfileArrays[i].triangle.p1 = tri.P1.val
-				innerProfileArrays[i].triangle.p2 = tri.P2.val
-				innerProfileArrays[i].triangle.p3 = tri.P3.val
-			case ProfileTypeRectangle:
-				rect := innerProfile.Data.Rectangle
-				innerProfileArrays[i].type_ = C.PROFILE_TYPE_RECTANGLE
-				innerProfileArrays[i].rectangle.p1 = rect.P1.val
-				innerProfileArrays[i].rectangle.p2 = rect.P2.val
-			case ProfileTypeCirc:
-				circ := innerProfile.Data.Circ
-				innerProfileArrays[i].type_ = C.PROFILE_TYPE_CIRC
-				innerProfileArrays[i].circ.center = circ.Center.val
-				innerProfileArrays[i].circ.norm = circ.Norm.val
-				innerProfileArrays[i].circ.radius = C.double(circ.Radius)
-			case ProfileTypeElips:
-				elips := innerProfile.Data.Elips
-				innerProfileArrays[i].type_ = C.PROFILE_TYPE_ELIPS
-				innerProfileArrays[i].elips.s1 = elips.S1.val
-				innerProfileArrays[i].elips.s2 = elips.S2.val
-				innerProfileArrays[i].elips.center = elips.Center.val
-			case ProfileTypePolygon:
-				poly := innerProfile.Data.Polygon
-				innerProfileArrays[i].type_ = C.PROFILE_TYPE_POLYGON
-
-				edges := make([]C.pnt3d_t, len(poly.Edges))
-				for k, pt := range poly.Edges {
-					edges[k] = pt.val
-				}
-				innerProfileArrays[i].polygon.edges = &edges[0]
-				innerProfileArrays[i].polygon.edgeCount = C.int(len(poly.Edges))
-
-				if len(poly.InnerEdges) > 0 {
-					innerCounts := make([]C.int, len(poly.InnerEdges))
-					innerPtrs := make([]*C.pnt3d_t, len(poly.InnerEdges))
-					innerArrays := make([][]C.pnt3d_t, len(poly.InnerEdges))
-
-					for k, inner := range poly.InnerEdges {
-						innerCounts[k] = C.int(len(inner))
-						innerArrays[k] = make([]C.pnt3d_t, len(inner))
-						for l, pt := range inner {
-							innerArrays[k][l] = pt.val
-						}
-						innerPtrs[k] = &innerArrays[k][0]
-					}
-
-					innerProfileArrays[i].polygon.inners = &innerPtrs[0]
-					innerProfileArrays[i].polygon.innerCounts = &innerCounts[0]
-					innerProfileArrays[i].polygon.innerArrayCount = C.int(len(poly.InnerEdges))
-				}
-			}
+			innerProfileArrays[i] = innerProfile.toStruct()
 			innerProfilePtrs[i] = &innerProfileArrays[i]
 			innerProfileCounts[i] = C.int(len(p.InnerProfiles))
 		}
@@ -5499,6 +5239,192 @@ func CreateMultiSegmentPipeWithPlace(params MultiSegmentPipeParams, position Poi
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
+}
+
+type ProfileLayer struct {
+	Name          string
+	Profiles      []ShapeProfile
+	InnerProfiles []ShapeProfile
+}
+
+type MultiLayerExtrusionStructureParams struct {
+	Wires          [][]Point3
+	SegmentTypes   []SegmentType
+	Layers         []ProfileLayer
+	TransitionMode TransitionMode
+	UpDir          *Dir3
+}
+
+func (p *ProfileLayer) toStruct() C.profile_layer_t {
+	var c C.profile_layer_t
+	c.name = C.CString(p.Name)
+
+	// 转换profiles
+	if len(p.Profiles) > 0 {
+		c.profiles = (*C.shape_profile_t)(C.malloc(C.size_t(len(p.Profiles)) * C.sizeof_shape_profile_t))
+		for i, profile := range p.Profiles {
+			cProfile := profile.toStruct()
+			*(*C.shape_profile_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.profiles)) + uintptr(i)*C.sizeof_shape_profile_t)) = cProfile
+		}
+		c.profile_count = C.int(len(p.Profiles))
+	}
+
+	// 转换inner_profiles
+	if len(p.InnerProfiles) > 0 {
+		c.inner_profiles = (*C.shape_profile_t)(C.malloc(C.size_t(len(p.InnerProfiles)) * C.sizeof_shape_profile_t))
+		for i, profile := range p.InnerProfiles {
+			cProfile := profile.toStruct()
+			*(*C.shape_profile_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.inner_profiles)) + uintptr(i)*C.sizeof_shape_profile_t)) = cProfile
+		}
+		c.inner_profile_count = C.int(len(p.InnerProfiles))
+	}
+
+	return c
+}
+
+func (p *MultiLayerExtrusionStructureParams) toStruct() C.multi_layer_extrusion_structure_params_t {
+	var c C.multi_layer_extrusion_structure_params_t
+
+	// 转换wires
+	if len(p.Wires) > 0 {
+		wirePtrs := make([]*C.pnt3d_t, len(p.Wires))
+		wireCounts := make([]C.int, len(p.Wires))
+		wireArrays := make([][]C.pnt3d_t, len(p.Wires))
+
+		for i, wire := range p.Wires {
+			wireArrays[i] = make([]C.pnt3d_t, len(wire))
+			for j, pt := range wire {
+				wireArrays[i][j] = pt.val
+			}
+			wirePtrs[i] = &wireArrays[i][0]
+			wireCounts[i] = C.int(len(wire))
+		}
+
+		c.wires = &wirePtrs[0]
+		c.wire_counts = &wireCounts[0]
+		c.wire_array_count = C.int(len(p.Wires))
+	}
+
+	// 转换segment_types
+	if len(p.SegmentTypes) > 0 {
+		c.segment_types = (*C.segment_type_t)(C.malloc(C.size_t(len(p.SegmentTypes)) * C.sizeof_segment_type_t))
+		for i, st := range p.SegmentTypes {
+			*(*C.segment_type_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.segment_types)) + uintptr(i)*C.sizeof_segment_type_t)) = C.segment_type_t(st)
+		}
+		c.segment_type_count = C.int(len(p.SegmentTypes))
+	}
+
+	// 转换layers
+	if len(p.Layers) > 0 {
+		c.layers = (*C.profile_layer_t)(C.malloc(C.size_t(len(p.Layers)) * C.sizeof_profile_layer_t))
+		for i, layer := range p.Layers {
+			cLayer := layer.toStruct()
+			*(*C.profile_layer_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.layers)) + uintptr(i)*C.sizeof_profile_layer_t)) = cLayer
+		}
+		c.layer_count = C.int(len(p.Layers))
+	}
+
+	c.transition_mode = C.transition_mode_t(p.TransitionMode)
+
+	if p.UpDir != nil {
+		c.upDir = &p.UpDir.val
+	}
+
+	return c
+}
+
+func freeMultiLayerParams(c C.multi_layer_extrusion_structure_params_t) {
+	// 释放wires内存
+	if c.wires != nil {
+		C.free(unsafe.Pointer(c.wires))
+	}
+	if c.wire_counts != nil {
+		C.free(unsafe.Pointer(c.wire_counts))
+	}
+
+	// 释放segment_types内存
+	if c.segment_types != nil {
+		C.free(unsafe.Pointer(c.segment_types))
+	}
+
+	// 释放layers内存
+	if c.layers != nil {
+		for i := 0; i < int(c.layer_count); i++ {
+			layer := (*C.profile_layer_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.layers)) + uintptr(i)*C.sizeof_profile_layer_t))
+			C.free(unsafe.Pointer(layer.name))
+			if layer.profiles != nil {
+				C.free(unsafe.Pointer(layer.profiles))
+			}
+			if layer.inner_profiles != nil {
+				C.free(unsafe.Pointer(layer.inner_profiles))
+			}
+		}
+		C.free(unsafe.Pointer(c.layers))
+	}
+}
+
+func CreateMultiLayerExtrusionStructure(params MultiLayerExtrusionStructureParams) (map[string]*Shape, error) {
+	cParams := params.toStruct()
+	defer freeMultiLayerParams(cParams)
+
+	var outCount C.int
+	cShapes := C.create_multi_layer_extrusion_structure(cParams, &outCount)
+	defer C.free(unsafe.Pointer(cShapes))
+
+	if cShapes == nil || outCount == 0 {
+		return nil, errors.New("failed to create multi-layer extrusion structure")
+	}
+
+	shapes := make(map[string]*Shape)
+	for i := 0; i < int(outCount); i++ {
+		cShape := *(**C.topo_shape_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cShapes)) + uintptr(i)*unsafe.Sizeof(cShapes)))
+		if cShape != nil {
+			name := params.Layers[i].Name
+			shapes[name] = &Shape{
+				inner: &innerShape{val: cShape},
+			}
+			runtime.SetFinalizer(shapes[name].inner, (*innerShape).free)
+		}
+	}
+
+	return shapes, nil
+}
+
+func CreateMultiLayerExtrusionStructureCenterline(params MultiLayerExtrusionStructureParams) *Wire {
+	cParams := params.toStruct()
+	defer freeMultiLayerParams(cParams)
+
+	wire := C.create_multi_layer_extrusion_structure_centerline(cParams)
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
+}
+
+func CreateMultiLayerExtrusionStructureWithPlace(params MultiLayerExtrusionStructureParams, position Point3, direction Dir3, xDir Dir3) (map[string]*Shape, error) {
+	cParams := params.toStruct()
+	defer freeMultiLayerParams(cParams)
+
+	var outCount C.int
+	cShapes := C.create_multi_layer_extrusion_structure_with_place(cParams, position.val, direction.val, xDir.val, &outCount)
+	defer C.free(unsafe.Pointer(cShapes))
+
+	if cShapes == nil || outCount == 0 {
+		return nil, errors.New("failed to create multi-layer extrusion structure with place")
+	}
+
+	shapes := make(map[string]*Shape)
+	for i := 0; i < int(outCount); i++ {
+		cShape := *(**C.topo_shape_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cShapes)) + uintptr(i)*unsafe.Sizeof(cShapes)))
+		if cShape != nil {
+			name := params.Layers[i].Name
+			shapes[name] = &Shape{
+				inner: &innerShape{val: cShape},
+			}
+			runtime.SetFinalizer(shapes[name].inner, (*innerShape).free)
+		}
+	}
+
+	return shapes, nil
 }
 
 // 管道连接参数

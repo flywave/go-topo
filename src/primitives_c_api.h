@@ -2063,7 +2063,7 @@ typedef struct {
   int segment_type_count;
   profile_layer_t *layers;
   int layer_count;
-  int transition_mode;
+  transition_mode_t transition_mode;
   dir3d_t *upDir;
 } multi_layer_extrusion_structure_params_t;
 
