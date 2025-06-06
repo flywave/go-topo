@@ -2602,6 +2602,7 @@ struct borehole_sample {
 struct borehole_params {
   std::vector<borehole_sample> samples;
   double diameter;
+  boost::optional<gp_Dir> upDir;
 };
 
 std::map<std::string, TopoDS_Shape>

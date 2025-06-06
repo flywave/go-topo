@@ -18461,8 +18461,8 @@ std::map<std::string, TopoDS_Shape> create_multi_layer_extrusion_structure(
 
     auto shp =
         create_multi_segment_pipe({.wires = params.wires,
-                                    .profiles = layer.profiles,
-                                    .inner_profiles = layer.inner_profiles,
+                                   .profiles = layer.profiles,
+                                   .inner_profiles = layer.inner_profiles,
                                    .segment_types = params.segment_types,
                                    .transition_mode = params.transition_mode,
                                    .upDir = params.upDir});
@@ -19364,8 +19364,10 @@ create_borehole(const borehole_params &params) {
       continue;
     }
 
+    gp_Dir upDir = params.upDir ? *params.upDir : gp::DZ();
+
     // 创建圆柱体
-    gp_Ax2 axis(gp_Pnt(0, 0, -sample.depth_from), gp_Dir(0, 0, -1));
+    gp_Ax2 axis(gp_Pnt(0, 0, -sample.depth_to), upDir);
     BRepPrimAPI_MakeCylinder maker(axis, params.diameter / 2.0, height);
     result[sample.name] = maker.Shape();
   }

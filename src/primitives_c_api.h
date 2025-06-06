@@ -2241,6 +2241,7 @@ typedef struct {
   borehole_sample_t *samples;
   int sample_count;
   double diameter;
+  dir3d_t *up_dir;
 } borehole_params_t;
 
 PRIMCAPICALL topo_shape_t **create_borehole(borehole_params_t params,

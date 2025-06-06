@@ -6287,6 +6287,7 @@ type BoreholeSample struct {
 type BoreholeParams struct {
 	Samples  []BoreholeSample
 	Diameter float32
+	UpDir    *Dir3
 }
 
 func (p *BoreholeSample) to_struct() C.borehole_sample_t {
@@ -6310,6 +6311,11 @@ func (p *BoreholeParams) to_struct() C.borehole_params_t {
 		}
 	}
 
+	if p.UpDir != nil {
+		c.up_dir = &p.UpDir.val
+	} else {
+		c.up_dir = nil
+	}
 	return c
 }
 

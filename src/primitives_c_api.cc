@@ -7436,6 +7436,11 @@ PRIMCAPICALL topo_shape_t **create_borehole(borehole_params_t params,
       cpp_params.samples.push_back(sample);
     }
 
+  if (params.up_dir != nullptr) {
+    cpp_params.upDir =
+        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
+  }
+
     auto shapes = create_borehole(cpp_params);
 
     *out_count = static_cast<int>(shapes.size());
