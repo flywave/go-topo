@@ -18461,11 +18461,11 @@ std::map<std::string, TopoDS_Shape> create_multi_layer_extrusion_structure(
 
     auto shp =
         create_multi_segment_pipe({.wires = params.wires,
+                                    .profiles = layer.profiles,
+                                    .inner_profiles = layer.inner_profiles,
                                    .segment_types = params.segment_types,
                                    .transition_mode = params.transition_mode,
-                                   .upDir = params.upDir,
-                                   .profiles = layer.profiles,
-                                   .inner_profiles = layer.inner_profiles});
+                                   .upDir = params.upDir});
 
     results.emplace(layer.name, shp);
   }

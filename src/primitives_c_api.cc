@@ -5863,10 +5863,10 @@ static std::vector<profile_layer> convert_layers(profile_layer_t *layers,
     layer.name = layers[i].name ? std::string(layers[i].name) : "";
 
     // 转换剖面类型
-    for (int i = 0; i < layers[i].profile_count; i++) {
+    for (int j = 0; j < layers[i].profile_count; j++) {
       switch (layers[i].profiles[i].type_) {
       case PROFILE_TYPE_TRIANGLE: {
-        auto &tri = layers[i].profiles[i].triangle;
+        auto &tri = layers[i].profiles[j].triangle;
         layer.profiles.emplace_back(
             triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
                              gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
@@ -5881,14 +5881,14 @@ static std::vector<profile_layer> convert_layers(profile_layer_t *layers,
         break;
       }
       case PROFILE_TYPE_CIRC: {
-        auto &circ = layers[i].profiles[i].circ;
+        auto &circ = layers[i].profiles[j].circ;
         layer.profiles.emplace_back(circ_profile(
             gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
             gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
         break;
       }
       case PROFILE_TYPE_ELIPS: {
-        auto &elips = layers[i].profiles[i].elips;
+        auto &elips = layers[i].profiles[j].elips;
         layer.profiles.emplace_back(elips_profile(
             gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
             gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
@@ -5896,18 +5896,18 @@ static std::vector<profile_layer> convert_layers(profile_layer_t *layers,
         break;
       }
       case PROFILE_TYPE_POLYGON: {
-        auto &poly = layers[i].profiles[i].polygon;
+        auto &poly = layers[i].profiles[j].polygon;
         std::vector<gp_Pnt> edges;
-        for (int j = 0; j < poly.edgeCount; j++) {
-          edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
+        for (int k = 0; k < poly.edgeCount; k++) {
+          edges.emplace_back(poly.edges[k].x, poly.edges[k].y, poly.edges[k].z);
         }
 
         std::vector<std::vector<gp_Pnt>> inners;
-        for (int j = 0; j < poly.innerArrayCount; j++) {
+        for (int n= 0; n < poly.innerArrayCount; n++) {
           std::vector<gp_Pnt> inner;
-          for (int k = 0; k < poly.innerCounts[j]; k++) {
-            inner.emplace_back(poly.inners[j][k].x, poly.inners[j][k].y,
-                               poly.inners[j][k].z);
+          for (int k = 0; k < poly.innerCounts[n]; k++) {
+            inner.emplace_back(poly.inners[n][k].x, poly.inners[n][k].y,
+                               poly.inners[n][k].z);
           }
           inners.push_back(inner);
         }
@@ -5916,6 +5916,7 @@ static std::vector<profile_layer> convert_layers(profile_layer_t *layers,
         break;
       }
       default:
+        break;
       }
     }
 
@@ -6029,7 +6030,6 @@ PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure(
     case TRANSITION_TRANSFORMED:
       cpp_params.transition_mode = transition_mode::TRANSFORMED;
       break;
-    default:
     }
 
     if (params.upDir) {
@@ -6084,8 +6084,7 @@ PRIMCAPICALL topo_wire_t create_multi_layer_extrusion_structure_centerline(
         case SEGMENT_TYPE_BEZIER:
           segment_types.push_back(segment_type::BEZIER);
           break;
-        default:
-        }
+         }
       }
       cpp_params.segment_types = segment_types;
     }
@@ -6102,8 +6101,7 @@ PRIMCAPICALL topo_wire_t create_multi_layer_extrusion_structure_centerline(
     case TRANSITION_TRANSFORMED:
       cpp_params.transition_mode = transition_mode::TRANSFORMED;
       break;
-    default:
-    }
+     }
 
     if (params.upDir) {
       cpp_params.upDir =
@@ -6145,8 +6143,7 @@ PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure_with_place(
         case SEGMENT_TYPE_BEZIER:
           segment_types.push_back(segment_type::BEZIER);
           break;
-        default:
-        }
+         }
       }
       cpp_params.segment_types = segment_types;
     }
@@ -6163,8 +6160,7 @@ PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure_with_place(
     case TRANSITION_TRANSFORMED:
       cpp_params.transition_mode = transition_mode::TRANSFORMED;
       break;
-    default:
-    }
+     }
 
     if (params.upDir) {
       cpp_params.upDir =
