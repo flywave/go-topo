@@ -3941,7 +3941,14 @@ func (p *CableTrenchParams) to_struct() C.cable_trench_params_t {
 	c.wallThickness2 = C.double(p.WallThickness2)
 
 	if len(p.Points) > 0 {
-		c.points = (*C.channel_point_t)(unsafe.Pointer(&p.Points[0]))
+		c.points = (*C.channel_point_t)(C.malloc(C.size_t(len(p.Points)) * C.sizeof_channel_point_t))
+		for i, point := range p.Points {
+			cp := C.channel_point_t{
+				position: point.Position.val,
+				ctype:    C.int(point.Ctype),
+			}
+			*(*C.channel_point_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.points)) + uintptr(i)*C.sizeof_channel_point_t)) = cp
+		}
 		c.pointCount = C.int(len(p.Points))
 	}
 	return c
@@ -4005,7 +4012,14 @@ func (p *CableTunnelParams) to_struct() C.cable_tunnel_params_t {
 	c.cushionThickness = C.double(p.CushionThickness)
 
 	if len(p.Points) > 0 {
-		c.points = (*C.channel_point_t)(unsafe.Pointer(&p.Points[0]))
+		c.points = (*C.channel_point_t)(C.malloc(C.size_t(len(p.Points)) * C.sizeof_channel_point_t))
+		for i, point := range p.Points {
+			cp := C.channel_point_t{
+				position: point.Position.val,
+				ctype:    C.int(point.Ctype),
+			}
+			*(*C.channel_point_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.points)) + uintptr(i)*C.sizeof_channel_point_t)) = cp
+		}
 		c.pointCount = C.int(len(p.Points))
 	}
 	return c
@@ -4070,7 +4084,10 @@ func (p *CableTrayParams) to_struct() C.cable_tray_params_t {
 	c.pipeCount = C.int(len(p.PipePositions))
 
 	if len(p.PipePositions) > 0 {
-		c.pipePositions = (*C.pnt2d_t)(unsafe.Pointer(&p.PipePositions[0]))
+		c.pipePositions = (*C.pnt2d_t)(C.malloc(C.size_t(len(p.PipePositions)) * C.sizeof_pnt2d_t))
+		for i, pos := range p.PipePositions {
+			*(*C.pnt2d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.pipePositions)) + uintptr(i)*C.sizeof_pnt2d_t)) = pos.val
+		}
 	}
 	if len(p.PipeInnerDiameters) > 0 {
 		c.pipeInnerDiameters = (*C.double)(unsafe.Pointer(&p.PipeInnerDiameters[0]))
@@ -4086,7 +4103,14 @@ func (p *CableTrayParams) to_struct() C.cable_tray_params_t {
 	}
 
 	if len(p.Points) > 0 {
-		c.points = (*C.channel_point_t)(unsafe.Pointer(&p.Points[0]))
+		c.points = (*C.channel_point_t)(C.malloc(C.size_t(len(p.Points)) * C.sizeof_channel_point_t))
+		for i, point := range p.Points {
+			cp := C.channel_point_t{
+				position: point.Position.val,
+				ctype:    C.int(point.Ctype),
+			}
+			*(*C.channel_point_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.points)) + uintptr(i)*C.sizeof_channel_point_t)) = cp
+		}
 		c.pointCount = C.int(len(p.Points))
 	}
 	return c
@@ -4098,12 +4122,7 @@ func CreateCableTray(params CableTrayParams) *Shape {
 		if cParams.pipePositions != nil {
 			C.free(unsafe.Pointer(cParams.pipePositions))
 		}
-		if cParams.pipeInnerDiameters != nil {
-			C.free(unsafe.Pointer(cParams.pipeInnerDiameters))
-		}
-		if cParams.pipeWallThicknesses != nil {
-			C.free(unsafe.Pointer(cParams.pipeWallThicknesses))
-		}
+
 		if cParams.points != nil {
 			C.free(unsafe.Pointer(cParams.points))
 		}
@@ -4287,10 +4306,9 @@ func CreateSumpWithPlace(params SumpParams, position Point3, normal Dir3, xDir D
 }
 
 type FootpathParams struct {
-	Height     float32
-	Width      float32
-	Points     []ChannelPoint
-	PointCount int
+	Height float32
+	Width  float32
+	Points []ChannelPoint
 }
 
 func (p *FootpathParams) to_struct() C.footpath_params_t {
@@ -4307,9 +4325,9 @@ func (p *FootpathParams) to_struct() C.footpath_params_t {
 			}
 			*(*C.channel_point_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.points)) + uintptr(i)*C.sizeof_channel_point_t)) = cp
 		}
+		c.pointCount = C.int(len(p.Points))
 	}
-
-	c.pointCount = C.int(p.PointCount)
+	c.pointCount = C.int(len(p.Points))
 	return c
 }
 
