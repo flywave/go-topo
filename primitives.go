@@ -4090,10 +4090,17 @@ func (p *CableTrayParams) to_struct() C.cable_tray_params_t {
 		}
 	}
 	if len(p.PipeInnerDiameters) > 0 {
-		c.pipeInnerDiameters = (*C.double)(unsafe.Pointer(&p.PipeInnerDiameters[0]))
+		c.pipeInnerDiameters = (*C.double)(C.malloc(C.size_t(len(p.PipeInnerDiameters)) * C.sizeof_double))
+		for i, radius := range p.PipeInnerDiameters {
+			C.double_array_set(c.pipeInnerDiameters, C.int(i), C.double(radius))
+		}
 	}
+
 	if len(p.PipeWallThicknesses) > 0 {
-		c.pipeWallThicknesses = (*C.double)(unsafe.Pointer(&p.PipeWallThicknesses[0]))
+		c.pipeWallThicknesses = (*C.double)(C.malloc(C.size_t(len(p.PipeWallThicknesses)) * C.sizeof_double))
+		for i, thinckness := range p.PipeWallThicknesses {
+			C.double_array_set(c.pipeWallThicknesses, C.int(i), C.double(thinckness))
+		}
 	}
 
 	if C.bool(p.HasProtectionPlate) {
@@ -4125,6 +4132,12 @@ func CreateCableTray(params CableTrayParams) *Shape {
 
 		if cParams.points != nil {
 			C.free(unsafe.Pointer(cParams.points))
+		}
+		if cParams.pipeInnerDiameters != nil {
+			C.free(unsafe.Pointer(cParams.pipeInnerDiameters))
+		}
+		if cParams.pipeWallThicknesses != nil {
+			C.free(unsafe.Pointer(cParams.pipeWallThicknesses))
 		}
 	}()
 
@@ -4437,16 +4450,30 @@ func (p *TunnelPartitionBoardParams) to_struct() C.tunnel_partition_board_params
 	c.holeCount = C.int(p.HoleCount)
 
 	if len(p.HolePositions) > 0 {
-		c.holePositions = (*C.pnt2d_t)(unsafe.Pointer(&p.HolePositions[0]))
+		c.holePositions = (*C.pnt2d_t)(C.malloc(C.size_t(len(p.HolePositions)) * C.sizeof_pnt2d_t))
+		for i, pos := range p.HolePositions {
+			*(*C.pnt2d_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.holePositions)) + uintptr(i)*C.sizeof_pnt2d_t)) = pos.val
+		}
 	}
+
 	if len(p.HoleStyles) > 0 {
-		c.holeStyles = (*C.int)(unsafe.Pointer(&p.HoleStyles[0]))
+		size := C.size_t(C.int(0))
+		c.holeStyles = (*C.int)(C.malloc(C.size_t(len(p.HoleStyles)) * size))
+		for i, style := range p.HoleStyles {
+			C.int_array_set(c.holeStyles, C.int(i), C.int(style))
+		}
 	}
 	if len(p.HoleDiameters) > 0 {
-		c.holeDiameters = (*C.double)(unsafe.Pointer(&p.HoleDiameters[0]))
+		c.holeDiameters = (*C.double)(C.malloc(C.size_t(len(p.HoleDiameters)) * C.sizeof_double))
+		for i, diameter := range p.HoleDiameters {
+			C.double_array_set(c.holeDiameters, C.int(i), C.double(diameter))
+		}
 	}
 	if len(p.HoleWidths) > 0 {
-		c.holeWidths = (*C.double)(unsafe.Pointer(&p.HoleWidths[0]))
+		c.holeWidths = (*C.double)(C.malloc(C.size_t(len(p.HoleWidths)) * C.sizeof_double))
+		for i, width := range p.HoleWidths {
+			C.double_array_set(c.holeWidths, C.int(i), C.double(width))
+		}
 	}
 	return c
 }
@@ -5352,19 +5379,6 @@ func (p *MultiLayerExtrusionStructureParams) toStruct() C.multi_layer_extrusion_
 }
 
 func freeMultiLayerParams(c C.multi_layer_extrusion_structure_params_t) {
-	// 释放wires内存
-	if c.wires != nil {
-		C.free(unsafe.Pointer(c.wires))
-	}
-	if c.wire_counts != nil {
-		C.free(unsafe.Pointer(c.wire_counts))
-	}
-
-	// 释放segment_types内存
-	if c.segment_types != nil {
-		C.free(unsafe.Pointer(c.segment_types))
-	}
-
 	// 释放layers内存
 	if c.layers != nil {
 		for i := 0; i < int(c.layer_count); i++ {
@@ -6372,4 +6386,65 @@ func CreateBorehole(params BoreholeParams) (map[string]*Shape, error) {
 	}
 
 	return shapes, nil
+}
+
+type WaterTunnelParams struct {
+	Style                int            // 截面样式
+	Width                float32        // 内净宽/内径 W (mm)
+	Height               float32        // 内净高 H (mm)
+	TopThickness         float32        // 顶板厚 H1 (mm)
+	BottomThickness      float32        // 底板厚 H2 (mm)
+	OuterWallThickness   float32        // 外壁厚 T (mm)
+	InnerWallThickness   float32        // 内壁厚 T1 (mm)
+	ArcHeight            float32        // 拱高 H4 (mm)
+	ArcRadius            float32        // 拱半径 R (mm)
+	ArcAngle             float32        // 拱角 α (°)
+	BottomPlatformHeight float32        // 底部平台高 H5 (mm)
+	CushionExtension     float32        // 垫层滋出 W2 (mm)
+	CushionThickness     float32        // 垫层厚 H3 (mm)
+	Points               []ChannelPoint // 使用切片代替原始指针和计数
+}
+
+func (p *WaterTunnelParams) to_struct() C.water_tunnel_params_t {
+	cParams := C.water_tunnel_params_t{
+		style:                C.int(p.Style),
+		width:                C.double(p.Width),
+		height:               C.double(p.Height),
+		topThickness:         C.double(p.TopThickness),
+		bottomThickness:      C.double(p.BottomThickness),
+		outerWallThickness:   C.double(p.OuterWallThickness),
+		innerWallThickness:   C.double(p.InnerWallThickness),
+		arcHeight:            C.double(p.ArcHeight),
+		arcRadius:            C.double(p.ArcRadius),
+		arcAngle:             C.double(p.ArcAngle),
+		bottomPlatformHeight: C.double(p.BottomPlatformHeight),
+		cushionExtension:     C.double(p.CushionExtension),
+		cushionThickness:     C.double(p.CushionThickness),
+		point_count:          C.int(len(p.Points)),
+	}
+
+	if len(p.Points) > 0 {
+		cParams.points = (*C.channel_point_t)(C.malloc(C.size_t(len(p.Points)) * C.sizeof_channel_point_t))
+		for i, point := range p.Points {
+			cp := C.channel_point_t{
+				position: point.Position.val,
+				ctype:    C.int(point.Ctype),
+			}
+			*(*C.channel_point_t)(unsafe.Pointer(uintptr(unsafe.Pointer(cParams.points)) + uintptr(i)*C.sizeof_channel_point_t)) = cp
+		}
+	}
+	return cParams
+}
+
+func CreateWaterTunnel(params WaterTunnelParams) *Shape {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.points != nil {
+			C.free(unsafe.Pointer(cParams.points))
+		}
+	}()
+	shp := C.create_water_tunnel(cParams)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
 }

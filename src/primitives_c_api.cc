@@ -3613,6 +3613,13 @@ PRIMCAPICALL topo_shape_t *create_cable_tray(cable_tray_params_t params) {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_cable_tray(cpp_params))};
   } catch (...) {
+       try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "Unknown exception occurred" << std::endl;
+    }
     return nullptr;
   }
 }
@@ -3934,20 +3941,27 @@ create_tunnel_partition_board(tunnel_partition_board_params_t params) {
   tunnel_partition_board_params cpp_params{
       static_cast<tunnel_partition_board_style>(params.style), params.length,
       params.width, params.thickness};
-
+ cpp_params.holeCount = params.holeCount;
   if (params.holeCount > 0) {
     for (int i = 0; i < params.holeCount; i++) {
       pnt2d_t pos = params.holePositions[i];
       cpp_params.holePositions.push_back(gp_Pnt2d(pos.x, pos.y));
       cpp_params.holeStyles.push_back(params.holeStyles[i]);
       cpp_params.holeDiameters.push_back(params.holeDiameters[i]);
-      cpp_params.holeWidths.push_back(params.holeWidths[i]);
+      cpp_params.holeWidths.push_back(params.holeWidths[i]); 
     }
   }
   try {
     return new topo_shape_t{.shp = std::make_shared<shape>(
                                 create_tunnel_partition_board(cpp_params))};
   } catch (...) {
+           try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "Unknown exception occurred" << std::endl;
+    }
     return nullptr;
   }
 }
@@ -4149,6 +4163,12 @@ PRIMCAPICALL void double_array_set(double *array, int index, double value) {
   }
 }
 
+ PRIMCAPICALL void int_array_set(int *array, int index, int value){
+   if (array!= NULL) {
+      array[index] = value;
+   }
+ }
+
 PRIMCAPICALL topo_shape_t *create_pipe_support(pipe_support_params_t params) {
   pipe_support_params cpp_params{static_cast<pipe_support_style>(params.style),
                                  params.count};
@@ -4159,14 +4179,23 @@ PRIMCAPICALL topo_shape_t *create_pipe_support(pipe_support_params_t params) {
       pnt2d_t p = params.positions[i];
       cpp_params.positions.push_back(gp_Pnt2d(p.x, p.y));
       cpp_params.radii.push_back(params.radii[i]);
-    }
+     }
   }
   cpp_params.length = params.length;
   cpp_params.height = params.height;
+  cpp_params.width = params.width;
+
   try {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_pipe_support(cpp_params))};
   } catch (...) {
+       try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "Unknown exception occurred" << std::endl;
+    }
     return nullptr;
   }
 }
@@ -5391,6 +5420,13 @@ create_multi_segment_pipe(multi_segment_pipe_params_t params) {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_multi_segment_pipe(cpp_params))};
   } catch (...) {
+          try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "Unknown exception occurred" << std::endl;
+    }
     return nullptr;
   }
 }
@@ -6054,6 +6090,13 @@ PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure(
   } catch (...) {
     if (out_count)
       *out_count = 0;
+    try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (const Standard_ConstructionError& e) {
+        std::cerr << e.GetMessageString() << std::endl;
+    }
     return nullptr;
   }
 }
@@ -7468,6 +7511,46 @@ PRIMCAPICALL void free_borehole_results(topo_shape_t **results, int count) {
     return;
   free(results);
 }
+ 
+
+PRIMCAPICALL topo_shape_t *create_water_tunnel(water_tunnel_params_t params){
+  try {
+    water_tunnel_params cpp_params;
+    cpp_params.style = water_tunnel_section_style(params.style); 
+    cpp_params.width = params.width;
+    cpp_params.topThickness = params.topThickness;
+    cpp_params.bottomThickness = params.bottomThickness;
+    cpp_params.outerWallThickness = params.outerWallThickness;
+    cpp_params.innerWallThickness = params.innerWallThickness;
+    cpp_params.arcHeight = params.arcHeight;
+    cpp_params.arcRadius = params.arcRadius;
+    cpp_params.arcAngle = params.arcAngle;
+    cpp_params.bottomPlatformHeight = params.bottomPlatformHeight;
+    cpp_params.cushionExtension = params.cushionExtension;
+    cpp_params.cushionThickness = params.cushionThickness;
+    auto pts = params.points;
+    for (int i = 0; i < params.point_count; i++) {
+      channel_point point;
+      point.position = gp_Pnt(pts->position.x,pts->position.y,pts->position.z); 
+      point.type =channel_point_type( params.points[i].ctype);
+      cpp_params.points.push_back(point);
+      pts++;
+    }
+    auto shp = create_water_tunnel(cpp_params);
+    return new topo_shape_t{.shp = std::make_shared<shape>(shp)};
+  }catch(...){
+           try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (Standard_ConstructionError& e) {
+        std::cerr << e.GetMessageString()<< std::endl;
+    }
+    return nullptr;
+  }
+}
+
+
 #ifdef __cplusplus
 }
 #endif

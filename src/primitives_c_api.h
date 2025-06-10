@@ -1850,6 +1850,7 @@ typedef struct {
 
 PRIMCAPICALL void pnt2d_t_array_set(pnt2d_t *array, int index, pnt2d_t value);
 PRIMCAPICALL void double_array_set(double *array, int index, double value);
+PRIMCAPICALL void int_array_set(int *array, int index, int value);
 
 PRIMCAPICALL topo_shape_t *create_pipe_support(pipe_support_params_t params);
 PRIMCAPICALL topo_shape_t *
@@ -2247,6 +2248,38 @@ typedef struct {
 PRIMCAPICALL topo_shape_t **create_borehole(borehole_params_t params,
                                             int *out_count);
 PRIMCAPICALL void free_borehole_results(topo_shape_t **results, int count);
+
+typedef struct {
+   int style; // 截面样式
+  // 基本尺寸参数
+  double width;  // 内净宽/内径 W (mm)
+  double height; // 内净高 H (mm)
+
+  // 矩形隧道参数
+  double topThickness;    // 顶板厚 H1 (mm)
+  double bottomThickness; // 底板厚 H2 (mm)
+
+  // 城市洞形隧道参数 （拱半径和拱高只需要提供一个）
+  double outerWallThickness; // 外壁厚 T (mm)
+  double innerWallThickness; // 内壁厚 T1 (mm)
+  double arcHeight;          // 拱高 H4 (mm)
+  double arcRadius;          // 拱半径 R (mm)
+
+  // 马蹄形隧道参数
+  double arcAngle; // 拱角 α (°)
+
+  // 圆形隧道参数
+  double bottomPlatformHeight; // 底部平台高 H5 (mm)
+
+  // 通用参数
+  double cushionExtension; // 垫层滋出 W2 (mm)
+  double cushionThickness; // 垫层厚 H3 (mm)
+  channel_point_t *points;
+  int point_count;
+} water_tunnel_params_t;
+
+PRIMCAPICALL topo_shape_t *create_water_tunnel(water_tunnel_params_t params);
+
 
 #ifdef __cplusplus
 }

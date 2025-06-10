@@ -15795,7 +15795,7 @@ create_tunnel_partition_board(const tunnel_partition_board_params &params) {
     throw Standard_ConstructionError("Hole parameters count mismatch");
   }
 
-  // 创建隔板主体
+   // 创建隔板主体
   TopoDS_Shape partition;
   if (params.style == tunnel_partition_board_style::CIRCULAR) { // 圆形隔板
     partition = BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DZ()),
@@ -15826,7 +15826,7 @@ create_tunnel_partition_board(const tunnel_partition_board_params &params) {
                               params.holeDiameters[i], params.holeWidths[i],
                               params.thickness + 2)
               .Shape();
-    }
+    } 
 
     // 从隔板中减去孔
     partition = BRepAlgoAPI_Cut(partition, hole).Shape();
