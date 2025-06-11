@@ -6156,6 +6156,13 @@ topo_clip_with_4d(topo_shape_t *shape, const work_progress_params_t *params) {
                                 std::make_shared<flywave::topo::shape>(result)};
 
   } catch (...) {
+    try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (const Standard_ConstructionError& e) {
+        std::cerr << e.GetMessageString() << std::endl;
+    }
     return NULL;
   }
 }
@@ -6170,6 +6177,13 @@ TOPOCAPICALL topo_wire_t topo_fit_centerline_from_shape(
     return topo_wire_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::shape>(w)}};
   } catch (...) {
+        try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (const Standard_ConstructionError& e) {
+        std::cerr << e.GetMessageString() << std::endl;
+    }
     return {nullptr};
   }
 }
@@ -6219,6 +6233,13 @@ TOPOCAPICALL pnt3d_t *topo_sample_centerline_wire(topo_wire_t centerline,
     }
     return points;
   } catch (...) {
+    try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (Standard_ConstructionError& e) {
+        std::cerr << e.GetMessageString()<< std::endl;
+    }
     *point_count = 0;
     return nullptr;
   }

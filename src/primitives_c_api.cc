@@ -7518,6 +7518,7 @@ PRIMCAPICALL topo_shape_t *create_water_tunnel(water_tunnel_params_t params){
     water_tunnel_params cpp_params;
     cpp_params.style = water_tunnel_section_style(params.style); 
     cpp_params.width = params.width;
+    cpp_params.height = params.height;
     cpp_params.topThickness = params.topThickness;
     cpp_params.bottomThickness = params.bottomThickness;
     cpp_params.outerWallThickness = params.outerWallThickness;
@@ -7539,13 +7540,13 @@ PRIMCAPICALL topo_shape_t *create_water_tunnel(water_tunnel_params_t params){
     auto shp = create_water_tunnel(cpp_params);
     return new topo_shape_t{.shp = std::make_shared<shape>(shp)};
   }catch(...){
-           try {
+  try {
         std::rethrow_exception(std::current_exception());
     } catch (const std::exception& e) {
         std::cerr << "Exception: " << e.what() << std::endl;
     } catch (Standard_ConstructionError& e) {
         std::cerr << e.GetMessageString()<< std::endl;
-    }
+    }  
     return nullptr;
   }
 }
