@@ -13970,6 +13970,38 @@ TopoDS_Shape create_pipe_row(const pipe_row_params &params,
   return transform.Shape();
 }
 
+TopoDS_Wire create_pipe_row_centerline(const pipe_row_params &params) {
+  BRepBuilderAPI_MakeWire pathWire;
+  for (size_t i = 0; i < params.points.size() - 1; i++) {
+    const gp_Pnt &current = params.points[i].position;
+    const gp_Pnt &next = params.points[i + 1].position;
+
+    if (params.points[i].type == channel_point_type::LINE &&
+        params.points[i + 1].type == channel_point_type::LINE) { // 普通节点
+      // 创建直线段
+      pathWire.Add(BRepBuilderAPI_MakeEdge(current, next).Edge());
+    } else if (params.points[i].type == channel_point_type::ARC) { // 弧形节点
+      // 确保有前一个点和后一个点
+      if (i == 0 || i == params.points.size() - 1) {
+        throw Standard_ConstructionError("弧形节点需要前后都有节点");
+      }
+
+      const gp_Pnt &prev = params.points[i - 1].position;
+
+      // 创建三点圆弧
+      pathWire.Add(BRepBuilderAPI_MakeEdge(
+                       GC_MakeArcOfCircle(prev, current, next).Value())
+                       .Edge());
+    }
+  }
+
+  if (!pathWire.IsDone()) {
+    throw Standard_ConstructionError("路径线框创建失败");
+  }
+
+  return pathWire.Wire();
+}
+
 TopoDS_Shape create_cable_trench(const cable_trench_params &params) {
   // 参数验证
   if (params.width <= 0 || params.height <= 0) {
@@ -14228,6 +14260,48 @@ TopoDS_Shape create_cable_trench(const cable_trench_params &params,
   BRepBuilderAPI_Transform transform(trench, transformation);
 
   return transform.Shape();
+}
+
+TopoDS_Wire create_cable_trench_centerline(const cable_trench_params &params) {
+  if (params.coverThickness < 0 || params.baseThickness < 0 ||
+      params.cushionThickness < 0 || params.wallThickness < 0) {
+    throw Standard_ConstructionError("Thickness values must be non-negative");
+  }
+
+  BRepBuilderAPI_MakeWire baseMaker;
+
+  // 创建路径线框
+  BRepBuilderAPI_MakeWire pathWire;
+
+  // 处理点序列
+  for (size_t i = 0; i < params.points.size() - 1; i++) {
+    const gp_Pnt &current = params.points[i].position;
+    const gp_Pnt &next = params.points[i + 1].position;
+
+    if (params.points[i].type == channel_point_type::LINE &&
+        params.points[i + 1].type == channel_point_type::LINE) { // 普通节点
+      // 创建直线段
+      pathWire.Add(BRepBuilderAPI_MakeEdge(current, next).Edge());
+    } else if (params.points[i].type == channel_point_type::ARC) { // 弧形节点
+      // 确保有前一个点和后一个点
+      if (i == 0 || i == params.points.size() - 1) {
+        throw Standard_ConstructionError("弧形节点需要前后都有节点");
+      }
+
+      const gp_Pnt &prev = params.points[i - 1].position;
+
+      // 创建三点圆弧
+      pathWire.Add(BRepBuilderAPI_MakeEdge(
+                       GC_MakeArcOfCircle(prev, current, next).Value())
+                       .Edge());
+    }
+  }
+
+  if (!pathWire.IsDone()) {
+    throw Standard_ConstructionError("路径线框创建失败");
+  }
+
+   return  pathWire.Wire();
 }
 
 TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params) {
@@ -14603,6 +14677,39 @@ TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params,
 
   BRepBuilderAPI_Transform transform(tunnel, transformation);
   return transform.Shape();
+}
+TopoDS_Wire create_cable_tunnel_centerline(const cable_tunnel_params &params){
+  BRepBuilderAPI_MakeWire pathWire;
+
+  // 处理点序列
+  for (size_t i = 0; i < params.points.size() - 1; i++) {
+    const gp_Pnt &current = params.points[i].position;
+    const gp_Pnt &next = params.points[i + 1].position;
+
+    if (params.points[i].type == channel_point_type::LINE &&
+        params.points[i + 1].type == channel_point_type::LINE) { // 普通节点
+      // 创建直线段
+      pathWire.Add(BRepBuilderAPI_MakeEdge(current, next).Edge());
+    } else if (params.points[i].type == channel_point_type::ARC) { // 弧形节点
+      // 确保有前一个点和后一个点
+      if (i == 0 || i == params.points.size() - 1) {
+        throw Standard_ConstructionError("弧形节点需要前后都有节点");
+      }
+
+      const gp_Pnt &prev = params.points[i - 1].position;
+
+      // 创建三点圆弧
+      pathWire.Add(BRepBuilderAPI_MakeEdge(
+                       GC_MakeArcOfCircle(prev, current, next).Value())
+                       .Edge());
+    }
+  }
+
+  if (!pathWire.IsDone()) {
+    throw Standard_ConstructionError("路径线框创建失败");
+  }
+
+  return pathWire.Wire();
 }
 
 TopoDS_Shape create_cable_tray(const cable_tray_params &params) {
@@ -15287,6 +15394,49 @@ TopoDS_Shape create_cable_tray(const cable_tray_params &params,
   return transform.Shape();
 }
 
+TopoDS_Wire create_cable_tray_centerline(const cable_tray_params &params) {
+  // 参数验证
+  if (params.width <= 0 || params.height <= 0 || params.span <= 0) {
+    throw Standard_ConstructionError("Width, height and span must be positive");
+  }
+  if (params.points.size() < 2) {
+    throw Standard_ConstructionError("At least 2 points are required");
+  }
+
+  // 创建路径线框
+  BRepBuilderAPI_MakeWire pathWire;
+
+  // 处理点序列
+  for (size_t i = 0; i < params.points.size() - 1; i++) {
+    const gp_Pnt &current = params.points[i].position;
+    const gp_Pnt &next = params.points[i + 1].position;
+
+    if (params.points[i].type == channel_point_type::LINE &&
+        params.points[i + 1].type == channel_point_type::LINE) { // 普通节点
+      // 创建直线段
+      pathWire.Add(BRepBuilderAPI_MakeEdge(current, next).Edge());
+    } else if (params.points[i].type == channel_point_type::ARC) { // 弧形节点
+      // 确保有前一个点和后一个点
+      if (i == 0 || i == params.points.size() - 1) {
+        throw Standard_ConstructionError("弧形节点需要前后都有节点");
+      }
+
+      const gp_Pnt &prev = params.points[i - 1].position;
+
+      // 创建三点圆弧
+      pathWire.Add(BRepBuilderAPI_MakeEdge(
+                       GC_MakeArcOfCircle(prev, current, next).Value())
+                       .Edge());
+    }
+  }
+
+  if (!pathWire.IsDone()) {
+    throw Standard_ConstructionError("路径线框创建失败");
+  }
+
+  return pathWire.Wire();
+}
+
 TopoDS_Shape create_cable_L_beam(const cable_L_beam_params &params) {
   // 参数验证
   if (params.length <= 0 || params.width <= 0 || params.height <= 0) {
@@ -15668,6 +15818,41 @@ TopoDS_Shape create_footpath(const footpath_params &params,
 
   BRepBuilderAPI_Transform transform(footpath, transformation);
   return transform.Shape();
+}
+
+TopoDS_Wire create_footpath_centerline(const footpath_params &params){
+  // 创建路径线框
+  BRepBuilderAPI_MakeWire pathWire;
+
+  // 处理点序列
+  for (size_t i = 0; i < params.points.size() - 1; i++) {
+    const gp_Pnt &current = params.points[i].position;
+    const gp_Pnt &next = params.points[i + 1].position;
+
+    if (params.points[i].type == channel_point_type::LINE &&
+        params.points[i + 1].type == channel_point_type::LINE) { // 普通节点
+      // 创建直线段
+      pathWire.Add(BRepBuilderAPI_MakeEdge(current, next).Edge());
+    } else if (params.points[i].type == channel_point_type::ARC) { // 弧形节点
+      // 确保有前一个点和后一个点
+      if (i == 0 || i == params.points.size() - 1) {
+        throw Standard_ConstructionError("弧形节点需要前后都有节点");
+      }
+
+      const gp_Pnt &prev = params.points[i - 1].position;
+
+      // 创建三点圆弧
+      pathWire.Add(BRepBuilderAPI_MakeEdge(
+                       GC_MakeArcOfCircle(prev, current, next).Value())
+                       .Edge());
+    }
+  }
+
+  if (!pathWire.IsDone()) {
+    throw Standard_ConstructionError("路径线框创建失败");
+  }
+  
+  return pathWire.Wire();
 }
 
 TopoDS_Shape create_shaft_chamber(const shaft_chamber_params &params) {
@@ -17190,6 +17375,41 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params,
   return transform.Shape();
 }
 
+TopoDS_Wire create_water_tunnel_centerline(const water_tunnel_params &params){
+   if (params.points.size() < 2) {
+    throw Standard_ConstructionError("At least 2 points are required");
+  }
+
+  BRepBuilderAPI_MakeWire pathWire;
+  for (size_t i = 0; i < params.points.size() - 1; i++) {
+    const gp_Pnt &current = params.points[i].position;
+    const gp_Pnt &next = params.points[i + 1].position;
+
+    if (params.points[i].type == channel_point_type::LINE &&
+        params.points[i + 1].type == channel_point_type::LINE) { // 普通节点
+      // 创建直线段
+      pathWire.Add(BRepBuilderAPI_MakeEdge(current, next).Edge());
+    } else if (params.points[i].type == channel_point_type::ARC) { // 弧形节点
+      // 确保有前一个点和后一个点
+      if (i == 0 || i == params.points.size() - 1) {
+        throw Standard_ConstructionError("弧形节点需要前后都有节点");
+      }
+
+      const gp_Pnt &prev = params.points[i - 1].position;
+
+      // 创建三点圆弧
+      pathWire.Add(BRepBuilderAPI_MakeEdge(
+                       GC_MakeArcOfCircle(prev, current, next).Value())
+                       .Edge());
+    }
+  }
+
+  if (!pathWire.IsDone()) {
+    throw Standard_ConstructionError("路径线框创建失败");
+  }
+
+  return pathWire.Wire();
+}
 TopoDS_Shape create_shape_from_profile(const shape_profile &profile,
                                        bool isFace,
                                        gp_Ax2 *sectionAxes = nullptr) {
@@ -18867,6 +19087,32 @@ TopoDS_Shape create_catenary(const catenary_params &params) {
   }
 
   return pipeMaker.Shape();
+}
+
+TopoDS_Wire create_catenary_centerline(const catenary_params &params) {
+  // 参数验证
+  if (params.slack <= 0) {
+    throw Standard_ConstructionError("Slack must be positive");
+  }
+  if (params.p1.Distance(params.p2) < Precision::Confusion()) {
+    throw Standard_ConstructionError("Points p1 and p2 are too close");
+  }
+
+  
+  gp_Ax3 rot = createOrientation(
+      params.p1, params.p2, params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
+  Handle(Geom_BSplineCurve) curve =
+      makeCatenaryCurve(params.p1, params.p2, rot, params.slack, params.maxSag,
+                        params.tessellation);
+  if (!curve) {
+    throw std::runtime_error("Failed to generate catenary curves");
+  }
+
+  // 创建路径线框
+  TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(curve).Edge();
+  TopoDS_Wire wire = BRepBuilderAPI_MakeWire(edge).Wire();
+ 
+  return wire;
 }
 
 TopoDS_Shape create_catenary(const catenary_params &params,

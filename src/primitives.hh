@@ -1835,7 +1835,7 @@ TopoDS_Shape create_pipe_row(const pipe_row_params &params,
                              const gp_Pnt &position,
                              const gp_Dir &normal = gp::DZ(),
                              const gp_Dir &xDir = gp::DX());
-
+TopoDS_Wire create_pipe_row_centerline(const pipe_row_params &params);
 // TD_DLG
 struct cable_trench_params {
   double width;            // 沟内净宽 W (mm)
@@ -1857,7 +1857,7 @@ TopoDS_Shape create_cable_trench(const cable_trench_params &params,
                                  const gp_Pnt &position,
                                  const gp_Dir &direction = gp::DZ(),
                                  const gp_Dir &xDir = gp::DX());
-
+TopoDS_Wire create_cable_trench_centerline(const cable_trench_params &params);
 // TD_DLSD
 struct cable_tunnel_params {
   connection_section_style style; // 截面样式
@@ -1890,6 +1890,7 @@ TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params,
                                  const gp_Pnt &position,
                                  const gp_Dir &direction = gp::DZ(),
                                  const gp_Dir &xDir = gp::DX());
+TopoDS_Wire create_cable_tunnel_centerline(const cable_tunnel_params &params);
 
 // 桥架样式枚举
 enum class cable_tray_style {
@@ -1928,7 +1929,7 @@ TopoDS_Shape create_cable_tray(const cable_tray_params &params,
                                const gp_Pnt &position,
                                const gp_Dir &direction = gp::DZ(),
                                const gp_Dir &xDir = gp::DX());
-
+TopoDS_Wire create_cable_tray_centerline(const cable_tray_params &params);
 struct cable_L_beam_params {
   double length; // 梁长 (L > 0)
   double width;  // 梁宽 (W > 0)
@@ -2024,6 +2025,8 @@ TopoDS_Shape create_footpath(const footpath_params &params,
                              const gp_Pnt &position,
                              const gp_Dir &direction = gp::DZ(),
                              const gp_Dir &xDir = gp::DX());
+TopoDS_Wire create_footpath_centerline(const footpath_params &params);
+
 // GZW_SJC
 struct shaft_chamber_params {
   double supportWallThickness; // 支护壁厚 T1 (mm)
@@ -2256,6 +2259,7 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params,
                                  const gp_Pnt &position,
                                  const gp_Dir &direction = gp::DZ(),
                                  const gp_Dir &xDir = gp::DX());
+TopoDS_Wire create_water_tunnel_centerline(const water_tunnel_params &params);
 
 enum profile_type {
   TYPE_NONE = 0,
@@ -2479,7 +2483,7 @@ TopoDS_Shape create_catenary(const catenary_params &params,
                              const gp_Pnt &position,
                              const gp_Dir &direction = gp::DZ(),
                              const gp_Dir &xDir = gp::DX());
-
+TopoDS_Wire create_catenary_centerline(const catenary_params &params);
 struct box_shape_params {
   gp_Pnt point1;
   gp_Pnt point2;

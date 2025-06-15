@@ -1566,6 +1566,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_row_with_place(pipe_row_params_t params,
                                                       pnt3d_t position,
                                                       dir3d_t normal,
                                                       dir3d_t xDir);
+PRIMCAPICALL topo_wire_t create_pipe_row_centerline(pipe_row_params_t params);
 
 typedef struct {
   double width;
@@ -1586,6 +1587,7 @@ PRIMCAPICALL topo_shape_t *create_cable_trench(cable_trench_params_t params);
 PRIMCAPICALL topo_shape_t *
 create_cable_trench_with_place(cable_trench_params_t params, pnt3d_t position,
                                dir3d_t direction, dir3d_t xDir);
+PRIMCAPICALL topo_wire_t create_cable_trench_centerline(cable_trench_params_t params);
 
 typedef struct {
   int style;
@@ -1607,6 +1609,7 @@ PRIMCAPICALL topo_shape_t *create_cable_tunnel(cable_tunnel_params_t params);
 PRIMCAPICALL topo_shape_t *
 create_cable_tunnel_with_place(cable_tunnel_params_t params, pnt3d_t position,
                                dir3d_t direction, dir3d_t xDir);
+PRIMCAPICALL topo_wire_t create_cable_tunnel_centerline(cable_tunnel_params_t params);
 
 enum { CABLE_TRAY_ARCH = 1, CABLE_TRAY_BEAM = 2 };
 
@@ -1637,6 +1640,7 @@ PRIMCAPICALL topo_shape_t *create_cable_tray(cable_tray_params_t params);
 PRIMCAPICALL topo_shape_t *
 create_cable_tray_with_place(cable_tray_params_t params, pnt3d_t position,
                              dir3d_t direction, dir3d_t xDir);
+PRIMCAPICALL topo_wire_t create_cable_tray_centerline(cable_tray_params_t params);
 
 typedef struct {
   double length;
@@ -1711,6 +1715,7 @@ PRIMCAPICALL topo_shape_t *create_footpath_with_place(footpath_params_t params,
                                                       pnt3d_t position,
                                                       dir3d_t direction,
                                                       dir3d_t xDir);
+PRIMCAPICALL topo_wire_t create_footpath_centerline(footpath_params_t params);
 
 typedef struct {
   double supportWallThickness;
@@ -2110,7 +2115,7 @@ PRIMCAPICALL topo_shape_t *create_catenary_with_place(catenary_params_t params,
                                                       pnt3d_t position,
                                                       dir3d_t direction,
                                                       dir3d_t xDir);
-
+PRIMCAPICALL topo_wire_t create_catenary_centerline(catenary_params_t params);
 // 长方体参数
 typedef struct {
   pnt3d_t point1;
@@ -2280,6 +2285,7 @@ typedef struct {
 
 PRIMCAPICALL topo_shape_t *create_water_tunnel(water_tunnel_params_t params);
 
+PRIMCAPICALL topo_wire_t create_water_tunnel_centerline(water_tunnel_params_t params);
 
 #ifdef __cplusplus
 }

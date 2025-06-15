@@ -3913,6 +3913,13 @@ func CreatePipeRowWithPlace(params PipeRowParams, position Point3, normal Dir3, 
 	return s
 }
 
+func CreatePipeRowCenterline(params PipeRowParams) *Wire {
+	wire := C.create_pipe_row_centerline(params.to_struct())
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
+}
+
 type CableTrenchParams struct {
 	Width            float32
 	Height           float32
@@ -3980,6 +3987,20 @@ func CreateCableTrenchWithPlace(params CableTrenchParams, position Point3, direc
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
+}
+
+func CreateCableTrenchCenterline(params CableTrenchParams) *Wire {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.points != nil {
+			C.free(unsafe.Pointer(cParams.points))
+		}
+	}()
+
+	wire := C.create_cable_trench_centerline(cParams)
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
 }
 
 type CableTunnelParams struct {
@@ -4051,6 +4072,20 @@ func CreateCableTunnelWithPlace(params CableTunnelParams, position Point3, direc
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
+}
+
+func CreateCableTunnelCenterline(params CableTunnelParams) *Wire {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.points != nil {
+			C.free(unsafe.Pointer(cParams.points))
+		}
+	}()
+
+	wire := C.create_cable_tunnel_centerline(cParams)
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
 }
 
 type CableTrayParams struct {
@@ -4168,6 +4203,30 @@ func CreateCableTrayWithPlace(params CableTrayParams, position Point3, direction
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
+}
+
+func CreateCableTrayCenterline(params CableTrayParams) *Wire {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.pipePositions != nil {
+			C.free(unsafe.Pointer(cParams.pipePositions))
+		}
+
+		if cParams.points != nil {
+			C.free(unsafe.Pointer(cParams.points))
+		}
+		if cParams.pipeInnerDiameters != nil {
+			C.free(unsafe.Pointer(cParams.pipeInnerDiameters))
+		}
+		if cParams.pipeWallThicknesses != nil {
+			C.free(unsafe.Pointer(cParams.pipeWallThicknesses))
+		}
+	}()
+
+	wire := C.create_cable_tray_centerline(cParams)
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
 }
 
 type CableLBeamParams struct {
@@ -4356,6 +4415,13 @@ func CreateFootpathWithPlace(params FootpathParams, position Point3, direction D
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
+}
+
+func CreateFootpathCenterline(params FootpathParams) *Wire {
+	wire := C.create_footpath_centerline(params.to_struct())
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
 }
 
 type ShaftChamberParams struct {
@@ -5862,6 +5928,14 @@ func CreateCatenaryWithPlace(params CatenaryParams, position Point3, direction D
 	return s
 }
 
+func CreateCatenaryCenterline(params CatenaryParams) *Wire {
+	cParams := params.to_struct()
+	wire := C.create_catenary_centerline(cParams)
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
+}
+
 // 长方体参数
 type BoxShapeParams struct {
 	Point1 Point3
@@ -6447,4 +6521,17 @@ func CreateWaterTunnel(params WaterTunnelParams) *Shape {
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
+}
+
+func CreateWaterTunnelCenterline(params WaterTunnelParams) *Wire {
+	cParams := params.to_struct()
+	defer func() {
+		if cParams.points != nil {
+			C.free(unsafe.Pointer(cParams.points))
+		}
+	}()
+	wire := C.create_water_tunnel_centerline(cParams)
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
 }

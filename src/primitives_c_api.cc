@@ -3445,6 +3445,55 @@ PRIMCAPICALL topo_shape_t *create_pipe_row_with_place(pipe_row_params_t params,
   }
 }
 
+PRIMCAPICALL topo_wire_t create_pipe_row_centerline(pipe_row_params_t params) {
+  pipe_row_params cpp_params{static_cast<pipe_row_type>(params.pipeType),
+                             params.hasEnclosure,
+                             params.enclosureWidth,
+                             params.enclosureHeight,
+                             params.baseExtension,
+                             params.baseThickness,
+                             params.cushionExtension,
+                             params.cushionThickness,
+                             {},
+                             {},
+                             {},
+                             params.pullPipeInnerDiameter,
+                             params.pullPipeThickness,
+                             {}};
+
+  if (params.pipeCount > 0) {
+    for (int i = 0; i < params.pipeCount; i++) {
+      cpp_params.pipePositions.push_back(
+          gp_Pnt2d(params.pipePositions[i].x, params.pipePositions[i].y));
+      cpp_params.pipeInnerDiameters.push_back(params.pipeInnerDiameters[i]);
+      cpp_params.pipeWallThicknesses.push_back(params.pipeWallThicknesses[i]);
+    }
+  }
+
+  if (params.pointCount > 0) {
+    for (int i = 0; i < params.pointCount; i++) {
+      cpp_params.points.push_back(
+          {gp_Pnt(params.points[i].position.x, params.points[i].position.y,
+                  params.points[i].position.z),
+           static_cast<channel_point_type>(params.points[i].ctype)});
+    }
+  }
+   try {
+          TopoDS_Wire wire = create_pipe_row_centerline(cpp_params);
+    return   topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+       try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "Unknown exception occurred" << std::endl;
+    }
+    return topo_wire_t{};
+  }
+}
+
 PRIMCAPICALL topo_shape_t *create_cable_trench(cable_trench_params_t params) {
   cable_trench_params cpp_params{params.width,
                                  params.height,
@@ -3507,6 +3556,43 @@ create_cable_trench_with_place(cable_trench_params_t params, pnt3d_t position,
             cpp_params, cpp_position, cpp_direction, cpp_xDir))};
   } catch (...) {
     return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_wire_t create_cable_trench_centerline(cable_trench_params_t params){
+cable_trench_params cpp_params{params.width,
+                                 params.height,
+                                 params.coverWidth,
+                                 params.coverThickness,
+                                 params.baseExtension,
+                                 params.baseThickness,
+                                 params.cushionExtension,
+                                 params.cushionThickness,
+                                 params.wallThickness,
+                                 params.wallThickness2,
+                                 {}};
+
+  if (params.pointCount > 0) {
+    for (int i = 0; i < params.pointCount; i++) {
+      cpp_params.points.push_back(
+          {gp_Pnt(params.points[i].position.x, params.points[i].position.y,
+                  params.points[i].position.z),
+           static_cast<channel_point_type>(params.points[i].ctype)});
+    }
+  }
+   try {
+          TopoDS_Wire wire = create_cable_trench_centerline(cpp_params);
+    return   topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+       try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "Unknown exception occurred" << std::endl;
+    }
+    return topo_wire_t{};
   }
 }
 
@@ -3576,6 +3662,44 @@ create_cable_tunnel_with_place(cable_tunnel_params_t params, pnt3d_t position,
             cpp_params, cpp_position, cpp_direction, cpp_xDir))};
   } catch (...) {
     return nullptr;
+  }
+}
+PRIMCAPICALL topo_wire_t create_cable_tunnel_centerline(cable_tunnel_params_t params){
+   cable_tunnel_params cpp_params{
+      static_cast<connection_section_style>(params.style),
+      params.width,
+      params.height,
+      params.topThickness,
+      params.bottomThickness,
+      params.outerWallThickness,
+      params.innerWallThickness,
+      params.arcHeight,
+      params.bottomPlatformHeight,
+      params.cushionExtension,
+      params.cushionThickness,
+      {}};
+
+  if (params.pointCount > 0) {
+    for (int i = 0; i < params.pointCount; i++) {
+      cpp_params.points.push_back(
+          {gp_Pnt(params.points[i].position.x, params.points[i].position.y,
+                  params.points[i].position.z),
+           static_cast<channel_point_type>(params.points[i].ctype)});
+    }
+  }
+    try {
+          TopoDS_Wire wire = create_cable_tunnel_centerline(cpp_params);
+    return   topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+       try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "Unknown exception occurred" << std::endl;
+    }
+    return topo_wire_t{};
   }
 }
 
@@ -3666,6 +3790,51 @@ create_cable_tray_with_place(cable_tray_params_t params, pnt3d_t position,
             cpp_params, cpp_position, cpp_direction, cpp_xDir))};
   } catch (...) {
     return nullptr;
+  }
+}
+PRIMCAPICALL topo_wire_t create_cable_tray_centerline(cable_tray_params_t params){
+  cable_tray_params cpp_params{static_cast<cable_tray_style>(params.style),
+                               params.columnDiameter,
+                               params.columnHeight,
+                               params.span,
+                               params.width,
+                               params.height,
+                               params.topPlateHeight,
+                               params.arcHeight,
+                               params.wallThickness};
+
+  cpp_params.hasProtectionPlate = params.hasProtectionPlate != 0;
+
+  if (params.pipeCount > 0) {
+    for (int i = 0; i < params.pipeCount; i++) {
+      pnt2d_t pos = params.pipePositions[i];
+      cpp_params.pipePositions.push_back(gp_Pnt2d(pos.x, pos.y));
+      cpp_params.pipeInnerDiameters.push_back(params.pipeInnerDiameters[i]);
+      cpp_params.pipeWallThicknesses.push_back(params.pipeWallThicknesses[i]);
+    }
+  }
+
+  if (params.pointCount > 0) {
+    for (int i = 0; i < params.pointCount; i++) {
+      channel_point_t point = params.points[i];
+      cpp_params.points.push_back(channel_point{
+          gp_Pnt(point.position.x, point.position.y, point.position.z),
+          static_cast<channel_point_type>(point.ctype)});
+    }
+  }
+  try {
+          TopoDS_Wire wire = create_cable_tray_centerline(cpp_params);
+    return   topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+       try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "Unknown exception occurred" << std::endl;
+    }
+    return topo_wire_t{};
   }
 }
 
@@ -3861,6 +4030,35 @@ PRIMCAPICALL topo_shape_t *create_footpath_with_place(footpath_params_t params,
     return nullptr;
   }
 }
+
+PRIMCAPICALL topo_wire_t create_footpath_centerline(footpath_params_t params){
+    footpath_params cpp_params{params.height, params.width};
+
+  if (params.pointCount > 0) {
+    for (int i = 0; i < params.pointCount; i++) {
+      cpp_params.points.push_back(
+          {gp_Pnt(params.points[i].position.x, params.points[i].position.y,
+                  params.points[i].position.z),
+           static_cast<channel_point_type>(params.points[i].ctype)});
+    }
+  }
+
+   try {
+          TopoDS_Wire wire = create_footpath_centerline(cpp_params);
+    return   topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+       try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "Unknown exception occurred" << std::endl;
+    }
+    return topo_wire_t{};
+  }
+}
+
 
 PRIMCAPICALL topo_shape_t *create_shaft_chamber(shaft_chamber_params_t params) {
   shaft_chamber_params cpp_params{
@@ -6976,7 +7174,29 @@ PRIMCAPICALL topo_shape_t *create_catenary_with_place(catenary_params_t params,
     return nullptr;
   }
 }
+PRIMCAPICALL topo_wire_t create_catenary_centerline(catenary_params_t params){
+   catenary_params cpp_params;
 
+  // 转换端点
+  cpp_params.p1 = gp_Pnt(params.p1.x, params.p1.y, params.p1.z);
+  cpp_params.p2 = gp_Pnt(params.p2.x, params.p2.y, params.p2.z);
+  cpp_params.slack = params.slack;
+  cpp_params.maxSag = params.max_sag;
+  cpp_params.tessellation = params.tessellation;
+
+  if (params.up_dir != nullptr) {
+    cpp_params.upDir =
+        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
+  }
+
+  try {
+   TopoDS_Wire wire = create_catenary_centerline(cpp_params);
+    return   topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+    return topo_wire_t{};
+  }
+}
 PRIMCAPICALL topo_shape_t *create_box_shape(box_shape_params_t params) {
   box_shape_params cpp_params{
       gp_Pnt(params.point1.x, params.point1.y, params.point1.z),
@@ -7551,6 +7771,44 @@ PRIMCAPICALL topo_shape_t *create_water_tunnel(water_tunnel_params_t params){
   }
 }
 
+PRIMCAPICALL topo_wire_t create_water_tunnel_centerline(water_tunnel_params_t params){
+  try {
+    water_tunnel_params cpp_params;
+    cpp_params.style = water_tunnel_section_style(params.style); 
+    cpp_params.width = params.width;
+    cpp_params.height = params.height;
+    cpp_params.topThickness = params.topThickness;
+    cpp_params.bottomThickness = params.bottomThickness;
+    cpp_params.outerWallThickness = params.outerWallThickness;
+    cpp_params.innerWallThickness = params.innerWallThickness;
+    cpp_params.arcHeight = params.arcHeight;
+    cpp_params.arcRadius = params.arcRadius;
+    cpp_params.arcAngle = params.arcAngle;
+    cpp_params.bottomPlatformHeight = params.bottomPlatformHeight;
+    cpp_params.cushionExtension = params.cushionExtension;
+    cpp_params.cushionThickness = params.cushionThickness;
+    auto pts = params.points;
+    for (int i = 0; i < params.point_count; i++) {
+      channel_point point;
+      point.position = gp_Pnt(pts->position.x,pts->position.y,pts->position.z); 
+      point.type =channel_point_type( params.points[i].ctype);
+      cpp_params.points.push_back(point);
+      pts++;
+    }
+         TopoDS_Wire wire = create_water_tunnel_centerline(cpp_params);
+    return   topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+       try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "Unknown exception occurred" << std::endl;
+    }
+    return topo_wire_t{};
+  }
+}
 
 #ifdef __cplusplus
 }
