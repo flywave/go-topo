@@ -540,8 +540,8 @@ func MakeCatenary(p1, p2 Point3, slack, maxSag float64, up Dir3, tessellation fl
 type ProgressType int
 
 const (
-	ProgressByRatio    ProgressType = 1
-	ProgressByDistance ProgressType = 2
+	ProgressByRatio    ProgressType = 0
+	ProgressByDistance ProgressType = 1
 )
 
 type WorkProgress struct {
