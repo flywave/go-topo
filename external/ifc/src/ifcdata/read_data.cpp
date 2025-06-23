@@ -103,8 +103,8 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
       prop.name = (*prop_it)->Name();
 
       auto attr = (*prop_it)->data().get_attribute_value(0);
-      if (attr) {
-        try {
+      try {
+        if (attr) {
           if (attr.type() == IfcUtil::Argument_STRING) {
             prop.value = (std::string)(attr);
           } else if (attr.type() == IfcUtil::Argument_INT) {
@@ -131,10 +131,10 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
                      IfcUtil::Argument_AGGREGATE_OF_AGGREGATE_OF_DOUBLE) {
             prop.value = static_cast<std::vector<std::vector<double>>>(attr);
           }
-        } catch (...) {
+        } else {
           prop.value = boost::blank();
         }
-      } else {
+      } catch (...) {
         prop.value = boost::blank();
       }
       prop.type = (*prop_it)->declaration().name();
@@ -153,14 +153,17 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
     auto quantities = (*it)->Quantities();
     for (auto qty_it = quantities->begin(); qty_it != quantities->end();
          ++qty_it) {
-      IfcQuantity qty;
-      qty.name = (*qty_it)->Name();
-      qty.type = (*qty_it)->declaration().name();
-      qty.value = (*qty_it)->data().get_attribute_value(0);
-      IfcSchema::IfcPhysicalSimpleQuantity *qt =
-          (*qty_it)->as<IfcSchema::IfcPhysicalSimpleQuantity>();
-      qty.unit = qt->Unit()->UnitType();
-      qto.quantities.push_back(qty);
+      try {
+        IfcQuantity qty;
+        qty.name = (*qty_it)->Name();
+        qty.type = (*qty_it)->declaration().name();
+        qty.value = (*qty_it)->data().get_attribute_value(0);
+        IfcSchema::IfcPhysicalSimpleQuantity *qt =
+            (*qty_it)->as<IfcSchema::IfcPhysicalSimpleQuantity>();
+        qty.unit = qt->Unit()->UnitType();
+        qto.quantities.push_back(qty);
+      } catch (...) {
+      }
     }
     data.quantities.push_back(qto);
   }

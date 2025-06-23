@@ -5,7 +5,6 @@
 #include <memory>
 #include <string>
 
-
 int main() {
   std::string path{"./buildingElementProxy.ifc"};
   auto ct = flywave::ifc::get_convert(path);
@@ -20,5 +19,8 @@ int main() {
   for (auto &tri : tris) {
     std::cout << tri << std::endl;
   }
+  auto data = ct->get_data();
+  std::cout << data->header.file_name.name << std::endl;
+
   return 0;
 }
