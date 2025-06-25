@@ -1,5 +1,6 @@
 #include "read_data.h"
 #include <ifcparse/IfcSIPrefix.h>
+#include <ifcparse/IfcException.h>
 
 using namespace ifcopenshell;
 using namespace ifcopenshell::data;
@@ -9,6 +10,42 @@ std::string qualify_unrooted_instance(IfcUtil::IfcBaseInterface *inst) {
   return inst->declaration().name() + "_" +
          boost::lexical_cast<std::string>(
              inst->as<IfcUtil::IfcBaseEntity>()->id());
+}
+
+
+
+void parseAttr(IfcProperty &prop,AttributeValue attr){
+   if (attr.type() == IfcUtil::Argument_STRING) {
+            prop.value = (std::string)(attr);
+          } else if (attr.type() == IfcUtil::Argument_INT) {
+            prop.value = static_cast<int>(attr);
+          } else if (attr.type() == IfcUtil::Argument_DOUBLE) {
+            prop.value = static_cast<double>(attr);
+          } else if (attr.type() == IfcUtil::Argument_BOOL) {
+            prop.value = static_cast<bool>(attr);
+          } else if (attr.type() == IfcUtil::Argument_BINARY) {
+            prop.value = static_cast<boost::dynamic_bitset<>>(attr);
+          } else if (attr.type() == IfcUtil::Argument_AGGREGATE_OF_INT) {
+            prop.value = static_cast<std::vector<int>>(attr);
+          } else if (attr.type() == IfcUtil::Argument_AGGREGATE_OF_DOUBLE) {
+            prop.value = static_cast<std::vector<double>>(attr);
+          } else if (attr.type() == IfcUtil::Argument_AGGREGATE_OF_STRING) {
+            prop.value = static_cast<std::vector<std::string>>(attr);
+          } else if (attr.type() == IfcUtil::Argument_AGGREGATE_OF_BINARY) {
+            prop.value =
+                static_cast<std::vector<boost::dynamic_bitset<>>>(attr);
+          } else if (attr.type() ==
+                     IfcUtil::Argument_AGGREGATE_OF_AGGREGATE_OF_INT) {
+            prop.value = static_cast<std::vector<std::vector<int>>>(attr);
+          } else if (attr.type() ==
+                     IfcUtil::Argument_AGGREGATE_OF_AGGREGATE_OF_DOUBLE) {
+            prop.value = static_cast<std::vector<std::vector<double>>>(attr);
+          }else if(attr.type()==IfcUtil::Argument_ENTITY_INSTANCE){
+             auto val=((IfcUtil::IfcBaseClass *)(attr))->data().get_attribute_value(0);
+             parseAttr(prop,val);
+          }else{
+            std::cerr << "Unknown attribute type: " << attr.type() << std::endl;
+          }
 }
 } // namespace
 
@@ -100,43 +137,17 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
     auto props = (*it)->HasProperties();
     for (auto prop_it = props->begin(); prop_it != props->end(); ++prop_it) {
       IfcProperty prop;
-      prop.name = (*prop_it)->Name();
-
-      auto attr = (*prop_it)->data().get_attribute_value(0);
-      try {
-        if (attr) {
-          if (attr.type() == IfcUtil::Argument_STRING) {
-            prop.value = (std::string)(attr);
-          } else if (attr.type() == IfcUtil::Argument_INT) {
-            prop.value = static_cast<int>(attr);
-          } else if (attr.type() == IfcUtil::Argument_DOUBLE) {
-            prop.value = static_cast<double>(attr);
-          } else if (attr.type() == IfcUtil::Argument_BOOL) {
-            prop.value = static_cast<bool>(attr);
-          } else if (attr.type() == IfcUtil::Argument_BINARY) {
-            prop.value = static_cast<boost::dynamic_bitset<>>(attr);
-          } else if (attr.type() == IfcUtil::Argument_AGGREGATE_OF_INT) {
-            prop.value = static_cast<std::vector<int>>(attr);
-          } else if (attr.type() == IfcUtil::Argument_AGGREGATE_OF_DOUBLE) {
-            prop.value = static_cast<std::vector<double>>(attr);
-          } else if (attr.type() == IfcUtil::Argument_AGGREGATE_OF_STRING) {
-            prop.value = static_cast<std::vector<std::string>>(attr);
-          } else if (attr.type() == IfcUtil::Argument_AGGREGATE_OF_BINARY) {
-            prop.value =
-                static_cast<std::vector<boost::dynamic_bitset<>>>(attr);
-          } else if (attr.type() ==
-                     IfcUtil::Argument_AGGREGATE_OF_AGGREGATE_OF_INT) {
-            prop.value = static_cast<std::vector<std::vector<int>>>(attr);
-          } else if (attr.type() ==
-                     IfcUtil::Argument_AGGREGATE_OF_AGGREGATE_OF_DOUBLE) {
-            prop.value = static_cast<std::vector<std::vector<double>>>(attr);
-          }
+      prop.name = (*prop_it)->Name(); 
+      auto attr = (*prop_it)->data().get_attribute_value(2);
+       try {
+        if (!attr.isNull()) {
+          parseAttr(prop,attr);
         } else {
           prop.value = boost::blank();
-        }
-      } catch (...) {
+         }
+       } catch (IfcParse::IfcException &e) {
         prop.value = boost::blank();
-      }
+       }
       prop.type = (*prop_it)->declaration().name();
       pset.properties.push_back(prop);
     }
@@ -157,7 +168,7 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
         IfcQuantity qty;
         qty.name = (*qty_it)->Name();
         qty.type = (*qty_it)->declaration().name();
-        qty.value = (*qty_it)->data().get_attribute_value(0);
+        qty.value = (*qty_it)->data().get_attribute_value(2);
         IfcSchema::IfcPhysicalSimpleQuantity *qt =
             (*qty_it)->as<IfcSchema::IfcPhysicalSimpleQuantity>();
         qty.unit = qt->Unit()->UnitType();
@@ -427,46 +438,16 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
                ++prop_it) {
             IfcProperty prop;
             prop.name = (*prop_it)->Name();
-
-            auto attr = (*prop_it)->data().get_attribute_value(0);
-            if (attr) {
-              try {
-                if (attr.type() == IfcUtil::Argument_STRING) {
-                  prop.value = (std::string)(attr);
-                } else if (attr.type() == IfcUtil::Argument_INT) {
-                  prop.value = static_cast<int>(attr);
-                } else if (attr.type() == IfcUtil::Argument_DOUBLE) {
-                  prop.value = static_cast<double>(attr);
-                } else if (attr.type() == IfcUtil::Argument_BOOL) {
-                  prop.value = static_cast<bool>(attr);
-                } else if (attr.type() == IfcUtil::Argument_BINARY) {
-                  prop.value = static_cast<boost::dynamic_bitset<>>(attr);
-                } else if (attr.type() == IfcUtil::Argument_AGGREGATE_OF_INT) {
-                  prop.value = static_cast<std::vector<int>>(attr);
-                } else if (attr.type() ==
-                           IfcUtil::Argument_AGGREGATE_OF_DOUBLE) {
-                  prop.value = static_cast<std::vector<double>>(attr);
-                } else if (attr.type() ==
-                           IfcUtil::Argument_AGGREGATE_OF_STRING) {
-                  prop.value = static_cast<std::vector<std::string>>(attr);
-                } else if (attr.type() ==
-                           IfcUtil::Argument_AGGREGATE_OF_BINARY) {
-                  prop.value =
-                      static_cast<std::vector<boost::dynamic_bitset<>>>(attr);
-                } else if (attr.type() ==
-                           IfcUtil::Argument_AGGREGATE_OF_AGGREGATE_OF_INT) {
-                  prop.value = static_cast<std::vector<std::vector<int>>>(attr);
-                } else if (attr.type() ==
-                           IfcUtil::Argument_AGGREGATE_OF_AGGREGATE_OF_DOUBLE) {
-                  prop.value =
-                      static_cast<std::vector<std::vector<double>>>(attr);
-                }
-              } catch (...) {
-                prop.value = boost::blank();
-              }
+            auto attr = (*prop_it)->data().get_attribute_value(2);
+            try {
+            if (!attr.isNull())  {
+                parseAttr(prop,attr);
             } else {
               prop.value = boost::blank();
             }
+            } catch (...) {
+                prop.value = boost::blank();
+              }
             prop.type = (*prop_it)->declaration().name();
             pset.properties.push_back(prop);
           }
@@ -534,7 +515,6 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
       data.materials.push_back(material);
     }
   }
-
   // 读取组信息
   auto groups = file->instances_by_type<IfcSchema::IfcGroup>();
   for (auto it = groups->begin(); it != groups->end(); ++it) {
@@ -553,9 +533,91 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
       }
     }
 #endif
-
-    data.groups.push_back(group);
+   data.groups.push_back(group);
   }
 
+#ifdef SCHEMA_HAS_IfcRelDefinesByType
+    auto rdts = file->instances_by_type<IfcSchema::IfcRelDefinesByType>();
+    for (auto rdt_it = rdts->begin();  rdt_it != rdts->end(); ++rdt_it) {
+        IfcRelDefinesByType rel;
+        rel.id =(std::string) (*rdt_it)->data().get_attribute_value(0);
+        auto attr1 = (*rdt_it)->data().get_attribute_value(2);
+        if (!attr1.isNull()){
+                  rel.name = (std::string)attr1;
+        }
+        auto attr2 = (*rdt_it)->data().get_attribute_value(3);
+        if (!attr2.isNull()){
+                  rel.desc = (std::string)attr2;
+        }
+#ifdef SCHEMA_IfcRelDefinesByType_HAS_RelatingType
+        rel.type_object_id = (*rdt_it)->RelatingType()->GlobalId();
+        auto relaatedObj = (*rdt_it)->data().get_attribute_value(4);
+        if(!relaatedObj.isNull()){
+             if (relaatedObj.type()==IfcUtil::Argument_ENTITY_INSTANCE){
+                auto attr = ((IfcUtil::IfcBaseClass*)(relaatedObj))->data().get_attribute_value(0);
+                rel.object_ids.push_back((std::string)attr);
+             }else  if (relaatedObj.type()==IfcUtil::Argument_AGGREGATE_OF_ENTITY_INSTANCE){
+                aggregate_of_instance::ptr entity_list_attribute = relaatedObj;
+              for (auto it = entity_list_attribute->begin();  it != entity_list_attribute->end(); ++it) {
+                  // 获取每个实体实例的GlobalId
+                  auto attr = (*it)->data().get_attribute_value(0);
+                  if (!attr.isNull()) {
+                      rel.object_ids.push_back((std::string)attr);
+                   }
+              }
+             }
+
+        }
+#endif
+          data.rel_defines_by_types.push_back(rel);
+    }
+#endif
+
+
+#ifdef SCHEMA_HAS_IfcRelDefinesByProperties
+    auto rdps = file->instances_by_type<IfcSchema::IfcRelDefinesByProperties>();
+    for (auto rdt_it = rdps->begin();  rdt_it != rdps->end(); ++rdt_it) {
+        IfcRelDefinesByProperties rel;
+        rel.id =(std::string) (*rdt_it)->data().get_attribute_value(0);
+        auto attr1 = (*rdt_it)->data().get_attribute_value(2);
+        if (!attr1.isNull()){
+          rel.name = (std::string)attr1;
+        }
+        auto attr2 = (*rdt_it)->data().get_attribute_value(3);
+        if (!attr2.isNull()){
+          rel.desc = (std::string)attr2;
+        }
+
+      auto attr3 = (*rdt_it)->data().get_attribute_value(4);
+   if(!attr3.isNull()){
+             if (attr3.type()==IfcUtil::Argument_ENTITY_INSTANCE){
+                auto attr = ((IfcUtil::IfcBaseClass*)(attr3))->data().get_attribute_value(0);
+                rel.object_ids.push_back((std::string)attr);
+             }else  if (attr3.type()==IfcUtil::Argument_AGGREGATE_OF_ENTITY_INSTANCE){
+                aggregate_of_instance::ptr entity_list_attribute = attr3;
+              for (auto it = entity_list_attribute->begin();  it != entity_list_attribute->end(); ++it) {
+                  // 获取每个实体实例的GlobalId
+                  auto attr = (*it)->data().get_attribute_value(0);
+                  if (!attr.isNull()) {
+                      rel.object_ids.push_back((std::string)attr);
+                   }
+              }
+             }
+        }
+
+        
+        auto defin = (*rdt_it)->RelatingPropertyDefinition();
+        auto attr = defin->data().get_attribute_value(0);
+                  std::cout<<"RelatingPropertyDefinition:"<<attr.type()<<std::endl;
+
+        if (!attr.isNull()){
+          rel.propertyset_id = (std::string)attr;
+        }
+         
+         data.rel_defines_by_properties.push_back(rel);
+    }
+#endif
+
+
   return data;
-}
+} 

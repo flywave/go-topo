@@ -104,6 +104,7 @@ ifc_element_t **ifc_convert_get_elements(ifc_convert_t *p, int *count) {
         .parent_id = s.parent_id,
         .name = s.name,
         .guid = s.guid,
+        .type = s.type,
     };
   }
   return sp;
@@ -1409,6 +1410,22 @@ IFCCAPICALL ifc_group_t **ifc_data_get_groups(ifc_data_t *data, int *count) {
       data->data->groups, count);
 }
 
+IFCCAPICALL ifc_rel_defines_by_type_t **ifc_data_get_rel_defines_by_types(ifc_data_t *data, int *count){
+  if (!data || !count)
+    return nullptr;
+  return get_object_vector<_ifc_rel_defines_by_type_t, ifcopenshell::data::IfcRelDefinesByType>(
+      data->data->rel_defines_by_types, count);
+}
+
+IFCCAPICALL ifc_rel_defines_by_properties_t **ifc_data_get_rel_defines_by_properties(ifc_data_t *data, int *count){
+  if (!data || !count)
+    return nullptr;
+  return get_object_vector<_ifc_rel_defines_by_properties_t, ifcopenshell::data::IfcRelDefinesByProperties>(
+      data->data->rel_defines_by_properties, count);
+}
+
+
+
 IFCCAPICALL void ifc_data_free_units(ifc_unit_t **units) {
   free_object_vector(units);
 }
@@ -1452,6 +1469,15 @@ IFCCAPICALL void ifc_data_free_materials(ifc_material_t **materials) {
 IFCCAPICALL void ifc_data_free_groups(ifc_group_t **groups) {
   free_object_vector(groups);
 }
+
+IFCCAPICALL void ifc_data_free_rel_defines_by_types(ifc_rel_defines_by_type_t **rdts) {
+  free_object_vector(rdts);
+}
+
+IFCCAPICALL void ifc_data_free_rel_defines_by_properties(ifc_rel_defines_by_properties_t **rdts){
+  free_object_vector(rdts);
+}
+
 // IfcTimePeriod 相关函数实现
 IFCCAPICALL const char *ifc_time_period_get_start_time(ifc_time_period_t *tp) {
   return tp->tp.start_time.c_str();
@@ -1541,6 +1567,101 @@ ifc_work_time_get_recurrence_pattern(ifc_work_time_t *wt) {
   rp->rp = wt->tm.recurrence_pattern;
   return rp;
 }
+
+IFCCAPICALL const char * ifc_rel_defines_by_type_get_id(ifc_rel_defines_by_type_t *rdt){
+  return rdt->rdt.id.c_str();
+}
+
+IFCCAPICALL const char * ifc_rel_defines_by_type_get_name(ifc_rel_defines_by_type_t *rdt){
+  return rdt->rdt.name.c_str();
+}
+
+IFCCAPICALL const char * ifc_rel_defines_by_type_get_desc(ifc_rel_defines_by_type_t *rdt){
+  return rdt->rdt.desc.c_str();
+}
+
+IFCCAPICALL const char * ifc_rel_defines_by_type_get_type_obj_id(ifc_rel_defines_by_type_t *rdt){
+  return rdt->rdt.type_object_id.c_str();
+}
+
+IFCCAPICALL const char ** ifc_rel_defines_by_type_get_obj_ids(ifc_rel_defines_by_type_t *rdt, int *count){
+    if (!rdt || !count) {
+    return nullptr;
+  }
+
+  *count = rdt->rdt.object_ids.size();
+  if (*count == 0) {
+    return nullptr;
+  }
+
+  // 分配指针数组
+  const char **result = new const char *[*count];
+  
+  // 将每个string的c_str()存入指针数组
+  for (int i = 0; i < *count; ++i) {
+    result[i] = rdt->rdt.object_ids[i].c_str();
+  }
+
+  return result;
+}
+
+IFCCAPICALL void ifc_rel_defines_by_type_free_obj_ids(const char **ids) {
+  if (ids) {
+    delete[] ids;
+  }
+}
+IFCCAPICALL void ifc_rel_defines_by_type_free(ifc_rel_defines_by_type_t *rdt){
+    if (rdt) {
+    delete rdt;
+  }
+}
+
+
+IFCCAPICALL const char * ifc_rel_defines_by_properties_get_id(ifc_rel_defines_by_properties_t *rdt){
+  return rdt->rdt.id.c_str();
+}
+IFCCAPICALL const char * ifc_rel_defines_by_properties_get_name(ifc_rel_defines_by_properties_t *rdt){
+  return rdt->rdt.name.c_str();
+}
+
+IFCCAPICALL const char * ifc_rel_defines_by_properties_get_desc(ifc_rel_defines_by_properties_t *rdt){
+  return rdt->rdt.desc.c_str();
+}
+
+IFCCAPICALL const char ** ifc_rel_defines_by_properties_get_obj_ids(ifc_rel_defines_by_properties_t *rdt, int *count){
+     if (!rdt || !count) {
+    return nullptr;
+  }
+
+  *count = rdt->rdt.object_ids.size();
+  if (*count == 0) {
+    return nullptr;
+  }
+
+   const char **result = new const char *[*count];
+  
+   for (int i = 0; i < *count; ++i) {
+    result[i] = rdt->rdt.object_ids[i].c_str();
+  }
+
+  return result;
+}
+IFCCAPICALL const char* ifc_rel_defines_by_properties_get_propertyset_id(ifc_rel_defines_by_properties_t *rdt){
+    return  rdt->rdt.propertyset_id.c_str();
+}
+
+IFCCAPICALL void ifc_rel_defines_by_properties_free(ifc_rel_defines_by_properties_t *rdt){
+  if (rdt) {
+    delete rdt;
+  }
+}
+
+IFCCAPICALL void ifc_rel_defines_by_properties_free_obj_ids(const char **ids){
+  if (ids) {
+    delete[] ids;
+  }
+}
+
 #ifdef __cplusplus
 }
 #endif

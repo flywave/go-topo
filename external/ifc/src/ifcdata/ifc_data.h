@@ -182,6 +182,24 @@ struct IfcGroup {
   std::vector<std::string> member_ids;
 };
 
+struct IfcRelDefinesByType{
+  std::string id;
+  std::string name;
+  std::string desc;
+  std::string type_object_id;
+  std::vector<std::string> object_ids;
+};
+
+ 
+struct IfcRelDefinesByProperties{
+  std::string id;
+  std::string name;
+  std::string desc;
+  std::vector<std::string> object_ids;
+  std::string propertyset_id;
+};
+
+
 struct IfcData {
   IfcHeader header;
   std::vector<IfcUnit> units;
@@ -195,6 +213,8 @@ struct IfcData {
   std::vector<IfcLayer> layers;
   std::vector<IfcMaterial> materials;
   std::vector<IfcGroup> groups;
+  std::vector<IfcRelDefinesByType> rel_defines_by_types;
+  std::vector<IfcRelDefinesByProperties> rel_defines_by_properties;
 };
 
 IfcData read_data(IfcParse::IfcFile *file);

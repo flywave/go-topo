@@ -111,4 +111,11 @@ struct _ifc_recurrence_pattern_t {
   ifcopenshell::data::IfcRecurrencePattern rp;
 };
 
+struct _ifc_rel_defines_by_type_t{
+  ifcopenshell::data::IfcRelDefinesByType rdt;
+};
+
+struct _ifc_rel_defines_by_properties_t{
+  ifcopenshell::data::IfcRelDefinesByProperties rdt;
+};
 #endif

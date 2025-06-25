@@ -545,6 +545,48 @@ func (d *IfcData) GetGroups() []*IfcGroup {
 	return groups
 }
 
+func (d *IfcData) GetRelDefinesByTypes() []*IfcRelDefinesByType {
+	count := 0
+	rels := []*IfcRelDefinesByType{}
+	res := C.ifc_data_get_rel_defines_by_types(d.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
+	if count == 0 {
+		return rels
+	}
+	defer C.ifc_data_free_rel_defines_by_types(res)
+
+	for i := 0; i < count; i++ {
+		rel := &IfcRelDefinesByType{
+			inner: &innerIfcRelDefinesByType{
+				ptr: *(**C.ifc_rel_defines_by_type_t)(unsafe.Pointer(uintptr(unsafe.Pointer(res)) + uintptr(i)*unsafe.Sizeof(*res))),
+			},
+		}
+		runtime.SetFinalizer(rel.inner, (*innerIfcRelDefinesByType).free)
+		rels = append(rels, rel)
+	}
+	return rels
+}
+
+func (d *IfcData) GetRelDefinesByProperties() []*IfcRelDefinesByProperties {
+	count := 0
+	rels := []*IfcRelDefinesByProperties{}
+	res := C.ifc_data_get_rel_defines_by_properties(d.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
+	if count == 0 {
+		return rels
+	}
+	defer C.ifc_data_free_rel_defines_by_properties(res)
+
+	for i := 0; i < count; i++ {
+		rel := &IfcRelDefinesByProperties{
+			inner: &innerIfcRelDefinesByProperties{
+				ptr: *(**C.ifc_rel_defines_by_properties_t)(unsafe.Pointer(uintptr(unsafe.Pointer(res)) + uintptr(i)*unsafe.Sizeof(*res))),
+			},
+		}
+		runtime.SetFinalizer(rel.inner, (*innerIfcRelDefinesByProperties).free)
+		rels = append(rels, rel)
+	}
+	return rels
+}
+
 type IfcHeader struct {
 	inner *innerIfcHeader
 }
@@ -1705,4 +1747,99 @@ func (rp *IfcRecurrencePattern) GetTimePeriods() []*IfcTimePeriod {
 		periods = append(periods, tp)
 	}
 	return periods
+}
+
+type IfcRelDefinesByType struct {
+	inner *innerIfcRelDefinesByType
+}
+
+type innerIfcRelDefinesByType struct {
+	ptr *C.ifc_rel_defines_by_type_t
+}
+
+func (ps *innerIfcRelDefinesByType) free() {
+	if ps.ptr != nil {
+		C.ifc_rel_defines_by_type_free(ps.ptr)
+		ps.ptr = nil
+	}
+}
+
+func (r *IfcRelDefinesByType) GetID() string {
+	id := C.ifc_rel_defines_by_type_get_id(r.inner.ptr)
+	return C.GoString(id)
+}
+
+func (r *IfcRelDefinesByType) GetName() string {
+	name := C.ifc_rel_defines_by_type_get_name(r.inner.ptr)
+	return C.GoString(name)
+}
+
+func (r *IfcRelDefinesByType) GetDescription() string {
+	desc := C.ifc_rel_defines_by_type_get_desc(r.inner.ptr)
+	return C.GoString(desc)
+}
+
+func (r *IfcRelDefinesByType) GetTypeObjectID() string {
+	id := C.ifc_rel_defines_by_type_get_type_obj_id(r.inner.ptr)
+	return C.GoString(id)
+}
+
+func (r *IfcRelDefinesByType) GetObjectIds() []string {
+	count := 0
+	ids := C.ifc_rel_defines_by_type_get_obj_ids(r.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
+	defer C.ifc_rel_defines_by_type_free_obj_ids(ids)
+
+	result := make([]string, count)
+	for i := 0; i < count; i++ {
+		result[i] = C.GoString(*(**C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(ids)) + uintptr(i)*unsafe.Sizeof(*ids))))
+	}
+	return result
+}
+
+type IfcRelDefinesByProperties struct {
+	inner *innerIfcRelDefinesByProperties
+}
+
+type innerIfcRelDefinesByProperties struct {
+	ptr *C.ifc_rel_defines_by_properties_t
+}
+
+func (ps *innerIfcRelDefinesByProperties) free() {
+	if ps.ptr != nil {
+		C.ifc_rel_defines_by_properties_free(ps.ptr)
+		ps.ptr = nil
+	}
+}
+
+func (r *IfcRelDefinesByProperties) GetID() string {
+	id := C.ifc_rel_defines_by_properties_get_id(r.inner.ptr)
+	return C.GoString(id)
+}
+
+func (r *IfcRelDefinesByProperties) GetName() string {
+	name := C.ifc_rel_defines_by_properties_get_name(r.inner.ptr)
+	return C.GoString(name)
+}
+
+func (r *IfcRelDefinesByProperties) GetDescription() string {
+	desc := C.ifc_rel_defines_by_properties_get_desc(r.inner.ptr)
+	return C.GoString(desc)
+}
+
+func (r *IfcRelDefinesByProperties) GetObjectIds() []string {
+	count := 0
+	ids := C.ifc_rel_defines_by_properties_get_obj_ids(r.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
+	defer C.ifc_rel_defines_by_properties_free_obj_ids(ids)
+
+	result := make([]string, count)
+	for i := 0; i < count; i++ {
+		result[i] = C.GoString(*(**C.char)(unsafe.Pointer(uintptr(unsafe.Pointer(ids)) + uintptr(i)*unsafe.Sizeof(*ids))))
+	}
+	return result
+}
+
+func (r *IfcRelDefinesByProperties) GetPropertySetId() string {
+	pid := C.ifc_rel_defines_by_properties_get_propertyset_id(r.inner.ptr)
+	return C.GoString(pid)
+
 }

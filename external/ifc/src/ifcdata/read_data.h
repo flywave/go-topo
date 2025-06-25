@@ -16,5 +16,7 @@
 // clang-format on
 
 ifcopenshell::data::IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file);
+ 
+
 
 #endif // READ_DATA_STRUCTS_HH

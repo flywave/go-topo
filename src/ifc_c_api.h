@@ -37,6 +37,9 @@ typedef struct _ifc_material_t ifc_material_t;
 typedef struct _ifc_group_t ifc_group_t;
 typedef struct _ifc_time_period_t ifc_time_period_t;
 typedef struct _ifc_recurrence_pattern_t ifc_recurrence_pattern_t;
+typedef struct _ifc_rel_defines_by_type_t ifc_rel_defines_by_type_t;
+typedef struct _ifc_rel_defines_by_properties_t ifc_rel_defines_by_properties_t;
+
 typedef struct _ifc_color_t {
   double r;
   double g;
@@ -363,6 +366,10 @@ IFCCAPICALL ifc_material_t **ifc_data_get_materials(ifc_data_t *data,
                                                     int *count);
 IFCCAPICALL ifc_group_t **ifc_data_get_groups(ifc_data_t *data, int *count);
 
+IFCCAPICALL ifc_rel_defines_by_type_t **ifc_data_get_rel_defines_by_types(ifc_data_t *data, int *count);
+
+IFCCAPICALL ifc_rel_defines_by_properties_t **ifc_data_get_rel_defines_by_properties(ifc_data_t *data, int *count);
+
 // IfcTimePeriod 相关函数
 IFCCAPICALL const char *ifc_time_period_get_start_time(ifc_time_period_t *tp);
 IFCCAPICALL const char *ifc_time_period_get_end_time(ifc_time_period_t *tp);
@@ -408,6 +415,29 @@ IFCCAPICALL void ifc_data_free_types(ifc_type_object_t **types);
 IFCCAPICALL void ifc_data_free_layers(ifc_layer_t **layers);
 IFCCAPICALL void ifc_data_free_materials(ifc_material_t **materials);
 IFCCAPICALL void ifc_data_free_groups(ifc_group_t **groups);
+IFCCAPICALL void ifc_data_free_rel_defines_by_types(ifc_rel_defines_by_type_t **rdts);
+IFCCAPICALL void ifc_data_free_rel_defines_by_properties(ifc_rel_defines_by_properties_t **rdts);
+
+
+IFCCAPICALL const char * ifc_rel_defines_by_type_get_id(ifc_rel_defines_by_type_t *rdt);
+IFCCAPICALL const char * ifc_rel_defines_by_type_get_name(ifc_rel_defines_by_type_t *rdt);
+IFCCAPICALL const char * ifc_rel_defines_by_type_get_desc(ifc_rel_defines_by_type_t *rdt);
+IFCCAPICALL const char * ifc_rel_defines_by_type_get_type_obj_id(ifc_rel_defines_by_type_t *rdt);
+IFCCAPICALL const char ** ifc_rel_defines_by_type_get_obj_ids(ifc_rel_defines_by_type_t *rdt, int *count);
+IFCCAPICALL void ifc_rel_defines_by_type_free(ifc_rel_defines_by_type_t *rdt);
+IFCCAPICALL void ifc_rel_defines_by_type_free_obj_ids(const char **ids);
+
+
+IFCCAPICALL const char * ifc_rel_defines_by_properties_get_id(ifc_rel_defines_by_properties_t *rdt);
+IFCCAPICALL const char * ifc_rel_defines_by_properties_get_name(ifc_rel_defines_by_properties_t *rdt);
+IFCCAPICALL const char * ifc_rel_defines_by_properties_get_desc(ifc_rel_defines_by_properties_t *rdt);
+IFCCAPICALL const char ** ifc_rel_defines_by_properties_get_obj_ids(ifc_rel_defines_by_properties_t *rdt, int *count);
+IFCCAPICALL const char* ifc_rel_defines_by_properties_get_propertyset_id(ifc_rel_defines_by_properties_t *rdt);
+
+IFCCAPICALL void ifc_rel_defines_by_properties_free(ifc_rel_defines_by_properties_t *rdt);
+IFCCAPICALL void ifc_rel_defines_by_properties_free_obj_ids(const char **ids);
+ 
+
 
 #ifdef __cplusplus
 }
