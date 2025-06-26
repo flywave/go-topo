@@ -18356,13 +18356,12 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
   // 逐个创建每段管道
   for (size_t i = 0; i < params.wires.size(); i++) {
     // 创建当前段的管道参数
-    pipe_params seg_params{.wire = params.wires[i],
-                           .segment_type = params.segment_types
-                                               ? (*params.segment_types)[i]
-                                               : segment_type::LINE,
-                           .transition_mode = params.transition_mode,
-                           .upDir = params.upDir};
-
+    pipe_params seg_params;
+      seg_params.upDir= params.upDir;
+      seg_params.segment_type = params.segment_types
+                                               ? (*params.segment_types)[i]: segment_type::LINE;
+      seg_params.wire = params.wires[i];
+      seg_params.transition_mode = params.transition_mode;
     if (params.profiles.size() == 1) {
       seg_params.profiles = {params.profiles[0], params.profiles[0]};
     } else {
@@ -18544,12 +18543,12 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
 
     TopoDS_Shape segment;
     if (noCut || needFrontCut || needBackCut) {
-      pipe_params seg_params{.wire = params.wires[i],
-                             .segment_type = params.segment_types
-                                                 ? (*params.segment_types)[i]
-                                                 : segment_type::LINE,
-                             .transition_mode = params.transition_mode,
-                             .upDir = params.upDir};
+         pipe_params seg_params;
+        seg_params.upDir= params.upDir;
+        seg_params.segment_type = params.segment_types
+                                               ? (*params.segment_types)[i]: segment_type::LINE;
+        seg_params.wire = params.wires[i];
+        seg_params.transition_mode = params.transition_mode;
 
       if (params.profiles.size() == 1) {
         seg_params.profiles = {params.profiles[0], params.profiles[0]};

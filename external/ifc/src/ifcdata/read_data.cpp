@@ -608,8 +608,6 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
         
         auto defin = (*rdt_it)->RelatingPropertyDefinition();
         auto attr = defin->data().get_attribute_value(0);
-                  std::cout<<"RelatingPropertyDefinition:"<<attr.type()<<std::endl;
-
         if (!attr.isNull()){
           rel.propertyset_id = (std::string)attr;
         }
