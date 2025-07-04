@@ -43,6 +43,16 @@ void parseAttr(IfcProperty &prop,AttributeValue attr){
           }else if(attr.type()==IfcUtil::Argument_ENTITY_INSTANCE){
              auto val=((IfcUtil::IfcBaseClass *)(attr))->data().get_attribute_value(0);
              parseAttr(prop,val);
+          }else if(attr.type()==IfcUtil::Argument_LOGICAL){
+                    IfcUtil::Argument_LOGICAL* logicalArg = 
+            static_cast<IfcUtil::Argument_LOGICAL*>(attr);
+            if (logicalArg->isTrue()) {
+                prop.value = "TRUE";
+            }else  if (logicalArg->isFalse()){
+                prop.value = "FALSE";
+            }else if (logicalArg->isUnknown()){
+                prop.value = "UNKNOWN";
+            }
           }else{
             std::cerr << "Unknown attribute type: " << attr.type() << std::endl;
           }
