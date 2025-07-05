@@ -15,7 +15,7 @@ std::string qualify_unrooted_instance(IfcUtil::IfcBaseInterface *inst) {
 
 
 void parseAttr(IfcProperty &prop,AttributeValue attr){
-   if (attr.type() == IfcUtil::Argument_STRING) {
+    if (attr.type() == IfcUtil::Argument_STRING) {
             prop.value = (std::string)(attr);
           } else if (attr.type() == IfcUtil::Argument_INT) {
             prop.value = static_cast<int>(attr);
@@ -44,13 +44,13 @@ void parseAttr(IfcProperty &prop,AttributeValue attr){
              auto val=((IfcUtil::IfcBaseClass *)(attr))->data().get_attribute_value(0);
              parseAttr(prop,val);
           }else if(attr.type()==IfcUtil::Argument_LOGICAL){
-                    IfcUtil::Argument_LOGICAL* logicalArg = 
-            static_cast<IfcUtil::Argument_LOGICAL*>(attr);
-            if (logicalArg->isTrue()) {
+                   boost::logic::tribool logicalArg = 
+            static_cast< boost::logic::tribool>(attr);
+            if (logicalArg) {
                 prop.value = "TRUE";
-            }else  if (logicalArg->isFalse()){
+            }else  if (!logicalArg){
                 prop.value = "FALSE";
-            }else if (logicalArg->isUnknown()){
+            }else {
                 prop.value = "UNKNOWN";
             }
           }else{
@@ -157,13 +157,13 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
          }
        } catch (IfcParse::IfcException &e) {
         prop.value = boost::blank();
-       }
+        }
       prop.type = (*prop_it)->declaration().name();
       pset.properties.push_back(prop);
     }
     data.properties.push_back(pset);
   }
-
+ 
   // 读取工程量信息
   auto qtosets = file->instances_by_type<IfcSchema::IfcElementQuantity>();
   for (auto it = qtosets->begin(); it != qtosets->end(); ++it) {
@@ -184,11 +184,11 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
         qty.unit = qt->Unit()->UnitType();
         qto.quantities.push_back(qty);
       } catch (...) {
-      }
+       }
     }
     data.quantities.push_back(qto);
   }
-
+ 
   // 读取工作计划
   auto work_plans = file->instances_by_type<IfcSchema::IfcWorkPlan>();
   for (auto it = work_plans->begin(); it != work_plans->end(); ++it) {
@@ -241,7 +241,7 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
 
     data.work_plans.push_back(plan);
   }
-
+ 
   // 读取工作进度表
   auto work_schedules = file->instances_by_type<IfcSchema::IfcWorkSchedule>();
   for (auto it = work_schedules->begin(); it != work_schedules->end(); ++it) {
@@ -329,7 +329,7 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
 
     data.work_schedules.push_back(schedule);
   }
-
+ 
 // 读取工作日历
 #ifdef SCHEMA_HAS_IfcWorkCalendar
   auto calendars = file->instances_by_type<IfcSchema::IfcWorkCalendar>();
@@ -407,7 +407,7 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
     data.calendars.push_back(calendar);
   }
 #endif
-
+ 
   // 读取连接关系
   auto connections =
       file->instances_by_type<IfcSchema::IfcRelConnectsElements>();
@@ -432,6 +432,7 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
     type.id = (*it)->GlobalId();
     type.name = (*it)->Name().get_value_or("");
 
+ 
 #ifdef SCHEMA_IfcTypeObject_HAS_HasPropertySets
     auto property_sets = (*it)->HasPropertySets();
     if (property_sets) {
@@ -456,7 +457,7 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
               prop.value = boost::blank();
             }
             } catch (...) {
-                prop.value = boost::blank();
+                 prop.value = boost::blank();
               }
             prop.type = (*prop_it)->declaration().name();
             pset.properties.push_back(prop);
@@ -469,7 +470,7 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
 
     data.types.push_back(type);
   }
-
+ 
   // 读取图层信息
   auto layers =
       file->instances_by_type<IfcSchema::IfcPresentationLayerAssignment>();
@@ -525,6 +526,7 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
       data.materials.push_back(material);
     }
   }
+ 
   // 读取组信息
   auto groups = file->instances_by_type<IfcSchema::IfcGroup>();
   for (auto it = groups->begin(); it != groups->end(); ++it) {
@@ -545,7 +547,7 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
 #endif
    data.groups.push_back(group);
   }
-
+ 
 #ifdef SCHEMA_HAS_IfcRelDefinesByType
     auto rdts = file->instances_by_type<IfcSchema::IfcRelDefinesByType>();
     for (auto rdt_it = rdts->begin();  rdt_it != rdts->end(); ++rdt_it) {
@@ -583,7 +585,6 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
     }
 #endif
 
-
 #ifdef SCHEMA_HAS_IfcRelDefinesByProperties
     auto rdps = file->instances_by_type<IfcSchema::IfcRelDefinesByProperties>();
     for (auto rdt_it = rdps->begin();  rdt_it != rdps->end(); ++rdt_it) {
@@ -600,14 +601,16 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
 
       auto attr3 = (*rdt_it)->data().get_attribute_value(4);
    if(!attr3.isNull()){
-             if (attr3.type()==IfcUtil::Argument_ENTITY_INSTANCE){
+              if (attr3.type()==IfcUtil::Argument_ENTITY_INSTANCE){
                 auto attr = ((IfcUtil::IfcBaseClass*)(attr3))->data().get_attribute_value(0);
                 rel.object_ids.push_back((std::string)attr);
              }else  if (attr3.type()==IfcUtil::Argument_AGGREGATE_OF_ENTITY_INSTANCE){
                 aggregate_of_instance::ptr entity_list_attribute = attr3;
               for (auto it = entity_list_attribute->begin();  it != entity_list_attribute->end(); ++it) {
                   // 获取每个实体实例的GlobalId
-                  auto attr = (*it)->data().get_attribute_value(0);
+                      IfcUtil::IfcBaseClass *entity = *it;
+                     std::string type = entity->declaration().name();
+                   auto attr = entity->data().get_attribute_value(0);
                   if (!attr.isNull()) {
                       rel.object_ids.push_back((std::string)attr);
                    }
@@ -615,13 +618,14 @@ IfcData POSTFIX_SCHEMA(read_data)(IfcParse::IfcFile *file) {
              }
         }
 
-        
-        auto defin = (*rdt_it)->RelatingPropertyDefinition();
-        auto attr = defin->data().get_attribute_value(0);
-        if (!attr.isNull()){
-          rel.propertyset_id = (std::string)attr;
+        auto  attr5 =  (*rdt_it)->data().get_attribute_value(5);
+       if (!attr5.isNull()){
+          auto defin = (*rdt_it)->RelatingPropertyDefinition();
+          auto attr = defin->data().get_attribute_value(0);
+          if (!attr.isNull()){
+            rel.propertyset_id = (std::string)attr;
+          }
         }
-         
          data.rel_defines_by_properties.push_back(rel);
     }
 #endif

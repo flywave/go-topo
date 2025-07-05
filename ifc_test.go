@@ -10,7 +10,7 @@ const TOLERANCE = 1e-8
 func TestIfc(t *testing.T) {
 
 	convert := NewIfcConverter()
-	convert.Load("tests/主管道.ifc")
+	convert.Load("tests/模型整合-主管道2.ifc")
 
 	// tris := IfcToTriangulations("tests/buildingElementProxy.ifc")//主管道加参数测试文件
 	// for _, tri := range tris {
@@ -54,7 +54,7 @@ func TestIfc(t *testing.T) {
 	rdps := data.GetRelDefinesByProperties()
 	for _, rdp := range rdps {
 		objs := rdp.GetObjectIds()
-		if objs[0] == "1XbPbka$v7pParXi$0VLWx" {
+		if len(objs) > 0 && objs[0] == "1XbPbka$v7pParXi$0VLWx" {
 			fmt.Println(rdp.GetID(), rdp.GetName(), rdp.GetObjectIds(), " GetTypeObjectID", rdp.GetPropertySetId())
 
 		}
