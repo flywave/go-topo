@@ -21,12 +21,13 @@ type IfcColor struct {
 }
 
 type IfcElement struct {
-	Shape    *Shape
-	Id       int
-	ParentId int
-	Name     string
-	Guid     string
-	Type     string
+	Shape     *Shape
+	Id        int
+	ParentId  int
+	Name      string
+	Guid      string
+	Type      string
+	Transform *[16]float64
 }
 
 type IfcTriangulationMaterial struct {
@@ -87,14 +88,22 @@ func (c *IfcConverter) GetElements() []*IfcElement {
 	for i := 0; i < count; i++ {
 		element := C.ifc_get_element(res, C.int(i))
 		shp := NewShape(C.ifc_element_get_shape(element))
+		mat := (*[16]float64)(nil)
+		trans := C.ifc_element_get_transform(element)
+		if trans != nil {
+			goSlice := (*[16]float64)(unsafe.Pointer(trans))
+			mat = goSlice
+		}
 		elements = append(elements, &IfcElement{
-			Shape:    shp,
-			Id:       int(C.ifc_element_get_id(element)),
-			ParentId: int(C.ifc_element_get_parent_id(element)),
-			Name:     C.GoString(C.ifc_element_get_name(element)),
-			Guid:     C.GoString(C.ifc_element_get_guid(element)),
-			Type:     C.GoString(C.ifc_element_get_type(element)),
+			Shape:     shp,
+			Id:        int(C.ifc_element_get_id(element)),
+			ParentId:  int(C.ifc_element_get_parent_id(element)),
+			Name:      C.GoString(C.ifc_element_get_name(element)),
+			Guid:      C.GoString(C.ifc_element_get_guid(element)),
+			Type:      C.GoString(C.ifc_element_get_type(element)),
+			Transform: mat,
 		})
+
 	}
 	return elements
 }
@@ -111,6 +120,13 @@ func (c *IfcConverter) GetTriangulations() []*IfcTriangulation {
 	for i := 0; i < count; i++ {
 		tri := &IfcTriangulation{}
 		tri.inner = &innerTriangulation{C.ifc_get_triangulation(res, C.int(i))}
+		ary := C.ifc_triangulation_get_transform(tri.inner.ptr)
+		mat := (*[16]float64)(nil)
+		if ary != nil {
+			goSlice := (*[16]float64)(unsafe.Pointer(ary))
+			mat = goSlice
+		}
+		tri.Transform = mat
 		runtime.SetFinalizer(tri.inner, (*innerTriangulation).free)
 		tris = append(tris, tri)
 	}
@@ -179,7 +195,8 @@ func IsIfc(f string) bool {
 }
 
 type IfcTriangulation struct {
-	inner *innerTriangulation
+	inner     *innerTriangulation
+	Transform *[16]float64
 }
 
 type innerTriangulation struct {
@@ -196,7 +213,7 @@ func (t *innerTriangulation) free() {
 func (t *IfcTriangulation) GetVerts() []float64 {
 	count := 0
 	verts := C.ifc_triangulation_get_verts(t.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
-	rets := []float64{}
+	rets := make([]float64, count)
 	copy(rets, (*[1 << 30]float64)(unsafe.Pointer(verts))[:count:count])
 	return rets
 }
@@ -204,7 +221,7 @@ func (t *IfcTriangulation) GetVerts() []float64 {
 func (t *IfcTriangulation) GetFaces() []int32 {
 	count := 0
 	faces := C.ifc_triangulation_get_faces(t.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
-	rets := []int32{}
+	rets := make([]int32, count)
 	copy(rets, (*[1 << 30]int32)(unsafe.Pointer(faces))[:count:count])
 	return rets
 }
@@ -212,7 +229,10 @@ func (t *IfcTriangulation) GetFaces() []int32 {
 func (t *IfcTriangulation) GetNormals() []float64 {
 	count := 0
 	normals := C.ifc_triangulation_get_normals(t.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
-	rets := []float64{}
+	if count == 0 {
+		return nil
+	}
+	rets := make([]float64, count)
 	copy(rets, (*[1 << 30]float64)(unsafe.Pointer(normals))[:count:count])
 	return rets
 }
@@ -220,7 +240,10 @@ func (t *IfcTriangulation) GetNormals() []float64 {
 func (t *IfcTriangulation) GetEdges() []int32 {
 	count := 0
 	edges := C.ifc_triangulation_get_edges(t.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
-	rets := []int32{}
+	if count == 0 {
+		return nil
+	}
+	rets := make([]int32, count)
 	copy(rets, (*[1 << 30]int32)(unsafe.Pointer(edges))[:count:count])
 	return rets
 }
@@ -228,7 +251,10 @@ func (t *IfcTriangulation) GetEdges() []int32 {
 func (t *IfcTriangulation) GetUVs() []float64 {
 	count := 0
 	uvs := C.ifc_triangulation_get_uvs(t.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
-	rets := []float64{}
+	if count == 0 {
+		return nil
+	}
+	rets := make([]float64, count)
 	copy(rets, (*[1 << 30]float64)(unsafe.Pointer(uvs))[:count:count])
 	return rets
 }
@@ -236,31 +262,34 @@ func (t *IfcTriangulation) GetUVs() []float64 {
 func (t *IfcTriangulation) GetMaterialIds() []int32 {
 	count := 0
 	ids := C.ifc_triangulation_get_material_ids(t.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
-	rets := []int32{}
+	if count == 0 {
+		return nil
+	}
+	rets := make([]int32, count)
 	copy(rets, (*[1 << 30]int32)(unsafe.Pointer(ids))[:count:count])
 	return rets
 }
 
 func (t *IfcTriangulation) GetMaterials() []*IfcTriangulationMaterial {
-	count := 0
-	materials := []*IfcTriangulationMaterial{}
-	res := C.ifc_triangulation_get_materials(t.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
-	if count == 0 {
-		return materials
+	var count C.int
+	res := C.ifc_triangulation_get_materials(t.inner.ptr, &count)
+	if res == nil || count == 0 {
+		return nil
 	}
 	defer C.ifc_triangulation_materials_free(res)
-	materialsSlice := (*[1 << 30]C.ifc_triangulation_material_t)(unsafe.Pointer(res))[:count:count]
 
-	for i := 0; i < count; i++ {
-		mtl := &materialsSlice[i]
+	materials := make([]*IfcTriangulationMaterial, 0, int(count))
+	for i := 0; i < int(count); i++ {
 		materials = append(materials, &IfcTriangulationMaterial{
-			Name:         C.GoString(C.ifc_triangulation_material_get_name(mtl)),
-			Diffuse:      toIfcColor(C.ifc_triangulation_material_get_diffuse(mtl)),
-			Surface:      toIfcColor(C.ifc_triangulation_material_get_surface(mtl)),
-			Specular:     toIfcColor(C.ifc_triangulation_material_get_specular(mtl)),
-			Specularity:  float64(C.ifc_triangulation_material_get_specularity(mtl)),
-			Transparency: float64(C.ifc_triangulation_material_get_transparency(mtl)),
+			Name:         C.GoString(C.ifc_triangulation_material_get_name(res)),
+			Diffuse:      toIfcColor(C.ifc_triangulation_material_get_diffuse(res)),
+			Surface:      toIfcColor(C.ifc_triangulation_material_get_surface(res)),
+			Specular:     toIfcColor(C.ifc_triangulation_material_get_specular(res)),
+			Specularity:  float64(C.ifc_triangulation_material_get_specularity(res)),
+			Transparency: float64(C.ifc_triangulation_material_get_transparency(res)),
 		})
+		sz := C.ifc_triangulation_material_size()
+		res = (*C.ifc_triangulation_material_t)(unsafe.Pointer(uintptr(unsafe.Pointer(res)) + uintptr(sz)))
 	}
 	return materials
 }
@@ -268,7 +297,10 @@ func (t *IfcTriangulation) GetMaterials() []*IfcTriangulationMaterial {
 func (t *IfcTriangulation) GetItemIds() []int32 {
 	count := 0
 	ids := C.ifc_triangulation_get_item_ids(t.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
-	rets := []int32{}
+	if count == 0 {
+		return nil
+	}
+	rets := make([]int32, count)
 	copy(rets, (*[1 << 30]int32)(unsafe.Pointer(ids))[:count:count])
 	return rets
 }
@@ -276,7 +308,7 @@ func (t *IfcTriangulation) GetItemIds() []int32 {
 func (t *IfcTriangulation) GetEdgesItemIds() []int32 {
 	count := 0
 	ids := C.ifc_triangulation_get_edges_item_ids(t.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
-	rets := []int32{}
+	rets := make([]int32, count)
 	copy(rets, (*[1 << 30]int32)(unsafe.Pointer(ids))[:count:count])
 	return rets
 }

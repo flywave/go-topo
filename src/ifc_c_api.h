@@ -67,6 +67,7 @@ IFCCAPICALL ifc_triangulation_t **ifc_get_triangulations(const char *filename,
 IFCCAPICALL void ifc_triangulations_free(ifc_triangulation_t **triangulations);
 IFCCAPICALL ifc_triangulation_t *
 ifc_get_triangulation(ifc_triangulation_t **triangulations, int index);
+IFCCAPICALL int ifc_triangulation_material_size();
 
 IFCCAPICALL int ifc_element_get_id(ifc_element_t *p);
 IFCCAPICALL int ifc_element_get_parent_id(ifc_element_t *p);
@@ -74,6 +75,7 @@ IFCCAPICALL const char *ifc_element_get_name(ifc_element_t *p);
 IFCCAPICALL const char *ifc_element_get_guid(ifc_element_t *p);
 IFCCAPICALL topo_shape_t *ifc_element_get_shape(ifc_element_t *p);
 IFCCAPICALL const char *ifc_element_get_type(ifc_element_t *p);
+IFCCAPICALL const double *ifc_element_get_transform(ifc_element_t *p);
 
 IFCCAPICALL void ifc_triangulation_free(ifc_triangulation_t *p);
 IFCCAPICALL const double *ifc_triangulation_get_verts(ifc_triangulation_t *p,
@@ -90,6 +92,7 @@ IFCCAPICALL const int *
 ifc_triangulation_get_material_ids(ifc_triangulation_t *p, int *count);
 IFCCAPICALL const int *ifc_triangulation_get_item_ids(ifc_triangulation_t *p,
                                                       int *count);
+IFCCAPICALL const double *ifc_triangulation_get_transform(ifc_triangulation_t *p);
 IFCCAPICALL const int *
 ifc_triangulation_get_edges_item_ids(ifc_triangulation_t *p, int *count);
 

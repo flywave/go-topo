@@ -57,7 +57,7 @@ ifc_convert::setup_filters(const std::vector<geom_filter> &filters) {
   return filter_funcs;
 }
 
-std::vector<ifc_element_info> ifc_convert::get_shape() {
+std::vector<ifc_element_info> ifc_convert::get_element_infos() {
   if (!_file && !this->load()) {
     return {};
   }
@@ -70,29 +70,35 @@ std::vector<ifc_element_info> ifc_convert::get_shape() {
       auto itm = ele->geometry().as_compound();
       TopoDS_Shape compound =
           ((ifcopenshell::geometry::OpenCascadeShape *)itm)->shape();
+      auto trans = ele2->transformation();
+      auto mt = trans.data()->components().data();
       shps.emplace_back(ifc_element_info{
           .shp = compound,
           .id = ele2->id(),
           .parent_id = ele2->parent_id(),
           .name = ele2->name(),
           .guid = ele2->guid(),
-          .type = ele2->type()
+          .type = ele2->type(),
+          .transform = mt,
       });
     } while (iter.next());
   }
   return shps;
 }
 
-std::vector<ifc_convert::triangulation_ptr> ifc_convert::get_geometry() {
+std::vector<ifc_triangulation_info> ifc_convert::get_geometry() {
   if (!_file && !this->load()) {
     return {};
   }
   IfcGeom::Iterator iter{settings, _file.get(), this->filter_funcs, 1};
-  std::vector<boost::shared_ptr<IfcGeom::Representation::Triangulation>> shps;
+  std::vector<ifc_triangulation_info> shps;
   if (iter.initialize()) {
     do {
       auto ptr = reinterpret_cast<IfcGeom::TriangulationElement *>(iter.get());
-      shps.push_back(ptr->geometry_pointer());
+      shps.push_back(ifc_triangulation_info{
+          .triangulation = ptr->geometry_pointer(),
+          .transform = ptr->transformation().data()->components().data(),
+      });
     } while (iter.next());
   }
   return shps;

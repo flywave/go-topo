@@ -92,11 +92,11 @@ ifc_element_t **ifc_convert_get_elements(ifc_convert_t *p, int *count) {
     *count = 0;
     return nullptr;
   }
-  auto shps = p->ct->get_shape();
-  *count = static_cast<int>(shps.size());
-  auto sp = new ifc_element_t *[shps.size()];
-  for (int i = 0; i < shps.size(); i++) {
-    auto s = shps[i];
+  auto infos = p->ct->get_element_infos();
+  *count = static_cast<int>(infos.size());
+  auto sp = new ifc_element_t *[infos.size()];
+  for (int i = 0; i < infos.size(); i++) {
+    auto s = infos[i];
     auto shp = std::make_shared<flywave::topo::shape>(s.shp);
     sp[i] = new ifc_element_t{
         .shp = shp,
@@ -105,8 +105,9 @@ ifc_element_t **ifc_convert_get_elements(ifc_convert_t *p, int *count) {
         .name = s.name,
         .guid = s.guid,
         .type = s.type,
+        .transform = s.transform,
     };
-  }
+   }
   return sp;
 }
 
@@ -122,7 +123,8 @@ ifc_triangulation_t **ifc_convert_get_triangulations(ifc_convert_t *p,
   for (int i = 0; i < tris.size(); i++) {
     auto t = tris[i];
     sp[i] = new ifc_triangulation_t{
-        .tri = t,
+        .tri = t.triangulation,
+        .transform = t.transform,
     };
   }
   return sp;
@@ -134,7 +136,7 @@ ifc_element_t **ifc_get_elements(const char *filename, int *count) {
     *count = 0;
     return nullptr;
   }
-  auto shps = ct->get_shape();
+  auto shps = ct->get_element_infos();
   *count = static_cast<int>(shps.size());
   auto sp = new ifc_element_t *[shps.size()];
   for (int i = 0; i < shps.size(); i++) {
@@ -146,8 +148,10 @@ ifc_element_t **ifc_get_elements(const char *filename, int *count) {
         .parent_id = s.parent_id,
         .name = s.name,
         .guid = s.guid,
+        .type = s.type,
+        .transform = s.transform,
     };
-  }
+   }
   return sp;
 }
 
@@ -163,7 +167,8 @@ ifc_triangulation_t **ifc_get_triangulations(const char *filename, int *count) {
   for (int i = 0; i < tris.size(); i++) {
     auto t = tris[i];
     sp[i] = new ifc_triangulation_t{
-        .tri = t,
+        .tri = t.triangulation,
+        .transform = t.transform,
     };
   }
   return sp;
@@ -198,6 +203,9 @@ int ifc_element_get_parent_id(ifc_element_t *p) { return p->parent_id; }
 const char *ifc_element_get_name(ifc_element_t *p) { return p->name.c_str(); }
 
 const char *ifc_element_get_guid(ifc_element_t *p) { return p->guid.c_str(); }
+
+const double *ifc_element_get_transform(ifc_element_t *p) { return p->transform; }
+
 
 topo_shape_t *ifc_element_get_shape(ifc_element_t *p) {
   return new topo_shape_t{
@@ -260,6 +268,9 @@ const int *ifc_triangulation_get_item_ids(ifc_triangulation_t *p, int *count) {
   *count = static_cast<int>(tri->item_ids().size());
   return tri->item_ids().data();
 }
+const double *ifc_triangulation_get_transform(ifc_triangulation_t *p) {
+  return p->transform;
+}
 
 const int *ifc_triangulation_get_edges_item_ids(ifc_triangulation_t *p,
                                                 int *count) {
@@ -275,7 +286,7 @@ ifc_triangulation_get_materials(ifc_triangulation_t *p, int *count) {
   *count = static_cast<int>(materials.size());
   auto mtls = new ifc_triangulation_material_t[materials.size()];
   for (size_t i = 0; i < materials.size(); i++) {
-    mtls[i] = ifc_triangulation_material_t{.mtl = materials[i]};
+    mtls[i].mtl = materials[i];
   }
   return mtls;
 }
@@ -317,6 +328,9 @@ ifc_triangulation_material_get_specularity(ifc_triangulation_material_t *mtl) {
 double
 ifc_triangulation_material_get_transparency(ifc_triangulation_material_t *mtl) {
   return mtl->mtl->transparency;
+}
+int ifc_triangulation_material_size() {
+    return sizeof(ifc_triangulation_material_t);
 }
 
 IFCCAPICALL void ifc_header_free(ifc_header_t *header) {

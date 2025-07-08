@@ -18,10 +18,12 @@ struct _ifc_element_t {
   std::string name;
   std::string guid;
   std::string type;
+  double *transform;
 };
 
 struct _ifc_triangulation_t {
   boost::shared_ptr<IfcGeom::Representation::Triangulation> tri;
+  double *transform;
 };
 
 struct _ifc_triangulation_material_t {

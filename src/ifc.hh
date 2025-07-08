@@ -24,6 +24,12 @@ struct ifc_element_info {
   std::string name;
   std::string guid;
   std::string type;
+  double *transform;
+};
+
+struct ifc_triangulation_info {
+  boost::shared_ptr<IfcGeom::Representation::Triangulation> triangulation;
+  double *transform;
 };
 
 struct geom_filter {
@@ -151,12 +157,9 @@ public:
 
   bool load();
 
-  std::vector<ifc_element_info> get_shape();
+  std::vector<ifc_element_info> get_element_infos();
 
-  using triangulation_ptr =
-      boost::shared_ptr<IfcGeom::Representation::Triangulation>;
-
-  std::vector<triangulation_ptr> get_geometry();
+  std::vector<ifc_triangulation_info> get_geometry();
 
   std::string get_version();
 
