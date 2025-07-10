@@ -70,8 +70,7 @@ std::vector<ifc_element_info> ifc_convert::get_element_infos() {
       auto itm = ele->geometry().as_compound();
       TopoDS_Shape compound =
           ((ifcopenshell::geometry::OpenCascadeShape *)itm)->shape();
-      auto trans = ele2->transformation();
-      auto mt = trans.data()->components().data();
+       auto xform_data = ele2->transformation().data();
       shps.emplace_back(ifc_element_info{
           .shp = compound,
           .id = ele2->id(),
@@ -79,7 +78,10 @@ std::vector<ifc_element_info> ifc_convert::get_element_infos() {
           .name = ele2->name(),
           .guid = ele2->guid(),
           .type = ele2->type(),
-          .transform = mt,
+         .transform = xform_data ? 
+                std::make_shared<std::array<double, 16>>(
+                    *reinterpret_cast<const std::array<double, 16>*>(xform_data->components().data()))
+                : nullptr,
       });
     } while (iter.next());
   }
@@ -87,17 +89,21 @@ std::vector<ifc_element_info> ifc_convert::get_element_infos() {
 }
 
 std::vector<ifc_triangulation_info> ifc_convert::get_geometry() {
-  if (!_file && !this->load()) {
-    return {};
+   if (!_file && !this->load()) {
+     return {};
   }
-  IfcGeom::Iterator iter{settings, _file.get(), this->filter_funcs, 1};
-  std::vector<ifc_triangulation_info> shps;
-  if (iter.initialize()) {
+   IfcGeom::Iterator iter{settings, _file.get(), this->filter_funcs, 1};
+   std::vector<ifc_triangulation_info> shps;
+   if (iter.initialize()) {
     do {
-      auto ptr = reinterpret_cast<IfcGeom::TriangulationElement *>(iter.get());
-      shps.push_back(ifc_triangulation_info{
+      auto ptr = std::make_unique<IfcGeom::TriangulationElement>(*iter.get_native());
+      auto xform_data = ptr->transformation().data();
+       shps.push_back(ifc_triangulation_info{
           .triangulation = ptr->geometry_pointer(),
-          .transform = ptr->transformation().data()->components().data(),
+          .transform = xform_data ? 
+                std::make_shared<std::array<double, 16>>(
+                    *reinterpret_cast<const std::array<double, 16>*>(xform_data->components().data()))
+                : nullptr,
       });
     } while (iter.next());
   }

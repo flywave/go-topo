@@ -94,7 +94,7 @@ ifc_element_t **ifc_convert_get_elements(ifc_convert_t *p, int *count) {
   }
   auto infos = p->ct->get_element_infos();
   *count = static_cast<int>(infos.size());
-  auto sp = new ifc_element_t *[infos.size()];
+  auto sp = new ifc_element_t *[infos.size()+1];
   for (int i = 0; i < infos.size(); i++) {
     auto s = infos[i];
     auto shp = std::make_shared<flywave::topo::shape>(s.shp);
@@ -105,9 +105,14 @@ ifc_element_t **ifc_convert_get_elements(ifc_convert_t *p, int *count) {
         .name = s.name,
         .guid = s.guid,
         .type = s.type,
-        .transform = s.transform,
-    };
+     };
+  if (s.transform) {
+      auto trans = new double[16];
+      std::copy(s.transform->begin(), s.transform->end(), trans);
+      sp[i]->transform = trans;
+    }
    }
+  sp[*count] = nullptr;
   return sp;
 }
 
@@ -119,13 +124,18 @@ ifc_triangulation_t **ifc_convert_get_triangulations(ifc_convert_t *p,
   }
   auto tris = p->ct->get_geometry();
   *count = static_cast<int>(tris.size());
-  auto sp = new ifc_triangulation_t *[tris.size()];
+   auto sp = new ifc_triangulation_t *[tris.size()];
   for (int i = 0; i < tris.size(); i++) {
     auto t = tris[i];
+ 
     sp[i] = new ifc_triangulation_t{
         .tri = t.triangulation,
-        .transform = t.transform,
-    };
+     };
+    if (t.transform) {
+      auto trans = new double[16];
+      std::copy(t.transform->begin(), t.transform->end(), trans);
+      sp[i]->transform = trans;
+    }
   }
   return sp;
 }
@@ -138,7 +148,7 @@ ifc_element_t **ifc_get_elements(const char *filename, int *count) {
   }
   auto shps = ct->get_element_infos();
   *count = static_cast<int>(shps.size());
-  auto sp = new ifc_element_t *[shps.size()];
+  auto sp = new ifc_element_t *[shps.size()+1];
   for (int i = 0; i < shps.size(); i++) {
     auto s = shps[i];
     auto shp = std::make_shared<flywave::topo::shape>(s.shp);
@@ -149,9 +159,14 @@ ifc_element_t **ifc_get_elements(const char *filename, int *count) {
         .name = s.name,
         .guid = s.guid,
         .type = s.type,
-        .transform = s.transform,
-    };
+     };
+    if (s.transform) {
+      auto trans = new double[16];
+      std::copy(s.transform->begin(), s.transform->end(), trans);
+      sp[i]->transform = trans;
+    }
    }
+   sp[*count] = nullptr;
   return sp;
 }
 
@@ -163,21 +178,26 @@ ifc_triangulation_t **ifc_get_triangulations(const char *filename, int *count) {
   }
   auto tris = ct->get_geometry();
   *count = static_cast<int>(tris.size());
-  auto sp = new ifc_triangulation_t *[tris.size()];
+  auto sp = new ifc_triangulation_t *[tris.size()+1];
   for (int i = 0; i < tris.size(); i++) {
     auto t = tris[i];
     sp[i] = new ifc_triangulation_t{
         .tri = t.triangulation,
-        .transform = t.transform,
-    };
+     };
+ 
+    if (t.transform) {
+      auto trans = new double[16];
+      std::copy(t.transform->begin(), t.transform->end(), trans);
+      sp[i]->transform = trans;
+    }
   }
   return sp;
 }
 
 void ifc_triangulations_free(ifc_triangulation_t **shps) {
   if (shps) {
-    delete[] shps;
-  }
+         delete []shps;
+    }
 }
 
 ifc_triangulation_t *ifc_get_triangulation(ifc_triangulation_t **triangulations,
@@ -192,7 +212,13 @@ _Bool is_ifc_file(const char *filename) {
 
 void ifc_elements_free(ifc_element_t **shps) {
   if (shps) {
-    delete[] shps;
+      for(int i=0;shps[i]!=nullptr;i++){
+          if(shps[i]->transform!=nullptr){
+              delete [] shps[i]->transform;
+          }
+          delete shps[i];
+      }
+      delete []shps;
   }
 }
 
@@ -221,6 +247,9 @@ ifc_element_t *ifc_get_element(ifc_element_t **elements, int index) {
 
 void ifc_triangulation_free(ifc_triangulation_t *p) {
   if (p) {
+      if(p->transform!=nullptr){
+          delete [] p->transform;
+      }
     delete p;
   }
 }

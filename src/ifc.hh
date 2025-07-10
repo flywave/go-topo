@@ -24,12 +24,12 @@ struct ifc_element_info {
   std::string name;
   std::string guid;
   std::string type;
-  double *transform;
+  std::shared_ptr<std::array<double, 16>> transform;
 };
 
 struct ifc_triangulation_info {
   boost::shared_ptr<IfcGeom::Representation::Triangulation> triangulation;
-  double *transform;
+  std::shared_ptr<std::array<double, 16>> transform;
 };
 
 struct geom_filter {

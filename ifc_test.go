@@ -10,17 +10,19 @@ const TOLERANCE = 1e-8
 func TestIfc(t *testing.T) {
 
 	convert := NewIfcConverter()
-	convert.Load("tests/模型整合-主管道2.ifc")
+	convert.Load("tests/buildingElementProxy.ifc")
 
 	// tris := IfcToTriangulations("tests/buildingElementProxy.ifc")//主管道加参数测试文件
-	// for _, tri := range tris {
-	// 	fmt.Println(len(tri.GetVerts()))
-	// }
 
-	// eles := convert.GetElements()
-	// for _, e := range eles {
-	// 	fmt.Println(e.Name, e.Type, e.Id, e.ParentId)
-	// }
+	eles := convert.GetElements()
+	for _, e := range eles {
+		fmt.Println(e.Name, e.Type, e.Id, e.ParentId)
+	}
+
+	tris := convert.GetTriangulations()
+	for _, tri := range tris {
+		fmt.Println(len(tri.GetVerts()))
+	}
 	data := convert.GetData()
 	prsets := data.GetPropertySets()
 
@@ -60,4 +62,24 @@ func TestIfc(t *testing.T) {
 		}
 	}
 
+}
+
+func TestIfc2(t *testing.T) {
+	convert := NewIfcConverter()
+	convert.Load("tests/buildingElementProxy.ifc")
+	convert.GetTriangulations()
+	for _, t := range convert.GetTriangulations() {
+		if t.Transform != nil {
+			fmt.Println(*t.Transform)
+		}
+	}
+}
+
+func TestIfc3(t *testing.T) {
+	trgs := IfcToTriangulations("tests/buildingElementProxy.ifc")
+	for _, t := range trgs {
+		if t.Transform != nil {
+			fmt.Println(*t.Transform)
+		}
+	}
 }

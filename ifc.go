@@ -77,7 +77,7 @@ func (c *IfcConverter) GetVersion() string {
 }
 
 func (c *IfcConverter) GetElements() []*IfcElement {
-	count := 0
+	var count C.int = 0
 	elements := []*IfcElement{}
 	res := C.ifc_convert_get_elements(c.inner.ptr, (*C.int)(unsafe.Pointer(&count)))
 	if count == 0 {
@@ -85,14 +85,14 @@ func (c *IfcConverter) GetElements() []*IfcElement {
 	}
 	defer C.ifc_elements_free(res)
 
-	for i := 0; i < count; i++ {
+	for i := 0; i < int(count); i++ {
 		element := C.ifc_get_element(res, C.int(i))
 		shp := NewShape(C.ifc_element_get_shape(element))
 		mat := (*[16]float64)(nil)
 		trans := C.ifc_element_get_transform(element)
 		if trans != nil {
-			goSlice := (*[16]float64)(unsafe.Pointer(trans))
-			mat = goSlice
+			goSlice := *(*[16]float64)(unsafe.Pointer(trans))
+			mat = &goSlice
 		}
 		elements = append(elements, &IfcElement{
 			Shape:     shp,
@@ -123,8 +123,8 @@ func (c *IfcConverter) GetTriangulations() []*IfcTriangulation {
 		ary := C.ifc_triangulation_get_transform(tri.inner.ptr)
 		mat := (*[16]float64)(nil)
 		if ary != nil {
-			goSlice := (*[16]float64)(unsafe.Pointer(ary))
-			mat = goSlice
+			goSlice := *(*[16]float64)(unsafe.Pointer(ary))
+			mat = &goSlice
 		}
 		tri.Transform = mat
 		runtime.SetFinalizer(tri.inner, (*innerTriangulation).free)
@@ -182,6 +182,13 @@ func IfcToTriangulations(f string) []*IfcTriangulation {
 	for i := 0; i < count; i++ {
 		tri := &IfcTriangulation{}
 		tri.inner = &innerTriangulation{C.ifc_get_triangulation(res, C.int(i))}
+		ary := C.ifc_triangulation_get_transform(tri.inner.ptr)
+		mat := (*[16]float64)(nil)
+		if ary != nil {
+			goSlice := *(*[16]float64)(unsafe.Pointer(ary))
+			mat = &goSlice
+		}
+		tri.Transform = mat
 		runtime.SetFinalizer(tri.inner, (*innerTriangulation).free)
 		tris = append(tris, tri)
 	}

@@ -6,7 +6,7 @@
 #include <string>
 
 int main() {
-  std::string path{"./buildingElementProxy.ifc"};
+  std::string path{"./tests/模型整合-主管道.ifc"};
   auto ct = flywave::ifc::get_convert(path);
   ct->load();
   auto v = ct->get_version();
