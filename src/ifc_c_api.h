@@ -92,6 +92,16 @@ IFCCAPICALL const int *
 ifc_triangulation_get_material_ids(ifc_triangulation_t *p, int *count);
 IFCCAPICALL const int *ifc_triangulation_get_item_ids(ifc_triangulation_t *p,
                                                       int *count);
+IFCCAPICALL int ifc_triangulation_get_id(ifc_triangulation_t *p);
+
+IFCCAPICALL int ifc_triangulation_get_parent_id(ifc_triangulation_t *p);
+
+IFCCAPICALL const char *ifc_triangulation_get_name(ifc_triangulation_t *p);
+
+IFCCAPICALL const char *ifc_triangulation_get_guid(ifc_triangulation_t *p);
+
+IFCCAPICALL const char *ifc_triangulation_get_type(ifc_triangulation_t *p);
+
 IFCCAPICALL const double *ifc_triangulation_get_transform(ifc_triangulation_t *p);
 IFCCAPICALL const int *
 ifc_triangulation_get_edges_item_ids(ifc_triangulation_t *p, int *count);

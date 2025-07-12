@@ -98,8 +98,14 @@ std::vector<ifc_triangulation_info> ifc_convert::get_geometry() {
     do {
       auto ptr = std::make_unique<IfcGeom::TriangulationElement>(*iter.get_native());
       auto xform_data = ptr->transformation().data();
+      auto ele2 = iter.get();
        shps.push_back(ifc_triangulation_info{
           .triangulation = ptr->geometry_pointer(),
+          .id = ele2->id(),
+          .parent_id = ele2->parent_id(),
+          .name = ele2->name(),
+          .guid = ele2->guid(),
+          .type = ele2->type(),
           .transform = xform_data ? 
                 std::make_shared<std::array<double, 16>>(
                     *reinterpret_cast<const std::array<double, 16>*>(xform_data->components().data()))

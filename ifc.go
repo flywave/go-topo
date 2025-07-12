@@ -118,8 +118,15 @@ func (c *IfcConverter) GetTriangulations() []*IfcTriangulation {
 	defer C.ifc_triangulations_free(res)
 
 	for i := 0; i < count; i++ {
-		tri := &IfcTriangulation{}
-		tri.inner = &innerTriangulation{C.ifc_get_triangulation(res, C.int(i))}
+		inner := &innerTriangulation{C.ifc_get_triangulation(res, C.int(i))}
+		tri := &IfcTriangulation{
+			inner:    inner,
+			Id:       int(C.ifc_triangulation_get_id(inner.ptr)),
+			ParentId: int(C.ifc_triangulation_get_parent_id(inner.ptr)),
+			Name:     C.GoString(C.ifc_triangulation_get_name(inner.ptr)),
+			Guid:     C.GoString(C.ifc_triangulation_get_guid(inner.ptr)),
+			Type:     C.GoString(C.ifc_triangulation_get_type(inner.ptr)),
+		}
 		ary := C.ifc_triangulation_get_transform(tri.inner.ptr)
 		mat := (*[16]float64)(nil)
 		if ary != nil {
@@ -180,8 +187,15 @@ func IfcToTriangulations(f string) []*IfcTriangulation {
 	defer C.ifc_triangulations_free(res)
 
 	for i := 0; i < count; i++ {
-		tri := &IfcTriangulation{}
-		tri.inner = &innerTriangulation{C.ifc_get_triangulation(res, C.int(i))}
+		inner := &innerTriangulation{C.ifc_get_triangulation(res, C.int(i))}
+		tri := &IfcTriangulation{
+			inner:    inner,
+			Id:       int(C.ifc_triangulation_get_id(inner.ptr)),
+			ParentId: int(C.ifc_triangulation_get_parent_id(inner.ptr)),
+			Name:     C.GoString(C.ifc_triangulation_get_name(inner.ptr)),
+			Guid:     C.GoString(C.ifc_triangulation_get_guid(inner.ptr)),
+			Type:     C.GoString(C.ifc_triangulation_get_type(inner.ptr)),
+		}
 		ary := C.ifc_triangulation_get_transform(tri.inner.ptr)
 		mat := (*[16]float64)(nil)
 		if ary != nil {
@@ -203,6 +217,11 @@ func IsIfc(f string) bool {
 
 type IfcTriangulation struct {
 	inner     *innerTriangulation
+	Id        int
+	ParentId  int
+	Name      string
+	Guid      string
+	Type      string
 	Transform *[16]float64
 }
 

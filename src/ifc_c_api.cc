@@ -130,6 +130,11 @@ ifc_triangulation_t **ifc_convert_get_triangulations(ifc_convert_t *p,
  
     sp[i] = new ifc_triangulation_t{
         .tri = t.triangulation,
+        .id = t.id,
+        .parent_id = t.parent_id,
+        .name = t.name,
+        .guid = t.guid,
+        .type = t.type,
      };
     if (t.transform) {
       auto trans = new double[16];
@@ -183,6 +188,11 @@ ifc_triangulation_t **ifc_get_triangulations(const char *filename, int *count) {
     auto t = tris[i];
     sp[i] = new ifc_triangulation_t{
         .tri = t.triangulation,
+        .id = t.id,
+        .parent_id = t.parent_id,
+        .name = t.name,
+        .guid = t.guid,
+        .type = t.type,
      };
  
     if (t.transform) {
@@ -297,6 +307,17 @@ const int *ifc_triangulation_get_item_ids(ifc_triangulation_t *p, int *count) {
   *count = static_cast<int>(tri->item_ids().size());
   return tri->item_ids().data();
 }
+
+int ifc_triangulation_get_id(ifc_triangulation_t *p) { return p->id; }
+
+int ifc_triangulation_get_parent_id(ifc_triangulation_t *p) { return p->parent_id; }
+
+const char *ifc_triangulation_get_name(ifc_triangulation_t *p) { return p->name.c_str(); }
+
+const char *ifc_triangulation_get_guid(ifc_triangulation_t *p) { return p->guid.c_str(); }
+
+const char *ifc_triangulation_get_type(ifc_triangulation_t *p) { return p->type.c_str(); }
+
 const double *ifc_triangulation_get_transform(ifc_triangulation_t *p) {
   return p->transform;
 }

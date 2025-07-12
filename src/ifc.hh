@@ -29,6 +29,11 @@ struct ifc_element_info {
 
 struct ifc_triangulation_info {
   boost::shared_ptr<IfcGeom::Representation::Triangulation> triangulation;
+  int id;
+  int parent_id;
+  std::string name;
+  std::string guid;
+  std::string type;
   std::shared_ptr<std::array<double, 16>> transform;
 };
 
