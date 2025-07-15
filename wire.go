@@ -331,19 +331,63 @@ func (t *Wire) Offset(distance float64, joinType int) int {
 }
 
 func (t *Wire) Fillet(vertices []Vertex, radius []float64) int {
-	vers := make([]C.struct__topo_vertex_t, len(vertices))
-	for i := range vertices {
-		vers[i] = vertices[i].inner.val
+	if len(vertices) == 0 || len(radius) == 0 || len(vertices) != len(radius) {
+		return 0
 	}
-	return int(C.topo_wire_fillet(t.inner.val, &vers[0], C.int(len(vertices)), (*C.double)(unsafe.Pointer(&radius[0])), C.int(len(radius))))
+
+	// 分配C内存
+	cVertices := C.malloc(C.size_t(len(vertices)) * C.size_t(unsafe.Sizeof(C.struct__topo_vertex_t{})))
+	defer C.free(cVertices)
+
+	cRadius := C.malloc(C.size_t(len(radius)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cRadius)
+
+	// 使用更安全的方式填充数据
+	verticesPtr := (*[1<<30 - 1]C.struct__topo_vertex_t)(cVertices)
+	radiusPtr := (*[1<<30 - 1]C.double)(cRadius)
+
+	for i := range vertices {
+		verticesPtr[i] = vertices[i].inner.val
+		radiusPtr[i] = C.double(radius[i])
+	}
+
+	return int(C.topo_wire_fillet(
+		t.inner.val,
+		(*C.struct__topo_vertex_t)(cVertices),
+		C.int(len(vertices)),
+		(*C.double)(cRadius),
+		C.int(len(radius)),
+	))
 }
 
-func (t *Wire) Chamfer(vertices []Vertex, radius []float64) int {
-	vers := make([]C.struct__topo_vertex_t, len(vertices))
-	for i := range vertices {
-		vers[i] = vertices[i].inner.val
+func (t *Wire) Chamfer(vertices []Vertex, distance []float64) int {
+	if len(vertices) == 0 || len(distance) == 0 || len(vertices) != len(distance) {
+		return 0
 	}
-	return int(C.topo_wire_chamfer(t.inner.val, &vers[0], C.int(len(vertices)), (*C.double)(unsafe.Pointer(&radius[0])), C.int(len(radius))))
+
+	// 分配C内存
+	cVertices := C.malloc(C.size_t(len(vertices)) * C.size_t(unsafe.Sizeof(C.struct__topo_vertex_t{})))
+	defer C.free(cVertices)
+
+	cDistance := C.malloc(C.size_t(len(distance)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cDistance)
+
+	// 填充数据
+	verticesPtr := (*[1<<30 - 1]C.struct__topo_vertex_t)(cVertices)
+	distancePtr := (*[1<<30 - 1]C.double)(cDistance)
+
+	for i := range vertices {
+		verticesPtr[i] = vertices[i].inner.val
+		distancePtr[i] = C.double(distance[i])
+	}
+
+	return int(C.topo_wire_chamfer(
+		t.inner.val,
+		(*C.struct__topo_vertex_t)(cVertices),
+		C.int(len(vertices)),
+		(*C.double)(cDistance),
+		C.int(len(distance)),
+	))
 }
 
 func (w *Wire) Bounds() (min, max float64) {
@@ -368,24 +412,57 @@ func (w *Wire) ParamAtPoint(pt Point3) float64 {
 }
 
 func (w *Wire) Params(pts []Point3, tol float64) []float64 {
-	count := len(pts)
-	cPoints := make([]C.pnt3d_t, count)
-	params := make([]float64, count)
-
-	for i := range pts {
-		cPoints[i] = pts[i].val
+	if len(pts) == 0 {
+		return nil
 	}
 
-	C.topo_wire_params(w.inner.val, &cPoints[0], C.int(count),
-		(*C.double)(&params[0]), C.double(tol))
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(len(pts)) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))
+	defer C.free(cPoints)
+
+	params := make([]float64, len(pts))
+
+	// 填充点数据
+	pointsPtr := (*[1<<30 - 1]C.pnt3d_t)(cPoints)
+	for i := range pts {
+		pointsPtr[i] = pts[i].val
+	}
+
+	C.topo_wire_params(
+		w.inner.val,
+		(*C.pnt3d_t)(cPoints),
+		C.int(len(pts)),
+		(*C.double)(unsafe.Pointer(&params[0])),
+		C.double(tol),
+	)
+
 	return params
 }
 
 func (w *Wire) ParamsLength(locations []float64) []float64 {
-	count := len(locations)
-	params := make([]float64, count)
-	C.topo_wire_params_length(w.inner.val, (*C.double)(&locations[0]),
-		C.int(count), (*C.double)(&params[0]))
+	if len(locations) == 0 {
+		return nil
+	}
+
+	params := make([]float64, len(locations))
+
+	// 分配C内存
+	cLocations := C.malloc(C.size_t(len(locations)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cLocations)
+
+	// 填充数据
+	locationsPtr := (*[1<<30 - 1]C.double)(cLocations)
+	for i := range locations {
+		locationsPtr[i] = C.double(locations[i])
+	}
+
+	C.topo_wire_params_length(
+		w.inner.val,
+		(*C.double)(cLocations),
+		C.int(len(locations)),
+		(*C.double)(unsafe.Pointer(&params[0])),
+	)
+
 	return params
 }
 
@@ -394,19 +471,74 @@ func (w *Wire) TangentAt(param float64) Dir3 {
 }
 
 func (w *Wire) Tangents(params []float64) []Dir3 {
-	count := len(params)
-	tangents := make([]Dir3, count)
-	cParams := make([]float64, count)
-	copy(cParams, params)
-
-	cTangents := make([]C.dir3d_t, count)
-	C.topo_wire_tangents(w.inner.val, (*C.double)(&cParams[0]), C.int(count),
-		&cTangents[0])
-
-	for i := range cTangents {
-		tangents[i] = Dir3{val: cTangents[i]}
+	if len(params) == 0 {
+		return nil
 	}
+
+	// 分配C内存
+	cParams := C.malloc(C.size_t(len(params)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cParams)
+
+	cTangents := C.malloc(C.size_t(len(params)) * C.size_t(unsafe.Sizeof(C.dir3d_t{})))
+	defer C.free(cTangents)
+
+	// 填充参数数据
+	paramsPtr := (*[1<<30 - 1]C.double)(cParams)
+	for i := range params {
+		paramsPtr[i] = C.double(params[i])
+	}
+
+	C.topo_wire_tangents(
+		w.inner.val,
+		(*C.double)(cParams),
+		C.int(len(params)),
+		(*C.dir3d_t)(cTangents),
+	)
+
+	// 转换结果
+	tangents := make([]Dir3, len(params))
+	tangentsPtr := (*[1<<30 - 1]C.dir3d_t)(cTangents)
+	for i := range tangents {
+		tangents[i] = Dir3{val: tangentsPtr[i]}
+	}
+
 	return tangents
+}
+
+func (w *Wire) Positions(ds []float64, mode int) []Point3 {
+	if len(ds) == 0 {
+		return nil
+	}
+
+	// 分配C内存
+	cDs := C.malloc(C.size_t(len(ds)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cDs)
+
+	cPoints := C.malloc(C.size_t(len(ds)) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))
+	defer C.free(cPoints)
+
+	// 填充参数数据
+	dsPtr := (*[1<<30 - 1]C.double)(cDs)
+	for i := range ds {
+		dsPtr[i] = C.double(ds[i])
+	}
+
+	C.topo_wire_positions(
+		w.inner.val,
+		(*C.double)(cDs),
+		C.int(len(ds)),
+		(*C.pnt3d_t)(cPoints),
+		C.int(mode),
+	)
+
+	// 转换结果
+	points := make([]Point3, len(ds))
+	pointsPtr := (*[1<<30 - 1]C.pnt3d_t)(cPoints)
+	for i := range points {
+		points[i] = Point3{val: pointsPtr[i]}
+	}
+
+	return points
 }
 
 func (w *Wire) Normal() Dir3 {
@@ -423,22 +555,6 @@ func (w *Wire) Radius() float64 {
 
 func (w *Wire) PositionAt(d float64, mode int) Point3 {
 	return Point3{val: C.topo_wire_position_at(w.inner.val, C.double(d), C.int(mode))}
-}
-
-func (w *Wire) Positions(ds []float64, mode int) []Point3 {
-	count := len(ds)
-	points := make([]Point3, count)
-	cPoints := make([]C.pnt3d_t, count)
-	cDs := make([]float64, count)
-	copy(cDs, ds)
-
-	C.topo_wire_positions(w.inner.val, (*C.double)(&cDs[0]), C.int(count),
-		&cPoints[0], C.int(mode))
-
-	for i := range cPoints {
-		points[i] = Point3{val: cPoints[i]}
-	}
-	return points
 }
 
 func (w *Wire) SampleUniform(n float64) ([]Point3, []float64) {
@@ -482,23 +598,40 @@ func (w *Wire) LocationAt(d float64, mode, frame int, planar bool) *TopoLocation
 }
 
 func (w *Wire) Locations(ds []float64, mode, frame int, planar bool) []*TopoLocation {
-	count := len(ds)
-	cDs := make([]float64, count)
-	copy(cDs, ds)
+	if len(ds) == 0 {
+		return nil
+	}
+
+	// 分配C内存
+	cDs := C.malloc(C.size_t(len(ds)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cDs)
+
+	// 填充参数数据
+	dsPtr := (*[1<<30 - 1]C.double)(cDs)
+	for i := range ds {
+		dsPtr[i] = C.double(ds[i])
+	}
 
 	var resultCount C.int
-	locs := C.topo_wire_locations(w.inner.val, (*C.double)(&cDs[0]), C.int(count),
-		C.int(mode), C.int(frame), C.bool(planar), &resultCount)
+	locs := C.topo_wire_locations(
+		w.inner.val,
+		(*C.double)(cDs),
+		C.int(len(ds)),
+		C.int(mode),
+		C.int(frame),
+		C.bool(planar),
+		&resultCount,
+	)
 	if locs == nil {
 		return nil
 	}
 	defer C.topo_location_list_free(locs, resultCount)
 
-	locSlice := (*[1 << 30]*C.struct__topo_location_t)(unsafe.Pointer(locs))[:resultCount:resultCount]
+	// 转换结果
 	locations := make([]*TopoLocation, resultCount)
-
-	for i := range locSlice {
-		locations[i] = &TopoLocation{inner: &innerTopoLocation{val: locSlice[i]}}
+	locsPtr := (*[1<<30 - 1]*C.struct__topo_location_t)(unsafe.Pointer(locs))
+	for i := range locations {
+		locations[i] = &TopoLocation{inner: &innerTopoLocation{val: locsPtr[i]}}
 		runtime.SetFinalizer(locations[i].inner, (*innerTopoLocation).free)
 	}
 
@@ -509,18 +642,25 @@ func (w *Wire) Projected(f *Face, direction Vector3, closest bool) ([]*Shape, in
 	var resultCount C.int
 	var cResult **C.struct__topo_shape_t
 
-	ret := C.topo_wire_projected(w.inner.val, f.inner.val, direction.val,
-		C.bool(closest), &cResult, &resultCount)
+	ret := C.topo_wire_projected(
+		w.inner.val,
+		f.inner.val,
+		direction.val,
+		C.bool(closest),
+		&cResult,
+		&resultCount,
+	)
 	if ret != 0 || cResult == nil {
 		return nil, 0
 	}
 	defer C.topo_shape_list_free(cResult, resultCount)
 
-	resultSlice := (*[1 << 30]*C.struct__topo_shape_t)(unsafe.Pointer(cResult))[:resultCount:resultCount]
+	// 转换结果
 	shapes := make([]*Shape, resultCount)
-
-	for i := range resultSlice {
-		shapes[i] = &Shape{inner: &innerShape{val: resultSlice[i]}}
+	resultPtr := (*[1<<30 - 1]*C.struct__topo_shape_t)(unsafe.Pointer(cResult))
+	for i := range shapes {
+		shapes[i] = &Shape{inner: &innerShape{val: resultPtr[i]}}
+		runtime.SetFinalizer(shapes[i].inner, (*innerShape).free)
 	}
 
 	return shapes, int(ret)
@@ -532,13 +672,31 @@ func (w *Wire) CurvatureAt(d float64, mode int, resolution float64) float64 {
 }
 
 func (w *Wire) Curvatures(ds []float64, mode int, resolution float64) []float64 {
-	count := len(ds)
-	curvatures := make([]float64, count)
-	cDs := make([]float64, count)
-	copy(cDs, ds)
+	if len(ds) == 0 {
+		return nil
+	}
 
-	C.topo_wire_curvatures(w.inner.val, (*C.double)(&cDs[0]), C.int(count),
-		(*C.double)(&curvatures[0]), C.int(mode), C.double(resolution))
+	curvatures := make([]float64, len(ds))
+
+	// 分配C内存
+	cDs := C.malloc(C.size_t(len(ds)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cDs)
+
+	// 填充参数数据
+	dsPtr := (*[1<<30 - 1]C.double)(cDs)
+	for i := range ds {
+		dsPtr[i] = C.double(ds[i])
+	}
+
+	C.topo_wire_curvatures(
+		w.inner.val,
+		(*C.double)(cDs),
+		C.int(len(ds)),
+		(*C.double)(unsafe.Pointer(&curvatures[0])),
+		C.int(mode),
+		C.double(resolution),
+	)
+
 	return curvatures
 }
 
@@ -621,21 +779,55 @@ func TopoMakeWireFromTwoWire(p1 Wire, p2 Edge) *Wire {
 }
 
 func TopoMakeWireFromEdges(edges []Edge) *Wire {
-	es := make([]C.struct__topo_edge_t, len(edges))
-	for i := range edges {
-		es[i] = edges[i].inner.val
+	if len(edges) == 0 {
+		return &Wire{inner: &innerWire{}}
 	}
-	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_edges(&es[0], C.int(len(edges)))}}
+
+	// 分配C内存
+	cEdges := C.malloc(C.size_t(len(edges)) * C.size_t(unsafe.Sizeof(C.struct__topo_edge_t{})))
+	defer C.free(cEdges)
+
+	// 填充数据
+	edgesPtr := (*[1<<30 - 1]C.struct__topo_edge_t)(cEdges)
+	for i := range edges {
+		edgesPtr[i] = edges[i].inner.val
+	}
+
+	wr := &Wire{
+		inner: &innerWire{
+			val: C.topo_make_wire_from_edges(
+				(*C.struct__topo_edge_t)(cEdges),
+				C.int(len(edges)),
+			),
+		},
+	}
 	runtime.SetFinalizer(wr.inner, (*innerWire).free)
 	return wr
 }
 
 func TopoMakeWireFromWires(wires []Wire) *Wire {
-	es := make([]C.struct__topo_wire_t, len(wires))
-	for i := range wires {
-		es[i] = wires[i].inner.val
+	if len(wires) == 0 {
+		return &Wire{inner: &innerWire{}}
 	}
-	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_wries(&es[0], C.int(len(wires)))}}
+
+	// 分配C内存
+	cWires := C.malloc(C.size_t(len(wires)) * C.size_t(unsafe.Sizeof(C.struct__topo_wire_t{})))
+	defer C.free(cWires)
+
+	// 填充数据
+	wiresPtr := (*[1<<30 - 1]C.struct__topo_wire_t)(cWires)
+	for i := range wires {
+		wiresPtr[i] = wires[i].inner.val
+	}
+
+	wr := &Wire{
+		inner: &innerWire{
+			val: C.topo_make_wire_from_wries(
+				(*C.struct__topo_wire_t)(cWires),
+				C.int(len(wires)),
+			),
+		},
+	}
 	runtime.SetFinalizer(wr.inner, (*innerWire).free)
 	return wr
 }
@@ -665,23 +857,41 @@ func TopoMakeWireFromHelix(pitch, height, radius float64, center Point3, dir Dir
 }
 
 func TopoMakeWireFromCombine(wires []Wire, tol float64) []*Wire {
-	es := make([]C.struct__topo_wire_t, len(wires))
-	for i := range wires {
-		es[i] = wires[i].inner.val
-	}
-	var count C.int
-	val := C.topo_make_wire_from_combine(&es[0], C.int(len(wires)), C.double(tol), &count)
-	if val == nil {
+	if len(wires) == 0 {
 		return nil
 	}
-	defer C.topo_wire_list_free(val, count)
-	valSlice := (*[1 << 30]C.struct__topo_wire_t)(unsafe.Pointer(val))[:count:count]
-	ws := make([]*Wire, count)
-	for i := 0; i < int(count); i++ {
-		ws[i] = &Wire{inner: &innerWire{val: valSlice[i]}}
-		runtime.SetFinalizer(ws[i].inner, (*innerWire).free)
+
+	// 分配C内存
+	cWires := C.malloc(C.size_t(len(wires)) * C.size_t(unsafe.Sizeof(C.struct__topo_wire_t{})))
+	defer C.free(cWires)
+
+	// 填充数据
+	wiresPtr := (*[1<<30 - 1]C.struct__topo_wire_t)(cWires)
+	for i := range wires {
+		wiresPtr[i] = wires[i].inner.val
 	}
-	return ws
+
+	var count C.int
+	cResult := C.topo_make_wire_from_combine(
+		(*C.struct__topo_wire_t)(cWires),
+		C.int(len(wires)),
+		C.double(tol),
+		&count,
+	)
+	if cResult == nil {
+		return nil
+	}
+	defer C.topo_wire_list_free(cResult, count)
+
+	// 转换结果
+	result := make([]*Wire, count)
+	resultPtr := (*[1<<30 - 1]C.struct__topo_wire_t)(unsafe.Pointer(cResult))
+	for i := range result {
+		result[i] = &Wire{inner: &innerWire{val: resultPtr[i]}}
+		runtime.SetFinalizer(result[i].inner, (*innerWire).free)
+	}
+
+	return result
 }
 
 type SweepCurveType int
@@ -695,22 +905,56 @@ const (
 
 func TopoMakeWireFromCombineCurve(points [][]Point3, curveTypes []SweepCurveType) *Wire {
 	curveCount := len(points)
+	if curveCount == 0 || curveCount != len(curveTypes) {
+		return &Wire{inner: &innerWire{}}
+	}
 
-	cPoints := make([]*C.pnt3d_t, curveCount)
+	// 分配C内存来存储曲线指针数组
+	cPointsArray := C.malloc(C.size_t(curveCount) * C.size_t(unsafe.Sizeof(unsafe.Pointer(nil))))
+	defer C.free(cPointsArray)
+
+	// 分配C内存来存储每个曲线的点数据
 	cPointCounts := make([]C.int, curveCount)
 	for i, pts := range points {
-		cPointCounts[i] = C.int(len(pts))
-		cPoints[i] = (*C.pnt3d_t)(unsafe.Pointer(&pts[0].val))
+		pointCount := len(pts)
+		if pointCount == 0 {
+			return &Wire{inner: &innerWire{}}
+		}
+		cPointCounts[i] = C.int(pointCount)
+
+		// 为当前曲线分配点数组内存
+		curvePoints := C.malloc(C.size_t(pointCount) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))
+		defer C.free(curvePoints) // 注意：这里不能立即释放，需要在C函数中使用完后释放
+
+		// 将点数据复制到C内存
+		pointsPtr := (*[1<<30 - 1]C.pnt3d_t)(curvePoints)
+		for j := 0; j < pointCount; j++ {
+			pointsPtr[j] = pts[j].val
+		}
+
+		// 将曲线指针存入指针数组
+		ptr := (*unsafe.Pointer)(unsafe.Pointer(uintptr(cPointsArray) + uintptr(i)*unsafe.Sizeof(unsafe.Pointer(nil))))
+		*ptr = curvePoints
 	}
 
-	cCurveTypes := make([]C.int, curveCount)
+	// 分配C内存来存储曲线类型数组
+	cCurveTypes := C.malloc(C.size_t(curveCount) * C.size_t(unsafe.Sizeof(C.int(0))))
+	defer C.free(cCurveTypes)
 	for i, t := range curveTypes {
-		cCurveTypes[i] = C.int(t)
+		*(*C.int)(unsafe.Pointer(uintptr(cCurveTypes) + uintptr(i)*unsafe.Sizeof(C.int(0)))) = C.int(t)
 	}
-	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_combine_curve((**C.pnt3d_t)(unsafe.Pointer(&cPoints[0])),
-		(*C.int)(unsafe.Pointer(&cPointCounts[0])),
-		C.int(curveCount),
-		(*C.int)(unsafe.Pointer(&cCurveTypes[0])))}}
+
+	// 调用C函数
+	wr := &Wire{
+		inner: &innerWire{
+			val: C.topo_make_wire_from_combine_curve(
+				(**C.pnt3d_t)(cPointsArray),
+				(*C.int)(unsafe.Pointer(&cPointCounts[0])),
+				C.int(curveCount),
+				(*C.int)(cCurveTypes),
+			),
+		},
+	}
 	runtime.SetFinalizer(wr.inner, (*innerWire).free)
 	return wr
 }

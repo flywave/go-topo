@@ -30,76 +30,292 @@ func GeomMakeAxis2PlacementForPointNVX(p Point3, n Dir3, vx Dir3) *GeomAxis2Plac
 }
 
 func GeomMakeBezierCurve(poles []Point3) *GeomBezierCurve {
-	in := make([]C.struct__pnt3d_t, len(poles))
-	for i := range poles {
-		in[i] = poles[i].val
+	if len(poles) == 0 {
+		return nil
 	}
-	return &GeomBezierCurve{inner: &innerGeomBezierCurve{geom: C.geom_make_bezier_curve(&in[0], C.int(len(poles)))}}
+
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(len(poles)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	defer C.free(cPoints)
+
+	// 复制数据
+	for i := range poles {
+		*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = poles[i].val
+	}
+
+	return &GeomBezierCurve{
+		inner: &innerGeomBezierCurve{
+			geom: C.geom_make_bezier_curve(
+				(*C.struct__pnt3d_t)(cPoints),
+				C.int(len(poles)),
+			),
+		},
+	}
 }
 
-func GeomMakeBezierCurveFromWeight(poles []Point3, Weights []float64) *GeomBezierCurve {
-	in := make([]C.struct__pnt3d_t, len(poles))
-	for i := range poles {
-		in[i] = poles[i].val
+func GeomMakeBezierCurveFromWeight(poles []Point3, weights []float64) *GeomBezierCurve {
+	if len(poles) == 0 || len(weights) == 0 || len(poles) != len(weights) {
+		return nil
 	}
-	return &GeomBezierCurve{inner: &innerGeomBezierCurve{geom: C.geom_make_bezier_curve_from_weight(&in[0], (*C.double)(unsafe.Pointer(&Weights[0])), C.int(len(poles)))}}
+
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(len(poles)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	defer C.free(cPoints)
+
+	cWeights := C.malloc(C.size_t(len(weights)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cWeights)
+
+	// 复制数据
+	for i := range poles {
+		*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = poles[i].val
+		*(*C.double)(unsafe.Pointer(uintptr(cWeights) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(weights[i])
+	}
+
+	return &GeomBezierCurve{
+		inner: &innerGeomBezierCurve{
+			geom: C.geom_make_bezier_curve_from_weight(
+				(*C.struct__pnt3d_t)(cPoints),
+				(*C.double)(cWeights),
+				C.int(len(poles)),
+			),
+		},
+	}
 }
 
-func GeomMakeBSplineCurve(poles []Point3, Knots []float64, Multiplicities []int, Degree int, Periodic bool) *GeomBSplineCurve {
-	in := make([]C.struct__pnt3d_t, len(poles))
-	for i := range poles {
-		in[i] = poles[i].val
+func GeomMakeBSplineCurve(poles []Point3, knots []float64, multiplicities []int, degree int, periodic bool) *GeomBSplineCurve {
+	if len(poles) == 0 || len(knots) == 0 || len(multiplicities) == 0 {
+		return nil
 	}
-	return &GeomBSplineCurve{inner: &innerGeomBSplineCurve{geom: C.geom_make_bspline_curve(&in[0], (*C.double)(unsafe.Pointer(&Knots[0])), (*C.int)(unsafe.Pointer(&Multiplicities[0])), C.int(len(poles)), C.int(Degree), C.bool(Periodic))}}
+
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(len(poles)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	defer C.free(cPoints)
+
+	cKnots := C.malloc(C.size_t(len(knots)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cKnots)
+
+	cMults := C.malloc(C.size_t(len(multiplicities)) * C.size_t(unsafe.Sizeof(C.int(0))))
+	defer C.free(cMults)
+
+	// 复制数据
+	for i := range poles {
+		*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = poles[i].val
+	}
+	for i := range knots {
+		*(*C.double)(unsafe.Pointer(uintptr(cKnots) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(knots[i])
+	}
+	for i := range multiplicities {
+		*(*C.int)(unsafe.Pointer(uintptr(cMults) + uintptr(i)*unsafe.Sizeof(C.int(0)))) = C.int(multiplicities[i])
+	}
+
+	return &GeomBSplineCurve{
+		inner: &innerGeomBSplineCurve{
+			geom: C.geom_make_bspline_curve(
+				(*C.struct__pnt3d_t)(cPoints),
+				(*C.double)(cKnots),
+				(*C.int)(cMults),
+				C.int(len(poles)),
+				C.int(degree),
+				C.bool(periodic),
+			),
+		},
+	}
 }
 
-func GeomMakeBSplineCurveFromWeight(poles []Point3, weights []float64, Knots []float64, Multiplicities []int, Degree int, Periodic bool) *GeomBSplineCurve {
-	in := make([]C.struct__pnt3d_t, len(poles))
-	for i := range poles {
-		in[i] = poles[i].val
+func GeomMakeBSplineCurveFromWeight(poles []Point3, weights []float64, knots []float64, multiplicities []int, degree int, periodic bool) *GeomBSplineCurve {
+	// 参数检查
+	if len(poles) == 0 || len(weights) == 0 || len(knots) == 0 || len(multiplicities) == 0 {
+		return nil
 	}
-	return &GeomBSplineCurve{inner: &innerGeomBSplineCurve{geom: C.geom_make_bspline_curve_from_weight(&in[0], (*C.double)(unsafe.Pointer(&weights[0])), (*C.double)(unsafe.Pointer(&Knots[0])), (*C.int)(unsafe.Pointer(&Multiplicities[0])), C.int(len(poles)), C.int(Degree), C.bool(Periodic), C.bool(false))}}
+	if len(poles) != len(weights) {
+		return nil
+	}
+
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(len(poles)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	defer C.free(cPoints)
+
+	cWeights := C.malloc(C.size_t(len(weights)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cWeights)
+
+	cKnots := C.malloc(C.size_t(len(knots)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cKnots)
+
+	cMults := C.malloc(C.size_t(len(multiplicities)) * C.size_t(unsafe.Sizeof(C.int(0))))
+	defer C.free(cMults)
+
+	// 复制数据到C内存
+	for i := range poles {
+		*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = poles[i].val
+		*(*C.double)(unsafe.Pointer(uintptr(cWeights) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(weights[i])
+	}
+
+	for i := range knots {
+		*(*C.double)(unsafe.Pointer(uintptr(cKnots) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(knots[i])
+	}
+
+	for i := range multiplicities {
+		*(*C.int)(unsafe.Pointer(uintptr(cMults) + uintptr(i)*unsafe.Sizeof(C.int(0)))) = C.int(multiplicities[i])
+	}
+
+	return &GeomBSplineCurve{
+		inner: &innerGeomBSplineCurve{
+			geom: C.geom_make_bspline_curve_from_weight(
+				(*C.struct__pnt3d_t)(cPoints),
+				(*C.double)(cWeights),
+				(*C.double)(cKnots),
+				(*C.int)(cMults),
+				C.int(len(poles)),
+				C.int(degree),
+				C.bool(periodic),
+				C.bool(false),
+			),
+		},
+	}
 }
 
 func GeomMakeBezierSurface(poles [][]Point3) *GeomBezierSurface {
-	row := len(poles)
-	col := len(poles[0])
-	in := make([]C.struct__pnt3d_t, col*row)
-	for i := 0; i < row; i++ {
-		for j := 0; j < col; j++ {
-			in[i*col+j] = poles[i][j].val
+	if len(poles) == 0 || len(poles[0]) == 0 {
+		return nil
+	}
+
+	rows := len(poles)
+	cols := len(poles[0])
+
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(rows*cols) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	defer C.free(cPoints)
+
+	// 复制数据
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			idx := i*cols + j
+			*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(idx)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = poles[i][j].val
 		}
 	}
-	return &GeomBezierSurface{inner: &innerGeomBezierSurface{geom: C.geom_make_bezier_surface(&in[0], C.int(row), C.int(col))}}
+
+	return &GeomBezierSurface{
+		inner: &innerGeomBezierSurface{
+			geom: C.geom_make_bezier_surface(
+				(*C.struct__pnt3d_t)(cPoints),
+				C.int(rows),
+				C.int(cols),
+			),
+		},
+	}
 }
 
 func GeomMakeBezierSurfaceFromWeight(poles [][]Point3, weights [][]float64) *GeomBezierSurface {
+	// 参数检查
+	if len(poles) == 0 || len(weights) == 0 {
+		return nil
+	}
 	row := len(poles)
 	col := len(poles[0])
-	in := make([]C.struct__pnt3d_t, col*row)
-	inw := make([]C.double, col*row)
 
-	for i := 0; i < row; i++ {
-		for j := 0; j < col; j++ {
-			in[i*col+j] = poles[i][j].val
-			inw[i*col+j] = C.double(weights[j][i])
+	// 检查所有子切片长度一致
+	for i := range poles {
+		if len(poles[i]) != col {
+			return nil
 		}
 	}
-	return &GeomBezierSurface{inner: &innerGeomBezierSurface{geom: C.geom_make_bezier_surface_from_weight(&in[0], &inw[0], C.int(row), C.int(col))}}
+	for i := range weights {
+		if len(weights[i]) != row { // 注意权重矩阵通常是转置的
+			return nil
+		}
+	}
+
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(row*col) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	defer C.free(cPoints)
+
+	cWeights := C.malloc(C.size_t(row*col) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cWeights)
+
+	// 复制数据到C内存
+	for i := 0; i < row; i++ {
+		for j := 0; j < col; j++ {
+			// 注意weights的索引是[j][i]因为权重矩阵通常是转置的
+			*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i*col+j)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = poles[i][j].val
+			*(*C.double)(unsafe.Pointer(uintptr(cWeights) + uintptr(i*col+j)*unsafe.Sizeof(C.double(0)))) = C.double(weights[j][i])
+		}
+	}
+
+	return &GeomBezierSurface{
+		inner: &innerGeomBezierSurface{
+			geom: C.geom_make_bezier_surface_from_weight(
+				(*C.struct__pnt3d_t)(cPoints),
+				(*C.double)(cWeights),
+				C.int(row),
+				C.int(col),
+			),
+		},
+	}
 }
 
-func GeomMakeBSplineSurface(poles [][]Point3, UKnots, VKnots []float64, UMults, VMults []int, UDegree, VDegree int, UPeriodic, VPeriodic bool) *GeomBSplineSurface {
-	row := len(poles)
-	col := len(poles[0])
-	in := make([]C.struct__pnt3d_t, col*row)
-	for i := 0; i < row; i++ {
-		for j := 0; j < col; j++ {
-			if j < len(poles[i]) {
-				in[i*col+j] = poles[i][j].val
-			}
+func GeomMakeBSplineSurface(poles [][]Point3, uKnots, vKnots []float64, uMults, vMults []int, uDegree, vDegree int, uPeriodic, vPeriodic bool) *GeomBSplineSurface {
+	if len(poles) == 0 || len(poles[0]) == 0 {
+		return nil
+	}
+
+	rows := len(poles)
+	cols := len(poles[0])
+
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(rows*cols) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	defer C.free(cPoints)
+
+	cUKnots := C.malloc(C.size_t(len(uKnots)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cUKnots)
+
+	cVKnots := C.malloc(C.size_t(len(vKnots)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cVKnots)
+
+	cUMults := C.malloc(C.size_t(len(uMults)) * C.size_t(unsafe.Sizeof(C.int(0))))
+	defer C.free(cUMults)
+
+	cVMults := C.malloc(C.size_t(len(vMults)) * C.size_t(unsafe.Sizeof(C.int(0))))
+	defer C.free(cVMults)
+
+	// 复制数据
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			idx := i*cols + j
+			*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(idx)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = poles[i][j].val
 		}
 	}
-	return &GeomBSplineSurface{inner: &innerGeomBSplineSurface{geom: C.geom_make_bspline_surface(&in[0], (*C.double)(unsafe.Pointer(&UKnots[0])), (*C.double)(unsafe.Pointer(&VKnots[0])), (*C.int)(unsafe.Pointer(&UMults[0])), (*C.int)(unsafe.Pointer(&VMults[0])), C.int(row), C.int(col), C.int(len(UKnots)), C.int(len(VKnots)), C.int(UDegree), C.int(VDegree), C.bool(UPeriodic), C.bool(VPeriodic))}}
+	for i := range uKnots {
+		*(*C.double)(unsafe.Pointer(uintptr(cUKnots) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(uKnots[i])
+	}
+	for i := range vKnots {
+		*(*C.double)(unsafe.Pointer(uintptr(cVKnots) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(vKnots[i])
+	}
+	for i := range uMults {
+		*(*C.int)(unsafe.Pointer(uintptr(cUMults) + uintptr(i)*unsafe.Sizeof(C.int(0)))) = C.int(uMults[i])
+	}
+	for i := range vMults {
+		*(*C.int)(unsafe.Pointer(uintptr(cVMults) + uintptr(i)*unsafe.Sizeof(C.int(0)))) = C.int(vMults[i])
+	}
+
+	return &GeomBSplineSurface{
+		inner: &innerGeomBSplineSurface{
+			geom: C.geom_make_bspline_surface(
+				(*C.struct__pnt3d_t)(cPoints),
+				(*C.double)(cUKnots),
+				(*C.double)(cVKnots),
+				(*C.int)(cUMults),
+				(*C.int)(cVMults),
+				C.int(rows),
+				C.int(cols),
+				C.int(len(uKnots)),
+				C.int(len(vKnots)),
+				C.int(uDegree),
+				C.int(vDegree),
+				C.bool(uPeriodic),
+				C.bool(vPeriodic),
+			),
+		},
+	}
 }
 
 func GeomMakeBSplineSurfaceFromWeight(poles [][]Point3, weights [][]float64, UKnots, VKnots []float64, UMults, VMults []int, UDegree, VDegree int, UPeriodic, VPeriodic bool) *GeomBSplineSurface {
@@ -461,35 +677,140 @@ func Geom2dMakeBisectorBisecPC(Cu1 *Geom2dCurve, p Point2, side2, UMin, UMax flo
 }
 
 func Geom2dMakeBezierCurve(poles []Point2) *Geom2dBezierCurve {
-	in := make([]C.struct__pnt2d_t, len(poles))
-	for i := range poles {
-		in[i] = poles[i].val
+	if len(poles) == 0 {
+		return nil
 	}
-	return &Geom2dBezierCurve{inner: &innerGeom2dBezierCurve{geom: C.geom2d_make_bezier_curve(&in[0], C.int(len(poles)))}}
+
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(len(poles)) * C.size_t(unsafe.Sizeof(C.struct__pnt2d_t{})))
+	defer C.free(cPoints)
+
+	// 复制数据
+	for i := range poles {
+		*(*C.struct__pnt2d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt2d_t{}))) = poles[i].val
+	}
+
+	return &Geom2dBezierCurve{
+		inner: &innerGeom2dBezierCurve{
+			geom: C.geom2d_make_bezier_curve(
+				(*C.struct__pnt2d_t)(cPoints),
+				C.int(len(poles)),
+			),
+		},
+	}
 }
 
 func Geom2dMakeBezierCurveFromWeight(poles []Point2, weights []float64) *Geom2dBezierCurve {
-	in := make([]C.struct__pnt2d_t, len(poles))
-	for i := range poles {
-		in[i] = poles[i].val
+	if len(poles) == 0 || len(weights) == 0 || len(poles) != len(weights) {
+		return nil
 	}
-	return &Geom2dBezierCurve{inner: &innerGeom2dBezierCurve{geom: C.geom2d_make_bezier_curve_with_weight(&in[0], (*C.double)(unsafe.Pointer(&weights[0])), C.int(len(poles)))}}
+
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(len(poles)) * C.size_t(unsafe.Sizeof(C.struct__pnt2d_t{})))
+	defer C.free(cPoints)
+
+	cWeights := C.malloc(C.size_t(len(weights)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cWeights)
+
+	// 复制数据
+	for i := range poles {
+		*(*C.struct__pnt2d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt2d_t{}))) = poles[i].val
+		*(*C.double)(unsafe.Pointer(uintptr(cWeights) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(weights[i])
+	}
+
+	return &Geom2dBezierCurve{
+		inner: &innerGeom2dBezierCurve{
+			geom: C.geom2d_make_bezier_curve_with_weight(
+				(*C.struct__pnt2d_t)(cPoints),
+				(*C.double)(cWeights),
+				C.int(len(poles)),
+			),
+		},
+	}
 }
 
-func Geom2dMakeBSplineCurve(poles []Point2, Knots []float64, Multiplicities []int, Degree int, Periodic bool) *Geom2dBSplineCurve {
-	in := make([]C.struct__pnt2d_t, len(poles))
-	for i := range poles {
-		in[i] = poles[i].val
+func Geom2dMakeBSplineCurve(poles []Point2, knots []float64, multiplicities []int, degree int, periodic bool) *Geom2dBSplineCurve {
+	if len(poles) == 0 || len(knots) == 0 || len(multiplicities) == 0 {
+		return nil
 	}
-	return &Geom2dBSplineCurve{inner: &innerGeom2dBSplineCurve{geom: C.geom2d_make_bspline_curve(&in[0], (*C.double)(unsafe.Pointer(&Knots[0])), (*C.int)(unsafe.Pointer(&Multiplicities[0])), C.int(len(poles)), C.int(Degree), C.bool(Periodic))}}
-}
 
-func Geom2dMakeBSplineCurveFromWeight(poles []Point2, weights []float64, Knots []float64, Multiplicities []int, Degree int, Periodic bool) *Geom2dBSplineCurve {
-	in := make([]C.struct__pnt2d_t, len(poles))
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(len(poles)) * C.size_t(unsafe.Sizeof(C.struct__pnt2d_t{})))
+	defer C.free(cPoints)
+
+	cKnots := C.malloc(C.size_t(len(knots)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cKnots)
+
+	cMults := C.malloc(C.size_t(len(multiplicities)) * C.size_t(unsafe.Sizeof(C.int(0))))
+	defer C.free(cMults)
+
+	// 复制数据
 	for i := range poles {
-		in[i] = poles[i].val
+		*(*C.struct__pnt2d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt2d_t{}))) = poles[i].val
 	}
-	return &Geom2dBSplineCurve{inner: &innerGeom2dBSplineCurve{geom: C.geom2d_make_bspline_curve_with_weight(&in[0], (*C.double)(unsafe.Pointer(&weights[0])), (*C.double)(unsafe.Pointer(&Knots[0])), (*C.int)(unsafe.Pointer(&Multiplicities[0])), C.int(len(poles)), C.int(Degree), C.bool(Periodic))}}
+	for i := range knots {
+		*(*C.double)(unsafe.Pointer(uintptr(cKnots) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(knots[i])
+	}
+	for i := range multiplicities {
+		*(*C.int)(unsafe.Pointer(uintptr(cMults) + uintptr(i)*unsafe.Sizeof(C.int(0)))) = C.int(multiplicities[i])
+	}
+
+	return &Geom2dBSplineCurve{
+		inner: &innerGeom2dBSplineCurve{
+			geom: C.geom2d_make_bspline_curve(
+				(*C.struct__pnt2d_t)(cPoints),
+				(*C.double)(cKnots),
+				(*C.int)(cMults),
+				C.int(len(poles)),
+				C.int(degree),
+				C.bool(periodic),
+			),
+		},
+	}
+}
+func Geom2dMakeBSplineCurveFromWeight(poles []Point2, weights []float64, knots []float64, multiplicities []int, degree int, periodic bool) *Geom2dBSplineCurve {
+	if len(poles) == 0 || len(weights) == 0 || len(poles) != len(weights) {
+		return nil
+	}
+
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(len(poles)) * C.size_t(unsafe.Sizeof(C.struct__pnt2d_t{})))
+	defer C.free(cPoints)
+
+	cWeights := C.malloc(C.size_t(len(weights)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cWeights)
+
+	cKnots := C.malloc(C.size_t(len(knots)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cKnots)
+
+	cMults := C.malloc(C.size_t(len(multiplicities)) * C.size_t(unsafe.Sizeof(C.int(0))))
+	defer C.free(cMults)
+
+	// 复制数据
+	for i := range poles {
+		*(*C.struct__pnt2d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt2d_t{}))) = poles[i].val
+		*(*C.double)(unsafe.Pointer(uintptr(cWeights) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(weights[i])
+	}
+	for i := range knots {
+		*(*C.double)(unsafe.Pointer(uintptr(cKnots) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(knots[i])
+	}
+	for i := range multiplicities {
+		*(*C.int)(unsafe.Pointer(uintptr(cMults) + uintptr(i)*unsafe.Sizeof(C.int(0)))) = C.int(multiplicities[i])
+	}
+
+	return &Geom2dBSplineCurve{
+		inner: &innerGeom2dBSplineCurve{
+			geom: C.geom2d_make_bspline_curve_with_weight(
+				(*C.struct__pnt2d_t)(cPoints),
+				(*C.double)(cWeights),
+				(*C.double)(cKnots),
+				(*C.int)(cMults),
+				C.int(len(poles)),
+				C.int(degree),
+				C.bool(periodic),
+			),
+		},
+	}
 }
 
 func Geom2dMakeTrimmedCurve(g *Geom2dCurve, u1, u2 float64, sense, adj bool) *Geom2dTrimmedCurve {

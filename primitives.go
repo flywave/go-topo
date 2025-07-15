@@ -4987,36 +4987,71 @@ func (p *ShapeProfile) toStruct() C.shape_profile_t {
 		poly := p.Data.Polygon
 		c.type_ = C.PROFILE_TYPE_POLYGON
 
-		// 转换外边缘
-		edges := make([]C.pnt3d_t, len(poly.Edges))
+		cEdges := C.malloc(C.size_t(len(poly.Edges)) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))
+		edgesSlice := (*[1<<30 - 1]C.pnt3d_t)(unsafe.Pointer(cEdges))[:len(poly.Edges):len(poly.Edges)]
+
 		for i, pt := range poly.Edges {
-			edges[i] = pt.val
+			edgesSlice[i] = pt.val
 		}
-		c.polygon.edges = &edges[0]
+
+		c.polygon.edges = (*C.pnt3d_t)(cEdges)
 		c.polygon.edgeCount = C.int(len(poly.Edges))
 
 		// 转换内边缘
 		if len(poly.InnerEdges) > 0 {
-			innerCounts := make([]C.int, len(poly.InnerEdges))
-			innerPtrs := make([]*C.pnt3d_t, len(poly.InnerEdges))
-			innerArrays := make([][]C.pnt3d_t, len(poly.InnerEdges))
+			cInnerCounts := C.malloc(C.size_t(len(poly.InnerEdges)) * C.size_t(unsafe.Sizeof(C.int(0))))
+			defer C.free(cInnerCounts)
+			innerCountsSlice := (*[1<<30 - 1]C.int)(unsafe.Pointer(cInnerCounts))[:len(poly.InnerEdges):len(poly.InnerEdges)]
+
+			// 2. 在C堆上分配内存存储内边指针数组
+			cInnerPtrs := C.malloc(C.size_t(len(poly.InnerEdges)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+			defer C.free(cInnerPtrs)
+			innerPtrsSlice := (*[1<<30 - 1]*C.pnt3d_t)(unsafe.Pointer(cInnerPtrs))[:len(poly.InnerEdges):len(poly.InnerEdges)]
 
 			for i, inner := range poly.InnerEdges {
-				innerCounts[i] = C.int(len(inner))
-				innerArrays[i] = make([]C.pnt3d_t, len(inner))
+				// 分配内存存储点数据
+				points := C.malloc(C.size_t(len(inner)) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))
+				defer C.free(points)
+				pointsSlice := (*[1<<30 - 1]C.pnt3d_t)(unsafe.Pointer(points))[:len(inner):len(inner)]
+
 				for j, pt := range inner {
-					innerArrays[i][j] = pt.val
+					pointsSlice[j] = pt.val
 				}
-				innerPtrs[i] = &innerArrays[i][0]
+
+				innerPtrsSlice[i] = (*C.pnt3d_t)(points)
+				innerCountsSlice[i] = C.int(len(inner))
 			}
 
-			c.polygon.inners = &innerPtrs[0]
-			c.polygon.innerCounts = &innerCounts[0]
+			c.polygon.inners = (**C.pnt3d_t)(cInnerPtrs)
+			c.polygon.innerCounts = (*C.int)(cInnerCounts)
 			c.polygon.innerArrayCount = C.int(len(poly.InnerEdges))
 		}
 	}
 
 	return c
+}
+
+func freeShapeProfile(p C.shape_profile_t) {
+	switch p.type_ {
+	case C.PROFILE_TYPE_POLYGON:
+
+		if p.polygon.edges != nil {
+			C.free(unsafe.Pointer(p.polygon.edges))
+		}
+		poly := p.polygon
+		if poly.inners != nil && poly.innerCounts != nil && poly.innerArrayCount > 0 {
+			innerPtrs := (*[1<<30 - 1]*C.pnt3d_t)(unsafe.Pointer(poly.inners))[:poly.innerArrayCount:poly.innerArrayCount]
+
+			for i := C.int(0); i < poly.innerArrayCount; i++ {
+				if innerPtrs[i] != nil {
+					C.free(unsafe.Pointer(innerPtrs[i]))
+				}
+			}
+
+			C.free(unsafe.Pointer(poly.inners))
+			C.free(unsafe.Pointer(poly.innerCounts))
+		}
+	}
 }
 
 // 旋转参数
@@ -5040,6 +5075,7 @@ func (p *RevolParams) to_struct() C.revol_params_t {
 
 func CreateRevol(params RevolParams) *Shape {
 	cParams := params.to_struct()
+	defer freeShapeProfile(cParams.profile)
 	shp := C.create_revol(cParams)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
@@ -5074,6 +5110,7 @@ func (p *PrismParams) to_struct() C.prism_params_t {
 
 func CreatePrism(params PrismParams) *Shape {
 	cParams := params.to_struct()
+	defer freeShapeProfile(cParams.profile)
 	shp := C.create_prism(cParams)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
@@ -5174,28 +5211,48 @@ func (p *PipeParams) to_struct() C.pipe_params_t {
 	c.wire_count = C.int(len(p.Wire))
 
 	// 转换剖面数组
-	cProfiles := make([]C.shape_profile_t, len(p.Profiles))
-	for i, profile := range p.Profiles {
-		cProfiles[i] = profile.toStruct()
-	}
+	if len(p.Profiles) > 0 {
+		// 在C堆上分配内存存储剖面数组
+		cProfiles := C.malloc(C.size_t(len(p.Profiles)) * C.size_t(unsafe.Sizeof(C.shape_profile_t{})))
+		profilesSlice := (*[1<<30 - 1]C.shape_profile_t)(unsafe.Pointer(cProfiles))[:len(p.Profiles):len(p.Profiles)]
 
-	c.profiles = &cProfiles[0]
-	c.profile_count = C.int(len(p.Profiles))
+		// 填充剖面数据
+		for i, profile := range p.Profiles {
+			profilesSlice[i] = profile.toStruct()
+		}
+
+		c.profiles = (*C.shape_profile_t)(cProfiles)
+		c.profile_count = C.int(len(p.Profiles))
+	} else {
+		c.profiles = nil
+		c.profile_count = 0
+	}
 
 	// 转换内剖面数组(如果存在)
 	if len(p.InnerProfiles) > 0 {
-		innerProfilePtrs := make([]*C.shape_profile_t, len(p.InnerProfiles))
-		innerProfileArrays := make([]C.shape_profile_t, len(p.InnerProfiles))
-		innerProfileCounts := make([]C.int, len(p.InnerProfiles))
+		// 在C堆上分配内存存储内剖面指针数组
+		cInnerProfilePtrs := C.malloc(C.size_t(len(p.InnerProfiles)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+		innerPtrsSlice := (*[1<<30 - 1]*C.shape_profile_t)(unsafe.Pointer(cInnerProfilePtrs))[:len(p.InnerProfiles):len(p.InnerProfiles)]
 
+		// 在C堆上分配内存存储内剖面计数数组
+		cInnerProfileCounts := C.malloc(C.size_t(len(p.InnerProfiles)) * C.size_t(unsafe.Sizeof(C.int(0))))
+		innerCountsSlice := (*[1<<30 - 1]C.int)(unsafe.Pointer(cInnerProfileCounts))[:len(p.InnerProfiles):len(p.InnerProfiles)]
+
+		// 为每个内剖面分配内存并填充数据
 		for i, innerProfile := range p.InnerProfiles {
-			innerProfileArrays[i] = innerProfile.toStruct()
-			innerProfilePtrs[i] = &innerProfileArrays[i]
-			innerProfileCounts[i] = C.int(len(p.InnerProfiles))
+			// 分配单个内剖面内存
+			innerProfileData := C.malloc(C.size_t(unsafe.Sizeof(C.shape_profile_t{})))
+			*(*C.shape_profile_t)(innerProfileData) = innerProfile.toStruct()
+
+			innerPtrsSlice[i] = (*C.shape_profile_t)(innerProfileData)
+			innerCountsSlice[i] = C.int(1) // 每个内剖面计数为1
 		}
 
-		c.inner_profiles = &innerProfilePtrs[0]
-		c.inner_profile_counts = &innerProfileCounts[0]
+		c.inner_profiles = (**C.shape_profile_t)(cInnerProfilePtrs)
+		c.inner_profile_counts = (*C.int)(cInnerProfileCounts)
+	} else {
+		c.inner_profiles = nil
+		c.inner_profile_counts = nil
 	}
 
 	if p.UpDir != nil {
@@ -5213,6 +5270,39 @@ func (p *PipeParams) to_struct() C.pipe_params_t {
 
 func CreatePipe(params PipeParams) *Shape {
 	cParams := params.to_struct()
+	defer func() {
+		if cParams.profiles != nil {
+			arraySlice := (*[1<<30 - 1]C.shape_profile_t)(unsafe.Pointer(cParams.profiles))[:cParams.profile_count:cParams.profile_count]
+			for i := range arraySlice {
+				freeShapeProfile(arraySlice[i])
+			}
+			C.free(unsafe.Pointer(cParams.profiles))
+		}
+
+		count := int(*cParams.inner_profile_counts) // 假设所有计数相同
+
+		// 转换为可索引的切片
+		innerPtrs := (*[1<<30 - 1]*C.shape_profile_t)(unsafe.Pointer(cParams.inner_profiles))[:count:count]
+
+		// 释放每个内剖面结构体
+		for i := 0; i < count; i++ {
+			if innerPtrs[i] != nil {
+				// 调用专门的释放函数释放shape_profile_t
+				freeShapeProfile(*innerPtrs[i])
+				// 释放结构体本身的内存
+				C.free(unsafe.Pointer(innerPtrs[i]))
+			}
+		}
+
+		// 释放指针数组
+		C.free(unsafe.Pointer(cParams.inner_profiles))
+		// 释放计数数组
+		C.free(unsafe.Pointer(cParams.inner_profile_counts))
+
+		cParams.inner_profiles = nil
+		cParams.inner_profile_counts = nil
+	}()
+
 	shp := C.create_pipe(cParams)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
@@ -5256,55 +5346,71 @@ func (p *MultiSegmentPipeParams) to_struct() C.multi_segment_pipe_params_t {
 	var c C.multi_segment_pipe_params_t
 
 	// 转换路径点数组
-	wirePtrs := make([]*C.pnt3d_t, len(p.Wires))
-	wireCounts := make([]C.int, len(p.Wires))
-	wireArrays := make([][]C.pnt3d_t, len(p.Wires))
+	// 分配C内存存储wire指针数组
+	cWires := C.malloc(C.size_t(len(p.Wires)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	wiresSlice := (*[1<<30 - 1]*C.pnt3d_t)(unsafe.Pointer(cWires))[:len(p.Wires):len(p.Wires)]
+
+	// 分配C内存存储wire计数数组
+	cWireCounts := C.malloc(C.size_t(len(p.Wires)) * C.size_t(unsafe.Sizeof(C.int(0))))
+	wireCountsSlice := (*[1<<30 - 1]C.int)(unsafe.Pointer(cWireCounts))[:len(p.Wires):len(p.Wires)]
 
 	for i, wire := range p.Wires {
-		wireArrays[i] = make([]C.pnt3d_t, len(wire))
+		points := C.malloc(C.size_t(len(wire)) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))
+		pointsSlice := (*[1<<30 - 1]C.pnt3d_t)(unsafe.Pointer(points))[:len(wire):len(wire)]
 		for j, pt := range wire {
-			wireArrays[i][j] = pt.val
+			pointsSlice[j] = pt.val
 		}
-		wirePtrs[i] = &wireArrays[i][0]
-		wireCounts[i] = C.int(len(wire))
+
+		wiresSlice[i] = (*C.pnt3d_t)(points)
+		wireCountsSlice[i] = C.int(len(wire))
 	}
 
-	c.wires = &wirePtrs[0]
-	c.wire_counts = &wireCounts[0]
+	c.wires = (**C.pnt3d_t)(cWires)
+	c.wire_counts = (*C.int)(cWireCounts)
 	c.wire_array_count = C.int(len(p.Wires))
-
 	// 转换剖面数组
-	cProfiles := make([]C.shape_profile_t, len(p.Profiles))
+	cProfiles := C.malloc(C.size_t(len(p.Profiles)) * C.size_t(unsafe.Sizeof(C.shape_profile_t{})))
+	profilesSlice := (*[1<<30 - 1]C.shape_profile_t)(unsafe.Pointer(cProfiles))[:len(p.Profiles):len(p.Profiles)]
+
 	for i, profile := range p.Profiles {
-		cProfiles[i] = profile.toStruct()
+		profilesSlice[i] = profile.toStruct()
 	}
 
-	c.profiles = &cProfiles[0]
+	c.profiles = (*C.shape_profile_t)(cProfiles)
 	c.profile_count = C.int(len(p.Profiles))
 
 	// 转换内剖面数组(如果存在)
 	if len(p.InnerProfiles) > 0 {
-		innerProfilePtrs := make([]*C.shape_profile_t, len(p.InnerProfiles))
-		innerProfileArrays := make([]C.shape_profile_t, len(p.InnerProfiles))
-		innerProfileCounts := make([]C.int, len(p.InnerProfiles))
+		cInnerProfiles := C.malloc(C.size_t(len(p.InnerProfiles)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+		innerProfilesSlice := (*[1<<30 - 1]*C.shape_profile_t)(unsafe.Pointer(cInnerProfiles))[:len(p.InnerProfiles):len(p.InnerProfiles)]
 
+		// 分配内存存储内剖面计数数组
+		cInnerProfileCounts := C.malloc(C.size_t(len(p.InnerProfiles)) * C.size_t(unsafe.Sizeof(C.int(0))))
+		innerProfileCountsSlice := (*[1<<30 - 1]C.int)(unsafe.Pointer(cInnerProfileCounts))[:len(p.InnerProfiles):len(p.InnerProfiles)]
+
+		// 为每个内剖面分配内存
 		for i, innerProfile := range p.InnerProfiles {
-			innerProfileArrays[i] = innerProfile.toStruct()
-			innerProfilePtrs[i] = &innerProfileArrays[i]
-			innerProfileCounts[i] = C.int(len(p.InnerProfiles))
+			innerProfileData := C.malloc(C.size_t(unsafe.Sizeof(C.shape_profile_t{})))
+			*(*C.shape_profile_t)(innerProfileData) = innerProfile.toStruct()
+
+			innerProfilesSlice[i] = (*C.shape_profile_t)(innerProfileData)
+			innerProfileCountsSlice[i] = C.int(1) // 假设每个内剖面只有一个
 		}
 
-		c.inner_profiles = &innerProfilePtrs[0]
-		c.inner_profile_counts = &innerProfileCounts[0]
+		c.inner_profiles = (**C.shape_profile_t)(cInnerProfiles)
+		c.inner_profile_counts = (*C.int)(cInnerProfileCounts)
 	}
 
 	// 转换线段类型数组
 	if len(p.SegmentTypes) > 0 {
-		cSegmentTypes := make([]C.segment_type_t, len(p.SegmentTypes))
+		cSegmentTypes := C.malloc(C.size_t(len(p.SegmentTypes)) * 4)
+		segmentTypesSlice := (*[1<<30 - 1]C.segment_type_t)(unsafe.Pointer(cSegmentTypes))[:len(p.SegmentTypes):len(p.SegmentTypes)]
+
 		for i, st := range p.SegmentTypes {
-			cSegmentTypes[i] = C.segment_type_t(st)
+			segmentTypesSlice[i] = C.segment_type_t(st)
 		}
-		c.segment_types = &cSegmentTypes[0]
+
+		c.segment_types = (*C.segment_type_t)(cSegmentTypes)
 		c.segment_type_count = C.int(len(p.SegmentTypes))
 	}
 
@@ -5316,12 +5422,66 @@ func (p *MultiSegmentPipeParams) to_struct() C.multi_segment_pipe_params_t {
 
 	// 转换过渡模式
 	c.transition_mode = C.transition_mode_t(p.TransitionMode)
-
 	return c
+}
+
+func freeMultiSegmentPipeParams(params C.multi_segment_pipe_params_t) {
+	// 1. 释放 wires 数组内存
+	if params.wires != nil && params.wire_counts != nil && params.wire_array_count > 0 {
+		// 将指针转换为可以索引的切片
+		wiresSlice := (*[1<<30 - 1]*C.pnt3d_t)(unsafe.Pointer(params.wires))[:params.wire_array_count:params.wire_array_count]
+
+		for i := C.int(0); i < params.wire_array_count; i++ {
+			if wiresSlice[i] != nil {
+				C.free(unsafe.Pointer(wiresSlice[i]))
+			}
+		}
+
+		// 释放 wires 指针数组
+		C.free(unsafe.Pointer(params.wires))
+		// 释放 wire_counts 数组
+		C.free(unsafe.Pointer(params.wire_counts))
+	}
+
+	// 2. 释放 profiles 数组
+	if params.profiles != nil && params.profile_count > 0 {
+		profs := (*[1<<30 - 1]C.shape_profile_t)(unsafe.Pointer(params.profiles))[:params.profile_count:params.profile_count]
+		for i := 0; i < int(params.profile_count); i++ {
+			freeShapeProfile(profs[i])
+		}
+		C.free(unsafe.Pointer(params.profiles))
+	}
+
+	// 3. 释放 inner_profiles 数组
+	if params.inner_profiles != nil && params.inner_profile_counts != nil {
+		// 获取数组长度 - 假设所有内剖面计数相同，取第一个
+		count := int(*(*C.int)(unsafe.Pointer(params.inner_profile_counts)))
+
+		innerProfilesSlice := (*[1<<30 - 1]*C.shape_profile_t)(unsafe.Pointer(params.inner_profiles))[:count:count]
+
+		// 释放每个内剖面结构体
+		for i := 0; i < count; i++ {
+			if innerProfilesSlice[i] != nil {
+				freeShapeProfile(*innerProfilesSlice[i])
+			}
+		}
+
+		// 释放 inner_profiles 指针数组
+		C.free(unsafe.Pointer(params.inner_profiles))
+		// 释放 inner_profile_counts 数组
+		C.free(unsafe.Pointer(params.inner_profile_counts))
+	}
+
+	// 4. 释放 segment_types 数组
+	if params.segment_types != nil && params.segment_type_count > 0 {
+		C.free(unsafe.Pointer(params.segment_types))
+	}
+
 }
 
 func CreateMultiSegmentPipe(params MultiSegmentPipeParams) *Shape {
 	cParams := params.to_struct()
+	defer freeMultiSegmentPipeParams(cParams)
 	shp := C.create_multi_segment_pipe(cParams)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
@@ -5915,6 +6075,7 @@ func (p *CatenaryParams) to_struct() C.catenary_params_t {
 func CreateCatenary(params CatenaryParams) *Shape {
 	cParams := params.to_struct()
 	shp := C.create_catenary(cParams)
+	defer freeShapeProfile(cParams.profile)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
@@ -5922,6 +6083,7 @@ func CreateCatenary(params CatenaryParams) *Shape {
 
 func CreateCatenaryWithPlace(params CatenaryParams, position Point3, direction Dir3, xDir Dir3) *Shape {
 	cParams := params.to_struct()
+	defer freeShapeProfile(cParams.profile)
 	shp := C.create_catenary_with_place(cParams, position.val, direction.val, xDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
@@ -6333,6 +6495,7 @@ func (p *PipeShapeParams) to_struct() C.pipe_shape_params_t {
 
 func CreatePipeShape(params PipeShapeParams) *Shape {
 	cParams := params.to_struct()
+	defer freeShapeProfile(cParams.profile)
 	shp := C.create_pipe_shape(cParams)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)

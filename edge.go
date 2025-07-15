@@ -354,16 +354,36 @@ func (s *Edge) Reverse() {
 }
 
 func (e *Edge) Params(pts []Point3, tol float64) []float64 {
-	count := len(pts)
-	cPoints := make([]C.pnt3d_t, count)
-	params := make([]float64, count)
-
-	for i := range pts {
-		cPoints[i] = pts[i].val
+	if len(pts) == 0 {
+		return nil
 	}
 
-	C.topo_edge_params(e.inner.val, &cPoints[0], C.int(count),
-		(*C.double)(&params[0]), C.double(tol))
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(len(pts)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	defer C.free(cPoints)
+
+	params := make([]float64, len(pts))
+	cParams := C.malloc(C.size_t(len(pts)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cParams)
+
+	// 复制数据
+	for i := range pts {
+		*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = pts[i].val
+	}
+
+	C.topo_edge_params(
+		e.inner.val,
+		(*C.struct__pnt3d_t)(cPoints),
+		C.int(len(pts)),
+		(*C.double)(cParams),
+		C.double(tol),
+	)
+
+	// 复制结果
+	for i := 0; i < len(pts); i++ {
+		params[i] = float64(*(*C.double)(unsafe.Pointer(uintptr(cParams) + uintptr(i)*unsafe.Sizeof(C.double(0)))))
+	}
+
 	return params
 }
 
@@ -380,18 +400,38 @@ func (e *Edge) TangentAt(param float64) Dir3 {
 }
 
 func (e *Edge) Tangents(params []float64) []Dir3 {
-	count := len(params)
-	tangents := make([]Dir3, count)
-	cParams := make([]float64, count)
-	copy(cParams, params)
-
-	cTangents := make([]C.dir3d_t, count)
-	C.topo_edge_tangents(e.inner.val, (*C.double)(&cParams[0]), C.int(count),
-		&cTangents[0])
-
-	for i := range cTangents {
-		tangents[i] = Dir3{val: cTangents[i]}
+	if len(params) == 0 {
+		return nil
 	}
+
+	// 分配C内存
+	cParams := C.malloc(C.size_t(len(params)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cParams)
+
+	cTangents := C.malloc(C.size_t(len(params)) * C.size_t(unsafe.Sizeof(C.struct__dir3d_t{})))
+	defer C.free(cTangents)
+
+	// 复制输入数据
+	for i := range params {
+		*(*C.double)(unsafe.Pointer(uintptr(cParams) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(params[i])
+	}
+
+	// 调用C函数
+	C.topo_edge_tangents(
+		e.inner.val,
+		(*C.double)(cParams),
+		C.int(len(params)),
+		(*C.struct__dir3d_t)(cTangents),
+	)
+
+	// 转换结果
+	tangents := make([]Dir3, len(params))
+	for i := 0; i < len(params); i++ {
+		tangents[i] = Dir3{
+			val: *(*C.struct__dir3d_t)(unsafe.Pointer(uintptr(cTangents) + uintptr(i)*unsafe.Sizeof(C.struct__dir3d_t{}))),
+		}
+	}
+
 	return tangents
 }
 
@@ -412,18 +452,39 @@ func (e *Edge) PositionAt(d float64, mode int) Point3 {
 }
 
 func (e *Edge) Positions(ds []float64, mode int) []Point3 {
-	count := len(ds)
-	points := make([]Point3, count)
-	cPoints := make([]C.pnt3d_t, count)
-	cDs := make([]float64, count)
-	copy(cDs, ds)
-
-	C.topo_edge_positions(e.inner.val, (*C.double)(&cDs[0]), C.int(count),
-		&cPoints[0], C.int(mode))
-
-	for i := range cPoints {
-		points[i] = Point3{val: cPoints[i]}
+	if len(ds) == 0 {
+		return nil
 	}
+
+	// 分配C内存
+	cDs := C.malloc(C.size_t(len(ds)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cDs)
+
+	cPoints := C.malloc(C.size_t(len(ds)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	defer C.free(cPoints)
+
+	// 复制输入数据
+	for i := range ds {
+		*(*C.double)(unsafe.Pointer(uintptr(cDs) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(ds[i])
+	}
+
+	// 调用C函数
+	C.topo_edge_positions(
+		e.inner.val,
+		(*C.double)(cDs),
+		C.int(len(ds)),
+		(*C.struct__pnt3d_t)(cPoints),
+		C.int(mode),
+	)
+
+	// 转换结果
+	points := make([]Point3, len(ds))
+	for i := 0; i < len(ds); i++ {
+		points[i] = Point3{
+			val: *(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt3d_t{}))),
+		}
+	}
+
 	return points
 }
 
@@ -468,23 +529,43 @@ func (e *Edge) LocationAt(d float64, mode, frame int, planar bool) *TopoLocation
 }
 
 func (e *Edge) Locations(ds []float64, mode, frame int, planar bool) []*TopoLocation {
-	count := len(ds)
-	cDs := make([]float64, count)
-	copy(cDs, ds)
-
-	var resultCount C.int
-	locs := C.topo_edge_locations(e.inner.val, (*C.double)(&cDs[0]), C.int(count),
-		C.int(mode), C.int(frame), C.bool(planar), &resultCount)
-	if locs == nil {
+	if len(ds) == 0 {
 		return nil
 	}
-	defer C.topo_location_list_free(locs, resultCount)
 
-	locSlice := (*[1 << 30]*C.struct__topo_location_t)(unsafe.Pointer(locs))[:resultCount:resultCount]
+	// 分配C内存
+	cDs := C.malloc(C.size_t(len(ds)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cDs)
+
+	// 复制输入数据
+	for i := range ds {
+		*(*C.double)(unsafe.Pointer(uintptr(cDs) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(ds[i])
+	}
+
+	var resultCount C.int
+	cLocs := C.topo_edge_locations(
+		e.inner.val,
+		(*C.double)(cDs),
+		C.int(len(ds)),
+		C.int(mode),
+		C.int(frame),
+		C.bool(planar),
+		&resultCount,
+	)
+	if cLocs == nil {
+		return nil
+	}
+	defer C.topo_location_list_free(cLocs, resultCount)
+
+	// 转换结果
+	locSlice := (*[1 << 30]*C.struct__topo_location_t)(unsafe.Pointer(cLocs))[:resultCount:resultCount]
 	locations := make([]*TopoLocation, resultCount)
 
 	for i := range locSlice {
-		locations[i] = &TopoLocation{inner: &innerTopoLocation{val: locSlice[i]}}
+		locations[i] = &TopoLocation{
+			inner: &innerTopoLocation{val: locSlice[i]},
+		}
+		runtime.SetFinalizer(locations[i].inner, (*innerTopoLocation).free)
 	}
 
 	return locations
@@ -506,6 +587,7 @@ func (e *Edge) Projected(f *Face, direction Vector3, closest bool) ([]*Shape, in
 
 	for i := range resultSlice {
 		shapes[i] = &Shape{inner: &innerShape{val: resultSlice[i]}}
+		runtime.SetFinalizer(shapes[i].inner, (*innerShape).free)
 	}
 
 	return shapes, int(ret)
@@ -517,13 +599,38 @@ func (e *Edge) CurvatureAt(d float64, mode int, resolution float64) float64 {
 }
 
 func (e *Edge) Curvatures(ds []float64, mode int, resolution float64) []float64 {
-	count := len(ds)
-	curvatures := make([]float64, count)
-	cDs := make([]float64, count)
-	copy(cDs, ds)
+	if len(ds) == 0 {
+		return nil
+	}
 
-	C.topo_edge_curvatures(e.inner.val, (*C.double)(&cDs[0]), C.int(count),
-		(*C.double)(&curvatures[0]), C.int(mode), C.double(resolution))
+	// 分配C内存
+	cDs := C.malloc(C.size_t(len(ds)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cDs)
+
+	curvatures := make([]float64, len(ds))
+	cCurvatures := C.malloc(C.size_t(len(ds)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cCurvatures)
+
+	// 复制输入数据
+	for i := range ds {
+		*(*C.double)(unsafe.Pointer(uintptr(cDs) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(ds[i])
+	}
+
+	// 调用C函数
+	C.topo_edge_curvatures(
+		e.inner.val,
+		(*C.double)(cDs),
+		C.int(len(ds)),
+		(*C.double)(cCurvatures),
+		C.int(mode),
+		C.double(resolution),
+	)
+
+	// 复制结果
+	for i := 0; i < len(ds); i++ {
+		curvatures[i] = float64(*(*C.double)(unsafe.Pointer(uintptr(cCurvatures) + uintptr(i)*unsafe.Sizeof(C.double(0)))))
+	}
+
 	return curvatures
 }
 
@@ -538,7 +645,27 @@ func (t *innerEdge) free() {
 }
 
 func TopoMakeEdgeFromPoints(pts []Point3) *Edge {
-	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_edge_from_points(&pts[0].val, C.int(len(pts)))}}
+	if len(pts) == 0 {
+		return nil
+	}
+
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(len(pts)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	defer C.free(cPoints)
+
+	// 复制数据
+	for i := range pts {
+		*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = pts[i].val
+	}
+
+	p := &Edge{
+		inner: &innerEdge{
+			val: C.topo_edge_make_edge_from_points(
+				(*C.struct__pnt3d_t)(cPoints),
+				C.int(len(pts)),
+			),
+		},
+	}
 	runtime.SetFinalizer(p.inner, (*innerEdge).free)
 	return p
 }
@@ -951,23 +1078,55 @@ func TopoEdgeMakePolygonFromFourVertex(p1, p2, p3, p4 Vertex, Close bool) *Edge 
 	runtime.SetFinalizer(p.inner, (*innerEdge).free)
 	return p
 }
-
 func TopoEdgeMakePolygonFromVertices(vers []Vertex, Close bool) *Edge {
-	cvs := make([]C.struct__topo_vertex_t, len(vers))
-	for i := range vers {
-		cvs[i] = vers[i].inner.val
+	if len(vers) == 0 {
+		return nil
 	}
-	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_polygon_from_vertices(&cvs[0], C.int(len(vers)), C.bool(Close))}}
+
+	// 分配C内存
+	cVertices := C.malloc(C.size_t(len(vers)) * C.size_t(unsafe.Sizeof(C.struct__topo_vertex_t{})))
+	defer C.free(cVertices)
+
+	// 复制数据
+	for i := range vers {
+		*(*C.struct__topo_vertex_t)(unsafe.Pointer(uintptr(cVertices) + uintptr(i)*unsafe.Sizeof(C.struct__topo_vertex_t{}))) = vers[i].inner.val
+	}
+
+	p := &Edge{
+		inner: &innerEdge{
+			val: C.topo_edge_make_polygon_from_vertices(
+				(*C.struct__topo_vertex_t)(cVertices),
+				C.int(len(vers)),
+				C.bool(Close),
+			),
+		},
+	}
 	runtime.SetFinalizer(p.inner, (*innerEdge).free)
 	return p
 }
-
 func TopoEdgeMakePolygonFromPoints(points []Point3, Close bool) *Edge {
-	cvs := make([]C.struct__pnt3d_t, len(points))
-	for i := range points {
-		cvs[i] = points[i].val
+	if len(points) == 0 {
+		return nil
 	}
-	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_polygonn_from_points(&cvs[0], C.int(len(points)), C.bool(Close))}}
+
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(len(points)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	defer C.free(cPoints)
+
+	// 复制数据
+	for i := range points {
+		*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = points[i].val
+	}
+
+	p := &Edge{
+		inner: &innerEdge{
+			val: C.topo_edge_make_polygonn_from_points(
+				(*C.struct__pnt3d_t)(cPoints),
+				C.int(len(points)),
+				C.bool(Close),
+			),
+		},
+	}
 	runtime.SetFinalizer(p.inner, (*innerEdge).free)
 	return p
 }
@@ -979,52 +1138,118 @@ func TopoMakeRect(width, height float64) *Edge {
 }
 
 func TopoMakeSpline(vertices []Point3, tol float64, periodic bool) *Edge {
-	count := len(vertices)
-	cVertices := make([]C.pnt3d_t, count)
-	for i, v := range vertices {
-		cVertices[i] = v.val
+	if len(vertices) == 0 {
+		return nil
 	}
-	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_spline(&cVertices[0], C.int(count),
-		C.double(tol), C.bool(periodic))}}
+
+	// 分配C内存
+	cVertices := C.malloc(C.size_t(len(vertices)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	defer C.free(cVertices)
+
+	// 复制数据
+	for i := range vertices {
+		*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cVertices) + uintptr(i)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = vertices[i].val
+	}
+
+	p := &Edge{
+		inner: &innerEdge{
+			val: C.topo_edge_make_spline(
+				(*C.struct__pnt3d_t)(cVertices),
+				C.int(len(vertices)),
+				C.double(tol),
+				C.bool(periodic),
+			),
+		},
+	}
 	runtime.SetFinalizer(p.inner, (*innerEdge).free)
 	return p
 }
 
 func TopoMakeSplineFromTangentsAndParameters(points []Point3, tangents []Vector3,
 	parameters []float64, tol float64, periodic, scale bool) *Edge {
-	pntCount := len(points)
-	tanCount := len(tangents)
-	paramCount := len(parameters)
 
-	cPoints := make([]C.pnt3d_t, pntCount)
-	for i, p := range points {
-		cPoints[i] = p.val
+	// 参数检查
+	if len(points) == 0 || len(tangents) == 0 || len(parameters) == 0 {
+		return nil
 	}
 
-	cTangents := make([]C.vec3d_t, tanCount)
-	for i, t := range tangents {
-		cTangents[i] = t.val
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(len(points)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	defer C.free(cPoints)
+
+	cTangents := C.malloc(C.size_t(len(tangents)) * C.size_t(unsafe.Sizeof(C.struct__vec3d_t{})))
+	defer C.free(cTangents)
+
+	cParams := C.malloc(C.size_t(len(parameters)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cParams)
+
+	// 复制数据
+	for i := range points {
+		*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = points[i].val
 	}
 
-	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_spline_from_tangents_and_parameters(
-		&cPoints[0], C.int(pntCount), &cTangents[0], C.int(tanCount),
-		(*C.double)(&parameters[0]), C.int(paramCount), C.double(tol),
-		C.bool(periodic), C.bool(scale))}}
+	for i := range tangents {
+		*(*C.struct__vec3d_t)(unsafe.Pointer(uintptr(cTangents) + uintptr(i)*unsafe.Sizeof(C.struct__vec3d_t{}))) = tangents[i].val
+	}
+
+	for i := range parameters {
+		*(*C.double)(unsafe.Pointer(uintptr(cParams) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(parameters[i])
+	}
+
+	p := &Edge{
+		inner: &innerEdge{
+			val: C.topo_edge_make_spline_from_tangents_and_parameters(
+				(*C.struct__pnt3d_t)(cPoints),
+				C.int(len(points)),
+				(*C.struct__vec3d_t)(cTangents),
+				C.int(len(tangents)),
+				(*C.double)(cParams),
+				C.int(len(parameters)),
+				C.double(tol),
+				C.bool(periodic),
+				C.bool(scale),
+			),
+		},
+	}
 	runtime.SetFinalizer(p.inner, (*innerEdge).free)
 	return p
 }
 
-func TopoMakeSplineApprox(points []Point3, tolerance float64, smoothing []float64,
-	minDegree, maxDegree int) *Edge {
-	count := len(points)
-	cPoints := make([]C.pnt3d_t, count)
-	for i, p := range points {
-		cPoints[i] = p.val
+func TopoMakeSplineApprox(points []Point3, tolerance float64,
+	smoothing []float64, minDegree, maxDegree int) *Edge {
+
+	if len(points) == 0 || len(smoothing) == 0 {
+		return nil
 	}
 
-	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_spline_approx(
-		&cPoints[0], C.int(count), C.double(tolerance),
-		(*C.double)(&smoothing[0]), C.int(minDegree), C.int(maxDegree))}}
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(len(points)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	defer C.free(cPoints)
+
+	cSmoothing := C.malloc(C.size_t(len(smoothing)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cSmoothing)
+
+	// 复制数据
+	for i := range points {
+		*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = points[i].val
+	}
+
+	for i := range smoothing {
+		*(*C.double)(unsafe.Pointer(uintptr(cSmoothing) + uintptr(i)*unsafe.Sizeof(C.double(0)))) = C.double(smoothing[i])
+	}
+
+	p := &Edge{
+		inner: &innerEdge{
+			val: C.topo_edge_make_spline_approx(
+				(*C.struct__pnt3d_t)(cPoints),
+				C.int(len(points)),
+				C.double(tolerance),
+				(*C.double)(cSmoothing),
+				C.int(minDegree),
+				C.int(maxDegree),
+			),
+		},
+	}
 	runtime.SetFinalizer(p.inner, (*innerEdge).free)
 	return p
 }
@@ -1057,13 +1282,27 @@ func TopoMakeEllipse(majorRadius, minorRadius float64, center Point3,
 }
 
 func TopoMakeBezier(points []Point3) *Edge {
-	count := len(points)
-	cPoints := make([]C.pnt3d_t, count)
-	for i, p := range points {
-		cPoints[i] = p.val
+	if len(points) == 0 {
+		return nil
 	}
-	p := &Edge{inner: &innerEdge{val: C.topo_edge_make_bezier(
-		&cPoints[0], C.int(count))}}
+
+	// 分配C内存
+	cPoints := C.malloc(C.size_t(len(points)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	defer C.free(cPoints)
+
+	// 复制数据
+	for i := range points {
+		*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = points[i].val
+	}
+
+	p := &Edge{
+		inner: &innerEdge{
+			val: C.topo_edge_make_bezier(
+				(*C.struct__pnt3d_t)(cPoints),
+				C.int(len(points)),
+			),
+		},
+	}
 	runtime.SetFinalizer(p.inner, (*innerEdge).free)
 	return p
 }

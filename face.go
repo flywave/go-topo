@@ -335,27 +335,55 @@ func (t *Face) Revolve(shp *Shape, p1, p2 Point3, angle float64) int {
 }
 
 func (s *Face) Sweep(spine *Wire, profiles []Shape, cornerMode int) int {
-	cshp := make([]*C.struct__topo_shape_t, len(profiles))
+	// 分配C内存来存储形状指针
+	cshp := C.malloc(C.size_t(len(profiles)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cshp)
+
+	// 转换为C指针数组
+	cshpArray := (*[1<<30 - 1]*C.struct__topo_shape_t)(cshp)
 	for i := range profiles {
-		cshp[i] = profiles[i].inner.val
+		cshpArray[i] = profiles[i].inner.val
 	}
-	return int(C.topo_face_sweep(s.inner.val, spine.inner.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
+
+	return int(C.topo_face_sweep(s.inner.val, spine.inner.val,
+		(**C.struct__topo_shape_t)(cshp), C.int(len(profiles)), C.int(cornerMode)))
 }
 
 func (s *Face) SweepWire(spine *Wire, profiles []Wire, cornerMode int) int {
-	cshp := make([]C.struct__topo_wire_t, len(profiles))
-	for i := range profiles {
-		cshp[i] = profiles[i].inner.val
+	if len(profiles) == 0 {
+		return int(C.topo_face_sweep_wire(s.inner.val, spine.inner.val, nil, 0, C.int(cornerMode)))
 	}
-	return int(C.topo_face_sweep_wire(s.inner.val, spine.inner.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
+
+	cArray := C.malloc(C.size_t(len(profiles)) * C.size_t(unsafe.Sizeof(C.struct__topo_wire_t{})))
+	defer C.free(cArray)
+
+	cArrayPtr := (*[1<<30 - 1]C.struct__topo_wire_t)(cArray)
+	for i := range profiles {
+		cArrayPtr[i] = profiles[i].inner.val
+	}
+
+	return int(C.topo_face_sweep_wire(
+		s.inner.val,
+		spine.inner.val,
+		(*C.struct__topo_wire_t)(cArray),
+		C.int(len(profiles)),
+		C.int(cornerMode),
+	))
 }
 
 func (t *Face) Loft(profiles []Shape, ruled bool, tolerance float64) int {
-	prs := make([]*C.struct__topo_shape_t, len(profiles))
+	// 分配C内存
+	cshp := C.malloc(C.size_t(len(profiles)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cshp)
+
+	// 转换为C指针数组
+	cshpArray := (*[1<<30 - 1]*C.struct__topo_shape_t)(cshp)
 	for i := range profiles {
-		prs[i] = profiles[i].inner.val
+		cshpArray[i] = profiles[i].inner.val
 	}
-	return int(C.topo_face_loft(t.inner.val, &prs[0], C.int(len(profiles)), C.bool(ruled), C.double(tolerance)))
+
+	return int(C.topo_face_loft(t.inner.val, (**C.struct__topo_shape_t)(cshp),
+		C.int(len(profiles)), C.bool(ruled), C.double(tolerance)))
 }
 
 func (t *Face) Boolean(tool *Face, op int) int {
@@ -374,17 +402,32 @@ func (f *Face) ParamAt(pt Point3) (u, v float64) {
 }
 
 func (f *Face) Params(pts []Point3, tol float64) ([]float64, []float64) {
-	count := len(pts)
-	cPoints := make([]C.pnt3d_t, count)
-	us := make([]float64, count)
-	vs := make([]float64, count)
-
-	for i := range pts {
-		cPoints[i] = pts[i].val
+	if len(pts) == 0 {
+		return nil, nil
 	}
 
-	C.topo_face_params(f.inner.val, &cPoints[0], C.int(count),
-		(*C.double)(&us[0]), (*C.double)(&vs[0]), C.double(tol))
+	// 分配C内存存储点数据
+	cPoints := C.malloc(C.size_t(len(pts)) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))
+	defer C.free(cPoints)
+
+	// 填充C数组
+	cPointsPtr := (*[1<<30 - 1]C.pnt3d_t)(cPoints)
+	for i := range pts {
+		cPointsPtr[i] = pts[i].val
+	}
+
+	// 分配Go切片用于返回结果
+	us := make([]float64, len(pts))
+	vs := make([]float64, len(pts))
+
+	C.topo_face_params(
+		f.inner.val,
+		(*C.pnt3d_t)(cPoints),
+		C.int(len(pts)),
+		(*C.double)(&us[0]),
+		(*C.double)(&vs[0]),
+		C.double(tol),
+	)
 	return us, vs
 }
 
@@ -393,20 +436,45 @@ func (f *Face) PositionAt(u, v float64) Point3 {
 }
 
 func (f *Face) Positions(us, vs []float64) []Point3 {
-	count := len(us)
-	points := make([]Point3, count)
-	cPoints := make([]C.pnt3d_t, count)
-	cUs := make([]float64, count)
-	cVs := make([]float64, count)
-	copy(cUs, us)
-	copy(cVs, vs)
-
-	C.topo_face_positions(f.inner.val, (*C.double)(&cUs[0]), (*C.double)(&cVs[0]),
-		C.int(count), &cPoints[0])
-
-	for i := range cPoints {
-		points[i] = Point3{val: cPoints[i]}
+	if len(us) == 0 || len(vs) == 0 || len(us) != len(vs) {
+		return nil
 	}
+
+	count := len(us)
+
+	// 分配C内存存储u/v参数
+	cUs := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cUs)
+	cVs := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cVs)
+
+	// 填充u/v数组
+	cUsPtr := (*[1<<30 - 1]C.double)(cUs)
+	cVsPtr := (*[1<<30 - 1]C.double)(cVs)
+	for i := 0; i < count; i++ {
+		cUsPtr[i] = C.double(us[i])
+		cVsPtr[i] = C.double(vs[i])
+	}
+
+	// 分配C内存存储结果点
+	cPoints := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))
+	defer C.free(cPoints)
+
+	C.topo_face_positions(
+		f.inner.val,
+		(*C.double)(cUs),
+		(*C.double)(cVs),
+		C.int(count),
+		(*C.pnt3d_t)(cPoints),
+	)
+
+	// 转换结果到Go切片
+	points := make([]Point3, count)
+	cPointsPtr := (*[1<<30 - 1]C.pnt3d_t)(cPoints)
+	for i := 0; i < count; i++ {
+		points[i] = Point3{val: cPointsPtr[i]}
+	}
+
 	return points
 }
 
@@ -422,46 +490,96 @@ func (f *Face) NormalAtUV(u, v float64) (Vector3, Point3) {
 }
 
 func (f *Face) Normals(us, vs []float64) ([]Vector3, []Point3) {
+	if len(us) == 0 || len(vs) == 0 || len(us) != len(vs) {
+		return nil, nil
+	}
+
 	count := len(us)
+
+	// 分配C内存存储u/v参数
+	cUs := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cUs)
+	cVs := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cVs)
+
+	// 填充u/v数组
+	cUsPtr := (*[1<<30 - 1]C.double)(cUs)
+	cVsPtr := (*[1<<30 - 1]C.double)(cVs)
+	for i := 0; i < count; i++ {
+		cUsPtr[i] = C.double(us[i])
+		cVsPtr[i] = C.double(vs[i])
+	}
+
+	// 分配C内存存储结果
+	cNormals := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(C.vec3d_t{})))
+	defer C.free(cNormals)
+	cPoints := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))
+	defer C.free(cPoints)
+
+	C.topo_face_normals(
+		f.inner.val,
+		(*C.double)(cUs),
+		(*C.double)(cVs),
+		C.int(count),
+		(*C.vec3d_t)(cNormals),
+		(*C.pnt3d_t)(cPoints),
+	)
+
+	// 转换结果到Go切片
 	normals := make([]Vector3, count)
 	points := make([]Point3, count)
-	cNormals := make([]C.vec3d_t, count)
-	cPoints := make([]C.pnt3d_t, count)
-	cUs := make([]float64, count)
-	cVs := make([]float64, count)
-	copy(cUs, us)
-	copy(cVs, vs)
-
-	C.topo_face_normals(f.inner.val, (*C.double)(&cUs[0]), (*C.double)(&cVs[0]),
-		C.int(count), &cNormals[0], &cPoints[0])
-
-	for i := range cNormals {
-		normals[i] = Vector3{val: cNormals[i]}
-		points[i] = Point3{val: cPoints[i]}
+	cNormalsPtr := (*[1<<30 - 1]C.vec3d_t)(cNormals)
+	cPointsPtr := (*[1<<30 - 1]C.pnt3d_t)(cPoints)
+	for i := 0; i < count; i++ {
+		normals[i] = Vector3{val: cNormalsPtr[i]}
+		points[i] = Point3{val: cPointsPtr[i]}
 	}
+
 	return normals, points
 }
 
 func (f *Face) Fillet2D(radius float64, vertices []*Vertex) *Face {
-	count := len(vertices)
-	cVertices := make([]C.struct__topo_vertex_t, count)
-	for i, v := range vertices {
-		cVertices[i] = v.inner.val
+	if len(vertices) == 0 {
+		return &Face{inner: &innerFace{val: C.topo_face_fillet2d(f.inner.val, C.double(radius), nil, 0)}}
 	}
-	p := &Face{inner: &innerFace{val: C.topo_face_fillet2d(f.inner.val,
-		C.double(radius), &cVertices[0], C.int(count))}}
+
+	cVertices := C.malloc(C.size_t(len(vertices)) * C.size_t(unsafe.Sizeof(C.struct__topo_vertex_t{})))
+	defer C.free(cVertices)
+
+	cVerticesPtr := (*[1<<30 - 1]C.struct__topo_vertex_t)(cVertices)
+	for i, v := range vertices {
+		cVerticesPtr[i] = v.inner.val
+	}
+
+	p := &Face{inner: &innerFace{val: C.topo_face_fillet2d(
+		f.inner.val,
+		C.double(radius),
+		(*C.struct__topo_vertex_t)(cVertices),
+		C.int(len(vertices))),
+	}}
 	runtime.SetFinalizer(p.inner, (*innerFace).free)
 	return p
 }
 
 func (f *Face) Chamfer2D(distance float64, vertices []*Vertex) *Face {
-	count := len(vertices)
-	cVertices := make([]C.struct__topo_vertex_t, count)
-	for i, v := range vertices {
-		cVertices[i] = v.inner.val
+	if len(vertices) == 0 {
+		return &Face{inner: &innerFace{val: C.topo_face_chamfer2d(f.inner.val, C.double(distance), nil, 0)}}
 	}
-	p := &Face{inner: &innerFace{val: C.topo_face_chamfer2d(f.inner.val,
-		C.double(distance), &cVertices[0], C.int(count))}}
+
+	cVertices := C.malloc(C.size_t(len(vertices)) * C.size_t(unsafe.Sizeof(C.struct__topo_vertex_t{})))
+	defer C.free(cVertices)
+
+	cVerticesPtr := (*[1<<30 - 1]C.struct__topo_vertex_t)(cVertices)
+	for i, v := range vertices {
+		cVerticesPtr[i] = v.inner.val
+	}
+
+	p := &Face{inner: &innerFace{val: C.topo_face_chamfer2d(
+		f.inner.val,
+		C.double(distance),
+		(*C.struct__topo_vertex_t)(cVertices),
+		C.int(len(vertices))),
+	}}
 	runtime.SetFinalizer(p.inner, (*innerFace).free)
 	return p
 }
@@ -680,62 +798,109 @@ func TopoMakeFaceFromFaceWire(f *Face, w Wire) *Face {
 	runtime.SetFinalizer(p.inner, (*innerFace).free)
 	return p
 }
-
 func TopoMakeFaceFromWires(ws []Wire) *Face {
-	cws := make([]C.struct__topo_wire_t, len(ws))
-	for i := range ws {
-		cws[i] = ws[i].inner.val
+	if len(ws) == 0 {
+		return &Face{inner: &innerFace{val: C.topo_face_make_face_from_wire(nil, 0)}}
 	}
-	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_wire(&cws[0], C.int(len(ws)))}}
+
+	cArray := C.malloc(C.size_t(len(ws)) * C.size_t(unsafe.Sizeof(C.struct__topo_wire_t{})))
+	defer C.free(cArray)
+
+	cArrayPtr := (*[1<<30 - 1]C.struct__topo_wire_t)(cArray)
+	for i := range ws {
+		cArrayPtr[i] = ws[i].inner.val
+	}
+
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_wire(
+		(*C.struct__topo_wire_t)(cArray),
+		C.int(len(ws)),
+	)}}
 	runtime.SetFinalizer(p.inner, (*innerFace).free)
 	return p
 }
 
 func TopoMakeFaceFromEdges(ws []Edge, pts []Point3) *Face {
-	cws := make([]C.struct__topo_edge_t, len(ws))
+	if len(ws) == 0 || len(pts) == 0 {
+		return &Face{inner: &innerFace{val: C.topo_face_make_face_from_egdes(nil, 0, nil, 0)}}
+	}
+
+	// 分配并填充edges数组
+	cEdges := C.malloc(C.size_t(len(ws)) * C.size_t(unsafe.Sizeof(C.struct__topo_edge_t{})))
+	defer C.free(cEdges)
+	cEdgesPtr := (*[1<<30 - 1]C.struct__topo_edge_t)(cEdges)
 	for i := range ws {
-		cws[i] = ws[i].inner.val
+		cEdgesPtr[i] = ws[i].inner.val
 	}
-	cpts := make([]C.struct__pnt3d_t, len(pts))
+
+	// 分配并填充points数组
+	cPoints := C.malloc(C.size_t(len(pts)) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))
+	defer C.free(cPoints)
+	cPointsPtr := (*[1<<30 - 1]C.pnt3d_t)(cPoints)
 	for i := range pts {
-		cpts[i] = pts[i].val
+		cPointsPtr[i] = pts[i].val
 	}
-	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_egdes(&cws[0], C.int(len(ws)), &cpts[0], C.int(len(pts)))}}
+
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_egdes(
+		(*C.struct__topo_edge_t)(cEdges),
+		C.int(len(ws)),
+		(*C.pnt3d_t)(cPoints),
+		C.int(len(pts)),
+	)}}
 	runtime.SetFinalizer(p.inner, (*innerFace).free)
 	return p
 }
 
 func TopoMakeFaceFromPoints(pts []Point3) *Face {
-	cpts := make([]C.struct__pnt3d_t, len(pts))
-	for i := range pts {
-		cpts[i] = pts[i].val
+	if len(pts) == 0 {
+		return &Face{inner: &innerFace{val: C.topo_face_make_face_from_points(nil, 0)}}
 	}
-	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_points(&cpts[0], C.int(len(pts)))}}
+
+	cArray := C.malloc(C.size_t(len(pts)) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))
+	defer C.free(cArray)
+
+	cArrayPtr := (*[1<<30 - 1]C.pnt3d_t)(cArray)
+	for i := range pts {
+		cArrayPtr[i] = pts[i].val
+	}
+
+	p := &Face{inner: &innerFace{val: C.topo_face_make_face_from_points(
+		(*C.pnt3d_t)(cArray),
+		C.int(len(pts)),
+	)}}
 	runtime.SetFinalizer(p.inner, (*innerFace).free)
 	return p
 }
 
 func TopoMakeFaceFromOuterAndInners(outer *Wire, inners []*Wire) []*Face {
 	innerCount := len(inners)
-	cInners := make([]C.struct__topo_wire_t, innerCount)
-	for i, w := range inners {
-		cInners[i] = w.inner.val
-	}
+	var cInners unsafe.Pointer
 
-	var cInnersPtr *C.struct__topo_wire_t
 	if innerCount > 0 {
-		cInnersPtr = &cInners[0]
+		cInners = C.malloc(C.size_t(innerCount) * C.size_t(unsafe.Sizeof(C.struct__topo_wire_t{})))
+		defer C.free(cInners)
+
+		cInnersArray := (*[1<<30 - 1]C.struct__topo_wire_t)(cInners)
+		for i, w := range inners {
+			cInnersArray[i] = w.inner.val
+		}
 	}
 
 	var resultCount C.int
-	cFace := C.topo_face_make_from_wires(outer.inner.val, cInnersPtr, C.int(innerCount), &resultCount)
+	cFace := C.topo_face_make_from_wires(outer.inner.val,
+		(*C.struct__topo_wire_t)(cInners),
+		C.int(innerCount),
+		&resultCount)
+
 	defer C.topo_face_list_free(cFace, resultCount)
+
 	cfaceSlice := (*[1 << 30]C.struct__topo_face_t)(unsafe.Pointer(cFace))[:resultCount:resultCount]
 	faces := make([]*Face, int(resultCount))
+
 	for i := 0; i < int(resultCount); i++ {
 		faces[i] = &Face{inner: &innerFace{val: cfaceSlice[i]}}
 		runtime.SetFinalizer(faces[i].inner, (*innerFace).free)
 	}
+
 	return faces
 }
 
@@ -743,30 +908,27 @@ func TopoMakeComplexFace(edges []*Shape, constraints []*Shape, continuity, degre
 	nbPtsOnCurve, nbIter int, anisotropy bool, tol2d, tol3d, tolAngle, tolCurv float64,
 	maxDegree, maxSegments int) *Face {
 
+	// 处理edges
 	edgeCount := len(edges)
-	cEdges := make([]*C.struct__topo_shape_t, edgeCount)
+	cEdges := C.malloc(C.size_t(edgeCount) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cEdges)
+	cEdgesArray := (*[1<<30 - 1]*C.struct__topo_shape_t)(cEdges)
 	for i, e := range edges {
-		cEdges[i] = e.inner.val
+		cEdgesArray[i] = e.inner.val
 	}
 
+	// 处理constraints
 	constraintCount := len(constraints)
-	cConstraints := make([]*C.struct__topo_shape_t, constraintCount)
+	cConstraints := C.malloc(C.size_t(constraintCount) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cConstraints)
+	cConstraintsArray := (*[1<<30 - 1]*C.struct__topo_shape_t)(cConstraints)
 	for i, c := range constraints {
-		cConstraints[i] = c.inner.val
-	}
-
-	var cEdgesPtr **C.struct__topo_shape_t
-	if edgeCount > 0 {
-		cEdgesPtr = &cEdges[0]
-	}
-
-	var cConstraintsPtr **C.struct__topo_shape_t
-	if constraintCount > 0 {
-		cConstraintsPtr = &cConstraints[0]
+		cConstraintsArray[i] = c.inner.val
 	}
 
 	p := &Face{inner: &innerFace{val: C.topo_face_make_complex(
-		cEdgesPtr, C.int(edgeCount), cConstraintsPtr, C.int(constraintCount),
+		(**C.struct__topo_shape_t)(cEdges), C.int(edgeCount),
+		(**C.struct__topo_shape_t)(cConstraints), C.int(constraintCount),
 		C.int(continuity), C.int(degree), C.int(nbPtsOnCurve), C.int(nbIter),
 		C.bool(anisotropy), C.double(tol2d), C.double(tol3d),
 		C.double(tolAngle), C.double(tolCurv), C.int(maxDegree),
@@ -774,7 +936,6 @@ func TopoMakeComplexFace(edges []*Shape, constraints []*Shape, continuity, degre
 	runtime.SetFinalizer(p.inner, (*innerFace).free)
 	return p
 }
-
 func TopoMakePlaneFace(basePoint Point3, direction Dir3, length, width float64) *Face {
 	p := &Face{inner: &innerFace{val: C.topo_face_make_plane(
 		basePoint.val, direction.val, (*C.double)(&length), (*C.double)(&width))}}
@@ -786,28 +947,53 @@ func TopoMakeSplineApproxFace(points [][]Point3, tol float64, smoothing []float6
 	minDegree, maxDegree int) *Face {
 
 	pointArraySize := len(points)
-	pointCounts := make([]C.int, pointArraySize)
-	totalPoints := 0
+	if pointArraySize == 0 {
+		return &Face{inner: &innerFace{val: C.topo_face_make_spline_approx(nil, nil, 0, C.double(tol), nil, C.int(minDegree), C.int(maxDegree))}}
+	}
 
 	// 计算总点数并填充pointCounts数组
+	pointCounts := make([]C.int, pointArraySize)
+	totalPoints := 0
 	for i, pts := range points {
 		pointCounts[i] = C.int(len(pts))
 		totalPoints += len(pts)
 	}
 
-	// 创建连续的点数组
-	cPoints := make([]C.pnt3d_t, totalPoints)
+	// 分配并填充pointCounts到C数组
+	cPointCounts := C.malloc(C.size_t(pointArraySize) * C.size_t(unsafe.Sizeof(C.int(0))))
+	defer C.free(cPointCounts)
+	cPointCountsPtr := (*[1<<30 - 1]C.int)(cPointCounts)
+	for i := range pointCounts {
+		cPointCountsPtr[i] = pointCounts[i]
+	}
+
+	// 分配并填充所有点到C数组
+	cPoints := C.malloc(C.size_t(totalPoints) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))
+	defer C.free(cPoints)
+	cPointsPtr := (*[1<<30 - 1]C.pnt3d_t)(cPoints)
 	index := 0
 	for _, pts := range points {
 		for _, pt := range pts {
-			cPoints[index] = pt.val
+			cPointsPtr[index] = pt.val
 			index++
 		}
 	}
 
+	// 处理smoothing参数
+	var cSmoothing *C.double
+	if len(smoothing) > 0 {
+		cSmoothing = (*C.double)(&smoothing[0])
+	}
+
 	p := &Face{inner: &innerFace{val: C.topo_face_make_spline_approx(
-		&cPoints[0], &pointCounts[0], C.int(pointArraySize), C.double(tol),
-		(*C.double)(&smoothing[0]), C.int(minDegree), C.int(maxDegree))}}
+		(*C.pnt3d_t)(cPoints),
+		(*C.int)(cPointCounts),
+		C.int(pointArraySize),
+		C.double(tol),
+		cSmoothing,
+		C.int(minDegree),
+		C.int(maxDegree)),
+	}}
 	runtime.SetFinalizer(p.inner, (*innerFace).free)
 	return p
 }

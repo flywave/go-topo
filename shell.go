@@ -10,7 +10,12 @@ package topo
 #cgo windows CXXFLAGS: -I ./libs  -std=gnu++14
 */
 import "C"
-import "runtime"
+import (
+	"errors"
+	"fmt"
+	"runtime"
+	"unsafe"
+)
 
 type Shell struct {
 	inner *innerShell
@@ -26,34 +31,92 @@ func TopoMakeShell() *Shell {
 	return p
 }
 
-func (s *Shell) Sweep(spine *Wire, profiles []Shape, cornerMode int) int {
-	cshp := make([]*C.struct__topo_shape_t, len(profiles))
-	for i := range profiles {
-		cshp[i] = profiles[i].inner.val
+func (s *Shell) Sweep(spine *Wire, profiles []Shape, cornerMode int) (int, error) {
+	if spine == nil || spine.inner == nil {
+		return 0, errors.New("nil spine wire")
 	}
-	return int(C.topo_shell_sweep(s.inner.val, spine.inner.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
+	if len(profiles) == 0 {
+		return 0, errors.New("empty profiles")
+	}
+
+	// 在C堆上分配内存
+	cProfiles := C.malloc(C.size_t(len(profiles)) * C.size_t(unsafe.Sizeof(C.struct__topo_shape_t{})))
+	defer C.free(cProfiles)
+
+	profilesSlice := (*[1<<30 - 1]*C.struct__topo_shape_t)(unsafe.Pointer(cProfiles))[:len(profiles):len(profiles)]
+
+	for i, profile := range profiles {
+		if profile.inner == nil {
+			return 0, fmt.Errorf("profile %d is nil", i)
+		}
+		profilesSlice[i] = profile.inner.val
+	}
+
+	ret := C.topo_shell_sweep(
+		s.inner.val,
+		spine.inner.val,
+		(**C.struct__topo_shape_t)(unsafe.Pointer(cProfiles)),
+		C.int(len(profiles)),
+		C.int(cornerMode),
+	)
+	return int(ret), nil
 }
 
-func (t *Shell) ToShape() *Shape {
-	sp := &Shape{inner: &innerShape{val: C.topo_shape_share(t.inner.val.shp)}}
+func (t *Shell) ToShape() (*Shape, error) {
+	if t == nil || t.inner == nil {
+		return nil, errors.New("nil shell")
+	}
+
+	// 使用复制而不是直接共享指针
+	cShape := C.topo_shape_copy(t.inner.val.shp)
+	if cShape == nil {
+		return nil, errors.New("failed to copy shape")
+	}
+
+	sp := &Shape{
+		inner: &innerShape{val: cShape},
+	}
 	runtime.SetFinalizer(sp.inner, (*innerShape).free)
-	return sp
+	return sp, nil
 }
 
 func (t *innerShell) free() {
 	C.topo_shell_free(t.val)
 }
 
-func TopoMakeShellFromSurface(S *GeomSurface, Segment bool) *Shell {
-	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_surface(S.inner.geom, C.bool(Segment))}}
+func TopoMakeShellFromSurface(S *GeomSurface, Segment bool) (*Shell, error) {
+	if S == nil || S.inner == nil {
+		return nil, errors.New("nil geometry surface")
+	}
+
+	sh := &Shell{
+		inner: &innerShell{
+			val: C.topo_shell_make_shell_from_surface(S.inner.geom, C.bool(Segment)),
+		},
+	}
 	runtime.SetFinalizer(sh.inner, (*innerShell).free)
-	return sh
+	return sh, nil
 }
 
-func TopoMakeShellFromSurfaceFromSurfaceParm(S *GeomSurface, UMin, UMax, VMin, VMax float64, Segment bool) *Shell {
-	sh := &Shell{inner: &innerShell{val: C.topo_shell_make_shell_from_surface_p(S.inner.geom, C.double(UMin), C.double(UMax), C.double(VMin), C.double(VMax), C.bool(Segment))}}
+func TopoMakeShellFromSurfaceFromSurfaceParm(S *GeomSurface, UMin, UMax, VMin, VMax float64, Segment bool) (*Shell, error) {
+	if S == nil || S.inner == nil {
+		return nil, errors.New("nil geometry surface")
+	}
+
+	sh := &Shell{
+		inner: &innerShell{
+			val: C.topo_shell_make_shell_from_surface_p(
+				S.inner.geom,
+				C.double(UMin),
+				C.double(UMax),
+				C.double(VMin),
+				C.double(VMax),
+				C.bool(Segment),
+			),
+		},
+	}
 	runtime.SetFinalizer(sh.inner, (*innerShell).free)
-	return sh
+	return sh, nil
 }
 
 func TopoMakeShellFromBox(dx, dy, dz float64) *Shell {
@@ -320,31 +383,51 @@ func TopoMakeShellFromWedgeAxis2Limit(a Axis2, dx, dy, dz, xmin, zmin, xmax, zma
 	return sh
 }
 
-type ShellIterator struct {
-	inner *innerShellIterator
-}
 type innerShellIterator struct {
 	val *C.struct__topo_shell_iterator_t
 }
 
-func TopoMakeShellIterator(p Shape) *ShellIterator {
-	wr := &ShellIterator{inner: &innerShellIterator{val: C.topo_shell_iterator_make(p.inner.val)}}
+type ShellIterator struct {
+	inner *innerShellIterator
+	shape *Shape // 保持对原始Shape的引用，防止GC
+}
+
+func TopoMakeShellIterator(p *Shape) (*ShellIterator, error) {
+	if p == nil || p.inner == nil {
+		return nil, errors.New("nil shape")
+	}
+
+	wr := &ShellIterator{
+		inner: &innerShellIterator{
+			val: C.topo_shell_iterator_make(p.inner.val),
+		},
+		shape: p, // 保持引用
+	}
 	runtime.SetFinalizer(wr.inner, (*innerShellIterator).free)
-	return wr
+	return wr, nil
 }
 
 func (t *innerShellIterator) free() {
 	C.topo_shell_iterator_free(t.val)
 }
 
-func (t *ShellIterator) Next() *Shell {
-	v := C.topo_shell_iterator_next(t.inner.val)
-	if v != nil {
-		var val C.struct__topo_shell_t
-		val.shp = v
-		p := &Shell{inner: &innerShell{val: val}}
-		runtime.SetFinalizer(p.inner, (*innerShell).free)
-		return p
+func (t *ShellIterator) Next() (*Shell, error) {
+	if t.inner == nil || t.inner.val == nil {
+		return nil, errors.New("iterator is invalid")
 	}
-	return nil
+
+	v := C.topo_shell_iterator_next(t.inner.val)
+	if v == nil {
+		return nil, nil // 迭代结束
+	}
+
+	// 创建新的Shell对象，复制C结构体值
+	var val C.struct__topo_shell_t
+	val.shp = v
+
+	p := &Shell{
+		inner: &innerShell{val: val},
+	}
+	runtime.SetFinalizer(p.inner, (*innerShell).free)
+	return p, nil
 }

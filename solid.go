@@ -11,6 +11,8 @@ package topo
 */
 import "C"
 import (
+	"errors"
+	"fmt"
 	"runtime"
 	"unsafe"
 )
@@ -334,17 +336,27 @@ func (s *Solid) OuterShell() *Shell {
 	return sh
 }
 
-func (s *Solid) InnerShells() []*Shell {
+func (s *Solid) InnerShells() ([]*Shell, error) {
 	var count C.int
 	cShells := C.topo_solid_inner_shells(s.inner.val, &count)
-	ccShellsSlice := (*[1 << 30]C.struct__topo_shell_t)(unsafe.Pointer(cShells))[:count:count]
-	shells := make([]*Shell, int(count))
-	for i := 0; i < int(count); i++ {
-		sh := &Shell{inner: &innerShell{val: ccShellsSlice[i]}}
-		runtime.SetFinalizer(sh.inner, (*innerShell).free)
-		shells[i] = sh
+	if cShells == nil || count == 0 {
+		return nil, nil
 	}
-	return shells
+
+	defer C.free(unsafe.Pointer(cShells))
+
+	shells := make([]*Shell, int(count))
+	ccShellsSlice := (*[1 << 30]C.struct__topo_shell_t)(unsafe.Pointer(cShells))[:count:count]
+
+	for i := 0; i < int(count); i++ {
+		// 复制结构体值而不是直接引用
+		val := ccShellsSlice[i]
+		shells[i] = &Shell{
+			inner: &innerShell{val: val},
+		}
+		runtime.SetFinalizer(shells[i].inner, (*innerShell).free)
+	}
+	return shells, nil
 }
 
 func (s *Solid) ExtrudeWithRotationFromWire(outerWire *Wire, innerWires []*Wire, vecCenter Point3, vecNormal Vector3, angleDegrees float64) int {
@@ -441,12 +453,33 @@ func (s *Solid) Revolve(f *Face, p1, p2 Point3, angle float64) int {
 	return int(C.topo_solid_revolve(s.inner.val, f.inner.val, p1.val, p2.val, C.double(angle)))
 }
 
-func (s *Solid) Loft(profiles []Shape, ruled bool, tolerance float64) int {
-	cshp := make([]*C.struct__topo_shape_t, len(profiles))
-	for i := range profiles {
-		cshp[i] = profiles[i].inner.val
+func (s *Solid) Loft(profiles []Shape, ruled bool, tolerance float64) (int, error) {
+	if len(profiles) == 0 {
+		return 0, errors.New("empty profiles")
 	}
-	return int(C.topo_solid_loft(s.inner.val, &cshp[0], C.int(len(profiles)), C.bool(ruled), C.double(tolerance)))
+
+	// 在C堆上分配数组
+	cProfiles := C.malloc(C.size_t(len(profiles)) * C.size_t(unsafe.Sizeof(C.struct__topo_shape_t{})))
+	defer C.free(cProfiles)
+
+	// 转换为切片以便填充数据
+	profilesSlice := (*[1<<30 - 1]*C.struct__topo_shape_t)(unsafe.Pointer(cProfiles))[:len(profiles)]
+
+	for i := range profiles {
+		if profiles[i].inner == nil {
+			return 0, fmt.Errorf("profile %d is nil", i)
+		}
+		profilesSlice[i] = profiles[i].inner.val
+	}
+
+	ret := C.topo_solid_loft(
+		s.inner.val,
+		(**C.struct__topo_shape_t)(cProfiles),
+		C.int(len(profiles)),
+		C.bool(ruled),
+		C.double(tolerance),
+	)
+	return int(ret), nil
 }
 
 func (s *Solid) Pipe(f *Face, w Wire) int {
@@ -459,42 +492,62 @@ type SweepProfile struct {
 	Index   *int
 }
 
-func (s *Solid) SweepCompound(spine *Wire,
-	profiles []SweepProfile,
-	cornerMode int,
-) int {
-	profileCount := len(profiles)
+func (s *Solid) SweepCompound(spine *Wire, profiles []SweepProfile, cornerMode int) int {
+	if len(profiles) == 0 {
+		return 0
+	}
 
-	cProfiles := make([]C.topo_sweep_profile_t, profileCount)
+	// 在C堆上分配数组
+	cProfiles := C.malloc(C.size_t(len(profiles)) * C.size_t(unsafe.Sizeof(C.topo_sweep_profile_t{})))
+	defer C.free(cProfiles)
+	profilesSlice := (*[1<<30 - 1]C.topo_sweep_profile_t)(cProfiles)[:len(profiles)]
+
 	for i, p := range profiles {
-		cProfiles[i] = C.topo_sweep_profile_t{
-			profile: p.Profile.inner.val,
-		}
-
+		profilesSlice[i].profile = p.Profile.inner.val
 		if p.Index != nil {
-			cProfiles[i].index = C.int(*p.Index)
+			profilesSlice[i].index = C.int(*p.Index)
 		} else {
-			cProfiles[i].index = -1
+			profilesSlice[i].index = -1
 		}
 	}
 
-	ret := C.topo_solid_sweep_compound(
+	return int(C.topo_solid_sweep_compound(
 		s.inner.val,
 		spine.inner.val,
-		(*C.topo_sweep_profile_t)(unsafe.Pointer(&cProfiles[0])),
-		C.int(profileCount),
-		C.int(cornerMode),
-	)
-
-	return int(ret)
+		(*C.topo_sweep_profile_t)(cProfiles),
+		C.int(len(profiles)),
+		C.int(cornerMode)))
 }
 
-func (s *Solid) Sweep(spine *Wire, profiles []Shape, cornerMode int) int {
-	cshp := make([]*C.struct__topo_shape_t, len(profiles))
-	for i := range profiles {
-		cshp[i] = profiles[i].inner.val
+func (s *Solid) Sweep(spine *Wire, profiles []Shape, cornerMode int) (int, error) {
+	if spine == nil || spine.inner == nil {
+		return 0, errors.New("nil spine wire")
 	}
-	return int(C.topo_solid_sweep(s.inner.val, spine.inner.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
+	if len(profiles) == 0 {
+		return 0, errors.New("empty profiles")
+	}
+
+	// 分配C内存
+	cProfiles := C.malloc(C.size_t(len(profiles)) * C.size_t(unsafe.Sizeof(C.struct__topo_shape_t{})))
+	defer C.free(cProfiles)
+
+	profilesSlice := (*[1<<30 - 1]*C.struct__topo_shape_t)(unsafe.Pointer(cProfiles))[:len(profiles)]
+
+	for i := range profiles {
+		if profiles[i].inner == nil {
+			return 0, fmt.Errorf("profile %d is nil", i)
+		}
+		profilesSlice[i] = profiles[i].inner.val
+	}
+
+	ret := C.topo_solid_sweep(
+		s.inner.val,
+		spine.inner.val,
+		(**C.struct__topo_shape_t)(cProfiles),
+		C.int(len(profiles)),
+		C.int(cornerMode),
+	)
+	return int(ret), nil
 }
 
 func (s *Solid) Boolean(tool *Solid, op int) int {
@@ -502,11 +555,30 @@ func (s *Solid) Boolean(tool *Solid, op int) int {
 }
 
 func (s *Solid) Fillet(edges []Edge, radius []float64) int {
-	cshp := make([]C.struct__topo_edge_t, len(edges))
-	for i := range edges {
-		cshp[i] = edges[i].inner.val
+	if len(edges) == 0 || len(radius) == 0 {
+		return 0
 	}
-	return int(C.topo_solid_fillet(s.inner.val, &cshp[0], C.int(len(edges)), (*C.double)(unsafe.Pointer(&radius[0])), C.int(len(radius))))
+	// 确保数据在C堆上分配
+	cEdges := C.malloc(C.size_t(len(edges)) * C.size_t(unsafe.Sizeof(C.struct__topo_edge_t{})))
+	defer C.free(cEdges)
+	edgesSlice := (*[1<<30 - 1]C.struct__topo_edge_t)(cEdges)[:len(edges)]
+
+	cRadius := C.malloc(C.size_t(len(radius)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cRadius)
+	radiusSlice := (*[1<<30 - 1]C.double)(cRadius)[:len(radius)]
+
+	for i := range edges {
+		edgesSlice[i] = edges[i].inner.val
+	}
+	for i := range radius {
+		radiusSlice[i] = C.double(radius[i])
+	}
+
+	return int(C.topo_solid_fillet(s.inner.val,
+		(*C.struct__topo_edge_t)(cEdges),
+		C.int(len(edges)),
+		(*C.double)(cRadius),
+		C.int(len(radius))))
 }
 
 func (s *Solid) Chamfer(edges []Edge, distances []float64) int {
@@ -517,12 +589,32 @@ func (s *Solid) Chamfer(edges []Edge, distances []float64) int {
 	return int(C.topo_solid_chamfer(s.inner.val, &cshp[0], C.int(len(edges)), (*C.double)(unsafe.Pointer(&distances[0])), C.int(len(distances))))
 }
 
-func (s *Solid) Shelling(faces []Face, offset, tolerance float64) int {
-	cshp := make([]C.struct__topo_face_t, len(faces))
-	for i := range faces {
-		cshp[i] = faces[i].inner.val
+func (s *Solid) Shelling(faces []Face, offset, tolerance float64) (int, error) {
+	if len(faces) == 0 {
+		return 0, errors.New("empty faces")
 	}
-	return int(C.topo_solid_shelling(s.inner.val, &cshp[0], C.int(len(faces)), C.double(offset), C.double(tolerance)))
+
+	// 分配C内存
+	cFaces := C.malloc(C.size_t(len(faces)) * C.size_t(unsafe.Sizeof(C.struct__topo_face_t{})))
+	defer C.free(cFaces)
+
+	facesSlice := (*[1<<30 - 1]C.struct__topo_face_t)(unsafe.Pointer(cFaces))[:len(faces)]
+
+	for i := range faces {
+		if faces[i].inner == nil {
+			return 0, fmt.Errorf("face %d is nil", i)
+		}
+		facesSlice[i] = faces[i].inner.val
+	}
+
+	ret := C.topo_solid_shelling(
+		s.inner.val,
+		(*C.struct__topo_face_t)(cFaces),
+		C.int(len(faces)),
+		C.double(offset),
+		C.double(tolerance),
+	)
+	return int(ret), nil
 }
 
 func (s *Solid) Offset(f *Face, offset, tolerance float64) int {
@@ -637,14 +729,34 @@ func TopoMakeSolidFromThreeShell(S1, S2, S3 *Shell) *Solid {
 	return sld
 }
 
-func TopoMakeSolidFromShells(S []Shell) *Solid {
-	shls := make([]C.struct__topo_shell_t, len(S))
-	for i := range S {
-		shls[i] = S[i].inner.val
+func TopoMakeSolidFromShells(shells []Shell) (*Solid, error) {
+	if len(shells) == 0 {
+		return nil, errors.New("empty shells")
 	}
-	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_shells(&shls[0], C.int(len(S)))}}
+
+	// 分配C内存
+	cShells := C.malloc(C.size_t(len(shells)) * C.size_t(unsafe.Sizeof(C.struct__topo_shell_t{})))
+	defer C.free(cShells)
+
+	shellsSlice := (*[1<<30 - 1]C.struct__topo_shell_t)(unsafe.Pointer(cShells))[:len(shells)]
+
+	for i := range shells {
+		if shells[i].inner == nil {
+			return nil, fmt.Errorf("shell %d is nil", i)
+		}
+		shellsSlice[i] = shells[i].inner.val
+	}
+
+	sld := &Solid{
+		inner: &innerSolid{
+			val: C.topo_solid_make_solid_from_shells(
+				(*C.struct__topo_shell_t)(cShells),
+				C.int(len(shells)),
+			),
+		},
+	}
 	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
-	return sld
+	return sld, nil
 }
 
 func TopoMakeSolidFromSolid(S *Solid) *Solid {
@@ -659,14 +771,35 @@ func TopoMakeSolidFromSolidShell(S *Solid, sl *Shell) *Solid {
 	return sld
 }
 
-func TopoMakeSolidFromFaces(S []Face, tolerance float64) *Solid {
-	shls := make([]C.struct__topo_face_t, len(S))
-	for i := range S {
-		shls[i] = S[i].inner.val
+func TopoMakeSolidFromFaces(faces []Face, tolerance float64) (*Solid, error) {
+	if len(faces) == 0 {
+		return nil, errors.New("empty faces")
 	}
-	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_faces(&shls[0], C.int(len(S)), C.double(tolerance))}}
+
+	// 分配C内存
+	cFaces := C.malloc(C.size_t(len(faces)) * C.size_t(unsafe.Sizeof(C.struct__topo_face_t{})))
+	defer C.free(cFaces)
+
+	facesSlice := (*[1<<30 - 1]C.struct__topo_face_t)(unsafe.Pointer(cFaces))[:len(faces)]
+
+	for i := range faces {
+		if faces[i].inner == nil {
+			return nil, fmt.Errorf("face %d is nil", i)
+		}
+		facesSlice[i] = faces[i].inner.val
+	}
+
+	sld := &Solid{
+		inner: &innerSolid{
+			val: C.topo_solid_make_solid_from_faces(
+				(*C.struct__topo_face_t)(cFaces),
+				C.int(len(faces)),
+				C.double(tolerance),
+			),
+		},
+	}
 	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
-	return sld
+	return sld, nil
 }
 
 func TopoMakeSolidFromBox(dx, dy, dz float64) *Solid {
@@ -927,14 +1060,35 @@ func TopoMakeSolidFromSphereWedgeAxis2Limit(a Axis2, dx, dy, dz, xmin, zmin, xma
 	return sld
 }
 
-func TopoMakeSolidFromLoft(wires []Wire, ruled bool) *Solid {
-	cshp := make([]C.struct__topo_wire_t, len(wires))
-	for i := range wires {
-		cshp[i] = wires[i].inner.val
+func TopoMakeSolidFromLoft(wires []Wire, ruled bool) (*Solid, error) {
+	if len(wires) == 0 {
+		return nil, errors.New("empty wires")
 	}
-	sld := &Solid{inner: &innerSolid{val: C.topo_solid_make_solid_from_loft(&cshp[0], C.int(len(wires)), C.bool(ruled))}}
+
+	// 分配C内存
+	cWires := C.malloc(C.size_t(len(wires)) * C.size_t(unsafe.Sizeof(C.struct__topo_wire_t{})))
+	defer C.free(cWires)
+
+	wiresSlice := (*[1<<30 - 1]C.struct__topo_wire_t)(unsafe.Pointer(cWires))[:len(wires)]
+
+	for i := range wires {
+		if wires[i].inner == nil {
+			return nil, fmt.Errorf("wire %d is nil", i)
+		}
+		wiresSlice[i] = wires[i].inner.val
+	}
+
+	sld := &Solid{
+		inner: &innerSolid{
+			val: C.topo_solid_make_solid_from_loft(
+				(*C.struct__topo_wire_t)(cWires),
+				C.int(len(wires)),
+				C.bool(ruled),
+			),
+		},
+	}
 	runtime.SetFinalizer(sld.inner, (*innerSolid).free)
-	return sld
+	return sld, nil
 }
 
 type SolidIterator struct {

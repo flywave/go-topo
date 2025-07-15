@@ -178,7 +178,7 @@ func IfcToElements(f string) []*IfcElement {
 func IfcToTriangulations(f string) []*IfcTriangulation {
 	fl := C.CString(f)
 	defer C.free(unsafe.Pointer(fl))
-	count := 0
+	var count C.int
 	tris := []*IfcTriangulation{}
 	res := C.ifc_get_triangulations(fl, (*C.int)(unsafe.Pointer(&count)))
 	if count == 0 {
@@ -186,7 +186,7 @@ func IfcToTriangulations(f string) []*IfcTriangulation {
 	}
 	defer C.ifc_triangulations_free(res)
 
-	for i := 0; i < count; i++ {
+	for i := 0; i < int(count); i++ {
 		inner := &innerTriangulation{C.ifc_get_triangulation(res, C.int(i))}
 		tri := &IfcTriangulation{
 			inner:    inner,

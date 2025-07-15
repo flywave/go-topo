@@ -11,7 +11,10 @@ package topo
 */
 import "C"
 import (
+	"errors"
+	"fmt"
 	"runtime"
+	"sync"
 	"unsafe"
 )
 
@@ -53,17 +56,24 @@ func NewPlateD3(duuu, duuv, duvv, dvvv XYZ) PlateD3 {
 
 type Plate struct {
 	inner *innerPlate
+	mu    sync.Mutex // 添加互斥锁保证线程安全
 }
 
 type innerPlate struct {
 	val *C.struct__plate_plate_t
 }
 
-func NewPlate() *Plate {
-	p := &Plate{inner: &innerPlate{C.plate_plate_new()}}
-	runtime.SetFinalizer(p.inner, (*innerPlate).free)
-	return p
+func NewPlate() (*Plate, error) {
+	cPlate := C.plate_plate_new()
+	if cPlate == nil {
+		return nil, errors.New("failed to create new plate")
+	}
 
+	p := &Plate{
+		inner: &innerPlate{val: cPlate},
+	}
+	runtime.SetFinalizer(p.inner, (*innerPlate).free)
+	return p, nil
 }
 
 func (p *innerPlate) free() {
@@ -71,44 +81,150 @@ func (p *innerPlate) free() {
 	p.val = nil
 }
 
-func (p *Plate) LoadPinpointConstraint(pc *PinpointConstraint) {
+func (p *Plate) LoadPinpointConstraint(pc *PinpointConstraint) error {
+	if p.inner == nil || p.inner.val == nil {
+		return errors.New("plate is nil")
+	}
+	if pc == nil || pc.inner == nil {
+		return errors.New("constraint is nil")
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	C.plate_plate_load_plate_pinpoint_constraint(p.inner.val, pc.inner.val)
+	return nil
 }
 
-func (p *Plate) LoadLinearXYZConstraint(pc *LinearXYZConstraint) {
+func (p *Plate) LoadLinearXYZConstraint(pc *LinearXYZConstraint) error {
+	if p.inner == nil || p.inner.val == nil {
+		return errors.New("plate is nil")
+	}
+	if pc == nil || pc.inner == nil {
+		return errors.New("constraint is nil")
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	C.plate_plate_load_plate_linear_xyz_constraint(p.inner.val, pc.inner.val)
+	return nil
 }
 
-func (p *Plate) LoadLinearScalarConstraint(pc *LinearScalarConstraint) {
+func (p *Plate) LoadLinearScalarConstraint(pc *LinearScalarConstraint) error {
+	if p.inner == nil || p.inner.val == nil {
+		return errors.New("plate is nil")
+	}
+	if pc == nil || pc.inner == nil {
+		return errors.New("constraint is nil")
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	C.plate_plate_load_plate_linear_scalar_constraint(p.inner.val, pc.inner.val)
+	return nil
 }
 
-func (p *Plate) LoadGlobalTranslationConstraint(pc *GlobalTranslationConstraint) {
+func (p *Plate) LoadGlobalTranslationConstraint(pc *GlobalTranslationConstraint) error {
+	if p.inner == nil || p.inner.val == nil {
+		return errors.New("plate is nil")
+	}
+	if pc == nil || pc.inner == nil {
+		return errors.New("constraint is nil")
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	C.plate_plate_load_plate_global_translation_constraint(p.inner.val, pc.inner.val)
+	return nil
 }
 
-func (p *Plate) LoadLineConstraint(pc *LineConstraint) {
+func (p *Plate) LoadLineConstraint(pc *LineConstraint) error {
+	if p.inner == nil || p.inner.val == nil {
+		return errors.New("plate is nil")
+	}
+	if pc == nil || pc.inner == nil {
+		return errors.New("constraint is nil")
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	C.plate_plate_load_plate_line_constraint(p.inner.val, pc.inner.val)
+	return nil
 }
 
-func (p *Plate) LoadPlaneConstraint(pc *PlaneConstraint) {
+func (p *Plate) LoadPlaneConstraint(pc *PlaneConstraint) error {
+	if p.inner == nil || p.inner.val == nil {
+		return errors.New("plate is nil")
+	}
+	if pc == nil || pc.inner == nil {
+		return errors.New("constraint is nil")
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	C.plate_plate_load_plate_plane_constraint(p.inner.val, pc.inner.val)
+	return nil
 }
 
-func (p *Plate) LoadSampledCurveConstraint(pc *SampledCurveConstraint) {
+func (p *Plate) LoadSampledCurveConstraint(pc *SampledCurveConstraint) error {
+	if p.inner == nil || p.inner.val == nil {
+		return errors.New("plate is nil")
+	}
+	if pc == nil || pc.inner == nil {
+		return errors.New("constraint is nil")
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	C.plate_plate_load_plate_sampled_curve_constraint(p.inner.val, pc.inner.val)
+	return nil
 }
 
-func (p *Plate) LoadGtoCConstraint(pc *GtoCConstraint) {
+func (p *Plate) LoadGtoCConstraint(pc *GtoCConstraint) error {
+	if p.inner == nil || p.inner.val == nil {
+		return errors.New("plate is nil")
+	}
+	if pc == nil || pc.inner == nil {
+		return errors.New("constraint is nil")
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	C.plate_plate_load_plate_g_to_c_constraint(p.inner.val, pc.inner.val)
+	return nil
 }
 
-func (p *Plate) LoadFreeGtoCConstraint(pc *FreeGtoCConstraint) {
+func (p *Plate) LoadFreeGtoCConstraint(pc *FreeGtoCConstraint) error {
+	if p.inner == nil || p.inner.val == nil {
+		return errors.New("plate is nil")
+	}
+	if pc == nil || pc.inner == nil {
+		return errors.New("constraint is nil")
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	C.plate_plate_load_plate_free_g_to_c_constraint(p.inner.val, pc.inner.val)
+	return nil
 }
 
-func (p *Plate) SolveTI(ord int, anisotropie float64) {
+func (p *Plate) SolveTI(ord int, anisotropie float64) error {
+	if p.inner == nil || p.inner.val == nil {
+		return errors.New("plate is nil")
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	C.plate_plate_solveti(p.inner.val, C.int(ord), C.double(anisotropie))
+	return nil
 }
 
 type PinpointConstraint struct {
@@ -124,10 +240,17 @@ func (p *innerPinpointConstraint) free() {
 	p.val = nil
 }
 
-func NewPinpointConstraint(p XY, v XYZ, iu, iv int) *PinpointConstraint {
-	pt := &PinpointConstraint{inner: &innerPinpointConstraint{val: C.plate_pinpoint_constraint_new(p.val, v.val, C.int(iu), C.int(iv))}}
+func NewPinpointConstraint(p XY, v XYZ, iu, iv int) (*PinpointConstraint, error) {
+	cConstraint := C.plate_pinpoint_constraint_new(p.val, v.val, C.int(iu), C.int(iv))
+	if cConstraint == nil {
+		return nil, errors.New("failed to create pinpoint constraint")
+	}
+
+	pt := &PinpointConstraint{
+		inner: &innerPinpointConstraint{val: cConstraint},
+	}
 	runtime.SetFinalizer(pt.inner, (*innerPinpointConstraint).free)
-	return pt
+	return pt, nil
 }
 
 type LinearXYZConstraint struct {
@@ -143,14 +266,49 @@ func (p *innerLinearXYZConstraint) free() {
 	p.val = nil
 }
 
-func NewLinearXYZConstraintDim1(ppc []PinpointConstraint, coffes []float64) *LinearXYZConstraint {
-	ppcc := make([]*C.struct__plate_pinpoint_constraint_t, len(ppc))
-	for i := range ppc {
-		ppcc[i] = ppc[i].inner.val
+func NewLinearXYZConstraintDim1(ppc []PinpointConstraint, coffes []float64) (*LinearXYZConstraint, error) {
+	if len(ppc) == 0 || len(coffes) == 0 {
+		return nil, errors.New("empty input slices")
 	}
-	p := &LinearXYZConstraint{inner: &innerLinearXYZConstraint{val: C.plate_linear_xyz_constraint_new_1dim(&ppcc[0], C.int(len(ppc)), (*C.double)(unsafe.Pointer(&coffes[0])), C.int(len(coffes)))}}
+	if len(ppc) != len(coffes) {
+		return nil, errors.New("length mismatch between constraints and coefficients")
+	}
+
+	// 在C堆上分配内存
+	cConstraints := C.malloc(C.size_t(len(ppc)) * C.size_t(unsafe.Sizeof(C.struct__plate_pinpoint_constraint_t{})))
+	defer C.free(cConstraints)
+
+	cCoeffs := C.malloc(C.size_t(len(coffes)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cCoeffs)
+
+	// 填充数据
+	constraintsSlice := (*[1<<30 - 1]*C.struct__plate_pinpoint_constraint_t)(unsafe.Pointer(cConstraints))[:len(ppc)]
+	coeffsSlice := (*[1<<30 - 1]C.double)(unsafe.Pointer(cCoeffs))[:len(coffes)]
+
+	for i := range ppc {
+		if ppc[i].inner == nil {
+			return nil, fmt.Errorf("constraint %d is nil", i)
+		}
+		constraintsSlice[i] = ppc[i].inner.val
+		coeffsSlice[i] = C.double(coffes[i])
+	}
+
+	cConstraint := C.plate_linear_xyz_constraint_new_1dim(
+		(**C.struct__plate_pinpoint_constraint_t)(cConstraints),
+		C.int(len(ppc)),
+		(*C.double)(cCoeffs),
+		C.int(len(coffes)),
+	)
+
+	if cConstraint == nil {
+		return nil, errors.New("failed to create linear XYZ constraint")
+	}
+
+	p := &LinearXYZConstraint{
+		inner: &innerLinearXYZConstraint{val: cConstraint},
+	}
 	runtime.SetFinalizer(p.inner, (*innerLinearXYZConstraint).free)
-	return p
+	return p, nil
 }
 
 func NewLinearXYZConstraintDim2(ppc []PinpointConstraint, coffes [][]float64) *LinearXYZConstraint {
@@ -298,15 +456,39 @@ func (p *innerSampledCurveConstraint) free() {
 	p.val = nil
 }
 
-func NewSampledCurveConstraint(ppc []PinpointConstraint) *SampledCurveConstraint {
-	ppcc := make([]*C.struct__plate_pinpoint_constraint_t, len(ppc))
-	for i := range ppc {
-		ppcc[i] = ppc[i].inner.val
+func NewSampledCurveConstraint(ppc []PinpointConstraint) (*SampledCurveConstraint, error) {
+	if len(ppc) == 0 {
+		return nil, errors.New("empty constraints slice")
 	}
 
-	p := &SampledCurveConstraint{inner: &innerSampledCurveConstraint{val: C.plate_sampled_curve_constraint_new(&ppcc[0], C.int(len(ppc)))}}
+	// 在C堆上分配内存
+	cConstraints := C.malloc(C.size_t(len(ppc)) * C.size_t(unsafe.Sizeof(C.struct__plate_pinpoint_constraint_t{})))
+	defer C.free(cConstraints)
+
+	// 填充数据
+	constraintsSlice := (*[1<<30 - 1]*C.struct__plate_pinpoint_constraint_t)(unsafe.Pointer(cConstraints))[:len(ppc)]
+
+	for i := range ppc {
+		if ppc[i].inner == nil {
+			return nil, fmt.Errorf("constraint %d is nil", i)
+		}
+		constraintsSlice[i] = ppc[i].inner.val
+	}
+
+	cConstraint := C.plate_sampled_curve_constraint_new(
+		(**C.struct__plate_pinpoint_constraint_t)(cConstraints),
+		C.int(len(ppc)),
+	)
+
+	if cConstraint == nil {
+		return nil, errors.New("failed to create sampled curve constraint")
+	}
+
+	p := &SampledCurveConstraint{
+		inner: &innerSampledCurveConstraint{val: cConstraint},
+	}
 	runtime.SetFinalizer(p.inner, (*innerSampledCurveConstraint).free)
-	return p
+	return p, nil
 }
 
 type GtoCConstraint struct {
