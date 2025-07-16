@@ -582,11 +582,20 @@ func (s *Solid) Fillet(edges []Edge, radius []float64) int {
 }
 
 func (s *Solid) Chamfer(edges []Edge, distances []float64) int {
-	cshp := make([]C.struct__topo_edge_t, len(edges))
+	cEdges := C.malloc(C.size_t(len(edges)) * C.size_t(unsafe.Sizeof(C.struct__topo_edge_t{})))
+	edgesSlice := (*[1<<30 - 1]C.struct__topo_edge_t)(cEdges)[:len(edges)]
+
 	for i := range edges {
-		cshp[i] = edges[i].inner.val
+		edgesSlice[i] = edges[i].inner.val
 	}
-	return int(C.topo_solid_chamfer(s.inner.val, &cshp[0], C.int(len(edges)), (*C.double)(unsafe.Pointer(&distances[0])), C.int(len(distances))))
+
+	cDis := C.malloc(C.size_t(len(distances)) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cDis)
+	cDisSlice := (*[1<<30 - 1]C.double)(cDis)[:len(distances)]
+	for i := range distances {
+		cDisSlice[i] = C.double(distances[i])
+	}
+	return int(C.topo_solid_chamfer(s.inner.val, (*C.struct__topo_edge_t)(cEdges), C.int(len(edges)), (*C.double)(cDis), C.int(len(distances))))
 }
 
 func (s *Solid) Shelling(faces []Face, offset, tolerance float64) (int, error) {
@@ -621,12 +630,41 @@ func (s *Solid) Offset(f *Face, offset, tolerance float64) int {
 	return int(C.topo_solid_offset(s.inner.val, f.inner.val, C.double(offset), C.double(tolerance)))
 }
 
-func (s *Solid) Draft(faces []Face, d Dir3, angle float64, p Plane) int {
-	fs := make([]C.struct__topo_face_t, len(faces))
-	for i := range faces {
-		fs[i] = faces[i].inner.val
+func (s *Solid) Draft(faces []Face, d Dir3, angle float64, p Plane) (int, error) {
+	// 1. 检查输入有效性
+	if s == nil || s.inner == nil {
+		return 0, errors.New("nil solid or solid inner")
 	}
-	return int(C.topo_solid_draft(s.inner.val, &fs[0], C.int(len(faces)), d.val, C.double(angle), p.val))
+	if len(faces) == 0 {
+		return 0, errors.New("empty faces slice")
+	}
+
+	// 2. 在C堆上分配内存存储面数组
+	cFaces := C.malloc(C.size_t(len(faces)) * C.size_t(unsafe.Sizeof(C.struct__topo_face_t{})))
+	defer C.free(cFaces)
+
+	// 3. 转换为可操作的切片
+	facesSlice := (*[1<<30 - 1]C.struct__topo_face_t)(unsafe.Pointer(cFaces))[:len(faces):len(faces)]
+
+	// 4. 填充数据
+	for i, face := range faces {
+		if face.inner == nil {
+			return 0, fmt.Errorf("face %d is nil", i)
+		}
+		facesSlice[i] = face.inner.val
+	}
+
+	// 5. 调用C函数
+	result := C.topo_solid_draft(
+		s.inner.val,
+		(*C.struct__topo_face_t)(cFaces),
+		C.int(len(faces)),
+		d.val,
+		C.double(angle),
+		p.val,
+	)
+
+	return int(result), nil
 }
 
 func (s *Solid) EvolvedFromFace(Spine *Face, Profil *Wire) int {
