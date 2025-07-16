@@ -695,22 +695,52 @@ const (
 
 func TopoMakeWireFromCombineCurve(points [][]Point3, curveTypes []SweepCurveType) *Wire {
 	curveCount := len(points)
+	if curveCount == 0 {
+		return &Wire{inner: &innerWire{}}
+	}
 
-	cPoints := make([]*C.pnt3d_t, curveCount)
+	// 分配C内存来存储曲线指针数组
+	cPointsArray := C.malloc(C.size_t(curveCount) * C.size_t(unsafe.Sizeof(unsafe.Pointer(nil))))
+	defer C.free(cPointsArray)
+
+	// 分配C内存来存储每个曲线的点数据
 	cPointCounts := make([]C.int, curveCount)
 	for i, pts := range points {
-		cPointCounts[i] = C.int(len(pts))
-		cPoints[i] = (*C.pnt3d_t)(unsafe.Pointer(&pts[0].val))
+		pointCount := len(pts)
+		cPointCounts[i] = C.int(pointCount)
+
+		// 为当前曲线分配点数组内存
+		curvePoints := C.malloc(C.size_t(pointCount) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))
+
+		// 将点数据复制到C内存
+		for j := 0; j < pointCount; j++ {
+			cPoint := (*C.pnt3d_t)(unsafe.Pointer(uintptr(curvePoints) + uintptr(j)*unsafe.Sizeof(C.pnt3d_t{})))
+			*cPoint = pts[j].val
+		}
+
+		// 将曲线指针存入指针数组
+		ptr := (*unsafe.Pointer)(unsafe.Pointer(uintptr(cPointsArray) + uintptr(i)*unsafe.Sizeof(unsafe.Pointer(nil))))
+		*ptr = curvePoints
 	}
 
-	cCurveTypes := make([]C.int, curveCount)
+	// 分配C内存来存储曲线类型数组
+	cCurveTypes := C.malloc(C.size_t(curveCount) * C.size_t(unsafe.Sizeof(C.int(0))))
+	defer C.free(cCurveTypes)
 	for i, t := range curveTypes {
-		cCurveTypes[i] = C.int(t)
+		*(*C.int)(unsafe.Pointer(uintptr(cCurveTypes) + uintptr(i)*unsafe.Sizeof(C.int(0)))) = C.int(t)
 	}
-	wr := &Wire{inner: &innerWire{val: C.topo_make_wire_from_combine_curve((**C.pnt3d_t)(unsafe.Pointer(&cPoints[0])),
-		(*C.int)(unsafe.Pointer(&cPointCounts[0])),
-		C.int(curveCount),
-		(*C.int)(unsafe.Pointer(&cCurveTypes[0])))}}
+
+	// 调用C函数
+	wr := &Wire{
+		inner: &innerWire{
+			val: C.topo_make_wire_from_combine_curve(
+				(**C.pnt3d_t)(cPointsArray),
+				(*C.int)(unsafe.Pointer(&cPointCounts[0])),
+				C.int(curveCount),
+				(*C.int)(cCurveTypes),
+			),
+		},
+	}
 	runtime.SetFinalizer(wr.inner, (*innerWire).free)
 	return wr
 }
