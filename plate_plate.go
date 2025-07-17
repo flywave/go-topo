@@ -312,20 +312,56 @@ func NewLinearXYZConstraintDim1(ppc []PinpointConstraint, coffes []float64) (*Li
 }
 
 func NewLinearXYZConstraintDim2(ppc []PinpointConstraint, coffes [][]float64) *LinearXYZConstraint {
-	ppcc := make([]*C.struct__plate_pinpoint_constraint_t, len(ppc))
-	for i := range ppc {
-		ppcc[i] = ppc[i].inner.val
+	// 1. 转换 ppc 为 C 指针数组
+	if len(ppc) == 0 {
+		return nil // 如果输入为空，直接返回 nil
 	}
+
+	// 在 C 堆上分配指针数组（存储 *C.struct__plate_pinpoint_constraint_t）
+	cPPC := C.malloc(C.size_t(len(ppc)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cPPC) // 确保临时内存释放（如果 C 函数不持有指针）
+
+	// 转换为 Go 可访问的切片
+	ppcSlice := (*[1<<30 - 1]*C.struct__plate_pinpoint_constraint_t)(unsafe.Pointer(cPPC))[:len(ppc):len(ppc)]
+	for i := range ppc {
+		ppcSlice[i] = ppc[i].inner.val // 填充 C 结构体指针
+	}
+
+	// 2. 转换 coffes 为 C double 数组
+	if len(coffes) == 0 || len(coffes[0]) == 0 {
+		return nil
+	}
+
 	row := len(coffes)
 	col := len(coffes[0])
-	inw := make([]C.double, col*row)
+	inw := make([]C.double, row*col)
 
 	for i := 0; i < row; i++ {
+		if len(coffes[i]) != col {
+			return nil // 确保矩阵每行长度一致
+		}
 		for j := 0; j < col; j++ {
-			inw[i*col+j] = C.double(coffes[j][i])
+			inw[i*col+j] = C.double(coffes[i][j])
 		}
 	}
-	p := &LinearXYZConstraint{inner: &innerLinearXYZConstraint{val: C.plate_linear_xyz_constraint_new_2dim(&ppcc[0], C.int(len(ppc)), &inw[0], C.int(row), C.int(col))}}
+
+	// 3. 调用 C 函数
+	var inwPtr *C.double
+	if len(inw) > 0 {
+		inwPtr = &inw[0]
+	}
+
+	p := &LinearXYZConstraint{
+		inner: &innerLinearXYZConstraint{
+			val: C.plate_linear_xyz_constraint_new_2dim(
+				(**C.struct__plate_pinpoint_constraint_t)(cPPC), // 传递 **C.struct
+				C.int(len(ppc)),
+				inwPtr,
+				C.int(row),
+				C.int(col),
+			),
+		},
+	}
 	runtime.SetFinalizer(p.inner, (*innerLinearXYZConstraint).free)
 	return p
 }
@@ -350,15 +386,44 @@ func NewLinearScalarConstraint(ppc *PinpointConstraint, x XYZ) *LinearScalarCons
 }
 
 func NewLinearScalarConstraintDim1(ppc []PinpointConstraint, coffes []XYZ) *LinearScalarConstraint {
-	ppcc := make([]*C.struct__plate_pinpoint_constraint_t, len(ppc))
-	for i := range ppc {
-		ppcc[i] = ppc[i].inner.val
+	// 处理空输入的情况
+	if len(ppc) == 0 || len(coffes) == 0 {
+		return nil
 	}
+
+	// 1. 转换 ppc 为 C 指针数组（在 C 堆上分配）
+	cPPC := C.malloc(C.size_t(len(ppc)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cPPC) // 如果 C 函数不持有这些指针，可以立即释放
+
+	ppcSlice := (*[1<<30 - 1]*C.struct__plate_pinpoint_constraint_t)(unsafe.Pointer(cPPC))[:len(ppc):len(ppc)]
+	for i := range ppc {
+		ppcSlice[i] = ppc[i].inner.val
+	}
+
+	// 2. 转换 coffes 为 C xyz_t 数组（在 Go 堆上分配，但底层数据是 C 兼容的）
 	xyzc := make([]C.struct__xyz_t, len(coffes))
 	for i := range coffes {
 		xyzc[i] = coffes[i].val
 	}
-	p := &LinearScalarConstraint{inner: &innerLinearScalarConstraint{val: C.plate_linear_scalar_constraint_new_1dim(&ppcc[0], C.int(len(ppc)), &xyzc[0], C.int(len(coffes)))}}
+
+	// 3. 调用 C 函数
+	var xyzPtr *C.struct__xyz_t
+	if len(xyzc) > 0 {
+		xyzPtr = &xyzc[0]
+	}
+
+	p := &LinearScalarConstraint{
+		inner: &innerLinearScalarConstraint{
+			val: C.plate_linear_scalar_constraint_new_1dim(
+				(**C.struct__plate_pinpoint_constraint_t)(cPPC), // 二级指针
+				C.int(len(ppc)),
+				xyzPtr,
+				C.int(len(coffes)),
+			),
+			// 如果需要长期持有 C 分配的内存，可以在这里保存 cPPC
+			// cMem: []unsafe.Pointer{cPPC}
+		},
+	}
 	runtime.SetFinalizer(p.inner, (*innerLinearScalarConstraint).free)
 	return p
 }

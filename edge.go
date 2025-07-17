@@ -389,9 +389,31 @@ func (e *Edge) Params(pts []Point3, tol float64) []float64 {
 
 func (e *Edge) ParamsLength(locations []float64) []float64 {
 	count := len(locations)
+	cLocations := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cLocations)
+	cParams := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cParams)
+
+	// 复制数据
+	locationsSlice := (*[1<<30 - 1]C.double)(unsafe.Pointer(cLocations))[:count:count]
+	for i, v := range locations {
+		locationsSlice[i] = C.double(v)
+	}
+
+	// 调用C函数
+	C.topo_edge_params_length(
+		e.inner.val,
+		(*C.double)(cLocations),
+		C.int(count),
+		(*C.double)(cParams),
+	)
+
+	// 复制结果回Go
 	params := make([]float64, count)
-	C.topo_edge_params_length(e.inner.val, (*C.double)(&locations[0]),
-		C.int(count), (*C.double)(&params[0]))
+	paramsSlice := (*[1<<30 - 1]C.double)(unsafe.Pointer(cParams))[:count:count]
+	for i, v := range paramsSlice {
+		params[i] = float64(v)
+	}
 	return params
 }
 
@@ -652,10 +674,10 @@ func TopoMakeEdgeFromPoints(pts []Point3) *Edge {
 	// 分配C内存
 	cPoints := C.malloc(C.size_t(len(pts)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
 	defer C.free(cPoints)
-
+	ptsSlice := (*[1<<30 - 1]C.struct__pnt3d_t)(cPoints)[:len(pts):len(pts)]
 	// 复制数据
 	for i := range pts {
-		*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = pts[i].val
+		ptsSlice[i] = pts[i].val
 	}
 
 	p := &Edge{
@@ -1086,10 +1108,11 @@ func TopoEdgeMakePolygonFromVertices(vers []Vertex, Close bool) *Edge {
 	// 分配C内存
 	cVertices := C.malloc(C.size_t(len(vers)) * C.size_t(unsafe.Sizeof(C.struct__topo_vertex_t{})))
 	defer C.free(cVertices)
+	versSlice := (*[1<<30 - 1]C.struct__topo_vertex_t)(cVertices)[:len(vers):len(vers)]
 
 	// 复制数据
 	for i := range vers {
-		*(*C.struct__topo_vertex_t)(unsafe.Pointer(uintptr(cVertices) + uintptr(i)*unsafe.Sizeof(C.struct__topo_vertex_t{}))) = vers[i].inner.val
+		versSlice[i] = vers[i].inner.val
 	}
 
 	p := &Edge{
@@ -1112,10 +1135,11 @@ func TopoEdgeMakePolygonFromPoints(points []Point3, Close bool) *Edge {
 	// 分配C内存
 	cPoints := C.malloc(C.size_t(len(points)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
 	defer C.free(cPoints)
+	pointsSlice := (*[1<<30 - 1]C.struct__pnt3d_t)(cPoints)[:len(points):len(points)]
 
 	// 复制数据
 	for i := range points {
-		*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cPoints) + uintptr(i)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = points[i].val
+		pointsSlice[i] = points[i].val
 	}
 
 	p := &Edge{
@@ -1145,10 +1169,11 @@ func TopoMakeSpline(vertices []Point3, tol float64, periodic bool) *Edge {
 	// 分配C内存
 	cVertices := C.malloc(C.size_t(len(vertices)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
 	defer C.free(cVertices)
+	verticesSlice := (*[1<<30 - 1]C.struct__pnt3d_t)(cVertices)[:len(vertices):len(vertices)]
 
 	// 复制数据
 	for i := range vertices {
-		*(*C.struct__pnt3d_t)(unsafe.Pointer(uintptr(cVertices) + uintptr(i)*unsafe.Sizeof(C.struct__pnt3d_t{}))) = vertices[i].val
+		verticesSlice[i] = vertices[i].val
 	}
 
 	p := &Edge{

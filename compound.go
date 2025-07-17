@@ -338,18 +338,15 @@ func (s *Compound) ExtrudeFromDir(f *Face, d Vector3) int {
 
 func (s *Compound) ExtrudeWithRotationFromWire(outerWire *Wire, innerWires []*Wire, vecCenter Point3, vecNormal Vector3, angleDegrees float64) int {
 	innerCount := len(innerWires)
-	cWires := make([]C.struct__topo_wire_t, innerCount)
+	cWires := C.malloc(C.size_t(innerCount) * C.size_t(unsafe.Sizeof(C.struct__topo_wire_t{})))
+	defer C.free(cWires)
+	wiresSlice := (*[1<<30 - 1]C.struct__topo_wire_t)(cWires)[:innerCount:innerCount]
 	for i, w := range innerWires {
-		cWires[i] = w.inner.val
-	}
-
-	var cWiresPtr *C.struct__topo_wire_t
-	if innerCount > 0 {
-		cWiresPtr = &cWires[0]
+		wiresSlice[i] = w.inner.val
 	}
 
 	return int(C.topo_solid_extrude_with_rotation_from_wire(
-		s.solid(), outerWire.inner.val, cWiresPtr, C.int(innerCount),
+		s.solid(), outerWire.inner.val, (*C.struct__topo_wire_t)(cWires), C.int(innerCount),
 		vecCenter.val, vecNormal.val, C.double(angleDegrees)))
 }
 
@@ -361,68 +358,58 @@ func (s *Compound) ExtrudeWithRotationFromFace(face *Face, vecCenter Point3, vec
 
 func (s *Compound) SweepWire(spine *Wire, profiles []*Wire, cornerMode int) int {
 	count := len(profiles)
-	cProfiles := make([]C.struct__topo_wire_t, count)
+	cProfiles := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(C.struct__topo_wire_t{})))
+	defer C.free(cProfiles)
+	profilesSlice := (*[1<<30 - 1]C.struct__topo_wire_t)(cProfiles)[:count:count]
 	for i, w := range profiles {
-		cProfiles[i] = w.inner.val
-	}
-
-	var cProfilesPtr *C.struct__topo_wire_t
-	if count > 0 {
-		cProfilesPtr = &cProfiles[0]
+		profilesSlice[i] = w.inner.val
 	}
 
 	return int(C.topo_solid_sweep_wire(
-		s.solid(), spine.inner.val, cProfilesPtr, C.int(count), C.int(cornerMode)))
+		s.solid(), spine.inner.val, (*C.struct__topo_wire_t)(cProfiles), C.int(count), C.int(cornerMode)))
 }
 
 func (s *Compound) SweepMultiFromVector(profiles []*Shape, path *Shape, makeSolid, isFrenet bool, vec *TopoVector) int {
 	count := len(profiles)
-	cProfiles := make([]*C.struct__topo_shape_t, count)
+	cProfiles := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cProfiles)
+	profilesSlice := (*[1<<30 - 1]*C.struct__topo_shape_t)(cProfiles)[:count:count]
 	for i, p := range profiles {
-		cProfiles[i] = p.inner.val
-	}
-
-	var cProfilesPtr **C.struct__topo_shape_t
-	if count > 0 {
-		cProfilesPtr = &cProfiles[0]
+		profilesSlice[i] = p.inner.val
 	}
 
 	return int(C.topo_solid_sweep_multi_from_vector(
-		s.solid(), cProfilesPtr, C.int(count), path.inner.val,
+		s.solid(), (**C.struct__topo_shape_t)(cProfiles), C.int(count), path.inner.val,
 		C.bool(makeSolid), C.bool(isFrenet), vec.inner.val))
 }
 
 func (s *Compound) SweepMultiFromWire(profiles []*Shape, path *Shape, makeSolid, isFrenet bool, wire *Wire) int {
 	count := len(profiles)
-	cProfiles := make([]*C.struct__topo_shape_t, count)
-	for i, p := range profiles {
-		cProfiles[i] = p.inner.val
-	}
+	cProfiles := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cProfiles)
+	profilesSlice := (*[1<<30 - 1]*C.struct__topo_shape_t)(cProfiles)[:count:count]
 
-	var cProfilesPtr **C.struct__topo_shape_t
-	if count > 0 {
-		cProfilesPtr = &cProfiles[0]
+	for i, p := range profiles {
+		profilesSlice[i] = p.inner.val
 	}
 
 	return int(C.topo_solid_sweep_multi_from_wire(
-		s.solid(), cProfilesPtr, C.int(count), path.inner.val,
+		s.solid(), (**C.struct__topo_shape_t)(cProfiles), C.int(count), path.inner.val,
 		C.bool(makeSolid), C.bool(isFrenet), &wire.inner.val))
 }
 
 func (s *Compound) SweepMultiFromEdge(profiles []*Shape, path *Shape, makeSolid, isFrenet bool, edge *Edge) int {
 	count := len(profiles)
-	cProfiles := make([]*C.struct__topo_shape_t, count)
-	for i, p := range profiles {
-		cProfiles[i] = p.inner.val
-	}
+	cProfiles := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cProfiles)
+	profilesSlice := (*[1<<30 - 1]*C.struct__topo_shape_t)(cProfiles)[:count:count]
 
-	var cProfilesPtr **C.struct__topo_shape_t
-	if count > 0 {
-		cProfilesPtr = &cProfiles[0]
+	for i, p := range profiles {
+		profilesSlice[i] = p.inner.val
 	}
 
 	return int(C.topo_solid_sweep_multi_from_edge(
-		s.solid(), cProfilesPtr, C.int(count), path.inner.val,
+		s.solid(), (**C.struct__topo_shape_t)(cProfiles), C.int(count), path.inner.val,
 		C.bool(makeSolid), C.bool(isFrenet), &edge.inner.val))
 }
 
@@ -431,11 +418,14 @@ func (s *Compound) Revolve(f *Face, p1, p2 Point3, angle float64) int {
 }
 
 func (s *Compound) Loft(profiles []Shape, ruled bool, tolerance float64) int {
-	cshp := make([]*C.struct__topo_shape_t, len(profiles))
+	cshp := C.malloc(C.size_t(len(profiles)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cshp)
+	cshpSlice := (*[1<<30 - 1]*C.struct__topo_shape_t)(cshp)[:len(profiles):len(profiles)]
+
 	for i := range profiles {
-		cshp[i] = profiles[i].inner.val
+		cshpSlice[i] = profiles[i].inner.val
 	}
-	return int(C.topo_solid_loft(s.solid(), &cshp[0], C.int(len(profiles)), C.bool(ruled), C.double(tolerance)))
+	return int(C.topo_solid_loft(s.solid(), (**C.struct__topo_shape_t)(cshp), C.int(len(profiles)), C.bool(ruled), C.double(tolerance)))
 }
 
 func (s *Compound) Pipe(f *Face, w Wire) int {
@@ -443,11 +433,13 @@ func (s *Compound) Pipe(f *Face, w Wire) int {
 }
 
 func (s *Compound) Sweep(spine *Wire, profiles []Shape, cornerMode int) int {
-	cshp := make([]*C.struct__topo_shape_t, len(profiles))
+	cshp := C.malloc(C.size_t(len(profiles)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cshp)
+	cshpSlice := (*[1<<30 - 1]*C.struct__topo_shape_t)(cshp)[:len(profiles):len(profiles)]
 	for i := range profiles {
-		cshp[i] = profiles[i].inner.val
+		cshpSlice[i] = profiles[i].inner.val
 	}
-	return int(C.topo_solid_sweep(s.solid(), spine.inner.val, &cshp[0], C.int(len(profiles)), C.int(cornerMode)))
+	return int(C.topo_solid_sweep(s.solid(), spine.inner.val, (**C.struct__topo_shape_t)(cshp), C.int(len(profiles)), C.int(cornerMode)))
 }
 
 func (s *Compound) Boolean(tool *Solid, op int) int {
@@ -455,27 +447,33 @@ func (s *Compound) Boolean(tool *Solid, op int) int {
 }
 
 func (s *Compound) Fillet(edges []Edge, radius []float64) int {
-	cshp := make([]C.struct__topo_edge_t, len(edges))
+	cshp := C.malloc(C.size_t(len(edges)) * C.size_t(unsafe.Sizeof(C.struct__topo_edge_t{})))
+	defer C.free(cshp)
+	cshpSlice := (*[1<<30 - 1]C.struct__topo_edge_t)(cshp)[:len(edges):len(edges)]
 	for i := range edges {
-		cshp[i] = edges[i].inner.val
+		cshpSlice[i] = edges[i].inner.val
 	}
-	return int(C.topo_solid_fillet(s.solid(), &cshp[0], C.int(len(edges)), (*C.double)(unsafe.Pointer(&radius[0])), C.int(len(radius))))
+	return int(C.topo_solid_fillet(s.solid(), (*C.struct__topo_edge_t)(cshp), C.int(len(edges)), (*C.double)(unsafe.Pointer(&radius[0])), C.int(len(radius))))
 }
 
 func (s *Compound) Chamfer(edges []Edge, distances []float64) int {
-	cshp := make([]C.struct__topo_edge_t, len(edges))
+	cshp := C.malloc(C.size_t(len(edges)) * C.size_t(unsafe.Sizeof(C.struct__topo_edge_t{})))
+	defer C.free(cshp)
+	cshpSlice := (*[1<<30 - 1]C.struct__topo_edge_t)(cshp)[:len(edges):len(edges)]
 	for i := range edges {
-		cshp[i] = edges[i].inner.val
+		cshpSlice[i] = edges[i].inner.val
 	}
-	return int(C.topo_solid_chamfer(s.solid(), &cshp[0], C.int(len(edges)), (*C.double)(unsafe.Pointer(&distances[0])), C.int(len(distances))))
+	return int(C.topo_solid_chamfer(s.solid(), (*C.struct__topo_edge_t)(cshp), C.int(len(edges)), (*C.double)(unsafe.Pointer(&distances[0])), C.int(len(distances))))
 }
 
 func (s *Compound) Shelling(faces []Face, offset, tolerance float64) int {
-	cshp := make([]C.struct__topo_face_t, len(faces))
+	cshp := C.malloc(C.size_t(len(faces)) * C.size_t(unsafe.Sizeof(C.struct__topo_face_t{})))
+	defer C.free(cshp)
+	cshpSlice := (*[1<<30 - 1]C.struct__topo_face_t)(cshp)[:len(faces):len(faces)]
 	for i := range faces {
-		cshp[i] = faces[i].inner.val
+		cshpSlice[i] = faces[i].inner.val
 	}
-	return int(C.topo_solid_shelling(s.solid(), &cshp[0], C.int(len(faces)), C.double(offset), C.double(tolerance)))
+	return int(C.topo_solid_shelling(s.solid(), (*C.struct__topo_face_t)(cshp), C.int(len(faces)), C.double(offset), C.double(tolerance)))
 }
 
 func (s *Compound) Offset(f *Face, offset, tolerance float64) int {
@@ -483,11 +481,13 @@ func (s *Compound) Offset(f *Face, offset, tolerance float64) int {
 }
 
 func (s *Compound) Draft(faces []Face, d Dir3, angle float64, p Plane) int {
-	fs := make([]C.struct__topo_face_t, len(faces))
+	cshp := C.malloc(C.size_t(len(faces)) * C.size_t(unsafe.Sizeof(C.struct__topo_face_t{})))
+	defer C.free(cshp)
+	cshpSlice := (*[1<<30 - 1]C.struct__topo_face_t)(cshp)[:len(faces):len(faces)]
 	for i := range faces {
-		fs[i] = faces[i].inner.val
+		cshpSlice[i] = faces[i].inner.val
 	}
-	return int(C.topo_solid_draft(s.solid(), &fs[0], C.int(len(faces)), d.val, C.double(angle), p.val))
+	return int(C.topo_solid_draft(s.solid(), (*C.struct__topo_face_t)(cshp), C.int(len(faces)), d.val, C.double(angle), p.val))
 }
 
 func (s *Compound) EvolvedFromFace(Spine *Face, Profil *Wire) int {
@@ -560,54 +560,45 @@ func (s *Compound) SectionWire(pnt, nor Point3) *Wire {
 
 func (c *Compound) Cut(toCut []*Shape, tol float64) *Compound {
 	count := len(toCut)
-	cShapes := make([]*C.struct__topo_shape_t, count)
+	cShapes := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cShapes)
+	cShapesSlice := (*[1<<30 - 1]*C.struct__topo_shape_t)(cShapes)[:count:count]
 	for i, s := range toCut {
-		cShapes[i] = s.inner.val
-	}
-
-	var cShapesPtr **C.struct__topo_shape_t
-	if count > 0 {
-		cShapesPtr = &cShapes[0]
+		cShapesSlice[i] = s.inner.val
 	}
 
 	p := &Compound{inner: &innerCompound{val: C.topo_compound_cut(
-		c.inner.val, cShapesPtr, C.int(count), C.double(tol))}}
+		c.inner.val, (**C.struct__topo_shape_t)(cShapes), C.int(count), C.double(tol))}}
 	runtime.SetFinalizer(p.inner, (*innerCompound).free)
 	return p
 }
 
 func (c *Compound) Fuse(toFuse []*Shape, glue bool, tol float64) *Compound {
 	count := len(toFuse)
-	cShapes := make([]*C.struct__topo_shape_t, count)
+	cShapes := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cShapes)
+	cShapesSlice := (*[1<<30 - 1]*C.struct__topo_shape_t)(cShapes)[:count:count]
 	for i, s := range toFuse {
-		cShapes[i] = s.inner.val
-	}
-
-	var cShapesPtr **C.struct__topo_shape_t
-	if count > 0 {
-		cShapesPtr = &cShapes[0]
+		cShapesSlice[i] = s.inner.val
 	}
 
 	p := &Compound{inner: &innerCompound{val: C.topo_compound_fuse(
-		c.inner.val, cShapesPtr, C.int(count), C.bool(glue), C.double(tol))}}
+		c.inner.val, (**C.struct__topo_shape_t)(cShapes), C.int(count), C.bool(glue), C.double(tol))}}
 	runtime.SetFinalizer(p.inner, (*innerCompound).free)
 	return p
 }
 
 func (c *Compound) Intersect(toIntersect []*Shape, tol float64) *Compound {
 	count := len(toIntersect)
-	cShapes := make([]*C.struct__topo_shape_t, count)
+	cShapes := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(cShapes)
+	cShapesSlice := (*[1<<30 - 1]*C.struct__topo_shape_t)(cShapes)[:count:count]
 	for i, s := range toIntersect {
-		cShapes[i] = s.inner.val
-	}
-
-	var cShapesPtr **C.struct__topo_shape_t
-	if count > 0 {
-		cShapesPtr = &cShapes[0]
+		cShapesSlice[i] = s.inner.val
 	}
 
 	p := &Compound{inner: &innerCompound{val: C.topo_compound_intersect(
-		c.inner.val, cShapesPtr, C.int(count), C.double(tol))}}
+		c.inner.val, (**C.struct__topo_shape_t)(cShapes), C.int(count), C.double(tol))}}
 	runtime.SetFinalizer(p.inner, (*innerCompound).free)
 	return p
 }

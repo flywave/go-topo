@@ -621,13 +621,18 @@ func (f *Face) Isoline(param float64, direction string) *Edge {
 
 func (f *Face) Isolines(params []float64, direction string) []*Edge {
 	count := len(params)
-	cParams := make([]float64, count)
-	copy(cParams, params)
+	cParams := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(C.double(0))))
+	defer C.free(cParams)
+	cParamsSlice := (*[1<<30 - 1]C.double)(cParams)[:count:count]
+	for i := range params {
+		cParamsSlice[i] = C.double(params[i])
+	}
+
 	cDir := C.CString(direction)
 	defer C.free(unsafe.Pointer(cDir))
 
 	var resultCount C.int
-	edges := C.topo_face_isolines(f.inner.val, (*C.double)(&cParams[0]),
+	edges := C.topo_face_isolines(f.inner.val, (*C.double)(cParams),
 		C.int(count), cDir, &resultCount)
 	if edges == nil {
 		return nil
@@ -963,9 +968,7 @@ func TopoMakeSplineApproxFace(points [][]Point3, tol float64, smoothing []float6
 	cPointCounts := C.malloc(C.size_t(pointArraySize) * C.size_t(unsafe.Sizeof(C.int(0))))
 	defer C.free(cPointCounts)
 	cPointCountsPtr := (*[1<<30 - 1]C.int)(cPointCounts)
-	for i := range pointCounts {
-		cPointCountsPtr[i] = pointCounts[i]
-	}
+	copy(cPointCountsPtr[:], pointCounts)
 
 	// 分配并填充所有点到C数组
 	cPoints := C.malloc(C.size_t(totalPoints) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))

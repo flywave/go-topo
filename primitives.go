@@ -3786,24 +3786,30 @@ type ChannelPoint struct {
 }
 
 func CreateChannelCenterline(points []ChannelPoint) *Wire {
-	cPoints := make([]C.channel_point_t, len(points))
+	count := len(points)
+	cPoints := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(C.channel_point_t{})))
+	defer C.free(cPoints)
+	ptsSlice := (*[1<<30 - 1]C.channel_point_t)(unsafe.Pointer(cPoints))[:count:count]
 	for i, pt := range points {
-		cPoints[i] = C.channel_point_t{
+		ptsSlice[i] = C.channel_point_t{
 			position: pt.Position.val,
 			ctype:    C.int(pt.Ctype),
 		}
 	}
 
-	wire := C.create_channel_centerline(&cPoints[0], C.int(len(points)))
+	wire := C.create_channel_centerline((*C.channel_point_t)(cPoints), C.int(count))
 	w := &Wire{inner: &innerWire{val: wire}}
 	runtime.SetFinalizer(w.inner, (*innerWire).free)
 	return w
 }
 
 func SampleChannelPoints(points []ChannelPoint, tessellation float64) []Point3 {
-	cPoints := make([]C.channel_point_t, len(points))
+	count := len(points)
+	cPoints := C.malloc(C.size_t(count) * C.size_t(unsafe.Sizeof(C.channel_point_t{})))
+	defer C.free(cPoints)
+	ptsSlice := (*[1<<30 - 1]C.channel_point_t)(unsafe.Pointer(cPoints))[:count:count]
 	for i, pt := range points {
-		cPoints[i] = C.channel_point_t{
+		ptsSlice[i] = C.channel_point_t{
 			position: pt.Position.val,
 			ctype:    C.int(pt.Ctype),
 		}
@@ -3811,7 +3817,7 @@ func SampleChannelPoints(points []ChannelPoint, tessellation float64) []Point3 {
 
 	var outCount C.int
 	cResult := C.sample_channel_points(
-		&cPoints[0],
+		(*C.channel_point_t)(cPoints),
 		C.int(len(points)),
 		C.double(tessellation),
 		&outCount,
@@ -5207,13 +5213,15 @@ type PipeParams struct {
 func (p *PipeParams) to_struct() C.pipe_params_t {
 	var c C.pipe_params_t
 
+	wlen := len(p.Wire)
 	// 转换路径点
-	wire := make([]C.pnt3d_t, len(p.Wire))
+	wire := C.malloc(C.size_t(wlen) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
+	wireSlice := (*[1<<30 - 1]C.struct__pnt3d_t)(unsafe.Pointer(wire))[:wlen:wlen]
 	for i, pt := range p.Wire {
-		wire[i] = pt.val
+		wireSlice[i] = pt.val
 	}
-	c.wire = &wire[0]
-	c.wire_count = C.int(len(p.Wire))
+	c.wire = (*C.struct__pnt3d_t)(wire)
+	c.wire_count = C.int(wlen)
 
 	// 转换剖面数组
 	if len(p.Profiles) > 0 {
@@ -5272,6 +5280,9 @@ func (p *PipeParams) to_struct() C.pipe_params_t {
 func CreatePipe(params PipeParams) *Shape {
 	cParams := params.to_struct()
 	defer func() {
+		if cParams.wire != nil {
+			C.free(unsafe.Pointer(cParams.wire))
+		}
 		if cParams.profiles != nil {
 			arraySlice := (*[1<<30 - 1]C.shape_profile_t)(unsafe.Pointer(cParams.profiles))[:cParams.profile_count:cParams.profile_count]
 			for i := range arraySlice {
