@@ -5235,7 +5235,14 @@ topo_wire_t create_pipe_centerline(pipe_params_t params) {
     TopoDS_Wire wire = create_pipe_centerline(cpp_params);
     return topo_wire_t{
         .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
-  } catch (...) {
+   } catch (...) {
+    try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (const Standard_ConstructionError& e) {
+        std::cerr << e.GetMessageString() << std::endl;
+    }
     return topo_wire_t{};
   }
 }
@@ -5821,6 +5828,13 @@ topo_shape_t *create_multi_segment_pipe_with_split_distances(
                                 create_multi_segment_pipe_with_split_distances(
                                     cpp_params, distances))};
   } catch (...) {
+    try {
+        std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (const Standard_ConstructionError& e) {
+        std::cerr << e.GetMessageString() << std::endl;
+    }
     return nullptr;
   }
 }

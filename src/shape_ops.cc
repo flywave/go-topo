@@ -1690,9 +1690,9 @@ gp_Pnt profile_project_point(profile_projection *proj, gp_Pnt point) {
       gp_Vec(point.Z(), point.Y(), 0).Transformed(proj->trsf));
 }
 
-double wrie_length(wire path) {
+double wire_length(wire path) {
   try {
-    return path.length();
+     return path.length();
   } catch (const std::exception &e) {
     return 0.0;
   }

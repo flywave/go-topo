@@ -18541,8 +18541,9 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
     bool needBackCut =
         (splitDistances[1] > segmentStart && splitDistances[1] < segmentEnd);
 
+    bool needTrans =   splitDistances[0] == segmentEnd;
     TopoDS_Shape segment;
-    if (noCut || needFrontCut || needBackCut) {
+    if (noCut || needFrontCut || needBackCut || needTrans) {
          pipe_params seg_params;
         seg_params.upDir= params.upDir;
         seg_params.segment_type = params.segment_types
@@ -18642,11 +18643,11 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
       }
     }
 
-    if (!segment.IsNull()) {
+    if (!segment.IsNull() && !needTrans) {
       if (result.IsNull()) {
         result = segment;
       } else {
-        result = BRepAlgoAPI_Fuse(result, segment).Shape();
+          result = BRepAlgoAPI_Fuse(result, segment).Shape();
       }
     }
 

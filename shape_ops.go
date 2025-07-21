@@ -558,10 +558,11 @@ func ClipWithTopo4D(shape *Shape, progress WorkProgress) *Shape {
 		return nil
 	}
 
-	params := C.work_progress_params_t{
-		_type:  C.progress_type_t(progress.Type),
-		_range: [2]C.double{C.double(progress.Range[0]), C.double(progress.Range[1])},
-	}
+	param := C.malloc(C.size_t(unsafe.Sizeof(C.work_progress_params_t{})))
+	defer C.free(param)
+	params := (*C.work_progress_params_t)(param)
+	params._type = C.progress_type_t(progress.Type)
+	params._range = [2]C.double{C.double(progress.Range[0]), C.double(progress.Range[1])}
 
 	if progress.Direction != nil {
 		params.direction = &progress.Direction.val
@@ -584,7 +585,7 @@ func ClipWithTopo4D(shape *Shape, progress WorkProgress) *Shape {
 		params.point_count = C.int(len(*progress.Points))
 	}
 
-	result := C.topo_clip_with_4d(shape.inner.val, &params)
+	result := C.topo_clip_with_4d(shape.inner.val, params)
 	if result == nil {
 		return nil
 	}

@@ -17,6 +17,8 @@
 #include <gp_Dir.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Trsf.hxx>
+#include <BRepBuilderAPI_MakeWire.hxx>
+#include <BRepBuilderAPI_MakeEdge.hxx>
 
 #include <array>
 #include <vector>
@@ -6138,6 +6140,26 @@ void test_make_pipe_shape() {
   }
 }
 
+void test_make_wire_from_segments() {
+  std::cout << "\n=== Testing Wire From Segments ===" << std::endl;
+  try {
+    // 测试基本线
+         BRepBuilderAPI_MakeWire wireMaker;
+         wireMaker.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(0, 0, 0), gp_Pnt(-15.676352151669562,	22.01439344789833,-36.72105858521536)));
+    if(!wireMaker.IsDone()){
+      std::cerr << "Error: Failed to create basic wire from segments" << std::endl;
+      return;
+    }
+    auto basicWire = wireMaker.Wire();
+    if (basicWire.IsNull()) {
+      std::cerr << "Error: Failed to create basic wire from segments" << std::endl;
+      return;
+    }
+   } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  }
+}
+
 int main() {
   // 基础图形
   // test_revol();
@@ -6258,6 +6280,7 @@ int main() {
   // test_make_cover_plate();
   // test_make_cable_ray();
   // 水利工程
-  test_water_tunnel();
+  // test_water_tunnel();
+  test_make_wire_from_segments();
   return 0;
 }

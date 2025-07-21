@@ -182,7 +182,7 @@ void test_clip_wire_between_distances() {
   auto mixedWire = flywave::topo::wire::make_wire(edges);
 
   // 计算总长度
-  double totalLength = flywave::topo::wrie_length(mixedWire);
+  double totalLength = flywave::topo::wire_length(mixedWire);
   std::cout << "Total wire length: " << totalLength << " mm" << std::endl;
 
   // 测试不同裁剪范围
@@ -211,7 +211,7 @@ void test_clip_wire_between_distances() {
       continue;
     }
 
-    double clippedLength = flywave::topo::wrie_length(clippedWire);
+    double clippedLength = flywave::topo::wire_length(clippedWire);
     std::cout << "Clipped wire length: " << clippedLength << " mm" << std::endl;
 
     // 采样点验证
