@@ -6122,8 +6122,7 @@ void topo_free_catenary_points(pnt3d_t *points) {
 TOPOCAPICALL topo_shape_t *
 topo_clip_with_4d(topo_shape_t *shape, const work_progress_params_t *params) {
   try {
-    flywave::topo::work_progress_params cpp_params;
-
+    flywave::topo::work_progress_params cpp_params; 
     if (params->direction) {
       cpp_params.direction = boost::make_optional(gp_Dir(
           params->direction->x, params->direction->y, params->direction->z));
@@ -6154,15 +6153,7 @@ topo_clip_with_4d(topo_shape_t *shape, const work_progress_params_t *params) {
 
     return new topo_shape_t{.shp =
                                 std::make_shared<flywave::topo::shape>(result)};
-
   } catch (...) {
-    try {
-        std::rethrow_exception(std::current_exception());
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
-    } catch (const Standard_ConstructionError& e) {
-        std::cerr << e.GetMessageString() << std::endl;
-    }
     return NULL;
   }
 }

@@ -2,6 +2,7 @@ package topo
 
 /*
 #include <stdlib.h>
+#include <string.h>
 #include "topo_c_api.h"
 #cgo CFLAGS: -I  ./libs
 #cgo linux CXXFLAGS: -I ./libs  -std=gnu++14
@@ -559,6 +560,7 @@ func ClipWithTopo4D(shape *Shape, progress WorkProgress) *Shape {
 	}
 
 	param := C.malloc(C.size_t(unsafe.Sizeof(C.work_progress_params_t{})))
+	C.memset(param, 0, C.size_t(unsafe.Sizeof(C.work_progress_params_t{})))
 	defer C.free(param)
 	params := (*C.work_progress_params_t)(param)
 	params._type = C.progress_type_t(progress.Type)
