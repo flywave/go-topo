@@ -2032,7 +2032,7 @@ typedef struct {
   int wire_array_count;
   shape_profile_t *profiles;
   int profile_count;
-  shape_profile_t **inner_profiles; // 可为NULL
+  shape_profile_t **inner_profiles;
   int *inner_profile_counts;
   segment_type_t *segment_types;
   int segment_type_count;

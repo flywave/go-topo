@@ -17803,7 +17803,7 @@ create_pipe_helper(const pipe_params &params) {
 
   // 获取外轮廓截面形状(作为面)
   addOuterProfileAtVertex(edge, params.profiles[0], v1, true);
-  if (params.profiles.size() == 2) {
+  if (params.profiles.size() > 1) {
     addOuterProfileAtVertex(edge, params.profiles[1], v2, false);
   }
 
@@ -17866,7 +17866,7 @@ create_pipe_helper(const pipe_params &params) {
     TopExp::Vertices(edge, v1, v2);
 
     addProfileAtVertex(edge, (*params.inner_profiles)[0], v1, true);
-    if (params.inner_profiles->size() == 2) {
+    if (params.inner_profiles->size() > 1) {
       addProfileAtVertex(edge, (*params.inner_profiles)[1], v2, false);
     }
     innerMaker.SetMode(Standard_True);

@@ -86,7 +86,6 @@ func TestBuge(t *testing.T) {
 		},
 	}
 
-	// 构建第一个多边形剖面
 	profile1 := ShapeProfile{
 		Type: ProfileTypePolygon,
 		Data: ProfileData{
@@ -109,7 +108,6 @@ func TestBuge(t *testing.T) {
 		},
 	}
 
-	// 构建第二个多边形剖面
 	profile2 := ShapeProfile{
 		Type: ProfileTypePolygon,
 		Data: ProfileData{
@@ -130,8 +128,7 @@ func TestBuge(t *testing.T) {
 		},
 	}
 
-	// 创建第一个多边形剖面 (12个点) - polygon3
-	polygon3 := ShapeProfile{
+	innerProfile1 := ShapeProfile{
 		Type: ProfileTypePolygon,
 		Data: ProfileData{
 			Polygon: PolygonProfile{
@@ -146,14 +143,14 @@ func TestBuge(t *testing.T) {
 					NewPoint3([3]float64{3.0362530020384777, 3.946891104328797, 0}),
 					NewPoint3([3]float64{3.0763705290048873, 2.57033053075941, 0}),
 					NewPoint3([3]float64{2.4402700090676666, 0.08020179663338835, 0}),
+					NewPoint3([3]float64{-2.4484020179459174, 0.08566007382641323, 0}),
 					NewPoint3([3]float64{-3.078273455639578, 2.575440459011272, 0}),
 				},
 			},
 		},
 	}
 
-	// 创建第二个多边形剖面 (10个点) - polygon4
-	polygon4 := ShapeProfile{
+	innerProfile2 := ShapeProfile{
 		Type: ProfileTypePolygon,
 		Data: ProfileData{
 			Polygon: PolygonProfile{
@@ -173,6 +170,9 @@ func TestBuge(t *testing.T) {
 		},
 	}
 
+	_ = innerProfile1
+	_ = innerProfile2
+
 	dir := NewDir3FromXYZ([3]float64{-0.37127704827582503, 0.7201908387390975, 0.586070396129907})
 
 	param := MultiSegmentPipeParams{
@@ -182,12 +182,12 @@ func TestBuge(t *testing.T) {
 			SegmentTypeLine,
 		},
 		Profiles:       []ShapeProfile{profile1, profile2},
-		InnerProfiles:  []ShapeProfile{polygon3, polygon4},
+		InnerProfiles:  []ShapeProfile{innerProfile1, innerProfile2},
 		TransitionMode: TransitionTransformed,
 		UpDir:          &dir,
 	}
 
-	shp := CreateMultiSegmentPipeWithSplitDistances(param, 2, 5)
+	shp := CreateMultiSegmentPipe(param)
 
 	if shp == nil {
 		t.Fatal("Failed to create shp")
