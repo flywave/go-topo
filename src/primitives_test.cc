@@ -1,4 +1,6 @@
 #include "primitives.hh"
+#include <BRepBuilderAPI_MakeEdge.hxx>
+#include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <BRep_Builder.hxx>
 #include <Interface_Static.hxx>
@@ -17,8 +19,6 @@
 #include <gp_Dir.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Trsf.hxx>
-#include <BRepBuilderAPI_MakeWire.hxx>
-#include <BRepBuilderAPI_MakeEdge.hxx>
 
 #include <array>
 #include <vector>
@@ -6144,21 +6144,125 @@ void test_make_wire_from_segments() {
   std::cout << "\n=== Testing Wire From Segments ===" << std::endl;
   try {
     // 测试基本线
-         BRepBuilderAPI_MakeWire wireMaker;
-         wireMaker.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(0, 0, 0), gp_Pnt(-15.676352151669562,	22.01439344789833,-36.72105858521536)));
-    if(!wireMaker.IsDone()){
-      std::cerr << "Error: Failed to create basic wire from segments" << std::endl;
+    BRepBuilderAPI_MakeWire wireMaker;
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(
+        gp_Pnt(0, 0, 0),
+        gp_Pnt(-15.676352151669562, 22.01439344789833, -36.72105858521536)));
+    if (!wireMaker.IsDone()) {
+      std::cerr << "Error: Failed to create basic wire from segments"
+                << std::endl;
       return;
     }
     auto basicWire = wireMaker.Wire();
     if (basicWire.IsNull()) {
-      std::cerr << "Error: Failed to create basic wire from segments" << std::endl;
+      std::cerr << "Error: Failed to create basic wire from segments"
+                << std::endl;
       return;
     }
-   } catch (const Standard_ConstructionError &e) {
+  } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
   }
 }
+
+
+void test_multi_segment_pipe_with_split_distances() {
+  
+  try {
+    // 准备测试数据 - 直线段 (两段Z轴方向的直线)
+    std::vector<gp_Pnt> segment1Points = {gp_Pnt(0, 0, 0), gp_Pnt(13.363751136232167, -26.227833716198802, 40.422308564186096)};
+    std::vector<gp_Pnt> segment2Points = {gp_Pnt(13.363751136232167, -26.227833716198802, 40.422308564186096), gp_Pnt(46.29231750732288, -90.69991450663656, 108.94551491551101)};
+
+    // 创建第一个多边形剖面 (12个点)
+    std::vector<gp_Pnt> polygon1 = {
+        gp_Pnt(-3.171, 2.538, 0),
+        gp_Pnt(-3.136, 3.954, 0),
+        gp_Pnt(-2.498, 5.219, 0),
+        gp_Pnt(-1.382, 6.09, 0),
+        gp_Pnt(0, 6.4, 0),
+        gp_Pnt(1.382, 6.09, 0),
+        gp_Pnt(2.498, 5.219, 0),
+        gp_Pnt(3.136, 3.954, 0),
+        gp_Pnt(3.171, 2.538, 0),
+        gp_Pnt(2.5, 0, 0),
+        gp_Pnt(-2.5, 0, 0),
+        gp_Pnt(-3.171, 2.538, 0)};
+    
+    // 创建第二个多边形剖面 (10个点)
+    std::vector<gp_Pnt> polygon2 = {
+        gp_Pnt(-3.4, 3.25, 0),
+        gp_Pnt(-2.773, 4.717, 0),
+        gp_Pnt(-1.553, 5.746, 0),
+        gp_Pnt(0, 6.115, 0),
+        gp_Pnt(1.553, 5.746, 0),
+        gp_Pnt(2.773, 4.717, 0),
+        gp_Pnt(3.4, 3.25, 0),
+        gp_Pnt(3.4, 0, 0),
+        gp_Pnt(-3.4, 0, 0),
+        gp_Pnt(-3.4, 3.25, 0)};
+
+
+    // 创建第一个多边形剖面 (12个点) - polygon3
+    std::vector<gp_Pnt> polygon3 = {
+        gp_Pnt(-3.078273455639578, 2.575440459011272, 0),
+        gp_Pnt(-3.036354153205542, 3.945591360596666, 0),
+        gp_Pnt(-2.415107425541498, 5.163064134049417, 0),
+        gp_Pnt(-1.339465963909452, 5.999496653245043, 0),
+        gp_Pnt(-0.00978236558095332, 6.3004796235756695, 0),
+        gp_Pnt(1.3250857438602934, 6.007776113883715, 0),
+        gp_Pnt(2.410219147892808, 5.171098830877157, 0),
+        gp_Pnt(3.0362530020384777, 3.946891104328797, 0),
+        gp_Pnt(3.0763705290048873, 2.57033053075941, 0),
+        gp_Pnt(2.4402700090676666, 0.08020179663338835, 0),
+        // 最后一点未提供，使用第一个点闭合
+        gp_Pnt(-3.078273455639578, 2.575440459011272, 0)};
+    
+    // 创建第二个多边形剖面 (10个点) - polygon4
+    std::vector<gp_Pnt> polygon4 = {
+        gp_Pnt(-3.3009689384399516, 3.2638870027828157, 0),
+        gp_Pnt(-2.681019727080062, 4.6777618885065335, 0),
+        gp_Pnt(-1.5023855429647655, 5.659755134999072, 0),
+        gp_Pnt(-0.013823869618346543, 6.0159601058725585, 0),
+        gp_Pnt(1.4854596950468153, 5.672255120809437, 0),
+        gp_Pnt(2.678133803605064, 4.68537082388747, 0),
+        gp_Pnt(3.30065175118932, 3.2613984849103375, 0),
+        gp_Pnt(3.328711291934881, 0.07012788391507485, 0),
+        gp_Pnt(-3.336054557835377, 0.07688290074113246, 0),
+        gp_Pnt(-3.3009689384399516, 3.2638870027828157, 0)};
+
+
+    // 创建多边形剖面
+    polygon_profile profile1(polygon1);
+    polygon_profile profile2(polygon2);
+
+    // 设置多段管道参数
+    multi_segment_pipe_params params{
+        .wires = {segment1Points, segment2Points},
+        .profiles = {polygon1, polygon2},
+        .inner_profiles = {{polygon3, polygon4}},
+        .segment_types = {
+            {segment_type::LINE, 
+             segment_type::LINE}},
+        .transition_mode = transition_mode::TRANSFORMED,
+        .upDir = gp_Dir(-0.37127704827582503, 0.7201908387390975, 0.586070396129907)  // Z轴方向
+    };
+
+    // 测试6: 多边形剖面的多段管道
+    std::cout << "\nTest Case 6: Polygonal Profiles (splitDistances = {1.0, 1.0})" << std::endl;
+    auto shp6 = create_multi_segment_pipe_with_split_distances(params, {2, 5});
+    if (shp6.IsNull()) {
+      std::cerr << "Error: Failed to create polygonal profile pipe" << std::endl;
+    } else {
+      test_export_shape(shp6, "./multi_segment_polygonal_pipe.stl");
+    }
+
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  } catch (const std::exception &e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+  }
+
+}
+
 
 int main() {
   // 基础图形
@@ -6281,6 +6385,7 @@ int main() {
   // test_make_cable_ray();
   // 水利工程
   // test_water_tunnel();
-  test_make_wire_from_segments();
+  //test_make_wire_from_segments();
+  test_multi_segment_pipe_with_split_distances();
   return 0;
 }

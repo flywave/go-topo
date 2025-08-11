@@ -73,3 +73,78 @@ func TestMaakeWire2(t *testing.T) {
 		t.Fatal("Failed to create wire")
 	}
 }
+
+func TestBuge(t *testing.T) {
+	points := [][]Point3{{
+		NewPoint3([3]float64{0, 0, 0}),
+		NewPoint3([3]float64{13.363751136232167, -26.227833716198802, 40.422308564186096}),
+	},
+		{
+			NewPoint3([3]float64{13.363751136232167, -26.227833716198802, 40.422308564186096}),
+			NewPoint3([3]float64{46.29231750732288, -90.69991450663656, 108.94551491551101}),
+		},
+	}
+
+	// 构建第一个多边形剖面
+	profile1 := ShapeProfile{
+		Type: ProfileTypePolygon,
+		Data: ProfileData{
+			Polygon: PolygonProfile{
+				Edges: []Point3{
+					NewPoint3([3]float64{-3.171, 2.538, 0}),
+					NewPoint3([3]float64{-3.136, 3.954, 0}),
+					NewPoint3([3]float64{-2.498, 5.219, 0}),
+					NewPoint3([3]float64{-1.382, 6.09, 0}),
+					NewPoint3([3]float64{0, 6.4, 0}),
+					NewPoint3([3]float64{1.382, 6.09, 0}),
+					NewPoint3([3]float64{2.498, 5.219, 0}),
+					NewPoint3([3]float64{3.136, 3.954, 0}),
+					NewPoint3([3]float64{3.171, 2.538, 0}),
+					NewPoint3([3]float64{2.5, 0, 0}),
+					NewPoint3([3]float64{-2.5, 0, 0}),
+					NewPoint3([3]float64{-3.171, 2.538, 0}),
+				},
+			},
+		},
+	}
+
+	// 构建第二个多边形剖面
+	profile2 := ShapeProfile{
+		Type: ProfileTypePolygon,
+		Data: ProfileData{
+			Polygon: PolygonProfile{
+				Edges: []Point3{
+					NewPoint3([3]float64{-3.4, 3.25, 0}),
+					NewPoint3([3]float64{-2.773, 4.717, 0}),
+					NewPoint3([3]float64{-1.553, 5.746, 0}),
+					NewPoint3([3]float64{0, 6.115, 0}),
+					NewPoint3([3]float64{1.553, 5.746, 0}),
+					NewPoint3([3]float64{2.773, 4.717, 0}),
+					NewPoint3([3]float64{3.4, 3.25, 0}),
+					NewPoint3([3]float64{3.4, 0, 0}),
+					NewPoint3([3]float64{-3.4, 0, 0}),
+					NewPoint3([3]float64{-3.4, 3.25, 0}),
+				},
+			},
+		},
+	}
+	dir := NewDir3FromXYZ([3]float64{-0.37127704827582503, 0.7201908387390975, 0.586070396129907})
+
+	param := MultiSegmentPipeParams{
+		Wires: points,
+		SegmentTypes: []SegmentType{
+			SegmentTypeLine,
+			SegmentTypeLine,
+		},
+		Profiles:       []ShapeProfile{profile2, profile2},
+		InnerProfiles:  []ShapeProfile{profile1, profile1},
+		TransitionMode: TransitionTransformed,
+		UpDir:          &dir,
+	}
+
+	shp := CreateMultiSegmentPipeWithSplitDistances(param, 2, 5)
+
+	if shp == nil {
+		t.Fatal("Failed to create shp")
+	}
+}
