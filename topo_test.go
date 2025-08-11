@@ -75,10 +75,11 @@ func TestMaakeWire2(t *testing.T) {
 }
 
 func TestBuge(t *testing.T) {
-	points := [][]Point3{{
-		NewPoint3([3]float64{0, 0, 0}),
-		NewPoint3([3]float64{13.363751136232167, -26.227833716198802, 40.422308564186096}),
-	},
+	points := [][]Point3{
+		{
+			NewPoint3([3]float64{0, 0, 0}),
+			NewPoint3([3]float64{13.363751136232167, -26.227833716198802, 40.422308564186096}),
+		},
 		{
 			NewPoint3([3]float64{13.363751136232167, -26.227833716198802, 40.422308564186096}),
 			NewPoint3([3]float64{46.29231750732288, -90.69991450663656, 108.94551491551101}),
@@ -128,6 +129,50 @@ func TestBuge(t *testing.T) {
 			},
 		},
 	}
+
+	// 创建第一个多边形剖面 (12个点) - polygon3
+	polygon3 := ShapeProfile{
+		Type: ProfileTypePolygon,
+		Data: ProfileData{
+			Polygon: PolygonProfile{
+				Edges: []Point3{
+					NewPoint3([3]float64{-3.078273455639578, 2.575440459011272, 0}),
+					NewPoint3([3]float64{-3.036354153205542, 3.945591360596666, 0}),
+					NewPoint3([3]float64{-2.415107425541498, 5.163064134049417, 0}),
+					NewPoint3([3]float64{-1.339465963909452, 5.999496653245043, 0}),
+					NewPoint3([3]float64{-0.00978236558095332, 6.3004796235756695, 0}),
+					NewPoint3([3]float64{1.3250857438602934, 6.007776113883715, 0}),
+					NewPoint3([3]float64{2.410219147892808, 5.171098830877157, 0}),
+					NewPoint3([3]float64{3.0362530020384777, 3.946891104328797, 0}),
+					NewPoint3([3]float64{3.0763705290048873, 2.57033053075941, 0}),
+					NewPoint3([3]float64{2.4402700090676666, 0.08020179663338835, 0}),
+					NewPoint3([3]float64{-3.078273455639578, 2.575440459011272, 0}),
+				},
+			},
+		},
+	}
+
+	// 创建第二个多边形剖面 (10个点) - polygon4
+	polygon4 := ShapeProfile{
+		Type: ProfileTypePolygon,
+		Data: ProfileData{
+			Polygon: PolygonProfile{
+				Edges: []Point3{
+					NewPoint3([3]float64{-3.3009689384399516, 3.2638870027828157, 0}),
+					NewPoint3([3]float64{-2.681019727080062, 4.6777618885065335, 0}),
+					NewPoint3([3]float64{-1.5023855429647655, 5.659755134999072, 0}),
+					NewPoint3([3]float64{-0.013823869618346543, 6.0159601058725585, 0}),
+					NewPoint3([3]float64{1.4854596950468153, 5.672255120809437, 0}),
+					NewPoint3([3]float64{2.678133803605064, 4.68537082388747, 0}),
+					NewPoint3([3]float64{3.30065175118932, 3.2613984849103375, 0}),
+					NewPoint3([3]float64{3.328711291934881, 0.07012788391507485, 0}),
+					NewPoint3([3]float64{-3.336054557835377, 0.07688290074113246, 0}),
+					NewPoint3([3]float64{-3.3009689384399516, 3.2638870027828157, 0}),
+				},
+			},
+		},
+	}
+
 	dir := NewDir3FromXYZ([3]float64{-0.37127704827582503, 0.7201908387390975, 0.586070396129907})
 
 	param := MultiSegmentPipeParams{
@@ -136,8 +181,8 @@ func TestBuge(t *testing.T) {
 			SegmentTypeLine,
 			SegmentTypeLine,
 		},
-		Profiles:       []ShapeProfile{profile2, profile2},
-		InnerProfiles:  []ShapeProfile{profile1, profile1},
+		Profiles:       []ShapeProfile{profile1, profile2},
+		InnerProfiles:  []ShapeProfile{polygon3, polygon4},
 		TransitionMode: TransitionTransformed,
 		UpDir:          &dir,
 	}
