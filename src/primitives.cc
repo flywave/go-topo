@@ -18508,10 +18508,14 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
   maxProfile.center = gp_Pnt(0, 0, 0);
   maxProfile.norm = gp_Dir(0, 0, 1);
 
-  TopoDS_Shape result;
+  TopoDS_Compound result;
+  BRep_Builder builder;
+  builder.MakeCompound(result);
+
   double accumulatedLength = 0;
   shape_profile prev_profile;
   boost::optional<shape_profile> prev_inner_profile;
+  std::vector<TopoDS_Shape> transitions;
 
   gp_Dir prev_normal;
   bool has_prev = false;
@@ -18606,8 +18610,7 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
             auto tr = BRepAlgoAPI_Fuse(segment, transition).Shape();
             BRepCheck_Analyzer aChecker(tr);
               if (!tr.IsNull() && aChecker.IsValid()) {
-                  //segment = tr;
-                  return segment;
+                 transitions.push_back(tr);
               }
           }
         }
@@ -18662,14 +18665,14 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
     }
 
     if (!segment.IsNull() && !needTrans) {
-      if (result.IsNull()) {
-        result = segment;
-      } else {
-          result = BRepAlgoAPI_Fuse(result, segment).Shape();
-      }
+        builder.Add(result, segment);
     }
 
     accumulatedLength += segmentLength;
+  }
+    
+  for (size_t i = 0; i < transitions.size(); i++) {
+    builder.Add(result, transitions[i]);
   }
 
   return result;
