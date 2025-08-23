@@ -4994,16 +4994,20 @@ func (p *ShapeProfile) toStruct() C.shape_profile_t {
 	case ProfileTypePolygon:
 		poly := p.Data.Polygon
 		c.type_ = C.PROFILE_TYPE_POLYGON
-
-		cEdges := C.malloc(C.size_t(len(poly.Edges)) * C.sizeof_pnt3d_t)
-		edgesSlice := (*[1<<30 - 1]C.pnt3d_t)(unsafe.Pointer(cEdges))[:len(poly.Edges):len(poly.Edges)]
-
-		for i, pt := range poly.Edges {
-			edgesSlice[i] = pt.val
-		}
-
-		c.polygon.edges = (*C.pnt3d_t)(cEdges)
 		c.polygon.edgeCount = C.int(len(poly.Edges))
+
+		// 分配边点数组
+		edges := C.malloc(C.size_t(len(poly.Edges)) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))
+		edgesSlice := (*[1<<30 - 1]C.pnt3d_t)(unsafe.Pointer(edges))[:len(poly.Edges):len(poly.Edges)]
+		for j, pt := range poly.Edges {
+			edgesSlice[j] = pt.val
+		}
+		c.polygon.edges = (*C.pnt3d_t)(edges)
+
+		// 明确设置内环字段
+		c.polygon.inners = nil
+		c.polygon.innerCounts = nil
+		c.polygon.innerArrayCount = 0
 
 		// 转换内边缘
 		if len(poly.InnerEdges) > 0 {

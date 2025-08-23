@@ -244,8 +244,7 @@ func TestBug2(t *testing.T) {
 			Type: ProfileTypePolygon,
 			Data: ProfileData{
 				Polygon: PolygonProfile{
-					Edges:      polygonPoints,
-					InnerEdges: [][]Point3{},
+					Edges: polygonPoints,
 				},
 			},
 		},
@@ -253,8 +252,7 @@ func TestBug2(t *testing.T) {
 			Type: ProfileTypePolygon,
 			Data: ProfileData{
 				Polygon: PolygonProfile{
-					Edges:      polygonPoints,
-					InnerEdges: [][]Point3{},
+					Edges: polygonPoints,
 				},
 			},
 		},
@@ -262,8 +260,7 @@ func TestBug2(t *testing.T) {
 			Type: ProfileTypePolygon,
 			Data: ProfileData{
 				Polygon: PolygonProfile{
-					Edges:      polygonPoints,
-					InnerEdges: [][]Point3{},
+					Edges: polygonPoints,
 				},
 			},
 		},
@@ -271,8 +268,7 @@ func TestBug2(t *testing.T) {
 			Type: ProfileTypePolygon,
 			Data: ProfileData{
 				Polygon: PolygonProfile{
-					Edges:      polygonPoints,
-					InnerEdges: [][]Point3{},
+					Edges: polygonPoints,
 				},
 			},
 		},
@@ -280,8 +276,7 @@ func TestBug2(t *testing.T) {
 			Type: ProfileTypePolygon,
 			Data: ProfileData{
 				Polygon: PolygonProfile{
-					Edges:      polygonPoints,
-					InnerEdges: [][]Point3{},
+					Edges: polygonPoints,
 				},
 			},
 		},
@@ -289,8 +284,7 @@ func TestBug2(t *testing.T) {
 			Type: ProfileTypePolygon,
 			Data: ProfileData{
 				Polygon: PolygonProfile{
-					Edges:      polygonPoints,
-					InnerEdges: [][]Point3{},
+					Edges: polygonPoints,
 				},
 			},
 		},
@@ -362,8 +356,7 @@ func TestBug3(t *testing.T) {
 			Type: ProfileTypePolygon,
 			Data: ProfileData{
 				Polygon: PolygonProfile{
-					Edges:      polygonPoints,
-					InnerEdges: [][]Point3{},
+					Edges: polygonPoints,
 				},
 			},
 		},
@@ -371,8 +364,7 @@ func TestBug3(t *testing.T) {
 			Type: ProfileTypePolygon,
 			Data: ProfileData{
 				Polygon: PolygonProfile{
-					Edges:      polygonPoints,
-					InnerEdges: [][]Point3{},
+					Edges: polygonPoints,
 				},
 			},
 		},
@@ -380,8 +372,7 @@ func TestBug3(t *testing.T) {
 			Type: ProfileTypePolygon,
 			Data: ProfileData{
 				Polygon: PolygonProfile{
-					Edges:      polygonPoints,
-					InnerEdges: [][]Point3{},
+					Edges: polygonPoints,
 				},
 			},
 		},
@@ -413,4 +404,5 @@ func TestBug3(t *testing.T) {
 	if !shp.IsValid() {
 		t.Fatal("Failed to create pipe")
 	}
+
 }

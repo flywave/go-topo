@@ -6337,7 +6337,7 @@ void test_multi_segment_pipe2() {
     transition_mode transitionMode = transition_mode::TRANSFORMED;
 
     // 创建上方向向量
-    gp_Dir upDir = gp_Vec(-0.301612, 0.874964, 0.378773).Normalized();
+    gp_Dir upDir = gp_Vec(-0.301612, 0.874964, 0.378773);
 
     // 构建参数
     multi_segment_pipe_params params;
