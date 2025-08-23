@@ -12,13 +12,13 @@
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakePolygon.hxx>
 #include <BRepBuilderAPI_MakeShell.hxx>
-#include <BRepCheck_Analyzer.hxx>
 #include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Sewing.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepBuilderAPI_TransitionMode.hxx>
+#include <BRepCheck_Analyzer.hxx>
 #include <BRepCheck_Wire.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
@@ -14302,7 +14302,7 @@ TopoDS_Wire create_cable_trench_centerline(const cable_trench_params &params) {
     throw Standard_ConstructionError("路径线框创建失败");
   }
 
-   return  pathWire.Wire();
+  return pathWire.Wire();
 }
 
 TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params) {
@@ -14679,7 +14679,7 @@ TopoDS_Shape create_cable_tunnel(const cable_tunnel_params &params,
   BRepBuilderAPI_Transform transform(tunnel, transformation);
   return transform.Shape();
 }
-TopoDS_Wire create_cable_tunnel_centerline(const cable_tunnel_params &params){
+TopoDS_Wire create_cable_tunnel_centerline(const cable_tunnel_params &params) {
   BRepBuilderAPI_MakeWire pathWire;
 
   // 处理点序列
@@ -15821,7 +15821,7 @@ TopoDS_Shape create_footpath(const footpath_params &params,
   return transform.Shape();
 }
 
-TopoDS_Wire create_footpath_centerline(const footpath_params &params){
+TopoDS_Wire create_footpath_centerline(const footpath_params &params) {
   // 创建路径线框
   BRepBuilderAPI_MakeWire pathWire;
 
@@ -15852,7 +15852,7 @@ TopoDS_Wire create_footpath_centerline(const footpath_params &params){
   if (!pathWire.IsDone()) {
     throw Standard_ConstructionError("路径线框创建失败");
   }
-  
+
   return pathWire.Wire();
 }
 
@@ -15981,7 +15981,7 @@ create_tunnel_partition_board(const tunnel_partition_board_params &params) {
     throw Standard_ConstructionError("Hole parameters count mismatch");
   }
 
-   // 创建隔板主体
+  // 创建隔板主体
   TopoDS_Shape partition;
   if (params.style == tunnel_partition_board_style::CIRCULAR) { // 圆形隔板
     partition = BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DZ()),
@@ -16012,7 +16012,7 @@ create_tunnel_partition_board(const tunnel_partition_board_params &params) {
                               params.holeDiameters[i], params.holeWidths[i],
                               params.thickness + 2)
               .Shape();
-    } 
+    }
 
     // 从隔板中减去孔
     partition = BRepAlgoAPI_Cut(partition, hole).Shape();
@@ -17376,8 +17376,8 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params,
   return transform.Shape();
 }
 
-TopoDS_Wire create_water_tunnel_centerline(const water_tunnel_params &params){
-   if (params.points.size() < 2) {
+TopoDS_Wire create_water_tunnel_centerline(const water_tunnel_params &params) {
+  if (params.points.size() < 2) {
     throw Standard_ConstructionError("At least 2 points are required");
   }
 
@@ -18358,11 +18358,11 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
   for (size_t i = 0; i < params.wires.size(); i++) {
     // 创建当前段的管道参数
     pipe_params seg_params;
-      seg_params.upDir= params.upDir;
-      seg_params.segment_type = params.segment_types
-                                               ? (*params.segment_types)[i]: segment_type::LINE;
-      seg_params.wire = params.wires[i];
-      seg_params.transition_mode = params.transition_mode;
+    seg_params.upDir = params.upDir;
+    seg_params.segment_type =
+        params.segment_types ? (*params.segment_types)[i] : segment_type::LINE;
+    seg_params.wire = params.wires[i];
+    seg_params.transition_mode = params.transition_mode;
     if (params.profiles.size() == 1) {
       seg_params.profiles = {params.profiles[0], params.profiles[0]};
     } else {
@@ -18477,11 +18477,14 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
   double totalLength = lengthProps.Mass();
 
   // 处理第二个分割距离
-  if (splitDistances[1] == -1) {
+  if (splitDistances[1] == -1 || splitDistances[1] > totalLength) {
     splitDistances[1] = totalLength;
-  } else if (splitDistances[1] <= splitDistances[0] ||
-             splitDistances[1] > totalLength) {
+  } else if (splitDistances[1] <= splitDistances[0]) {
     throw Standard_ConstructionError("Invalid second split distance");
+  }
+    
+  if (splitDistances[0] < 0) {
+    splitDistances[0] = 0;
   }
 
   // 如果不需要分割，直接返回完整管道
@@ -18537,8 +18540,6 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
     // 计算当前段的起始和结束距离
     double segmentStart = accumulatedLength;
     double segmentEnd = accumulatedLength + segmentLength;
-    
-    const double EPSILON = 1e-6;
 
     // 判断当前段是否需要裁切
     bool noCut =
@@ -18548,20 +18549,21 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
     bool needBackCut =
         (splitDistances[1] > segmentStart && splitDistances[1] < segmentEnd);
 
-    bool needTrans =   splitDistances[0] == segmentEnd;
+    bool needTrans = splitDistances[0] == segmentEnd;
     TopoDS_Shape segment;
     if (noCut || needFrontCut || needBackCut || needTrans) {
-         pipe_params seg_params;
-        seg_params.upDir= params.upDir;
-        seg_params.segment_type = params.segment_types
-                                               ? (*params.segment_types)[i]: segment_type::LINE;
-        seg_params.wire = params.wires[i];
-        seg_params.transition_mode = params.transition_mode;
+      pipe_params seg_params;
+      seg_params.upDir = params.upDir;
+      seg_params.segment_type = params.segment_types
+                                    ? (*params.segment_types)[i]
+                                    : segment_type::LINE;
+      seg_params.wire = params.wires[i];
+      seg_params.transition_mode = params.transition_mode;
 
       if (params.profiles.size() == 1) {
         seg_params.profiles = {params.profiles[0], params.profiles[0]};
       } else {
-        int nextId = i + 1;
+        size_t nextId = i + 1;
         if (nextId == params.profiles.size()) {
           nextId = i;
         }
@@ -18574,7 +18576,7 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
           seg_params.inner_profiles = {
               {(*params.inner_profiles)[0], (*params.inner_profiles)[0]}};
         } else {
-          int nextId = i + 1;
+          size_t nextId = i + 1;
           if (nextId == params.inner_profiles->size()) {
             nextId = i;
           }
@@ -18609,9 +18611,9 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
           if (!transition.IsNull()) {
             auto tr = BRepAlgoAPI_Fuse(segment, transition).Shape();
             BRepCheck_Analyzer aChecker(tr);
-              if (!tr.IsNull() && aChecker.IsValid()) {
-                 transitions.push_back(tr);
-              }
+            if (!tr.IsNull() && aChecker.IsValid()) {
+              transitions.push_back(tr);
+            }
           }
         }
       }
@@ -18631,24 +18633,24 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
       TopoDS_Shape cutterBack;
       if (needFrontCut) {
         // 仅前部裁切
-          auto dist = splitDistances[0] - segmentStart;
-          if (dist > EPSILON) {
-              TopoDS_Wire frontWire = clip_wire_between_distances_helper(
-                                                                         currentWire, 0, splitDistances[0] - segmentStart);
-              cutterFront =
-              create_simple_pipe(maxProfile, frontWire,
-                                 params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
-          }
+        auto dist = splitDistances[0] - segmentStart;
+        if (dist > EPSILON) {
+          TopoDS_Wire frontWire = clip_wire_between_distances_helper(
+              currentWire, 0, splitDistances[0] - segmentStart);
+          cutterFront = create_simple_pipe(maxProfile, frontWire,
+                                           params.upDir ? *params.upDir
+                                                        : gp_Dir(0, 0, 1));
+        }
       }
       if (needBackCut) {
         auto dist = segmentLength - (splitDistances[1] - segmentStart);
         if (dist > EPSILON) {
-            // 仅后部裁切
-            TopoDS_Wire backWire = clip_wire_between_distances_helper(
-                currentWire, splitDistances[1] - segmentStart, segmentLength);
-            cutterBack =
-                create_simple_pipe(maxProfile, backWire,
-                                   params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
+          // 仅后部裁切
+          TopoDS_Wire backWire = clip_wire_between_distances_helper(
+              currentWire, splitDistances[1] - segmentStart, segmentLength);
+          cutterBack = create_simple_pipe(maxProfile, backWire,
+                                          params.upDir ? *params.upDir
+                                                       : gp_Dir(0, 0, 1));
         }
       }
 
@@ -18662,12 +18664,12 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
     }
 
     if (!segment.IsNull() && !needTrans) {
-        builder.Add(result, segment);
+      builder.Add(result, segment);
     }
 
     accumulatedLength += segmentLength;
   }
-    
+
   for (size_t i = 0; i < transitions.size(); i++) {
     builder.Add(result, transitions[i]);
   }
@@ -19116,7 +19118,6 @@ TopoDS_Wire create_catenary_centerline(const catenary_params &params) {
     throw Standard_ConstructionError("Points p1 and p2 are too close");
   }
 
-  
   gp_Ax3 rot = createOrientation(
       params.p1, params.p2, params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
   Handle(Geom_BSplineCurve) curve =
@@ -19129,7 +19130,7 @@ TopoDS_Wire create_catenary_centerline(const catenary_params &params) {
   // 创建路径线框
   TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(curve).Edge();
   TopoDS_Wire wire = BRepBuilderAPI_MakeWire(edge).Wire();
- 
+
   return wire;
 }
 
