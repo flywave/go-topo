@@ -18431,6 +18431,10 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
     prev_normal = end_normal;
     has_prev = true;
   }
+
+  for (size_t i = 0; i < transitions.size(); i++) {
+    builder.Add(result, transitions[i]);
+  }
   return result;
 }
 
