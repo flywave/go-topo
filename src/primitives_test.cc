@@ -6263,6 +6263,194 @@ void test_multi_segment_pipe_with_split_distances() {
   }
 
 }
+void test_multi_segment_pipe2() {
+  std::cout << "\n=== Testing Multi-Segment Pipe With Split Distances ===" << std::endl;
+  
+  try {
+    // 创建路径线段数据，对应Go代码中的wires数据
+    std::vector<std::vector<gp_Pnt>> wires = {
+        // 第一段：直线段
+        {
+            gp_Pnt(0.000000, 0.000000, 0.000000),
+            gp_Pnt(-18.381608, -16.456729, 23.967570)
+        },
+        // 第二段：直线段
+        {
+            gp_Pnt(-18.381608, -16.456729, 23.967570),
+            gp_Pnt(-20.049600, -17.830275, 26.141186)
+        },
+        // 第三段：三点圆弧
+        {
+            gp_Pnt(-20.049600, -17.830275, 26.141186),
+            gp_Pnt(-29.312281, -23.429547, 34.741874),
+            gp_Pnt(-55.277435, -31.565721, 41.815130)
+        },
+        // 第四段：直线段
+        {
+            gp_Pnt(-55.277435, -31.565721, 41.815130),
+            gp_Pnt(-255.585003, -75.656772, 31.748227)
+        },
+        // 第五段：三点圆弧
+        {
+            gp_Pnt(-255.585003, -75.656772, 31.748227),
+            gp_Pnt(-328.386169, -107.483284, 77.701580),
+            gp_Pnt(-331.303108, -111.641479, 87.604189)
+        },
+        // 第六段：直线段
+        {
+            gp_Pnt(-331.303108, -111.641479, 87.604189),
+            gp_Pnt(-334.263097, -118.631098, 102.370422)
+        }
+    };
+
+    // 创建多边形剖面数据，对应Go代码中的polygonPoints
+    std::vector<gp_Pnt> polygonPoints = {
+        gp_Pnt(-3.900000, 4.000000, 0.000000),
+        gp_Pnt(-2.652000, 5.403000, 0.000000),
+        gp_Pnt(-0.939000, 6.172000, 0.000000),
+        gp_Pnt(0.939000, 6.172000, 0.000000),
+        gp_Pnt(2.652000, 5.403000, 0.000000),
+        gp_Pnt(3.900000, 4.000000, 0.000000),
+        gp_Pnt(3.900000, 0.000000, 0.000000),
+        gp_Pnt(-3.900000, 0.000000, 0.000000),
+        gp_Pnt(-3.900000, 4.000000, 0.000000)
+    };
+
+    // 创建剖面数据
+    std::vector<shape_profile> profiles;
+    // 为每一段创建相同的剖面（6段）
+    for (size_t i = 0; i < wires.size(); ++i) {
+        profiles.push_back(polygon_profile{polygonPoints});
+    }
+
+    // 创建线段类型，对应Go代码中的segmentTypes
+    std::vector<segment_type> segmentTypes = {
+        segment_type::LINE,              // 第一段：直线
+        segment_type::LINE,              // 第二段：直线
+        segment_type::THREE_POINT_ARC,   // 第三段：三点圆弧
+        segment_type::LINE,              // 第四段：直线
+        segment_type::THREE_POINT_ARC,   // 第五段：三点圆弧
+        segment_type::LINE               // 第六段：直线
+    };
+
+    // 设置过渡模式
+    transition_mode transitionMode = transition_mode::TRANSFORMED;
+
+    // 创建上方向向量
+    gp_Dir upDir = gp_Vec(-0.301612, 0.874964, 0.378773).Normalized();
+
+    // 构建参数
+    multi_segment_pipe_params params;
+    params.wires = wires;
+    params.profiles = profiles;
+    params.segment_types = segmentTypes;
+    params.transition_mode = transitionMode;
+    params.upDir = upDir;
+
+    // 创建多段管道
+    auto shp = create_multi_segment_pipe(params);
+
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create multi-segment pipe" << std::endl;
+      return;
+    }
+
+    // 导出形状以供检查
+    test_export_shape(shp, "./test_multi_segment_pipe2.stl");
+
+    std::cout << "Successfully created multi-segment pipe with split distances" << std::endl;
+    std::cout << "Segment types used: LINE, LINE, THREE_POINT_ARC, LINE, THREE_POINT_ARC, LINE" << std::endl;
+
+  } catch (const Standard_ConstructionError& e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  } catch (const std::exception& e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+  }
+}
+
+void test_multi_segment_pipe3() {
+  std::cout << "\n=== Testing Multi-Segment Pipe 3 (Based on TestBug3) ===" << std::endl;
+  
+  try {
+    // 创建路径线段数据，对应Go代码中的wires数据
+    std::vector<std::vector<gp_Pnt>> wires = {
+        // 第一段：直线段
+        {
+            gp_Pnt(0.000000, 0.000000, 0.000000),
+            gp_Pnt(-35.691625, -32.978268, 46.548679)
+        },
+        // 第二段：三点圆弧
+        {
+            gp_Pnt(-35.691625, -32.978268, 46.548679),
+            gp_Pnt(-37.229320, -36.179758, 52.584004),
+            gp_Pnt(-33.071860, -37.840417, 59.567516)
+        },
+        // 第三段：直线段
+        {
+            gp_Pnt(-33.071860, -37.840417, 59.567516),
+            gp_Pnt(150.857507, -37.395352, 200.922442)
+        }
+    };
+
+    // 创建多边形剖面数据
+    std::vector<gp_Pnt> polygonPoints = {
+        gp_Pnt(-1.500000, 2.100000, 0.000000),
+        gp_Pnt(-0.875000, 2.758000, 0.000000),
+        gp_Pnt(0.000000, 3.000000, 0.000000),
+        gp_Pnt(0.875000, 2.758000, 0.000000),
+        gp_Pnt(1.500000, 2.100000, 0.000000),
+        gp_Pnt(1.500000, 0.000000, 0.000000),
+        gp_Pnt(-1.500000, 0.000000, 0.000000),
+        gp_Pnt(-1.500000, 2.100000, 0.000000)
+    };
+
+    // 创建剖面
+    polygon_profile profile(polygonPoints);
+    std::vector<shape_profile> profiles = {profile, profile, profile};
+
+    // 创建线段类型
+    std::vector<segment_type> segmentTypes = {
+        segment_type::LINE,
+        segment_type::THREE_POINT_ARC,
+        segment_type::LINE
+    };
+
+    // 设置过渡模式
+    transition_mode transitionMode = transition_mode::TRANSFORMED;
+
+    // 创建上方向
+    gp_Dir upDir(-0.301639, 0.874967, 0.378744);
+
+    // 构建参数
+    multi_segment_pipe_params params;
+    params.wires = wires;
+    params.profiles = profiles;
+    params.segment_types = segmentTypes;
+    params.transition_mode = transitionMode;
+    params.upDir = upDir;
+
+    // 创建多段管道
+    auto shp = create_multi_segment_pipe_with_split_distances(params, {67.292182, 83.000373});
+
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create multi-segment pipe 3" << std::endl;
+      return;
+    }
+
+    // 导出形状以供检查
+    test_export_shape(shp, "./test_multi_segment_pipe3.stl");
+
+    std::cout << "Successfully created multi-segment pipe 3 based on TestBug3 data" << std::endl;
+    std::cout << "Segment types used: LINE, THREE_POINT_ARC, LINE" << std::endl;
+
+    // 67.292182 83.000373
+    
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  } catch (const std::exception &e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+  }
+}
 
 int main() {
   // 基础图形
@@ -6386,6 +6574,7 @@ int main() {
   // 水利工程
   // test_water_tunnel();
   //test_make_wire_from_segments();
-  test_multi_segment_pipe_with_split_distances();
+  test_multi_segment_pipe2();
+  test_multi_segment_pipe3();
   return 0;
 }

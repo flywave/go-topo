@@ -193,3 +193,224 @@ func TestBuge(t *testing.T) {
 		t.Fatal("Failed to create shp")
 	}
 }
+
+func TestBug2(t *testing.T) {
+	// 创建导线数据
+	wires := [][]Point3{
+		{
+			NewPoint3([3]float64{0.000000, 0.000000, 0.000000}),
+			NewPoint3([3]float64{-18.381608, -16.456729, 23.967570}),
+		},
+		{
+			NewPoint3([3]float64{-18.381608, -16.456729, 23.967570}),
+			NewPoint3([3]float64{-20.049600, -17.830275, 26.141186}),
+		},
+		{
+			NewPoint3([3]float64{-20.049600, -17.830275, 26.141186}),
+			NewPoint3([3]float64{-29.312281, -23.429547, 34.741874}),
+			NewPoint3([3]float64{-55.277435, -31.565721, 41.815130}),
+		},
+		{
+			NewPoint3([3]float64{-55.277435, -31.565721, 41.815130}),
+			NewPoint3([3]float64{-255.585003, -75.656772, 31.748227}),
+		},
+		{
+			NewPoint3([3]float64{-255.585003, -75.656772, 31.748227}),
+			NewPoint3([3]float64{-328.386169, -107.483284, 77.701580}),
+			NewPoint3([3]float64{-331.303108, -111.641479, 87.604189}),
+		},
+		{
+			NewPoint3([3]float64{-331.303108, -111.641479, 87.604189}),
+			NewPoint3([3]float64{-334.263097, -118.631098, 102.370422}),
+		},
+	}
+
+	// 创建多边形剖面数据
+	polygonPoints := []Point3{
+		NewPoint3([3]float64{-3.900000, 4.000000, 0.000000}),
+		NewPoint3([3]float64{-2.652000, 5.403000, 0.000000}),
+		NewPoint3([3]float64{-0.939000, 6.172000, 0.000000}),
+		NewPoint3([3]float64{0.939000, 6.172000, 0.000000}),
+		NewPoint3([3]float64{2.652000, 5.403000, 0.000000}),
+		NewPoint3([3]float64{3.900000, 4.000000, 0.000000}),
+		NewPoint3([3]float64{3.900000, 0.000000, 0.000000}),
+		NewPoint3([3]float64{-3.900000, 0.000000, 0.000000}),
+		NewPoint3([3]float64{-3.900000, 4.000000, 0.000000}),
+	}
+
+	// 创建剖面
+	profiles := []ShapeProfile{
+		{
+			Type: ProfileTypePolygon,
+			Data: ProfileData{
+				Polygon: PolygonProfile{
+					Edges:      polygonPoints,
+					InnerEdges: [][]Point3{},
+				},
+			},
+		},
+		{
+			Type: ProfileTypePolygon,
+			Data: ProfileData{
+				Polygon: PolygonProfile{
+					Edges:      polygonPoints,
+					InnerEdges: [][]Point3{},
+				},
+			},
+		},
+		{
+			Type: ProfileTypePolygon,
+			Data: ProfileData{
+				Polygon: PolygonProfile{
+					Edges:      polygonPoints,
+					InnerEdges: [][]Point3{},
+				},
+			},
+		},
+		{
+			Type: ProfileTypePolygon,
+			Data: ProfileData{
+				Polygon: PolygonProfile{
+					Edges:      polygonPoints,
+					InnerEdges: [][]Point3{},
+				},
+			},
+		},
+		{
+			Type: ProfileTypePolygon,
+			Data: ProfileData{
+				Polygon: PolygonProfile{
+					Edges:      polygonPoints,
+					InnerEdges: [][]Point3{},
+				},
+			},
+		},
+		{
+			Type: ProfileTypePolygon,
+			Data: ProfileData{
+				Polygon: PolygonProfile{
+					Edges:      polygonPoints,
+					InnerEdges: [][]Point3{},
+				},
+			},
+		},
+	}
+
+	// 创建线段类型
+	segmentTypes := []SegmentType{
+		SegmentTypeLine,
+		SegmentTypeLine,
+		SegmentTypeThreePointArc,
+		SegmentTypeLine,
+		SegmentTypeThreePointArc,
+		SegmentTypeLine,
+	}
+
+	// 设置过渡模式
+	transitionMode := TransitionTransformed
+
+	// 创建上方向
+	upDir := NewDir3FromXYZ([3]float64{-0.301612, 0.874964, 0.378773})
+
+	params := MultiSegmentPipeParams{
+		Wires:          wires,
+		Profiles:       profiles,
+		SegmentTypes:   segmentTypes,
+		TransitionMode: transitionMode,
+		UpDir:          &upDir,
+	}
+
+	shp := CreateMultiSegmentPipe(params)
+	if !shp.IsValid() {
+		t.Fatal("Failed to create pipe")
+	}
+}
+
+func TestBug3(t *testing.T) {
+	// 创建导线数据
+	wires := [][]Point3{
+		{
+			NewPoint3([3]float64{0.000000, 0.000000, 0.000000}),
+			NewPoint3([3]float64{-35.691625, -32.978268, 46.548679}),
+		},
+		{
+			NewPoint3([3]float64{-35.691625, -32.978268, 46.548679}),
+			NewPoint3([3]float64{-37.229320, -36.179758, 52.584004}),
+			NewPoint3([3]float64{-33.071860, -37.840417, 59.567516}),
+		},
+		{
+			NewPoint3([3]float64{-33.071860, -37.840417, 59.567516}),
+			NewPoint3([3]float64{150.857507, -37.395352, 200.922442}),
+		},
+	}
+
+	// 创建多边形剖面数据
+	polygonPoints := []Point3{
+		NewPoint3([3]float64{-1.500000, 2.100000, 0.000000}),
+		NewPoint3([3]float64{-0.875000, 2.758000, 0.000000}),
+		NewPoint3([3]float64{0.000000, 3.000000, 0.000000}),
+		NewPoint3([3]float64{0.875000, 2.758000, 0.000000}),
+		NewPoint3([3]float64{1.500000, 2.100000, 0.000000}),
+		NewPoint3([3]float64{1.500000, 0.000000, 0.000000}),
+		NewPoint3([3]float64{-1.500000, 0.000000, 0.000000}),
+		NewPoint3([3]float64{-1.500000, 2.100000, 0.000000}),
+	}
+
+	// 创建剖面
+	profiles := []ShapeProfile{
+		{
+			Type: ProfileTypePolygon,
+			Data: ProfileData{
+				Polygon: PolygonProfile{
+					Edges:      polygonPoints,
+					InnerEdges: [][]Point3{},
+				},
+			},
+		},
+		{
+			Type: ProfileTypePolygon,
+			Data: ProfileData{
+				Polygon: PolygonProfile{
+					Edges:      polygonPoints,
+					InnerEdges: [][]Point3{},
+				},
+			},
+		},
+		{
+			Type: ProfileTypePolygon,
+			Data: ProfileData{
+				Polygon: PolygonProfile{
+					Edges:      polygonPoints,
+					InnerEdges: [][]Point3{},
+				},
+			},
+		},
+	}
+
+	// 创建线段类型
+	segmentTypes := []SegmentType{
+		SegmentTypeLine,
+		SegmentTypeThreePointArc,
+		SegmentTypeLine,
+	}
+
+	// 设置过渡模式
+	transitionMode := TransitionTransformed
+
+	// 创建上方向
+	upDir := NewDir3FromXYZ([3]float64{-0.301639, 0.874967, 0.378744})
+
+	params := MultiSegmentPipeParams{
+		Wires:          wires,
+		Profiles:       profiles,
+		InnerProfiles:  nil, // 根据数据，InnerProfiles 为 nil
+		SegmentTypes:   segmentTypes,
+		TransitionMode: transitionMode,
+		UpDir:          &upDir,
+	}
+
+	shp := CreateMultiSegmentPipe(params)
+	if !shp.IsValid() {
+		t.Fatal("Failed to create pipe")
+	}
+}

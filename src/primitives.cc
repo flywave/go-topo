@@ -12,6 +12,7 @@
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakePolygon.hxx>
 #include <BRepBuilderAPI_MakeShell.hxx>
+#include <BRepCheck_Analyzer.hxx>
 #include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
@@ -18532,6 +18533,8 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
     // 计算当前段的起始和结束距离
     double segmentStart = accumulatedLength;
     double segmentEnd = accumulatedLength + segmentLength;
+    
+    const double EPSILON = 1e-6;
 
     // 判断当前段是否需要裁切
     bool noCut =
@@ -18600,7 +18603,12 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
             transition = BRepAlgoAPI_Cut(transition, inner_transition).Shape();
           }
           if (!transition.IsNull()) {
-            segment = BRepAlgoAPI_Fuse(segment, transition).Shape();
+            auto tr = BRepAlgoAPI_Fuse(segment, transition).Shape();
+            BRepCheck_Analyzer aChecker(tr);
+              if (!tr.IsNull() && aChecker.IsValid()) {
+                  //segment = tr;
+                  return segment;
+              }
           }
         }
       }
@@ -18619,19 +18627,29 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
       TopoDS_Shape cutterBack;
       if (needFrontCut) {
         // 仅前部裁切
-        TopoDS_Wire frontWire = clip_wire_between_distances_helper(
-            currentWire, 0, splitDistances[0] - segmentStart);
-        cutterFront =
-            create_simple_pipe(maxProfile, frontWire,
-                               params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
+          auto dist = splitDistances[0] - segmentStart;
+          if (dist > 0.1) {
+              TopoDS_Wire frontWire = clip_wire_between_distances_helper(
+                                                                         currentWire, 0, splitDistances[0] - segmentStart);
+              cutterFront =
+              create_simple_pipe(maxProfile, frontWire,
+                                 params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
+          } else {
+              cutterFront = TopoDS_Shape();
+          }
       }
       if (needBackCut) {
-        // 仅后部裁切
-        TopoDS_Wire backWire = clip_wire_between_distances_helper(
-            currentWire, splitDistances[1] - segmentStart, segmentLength);
-        cutterBack =
-            create_simple_pipe(maxProfile, backWire,
-                               params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
+        auto dist = segmentLength - (splitDistances[1] - segmentStart);
+        if (dist > 0.1) {
+            // 仅后部裁切
+            TopoDS_Wire backWire = clip_wire_between_distances_helper(
+                currentWire, splitDistances[1] - segmentStart, segmentLength);
+            cutterBack =
+                create_simple_pipe(maxProfile, backWire,
+                                   params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
+        } else {
+            cutterBack = TopoDS_Shape();
+        }
       }
 
       if (!cutterFront.IsNull()) {
