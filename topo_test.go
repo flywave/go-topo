@@ -406,3 +406,113 @@ func TestBug3(t *testing.T) {
 	}
 
 }
+
+func TestBug4(t *testing.T) {
+	// 创建导线数据 - 单一直线段
+	wires := [][]Point3{
+		{
+			NewPoint3([3]float64{0.000000, 0.000000, 0.000000}),
+			NewPoint3([3]float64{-128.976600, -1.038238, -99.629249}),
+		},
+	}
+
+	// 创建外多边形剖面数据 (20个点)
+	outerPolygonPoints := []Point3{
+		NewPoint3([3]float64{0.000000, 16.100000, 0.000000}),
+		NewPoint3([3]float64{14.250000, 16.100000, 0.000000}),
+		NewPoint3([3]float64{14.250000, 17.980000, 0.000000}),
+		NewPoint3([3]float64{14.049000, 18.948000, 0.000000}),
+		NewPoint3([3]float64{13.701000, 19.873000, 0.000000}),
+		NewPoint3([3]float64{13.213000, 20.734000, 0.000000}),
+		NewPoint3([3]float64{12.599000, 21.508000, 0.000000}),
+		NewPoint3([3]float64{9.375000, 23.710000, 0.000000}),
+		NewPoint3([3]float64{5.778000, 25.228000, 0.000000}),
+		NewPoint3([3]float64{1.952000, 26.002000, 0.000000}),
+		NewPoint3([3]float64{-1.952000, 26.002000, 0.000000}),
+		NewPoint3([3]float64{-5.778000, 25.228000, 0.000000}),
+		NewPoint3([3]float64{-9.375000, 23.710000, 0.000000}),
+		NewPoint3([3]float64{-12.599000, 21.508000, 0.000000}),
+		NewPoint3([3]float64{-13.213000, 20.734000, 0.000000}),
+		NewPoint3([3]float64{-13.701000, 19.873000, 0.000000}),
+		NewPoint3([3]float64{-14.049000, 18.948000, 0.000000}),
+		NewPoint3([3]float64{-14.250000, 17.980000, 0.000000}),
+		NewPoint3([3]float64{-14.259000, 16.100000, 0.000000}),
+		NewPoint3([3]float64{0.000000, 16.100000, 0.000000}),
+	}
+
+	// 创建内多边形剖面数据 (20个点)
+	innerPolygonPoints := []Point3{
+		NewPoint3([3]float64{-0.000010, 16.200000, 0.000000}),
+		NewPoint3([3]float64{14.154677, 16.130224, 0.000000}),
+		NewPoint3([3]float64{14.151671, 17.998204, 0.000000}),
+		NewPoint3([3]float64{13.949699, 18.959806, 0.000000}),
+		NewPoint3([3]float64{13.601148, 19.878432, 0.000000}),
+		NewPoint3([3]float64{13.113004, 20.733124, 0.000000}),
+		NewPoint3([3]float64{12.499248, 21.500956, 0.000000}),
+		NewPoint3([3]float64{9.280031, 23.678682, 0.000000}),
+		NewPoint3([3]float64{5.699827, 25.165638, 0.000000}),
+		NewPoint3([3]float64{1.917907, 25.907991, 0.000000}),
+		NewPoint3([3]float64{-1.917921, 25.907986, 0.000000}),
+		NewPoint3([3]float64{-5.699832, 25.165632, 0.000000}),
+		NewPoint3([3]float64{-9.280031, 23.678680, 0.000000}),
+		NewPoint3([3]float64{-12.499248, 21.500956, 0.000000}),
+		NewPoint3([3]float64{-13.113004, 20.733124, 0.000000}),
+		NewPoint3([3]float64{-13.601148, 19.878432, 0.000000}),
+		NewPoint3([3]float64{-13.949699, 18.959806, 0.000000}),
+		NewPoint3([3]float64{-14.151671, 17.998206, 0.000000}),
+		NewPoint3([3]float64{-14.163672, 16.130208, 0.000000}),
+		NewPoint3([3]float64{-0.000010, 16.200000, 0.000000}),
+	}
+
+	// 创建外剖面
+	outerProfile := ShapeProfile{
+		Type: ProfileTypePolygon,
+		Data: ProfileData{
+			Polygon: PolygonProfile{
+				Edges: outerPolygonPoints,
+			},
+		},
+	}
+
+	// 创建内剖面
+	innerProfile := ShapeProfile{
+		Type: ProfileTypePolygon,
+		Data: ProfileData{
+			Polygon: PolygonProfile{
+				Edges: innerPolygonPoints,
+			},
+		},
+	}
+
+	// 创建剖面数组 (只有一个剖面)
+	profiles := []ShapeProfile{outerProfile}
+
+	// 创建内剖面数组
+	innerProfiles := []ShapeProfile{innerProfile}
+
+	// 创建线段类型 (只有直线段)
+	segmentTypes := []SegmentType{
+		SegmentTypeLine,
+	}
+
+	// 设置过渡模式
+	transitionMode := TransitionTransformed
+
+	// 创建上方向
+	upDir := NewDir3FromXYZ([3]float64{-0.301619, 0.874963, 0.378768})
+
+	params := MultiSegmentPipeParams{
+		Wires:          wires,
+		Profiles:       profiles,
+		InnerProfiles:  innerProfiles,
+		SegmentTypes:   segmentTypes,
+		TransitionMode: transitionMode,
+		UpDir:          &upDir,
+	}
+
+	// 使用分割距离创建管道
+	shp := CreateMultiSegmentPipeWithSplitDistances(params, 64.300000, 68.400000)
+	if !shp.IsValid() {
+		t.Fatal("Failed to create pipe with split distances")
+	}
+}

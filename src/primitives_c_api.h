@@ -2008,8 +2008,8 @@ typedef struct {
   int wire_count;
   shape_profile_t *profiles;
   int profile_count;
-  shape_profile_t **inner_profiles; // 可为NULL
-  int *inner_profile_counts;
+  shape_profile_t *inner_profiles; // 可为NULL
+  int inner_profile_count;
   segment_type_t segment_type;
   transition_mode_t transition_mode;
   dir3d_t *up_dir;
@@ -2032,8 +2032,8 @@ typedef struct {
   int wire_array_count;
   shape_profile_t *profiles;
   int profile_count;
-  shape_profile_t **inner_profiles;
-  int *inner_profile_counts;
+  shape_profile_t *inner_profiles;
+  int inner_profile_count;
   segment_type_t *segment_types;
   int segment_type_count;
   transition_mode_t transition_mode;

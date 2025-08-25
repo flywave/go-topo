@@ -4907,10 +4907,10 @@ PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params) {
   // 转换内剖面(如果有)
   if (params.inner_profiles != nullptr) {
     std::vector<shape_profile> inner_profiles;
-    for (int i = 0; i < params.inner_profile_counts[0]; i++) {
-      switch (params.inner_profiles[0][i].type_) {
+    for (int i = 0; i < params.inner_profile_count; i++) {
+      switch (params.inner_profiles[i].type_) {
       case PROFILE_TYPE_TRIANGLE: {
-        auto &tri = params.inner_profiles[0][i].triangle;
+        auto &tri = params.inner_profiles[i].triangle;
         inner_profiles.emplace_back(
             triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
                              gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
@@ -4918,21 +4918,21 @@ PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params) {
         break;
       }
       case PROFILE_TYPE_RECTANGLE: {
-        auto &rect = params.inner_profiles[0][i].rectangle;
+        auto &rect = params.inner_profiles[i].rectangle;
         inner_profiles.emplace_back(
             rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
                               gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
         break;
       }
       case PROFILE_TYPE_CIRC: {
-        auto &circ = params.inner_profiles[0][i].circ;
+        auto &circ = params.inner_profiles[i].circ;
         inner_profiles.emplace_back(circ_profile(
             gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
             gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
         break;
       }
       case PROFILE_TYPE_ELIPS: {
-        auto &elips = params.inner_profiles[0][i].elips;
+        auto &elips = params.inner_profiles[i].elips;
         inner_profiles.emplace_back(elips_profile(
             gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
             gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
@@ -4940,7 +4940,7 @@ PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params) {
         break;
       }
       case PROFILE_TYPE_POLYGON: {
-        auto &poly = params.inner_profiles[0][i].polygon;
+        auto &poly = params.inner_profiles[i].polygon;
         std::vector<gp_Pnt> edges;
         for (int j = 0; j < poly.edgeCount; j++) {
           edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
@@ -5090,10 +5090,10 @@ topo_shape_t *create_pipe_with_split_distances(pipe_params_t params,
   // 转换内剖面(如果有)
   if (params.inner_profiles != nullptr) {
     std::vector<shape_profile> inner_profiles;
-    for (int i = 0; i < params.inner_profile_counts[0]; i++) {
-      switch (params.inner_profiles[0][i].type_) {
+    for (int i = 0; i < params.inner_profile_count; i++) {
+      switch (params.inner_profiles[i].type_) {
       case PROFILE_TYPE_TRIANGLE: {
-        auto &tri = params.inner_profiles[0][i].triangle;
+        auto &tri = params.inner_profiles[i].triangle;
         inner_profiles.emplace_back(
             triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
                              gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
@@ -5101,21 +5101,21 @@ topo_shape_t *create_pipe_with_split_distances(pipe_params_t params,
         break;
       }
       case PROFILE_TYPE_RECTANGLE: {
-        auto &rect = params.inner_profiles[0][i].rectangle;
+        auto &rect = params.inner_profiles[i].rectangle;
         inner_profiles.emplace_back(
             rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
                               gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
         break;
       }
       case PROFILE_TYPE_CIRC: {
-        auto &circ = params.inner_profiles[0][i].circ;
+        auto &circ = params.inner_profiles[i].circ;
         inner_profiles.emplace_back(circ_profile(
             gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
             gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
         break;
       }
       case PROFILE_TYPE_ELIPS: {
-        auto &elips = params.inner_profiles[0][i].elips;
+        auto &elips = params.inner_profiles[i].elips;
         inner_profiles.emplace_back(elips_profile(
             gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
             gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
@@ -5123,7 +5123,7 @@ topo_shape_t *create_pipe_with_split_distances(pipe_params_t params,
         break;
       }
       case PROFILE_TYPE_POLYGON: {
-        auto &poly = params.inner_profiles[0][i].polygon;
+        auto &poly = params.inner_profiles[i].polygon;
         std::vector<gp_Pnt> edges;
         for (int j = 0; j < poly.edgeCount; j++) {
           edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
@@ -5321,12 +5321,12 @@ PRIMCAPICALL topo_shape_t *create_pipe_with_place(pipe_params_t params,
   cpp_params.profiles = profiles;
 
   // 转换内剖面(如果有)
-  if (params.inner_profiles != nullptr) {
+  if (params.inner_profile_count > 0 && params.inner_profiles != nullptr) {
     std::vector<shape_profile> inner_profiles;
-    for (int i = 0; i < params.inner_profile_counts[0]; i++) {
-      switch (params.inner_profiles[0][i].type_) {
+    for (int i = 0; i < params.inner_profile_count; i++) {
+      switch (params.inner_profiles[i].type_) {
       case PROFILE_TYPE_TRIANGLE: {
-        auto &tri = params.inner_profiles[0][i].triangle;
+        auto &tri = params.inner_profiles[i].triangle;
         inner_profiles.emplace_back(
             triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
                              gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
@@ -5334,21 +5334,21 @@ PRIMCAPICALL topo_shape_t *create_pipe_with_place(pipe_params_t params,
         break;
       }
       case PROFILE_TYPE_RECTANGLE: {
-        auto &rect = params.inner_profiles[0][i].rectangle;
+        auto &rect = params.inner_profiles[i].rectangle;
         inner_profiles.emplace_back(
             rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
                               gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
         break;
       }
       case PROFILE_TYPE_CIRC: {
-        auto &circ = params.inner_profiles[0][i].circ;
+        auto &circ = params.inner_profiles[i].circ;
         inner_profiles.emplace_back(circ_profile(
             gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
             gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
         break;
       }
       case PROFILE_TYPE_ELIPS: {
-        auto &elips = params.inner_profiles[0][i].elips;
+        auto &elips = params.inner_profiles[i].elips;
         inner_profiles.emplace_back(elips_profile(
             gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
             gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
@@ -5356,7 +5356,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_with_place(pipe_params_t params,
         break;
       }
       case PROFILE_TYPE_POLYGON: {
-        auto &poly = params.inner_profiles[0][i].polygon;
+        auto &poly = params.inner_profiles[i].polygon;
         std::vector<gp_Pnt> edges;
         for (int j = 0; j < poly.edgeCount; j++) {
           edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
@@ -5513,12 +5513,12 @@ create_multi_segment_pipe(multi_segment_pipe_params_t params) {
   cpp_params.profiles = profiles;
 
   // 转换内剖面(如果有)
-  if (params.inner_profiles != nullptr) {
+  if (params.inner_profile_count > 0 && params.inner_profiles != nullptr) {
     std::vector<shape_profile> inner_profiles;
-    for (int i = 0; i < *params.inner_profile_counts; i++) {
-      switch ((*params.inner_profiles)[i].type_) {
+    for (int i = 0; i < params.inner_profile_count; i++) {
+      switch (params.inner_profiles[i].type_) {
       case PROFILE_TYPE_TRIANGLE: {
-        auto &tri = (*params.inner_profiles)[i].triangle;
+        auto &tri = params.inner_profiles[i].triangle;
         inner_profiles.emplace_back(
             triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
                              gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
@@ -5526,21 +5526,21 @@ create_multi_segment_pipe(multi_segment_pipe_params_t params) {
         break;
       }
       case PROFILE_TYPE_RECTANGLE: {
-        auto &rect = (*params.inner_profiles)[i].rectangle;
+        auto &rect = params.inner_profiles[i].rectangle;
         inner_profiles.emplace_back(
             rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
                               gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
         break;
       }
       case PROFILE_TYPE_CIRC: {
-        auto &circ = (*params.inner_profiles)[i].circ;
+        auto &circ = params.inner_profiles[i].circ;
         inner_profiles.emplace_back(circ_profile(
             gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
             gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
         break;
       }
       case PROFILE_TYPE_ELIPS: {
-        auto &elips = (*params.inner_profiles)[i].elips;
+        auto &elips = params.inner_profiles[i].elips;
         inner_profiles.emplace_back(elips_profile(
             gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
             gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
@@ -5548,7 +5548,7 @@ create_multi_segment_pipe(multi_segment_pipe_params_t params) {
         break;
       }
       case PROFILE_TYPE_POLYGON: {
-        auto &poly = (*params.inner_profiles)[i].polygon;
+        auto &poly = params.inner_profiles[i].polygon;
         std::vector<gp_Pnt> edges;
         for (int j = 0; j < poly.edgeCount; j++) {
           edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
@@ -5716,10 +5716,10 @@ topo_shape_t *create_multi_segment_pipe_with_split_distances(
   // 转换内剖面(如果有)
   if (params.inner_profiles != nullptr) {
     std::vector<shape_profile> inner_profiles;
-    for (int i = 0; i < *params.inner_profile_counts; i++) {
-      switch ((*params.inner_profiles)[i].type_) {
+    for (int i = 0; i < params.inner_profile_count; i++) {
+      switch (params.inner_profiles[i].type_) {
       case PROFILE_TYPE_TRIANGLE: {
-        auto &tri = (*params.inner_profiles)[i].triangle;
+        auto &tri = params.inner_profiles[i].triangle;
         inner_profiles.emplace_back(
             triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
                              gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
@@ -5727,21 +5727,21 @@ topo_shape_t *create_multi_segment_pipe_with_split_distances(
         break;
       }
       case PROFILE_TYPE_RECTANGLE: {
-        auto &rect = (*params.inner_profiles)[i].rectangle;
+        auto &rect = params.inner_profiles[i].rectangle;
         inner_profiles.emplace_back(
             rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
                               gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
         break;
       }
       case PROFILE_TYPE_CIRC: {
-        auto &circ = (*params.inner_profiles)[i].circ;
+        auto &circ = params.inner_profiles[i].circ;
         inner_profiles.emplace_back(circ_profile(
             gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
             gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
         break;
       }
       case PROFILE_TYPE_ELIPS: {
-        auto &elips = (*params.inner_profiles)[i].elips;
+        auto &elips = params.inner_profiles[i].elips;
         inner_profiles.emplace_back(elips_profile(
             gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
             gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
@@ -5749,7 +5749,7 @@ topo_shape_t *create_multi_segment_pipe_with_split_distances(
         break;
       }
       case PROFILE_TYPE_POLYGON: {
-        auto &poly = (*params.inner_profiles)[i].polygon;
+        auto &poly = params.inner_profiles[i].polygon;
         std::vector<gp_Pnt> edges;
         for (int j = 0; j < poly.edgeCount; j++) {
           edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);
@@ -5971,10 +5971,10 @@ create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
   // 转换内剖面(如果有)
   if (params.inner_profiles != nullptr) {
     std::vector<shape_profile> inner_profiles;
-    for (int i = 0; i < *params.inner_profile_counts; i++) {
-      switch ((*params.inner_profiles)[i].type_) {
+    for (int i = 0; i < params.inner_profile_count; i++) {
+      switch (params.inner_profiles[i].type_) {
       case PROFILE_TYPE_TRIANGLE: {
-        auto &tri = (*params.inner_profiles)[i].triangle;
+        auto &tri = params.inner_profiles[i].triangle;
         inner_profiles.emplace_back(
             triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
                              gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
@@ -5982,21 +5982,21 @@ create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
         break;
       }
       case PROFILE_TYPE_RECTANGLE: {
-        auto &rect = (*params.inner_profiles)[i].rectangle;
+        auto &rect = params.inner_profiles[i].rectangle;
         inner_profiles.emplace_back(
             rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
                               gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
         break;
       }
       case PROFILE_TYPE_CIRC: {
-        auto &circ = (*params.inner_profiles)[i].circ;
+        auto &circ = params.inner_profiles[i].circ;
         inner_profiles.emplace_back(circ_profile(
             gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
             gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius));
         break;
       }
       case PROFILE_TYPE_ELIPS: {
-        auto &elips = (*params.inner_profiles)[i].elips;
+        auto &elips = params.inner_profiles[i].elips;
         inner_profiles.emplace_back(elips_profile(
             gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
             gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
@@ -6004,7 +6004,7 @@ create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
         break;
       }
       case PROFILE_TYPE_POLYGON: {
-        auto &poly = (*params.inner_profiles)[i].polygon;
+        auto &poly = params.inner_profiles[i].polygon;
         std::vector<gp_Pnt> edges;
         for (int j = 0; j < poly.edgeCount; j++) {
           edges.emplace_back(poly.edges[j].x, poly.edges[j].y, poly.edges[j].z);

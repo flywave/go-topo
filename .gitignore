@@ -27,3 +27,4 @@ Session.vim
 build
 /libs
 /tests
+.cache

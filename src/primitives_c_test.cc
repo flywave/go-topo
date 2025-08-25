@@ -138,8 +138,8 @@ void test_multi_segment_pipe_with_split_distances() {
                                         .wire_array_count = 2,
                                         .profiles = profiles,
                                         .profile_count = 2,
-                                        .inner_profiles = &inner_profiles,
-                                        .inner_profile_counts = &inner_profile_count,
+                                        .inner_profiles = inner_profiles,
+                                        .inner_profile_count = inner_profile_count,
                                         .segment_types = segment_types,
                                         .segment_type_count = 2,
                                         .transition_mode =
