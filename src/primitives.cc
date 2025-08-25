@@ -18514,7 +18514,7 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
 
   // 创建圆形截面
   circ_profile maxProfile;
-  maxProfile.radius = maxRadius * 1.5; // 增加50%余量确保完全包裹
+  maxProfile.radius = maxRadius * 3.5; // 增加50%余量确保完全包裹
   maxProfile.center = gp_Pnt(0, 0, 0);
   maxProfile.norm = gp_Dir(0, 0, 1);
 

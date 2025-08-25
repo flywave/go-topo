@@ -6452,6 +6452,116 @@ void test_multi_segment_pipe3() {
   }
 }
 
+void test_multi_segment_pipe_based_on_data() {
+  std::cout << "\n=== Testing Multi-Segment Pipe (Based on Provided Data) ===" << std::endl;
+  
+  try {
+    // 创建路径线段数据，对应Go代码中的wires数据
+    std::vector<std::vector<gp_Pnt>> wires = {
+        // 单一直线段
+        {
+            gp_Pnt(0.000000, 0.000000, 0.000000),
+            gp_Pnt(-128.976600, -1.038238, -99.629249)
+        }
+    };
+
+    // 创建外多边形剖面数据
+    std::vector<gp_Pnt> outerPolygonPoints = {
+        gp_Pnt(0.000000, 16.100000, 0.000000),
+        gp_Pnt(14.250000, 16.100000, 0.000000),
+        gp_Pnt(14.250000, 17.980000, 0.000000),
+        gp_Pnt(14.049000, 18.948000, 0.000000),
+        gp_Pnt(13.701000, 19.873000, 0.000000),
+        gp_Pnt(13.213000, 20.734000, 0.000000),
+        gp_Pnt(12.599000, 21.508000, 0.000000),
+        gp_Pnt(9.375000, 23.710000, 0.000000),
+        gp_Pnt(5.778000, 25.228000, 0.000000),
+        gp_Pnt(1.952000, 26.002000, 0.000000),
+        gp_Pnt(-1.952000, 26.002000, 0.000000),
+        gp_Pnt(-5.778000, 25.228000, 0.000000),
+        gp_Pnt(-9.375000, 23.710000, 0.000000),
+        gp_Pnt(-12.599000, 21.508000, 0.000000),
+        gp_Pnt(-13.213000, 20.734000, 0.000000),
+        gp_Pnt(-13.701000, 19.873000, 0.000000),
+        gp_Pnt(-14.049000, 18.948000, 0.000000),
+        gp_Pnt(-14.250000, 17.980000, 0.000000),
+        gp_Pnt(-14.259000, 16.100000, 0.000000),
+        gp_Pnt(0.000000, 16.100000, 0.000000)
+    };
+
+    // 创建内多边形剖面数据
+    std::vector<gp_Pnt> innerPolygonPoints = {
+        gp_Pnt(-0.000010, 16.200000, 0.000000),
+        gp_Pnt(14.154677, 16.130224, 0.000000),
+        gp_Pnt(14.151671, 17.998204, 0.000000),
+        gp_Pnt(13.949699, 18.959806, 0.000000),
+        gp_Pnt(13.601148, 19.878432, 0.000000),
+        gp_Pnt(13.113004, 20.733124, 0.000000),
+        gp_Pnt(12.499248, 21.500956, 0.000000),
+        gp_Pnt(9.280031, 23.678682, 0.000000),
+        gp_Pnt(5.699827, 25.165638, 0.000000),
+        gp_Pnt(1.917907, 25.907991, 0.000000),
+        gp_Pnt(-1.917921, 25.907986, 0.000000),
+        gp_Pnt(-5.699832, 25.165632, 0.000000),
+        gp_Pnt(-9.280031, 23.678680, 0.000000),
+        gp_Pnt(-12.499248, 21.500956, 0.000000),
+        gp_Pnt(-13.113004, 20.733124, 0.000000),
+        gp_Pnt(-13.601148, 19.878432, 0.000000),
+        gp_Pnt(-13.949699, 18.959806, 0.000000),
+        gp_Pnt(-14.151671, 17.998206, 0.000000),
+        gp_Pnt(-14.163672, 16.130208, 0.000000),
+        gp_Pnt(-0.000010, 16.200000, 0.000000)
+    };
+
+    // 创建剖面（外轮廓）
+    polygon_profile outerProfile(outerPolygonPoints);
+    
+    // 创建剖面（内轮廓）
+    polygon_profile innerProfile(innerPolygonPoints);
+
+    // 创建线段类型
+    std::vector<segment_type> segmentTypes = {
+        segment_type::LINE
+    };
+
+    // 设置过渡模式
+    transition_mode transitionMode = transition_mode::TRANSFORMED;
+
+    // 创建上方向
+    gp_Dir upDir(-0.301619, 0.874963, 0.378768);
+
+    // 构建参数
+    multi_segment_pipe_params params;
+    params.wires = wires;
+    params.profiles = {outerProfile},
+    params.inner_profiles = {{innerProfile}},
+    params.segment_types = segmentTypes;
+    params.transition_mode = transitionMode;
+    params.upDir = upDir;
+
+    // 创建多段管道（使用提供的分割距离）
+    auto shp = create_multi_segment_pipe_with_split_distances(params, {64.300000, 68.400000});
+
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create multi-segment pipe" << std::endl;
+      return;
+    }
+
+    // 导出形状以供检查
+    test_export_shape(shp, "./test_multi_segment_pipe_data_based.stl");
+
+    std::cout << "Successfully created multi-segment pipe based on provided data" << std::endl;
+    std::cout << "Segment types used: LINE" << std::endl;
+    std::cout << "Split distances: 64.300000, 68.400000" << std::endl;
+    std::cout << "Pipe length: " << wires[0][0].Distance(wires[0][1]) << " mm" << std::endl;
+    
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  } catch (const std::exception &e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+  }
+}
+
 int main() {
   // 基础图形
   // test_revol();
@@ -6576,5 +6686,6 @@ int main() {
   //test_make_wire_from_segments();
   test_multi_segment_pipe2();
   test_multi_segment_pipe3();
+  test_multi_segment_pipe_based_on_data();
   return 0;
 }
