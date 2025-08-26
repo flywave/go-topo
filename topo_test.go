@@ -28,6 +28,11 @@ func TestMakeArc(t *testing.T) {
 	}
 }
 
+func TestMakeDir(t *testing.T) {
+	dir := NewDir3FromXYZ([3]float64{0, 0, 0})
+	fmt.Println(dir.Data())
+}
+
 func TestMaakeWire(t *testing.T) {
 
 	points := []Point3{
