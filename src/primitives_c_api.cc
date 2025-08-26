@@ -3478,17 +3478,17 @@ PRIMCAPICALL topo_wire_t create_pipe_row_centerline(pipe_row_params_t params) {
            static_cast<channel_point_type>(params.points[i].ctype)});
     }
   }
-   try {
-          TopoDS_Wire wire = create_pipe_row_centerline(cpp_params);
-    return   topo_wire_t{
+  try {
+    TopoDS_Wire wire = create_pipe_row_centerline(cpp_params);
+    return topo_wire_t{
         .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
   } catch (...) {
-       try {
-        std::rethrow_exception(std::current_exception());
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+    try {
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      std::cerr << "Exception: " << e.what() << std::endl;
     } catch (...) {
-        std::cerr << "Unknown exception occurred" << std::endl;
+      std::cerr << "Unknown exception occurred" << std::endl;
     }
     return topo_wire_t{};
   }
@@ -3559,8 +3559,9 @@ create_cable_trench_with_place(cable_trench_params_t params, pnt3d_t position,
   }
 }
 
-PRIMCAPICALL topo_wire_t create_cable_trench_centerline(cable_trench_params_t params){
-cable_trench_params cpp_params{params.width,
+PRIMCAPICALL topo_wire_t
+create_cable_trench_centerline(cable_trench_params_t params) {
+  cable_trench_params cpp_params{params.width,
                                  params.height,
                                  params.coverWidth,
                                  params.coverThickness,
@@ -3580,17 +3581,17 @@ cable_trench_params cpp_params{params.width,
            static_cast<channel_point_type>(params.points[i].ctype)});
     }
   }
-   try {
-          TopoDS_Wire wire = create_cable_trench_centerline(cpp_params);
-    return   topo_wire_t{
+  try {
+    TopoDS_Wire wire = create_cable_trench_centerline(cpp_params);
+    return topo_wire_t{
         .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
   } catch (...) {
-       try {
-        std::rethrow_exception(std::current_exception());
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+    try {
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      std::cerr << "Exception: " << e.what() << std::endl;
     } catch (...) {
-        std::cerr << "Unknown exception occurred" << std::endl;
+      std::cerr << "Unknown exception occurred" << std::endl;
     }
     return topo_wire_t{};
   }
@@ -3664,8 +3665,9 @@ create_cable_tunnel_with_place(cable_tunnel_params_t params, pnt3d_t position,
     return nullptr;
   }
 }
-PRIMCAPICALL topo_wire_t create_cable_tunnel_centerline(cable_tunnel_params_t params){
-   cable_tunnel_params cpp_params{
+PRIMCAPICALL topo_wire_t
+create_cable_tunnel_centerline(cable_tunnel_params_t params) {
+  cable_tunnel_params cpp_params{
       static_cast<connection_section_style>(params.style),
       params.width,
       params.height,
@@ -3687,17 +3689,17 @@ PRIMCAPICALL topo_wire_t create_cable_tunnel_centerline(cable_tunnel_params_t pa
            static_cast<channel_point_type>(params.points[i].ctype)});
     }
   }
-    try {
-          TopoDS_Wire wire = create_cable_tunnel_centerline(cpp_params);
-    return   topo_wire_t{
+  try {
+    TopoDS_Wire wire = create_cable_tunnel_centerline(cpp_params);
+    return topo_wire_t{
         .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
   } catch (...) {
-       try {
-        std::rethrow_exception(std::current_exception());
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+    try {
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      std::cerr << "Exception: " << e.what() << std::endl;
     } catch (...) {
-        std::cerr << "Unknown exception occurred" << std::endl;
+      std::cerr << "Unknown exception occurred" << std::endl;
     }
     return topo_wire_t{};
   }
@@ -3737,12 +3739,12 @@ PRIMCAPICALL topo_shape_t *create_cable_tray(cable_tray_params_t params) {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_cable_tray(cpp_params))};
   } catch (...) {
-       try {
-        std::rethrow_exception(std::current_exception());
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+    try {
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      std::cerr << "Exception: " << e.what() << std::endl;
     } catch (...) {
-        std::cerr << "Unknown exception occurred" << std::endl;
+      std::cerr << "Unknown exception occurred" << std::endl;
     }
     return nullptr;
   }
@@ -3792,7 +3794,8 @@ create_cable_tray_with_place(cable_tray_params_t params, pnt3d_t position,
     return nullptr;
   }
 }
-PRIMCAPICALL topo_wire_t create_cable_tray_centerline(cable_tray_params_t params){
+PRIMCAPICALL topo_wire_t
+create_cable_tray_centerline(cable_tray_params_t params) {
   cable_tray_params cpp_params{static_cast<cable_tray_style>(params.style),
                                params.columnDiameter,
                                params.columnHeight,
@@ -3823,16 +3826,16 @@ PRIMCAPICALL topo_wire_t create_cable_tray_centerline(cable_tray_params_t params
     }
   }
   try {
-          TopoDS_Wire wire = create_cable_tray_centerline(cpp_params);
-    return   topo_wire_t{
+    TopoDS_Wire wire = create_cable_tray_centerline(cpp_params);
+    return topo_wire_t{
         .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
   } catch (...) {
-       try {
-        std::rethrow_exception(std::current_exception());
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+    try {
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      std::cerr << "Exception: " << e.what() << std::endl;
     } catch (...) {
-        std::cerr << "Unknown exception occurred" << std::endl;
+      std::cerr << "Unknown exception occurred" << std::endl;
     }
     return topo_wire_t{};
   }
@@ -4031,8 +4034,8 @@ PRIMCAPICALL topo_shape_t *create_footpath_with_place(footpath_params_t params,
   }
 }
 
-PRIMCAPICALL topo_wire_t create_footpath_centerline(footpath_params_t params){
-    footpath_params cpp_params{params.height, params.width};
+PRIMCAPICALL topo_wire_t create_footpath_centerline(footpath_params_t params) {
+  footpath_params cpp_params{params.height, params.width};
 
   if (params.pointCount > 0) {
     for (int i = 0; i < params.pointCount; i++) {
@@ -4043,22 +4046,21 @@ PRIMCAPICALL topo_wire_t create_footpath_centerline(footpath_params_t params){
     }
   }
 
-   try {
-          TopoDS_Wire wire = create_footpath_centerline(cpp_params);
-    return   topo_wire_t{
+  try {
+    TopoDS_Wire wire = create_footpath_centerline(cpp_params);
+    return topo_wire_t{
         .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
   } catch (...) {
-       try {
-        std::rethrow_exception(std::current_exception());
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+    try {
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      std::cerr << "Exception: " << e.what() << std::endl;
     } catch (...) {
-        std::cerr << "Unknown exception occurred" << std::endl;
+      std::cerr << "Unknown exception occurred" << std::endl;
     }
     return topo_wire_t{};
   }
 }
-
 
 PRIMCAPICALL topo_shape_t *create_shaft_chamber(shaft_chamber_params_t params) {
   shaft_chamber_params cpp_params{
@@ -4139,26 +4141,26 @@ create_tunnel_partition_board(tunnel_partition_board_params_t params) {
   tunnel_partition_board_params cpp_params{
       static_cast<tunnel_partition_board_style>(params.style), params.length,
       params.width, params.thickness};
- cpp_params.holeCount = params.holeCount;
+  cpp_params.holeCount = params.holeCount;
   if (params.holeCount > 0) {
     for (int i = 0; i < params.holeCount; i++) {
       pnt2d_t pos = params.holePositions[i];
       cpp_params.holePositions.push_back(gp_Pnt2d(pos.x, pos.y));
       cpp_params.holeStyles.push_back(params.holeStyles[i]);
       cpp_params.holeDiameters.push_back(params.holeDiameters[i]);
-      cpp_params.holeWidths.push_back(params.holeWidths[i]); 
+      cpp_params.holeWidths.push_back(params.holeWidths[i]);
     }
   }
   try {
     return new topo_shape_t{.shp = std::make_shared<shape>(
                                 create_tunnel_partition_board(cpp_params))};
   } catch (...) {
-           try {
-        std::rethrow_exception(std::current_exception());
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+    try {
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      std::cerr << "Exception: " << e.what() << std::endl;
     } catch (...) {
-        std::cerr << "Unknown exception occurred" << std::endl;
+      std::cerr << "Unknown exception occurred" << std::endl;
     }
     return nullptr;
   }
@@ -4361,11 +4363,11 @@ PRIMCAPICALL void double_array_set(double *array, int index, double value) {
   }
 }
 
- PRIMCAPICALL void int_array_set(int *array, int index, int value){
-   if (array!= NULL) {
-      array[index] = value;
-   }
- }
+PRIMCAPICALL void int_array_set(int *array, int index, int value) {
+  if (array != NULL) {
+    array[index] = value;
+  }
+}
 
 PRIMCAPICALL topo_shape_t *create_pipe_support(pipe_support_params_t params) {
   pipe_support_params cpp_params{static_cast<pipe_support_style>(params.style),
@@ -4377,7 +4379,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_support(pipe_support_params_t params) {
       pnt2d_t p = params.positions[i];
       cpp_params.positions.push_back(gp_Pnt2d(p.x, p.y));
       cpp_params.radii.push_back(params.radii[i]);
-     }
+    }
   }
   cpp_params.length = params.length;
   cpp_params.height = params.height;
@@ -4387,12 +4389,12 @@ PRIMCAPICALL topo_shape_t *create_pipe_support(pipe_support_params_t params) {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_pipe_support(cpp_params))};
   } catch (...) {
-       try {
-        std::rethrow_exception(std::current_exception());
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+    try {
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      std::cerr << "Exception: " << e.what() << std::endl;
     } catch (...) {
-        std::cerr << "Unknown exception occurred" << std::endl;
+      std::cerr << "Unknown exception occurred" << std::endl;
     }
     return nullptr;
   }
@@ -5235,13 +5237,13 @@ topo_wire_t create_pipe_centerline(pipe_params_t params) {
     TopoDS_Wire wire = create_pipe_centerline(cpp_params);
     return topo_wire_t{
         .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
-   } catch (...) {
+  } catch (...) {
     try {
-        std::rethrow_exception(std::current_exception());
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
-    } catch (const Standard_ConstructionError& e) {
-        std::cerr << e.GetMessageString() << std::endl;
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (const Standard_ConstructionError &e) {
+      std::cerr << e.GetMessageString() << std::endl;
     }
     return topo_wire_t{};
   }
@@ -5625,12 +5627,12 @@ create_multi_segment_pipe(multi_segment_pipe_params_t params) {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_multi_segment_pipe(cpp_params))};
   } catch (...) {
-          try {
-        std::rethrow_exception(std::current_exception());
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+    try {
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      std::cerr << "Exception: " << e.what() << std::endl;
     } catch (...) {
-        std::cerr << "Unknown exception occurred" << std::endl;
+      std::cerr << "Unknown exception occurred" << std::endl;
     }
     return nullptr;
   }
@@ -5829,11 +5831,11 @@ topo_shape_t *create_multi_segment_pipe_with_split_distances(
                                     cpp_params, distances))};
   } catch (...) {
     try {
-        std::rethrow_exception(std::current_exception());
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
-    } catch (const Standard_ConstructionError& e) {
-        std::cerr << e.GetMessageString() << std::endl;
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (const Standard_ConstructionError &e) {
+      std::cerr << e.GetMessageString() << std::endl;
     }
     return nullptr;
   }
@@ -6151,7 +6153,7 @@ static std::vector<profile_layer> convert_layers(profile_layer_t *layers,
         }
 
         std::vector<std::vector<gp_Pnt>> inners;
-        for (int n= 0; n < poly.innerArrayCount; n++) {
+        for (int n = 0; n < poly.innerArrayCount; n++) {
           std::vector<gp_Pnt> inner;
           for (int k = 0; k < poly.innerCounts[n]; k++) {
             inner.emplace_back(poly.inners[n][k].x, poly.inners[n][k].y,
@@ -6303,11 +6305,11 @@ PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure(
     if (out_count)
       *out_count = 0;
     try {
-        std::rethrow_exception(std::current_exception());
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
-    } catch (const Standard_ConstructionError& e) {
-        std::cerr << e.GetMessageString() << std::endl;
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (const Standard_ConstructionError &e) {
+      std::cerr << e.GetMessageString() << std::endl;
     }
     return nullptr;
   }
@@ -6339,7 +6341,7 @@ PRIMCAPICALL topo_wire_t create_multi_layer_extrusion_structure_centerline(
         case SEGMENT_TYPE_BEZIER:
           segment_types.push_back(segment_type::BEZIER);
           break;
-         }
+        }
       }
       cpp_params.segment_types = segment_types;
     }
@@ -6356,7 +6358,7 @@ PRIMCAPICALL topo_wire_t create_multi_layer_extrusion_structure_centerline(
     case TRANSITION_TRANSFORMED:
       cpp_params.transition_mode = transition_mode::TRANSFORMED;
       break;
-     }
+    }
 
     if (params.upDir) {
       cpp_params.upDir =
@@ -6398,7 +6400,7 @@ PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure_with_place(
         case SEGMENT_TYPE_BEZIER:
           segment_types.push_back(segment_type::BEZIER);
           break;
-         }
+        }
       }
       cpp_params.segment_types = segment_types;
     }
@@ -6415,7 +6417,7 @@ PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure_with_place(
     case TRANSITION_TRANSFORMED:
       cpp_params.transition_mode = transition_mode::TRANSFORMED;
       break;
-     }
+    }
 
     if (params.upDir) {
       cpp_params.upDir =
@@ -6639,7 +6641,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params) {
       break;
     }
     default:
-      throw Standard_ConstructionError("Invalid profile type");
+      return nullptr;
     }
 
     // 转换内剖面(如果有)
@@ -7026,75 +7028,76 @@ create_pipe_joint_with_place(pipe_joint_params_t params, pnt3d_t position,
 PRIMCAPICALL topo_shape_t *create_catenary(catenary_params_t params) {
   catenary_params cpp_params;
 
-  // 转换端点
-  cpp_params.p1 = gp_Pnt(params.p1.x, params.p1.y, params.p1.z);
-  cpp_params.p2 = gp_Pnt(params.p2.x, params.p2.y, params.p2.z);
-
-  // 转换剖面类型
-  switch (params.profile.type_) {
-  case PROFILE_TYPE_TRIANGLE: {
-    auto &tri = params.profile.triangle;
-    cpp_params.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
-                                          gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
-                                          gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
-    break;
-  }
-  case PROFILE_TYPE_RECTANGLE: {
-    auto &rect = params.profile.rectangle;
-    cpp_params.profile =
-        rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
-                          gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
-    break;
-  }
-  case PROFILE_TYPE_CIRC: {
-    auto &circ = params.profile.circ;
-    cpp_params.profile = circ_profile(
-        gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-        gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
-    break;
-  }
-  case PROFILE_TYPE_ELIPS: {
-    auto &elips = params.profile.elips;
-    cpp_params.profile =
-        elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
-                      gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
-                      gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
-    break;
-  }
-  case PROFILE_TYPE_POLYGON: {
-    auto &poly = params.profile.polygon;
-    std::vector<gp_Pnt> edges;
-    for (int i = 0; i < poly.edgeCount; i++) {
-      edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
-    }
-
-    std::vector<std::vector<gp_Pnt>> inners;
-    for (int i = 0; i < poly.innerArrayCount; i++) {
-      std::vector<gp_Pnt> inner;
-      for (int j = 0; j < poly.innerCounts[i]; j++) {
-        inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
-                           poly.inners[i][j].z);
-      }
-      inners.push_back(inner);
-    }
-
-    cpp_params.profile = polygon_profile(edges, inners);
-    break;
-  }
-  default:
-    return nullptr;
-  }
-
-  cpp_params.slack = params.slack;
-  cpp_params.maxSag = params.max_sag;
-  cpp_params.tessellation = params.tessellation;
-
-  if (params.up_dir != nullptr) {
-    cpp_params.upDir =
-        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
-  }
-
   try {
+    // 转换端点
+    cpp_params.p1 = gp_Pnt(params.p1.x, params.p1.y, params.p1.z);
+    cpp_params.p2 = gp_Pnt(params.p2.x, params.p2.y, params.p2.z);
+
+    // 转换剖面类型
+    switch (params.profile.type_) {
+    case PROFILE_TYPE_TRIANGLE: {
+      auto &tri = params.profile.triangle;
+      cpp_params.profile =
+          triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                           gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                           gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+      break;
+    }
+    case PROFILE_TYPE_RECTANGLE: {
+      auto &rect = params.profile.rectangle;
+      cpp_params.profile =
+          rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                            gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+      break;
+    }
+    case PROFILE_TYPE_CIRC: {
+      auto &circ = params.profile.circ;
+      cpp_params.profile = circ_profile(
+          gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+          gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+      break;
+    }
+    case PROFILE_TYPE_ELIPS: {
+      auto &elips = params.profile.elips;
+      cpp_params.profile =
+          elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                        gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                        gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+      break;
+    }
+    case PROFILE_TYPE_POLYGON: {
+      auto &poly = params.profile.polygon;
+      std::vector<gp_Pnt> edges;
+      for (int i = 0; i < poly.edgeCount; i++) {
+        edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+      }
+
+      std::vector<std::vector<gp_Pnt>> inners;
+      for (int i = 0; i < poly.innerArrayCount; i++) {
+        std::vector<gp_Pnt> inner;
+        for (int j = 0; j < poly.innerCounts[i]; j++) {
+          inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
+                             poly.inners[i][j].z);
+        }
+        inners.push_back(inner);
+      }
+
+      cpp_params.profile = polygon_profile(edges, inners);
+      break;
+    }
+    default:
+      return nullptr;
+    }
+
+    cpp_params.slack = params.slack;
+    cpp_params.maxSag = params.max_sag;
+    cpp_params.tessellation = params.tessellation;
+
+    if (params.up_dir != nullptr) {
+      cpp_params.upDir =
+          gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
+    }
+
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_catenary(cpp_params))};
   } catch (...) {
@@ -7107,80 +7110,80 @@ PRIMCAPICALL topo_shape_t *create_catenary_with_place(catenary_params_t params,
                                                       dir3d_t direction,
                                                       dir3d_t xDir) {
   catenary_params cpp_params;
-
-  // 转换端点
-  cpp_params.p1 = gp_Pnt(params.p1.x, params.p1.y, params.p1.z);
-  cpp_params.p2 = gp_Pnt(params.p2.x, params.p2.y, params.p2.z);
-
-  // 转换剖面类型
-  switch (params.profile.type_) {
-  case PROFILE_TYPE_TRIANGLE: {
-    auto &tri = params.profile.triangle;
-    cpp_params.profile = triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
-                                          gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
-                                          gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
-    break;
-  }
-  case PROFILE_TYPE_RECTANGLE: {
-    auto &rect = params.profile.rectangle;
-    cpp_params.profile =
-        rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
-                          gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
-    break;
-  }
-  case PROFILE_TYPE_CIRC: {
-    auto &circ = params.profile.circ;
-    cpp_params.profile = circ_profile(
-        gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
-        gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
-    break;
-  }
-  case PROFILE_TYPE_ELIPS: {
-    auto &elips = params.profile.elips;
-    cpp_params.profile =
-        elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
-                      gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
-                      gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
-    break;
-  }
-  case PROFILE_TYPE_POLYGON: {
-    auto &poly = params.profile.polygon;
-    std::vector<gp_Pnt> edges;
-    for (int i = 0; i < poly.edgeCount; i++) {
-      edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
-    }
-
-    std::vector<std::vector<gp_Pnt>> inners;
-    for (int i = 0; i < poly.innerArrayCount; i++) {
-      std::vector<gp_Pnt> inner;
-      for (int j = 0; j < poly.innerCounts[i]; j++) {
-        inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
-                           poly.inners[i][j].z);
-      }
-      inners.push_back(inner);
-    }
-
-    cpp_params.profile = polygon_profile(edges, inners);
-    break;
-  }
-  default:
-    throw Standard_ConstructionError("Invalid profile type");
-  }
-
-  cpp_params.slack = params.slack;
-  cpp_params.maxSag = params.max_sag;
-  cpp_params.tessellation = params.tessellation;
-
-  if (params.up_dir != nullptr) {
-    cpp_params.upDir =
-        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
-  }
-
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
-
   try {
+    // 转换端点
+    cpp_params.p1 = gp_Pnt(params.p1.x, params.p1.y, params.p1.z);
+    cpp_params.p2 = gp_Pnt(params.p2.x, params.p2.y, params.p2.z);
+
+    // 转换剖面类型
+    switch (params.profile.type_) {
+    case PROFILE_TYPE_TRIANGLE: {
+      auto &tri = params.profile.triangle;
+      cpp_params.profile =
+          triangle_profile(gp_Pnt(tri.p1.x, tri.p1.y, tri.p1.z),
+                           gp_Pnt(tri.p2.x, tri.p2.y, tri.p2.z),
+                           gp_Pnt(tri.p3.x, tri.p3.y, tri.p3.z));
+      break;
+    }
+    case PROFILE_TYPE_RECTANGLE: {
+      auto &rect = params.profile.rectangle;
+      cpp_params.profile =
+          rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
+                            gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z));
+      break;
+    }
+    case PROFILE_TYPE_CIRC: {
+      auto &circ = params.profile.circ;
+      cpp_params.profile = circ_profile(
+          gp_Pnt(circ.center.x, circ.center.y, circ.center.z),
+          gp_Dir(circ.norm.x, circ.norm.y, circ.norm.z), circ.radius);
+      break;
+    }
+    case PROFILE_TYPE_ELIPS: {
+      auto &elips = params.profile.elips;
+      cpp_params.profile =
+          elips_profile(gp_Pnt(elips.s1.x, elips.s1.y, elips.s1.z),
+                        gp_Pnt(elips.s2.x, elips.s2.y, elips.s2.z),
+                        gp_Pnt(elips.center.x, elips.center.y, elips.center.z));
+      break;
+    }
+    case PROFILE_TYPE_POLYGON: {
+      auto &poly = params.profile.polygon;
+      std::vector<gp_Pnt> edges;
+      for (int i = 0; i < poly.edgeCount; i++) {
+        edges.emplace_back(poly.edges[i].x, poly.edges[i].y, poly.edges[i].z);
+      }
+
+      std::vector<std::vector<gp_Pnt>> inners;
+      for (int i = 0; i < poly.innerArrayCount; i++) {
+        std::vector<gp_Pnt> inner;
+        for (int j = 0; j < poly.innerCounts[i]; j++) {
+          inner.emplace_back(poly.inners[i][j].x, poly.inners[i][j].y,
+                             poly.inners[i][j].z);
+        }
+        inners.push_back(inner);
+      }
+
+      cpp_params.profile = polygon_profile(edges, inners);
+      break;
+    }
+    default:
+      return nullptr;
+    }
+
+    cpp_params.slack = params.slack;
+    cpp_params.maxSag = params.max_sag;
+    cpp_params.tessellation = params.tessellation;
+
+    if (params.up_dir != nullptr) {
+      cpp_params.upDir =
+          gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
+    }
+
+    gp_Pnt cpp_position(position.x, position.y, position.z);
+    gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+    gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
+
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_catenary(
             cpp_params, cpp_position, cpp_direction, cpp_xDir))};
@@ -7188,24 +7191,23 @@ PRIMCAPICALL topo_shape_t *create_catenary_with_place(catenary_params_t params,
     return nullptr;
   }
 }
-PRIMCAPICALL topo_wire_t create_catenary_centerline(catenary_params_t params){
-   catenary_params cpp_params;
-
-  // 转换端点
-  cpp_params.p1 = gp_Pnt(params.p1.x, params.p1.y, params.p1.z);
-  cpp_params.p2 = gp_Pnt(params.p2.x, params.p2.y, params.p2.z);
-  cpp_params.slack = params.slack;
-  cpp_params.maxSag = params.max_sag;
-  cpp_params.tessellation = params.tessellation;
-
-  if (params.up_dir != nullptr) {
-    cpp_params.upDir =
-        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
-  }
-
+PRIMCAPICALL topo_wire_t create_catenary_centerline(catenary_params_t params) {
+  catenary_params cpp_params;
   try {
-   TopoDS_Wire wire = create_catenary_centerline(cpp_params);
-    return   topo_wire_t{
+    // 转换端点
+    cpp_params.p1 = gp_Pnt(params.p1.x, params.p1.y, params.p1.z);
+    cpp_params.p2 = gp_Pnt(params.p2.x, params.p2.y, params.p2.z);
+    cpp_params.slack = params.slack;
+    cpp_params.maxSag = params.max_sag;
+    cpp_params.tessellation = params.tessellation;
+
+    if (params.up_dir != nullptr) {
+      cpp_params.upDir =
+          gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
+    }
+
+    TopoDS_Wire wire = create_catenary_centerline(cpp_params);
+    return topo_wire_t{
         .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
   } catch (...) {
     return topo_wire_t{};
@@ -7713,10 +7715,10 @@ PRIMCAPICALL topo_shape_t **create_borehole(borehole_params_t params,
       cpp_params.samples.push_back(sample);
     }
 
-  if (params.up_dir != nullptr) {
-    cpp_params.upDir =
-        gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
-  }
+    if (params.up_dir != nullptr) {
+      cpp_params.upDir =
+          gp_Dir(params.up_dir->x, params.up_dir->y, params.up_dir->z);
+    }
 
     auto shapes = create_borehole(cpp_params);
 
@@ -7745,12 +7747,11 @@ PRIMCAPICALL void free_borehole_results(topo_shape_t **results, int count) {
     return;
   free(results);
 }
- 
 
-PRIMCAPICALL topo_shape_t *create_water_tunnel(water_tunnel_params_t params){
+PRIMCAPICALL topo_shape_t *create_water_tunnel(water_tunnel_params_t params) {
   try {
     water_tunnel_params cpp_params;
-    cpp_params.style = water_tunnel_section_style(params.style); 
+    cpp_params.style = water_tunnel_section_style(params.style);
     cpp_params.width = params.width;
     cpp_params.height = params.height;
     cpp_params.topThickness = params.topThickness;
@@ -7766,29 +7767,31 @@ PRIMCAPICALL topo_shape_t *create_water_tunnel(water_tunnel_params_t params){
     auto pts = params.points;
     for (int i = 0; i < params.point_count; i++) {
       channel_point point;
-      point.position = gp_Pnt(pts->position.x,pts->position.y,pts->position.z); 
-      point.type =channel_point_type( params.points[i].ctype);
+      point.position =
+          gp_Pnt(pts->position.x, pts->position.y, pts->position.z);
+      point.type = channel_point_type(params.points[i].ctype);
       cpp_params.points.push_back(point);
       pts++;
     }
     auto shp = create_water_tunnel(cpp_params);
     return new topo_shape_t{.shp = std::make_shared<shape>(shp)};
-  }catch(...){
-  try {
-        std::rethrow_exception(std::current_exception());
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
-    } catch (Standard_ConstructionError& e) {
-        std::cerr << e.GetMessageString()<< std::endl;
-    }  
+  } catch (...) {
+    try {
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      std::cerr << "Exception: " << e.what() << std::endl;
+    } catch (Standard_ConstructionError &e) {
+      std::cerr << e.GetMessageString() << std::endl;
+    }
     return nullptr;
   }
 }
 
-PRIMCAPICALL topo_wire_t create_water_tunnel_centerline(water_tunnel_params_t params){
+PRIMCAPICALL topo_wire_t
+create_water_tunnel_centerline(water_tunnel_params_t params) {
   try {
     water_tunnel_params cpp_params;
-    cpp_params.style = water_tunnel_section_style(params.style); 
+    cpp_params.style = water_tunnel_section_style(params.style);
     cpp_params.width = params.width;
     cpp_params.height = params.height;
     cpp_params.topThickness = params.topThickness;
@@ -7804,21 +7807,22 @@ PRIMCAPICALL topo_wire_t create_water_tunnel_centerline(water_tunnel_params_t pa
     auto pts = params.points;
     for (int i = 0; i < params.point_count; i++) {
       channel_point point;
-      point.position = gp_Pnt(pts->position.x,pts->position.y,pts->position.z); 
-      point.type =channel_point_type( params.points[i].ctype);
+      point.position =
+          gp_Pnt(pts->position.x, pts->position.y, pts->position.z);
+      point.type = channel_point_type(params.points[i].ctype);
       cpp_params.points.push_back(point);
       pts++;
     }
-         TopoDS_Wire wire = create_water_tunnel_centerline(cpp_params);
-    return   topo_wire_t{
+    TopoDS_Wire wire = create_water_tunnel_centerline(cpp_params);
+    return topo_wire_t{
         .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
   } catch (...) {
-       try {
-        std::rethrow_exception(std::current_exception());
-    } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+    try {
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      std::cerr << "Exception: " << e.what() << std::endl;
     } catch (...) {
-        std::cerr << "Unknown exception occurred" << std::endl;
+      std::cerr << "Unknown exception occurred" << std::endl;
     }
     return topo_wire_t{};
   }
