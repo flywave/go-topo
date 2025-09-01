@@ -509,6 +509,9 @@ func ProfileProjectPointList(proj *ProfileProjection, points []Point3) []Point3 
 }
 
 func WireLength(wire *Wire) float64 {
+	if wire == nil || wire.inner == nil {
+		return 0.0
+	}
 	return float64(C.topo_wrie_length(wire.inner.val))
 }
 
@@ -595,6 +598,11 @@ func ClipWithTopo4D(shape *Shape, progress WorkProgress) *Shape {
 }
 
 func FitCenterlineFromShape(shape *Shape, numSamples int, smoothingFactor float64) *Wire {
+	// 添加空指针检查
+	if shape == nil {
+		return nil
+	}
+
 	result := C.topo_fit_centerline_from_shape(shape.inner.val, C.int(numSamples), C.double(smoothingFactor))
 	if result.shp == nil {
 		return nil
@@ -629,6 +637,10 @@ func ComputeShapeMaxRadiusFromCenterline(shape *Shape, centerline *Wire) float64
 }
 
 func SampleCenterlineWire(centerline *Wire, numSamples int, simplify bool) []Point3 {
+	if centerline == nil {
+		return nil
+	}
+
 	var count C.int
 	cPoints := C.topo_sample_centerline_wire(centerline.inner.val, C.int(numSamples), C.bool(simplify), &count)
 	defer C.free(unsafe.Pointer(cPoints))
@@ -647,6 +659,11 @@ func SampleCenterlineWire(centerline *Wire, numSamples int, simplify bool) []Poi
 }
 
 func CreateBoundingCenterlineShape(radius float64, path *Wire) *Shape {
+	// 添加空指针检查
+	if path == nil {
+		return nil
+	}
+
 	result := C.topo_create_bounding_centerline_shape(C.double(radius), path.inner.val)
 	if result == nil {
 		return nil

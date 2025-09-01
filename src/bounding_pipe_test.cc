@@ -1,4 +1,5 @@
 #include "bounding_pipe.hh"
+#include "shape_ops.hh"
 
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
@@ -465,7 +466,7 @@ void test_fit_centerline_from_shape() {
     arcCircle->D1(M_PI_2, arc_end, atangent); // 获取圆弧终点的切线方向
     gp_Dir atangentDir(atangent);             // 转换为方向向量
     gp_Pnt line_end =
-        arc_end.Translated(100 * atangentDir); // 沿切线方向延伸100单位
+        arc_end.Translated(gp_Vec(atangentDir).Multiplied(100)); // 沿切线方向延伸100单位
     Handle(Geom_Line) line = new Geom_Line(arc_end, atangentDir);
     TopoDS_Edge lineEdge =
         BRepBuilderAPI_MakeEdge(line, arc_end, line_end).Edge();
@@ -650,7 +651,7 @@ void test_clip_with_bounding_pipe_by_ratios() {
       return;
     }
 
-    exportShapeToStl(clipped, "./test_spline_clipped_arc_pipe.stl");
+    exportShapeToStl(clipped, "./test_arc_clipped_pipe.stl");
 
     // 计算裁剪后体积
     GProp_GProps props;
@@ -832,7 +833,7 @@ void test_clip_with_bounding_pipe_by_ratios() {
     arcCircle->D1(M_PI_2, arc_end, atangent); // 获取圆弧终点的切线方向
     gp_Dir atangentDir(atangent);             // 转换为方向向量
     gp_Pnt line_end =
-        arc_end.Translated(100 * atangentDir); // 沿切线方向延伸100单位
+        arc_end.Translated(gp_Vec(atangentDir).Multiplied(100)); // 沿切线方向延伸100单位
     Handle(Geom_Line) line = new Geom_Line(arc_end, atangentDir);
     TopoDS_Edge lineEdge =
         BRepBuilderAPI_MakeEdge(line, arc_end, line_end).Edge();
@@ -899,8 +900,330 @@ void test_clip_with_bounding_pipe_by_ratios() {
   }
 }
 
+void test_sample_centerline_wire() {
+  std::cout << "Testing sample_centerline_wire..." << std::endl;
+
+  // 测试1: 圆弧中心线
+  {
+    std::cout << "\nTest case 1: Arc centerline" << std::endl;
+    
+    // 1. 创建圆弧路径
+    gp_Pnt center(0, 0, 0);
+    gp_Dir normal(0, 0, 1); // Z轴方向为法向
+    gp_Ax2 axis(center, normal);
+
+    // 创建圆弧（90度弧）
+    Handle(Geom_Circle) pathCircle = new Geom_Circle(axis, 50.0);
+    TopoDS_Edge arc = BRepBuilderAPI_MakeEdge(pathCircle, 0, M_PI_2).Edge();
+    TopoDS_Wire pathWire = BRepBuilderAPI_MakeWire(arc).Wire();
+
+    // 2. 创建topo::wire对象
+    flywave::topo::wire centerlineWire(pathWire);
+    
+    // 3. 采样中心线
+    try {
+      std::vector<gp_Pnt> points = sample_centerline_wire(centerlineWire, 50);
+      
+      std::cout << "Sampled " << points.size() << " points from arc centerline" << std::endl;
+      
+      // 验证采样点的数量
+      if (points.size() != 50) {
+        std::cerr << "Warning: Expected 50 points, got " << points.size() << std::endl;
+      }
+      
+      // 检查是否有inf或nan值
+      bool hasInvalidValues = false;
+      for (const auto& point : points) {
+        if (!std::isfinite(point.X()) || !std::isfinite(point.Y()) || !std::isfinite(point.Z())) {
+          std::cerr << "Error: Found inf/nan values in sampled points" << std::endl;
+          hasInvalidValues = true;
+          break;
+        }
+      }
+      
+      if (!hasInvalidValues) {
+        std::cout << "All sampled points are valid (no inf/nan values)" << std::endl;
+      }
+      
+      // 打印前几个和后几个点的坐标
+      std::cout << "First 3 points:" << std::endl;
+      for (int i = 0; i < std::min(3, (int)points.size()); i++) {
+        std::cout << "  Point " << i << ": (" << points[i].X() << ", " 
+                  << points[i].Y() << ", " << points[i].Z() << ")" << std::endl;
+      }
+      
+      std::cout << "Last 3 points:" << std::endl;
+      int startIdx = std::max(0, (int)points.size() - 3);
+      for (int i = startIdx; i < (int)points.size(); i++) {
+        std::cout << "  Point " << i << ": (" << points[i].X() << ", " 
+                  << points[i].Y() << ", " << points[i].Z() << ")" << std::endl;
+      }
+    } catch (const std::exception& e) {
+      std::cerr << "Error sampling arc centerline: " << e.what() << std::endl;
+    }
+  }
+
+  // 测试2: B样条曲线中心线
+  {
+    std::cout << "\nTest case 2: BSpline centerline" << std::endl;
+    
+    // 1. 创建B样条曲线路径
+    std::vector<gp_Pnt> splinePoints = {gp_Pnt(0, 0, 0), gp_Pnt(20, 10, 30),
+                                        gp_Pnt(40, -10, 60), gp_Pnt(60, 15, 90),
+                                        gp_Pnt(80, 0, 120)};
+
+    // 转换为TColgp_Array1OfPnt
+    TColgp_Array1OfPnt points(1, splinePoints.size());
+    for (int i = 0; i < splinePoints.size(); i++) {
+      points.SetValue(i + 1, splinePoints[i]);
+    }
+
+    // 拟合B样条曲线
+    GeomAPI_PointsToBSpline fitter;
+    fitter.Init(points, 3, 8);
+    Handle(Geom_BSplineCurve) splineCurve = fitter.Curve();
+    GeomAdaptor_Curve adaptor(splineCurve);
+
+    // 创建路径线
+    TopoDS_Edge splineEdge = BRepBuilderAPI_MakeEdge(adaptor.Curve()).Edge();
+    TopoDS_Wire splineWire = BRepBuilderAPI_MakeWire(splineEdge).Wire();
+
+    // 2. 创建topo::wire对象
+    flywave::topo::wire centerlineWire(splineWire);
+    
+    // 3. 采样中心线
+    try {
+      std::vector<gp_Pnt> points = sample_centerline_wire(centerlineWire, 100);
+      
+      std::cout << "Sampled " << points.size() << " points from BSpline centerline" << std::endl;
+      
+      // 验证采样点的数量
+      if (points.size() != 100) {
+        std::cerr << "Warning: Expected 100 points, got " << points.size() << std::endl;
+      }
+      
+      // 检查是否有inf或nan值
+      bool hasInvalidValues = false;
+      for (const auto& point : points) {
+        if (!std::isfinite(point.X()) || !std::isfinite(point.Y()) || !std::isfinite(point.Z())) {
+          std::cerr << "Error: Found inf/nan values in sampled points" << std::endl;
+          hasInvalidValues = true;
+          break;
+        }
+      }
+      
+      if (!hasInvalidValues) {
+        std::cout << "All sampled points are valid (no inf/nan values)" << std::endl;
+      }
+      
+      // 打印前几个和后几个点的坐标
+      std::cout << "First 3 points:" << std::endl;
+      for (int i = 0; i < std::min(3, (int)points.size()); i++) {
+        std::cout << "  Point " << i << ": (" << points[i].X() << ", " 
+                  << points[i].Y() << ", " << points[i].Z() << ")" << std::endl;
+      }
+      
+      std::cout << "Last 3 points:" << std::endl;
+      int startIdx = std::max(0, (int)points.size() - 3);
+      for (int i = startIdx; i < (int)points.size(); i++) {
+        std::cout << "  Point " << i << ": (" << points[i].X() << ", " 
+                  << points[i].Y() << ", " << points[i].Z() << ")" << std::endl;
+      }
+    } catch (const std::exception& e) {
+      std::cerr << "Error sampling BSpline centerline: " << e.what() << std::endl;
+    }
+  }
+
+  // 测试3: 复合曲线中心线（圆弧+直线）
+  {
+    std::cout << "\nTest case 3: Composite curve centerline (Arc + Line)" << std::endl;
+    
+    // 1. 创建复合路径（圆弧+直线）
+    gp_Pnt arc_center(0, 0, 0);
+    gp_Dir normal(0, 0, 1);
+    gp_Ax2 axis(arc_center, normal);
+
+    // 创建圆弧（90度弧）
+    Handle(Geom_Circle) arcCircle = new Geom_Circle(axis, 50.0);
+    TopoDS_Edge arcEdge = BRepBuilderAPI_MakeEdge(arcCircle, 0, M_PI_2).Edge();
+
+    // 创建直线（从圆弧终点开始沿Z轴延伸）
+    gp_Pnt arc_end = arcCircle->Value(M_PI_2);
+    gp_Vec atangent;
+    arcCircle->D1(M_PI_2, arc_end, atangent); // 获取圆弧终点的切线方向
+    gp_Dir atangentDir(atangent);             // 转换为方向向量
+    gp_Pnt line_end =
+        arc_end.Translated(gp_Vec(atangentDir).Multiplied(100)); // 沿切线方向延伸100单位
+    Handle(Geom_Line) line = new Geom_Line(arc_end, atangentDir);
+    TopoDS_Edge lineEdge =
+        BRepBuilderAPI_MakeEdge(line, arc_end, line_end).Edge();
+
+    // 组合成复合路径
+    BRepBuilderAPI_MakeWire wireMaker;
+    wireMaker.Add(arcEdge);
+    wireMaker.Add(lineEdge);
+    TopoDS_Wire pathWire = wireMaker.Wire();
+
+    // 2. 创建topo::wire对象
+    flywave::topo::wire centerlineWire(pathWire);
+    
+    // 3. 采样中心线
+    try {
+      std::vector<gp_Pnt> points = sample_centerline_wire(centerlineWire, 80);
+      
+      std::cout << "Sampled " << points.size() << " points from composite centerline" << std::endl;
+      
+      // 验证采样点的数量
+      if (points.size() != 80) {
+        std::cerr << "Warning: Expected 80 points, got " << points.size() << std::endl;
+      }
+      
+      // 检查是否有inf或nan值
+      bool hasInvalidValues = false;
+      for (const auto& point : points) {
+        if (!std::isfinite(point.X()) || !std::isfinite(point.Y()) || !std::isfinite(point.Z())) {
+          std::cerr << "Error: Found inf/nan values in sampled points" << std::endl;
+          hasInvalidValues = true;
+          break;
+        }
+      }
+      
+      if (!hasInvalidValues) {
+        std::cout << "All sampled points are valid (no inf/nan values)" << std::endl;
+      }
+      
+      // 打印前几个和后几个点的坐标
+      std::cout << "First 3 points:" << std::endl;
+      for (int i = 0; i < std::min(3, (int)points.size()); i++) {
+        std::cout << "  Point " << i << ": (" << points[i].X() << ", " 
+                  << points[i].Y() << ", " << points[i].Z() << ")" << std::endl;
+      }
+      
+      std::cout << "Last 3 points:" << std::endl;
+      int startIdx = std::max(0, (int)points.size() - 3);
+      for (int i = startIdx; i < (int)points.size(); i++) {
+        std::cout << "  Point " << i << ": (" << points[i].X() << ", " 
+                  << points[i].Y() << ", " << points[i].Z() << ")" << std::endl;
+      }
+    } catch (const std::exception& e) {
+      std::cerr << "Error sampling composite centerline: " << e.what() << std::endl;
+    }
+  }
+
+  // 测试4: 简化采样
+  {
+    std::cout << "\nTest case 4: Simplified sampling" << std::endl;
+    
+    // 1. 创建B样条曲线路径
+    std::vector<gp_Pnt> splinePoints = {gp_Pnt(0, 0, 0), gp_Pnt(20, 10, 30),
+                                        gp_Pnt(40, -10, 60), gp_Pnt(60, 15, 90),
+                                        gp_Pnt(80, 0, 120)};
+
+    // 转换为TColgp_Array1OfPnt
+    TColgp_Array1OfPnt points(1, splinePoints.size());
+    for (int i = 0; i < splinePoints.size(); i++) {
+      points.SetValue(i + 1, splinePoints[i]);
+    }
+
+    // 拟合B样条曲线
+    GeomAPI_PointsToBSpline fitter;
+    fitter.Init(points, 3, 8);
+    Handle(Geom_BSplineCurve) splineCurve = fitter.Curve();
+    GeomAdaptor_Curve adaptor(splineCurve);
+
+    // 创建路径线
+    TopoDS_Edge splineEdge = BRepBuilderAPI_MakeEdge(adaptor.Curve()).Edge();
+    TopoDS_Wire splineWire = BRepBuilderAPI_MakeWire(splineEdge).Wire();
+
+    // 2. 创建topo::wire对象
+    flywave::topo::wire centerlineWire(splineWire);
+    
+    // 3. 使用简化模式采样中心线
+    try {
+      std::vector<gp_Pnt> points = sample_centerline_wire(centerlineWire, 50, true);
+      
+      std::cout << "Sampled " << points.size() << " points from BSpline centerline (simplified)" << std::endl;
+      
+      // 验证采样点的数量
+      if (points.size() != 50) {
+        std::cerr << "Warning: Expected 50 points, got " << points.size() << std::endl;
+      }
+      
+      // 检查是否有inf或nan值
+      bool hasInvalidValues = false;
+      for (const auto& point : points) {
+        if (!std::isfinite(point.X()) || !std::isfinite(point.Y()) || !std::isfinite(point.Z())) {
+          std::cerr << "Error: Found inf/nan values in sampled points" << std::endl;
+          hasInvalidValues = true;
+          break;
+        }
+      }
+      
+      if (!hasInvalidValues) {
+        std::cout << "All sampled points are valid (no inf/nan values)" << std::endl;
+      }
+      
+      // 打印前几个和后几个点的坐标
+      std::cout << "First 3 points:" << std::endl;
+      for (int i = 0; i < std::min(3, (int)points.size()); i++) {
+        std::cout << "  Point " << i << ": (" << points[i].X() << ", " 
+                  << points[i].Y() << ", " << points[i].Z() << ")" << std::endl;
+      }
+      
+      std::cout << "Last 3 points:" << std::endl;
+      int startIdx = std::max(0, (int)points.size() - 3);
+      for (int i = startIdx; i < (int)points.size(); i++) {
+        std::cout << "  Point " << i << ": (" << points[i].X() << ", " 
+                  << points[i].Y() << ", " << points[i].Z() << ")" << std::endl;
+      }
+    } catch (const std::exception& e) {
+      std::cerr << "Error sampling BSpline centerline with simplification: " << e.what() << std::endl;
+    }
+  }
+
+  // 测试5: 检查最后一个点是否为inf的特殊情况
+  {
+    std::cout << "\nTest case 5: Check for inf values in last point" << std::endl;
+    
+    // 1. 创建一个简单的直线路径
+    gp_Pnt start(0, 0, 0);
+    gp_Pnt end(100, 0, 0);
+    Handle(Geom_Line) line = new Geom_Line(start, gp_Dir(gp_Vec(start, end)));
+    TopoDS_Edge lineEdge = BRepBuilderAPI_MakeEdge(line, start, end).Edge();
+    TopoDS_Wire lineWire = BRepBuilderAPI_MakeWire(lineEdge).Wire();
+
+    // 2. 创建topo::wire对象
+    flywave::topo::wire centerlineWire(lineWire);
+    
+    // 3. 采样中心线，使用不同的采样点数进行测试
+    std::vector<int> sampleCounts = {10, 50, 100, 200};
+    
+    for (int numSamples : sampleCounts) {
+      try {
+        std::cout << "Testing with " << numSamples << " samples..." << std::endl;
+        std::vector<gp_Pnt> points = sample_centerline_wire(centerlineWire, numSamples);
+        
+        // 检查最后一个点是否为inf
+        if (!points.empty()) {
+          const gp_Pnt& lastPoint = points.back();
+          if (!std::isfinite(lastPoint.X()) || !std::isfinite(lastPoint.Y()) || !std::isfinite(lastPoint.Z())) {
+            std::cerr << "Error: Last point is inf/nan: (" << lastPoint.X() << ", " 
+                      << lastPoint.Y() << ", " << lastPoint.Z() << ")" << std::endl;
+          } else {
+            std::cout << "Last point is valid: (" << lastPoint.X() << ", " 
+                      << lastPoint.Y() << ", " << lastPoint.Z() << ")" << std::endl;
+          }
+        }
+      } catch (const std::exception& e) {
+        std::cerr << "Error sampling line centerline with " << numSamples << " samples: " << e.what() << std::endl;
+      }
+    }
+  }
+}
+
 int main() {
   test_fit_centerline_from_shape();
   test_clip_with_bounding_pipe_by_ratios();
+  test_sample_centerline_wire();  // 添加新的测试函数
   return 0;
 }
