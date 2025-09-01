@@ -643,7 +643,7 @@ func SampleCenterlineWire(centerline *Wire, numSamples int, simplify bool) []Poi
 
 	var count C.int
 	cPoints := C.topo_sample_centerline_wire(centerline.inner.val, C.int(numSamples), C.bool(simplify), &count)
-	defer C.free(unsafe.Pointer(cPoints))
+	defer C.topo_free_points(cPoints)
 
 	if cPoints == nil || count == 0 {
 		return nil

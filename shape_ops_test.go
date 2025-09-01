@@ -947,8 +947,3 @@ func TestCombinedCenterOfBoundBox(t *testing.T) {
 func float64Ptr(v float64) *float64 {
 	return &v
 }
-
-// 辅助函数，用于创建Dir3指针（如果需要）
-func dir3Ptr(v Dir3) *Dir3 {
-	return &v
-}

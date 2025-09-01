@@ -6236,6 +6236,12 @@ TOPOCAPICALL pnt3d_t *topo_sample_centerline_wire(topo_wire_t centerline,
   }
 }
 
+TOPOCAPICALL void topo_free_points(pnt3d_t *points) {
+  if (points) {
+    delete[] points;
+  }
+}
+
 TOPOCAPICALL topo_shape_t *
 topo_create_bounding_centerline_shape(double radius, topo_wire_t path) {
   if (!path.shp)

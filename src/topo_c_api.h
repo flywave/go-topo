@@ -1618,6 +1618,8 @@ topo_compute_shape_max_radius_from_centerline(topo_shape_t *shape,
 TOPOCAPICALL pnt3d_t *topo_sample_centerline_wire(topo_wire_t centerline,
                                                   int numSamples, bool simplify,
                                                   int *point_count);
+TOPOCAPICALL void topo_free_points(pnt3d_t *points);
+
 TOPOCAPICALL topo_shape_t *
 topo_create_bounding_centerline_shape(double radius, topo_wire_t path);
 
