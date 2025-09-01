@@ -228,5 +228,9 @@ std::vector<gp_Pnt> sample_centerline_wire(const topo::wire &centerline,
                                            bool simplify = false);
 shape create_bounding_centerline_shape(double radius, const topo::wire &path);
 
+std::vector<std::vector<gp_Pnt>> get_shape_outline(const shape &shp,
+                                                   int numSamples = 200,
+                                                   bool simplify = false);
+
 } // namespace topo
 } // namespace flywave

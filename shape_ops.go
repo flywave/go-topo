@@ -598,7 +598,6 @@ func ClipWithTopo4D(shape *Shape, progress WorkProgress) *Shape {
 }
 
 func FitCenterlineFromShape(shape *Shape, numSamples int, smoothingFactor float64) *Wire {
-	// 添加空指针检查
 	if shape == nil {
 		return nil
 	}
@@ -659,7 +658,6 @@ func SampleCenterlineWire(centerline *Wire, numSamples int, simplify bool) []Poi
 }
 
 func CreateBoundingCenterlineShape(radius float64, path *Wire) *Shape {
-	// 添加空指针检查
 	if path == nil {
 		return nil
 	}
@@ -669,4 +667,51 @@ func CreateBoundingCenterlineShape(radius float64, path *Wire) *Shape {
 		return nil
 	}
 	return NewShape(result)
+}
+
+func GetShapeOutline(shape *Shape, numSamples int, simplify bool) [][]Point3 {
+	if shape == nil {
+		return nil
+	}
+
+	var (
+		cOutlines     **C.pnt3d_t
+		cOutlineSizes *C.int
+		cOutlineCount C.int
+	)
+
+	C.topo_shape_get_outline(
+		shape.inner.val,
+		C.int(numSamples),
+		C.bool(simplify),
+		&cOutlines,
+		&cOutlineSizes,
+		&cOutlineCount,
+	)
+
+	defer C.topo_free_outline_points(cOutlines, cOutlineSizes, cOutlineCount)
+
+	if cOutlines == nil || cOutlineSizes == nil || cOutlineCount == 0 {
+		return nil
+	}
+
+	outlineCount := int(cOutlineCount)
+	result := make([][]Point3, outlineCount)
+
+	outlinesArray := (*[1 << 30]*C.pnt3d_t)(unsafe.Pointer(cOutlines))[:outlineCount:outlineCount]
+	sizesArray := (*[1 << 30]C.int)(unsafe.Pointer(cOutlineSizes))[:outlineCount:outlineCount]
+
+	for i := 0; i < outlineCount; i++ {
+		pointCount := int(sizesArray[i])
+		if pointCount > 0 {
+			pointsArray := (*[1 << 30]C.pnt3d_t)(unsafe.Pointer(outlinesArray[i]))[:pointCount:pointCount]
+			points := make([]Point3, pointCount)
+			for j := 0; j < pointCount; j++ {
+				points[j] = Point3{val: pointsArray[j]}
+			}
+			result[i] = points
+		}
+	}
+
+	return result
 }

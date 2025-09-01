@@ -67,6 +67,14 @@
 #include <stdexcept>
 #include <vector>
 
+// 添加轮廓线采样所需的头文件
+#include <BRepAdaptor_Curve.hxx>
+#include <GCPnts_QuasiUniformAbscissa.hxx>
+#include <GCPnts_QuasiUniformDeflection.hxx>
+#include <GeomAdaptor_Curve.hxx>
+#include <Geom_Curve.hxx>
+#include <Precision.hxx>
+
 namespace flywave {
 namespace topo {
 namespace {
@@ -1692,7 +1700,7 @@ gp_Pnt profile_project_point(profile_projection *proj, gp_Pnt point) {
 
 double wire_length(wire path) {
   try {
-     return path.length();
+    return path.length();
   } catch (const std::exception &e) {
     return 0.0;
   }
@@ -1801,6 +1809,139 @@ std::vector<gp_Pnt> sample_centerline_wire(const topo::wire &centerline,
 shape create_bounding_centerline_shape(double radius, const topo::wire &path) {
   TopoDS_Wire wire = path.value();
   return create_bounding_pipe_shape(radius, wire);
+}
+
+std::vector<std::vector<gp_Pnt>>
+get_shape_outline(const shape &shp, int numSamples, bool simplify) {
+  std::vector<std::vector<gp_Pnt>> outlines;
+
+  // 获取形状的所有面
+  std::vector<face> faces = shp.faces();
+
+  // 遍历每个面，提取外轮廓线
+  for (const auto &f : faces) {
+    // 获取面的外轮廓线
+    wire outerWire = f.outer_wire();
+
+    // 将轮廓线离散化为点序列
+    std::vector<gp_Pnt> outlinePoints;
+
+    // 遍历轮廓线上的每条边
+    for (TopExp_Explorer exp(outerWire.value(), TopAbs_EDGE); exp.More();
+         exp.Next()) {
+      const TopoDS_Edge &edge = TopoDS::Edge(exp.Current());
+
+      // 获取边的几何曲线
+      Standard_Real first, last;
+      Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, first, last);
+
+      if (!curve.IsNull()) {
+        // 对曲线进行采样
+        // 如果是直线，只需要两个端点
+        // 如果是曲线，需要多个采样点
+
+        GeomAdaptor_Curve adaptor(curve);
+        GeomAbs_CurveType curveType = adaptor.GetType();
+
+        if (curveType == GeomAbs_Line) {
+          // 直线只需要两个端点
+          gp_Pnt start, end;
+          curve->D0(first, start);
+          curve->D0(last, end);
+          outlinePoints.push_back(start);
+          // 只在不是闭合边的情况下添加终点，避免重复
+          if (!start.IsEqual(end, Precision::Confusion())) {
+            outlinePoints.push_back(end);
+          }
+        } else {
+          // 根据simplify参数决定采样方式
+          if (simplify) {
+            // 简化模式：使用较少的点进行采样
+            GCPnts_QuasiUniformAbscissa discretizer(
+                adaptor, std::min(10, numSamples), first, last);
+
+            if (discretizer.IsDone()) {
+              int nbPoints = discretizer.NbPoints();
+              for (int i = 1; i <= nbPoints; i++) {
+                Standard_Real param = discretizer.Parameter(i);
+                gp_Pnt point;
+                adaptor.D0(param, point);
+                outlinePoints.push_back(point);
+              }
+            } else {
+              // 如果采样失败，至少添加端点
+              gp_Pnt start, end;
+              curve->D0(first, start);
+              curve->D0(last, end);
+              outlinePoints.push_back(start);
+              if (!start.IsEqual(end, Precision::Confusion())) {
+                outlinePoints.push_back(end);
+              }
+            }
+          } else {
+            // 标准模式：使用自适应采样
+            // 计算每个轮廓的点数分配
+            int pointsPerContour =
+                std::max(10, numSamples / std::max(1, (int)faces.size()));
+
+            GCPnts_QuasiUniformDeflection discretizer(adaptor, 0.1, first,
+                                                      last);
+
+            if (discretizer.IsDone()) {
+              int nbPoints = discretizer.NbPoints();
+              // 根据numSamples参数限制点数
+              int step = std::max(1, nbPoints / pointsPerContour);
+              for (int i = 1; i <= nbPoints; i += step) {
+                Standard_Real param = discretizer.Parameter(i);
+                gp_Pnt point;
+                adaptor.D0(param, point);
+                outlinePoints.push_back(point);
+              }
+            } else {
+              // 如果自适应采样失败，使用固定数量的点采样
+              GCPnts_QuasiUniformAbscissa discretizer(adaptor, pointsPerContour,
+                                                      first, last);
+
+              if (discretizer.IsDone()) {
+                int nbPoints = discretizer.NbPoints();
+                for (int i = 1; i <= nbPoints; i++) {
+                  Standard_Real param = discretizer.Parameter(i);
+                  gp_Pnt point;
+                  adaptor.D0(param, point);
+                  outlinePoints.push_back(point);
+                }
+              } else {
+                // 如果采样都失败，至少添加端点
+                gp_Pnt start, end;
+                curve->D0(first, start);
+                curve->D0(last, end);
+                outlinePoints.push_back(start);
+                if (!start.IsEqual(end, Precision::Confusion())) {
+                  outlinePoints.push_back(end);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 去除重复的连续点
+    std::vector<gp_Pnt> cleanedPoints;
+    for (const auto &point : outlinePoints) {
+      if (cleanedPoints.empty() ||
+          !point.IsEqual(cleanedPoints.back(), Precision::Confusion())) {
+        cleanedPoints.push_back(point);
+      }
+    }
+
+    // 如果点序列不为空，添加到结果中
+    if (!cleanedPoints.empty()) {
+      outlines.push_back(cleanedPoints);
+    }
+  }
+
+  return outlines;
 }
 
 } // namespace topo

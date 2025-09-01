@@ -6255,6 +6255,45 @@ topo_create_bounding_centerline_shape(double radius, topo_wire_t path) {
   }
 }
 
+TOPOCAPICALL void topo_shape_get_outline(topo_shape_t *p, int numSamples, 
+                                        bool simplify, pnt3d_t ***outlines, 
+                                        int **outline_sizes, int *outline_count) {
+  if (!p || !outlines || !outline_sizes || !outline_count)
+    return;
+  
+  try {
+    auto result = flywave::topo::get_shape_outline(p->shp->value(), numSamples, simplify);
+    
+    *outline_count = static_cast<int>(result.size());
+    *outlines = new pnt3d_t*[*outline_count];
+    *outline_sizes = new int[*outline_count];
+    
+    for (int i = 0; i < *outline_count; i++) {
+      const auto& outline = result[i];
+      (*outline_sizes)[i] = static_cast<int>(outline.size());
+      (*outlines)[i] = new pnt3d_t[outline.size()];
+      
+      for (size_t j = 0; j < outline.size(); j++) {
+        (*outlines)[i][j] = {outline[j].X(), outline[j].Y(), outline[j].Z()};
+      }
+    }
+  } catch (...) {
+    *outline_count = 0;
+    *outlines = nullptr;
+    *outline_sizes = nullptr;
+  }
+}
+
+TOPOCAPICALL void topo_free_outline_points(pnt3d_t **outlines, int *outline_sizes, int outline_count) {
+  if (outlines && outline_sizes) {
+    for (int i = 0; i < outline_count; i++) {
+      delete[] outlines[i];
+    }
+    delete[] outlines;
+    delete[] outline_sizes;
+  }
+}
+
 #ifdef __cplusplus
 }
 #endif

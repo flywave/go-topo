@@ -199,6 +199,13 @@ TOPOCAPICALL void topo_shape_set_auto_scale_size_on_v(topo_shape_t *p,
 TOPOCAPICALL void topo_shape_set_txture_map_type(topo_shape_t *p, int t);
 TOPOCAPICALL void topo_shape_set_rotation_angle(topo_shape_t *p, double angle);
 
+// 在这里添加get_shape_outline的声明
+TOPOCAPICALL void topo_shape_get_outline(topo_shape_t *p, int numSamples, 
+                                         bool simplify, pnt3d_t ***outlines, 
+                                         int **outline_sizes, int *outline_count);
+
+TOPOCAPICALL void topo_free_outline_points(pnt3d_t **outlines, int *outline_sizes, int outline_count);
+
 TOPOCAPICALL color_t topo_shape_get_surface_colour(topo_shape_t *p);
 TOPOCAPICALL color_t topo_shape_get_curve_colour(topo_shape_t *p);
 TOPOCAPICALL const char *topo_shape_get_label(topo_shape_t *p);
