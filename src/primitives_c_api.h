@@ -1081,6 +1081,7 @@ typedef struct {
 } cable_wire_params_t;
 
 PRIMCAPICALL topo_shape_t *create_cable_wire(cable_wire_params_t params);
+PRIMCAPICALL topo_wire_t create_cable_wire_centerline(cable_wire_params_t params);
 PRIMCAPICALL topo_shape_t *
 create_cable_wire_with_place(cable_wire_params_t params, pnt3d_t position,
                              dir3d_t direction, dir3d_t upDirection);

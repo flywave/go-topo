@@ -2360,6 +2360,27 @@ create_cable_wire_with_place(cable_wire_params_t params, pnt3d_t position,
     return nullptr;
   }
 }
+ 
+PRIMCAPICALL topo_wire_t create_cable_wire_centerline(cable_wire_params_t params) {
+  cable_wire_params cpp_params;
+  try {
+    // 转换路径点集
+    std::vector<gp_Pnt> points;
+    for (int i = 0; i < params.numPoints; i++) {
+      points.emplace_back(params.points[i].x, params.points[i].y, params.points[i].z);
+    }
+    cpp_params.points = points;
+    
+    // 转换电缆外径
+    cpp_params.outsideDiameter = params.outsideDiameter;
+
+    TopoDS_Wire wire = create_cable_wire_centerline(cpp_params);
+    return topo_wire_t{
+        .shp = new topo_shape_t{.shp = std::make_shared<shape>(wire)}};
+  } catch (...) {
+    return topo_wire_t{};
+  }
+}
 
 PRIMCAPICALL topo_shape_t *create_pole_tower(pole_tower_params_t params) {
   pole_tower_params cpp_params;

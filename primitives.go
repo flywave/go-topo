@@ -2622,6 +2622,16 @@ func CreateCableWire(params CableWireParams) *Shape {
 	return s
 }
 
+func CreateCableWireCenterline(params CableWireParams) *Wire {
+	cParams := params.to_struct()
+	defer C.free(unsafe.Pointer(cParams.points))
+
+	wire := C.create_cable_wire_centerline(cParams)
+	w := &Wire{inner: &innerWire{val: wire}}
+	runtime.SetFinalizer(w.inner, (*innerWire).free)
+	return w
+}
+
 func CreateCableWireWithPlace(params CableWireParams, position Point3, direction Dir3, upDirection Dir3) *Shape {
 	cParams := params.to_struct()
 	defer C.free(unsafe.Pointer(cParams.points))

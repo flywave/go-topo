@@ -1324,6 +1324,7 @@ TopoDS_Shape create_cable_wire(const cable_wire_params &params,
                                const gp_Pnt &position,
                                const gp_Dir &direction = gp_Dir(0, 1, 0),
                                const gp_Dir &upDirection = gp_Dir(1, 0, 0));
+TopoDS_Wire create_cable_wire_centerline(const cable_wire_params &params);
 
 /**
  * @brief 中间接头参数结构体 DL_JT
