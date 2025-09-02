@@ -1793,17 +1793,76 @@ double compute_shape_max_radius_from_centerline(const shape &shp,
 std::vector<gp_Pnt> sample_centerline_wire(const topo::wire &centerline,
                                            int numSamples, bool simplify) {
   TopoDS_Wire wire = centerline.value();
-  Handle(Geom_Curve) curve;
-  TopExp_Explorer exp(wire, TopAbs_EDGE);
-  if (exp.More()) {
-    TopoDS_Edge edge = TopoDS::Edge(exp.Current());
+  
+  // 收集线框中的所有边
+  std::vector<TopoDS_Edge> edges;
+  for (TopExp_Explorer exp(wire, TopAbs_EDGE); exp.More(); exp.Next()) {
+    edges.push_back(TopoDS::Edge(exp.Current()));
+  }
+  
+  if (edges.empty()) {
+    throw std::runtime_error("Failed to extract curve from wire: no edges found");
+  }
+  
+  // 如果只有一条边，使用原来的逻辑
+  if (edges.size() == 1) {
     Standard_Real first, last;
-    curve = BRep_Tool::Curve(edge, first, last);
+    Handle(Geom_Curve) curve = BRep_Tool::Curve(edges[0], first, last);
+    if (curve.IsNull()) {
+      throw std::runtime_error("Failed to extract curve from wire");
+    }
+    
+    // 创建修剪后的曲线
+    Handle(Geom_TrimmedCurve) trimmedCurve = new Geom_TrimmedCurve(curve, first, last);
+    return sample_centerline(trimmedCurve, numSamples, simplify);
   }
-  if (!curve) {
-    throw std::runtime_error("Failed to extract curve from wire");
+  
+  // 对于多条边的情况，我们需要分别采样每条边，然后连接结果
+  std::vector<gp_Pnt> allPoints;
+  
+  // 计算每条边的采样点数（平均分配）
+  int pointsPerEdge = std::max(1, numSamples / (int)edges.size());
+  
+  for (const TopoDS_Edge& edge : edges) {
+    Standard_Real first, last;
+    Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, first, last);
+    
+    if (!curve.IsNull()) {
+      // 创建修剪后的曲线
+      Handle(Geom_TrimmedCurve) trimmedCurve = new Geom_TrimmedCurve(curve, first, last);
+      
+      // 采样当前边
+      std::vector<gp_Pnt> edgePoints = sample_centerline(trimmedCurve, pointsPerEdge, simplify);
+      
+      // 将采样点添加到总结果中
+      // 注意：避免在线段连接处重复添加点
+      if (!allPoints.empty() && !edgePoints.empty()) {
+        // 如果上一个点和当前第一个点相同，则跳过第一个点
+        if (allPoints.back().IsEqual(edgePoints.front(), Precision::Confusion())) {
+          allPoints.insert(allPoints.end(), edgePoints.begin() + 1, edgePoints.end());
+        } else {
+          allPoints.insert(allPoints.end(), edgePoints.begin(), edgePoints.end());
+        }
+      } else {
+        allPoints.insert(allPoints.end(), edgePoints.begin(), edgePoints.end());
+      }
+    }
   }
-  return sample_centerline(curve, numSamples, simplify);
+  
+  // 如果采样点数不足预期，进行调整
+  if ((int)allPoints.size() < numSamples && !allPoints.empty()) {
+    // 简单重复最后一个点来填充
+    while ((int)allPoints.size() < numSamples) {
+      allPoints.push_back(allPoints.back());
+    }
+  }
+  
+  // 如果采样点数超过预期，进行裁剪
+  if ((int)allPoints.size() > numSamples && numSamples > 0) {
+    allPoints.resize(numSamples);
+  }
+  
+  return allPoints;
 }
 
 shape create_bounding_centerline_shape(double radius, const topo::wire &path) {

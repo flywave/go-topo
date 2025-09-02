@@ -968,16 +968,38 @@ std::vector<gp_Pnt> sample_centerline(Handle(Geom_Curve) centerline,
   // 计算路径总长度
   GCPnts_AbscissaPoint abscissa;
   double totalLength = abscissa.Length(GeomAdaptor_Curve(centerline));
-
-  GCPnts_UniformAbscissa sampler;
-  sampler.Initialize(GeomAdaptor_Curve(centerline), numSamples);
-  for (int i = 1; i <= sampler.NbPoints(); ++i) {
-    double param = sampler.Parameter(i);
-    points.push_back(centerline->Value(param));
+  
+  // 检查总长度是否有效
+  if (std::isinf(totalLength) || std::isnan(totalLength) || totalLength <= 0) {
+    totalLength = lastParam - firstParam; // 使用参数范围作为替代
   }
 
-  if (simplify) {
+  // 使用限制后的参数范围进行采样
+  GCPnts_UniformAbscissa sampler;
+  sampler.Initialize(adaptor, numSamples, firstParam, lastParam);
+  
+  if (!sampler.IsDone()) {
+    // 如果初始化失败，尝试使用默认参数范围
+    sampler.Initialize(adaptor, numSamples, 0.0, 1.0);
+  }
+  
+  if (sampler.IsDone()) {
+    for (int i = 1; i <= sampler.NbPoints(); ++i) {
+      double param = sampler.Parameter(i);
+      // 确保参数在有效范围内
+      param = std::max(firstParam, std::min(lastParam, param));
+      gp_Pnt point;
+      centerline->D0(param, point);
+      points.push_back(point);
+    }
+  }
+
+  if (simplify && points.size() > 2) {
     double epsilon = totalLength * 0.001;
+    // 确保epsilon是有效值
+    if (std::isinf(epsilon) || std::isnan(epsilon) || epsilon <= 0) {
+      epsilon = 0.001;
+    }
     return douglas_peucker(points, epsilon);
   }
 

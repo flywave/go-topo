@@ -18,10 +18,14 @@
 #include <Geom_Line.hxx>
 #include <StlAPI_Writer.hxx>
 #include <TopExp_Explorer.hxx>
+#include <TopExp.hxx>
+#include <Precision.hxx>
 
 #include <iostream>
 #include <memory>
 #include <string>
+#include <algorithm>
+#include <cmath>
 
 using namespace flywave::topo;
 
@@ -1221,9 +1225,413 @@ void test_sample_centerline_wire() {
   }
 }
 
+// 测试 sample_centerline_wire 函数（根据Go测试方法）
+void test_sample_centerline_wire_go_style() {
+  std::cout << "Testing sample_centerline_wire (Go style)..." << std::endl;
+
+  // 测试1: 单边线框（直线）
+  {
+    std::cout << "\nTest case 1: Single edge wire (straight line)" << std::endl;
+    
+    // 创建测试用的线框形状
+    gp_Pnt p1(0, 0, 0);
+    gp_Pnt p2(100, 0, 0);
+
+    // 创建边和线框
+    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(p1, p2).Edge();
+    if (edge.IsNull()) {
+      std::cerr << "Failed to create edge" << std::endl;
+      return;
+    }
+
+    TopoDS_Wire wire = BRepBuilderAPI_MakeWire(edge).Wire();
+    if (wire.IsNull()) {
+      std::cerr << "Failed to create wire" << std::endl;
+      return;
+    }
+
+    flywave::topo::wire topoWire(wire);
+
+    // 测试不同的采样点数
+    std::vector<int> sampleCounts = {10, 50, 100, 200};
+
+    for (int numSamples : sampleCounts) {
+      std::cout << "\nTesting with " << numSamples << " samples" << std::endl;
+      
+      try {
+        std::vector<gp_Pnt> points = sample_centerline_wire(topoWire, numSamples, false);
+
+        // 检查返回值是否为空
+        if (points.empty()) {
+          std::cerr << "sample_centerline_wire returned empty for " << numSamples << " samples" << std::endl;
+          continue;
+        }
+
+        // 检查点数是否正确
+        if ((int)points.size() != numSamples) {
+          std::cerr << "Expected " << numSamples << " points, got " << points.size() << std::endl;
+        }
+
+        // 检查是否有inf或nan值
+        bool hasInvalidValues = false;
+        for (size_t i = 0; i < points.size(); i++) {
+          const gp_Pnt& point = points[i];
+          if (std::isinf(point.X()) || std::isnan(point.X()) ||
+              std::isinf(point.Y()) || std::isnan(point.Y()) ||
+              std::isinf(point.Z()) || std::isnan(point.Z())) {
+            std::cerr << "Found inf/nan values at point " << i << ": (" 
+                      << point.X() << ", " << point.Y() << ", " << point.Z() << ")" << std::endl;
+            hasInvalidValues = true;
+          }
+        }
+
+        if (!hasInvalidValues) {
+          std::cout << "All " << points.size() << " sampled points are valid (no inf/nan values)" << std::endl;
+        }
+
+        // 特别检查第一个和最后一个点
+        if (!points.empty()) {
+          const gp_Pnt& firstPoint = points[0];
+          const gp_Pnt& lastPoint = points[points.size() - 1];
+
+          std::cout << "First point: (" << firstPoint.X() << ", " << firstPoint.Y() << ", " << firstPoint.Z() << ")" << std::endl;
+          std::cout << "Last point: (" << lastPoint.X() << ", " << lastPoint.Y() << ", " << lastPoint.Z() << ")" << std::endl;
+
+          // 验证端点是否正确
+          if (!firstPoint.IsEqual(p1, Precision::Confusion())) {
+            std::cerr << "First point doesn't match expected start point" << std::endl;
+          }
+          
+          if (!lastPoint.IsEqual(p2, Precision::Confusion())) {
+            std::cerr << "Last point doesn't match expected end point" << std::endl;
+          }
+
+          // 检查最后一个点是否为inf
+          if (std::isinf(lastPoint.X()) || std::isnan(lastPoint.X()) ||
+              std::isinf(lastPoint.Y()) || std::isnan(lastPoint.Y()) ||
+              std::isinf(lastPoint.Z()) || std::isnan(lastPoint.Z())) {
+            std::cerr << "Last point is inf/nan: (" << lastPoint.X() << ", " 
+                      << lastPoint.Y() << ", " << lastPoint.Z() << ")" << std::endl;
+          }
+        }
+      } catch (const std::exception& e) {
+        std::cerr << "Exception occurred with " << numSamples << " samples: " << e.what() << std::endl;
+      }
+    }
+  }
+
+  // 测试2: 多边线框（两段线）
+  {
+    std::cout << "\nTest case 2: Multi-edge wire (two segments)" << std::endl;
+    
+    // 创建测试用的线框形状（两段线）
+    gp_Pnt p1(0, 0, 0);
+    gp_Pnt p2(50, 0, 0);
+    gp_Pnt p3(100, 30, 0);
+
+    // 创建边
+    TopoDS_Edge edge1 = BRepBuilderAPI_MakeEdge(p1, p2).Edge();
+    TopoDS_Edge edge2 = BRepBuilderAPI_MakeEdge(p2, p3).Edge();
+    
+    if (edge1.IsNull() || edge2.IsNull()) {
+      std::cerr << "Failed to create edges" << std::endl;
+      return;
+    }
+
+    // 创建线框
+    BRepBuilderAPI_MakeWire wireMaker;
+    wireMaker.Add(edge1);
+    wireMaker.Add(edge2);
+    TopoDS_Wire wire = wireMaker.Wire();
+    
+    if (wire.IsNull()) {
+      std::cerr << "Failed to create wire" << std::endl;
+      return;
+    }
+
+    flywave::topo::wire topoWire(wire);
+
+    // 测试不同的采样点数
+    std::vector<int> sampleCounts = {10, 50, 100};
+
+    for (int numSamples : sampleCounts) {
+      std::cout << "\nTesting with " << numSamples << " samples" << std::endl;
+      
+      try {
+        std::vector<gp_Pnt> points = sample_centerline_wire(topoWire, numSamples, false);
+
+        // 检查返回值是否为空
+        if (points.empty()) {
+          std::cerr << "sample_centerline_wire returned empty for " << numSamples << " samples" << std::endl;
+          continue;
+        }
+
+        // 检查点数是否正确
+        if ((int)points.size() != numSamples) {
+          std::cerr << "Expected " << numSamples << " points, got " << points.size() << std::endl;
+        }
+
+        // 检查是否有inf或nan值
+        bool hasInvalidValues = false;
+        for (size_t i = 0; i < points.size(); i++) {
+          const gp_Pnt& point = points[i];
+          if (std::isinf(point.X()) || std::isnan(point.X()) ||
+              std::isinf(point.Y()) || std::isnan(point.Y()) ||
+              std::isinf(point.Z()) || std::isnan(point.Z())) {
+            std::cerr << "Found inf/nan values at point " << i << ": (" 
+                      << point.X() << ", " << point.Y() << ", " << point.Z() << ")" << std::endl;
+            hasInvalidValues = true;
+          }
+        }
+
+        if (!hasInvalidValues) {
+          std::cout << "All " << points.size() << " sampled points are valid (no inf/nan values)" << std::endl;
+        }
+
+        // 特别检查第一个和最后一个点
+        if (!points.empty()) {
+          const gp_Pnt& firstPoint = points[0];
+          const gp_Pnt& lastPoint = points[points.size() - 1];
+
+          std::cout << "First point: (" << firstPoint.X() << ", " << firstPoint.Y() << ", " << firstPoint.Z() << ")" << std::endl;
+          std::cout << "Last point: (" << lastPoint.X() << ", " << lastPoint.Y() << ", " << lastPoint.Z() << ")" << std::endl;
+
+          // 验证端点是否正确
+          if (!firstPoint.IsEqual(p1, Precision::Confusion())) {
+            std::cerr << "First point doesn't match expected start point" << std::endl;
+          }
+          
+          if (!lastPoint.IsEqual(p3, Precision::Confusion())) {
+            std::cerr << "Last point doesn't match expected end point" << std::endl;
+          }
+
+          // 检查最后一个点是否为inf
+          if (std::isinf(lastPoint.X()) || std::isnan(lastPoint.X()) ||
+              std::isinf(lastPoint.Y()) || std::isnan(lastPoint.Y()) ||
+              std::isinf(lastPoint.Z()) || std::isnan(lastPoint.Z())) {
+            std::cerr << "Last point is inf/nan: (" << lastPoint.X() << ", " 
+                      << lastPoint.Y() << ", " << lastPoint.Z() << ")" << std::endl;
+          }
+        }
+      } catch (const std::exception& e) {
+        std::cerr << "Exception occurred with " << numSamples << " samples: " << e.what() << std::endl;
+      }
+    }
+  }
+
+  // 测试简化模式
+  std::cout << "\nTesting simplify mode" << std::endl;
+  {
+    gp_Pnt p1(0, 0, 0);
+    gp_Pnt p2(100, 0, 0);
+    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(p1, p2).Edge();
+    TopoDS_Wire wire = BRepBuilderAPI_MakeWire(edge).Wire();
+    flywave::topo::wire topoWire(wire);
+    
+    try {
+      std::vector<gp_Pnt> points = sample_centerline_wire(topoWire, 50, true);
+
+      // 检查返回值是否为空
+      if (points.empty()) {
+        std::cerr << "sample_centerline_wire with simplify returned empty" << std::endl;
+        return;
+      }
+
+      // 检查是否有inf或nan值
+      bool hasInvalidValues = false;
+      for (size_t i = 0; i < points.size(); i++) {
+        const gp_Pnt& point = points[i];
+        if (std::isinf(point.X()) || std::isnan(point.X()) ||
+            std::isinf(point.Y()) || std::isnan(point.Y()) ||
+            std::isinf(point.Z()) || std::isnan(point.Z())) {
+          std::cerr << "Found inf/nan values at point " << i << ": (" 
+                    << point.X() << ", " << point.Y() << ", " << point.Z() << ")" << std::endl;
+          hasInvalidValues = true;
+        }
+      }
+
+      if (!hasInvalidValues) {
+        std::cout << "All " << points.size() << " sampled points with simplify are valid (no inf/nan values)" << std::endl;
+      }
+
+      // 特别检查最后一个点
+      if (!points.empty()) {
+        const gp_Pnt& lastPoint = points[points.size() - 1];
+        
+        if (std::isinf(lastPoint.X()) || std::isnan(lastPoint.X()) ||
+            std::isinf(lastPoint.Y()) || std::isnan(lastPoint.Y()) ||
+            std::isinf(lastPoint.Z()) || std::isnan(lastPoint.Z())) {
+          std::cerr << "Last point with simplify is inf/nan: (" << lastPoint.X() << ", " 
+                    << lastPoint.Y() << ", " << lastPoint.Z() << ")" << std::endl;
+        }
+      }
+    } catch (const std::exception& e) {
+      std::cerr << "Exception occurred in simplify mode: " << e.what() << std::endl;
+    }
+  }
+
+  // 测试边界情况：0采样点数
+  std::cout << "\nTesting zero sample count" << std::endl;
+  {
+    gp_Pnt p1(0, 0, 0);
+    gp_Pnt p2(100, 0, 0);
+    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(p1, p2).Edge();
+    TopoDS_Wire wire = BRepBuilderAPI_MakeWire(edge).Wire();
+    flywave::topo::wire topoWire(wire);
+    
+    try {
+      std::vector<gp_Pnt> points = sample_centerline_wire(topoWire, 0, false);
+      std::cout << "Zero sample count returned " << points.size() << " points" << std::endl;
+    } catch (const std::exception& e) {
+      std::cout << "Zero sample count correctly threw exception: " << e.what() << std::endl;
+    }
+  }
+
+  // 测试边界情况：负采样点数
+  std::cout << "\nTesting negative sample count" << std::endl;
+  {
+    gp_Pnt p1(0, 0, 0);
+    gp_Pnt p2(100, 0, 0);
+    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(p1, p2).Edge();
+    TopoDS_Wire wire = BRepBuilderAPI_MakeWire(edge).Wire();
+    flywave::topo::wire topoWire(wire);
+    
+    try {
+      std::vector<gp_Pnt> points = sample_centerline_wire(topoWire, -1, false);
+      std::cout << "Negative sample count returned " << points.size() << " points" << std::endl;
+    } catch (const std::exception& e) {
+      std::cout << "Negative sample count correctly threw exception: " << e.what() << std::endl;
+    }
+  }
+}
+
+// 测试 get_shape_outline 函数
+void test_get_shape_outline() {
+  std::cout << "Testing get_shape_outline..." << std::endl;
+
+  // 测试1: 简单的立方体形状
+  {
+    std::cout << "\nTest case 1: Simple box shape" << std::endl;
+    
+    // 创建一个立方体
+    TopoDS_Shape box = BRepPrimAPI_MakeBox(10, 10, 10).Shape();
+    flywave::topo::shape boxShape(box);
+    
+    // 获取形状轮廓
+    std::vector<std::vector<gp_Pnt>> outlines = get_shape_outline(boxShape, 50, false);
+    
+    std::cout << "Found " << outlines.size() << " outlines" << std::endl;
+    
+    // 验证结果
+    if (outlines.size() > 0) {
+      std::cout << "First outline has " << outlines[0].size() << " points" << std::endl;
+      
+      // 检查是否有inf或nan值
+      bool hasInvalidValues = false;
+      for (const auto& outline : outlines) {
+        for (const auto& point : outline) {
+          if (!std::isfinite(point.X()) || !std::isfinite(point.Y()) || !std::isfinite(point.Z())) {
+            std::cerr << "Error: Found inf/nan values in outline points" << std::endl;
+            hasInvalidValues = true;
+            break;
+          }
+        }
+        if (hasInvalidValues) break;
+      }
+      
+      if (!hasInvalidValues) {
+        std::cout << "All outline points are valid (no inf/nan values)" << std::endl;
+      }
+    } else {
+      std::cerr << "Error: No outlines found for box shape" << std::endl;
+    }
+  }
+
+  // 测试2: 简化的轮廓
+  {
+    std::cout << "\nTest case 2: Simplified outline" << std::endl;
+    
+    // 创建一个立方体
+    TopoDS_Shape box = BRepPrimAPI_MakeBox(10, 10, 10).Shape();
+    flywave::topo::shape boxShape(box);
+    
+    // 获取简化形状轮廓
+    std::vector<std::vector<gp_Pnt>> outlines = get_shape_outline(boxShape, 50, true);
+    
+    std::cout << "Found " << outlines.size() << " simplified outlines" << std::endl;
+    
+    // 验证结果
+    if (outlines.size() > 0) {
+      std::cout << "First simplified outline has " << outlines[0].size() << " points" << std::endl;
+      
+      // 检查是否有inf或nan值
+      bool hasInvalidValues = false;
+      for (const auto& outline : outlines) {
+        for (const auto& point : outline) {
+          if (!std::isfinite(point.X()) || !std::isfinite(point.Y()) || !std::isfinite(point.Z())) {
+            std::cerr << "Error: Found inf/nan values in outline points" << std::endl;
+            hasInvalidValues = true;
+            break;
+          }
+        }
+        if (hasInvalidValues) break;
+      }
+      
+      if (!hasInvalidValues) {
+        std::cout << "All simplified outline points are valid (no inf/nan values)" << std::endl;
+      }
+    } else {
+      std::cerr << "Error: No simplified outlines found for box shape" << std::endl;
+    }
+  }
+
+  // 测试3: 空形状
+  {
+    std::cout << "\nTest case 3: Empty shape" << std::endl;
+    
+    // 创建一个空形状
+    flywave::topo::shape emptyShape;
+    
+    // 获取形状轮廓
+    std::vector<std::vector<gp_Pnt>> outlines = get_shape_outline(emptyShape, 50, false);
+    
+    std::cout << "Found " << outlines.size() << " outlines for empty shape" << std::endl;
+    
+    if (outlines.size() == 0) {
+      std::cout << "Correctly handled empty shape" << std::endl;
+    } else {
+      std::cerr << "Error: Expected no outlines for empty shape" << std::endl;
+    }
+  }
+
+  // 测试4: 不同采样点数
+  {
+    std::cout << "\nTest case 4: Different sample counts" << std::endl;
+    
+    // 创建一个立方体
+    TopoDS_Shape box = BRepPrimAPI_MakeBox(10, 10, 10).Shape();
+    flywave::topo::shape boxShape(box);
+    
+    // 测试不同的采样点数
+    std::vector<int> sampleCounts = {10, 50, 100};
+    
+    for (int numSamples : sampleCounts) {
+      std::vector<std::vector<gp_Pnt>> outlines = get_shape_outline(boxShape, numSamples, false);
+      
+      std::cout << "With " << numSamples << " samples: found " << outlines.size() << " outlines" << std::endl;
+      
+      if (outlines.size() > 0) {
+        std::cout << "  First outline has " << outlines[0].size() << " points" << std::endl;
+      }
+    }
+  }
+}
+
 int main() {
   test_fit_centerline_from_shape();
   test_clip_with_bounding_pipe_by_ratios();
-  test_sample_centerline_wire();  // 添加新的测试函数
+  test_sample_centerline_wire();  
+  test_sample_centerline_wire_go_style();  // 添加新的Go风格测试函数
+  test_get_shape_outline();
   return 0;
 }
