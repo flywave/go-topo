@@ -12,8 +12,33 @@ package topo
 import "C"
 import (
 	"runtime"
+	"strings"
 	"unsafe"
 )
+
+func TxtureMapToString(tp int) string {
+	switch tp {
+	case TextureCube:
+		return "cube"
+	case TextureNormal:
+		return "normal"
+	case TextureNormalAutoScale:
+		return "normal-auto-scale"
+	default:
+		return ""
+	}
+}
+
+func StringToTxtureMap(tp string) int {
+	if strings.EqualFold(tp, "cube") {
+		return TextureCube
+	} else if strings.EqualFold(tp, "normal") {
+		return TextureNormal
+	} else if strings.EqualFold(tp, "normal-auto-scale") {
+		return TextureNormalAutoScale
+	}
+	return -1
+}
 
 type Shape struct {
 	inner *innerShape
