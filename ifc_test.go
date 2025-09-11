@@ -76,10 +76,13 @@ func TestIfc2(t *testing.T) {
 }
 
 func TestIfc3(t *testing.T) {
-	trgs := IfcToTriangulations("tests/buildingElementProxy.ifc")
-	for _, t := range trgs {
-		if t.Transform != nil {
-			fmt.Println(*t.Transform)
+	meshs, err := IfcToMstWithProperties("tests/buildingElementProxy.ifc")
+	if err != nil {
+		t.Error(err)
+	}
+	for _, m := range meshs {
+		if len(m.Nodes) > 0 {
+			fmt.Println(m.Nodes[0])
 		}
 	}
 }
