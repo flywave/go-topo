@@ -153,6 +153,7 @@ func ExtractIfcProperties(convert *IfcConverter) ([]*mst.Properties, error) {
 
 		// Add basic element information
 		props["id"] = mst.PropsValue{Type: mst.PROP_TYPE_INT, Value: int64(element.Id)}
+		props["parent_id"] = mst.PropsValue{Type: mst.PROP_TYPE_INT, Value: int64(element.ParentId)}
 		props["name"] = mst.PropsValue{Type: mst.PROP_TYPE_STRING, Value: element.Name}
 		props["guid"] = mst.PropsValue{Type: mst.PROP_TYPE_STRING, Value: element.Guid}
 		props["type"] = mst.PropsValue{Type: mst.PROP_TYPE_STRING, Value: element.Type}
