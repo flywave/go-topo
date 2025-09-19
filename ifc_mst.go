@@ -457,18 +457,6 @@ func TriangulationsToMstWithProperties(convert *IfcConverter) ([]*mst.Mesh, []*v
 				for key, value := range *props {
 					(*mesh.Props)[key] = value
 				}
-
-				// Assign properties to individual nodes as well
-				for _, node := range mesh.Nodes {
-					if node.Props == nil {
-						node.Props = &mst.Properties{}
-					}
-
-					// Copy properties to each node
-					for key, value := range *props {
-						(*node.Props)[key] = value
-					}
-				}
 			}
 		}
 	}
