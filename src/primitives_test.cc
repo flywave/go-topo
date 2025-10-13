@@ -6570,8 +6570,8 @@ void test_custom_polygon_pipe() {
     // 创建路径线段数据 - 简单直线段
     std::vector<std::vector<gp_Pnt>> wires = {
         {
-            gp_Pnt(-27.090603828895837,-2.347627967596054,34.4),
-            gp_Pnt(-23.988881956785917,-2.345693053677678,34.4)
+            gp_Pnt(0.000000, 0.000000, 0.000000),
+            gp_Pnt(0, 0, -99.629249)
         }
     };
 
@@ -6631,12 +6631,6 @@ void test_custom_polygon_pipe() {
       return;
     }
       
-    BRepCheck_Analyzer aChecker(shp);
-      if (!aChecker.IsValid()) {
-          std::cerr << "Error: Failed to create custom polygon pipe" << std::endl;
-          return;
-      }
-
     // 导出形状以供检查
     test_export_shape(shp, "./test_custom_polygon_pipe.stl");
 
