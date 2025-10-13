@@ -101,14 +101,15 @@ namespace internal
   template<typename Scalar>
   inline void putVectorElt(std::complex<Scalar> value, std::ofstream& out)
   {
-    out << value.real << " " << value.imag()<< "\n"; 
+    out << value.real() << " " << value.imag()<< "\n"; 
   }
 
-} // end namepsace internal
+} // end namespace internal
 
 inline bool getMarketHeader(const std::string& filename, int& sym, bool& iscomplex, bool& isvector)
 {
   sym = 0; 
+  iscomplex = false;
   isvector = false;
   std::ifstream in(filename.c_str(),std::ios::in);
   if(!in)
@@ -162,7 +163,7 @@ bool loadMarket(SparseMatrixType& mat, const std::string& filename)
     {
       std::stringstream line(buffer);
       line >> M >> N >> NNZ;
-      if(M > 0 && N > 0 && NNZ > 0) 
+      if(M > 0 && N > 0)
       {
         readsizes = true;
         mat.resize(M,N);

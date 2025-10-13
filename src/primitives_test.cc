@@ -19,6 +19,7 @@
 #include <gp_Dir.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Trsf.hxx>
+#include <BRepCheck_Analyzer.hxx>
 
 #include <array>
 #include <vector>
@@ -6533,8 +6534,8 @@ void test_multi_segment_pipe_based_on_data() {
     // 构建参数
     multi_segment_pipe_params params;
     params.wires = wires;
-    params.profiles = {outerProfile},
-    params.inner_profiles = {{innerProfile}},
+    params.profiles = {outerProfile};
+    params.inner_profiles = {{innerProfile}};
     params.segment_types = segmentTypes;
     params.transition_mode = transitionMode;
     params.upDir = upDir;
@@ -6555,6 +6556,94 @@ void test_multi_segment_pipe_based_on_data() {
     std::cout << "Split distances: 64.300000, 68.400000" << std::endl;
     std::cout << "Pipe length: " << wires[0][0].Distance(wires[0][1]) << " mm" << std::endl;
     
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  } catch (const std::exception &e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+  }
+}
+
+void test_custom_polygon_pipe() {
+  std::cout << "\n=== Testing Custom Polygon Pipe ===" << std::endl;
+  
+  try {
+    // 创建路径线段数据 - 简单直线段
+    std::vector<std::vector<gp_Pnt>> wires = {
+        {
+            gp_Pnt(-27.090603828895837,-2.347627967596054,34.4),
+            gp_Pnt(-23.988881956785917,-2.345693053677678,34.4)
+        }
+    };
+
+    // 使用提供的自定义多边形剖面数据 (21个点)
+    std::vector<gp_Pnt> customPolygonPoints = {
+        gp_Pnt(0, 10, 0),
+        gp_Pnt(-3.403, 9.702, 0),
+        gp_Pnt(-6.703, 8.818, 0),
+        gp_Pnt(-9.8, 7.374, 0),
+        gp_Pnt(-12.599, 5.415, 0),
+        gp_Pnt(-13.168, 4.846, 0),
+        gp_Pnt(-13.63, 4.188, 0),
+        gp_Pnt(-13.97, 3.459, 0),
+        gp_Pnt(-14.179, 2.682, 0),
+        gp_Pnt(-14.25, 1.88, 0),
+        gp_Pnt(-14.25, 0, 0),
+        gp_Pnt(-5.4, 0, 0),
+        gp_Pnt(-5.4, 1.2, 0),
+        gp_Pnt(-5.6, 1.2, 0),
+        gp_Pnt(-5.6, 6.93, 0),
+        gp_Pnt(-4.928, 7.812, 0),
+        gp_Pnt(-4.118, 8.57, 0),
+        gp_Pnt(-3.193, 9.182, 0),
+        gp_Pnt(-2.18, 9.632, 0),
+        gp_Pnt(-1.105, 9.907, 0),
+        gp_Pnt(0, 10, 0)
+    };
+
+    // 创建外剖面（自定义多边形）
+    polygon_profile outerProfile(customPolygonPoints);
+    
+
+    // 创建线段类型 (只有直线段)
+    std::vector<segment_type> segmentTypes = {
+        segment_type::LINE
+    };
+
+    // 设置过渡模式
+    transition_mode transitionMode = transition_mode::TRANSFORMED;
+
+    // 创建上方向 (y轴方向)
+    gp_Dir upDir(0.0, 1.0, 0.0);
+
+    // 构建参数
+    multi_segment_pipe_params params;
+    params.wires = wires;
+    params.profiles = {outerProfile};
+    params.segment_types = segmentTypes;
+    params.transition_mode = transitionMode;
+    params.upDir = upDir;
+
+    // 创建多段管道
+    auto shp = create_multi_segment_pipe(params);
+
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create custom polygon pipe" << std::endl;
+      return;
+    }
+      
+    BRepCheck_Analyzer aChecker(shp);
+      if (!aChecker.IsValid()) {
+          std::cerr << "Error: Failed to create custom polygon pipe" << std::endl;
+          return;
+      }
+
+    // 导出形状以供检查
+    test_export_shape(shp, "./test_custom_polygon_pipe.stl");
+
+    std::cout << "Successfully created custom polygon pipe with " << customPolygonPoints.size() << " profile points" << std::endl;
+    std::cout << "Segment types used: LINE" << std::endl;
+    std::cout << "Pipe length: " << wires[0][0].Distance(wires[0][1]) << " mm" << std::endl;
+
   } catch (const Standard_ConstructionError &e) {
     std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
   } catch (const std::exception &e) {
@@ -6684,8 +6773,9 @@ int main() {
   // 水利工程
   // test_water_tunnel();
   //test_make_wire_from_segments();
-  test_multi_segment_pipe2();
-  test_multi_segment_pipe3();
-  test_multi_segment_pipe_based_on_data();
+  test_custom_polygon_pipe();
+  //test_multi_segment_pipe2();
+  //test_multi_segment_pipe3();
+  //test_multi_segment_pipe_based_on_data();
   return 0;
 }

@@ -521,3 +521,78 @@ func TestBug4(t *testing.T) {
 		t.Fatal("Failed to create pipe with split distances")
 	}
 }
+
+func TestCustomPolygonPipe(t *testing.T) {
+	// 创建导线数据 - 简单直线段
+	wires := [][]Point3{
+		{
+			NewPoint3([3]float64{0.000000, 0.000000, 0.000000}),
+			NewPoint3([3]float64{0.000000, 0.000000, 50.000000}),
+		},
+	}
+
+	// 使用提供的自定义多边形剖面数据 (21个点)
+	customPolygonPoints := []Point3{
+		NewPoint3([3]float64{0, 10, 0}),
+		NewPoint3([3]float64{-3.403, 9.702, 0}),
+		NewPoint3([3]float64{-6.703, 8.818, 0}),
+		NewPoint3([3]float64{-9.8, 7.374, 0}),
+		NewPoint3([3]float64{-12.599, 5.415, 0}),
+		NewPoint3([3]float64{-13.168, 4.846, 0}),
+		NewPoint3([3]float64{-13.63, 4.188, 0}),
+		NewPoint3([3]float64{-13.97, 3.459, 0}),
+		NewPoint3([3]float64{-14.179, 2.682, 0}),
+		NewPoint3([3]float64{-14.25, 1.88, 0}),
+		NewPoint3([3]float64{-14.25, 0, 0}),
+		NewPoint3([3]float64{-5.4, 0, 0}),
+		NewPoint3([3]float64{-5.4, 1.2, 0}),
+		NewPoint3([3]float64{-5.6, 1.2, 0}),
+		NewPoint3([3]float64{-5.6, 6.93, 0}),
+		NewPoint3([3]float64{-4.928, 7.812, 0}),
+		NewPoint3([3]float64{-4.118, 8.57, 0}),
+		NewPoint3([3]float64{-3.193, 9.182, 0}),
+		NewPoint3([3]float64{-2.18, 9.632, 0}),
+		NewPoint3([3]float64{-1.105, 9.907, 0}),
+		NewPoint3([3]float64{0, 10, 0}),
+	}
+
+	// 创建外剖面
+	outerProfile := ShapeProfile{
+		Type: ProfileTypePolygon,
+		Data: ProfileData{
+			Polygon: PolygonProfile{
+				Edges: customPolygonPoints,
+			},
+		},
+	}
+
+	// 创建剖面数组
+	profiles := []ShapeProfile{outerProfile}
+
+	// 创建线段类型 (只有直线段)
+	segmentTypes := []SegmentType{
+		SegmentTypeLine,
+	}
+
+	// 设置过渡模式
+	transitionMode := TransitionTransformed
+
+	// 创建上方向 (z轴方向)
+	upDir := NewDir3FromXYZ([3]float64{0.0, 1.0, 0.0})
+
+	params := MultiSegmentPipeParams{
+		Wires:          wires,
+		Profiles:       profiles,
+		SegmentTypes:   segmentTypes,
+		TransitionMode: transitionMode,
+		UpDir:          &upDir,
+	}
+
+	// 使用分割距离创建管道
+	shp := CreateMultiSegmentPipe(params)
+	if !shp.IsValid() {
+		t.Fatal("Failed to create custom polygon pipe with split distances")
+	}
+
+	t.Logf("Successfully created custom polygon pipe with %d profile points", len(customPolygonPoints))
+}
