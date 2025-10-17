@@ -76,6 +76,8 @@
 #include <gp_Pln.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Vec.hxx>
+#include <StlAPI_Writer.hxx>
+#include <BRepMesh_IncrementalMesh.hxx>
 
 namespace flywave {
 namespace topo {
@@ -18216,7 +18218,8 @@ create_pipe_transition(const shape_profile &profile1, const gp_Dir &normal1,
 
   auto pair2 = compute_profile_radius_and_center(profile2);
   double radius2 = pair2.first;
-  double maxRadius = std::max(radius1 * 2.2, radius2 * 2.2);
+  double maxRadius1 = radius1 * 5;
+    double maxRadius2 = radius1 * 10;
 
   gp_Dir tan1Dir = gp_Vec(normal1).Normalized();
   gp_Dir ref1Dir = gp_Vec(upDir.Crossed(tan1Dir)).Normalized();
@@ -18243,10 +18246,13 @@ create_pipe_transition(const shape_profile &profile1, const gp_Dir &normal1,
 
   TopoDS_Shape part1;
   {
-    gp_Pnt position2 =
-        position.Translated((gp_Vec(normal1).Normalized() * maxRadius).XYZ());
+    gp_Pnt position1 =
+        position.Translated((gp_Vec(normal1).Normalized() * maxRadius1).XYZ());
+      gp_Pnt position2 =
+          position.Translated((gp_Vec(normal1.Reversed()).Normalized() * maxRadius1).XYZ());
     BRepBuilderAPI_MakeWire wireMaker;
-    wireMaker.Add(BRepBuilderAPI_MakeEdge(position, position2));
+      
+    wireMaker.Add(BRepBuilderAPI_MakeEdge(position, position1));
 
     TopoDS_Wire wire = wireMaker.Wire();
 
@@ -18264,12 +18270,24 @@ create_pipe_transition(const shape_profile &profile1, const gp_Dir &normal1,
     }
 
     part1 = pipeMaker.Shape();
+      
+      
+      std::string debugFileName = "./debug_part1_segment.stl";
+      
+      // 对形状进行网格化（三角剖分）
+      BRepMesh_IncrementalMesh mesher(part1,  0.5, false, 0.3);
+      mesher.Perform();
+      
+      StlAPI_Writer stlWriter;
+      stlWriter.Write(part1, debugFileName.c_str());
+      
   }
 
   TopoDS_Shape part2;
   {
+
     gp_Pnt position2 = position.Translated(
-        (gp_Vec(normal2.Reversed()).Normalized() * maxRadius).XYZ());
+        (gp_Vec(normal2.Reversed()).Normalized() * maxRadius2).XYZ());
     BRepBuilderAPI_MakeWire wireMaker;
     wireMaker.Add(BRepBuilderAPI_MakeEdge(position, position2));
 
@@ -18289,7 +18307,20 @@ create_pipe_transition(const shape_profile &profile1, const gp_Dir &normal1,
     }
 
     part2 = pipeMaker.Shape();
+      
+      
+      
+      std::string debugFileName = "./debug_part2_segment.stl";
+      
+      // 对形状进行网格化（三角剖分）
+      BRepMesh_IncrementalMesh mesher(part2,  0.5, false, 0.3);
+      mesher.Perform();
+      
+      StlAPI_Writer stlWriter;
+      stlWriter.Write(part2, debugFileName.c_str());
   }
+    
+    
 
   return BRepAlgoAPI_Common(part1, part2).Shape();
 }
@@ -18461,11 +18492,7 @@ create_multi_segment_pipe(const multi_segment_pipe_params &params) {
         transition = BRepAlgoAPI_Cut(transition, inner_transition).Shape();
       }
       if (!transition.IsNull()) {
-        auto tr = BRepAlgoAPI_Fuse(segment, transition).Shape();
-        BRepCheck_Analyzer aChecker(tr);
-        if (!tr.IsNull() && aChecker.IsValid()) {
-          transitions.push_back(tr);
-        }
+        transitions.push_back(transition);
       }
     }
 
@@ -18661,13 +18688,13 @@ TopoDS_Shape create_multi_segment_pipe_with_split_distances(
                 params.upDir ? *params.upDir : gp_Dir(0, 0, 1));
             transition = BRepAlgoAPI_Cut(transition, inner_transition).Shape();
           }
-          if (!transition.IsNull()) {
-            auto tr = BRepAlgoAPI_Fuse(segment, transition).Shape();
-            BRepCheck_Analyzer aChecker(tr);
-            if (!tr.IsNull() && aChecker.IsValid()) {
-              transitions.push_back(tr);
+            if (!transition.IsNull()) {
+                auto tr = BRepAlgoAPI_Fuse(segment, transition).Shape();
+                BRepCheck_Analyzer aChecker(transition);
+                if (aChecker.IsValid()) {
+                    transitions.push_back(transition);
+                }
             }
-          }
         }
       }
 

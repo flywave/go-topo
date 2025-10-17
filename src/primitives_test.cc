@@ -6563,6 +6563,122 @@ void test_multi_segment_pipe_based_on_data() {
   }
 }
 
+void test_simple_profile_pipe() {
+  std::cout << "\n=== Testing Multi-Segment Pipe with Mixed Segment Types ==" << std::endl;
+  
+  try {
+    // 创建路径线段数据(6个wire段)
+    std::vector<std::vector<gp_Pnt>> wires = {
+        // Wire[0] - Line
+        {
+            gp_Pnt(0.000000, 0.000000, 0.000000),
+            gp_Pnt(-18.452253, -16.251175, 24.056912)
+        },
+        // Wire[1] - Line
+        {
+            gp_Pnt(-18.452253, -16.251175, 24.056912),
+            gp_Pnt(-20.141557, -17.562913, 26.258224)
+        },
+        // Wire[2] - ThreePointArc
+        {
+            gp_Pnt(-20.141557, -17.562913, 26.258224),
+            gp_Pnt(-35.389224, -25.771118, 38.135414),
+            gp_Pnt(-55.277210, -31.565765, 41.815409)
+        },
+        // Wire[3] - Line
+        {
+            gp_Pnt(-55.277210, -31.565765, 41.815409),
+            gp_Pnt(-88.215550, -37.856311, 40.564051)
+        },
+        // Wire[4] - ThreePointArc
+        {
+            gp_Pnt(-88.215550, -37.856311, 40.564051),
+            gp_Pnt(-100.995870, -42.491170, 44.558055),
+            gp_Pnt(-106.945102, -48.915430, 55.626979)
+        },
+        // Wire[5] - Line
+        {
+            gp_Pnt(-106.945102, -48.915430, 55.626979),
+            gp_Pnt(-127.881777, -112.381651, 230.988480)
+        }
+    };
+
+    // 创建多边形剖面数据(9个点,所有6个profile使用相同的形状)
+    std::vector<gp_Pnt> polygonPoints = {
+        gp_Pnt(-3.900000, 4.000000, 0.000000),
+        gp_Pnt(-2.652000, 5.403000, 0.000000),
+        gp_Pnt(-0.939000, 6.172000, 0.000000),
+        gp_Pnt(0.939000, 6.172000, 0.000000),
+        gp_Pnt(2.652000, 5.403000, 0.000000),
+        gp_Pnt(3.900000, 4.000000, 0.000000),
+        gp_Pnt(3.900000, 0.000000, 0.000000),
+        gp_Pnt(-3.900000, 0.000000, 0.000000),
+        gp_Pnt(-3.900000, 4.000000, 0.000000)
+    };
+
+    // 创建6个相同的剖面
+    polygon_profile profile(polygonPoints);
+    std::vector<shape_profile> profiles = {
+        profile, profile, profile, profile, profile, profile
+    };
+
+    // 创建线段类型(混合Line和ThreePointArc)
+    std::vector<segment_type> segmentTypes = {
+        segment_type::LINE,           // Wire[0]
+        segment_type::LINE,           // Wire[1]
+        segment_type::THREE_POINT_ARC, // Wire[2]
+        segment_type::LINE,           // Wire[3]
+        segment_type::THREE_POINT_ARC, // Wire[4]
+        segment_type::LINE            // Wire[5]
+    };
+
+    // 设置过渡模式
+    transition_mode transitionMode = transition_mode::TRANSFORMED;
+
+    // 创建上方向
+    gp_Dir upDir(-0.301612, 0.874964, 0.378773);
+
+    // 构建参数
+    multi_segment_pipe_params params;
+    params.wires = wires;
+    params.profiles = profiles;
+    params.segment_types = segmentTypes;
+    params.transition_mode = transitionMode;
+    params.upDir = upDir;
+
+    // 创建多段管道(使用提供的分割距离)
+    auto shp = create_multi_segment_pipe_with_split_distances(params, {140.000000, 146.900000});
+
+    if (shp.IsNull()) {
+      std::cerr << "Error: Failed to create multi-segment pipe" << std::endl;
+      return;
+    }
+
+    // 导出形状以供检查
+    test_export_shape(shp, "./test_simple_profile_pipe.stl");
+
+    std::cout << "Successfully created multi-segment pipe with mixed segment types" << std::endl;
+    std::cout << "Profile points: " << polygonPoints.size() << std::endl;
+    std::cout << "Number of wire segments: " << wires.size() << std::endl;
+    std::cout << "Segment types: LINE, LINE, THREE_POINT_ARC, LINE, THREE_POINT_ARC, LINE" << std::endl;
+    std::cout << "Split distances: 140.000000, 146.900000" << std::endl;
+    
+    // 计算总管道长度
+    double totalLength = 0.0;
+    for (const auto& wire : wires) {
+      if (wire.size() >= 2) {
+        totalLength += wire[0].Distance(wire.back());
+      }
+    }
+    std::cout << "Approximate total pipe length: " << totalLength << " mm" << std::endl;
+    
+  } catch (const Standard_ConstructionError &e) {
+    std::cerr << "Construction Error: " << e.GetMessageString() << std::endl;
+  } catch (const std::exception &e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+  }
+}
+
 void test_custom_polygon_pipe() {
   std::cout << "\n=== Testing Custom Polygon Pipe ===" << std::endl;
   
@@ -6767,7 +6883,8 @@ int main() {
   // 水利工程
   // test_water_tunnel();
   //test_make_wire_from_segments();
-  test_custom_polygon_pipe();
+  test_simple_profile_pipe();
+  //test_custom_polygon_pipe();
   //test_multi_segment_pipe2();
   //test_multi_segment_pipe3();
   //test_multi_segment_pipe_based_on_data();
