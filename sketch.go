@@ -9,7 +9,6 @@ package topo
 #cgo darwin,arm64 CXXFLAGS: -I ./libs  -std=gnu++14
 #cgo windows CXXFLAGS: -I ./libs  -std=gnu++14
 topo_face_t eachForFaceFunc(void *userdata, topo_location_t *loc);
-topo_face_t eachForFaceFunc(void *userdata, topo_location_t *loc);
 topo_face_t eachForSketchFunc(void *userdata, topo_location_t *loc);
 topo_face_t eachForCompoundFunc(void *userdata, topo_location_t *loc);
 bool sketchFilterFunc(void *userdata, sketch_val_t *val);
@@ -22,6 +21,15 @@ import (
 	"runtime"
 	"unsafe"
 )
+
+// Force export of C functions
+var _ = C.eachForFaceFunc
+var _ = C.eachForSketchFunc
+var _ = C.eachForCompoundFunc
+var _ = C.sketchFilterFunc
+var _ = C.sketchMapFunc
+var _ = C.sketchApplyFunc
+var _ = C.sketchSortFunc
 
 type SketchObject struct {
 	inner *innerSketchObject
