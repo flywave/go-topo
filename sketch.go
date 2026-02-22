@@ -9,8 +9,8 @@ package topo
 #cgo darwin,arm64 CXXFLAGS: -I ./libs  -std=gnu++14
 #cgo windows CXXFLAGS: -I ./libs  -std=gnu++14
 topo_face_t eachForFaceFunc(void *userdata, topo_location_t *loc);
-topo_face_t eachForSketchFunc(void *userdata, topo_location_t *loc);
-topo_face_t eachForCompoundFunc(void *userdata, topo_location_t *loc);
+struct _sketch_t* eachForSketchFunc(void *userdata, topo_location_t *loc);
+topo_compound_t eachForCompoundFunc(void *userdata, topo_location_t *loc);
 bool sketchFilterFunc(void *userdata, sketch_val_t *val);
 sketch_val_t* sketchMapFunc(void *userdata, sketch_val_t *val);
 sketch_val_t** sketchApplyFunc(void *userdata, sketch_val_t **vals, int num);
@@ -590,7 +590,7 @@ func (c *Sketch) Replace() *Sketch {
 	return c
 }
 
-// export eachForFaceFunc
+//export eachForFaceFunc
 func eachForFaceFunc(userData unsafe.Pointer, loc *C.struct__topo_location_t) C.struct__topo_face_t {
 	fn := *(*func(*TopoLocation) *Face)(userData)
 	lloc := &TopoLocation{inner: &innerTopoLocation{val: loc}}
@@ -609,7 +609,7 @@ func (c *Sketch) EachForFace(fn func(*TopoLocation) *Face, mode int, tag string,
 	return c
 }
 
-// export eachForSketchFunc
+//export eachForSketchFunc
 func eachForSketchFunc(userData unsafe.Pointer, loc *C.struct__topo_location_t) *C.struct__sketch_t {
 	fn := *(*func(*TopoLocation) *Sketch)(userData)
 	lloc := &TopoLocation{inner: &innerTopoLocation{val: loc}}
@@ -628,7 +628,7 @@ func (c *Sketch) EachForSketch(fn func(*TopoLocation) *Sketch, mode int, tag str
 	return c
 }
 
-// export eachForCompoundFunc
+//export eachForCompoundFunc
 func eachForCompoundFunc(userData unsafe.Pointer, loc *C.struct__topo_location_t) C.struct__topo_compound_t {
 	fn := *(*func(*TopoLocation) *Compound)(userData)
 	lloc := &TopoLocation{inner: &innerTopoLocation{val: loc}}
@@ -647,7 +647,7 @@ func (c *Sketch) EachForCompound(fn func(*TopoLocation) *Compound, mode int, tag
 	return c
 }
 
-// export sketchFilterFunc
+//export sketchFilterFunc
 func sketchFilterFunc(userData unsafe.Pointer, val *C.struct__sketch_val_t) C.bool {
 	fn := *(*func(*SketchObject) bool)(userData)
 	obj := &SketchObject{inner: &innerSketchObject{val: val}}
@@ -663,7 +663,7 @@ func (c *Sketch) Filter(fn func(*SketchObject) bool) *Sketch {
 	return c
 }
 
-// export sketchMapFunc
+//export sketchMapFunc
 func sketchMapFunc(userData unsafe.Pointer, val *C.struct__sketch_val_t) *C.struct__sketch_val_t {
 	fn := *(*func(*SketchObject) *SketchObject)(userData)
 	obj := &SketchObject{inner: &innerSketchObject{val: val}}
@@ -676,7 +676,7 @@ func (c *Sketch) Map(fn func(*SketchObject) *SketchObject) *Sketch {
 	return c
 }
 
-// export sketchApplyFunc
+//export sketchApplyFunc
 func sketchApplyFunc(userData unsafe.Pointer, vals **C.struct__sketch_val_t, num C.int) **C.struct__sketch_val_t {
 	fn := *(*func([]*SketchObject) []*SketchObject)(userData)
 	vals_ := make([]*SketchObject, num)
@@ -699,7 +699,7 @@ func (c *Sketch) Apply(fn func([]*SketchObject) []*SketchObject) *Sketch {
 	return c
 }
 
-// export sketchSortFunc
+//export sketchSortFunc
 func sketchSortFunc(userData unsafe.Pointer, val1 *C.struct__sketch_val_t, val2 *C.struct__sketch_val_t) C.bool {
 	fn := *(*func(*SketchObject, *SketchObject) bool)(userData)
 	o1 := &SketchObject{inner: &innerSketchObject{val: val1}}

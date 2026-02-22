@@ -649,7 +649,7 @@ func (wp *Workplane) ConsolidateWires() *Workplane {
 	return c
 }
 
-// export eachFunc
+//export eachFunc
 func eachFunc(userdata unsafe.Pointer, obj *C.struct__shape_object_t) {
 	func_ := *(*func(*ShapeObject))(userdata)
 	o := &ShapeObject{inner: &innerShapeObject{val: obj}}
@@ -746,7 +746,7 @@ func (wp *Workplane) LargestDimension() float64 {
 	return float64(C.workplane_largest_dimension(wp.inner.val))
 }
 
-// export cutEachFunc
+//export cutEachFunc
 func cutEachFunc(userdata unsafe.Pointer, loc *C.struct__topo_location_t) *C.struct__topo_shape_t {
 	func_ := *(*func(*TopoLocation) *Shape)(userdata)
 	l := &TopoLocation{inner: &innerTopoLocation{val: loc}}
