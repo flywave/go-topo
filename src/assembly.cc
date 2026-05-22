@@ -316,7 +316,6 @@ bool export_assembly(
   try {
     int pcurves = 1;
     int precision_mode = 0;
-    boost::optional<float> fuzzy_tol;
     bool glue = false;
 
     std::string assembly_name =
@@ -428,10 +427,9 @@ assembly::assembly(assembly_object obj, std::shared_ptr<topo_location> loc,
     : obj_(std::move(obj)),
       loc_(loc ? std::move(loc) : std::make_shared<topo_location>()),
       name_(name.empty() ? detail::generate_uuid() : name),
-      color_(std::move(color)), metadata_(metadata), parent_(), children_(),
+       color_(std::move(color)), metadata_(metadata), parent_(), children_(),
       objects_(), constraints_(), solve_result_(boost::none) {
 
-  objects_[name_] = shared_from_this();
   struct validator : public boost::static_visitor<void> {
     void operator()(const std::shared_ptr<workplane> &wp) const {
       if (!wp)
@@ -448,9 +446,7 @@ assembly::assembly(assembly_object obj, std::shared_ptr<topo_location> loc,
 
   boost::apply_visitor(validator(), obj_);
 
-  if (obj_.which() != -1) {
-    children_.reserve(4);
-  }
+  children_.reserve(4);
 }
 
 assembly::assembly(assembly &&o) noexcept {
@@ -812,7 +808,7 @@ assembly &assembly::solve(int verbosity) {
     solve_result_ = solve_result.second;
 
     auto root_loc_inv = std::make_shared<topo_location>();
-    if (obj_.which() != 2) {
+    if (has_obj()) {
       for (const auto &entry : ents) {
         if (entry.first == name_) {
           *root_loc_inv = solve_result.first[entry.second].Inverted();
@@ -928,11 +924,15 @@ assembly::_get_elements(std::shared_ptr<topo_location> loc,
 
     auto new_color = assy->color_ ? assy->color_ : current_color;
 
-    if (assy->obj_.which() != 2) {
+    if (assy->has_obj()) {
       compound shape_obj;
 
       if (auto sh = boost::get<shape>(&assy->obj_)) {
-        shape_obj = *sh->cast<topo::compound>();
+        if (sh->shape_type() == TopAbs_COMPOUND) {
+          shape_obj = *sh->cast<topo::compound>();
+        } else {
+          shape_obj = compound::make_compound({*sh});
+        }
       } else if (auto wp =
                      boost::get<std::shared_ptr<workplane>>(&assy->obj_)) {
         std::vector<shape> shapes;

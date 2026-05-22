@@ -84,7 +84,7 @@ workplane &workplane::tag(const std::string &name) {
 std::vector<shape>
 workplane::collect_property(const shape_object_type &propName) const {
   std::vector<shape> result;
-  std::unordered_map<shape, bool> seen; // used as an ordered set
+  std::unordered_map<shape, bool> seen; // used as a dedup set
 
   for (auto &obj : _objects) {
     if (auto shp = boost::get<shape>(&obj)) {
@@ -95,6 +95,12 @@ workplane::collect_property(const shape_object_type &propName) const {
               seen[k] = true;
               result.push_back(k);
             }
+          }
+        }
+        for (auto &k : shp->solids()) {
+          if (seen.find(k) == seen.end()) {
+            seen[k] = true;
+            result.push_back(k);
           }
         }
       } else if (propName == shape_object_type::compound) {
@@ -127,13 +133,6 @@ workplane::collect_property(const shape_object_type &propName) const {
         }
       } else if (propName == shape_object_type::wire) {
         for (auto &k : shp->wires()) {
-          if (seen.find(k) == seen.end()) {
-            seen[k] = true;
-            result.push_back(k);
-          }
-        }
-      } else if (propName == shape_object_type::solid) {
-        for (auto &k : shp->solids()) {
           if (seen.find(k) == seen.end()) {
             seen[k] = true;
             result.push_back(k);
@@ -455,16 +454,13 @@ std::shared_ptr<workplane> workplane::last() {
 }
 
 std::shared_ptr<workplane> workplane::end(int n) {
-  std::shared_ptr<workplane> rv = nullptr;
+  std::shared_ptr<workplane> rv = this->shared_from_this();
   for (int i = 0; i < n; ++i) {
     if (rv->has_parent()) {
       rv = rv->parent();
     } else {
       throw std::runtime_error("Cannot End the chain-- no parents!");
     }
-  }
-  if (!rv) {
-    return this->shared_from_this();
   }
   return rv;
 }
@@ -950,11 +946,13 @@ std::shared_ptr<workplane> workplane::shell(double thickness,
     throw std::runtime_error("Shell requires at least one face to be selected");
   }
 
-  GeomAbs_JoinType joinType;
+  GeomAbs_JoinType joinType = GeomAbs_Arc;
   if (kind == "arc") {
     joinType = GeomAbs_Arc;
   } else if (kind == "intersection") {
     joinType = GeomAbs_Intersection;
+  } else {
+    throw std::runtime_error("Unknown join type: " + kind);
   }
 
   shape shp = *topo::shelling(s, faces, thickness, 1.0E-4, joinType);
@@ -1112,6 +1110,9 @@ edge workplane::find_from_edge(bool useLocalCoords) {
     if (e->shape_type() == TopAbs_EDGE) {
       return useLocalCoords ? *_plane->to_local_coords(*e).cast<edge>()
                             : *e->cast<edge>();
+    } else {
+      throw std::runtime_error(
+          "Previous Edge requested, but the previous object was not an Edge");
     }
   } else {
     throw std::runtime_error(
@@ -1706,15 +1707,16 @@ workplane::each(std::function<shape_object(shape_object &)> callback,
   for (auto &obj : _objects) {
     shape_object r;
     if (useLocalCoordinates) {
-      auto shape = select_shape(obj);
-      if (shape) {
-        shape_object so(_plane->to_local_coords(*shape));
+      auto sel = select_shape(obj);
+      if (sel) {
+        shape_object so(_plane->to_local_coords(*sel));
         r = callback(so);
 
-        auto shape = select_shape(r);
-        shape->transform(_plane->_rG);
-
-        r = *shape;
+        auto sel2 = select_shape(r);
+        if (sel2) {
+          sel2->transform(_plane->_rG);
+          r = *sel2;
+        }
       }
 
     } else {
@@ -2203,15 +2205,17 @@ std::shared_ptr<workplane> workplane::combine_with_base(
   auto bmode = boost::get<bool>(&mode);
 
   if (smode || (bmode && *bmode)) {
-    shape shp = boost::get<shape>(obj);
+    shape shp;
     auto shapes = boost::get<std::vector<shape>>(&obj);
     if (shapes) {
       shp = compound::make_compound(*shapes);
+    } else {
+      shp = boost::get<shape>(obj);
     }
-    if (*smode == combine_mode_type::cut ||
-        *smode == combine_mode_type::subtractive) {
+    if (smode && (*smode == combine_mode_type::cut ||
+                  *smode == combine_mode_type::subtractive)) {
       newS = cut_from_base(shp);
-    } else if ((smode && *smode == combine_mode_type::additive) || *bmode) {
+    } else {
       newS = fuse_with_base(shp);
     }
   } else {

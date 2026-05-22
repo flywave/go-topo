@@ -11,7 +11,9 @@
 #include <gp_Pnt.hxx>
 #include <gp_Quaternion.hxx>
 #include <gp_Trsf.hxx>
+#include <cmath>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <vector>
 
@@ -27,10 +29,24 @@ DOF6 location_to_dof6(const gp_Trsf &loc) {
   gp_Vec v = loc.TranslationPart();
   gp_Quaternion q = loc.GetRotation();
 
-  double alpha_2 = (1 - q.W()) / (1 + q.W());
-  double a = (alpha_2 + 1) * q.X() / 2;
-  double b = (alpha_2 + 1) * q.Y() / 2;
-  double c = (alpha_2 + 1) * q.Z() / 2;
+  double w = q.W();
+  double alpha_2, a, b, c;
+
+  if (std::abs(w + 1.0) < 1e-12) {
+    double norm = std::sqrt(q.X() * q.X() + q.Y() * q.Y() + q.Z() * q.Z());
+    if (norm < 1e-12) {
+      a = b = c = 0.0;
+    } else {
+      a = q.X() / norm * 1e6;
+      b = q.Y() / norm * 1e6;
+      c = q.Z() / norm * 1e6;
+    }
+  } else {
+    alpha_2 = (1 - w) / (1 + w);
+    a = (alpha_2 + 1) * q.X() / 2;
+    b = (alpha_2 + 1) * q.Y() / 2;
+    c = (alpha_2 + 1) * q.Z() / 2;
+  }
 
   std::array<double, 3> T{v.X(), v.Y(), v.Z()};
   std::array<double, 3> R{a, b, c};
@@ -50,6 +66,11 @@ private:
   double scale_;
   size_t ne_;
   std::vector<gp_Trsf> final_transforms_;
+  std::set<size_t> lockedSet_;
+
+  bool is_locked(size_t entityIdx) const {
+    return lockedSet_.count(entityIdx) > 0;
+  }
 
   static gp_Trsf build_transform(const double *T, const double *R) {
     gp_Trsf transform;
@@ -66,20 +87,35 @@ public:
   constraint_problem(constraint_solver &solver)
       : solver_(solver), initial_transforms_(solver.initial_transforms_),
         constraints_(solver.constraints_), lockedEntities_(solver.locked_),
-        scale_(solver.scale_), ne_(solver.ne_) {}
+        scale_(solver.scale_), ne_(solver.ne_) {
+    lockedSet_.insert(lockedEntities_.begin(), lockedEntities_.end());
+  }
 
   static void transform_to_variables(const gp_Trsf &trsf, double *T,
                                      double *R) {
     gp_Vec translation = trsf.TranslationPart();
     gp_Quaternion quat = trsf.GetRotation();
 
-    double alpha_2 = (1 - quat.W()) / (1 + quat.W());
     T[0] = translation.X();
     T[1] = translation.Y();
     T[2] = translation.Z();
-    R[0] = (alpha_2 + 1) * quat.X() / 2;
-    R[1] = (alpha_2 + 1) * quat.Y() / 2;
-    R[2] = (alpha_2 + 1) * quat.Z() / 2;
+
+    double w = quat.W();
+    if (std::abs(w + 1.0) < 1e-12) {
+      double norm = std::sqrt(quat.X() * quat.X() + quat.Y() * quat.Y() + quat.Z() * quat.Z());
+      if (norm < 1e-12) {
+        R[0] = R[1] = R[2] = 0.0;
+      } else {
+        R[0] = quat.X() / norm * 1e6;
+        R[1] = quat.Y() / norm * 1e6;
+        R[2] = quat.Z() / norm * 1e6;
+      }
+    } else {
+      double alpha_2 = (1 - w) / (1 + w);
+      R[0] = (alpha_2 + 1) * quat.X() / 2;
+      R[1] = (alpha_2 + 1) * quat.Y() / 2;
+      R[2] = (alpha_2 + 1) * quat.Z() / 2;
+    }
   }
 
   static gp_Trsf variables_to_transform(const double *T, const double *R) {
@@ -99,7 +135,11 @@ public:
                     IndexStyleEnum &index_style) override {
     n = static_cast<Index>(ne_ * 6);
     m = static_cast<Index>(constraints_.size());
-    nnz_jac_g = m * n;
+    nnz_jac_g = 0;
+    for (Index i = 0; i < m; i++) {
+      const auto &entityIndices = std::get<3>(constraints_[i]);
+      nnz_jac_g += static_cast<Index>(entityIndices.size()) * 6;
+    }
     nnz_h_lag = 0;
     index_style = TNLP::C_STYLE;
     return true;
@@ -113,7 +153,7 @@ public:
     }
 
     for (Index i = 0; i < ne_; i++) {
-      if (lockedEntities_[i]) {
+      if (is_locked(i)) {
         x_l[i * 6] = x_u[i * 6] = 0;
         x_l[i * 6 + 1] = x_u[i * 6 + 1] = 0;
         x_l[i * 6 + 2] = x_u[i * 6 + 2] = 0;
@@ -143,13 +183,32 @@ public:
               Number &obj_value) override {
     obj_value = 0.0;
 
-    for (const auto &c : constraints_) {
-      double cost = evaluate_constraint(c, x);
-      obj_value += cost;
+    for (size_t ci = 0; ci < constraints_.size(); ci++) {
+      const auto &constraint = constraints_[ci];
+      constraint_kind kind = std::get<1>(constraint);
+      const auto &param = std::get<2>(constraint);
+      const auto &entityIndices = std::get<3>(constraint);
+
+      std::vector<double> vars;
+      std::vector<double> inits;
+
+      for (int entityIdx : entityIndices) {
+        auto dof = location_to_dof6(initial_transforms_[entityIdx]);
+        auto T0 = std::get<0>(dof);
+        auto R0 = std::get<1>(dof);
+        inits.insert(inits.end(), T0.begin(), T0.end());
+        inits.insert(inits.end(), R0.begin(), R0.end());
+
+        for (int i = 0; i < 6; i++) {
+          vars.push_back(x[entityIdx * 6 + i]);
+        }
+      }
+
+      obj_value += compute_constraint_value(kind, inits, vars, param, scale_);
     }
 
     for (Index i = 0; i < n; i++) {
-      if (!lockedEntities_[i / 6]) {
+      if (!is_locked(i / 6)) {
         obj_value += 1e-16 * x[i] * x[i];
       }
     }
@@ -195,7 +254,7 @@ public:
     }
 
     for (Index i = 0; i < n; i++) {
-      if (!lockedEntities_[i / 6]) {
+      if (!is_locked(i / 6)) {
         grad_f[i] += 2.0 * 1e-16 * x[i];
       }
     }
@@ -890,33 +949,17 @@ constraint_solver::constraint_solver(
   ne_ = entities.size();
   nc_ = constraints.size();
   initial_transforms_ = entities;
-
-  for (size_t i = 0; i < entities.size(); ++i) {
-    auto dof = location_to_dof6(entities[i]);
-    auto T0 = std::get<0>(dof);
-    auto R0 = std::get<1>(dof);
-    std::array<double, 3> T{3, 0.0}, R{3, 0.0};
-    std::array<double, 3> T_init = T0;
-    std::array<double, 3> R_init = R0;
-
-    if (std::find(locked.begin(), locked.end(), i) != locked.end()) {
-      T = {0.0, 0.0, 0.0};
-      R = {0.0, 0.0, 0.0};
-    } else {
-      R = {1e-2, 1e-2, 1e-2};
-    }
-
-    variables_.emplace_back(T, R);
-    start_points_.emplace_back(T_init, R_init);
-  }
 }
 
 #ifdef __EMSCRIPTEN__
 std::pair<std::vector<gp_Trsf>, std::map<std::string, double>>
 constraint_solver::solve(int verbosity) {
-  std::vector<gp_Trsf> emptyTransforms;
-  std::map<std::string, double> emptyStats;
-  return std::make_pair(emptyTransforms, emptyStats);
+  std::vector<gp_Trsf> transforms = initial_transforms_;
+  std::map<std::string, double> stats;
+  stats["iter_count"] = 0;
+  stats["solve_time"] = 0.0;
+  stats["final_obj"] = 0.0;
+  return std::make_pair(transforms, stats);
 }
 #else
 std::pair<std::vector<gp_Trsf>, std::map<std::string, double>>

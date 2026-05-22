@@ -109,7 +109,7 @@ private:
 
   const double DIFF_EPS = 1e-10;
   const double TOL = 1e-9;
-  const int MAXITER = 0;
+  const int MAXITER = 1000;
 };
 
 } // namespace topo

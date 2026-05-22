@@ -1190,7 +1190,12 @@ int topo_wire_projected(topo_wire_t w, topo_face_t f, vec3d_t direction,
 }
 
 void topo_shape_list_free(topo_shape_t **result, int result_count) {
-  delete[] result;
+  if (result) {
+    for (int i = 0; i < result_count; i++) {
+      delete result[i];
+    }
+    delete[] result;
+  }
 }
 
 double topo_wire_curvature_at(topo_wire_t w, double d, int mode,
@@ -5213,7 +5218,12 @@ trsf_t topo_location_get_trsf(topo_location_t *p) {
 }
 
 void topo_location_list_free(topo_location_t **result, int result_count) {
-  delete[] result;
+  if (result) {
+    for (int i = 0; i < result_count; i++) {
+      delete result[i];
+    }
+    delete[] result;
+  }
 }
 
 void topo_shape_to_stl(topo_shape_t *p, char *str) {

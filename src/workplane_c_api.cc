@@ -627,7 +627,10 @@ workplane_t *workplane_eachpoint(workplane_t *wp, void *userdata,
                      flywave::topo::topo_location loc) -> flywave::topo::shape {
     shape_object_t sobj{loc};
     func(userdata, &sobj);
-    return boost::get<flywave::topo::shape>(sobj.obj);
+    if (auto shp = boost::get<flywave::topo::shape>(&sobj.obj)) {
+      return *shp;
+    }
+    return flywave::topo::shape();
   };
 
   auto result =
@@ -1109,7 +1112,7 @@ workplane_t *workplane_combine(workplane_t *wp, bool clean, bool glue,
 
 workplane_t *workplane_cut_thru_all(workplane_t *wp, double taper, bool clean) {
   auto result = SAFE_CALL(wp, return wp->ptr->cut_thru_all(clean, taper));
-  return new workplane_t{result};
+  return new workplane_t{.ptr = result};
 }
 
 workplane_t *workplane_loft(workplane_t *wp, bool ruled, bool combine,
@@ -1283,7 +1286,14 @@ workplane_t **workplane_all(workplane_t *wp, int *count) {
   return arr;
 }
 
-void workplane_list_free(workplane_t **list, int count) { delete[] list; }
+void workplane_list_free(workplane_t **list, int count) {
+  if (list) {
+    for (int i = 0; i < count; i++) {
+      delete list[i];
+    }
+    delete[] list;
+  }
+}
 
 topo_shape_t **workplane_shapes(workplane_t *wp, int *count) {
   auto shapes = wp->ptr->shapes();
@@ -1296,9 +1306,23 @@ topo_shape_t **workplane_shapes(workplane_t *wp, int *count) {
   return arr;
 }
 
-void shape_list_free(topo_shape_t **list, int count) { delete[] list; }
+void shape_list_free(topo_shape_t **list, int count) {
+  if (list) {
+    for (int i = 0; i < count; i++) {
+      delete list[i];
+    }
+    delete[] list;
+  }
+}
 
-void shape_objects_free(shape_object_t **list, int count) { delete[] list; }
+void shape_objects_free(shape_object_t **list, int count) {
+  if (list) {
+    for (int i = 0; i < count; i++) {
+      delete list[i];
+    }
+    delete[] list;
+  }
+}
 
 shape_object_t **workplane_vals(workplane_t *wp, int *count) {
   auto vals = wp->ptr->vals();

@@ -205,9 +205,11 @@ sketch &sketch::_face(boost::variant<wire, std::vector<topo::edge>, shape,
     res = compound::make_compound(faces);
   } else if (auto edges = boost::get<std::vector<topo::edge>>(&b)) {
     auto wires = detail::edges_to_wires(*edges);
-    std::vector<wire> wire_ptrs(wires.begin(), wires.end());
-    res = face::make_face(wire_ptrs[0], std::vector<wire>(wire_ptrs.begin() + 1,
-                                                          wire_ptrs.end()));
+    if (wires.empty()) {
+      throw std::invalid_argument("Could not construct wires from edges");
+    }
+    res = face::make_face(wires[0], std::vector<wire>(wires.begin() + 1,
+                                                       wires.end()));
   } else {
     throw std::invalid_argument("Unsupported argument");
   }
@@ -241,8 +243,8 @@ sketch &sketch::_face(boost::variant<wire, std::vector<topo::edge>, shape,
 
 sketch &sketch::rect(double w, double h, double angle, Mode mode,
                      const boost::optional<std::string> &tag) {
-  auto res = face::make_plane(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 0), h, w)
-                 .rotated(angle, gp_Pnt(0, 0, 0), gp_Pnt(0, 0, 0));
+  auto res = face::make_plane(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), h, w)
+                 .rotated(angle, gp_Pnt(0, 0, 0), gp_Pnt(0, 0, 1));
   return _each(
       [res](const topo_location &loc) {
         return *res.located(loc).cast<topo::face>();
@@ -461,10 +463,6 @@ sketch &sketch::distribute(int n, double start, double stop, bool rotate) {
     }
   }
 
-  if (!selection_ || selection_->empty()) {
-    throw std::invalid_argument("Nothing selected to distribute over");
-  }
-
   bool trimmed = (1.0 - std::abs(stop - start)) >= TOL;
 
   // Calculate parameters
@@ -601,6 +599,9 @@ sketch &sketch::_each(
     auto tmp = callback(loc);
 
     if (auto sk = boost::get<std::shared_ptr<sketch>>(&tmp)) {
+      if (!(*sk)->faces_) {
+        continue;
+      }
       auto faces = (*sk)->faces_->faces();
       res.insert(res.end(), faces.begin(), faces.end());
     } else if (auto comp = boost::get<compound>(&tmp)) {
@@ -1180,15 +1181,17 @@ sketch &sketch::constrain(const std::string &tag1, const std::string &tag2,
     throw std::invalid_argument("Invalid tags specified");
   }
 
-  auto edge1 = boost::get<shape>(it1->second[0]);
-  auto edge2 = boost::get<shape>(it2->second[0]);
-  if (!edge1 || !edge2 || edge1.shape_type() != TopAbs_EDGE ||
-      edge2.shape_type() != TopAbs_EDGE) {
+  auto edge1 = boost::get<shape>(&it1->second[0]);
+  auto edge2 = boost::get<shape>(&it2->second[0]);
+  if (!edge1 || !edge2 || edge1->shape_type() != TopAbs_EDGE ||
+      edge2->shape_type() != TopAbs_EDGE) {
     throw std::invalid_argument("Tags must reference edges");
   }
 
   constraints_.emplace_back(
-      (tag1, tag2), (*edge1.cast<topo::edge>(), *edge2.cast<topo::edge>()),
+      std::vector<std::string>{tag1, tag2},
+      std::vector<topo::edge>{*edge1->cast<topo::edge>(),
+                              *edge2->cast<topo::edge>()},
       constraint, arg);
   return *this;
 }
@@ -1492,12 +1495,26 @@ sketch::to_compound(const shape &sh) const {
 }
 
 void sketch::set_error(const std::string &msg) {
-  return this->parent_->ctx()->set_error(msg);
+  if (!parent_) {
+    throw std::runtime_error(msg);
+  }
+  this->parent_->ctx()->set_error(msg);
 }
 
-bool sketch::has_error() const { return this->parent_->has_error(); }
+bool sketch::has_error() const {
+  if (!parent_) {
+    return false;
+  }
+  return this->parent_->has_error();
+}
 
-const std::string &sketch::error() const { return this->parent_->error(); }
+const std::string &sketch::error() const {
+  static const std::string empty;
+  if (!parent_) {
+    return empty;
+  }
+  return this->parent_->error();
+}
 
 } // namespace topo
 } // namespace flywave

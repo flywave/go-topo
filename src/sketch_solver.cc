@@ -88,6 +88,8 @@ double sketch_solver::coincident_cost(
   } else if (t1 == geom_type::CIRCLE) {
     arc_dof arc1{{x1[0], x1[1], x1[2], x1[3], x1[4]}};
     p1 = arc_point(arc1, val);
+  } else {
+    throw std::invalid_argument("Unsupported geometry type for entity 1");
   }
 
   if (t2 == geom_type::LINE) {
@@ -96,6 +98,8 @@ double sketch_solver::coincident_cost(
   } else if (t2 == geom_type::CIRCLE) {
     arc_dof arc2{{x2[0], x2[1], x2[2], x2[3], x2[4]}};
     p2 = arc_point(arc2, val);
+  } else {
+    throw std::invalid_argument("Unsupported geometry type for entity 2");
   }
 
   return p1.Distance(p2);
@@ -115,6 +119,8 @@ double sketch_solver::angle_cost(const std::vector<double> &x1, geom_type t1,
   } else if (t1 == geom_type::CIRCLE) {
     arc_dof arc1{{x1[0], x1[1], x1[2], x1[3], x1[4]}};
     v1 = arc_first_tangent(arc1);
+  } else {
+    throw std::invalid_argument("Unsupported geometry type for entity 1");
   }
 
   if (t2 == geom_type::LINE) {
@@ -125,6 +131,8 @@ double sketch_solver::angle_cost(const std::vector<double> &x1, geom_type t1,
   } else if (t2 == geom_type::CIRCLE) {
     arc_dof arc2{{x2[0], x2[1], x2[2], x2[3], x2[4]}};
     v2 = arc_first_tangent(arc2);
+  } else {
+    throw std::invalid_argument("Unsupported geometry type for entity 2");
   }
 
   double angle = v1.Angle(v2);
@@ -163,6 +171,8 @@ double sketch_solver::distance_cost(const std::vector<double> &x1, geom_type t1,
   } else if (t1 == geom_type::CIRCLE) {
     arc_dof arc1{{x1[0], x1[1], x1[2], x1[3], x1[4]}};
     p1 = arc_point(arc1, val1);
+  } else {
+    throw std::invalid_argument("Unsupported geometry type for entity 1");
   }
 
   if (t2 == geom_type::LINE) {
@@ -171,6 +181,8 @@ double sketch_solver::distance_cost(const std::vector<double> &x1, geom_type t1,
   } else if (t2 == geom_type::CIRCLE) {
     arc_dof arc2{{x2[0], x2[1], x2[2], x2[3], x2[4]}};
     p2 = arc_point(arc2, val2);
+  } else {
+    throw std::invalid_argument("Unsupported geometry type for entity 2");
   }
 
   return std::abs(p1.Distance(p2) - d);
@@ -190,6 +202,8 @@ double sketch_solver::orientation_cost(const std::vector<double> &x,
   } else if (t == geom_type::CIRCLE) {
     arc_dof arc{{x[0], x[1], x[2], x[3], x[4]}};
     v = arc_first_tangent(arc);
+  } else {
+    throw std::invalid_argument("Unsupported geometry type");
   }
 
   double angle = v.Angle(gp_Vec2d(val.first, val.second));
@@ -461,10 +475,19 @@ sketch_solver::sketch_solver(const std::vector<sketch_dof> &entities,
 
 #ifdef __EMSCRIPTEN__
 std::pair<std::vector<std::vector<double>>,
-          std::map<std::string, boost::variant<double, int, std::string>>>
+           std::map<std::string, boost::variant<double, int, std::string>>>
 sketch_solver::solve() {
   std::vector<std::vector<double>> solution;
+  for (size_t i = 0; i < ixs.size() - 1; ++i) {
+    size_t start = ixs[i];
+    size_t end = ixs[i + 1];
+    solution.emplace_back(x0.begin() + start, x0.begin() + end);
+  }
+
   std::map<std::string, boost::variant<double, int, std::string>> status;
+  status["cost"] = -1.0;
+  status["iters"] = 0;
+  status["status"] = std::string("emscripten_no_solve");
   return std::make_pair(solution, status);
 }
 #else
@@ -496,6 +519,11 @@ sketch_solver::solve() {
   std::vector<double> x = x0;
   double min_cost;
   nlopt::result result = opt.optimize(x, min_cost);
+
+  if (min_cost > TOL * 1e3) {
+    std::cerr << "Warning: sketch solver did not converge, cost = " << min_cost
+              << std::endl;
+  }
 
   std::vector<std::vector<double>> solution;
   for (size_t i = 0; i < ixs.size() - 1; ++i) {

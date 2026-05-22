@@ -140,9 +140,11 @@ func customSelectorFunc(user_data unsafe.Pointer, shapes **C.struct__topo_shape_
 		shp := &Shape{inner: &innerShape{val: shapesSlice[i]}}
 		shapes_[i] = shp
 	}
-	index_ := int(*index)
 	shapes_ = (*(*func([]*Shape) []*Shape)(user_data))(shapes_)
-	*index = C.int(index_)
+	*index = C.int(len(shapes_))
+	if len(shapes_) == 0 {
+		return nil
+	}
 	shapesSlice_ := make([]*C.struct__topo_shape_t, len(shapes_))
 	for i := 0; i < len(shapes_); i++ {
 		shapesSlice_[i] = shapes_[i].inner.val

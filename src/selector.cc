@@ -167,8 +167,10 @@ direction_nth_selector::filter(const std::vector<shape> &objects) const {
 }
 
 double length_nth_selector::get_key(const shape &obj) const {
-  if (obj.shape_type() == TopAbs_EDGE || obj.shape_type() == TopAbs_WIRE) {
+  if (obj.shape_type() == TopAbs_EDGE) {
     return obj.cast<edge>()->length();
+  } else if (obj.shape_type() == TopAbs_WIRE) {
+    return obj.cast<wire>()->length();
   }
   throw std::runtime_error("LengthNthSelector supports only Edges and Wires");
 }
@@ -233,27 +235,42 @@ binary_selector::filter(const std::vector<shape> &objects) const {
 
 std::vector<shape>
 and_selector::filter_results(const std::vector<shape> &left,
-                             const std::vector<shape> &right) const {
+                              const std::vector<shape> &right) const {
+  auto sorted_left = left;
+  auto sorted_right = right;
+  std::sort(sorted_left.begin(), sorted_left.end());
+  std::sort(sorted_right.begin(), sorted_right.end());
   std::vector<shape> result;
-  std::set_intersection(left.begin(), left.end(), right.begin(), right.end(),
+  std::set_intersection(sorted_left.begin(), sorted_left.end(),
+                        sorted_right.begin(), sorted_right.end(),
                         std::back_inserter(result));
   return result;
 }
 
 std::vector<shape>
 or_selector::filter_results(const std::vector<shape> &left,
-                            const std::vector<shape> &right) const {
-  std::vector<shape> result = left;
-  result.insert(result.end(), right.begin(), right.end());
-  result.erase(std::unique(result.begin(), result.end()), result.end());
+                             const std::vector<shape> &right) const {
+  auto sorted_left = left;
+  auto sorted_right = right;
+  std::sort(sorted_left.begin(), sorted_left.end());
+  std::sort(sorted_right.begin(), sorted_right.end());
+  std::vector<shape> result;
+  std::set_union(sorted_left.begin(), sorted_left.end(),
+                 sorted_right.begin(), sorted_right.end(),
+                 std::back_inserter(result));
   return result;
 }
 
 std::vector<shape>
 subtract_selector::filter_results(const std::vector<shape> &left,
-                                  const std::vector<shape> &right) const {
+                                   const std::vector<shape> &right) const {
+  auto sorted_left = left;
+  auto sorted_right = right;
+  std::sort(sorted_left.begin(), sorted_left.end());
+  std::sort(sorted_right.begin(), sorted_right.end());
   std::vector<shape> result;
-  std::set_difference(left.begin(), left.end(), right.begin(), right.end(),
+  std::set_difference(sorted_left.begin(), sorted_left.end(),
+                      sorted_right.begin(), sorted_right.end(),
                       std::back_inserter(result));
   return result;
 }
@@ -261,9 +278,14 @@ subtract_selector::filter_results(const std::vector<shape> &left,
 std::vector<shape>
 not_selector::filter(const std::vector<shape> &objects) const {
   auto filtered = selector_->filter(objects);
+  auto sorted_objects = objects;
+  auto sorted_filtered = filtered;
+  std::sort(sorted_objects.begin(), sorted_objects.end());
+  std::sort(sorted_filtered.begin(), sorted_filtered.end());
   std::vector<shape> result;
-  std::set_difference(objects.begin(), objects.end(), filtered.begin(),
-                      filtered.end(), std::back_inserter(result));
+  std::set_difference(sorted_objects.begin(), sorted_objects.end(),
+                      sorted_filtered.begin(), sorted_filtered.end(),
+                      std::back_inserter(result));
   return result;
 }
 

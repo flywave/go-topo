@@ -225,10 +225,6 @@ private:
 
 class constraint_solver {
 private:
-  std::vector<std::pair<std::array<double, 3>, std::array<double, 3>>>
-      variables_;
-  std::vector<std::pair<std::array<double, 3>, std::array<double, 3>>>
-      start_points_;
   std::vector<assembly_constraint> constraints_;
   std::vector<size_t> locked_;
   std::vector<gp_Trsf> initial_transforms_;

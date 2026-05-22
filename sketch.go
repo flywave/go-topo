@@ -65,12 +65,14 @@ func (c *SketchObject) IsLocation() bool {
 
 func (c *SketchObject) GetShape() *Shape {
 	shp := &Shape{inner: &innerShape{C.sketch_val_get_shape(c.inner.val)}}
-	runtime.SetFinalizer(c.inner, (*innerShape).free)
+	runtime.SetFinalizer(shp.inner, (*innerShape).free)
 	return shp
 }
 
 func (c *SketchObject) GetLocation() *TopoLocation {
-	return &TopoLocation{inner: &innerTopoLocation{C.sketch_val_get_location(c.inner.val)}}
+	loc := &TopoLocation{inner: &innerTopoLocation{C.sketch_val_get_location(c.inner.val)}}
+	runtime.SetFinalizer(loc.inner, (*innerTopoLocation).free)
+	return loc
 }
 
 type SketchConstraintValue struct {
@@ -243,6 +245,9 @@ func (c *Sketch) RegularPolygon(r float64, n int, angle float64, tag string) *Sk
 func (c *Sketch) Polygon(pts []*TopoVector, angle float64, tag string) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
+	if len(pts) == 0 {
+		return c
+	}
 	cpts := make([]*C.struct__topo_vector_t, len(pts))
 	for i := 0; i < len(pts); i++ {
 		cpts[i] = pts[i].inner.val
@@ -275,6 +280,9 @@ func (c *Sketch) Distribute(n int, start, stop float64, rotate bool, angle float
 func (c *Sketch) Push(locs []*TopoLocation, tag string) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
+	if len(locs) == 0 {
+		return c
+	}
 	clocs := make([]*C.struct__topo_location_t, len(locs))
 	for i := 0; i < len(locs); i++ {
 		clocs[i] = locs[i].inner.val
@@ -606,6 +614,7 @@ func (c *Sketch) EachForFace(fn func(*TopoLocation) *Face, mode int, tag string,
 		return fn(loc)
 	}
 	C.sketch_each_for_face(c.inner.val, unsafe.Pointer(&f), (*[0]byte)(C.eachForFaceFunc), C.int(mode), cstr, C.bool(ignoreSelection))
+	runtime.KeepAlive(f)
 	return c
 }
 
@@ -625,6 +634,7 @@ func (c *Sketch) EachForSketch(fn func(*TopoLocation) *Sketch, mode int, tag str
 		return fn(loc)
 	}
 	C.sketch_each_for_sketch(c.inner.val, unsafe.Pointer(&f), (*[0]byte)(C.eachForSketchFunc), C.int(mode), cstr, C.bool(ignoreSelection))
+	runtime.KeepAlive(f)
 	return c
 }
 
@@ -644,6 +654,7 @@ func (c *Sketch) EachForCompound(fn func(*TopoLocation) *Compound, mode int, tag
 		return fn(loc)
 	}
 	C.sketch_each_for_compound(c.inner.val, unsafe.Pointer(&f), (*[0]byte)(C.eachForCompoundFunc), C.int(mode), cstr, C.bool(ignoreSelection))
+	runtime.KeepAlive(f)
 	return c
 }
 
@@ -660,6 +671,7 @@ func (c *Sketch) Filter(fn func(*SketchObject) bool) *Sketch {
 		return fn(val)
 	}
 	C.sketch_filter(c.inner.val, unsafe.Pointer(&f), (*[0]byte)(C.sketchFilterFunc))
+	runtime.KeepAlive(f)
 	return c
 }
 
@@ -673,6 +685,7 @@ func sketchMapFunc(userData unsafe.Pointer, val *C.struct__sketch_val_t) *C.stru
 
 func (c *Sketch) Map(fn func(*SketchObject) *SketchObject) *Sketch {
 	C.sketch_map(c.inner.val, unsafe.Pointer(&fn), (*[0]byte)(C.sketchMapFunc))
+	runtime.KeepAlive(fn)
 	return c
 }
 
@@ -687,15 +700,21 @@ func sketchApplyFunc(userData unsafe.Pointer, vals **C.struct__sketch_val_t, num
 		vals_[i] = val
 	}
 	vals_ = fn(vals_)
-	valsSlice_ := make([]*C.struct__sketch_val_t, len(vals_))
-	for i := 0; i < len(vals_); i++ {
-		valsSlice_[i] = vals_[i].inner.val
+	if len(vals_) == 0 {
+		return nil
 	}
-	return &valsSlice_[0]
+	var dummy *C.struct__sketch_val_t
+	result := (**C.struct__sketch_val_t)(C.malloc(C.size_t(len(vals_)) * C.size_t(unsafe.Sizeof(dummy))))
+	resultSlice := (*[1 << 30]*C.struct__sketch_val_t)(unsafe.Pointer(result))[:len(vals_):len(vals_)]
+	for i := 0; i < len(vals_); i++ {
+		resultSlice[i] = vals_[i].inner.val
+	}
+	return result
 }
 
 func (c *Sketch) Apply(fn func([]*SketchObject) []*SketchObject) *Sketch {
 	C.sketch_apply(c.inner.val, unsafe.Pointer(&fn), (*[0]byte)(C.sketchApplyFunc))
+	runtime.KeepAlive(fn)
 	return c
 }
 
@@ -711,6 +730,7 @@ func sketchSortFunc(userData unsafe.Pointer, val1 *C.struct__sketch_val_t, val2 
 
 func (c *Sketch) Sort(fn func(*SketchObject, *SketchObject) bool) *Sketch {
 	C.sketch_sort(c.inner.val, unsafe.Pointer(&fn), (*[0]byte)(C.sketchSortFunc))
+	runtime.KeepAlive(fn)
 	return c
 }
 

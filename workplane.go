@@ -212,6 +212,9 @@ func (c *Workplane) AddShape(obj *ShapeObject) *Workplane {
 }
 
 func (c *Workplane) AddShapes(objs []*ShapeObject) *Workplane {
+	if len(objs) == 0 {
+		return c
+	}
 	objsPtr := make([]*C.struct__shape_object_t, len(objs))
 	for i, obj := range objs {
 		objsPtr[i] = obj.inner.val
@@ -232,7 +235,7 @@ func (wp *Workplane) Vertices(selector string, tag string) *Workplane {
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_vertices(wp.inner.val, cselector, ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -240,7 +243,7 @@ func (wp *Workplane) VerticesWithSelector(selector *Selector, tag string) *Workp
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_vertices_with_selector(wp.inner.val, selector.inner.val, ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -250,7 +253,7 @@ func (wp *Workplane) Edges(selector string, tag string) *Workplane {
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_edges(wp.inner.val, cselector, ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -258,7 +261,7 @@ func (wp *Workplane) EdgesWithSelector(selector *Selector, tag string) *Workplan
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_edges_with_selector(wp.inner.val, selector.inner.val, ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -268,7 +271,7 @@ func (wp *Workplane) Wires(selector string, tag string) *Workplane {
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_wires(wp.inner.val, cselector, ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -276,7 +279,7 @@ func (wp *Workplane) WiresWithSelector(selector *Selector, tag string) *Workplan
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_wires_with_selector(wp.inner.val, selector.inner.val, ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -286,7 +289,7 @@ func (wp *Workplane) Faces(selector string, tag string) *Workplane {
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_faces(wp.inner.val, cselector, ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -294,7 +297,7 @@ func (wp *Workplane) FacesWithSelector(selector *Selector, tag string) *Workplan
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_faces_with_selector(wp.inner.val, selector.inner.val, ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -304,7 +307,7 @@ func (wp *Workplane) Shells(selector string, tag string) *Workplane {
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_shells(wp.inner.val, cselector, ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -312,7 +315,7 @@ func (wp *Workplane) ShellsWithSelector(selector *Selector, tag string) *Workpla
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_shells_with_selector(wp.inner.val, selector.inner.val, ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -322,7 +325,7 @@ func (wp *Workplane) Solids(selector string, tag string) *Workplane {
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_solids(wp.inner.val, cselector, ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -330,7 +333,7 @@ func (wp *Workplane) SolidsWithSelector(selector *Selector, tag string) *Workpla
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_solids_with_selector(wp.inner.val, selector.inner.val, ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -340,14 +343,14 @@ func (wp *Workplane) Compounds(selector string, tag string) *Workplane {
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_compounds(wp.inner.val, cselector, ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 func (wp *Workplane) CompoundsWithSelector(selector *Selector, tag string) *Workplane {
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_compounds_with_selector(wp.inner.val, selector.inner.val, ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -355,7 +358,7 @@ func (wp *Workplane) Ancestors(kind int, tag string) *Workplane {
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_ancestors(wp.inner.val, C.int(kind), ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -363,19 +366,19 @@ func (wp *Workplane) Siblings(kind int, level int, tag string) *Workplane {
 	ctag := C.CString(tag)
 	defer C.free(unsafe.Pointer(ctag))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_siblings(wp.inner.val, C.int(kind), C.int(level), ctag)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) RotateAboutCenter(axisEndPoint *TopoVector, angle float64) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_rotate_about_center(wp.inner.val, axisEndPoint.inner.val, C.double(angle))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) Rotate(axisStart *TopoVector, axisEnd *TopoVector, angle float64) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_rotate(wp.inner.val, axisStart.inner.val, axisEnd.inner.val, C.double(angle))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -383,13 +386,13 @@ func (wp *Workplane) Mirror(planeName string, basePoint *TopoVector) *Workplane 
 	cplaneName := C.CString(planeName)
 	defer C.free(unsafe.Pointer(cplaneName))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_mirror(wp.inner.val, cplaneName, basePoint.inner.val)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) MirrorWithNormal(normal *TopoVector, basePoint *TopoVector) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_mirror_with_normal(wp.inner.val, normal.inner.val, basePoint.inner.val)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -397,18 +400,18 @@ func (wp *Workplane) MirrorWithName(planeName string, basePoint *TopoVector, uni
 	cplaneName := C.CString(planeName)
 	defer C.free(unsafe.Pointer(cplaneName))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_mirror_with_name(wp.inner.val, cplaneName, basePoint.inner.val, C.bool(unionResult))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) MirrorWithFace(mirrorFace *Face, basePoint *TopoVector, unionResult bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_mirror_with_face(wp.inner.val, &mirrorFace.inner.val, basePoint.inner.val, C.bool(unionResult))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 func (wp *Workplane) Transform(rotate *TopoVector, offset *TopoVector) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_transformed(wp.inner.val, rotate.inner.val, offset.inner.val)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -417,8 +420,12 @@ func (wp *Workplane) PushPoints(locs []*TopoLocation) *Workplane {
 	for i, loc := range locs {
 		locsPtr[i] = loc.inner.val
 	}
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_push_points(wp.inner.val, &locsPtr[0], C.int(len(locs)))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	var locsPtrRaw **C.struct__topo_location_t
+	if len(locsPtr) > 0 {
+		locsPtrRaw = &locsPtr[0]
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_push_points(wp.inner.val, locsPtrRaw, C.int(len(locs)))}}
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -427,14 +434,18 @@ func (wp *Workplane) PushPointsWithVector(vecs []*TopoVector) *Workplane {
 	for i, vec := range vecs {
 		vecsPtr[i] = vec.inner.val
 	}
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_push_points_with_vector(wp.inner.val, &vecsPtr[0], C.int(len(vecs)))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	var vecsPtrRaw **C.struct__topo_vector_t
+	if len(vecsPtr) > 0 {
+		vecsPtrRaw = &vecsPtr[0]
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_push_points_with_vector(wp.inner.val, vecsPtrRaw, C.int(len(vecs)))}}
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) Translate(vec *TopoVector) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_translate(wp.inner.val, vec.inner.val)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -442,43 +453,43 @@ func (wp *Workplane) Shell(thickness float64, kind string) *Workplane {
 	ckind := C.CString(kind)
 	defer C.free(unsafe.Pointer(ckind))
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_shell(wp.inner.val, C.double(thickness), ckind)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) Fillet(radius float64) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_fillet(wp.inner.val, C.double(radius))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) Chamfer(length float64, length2 float64) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_chamfer(wp.inner.val, C.double(length), C.double(length2))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) Rarray(xSpacing float64, ySpacing float64, xCount int, yCount int, centerX bool, centerY bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_rarray(wp.inner.val, C.double(xSpacing), C.double(ySpacing), C.int(xCount), C.int(yCount), C.bool(centerX), C.bool(centerY))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) PolarArray(radius float64, startAngle float64, angle float64, count int, fill bool, rotate bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_polar_array(wp.inner.val, C.double(radius), C.double(startAngle), C.double(angle), C.int(count), C.bool(fill), C.bool(rotate))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) Center(x float64, y float64) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_center(wp.inner.val, C.double(x), C.double(y))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) LineTo(x float64, y float64, forConstruction bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_line_to(wp.inner.val, C.double(x), C.double(y), C.bool(forConstruction))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -487,68 +498,72 @@ func (wp *Workplane) Bezier(points []*TopoVector, forConstruction bool, includeC
 	for i, point := range points {
 		pointsPtr[i] = point.inner.val
 	}
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_bezier(wp.inner.val, &pointsPtr[0], C.int(len(points)), C.bool(forConstruction), C.bool(includeCurrent), C.bool(makeWire))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	var pointsPtrRaw **C.struct__topo_vector_t
+	if len(pointsPtr) > 0 {
+		pointsPtrRaw = &pointsPtr[0]
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_bezier(wp.inner.val, pointsPtrRaw, C.int(len(points)), C.bool(forConstruction), C.bool(includeCurrent), C.bool(makeWire))}}
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) Line(xDist float64, yDist float64, forConstruction bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_line(wp.inner.val, C.double(xDist), C.double(yDist), C.bool(forConstruction))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) VLine(distance float64, forConstruction bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_vline(wp.inner.val, C.double(distance), C.bool(forConstruction))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) HLine(distance float64, forConstruction bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_hline(wp.inner.val, C.double(distance), C.bool(forConstruction))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) VLineTo(yCoord float64, forConstruction bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_vline_to(wp.inner.val, C.double(yCoord), C.bool(forConstruction))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) HLineTo(xCoord float64, forConstruction bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_hline_to(wp.inner.val, C.double(xCoord), C.bool(forConstruction))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) PolarLine(distance float64, angle float64, forConstruction bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_polar_line(wp.inner.val, C.double(distance), C.double(angle), C.bool(forConstruction))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) PolarLineTo(distance float64, angle float64, forConstruction bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_polar_line_to(wp.inner.val, C.double(distance), C.double(angle), C.bool(forConstruction))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) MoveTo(x float64, y float64) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_move_to(wp.inner.val, C.double(x), C.double(y))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) Move(xDist float64, yDist float64) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_move(wp.inner.val, C.double(xDist), C.double(yDist))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) Slot2d(length float64, diameter float64, angle float64) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_slot2d(wp.inner.val, C.double(length), C.double(diameter), C.double(angle))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -561,8 +576,16 @@ func (wp *Workplane) Spline(points []*TopoVector, periodic bool, tangents []*Top
 	for i, tangent := range tangents {
 		tangentsPtr[i] = tangent.inner.val
 	}
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_spline(wp.inner.val, &pointsPtr[0], C.int(len(points)), C.bool(periodic), &tangentsPtr[0], C.int(len(tangents)), C.bool(scale), C.double(tol), C.bool(forConstruction), C.bool(includeCurrent), C.bool(makeWire))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	var pointsPtrRaw **C.struct__topo_vector_t
+	if len(pointsPtr) > 0 {
+		pointsPtrRaw = &pointsPtr[0]
+	}
+	var tangentsPtrRaw **C.struct__topo_vector_t
+	if len(tangentsPtr) > 0 {
+		tangentsPtrRaw = &tangentsPtr[0]
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_spline(wp.inner.val, pointsPtrRaw, C.int(len(points)), C.bool(periodic), tangentsPtrRaw, C.int(len(tangents)), C.bool(scale), C.double(tol), C.bool(forConstruction), C.bool(includeCurrent), C.bool(makeWire))}}
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -571,8 +594,12 @@ func (wp *Workplane) SplineApprox(points []*TopoVector, tol float64, minDeg int,
 	for i, point := range points {
 		pointsPtr[i] = point.inner.val
 	}
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_spline_approx(wp.inner.val, &pointsPtr[0], C.int(len(points)), C.double(tol), C.int(minDeg), C.int(maxDeg), smoothing.inner.val, C.bool(forConstruction), C.bool(includeCurrent), C.bool(makeWire))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	var pointsPtrRaw **C.struct__topo_vector_t
+	if len(pointsPtr) > 0 {
+		pointsPtrRaw = &pointsPtr[0]
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_spline_approx(wp.inner.val, pointsPtrRaw, C.int(len(points)), C.double(tol), C.int(minDeg), C.int(maxDeg), smoothing.inner.val, C.bool(forConstruction), C.bool(includeCurrent), C.bool(makeWire))}}
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -585,7 +612,8 @@ func parametricCurveFunc(userdata unsafe.Pointer, t float64) *C.struct__topo_vec
 // C.parametricCurveFunc
 func (wp *Workplane) ParametricCurve(func_ func(float64) *TopoVector, N int, start float64, stop float64, tol float64, minDeg int, maxDeg int, smoothing *TopoVector, makeWire bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_parametric_curve(wp.inner.val, unsafe.Pointer(&func_), (*[0]byte)(C.parametricCurveFunc), C.int(N), C.double(start), C.double(stop), C.double(tol), C.int(minDeg), C.int(maxDeg), smoothing.inner.val, C.bool(makeWire))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
+	runtime.KeepAlive(func_)
 	return c
 }
 
@@ -597,55 +625,56 @@ func parametricSurfaceFunc(userdata unsafe.Pointer, t float64, u float64) *C.str
 
 func (wp *Workplane) ParametricSurface(func_ func(float64, float64) *TopoVector, N int, start float64, stop float64, tol float64, minDeg int, maxDeg int, smoothing *TopoVector) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_parametric_surface(wp.inner.val, unsafe.Pointer(&func_), (*[0]byte)(C.parametricSurfaceFunc), C.int(N), C.double(start), C.double(stop), C.double(tol), C.int(minDeg), C.int(maxDeg), smoothing.inner.val)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
+	runtime.KeepAlive(func_)
 	return c
 }
 
 func (wp *Workplane) EllipseArc(xRadius float64, yRadius float64, angle1 float64, angle2 float64, rotationAngle float64, sense int, forConstruction bool, startAtCurrent bool, makeWire bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_ellipse_arc(wp.inner.val, C.double(xRadius), C.double(yRadius), C.double(angle1), C.double(angle2), C.double(rotationAngle), C.int(sense), C.bool(forConstruction), C.bool(startAtCurrent), C.bool(makeWire))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) ThreePointArc(point1 *TopoVector, point2 *TopoVector, forConstruction bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_three_point_arc(wp.inner.val, point1.inner.val, point2.inner.val, C.bool(forConstruction))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) SagittaArc(endPoint *TopoVector, sag float64, forConstruction bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_sagitta_arc(wp.inner.val, endPoint.inner.val, C.double(sag), C.bool(forConstruction))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) TangentArcPoint(endPoint *TopoVector, forConstruction bool, relative bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_tangent_arc_point(wp.inner.val, endPoint.inner.val, C.bool(forConstruction), C.bool(relative))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) RadiusArc(endPoint *TopoVector, radius float64, forConstruction bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_radius_arc(wp.inner.val, endPoint.inner.val, C.double(radius), C.bool(forConstruction))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) MirrorY() *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_mirror_y(wp.inner.val)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) MirrorX() *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_mirror_x(wp.inner.val)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) ConsolidateWires() *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_consolidate_wires(wp.inner.val)}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
@@ -659,13 +688,15 @@ func eachFunc(userdata unsafe.Pointer, obj *C.struct__shape_object_t) {
 
 func (wp *Workplane) Each(func_ func(*ShapeObject)) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_each(wp.inner.val, unsafe.Pointer(&func_), (*[0]byte)(C.eachFunc), C.bool(false), C.bool(false), C.bool(false))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
+	runtime.KeepAlive(func_)
 	return c
 }
 
 func (wp *Workplane) EachPoint(func_ func(*ShapeObject)) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_eachpoint(wp.inner.val, unsafe.Pointer(&func_), (*[0]byte)(C.eachFunc), C.bool(false), C.bool(false), C.bool(false))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
+	runtime.KeepAlive(func_)
 	return c
 }
 
@@ -692,7 +723,8 @@ func eachFuncWithLocation(userdata unsafe.Pointer, loc *C.struct__topo_location_
 
 func (wp *Workplane) EachPointWithLocation(func_ func(*TopoLocation) *Shape) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_eachpoint_with_location(wp.inner.val, unsafe.Pointer(&func_), (*[0]byte)(C.eachFuncWithLocation), C.bool(false), C.bool(false), C.bool(false))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
+	runtime.KeepAlive(func_)
 	return c
 }
 
@@ -757,7 +789,8 @@ func cutEachFunc(userdata unsafe.Pointer, loc *C.struct__topo_location_t) *C.str
 
 func (wp *Workplane) CutEach(func_ func(*TopoLocation) *Shape, useLocalCoordinates, clean bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_cut_each(wp.inner.val, unsafe.Pointer(&func_), (*[0]byte)(C.cutEachFunc), C.bool(useLocalCoordinates), C.bool(clean))}}
-	runtime.SetFinalizer(c, (*innerWorkplane).free)
+	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
+	runtime.KeepAlive(func_)
 	return c
 }
 
@@ -1182,6 +1215,7 @@ func workplaneFilterFunc(userdata unsafe.Pointer, obj *C.struct__shape_object_t)
 func (wp *Workplane) Filter(func_ func(*ShapeObject) bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_filter(wp.inner.val, unsafe.Pointer(&func_), (*[0]byte)(C.workplaneFilterFunc))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
+	runtime.KeepAlive(func_)
 	return c
 }
 
@@ -1197,6 +1231,7 @@ func workplaneMapFunc(userdata unsafe.Pointer, obj *C.struct__shape_object_t) *C
 func (wp *Workplane) Map(func_ func(*ShapeObject) *ShapeObject) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_map(wp.inner.val, unsafe.Pointer(&func_), (*[0]byte)(C.workplaneMapFunc))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
+	runtime.KeepAlive(func_)
 	return c
 }
 
@@ -1225,6 +1260,7 @@ func workplaneApplyFunc(userdata unsafe.Pointer, objs **C.struct__shape_object_t
 func (wp *Workplane) Apply(func_ func([]*ShapeObject) []*ShapeObject) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_apply(wp.inner.val, unsafe.Pointer(&func_), (*[0]byte)(C.workplaneApplyFunc))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
+	runtime.KeepAlive(func_)
 	return c
 }
 
@@ -1241,6 +1277,7 @@ func workplaneSortFunc(userdata unsafe.Pointer, obj1, obj2 *C.struct__shape_obje
 func (wp *Workplane) Sort(func_ func(*ShapeObject, *ShapeObject) bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_sort(wp.inner.val, unsafe.Pointer(&func_), (*[0]byte)(C.workplaneSortFunc))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
+	runtime.KeepAlive(func_)
 	return c
 }
 
@@ -1253,6 +1290,7 @@ func workplaneInvokeFunc(userdata unsafe.Pointer) *C.struct__workplane_t {
 
 func (wp *Workplane) Invoke(func_ func() *Workplane) {
 	C.workplane_invoke(wp.inner.val, unsafe.Pointer(&func_), (*[0]byte)(C.workplaneInvokeFunc))
+	runtime.KeepAlive(func_)
 }
 
 func (wp *Workplane) HasError() bool {

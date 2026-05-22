@@ -36,12 +36,14 @@ func (c *innerAssemblyObject) free() {
 
 func (c *AssemblyObject) GetShape() *Shape {
 	shp := &Shape{inner: &innerShape{C.assembly_object_get_shape(c.inner.val)}}
-	runtime.SetFinalizer(c.inner, (*innerShape).free)
+	runtime.SetFinalizer(shp.inner, (*innerShape).free)
 	return shp
 }
 
 func (c *AssemblyObject) GetWorkplane() *Workplane {
-	return &Workplane{inner: &innerWorkplane{C.assembly_object_get_workplane(c.inner.val)}}
+	wp := &Workplane{inner: &innerWorkplane{C.assembly_object_get_workplane(c.inner.val)}}
+	runtime.SetFinalizer(wp.inner, (*innerWorkplane).free)
+	return wp
 }
 
 func (c *AssemblyObject) IsShape() bool {
@@ -70,7 +72,7 @@ func (c *AssemblyElament) GetName() string {
 
 func (c *AssemblyElament) GetShape() *Shape {
 	shp := &Shape{inner: &innerShape{C.assembly_element_get_shape(c.inner.val)}}
-	runtime.SetFinalizer(c.inner, (*innerShape).free)
+	runtime.SetFinalizer(shp.inner, (*innerShape).free)
 	return shp
 }
 
@@ -132,10 +134,12 @@ func NewAssembly(obj *AssemblyObject, loc *TopoLocation, name string, color *Col
 	var color_ *C.struct__color_t
 	if color != nil {
 		color_ = &color.val
-	} else {
-		color_ = nil
 	}
-	c := &Assembly{inner: &innerAssembly{val: C.assembly_create(obj.inner.val, loc.inner.val, cname, color_)}}
+	var cloc *C.struct__topo_location_t
+	if loc != nil {
+		cloc = loc.inner.val
+	}
+	c := &Assembly{inner: &innerAssembly{val: C.assembly_create(obj.inner.val, cloc, cname, color_)}}
 	runtime.SetFinalizer(c.inner, (*innerAssembly).free)
 	return c
 }
@@ -153,7 +157,11 @@ func (c *Assembly) AddObject(obj *AssemblyObject, loc *TopoLocation, name string
 	if color != nil {
 		color_ = &color.val
 	}
-	C.assembly_add_object(c.inner.val, obj.inner.val, loc.inner.val, cname, color_)
+	var cloc *C.struct__topo_location_t
+	if loc != nil {
+		cloc = loc.inner.val
+	}
+	C.assembly_add_object(c.inner.val, obj.inner.val, cloc, cname, color_)
 	return c
 }
 
@@ -164,7 +172,11 @@ func (c *Assembly) AddAssembly(obj *Assembly, loc *TopoLocation, name string, co
 	if color != nil {
 		color_ = &color.val
 	}
-	C.assembly_add_assembly(c.inner.val, obj.inner.val, loc.inner.val, cname, color_)
+	var cloc *C.struct__topo_location_t
+	if loc != nil {
+		cloc = loc.inner.val
+	}
+	C.assembly_add_assembly(c.inner.val, obj.inner.val, cloc, cname, color_)
 	return c
 }
 

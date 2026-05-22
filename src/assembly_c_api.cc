@@ -234,6 +234,9 @@ assembly_element_t **assembly_get_elements(assembly_t *as, int *size) {
 
 void assembly_element_list_free(assembly_element_t **list, int size) {
   if (list) {
+    for (int i = 0; i < size; i++) {
+      delete list[i];
+    }
     delete[] list;
   }
 }
@@ -267,6 +270,9 @@ assembly_t **assembly_children(assembly_t *as, int *size) {
 
 void assembly_list_free(assembly_t **list, int size) {
   if (list) {
+    for (int i = 0; i < size; i++) {
+      delete list[i];
+    }
     delete[] list;
   }
 }
