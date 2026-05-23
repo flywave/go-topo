@@ -119,7 +119,7 @@ public:
   int mirror(gp_Ax1 a);
   int mirror(gp_Ax2 a);
 
-  gp_Pnt centre_of_mass() const;
+  virtual gp_Pnt centre_of_mass() const;
   gp_Pnt center_of_bound_box() const;
   double compute_mass() const;
   double compute_area() const;

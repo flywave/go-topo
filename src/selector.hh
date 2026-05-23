@@ -114,7 +114,7 @@ class direction_minmax_selector : public center_nth_selector {
 public:
   direction_minmax_selector(const topo_vector &dir, bool direction_max = true,
                             double tolerance = 1e-4)
-      : center_nth_selector(dir, -1, direction_max, tolerance) {}
+      : center_nth_selector(dir, 0, direction_max, tolerance) {}
 };
 
 class direction_selector : public selector {

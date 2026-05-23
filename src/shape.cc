@@ -707,7 +707,14 @@ topo_location shape::location() const {
 
 gp_Pnt shape::centre_of_mass() const {
   GProp_GProps system;
-  BRepGProp::VolumeProperties(_shape, system);
+  TopAbs_ShapeEnum st = _shape.ShapeType();
+  if (st == TopAbs_FACE || st == TopAbs_SHELL) {
+    BRepGProp::SurfaceProperties(_shape, system);
+  } else if (st == TopAbs_EDGE || st == TopAbs_WIRE) {
+    BRepGProp::LinearProperties(_shape, system);
+  } else {
+    BRepGProp::VolumeProperties(_shape, system);
+  }
   return system.CentreOfMass();
 }
 

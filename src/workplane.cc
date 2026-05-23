@@ -27,13 +27,14 @@ std::vector<shape> select_shapes(const std::vector<shape_object> &objects) {
 } // namespace
 
 workplane::workplane()
-    : _plane(nullptr), _parent(), _ctx(std::make_shared<context>()) {}
+    : _plane(std::make_shared<topo_plane>(topo_plane::XY())), _parent(),
+      _ctx(std::make_shared<context>()) {}
 
 workplane::workplane(topo_plane plane, topo_vector *origin, shape_object obj)
     : _plane(std::make_shared<topo_plane>(plane)), _parent(),
       _ctx(std::make_shared<context>()),
-      _objects(obj.empty() ? std::vector<shape_object>{}
-                           : std::vector<shape_object>{obj}) {}
+      _objects(boost::get<boost::blank>(&obj) ? std::vector<shape_object>{}
+                                              : std::vector<shape_object>{obj}) {}
 
 workplane::workplane(const std::string &planeName, topo_vector *origin,
                      shape_object obj)
@@ -41,7 +42,7 @@ workplane::workplane(const std::string &planeName, topo_vector *origin,
   auto plane =
       topo_plane::named(planeName, origin ? *origin : topo_vector(0, 0, 0));
   _plane = std::make_shared<topo_plane>(std::move(plane));
-  if (!obj.empty()) {
+  if (!boost::get<boost::blank>(&obj)) {
     _objects.push_back(obj);
   }
 }
@@ -210,9 +211,9 @@ std::vector<std::shared_ptr<workplane>> workplane::all() {
 
 size_t workplane::size() const { return _objects.size(); }
 
-bool workplane::has_parent() const { return !_parent.expired(); }
+bool workplane::has_parent() const { return _parent != nullptr; }
 
-std::shared_ptr<workplane> workplane::parent() const { return _parent.lock(); }
+std::shared_ptr<workplane> workplane::parent() const { return _parent; }
 
 std::vector<shape_object> workplane::vals() const { return _objects; }
 
@@ -383,7 +384,8 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
   gp_Pnt offsetCenter = center_.Translated(offsetVector);
 
   topo_plane newPlane(offsetCenter, xDir, normal);
-  auto s = std::make_shared<workplane>(newPlane);
+  auto s = std::make_shared<workplane>();
+  s->_plane = std::make_shared<topo_plane>(newPlane);
   s->_parent = shared_from_this();
   s->_ctx = _ctx;
 
@@ -1787,6 +1789,8 @@ std::shared_ptr<workplane> workplane::_eachpoint(
                        topo_location(*_plane, (*sk)->faces_->centre_of_mass()));
       } else if (auto loc = boost::get<topo_location>(&o)) {
         pnts.push_back(*loc);
+      } else if (boost::get<boost::blank>(&o)) {
+        pnts.push_back(topo_location());
       }
     }
   }
@@ -2052,7 +2056,7 @@ workplane::hole(double diameter, boost::optional<double> depth, bool clean) {
     depth = largest_dimension();
   }
 
-  gp_Vec boreDir(0, 0, -1);
+  gp_Dir boreDir(0, 0, -1);
   solid h = solid::make_solid_from_cylinder(diameter / 2.0, *depth, gp_Pnt(),
                                             boreDir);
 
@@ -2866,7 +2870,7 @@ std::shared_ptr<workplane> workplane::_box(
   }
 
   shape box = solid::make_solid_from_box(
-      gp_Pnt(offset.X(), offset.Y(), offset.Z()), width, height, length);
+      gp_Pnt(offset.X(), offset.Y(), offset.Z()), length, width, height);
 
   return _eachpoint([box](const topo_location &loc) { return box.moved(loc); },
                     true, combine, clean);

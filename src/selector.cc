@@ -134,7 +134,7 @@ nth_selector::filter(const std::vector<shape> &objects) const {
   }
 
   auto clustered = cluster(objects);
-  if (!direction_max_) {
+  if (direction_max_) {
     std::reverse(clustered.begin(), clustered.end());
   }
 

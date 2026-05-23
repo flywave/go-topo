@@ -327,23 +327,21 @@ solid solid::make_solid_from_cylinder(const gp_Ax2 &Axes, const Standard_Real R,
 
 // Make a cylinder with given radius and height
 solid solid::make_solid_from_cylinder(double radius, double height,
-                                      const gp_Pnt &pnt, const gp_Dir &dir,
-                                      double angleDegrees) {
+                                       const gp_Pnt &pnt, const gp_Dir &dir,
+                                       double angleDegrees) {
   try {
-    // Convert angle to radians
-    double angleRadians = angleDegrees * M_PI / 180.0;
-
-    // Create axis system
-    gp_Ax2 axis(pnt, dir);
-
-    // Build the cylinder
-    BRepPrimAPI_MakeCylinder cylinderMaker(axis, radius, height, angleRadians);
-
-    if (!cylinderMaker.IsDone()) {
-      throw std::runtime_error("Cylinder creation failed");
+    // Create axis system with explicit X direction
+    gp_Dir zDir = dir;
+    gp_Dir xDir(1, 0, 0);
+    gp_Vec cross = zDir.Crossed(gp::DZ());
+    if (cross.Magnitude() > 1e-10) {
+      xDir = gp_Dir(cross);
     }
+    gp_Ax2 axis(pnt, zDir, xDir);
 
-    return solid(cylinderMaker.Shape());
+    // Build the cylinder (full 360 degree)
+    BRepPrimAPI_MakeCylinder cylinderMaker(axis, radius, height);
+    return solid(cylinderMaker.Solid());
   } catch (...) {
     return solid{};
   }
