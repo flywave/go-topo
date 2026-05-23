@@ -1091,7 +1091,8 @@ workplane::new_object(const std::vector<shape_object> &objlist) const {
     ns->_plane = std::make_shared<topo_plane>(*_plane);
   }
 
-  ns->_parent = std::const_pointer_cast<workplane>(shared_from_this());
+  ns->_parent = std::const_pointer_cast<workplane>(
+      const_cast<workplane *>(this)->shared_from_this());
   ns->_ctx = _ctx;
 
   ns->_objects = objlist;
@@ -1805,6 +1806,8 @@ std::shared_ptr<workplane> workplane::_eachpoint(
         pnts.push_back(*loc);
       } else if (boost::get<boost::blank>(&o)) {
         pnts.push_back(topo_location());
+      } else if (boost::get<boost::blank>(&o)) {
+        pnts.push_back(topo_location());
       }
     }
   }
@@ -2030,7 +2033,7 @@ workplane::cbore_hole(double diameter, double cboreDiameter, double cboreDepth,
     depth = largest_dimension();
   }
 
-  gp_Vec boreDir(0, 0, -1);
+  gp_Dir boreDir(0, 0, -1);
   gp_Pnt center;
 
   solid hole =

@@ -6,27 +6,27 @@ import (
 )
 
 func Test_example_rectangularPlate(t *testing.T) {
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	r := wp.BoxCentered(2.0, 2.0, 0.5)
 	r.ExportTo("example_01_rectangular_plate.step")
 }
 
 func Test_example_plateWithHole(t *testing.T) {
 	const length, height, thickness, centerHoleDia = 80.0, 60.0, 10.0, 22.0
-	wp := NewNamedWorkplane("XY")
+	wp := NewWorkplane()
 	r := wp.BoxCentered(length, height, thickness)
 	r = r.Faces(">Z", "").Workplane(0, false, 0, nil).HoleThrough(centerHoleDia)
 	r.ExportTo("example_02_plate_with_hole.step")
 }
 
 func Test_example_extrudePrism(t *testing.T) {
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	r := wp.CircleCentered(2.0).RectCentered(0.5, 0.75).ExtrudeSimple(0.5)
 	r.ExportTo("example_03_extrude_prism.step")
 }
 
 func Test_example_lineAndArc(t *testing.T) {
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	r := wp.LineTo(2.0, 0, false)
 	r = r.LineTo(2.0, 1.0, false)
 	r = r.ThreePointArc(NewTopoVector(1.0, 1.5, 0), NewTopoVector(0.0, 1.0, 0), false)
@@ -35,7 +35,7 @@ func Test_example_lineAndArc(t *testing.T) {
 }
 
 func Test_example_moveWorkPoint(t *testing.T) {
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	r := wp.CircleCentered(3.0)
 	r = r.Center(1.5, 0.0).RectCentered(0.5, 0.5)
 	r = r.Center(-1.5, 1.5).CircleCentered(0.25)
@@ -44,7 +44,7 @@ func Test_example_moveWorkPoint(t *testing.T) {
 }
 
 func Test_example_pointList(t *testing.T) {
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	pts := []*TopoVector{
 		NewTopoVector(1.5, 0, 0),
 		NewTopoVector(0, 1.5, 0),
@@ -57,7 +57,7 @@ func Test_example_pointList(t *testing.T) {
 }
 
 func Test_example_polygon(t *testing.T) {
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	r := wp.BoxCentered(3.0, 4.0, 0.25)
 	pts := []*TopoVector{
 		NewTopoVector(0, 0.75, 0),
@@ -79,7 +79,7 @@ func Test_example_polyline(t *testing.T) {
 		NewTopoVector(W/2.0, H/-2.0, 0),
 		NewTopoVector(0, H/-2.0, 0),
 	}
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	r := wp.Polyline(pts, false, false).MirrorY().ExtrudeSimple(L)
 	r.ExportTo("example_08_polyline.step")
 }
@@ -94,7 +94,7 @@ func Test_example_splineEdge(t *testing.T) {
 		NewTopoVector(0.5, 1.0, 0),
 		NewTopoVector(0, 1.0, 0),
 	}
-	wp := NewNamedWorkplane("XY")
+	wp := NewWorkplane()
 	r := wp.LineTo(3.0, 0, false).LineTo(3.0, 1.0, false)
 	r = r.Spline(sPnts, false, nil, false, 0.01, false, true, false).Close()
 	r = r.ExtrudeSimple(0.5)
@@ -102,7 +102,7 @@ func Test_example_splineEdge(t *testing.T) {
 }
 
 func Test_example_mirrorGeometry2D(t *testing.T) {
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	r := wp.HLine(1.0, false)
 	r = r.VLine(0.5, false).HLine(-0.25, false).VLine(-0.25, false).HLineTo(0.0, false)
 	r = r.MirrorY().ExtrudeSimple(0.25)
@@ -110,7 +110,7 @@ func Test_example_mirrorGeometry2D(t *testing.T) {
 }
 
 func Test_example_mirror3D(t *testing.T) {
-	wp := NewNamedWorkplane("XY")
+	wp := NewWorkplane()
 	r0 := wp.MoveTo(10, 0)
 	r0 = r0.LineTo(5, 0, false)
 	r0 = r0.ThreePointArc(NewTopoVector(3.9393, 0.4393, 0), NewTopoVector(3.5, 1.5, 0), false)
@@ -156,21 +156,21 @@ func Test_example_mirror3D(t *testing.T) {
 }
 
 func Test_example_mirrorByFace(t *testing.T) {
-	wp := NewNamedWorkplane("XY")
+	wp := NewWorkplane()
 	r := wp.Line(0, 1, false).Line(1, 0, false).Line(0, -0.5, false).Close().ExtrudeSimple(1)
 	r = r.MirrorWithName("XY", NewTopoVector(1, 0, 0), true)
 	r.ExportTo("example_12_mirror_by_face.step")
 }
 
 func Test_example_workplaneOnFace(t *testing.T) {
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	r := wp.BoxCentered(2, 3, 0.5)
 	r = r.Faces(">Z", "").Workplane(0, false, 0, nil).HoleThrough(0.5)
 	r.ExportTo("example_13_workplane_on_face.step")
 }
 
 func Test_example_workplaneOnVertex(t *testing.T) {
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	r := wp.BoxCentered(3, 2, 0.5)
 	r = r.Faces(">Z", "").Vertices("<XY", "")
 	r = r.Workplane(0, false, 1, nil).CircleCentered(1.0).CutThruAll(0, true)
@@ -178,14 +178,14 @@ func Test_example_workplaneOnVertex(t *testing.T) {
 }
 
 func Test_example_offsetWorkplane(t *testing.T) {
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	r := wp.BoxCentered(3, 2, 0.5)
 	r = r.Faces("<X", "").Workplane(0.75, false, 0, nil).CircleCentered(1.0).ExtrudeSimple(0.5)
 	r.ExportTo("example_15_offset_workplane.step")
 }
 
 func Test_example_copyWorkplane(t *testing.T) {
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	r := wp.CircleCentered(1).ExtrudeSimple(10)
 	wp2 := NewWorkplaneFromName("right", NewTopoVector(-5, 0, 0))
 	r2 := wp2.CircleCentered(1).ExtrudeSimple(10)
@@ -194,7 +194,7 @@ func Test_example_copyWorkplane(t *testing.T) {
 }
 
 func Test_example_transformedWorkplane(t *testing.T) {
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	r := wp.BoxCentered(4.0, 4.0, 0.25)
 	r = r.Faces(">Z", "").Workplane(0, false, 0, nil)
 	r = r.Transform(NewTopoVector(60, 0, 0), NewTopoVector(0, -1.5, 1.0))
@@ -203,7 +203,7 @@ func Test_example_transformedWorkplane(t *testing.T) {
 }
 
 func Test_example_constructionGeometry(t *testing.T) {
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	r := wp.BoxCentered(2, 2, 0.5)
 	r = r.Faces(">Z", "").Workplane(0, false, 0, nil)
 	r = r.RectAll(1.5, 1.5, true, true).Vertices("", "").HoleThrough(0.125)
@@ -211,21 +211,21 @@ func Test_example_constructionGeometry(t *testing.T) {
 }
 
 func Test_example_shell(t *testing.T) {
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	r1 := wp.BoxCentered(2, 2, 2).Shell(-0.1, "")
 	r1.ExportTo("example_19_shell_negative.step")
 
-	wp2 := NewNamedWorkplane("front")
+	wp2 := NewWorkplane()
 	r2 := wp2.BoxCentered(2, 2, 2).Shell(0.1, "")
 	r2.ExportTo("example_19_shell_positive.step")
 
-	wp3 := NewNamedWorkplane("front")
+	wp3 := NewWorkplane()
 	r3 := wp3.BoxCentered(2, 2, 2).Faces("+Z", "").Shell(0.1, "")
 	r3.ExportTo("example_19_shell_face_removal.step")
 }
 
 func Test_example_loft(t *testing.T) {
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	r := wp.BoxCentered(4.0, 4.0, 0.25)
 	r = r.Faces(">Z", "").CircleCentered(1.5)
 	r = r.Workplane(3.0, false, 0, nil).RectCentered(0.75, 0.5).LoftSimple()
@@ -240,7 +240,7 @@ func Test_example_extrudeToFace(t *testing.T) {
 }
 
 func Test_example_cboreAndCskHole(t *testing.T) {
-	wp := NewNamedWorkplane("XY")
+	wp := NewWorkplane()
 	r := wp.BoxCentered(4, 2, 0.5)
 	r = r.Faces(">Z", "").Workplane(0, false, 0, nil)
 	r = r.RectAll(3.5, 1.5, true, true).Vertices("", "")
@@ -261,13 +261,13 @@ func Test_example_offset2D(t *testing.T) {
 }
 
 func Test_example_fillet(t *testing.T) {
-	wp := NewNamedWorkplane("XY")
+	wp := NewWorkplane()
 	r := wp.BoxCentered(3, 3, 0.5).Edges("|Z", "").Fillet(0.125)
 	r.ExportTo("example_24_fillet.step")
 }
 
 func Test_example_tag(t *testing.T) {
-	wp := NewNamedWorkplane("XY")
+	wp := NewWorkplane()
 	r := wp.BoxCentered(10, 10, 10).Faces(">Z", "").Workplane(0, false, 0, nil)
 	r = r.Center(-3, 0).CircleCentered(1).ExtrudeSimple(3)
 	r = r.Center(6, 0).CircleCentered(1).ExtrudeSimple(2)
@@ -276,7 +276,7 @@ func Test_example_tag(t *testing.T) {
 
 func Test_example_bearingHolder(t *testing.T) {
 	const length, height, bearingDiam, thickness, padding = 30.0, 40.0, 22.0, 10.0, 8.0
-	wp := NewNamedWorkplane("XY")
+	wp := NewWorkplane()
 	r := wp.BoxCentered(length, height, thickness)
 	r = r.Faces(">Z", "").Workplane(0, false, 0, nil).HoleThrough(bearingDiam)
 	r = r.Faces(">Z", "").Workplane(0, false, 0, nil)
@@ -286,7 +286,7 @@ func Test_example_bearingHolder(t *testing.T) {
 }
 
 func Test_example_split(t *testing.T) {
-	wp := NewNamedWorkplane("XY")
+	wp := NewWorkplane()
 	r := wp.BoxCentered(1, 1, 1)
 	r = r.Faces(">Z", "").Workplane(0, false, 0, nil).CircleCentered(0.25).CutThruAll(0, true)
 	r = r.Faces(">Y", "").Workplane(-0.5, false, 0, nil).Split(true, false)
@@ -295,7 +295,7 @@ func Test_example_split(t *testing.T) {
 
 func Test_example_occBottle(t *testing.T) {
 	const L, wVal, thickVal = 20.0, 6.0, 3.0
-	wp := NewNamedWorkplane("XY")
+	wp := NewWorkplane()
 	p := wp.Center(-L/2.0, 0).VLine(wVal/2.0, false)
 	p = p.ThreePointArc(NewTopoVector(L/2.0, wVal/2.0+thickVal, 0), NewTopoVector(L, wVal/2.0, 0), false)
 	p = p.VLine(-wVal/2.0, false).MirrorX().ExtrudeSimple(30.0)
@@ -318,7 +318,7 @@ func Test_example_enclosure(t *testing.T) {
 		pLipHeight          = 1.0
 	)
 
-	oshell := NewNamedWorkplane("XY").RectCentered(pOuterWidth, pOuterLength).ExtrudeSimple(pOuterHeight + pLipHeight)
+	oshell := NewWorkplane().RectCentered(pOuterWidth, pOuterLength).ExtrudeSimple(pOuterHeight + pLipHeight)
 
 	if pSideRadius > pTopAndBottomRadius {
 		oshell = oshell.Edges("|Z", "").Fillet(pSideRadius)
@@ -331,7 +331,7 @@ func Test_example_enclosure(t *testing.T) {
 	innerW := pOuterWidth - 2*pThickness
 	innerL := pOuterLength - 2*pThickness
 	innerH := pOuterHeight - 2*pThickness
-	ishell := NewNamedWorkplane("XY").RectCentered(innerW, innerL).ExtrudeSimple(innerH + pLipHeight)
+	ishell := NewWorkplane().RectCentered(innerW, innerL).ExtrudeSimple(innerH + pLipHeight)
 	ishell = ishell.Edges("|Z", "").Fillet(pSideRadius - pThickness)
 
 	box := oshell.Cut(ishell, true, 0.001)
@@ -362,7 +362,7 @@ func Test_example_legoBrick(t *testing.T) {
 	totalLength := float64(lbumps)*pitch - 2.0*clearance
 	totalWidth := float64(wbumps)*pitch - 2.0*clearance
 
-	wp := NewNamedWorkplane("XY")
+	wp := NewWorkplane()
 	s := wp.BoxCentered(totalLength, totalWidth, height)
 	s = s.Faces("<Z", "").Shell(-thick, "")
 
@@ -393,7 +393,7 @@ func Test_example_braille(t *testing.T) {
 		plateHeight   = 30.0
 	)
 
-	wp := NewNamedWorkplane("XY")
+	wp := NewWorkplane()
 	base := wp.BoxCentered(plateWidth, plateHeight, baseThickness)
 
 	dotPositions := []*TopoVector{
@@ -407,7 +407,7 @@ func Test_example_braille(t *testing.T) {
 
 func Test_example_panelConnectors(t *testing.T) {
 	const width, height, thickness = 400.0, 500.0, 2.0
-	wp := NewNamedWorkplane("front")
+	wp := NewWorkplane()
 	result := wp.BoxCentered(width, height, thickness)
 
 	hSep := 60.0
@@ -456,7 +456,7 @@ func Test_example_cycloidalGear(t *testing.T) {
 		pts[i] = NewTopoVector(x, y, 0)
 	}
 
-	wp := NewNamedWorkplane("XY")
+	wp := NewWorkplane()
 	r := wp.Polyline(pts, false, false).Close()
 	r = r.TwistExtrude(15, 90, true, true)
 	r = r.Faces(">Z", "").Workplane(0, false, 0, nil).CircleCentered(2).CutThruAll(0, true)
