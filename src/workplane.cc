@@ -1045,7 +1045,7 @@ workplane::new_shape_object(const std::vector<T> &objlist) const {
     ns->_plane = std::make_shared<topo_plane>(*_plane);
   }
 
-  ns->_parent = std::const_pointer_cast<workplane>(this->shared_from_this());
+  ns->_parent = std::const_pointer_cast<workplane>(const_cast<workplane*>(this)->shared_from_this());
   ns->_ctx = _ctx;
 
   ns->_objects.clear();
@@ -1804,8 +1804,6 @@ std::shared_ptr<workplane> workplane::_eachpoint(
                        topo_location(*_plane, (*sk)->faces_->centre_of_mass()));
       } else if (auto loc = boost::get<topo_location>(&o)) {
         pnts.push_back(*loc);
-      } else if (boost::get<boost::blank>(&o)) {
-        pnts.push_back(topo_location());
       } else if (boost::get<boost::blank>(&o)) {
         pnts.push_back(topo_location());
       }
