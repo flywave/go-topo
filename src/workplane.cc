@@ -32,9 +32,17 @@ workplane::workplane()
 
 workplane::workplane(topo_plane plane, topo_vector *origin, shape_object obj)
     : _plane(std::make_shared<topo_plane>(plane)), _parent(),
-      _ctx(std::make_shared<context>()),
-      _objects(boost::get<boost::blank>(&obj) ? std::vector<shape_object>{}
-                                              : std::vector<shape_object>{obj}) {}
+      _ctx(std::make_shared<context>()) {
+  if (!boost::get<boost::blank>(&obj)) {
+    if (auto s = boost::get<shape>(&obj)) {
+      if (!s->is_null()) {
+        _objects.push_back(obj);
+      }
+    } else {
+      _objects.push_back(obj);
+    }
+  }
+}
 
 workplane::workplane(const std::string &planeName, topo_vector *origin,
                      shape_object obj)
@@ -43,7 +51,13 @@ workplane::workplane(const std::string &planeName, topo_vector *origin,
       topo_plane::named(planeName, origin ? *origin : topo_vector(0, 0, 0));
   _plane = std::make_shared<topo_plane>(std::move(plane));
   if (!boost::get<boost::blank>(&obj)) {
-    _objects.push_back(obj);
+    if (auto s = boost::get<shape>(&obj)) {
+      if (!s->is_null()) {
+        _objects.push_back(obj);
+      }
+    } else {
+      _objects.push_back(obj);
+    }
   }
 }
 
@@ -1031,7 +1045,7 @@ workplane::new_shape_object(const std::vector<T> &objlist) const {
     ns->_plane = std::make_shared<topo_plane>(*_plane);
   }
 
-  ns->_parent = std::const_pointer_cast<workplane>(shared_from_this());
+  ns->_parent = std::const_pointer_cast<workplane>(this->shared_from_this());
   ns->_ctx = _ctx;
 
   ns->_objects.clear();
