@@ -330,16 +330,10 @@ solid solid::make_solid_from_cylinder(double radius, double height,
                                        const gp_Pnt &pnt, const gp_Dir &dir,
                                        double angleDegrees) {
   try {
-    // Create axis system with explicit X direction
-    gp_Dir zDir = dir;
-    gp_Dir xDir(1, 0, 0);
-    gp_Vec cross = zDir.Crossed(gp::DZ());
-    if (cross.Magnitude() > 1e-10) {
-      xDir = gp_Dir(cross);
-    }
-    gp_Ax2 axis(pnt, zDir, xDir);
-
     // Build the cylinder (full 360 degree)
+    gp_Ax2 axis(gp::XOY());
+    axis.SetLocation(pnt);
+    axis.SetDirection(dir);
     BRepPrimAPI_MakeCylinder cylinderMaker(axis, radius, height);
     return solid(cylinderMaker.Solid());
   } catch (...) {
