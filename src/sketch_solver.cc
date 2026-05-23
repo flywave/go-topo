@@ -239,7 +239,7 @@ double sketch_solver::objective_function(const std::vector<double> &x,
 }
 
 double sketch_solver::compute_cost(const std::vector<double> &x,
-                                   std::vector<double> &grad) {
+                                    std::vector<double> &grad) {
   double cost = 0.0;
 
   if (!grad.empty()) {
@@ -442,7 +442,6 @@ double sketch_solver::compute_cost(const std::vector<double> &x,
       }
     }
   }
-
   return cost;
 }
 
@@ -518,7 +517,16 @@ sketch_solver::solve() {
 
   std::vector<double> x = x0;
   double min_cost;
-  nlopt::result result = opt.optimize(x, min_cost);
+  nlopt::result result;
+  try {
+    result = opt.optimize(x, min_cost);
+  } catch (const std::exception &e) {
+    std::cerr << "NLopt exception: " << e.what() << std::endl;
+    throw;
+  } catch (...) {
+    std::cerr << "NLopt unknown exception" << std::endl;
+    throw;
+  }
 
   if (min_cost > TOL * 1e3) {
     std::cerr << "Warning: sketch solver did not converge, cost = " << min_cost

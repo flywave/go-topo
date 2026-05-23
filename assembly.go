@@ -192,14 +192,22 @@ func (c *Assembly) Constrain(q1, q2 string, kind int, param *AssemblyConstraintP
 	defer C.free(unsafe.Pointer(cq1))
 	cq2 := C.CString(q2)
 	defer C.free(unsafe.Pointer(cq2))
-	C.assembly_constrain(c.inner.val, cq1, cq2, C.int(kind), param.inner.val)
+	var cp *C.struct__constraint_param_t
+	if param != nil {
+		cp = param.inner.val
+	}
+	C.assembly_constrain(c.inner.val, cq1, cq2, C.int(kind), cp)
 	return c
 }
 
 func (c *Assembly) Constrain1(q1 string, kind int, param *AssemblyConstraintParm) *Assembly {
 	cq1 := C.CString(q1)
 	defer C.free(unsafe.Pointer(cq1))
-	C.assembly_constrain1(c.inner.val, cq1, C.int(kind), param.inner.val)
+	var cp *C.struct__constraint_param_t
+	if param != nil {
+		cp = param.inner.val
+	}
+	C.assembly_constrain1(c.inner.val, cq1, C.int(kind), cp)
 	return c
 }
 
@@ -208,14 +216,22 @@ func (c *Assembly) Constrain2(id1 string, s1 *Shape, id2 string, s2 *Shape, kind
 	defer C.free(unsafe.Pointer(cid1))
 	cid2 := C.CString(id2)
 	defer C.free(unsafe.Pointer(cid2))
-	C.assembly_constrain2(c.inner.val, cid1, s1.inner.val, cid2, s2.inner.val, C.int(kind), param.inner.val)
+	var cp *C.struct__constraint_param_t
+	if param != nil {
+		cp = param.inner.val
+	}
+	C.assembly_constrain2(c.inner.val, cid1, s1.inner.val, cid2, s2.inner.val, C.int(kind), cp)
 	return c
 }
 
 func (c *Assembly) Constrain3(id1 string, s1 *Shape, kind int, param *AssemblyConstraintParm) *Assembly {
 	cid1 := C.CString(id1)
 	defer C.free(unsafe.Pointer(cid1))
-	C.assembly_constrain3(c.inner.val, cid1, s1.inner.val, C.int(kind), param.inner.val)
+	var cp *C.struct__constraint_param_t
+	if param != nil {
+		cp = param.inner.val
+	}
+	C.assembly_constrain3(c.inner.val, cid1, s1.inner.val, C.int(kind), cp)
 	return c
 }
 

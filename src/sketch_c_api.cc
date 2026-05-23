@@ -17,7 +17,7 @@ void safe_call(std::shared_ptr<sketch> sk, const T &func) {
   } catch (const std::exception &e) {
     sk->set_error(e.what());
   } catch (...) {
-    sk->set_error("Unknown error occurred");
+    sk->set_error("Unknown error occurred in solve()");
   }
 }
 
