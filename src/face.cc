@@ -1140,12 +1140,31 @@ std::vector<edge> face::isolines(const std::vector<double> &params,
 
 std::vector<face> face::make_from_wires(const wire &outer,
                                         const std::vector<wire> &inners) {
-  BRepBuilderAPI_MakeFace faceBuilder;
+  const TopoDS_Shape &sh = outer.value();
+  if (sh.IsNull()) {
+    throw std::runtime_error("make_from_wires: null wire shape");
+  }
+  if (sh.TShape().IsNull()) {
+    throw std::runtime_error("make_from_wires: wire has null TShape handle");
+  }
+  const TopoDS_TShape *ts = sh.TShape().operator->();
+  if (ts == nullptr || (reinterpret_cast<uintptr_t>(ts) < 0x1000)) {
+    throw std::runtime_error("make_from_wires: TShape pointer corrupted");
+  }
 
-  faceBuilder.Add(TopoDS::Wire(outer.value()));
+  // Stable copy of the wire to prevent TopoDS::Wire reinterpret_cast lifecycle issues
+  TopoDS_Shape shStable(sh);
+  const TopoDS_Wire &wireRef = TopoDS::Wire(shStable);
+  if (wireRef.IsNull()) {
+    throw std::runtime_error("make_from_wires: null wire after TopoDS::Wire");
+  }
+  BRepBuilderAPI_MakeFace faceBuilder(wireRef);
+  faceBuilder.Add(wireRef);
 
   for (const wire &w : inners) {
-    faceBuilder.Add(TopoDS::Wire(w.value()));
+    TopoDS_Shape innerStable(w.value());
+    const TopoDS_Wire &innerRef = TopoDS::Wire(innerStable);
+    faceBuilder.Add(innerRef);
   }
 
   TopoDS_Shape result = faceBuilder.Shape();

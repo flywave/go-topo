@@ -199,7 +199,7 @@ shape::operator TopoDS_Shape &() { return _shape; }
 shape::operator const TopoDS_Shape &() const { return _shape; }
 
 shape::shape(shape &&o) noexcept
-    : _shape(o._shape), _surface_colour(o._surface_colour),
+    : _shape(std::move(o._shape)), _surface_colour(o._surface_colour),
       _curve_colour(o._curve_colour), _u_origin(o._u_origin),
       _v_origin(o._v_origin), _u_repeat(o._u_repeat), _v_repeat(o._v_repeat),
       _scale_u(o._scale_u), _scale_v(o._scale_v),
@@ -207,12 +207,10 @@ shape::shape(shape &&o) noexcept
       _auto_scale_size_on_v(o._auto_scale_size_on_v),
       _txture_map_type(o._txture_map_type), _rotation_angle(o._rotation_angle),
       _for_construction(o._for_construction) {
-  if (!o._shape.IsNull())
-    o._shape.Free();
 }
 
 shape &shape::operator=(shape &&o) noexcept {
-  _shape = o._shape;
+  _shape = std::move(o._shape);
   _surface_colour = o._surface_colour;
   _curve_colour = o._curve_colour;
   _u_origin = o._u_origin;
@@ -226,12 +224,13 @@ shape &shape::operator=(shape &&o) noexcept {
   _txture_map_type = o._txture_map_type;
   _rotation_angle = o._rotation_angle;
   _for_construction = o._for_construction;
-  if (!o._shape.IsNull())
-    o._shape.Free();
   return *this;
 }
 
 shape shape::copy(bool deep) const {
+  if (_shape.IsNull()) {
+    return shape{};
+  }
   try {
     BRepBuilderAPI_Copy _copy(_shape, deep);
     _copy.Build();
@@ -260,9 +259,8 @@ shape shape::copy(bool deep) const {
     case TopAbs_SOLID:
       return solid(*this, shp);
     default:
-      break;
+      return shape{*this, shp};
     }
-    return shape{};
   } catch (...) {
     throw;
   }
@@ -1450,7 +1448,12 @@ boost::optional<shape> shape::make_shape(TopoDS_Shape shp) {
   return boost::none;
 }
 
-TopAbs_ShapeEnum shape::shape_type() const { return _shape.ShapeType(); }
+TopAbs_ShapeEnum shape::shape_type() const {
+  if (_shape.IsNull()) {
+    return TopAbs_SHAPE;
+  }
+  return _shape.ShapeType();
+}
 
 shape_geom_type shape::geom_type() const {
   if (_shape.IsNull()) {

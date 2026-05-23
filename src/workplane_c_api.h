@@ -291,12 +291,12 @@ workplane_cut_each(workplane_t *wp, void *userdata,
                    bool useLocalCoordinates, bool clean);
 WORKPLANECAPICALL workplane_t *
 workplane_cbore_hole(workplane_t *wp, double diameter, double cboreDiameter,
-                     double cboreDepth, double depth, bool clean);
+                     double cboreDepth, double *depth, bool clean);
 WORKPLANECAPICALL workplane_t *
 workplane_csk_hole(workplane_t *wp, double diameter, double cskDiameter,
-                   double cskAngle, double depth, bool clean);
+                   double cskAngle, double *depth, bool clean);
 WORKPLANECAPICALL workplane_t *workplane_hole(workplane_t *wp, double diameter,
-                                              double depth, bool clean);
+                                              double *depth, bool clean);
 WORKPLANECAPICALL workplane_t *
 workplane_twist_extrude(workplane_t *wp, double distance, double angleDegrees,
                         bool combine, bool clean);

@@ -70,9 +70,14 @@ int topo_shape_transform(topo_shape_t *p, trsf_t mat) {
   return -1;
 }
 
+#define CATCH_SHAPE_OP(RET_ON_ERR) \
+  catch (const std::exception &) { return RET_ON_ERR; } \
+  catch (...) { return RET_ON_ERR; }
+
 int topo_shape_translate(topo_shape_t *p, vec3d_t delta) {
   if (p) {
-    return p->shp->translate(cast_to_gp(delta));
+    try { return p->shp->translate(cast_to_gp(delta)); }
+    CATCH_SHAPE_OP(-1)
   }
   return -1;
 }
@@ -80,28 +85,32 @@ int topo_shape_translate(topo_shape_t *p, vec3d_t delta) {
 int topo_shape_rotate_from_two_point(topo_shape_t *p, double angle, pnt3d_t p1,
                                      pnt3d_t p2) {
   if (p) {
-    return p->shp->rotate(angle, cast_to_gp(p1), cast_to_gp(p2));
+    try { return p->shp->rotate(angle, cast_to_gp(p1), cast_to_gp(p2)); }
+    CATCH_SHAPE_OP(-1)
   }
   return -1;
 }
 
 int topo_shape_rotate_from_axis1(topo_shape_t *p, double angle, axis1_t a) {
   if (p) {
-    return p->shp->rotate(angle, cast_to_gp(a));
+    try { return p->shp->rotate(angle, cast_to_gp(a)); }
+    CATCH_SHAPE_OP(-1)
   }
   return -1;
 }
 
 int topo_shape_rotate_from_quaternion(topo_shape_t *p, quaternion_t q) {
   if (p) {
-    return p->shp->rotate(cast_to_gp(q));
+    try { return p->shp->rotate(cast_to_gp(q)); }
+    CATCH_SHAPE_OP(-1)
   }
   return -1;
 }
 
 int topo_shape_scale(topo_shape_t *p, double angle, pnt3d_t a) {
   if (p) {
-    return p->shp->scale(cast_to_gp(a), angle);
+    try { return p->shp->scale(cast_to_gp(a), angle); }
+    CATCH_SHAPE_OP(-1)
   }
   return -1;
 }
@@ -109,47 +118,58 @@ int topo_shape_scale(topo_shape_t *p, double angle, pnt3d_t a) {
 int topo_shape_mirror_from_point_norm(topo_shape_t *p, pnt3d_t pnt,
                                       pnt3d_t ner) {
   if (p) {
-    return p->shp->mirror(cast_to_gp(pnt), cast_to_gp(ner));
+    try { return p->shp->mirror(cast_to_gp(pnt), cast_to_gp(ner)); }
+    CATCH_SHAPE_OP(-1)
   }
   return -1;
 }
 
 int topo_shape_mirror_from_axis1(topo_shape_t *p, axis1_t a) {
   if (p) {
-    return p->shp->mirror(cast_to_gp(a));
+    try { return p->shp->mirror(cast_to_gp(a)); }
+    CATCH_SHAPE_OP(-1)
   }
   return -1;
 }
 
 int topo_shape_mirror_from_axis2(topo_shape_t *p, axis2_t a) {
   if (p) {
-    return p->shp->mirror(cast_to_gp(a));
+    try { return p->shp->mirror(cast_to_gp(a)); }
+    CATCH_SHAPE_OP(-1)
   }
   return -1;
 }
 
-topo_shape_t *topo_shape_transformed(topo_shape_t *p, trsf_t mat) {
+topo_shape_t *topo_shape_transformed(topo_shape_t *p, trsf_t t) {
   if (p) {
-    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
-                                p->shp->transformed(cast_to_gp(mat)))};
+    try {
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(
+              p->shp->transformed(cast_to_gp(t)))};
+    } CATCH_SHAPE_OP(nullptr)
   }
   return nullptr;
 }
 
 topo_shape_t *topo_shape_translated(topo_shape_t *p, vec3d_t delta) {
   if (p) {
-    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
-                                p->shp->translated(cast_to_gp(delta)))};
+    try {
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(
+              p->shp->translated(cast_to_gp(delta)))};
+    } CATCH_SHAPE_OP(nullptr)
   }
   return nullptr;
 }
 
 topo_shape_t *topo_shape_rotated_from_two_point(topo_shape_t *p, double angle,
-                                                pnt3d_t p1, pnt3d_t p2) {
+                                                 pnt3d_t p1, pnt3d_t p2) {
   if (p) {
-    return new topo_shape_t{
-        .shp = std::make_shared<flywave::topo::shape>(
-            p->shp->rotated(angle, cast_to_gp(p1), cast_to_gp(p2)))};
+    try {
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(
+              p->shp->rotated(angle, cast_to_gp(p1), cast_to_gp(p2)))};
+    } CATCH_SHAPE_OP(nullptr)
   }
   return nullptr;
 }
@@ -157,8 +177,11 @@ topo_shape_t *topo_shape_rotated_from_two_point(topo_shape_t *p, double angle,
 topo_shape_t *topo_shape_rotated_from_axis1(topo_shape_t *p, double angle,
                                             axis1_t a) {
   if (p) {
-    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
-                                p->shp->rotated(angle, cast_to_gp(a)))};
+    try {
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(
+              p->shp->rotated(angle, cast_to_gp(a)))};
+    } CATCH_SHAPE_OP(nullptr)
   }
   return nullptr;
 }
@@ -166,16 +189,20 @@ topo_shape_t *topo_shape_rotated_from_axis1(topo_shape_t *p, double angle,
 topo_shape_t *topo_shape_rotated_from_quaternion(topo_shape_t *p,
                                                  quaternion_t q) {
   if (p) {
-    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
-                                p->shp->rotated(cast_to_gp(q)))};
+    try {
+      return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
+                                  p->shp->rotated(cast_to_gp(q)))};
+    } CATCH_SHAPE_OP(nullptr)
   }
   return nullptr;
 }
 
 topo_shape_t *topo_shape_scaled(topo_shape_t *p, double angle, pnt3d_t a) {
   if (p) {
-    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
-                                p->shp->scaled(cast_to_gp(a), angle))};
+    try {
+      return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
+                                  p->shp->scaled(cast_to_gp(a), angle))};
+    } CATCH_SHAPE_OP(nullptr)
   }
   return nullptr;
 }
@@ -183,25 +210,31 @@ topo_shape_t *topo_shape_scaled(topo_shape_t *p, double angle, pnt3d_t a) {
 topo_shape_t *topo_shape_mirrored_from_point_norm(topo_shape_t *p, pnt3d_t pnt,
                                                   pnt3d_t ner) {
   if (p) {
-    return new topo_shape_t{
-        .shp = std::make_shared<flywave::topo::shape>(
-            p->shp->mirrored(cast_to_gp(pnt), cast_to_gp(ner)))};
+    try {
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(
+              p->shp->mirrored(cast_to_gp(pnt), cast_to_gp(ner)))};
+    } CATCH_SHAPE_OP(nullptr)
   }
   return nullptr;
 }
 
 topo_shape_t *topo_shape_mirrored_from_axis1(topo_shape_t *p, axis1_t a) {
   if (p) {
-    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
-                                p->shp->mirrored(cast_to_gp(a)))};
+    try {
+      return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
+                                  p->shp->mirrored(cast_to_gp(a)))};
+    } CATCH_SHAPE_OP(nullptr)
   }
   return nullptr;
 }
 
 topo_shape_t *topo_shape_mirrored_from_axis2(topo_shape_t *p, axis2_t a) {
   if (p) {
-    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
-                                p->shp->mirrored(cast_to_gp(a)))};
+    try {
+      return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
+                                  p->shp->mirrored(cast_to_gp(a)))};
+    } CATCH_SHAPE_OP(nullptr)
   }
   return nullptr;
 }
@@ -5419,9 +5452,11 @@ topo_plane_t *topo_plane_new(pnt3d_t *origin, dir3d_t *xDir, vec3d_t *normal) {
 }
 
 topo_plane_t *topo_plane_new_from_named(const char *name, pnt3d_t *origin) {
+  flywave::topo::topo_vector vec =
+      origin ? flywave::topo::topo_vector(cast_to_gp(*origin))
+             : flywave::topo::topo_vector(0, 0, 0);
   return new topo_plane_t{
-      .plane = flywave::topo::topo_plane::named(
-          std::string(name), flywave::topo::topo_vector(cast_to_gp(*origin)))};
+      .plane = flywave::topo::topo_plane::named(std::string(name), vec)};
 }
 
 void topo_plane_free(topo_plane_t *p) {

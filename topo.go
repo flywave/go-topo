@@ -140,7 +140,11 @@ func NewTopoPlane(origin *Point3, xDir *Dir3, normal *Vector3) *TopoPlane {
 func NewTopoPlaneFromNamed(name string, origin *Point3) *TopoPlane {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
-	p := &TopoPlane{inner: &innerTopoPlane{val: C.topo_plane_new_from_named(cname, &origin.val)}}
+	var cOrigin *C.pnt3d_t
+	if origin != nil {
+		cOrigin = &origin.val
+	}
+	p := &TopoPlane{inner: &innerTopoPlane{val: C.topo_plane_new_from_named(cname, cOrigin)}}
 	runtime.SetFinalizer(p.inner, (*innerTopoPlane).free)
 	return p
 }

@@ -75,13 +75,14 @@ workplane_t *workplane_create() {
 workplane_t *workplane_create_from_plane(topo_plane_t *plane,
                                          topo_vector_t *origin) {
   return new workplane_t{.ptr = std::make_shared<flywave::topo::workplane>(
-                             plane->plane, &origin->vec)};
+                             plane->plane,
+                             origin ? &origin->vec : nullptr)};
 }
 
 workplane_t *workplane_create_from_name(const char *planeName,
                                         topo_vector_t *origin) {
   return new workplane_t{.ptr = std::make_shared<flywave::topo::workplane>(
-                             planeName, &origin->vec)};
+                             planeName, origin ? &origin->vec : nullptr)};
 }
 
 void workplane_free(workplane_t *wp) {
@@ -260,52 +261,78 @@ workplane_t *workplane_siblings(workplane_t *wp, int kind, int level,
 workplane_t *workplane_rotate_about_center(workplane_t *wp,
                                            topo_vector_t *axisEndPoint,
                                            double angle) {
+  gp_Pnt end(axisEndPoint ? gp_Pnt(axisEndPoint->vec.x(), axisEndPoint->vec.y(),
+                                    axisEndPoint->vec.z())
+                          : gp_Pnt(0, 0, 0));
   return new workplane_t{
       .ptr = SAFE_CALL(
-          wp, return wp->ptr->rotate_about_center(axisEndPoint->vec, angle))};
+          wp, return wp->ptr->rotate_about_center(end, angle))};
 }
 
 workplane_t *workplane_rotate(workplane_t *wp, topo_vector_t *axisStart,
                               topo_vector_t *axisEnd, double angle) {
+  gp_Pnt start(axisStart ? gp_Pnt(axisStart->vec.x(), axisStart->vec.y(),
+                                   axisStart->vec.z())
+                         : gp_Pnt(0, 0, 0));
+  gp_Pnt end(axisEnd ? gp_Pnt(axisEnd->vec.x(), axisEnd->vec.y(),
+                               axisEnd->vec.z())
+                     : gp_Pnt(0, 0, 1));
   return new workplane_t{
       .ptr = SAFE_CALL(
-          wp, return wp->ptr->rotate(axisStart->vec, axisEnd->vec, angle))};
+          wp, return wp->ptr->rotate(start, end, angle))};
 }
 
 workplane_t *workplane_mirror(workplane_t *wp, const char *planeName,
                               topo_vector_t *basePoint) {
+  gp_Pnt bp = basePoint ? gp_Pnt(basePoint->vec.x(), basePoint->vec.y(),
+                                  basePoint->vec.z())
+                        : gp_Pnt();
   return new workplane_t{
-      .ptr = SAFE_CALL(wp, return wp->ptr->mirror(planeName, basePoint->vec))};
+      .ptr = SAFE_CALL(wp, return wp->ptr->mirror(planeName, bp))};
 }
 
 workplane_t *workplane_mirror_with_normal(workplane_t *wp,
                                           topo_vector_t *normal,
                                           topo_vector_t *basePoint) {
+  gp_Vec n;
+  if (normal) {
+    n = static_cast<gp_Vec>(normal->vec);
+  }
+  gp_Pnt bp = basePoint ? gp_Pnt(basePoint->vec.x(), basePoint->vec.y(),
+                                  basePoint->vec.z())
+                        : gp_Pnt();
   return new workplane_t{
-      .ptr =
-          SAFE_CALL(wp, return wp->ptr->mirror(normal->vec, basePoint->vec))};
+      .ptr = SAFE_CALL(wp, return wp->ptr->mirror(n, bp))};
 }
 
 workplane_t *workplane_mirror_with_name(workplane_t *wp, const char *planeName,
                                         topo_vector_t *basePoint,
                                         bool unionResult) {
+  gp_Pnt bp = basePoint ? gp_Pnt(basePoint->vec.x(), basePoint->vec.y(),
+                                  basePoint->vec.z())
+                        : gp_Pnt();
   return new workplane_t{
       .ptr = SAFE_CALL(
-          wp, return wp->ptr->mirror(planeName, basePoint->vec, unionResult))};
+          wp, return wp->ptr->mirror(planeName, bp, unionResult))};
 }
 
 workplane_t *workplane_mirror_with_face(workplane_t *wp,
                                         topo_face_t *mirrorFace,
                                         topo_vector_t *basePoint,
                                         bool unionResult) {
+  gp_Pnt bp = basePoint ? gp_Pnt(basePoint->vec.x(), basePoint->vec.y(),
+                                  basePoint->vec.z())
+                        : gp_Pnt();
   return new workplane_t{
       .ptr =
           SAFE_CALL(wp, return wp->ptr->mirror(
                             *mirrorFace->shp->shp->cast<flywave::topo::face>(),
-                            basePoint->vec, unionResult))};
+                            bp, unionResult))};
 }
 
 workplane_t *workplane_translate(workplane_t *wp, topo_vector_t *vec) {
+  if (!vec)
+    return new workplane_t{.ptr = wp->ptr};
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->translate(vec->vec))};
 }
@@ -327,8 +354,16 @@ workplane_t *workplane_chamfer(workplane_t *wp, double length, double length2) {
 
 workplane_t *workplane_transformed(workplane_t *wp, topo_vector_t *rotate,
                                    topo_vector_t *offset) {
-  return new workplane_t{.ptr = SAFE_CALL(wp, return wp->ptr->transformed(
-                                                  rotate->vec, offset->vec))};
+  gp_Vec r;
+  if (rotate) {
+    r = static_cast<gp_Vec>(rotate->vec);
+  }
+  gp_Vec o;
+  if (offset) {
+    o = static_cast<gp_Vec>(offset->vec);
+  }
+  return new workplane_t{.ptr = SAFE_CALL(
+                             wp, return wp->ptr->transformed(r, o))};
 }
 
 workplane_t *workplane_rarray(workplane_t *wp, double xSpacing, double ySpacing,
@@ -748,25 +783,33 @@ workplane_t *workplane_cut_each(workplane_t *wp, void *userdata,
 }
 
 workplane_t *workplane_cbore_hole(workplane_t *wp, double diameter,
-                                  double cboreDiameter, double cboreDepth,
-                                  double depth, bool clean) {
+                                   double cboreDiameter, double cboreDepth,
+                                   double *depth, bool clean) {
   auto result =
-      SAFE_CALL(wp, return wp->ptr->cbore_hole(diameter, cboreDiameter,
-                                               cboreDepth, depth, clean));
+      SAFE_CALL(wp, return wp->ptr->cbore_hole(
+                        diameter, cboreDiameter, cboreDepth,
+                        depth ? boost::optional<double>(*depth) : boost::none,
+                        clean));
   return new workplane_t{.ptr = result};
 }
 
 workplane_t *workplane_csk_hole(workplane_t *wp, double diameter,
-                                double cskDiameter, double cskAngle,
-                                double depth, bool clean) {
-  auto result = SAFE_CALL(wp, return wp->ptr->csk_hole(diameter, cskDiameter,
-                                                       cskAngle, depth, clean));
+                                 double cskDiameter, double cskAngle,
+                                 double *depth, bool clean) {
+  auto result = SAFE_CALL(wp, return wp->ptr->csk_hole(
+                                  diameter, cskDiameter, cskAngle,
+                                  depth ? boost::optional<double>(*depth)
+                                        : boost::none,
+                                  clean));
   return new workplane_t{.ptr = result};
 }
 
-workplane_t *workplane_hole(workplane_t *wp, double diameter, double depth,
-                            bool clean) {
-  auto result = SAFE_CALL(wp, return wp->ptr->hole(diameter, depth, clean));
+workplane_t *workplane_hole(workplane_t *wp, double diameter, double *depth,
+                             bool clean) {
+  auto result = SAFE_CALL(
+      wp, return wp->ptr->hole(
+              diameter, depth ? boost::optional<double>(*depth) : boost::none,
+              clean));
   return new workplane_t{.ptr = result};
 }
 
@@ -816,7 +859,7 @@ workplane_t *workplane_sweep(workplane_t *wp, workplane_t *path,
               *path->ptr, multisection, makeSolid, isFrenet, combine, clean,
               static_cast<flywave::topo::transition_mode>(transition),
               normal ? boost::make_optional(normal->vec) : boost::none,
-              auxSpine->ptr));
+              auxSpine ? auxSpine->ptr : nullptr));
   return new workplane_t{.ptr = result};
 }
 
@@ -831,7 +874,7 @@ workplane_t *workplane_sweep_with_wire(workplane_t *wp, topo_wire_t *path,
               makeSolid, isFrenet, combine, clean,
               static_cast<flywave::topo::transition_mode>(transition),
               normal ? boost::make_optional(normal->vec) : boost::none,
-              auxSpine->ptr));
+              auxSpine ? auxSpine->ptr : nullptr));
   return new workplane_t{.ptr = result};
 }
 
@@ -846,7 +889,7 @@ workplane_t *workplane_sweep_with_edge(workplane_t *wp, topo_edge_t *path,
               makeSolid, isFrenet, combine, clean,
               static_cast<flywave::topo::transition_mode>(transition),
               normal ? boost::make_optional(normal->vec) : boost::none,
-              auxSpine->ptr));
+              auxSpine ? auxSpine->ptr : nullptr));
   return new workplane_t{.ptr = result};
 }
 
@@ -952,8 +995,12 @@ workplane_t *workplane_cut_blind_with_face(workplane_t *wp, topo_face_t *face,
 workplane_t *workplane_revolve(workplane_t *wp, topo_vector_t *axisStart,
                                topo_vector_t *axisEnd, double angleDegrees,
                                bool combine, bool clean) {
-  gp_Pnt start(axisStart->vec.x(), axisStart->vec.y(), axisStart->vec.z());
-  gp_Pnt end(axisEnd->vec.x(), axisEnd->vec.y(), axisEnd->vec.z());
+  gp_Pnt start(axisStart ? gp_Pnt(axisStart->vec.x(), axisStart->vec.y(),
+                                   axisStart->vec.z())
+                         : gp_Pnt(0, 0, 0));
+  gp_Pnt end(axisEnd ? gp_Pnt(axisEnd->vec.x(), axisEnd->vec.y(),
+                               axisEnd->vec.z())
+                     : gp_Pnt(0, 1, 0));
   auto result = SAFE_CALL(
       wp, return wp->ptr->revolve(angleDegrees, start, end, combine, clean));
   return new workplane_t{.ptr = result};
@@ -1037,7 +1084,8 @@ workplane_t *workplane_sphere(workplane_t *wp, double radius,
                               double angle2, double angle3, bool centerX,
                               bool centerY, bool centerZ, bool combine,
                               bool clean) {
-  gp_Dir dir(direct->vec.x(), direct->vec.y(), direct->vec.z());
+  gp_Dir dir(direct ? gp_Dir(direct->vec.x(), direct->vec.y(), direct->vec.z())
+                    : gp_Dir(0, 0, 1));
   auto result = SAFE_CALL(
       wp, return wp->ptr->sphere(radius, dir, angle1, angle2, angle3,
                                  {centerX, centerY, centerZ}, combine, clean));
@@ -1048,7 +1096,8 @@ workplane_t *workplane_sphere_all(workplane_t *wp, double radius,
                                   topo_vector_t *direct, double angle1,
                                   double angle2, double angle3, bool centerAll,
                                   bool combine, bool clean) {
-  gp_Dir dir(direct->vec.x(), direct->vec.y(), direct->vec.z());
+  gp_Dir dir(direct ? gp_Dir(direct->vec.x(), direct->vec.y(), direct->vec.z())
+                    : gp_Dir(0, 0, 1));
   auto result =
       SAFE_CALL(wp, return wp->ptr->sphere(radius, dir, angle1, angle2, angle3,
                                            centerAll, combine, clean));
@@ -1059,7 +1108,8 @@ workplane_t *workplane_cylinder(workplane_t *wp, double height, double radius,
                                 topo_vector_t *direct, double angle,
                                 bool centerX, bool centerY, bool centerZ,
                                 bool combine, bool clean) {
-  gp_Dir dir(direct->vec.x(), direct->vec.y(), direct->vec.z());
+  gp_Dir dir(direct ? gp_Dir(direct->vec.x(), direct->vec.y(), direct->vec.z())
+                    : gp_Dir(0, 0, 1));
   auto result = SAFE_CALL(wp, return wp->ptr->cylinder(
                                   height, radius, dir, angle,
                                   {centerX, centerY, centerZ}, combine, clean));
@@ -1070,7 +1120,8 @@ workplane_t *workplane_cylinder_all(workplane_t *wp, double height,
                                     double radius, topo_vector_t *direct,
                                     double angle, bool centerAll, bool combine,
                                     bool clean) {
-  gp_Dir dir(direct->vec.x(), direct->vec.y(), direct->vec.z());
+  gp_Dir dir(direct ? gp_Dir(direct->vec.x(), direct->vec.y(), direct->vec.z())
+                    : gp_Dir(0, 0, 1));
   auto result =
       SAFE_CALL(wp, return wp->ptr->cylinder(height, radius, dir, angle,
                                              centerAll, combine, clean));
@@ -1082,8 +1133,10 @@ workplane_t *workplane_wedge(workplane_t *wp, double dx, double dy, double dz,
                              topo_vector_t *pnt, topo_vector_t *dir,
                              bool centerX, bool centerY, bool centerZ,
                              bool combine, bool clean) {
-  gp_Pnt point(pnt->vec.x(), pnt->vec.y(), pnt->vec.z());
-  gp_Dir direction(dir->vec.x(), dir->vec.y(), dir->vec.z());
+  gp_Pnt point(pnt ? gp_Pnt(pnt->vec.x(), pnt->vec.y(), pnt->vec.z())
+                   : gp_Pnt(0, 0, 0));
+  gp_Dir direction(dir ? gp_Dir(dir->vec.x(), dir->vec.y(), dir->vec.z())
+                       : gp_Dir(0, 0, 1));
   auto result =
       SAFE_CALL(wp, return wp->ptr->wedge(
                         dx, dy, dz, xmin, zmin, xmax, zmax, point, direction,
@@ -1096,8 +1149,10 @@ workplane_t *workplane_wedge_all(workplane_t *wp, double dx, double dy,
                                  double xmax, double zmax, topo_vector_t *pnt,
                                  topo_vector_t *dir, bool centerAll,
                                  bool combine, bool clean) {
-  gp_Pnt point(pnt->vec.x(), pnt->vec.y(), pnt->vec.z());
-  gp_Dir direction(dir->vec.x(), dir->vec.y(), dir->vec.z());
+  gp_Pnt point(pnt ? gp_Pnt(pnt->vec.x(), pnt->vec.y(), pnt->vec.z())
+                   : gp_Pnt(0, 0, 0));
+  gp_Dir direction(dir ? gp_Dir(dir->vec.x(), dir->vec.y(), dir->vec.z())
+                       : gp_Dir(0, 0, 1));
   auto result = SAFE_CALL(
       wp, return wp->ptr->wedge(dx, dy, dz, xmin, zmin, xmax, zmax, point,
                                 direction, centerAll, combine, clean));

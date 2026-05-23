@@ -18,6 +18,7 @@ bool sketchSortFunc(void *userdata, sketch_val_t *val1, sketch_val_t *val2);
 */
 import "C"
 import (
+	"errors"
 	"runtime"
 	"unsafe"
 )
@@ -50,7 +51,11 @@ func NewSketchObjectFromShpe(shp Shape) *SketchObject {
 }
 
 func NewSketchObjectFromLocation(loc *TopoLocation) *SketchObject {
-	c := &SketchObject{inner: &innerSketchObject{val: C.sketch_val_create_from_location(loc.inner.val)}}
+	var cLoc *C.struct__topo_location_t
+	if loc != nil {
+		cLoc = loc.inner.val
+	}
+	c := &SketchObject{inner: &innerSketchObject{val: C.sketch_val_create_from_location(cLoc)}}
 	runtime.SetFinalizer(c.inner, (*innerSketchObject).free)
 	return c
 }
@@ -189,6 +194,9 @@ func (c *Sketch) FaceFromEdges(edges []*Edge, angle float64, tag string) *Sketch
 func (c *Sketch) FaceFromShape(shape *Shape, angle float64, tag string) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
+	if shape == nil {
+		return c
+	}
 	C.sketch_face_from_shape(c.inner.val, shape.inner.val, C.double(angle), cstr)
 	return c
 }
@@ -196,6 +204,9 @@ func (c *Sketch) FaceFromShape(shape *Shape, angle float64, tag string) *Sketch 
 func (c *Sketch) FaceFromSketch(other *Sketch, angle float64, tag string) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
+	if other == nil {
+		return c
+	}
 	C.sketch_face_from_sketch(c.inner.val, other.inner.val, C.double(angle), cstr)
 	return c
 }
@@ -349,7 +360,40 @@ func (c *Sketch) Faces(selector string, tag string) *Sketch {
 func (c *Sketch) FacesForSelector(selector *Selector, tag string) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
+	if selector == nil {
+		return c
+	}
 	C.sketch_faces_for_selector(c.inner.val, selector.inner.val, cstr)
+	return c
+}
+
+func (c *Sketch) WiresForSelector(selector *Selector, tag string) *Sketch {
+	cstr := C.CString(tag)
+	defer C.free(unsafe.Pointer(cstr))
+	if selector == nil {
+		return c
+	}
+	C.sketch_wires_for_selector(c.inner.val, selector.inner.val, cstr)
+	return c
+}
+
+func (c *Sketch) EdgesForSelector(selector *Selector, tag string) *Sketch {
+	cstr := C.CString(tag)
+	defer C.free(unsafe.Pointer(cstr))
+	if selector == nil {
+		return c
+	}
+	C.sketch_edges_for_selector(c.inner.val, selector.inner.val, cstr)
+	return c
+}
+
+func (c *Sketch) VerticesForSelector(selector *Selector, tag string) *Sketch {
+	cstr := C.CString(tag)
+	defer C.free(unsafe.Pointer(cstr))
+	if selector == nil {
+		return c
+	}
+	C.sketch_vertices_for_selector(c.inner.val, selector.inner.val, cstr)
 	return c
 }
 
@@ -359,45 +403,6 @@ func (c *Sketch) Wires(selector string, tag string) *Sketch {
 	cstr2 := C.CString(selector)
 	defer C.free(unsafe.Pointer(cstr2))
 	C.sketch_wires(c.inner.val, cstr2, cstr)
-	return c
-}
-
-func (c *Sketch) WiresForSelector(selector *Selector, tag string) *Sketch {
-	cstr := C.CString(tag)
-	defer C.free(unsafe.Pointer(cstr))
-	C.sketch_wires_for_selector(c.inner.val, selector.inner.val, cstr)
-	return c
-}
-
-func (c *Sketch) Edges(selector string, tag string) *Sketch {
-	cstr := C.CString(tag)
-	defer C.free(unsafe.Pointer(cstr))
-	cstr2 := C.CString(selector)
-	defer C.free(unsafe.Pointer(cstr2))
-	C.sketch_edges(c.inner.val, cstr2, cstr)
-	return c
-}
-
-func (c *Sketch) EdgesForSelector(selector *Selector, tag string) *Sketch {
-	cstr := C.CString(tag)
-	defer C.free(unsafe.Pointer(cstr))
-	C.sketch_edges_for_selector(c.inner.val, selector.inner.val, cstr)
-	return c
-}
-
-func (c *Sketch) Vertices(selector string, tag string) *Sketch {
-	cstr := C.CString(tag)
-	defer C.free(unsafe.Pointer(cstr))
-	cstr2 := C.CString(selector)
-	defer C.free(unsafe.Pointer(cstr2))
-	C.sketch_vertices(c.inner.val, cstr2, cstr)
-	return c
-}
-
-func (c *Sketch) VerticesForSelector(selector *Selector, tag string) *Sketch {
-	cstr := C.CString(tag)
-	defer C.free(unsafe.Pointer(cstr))
-	C.sketch_vertices_for_selector(c.inner.val, selector.inner.val, cstr)
 	return c
 }
 
@@ -414,6 +419,9 @@ func (c *Sketch) DeleteSelected() *Sketch {
 func (c *Sketch) Edge(edge *Edge, tag string, forConstruction bool) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
+	if edge == nil {
+		return c
+	}
 	C.sketch_edge(c.inner.val, &edge.inner.val, cstr, C.bool(forConstruction))
 	return c
 }
@@ -421,14 +429,25 @@ func (c *Sketch) Edge(edge *Edge, tag string, forConstruction bool) *Sketch {
 func (c *Sketch) Segment(p1, p2 *TopoVector, tag string, forConstruction bool) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
-	C.sketch_segment(c.inner.val, p1.inner.val, p2.inner.val, cstr, C.bool(forConstruction))
+	var cp1, cp2 *C.struct__topo_vector_t
+	if p1 != nil {
+		cp1 = p1.inner.val
+	}
+	if p2 != nil {
+		cp2 = p2.inner.val
+	}
+	C.sketch_segment(c.inner.val, cp1, cp2, cstr, C.bool(forConstruction))
 	return c
 }
 
 func (c *Sketch) SegmentFromPoint(p2 *TopoVector, tag string, forConstruction bool) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
-	C.sketch_segment2(c.inner.val, p2.inner.val, cstr, C.bool(forConstruction))
+	var cp2 *C.struct__topo_vector_t
+	if p2 != nil {
+		cp2 = p2.inner.val
+	}
+	C.sketch_segment2(c.inner.val, cp2, cstr, C.bool(forConstruction))
 	return c
 }
 
@@ -442,21 +461,42 @@ func (c *Sketch) SegmentFromLengthAngle(l, a float64, tag string, forConstructio
 func (c *Sketch) Arc(p1, p2, p3 *TopoVector, tag string, forConstruction bool) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
-	C.sketch_arc(c.inner.val, p1.inner.val, p2.inner.val, p3.inner.val, cstr, C.bool(forConstruction))
+	var cp1, cp2, cp3 *C.struct__topo_vector_t
+	if p1 != nil {
+		cp1 = p1.inner.val
+	}
+	if p2 != nil {
+		cp2 = p2.inner.val
+	}
+	if p3 != nil {
+		cp3 = p3.inner.val
+	}
+	C.sketch_arc(c.inner.val, cp1, cp2, cp3, cstr, C.bool(forConstruction))
 	return c
 }
 
 func (c *Sketch) ArcFromPoints(p2, p3 *TopoVector, tag string, forConstruction bool) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
-	C.sketch_arc2(c.inner.val, p2.inner.val, p3.inner.val, cstr, C.bool(forConstruction))
+	var cp2, cp3 *C.struct__topo_vector_t
+	if p2 != nil {
+		cp2 = p2.inner.val
+	}
+	if p3 != nil {
+		cp3 = p3.inner.val
+	}
+	C.sketch_arc2(c.inner.val, cp2, cp3, cstr, C.bool(forConstruction))
 	return c
 }
 
 func (c *Sketch) ArcFromCenter(center *TopoVector, radius, startAngle, deltaAngle float64, tag string, forConstruction bool) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
-	C.sketch_arc3(c.inner.val, center.inner.val, C.double(radius), C.double(startAngle), C.double(deltaAngle), cstr, C.bool(forConstruction))
+	var cCenter *C.struct__topo_vector_t
+	if center != nil {
+		cCenter = center.inner.val
+	}
+	C.sketch_arc3(c.inner.val, cCenter, C.double(radius), C.double(startAngle), C.double(deltaAngle), cstr, C.bool(forConstruction))
 	return c
 }
 
@@ -518,6 +558,9 @@ func (c *Sketch) Assemble(mode int, tag string) *Sketch {
 func (c *Sketch) Constrain(tag string, constraint int, arg *SketchConstraintValue) *Sketch {
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
+	if arg == nil {
+		return c
+	}
 	C.sketch_constrain(c.inner.val, cstr, C.int(constraint), arg.inner.val)
 	return c
 }
@@ -527,6 +570,9 @@ func (c *Sketch) ConstraintBetween(tag1, tag2 string, constraint int, arg *Sketc
 	defer C.free(unsafe.Pointer(cstr))
 	cstr2 := C.CString(tag2)
 	defer C.free(unsafe.Pointer(cstr2))
+	if arg == nil {
+		return c
+	}
 	C.sketch_constrain2(c.inner.val, cstr, cstr2, C.int(constraint), arg.inner.val)
 	return c
 }
@@ -553,7 +599,11 @@ func (c *Sketch) Moved(locs []*TopoLocation) *Sketch {
 }
 
 func (c *Sketch) Located(loc *TopoLocation) *Sketch {
-	c2 := &Sketch{inner: &innerSketch{val: C.sketch_located(c.inner.val, loc.inner.val)}}
+	var cLoc *C.struct__topo_location_t
+	if loc != nil {
+		cLoc = loc.inner.val
+	}
+	c2 := &Sketch{inner: &innerSketch{val: C.sketch_located(c.inner.val, cLoc)}}
 	runtime.SetFinalizer(c2.inner, (*innerSketch).free)
 	return c2
 }
@@ -740,4 +790,11 @@ func (c *Sketch) HasError() bool {
 
 func (c *Sketch) Error() string {
 	return C.GoString(C.sketch_error(c.inner.val))
+}
+
+func (c *Sketch) Err() error {
+	if c.HasError() {
+		return errors.New(c.Error())
+	}
+	return nil
 }

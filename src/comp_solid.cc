@@ -34,6 +34,9 @@ const TopoDS_CompSolid &comp_solid::value() const {
 }
 
 shape comp_solid::copy(bool deep) const {
+  if (_shape.IsNull()) {
+    return comp_solid{};
+  }
   try {
     BRepBuilderAPI_Copy _copy(_shape, deep);
     _copy.Build();

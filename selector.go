@@ -28,108 +28,95 @@ func (c *innerSelector) free() {
 	C.selector_free(c.val)
 }
 
-func NewNearestToPointSelector(p *TopoVector) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_nearest_to_point_selector_create(p.inner.val)}}
+func newSelector(val *C.struct__selector_t) *Selector {
+	if val == nil {
+		return nil
+	}
+	c := &Selector{inner: &innerSelector{val}}
 	runtime.SetFinalizer(c.inner, (*innerSelector).free)
 	return c
+}
+
+func NewNearestToPointSelector(p *TopoVector) *Selector {
+	return newSelector(C.selector_nearest_to_point_selector_create(p.inner.val))
 }
 
 func NewBoxSelector(p0 *TopoVector, p1 *TopoVector, use_bb bool) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_box_selector_create(p0.inner.val, p1.inner.val, C.bool(use_bb))}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	return newSelector(C.selector_box_selector_create(p0.inner.val, p1.inner.val, C.bool(use_bb)))
 }
 
 func NewRadiusNthSelector(n int, direction_max bool, tolerance float64) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_radius_nth_selector_create(C.int(n), C.bool(direction_max), C.double(tolerance))}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	return newSelector(C.selector_radius_nth_selector_create(C.int(n), C.bool(direction_max), C.double(tolerance)))
 }
 
 func NewCenterNthSelector(dir *TopoVector, n int, direction_max bool, tolerance float64) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_center_nth_selector_create(dir.inner.val, C.int(n), C.bool(direction_max), C.double(tolerance))}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	return newSelector(C.selector_center_nth_selector_create(dir.inner.val, C.int(n), C.bool(direction_max), C.double(tolerance)))
 }
 
 func NewDirectionMinmaxSelector(dir *TopoVector, direction_max bool, tolerance float64) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_direction_minmax_selector_create(dir.inner.val, C.bool(direction_max), C.double(tolerance))}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	return newSelector(C.selector_direction_minmax_selector_create(dir.inner.val, C.bool(direction_max), C.double(tolerance)))
 }
 
 func NewParallelDirSelector(dir *TopoVector, tol float64) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_parallel_dir_selector_create(dir.inner.val, C.double(tol))}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	return newSelector(C.selector_parallel_dir_selector_create(dir.inner.val, C.double(tol)))
 }
 
 func NewDirSelector(dir *TopoVector, tol float64) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_dir_selector_create(dir.inner.val, C.double(tol))}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	return newSelector(C.selector_dir_selector_create(dir.inner.val, C.double(tol)))
 }
 
 func NewPerpendicularDirSelector(dir *TopoVector, tol float64) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_perpendicular_dir_selector_create(dir.inner.val, C.double(tol))}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	return newSelector(C.selector_perpendicular_dir_selector_create(dir.inner.val, C.double(tol)))
 }
 
 func NewDirectionNthSelector(dir *TopoVector, n int, direction_max bool, tolerance float64) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_direction_nth_selector_create(dir.inner.val, C.int(n), C.bool(direction_max), C.double(tolerance))}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	return newSelector(C.selector_direction_nth_selector_create(dir.inner.val, C.int(n), C.bool(direction_max), C.double(tolerance)))
 }
 
 func NewLengthNthSelector(n int, direction_max bool, tolerance float64) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_length_nth_selector_create(C.int(n), C.bool(direction_max), C.double(tolerance))}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	return newSelector(C.selector_length_nth_selector_create(C.int(n), C.bool(direction_max), C.double(tolerance)))
 }
 
 func NewTypeSelector(typ int) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_type_selector_create(C.int(typ))}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	return newSelector(C.selector_type_selector_create(C.int(typ)))
 }
 
 func NewAreaNthSelector(n int, direction_max bool, tolerance float64) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_area_nth_selector_create(C.int(n), C.bool(direction_max), C.double(tolerance))}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	return newSelector(C.selector_area_nth_selector_create(C.int(n), C.bool(direction_max), C.double(tolerance)))
 }
 
 func NewAndSelector(left *Selector, right *Selector) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_and_selector_create(left.inner.val, right.inner.val)}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	if left == nil || right == nil {
+		return nil
+	}
+	return newSelector(C.selector_and_selector_create(left.inner.val, right.inner.val))
 }
 
 func NewOrSelector(left *Selector, right *Selector) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_or_selector_create(left.inner.val, right.inner.val)}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	if left == nil || right == nil {
+		return nil
+	}
+	return newSelector(C.selector_or_selector_create(left.inner.val, right.inner.val))
 }
 
 func NewSubtractSelector(left *Selector, right *Selector) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_subtract_selector_create(left.inner.val, right.inner.val)}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	if left == nil || right == nil {
+		return nil
+	}
+	return newSelector(C.selector_subtract_selector_create(left.inner.val, right.inner.val))
 }
 
 func NewNotSelector(sel *Selector) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_not_selector_create(sel.inner.val)}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	if sel == nil {
+		return nil
+	}
+	return newSelector(C.selector_not_selector_create(sel.inner.val))
 }
 
 func NewStringSyntaxSelector(selector_str string) *Selector {
 	cselector_str := C.CString(selector_str)
 	defer C.free(unsafe.Pointer(cselector_str))
-	c := &Selector{inner: &innerSelector{C.selector_string_syntax_selector_create(cselector_str)}}
-	runtime.SetFinalizer(c.inner, (*innerSelector).free)
-	return c
+	return newSelector(C.selector_string_syntax_selector_create(cselector_str))
 }
 
 //export customSelectorFunc

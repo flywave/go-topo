@@ -90,7 +90,17 @@ topo_plane::topo_plane(gp_Pln pln) {
 
 void topo_plane::set_plane_dir(const topo_vector &xDir) {
   this->_x_dir = xDir.normalized();
-  this->_y_dir = _z_dir.cross(this->_x_dir).normalized();
+  topo_vector cross = _z_dir.cross(this->_x_dir);
+  if (cross.length() < 1e-12) {
+    gp_Ax3 ax3(_origin.to_pnt(), _z_dir.to_dir());
+    this->_x_dir = topo_vector(ax3.XDirection());
+    cross = _z_dir.cross(this->_x_dir);
+    if (cross.length() < 1e-12) {
+      this->_x_dir = topo_vector(1, 0, 0);
+      cross = _z_dir.cross(this->_x_dir);
+    }
+  }
+  this->_y_dir = cross.normalized();
   calc_transforms();
 }
 

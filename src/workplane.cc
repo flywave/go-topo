@@ -1084,7 +1084,14 @@ workplane::new_object(const std::vector<shape_object> &objlist) const {
 }
 
 gp_Pnt workplane::find_from_point(bool useLocalCoords) {
-  shape_object obj = _objects.empty() ? _plane->origin() : _objects.back();
+  if (_objects.empty()) {
+    if (_plane) {
+      return useLocalCoords ? _plane->to_local_coords(_plane->origin())
+                            : _plane->origin();
+    }
+    return gp_Pnt(0, 0, 0);
+  }
+  shape_object obj = _objects.back();
 
   topo_vector p;
   if (auto shp = boost::get<shape>(&obj)) {
@@ -2907,9 +2914,12 @@ std::shared_ptr<workplane> workplane::_sphere(
     offset += gp_Vec(0, 0, radius);
   }
 
+  double a1 = angle1 * M_PI / 180.0;
+  double a2 = angle2 * M_PI / 180.0;
+  double a3 = angle3 * M_PI / 180.0;
   shape s = solid::make_solid_from_sphere(
       gp_Ax2(gp_Pnt(offset.X(), offset.Y(), offset.Z()), direct), radius,
-      angle1, angle2, angle3);
+      a1, a2, a3);
 
   return _eachpoint([s](const topo_location &loc) { return s.moved(loc); },
                     true, combine, clean);
@@ -2954,10 +2964,11 @@ std::shared_ptr<workplane> workplane::_cylinder(
     offset += gp_Vec(0, 0, -height / 2);
   }
 
+  double a = angle * M_PI / 180.0;
   shape s =
       solid::make_solid_from_cylinder(
           gp_Ax2(gp_Pnt(offset.X(), offset.Y(), offset.Z()), gp_Dir(0, 0, 1)),
-          radius, height, angle)
+          radius, height, a)
           .moved(topo_plane(gp_Pnt(), direct).location());
 
   return _eachpoint([s](const topo_location &loc) { return s.moved(loc); },

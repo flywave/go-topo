@@ -316,19 +316,17 @@ struct selector_grammar
 
     identifier = lexeme[(char_("a-zA-Z") >> *char_("a-zA-Z0-9_"))];
     vector = '(' >> double_ >> ',' >> double_ >> ',' >> double_ >> ')';
-    simple_dir = no_case[lit("x") | "y" | "z" | "xy" | "xz" | "yz"];
+    simple_dir = no_case[qi::string("xy") | qi::string("xz") | qi::string("yz") | qi::string("x") | qi::string("y") | qi::string("z")];
     direction = simple_dir | vector;
-    cqtype = no_case[lit("plane") | "cylinder" | "cone" | "sphere" | "torus" |
-                     "line" | "circle" | "ellipse" | "hyperbola" | "parabola"];
+    cqtype = no_case[qi::string("plane") | qi::string("cylinder") | qi::string("cone") | qi::string("sphere") | qi::string("torus") |
+                     qi::string("line") | qi::string("circle") | qi::string("ellipse") | qi::string("hyperbola") | qi::string("parabola")];
     index = '[' >> -int_ >> ']';
-    named_view =
-        no_case[lit("front") | "back" | "left" | "right" | "top" | "bottom"];
+    named_view = no_case[qi::string("front") | qi::string("back") | qi::string("left") | qi::string("right") | qi::string("top") | qi::string("bottom")];
 
-    type_op = lexeme[lit('%')];
-    dir_op = lexeme[lit('>')] | lexeme[lit('<')];
+    type_op = qi::char_('%');
+    dir_op = qi::char_('>') | qi::char_('<');
     center_nth_op = lexeme[lit(">>")] | lexeme[lit("<<")];
-    other_op = lexeme[lit('|')] | lexeme[lit('#')] | lexeme[lit('+')] |
-               lexeme[lit('-')];
+    other_op = qi::char_('|') | qi::char_('#') | qi::char_('+') | qi::char_('-');
 
     only_dir = direction[_val = phx::bind(
                              &selector_grammar::create_dir_selector, this, _1)];
@@ -391,7 +389,10 @@ private:
         static std::unordered_map<std::string, topo_vector> axes = {
             {"x", {1, 0, 0}},  {"y", {0, 1, 0}},  {"z", {0, 0, 1}},
             {"xy", {1, 1, 0}}, {"xz", {1, 0, 1}}, {"yz", {0, 1, 1}}};
-        return axes.at(s);
+        std::string lower;
+        lower.reserve(s.size());
+        for (char c : s) lower.push_back(tolower(c));
+        return axes.at(lower);
       }
     };
     return boost::apply_visitor(visitor(), dir);
@@ -409,7 +410,10 @@ private:
         {"torus", shape_geom_torus},         {"line", shape_geom_line},
         {"circle", shape_geom_circle},       {"ellipse", shape_geom_ellipse},
         {"hyperbola", shape_geom_hyperbola}, {"parabola", shape_geom_parabola}};
-    auto &type_ = types.at(type);
+    std::string lower;
+    lower.reserve(type.size());
+    for (char c : type) lower.push_back(tolower(c));
+    auto &type_ = types.at(lower);
     return std::make_shared<type_selector>(type_);
   }
 
@@ -446,7 +450,10 @@ private:
         {{"front", {{0, 0, 1}, true}}, {"back", {{0, 0, 1}, false}},
          {"left", {{1, 0, 0}, false}}, {"right", {{1, 0, 0}, true}},
          {"top", {{0, 1, 0}, true}},   {"bottom", {{0, 1, 0}, false}}};
-    auto &args = views.at(view);
+    std::string lower;
+    lower.reserve(view.size());
+    for (char c : view) lower.push_back(tolower(c));
+    auto &args = views.at(lower);
     return std::make_shared<direction_minmax_selector>(args.first, args.second);
   }
 

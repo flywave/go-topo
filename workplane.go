@@ -22,6 +22,7 @@ struct _workplane_t* workplaneInvokeFunc(void* userdata);
 */
 import "C"
 import (
+	"errors"
 	"runtime"
 	"unsafe"
 )
@@ -141,7 +142,11 @@ func NewWorkplane() *Workplane {
 }
 
 func NewWorkplaneFromPlane(plane *TopoPlane, origin *TopoVector) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_create_from_plane(plane.inner.val, origin.inner.val)}}
+	var cOrigin *C.struct__topo_vector_t
+	if origin != nil {
+		cOrigin = origin.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_create_from_plane(plane.inner.val, cOrigin)}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
@@ -149,7 +154,11 @@ func NewWorkplaneFromPlane(plane *TopoPlane, origin *TopoVector) *Workplane {
 func NewWorkplaneFromName(name string, origin *TopoVector) *Workplane {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_create_from_name(cname, origin.inner.val)}}
+	var cOrigin *C.struct__topo_vector_t
+	if origin != nil {
+		cOrigin = origin.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_create_from_name(cname, cOrigin)}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
@@ -171,7 +180,11 @@ func (c *Workplane) Clean() *Workplane {
 }
 
 func (c *Workplane) Workplane(offset float64, invert bool, centerOption int, origin *TopoVector) *Workplane {
-	wp := &Workplane{inner: &innerWorkplane{val: C.workplane_workplane(c.inner.val, C.double(offset), C.bool(invert), C.int(centerOption), origin.inner.val)}}
+	var cOrigin *C.struct__topo_vector_t
+	if origin != nil {
+		cOrigin = origin.inner.val
+	}
+	wp := &Workplane{inner: &innerWorkplane{val: C.workplane_workplane(c.inner.val, C.double(offset), C.bool(invert), C.int(centerOption), cOrigin)}}
 	runtime.SetFinalizer(wp.inner, (*innerWorkplane).free)
 	return wp
 }
@@ -371,13 +384,24 @@ func (wp *Workplane) Siblings(kind int, level int, tag string) *Workplane {
 }
 
 func (wp *Workplane) RotateAboutCenter(axisEndPoint *TopoVector, angle float64) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_rotate_about_center(wp.inner.val, axisEndPoint.inner.val, C.double(angle))}}
+	var cAxis *C.struct__topo_vector_t
+	if axisEndPoint != nil {
+		cAxis = axisEndPoint.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_rotate_about_center(wp.inner.val, cAxis, C.double(angle))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) Rotate(axisStart *TopoVector, axisEnd *TopoVector, angle float64) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_rotate(wp.inner.val, axisStart.inner.val, axisEnd.inner.val, C.double(angle))}}
+	var cStart, cEnd *C.struct__topo_vector_t
+	if axisStart != nil {
+		cStart = axisStart.inner.val
+	}
+	if axisEnd != nil {
+		cEnd = axisEnd.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_rotate(wp.inner.val, cStart, cEnd, C.double(angle))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
@@ -385,13 +409,24 @@ func (wp *Workplane) Rotate(axisStart *TopoVector, axisEnd *TopoVector, angle fl
 func (wp *Workplane) Mirror(planeName string, basePoint *TopoVector) *Workplane {
 	cplaneName := C.CString(planeName)
 	defer C.free(unsafe.Pointer(cplaneName))
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_mirror(wp.inner.val, cplaneName, basePoint.inner.val)}}
+	var cBase *C.struct__topo_vector_t
+	if basePoint != nil {
+		cBase = basePoint.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_mirror(wp.inner.val, cplaneName, cBase)}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) MirrorWithNormal(normal *TopoVector, basePoint *TopoVector) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_mirror_with_normal(wp.inner.val, normal.inner.val, basePoint.inner.val)}}
+	var cNormal, cBase *C.struct__topo_vector_t
+	if normal != nil {
+		cNormal = normal.inner.val
+	}
+	if basePoint != nil {
+		cBase = basePoint.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_mirror_with_normal(wp.inner.val, cNormal, cBase)}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
@@ -399,18 +434,33 @@ func (wp *Workplane) MirrorWithNormal(normal *TopoVector, basePoint *TopoVector)
 func (wp *Workplane) MirrorWithName(planeName string, basePoint *TopoVector, unionResult bool) *Workplane {
 	cplaneName := C.CString(planeName)
 	defer C.free(unsafe.Pointer(cplaneName))
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_mirror_with_name(wp.inner.val, cplaneName, basePoint.inner.val, C.bool(unionResult))}}
+	var cBase *C.struct__topo_vector_t
+	if basePoint != nil {
+		cBase = basePoint.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_mirror_with_name(wp.inner.val, cplaneName, cBase, C.bool(unionResult))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) MirrorWithFace(mirrorFace *Face, basePoint *TopoVector, unionResult bool) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_mirror_with_face(wp.inner.val, &mirrorFace.inner.val, basePoint.inner.val, C.bool(unionResult))}}
+	var cBase *C.struct__topo_vector_t
+	if basePoint != nil {
+		cBase = basePoint.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_mirror_with_face(wp.inner.val, &mirrorFace.inner.val, cBase, C.bool(unionResult))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 func (wp *Workplane) Transform(rotate *TopoVector, offset *TopoVector) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_transformed(wp.inner.val, rotate.inner.val, offset.inner.val)}}
+	var cRot, cOff *C.struct__topo_vector_t
+	if rotate != nil {
+		cRot = rotate.inner.val
+	}
+	if offset != nil {
+		cOff = offset.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_transformed(wp.inner.val, cRot, cOff)}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
@@ -444,7 +494,11 @@ func (wp *Workplane) PushPointsWithVector(vecs []*TopoVector) *Workplane {
 }
 
 func (wp *Workplane) Translate(vec *TopoVector) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_translate(wp.inner.val, vec.inner.val)}}
+	var cVec *C.struct__topo_vector_t
+	if vec != nil {
+		cVec = vec.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_translate(wp.inner.val, cVec)}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
@@ -598,7 +652,11 @@ func (wp *Workplane) SplineApprox(points []*TopoVector, tol float64, minDeg int,
 	if len(pointsPtr) > 0 {
 		pointsPtrRaw = &pointsPtr[0]
 	}
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_spline_approx(wp.inner.val, pointsPtrRaw, C.int(len(points)), C.double(tol), C.int(minDeg), C.int(maxDeg), smoothing.inner.val, C.bool(forConstruction), C.bool(includeCurrent), C.bool(makeWire))}}
+	var cSmooth *C.struct__topo_vector_t
+	if smoothing != nil {
+		cSmooth = smoothing.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_spline_approx(wp.inner.val, pointsPtrRaw, C.int(len(points)), C.double(tol), C.int(minDeg), C.int(maxDeg), cSmooth, C.bool(forConstruction), C.bool(includeCurrent), C.bool(makeWire))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
@@ -740,6 +798,18 @@ func (wp *Workplane) RectAll(xLen, yLen float64, centerAll, forConstruction bool
 	return c
 }
 
+func (wp *Workplane) RectCentered(xLen, yLen float64) *Workplane {
+	return wp.RectAll(xLen, yLen, true, false)
+}
+
+func (wp *Workplane) CircleCentered(radius float64) *Workplane {
+	return wp.Circle(radius, false)
+}
+
+func (wp *Workplane) EllipseCentered(xRadius, yRadius, rotationAngle float64) *Workplane {
+	return wp.Ellipse(xRadius, yRadius, rotationAngle, false)
+}
+
 func (wp *Workplane) Circle(radius float64, forConstruction bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_circle(wp.inner.val, C.double(radius), C.bool(forConstruction))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
@@ -756,6 +826,10 @@ func (wp *Workplane) Polygon(nSides int, diameter float64, forConstruction, circ
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_polygon(wp.inner.val, C.int(nSides), C.double(diameter), C.bool(forConstruction), C.bool(circumscribed))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
+}
+
+func (wp *Workplane) PolygonSimple(nSides int, diameter float64) *Workplane {
+	return wp.Polygon(nSides, diameter, false, false)
 }
 
 func (wp *Workplane) Polyline(points []*TopoVector, forConstruction, includeCurrent bool) *Workplane {
@@ -794,22 +868,43 @@ func (wp *Workplane) CutEach(func_ func(*TopoLocation) *Shape, useLocalCoordinat
 	return c
 }
 
-func (wp *Workplane) CboreHole(diameter, cboreDiameter, cboreDepth, depth float64, clean bool) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_cbore_hole(wp.inner.val, C.double(diameter), C.double(cboreDiameter), C.double(cboreDepth), C.double(depth), C.bool(clean))}}
-	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
-	return c
+func (wp *Workplane) CboreHole(diameter, cboreDiameter, cboreDepth float64, depth *float64, clean bool) *Workplane {
+	var c *C.struct__workplane_t
+	if depth != nil {
+		cd := C.double(*depth)
+		c = C.workplane_cbore_hole(wp.inner.val, C.double(diameter), C.double(cboreDiameter), C.double(cboreDepth), &cd, C.bool(clean))
+	} else {
+		c = C.workplane_cbore_hole(wp.inner.val, C.double(diameter), C.double(cboreDiameter), C.double(cboreDepth), nil, C.bool(clean))
+	}
+	wp2 := &Workplane{inner: &innerWorkplane{val: c}}
+	runtime.SetFinalizer(wp2.inner, (*innerWorkplane).free)
+	return wp2
 }
 
-func (wp *Workplane) CskHole(diameter, cskDiameter, cskAngle, depth float64, clean bool) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_csk_hole(wp.inner.val, C.double(diameter), C.double(cskDiameter), C.double(cskAngle), C.double(depth), C.bool(clean))}}
-	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
-	return c
+func (wp *Workplane) CskHole(diameter, cskDiameter, cskAngle float64, depth *float64, clean bool) *Workplane {
+	var c *C.struct__workplane_t
+	if depth != nil {
+		cd := C.double(*depth)
+		c = C.workplane_csk_hole(wp.inner.val, C.double(diameter), C.double(cskDiameter), C.double(cskAngle), &cd, C.bool(clean))
+	} else {
+		c = C.workplane_csk_hole(wp.inner.val, C.double(diameter), C.double(cskDiameter), C.double(cskAngle), nil, C.bool(clean))
+	}
+	wp2 := &Workplane{inner: &innerWorkplane{val: c}}
+	runtime.SetFinalizer(wp2.inner, (*innerWorkplane).free)
+	return wp2
 }
 
-func (wp *Workplane) Hole(diameter, depth float64, clean bool) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_hole(wp.inner.val, C.double(diameter), C.double(depth), C.bool(clean))}}
-	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
-	return c
+func (wp *Workplane) Hole(diameter float64, depth *float64, clean bool) *Workplane {
+	var c *C.struct__workplane_t
+	if depth != nil {
+		cd := C.double(*depth)
+		c = C.workplane_hole(wp.inner.val, C.double(diameter), &cd, C.bool(clean))
+	} else {
+		c = C.workplane_hole(wp.inner.val, C.double(diameter), nil, C.bool(clean))
+	}
+	wp2 := &Workplane{inner: &innerWorkplane{val: c}}
+	runtime.SetFinalizer(wp2.inner, (*innerWorkplane).free)
+	return wp2
 }
 
 func (wp *Workplane) TwistExtrude(distance, angleDegrees float64, combine, clean bool) *Workplane {
@@ -822,6 +917,10 @@ func (wp *Workplane) Extrude(distance float64, combine, clean, both bool, taper 
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_extrude(wp.inner.val, C.double(distance), C.bool(combine), C.bool(clean), C.bool(both), (*C.double)(&taper))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
+}
+
+func (wp *Workplane) ExtrudeSimple(distance float64) *Workplane {
+	return wp.Extrude(distance, true, true, false, 0)
 }
 
 func (wp *Workplane) ExtrudeWithFaceType(indexType int, combine, clean, both bool, taper float64) *Workplane {
@@ -837,19 +936,43 @@ func (wp *Workplane) ExtrudeWithFace(face *Face, combine, clean, both bool, tape
 }
 
 func (wp *Workplane) Sweep(path *Workplane, multisection, makeSolid, isFrenet, combine, clean bool, transition int, normal *TopoVector, auxSpine *Workplane) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_sweep(wp.inner.val, path.inner.val, C.bool(multisection), C.bool(makeSolid), C.bool(isFrenet), C.bool(combine), C.bool(clean), C.int(transition), normal.inner.val, auxSpine.inner.val)}}
+	var cNormal *C.struct__topo_vector_t
+	if normal != nil {
+		cNormal = normal.inner.val
+	}
+	var cAux *C.struct__workplane_t
+	if auxSpine != nil {
+		cAux = auxSpine.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_sweep(wp.inner.val, path.inner.val, C.bool(multisection), C.bool(makeSolid), C.bool(isFrenet), C.bool(combine), C.bool(clean), C.int(transition), cNormal, cAux)}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) SweepWithWire(wire *Wire, multisection, makeSolid, isFrenet, combine, clean bool, transition int, normal *TopoVector, auxSpine *Workplane) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_sweep_with_wire(wp.inner.val, &wire.inner.val, C.bool(multisection), C.bool(makeSolid), C.bool(isFrenet), C.bool(combine), C.bool(clean), C.int(transition), normal.inner.val, auxSpine.inner.val)}}
+	var cNormal *C.struct__topo_vector_t
+	if normal != nil {
+		cNormal = normal.inner.val
+	}
+	var cAux *C.struct__workplane_t
+	if auxSpine != nil {
+		cAux = auxSpine.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_sweep_with_wire(wp.inner.val, &wire.inner.val, C.bool(multisection), C.bool(makeSolid), C.bool(isFrenet), C.bool(combine), C.bool(clean), C.int(transition), cNormal, cAux)}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) SweepWithEdge(edge *Edge, multisection, makeSolid, isFrenet, combine, clean bool, transition int, normal *TopoVector, auxSpine *Workplane) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_sweep_with_edge(wp.inner.val, &edge.inner.val, C.bool(multisection), C.bool(makeSolid), C.bool(isFrenet), C.bool(combine), C.bool(clean), C.int(transition), normal.inner.val, auxSpine.inner.val)}}
+	var cNormal *C.struct__topo_vector_t
+	if normal != nil {
+		cNormal = normal.inner.val
+	}
+	var cAux *C.struct__workplane_t
+	if auxSpine != nil {
+		cAux = auxSpine.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_sweep_with_edge(wp.inner.val, &edge.inner.val, C.bool(multisection), C.bool(makeSolid), C.bool(isFrenet), C.bool(combine), C.bool(clean), C.int(transition), cNormal, cAux)}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
@@ -914,6 +1037,10 @@ func (wp *Workplane) CutBlind(distance float64, clean, both bool, taper float64)
 	return c
 }
 
+func (wp *Workplane) CutBlindSimple(distance float64) *Workplane {
+	return wp.CutBlind(distance, true, false, 0)
+}
+
 func (wp *Workplane) CutBlindWithUntilFace(untilFace int, clean, both bool, taper float64) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_cut_blind_with_until_face(wp.inner.val, C.int(untilFace), C.bool(clean), C.bool(both), C.double(taper))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
@@ -927,9 +1054,20 @@ func (wp *Workplane) CutBlindWithFace(face *Face, clean, both bool, taper float6
 }
 
 func (wp *Workplane) Revolve(axisStart, axisEnd *TopoVector, angleDegrees float64, combine, clean bool) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_revolve(wp.inner.val, axisStart.inner.val, axisEnd.inner.val, C.double(angleDegrees), C.bool(combine), C.bool(clean))}}
+	var cStart, cEnd *C.struct__topo_vector_t
+	if axisStart != nil {
+		cStart = axisStart.inner.val
+	}
+	if axisEnd != nil {
+		cEnd = axisEnd.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_revolve(wp.inner.val, cStart, cEnd, C.double(angleDegrees), C.bool(combine), C.bool(clean))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
+}
+
+func (wp *Workplane) RevolveSimple(angleDegrees float64) *Workplane {
+	return wp.Revolve(nil, nil, angleDegrees, true, true)
 }
 
 func (wp *Workplane) InterpPlate(points []*TopoVector, thickness float64, combine, clean bool, degree, nbPtsOnCur, nbIter int, anisotropy bool, tol2d, tol3d, tolAng, tolCurv float64, maxDeg, maxSegments int) *Workplane {
@@ -978,38 +1116,88 @@ func (wp *Workplane) BoxAll(length, width, height float64, centerAll, combine, c
 	return c
 }
 
+func (wp *Workplane) BoxCentered(length, width, height float64) *Workplane {
+	return wp.BoxAll(length, width, height, true, true, true)
+}
+
+func (wp *Workplane) BoxCorners(length, width, height float64) *Workplane {
+	return wp.Box(length, width, height, false, false, false, true, true)
+}
+
 func (wp *Workplane) Sphere(radius float64, direct *TopoVector, angle1, angle2, angle3 float64, centerX, centerY, centerZ, combine, clean bool) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_sphere(wp.inner.val, C.double(radius), direct.inner.val, C.double(angle1), C.double(angle2), C.double(angle3), C.bool(centerX), C.bool(centerY), C.bool(centerZ), C.bool(combine), C.bool(clean))}}
+	var cDirect *C.struct__topo_vector_t
+	if direct != nil {
+		cDirect = direct.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_sphere(wp.inner.val, C.double(radius), cDirect, C.double(angle1), C.double(angle2), C.double(angle3), C.bool(centerX), C.bool(centerY), C.bool(centerZ), C.bool(combine), C.bool(clean))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) SphereAll(radius float64, direct *TopoVector, angle1, angle2, angle3 float64, centerAll, combine, clean bool) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_sphere_all(wp.inner.val, C.double(radius), direct.inner.val, C.double(angle1), C.double(angle2), C.double(angle3), C.bool(centerAll), C.bool(combine), C.bool(clean))}}
+	var cDirect *C.struct__topo_vector_t
+	if direct != nil {
+		cDirect = direct.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_sphere_all(wp.inner.val, C.double(radius), cDirect, C.double(angle1), C.double(angle2), C.double(angle3), C.bool(centerAll), C.bool(combine), C.bool(clean))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
+func (wp *Workplane) SphereCentered(radius float64) *Workplane {
+	return wp.Sphere(radius, nil, -90, 90, 360, false, false, false, true, true)
+}
+
 func (wp *Workplane) Cylinder(height, radius float64, direct *TopoVector, angle float64, centerX, centerY, centerZ, combine, clean bool) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_cylinder(wp.inner.val, C.double(height), C.double(radius), direct.inner.val, C.double(angle), C.bool(centerX), C.bool(centerY), C.bool(centerZ), C.bool(combine), C.bool(clean))}}
+	var cDirect *C.struct__topo_vector_t
+	if direct != nil {
+		cDirect = direct.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_cylinder(wp.inner.val, C.double(height), C.double(radius), cDirect, C.double(angle), C.bool(centerX), C.bool(centerY), C.bool(centerZ), C.bool(combine), C.bool(clean))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) CylinderAll(height, radius float64, direct *TopoVector, angle float64, centerAll, combine, clean bool) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_cylinder_all(wp.inner.val, C.double(height), C.double(radius), direct.inner.val, C.double(angle), C.bool(centerAll), C.bool(combine), C.bool(clean))}}
+	var cDirect *C.struct__topo_vector_t
+	if direct != nil {
+		cDirect = direct.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_cylinder_all(wp.inner.val, C.double(height), C.double(radius), cDirect, C.double(angle), C.bool(centerAll), C.bool(combine), C.bool(clean))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
+func (wp *Workplane) CylinderCentered(height, radius float64) *Workplane {
+	return wp.CylinderAll(height, radius, nil, 360, true, true, true)
+}
+
+func (wp *Workplane) CylinderAt(height, radius float64) *Workplane {
+	return wp.Cylinder(height, radius, nil, 360, false, false, false, true, true)
+}
+
 func (wp *Workplane) Wedge(dx, dy, dz, xmin, zmin, xmax, zmax float64, pnt, dir *TopoVector, centerX, centerY, centerZ, combine, clean bool) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_wedge(wp.inner.val, C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax), pnt.inner.val, dir.inner.val, C.bool(centerX), C.bool(centerY), C.bool(centerZ), C.bool(combine), C.bool(clean))}}
+	var cPnt, cDir *C.struct__topo_vector_t
+	if pnt != nil {
+		cPnt = pnt.inner.val
+	}
+	if dir != nil {
+		cDir = dir.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_wedge(wp.inner.val, C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax), cPnt, cDir, C.bool(centerX), C.bool(centerY), C.bool(centerZ), C.bool(combine), C.bool(clean))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
 
 func (wp *Workplane) WedgeAll(dx, dy, dz, xmin, zmin, xmax, zmax float64, pnt, dir *TopoVector, centerAll, combine, clean bool) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_wedge_all(wp.inner.val, C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax), pnt.inner.val, dir.inner.val, C.bool(centerAll), C.bool(combine), C.bool(clean))}}
+	var cPnt, cDir *C.struct__topo_vector_t
+	if pnt != nil {
+		cPnt = pnt.inner.val
+	}
+	if dir != nil {
+		cDir = dir.inner.val
+	}
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_wedge_all(wp.inner.val, C.double(dx), C.double(dy), C.double(dz), C.double(xmin), C.double(zmin), C.double(xmax), C.double(zmax), cPnt, cDir, C.bool(centerAll), C.bool(combine), C.bool(clean))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
 }
@@ -1030,6 +1218,14 @@ func (wp *Workplane) Loft(ruled, combine, clean bool) *Workplane {
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_loft(wp.inner.val, C.bool(ruled), C.bool(combine), C.bool(clean))}}
 	runtime.SetFinalizer(c.inner, (*innerWorkplane).free)
 	return c
+}
+
+func (wp *Workplane) LoftSimple() *Workplane {
+	return wp.Loft(false, true, true)
+}
+
+func (wp *Workplane) LoftRuled() *Workplane {
+	return wp.Loft(true, true, true)
 }
 
 func (wp *Workplane) Text(txt string, fontsize, distance float64, cut, combine, clean bool, font, fontPath string, kind, halign, valign int) *Workplane {
@@ -1299,4 +1495,24 @@ func (wp *Workplane) HasError() bool {
 
 func (wp *Workplane) Error() string {
 	return C.GoString(C.workplane_error(wp.inner.val))
+}
+
+func (wp *Workplane) Err() error {
+	if wp.HasError() {
+		return errors.New(wp.Error())
+	}
+	return nil
+}
+
+func NewNamedWorkplane(name string) *Workplane {
+	origin := NewTopoVector(0, 0, 0)
+	return NewWorkplaneFromName(name, origin)
+}
+
+func (wp *Workplane) HoleThrough(diameter float64) *Workplane {
+	return wp.Hole(diameter, nil, true)
+}
+
+func (wp *Workplane) HoleThroughWithDepth(diameter, depth float64) *Workplane {
+	return wp.Hole(diameter, &depth, true)
 }
