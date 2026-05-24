@@ -157,7 +157,9 @@ func NewWorkplaneFromPlane(plane *TopoPlane, origin *TopoVector) *Workplane {
 
 func NewWorkplaneFromName(name string, origin *TopoVector) *Workplane {
 	cname := C.CString(name)
-	defer C.free(unsafe.Pointer(cname))
+ cnamePtr := unsafe.Pointer(cname)
+
+	defer C.free(cnamePtr)
 	var cOrigin *C.struct__topo_vector_t
 	if origin != nil {
 		cOrigin = origin.inner.val
@@ -197,7 +199,9 @@ func (c *Workplane) Workplane(offset float64, invert bool, centerOption int, ori
 
 func (c *Workplane) Tag(name string) *Workplane {
 	cname := C.CString(name)
-	defer C.free(unsafe.Pointer(cname))
+ cnamePtr := unsafe.Pointer(cname)
+
+	defer C.free(cnamePtr)
 	C.workplane_tag(c.inner.val, cname)
 	runtime.KeepAlive(c)
 	return c
@@ -258,9 +262,13 @@ func (c *Workplane) FindSolid(searchStack bool, searchParents bool) *Solid {
 
 func (wp *Workplane) Vertices(selector string, tag string) *Workplane {
 	cselector := C.CString(selector)
-	defer C.free(unsafe.Pointer(cselector))
+ cselectorPtr := unsafe.Pointer(cselector)
+
+	defer C.free(cselectorPtr)
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_vertices(wp.inner.val, cselector, ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -269,7 +277,9 @@ func (wp *Workplane) Vertices(selector string, tag string) *Workplane {
 
 func (wp *Workplane) VerticesWithSelector(selector *Selector, tag string) *Workplane {
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_vertices_with_selector(wp.inner.val, selector.inner.val, ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -278,9 +288,13 @@ func (wp *Workplane) VerticesWithSelector(selector *Selector, tag string) *Workp
 
 func (wp *Workplane) Edges(selector string, tag string) *Workplane {
 	cselector := C.CString(selector)
-	defer C.free(unsafe.Pointer(cselector))
+ cselectorPtr := unsafe.Pointer(cselector)
+
+	defer C.free(cselectorPtr)
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_edges(wp.inner.val, cselector, ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -289,7 +303,9 @@ func (wp *Workplane) Edges(selector string, tag string) *Workplane {
 
 func (wp *Workplane) EdgesWithSelector(selector *Selector, tag string) *Workplane {
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_edges_with_selector(wp.inner.val, selector.inner.val, ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -298,9 +314,13 @@ func (wp *Workplane) EdgesWithSelector(selector *Selector, tag string) *Workplan
 
 func (wp *Workplane) Wires(selector string, tag string) *Workplane {
 	cselector := C.CString(selector)
-	defer C.free(unsafe.Pointer(cselector))
+ cselectorPtr := unsafe.Pointer(cselector)
+
+	defer C.free(cselectorPtr)
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_wires(wp.inner.val, cselector, ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -309,7 +329,9 @@ func (wp *Workplane) Wires(selector string, tag string) *Workplane {
 
 func (wp *Workplane) WiresWithSelector(selector *Selector, tag string) *Workplane {
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_wires_with_selector(wp.inner.val, selector.inner.val, ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -318,9 +340,13 @@ func (wp *Workplane) WiresWithSelector(selector *Selector, tag string) *Workplan
 
 func (wp *Workplane) Faces(selector string, tag string) *Workplane {
 	cselector := C.CString(selector)
-	defer C.free(unsafe.Pointer(cselector))
+ cselectorPtr := unsafe.Pointer(cselector)
+
+	defer C.free(cselectorPtr)
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_faces(wp.inner.val, cselector, ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -329,7 +355,9 @@ func (wp *Workplane) Faces(selector string, tag string) *Workplane {
 
 func (wp *Workplane) FacesWithSelector(selector *Selector, tag string) *Workplane {
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_faces_with_selector(wp.inner.val, selector.inner.val, ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -338,9 +366,13 @@ func (wp *Workplane) FacesWithSelector(selector *Selector, tag string) *Workplan
 
 func (wp *Workplane) Shells(selector string, tag string) *Workplane {
 	cselector := C.CString(selector)
-	defer C.free(unsafe.Pointer(cselector))
+ cselectorPtr := unsafe.Pointer(cselector)
+
+	defer C.free(cselectorPtr)
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_shells(wp.inner.val, cselector, ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -349,7 +381,9 @@ func (wp *Workplane) Shells(selector string, tag string) *Workplane {
 
 func (wp *Workplane) ShellsWithSelector(selector *Selector, tag string) *Workplane {
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_shells_with_selector(wp.inner.val, selector.inner.val, ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -358,9 +392,13 @@ func (wp *Workplane) ShellsWithSelector(selector *Selector, tag string) *Workpla
 
 func (wp *Workplane) Solids(selector string, tag string) *Workplane {
 	cselector := C.CString(selector)
-	defer C.free(unsafe.Pointer(cselector))
+ cselectorPtr := unsafe.Pointer(cselector)
+
+	defer C.free(cselectorPtr)
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_solids(wp.inner.val, cselector, ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -369,7 +407,9 @@ func (wp *Workplane) Solids(selector string, tag string) *Workplane {
 
 func (wp *Workplane) SolidsWithSelector(selector *Selector, tag string) *Workplane {
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_solids_with_selector(wp.inner.val, selector.inner.val, ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -378,9 +418,13 @@ func (wp *Workplane) SolidsWithSelector(selector *Selector, tag string) *Workpla
 
 func (wp *Workplane) Compounds(selector string, tag string) *Workplane {
 	cselector := C.CString(selector)
-	defer C.free(unsafe.Pointer(cselector))
+ cselectorPtr := unsafe.Pointer(cselector)
+
+	defer C.free(cselectorPtr)
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_compounds(wp.inner.val, cselector, ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -388,7 +432,9 @@ func (wp *Workplane) Compounds(selector string, tag string) *Workplane {
 }
 func (wp *Workplane) CompoundsWithSelector(selector *Selector, tag string) *Workplane {
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_compounds_with_selector(wp.inner.val, selector.inner.val, ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -397,7 +443,9 @@ func (wp *Workplane) CompoundsWithSelector(selector *Selector, tag string) *Work
 
 func (wp *Workplane) Ancestors(kind int, tag string) *Workplane {
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_ancestors(wp.inner.val, C.int(kind), ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -406,7 +454,9 @@ func (wp *Workplane) Ancestors(kind int, tag string) *Workplane {
 
 func (wp *Workplane) Siblings(kind int, level int, tag string) *Workplane {
 	ctag := C.CString(tag)
-	defer C.free(unsafe.Pointer(ctag))
+ ctagPtr := unsafe.Pointer(ctag)
+
+	defer C.free(ctagPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_siblings(wp.inner.val, C.int(kind), C.int(level), ctag)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -440,7 +490,9 @@ func (wp *Workplane) Rotate(axisStart *TopoVector, axisEnd *TopoVector, angle fl
 
 func (wp *Workplane) Mirror(planeName string, basePoint *TopoVector) *Workplane {
 	cplaneName := C.CString(planeName)
-	defer C.free(unsafe.Pointer(cplaneName))
+ cplaneNamePtr := unsafe.Pointer(cplaneName)
+
+	defer C.free(cplaneNamePtr)
 	var cBase *C.struct__topo_vector_t
 	if basePoint != nil {
 		cBase = basePoint.inner.val
@@ -467,7 +519,9 @@ func (wp *Workplane) MirrorWithNormal(normal *TopoVector, basePoint *TopoVector)
 
 func (wp *Workplane) MirrorWithName(planeName string, basePoint *TopoVector, unionResult bool) *Workplane {
 	cplaneName := C.CString(planeName)
-	defer C.free(unsafe.Pointer(cplaneName))
+ cplaneNamePtr := unsafe.Pointer(cplaneName)
+
+	defer C.free(cplaneNamePtr)
 	var cBase *C.struct__topo_vector_t
 	if basePoint != nil {
 		cBase = basePoint.inner.val
@@ -545,7 +599,9 @@ func (wp *Workplane) Translate(vec *TopoVector) *Workplane {
 
 func (wp *Workplane) Shell(thickness float64, kind string) *Workplane {
 	ckind := C.CString(kind)
-	defer C.free(unsafe.Pointer(ckind))
+ ckindPtr := unsafe.Pointer(ckind)
+
+	defer C.free(ckindPtr)
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_shell(wp.inner.val, C.double(thickness), ckind)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
@@ -1321,7 +1377,10 @@ func (wp *Workplane) Combine(clean, glue bool, tol float64) *Workplane {
 }
 
 func (wp *Workplane) CutThruAll(taper float64, clean bool) *Workplane {
-	c := &Workplane{inner: &innerWorkplane{val: C.workplane_cut_thru_all(wp.inner.val, C.double(taper), C.bool(clean))}}
+	wpVal := wp.inner.val
+	cTaper := C.double(taper)
+	cClean := C.bool(clean)
+	c := &Workplane{inner: &innerWorkplane{val: C.workplane_cut_thru_all(wpVal, cTaper, cClean)}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
 	runtime.KeepAlive(wp)
 	return c
@@ -1344,11 +1403,17 @@ func (wp *Workplane) LoftRuled() *Workplane {
 
 func (wp *Workplane) Text(txt string, fontsize, distance float64, cut, combine, clean bool, font, fontPath string, kind, halign, valign int) *Workplane {
 	ctxt := C.CString(txt)
-	defer C.free(unsafe.Pointer(ctxt))
+ ctxtPtr := unsafe.Pointer(ctxt)
+
+	defer C.free(ctxtPtr)
 	cfont := C.CString(font)
-	defer C.free(unsafe.Pointer(cfont))
+ cfontPtr := unsafe.Pointer(cfont)
+
+	defer C.free(cfontPtr)
 	cfontPath := C.CString(fontPath)
-	defer C.free(unsafe.Pointer(cfontPath))
+ cfontPathPtr := unsafe.Pointer(cfontPath)
+
+	defer C.free(cfontPathPtr)
 
 	c := &Workplane{inner: &innerWorkplane{val: C.workplane_text(wp.inner.val, ctxt, C.double(fontsize), C.double(distance), C.bool(cut), C.bool(combine), C.bool(clean), cfont, cfontPath, C.int(kind), C.int(halign), C.int(valign))}}
 	runtime.SetFinalizer(c, finalizeWorkplane)
@@ -1414,8 +1479,8 @@ func (wp *Workplane) GetIndices(indices []int) *Workplane {
 
 func (wp *Workplane) ExportTo(path string) {
 	cpath := C.CString(path)
-	defer C.free(unsafe.Pointer(cpath))
 	C.workplane_export_to(wp.inner.val, cpath)
+	C.free(unsafe.Pointer(cpath))
 	runtime.KeepAlive(wp)
 }
 

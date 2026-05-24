@@ -28,3 +28,4 @@ build
 /libs
 /tests
 .cache
+example_*.step

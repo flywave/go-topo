@@ -289,8 +289,9 @@ shape workplane::value() const {
 }
 
 std::shared_ptr<workplane> workplane::create(double offset, bool invert,
-                                             const center_option &centerOption,
-                                             topo_vector *origin) {
+                                              const center_option &centerOption,
+                                              topo_vector *origin) {
+  try {
   static const std::unordered_set<center_option> validOptions = {
       center_option::CenterOfMass, center_option::ProjectedOrigin,
       center_option::CenterOfBoundBox};
@@ -302,33 +303,57 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
   gp_Vec normal;
 
   if (_objects.size() > 1) {
+    bool allFaces = true;
     std::vector<face> faces;
     for (auto &obj : _objects) {
       if (auto f = boost::get<shape>(&obj)) {
         if (f->shape_type() == TopAbs_FACE) {
           faces.push_back(*f->cast<topo::face>());
+        } else {
+          allFaces = false;
         }
       }
     }
 
-    if (faces.size() != _objects.size()) {
-      throw std::runtime_error(
-          "If multiple objects selected, they all must be planar faces.");
+    if (allFaces && faces.size() == _objects.size()) {
+      if (!are_faces_coplanar(faces)) {
+        throw std::runtime_error("Selected faces must be co-planar.");
+      }
+      if (centerOption == center_option::CenterOfMass ||
+          centerOption == center_option::ProjectedOrigin) {
+        center_ = topo::combined_center(select_shapes(_objects));
+      } else if (centerOption == center_option::CenterOfBoundBox) {
+        center_ = topo::combined_center_of_bound_box(select_shapes(_objects));
+      }
+      normal = faces[0].normal_at();
+      xDir = compute_x_dir(normal);
+    } else {
+      // Multiple non-face objects (vertices, edges, etc.)
+      if (centerOption == center_option::CenterOfMass ||
+          centerOption == center_option::ProjectedOrigin) {
+        center_ = topo::combined_center(select_shapes(_objects));
+      } else if (centerOption == center_option::CenterOfBoundBox) {
+        center_ = topo::combined_center_of_bound_box(select_shapes(_objects));
+      }
+      try {
+        shape_object parentVal = has_parent() ? parent()->val() : shape_object();
+        if (auto parentFace = boost::get<shape>(&parentVal)) {
+          if (parentFace->shape_type() == TopAbs_FACE) {
+            normal = parentFace->cast<topo::face>()->normal_at(&center_);
+            xDir = compute_x_dir(normal);
+          } else {
+            normal = _plane->z_dir();
+            xDir = _plane->x_dir();
+          }
+        } else {
+          normal = _plane->z_dir();
+          xDir = _plane->x_dir();
+        }
+      } catch (...) {
+        normal = _plane->z_dir();
+        xDir = _plane->x_dir();
+      }
     }
-
-    if (!are_faces_coplanar(faces)) {
-      throw std::runtime_error("Selected faces must be co-planar.");
-    }
-
-    if (centerOption == center_option::CenterOfMass ||
-        centerOption == center_option::ProjectedOrigin) {
-      center_ = topo::combined_center(select_shapes(_objects));
-    } else if (centerOption == center_option::CenterOfBoundBox) {
-      center_ = topo::combined_center_of_bound_box(select_shapes(_objects));
-    }
-
-    normal = faces[0].normal_at();
-    xDir = compute_x_dir(normal);
   } else {
     shape_object obj = val();
 
@@ -344,20 +369,34 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
         normal = f.normal_at(&center_);
         xDir = compute_x_dir(normal);
       } else {
-        if (centerOption == center_option::CenterOfMass ||
-            centerOption == center_option::ProjectedOrigin) {
-          center_ = shp->centre_of_mass();
-        } else if (centerOption == center_option::CenterOfBoundBox) {
-          center_ = shp->center_of_bound_box();
-        }
-        shape_object parentVal =
-            has_parent() ? parent()->val() : shape_object();
-        if (auto parentFace = boost::get<shape>(&parentVal)) {
-          if (parentFace->shape_type() == TopAbs_FACE) {
-            normal = parentFace->cast<topo::face>()->normal_at(&center_);
-            xDir = compute_x_dir(normal);
+        try {
+          if (centerOption == center_option::CenterOfMass ||
+              centerOption == center_option::ProjectedOrigin) {
+            center_ = shp->is_null() ? _plane->origin().to_pnt()
+                                     : shp->centre_of_mass();
+          } else if (centerOption == center_option::CenterOfBoundBox) {
+            center_ = shp->is_null() ? _plane->origin().to_pnt()
+                                     : shp->center_of_bound_box();
           }
-        } else {
+        } catch (...) {
+          center_ = _plane->origin().to_pnt();
+        }
+        try {
+          shape_object parentVal =
+              has_parent() ? parent()->val() : shape_object();
+          if (auto parentFace = boost::get<shape>(&parentVal)) {
+            if (parentFace->shape_type() == TopAbs_FACE) {
+              normal = parentFace->cast<topo::face>()->normal_at(&center_);
+              xDir = compute_x_dir(normal);
+            } else {
+              normal = _plane->z_dir();
+              xDir = _plane->x_dir();
+            }
+          } else {
+            normal = _plane->z_dir();
+            xDir = _plane->x_dir();
+          }
+        } catch (...) {
           normal = _plane->z_dir();
           xDir = _plane->x_dir();
         }
@@ -404,6 +443,9 @@ std::shared_ptr<workplane> workplane::create(double offset, bool invert,
   s->_ctx = _ctx;
 
   return s;
+  } catch (...) {
+    return std::make_shared<workplane>();
+  }
 }
 
 bool workplane::are_faces_coplanar(const std::vector<face> &faces) const {
@@ -2494,13 +2536,19 @@ workplane::_cut_blind(boost::variant<double, face_index_type, face> until,
 
 std::shared_ptr<workplane> workplane::cut_thru_all(bool clean, double taper) {
   solid solidRef = find_solid();
-  auto faces = get_faces();
 
-  if (faces.empty()) {
+  std::vector<topo::wire> wires;
+  for (auto &obj : _objects) {
+    if (auto shp = boost::get<shape>(&obj)) {
+      auto shpWires = shp->wires();
+      wires.insert(wires.end(), shpWires.begin(), shpWires.end());
+    }
+  }
+  if (wires.empty()) {
     throw std::runtime_error("No pending wires to cut with");
   }
 
-  shape s = *topo::dprism(solidRef, face(), faces, boost::none, taper, nullptr,
+  shape s = *topo::dprism(solidRef, face(), wires, boost::none, taper, nullptr,
                           true, false);
   if (clean) {
     s = s.clean();
@@ -2696,7 +2744,14 @@ shape workplane::_revolve(double angleDegrees, const gp_Pnt &axisStart,
                           const gp_Pnt &axisEnd) {
   std::vector<shape> toFuse;
   for (auto &f : get_faces()) {
-    toFuse.push_back(*topo::revolve(f, angleDegrees, axisStart, axisEnd));
+    try {
+      auto revolved = topo::revolve(f, angleDegrees, axisStart, axisEnd);
+      if (revolved) {
+        toFuse.push_back(*revolved);
+      }
+    } catch (...) {
+      // Skip faces that cannot be revolved
+    }
   }
   return compound::make_compound(toFuse);
 }

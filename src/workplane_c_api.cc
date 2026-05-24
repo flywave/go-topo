@@ -3,6 +3,7 @@
 #include "sketch_impl.hh"
 #include "topo_impl.hh"
 #include "workplane_impl.hh"
+#include <Standard_Failure.hxx>
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,7 +97,10 @@ topo_shape_t *workplane_value(workplane_t *wp) {
       .shp = std::make_shared<flywave::topo::shape>(wp->ptr->value())};
 }
 
-#define SAFE_CALL(wp, expr) (wp)->ptr->safe_call([&]() { expr; })
+#define SAFE_CALL(wp, expr)                                                    \
+  (!(wp) || !(wp)->ptr                                                         \
+       ? std::shared_ptr<flywave::topo::workplane>()                           \
+       : (wp)->ptr->safe_call([&]() { expr; }))
 
 workplane_t *workplane_clean(workplane_t *wp) {
   return new workplane_t{.ptr = SAFE_CALL(wp, return wp->ptr->clean())};
@@ -104,12 +108,21 @@ workplane_t *workplane_clean(workplane_t *wp) {
 
 workplane_t *workplane_workplane(workplane_t *wp, double offset, bool invert,
                                  int centerOption, topo_vector_t *origin) {
-  return new workplane_t{
-      .ptr = SAFE_CALL(
-          wp, return wp->ptr->create(
-                  offset, invert,
-                  static_cast<flywave::topo::center_option>(centerOption),
-                  origin ? &origin->vec : nullptr))};
+  auto result = SAFE_CALL(
+      wp, return wp->ptr->create(
+              offset, invert,
+              static_cast<flywave::topo::center_option>(centerOption),
+              origin ? &origin->vec : nullptr));
+  if (!result) {
+    std::cerr << "workplane_workplane: SAFE_CALL returned null" << std::endl;
+    if (wp && wp->ptr) {
+      std::string err = wp->ptr->error();
+      if (!err.empty()) {
+        std::cerr << "  error: " << err << std::endl;
+      }
+    }
+  }
+  return new workplane_t{.ptr = result};
 }
 
 void workplane_tag(workplane_t *wp, const char *name) { wp->ptr->tag(name); }
@@ -725,6 +738,10 @@ workplane_t *workplane_rect_all(workplane_t *wp, double xLen, double yLen,
 
 workplane_t *workplane_circle(workplane_t *wp, double radius,
                               bool forConstruction) {
+  if (!wp || !wp->ptr) {
+    std::cerr << "workplane_circle: null wp or ptr!" << std::endl;
+    return new workplane_t{};
+  }
   auto result = SAFE_CALL(wp, return wp->ptr->circle(radius, forConstruction));
   return new workplane_t{.ptr = result};
 }
@@ -822,11 +839,13 @@ workplane_t *workplane_twist_extrude(workplane_t *wp, double distance,
 }
 
 workplane_t *workplane_extrude(workplane_t *wp, double distance, bool combine,
-                               bool clean, bool both, double *taper) {
-  auto result =
-      SAFE_CALL(wp, return wp->ptr->extrude(
-                        distance, combine, clean, both,
-                        taper ? boost::optional<double>(*taper) : boost::none));
+                                bool clean, bool both, double *taper) {
+  auto result = SAFE_CALL(
+      wp, return wp->ptr->extrude(
+              distance, combine, clean, both,
+              (taper && *taper != 0.0)
+                  ? boost::optional<double>(*taper)
+                  : boost::none));
   return new workplane_t{.ptr = result};
 }
 
@@ -1003,6 +1022,12 @@ workplane_t *workplane_revolve(workplane_t *wp, topo_vector_t *axisStart,
                      : gp_Pnt(0, 1, 0));
   auto result = SAFE_CALL(
       wp, return wp->ptr->revolve(angleDegrees, start, end, combine, clean));
+  if (!result && wp && wp->ptr) {
+    std::string err = wp->ptr->error();
+    if (!err.empty()) {
+      std::cerr << "revolve error: " << err << std::endl;
+    }
+  }
   return new workplane_t{.ptr = result};
 }
 
@@ -1303,6 +1328,8 @@ void workplane_invoke(workplane_t *wp, void *userdate,
 }
 
 void workplane_export_to(workplane_t *wp, const char *path) {
+  if (!wp || !wp->ptr) return;
+  if (!path) return;
   wp->ptr->export_to(path);
 }
 

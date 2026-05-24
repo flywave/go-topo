@@ -36,6 +36,7 @@
 #include <STEPCAFControl_Reader.hxx>
 #include <STEPControl_Reader.hxx>
 #include <STEPControl_Writer.hxx>
+#include <Standard_Failure.hxx>
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <TDataStd_Name.hxx>
 #include <TDocStd_Document.hxx>
@@ -1270,22 +1271,28 @@ boost::optional<shape> dprism(const shape &shp, const face &basis,
   const double taperRad = taper * M_PI / 180.0;
 
   for (const face &f : faces) {
-    BRepFeat_MakeDPrism prismBuilder(shape_, f.value(), basisFace, taperRad,
-                                     additive, false);
+    try {
+      BRepFeat_MakeDPrism prismBuilder(shape_, f.value(), basisFace, taperRad,
+                                       additive, false);
 
-    if (upToFace) {
-      prismBuilder.Perform(upToFace->value());
-    } else if (thruAll || !depth) {
-      prismBuilder.PerformThruAll();
-    } else {
-      prismBuilder.Perform(*depth);
+      if (upToFace) {
+        prismBuilder.Perform(upToFace->value());
+      } else if (thruAll || !depth) {
+        prismBuilder.PerformThruAll();
+      } else {
+        prismBuilder.Perform(*depth);
+      }
+
+      if (!prismBuilder.IsDone()) {
+        throw std::runtime_error("Failed to create prismatic feature");
+      }
+
+      shape_ = prismBuilder.Shape();
+    } catch (Standard_Failure const &e) {
+      throw std::runtime_error(
+          std::string("DPrism failed: ") +
+          (e.GetMessageString() ? e.GetMessageString() : "OCCT error"));
     }
-
-    if (!prismBuilder.IsDone()) {
-      throw std::runtime_error("Failed to create prismatic feature");
-    }
-
-    shape_ = prismBuilder.Shape();
   }
 
   return boost::make_optional<shape>(shape_);
