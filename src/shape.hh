@@ -226,6 +226,8 @@ public:
 
   bool export_step(const std::string &fileName, bool write_pcurves = true,
                    int precision_mode = 0) const;
+  bool export_stl(const std::string &fileName,
+                  double deflection = 0.1) const;
   bool export_brep(const std::string &fileName) const;
 
   static boost::optional<shape> import_from_brep(const std::string &fileName);

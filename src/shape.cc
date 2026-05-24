@@ -41,6 +41,7 @@
 #include <Poly.hxx>
 #include <Poly_Triangulation.hxx>
 #include <STEPControl_Writer.hxx>
+#include <StlAPI_Writer.hxx>
 #include <ShapeCustom.hxx>
 #include <ShapeCustom_BSplineRestriction.hxx>
 #include <ShapeCustom_RestrictionParameters.hxx>
@@ -1568,6 +1569,17 @@ bool shape::export_step(const std::string &fileName, bool write_pcurves,
   STEPControl_Writer writer;
   writer.Transfer(_shape, STEPControl_AsIs);
   return writer.Write(fileName.c_str());
+}
+
+bool shape::export_stl(const std::string &fileName, double deflection) const {
+  try {
+    BRepMesh_IncrementalMesh mesh(_shape, deflection);
+    StlAPI_Writer writer;
+    writer.ASCIIMode() = false;
+    return writer.Write(_shape, fileName.c_str());
+  } catch (...) {
+    return false;
+  }
 }
 
 bool shape::export_brep(const std::string &fileName) const {

@@ -3321,7 +3321,12 @@ std::vector<shape> workplane::shapes() const {
 
 workplane &workplane::export_to(const std::string &path) {
   compound comp = compound::make_compound(shapes());
-  comp.export_step(path);
+  std::string ext = path.substr(path.find_last_of('.') + 1);
+  if (ext == "stl" || ext == "STL") {
+    comp.export_stl(path);
+  } else {
+    comp.export_step(path);
+  }
   return *this;
 }
 
