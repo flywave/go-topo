@@ -747,14 +747,19 @@ TopoDS_Shape create_registration_arm(const registration_arm_params &params) {
   }
 
 
-  // Base end: mounting bracket + movable joint (in YZ plane, at X=0)
-  double jointSize = std::max(W, H) * 1.8, jThick = W * 0.8;
-  gp_Pnt jOrg(-jThick*0.3, -jointSize/2, -jointSize/2);
-  TopoDS_Shape joint = BRepPrimAPI_MakeBox(jOrg, jThick, jointSize, jointSize).Shape();
-  double pinR = W * 0.2;
-  joint = BRepAlgoAPI_Cut(joint, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(0, -jointSize, 0), gp::DX()), pinR, jThick+2).Shape()).Shape();
-  joint = BRepAlgoAPI_Cut(joint, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(0, -jointSize, jointSize), gp::DX()), pinR, jThick+2).Shape()).Shape();
+  // Base end: joint plate + L-flange toward band
+  double jointSize = std::max(W, H) * 1.2;
+  double jThick = W * 0.6;
+  double jY = jointSize/6, jW = jointSize/3, jZ = jointSize*1.8, jH = jointSize*2;
+  gp_Pnt jOrg(-jThick/2, -jY, -jZ);
+  TopoDS_Shape joint = BRepPrimAPI_MakeBox(jOrg, jThick, jW, jH).Shape();
   tube = BRepAlgoAPI_Fuse(tube, joint).Shape();
+
+  // L-flange — short tab in XZ, 90° to joint
+  double fLen = jThick * 1.5, fH = jThick * 0.8;
+  gp_Pnt fOrg(-jThick/2 - fLen, -jThick/2, -jZ - fH);
+  TopoDS_Shape flange = BRepPrimAPI_MakeBox(fOrg, fLen + jThick, jThick, fH).Shape();
+  tube = BRepAlgoAPI_Fuse(tube, flange).Shape();
 
   // Front end: wire clamp — top flush with tube top, extends downward
   double clampW = W * 1.2, clampH = H * 2, cThick = W * 0.6;
