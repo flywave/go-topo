@@ -968,7 +968,7 @@ RAILCAPICALL topo_shape_t *create_rail_with_place(rail_params_t params,
 // 25. Sleeper
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_sleeper(sleeper_params_t params) {
-  sleeper_params cpp_params{params.length, params.width, params.height,
+  sleeper_params cpp_params{static_cast<sleeper_shape_type>(params.shapeType), params.length, params.width, params.height,
                              params.gauge, params.grooveDepth, params.spacing};
   try {
     return new topo_shape_t{
@@ -981,7 +981,7 @@ RAILCAPICALL topo_shape_t *create_sleeper(sleeper_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_sleeper_with_place(sleeper_params_t params, pnt3d_t position,
                           dir3d_t direction, dir3d_t upDir) {
-  sleeper_params cpp_params{params.length, params.width, params.height,
+  sleeper_params cpp_params{static_cast<sleeper_shape_type>(params.shapeType), params.length, params.width, params.height,
                              params.gauge, params.grooveDepth, params.spacing};
   gp_Pnt cpp_pos(position.x, position.y, position.z);
   gp_Dir cpp_dir(direction.x, direction.y, direction.z);

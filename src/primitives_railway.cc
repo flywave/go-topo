@@ -2193,28 +2193,62 @@ TopoDS_Shape create_sleeper(const sleeper_params &params) {
   if (params.length <= 0 || params.width <= 0 || params.height <= 0)
     throw Standard_ConstructionError("Dimensions must be positive");
 
-  gp_Pnt origin(-params.length / 2, -params.width / 2, 0);
-  TopoDS_Shape body =
-      BRepPrimAPI_MakeBox(origin, params.length, params.width, params.height)
-          .Shape();
+  double L = params.length, W = params.width, H = params.height;
+  TopoDS_Shape body;
 
-  // Cut two rail seats (grooves) on top
-  if (params.grooveDepth > 0 && params.gauge > 0) {
-    double grooveW = params.width * 0.6;
-    double gD = params.grooveDepth;
-    double halfGauge = params.gauge / 2;
+  if (params.shapeType == sleeper_shape_type::TRAPEZOIDAL) {
+    double topW = W * 0.75, midW = W * 0.85;
+    // Fish-belly: 3 sections — end(narrow) → center(wide) → end(narrow)
+    BRepOffsetAPI_ThruSections gen(Standard_True);
+    for (int s = 0; s < 3; ++s) {
+      double t = s / 2.0;
+      double x = -L/2 + t * L;
+      double curW = (s == 1) ? W : midW;
+      double curTopW = (s == 1) ? topW : topW * 0.9;
+      double hw = curW / 2, htw = curTopW / 2;
+      gp_Pnt bp[4] = {{x, -hw, 0}, {x + L*0.02, -htw, H},
+                       {x + L*0.02, htw, H}, {x, hw, 0}};
+      gen.AddWire(BRepBuilderAPI_MakePolygon(bp[0], bp[1], bp[2], bp[3], Standard_True));
+    }
+    gen.Build(); body = gen.Shape();
 
-    // Left rail seat
-    gp_Pnt leftGroove(-grooveW / 2, -halfGauge - grooveW / 2, params.height - gD);
-    TopoDS_Shape leftCut =
-        BRepPrimAPI_MakeBox(leftGroove, grooveW, grooveW, gD + 1).Shape();
-    body = BRepAlgoAPI_Cut(body, leftCut).Shape();
+    // End chamfer wedges
+    double cfLen = L * 0.08;
+    for (int side = -1; side <= 1; side += 2) {
+      double x = side * L/2;
+      gp_Pnt tp1(x, -W/2 - 1, -1), tp2(x - side*cfLen, -W/2 - 1, -1);
+      gp_Pnt tp3(x - side*cfLen, W/2 + 1, -1), tp4(x, W/2 + 1, -1);
+      TopoDS_Wire cw = BRepBuilderAPI_MakePolygon(tp1, tp2, tp3, tp4, Standard_True).Wire();
+      body = BRepAlgoAPI_Cut(body, BRepPrimAPI_MakePrism(BRepLib_MakeFace(cw).Face(), gp_Vec(0, 0, H*1.5)).Shape()).Shape();
+    }
 
-    // Right rail seat
-    gp_Pnt rightGroove(-grooveW / 2, halfGauge - grooveW / 2, params.height - gD);
-    TopoDS_Shape rightCut =
-        BRepPrimAPI_MakeBox(rightGroove, grooveW, grooveW, gD + 1).Shape();
-    body = BRepAlgoAPI_Cut(body, rightCut).Shape();
+    // Rail seats with inward slope
+    if (params.grooveDepth > 0 && params.gauge > 0) {
+      double hG = params.gauge / 2, gD = params.grooveDepth;
+      double seatW = W * 0.3, seatL = L * 0.35;
+      for (int side = -1; side <= 1; side += 2) {
+        double y = side * hG;
+        TopoDS_Shape seat = BRepPrimAPI_MakeBox(gp_Pnt(-seatL/2, y - seatW/2, H - gD), seatL, seatW, gD+1).Shape();
+        body = BRepAlgoAPI_Cut(body, seat).Shape();
+      }
+    }
+  } else {
+    double cfLen = L * 0.08;
+    body = BRepPrimAPI_MakeBox(gp_Pnt(-L/2, -W/2, 0), L, W, H).Shape();
+
+    for (int side = -1; side <= 1; side += 2) {
+      double x = side * L/2;
+      gp_Pnt tp1(x, -W/2 - 1, -1), tp2(x - side*cfLen, -W/2 - 1, -1);
+      gp_Pnt tp3(x - side*cfLen, W/2 + 1, -1), tp4(x, W/2 + 1, -1);
+      TopoDS_Wire cw = BRepBuilderAPI_MakePolygon(tp1, tp2, tp3, tp4, Standard_True).Wire();
+      body = BRepAlgoAPI_Cut(body, BRepPrimAPI_MakePrism(BRepLib_MakeFace(cw).Face(), gp_Vec(0, 0, H*1.5)).Shape()).Shape();
+    }
+
+    if (params.grooveDepth > 0 && params.gauge > 0) {
+      double hG = params.gauge / 2;
+      for (int side = -1; side <= 1; side += 2)
+        body = BRepAlgoAPI_Cut(body, BRepPrimAPI_MakeBox(gp_Pnt(-L*0.15, side*hG - W*0.18, H - params.grooveDepth), L*0.3, W*0.35, params.grooveDepth+1).Shape()).Shape();
+    }
   }
 
   return body;

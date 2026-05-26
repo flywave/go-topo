@@ -636,7 +636,17 @@ TopoDS_Shape create_rail(const rail_params &params,
 // =========================================================================
 // TRACK: 25. Sleeper (轨枕) TYPE=TRACK_SLEEPER_CONC
 // =========================================================================
+// =========================================================================
+// TRACK: 25. Sleeper (轨枕) TYPE=TRACK_SLEEPER_CONC
+// =========================================================================
+
+enum class sleeper_shape_type {
+  RECTANGULAR = 1,   // 矩形 (木枕/简易)
+  TRAPEZOIDAL = 2    // 梯形收腰 (混凝土枕, 底部宽顶部窄, 顶角圆角)
+};
+
 struct sleeper_params {
+  sleeper_shape_type shapeType; // 类型
   double length;          // 长度(mm)
   double width;           // 宽度(mm)
   double height;          // 高度(mm)

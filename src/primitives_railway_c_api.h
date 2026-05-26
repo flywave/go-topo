@@ -559,6 +559,7 @@ RAILCAPICALL topo_shape_t *create_rail_with_place(rail_params_t params,
 // 25. Sleeper (轨枕)
 // ===========================================================================
 typedef struct {
+  int shapeType;
   double length;
   double width;
   double height;

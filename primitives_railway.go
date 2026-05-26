@@ -1160,6 +1160,7 @@ func CreateRailWithPlace(params RailParams, startPoint, endPoint Point3) *Shape 
 // =========================================================================
 
 type SleeperParams struct {
+	ShapeType   int
 	Length      float64
 	Width       float64
 	Height      float64
@@ -1170,6 +1171,7 @@ type SleeperParams struct {
 
 func (p *SleeperParams) to_struct() C.sleeper_params_t {
 	var c C.sleeper_params_t
+	c.shapeType = C.int(p.ShapeType)
 	c.length = C.double(p.Length)
 	c.width = C.double(p.Width)
 	c.height = C.double(p.Height)
