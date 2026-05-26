@@ -1,0 +1,2496 @@
+#include "primitives_railway.hh"
+
+#include <BRepAlgoAPI_Cut.hxx>
+#include <BRepAlgoAPI_Fuse.hxx>
+#include <BRepBuilderAPI_MakeEdge.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
+#include <BRepBuilderAPI_MakePolygon.hxx>
+#include <BRepBuilderAPI_MakeWire.hxx>
+#include <BRepBuilderAPI_Transform.hxx>
+#include <BRepFilletAPI_MakeFillet.hxx>
+#include <BRepOffsetAPI_MakePipe.hxx>
+#include <BRepOffsetAPI_MakePipeShell.hxx>
+#include <BRepOffsetAPI_ThruSections.hxx>
+#include <BRepPrimAPI_MakeBox.hxx>
+#include <BRepPrimAPI_MakeCone.hxx>
+#include <BRepPrimAPI_MakeCylinder.hxx>
+#include <BRepPrimAPI_MakePrism.hxx>
+#include <BRepPrimAPI_MakeRevol.hxx>
+#include <BRep_Tool.hxx>
+#include <BRepLib_MakeFace.hxx>
+#include <GC_MakeArcOfCircle.hxx>
+#include <GC_MakeSegment.hxx>
+#include <Geom_BezierCurve.hxx>
+#include <Geom_Circle.hxx>
+#include <Geom_Plane.hxx>
+#include <Precision.hxx>
+#include <Standard_ConstructionError.hxx>
+#include <TColgp_HArray1OfPnt.hxx>
+#include <gp_Ax2.hxx>
+#include <gp_Ax3.hxx>
+#include <gp_Circ.hxx>
+#include <gp_Dir.hxx>
+#include <gp_Pnt.hxx>
+#include <gp_Trsf.hxx>
+#include <gp_Vec.hxx>
+
+#include <cmath>
+
+namespace flywave {
+namespace topo {
+
+// =========================================================================
+// 1. Contact Wire (接触线)
+// =========================================================================
+TopoDS_Shape create_contact_wire(const contact_wire_params &params,
+                                 const gp_Pnt &startPoint,
+                                 const gp_Pnt &endPoint) {
+  if (params.diameter <= 0)
+    throw Standard_ConstructionError("Diameter must be positive");
+  if (params.bottomRadius <= 0)
+    throw Standard_ConstructionError("Bottom radius must be positive");
+
+  // Build contact wire cross-section profile:
+  //   Top: clamping area with rounded edge (semi-circle R=topRadius)
+  //   Middle: trapezoidal transition
+  //   Bottom: contact surface arc (R=bottomRadius)
+  //   Sides: grooves (deep grooveDepth, wide grooveWidth)
+  const double R = params.diameter / 2.0;
+  const double h = params.diameter * 0.6; // approximate profile height
+  const double gD = params.grooveDepth > 0 ? params.grooveDepth : 2.0;
+  const double gW = params.grooveWidth > 0 ? params.grooveWidth : 3.0;
+  const double bR =
+      params.bottomRadius > 0 ? params.bottomRadius : R * 0.6;
+  const double tR = params.topRadius > 0 ? params.topRadius : 3.0;
+
+  // Build profile points (YZ plane, centered on X axis)
+  // Starting from bottom center, going clockwise
+  double bottomArcCenterY = 0;
+  double bottomArcCenterZ = bR;
+
+  // Key profile points
+  gp_Pnt p0(0, -R, 0);                          // bottom-left
+  gp_Pnt p1(0, -R + gD, -gW / 2);               // groove bottom-left
+  gp_Pnt p2(0, -R + gD, gW / 2);                // groove bottom-right
+  gp_Pnt p3(0, -R + gD + (h - 2 * bR), gW / 2); // shoulder-right
+  gp_Pnt p4(0, -R + gD + (h - 2 * bR), -gW / 2); // shoulder-left
+  gp_Pnt p5(0, -R, h);                           // top-left
+
+  // Bottom arc
+  gp_Circ bottomArc(
+      gp_Ax2(gp_Pnt(0, 0, bR), gp_Dir(1, 0, 0)),
+      bR);
+  Handle(Geom_TrimmedCurve) bottomArcCurve =
+      GC_MakeArcOfCircle(bottomArc, -M_PI / 2, M_PI / 2, false).Value();
+
+  TopoDS_Edge bottomArcEdge = BRepBuilderAPI_MakeEdge(bottomArcCurve).Edge();
+  TopoDS_Edge e1 = BRepBuilderAPI_MakeEdge(p0, p1).Edge();
+  TopoDS_Edge e2 = BRepBuilderAPI_MakeEdge(p1, p2).Edge();
+  TopoDS_Edge e3 = BRepBuilderAPI_MakeEdge(p2, p3).Edge();
+  TopoDS_Edge e4 = BRepBuilderAPI_MakeEdge(p3, p4).Edge();
+  TopoDS_Edge e5 = BRepBuilderAPI_MakeEdge(p4, p5).Edge();
+
+  // Top semi-circle for clamping area
+  gp_Circ topArc(
+      gp_Ax2(gp_Pnt(0, -R + h - tR, -tR), gp_Dir(0, 0, 1)),
+      tR);
+  Handle(Geom_TrimmedCurve) topArcCurve =
+      GC_MakeArcOfCircle(topArc, -M_PI / 2, M_PI / 2, false).Value();
+  TopoDS_Edge topArcEdge = BRepBuilderAPI_MakeEdge(topArcCurve).Edge();
+
+  BRepBuilderAPI_MakeWire wireMaker;
+  wireMaker.Add(bottomArcEdge);
+  wireMaker.Add(e1);
+  wireMaker.Add(e2);
+  wireMaker.Add(e3);
+  wireMaker.Add(e4);
+  wireMaker.Add(e5);
+  wireMaker.Add(topArcEdge);
+  TopoDS_Wire profileWire = wireMaker.Wire();
+
+  TopoDS_Face profileFace = BRepBuilderAPI_MakeFace(profileWire).Face();
+
+  // Extrude along the path from startPoint to endPoint
+  gp_Vec pathVec(startPoint, endPoint);
+  return BRepPrimAPI_MakePrism(profileFace, pathVec).Shape();
+}
+
+// =========================================================================
+// 2. Messenger Wire (承力索)
+// =========================================================================
+TopoDS_Shape create_messenger_wire(const messenger_wire_params &params,
+                                   const gp_Pnt &startPoint,
+                                   const gp_Pnt &endPoint) {
+  if (params.diameter <= 0)
+    throw Standard_ConstructionError("Diameter must be positive");
+
+  double radius = params.diameter / 2.0;
+
+  // Create a circular profile centered at startPoint
+  gp_Ax2 axis(startPoint, gp_Dir(endPoint.XYZ() - startPoint.XYZ()));
+  gp_Circ sectionCircle(axis, radius);
+  TopoDS_Edge sectionEdge = BRepBuilderAPI_MakeEdge(sectionCircle).Edge();
+  TopoDS_Wire sectionWire = BRepBuilderAPI_MakeWire(sectionEdge).Wire();
+  TopoDS_Face sectionFace = BRepBuilderAPI_MakeFace(sectionWire).Face();
+
+  // Extrude along path
+  gp_Vec pathVec(startPoint, endPoint);
+  return BRepPrimAPI_MakePrism(sectionFace, pathVec).Shape();
+}
+
+// =========================================================================
+// 3. Cross Arm (横担)
+// =========================================================================
+TopoDS_Shape create_cross_arm(const cross_arm_params &params) {
+  if (params.beamLength <= 0 || params.beamHeight <= 0 || params.beamWidth <= 0)
+    throw Standard_ConstructionError("Beam dimensions must be positive");
+
+  BRep_Builder builder;
+  TopoDS_Compound compound;
+  builder.MakeCompound(compound);
+
+  // Main beam
+  gp_Pnt beamOrigin(-params.beamLength / 2.0, -params.beamWidth / 2.0, 0);
+  TopoDS_Shape beam =
+      BRepPrimAPI_MakeBox(beamOrigin, params.beamLength, params.beamWidth,
+                            params.beamHeight).Shape();
+
+  // Edge fillets on beam corners
+  double filletR = std::min({params.beamHeight, params.beamWidth}) * 0.1;
+  if (filletR > Precision::Confusion()) {
+    BRepFilletAPI_MakeFillet fillet(beam);
+    for (TopExp_Explorer ex(beam, TopAbs_EDGE); ex.More(); ex.Next()) {
+      TopoDS_Edge edge = TopoDS::Edge(ex.Current());
+      gp_Pnt p1 = BRep_Tool::Pnt(TopExp::FirstVertex(edge));
+      gp_Pnt p2 = BRep_Tool::Pnt(TopExp::LastVertex(edge));
+      if (std::abs(p1.Z() - p2.Z()) < Precision::Confusion())
+        fillet.Add(filletR, edge);
+    }
+    fillet.Build();
+    if (fillet.IsDone()) beam = fillet.Shape();
+  }
+  builder.Add(compound, beam);
+
+  // Braces
+  double braceLen = params.braceLength > 0 ? params.braceLength : params.beamLength * 0.6;
+  double braceD = params.braceDiameter > 0 ? params.braceDiameter : params.beamWidth * 0.5;
+  for (int side = -1; side <= 1; side += 2) {
+    double x = side * params.beamLength * 0.2;
+    gp_Ax2 braceAxis(gp_Pnt(x, -params.beamWidth / 2.0, 0), gp::DZ());
+    TopoDS_Shape brace =
+        BRepPrimAPI_MakeCylinder(braceAxis, braceD / 2.0, braceLen).Shape();
+    gp_Trsf rot;
+    rot.SetRotation(gp_Ax1(gp_Pnt(x, -params.beamWidth / 2.0, 0), gp::DY()), -M_PI / 6);
+    brace = BRepBuilderAPI_Transform(brace, rot).Shape();
+    builder.Add(compound, brace);
+  }
+
+  // Bolt holes
+  if (params.boltDiameter > 0 && params.boltCount > 0) {
+    double holeR = params.boltDiameter / 2.0;
+    double hs = params.boltSpacing / 2.0;
+    double midZ = params.beamHeight / 2.0;
+    for (int i = 0; i < params.boltCount / 2; ++i) {
+      for (int j = 0; j < 2; ++j) {
+        double hx = (i - (params.boltCount / 4)) * params.boltSpacing * 2;
+        double hy = (j == 0) ? -hs : hs;
+        gp_Ax2 ha(gp_Pnt(hx, hy, midZ), gp::DZ());
+        TopoDS_Shape hole =
+            BRepPrimAPI_MakeCylinder(ha, holeR, params.beamHeight + 2).Shape();
+        beam = BRepAlgoAPI_Cut(beam, hole).Shape();
+      }
+    }
+  }
+
+  return compound;
+}
+
+TopoDS_Shape create_cross_arm(const cross_arm_params &params,
+                              const gp_Pnt &position,
+                              const gp_Dir &normal,
+                              const gp_Dir &xDir) {
+  TopoDS_Shape shape = create_cross_arm(params);
+
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, normal, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  return BRepBuilderAPI_Transform(shape, transformation).Shape();
+}
+
+// =========================================================================
+// 4. Level Cantilever (平腕臂)
+// =========================================================================
+TopoDS_Shape create_level_cantilever(const level_cantilever_params &params) {
+  if (params.length <= 0 || params.outerDiameter <= 0)
+    throw Standard_ConstructionError("Length and diameter must be positive");
+  if (params.wallThickness <= 0 || params.wallThickness >= params.outerDiameter / 2)
+    throw Standard_ConstructionError("Invalid wall thickness");
+
+  double innerRadius = params.outerDiameter / 2 - params.wallThickness;
+  double outerRadius = params.outerDiameter / 2;
+
+  // Outer cylinder along X axis
+  gp_Ax2 outerAxis(gp::Origin(), gp::DX());
+  TopoDS_Shape outerCyl =
+      BRepPrimAPI_MakeCylinder(outerAxis, outerRadius, params.length).Shape();
+
+  // Inner cylinder (to be subtracted)
+  gp_Ax2 innerAxis(gp::Origin(), gp::DX());
+  TopoDS_Shape innerCyl =
+      BRepPrimAPI_MakeCylinder(innerAxis, innerRadius, params.length).Shape();
+
+  // Thin-walled tube
+  TopoDS_Shape tube = BRepAlgoAPI_Cut(outerCyl, innerCyl).Shape();
+
+  // Apply rise angle rotation
+  if (std::abs(params.riseAngle) > Precision::Angular()) {
+    double angleRad = params.riseAngle * M_PI / 180.0;
+    gp_Trsf rot;
+    rot.SetRotation(gp_Ax1(gp::Origin(), gp::DY()), angleRad);
+    return BRepBuilderAPI_Transform(tube, rot).Shape();
+  }
+
+  return tube;
+}
+
+TopoDS_Shape create_level_cantilever(const level_cantilever_params &params,
+                                     const gp_Pnt &basePoint,
+                                     const gp_Dir &axisDirection,
+                                     const gp_Dir &upDir) {
+  TopoDS_Shape shape = create_level_cantilever(params);
+
+  gp_Dir yDir = upDir.Crossed(axisDirection);
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(basePoint, upDir, axisDirection);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  return BRepBuilderAPI_Transform(shape, transformation).Shape();
+}
+
+// =========================================================================
+// 5. Slanted Cantilever (斜腕臂)
+// =========================================================================
+TopoDS_Shape create_slant_cantilever(const slant_cantilever_params &params) {
+  if (params.length <= 0 || params.outerDiameter <= 0)
+    throw Standard_ConstructionError("Length and diameter must be positive");
+  if (params.wallThickness <= 0 || params.wallThickness >= params.outerDiameter / 2)
+    throw Standard_ConstructionError("Invalid wall thickness");
+
+  double innerRadius = params.outerDiameter / 2 - params.wallThickness;
+  double outerRadius = params.outerDiameter / 2;
+
+  // Create tube along Z axis first (vertical), then rotate
+  gp_Ax2 outerAxis(gp::Origin(), gp::DZ());
+  TopoDS_Shape outerCyl =
+      BRepPrimAPI_MakeCylinder(outerAxis, outerRadius, params.length).Shape();
+
+  gp_Ax2 innerAxis(gp::Origin(), gp::DZ());
+  TopoDS_Shape innerCyl =
+      BRepPrimAPI_MakeCylinder(innerAxis, innerRadius, params.length).Shape();
+
+  TopoDS_Shape tube = BRepAlgoAPI_Cut(outerCyl, innerCyl).Shape();
+
+  // Rotate by slant angle around Y axis
+  double angleRad = params.slantAngle * M_PI / 180.0;
+  gp_Trsf rot;
+  rot.SetRotation(gp_Ax1(gp::Origin(), gp::DY()), angleRad);
+  return BRepBuilderAPI_Transform(tube, rot).Shape();
+}
+
+TopoDS_Shape create_slant_cantilever(const slant_cantilever_params &params,
+                                     const gp_Pnt &basePoint,
+                                     const gp_Dir &axisDirection,
+                                     const gp_Dir &upDir) {
+  TopoDS_Shape shape = create_slant_cantilever(params);
+
+  gp_Dir yDir = upDir.Crossed(axisDirection);
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(basePoint, upDir, axisDirection);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  return BRepBuilderAPI_Transform(shape, transformation).Shape();
+}
+
+// =========================================================================
+// 6. Curved Arm (弯臂)
+// =========================================================================
+TopoDS_Shape create_curved_arm(const curved_arm_params &params) {
+  if (params.verticalLength <= 0 || params.horizontalLength <= 0)
+    throw Standard_ConstructionError("Lengths must be positive");
+  if (params.outerDiameter <= 0)
+    throw Standard_ConstructionError("Outer diameter must be positive");
+
+  double tubeRadius = params.outerDiameter / 2;
+  double R =
+      params.bendRadius > 0 ? params.bendRadius
+                            : std::min(params.verticalLength,
+                                       params.horizontalLength) * 0.3;
+  double V = params.verticalLength;
+  double H = params.horizontalLength;
+
+  if (R > V || R > H)
+    R = std::min(V, H) * 0.5;
+
+  // Build centerline path: vertical straight + quarter-circle arc + horizontal straight
+  // Arc center: (R, 0, V-R), quarter turn from Z-direction to X-direction
+  gp_Pnt arcCenter(R, 0, V - R);
+
+  // Vertical segment: from origin to arc start point (0, 0, V-R)
+  gp_Pnt vStart(0, 0, 0);
+  gp_Pnt arcStart(0, 0, V - R);
+
+  // Quarter-circle arc (in XZ plane, from left to top of center)
+  // At parameter 0: arcCenter + (R*cos(0), 0, R*sin(0)) = (R+R, 0, V-R) — right side
+  // At parameter pi/2: arcCenter + (R*cos(pi/2), 0, R*sin(pi/2)) = (R, 0, V) — top
+  // At parameter pi: arcCenter + (R*cos(pi), 0, R*sin(pi)) = (0, 0, V-R) — left side
+  // Arc from pi to pi/2: quarter turn left-to-top (Z-vertical to X-horizontal)
+  gp_Circ arcCircle(gp_Ax2(arcCenter, gp_Dir(0, -1, 0)), R);
+  Handle(Geom_TrimmedCurve) arcCurve =
+      GC_MakeArcOfCircle(arcCircle, M_PI, M_PI / 2, false).Value();
+
+  // Horizontal segment: from arc end to horizontal end
+  gp_Pnt arcEnd(R, 0, V);
+  gp_Pnt hEnd(H, 0, V);
+
+  TopoDS_Edge vertEdge = BRepBuilderAPI_MakeEdge(vStart, arcStart).Edge();
+  TopoDS_Edge arcEdge = BRepBuilderAPI_MakeEdge(arcCurve).Edge();
+  TopoDS_Edge hEdge = BRepBuilderAPI_MakeEdge(arcEnd, hEnd).Edge();
+
+  BRepBuilderAPI_MakeWire pathMaker;
+  pathMaker.Add(vertEdge);
+  pathMaker.Add(arcEdge);
+  pathMaker.Add(hEdge);
+  TopoDS_Wire pathWire = pathMaker.Wire();
+
+  // Circular cross-section at path start
+  gp_Ax2 sectionAxes(vStart, gp_Dir(0, 0, 1));
+  gp_Circ sectionCircle(sectionAxes, tubeRadius);
+  TopoDS_Edge sectionEdge = BRepBuilderAPI_MakeEdge(sectionCircle).Edge();
+  TopoDS_Wire sectionWire = BRepBuilderAPI_MakeWire(sectionEdge).Edge();
+
+  // Sweep along path
+  BRepOffsetAPI_MakePipeShell pipeMaker(pathWire);
+  pipeMaker.Add(sectionWire);
+  pipeMaker.SetMode(Standard_True);
+  pipeMaker.Build();
+
+  if (!pipeMaker.IsDone())
+    throw Standard_ConstructionError("Curved arm pipe generation failed");
+  if (!pipeMaker.MakeSolid())
+    throw Standard_ConstructionError("Failed to create solid curved arm");
+
+  TopoDS_Shape arm = pipeMaker.Shape();
+
+  // Add mounting flange at base
+  if (params.flangeThickness > 0) {
+    double flangeSize = params.outerDiameter * 2;
+    gp_Pnt flangeOrigin(-flangeSize / 2, -flangeSize / 2, -params.flangeThickness);
+    TopoDS_Shape flange =
+        BRepPrimAPI_MakeBox(flangeOrigin, flangeSize, flangeSize,
+                              params.flangeThickness)
+            .Shape();
+    arm = BRepAlgoAPI_Fuse(arm, flange).Shape();
+  }
+
+  return arm;
+}
+
+TopoDS_Shape create_curved_arm(const curved_arm_params &params,
+                               const gp_Pnt &position,
+                               const gp_Dir &normal,
+                               const gp_Dir &xDir) {
+  TopoDS_Shape shape = create_curved_arm(params);
+
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, normal, xDir);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  return BRepBuilderAPI_Transform(shape, transformation).Shape();
+}
+
+// =========================================================================
+// 7. Rod Insulator (棒式绝缘子)
+// =========================================================================
+TopoDS_Shape create_rod_insulator(const rod_insulator_params &params) {
+  if (params.height <= 0 || params.outerDiameter <= 0)
+    throw Standard_ConstructionError("Height and diameter must be positive");
+  if (params.shedDiameter < params.outerDiameter)
+    throw Standard_ConstructionError("Shed diameter must be >= outer diameter");
+  if (params.shedCount < 0)
+    throw Standard_ConstructionError("Shed count must be non-negative");
+
+  double rodRadius = params.outerDiameter / 2.0;
+  double shedMajorR = params.shedDiameter / 2.0;
+  double shedMinorR = shedMajorR * 0.85;
+  double innerR = params.innerDiameter / 2.0;
+
+  // Main rod body — hollow if innerDiameter > 0
+  gp_Ax2 rodAxis(gp::Origin(), gp::DZ());
+  TopoDS_Shape rod;
+  if (innerR > Precision::Confusion() && innerR < rodRadius) {
+    TopoDS_Shape outerCyl =
+        BRepPrimAPI_MakeCylinder(rodAxis, rodRadius, params.height).Shape();
+    TopoDS_Shape innerCyl =
+        BRepPrimAPI_MakeCylinder(rodAxis, innerR, params.height).Shape();
+    rod = BRepAlgoAPI_Cut(outerCyl, innerCyl).Shape();
+  } else {
+    rod = BRepPrimAPI_MakeCylinder(rodAxis, rodRadius, params.height).Shape();
+  }
+
+  if (params.shedCount == 0) return rod;
+
+  // Build compound: body + all shed rings
+  BRep_Builder builder;
+  TopoDS_Compound compound;
+  builder.MakeCompound(compound);
+  builder.Add(compound, rod);
+
+  double shedSpacing = params.shedSpacing > 0
+                           ? params.shedSpacing
+                           : params.height / (params.shedCount + 1);
+  double segH = shedSpacing;
+
+  for (int i = 0; i < params.shedCount; ++i) {
+    double zPos = (i + 1) * shedSpacing;
+    double r = (i % 2 == 0) ? shedMajorR : shedMinorR;
+
+    // 5-point shed profile (references GIM porcelain bushing pattern)
+    // basePoint → outer edge → upper lip → inner dip → end point
+    BRepBuilderAPI_MakeWire wire;
+    gp_Pnt basePt(rodRadius, 0, zPos);
+    gp_Pnt p1(r, 0, zPos);
+    gp_Pnt p2(r * 0.95, 0, zPos + segH * 0.25);
+    gp_Pnt p3(r * 0.7, 0, zPos + segH * 0.4);
+    gp_Pnt endPt(rodRadius, 0, zPos + segH * 0.25);
+
+    wire.Add(BRepBuilderAPI_MakeEdge(basePt, p1));
+    wire.Add(BRepBuilderAPI_MakeEdge(p1, p2));
+    wire.Add(BRepBuilderAPI_MakeEdge(p2, p3));
+    wire.Add(BRepBuilderAPI_MakeEdge(p3, endPt));
+    wire.Add(BRepBuilderAPI_MakeEdge(endPt, basePt));
+
+    if (!wire.IsDone())
+      throw Standard_ConstructionError("Shed wire not closed");
+
+    TopoDS_Face face = BRepLib_MakeFace(wire.Wire()).Face();
+    BRepPrimAPI_MakeRevol revol(face, gp_Ax1(gp::Origin(), gp::DZ()));
+    revol.Build();
+    TopoDS_Shape shed = revol.Shape();
+    if (shed.IsNull())
+      throw Standard_ConstructionError("Shed revolution failed");
+
+    builder.Add(compound, shed);
+  }
+
+  // End flanges
+  if (params.endFitting == end_fitting_type::FLANGE && params.flangeDiameter > rodRadius * 2) {
+    double flangeR = params.flangeDiameter / 2.0;
+    double flangeH = params.height * 0.05;
+    gp_Ax2 botAxis(gp_Pnt(0, 0, -flangeH), gp::DZ());
+    TopoDS_Shape botFlange =
+        BRepPrimAPI_MakeCylinder(botAxis, flangeR, flangeH).Shape();
+    builder.Add(compound, botFlange);
+
+    gp_Ax2 topAxis(gp_Pnt(0, 0, params.height), gp::DZ());
+    TopoDS_Shape topFlange =
+        BRepPrimAPI_MakeCylinder(topAxis, flangeR, flangeH).Shape();
+    builder.Add(compound, topFlange);
+  }
+
+  return compound;
+}
+
+TopoDS_Shape create_rod_insulator(const rod_insulator_params &params,
+                                  const gp_Pnt &basePoint,
+                                  const gp_Dir &axisDirection) {
+  TopoDS_Shape shape = create_rod_insulator(params);
+
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ());
+  gp_Ax3 targetAx3(basePoint, axisDirection);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  return BRepBuilderAPI_Transform(shape, transformation).Shape();
+}
+
+// =========================================================================
+// 8. Mast Bracket (支柱连接座)
+// =========================================================================
+TopoDS_Shape create_mast_bracket(const mast_bracket_params &params) {
+  if (params.height <= 0 || params.width <= 0 || params.thickness <= 0)
+    throw Standard_ConstructionError("Dimensions must be positive");
+
+  BRep_Builder builder;
+  TopoDS_Compound compound;
+  builder.MakeCompound(compound);
+
+  // Main plate
+  gp_Pnt plateOrg(-params.thickness / 2.0, -params.width / 2.0, 0);
+  TopoDS_Shape plate =
+      BRepPrimAPI_MakeBox(plateOrg, params.thickness, params.width,
+                            params.height).Shape();
+  builder.Add(compound, plate);
+
+  // Mounting bolt holes
+  if (params.boltDiameter > 0 && params.boltSpacing > 0) {
+    double hs = params.boltSpacing / 2.0;
+    double midZ = params.height / 2.0;
+    double holeR = params.boltDiameter / 2.0;
+    gp_Pnt hc[4] = {{0, -hs, midZ - hs}, {0, hs, midZ - hs},
+                     {0, -hs, midZ + hs}, {0, hs, midZ + hs}};
+    for (auto &c : hc) {
+      TopoDS_Shape hole =
+          BRepPrimAPI_MakeCylinder(gp_Ax2(c, gp::DX()), holeR, params.thickness + 2).Shape();
+      plate = BRepAlgoAPI_Cut(plate, hole).Shape();
+    }
+  }
+
+  // Insulator ear plates
+  if (params.insulatorBoltSpacing > 0) {
+    double eT = params.thickness * 0.8;
+    double eW = params.width * 0.3;
+    double eH = params.height * 0.6;
+    double eOff = params.thickness / 2.0;
+    double eZ = (params.height - eH) / 2.0;
+
+    // Two ear plates at top and bottom edges
+    for (int side = 0; side < 2; ++side) {
+      double y = (side == 0) ? -eW / 2.0 : params.width - eW / 2.0;
+      gp_Pnt earOrg(eOff, y, eZ);
+      TopoDS_Shape ear =
+          BRepPrimAPI_MakeBox(earOrg, eT, eW, eH).Shape();
+      plate = BRepAlgoAPI_Fuse(plate, ear).Shape();
+
+      // Ear pin hole
+      if (params.insulatorBoltDiameter > 0) {
+        double hr = params.insulatorBoltDiameter / 2.0;
+        double hz = params.height / 2.0;
+        TopoDS_Shape hole =
+            BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(eOff, params.width / 2.0, hz), gp::DY()),
+                                      hr, eW + 2).Shape();
+        plate = BRepAlgoAPI_Cut(plate, hole).Shape();
+      }
+    }
+  }
+
+  // Stiffener ribs (triangular plates connecting plate to mast)
+  double ribH = params.height * 0.3;
+  double ribW = params.thickness * 2.0;
+  double ribThick = params.thickness * 0.5;
+  for (int side = -1; side <= 1; side += 2) {
+    double y = params.width / 2.0 + side * (params.width / 2.0 - ribW);
+    gp_Pnt rp1(-params.thickness / 2.0, y, params.height / 2.0);
+    gp_Pnt rp2(-params.thickness / 2.0 - ribW, y, params.height / 2.0 - ribH / 2.0);
+    gp_Pnt rp3(-params.thickness / 2.0 - ribW, y, params.height / 2.0 + ribH / 2.0);
+    TopoDS_Wire rw = BRepBuilderAPI_MakePolygon(rp1, rp2, rp3, Standard_True).Wire();
+    TopoDS_Face rf = BRepLib_MakeFace(rw).Face();
+    TopoDS_Shape rib = BRepPrimAPI_MakePrism(rf, gp_Vec(0, -side * ribThick, 0)).Shape();
+    plate = BRepAlgoAPI_Fuse(plate, rib).Shape();
+  }
+
+  // Apply mount angle
+  if (std::abs(params.mountAngle) > Precision::Angular()) {
+    double a = params.mountAngle * M_PI / 180.0;
+    gp_Trsf rot;
+    rot.SetRotation(gp_Ax1(gp_Pnt(0, params.width / 2.0, params.height / 2.0), gp::DY()), a);
+    plate = BRepBuilderAPI_Transform(plate, rot).Shape();
+  }
+
+  return plate;
+}
+
+TopoDS_Shape create_mast_bracket(const mast_bracket_params &params,
+                                 const gp_Pnt &position,
+                                 const gp_Dir &normal,
+                                 const gp_Dir &upDir) {
+  TopoDS_Shape shape = create_mast_bracket(params);
+
+  gp_Dir yDir = upDir.Crossed(normal);
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, upDir, normal);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  return BRepBuilderAPI_Transform(shape, transformation).Shape();
+}
+
+// =========================================================================
+// 9. Registration Arm (定位器)
+// =========================================================================
+TopoDS_Shape create_registration_arm(const registration_arm_params &params) {
+  if (params.length <= 0 || params.outerDiameter <= 0)
+    throw Standard_ConstructionError("Length and diameter must be positive");
+
+  double OR = params.outerDiameter / 2.0;
+  double IR = OR - params.wallThickness;
+  if (IR <= 0) IR = OR * 0.85;
+  double L = params.length;
+
+  TopoDS_Shape tube;
+
+  // ===== Tube body =====
+  if (params.type == registration_arm_type::STRAIGHT ||
+      params.type == registration_arm_type::EXTENDED) {
+    gp_Ax2 outerAxis(gp::Origin(), gp::DX());
+    TopoDS_Shape outerCyl =
+        BRepPrimAPI_MakeCylinder(outerAxis, OR, L).Shape();
+    if (params.wallThickness > 0 && IR > Precision::Confusion()) {
+      TopoDS_Shape innerCyl =
+          BRepPrimAPI_MakeCylinder(outerAxis, IR, L).Shape();
+      tube = BRepAlgoAPI_Cut(outerCyl, innerCyl).Shape();
+    } else {
+      tube = outerCyl;
+    }
+    if (params.type == registration_arm_type::EXTENDED) {
+      double extLen = L * 0.3;
+      gp_Ax2 extAxis(gp_Pnt(L, 0, 0), gp::DX());
+      TopoDS_Shape extCyl =
+          BRepPrimAPI_MakeCylinder(extAxis, OR, extLen).Shape();
+      tube = BRepAlgoAPI_Fuse(tube, extCyl).Shape();
+    }
+  } else {
+    // Curved type
+    double straightLen = L * 0.7;
+    double curveLen = L * 0.3;
+    gp_Ax2 outerAxis(gp::Origin(), gp::DX());
+    TopoDS_Shape outerCyl =
+        BRepPrimAPI_MakeCylinder(outerAxis, OR, straightLen).Shape();
+    if (params.wallThickness > 0 && IR > Precision::Confusion()) {
+      TopoDS_Shape innerCyl =
+          BRepPrimAPI_MakeCylinder(outerAxis, IR, straightLen).Shape();
+      tube = BRepAlgoAPI_Cut(outerCyl, innerCyl).Shape();
+    } else {
+      tube = outerCyl;
+    }
+    // Curved tip via Bezier
+    gp_Pnt ts(straightLen, 0, 0);
+    gp_Pnt tm(straightLen + curveLen * 0.5, 0, curveLen * 0.15);
+    gp_Pnt te(straightLen + curveLen, 0, curveLen * 0.3);
+    Handle(TColgp_HArray1OfPnt) bzp = new TColgp_HArray1OfPnt(1, 3);
+    bzp->SetValue(1, ts); bzp->SetValue(2, tm); bzp->SetValue(3, te);
+    Handle(Geom_BezierCurve) bez = new Geom_BezierCurve(bzp);
+    TopoDS_Edge bezEdge = BRepBuilderAPI_MakeEdge(bez).Edge();
+    BRepBuilderAPI_MakeWire bezWire; bezWire.Add(bezEdge);
+    gp_Ax2 secAx(ts, gp::DX());
+    gp_Circ secCirc(secAx, OR);
+    TopoDS_Wire secWire =
+        BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(secCirc).Edge()).Wire();
+    BRepOffsetAPI_MakePipeShell curvePipe(bezWire.Wire());
+    curvePipe.Add(secWire);
+    curvePipe.SetMode(Standard_True);
+    curvePipe.Build();
+    if (curvePipe.IsDone() && curvePipe.MakeSolid())
+      tube = BRepAlgoAPI_Fuse(tube, curvePipe.Shape()).Shape();
+  }
+
+  // ===== 腕臂端连接关节块 (Joint block at cantilever end) =====
+  double jointSize = OR * 2.5;
+  double jointThick = OR * 1.0;
+  gp_Pnt jointOrg(-jointThick * 0.3, -jointSize / 2.0, -jointSize / 2.0);
+  TopoDS_Shape joint =
+      BRepPrimAPI_MakeBox(jointOrg, jointThick, jointSize, jointSize).Shape();
+  // Pin hole through joint (销孔)
+  double pinR = OR * 0.35;
+  gp_Ax2 pinAxis(gp_Pnt(0, -jointSize, 0), gp::DX());
+  TopoDS_Shape pinHole =
+      BRepPrimAPI_MakeCylinder(pinAxis, pinR, jointThick + 2).Shape();
+  joint = BRepAlgoAPI_Cut(joint, pinHole).Shape();
+  gp_Ax2 pinAxis2(gp_Pnt(0, -jointSize, jointSize), gp::DX());
+  TopoDS_Shape pinHole2 =
+      BRepPrimAPI_MakeCylinder(pinAxis2, pinR, jointThick + 2).Shape();
+  joint = BRepAlgoAPI_Cut(joint, pinHole2).Shape();
+  tube = BRepAlgoAPI_Fuse(tube, joint).Shape();
+
+  // ===== 导线端定位线夹 (Contact wire clamp) =====
+  double totalL = (params.type == registration_arm_type::EXTENDED) ? L * 1.3 : L;
+  double clampW = OR * 1.8;
+  double clampH = OR * 2.5;
+  double clampThick = OR * 0.6;
+  gp_Pnt clampOrg(totalL, -clampW / 2.0, -clampH / 2.0);
+  TopoDS_Shape clamp =
+      BRepPrimAPI_MakeBox(clampOrg, clampThick, clampW, clampH).Shape();
+  // Arc groove for contact wire (弧形槽贴合接触线)
+  double grooveR = OR * 0.6;
+  gp_Ax2 grooveAxis(gp_Pnt(totalL + clampThick / 2.0, 0, -clampH / 4.0),
+                     gp_Dir(0, 1, 0));
+  TopoDS_Shape groove =
+      BRepPrimAPI_MakeCylinder(grooveAxis, grooveR, clampW + 2).Shape();
+  clamp = BRepAlgoAPI_Cut(clamp, groove).Shape();
+  // Clamp bolt holes (螺栓孔)
+  double cbR = OR * 0.2;
+  gp_Ax2 cb1(gp_Pnt(totalL, -clampW * 0.4, -clampH / 2.0), gp::DX());
+  gp_Ax2 cb2(gp_Pnt(totalL, clampW * 0.4, -clampH / 2.0), gp::DX());
+  for (auto &ca : {cb1, cb2}) {
+    TopoDS_Shape ch =
+        BRepPrimAPI_MakeCylinder(ca, cbR, clampThick + 2).Shape();
+    clamp = BRepAlgoAPI_Cut(clamp, ch).Shape();
+  }
+  tube = BRepAlgoAPI_Fuse(tube, clamp).Shape();
+
+  // ===== 抬升/下压角 =====
+  if (std::abs(params.angle) > Precision::Angular()) {
+    double ar = params.angle * M_PI / 180.0;
+    gp_Trsf rot;
+    rot.SetRotation(gp_Ax1(gp::Origin(), gp::DY()), ar);
+    tube = BRepBuilderAPI_Transform(tube, rot).Shape();
+  }
+
+  return tube;
+}
+
+TopoDS_Shape create_registration_arm(const registration_arm_params &params,
+                                     const gp_Pnt &basePoint,
+                                     const gp_Dir &axisDirection,
+                                     const gp_Dir &upDir) {
+  TopoDS_Shape shape = create_registration_arm(params);
+
+  gp_Dir yDir = upDir.Crossed(axisDirection);
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(basePoint, upDir, axisDirection);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  return BRepBuilderAPI_Transform(shape, transformation).Shape();
+}
+
+// =========================================================================
+// 10. Guy Wire (下锚拉线)
+// =========================================================================
+TopoDS_Shape create_guy_wire(const guy_wire_params &params) {
+  if (params.length <= 0 || params.diameter <= 0)
+    throw Standard_ConstructionError("Length and diameter must be positive");
+
+  double radius = params.diameter / 2;
+
+  // Wire body — a straight cable segment
+  gp_Ax2 wireAxis(gp::Origin(), gp::DZ());
+  TopoDS_Shape wire =
+      BRepPrimAPI_MakeCylinder(wireAxis, radius, params.length).Shape();
+
+  // Apply angle (rotate from vertical to specified angle)
+  double angleRad = params.angle * M_PI / 180.0;
+  gp_Trsf rot;
+  rot.SetRotation(gp_Ax1(gp::Origin(), gp::DY()),
+                  M_PI / 2 - angleRad);
+  return BRepBuilderAPI_Transform(wire, rot).Shape();
+}
+
+TopoDS_Shape create_guy_wire(const guy_wire_params &params,
+                             const gp_Pnt &anchorPoint,
+                             const gp_Pnt &mastPoint,
+                             const gp_Dir &upDir) {
+  // Calculate direction and length from anchor to mast point
+  gp_Vec vec(anchorPoint, mastPoint);
+  double len = vec.Magnitude();
+  if (len <= Precision::Confusion())
+    throw Standard_ConstructionError("Anchor and mast points must differ");
+
+  // Create wire segment directly along the vector
+  double radius = params.diameter / 2;
+  gp_Ax2 wireAxis(anchorPoint, gp_Dir(vec));
+  TopoDS_Shape wire =
+      BRepPrimAPI_MakeCylinder(wireAxis, radius, len).Shape();
+
+  return wire;
+}
+
+// =========================================================================
+// 11. Steel Mast (钢支柱) — TB/T 中国电气化铁路标准
+// =========================================================================
+// Types: LATTICE=格构式角钢柱(H/系列), H_BEAM=H型钢柱(GH/系列)
+// 特征: 格构式4角主肢角钢+Z字腹杆+节点板+柱底法兰+攀爬脚钉
+//       H型钢腹板+翼缘+T形截面锥度+渐变法兰
+// =========================================================================
+
+namespace {
+
+// Helper: create an L-shaped angle steel cross-section wire for lattice legs
+// legLong = long leg length, legShort = short leg length, thick = thickness
+TopoDS_Wire makeAngleSteelProfile(double legLong, double legShort, double thick) {
+  BRepBuilderAPI_MakeWire w;
+  // L-shape in the XY plane: origin at the outer corner
+  // Long leg along +Y, short leg along +X
+  w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(0, 0, 0), gp_Pnt(0, legLong, 0)));
+  w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(0, legLong, 0), gp_Pnt(thick, legLong, 0)));
+  w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(thick, legLong, 0), gp_Pnt(thick, legShort, 0)));
+  w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(thick, legShort, 0), gp_Pnt(0, 0, 0)));
+  return w.Wire();
+}
+
+} // anonymous namespace
+
+TopoDS_Shape create_steel_mast(const steel_mast_params &params) {
+  if (params.height <= 0 || params.bottomWidth <= 0)
+    throw Standard_ConstructionError("Height and bottom width must be positive");
+
+  BRep_Builder builder;
+  TopoDS_Compound compound;
+  builder.MakeCompound(compound);
+
+  const double H = params.height;
+  const double B = params.bottomWidth;    // bottom outer width between leg centers
+  const double T = params.topWidth > 0 ? params.topWidth : B * 0.6;
+  const double L = params.wallThickness;  // plate/steel thickness
+
+  // ===== H-BEAM TYPE =====
+  if (params.type == steel_mast_type::H_BEAM) {
+    double fT = params.flangeThickness > 0 ? params.flangeThickness : L * 1.5;
+    int nSeg = std::max(1, params.segmentCount);
+    double segH = H / nSeg;
+
+    for (int seg = 0; seg < nSeg; ++seg) {
+      double r0 = (double)seg / nSeg, r1 = (double)(seg + 1) / nSeg;
+      double w0 = B + (T - B) * r0, w1 = B + (T - B) * r1;
+      double z0 = seg * segH;
+      double hw0 = w0 / 2.0, hw1 = w1 / 2.0;
+
+      // Web: tapered prism
+      gp_Pnt webBt[4] = {{-L/2, -hw0+fT, z0}, {L/2, -hw0+fT, z0},
+                          {L/2, hw0-fT, z0}, {-L/2, hw0-fT, z0}};
+      TopoDS_Wire webBw = BRepBuilderAPI_MakePolygon(webBt[0], webBt[1], webBt[2], webBt[3], Standard_True).Wire();
+      gp_Pnt webTt[4] = {{-L/2, -hw1+fT, z0+segH}, {L/2, -hw1+fT, z0+segH},
+                          {L/2, hw1-fT, z0+segH}, {-L/2, hw1-fT, z0+segH}};
+      TopoDS_Wire webTw = BRepBuilderAPI_MakePolygon(webTt[0], webTt[1], webTt[2], webTt[3], Standard_True).Wire();
+      BRepOffsetAPI_ThruSections webThru(Standard_True);
+      webThru.AddWire(webBw); webThru.AddWire(webTw); webThru.Build();
+
+      // Left flange: tapered box
+      gp_Pnt lfBt[4] = {{-hw0, -hw0, z0}, {-hw0+2*L, -hw0, z0},
+                         {-hw0+2*L, -hw0+fT, z0}, {-hw0, -hw0+fT, z0}};
+      TopoDS_Wire lfBw = BRepBuilderAPI_MakePolygon(lfBt[0], lfBt[1], lfBt[2], lfBt[3], Standard_True).Wire();
+      gp_Pnt lfTt[4] = {{-hw1, -hw1, z0+segH}, {-hw1+2*L, -hw1, z0+segH},
+                         {-hw1+2*L, -hw1+fT, z0+segH}, {-hw1, -hw1+fT, z0+segH}};
+      TopoDS_Wire lfTw = BRepBuilderAPI_MakePolygon(lfTt[0], lfTt[1], lfTt[2], lfTt[3], Standard_True).Wire();
+      BRepOffsetAPI_ThruSections lfThru(Standard_True);
+      lfThru.AddWire(lfBw); lfThru.AddWire(lfTw); lfThru.Build();
+
+      // Right flange: mirrored
+      gp_Pnt rfBt[4] = {{hw0-2*L, -hw0+fT, z0}, {hw0, -hw0+fT, z0},
+                         {hw0, -hw0, z0}, {hw0-2*L, -hw0, z0}};
+      TopoDS_Wire rfBw = BRepBuilderAPI_MakePolygon(rfBt[0], rfBt[1], rfBt[2], rfBt[3], Standard_True).Wire();
+      gp_Pnt rfTt[4] = {{hw1-2*L, -hw1+fT, z0+segH}, {hw1, -hw1+fT, z0+segH},
+                         {hw1, -hw1, z0+segH}, {hw1-2*L, -hw1, z0+segH}};
+      TopoDS_Wire rfTw = BRepBuilderAPI_MakePolygon(rfTt[0], rfTt[1], rfTt[2], rfTt[3], Standard_True).Wire();
+      BRepOffsetAPI_ThruSections rfThru(Standard_True);
+      rfThru.AddWire(rfBw); rfThru.AddWire(rfTw); rfThru.Build();
+
+      TopoDS_Shape segBody = BRepAlgoAPI_Fuse(webThru.Shape(), lfThru.Shape()).Shape();
+      segBody = BRepAlgoAPI_Fuse(segBody, rfThru.Shape()).Shape();
+      builder.Add(compound, segBody);
+
+      if (seg > 0 && params.flangeThickness > 0) {
+        gp_Pnt fo(-hw0, -hw0, z0 - params.flangeThickness);
+        builder.Add(compound, BRepPrimAPI_MakeBox(fo, w0, w0, params.flangeThickness).Shape());
+      }
+    }
+  }
+
+  // ===== LATTICE TYPE (格构式角钢柱) =====
+  else {
+    double legW = std::max(L * 3.0, B * 0.06);
+    double legT = L * 0.8;
+    double halfB = B / 2.0, halfT = T / 2.0;
+
+    auto makeTaperedLeg = [&](double sx, double sy) -> TopoDS_Shape {
+      double xb = sx * halfB, yb = sy * halfB;
+      double xt = sx * halfT, yt = sy * halfT;
+      TopoDS_Wire botWire = makeAngleSteelProfile(legW, legW, legT);
+      gp_Trsf botTrs; botTrs.SetTranslation(gp_Vec(xb - legW/2, yb - legW/2, 0));
+      botWire = BRepBuilderAPI_Transform(botWire, botTrs).Shape();
+      double aBot = atan2(yb, xb) + M_PI/4;
+      gp_Trsf rBot; rBot.SetRotation(gp_Ax1(gp_Pnt(xb, yb, 0), gp::DZ()), aBot);
+      botWire = BRepBuilderAPI_Transform(botWire, rBot).Shape();
+
+      TopoDS_Wire topWire = makeAngleSteelProfile(legW*0.6, legW*0.6, legT);
+      gp_Trsf topTrs; topTrs.SetTranslation(gp_Vec(xt - legW*0.3, yt - legW*0.3, H));
+      topWire = BRepBuilderAPI_Transform(topWire, topTrs).Shape();
+      double aTop = atan2(yt, xt) + M_PI/4;
+      gp_Trsf rTop; rTop.SetRotation(gp_Ax1(gp_Pnt(xt, yt, H), gp::DZ()), aTop);
+      topWire = BRepBuilderAPI_Transform(topWire, rTop).Shape();
+
+      BRepOffsetAPI_ThruSections legGen(Standard_True);
+      legGen.AddWire(botWire); legGen.AddWire(topWire); legGen.Build();
+      return legGen.Shape();
+    };
+
+    for (auto &c : {std::make_pair(-1.0, -1.0), std::make_pair(-1.0, 1.0),
+                     std::make_pair(1.0, -1.0), std::make_pair(1.0, 1.0)})
+      builder.Add(compound, makeTaperedLeg(c.first, c.second));
+
+    int nLevels = std::max(1, (int)(H / 2500));
+    int nSeg = nLevels + 1;
+    double segH = H / nSeg;
+    double braceR = legW * 0.10;
+    double gussetSize = legW * 2.5, gussetThick = L * 0.6;
+
+    for (int i = 0; i < nSeg; ++i) {
+      double z0 = i * segH, z1 = (i + 1) * segH;
+      double interp0 = halfB + (halfT - halfB) * z0 / H;
+      double interp1 = halfB + (halfT - halfB) * z1 / H;
+
+      if (i > 0) {
+        for (int face = 0; face < 4; ++face) {
+          double x1, y1, x2, y2;
+          switch (face) {
+            case 0: x1=-interp0; y1=-interp0; x2=interp0; y2=-interp0; break;
+            case 1: x1=interp0; y1=-interp0; x2=interp0; y2=interp0; break;
+            case 2: x1=interp0; y1=interp0; x2=-interp0; y2=interp0; break;
+            case 3: x1=-interp0; y1=interp0; x2=-interp0; y2=-interp0; break;
+          }
+          gp_Pnt t1(x1, y1, z0), t2(x2, y2, z0);
+          gp_Vec v(t1, t2); double l = v.Magnitude();
+          if (l > Precision::Confusion())
+            builder.Add(compound, BRepPrimAPI_MakeCylinder(gp_Ax2(t1, gp_Dir(v)), braceR, l).Shape());
+          double gs = std::min(gussetSize, l * 0.2);
+          gp_Pnt go(x1-gs/2, y1-gs/2, z0-gussetThick/2);
+          gp_Trsf gTrs; gTrs.SetTranslation(gp_Vec(0, 0, 0));
+          builder.Add(compound, BRepPrimAPI_MakeBox(go, gs, gs, gussetThick).Shape());
+        }
+      }
+
+      for (int face = 0; face < 4; ++face) {
+        double xb, yb, xt, yt;
+        switch (face) {
+          case 0: xb=interp0; yb=-interp0; xt=-interp1; yt=-interp1; break;
+          case 1: xb=interp0; yb=interp0; xt=interp1; yt=-interp1; break;
+          case 2: xb=-interp0; yb=interp0; xt=interp1; yt=interp1; break;
+          case 3: xb=-interp0; yb=-interp0; xt=-interp1; yt=interp1; break;
+        }
+        gp_Pnt pz1(xb, yb, z0), pz2(xt, yt, z1);
+        gp_Vec vz(pz1, pz2); double dz = vz.Magnitude();
+        if (dz > Precision::Confusion())
+          builder.Add(compound, BRepPrimAPI_MakeCylinder(gp_Ax2(pz1, gp_Dir(vz)), braceR*0.7, dz).Shape());
+      }
+    }
+
+    int pegCount = (int)(H / 300);
+    for (int p = 0; p < pegCount; ++p) {
+      double z = (p + 1) * 300;
+      double ip = halfB + (halfT - halfB) * z / H;
+      builder.Add(compound, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(ip, -ip, z), gp_Dir(1, -1, 0)), legW*0.15, legW*0.8).Shape());
+    }
+  }
+
+  // ===== BASE FLANGE (柱底法兰) =====
+  double fw = params.flangeWidth > 0 ? params.flangeWidth : params.bottomWidth * 1.3;
+  double fth = params.flangeThickness > 0 ? params.flangeThickness : params.wallThickness * 2;
+  double halfFW = fw / 2.0;
+  gp_Pnt flgOrg(-halfFW, -halfFW, -fth);
+  TopoDS_Shape flange = BRepPrimAPI_MakeBox(flgOrg, fw, fw, fth).Shape();
+  builder.Add(compound, flange);
+
+  double ribH = fth * 2.0, ribT = L * 0.6;
+  for (int r = 0; r < 8; ++r) {
+    double a = r * M_PI / 4.0;
+    gp_Pnt r1(halfFW*0.2*cos(a), halfFW*0.2*sin(a), -fth);
+    gp_Pnt r2(halfFW*0.7*cos(a), halfFW*0.7*sin(a), -fth);
+    gp_Pnt r3(halfFW*0.2*cos(a), halfFW*0.2*sin(a), -fth+ribH);
+    gp_Dir tang(-sin(a), cos(a), 0);
+    TopoDS_Wire rw = BRepBuilderAPI_MakePolygon(r1, r2, r3, Standard_True).Wire();
+    TopoDS_Face rf = BRepLib_MakeFace(rw).Face();
+    TopoDS_Shape rib = BRepPrimAPI_MakePrism(rf, gp_Vec(tang.XYZ()*ribT/2)).Shape();
+    rib = BRepAlgoAPI_Fuse(rib, BRepPrimAPI_MakePrism(rf, gp_Vec(-tang.X()*ribT/2, -tang.Y()*ribT/2, 0)).Shape()).Shape();
+    builder.Add(compound, rib);
+  }
+
+  if (params.anchorDiameter > 0 && params.anchorSpacing > 0) {
+    double ar = params.anchorDiameter / 2.0, hs = params.anchorSpacing / 2.0;
+    for (int ax = -1; ax <= 1; ax += 2)
+      for (int ay = -1; ay <= 1; ay += 2) {
+        TopoDS_Shape hole = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(ax*hs, ay*hs, -fth-1), gp::DZ()), ar, fth+2).Shape();
+        flange = BRepAlgoAPI_Cut(flange, hole).Shape();
+      }
+  }
+
+  return compound;
+}
+
+// =========================================================================
+// 12. Concrete Mast (混凝土支柱)
+// =========================================================================
+TopoDS_Shape create_concrete_mast(const concrete_mast_params &params) {
+  if (params.height <= 0 || params.bottomWidth <= 0)
+    throw Standard_ConstructionError("Height and width must be positive");
+  TopoDS_Shape mast;
+  if (params.sectionType == concrete_mast_section_type::CIRCULAR ||
+      params.sectionType == concrete_mast_section_type::CIRCULAR_HOLED) {
+    double outerR = params.bottomWidth / 2, innerR = outerR - params.wallThickness, topR = params.topWidth / 2;
+    if (std::abs(topR - outerR) > Precision::Confusion()) {
+      BRepOffsetAPI_ThruSections gen(Standard_True);
+      gp_Circ bc(gp_Ax2(gp::Origin(), gp::DZ()), outerR);
+      TopoDS_Wire bw = BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(bc).Edge());
+      gen.AddWire(bw);
+      gp_Circ tc(gp_Ax2(gp_Pnt(0, 0, params.height), gp::DZ()), topR);
+      TopoDS_Wire tw = BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(tc).Edge());
+      gen.AddWire(tw); gen.Build();
+      mast = gen.Shape();
+    } else {
+      mast = BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DZ()), outerR, params.height).Shape();
+    }
+    if (innerR > 0) {
+      double innerTopR = std::max(innerR - (params.bottomWidth - params.topWidth) / 2, 0.1);
+      TopoDS_Shape inner;
+      if (std::abs(innerTopR - innerR) > Precision::Confusion()) {
+        BRepOffsetAPI_ThruSections ig(Standard_True);
+        gp_Circ ibc(gp_Ax2(gp::Origin(), gp::DZ()), innerR);
+        ig.AddWire(BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(ibc).Edge()));
+        gp_Circ itc(gp_Ax2(gp_Pnt(0, 0, params.height), gp::DZ()), innerTopR);
+        ig.AddWire(BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(itc).Edge()));
+        ig.Build(); inner = ig.Shape();
+      } else {
+        inner = BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DZ()), innerR, params.height).Shape();
+      }
+      mast = BRepAlgoAPI_Cut(mast, inner).Shape();
+    }
+    if (params.sectionType == concrete_mast_section_type::CIRCULAR_HOLED && params.holeDiameter > 0) {
+      double holeR = params.holeDiameter / 2;
+      for (int row = 0; row < params.holeRowCount; ++row) {
+        double zPos = params.firstHoleOffset + row * params.holeSpacingV;
+        if (zPos + holeR > params.height) break;
+        for (int col = 0; col < params.holesPerRow; ++col) {
+          double a = 2 * M_PI * col / params.holesPerRow;
+          TopoDS_Shape h = BRepPrimAPI_MakeCylinder(
+              gp_Ax2(gp_Pnt(outerR*cos(a), outerR*sin(a), zPos),
+                     gp_Dir(cos(a), sin(a), 0)), holeR, params.wallThickness+2).Shape();
+          mast = BRepAlgoAPI_Cut(mast, h).Shape();
+        }
+      }
+    }
+  } else {
+    double b = params.bottomWidth, t = params.topWidth > 0 ? params.topWidth : b;
+    if (std::abs(t - b) > Precision::Confusion()) {
+      BRepOffsetAPI_ThruSections gen(Standard_True);
+      gp_Pnt bp[4] = {{-b/2, -b/2, 0}, {b/2, -b/2, 0}, {b/2, b/2, 0}, {-b/2, b/2, 0}};
+      gen.AddWire(BRepBuilderAPI_MakePolygon(bp[0], bp[1], bp[2], bp[3], Standard_True));
+      gp_Pnt tp[4] = {{-t/2, -t/2, (double)params.height}, {t/2, -t/2, (double)params.height}, {t/2, t/2, (double)params.height}, {-t/2, t/2, (double)params.height}};
+      gen.AddWire(BRepBuilderAPI_MakePolygon(tp[0], tp[1], tp[2], tp[3], Standard_True));
+      gen.Build(); mast = gen.Shape();
+    } else {
+      mast = BRepPrimAPI_MakeBox(gp_Pnt(-b/2, -b/2, 0), b, b, params.height).Shape();
+    }
+    if (params.wallThickness > 0 && b > 2*params.wallThickness) {
+      double ib = b - 2*params.wallThickness;
+      TopoDS_Shape inner = BRepPrimAPI_MakeBox(gp_Pnt(-ib/2, -ib/2, -1), ib, ib, params.height+2).Shape();
+      mast = BRepAlgoAPI_Cut(mast, inner).Shape();
+    }
+  }
+  return mast;
+}
+TopoDS_Shape create_concrete_mast(const concrete_mast_params &params, const gp_Pnt &baseCenter, const gp_Dir &axisDirection) {
+  TopoDS_Shape s = create_concrete_mast(params);
+  gp_Ax3 src(gp::Origin(), gp::DZ()), tgt(baseCenter, axisDirection);
+  gp_Trsf tr; tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+// =========================================================================
+// 13. OCS Foundation (支柱基础)
+// =========================================================================
+TopoDS_Shape create_ocs_foundation(const ocs_foundation_params &params) {
+  if (params.height <= 0) throw Standard_ConstructionError("Height must be positive");
+  TopoDS_Shape foundation;
+  switch (params.type) {
+  case foundation_type::FLANGE:
+    foundation = BRepPrimAPI_MakeBox(gp_Pnt(-params.length/2, -params.width/2, 0), params.length, params.width, params.height).Shape();
+    if (params.flangeThickness > 0) {
+      double fs = std::min(params.length, params.width) * 0.8;
+      foundation = BRepAlgoAPI_Fuse(foundation, BRepPrimAPI_MakeBox(gp_Pnt(-fs/2, -fs/2, params.height), fs, fs, params.flangeThickness).Shape()).Shape();
+    }
+    if (params.anchorCount > 0 && params.anchorDiameter > 0) {
+      double hs = params.anchorSpacing/2, br = params.anchorDiameter/2, th = params.height + params.flangeThickness + params.anchorLength;
+      for (int ax = -1; ax <= 1; ax += 2) for (int ay = -1; ay <= 1; ay += 2) {
+        if (params.anchorCount >= 4 || (ax == -1 && ay == -1))
+          foundation = BRepAlgoAPI_Fuse(foundation, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(ax*hs, ay*hs, 0), gp::DZ()), br, th).Shape()).Shape();
+      }
+    }
+    break;
+  case foundation_type::DIRECT_BURIED:
+    foundation = BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DZ()), std::min(params.length, params.width)/2, params.height).Shape(); break;
+  case foundation_type::BORED_PILE: {
+    double pr = std::min(params.length, params.width)/2;
+    foundation = BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DZ()), pr, params.height).Shape();
+    foundation = BRepAlgoAPI_Fuse(foundation, BRepPrimAPI_MakeCone(gp_Ax2(gp_Pnt(0, 0, params.height*0.85), gp::DZ()), pr*1.3, pr, params.height*0.15).Shape()).Shape();
+    break;
+  }
+  default:
+    foundation = BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DZ()), std::min(params.length, params.width)/2, params.height).Shape(); break;
+  }
+  return foundation;
+}
+TopoDS_Shape create_ocs_foundation(const ocs_foundation_params &params, const gp_Pnt &position, const gp_Dir &normal, const gp_Dir &xDir) {
+  TopoDS_Shape s = create_ocs_foundation(params);
+  gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX()), tgt(position, normal, xDir);
+  gp_Trsf tr; tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+// =========================================================================
+// 14. Dropper (吊弦)
+// =========================================================================
+TopoDS_Shape create_dropper(const dropper_params &params) {
+  if (params.length <= 0 || params.wireDiameter <= 0) throw Standard_ConstructionError("Invalid dimensions");
+  double wr = params.wireDiameter/2;
+  TopoDS_Shape wire = BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DZ()), wr, params.length).Shape();
+  if (params.clampLength > 0 && params.clampWidth > 0) {
+    double ch = params.clampThickness > 0 ? params.clampThickness : params.wireDiameter;
+    wire = BRepAlgoAPI_Fuse(wire, BRepPrimAPI_MakeBox(gp_Pnt(-params.clampWidth/2, -params.clampWidth/2, params.length), params.clampWidth, params.clampWidth, ch).Shape()).Shape();
+    wire = BRepAlgoAPI_Fuse(wire, BRepPrimAPI_MakeBox(gp_Pnt(-params.clampWidth/2, -params.clampWidth/2, -ch), params.clampWidth, params.clampWidth, ch).Shape()).Shape();
+  }
+  return wire;
+}
+TopoDS_Shape create_dropper(const dropper_params &params, const gp_Pnt &topPoint, const gp_Dir &direction) {
+  TopoDS_Shape s = create_dropper(params);
+  gp_Ax3 src(gp::Origin(), gp::DZ()), tgt(topPoint, direction);
+  gp_Trsf tr; tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+// =========================================================================
+// 15. Cantilever Base (腕臂底座)
+// =========================================================================
+TopoDS_Shape create_cantilever_base(const cantilever_base_params &params) {
+  if (params.length <= 0 || params.width <= 0 || params.height <= 0) throw Standard_ConstructionError("Invalid dimensions");
+  TopoDS_Shape base = BRepPrimAPI_MakeBox(gp_Pnt(-params.length/2, -params.width/2, 0), params.length, params.width, params.height).Shape();
+  if (params.boltDiameter > 0 && params.boltCount > 0) {
+    double hr = params.boltDiameter/2, hs = params.boltSpacing/2;
+    int cols = std::max(1, params.boltCount/2);
+    for (int i = 0; i < cols; ++i) for (int j = 0; j < 2; ++j) {
+      double x = (i - (cols-1)/2.0) * params.boltSpacing, y = (j == 0) ? -hs : hs;
+      base = BRepAlgoAPI_Cut(base, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(x, y, -1), gp::DZ()), hr, params.height+2).Shape()).Shape();
+    }
+  }
+  return base;
+}
+TopoDS_Shape create_cantilever_base(const cantilever_base_params &params, const gp_Pnt &position, const gp_Dir &normal, const gp_Dir &upDir) {
+  TopoDS_Shape s = create_cantilever_base(params);
+  gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX()), tgt(position, upDir, normal);
+  gp_Trsf tr; tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+// =========================================================================
+// 16. Messenger Wire Saddle (承力索座)
+// =========================================================================
+TopoDS_Shape create_mw_saddle(const mw_saddle_params &params) {
+  if (params.length <= 0 || params.width <= 0) throw Standard_ConstructionError("Invalid dimensions");
+  TopoDS_Shape body = BRepPrimAPI_MakeBox(gp_Pnt(-params.length/2, -params.width/2, 0), params.length, params.width, params.height).Shape();
+  if (params.grooveRadius > 0) body = BRepAlgoAPI_Cut(body, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(0, 0, params.height), gp::DY()), params.grooveRadius, params.width+2).Shape()).Shape();
+  if (params.boltDiameter > 0) {
+    double hr = params.boltDiameter/2, hl = params.length*0.3;
+    body = BRepAlgoAPI_Cut(body, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-hl, 0, -1), gp::DZ()), hr, params.height+2).Shape()).Shape();
+    body = BRepAlgoAPI_Cut(body, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(hl, 0, -1), gp::DZ()), hr, params.height+2).Shape()).Shape();
+  }
+  return body;
+}
+TopoDS_Shape create_mw_saddle(const mw_saddle_params &params, const gp_Pnt &position, const gp_Dir &normal, const gp_Dir &xDir) {
+  TopoDS_Shape s = create_mw_saddle(params);
+  gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX()), tgt(position, normal, xDir);
+  gp_Trsf tr; tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+// =========================================================================
+// 17. Balance Weight (坠砣)
+// =========================================================================
+TopoDS_Shape create_balance_weight(const balance_weight_params &params) {
+  if (params.width <= 0 || params.thickness <= 0 || params.height <= 0) throw Standard_ConstructionError("Invalid dimensions");
+  TopoDS_Shape b = BRepPrimAPI_MakeBox(gp_Pnt(-params.width/2, -params.thickness/2, 0), params.width, params.thickness, params.height).Shape();
+  double fr = std::min({params.width, params.thickness, params.height}) * 0.08;
+  if (fr > Precision::Confusion()) {
+    BRepFilletAPI_MakeFillet fillet(b);
+    for (TopExp_Explorer ex(b, TopAbs_EDGE); ex.More(); ex.Next()) {
+      TopoDS_Edge e = TopoDS::Edge(ex.Current());
+      gp_Pnt p1 = BRep_Tool::Pnt(TopExp::FirstVertex(e)), p2 = BRep_Tool::Pnt(TopExp::LastVertex(e));
+      if (std::abs(p1.Z()-p2.Z()) < Precision::Confusion() && std::abs(p1.X()-p2.X()) > Precision::Confusion())
+        fillet.Add(fr, e);
+    }
+    fillet.Build(); if (fillet.IsDone()) b = fillet.Shape();
+  }
+  if (params.centerHoleDiameter > 0) b = BRepAlgoAPI_Cut(b, BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DZ()), params.centerHoleDiameter/2, params.height+2).Shape()).Shape();
+  return b;
+}
+TopoDS_Shape create_balance_weight(const balance_weight_params &params, const gp_Pnt &position, const gp_Dir &normal, const gp_Dir &xDir) {
+  TopoDS_Shape s = create_balance_weight(params);
+  gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX()), tgt(position, normal, xDir);
+  gp_Trsf tr; tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+// =========================================================================
+// 18. Weight Rod (坠砣杆)
+// =========================================================================
+TopoDS_Shape create_weight_rod(const weight_rod_params &params) {
+  if (params.rodDiameter <= 0 || params.rodLength <= 0) throw Standard_ConstructionError("Invalid dimensions");
+  double rr = params.rodDiameter/2;
+  TopoDS_Shape rod = BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DZ()), rr, params.rodLength).Shape();
+  if (params.topHoleDiameter > 0) rod = BRepAlgoAPI_Cut(rod, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(0, 0, params.rodLength - rr*3), gp::DY()), params.topHoleDiameter/2, rr*4).Shape()).Shape();
+  return rod;
+}
+TopoDS_Shape create_weight_rod(const weight_rod_params &params, const gp_Pnt &position, const gp_Dir &axisDirection) {
+  TopoDS_Shape s = create_weight_rod(params);
+  gp_Ax3 src(gp::Origin(), gp::DZ()), tgt(position, axisDirection);
+  gp_Trsf tr; tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+// =========================================================================
+// 19. Anchor Fitting (下锚金具)
+// =========================================================================
+TopoDS_Shape create_anchor_fitting(const anchor_fitting_params &params) {
+  if (params.length <= 0 || params.diameter <= 0) throw Standard_ConstructionError("Invalid dimensions");
+  double R = params.diameter/2;
+  if (params.type == anchor_fitting_type::ROD_AND_RING) {
+    return BRepAlgoAPI_Fuse(BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DX()), R, params.length).Shape(),
+                             BRepPrimAPI_MakeSphere(gp_Ax2(gp_Pnt(params.length, 0, 0), gp::DX()), R*1.5).Shape()).Shape();
+  } else if (params.type == anchor_fitting_type::DOUBLE_EAR) {
+    TopoDS_Shape b = BRepPrimAPI_MakeBox(gp_Pnt(-params.length/2, -R, -R), params.length, R*2, R*2).Shape();
+    if (R > 0) {
+      b = BRepAlgoAPI_Cut(b, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-params.length/3, 0, 0), gp::DY()), R*0.4, R*4).Shape()).Shape();
+      b = BRepAlgoAPI_Cut(b, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(params.length/3, 0, 0), gp::DY()), R*0.4, R*4).Shape()).Shape();
+    }
+    return b;
+  } else {
+    gp_Pnt bp[4] = {{-R, -R, 0}, {R, -R, 0}, {R, R, 0}, {-R, R, 0}};
+    BRepOffsetAPI_ThruSections gen(Standard_True);
+    gen.AddWire(BRepBuilderAPI_MakePolygon(bp[0], bp[1], bp[2], bp[3], Standard_True));
+    gp_Pnt tp[4] = {{-R*0.7, -R*0.7, params.length}, {R*0.7, -R*0.7, params.length}, {R*0.7, R*0.7, params.length}, {-R*0.7, R*0.7, params.length}};
+    gen.AddWire(BRepBuilderAPI_MakePolygon(tp[0], tp[1], tp[2], tp[3], Standard_True));
+    gen.Build(); return gen.Shape();
+  }
+}
+TopoDS_Shape create_anchor_fitting(const anchor_fitting_params &params, const gp_Pnt &position, const gp_Dir &direction, const gp_Dir &upDir) {
+  TopoDS_Shape s = create_anchor_fitting(params);
+  gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX()), tgt(position, upDir, direction);
+  gp_Trsf tr; tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+// =========================================================================
+// 20. Crossing (线岔)
+// =========================================================================
+TopoDS_Shape create_crossing(const crossing_params &params) {
+  if (params.limitPipeLength <= 0) throw Standard_ConstructionError("Invalid pipe length");
+  double pr = params.pipeDiameter/2, wr = params.wireDiameter/2;
+  TopoDS_Shape pipe = BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DX()), pr*2, params.limitPipeLength).Shape();
+  if (pr > 0) pipe = BRepAlgoAPI_Cut(pipe, BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DX()), pr, params.limitPipeLength).Shape()).Shape();
+  double wl = params.limitPipeLength/2*3;
+  TopoDS_Shape result = BRepAlgoAPI_Fuse(pipe, BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DX()), wr, wl).Shape()).Shape();
+  double a = M_PI/6;
+  result = BRepAlgoAPI_Fuse(result, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-wl/2, 0, 0), gp_Dir(cos(a), sin(a), 0)), wr, wl).Shape()).Shape();
+  return result;
+}
+TopoDS_Shape create_crossing(const crossing_params &params, const gp_Pnt &crossPoint, const gp_Dir &mainDir, const gp_Dir &branchDir) {
+  TopoDS_Shape s = create_crossing(params);
+  gp_Dir up = mainDir.Crossed(branchDir); if (up.Magnitude() < Precision::Angular()) up = gp::DZ();
+  gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX()), tgt(crossPoint, up, mainDir);
+  gp_Trsf tr; tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+// =========================================================================
+// 21. Head Span (软横跨)
+// =========================================================================
+TopoDS_Shape create_head_span(const head_span_params &params) {
+  if (params.span <= 0) throw Standard_ConstructionError("Span must be positive");
+  double span = params.span, cDia = params.crossCatenaryDiameter > 0 ? params.crossCatenaryDiameter : 10;
+  double uDia = params.upperRopeDiameter > 0 ? params.upperRopeDiameter : 8, lDia = params.lowerRopeDiameter > 0 ? params.lowerRopeDiameter : 8;
+  double sag = params.crossCatenarySag > 0 ? params.crossCatenarySag : span * 0.05;
+
+  // Cross catenary
+  Handle(TColgp_HArray1OfPnt) pts = new TColgp_HArray1OfPnt(1, 3);
+  pts->SetValue(1, gp_Pnt(0, 0, sag+1000)); pts->SetValue(2, gp_Pnt(span/2, 0, 1000)); pts->SetValue(3, gp_Pnt(span, 0, sag+1000));
+  TopoDS_Edge ce = BRepBuilderAPI_MakeEdge(new Geom_BezierCurve(pts));
+  TopoDS_Wire cw; BRep_Builder().MakeWire(cw); cw = BRepBuilderAPI_MakeWire(ce);
+  gp_Circ cs(gp_Ax2(gp_Pnt(0, 0, sag+1000), gp::DZ()), cDia/2);
+  TopoDS_Wire sc = BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(cs));
+  BRepOffsetAPI_MakePipeShell cp(cw); cp.Add(sc); cp.SetMode(Standard_True); cp.Build();
+  TopoDS_Shape result = cp.Shape();
+
+  // Fixed ropes
+  gp_Pnt ul(0, 0, sag+800), ur(span, 0, sag+800);
+  result = BRepAlgoAPI_Fuse(result, BRepPrimAPI_MakeCylinder(gp_Ax2(ul, gp_Dir(ur.XYZ()-ul.XYZ())), uDia/2, span).Shape()).Shape();
+  gp_Pnt ll(0, 0, 800), lr(span, 0, 800);
+  result = BRepAlgoAPI_Fuse(result, BRepPrimAPI_MakeCylinder(gp_Ax2(ll, gp_Dir(lr.XYZ()-ll.XYZ())), lDia/2, span).Shape()).Shape();
+
+  // Insulators
+  if (params.insulatorLength > 0) {
+    double iL = params.insulatorLength, iD = iL*0.2;
+    rod_insulator_params rip; rip.type = rod_insulator_type::SOLID; rip.height = iL; rip.outerDiameter = iD;
+    rip.innerDiameter = 0; rip.shedDiameter = iD*1.5; rip.shedSpacing = iL/5; rip.shedCount = 3;
+    rip.endFitting = end_fitting_type::FLANGE; rip.flangeDiameter = iD*1.2; rip.flangeBoltSpacing = iD*0.7; rip.flangeBoltDiameter = iD*0.18;
+    for (int side = 0; side < 2; ++side) {
+      double x = side * span;
+      result = BRepAlgoAPI_Fuse(result, create_rod_insulator(rip, gp_Pnt(x, 0, sag+1000), gp::DZ())).Shape();
+      result = BRepAlgoAPI_Fuse(result, create_rod_insulator(rip, gp_Pnt(x, 0, sag+800), gp::DX())).Shape();
+      result = BRepAlgoAPI_Fuse(result, create_rod_insulator(rip, gp_Pnt(x, 0, 800), gp::DX())).Shape();
+    }
+  }
+  return result;
+}
+TopoDS_Shape create_head_span(const head_span_params &params, const gp_Pnt &leftMast, const gp_Pnt &rightMast, const gp_Dir &upDir) {
+  TopoDS_Shape s = create_head_span(params);
+  gp_Vec v(leftMast, rightMast); double len = v.Magnitude();
+  if (len <= Precision::Confusion()) return s;
+  double scale = len / params.span;
+  gp_Trsf sc; sc.SetScale(gp::Origin(), scale);
+  gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX()), tgt(leftMast, upDir, gp_Dir(v));
+  gp_Trsf tr; tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(BRepBuilderAPI_Transform(s, sc).Shape(), tr).Shape();
+}
+TopoDS_Shape create_transverse_span(const transverse_span_params &params) {
+  if (params.span <= 0 || params.beamHeight <= 0)
+    throw Standard_ConstructionError("Dimensions must be positive");
+
+  BRep_Builder builder;
+  TopoDS_Compound compound;
+  builder.MakeCompound(compound);
+
+  double span = params.span;
+  double bh = params.beamHeight, bw = params.beamWidth, bt = params.beamThickness;
+
+  if (params.beamType == beam_section_type::TRUSS) {
+    int nPanels = std::max(4, (int)(span / 2000));
+    double panelLen = span / nPanels;
+    double chordR = bw * 0.15, webR = bw * 0.10;
+    double camber = span * 0.002;
+
+    auto makeChord = [&](gp_Pnt from, gp_Pnt to, double r) -> TopoDS_Shape {
+      gp_Vec v(from, to);
+      return BRepPrimAPI_MakeCylinder(gp_Ax2(from, gp_Dir(v)), r, v.Magnitude()).Shape();
+    };
+
+    std::vector<gp_Pnt> topPts, botPts;
+    for (int i = 0; i <= nPanels; ++i) {
+      double x = -span/2 + i * panelLen;
+      double t = (double)i / nPanels;
+      double cz = camber * (1.0 - 4.0 * (t - 0.5) * (t - 0.5));
+      topPts.push_back(gp_Pnt(x, 0, bh + cz));
+      botPts.push_back(gp_Pnt(x, 0, cz * 0.3));
+    }
+
+    for (int i = 0; i < nPanels; ++i) {
+      for (int face = -1; face <= 1; face += 2) {
+        double y = face * bw/2;
+        builder.Add(compound, makeChord(gp_Pnt(topPts[i].X(), y, topPts[i].Z()), gp_Pnt(topPts[i+1].X(), y, topPts[i+1].Z()), chordR));
+        builder.Add(compound, makeChord(gp_Pnt(botPts[i].X(), y, botPts[i].Z()), gp_Pnt(botPts[i+1].X(), y, botPts[i+1].Z()), chordR));
+        // Verticals
+        builder.Add(compound, makeChord(gp_Pnt(topPts[i].X(), y, topPts[i].Z()), gp_Pnt(botPts[i].X(), y, botPts[i].Z()), webR));
+        // Z-diagonals
+        builder.Add(compound, makeChord(gp_Pnt(botPts[i].X(), y, botPts[i].Z()), gp_Pnt(topPts[i+1].X(), y, topPts[i+1].Z()), webR*0.8));
+        builder.Add(compound, makeChord(gp_Pnt(topPts[i].X(), y, topPts[i].Z()), gp_Pnt(botPts[i+1].X(), y, botPts[i+1].Z()), webR*0.8));
+      }
+    }
+  } else if (params.beamType == beam_section_type::BOX) {
+    gp_Pnt b1(-span/2, -bw/2, 0), b2(-span/2, bw/2, 0), b3(-span/2, bw/2, bh), b4(-span/2, -bw/2, bh);
+    TopoDS_Face of = BRepLib_MakeFace(BRepBuilderAPI_MakePolygon(b1, b2, b3, b4, Standard_True).Wire()).Face();
+    TopoDS_Shape beam = BRepPrimAPI_MakePrism(of, gp_Vec(span, 0, 0)).Shape();
+    if (bt > 0 && bh > 2*bt && bw > 2*bt) {
+      gp_Pnt i1(-span/2-1, -bw/2+bt, bt), i2(-span/2-1, bw/2-bt, bt);
+      gp_Pnt i3(-span/2-1, bw/2-bt, bh-bt), i4(-span/2-1, -bw/2+bt, bh-bt);
+      TopoDS_Face inf = BRepLib_MakeFace(BRepBuilderAPI_MakePolygon(i1, i2, i3, i4, Standard_True).Wire()).Face();
+      beam = BRepAlgoAPI_Cut(beam, BRepPrimAPI_MakePrism(inf, gp_Vec(span+2, 0, 0)).Shape()).Shape();
+    }
+    builder.Add(compound, beam);
+  } else if (params.beamType == beam_section_type::H_BEAM_T) {
+    TopoDS_Shape web = BRepPrimAPI_MakeBox(gp_Pnt(-span/2, -bw*0.15, bt), span, bw*0.3, bh-2*bt).Shape();
+    TopoDS_Shape lf = BRepPrimAPI_MakeBox(gp_Pnt(-span/2, -bw/2, 0), span, bw, bt).Shape();
+    TopoDS_Shape rf = BRepPrimAPI_MakeBox(gp_Pnt(-span/2, -bw/2, bh-bt), span, bw, bt).Shape();
+    TopoDS_Shape beam = BRepAlgoAPI_Fuse(web, lf).Shape();
+    beam = BRepAlgoAPI_Fuse(beam, rf).Shape();
+    builder.Add(compound, beam);
+  } else {
+    // COMBO: upper box + lower truss
+    double boxH = bh * 0.4, trussH = bh - boxH;
+    gp_Pnt bb1(-span/2, -bw/2, trussH), bb2(-span/2, bw/2, trussH);
+    gp_Pnt bb3(-span/2, bw/2, bh), bb4(-span/2, -bw/2, bh);
+    TopoDS_Face bf = BRepLib_MakeFace(BRepBuilderAPI_MakePolygon(bb1, bb2, bb3, bb4, Standard_True).Wire()).Face();
+    builder.Add(compound, BRepPrimAPI_MakePrism(bf, gp_Vec(span, 0, 0)).Shape());
+    int nPanels = std::max(4, (int)(span / 2000));
+    double panelLen = span / nPanels;
+    double chordR = bw * 0.1;
+    for (int i = 0; i <= nPanels; ++i) {
+      double x = -span/2 + i * panelLen;
+      for (int face = -1; face <= 1; face += 2) {
+        double y = face * bw/2;
+        gp_Pnt bc(x, y, 0);
+        if (i < nPanels) {
+          gp_Pnt bcN(-span/2 + (i+1)*panelLen, y, 0);
+          builder.Add(compound, BRepPrimAPI_MakeCylinder(gp_Ax2(bc, gp_Dir(bcN.XYZ()-bc.XYZ())), chordR, panelLen).Shape());
+          gp_Pnt upN(-span/2 + (i+1)*panelLen, y, trussH);
+          builder.Add(compound, BRepPrimAPI_MakeCylinder(gp_Ax2(bc, gp_Dir(upN.XYZ()-bc.XYZ())), chordR*0.7, panelLen*1.2).Shape());
+        }
+      }
+    }
+  }
+
+  return compound;
+}
+
+TopoDS_Shape create_transverse_span(const transverse_span_params &params,
+                                    const gp_Pnt &position,
+                                    const gp_Dir &direction,
+                                    const gp_Dir &upDir) {
+  TopoDS_Shape shape = create_transverse_span(params);
+  gp_Dir yDir = upDir.Crossed(direction);
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, upDir, direction);
+  gp_Trsf t;
+  t.SetTransformation(targetAx3, sourceAx3);
+  return BRepBuilderAPI_Transform(shape, t).Shape();
+}
+
+// =========================================================================
+// 22b. Hanger Post (硬横跨吊柱) TYPE=OCS_HANGER_POST
+// =========================================================================
+TopoDS_Shape create_hanger_post(const hanger_post_params &params) {
+  if (params.length <= 0 || params.sectionSize <= 0)
+    throw Standard_ConstructionError("Length and section size must be positive");
+
+  double halfS = params.sectionSize / 2.0;
+  double wT = params.wallThickness;
+
+  // Main body: hollow tube
+  TopoDS_Shape body;
+  gp_Ax2 bodyAxis(gp::Origin(), gp::DZ());
+  if (params.sectionType == hanger_post_section_type::ROUND) {
+    TopoDS_Shape outer =
+        BRepPrimAPI_MakeCylinder(bodyAxis, halfS, params.length).Shape();
+    if (wT > 0 && halfS > wT) {
+      TopoDS_Shape inner =
+          BRepPrimAPI_MakeCylinder(bodyAxis, halfS - wT, params.length).Shape();
+      body = BRepAlgoAPI_Cut(outer, inner).Shape();
+    } else {
+      body = outer;
+    }
+  } else {
+    // Square or H-beam: square tube
+    double ext = halfS;
+    gp_Pnt outerOrg(-ext, -ext, 0);
+    TopoDS_Shape outer =
+        BRepPrimAPI_MakeBox(outerOrg, params.sectionSize, params.sectionSize,
+                              params.length).Shape();
+    if (wT > 0 && ext > wT) {
+      double innerExt = ext - wT;
+      gp_Pnt innerOrg(-innerExt, -innerExt, -1);
+      TopoDS_Shape inner =
+          BRepPrimAPI_MakeBox(innerOrg, params.sectionSize - 2 * wT,
+                                params.sectionSize - 2 * wT,
+                                params.length + 2).Shape();
+      body = BRepAlgoAPI_Cut(outer, inner).Shape();
+    } else {
+      body = outer;
+    }
+  }
+
+  // Top flange (连接横梁)
+  if (params.topFlangeSize > 0) {
+    double flgH = params.topFlangeSize / 2.0;
+    double flgTh = params.topFlangeThick > 0 ? params.topFlangeThick : wT * 2;
+    gp_Pnt tfOrg(-flgH, -flgH, params.length);
+    TopoDS_Shape tf =
+        BRepPrimAPI_MakeBox(tfOrg, params.topFlangeSize, params.topFlangeSize,
+                              flgTh).Shape();
+    // Bolt holes
+    if (params.boltDiameter > 0) {
+      double hr = params.boltDiameter / 2.0;
+      double hs = params.boltSpacing / 2.0;
+      for (int x = -1; x <= 1; x += 2)
+        for (int y = -1; y <= 1; y += 2) {
+          TopoDS_Shape h =
+              BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(x * hs, y * hs, params.length - 1),
+                                               gp::DZ()),
+                                        hr, flgTh + 2).Shape();
+          tf = BRepAlgoAPI_Cut(tf, h).Shape();
+        }
+    }
+    body = BRepAlgoAPI_Fuse(body, tf).Shape();
+
+    // Stiffener ribs (三角加劲肋) between tube and top flange — 4 corners
+    double ribH = params.topFlangeSize * 0.3;        // rib height
+    double ribW = params.topFlangeSize * 0.25;        // rib extends outward from tube
+    double ribT = params.wallThickness * 0.8;          // rib plate thickness
+    for (int r = 0; r < 4; ++r) {
+      double a = r * M_PI / 2.0 + M_PI / 4.0;          // 45°, 135°, 225°, 315°
+      double nx = cos(a), ny = sin(a);                  // outward normal
+      double tx = -ny, ty = nx;                         // tangential direction
+      double bx = halfS * 0.85 * nx, by = halfS * 0.85 * ny;  // base on tube surface
+
+      // Three vertices: tube→flange edge→tube(offset down)
+      gp_Pnt r1(bx, by, params.length);                              // top (flange level)
+      gp_Pnt r2(bx + ribW * nx, by + ribW * ny, params.length - ribH * 0.3);  // flange edge
+      gp_Pnt r3(bx, by, params.length - ribH);                       // tube(offset down)
+      TopoDS_Wire rw = BRepBuilderAPI_MakePolygon(r1, r2, r3, Standard_True).Wire();
+      TopoDS_Face rf = BRepLib_MakeFace(rw).Face();
+      // Extrude along tangential direction to give thickness
+      TopoDS_Shape rib = BRepPrimAPI_MakePrism(rf,
+          gp_Vec(tx * ribT * 0.5, ty * ribT * 0.5, 0)).Shape();
+      rib = BRepAlgoAPI_Fuse(rib,
+          BRepPrimAPI_MakePrism(rf,
+              gp_Vec(-tx * ribT * 0.5, -ty * ribT * 0.5, 0)).Shape()).Shape();
+      body = BRepAlgoAPI_Fuse(body, rib).Shape();
+    }
+  }
+
+  // Bottom flange (安装腕臂底座)
+  if (params.bottomFlangeSize > 0) {
+    double flgH = params.bottomFlangeSize / 2.0;
+    double flgTh = params.bottomFlangeThick > 0 ? params.bottomFlangeThick : wT * 2;
+    gp_Pnt bfOrg(-flgH, -flgH, -flgTh);
+    TopoDS_Shape bf =
+        BRepPrimAPI_MakeBox(bfOrg, params.bottomFlangeSize, params.bottomFlangeSize,
+                              flgTh).Shape();
+    if (params.boltDiameter > 0) {
+      double hr = params.boltDiameter / 2.0;
+      double hs = params.boltSpacing / 2.0;
+      for (int x = -1; x <= 1; x += 2)
+        for (int y = -1; y <= 1; y += 2) {
+          TopoDS_Shape h =
+              BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(x * hs, y * hs, -flgTh - 1),
+                                               gp::DZ()),
+                                        hr, flgTh + 2).Shape();
+          bf = BRepAlgoAPI_Cut(bf, h).Shape();
+        }
+    }
+    body = BRepAlgoAPI_Fuse(body, bf).Shape();
+  }
+
+  return body;
+}
+
+TopoDS_Shape create_hanger_post(const hanger_post_params &params,
+                                 const gp_Pnt &position,
+                                 const gp_Dir &direction) {
+  TopoDS_Shape shape = create_hanger_post(params);
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ());
+  gp_Ax3 targetAx3(position, direction);
+  gp_Trsf t;
+  t.SetTransformation(targetAx3, sourceAx3);
+  return BRepBuilderAPI_Transform(shape, t).Shape();
+}
+
+// =========================================================================
+// 22c. Portal Frame (梁顶门型架) TYPE=OCS_PORTAL_FRAME
+// =========================================================================
+TopoDS_Shape create_portal_frame(const portal_frame_params &params) {
+  if (params.frameHeight <= 0 || params.frameWidth <= 0)
+    throw Standard_ConstructionError("Frame dimensions must be positive");
+
+  double postR = params.postDiameter / 2.0;
+  double postIR = postR - params.postWallThick;
+  double beamR = params.beamDiameter / 2.0;
+  double beamIR = beamR - params.beamWallThick;
+  double halfFW = params.frameWidth / 2.0;
+  double halfBL = params.beamLength / 2.0;
+
+  // Helper: hollow tube
+  auto makeTube = [](gp_Ax2 axis, double OR, double IR, double len) -> TopoDS_Shape {
+    TopoDS_Shape outer = BRepPrimAPI_MakeCylinder(axis, OR, len).Shape();
+    if (IR > Precision::Confusion()) {
+      TopoDS_Shape inner = BRepPrimAPI_MakeCylinder(axis, IR, len).Shape();
+      return BRepAlgoAPI_Cut(outer, inner).Shape();
+    }
+    return outer;
+  };
+
+  TopoDS_Shape result;
+
+  // Left post: vertical along Z, at X=-halfFW
+  gp_Ax2 leftAxis(gp_Pnt(-halfFW, 0, 0), gp::DZ());
+  TopoDS_Shape leftPost = makeTube(leftAxis, postR, postIR, params.frameHeight);
+
+  // Right post: vertical along Z, at X=+halfFW
+  gp_Ax2 rightAxis(gp_Pnt(halfFW, 0, 0), gp::DZ());
+  TopoDS_Shape rightPost = makeTube(rightAxis, postR, postIR, params.frameHeight);
+
+  // Top horizontal beam along X, at Z=frameHeight
+  gp_Ax2 topAxis(gp_Pnt(-halfBL, 0, params.frameHeight), gp::DX());
+  TopoDS_Shape topBeam = makeTube(topAxis, beamR, beamIR, params.beamLength);
+
+  result = BRepAlgoAPI_Fuse(leftPost, rightPost).Shape();
+  result = BRepAlgoAPI_Fuse(result, topBeam).Shape();
+
+  // Base plates under each post
+  if (params.basePlateLength > 0) {
+    double bpl = params.basePlateLength / 2.0;
+    double bpw = params.basePlateWidth / 2.0;
+    double bpt = params.basePlateThick > 0 ? params.basePlateThick : params.postWallThick * 2;
+
+    for (int side = -1; side <= 1; side += 2) {
+      double cx = side * halfFW;
+      gp_Pnt bpOrg(cx - bpl, -bpw, -bpt);
+      TopoDS_Shape bp =
+          BRepPrimAPI_MakeBox(bpOrg, params.basePlateLength, params.basePlateWidth,
+                                bpt).Shape();
+      // Bolt holes
+      if (params.boltDiameter > 0) {
+        double hr = params.boltDiameter / 2.0;
+        double hs = params.boltSpacing / 2.0;
+        for (int bx = -1; bx <= 1; bx += 2)
+          for (int by = -1; by <= 1; by += 2) {
+            TopoDS_Shape hole =
+                BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(cx + bx * hs, by * hs, -bpt - 1),
+                                                  gp::DZ()),
+                                          hr, bpt + 2).Shape();
+            bp = BRepAlgoAPI_Cut(bp, hole).Shape();
+          }
+      }
+      result = BRepAlgoAPI_Fuse(result, bp).Shape();
+
+      // Stiffener ribs between post and base plate (前后各一片)
+      for (int fr = -1; fr <= 1; fr += 2) {
+        double ry = fr * bpw * 0.7;
+        double ribH = params.frameHeight * 0.15;
+        gp_Pnt r1(cx, ry, 0);
+        gp_Pnt r2(cx + side * ribH * 0.5, ry, 0);
+        gp_Pnt r3(cx, ry, -ribH);
+        TopoDS_Wire rw = BRepBuilderAPI_MakePolygon(r1, r2, r3, Standard_True).Wire();
+        TopoDS_Face rf = BRepLib_MakeFace(rw).Face();
+        TopoDS_Shape rib = BRepPrimAPI_MakePrism(rf, gp_Vec(0, fr * bpt, 0)).Shape();
+        result = BRepAlgoAPI_Fuse(result, rib).Shape();
+      }
+    }
+  }
+
+  // Hanging ear plates on top beam
+  int nHang = std::max(0, params.hangPointCount);
+  if (nHang > 0) {
+    double hSpacing = params.hangPointSpacing > 0 ? params.hangPointSpacing
+                                                   : params.beamLength / (nHang + 1);
+    double earW = beamR * 1.5, earH = beamR * 1.0, earT = params.beamWallThick * 2;
+    for (int i = 0; i < nHang; ++i) {
+      double x = -halfBL + (i + 1) * hSpacing;
+      gp_Pnt earOrg(x - earT/2, -earW/2, params.frameHeight + beamR);
+      TopoDS_Shape ear =
+          BRepPrimAPI_MakeBox(earOrg, earT, earW, earH).Shape();
+      gp_Ax2 earHole(gp_Pnt(x, 0, params.frameHeight + beamR + earH * 0.6),
+                     gp::DY());
+      TopoDS_Shape hole =
+          BRepPrimAPI_MakeCylinder(earHole, beamR * 0.3, earW + 2).Shape();
+      ear = BRepAlgoAPI_Cut(ear, hole).Shape();
+      result = BRepAlgoAPI_Fuse(result, ear).Shape();
+    }
+  }
+
+  return result;
+}
+
+TopoDS_Shape create_portal_frame(const portal_frame_params &params,
+                                  const gp_Pnt &position,
+                                  const gp_Dir &direction,
+                                  const gp_Dir &upDir) {
+  TopoDS_Shape shape = create_portal_frame(params);
+  gp_Dir yDir = upDir.Crossed(direction);
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, upDir, direction);
+  gp_Trsf t;
+  t.SetTransformation(targetAx3, sourceAx3);
+  return BRepBuilderAPI_Transform(shape, t).Shape();
+}
+
+// =========================================================================
+// 22d. Suspension Cable (悬索) — shared primitive
+// =========================================================================
+TopoDS_Shape create_suspension_cable(const suspension_cable_params &params) {
+  if (params.diameter <= 0) throw Standard_ConstructionError("Diameter must be positive");
+
+  TopoDS_Wire centerline = create_suspension_cable_centerline(params);
+  double R = params.diameter / 2.0;
+
+  // Create circular section at start
+  gp_Pnt sp = params.startPoint;
+  gp_Vec dir(sp, params.endPoint);
+  gp_Ax2 secAx(sp, gp::DZ(), gp_Dir(dir));
+  gp_Circ secCirc(secAx, R);
+  TopoDS_Edge secEdge = BRepBuilderAPI_MakeEdge(secCirc).Edge();
+  TopoDS_Wire secWire = BRepBuilderAPI_MakeWire(secEdge).Wire();
+  ShapeFix_Wire fixer;
+  fixer.Load(secWire);
+  fixer.Perform();
+  TopoDS_Wire closedSec = fixer.Wire();
+
+  BRepOffsetAPI_MakePipeShell pipe(centerline);
+  pipe.Add(closedSec);
+  pipe.SetMode(Standard_True);
+  pipe.Build();
+  if (!pipe.IsDone()) throw Standard_ConstructionError("Suspension cable sweep failed");
+  if (!pipe.MakeSolid()) throw Standard_ConstructionError("Failed to make solid");
+
+  return pipe.Shape();
+}
+
+TopoDS_Wire create_suspension_cable_centerline(const suspension_cable_params &params) {
+  gp_Vec vec(params.startPoint, params.endPoint);
+  double span = vec.Magnitude();
+  if (span <= Precision::Confusion())
+    return BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(params.startPoint, params.startPoint));
+
+  BRepBuilderAPI_MakeWire wire;
+
+  if (params.cableType == suspension_cable_type::FIXED_ROPE || span < Precision::Confusion()) {
+    // Straight line
+    wire.Add(BRepBuilderAPI_MakeEdge(params.startPoint, params.endPoint));
+  } else {
+    // Catenary arc (Bezier) — sag is the mid-span deviation
+    double sag = params.sag > 0 ? params.sag : span * 0.05;
+    double sign = (params.cableType == suspension_cable_type::DROPPER) ? 1.0 : -1.0;
+    gp_Vec sagVec = gp_Vec(0, 0, 1) * sag * sign;
+
+    gp_Pnt mid = gp_Pnt(
+        (params.startPoint.X() + params.endPoint.X()) / 2.0,
+        (params.startPoint.Y() + params.endPoint.Y()) / 2.0,
+        (params.startPoint.Z() + params.endPoint.Z()) / 2.0);
+    mid.Translate(sagVec);
+
+    Handle(TColgp_HArray1OfPnt) pts = new TColgp_HArray1OfPnt(1, 3);
+    pts->SetValue(1, params.startPoint);
+    pts->SetValue(2, mid);
+    pts->SetValue(3, params.endPoint);
+    Handle(Geom_BezierCurve) bezier = new Geom_BezierCurve(pts);
+    wire.Add(BRepBuilderAPI_MakeEdge(bezier));
+  }
+
+  return wire.Wire();
+}
+
+// =========================================================================
+// 22e. Suspension Hard Span (悬索式硬横跨)
+// =========================================================================
+TopoDS_Shape create_suspension_hard_span(const suspension_hard_span_params &params) {
+  if (params.span <= 0 || params.mastHeight <= 0)
+    throw Standard_ConstructionError("Span and height must be positive");
+
+  BRep_Builder builder;
+  TopoDS_Compound compound;
+  builder.MakeCompound(compound);
+
+  double span = params.span;
+
+  // Main suspension cable (top span, catenary type)
+  suspension_cable_params sc;
+  sc.startPoint = gp_Pnt(-span/2, 0, params.mastHeight);
+  sc.endPoint   = gp_Pnt(span/2, 0, params.mastHeight);
+  sc.diameter   = params.cableDiameter;
+  sc.sag        = params.cableSag > 0 ? params.cableSag : span * 0.05;
+  sc.cableType  = suspension_cable_type::CATENARY;
+  sc.tension    = 0;
+  builder.Add(compound, create_suspension_cable(sc));
+
+  // Vertical dropper cables
+  if (params.dropperCount > 0) {
+    int nDrop = params.dropperCount;
+    double dSpacing = params.dropperSpacing > 0 ? params.dropperSpacing
+                                                 : span / (nDrop + 1);
+    auto cl = create_suspension_cable_centerline(sc);
+    TopExp_Explorer ex(cl, TopAbs_EDGE);
+    if (ex.More()) {
+      TopoDS_Edge ce = TopoDS::Edge(ex.Current());
+      double first = 0, last = 0;
+      Handle(Geom_Curve) curve = BRep_Tool::Curve(ce, first, last);
+
+      for (int i = 0; i < nDrop; ++i) {
+        double t = first + (last - first) * (i + 1) / (nDrop + 1);
+        gp_Pnt topPt = curve->Value(t);
+        // Vertical dropper from cable down to contact height
+        double dropLen = topPt.Z() * 0.5;  // arbitrary: half height
+        gp_Pnt botPt = topPt.Translated(gp_Vec(0, 0, -dropLen));
+
+        suspension_cable_params dropCable;
+        dropCable.startPoint = topPt;
+        dropCable.endPoint   = botPt;
+        dropCable.diameter   = params.dropperCableDiameter;
+        dropCable.sag        = 0;
+        dropCable.cableType  = suspension_cable_type::DROPPER;
+        dropCable.tension    = 0;
+        builder.Add(compound, create_suspension_cable(dropCable));
+      }
+    }
+  }
+
+  // Upper fixed rope (水平) at ~70% mast height — shared pattern with soft span
+  suspension_cable_params upRope;
+  upRope.startPoint = gp_Pnt(-span/2, 0, params.mastHeight * 0.7);
+  upRope.endPoint   = gp_Pnt(span/2, 0, params.mastHeight * 0.7);
+  upRope.diameter   = params.cableDiameter * 0.6;
+  upRope.sag        = 0;
+  upRope.cableType  = suspension_cable_type::FIXED_ROPE;
+  upRope.tension    = 0;
+  builder.Add(compound, create_suspension_cable(upRope));
+
+  // Lower fixed rope (水平) at ~50% mast height — shared pattern with soft span
+  suspension_cable_params loRope;
+  loRope.startPoint = gp_Pnt(-span/2, 0, params.mastHeight * 0.5);
+  loRope.endPoint   = gp_Pnt(span/2, 0, params.mastHeight * 0.5);
+  loRope.diameter   = params.cableDiameter * 0.5;
+  loRope.sag        = 0;
+  loRope.cableType  = suspension_cable_type::FIXED_ROPE;
+  loRope.tension    = 0;
+  builder.Add(compound, create_suspension_cable(loRope));
+
+  // Insulators at fixed rope ends (each mast side)
+  if (params.insulatorLength > 0 && params.insulatorDiameter > 0) {
+    rod_insulator_params insParams;
+    insParams.type = rod_insulator_type::SOLID;
+    insParams.height = params.insulatorLength;
+    insParams.outerDiameter = params.insulatorDiameter;
+    insParams.innerDiameter = 0;
+    insParams.shedDiameter = params.insulatorDiameter * 1.6;
+    insParams.shedSpacing = params.insulatorLength / 5;
+    insParams.shedCount = 3;
+    insParams.endFitting = end_fitting_type::FLANGE;
+    insParams.flangeDiameter = params.insulatorDiameter * 1.3;
+    insParams.flangeBoltSpacing = params.insulatorDiameter * 0.8;
+    insParams.flangeBoltDiameter = params.insulatorDiameter * 0.2;
+
+    for (int side = -1; side <= 1; side += 2) {
+      double mastX = side * span / 2.0;
+      // Insulator at upper fixed rope end
+      builder.Add(compound,
+          create_rod_insulator(insParams,
+              gp_Pnt(mastX, 0, params.mastHeight * 0.7),
+              gp_Dir(-side, 0, 0)));
+      // Insulator at lower fixed rope end
+      builder.Add(compound,
+          create_rod_insulator(insParams,
+              gp_Pnt(mastX, 0, params.mastHeight * 0.5),
+              gp_Dir(-side, 0, 0)));
+    }
+  }
+
+  return compound;
+}
+
+TopoDS_Shape create_suspension_hard_span(const suspension_hard_span_params &params,
+                                          const gp_Pnt &position,
+                                          const gp_Dir &direction,
+                                          const gp_Dir &upDir) {
+  TopoDS_Shape shape = create_suspension_hard_span(params);
+  gp_Dir yDir = upDir.Crossed(direction);
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, upDir, direction);
+  gp_Trsf t;
+  t.SetTransformation(targetAx3, sourceAx3);
+  return BRepBuilderAPI_Transform(shape, t).Shape();
+}
+
+// =========================================================================
+// 22f. Positioning Cable (定位索)
+// =========================================================================
+// Shared straight-cable geometry — also usable by HeadSpan fixed ropes
+TopoDS_Shape create_positioning_cable(const positioning_cable_params &params) {
+  if (params.diameter <= 0) throw Standard_ConstructionError("Diameter must be positive");
+
+  gp_Vec v(params.topPoint, params.bottomPoint);
+  double len = v.Magnitude();
+  if (len <= Precision::Confusion())
+    throw Standard_ConstructionError("Top and bottom points must differ");
+
+  double R = params.diameter / 2.0;
+  TopoDS_Shape cable;
+
+  if (params.adjustable) {
+    // Three-segment: upper straight + threaded adjuster + lower straight
+    double adjLen = len * 0.15;       // adjuster length in middle
+    double segLen = (len - adjLen) / 2.0;
+    gp_Dir dir(v);
+    gp_Vec halfStep = gp_Vec(dir.XYZ() * segLen);
+
+    gp_Pnt adjStart = params.topPoint.Translated(halfStep);
+    gp_Pnt adjEnd = adjStart.Translated(gp_Vec(dir.XYZ() * adjLen));
+
+    // Upper segment
+    gp_Ax2 upAxis(params.topPoint, dir);
+    TopoDS_Shape upper =
+        BRepPrimAPI_MakeCylinder(upAxis, R, segLen).Shape();
+
+    // Lower segment
+    gp_Ax2 loAxis(adjEnd, dir);
+    TopoDS_Shape lower =
+        BRepPrimAPI_MakeCylinder(loAxis, R, segLen).Shape();
+
+    // Threaded adjuster: thicker cylinder + hex nut
+    gp_Ax2 adjAxis(adjStart, dir);
+    TopoDS_Shape adjRod =
+        BRepPrimAPI_MakeCylinder(adjAxis, R * 1.3, adjLen).Shape();
+    // Hex nut (approximated by hexagonal prism)
+    double nutH = adjLen * 0.3;
+    gp_Pnt nutCenter = adjStart.Translated(gp_Vec(dir.XYZ() * adjLen * 0.5));
+    // Simple box approximation for the nut
+    gp_Pnt nutOrg(nutCenter.X() - R*1.5, nutCenter.Y() - R*1.5, nutCenter.Z() - nutH/2);
+    TopoDS_Shape nut =
+        BRepPrimAPI_MakeBox(nutOrg, R*3, R*3, nutH).Shape();
+    adjRod = BRepAlgoAPI_Fuse(adjRod, nut).Shape();
+
+    cable = BRepAlgoAPI_Fuse(upper, adjRod).Shape();
+    cable = BRepAlgoAPI_Fuse(cable, lower).Shape();
+  } else {
+    // Simple straight cylinder
+    gp_Ax2 cableAxis(params.topPoint, gp_Dir(v));
+    cable = BRepPrimAPI_MakeCylinder(cableAxis, R, len).Shape();
+  }
+
+  // Connection plates at both ends
+  double plateSize = R * 4;
+  double plateThick = R * 1.5;
+  for (int end = 0; end < 2; ++end) {
+    gp_Pnt pt = (end == 0) ? params.topPoint : params.bottomPoint;
+    gp_Pnt plateOrg(pt.X() - plateSize/2, pt.Y() - plateSize/2,
+                    pt.Z() - (end == 0 ? 0 : plateThick));
+    TopoDS_Shape plate =
+        BRepPrimAPI_MakeBox(plateOrg, plateSize, plateSize, plateThick).Shape();
+    // Bolt hole
+    double holeR = R * 0.5;
+    TopoDS_Shape hole =
+        BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(pt.X(), pt.Y(),
+                                                  pt.Z() + (end == 0 ? -1 : plateThick+1)),
+                                        gp::DZ()), holeR, plateThick+2).Shape();
+    plate = BRepAlgoAPI_Cut(plate, hole).Shape();
+    cable = BRepAlgoAPI_Fuse(cable, plate).Shape();
+  }
+
+  return cable;
+}
+
+// =========================================================================
+// 23. Auxiliary Wire Bracket (附加导线安装支架)
+// =========================================================================
+TopoDS_Shape create_aux_bracket(const aux_bracket_params &params) {
+  if (params.overhangLength <= 0)
+    throw Standard_ConstructionError("Overhang length must be positive");
+
+  double halfL = params.bracketLength / 2;
+  double halfW = params.bracketWidth / 2;
+
+  if (params.type == aux_bracket_type::CROSS_ARM) {
+    // Main beam along Y
+    gp_Pnt beamOrigin(-halfL, -params.overhangLength / 2, 0);
+    TopoDS_Shape beam =
+        BRepPrimAPI_MakeBox(beamOrigin, params.bracketLength,
+                              params.overhangLength, params.bracketWidth)
+            .Shape();
+
+    // Diagonal brace
+    double braceLen = params.overhangLength * 0.6;
+    gp_Ax2 braceAxis(gp_Pnt(0, 0, 0), gp::DZ());
+    TopoDS_Shape brace =
+        BRepPrimAPI_MakeCylinder(braceAxis, halfW * 0.3, braceLen).Shape();
+    gp_Trsf rot;
+    rot.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp::DY()), -M_PI / 4);
+    brace = BRepBuilderAPI_Transform(brace, rot).Shape();
+    return BRepAlgoAPI_Fuse(beam, brace).Shape();
+  } else {
+    // Wall-mount or double mast: flat plate
+    gp_Pnt plateOrigin(-halfL, -halfW, 0);
+    TopoDS_Shape plate =
+        BRepPrimAPI_MakeBox(plateOrigin, params.bracketLength,
+                              params.bracketWidth, params.mountHeight)
+            .Shape();
+
+    // Bolt holes
+    if (params.boltDiameter > 0) {
+      double holeR = params.boltDiameter / 2;
+      double hs = params.boltSpacing / 2;
+      gp_Ax2 h1(gp_Pnt(-hs, -hs, -1), gp::DZ());
+      gp_Ax2 h2(gp_Pnt(hs, -hs, -1), gp::DZ());
+      gp_Ax2 h3(gp_Pnt(-hs, hs, -1), gp::DZ());
+      gp_Ax2 h4(gp_Pnt(hs, hs, -1), gp::DZ());
+      for (auto &ha : {h1, h2, h3, h4}) {
+        TopoDS_Shape hole =
+            BRepPrimAPI_MakeCylinder(ha, holeR, params.mountHeight + 2)
+                .Shape();
+        plate = BRepAlgoAPI_Cut(plate, hole).Shape();
+      }
+    }
+    return plate;
+  }
+}
+
+TopoDS_Shape create_aux_bracket(const aux_bracket_params &params,
+                                const gp_Pnt &position,
+                                const gp_Dir &normal,
+                                const gp_Dir &upDir) {
+  TopoDS_Shape shape = create_aux_bracket(params);
+  gp_Dir yDir = upDir.Crossed(normal);
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, upDir, normal);
+  gp_Trsf t;
+  t.SetTransformation(targetAx3, sourceAx3);
+  return BRepBuilderAPI_Transform(shape, t).Shape();
+}
+
+// =========================================================================
+// 24. Rail (钢轨)
+// =========================================================================
+TopoDS_Shape create_rail(const rail_params &params) {
+  if (params.railHeight <= 0 || params.headWidth <= 0 || params.baseWidth <= 0)
+    throw Standard_ConstructionError("Rail dimensions must be positive");
+
+  const double H = params.railHeight;
+  const double hH = params.headHeight > 0 ? params.headHeight : H * 0.36;
+  const double bH = params.baseHeight > 0 ? params.baseHeight : H * 0.18;
+  const double hW = params.headWidth / 2.0;
+  const double bW = params.baseWidth / 2.0;
+  const double wT = params.webThickness > 0 ? params.webThickness / 2.0 : bW * 0.22;
+
+  // 18-point rail profile in YZ plane (Z=0 at base bottom, Y=0 at centerline)
+  // Head: wide top with rounded corners, slight dome
+  // Web: tapered waist connecting head to base
+  // Base: wide bottom with 1:4 end slopes
+  BRepBuilderAPI_MakeWire wire;
+
+  // Head top surface (3 segments for slight dome)
+  gp_Pnt hTL(-hW, 0, H);
+  gp_Pnt hTC(-hW * 0.7, 0, H + hH * 0.02);
+  gp_Pnt hTM(0, 0, H + hH * 0.03);
+  gp_Pnt hTR(hW * 0.7, 0, H + hH * 0.02);
+  gp_Pnt hTR2(hW, 0, H);
+  wire.Add(BRepBuilderAPI_MakeEdge(hTL, hTC));
+  wire.Add(BRepBuilderAPI_MakeEdge(hTC, hTM));
+  wire.Add(BRepBuilderAPI_MakeEdge(hTM, hTR));
+  wire.Add(BRepBuilderAPI_MakeEdge(hTR, hTR2));
+
+  // Head right side: outer vertical + bevel to web
+  gp_Pnt hRB1(hW, 0, H - hH * 0.3);
+  gp_Pnt hRB2(hW * 0.85, 0, H - hH * 0.7);
+  wire.Add(BRepBuilderAPI_MakeEdge(hTR2, hRB1));
+  wire.Add(BRepBuilderAPI_MakeEdge(hRB1, hRB2));
+
+  // Head-web transition (beveled)
+  gp_Pnt hwb(wT, 0, H - hH);
+  wire.Add(BRepBuilderAPI_MakeEdge(hRB2, hwb));
+
+  // Web body (tapered waist)
+  gp_Pnt webBot(wT, 0, bH + bH * 0.3);
+  wire.Add(BRepBuilderAPI_MakeEdge(hwb, webBot));
+
+  // Web-base transition (flare to base)
+  gp_Pnt wbFlare(bW * 0.7, 0, bH * 0.5);
+  gp_Pnt wbBase(bW, 0, bH);
+  wire.Add(BRepBuilderAPI_MakeEdge(webBot, wbFlare));
+  wire.Add(BRepBuilderAPI_MakeEdge(wbFlare, wbBase));
+
+  // Base right slope (1:4) and bottom
+  gp_Pnt baseBotR(bW, 0, 0);
+  wire.Add(BRepBuilderAPI_MakeEdge(wbBase, baseBotR));
+
+  // Base bottom flat
+  gp_Pnt baseBotL(-bW, 0, 0);
+  wire.Add(BRepBuilderAPI_MakeEdge(baseBotR, baseBotL));
+
+  // Base left slope (1:4)
+  gp_Pnt baseTopL(-bW, 0, bH);
+  wire.Add(BRepBuilderAPI_MakeEdge(baseBotL, baseTopL));
+
+  // Base left top → web flare
+  gp_Pnt wbFlareL(-bW * 0.7, 0, bH * 0.5);
+  gp_Pnt webBotL(-wT, 0, bH + bH * 0.3);
+  wire.Add(BRepBuilderAPI_MakeEdge(baseTopL, wbFlareL));
+  wire.Add(BRepBuilderAPI_MakeEdge(wbFlareL, webBotL));
+
+  // Web left body
+  gp_Pnt webTopL(-wT, 0, H - hH);
+  wire.Add(BRepBuilderAPI_MakeEdge(webBotL, webTopL));
+
+  // Head-web left transition
+  gp_Pnt hwbL(-hW * 0.85, 0, H - hH * 0.7);
+  gp_Pnt hLB1(-hW, 0, H - hH * 0.3);
+  wire.Add(BRepBuilderAPI_MakeEdge(webTopL, hwbL));
+  wire.Add(BRepBuilderAPI_MakeEdge(hwbL, hLB1));
+  wire.Add(BRepBuilderAPI_MakeEdge(hLB1, hTL));  // close to start
+
+  if (!wire.IsDone())
+    throw Standard_ConstructionError("Rail profile wire failed");
+
+  TopoDS_Face face = BRepLib_MakeFace(wire.Wire()).Face();
+  return BRepPrimAPI_MakePrism(face, gp_Vec(0, 0, params.standardLength)).Shape();
+}
+
+TopoDS_Shape create_rail(const rail_params &params,
+                         const gp_Pnt &startPoint,
+                         const gp_Pnt &endPoint) {
+  TopoDS_Shape shape = create_rail(params);
+  gp_Vec vec(startPoint, endPoint);
+  double len = vec.Magnitude();
+  if (len <= Precision::Confusion()) return shape;
+
+  // Scale to match length, then rotate and translate
+  gp_Dir dir(vec);
+  double scale = len / params.standardLength;
+  gp_Trsf s;
+  s.SetScale(gp::Origin(), scale);
+  shape = BRepBuilderAPI_Transform(shape, s).Shape();
+
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(startPoint, gp::DZ(), dir);
+  gp_Trsf t;
+  t.SetTransformation(targetAx3, sourceAx3);
+  return BRepBuilderAPI_Transform(shape, t).Shape();
+}
+
+// =========================================================================
+// 25. Sleeper (轨枕)
+// =========================================================================
+TopoDS_Shape create_sleeper(const sleeper_params &params) {
+  if (params.length <= 0 || params.width <= 0 || params.height <= 0)
+    throw Standard_ConstructionError("Dimensions must be positive");
+
+  gp_Pnt origin(-params.length / 2, -params.width / 2, 0);
+  TopoDS_Shape body =
+      BRepPrimAPI_MakeBox(origin, params.length, params.width, params.height)
+          .Shape();
+
+  // Cut two rail seats (grooves) on top
+  if (params.grooveDepth > 0 && params.gauge > 0) {
+    double grooveW = params.width * 0.6;
+    double gD = params.grooveDepth;
+    double halfGauge = params.gauge / 2;
+
+    // Left rail seat
+    gp_Pnt leftGroove(-grooveW / 2, -halfGauge - grooveW / 2, params.height - gD);
+    TopoDS_Shape leftCut =
+        BRepPrimAPI_MakeBox(leftGroove, grooveW, grooveW, gD + 1).Shape();
+    body = BRepAlgoAPI_Cut(body, leftCut).Shape();
+
+    // Right rail seat
+    gp_Pnt rightGroove(-grooveW / 2, halfGauge - grooveW / 2, params.height - gD);
+    TopoDS_Shape rightCut =
+        BRepPrimAPI_MakeBox(rightGroove, grooveW, grooveW, gD + 1).Shape();
+    body = BRepAlgoAPI_Cut(body, rightCut).Shape();
+  }
+
+  return body;
+}
+
+TopoDS_Shape create_sleeper(const sleeper_params &params,
+                            const gp_Pnt &position,
+                            const gp_Dir &direction,
+                            const gp_Dir &upDir) {
+  TopoDS_Shape shape = create_sleeper(params);
+  gp_Dir yDir = upDir.Crossed(direction);
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, upDir, direction);
+  gp_Trsf t;
+  t.SetTransformation(targetAx3, sourceAx3);
+  return BRepBuilderAPI_Transform(shape, t).Shape();
+}
+
+// =========================================================================
+// 26. Ballast Bed (道床)
+// =========================================================================
+TopoDS_Shape create_ballast(const ballast_params &params) {
+  if (params.topWidth <= 0 || params.thickness <= 0 || params.length <= 0)
+    throw Standard_ConstructionError("Dimensions must be positive");
+
+  double slope = params.sideSlope > 0 ? params.sideSlope : 1.5;
+  double bottomWidth = params.topWidth + 2 * slope * params.thickness;
+
+  // Trapezoidal cross-section
+  gp_Pnt p1(-bottomWidth / 2, 0, 0);
+  gp_Pnt p2(-params.topWidth / 2, 0, params.thickness);
+  gp_Pnt p3(params.topWidth / 2, 0, params.thickness);
+  gp_Pnt p4(bottomWidth / 2, 0, 0);
+
+  BRepBuilderAPI_MakeWire wire;
+  wire.Add(BRepBuilderAPI_MakeEdge(p1, p2));
+  wire.Add(BRepBuilderAPI_MakeEdge(p2, p3));
+  wire.Add(BRepBuilderAPI_MakeEdge(p3, p4));
+  wire.Add(BRepBuilderAPI_MakeEdge(p4, p1));
+  TopoDS_Face face = BRepBuilderAPI_MakeFace(wire.Wire()).Face();
+  return BRepPrimAPI_MakePrism(face, gp_Vec(0, 0, params.length)).Shape();
+}
+
+TopoDS_Shape create_ballast(const ballast_params &params,
+                            const gp_Pnt &position,
+                            const gp_Dir &direction,
+                            const gp_Dir &upDir) {
+  TopoDS_Shape shape = create_ballast(params);
+  gp_Dir yDir = upDir.Crossed(direction);
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, upDir, direction);
+  gp_Trsf t;
+  t.SetTransformation(targetAx3, sourceAx3);
+  return BRepBuilderAPI_Transform(shape, t).Shape();
+}
+
+// =========================================================================
+// 27. Track Slab (轨道板)
+// =========================================================================
+TopoDS_Shape create_track_slab(const track_slab_params &params) {
+  if (params.length <= 0 || params.width <= 0 || params.thickness <= 0)
+    throw Standard_ConstructionError("Dimensions must be positive");
+
+  // Main slab
+  gp_Pnt slabOrigin(-params.length / 2, -params.width / 2, 0);
+  TopoDS_Shape slab =
+      BRepPrimAPI_MakeBox(slabOrigin, params.length, params.width,
+                            params.thickness)
+          .Shape();
+
+  // Rail seats on top
+  int nSeats = std::max(2, params.railSeatCount);
+  double seatSpacing = params.railSeatSpacing > 0
+                           ? params.railSeatSpacing
+                           : params.length / nSeats;
+  double seatW = 200;
+  double seatH = 30;
+
+  for (int i = 0; i < nSeats; ++i) {
+    double x = -params.length / 2 + (i + 0.5) * seatSpacing;
+    gp_Pnt seatOrigin(x - seatW / 2, -seatW / 2, params.thickness);
+    TopoDS_Shape seat =
+        BRepPrimAPI_MakeBox(seatOrigin, seatW, seatW, seatH).Shape();
+    slab = BRepAlgoAPI_Fuse(slab, seat).Shape();
+  }
+
+  // CA mortar layer underneath
+  if (params.cementAsphaltThickness > 0) {
+    double caH = params.cementAsphaltThickness;
+    gp_Pnt caOrigin(-params.length / 2, -params.width / 2, -caH);
+    TopoDS_Shape caLayer =
+        BRepPrimAPI_MakeBox(caOrigin, params.length, params.width, caH)
+            .Shape();
+    slab = BRepAlgoAPI_Fuse(slab, caLayer).Shape();
+  }
+
+  return slab;
+}
+
+TopoDS_Shape create_track_slab(const track_slab_params &params,
+                               const gp_Pnt &position,
+                               const gp_Dir &direction,
+                               const gp_Dir &upDir) {
+  TopoDS_Shape shape = create_track_slab(params);
+  gp_Dir yDir = upDir.Crossed(direction);
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, upDir, direction);
+  gp_Trsf t;
+  t.SetTransformation(targetAx3, sourceAx3);
+  return BRepBuilderAPI_Transform(shape, t).Shape();
+}
+
+// =========================================================================
+// 28. Fastener (扣件)
+// =========================================================================
+TopoDS_Shape create_fastener(const fastener_params &params) {
+  if (params.padLength <= 0 || params.padWidth <= 0)
+    throw Standard_ConstructionError("Pad dimensions must be positive");
+
+  // Base pad
+  gp_Pnt padOrigin(-params.padLength / 2, -params.padWidth / 2, 0);
+  TopoDS_Shape pad =
+      BRepPrimAPI_MakeBox(padOrigin, params.padLength, params.padWidth,
+                            params.padThickness)
+          .Shape();
+
+  // Bolt holes
+  if (params.gauge > 0) {
+    double halfG = params.gauge / 2;
+    double holeR = 8;
+    gp_Ax2 h1(gp_Pnt(-25, -halfG, -1), gp::DZ());
+    gp_Ax2 h2(gp_Pnt(25, -halfG, -1), gp::DZ());
+    gp_Ax2 h3(gp_Pnt(-25, halfG, -1), gp::DZ());
+    gp_Ax2 h4(gp_Pnt(25, halfG, -1), gp::DZ());
+    for (auto &ha : {h1, h2, h3, h4}) {
+      TopoDS_Shape hole =
+          BRepPrimAPI_MakeCylinder(ha, holeR, params.padThickness + 2).Shape();
+      pad = BRepAlgoAPI_Cut(pad, hole).Shape();
+    }
+  }
+
+  return pad;
+}
+
+TopoDS_Shape create_fastener(const fastener_params &params,
+                             const gp_Pnt &position,
+                             const gp_Dir &direction,
+                             const gp_Dir &upDir) {
+  TopoDS_Shape shape = create_fastener(params);
+  gp_Dir yDir = upDir.Crossed(direction);
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, upDir, direction);
+  gp_Trsf t;
+  t.SetTransformation(targetAx3, sourceAx3);
+  return BRepBuilderAPI_Transform(shape, t).Shape();
+}
+
+// =========================================================================
+// 29. Guard Rail (护轨)
+// =========================================================================
+TopoDS_Shape create_guard_rail(const guard_rail_params &params) {
+  if (params.height <= 0 || params.totalLength <= 0)
+    throw Standard_ConstructionError("Dimensions must be positive");
+  if (params.grooveWidth <= 0)
+    throw Standard_ConstructionError("Groove width must be positive");
+
+  double hW = params.headWidth / 2;
+  double bW = params.baseWidth / 2;
+  double gW = params.grooveWidth / 2;
+  double H = params.height;
+
+  // U-shaped cross-section profile
+  // Has a groove in the head (typical for guard rail)
+  gp_Pnt p1(-bW, 0, 0);
+  gp_Pnt p2(bW, 0, 0);
+  gp_Pnt p3(bW, 0, H);
+  gp_Pnt p4(gW, 0, H);
+  gp_Pnt p5(gW, 0, H * 0.8);
+  gp_Pnt p6(-gW, 0, H * 0.8);
+  gp_Pnt p7(-gW, 0, H);
+  gp_Pnt p8(-bW, 0, H);
+
+  BRepBuilderAPI_MakeWire wire;
+  wire.Add(BRepBuilderAPI_MakeEdge(p1, p2));
+  wire.Add(BRepBuilderAPI_MakeEdge(p2, p3));
+  wire.Add(BRepBuilderAPI_MakeEdge(p3, p4));
+  wire.Add(BRepBuilderAPI_MakeEdge(p4, p5));
+  wire.Add(BRepBuilderAPI_MakeEdge(p5, p6));
+  wire.Add(BRepBuilderAPI_MakeEdge(p6, p7));
+  wire.Add(BRepBuilderAPI_MakeEdge(p7, p8));
+  wire.Add(BRepBuilderAPI_MakeEdge(p8, p1));
+  TopoDS_Face face = BRepBuilderAPI_MakeFace(wire.Wire()).Face();
+  return BRepPrimAPI_MakePrism(face, gp_Vec(0, 0, params.totalLength)).Shape();
+}
+
+TopoDS_Shape create_guard_rail(const guard_rail_params &params,
+                               const gp_Pnt &startPoint,
+                               const gp_Pnt &endPoint) {
+  // Create rail along X, then transform
+  rail_params rp;
+  rp.railHeight = params.height;
+  rp.headWidth = params.headWidth;
+  rp.baseWidth = params.baseWidth;
+  rp.standardLength = params.totalLength;
+  rp.headHeight = params.height * 0.4;
+  rp.baseHeight = params.height * 0.2;
+  rp.webThickness = params.baseWidth * 0.2;
+  TopoDS_Shape shape = create_rail(rp);
+
+  gp_Vec vec(startPoint, endPoint);
+  double len = vec.Magnitude();
+  if (len <= Precision::Confusion()) return shape;
+
+  double scale = len / params.totalLength;
+  gp_Trsf s;
+  s.SetScale(gp::Origin(), scale);
+  shape = BRepBuilderAPI_Transform(shape, s).Shape();
+
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(startPoint, gp::DZ(), gp_Dir(vec));
+  gp_Trsf t;
+  t.SetTransformation(targetAx3, sourceAx3);
+  return BRepBuilderAPI_Transform(shape, t).Shape();
+}
+
+// =========================================================================
+// 30. Mast Assembly (支柱装配)
+// =========================================================================
+TopoDS_Shape create_mast_assembly(const mast_assembly_params &params) {
+  // Start with mast
+  steel_mast_params mastParams;
+  mastParams.type = steel_mast_type::H_BEAM;
+  mastParams.height = params.mastHeight;
+  mastParams.topWidth = 200;
+  mastParams.bottomWidth = 300;
+  mastParams.wallThickness = 10;
+  mastParams.flangeThickness = 16;
+  mastParams.flangeWidth = 350;
+  mastParams.anchorSpacing = 200;
+  mastParams.anchorDiameter = 24;
+  mastParams.segmentCount = 1;
+  TopoDS_Shape result = create_steel_mast(mastParams);
+
+  // Cantilever system
+  if (params.cantileverType > 0) {
+    double armDiam = params.armDiameter > 0 ? params.armDiameter : 60;
+    double armLen = 2500;
+
+    // Mast bracket at specified height
+    mast_bracket_params bracketParams;
+    bracketParams.boltSpacing = 80;
+    bracketParams.boltDiameter = 16;
+    bracketParams.height = 150;
+    bracketParams.width = 120;
+    bracketParams.thickness = 12;
+    bracketParams.insulatorBoltSpacing = 60;
+    bracketParams.insulatorBoltDiameter = 14;
+    bracketParams.mountAngle = 0;
+    double bracketH = params.mastHeight * 0.7;
+    TopoDS_Shape bracket = create_mast_bracket(
+        bracketParams, gp_Pnt(0, 0, bracketH), gp::DX(), gp::DZ());
+    result = BRepAlgoAPI_Fuse(result, bracket).Shape();
+
+    // Rod insulator
+    rod_insulator_params rodParams;
+    rodParams.type = rod_insulator_type::SOLID;
+    rodParams.height = 500;
+    rodParams.outerDiameter = 80;
+    rodParams.innerDiameter = 0;
+    rodParams.shedDiameter = 140;
+    rodParams.shedSpacing = 60;
+    rodParams.shedCount = 6;
+    rodParams.endFitting = end_fitting_type::FLANGE;
+    rodParams.flangeDiameter = 100;
+    rodParams.flangeBoltSpacing = 70;
+    rodParams.flangeBoltDiameter = 12;
+    TopoDS_Shape insulator = create_rod_insulator(
+        rodParams, gp_Pnt(80, 0, bracketH), gp::DX());
+    result = BRepAlgoAPI_Fuse(result, insulator).Shape();
+
+    // Level cantilever
+    level_cantilever_params levelParams;
+    levelParams.length = armLen;
+    levelParams.outerDiameter = armDiam;
+    levelParams.wallThickness = 4;
+    levelParams.mountHeight = bracketH + 80;
+    levelParams.riseAngle = 0;
+    TopoDS_Shape level = create_level_cantilever(
+        levelParams, gp_Pnt(580, 0, bracketH), gp::DX(), gp::DZ());
+    result = BRepAlgoAPI_Fuse(result, level).Shape();
+
+    if (params.cantileverType == 2) {
+      // Slanted cantilever (double arm)
+      slant_cantilever_params slantParams;
+      slantParams.length = armLen * 0.9;
+      slantParams.outerDiameter = armDiam;
+      slantParams.wallThickness = 4;
+      slantParams.slantAngle = 45;
+      TopoDS_Shape slant = create_slant_cantilever(
+          slantParams, gp_Pnt(80, 0, bracketH - 100), gp::DX(), gp::DZ());
+      result = BRepAlgoAPI_Fuse(result, slant).Shape();
+    }
+
+    // Registration arm at cantilever tip
+    registration_arm_params regParams;
+    regParams.type = registration_arm_type::STRAIGHT;
+    regParams.length = 800;
+    regParams.outerDiameter = 30;
+    regParams.wallThickness = 3;
+    regParams.angle = 0;
+    TopoDS_Shape regArm = create_registration_arm(
+        regParams, gp_Pnt(armLen + 580, params.stagger, bracketH - 200),
+        gp::DX(), gp::DZ());
+    result = BRepAlgoAPI_Fuse(result, regArm).Shape();
+  }
+
+  return result;
+}
+
+TopoDS_Shape create_mast_assembly(const mast_assembly_params &params,
+                                  const gp_Pnt &position,
+                                  const gp_Dir &direction,
+                                  const gp_Dir &upDir) {
+  TopoDS_Shape shape = create_mast_assembly(params);
+  gp_Dir yDir = upDir.Crossed(direction);
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(position, upDir, direction);
+  gp_Trsf t;
+  t.SetTransformation(targetAx3, sourceAx3);
+  return BRepBuilderAPI_Transform(shape, t).Shape();
+}
+
+} // namespace topo
+} // namespace flywave

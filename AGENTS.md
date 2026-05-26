@@ -44,38 +44,12 @@ cmake --install build/build --prefix libs/darwin_arm
 | `shape.go` | Shape methods |
 | `shape_ops.go` | Boolean ops, extrude, sweep, loft, offset |
 | `primitives.go` | Box, sphere, cylinder, prism creation |
+| `primitives_railway.go` | Railway OCS & track primitives (30 types) |
 | `geometry.go` | Geometry type constants |
 | `geometry_creator.go` | Curve/surface creation helpers |
 | `dxf.go` / `ifc.go` | DXF/IFC import |
 | `mesh.go` / `topo_export.go` | Mesh export via callback |
 | `selector.go` / `workplane.go` / `sketch.go` | Higher-level modeling |
-
-## Workplane API
-
-Entrypoint: `NewWorkplane()` (empty) or `NewNamedWorkplane("XY")` or `NewWorkplaneFromName("XY", nil)`.
-
-Convenience wrappers in `workplane.go`:
-
-| Method | Calls | Use |
-|--------|-------|-----|
-| `BoxCentered(w,h,d)` | `BoxAll(w,h,d, true,true,true)` | Centered box, combined |
-| `BoxCorners(w,h,d)` | `Box(w,h,d, false,false,false, true,true)` | Corner-at-origin, combined |
-| `SphereCentered(r)` | `Sphere(r, nil, -90,90,360, false,false,false, true,true)` | |
-| `CylinderCentered(h,r)` | `CylinderAll(h,r, nil,360, true,true,true)` | |
-| `CylinderAt(h,r)` | `Cylinder(h,r, nil,360, false,false,false, true,true)` | Grows in +Z from XY |
-| `RectCentered(w,h)` | `RectAll(w,h, true,false)` | Non-construction |
-| `CircleCentered(r)` | `Circle(r, false)` | |
-| `PolygonSimple(n,d)` | `Polygon(n,d, false,false)` | |
-| `ExtrudeSimple(d)` | `Extrude(d, true,true, false,0)` | |
-| `CutBlindSimple(d)` | `CutBlind(d, true, false,0)` | |
-| `RevolveSimple(a)` | `Revolve(nil,nil, a, true,true)` | Defaults to Y axis |
-| `LoftSimple()` | `Loft(false, true,true)` | Non-ruled |
-| `HoleThrough(d)` | `Hole(d, nil, true)` | Through-hole (auto depth) |
-| `HoleThroughWithDepth(d,dep)` | `Hole(d, &dep, true)` | |
-
-Optional pointer params (`nil` = use C++ default): `origin`, `basePoint`, `direct`, `normal`, `auxSpine`, `smoothing`, `pnt`, `dir`, `depth`, `axisStart`, `axisEnd`, `rotate`, `offset`, `vec`.
-
-Check errors: `if err := wp.Err(); err != nil { ... }`.
 
 ## Key entrypoints
 
