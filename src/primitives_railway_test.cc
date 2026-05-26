@@ -218,6 +218,15 @@ void test_mast_assembly() {
   test_export(create_mast_assembly(p), "mast_assembly");
 }
 
+void test_reg_arm_bracket() {
+  std::cout << "\n=== Reg Arm Bracket ===" << std::endl;
+  reg_arm_bracket_params p;
+  p.tubeDiameter = 60; p.bandWidth = 50; p.bandThickness = 6;
+  p.bracketHeight = 120; p.bracketThickness = 8; p.bracketWidth = 40;
+  p.mountHoleDiameter = 20;
+  test_export(create_reg_arm_bracket(p), "reg_arm_bracket");
+}
+
 int main() {
   auto run = [](const char *name, auto fn) {
     std::cout << "\n=== " << name << " ===" << std::endl;
@@ -232,6 +241,7 @@ int main() {
     steel_mast_type::LATTICE,8000,300,600,8,12,750,200,24,1}), "steel_mast_lattice"); });
   run("Cross Arm", test_cross_arm);
   run("Registration Arm", test_registration_arm);
+  run("Reg Arm Bracket", test_reg_arm_bracket);
   run("Concrete Mast", test_concrete_mast);
   run("Head Span", test_head_span);
   run("Transverse Span", []{

@@ -309,6 +309,23 @@ create_registration_arm_with_place(registration_arm_params_t params,
 }
 
 // ===========================================================================
+// 9b. Reg Arm Bracket
+// ===========================================================================
+RAILCAPICALL topo_shape_t *create_reg_arm_bracket(reg_arm_bracket_params_t params) {
+  reg_arm_bracket_params p{params.tubeDiameter, params.bandWidth, params.bandThickness,
+    params.bracketHeight, params.bracketThickness, params.bracketWidth, params.mountHoleDiameter};
+  try { return new topo_shape_t{.shp = std::make_shared<shape>(create_reg_arm_bracket(p))}; } catch (...) { return nullptr; }
+}
+RAILCAPICALL topo_shape_t *create_reg_arm_bracket_with_place(reg_arm_bracket_params_t params,
+    pnt3d_t position, dir3d_t tubeDir, dir3d_t upDir) {
+  reg_arm_bracket_params p{params.tubeDiameter, params.bandWidth, params.bandThickness,
+    params.bracketHeight, params.bracketThickness, params.bracketWidth, params.mountHoleDiameter};
+  try { return new topo_shape_t{.shp = std::make_shared<shape>(create_reg_arm_bracket(p,
+    gp_Pnt(position.x,position.y,position.z), gp_Dir(tubeDir.x,tubeDir.y,tubeDir.z),
+    gp_Dir(upDir.x,upDir.y,upDir.z)))}; } catch (...) { return nullptr; }
+}
+
+// ===========================================================================
 // 10. Guy Wire
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_guy_wire(guy_wire_params_t params) {

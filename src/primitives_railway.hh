@@ -968,5 +968,24 @@ struct OcsSpanCalcOutput {
 // 从中心线+高层参数推算各支柱的全部位姿
 OcsSpanCalcOutput calc_ocs_span_positions(const OcsSpanCalcInput &input);
 
+// =========================================================================
+// 9b. Registration Arm Bracket (定位器底座 L型金具) TYPE=OCS_REG_BRACKET
+// =========================================================================
+struct reg_arm_bracket_params {
+  double tubeDiameter;       // 抱箍内径(mm), 腕臂管径
+  double bandWidth;          // 抱箍宽度(mm)
+  double bandThickness;      // 抱箍壁厚(mm)
+  double bracketHeight;      // L型弯板高度(mm), 从管心到定位器座
+  double bracketThickness;   // 弯板厚度(mm)
+  double bracketWidth;       // 弯板宽度(mm)
+  double mountHoleDiameter;  // 定位器销轴孔径(mm)
+};
+
+TopoDS_Shape create_reg_arm_bracket(const reg_arm_bracket_params &params);
+TopoDS_Shape create_reg_arm_bracket(const reg_arm_bracket_params &params,
+                                     const gp_Pnt &position,
+                                     const gp_Dir &tubeDir = gp::DX(),
+                                     const gp_Dir &upDir = gp::DZ());
+
 } // namespace topo
 } // namespace flywave

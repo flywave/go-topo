@@ -184,7 +184,17 @@ create_registration_arm(registration_arm_params_t params);
 RAILCAPICALL topo_shape_t *
 create_registration_arm_with_place(registration_arm_params_t params,
                                    pnt3d_t basePoint, dir3d_t axisDir,
-                                   dir3d_t upDir);
+                                    dir3d_t upDir);
+
+// ===========================================================================
+// 9b. Reg Arm Bracket (定位器底座 L型金具)
+// ===========================================================================
+typedef struct { double tubeDiameter; double bandWidth; double bandThickness;
+  double bracketHeight; double bracketThickness; double bracketWidth; double mountHoleDiameter;
+} reg_arm_bracket_params_t;
+RAILCAPICALL topo_shape_t *create_reg_arm_bracket(reg_arm_bracket_params_t params);
+RAILCAPICALL topo_shape_t *create_reg_arm_bracket_with_place(reg_arm_bracket_params_t params,
+                                                              pnt3d_t position, dir3d_t tubeDir, dir3d_t upDir);
 
 // ===========================================================================
 // 10. Guy Wire (下锚拉线)

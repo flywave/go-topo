@@ -365,6 +365,34 @@ func CreateRegistrationArmWithPlace(params RegistrationArmParams, basePoint Poin
 }
 
 // =========================================================================
+// 9b. Registration Arm Bracket (定位器底座 L型金具)
+// =========================================================================
+
+type RegArmBracketParams struct {
+	TubeDiameter      float64
+	BandWidth         float64
+	BandThickness     float64
+	BracketHeight     float64
+	BracketThickness  float64
+	BracketWidth      float64
+	MountHoleDiameter float64
+}
+
+func CreateRegArmBracket(params RegArmBracketParams) *Shape {
+	var c C.reg_arm_bracket_params_t
+	c.tubeDiameter = C.double(params.TubeDiameter)
+	c.bandWidth = C.double(params.BandWidth)
+	c.bandThickness = C.double(params.BandThickness)
+	c.bracketHeight = C.double(params.BracketHeight)
+	c.bracketThickness = C.double(params.BracketThickness)
+	c.bracketWidth = C.double(params.BracketWidth)
+	c.mountHoleDiameter = C.double(params.MountHoleDiameter)
+	s := &Shape{inner: &innerShape{val: C.create_reg_arm_bracket(c)}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+// =========================================================================
 // 10. Guy Wire (下锚拉线)
 // =========================================================================
 

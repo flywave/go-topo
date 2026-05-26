@@ -722,29 +722,28 @@ TopoDS_Shape create_registration_arm(const registration_arm_params &params) {
       tube = BRepAlgoAPI_Cut(outer, inner).Shape();
     } else tube = outer;
   } else {
-    // Bow-shaped: straight + curved tip
-    double straightLen = L * 0.6;
-    double curveLen = L * 0.4;
-    TopoDS_Shape outer = BRepPrimAPI_MakeBox(gp_Pnt(0, -W/2, -H/2), straightLen, W, H).Shape();
-    if (t > 0 && W > 2*t && H > 2*t) {
-      TopoDS_Shape inner = BRepPrimAPI_MakeBox(gp_Pnt(-1, -W/2+t, -H/2+t), straightLen+2, W-2*t, H-2*t).Shape();
-      tube = BRepAlgoAPI_Cut(outer, inner).Shape();
-    } else tube = outer;
+    // Curved type: single continuous sweep — straight + arc transition + curved tip
+    double straightLen = L * 0.7, curveLen = L * 0.3;
+    gp_Pnt p0(0, 0, 0), p1(straightLen, 0, 0);
+    gp_Pnt p2(straightLen + curveLen * 0.5, 0, -curveLen * 0.1);
+    gp_Pnt p3(straightLen + curveLen, 0, -curveLen * 0.2);
 
-    // Bow curve: gentle downward press at tip (末端缓慢下压)
-    gp_Pnt ts(straightLen, 0, 0), tc(straightLen + curveLen*0.5, 0, -curveLen*0.06);
-    gp_Pnt te(straightLen + curveLen, 0, -curveLen*0.15);
-    Handle(TColgp_HArray1OfPnt) bzp = new TColgp_HArray1OfPnt(1, 4);
-    bzp->SetValue(1, ts); bzp->SetValue(2, tc); bzp->SetValue(3, te);
-    TopoDS_Edge bezEdge = BRepBuilderAPI_MakeEdge(new Geom_BezierCurve(bzp->Array1()));
-    TopoDS_Wire bezWire = BRepBuilderAPI_MakeWire(bezEdge).Wire();
-    // Square section in YZ plane at curve start
-    gp_Pnt sq1(0, -W/2, -H/2), sq2(0, W/2, -H/2), sq3(0, W/2, H/2), sq4(0, -W/2, H/2);
-    TopoDS_Wire sqWire = BRepBuilderAPI_MakePolygon(sq1, sq2, sq3, sq4, Standard_True).Wire();
-    BRepOffsetAPI_MakePipeShell curvePipe(bezWire);
-    curvePipe.Add(sqWire); curvePipe.SetMode(Standard_False); curvePipe.Build();
-    if (curvePipe.IsDone() && curvePipe.MakeSolid())
-      tube = BRepAlgoAPI_Fuse(tube, curvePipe.Shape()).Shape();
+    // Build single path: line + Bezier
+    BRepBuilderAPI_MakeWire pathWire;
+    pathWire.Add(BRepBuilderAPI_MakeEdge(p0, p1));  // straight segment
+    Handle(TColgp_HArray1OfPnt) bzp = new TColgp_HArray1OfPnt(1, 3);
+    bzp->SetValue(1, p1); bzp->SetValue(2, p2); bzp->SetValue(3, p3);
+    pathWire.Add(BRepBuilderAPI_MakeEdge(new Geom_BezierCurve(bzp->Array1())));
+
+    // Square section in YZ plane at start
+    gp_Pnt s1(0, -W/2, -H/2), s2(0, W/2, -H/2), s3(0, W/2, H/2), s4(0, -W/2, H/2);
+    TopoDS_Wire sqWire = BRepBuilderAPI_MakePolygon(s1, s2, s3, s4, Standard_True).Wire();
+
+    BRepOffsetAPI_MakePipeShell pipe(pathWire.Wire());
+    pipe.Add(sqWire);
+    pipe.SetMode(Standard_True);
+    pipe.Build();
+    if (pipe.IsDone() && pipe.MakeSolid()) tube = pipe.Shape();
   }
 
 
@@ -757,18 +756,26 @@ TopoDS_Shape create_registration_arm(const registration_arm_params &params) {
   joint = BRepAlgoAPI_Cut(joint, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(0, -jointSize, jointSize), gp::DX()), pinR, jThick+2).Shape()).Shape();
   tube = BRepAlgoAPI_Fuse(tube, joint).Shape();
 
-  // Front end: wire clamp at X=totalL, wraps around contact wire (wire runs along X)
-  double clampW = W * 1.5, clampH = H * 1.5, cThick = W * 0.5;
+  // Front end: wire clamp — top flush with tube top, extends downward
+  double clampW = W * 1.2, clampH = H * 2, cThick = W * 0.6;
   double clampX = totalL;
-  double clampZ = (params.type == registration_arm_type::CURVED) ? -(L * 0.4 * 0.15) : 0;
-  gp_Pnt cOrg(clampX, -clampW/2, clampZ - clampH/2);
+  double tubeTopZ = (params.type == registration_arm_type::CURVED) ? -(L * 0.3 * 0.2) + H/2 : H/2;
+  // Clamp hangs down from tube top
+  gp_Pnt cOrg(clampX, -clampW/2, tubeTopZ - clampH);
   TopoDS_Shape clamp = BRepPrimAPI_MakeBox(cOrg, cThick, clampW, clampH).Shape();
+
+  // Wire groove at clamp bottom
   double gr = W * 0.35;
-  // Groove along Y (perpendicular to contact wire X-direction)
-  clamp = BRepAlgoAPI_Cut(clamp, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(clampX+cThick/2, 0, clampZ - clampH/4), gp::DY()), gr, clampW+2).Shape()).Shape();
-  double cbR = W * 0.12;
-  clamp = BRepAlgoAPI_Cut(clamp, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(clampX, -clampW*0.4, clampZ - clampH/2), gp::DX()), cbR, cThick+2).Shape()).Shape();
-  clamp = BRepAlgoAPI_Cut(clamp, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(clampX, clampW*0.4, clampZ - clampH/2), gp::DX()), cbR, cThick+2).Shape()).Shape();
+  gp_Ax2 ga(gp_Pnt(clampX + cThick/2, -clampW/2, tubeTopZ - clampH), gp::DY());
+  clamp = BRepAlgoAPI_Cut(clamp, BRepPrimAPI_MakeCylinder(ga, gr, clampW).Shape()).Shape();
+
+  // Bolts at mid-clamp
+  double br = W * 0.09, boltLen = cThick + W * 0.15;
+  for (int side = -1; side <= 1; side += 2) {
+    double by = side * clampW * 0.35;
+    TopoDS_Shape bolt = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(clampX - 1, by, tubeTopZ - clampH/2), gp::DX()), br, boltLen).Shape();
+    clamp = BRepAlgoAPI_Fuse(clamp, bolt).Shape();
+  }
   tube = BRepAlgoAPI_Fuse(tube, clamp).Shape();
 
   if (std::abs(params.angle) > Precision::Angular()) {
@@ -3100,6 +3107,50 @@ TopoDS_Shape create_curve_track(const curve_track_params &params,
                                  const gp_Pnt &position, const gp_Dir &direction, const gp_Dir &upDir) {
   TopoDS_Shape s = create_curve_track(params);
   gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX()), tgt(position, upDir, direction);
+  gp_Trsf tr; tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+// =========================================================================
+// 9b. Registration Arm Bracket (定位器底座 L型金具)
+// =========================================================================
+TopoDS_Shape create_reg_arm_bracket(const reg_arm_bracket_params &params) {
+  if (params.tubeDiameter <= 0 || params.bracketHeight <= 0)
+    throw Standard_ConstructionError("Invalid bracket dimensions");
+
+  double R = params.tubeDiameter / 2.0;
+  double bWidth = params.bandWidth > 0 ? params.bandWidth : R * 0.8;
+  double bThick = params.bandThickness > 0 ? params.bandThickness : R * 0.12;
+  double bkW = params.bracketWidth > 0 ? params.bracketWidth : bThick * 3;
+  double bkH = params.bracketHeight;
+
+  BRep_Builder b; TopoDS_Compound c; b.MakeCompound(c);
+
+  // Band clamp — centered at half-band position along X
+  double bw2 = bWidth/2;
+  b.Add(c, BRepAlgoAPI_Cut(
+    BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-bw2, 0, 0), gp::DX()), R + bThick, bWidth).Shape(),
+    BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-bw2, 0, 0), gp::DX()), R, bWidth + 2).Shape()).Shape());
+
+  // Vertical plate — from tube bottom (Z=-R) extending down
+  b.Add(c, BRepPrimAPI_MakeBox(gp_Pnt(-bThick/2, -bkW/2, -R - bkH), bThick, bkW, bkH).Shape());
+
+  // Pin bolt at bottom of plate2
+  if (params.mountHoleDiameter > 0) {
+    double br = params.mountHoleDiameter / 2.0;
+    double bz = -R - bkH * 0.85;
+    b.Add(c, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-bThick/2 - br*0.3, 0, bz), gp::DX()), br, bThick + br*0.6).Shape());
+  }
+
+  return c;
+}
+
+TopoDS_Shape create_reg_arm_bracket(const reg_arm_bracket_params &params,
+                                     const gp_Pnt &position,
+                                     const gp_Dir &tubeDir,
+                                     const gp_Dir &upDir) {
+  TopoDS_Shape s = create_reg_arm_bracket(params);
+  gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX()), tgt(position, upDir, tubeDir);
   gp_Trsf tr; tr.SetTransformation(tgt, src);
   return BRepBuilderAPI_Transform(s, tr).Shape();
 }
