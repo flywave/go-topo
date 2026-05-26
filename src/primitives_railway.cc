@@ -2198,37 +2198,26 @@ TopoDS_Shape create_sleeper(const sleeper_params &params) {
 
   if (params.shapeType == sleeper_shape_type::TRAPEZOIDAL) {
     double topW = W * 0.75, midW = W * 0.85;
-    // Fish-belly: 3 sections — end(narrow) → center(wide) → end(narrow)
+    // Fish-belly: ends(wide) → center(narrow)
     BRepOffsetAPI_ThruSections gen(Standard_True);
     for (int s = 0; s < 3; ++s) {
       double t = s / 2.0;
       double x = -L/2 + t * L;
-      double curW = (s == 1) ? W : midW;
-      double curTopW = (s == 1) ? topW : topW * 0.9;
+      double curW = (s == 1) ? midW : W;
+      double curTopW = (s == 1) ? topW * 0.85 : topW;
       double hw = curW / 2, htw = curTopW / 2;
-      gp_Pnt bp[4] = {{x, -hw, 0}, {x + L*0.02, -htw, H},
-                       {x + L*0.02, htw, H}, {x, hw, 0}};
+      gp_Pnt bp[4] = {{x, -hw, 0}, {x, -htw, H},
+                       {x, htw, H}, {x, hw, 0}};
       gen.AddWire(BRepBuilderAPI_MakePolygon(bp[0], bp[1], bp[2], bp[3], Standard_True));
     }
     gen.Build(); body = gen.Shape();
 
-    // End chamfer wedges
-    double cfLen = L * 0.08;
-    for (int side = -1; side <= 1; side += 2) {
-      double x = side * L/2;
-      gp_Pnt tp1(x, -W/2 - 1, -1), tp2(x - side*cfLen, -W/2 - 1, -1);
-      gp_Pnt tp3(x - side*cfLen, W/2 + 1, -1), tp4(x, W/2 + 1, -1);
-      TopoDS_Wire cw = BRepBuilderAPI_MakePolygon(tp1, tp2, tp3, tp4, Standard_True).Wire();
-      body = BRepAlgoAPI_Cut(body, BRepPrimAPI_MakePrism(BRepLib_MakeFace(cw).Face(), gp_Vec(0, 0, H*1.5)).Shape()).Shape();
-    }
-
-    // Rail seats with inward slope
+    // Rail seats — shallow grooves at correct gauge positions
     if (params.grooveDepth > 0 && params.gauge > 0) {
       double hG = params.gauge / 2, gD = params.grooveDepth;
-      double seatW = W * 0.3, seatL = L * 0.35;
       for (int side = -1; side <= 1; side += 2) {
         double y = side * hG;
-        TopoDS_Shape seat = BRepPrimAPI_MakeBox(gp_Pnt(-seatL/2, y - seatW/2, H - gD), seatL, seatW, gD+1).Shape();
+        TopoDS_Shape seat = BRepPrimAPI_MakeBox(gp_Pnt(-L*0.12, y - W*0.1, H - gD), L*0.24, W*0.2, gD+1).Shape();
         body = BRepAlgoAPI_Cut(body, seat).Shape();
       }
     }
