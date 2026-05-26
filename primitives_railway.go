@@ -6,6 +6,7 @@ package topo
 */
 import "C"
 import (
+	"math"
 	"runtime"
 )
 
@@ -1162,32 +1163,18 @@ func CreateSleeperWithPlace(params SleeperParams, position Point3, direction, up
 // 26. Ballast (道床)
 // =========================================================================
 
-type BallastParams struct {
-	TopWidth  float64
-	Thickness float64
-	SideSlope float64
-	Length    float64
-}
+// BallastParams — 梯形道床，沿中心线路径扫掠生成
 
-func (p *BallastParams) to_struct() C.ballast_params_t {
-	var c C.ballast_params_t
-	c.topWidth = C.double(p.TopWidth)
-	c.thickness = C.double(p.Thickness)
-	c.sideSlope = C.double(p.SideSlope)
-	c.length = C.double(p.Length)
-	return c
-}
-
-func CreateBallast(params BallastParams) *Shape {
-	shp := C.create_ballast(params.to_struct())
-	s := &Shape{inner: &innerShape{val: shp}}
-	runtime.SetFinalizer(s.inner, (*innerShape).free)
-	return s
-}
-
-func CreateBallastWithPlace(params BallastParams, position Point3, direction, upDir Dir3) *Shape {
-	shp := C.create_ballast_with_place(params.to_struct(), position.val, direction.val, upDir.val)
-	s := &Shape{inner: &innerShape{val: shp}}
+func CreateBallastAlongPath(centerline []Point3, topWidth, thickness, sideSlope float64) *Shape {
+	pts := make([]C.pnt3d_t, len(centerline))
+	for i, p := range centerline { pts[i] = p.val }
+	var cp C.ballast_params_t
+	cp.topWidth = C.double(topWidth)
+	cp.thickness = C.double(thickness)
+	cp.sideSlope = C.double(sideSlope)
+	cp.centerline = &pts[0]
+	cp.pointCount = C.int(len(pts))
+	s := &Shape{inner: &innerShape{val: C.create_ballast(cp)}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
@@ -1347,3 +1334,583 @@ func CreateMastAssemblyWithPlace(params MastAssemblyParams, position Point3, dir
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
+
+// =========================================================================
+// 31. Switch Rail (尖轨)
+// =========================================================================
+
+type SwitchRailParams struct {
+	Length        float64
+	RailHeight    float64
+	RailHeadWidth float64
+	RailBaseWidth float64
+	TipWidth      float64
+	CurveRadius   float64
+	IsLeftHand    bool
+}
+
+func (p *SwitchRailParams) to_struct() C.switch_rail_params_t {
+	return C.switch_rail_params_t{
+		length:        C.double(p.Length),
+		railHeight:    C.double(p.RailHeight),
+		railHeadWidth: C.double(p.RailHeadWidth),
+		railBaseWidth: C.double(p.RailBaseWidth),
+		tipWidth:      C.double(p.TipWidth),
+		curveRadius:   C.double(p.CurveRadius),
+		isLeftHand:    C.bool(p.IsLeftHand),
+	}
+}
+
+func CreateSwitchRail(params SwitchRailParams) *Shape {
+	shp := C.create_switch_rail(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateSwitchRailWithPlace(params SwitchRailParams, position Point3, direction, upDir Dir3) *Shape {
+	shp := C.create_switch_rail_with_place(params.to_struct(), position.val, direction.val, upDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+// =========================================================================
+// 32. Frog (辙叉)
+// =========================================================================
+
+type FrogParams struct {
+	TurnoutNo     int
+	Gauge         float64
+	RailHeight    float64
+	RailHeadWidth float64
+	RailBaseWidth float64
+}
+
+func (p *FrogParams) to_struct() C.frog_params_t {
+	return C.frog_params_t{
+		turnoutNo:     C.int(p.TurnoutNo),
+		gauge:         C.double(p.Gauge),
+		railHeight:    C.double(p.RailHeight),
+		railHeadWidth: C.double(p.RailHeadWidth),
+		railBaseWidth: C.double(p.RailBaseWidth),
+	}
+}
+
+func CreateFrog(params FrogParams) *Shape {
+	shp := C.create_frog(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateFrogWithPlace(params FrogParams, position Point3, direction, upDir Dir3) *Shape {
+	shp := C.create_frog_with_place(params.to_struct(), position.val, direction.val, upDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+// =========================================================================
+// 33. Turnout (单开道岔)
+// =========================================================================
+
+type TurnoutParams struct {
+	TurnoutNo        int
+	IsLeftHand       bool
+	Gauge            float64
+	RailHeight       float64
+	RailHeadWidth    float64
+	RailBaseWidth    float64
+	SwitchRailLength float64
+	LeadCurveRadius  float64
+	FrogLength       float64
+	SleeperCount     int
+	SleeperSpacing   float64
+}
+
+func (p *TurnoutParams) to_struct() C.turnout_params_t {
+	return C.turnout_params_t{
+		turnoutNo:        C.int(p.TurnoutNo),
+		isLeftHand:       C.bool(p.IsLeftHand),
+		gauge:            C.double(p.Gauge),
+		railHeight:       C.double(p.RailHeight),
+		railHeadWidth:    C.double(p.RailHeadWidth),
+		railBaseWidth:    C.double(p.RailBaseWidth),
+		switchRailLength: C.double(p.SwitchRailLength),
+		leadCurveRadius:  C.double(p.LeadCurveRadius),
+		frogLength:       C.double(p.FrogLength),
+		sleeperCount:     C.int(p.SleeperCount),
+		sleeperSpacing:   C.double(p.SleeperSpacing),
+	}
+}
+
+func CreateTurnout(params TurnoutParams) *Shape {
+	shp := C.create_turnout(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateTurnoutWithPlace(params TurnoutParams, position Point3, direction, upDir Dir3) *Shape {
+	shp := C.create_turnout_with_place(params.to_struct(), position.val, direction.val, upDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+// =========================================================================
+// GeoJSON 中心线 → 轨道区段/道岔段参数推算
+// =========================================================================
+
+// 线段类型
+type TrackSegmentType int
+
+const (
+	SegmentStraight   TrackSegmentType = 0 // 直线
+	SegmentCurve      TrackSegmentType = 1 // 圆曲线
+	SegmentTransition TrackSegmentType = 2 // 缓和曲线
+	SegmentTurnout    TrackSegmentType = 3 // 道岔分岔点
+)
+
+// 轨道区段描述
+type TrackSegment struct {
+	SegType      TrackSegmentType
+	Points       []Point3  // 本段坐标序列
+	Length       float64   // 弧长(mm)
+	CurveRadius  float64   // 曲线半径(mm), 直线=0
+	SuperElevation float64 // 超高(mm)
+	StartMileage float64   // 起始里程(m)
+}
+
+// 道岔段参数 — 从中心线分岔点 + GeoJSON 属性推算
+type TurnoutSegment struct {
+	Position        Point3  // 岔心位置 (理论中心)
+	MainDirection   Dir3    // 直股方向
+	BranchDirection Dir3    // 侧股方向
+	Hand            string  // "left" / "right"
+	TurnoutNo       int     // 道岔号数
+	FrogAngle       float64 // 辙叉角(rad)
+	FrogLength      float64 // 辙叉长度
+	SwitchRailLen   float64 // 尖轨长度
+	LeadCurveRadius float64 // 导曲线半径
+	TotalLength     float64 // 道岔全长
+}
+
+// DetectTrackSegments 从中心线点序列识别曲线段类型: 直线/圆曲线/缓和曲线/道岔
+// 使用三点圆拟合法: 对每三个连续点拟合圆, 曲率≈0→直线, 曲率恒定→圆曲线, 曲率变化→缓和曲线
+func DetectTrackSegments(centerline []Point3) []TrackSegment {
+	if len(centerline) < 3 {
+		return []TrackSegment{{SegType: SegmentStraight, Points: centerline, Length: 0, StartMileage: 0}}
+	}
+
+	// 对每个内部点拟合三点圆, 计算曲率和圆心
+	type curveInfo struct {
+		radius   float64 // 曲率半径, 1e8=近视直线
+		centerX  float64
+		centerY  float64
+		curvature float64 // 1/radius
+	}
+	infos := make([]curveInfo, len(centerline))
+
+	for i := 1; i < len(centerline)-1; i++ {
+		x1 := float64(centerline[i-1].val.x); y1 := float64(centerline[i-1].val.y)
+		x2 := float64(centerline[i].val.x); y2 := float64(centerline[i].val.y)
+		x3 := float64(centerline[i+1].val.x); y3 := float64(centerline[i+1].val.y)
+
+		// 三点共线判定
+		cross := (x2-x1)*(y3-y1) - (y2-y1)*(x3-x1)
+		if math.Abs(cross) < 1e-6 {
+			infos[i].radius = 1e8
+			infos[i].curvature = 0
+			continue
+		}
+
+		// 三点圆拟合: 中垂线交点法求圆心
+		mx1, my1 := (x1+x2)/2, (y1+y2)/2
+		mx2, my2 := (x2+x3)/2, (y2+y3)/2
+		k1 := (x2 - x1) / (y1 - y2)
+		k2 := (x3 - x2) / (y2 - y3)
+
+		cx := (my2 - my1 + k1*mx1 - k2*mx2) / (k1 - k2)
+		cy := k1*(cx-mx1) + my1
+		r := math.Sqrt((cx-x1)*(cx-x1) + (cy-y1)*(cy-y1))
+
+		infos[i].radius = r
+		infos[i].centerX = cx
+		infos[i].centerY = cy
+		infos[i].curvature = 1.0 / math.Max(r, 1)
+	}
+	infos[0] = infos[1]
+	infos[len(infos)-1] = infos[len(infos)-2]
+
+	// 曲率分类阈值
+	const kStraight = 0.000005  // 曲率<此值→直线 (r>200km)
+	const kMergeTol = 0.000001  // 相邻点曲率差<此值→同类
+
+	// 区分段类型: 0=直线, 1=圆曲线, 2=缓和曲线
+	types := make([]int, len(infos))
+	for i := 0; i < len(infos); i++ {
+		if infos[i].curvature < kStraight {
+			types[i] = 0 // 直线
+		} else {
+			// 检查前后两点曲率差: 恒定→圆曲线, 变化→缓和曲线
+			if i > 0 && i < len(infos)-1 {
+				diff1 := math.Abs(infos[i].curvature - infos[i-1].curvature)
+				diff2 := math.Abs(infos[i+1].curvature - infos[i].curvature)
+				if diff1 > kMergeTol*3 || diff2 > kMergeTol*3 {
+					types[i] = 2 // 缓和曲线
+				} else {
+					types[i] = 1 // 圆曲线
+				}
+			} else {
+				types[i] = 1
+			}
+		}
+	}
+
+	// 合并相邻同类型段
+	var segs []TrackSegment
+	start := 0
+	mileage := 0.0
+
+	addSegment := func(s, e int, t int) {
+		if e <= s { return }
+		pts := make([]Point3, e-s+2)
+		copy(pts, centerline[s:min(e+2, len(centerline))])
+		l := 0.0
+		for j := 1; j < len(pts); j++ {
+			dx := float64(pts[j].val.x - pts[j-1].val.x)
+			dy := float64(pts[j].val.y - pts[j-1].val.y)
+			l += math.Sqrt(dx*dx + dy*dy)
+		}
+		segType := SegmentStraight
+		if t == 1 { segType = SegmentCurve }
+		if t == 2 { segType = SegmentTransition }
+		mid := (s + e) / 2
+		seg := TrackSegment{
+			SegType:     segType,
+			Points:      pts,
+			Length:      l,
+			CurveRadius: infos[mid].radius,
+			StartMileage: mileage / 1000,
+		}
+		// 曲线段补充圆心方向
+		if segType == SegmentCurve && infos[mid].radius < 1e7 {
+			seg.CurveRadius = infos[mid].radius
+		}
+		segs = append(segs, seg)
+		mileage += l
+	}
+
+	for i := 1; i < len(types); i++ {
+		if types[i] != types[i-1] {
+			addSegment(start, i-1, types[i-1])
+			start = i - 1
+		}
+	}
+	addSegment(start, len(types)-1, types[start])
+
+	return segs
+}
+
+// CalcTurnoutSegment 从 GeoJSON 分岔点推算道岔段参数
+// 输入: 岔心坐标 + 直股方向 + 侧线方向 + 道岔属性
+// 输出: TurnoutSegment 含所有计算参数
+func CalcTurnoutSegment(
+	crossPoint Point3,
+	mainDir, branchDir Dir3,
+	hand string, turnoutNo int,
+	gauge float64,
+) TurnoutSegment {
+	t := TurnoutSegment{
+		Position:      crossPoint,
+		MainDirection: mainDir,
+		BranchDirection: branchDir,
+		Hand:          hand,
+		TurnoutNo:     turnoutNo,
+	}
+
+	// 辙叉角 α = arctan(1/N)
+	t.FrogAngle = math.Atan(1.0 / float64(turnoutNo))
+
+	// 参数查表
+	switch turnoutNo {
+	case 9:
+		t.LeadCurveRadius = 180000; t.SwitchRailLen = 6450; t.TotalLength = 29569
+	case 12:
+		t.LeadCurveRadius = 350000; t.SwitchRailLen = 7700; t.TotalLength = 37800
+	case 18:
+		t.LeadCurveRadius = 800000; t.SwitchRailLen = 12500; t.TotalLength = 56700
+	case 30:
+		t.LeadCurveRadius = 2700000; t.SwitchRailLen = 15400; t.TotalLength = 94500
+	case 42:
+		t.LeadCurveRadius = 5000000; t.SwitchRailLen = 19200; t.TotalLength = 132300
+	default:
+		t.LeadCurveRadius = 350000; t.SwitchRailLen = 7700; t.TotalLength = 37800
+	}
+
+	// 辙叉长度= 轨距 × 号数 / 2
+	t.FrogLength = gauge * float64(turnoutNo) * 0.28
+
+	return t
+}
+
+// CalcFrogTable 辙叉参数查表 (独立调用)
+func CalcFrogTable(turnoutNo int, gauge float64) (frogAngleRad, frogLength, leadCurveR, switchLen, totalLen float64) {
+	frogAngleRad = math.Atan(1.0 / float64(turnoutNo))
+	switch turnoutNo {
+	case 9: leadCurveR = 180000; switchLen = 6450; totalLen = 29569
+	case 12: leadCurveR = 350000; switchLen = 7700; totalLen = 37800
+	case 18: leadCurveR = 800000; switchLen = 12500; totalLen = 56700
+	case 30: leadCurveR = 2700000; switchLen = 15400; totalLen = 94500
+	case 42: leadCurveR = 5000000; switchLen = 19200; totalLen = 132300
+	default: leadCurveR = 350000; switchLen = 7700; totalLen = 37800
+	}
+	frogLength = gauge * float64(turnoutNo) * 0.28
+	return
+}
+
+type OcsMastPosition struct {
+	Mileage           float64 // 里程(m)
+	Position          Point3  // 柱底中心
+	MastHeight        float64 // 柱高(mm)
+	BeamBottomZ       float64 // 横梁底部 Z
+	ContactWireZ      float64 // 接触线 Z
+	MessengerWireZ    float64 // 承力索 Z
+	Stagger           float64 // 拉出值(mm)
+	HangerPostLength  float64 // 吊柱长度
+	BracketMountZ     float64 // 腕臂底座 Z
+	InsulatorMountZ   float64 // 绝缘子 Z
+	RegistrationArmZ  float64 // 定位器 Z
+	IsTensionMast     bool   // 是否锚柱
+}
+
+type OcsSpanInput struct {
+	Centerline      []Point3 // 线路中心线
+	ContactHeight   float64  // 导高 默认 5300
+	StructureHeight float64  // 结构高度 默认 1400
+	StaggerTable    []float64 // 拉出值
+	SpanLength      float64  // 标准跨距 默认 50000
+	MastHeight      float64  // 支柱高度
+	HasCompensator  bool     // 两端设补偿
+}
+
+type OcsSpanOutput struct {
+	Masts          []OcsMastPosition
+	TotalLength    float64
+	MastCount      int
+	BeamBottomZ    float64
+	ContactWireZ   float64
+	MessengerWireZ float64
+}
+
+func CalcOcsSpanPositions(input OcsSpanInput) OcsSpanOutput {
+	out := OcsSpanOutput{}
+	if len(input.Centerline) < 2 || input.SpanLength <= 0 {
+		return out
+	}
+
+	CH := input.ContactHeight
+	if CH <= 0 { CH = 5300 }
+	SH := input.StructureHeight
+	if SH <= 0 { SH = 1400 }
+	MH := input.MastHeight
+	if MH <= 0 { MH = 8000 }
+	spanLen := input.SpanLength
+	if spanLen <= 0 { spanLen = 50000 }
+
+	beamBottomZ := CH + SH
+	systemMargin := 800.0
+
+	out.ContactWireZ = CH
+	out.MessengerWireZ = CH + SH
+	out.BeamBottomZ = beamBottomZ
+
+	if MH < beamBottomZ+systemMargin {
+		return out
+	}
+
+	// 计算总弧长
+	totalLen := 0.0
+	for i := 0; i < len(input.Centerline)-1; i++ {
+		dx := input.Centerline[i+1].val.x - input.Centerline[i].val.x
+		dy := input.Centerline[i+1].val.y - input.Centerline[i].val.y
+		dz := input.Centerline[i+1].val.z - input.Centerline[i].val.z
+		totalLen += math.Sqrt(float64(dx*dx + dy*dy + dz*dz))
+	}
+	out.TotalLength = totalLen
+	out.MastCount = int(totalLen/spanLen) + 1
+	if out.MastCount < 2 { out.MastCount = 2 }
+
+	mastSpacing := totalLen / float64(out.MastCount-1)
+
+	for m := 0; m < out.MastCount; m++ {
+		dist := float64(m) * mastSpacing
+		acc := 0.0
+		pos := input.Centerline[0]
+		for j := 0; j < len(input.Centerline)-1; j++ {
+			dx := float64(input.Centerline[j+1].val.x - input.Centerline[j].val.x)
+			dy := float64(input.Centerline[j+1].val.y - input.Centerline[j].val.y)
+			dz := float64(input.Centerline[j+1].val.z - input.Centerline[j].val.z)
+			segLen := math.Sqrt(dx*dx + dy*dy + dz*dz)
+			if acc+segLen >= dist || j == len(input.Centerline)-2 {
+				t := 0.0
+				if segLen > 0 { t = (dist - acc) / segLen }
+				if t < 0 { t = 0 }; if t > 1 { t = 1 }
+				px := float64(input.Centerline[j].val.x) + dx*t
+				py := float64(input.Centerline[j].val.y) + dy*t
+				pz := float64(input.Centerline[j].val.z) + dz*t
+				pos = NewPoint3([3]float64{px, py, pz})
+				break
+			}
+			acc += segLen
+		}
+		stagger := 0.0
+		if m < len(input.StaggerTable) { stagger = input.StaggerTable[m] }
+
+		mp := OcsMastPosition{
+			Mileage:         dist / 1000,
+			Position:        pos,
+			MastHeight:      MH,
+			BeamBottomZ:     beamBottomZ,
+			ContactWireZ:    CH,
+			MessengerWireZ:  CH + SH,
+			Stagger:         stagger,
+			HangerPostLength: MH - beamBottomZ - float64(systemMargin)*0.5,
+			BracketMountZ:   beamBottomZ - 100,
+			InsulatorMountZ: beamBottomZ - 600,
+			RegistrationArmZ: CH,
+			IsTensionMast:   input.HasCompensator && (m == 0 || m == out.MastCount-1),
+		}
+		out.Masts = append(out.Masts, mp)
+	}
+	return out
+}
+
+// =========================================================================
+// 37. Straight Track (直线轨道段)
+// =========================================================================
+
+type StraightTrackParams struct {
+	StartPoint       Point3
+	EndPoint         Point3
+	Gauge            float64
+	RailHeight       float64
+	RailHeadWidth    float64
+	RailBaseWidth    float64
+	SleeperLength    float64
+	SleeperWidth     float64
+	SleeperHeight    float64
+	SleeperSpacing   float64
+	BallastTopWidth  float64
+	BallastThickness float64
+	BallastSlope     float64
+}
+
+func CreateStraightTrack(params StraightTrackParams) *Shape {
+	var cp C.straight_track_params_t
+	cp.startPoint = params.StartPoint.val
+	cp.endPoint = params.EndPoint.val
+	cp.gauge = C.double(params.Gauge)
+	cp.railHeight = C.double(params.RailHeight)
+	cp.railHeadWidth = C.double(params.RailHeadWidth)
+	cp.railBaseWidth = C.double(params.RailBaseWidth)
+	cp.sleeperLength = C.double(params.SleeperLength)
+	cp.sleeperWidth = C.double(params.SleeperWidth)
+	cp.sleeperHeight = C.double(params.SleeperHeight)
+	cp.sleeperSpacing = C.double(params.SleeperSpacing)
+	cp.ballastTopWidth = C.double(params.BallastTopWidth)
+	cp.ballastThickness = C.double(params.BallastThickness)
+	cp.ballastSlope = C.double(params.BallastSlope)
+	s := &Shape{inner: &innerShape{val: C.create_straight_track(cp)}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+// =========================================================================
+// 38. Curve Track (曲线轨道段)
+// =========================================================================
+
+type CurveTrackParams struct {
+	CurveCenter      Point3
+	StartAngle       float64
+	SweepAngle       float64
+	CurveRadius      float64
+	Gauge            float64
+	SuperElevation   float64
+	RailHeight       float64
+	RailHeadWidth    float64
+	RailBaseWidth    float64
+	SleeperLength    float64
+	SleeperWidth     float64
+	SleeperHeight    float64
+	SleeperSpacing   float64
+	BallastTopWidth  float64
+	BallastThickness float64
+	BallastSlope     float64
+}
+
+func CreateCurveTrack(params CurveTrackParams) *Shape {
+	var cp C.curve_track_params_t
+	cp.curveCenter = params.CurveCenter.val
+	cp.startAngle = C.double(params.StartAngle)
+	cp.sweepAngle = C.double(params.SweepAngle)
+	cp.curveRadius = C.double(params.CurveRadius)
+	cp.gauge = C.double(params.Gauge)
+	cp.superElevation = C.double(params.SuperElevation)
+	cp.railHeight = C.double(params.RailHeight)
+	cp.railHeadWidth = C.double(params.RailHeadWidth)
+	cp.railBaseWidth = C.double(params.RailBaseWidth)
+	cp.sleeperLength = C.double(params.SleeperLength)
+	cp.sleeperWidth = C.double(params.SleeperWidth)
+	cp.sleeperHeight = C.double(params.SleeperHeight)
+	cp.sleeperSpacing = C.double(params.SleeperSpacing)
+	cp.ballastTopWidth = C.double(params.BallastTopWidth)
+	cp.ballastThickness = C.double(params.BallastThickness)
+	cp.ballastSlope = C.double(params.BallastSlope)
+	s := &Shape{inner: &innerShape{val: C.create_curve_track(cp)}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+// =========================================================================
+// 35. Rail Pair (轨排对)
+// =========================================================================
+
+func CreateRailPairFromPoints(centerline []Point3, gauge, superElevation, railHeight, railHeadWidth, railBaseWidth float64) *Shape {
+	pts := make([]C.pnt3d_t, len(centerline))
+	for i, p := range centerline { pts[i] = p.val }
+	var cParams C.rail_pair_params_t
+	cParams.centerline = &pts[0]
+	cParams.pointCount = C.int(len(pts))
+	cParams.gauge = C.double(gauge)
+	cParams.superElevation = C.double(superElevation)
+	cParams.railHeight = C.double(railHeight)
+	cParams.railHeadWidth = C.double(railHeadWidth)
+	cParams.railBaseWidth = C.double(railBaseWidth)
+	s := &Shape{inner: &innerShape{val: C.create_rail_pair(cParams)}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+// =========================================================================
+// 36. Sleeper Layout (轨枕阵列)
+// =========================================================================
+
+func CreateSleeperLayout(centerline []Point3, length, width, height, spacing, gauge float64) *Shape {
+	pts := make([]C.pnt3d_t, len(centerline))
+	for i, p := range centerline { pts[i] = p.val }
+	var cParams C.sleeper_layout_params_t
+	cParams.centerline = &pts[0]
+	cParams.pointCount = C.int(len(pts))
+	cParams.length = C.double(length)
+	cParams.width = C.double(width)
+	cParams.height = C.double(height)
+	cParams.spacing = C.double(spacing)
+	cParams.gauge = C.double(gauge)
+	s := &Shape{inner: &innerShape{val: C.create_sleeper_layout(cParams)}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+

@@ -567,14 +567,11 @@ typedef struct {
   double topWidth;
   double thickness;
   double sideSlope;
-  double length;
+  pnt3d_t *centerline;
+  int pointCount;
 } ballast_params_t;
 
 RAILCAPICALL topo_shape_t *create_ballast(ballast_params_t params);
-RAILCAPICALL topo_shape_t *create_ballast_with_place(ballast_params_t params,
-                                                     pnt3d_t position,
-                                                     dir3d_t direction,
-                                                     dir3d_t upDir);
 
 // ===========================================================================
 // 27. Track Slab (轨道板)
@@ -648,6 +645,107 @@ create_mast_assembly(mast_assembly_params_t params);
 RAILCAPICALL topo_shape_t *
 create_mast_assembly_with_place(mast_assembly_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t upDir);
+
+// ===========================================================================
+// 31. Switch Rail (尖轨)
+// ===========================================================================
+typedef struct {
+  double length;
+  double railHeight;
+  double railHeadWidth;
+  double railBaseWidth;
+  double tipWidth;
+  double curveRadius;
+  bool isLeftHand;
+} switch_rail_params_t;
+
+RAILCAPICALL topo_shape_t *create_switch_rail(switch_rail_params_t params);
+RAILCAPICALL topo_shape_t *create_switch_rail_with_place(switch_rail_params_t params,
+                                                          pnt3d_t position,
+                                                          dir3d_t direction,
+                                                          dir3d_t upDir);
+
+// ===========================================================================
+// 32. Frog (辙叉)
+// ===========================================================================
+typedef struct {
+  int turnoutNo;
+  double gauge;
+  double railHeight;
+  double railHeadWidth;
+  double railBaseWidth;
+} frog_params_t;
+
+RAILCAPICALL topo_shape_t *create_frog(frog_params_t params);
+RAILCAPICALL topo_shape_t *create_frog_with_place(frog_params_t params,
+                                                   pnt3d_t position,
+                                                   dir3d_t direction,
+                                                   dir3d_t upDir);
+
+// ===========================================================================
+// 33. Turnout (单开道岔)
+// ===========================================================================
+typedef struct {
+  int turnoutNo;
+  bool isLeftHand;
+  double gauge;
+  double railHeight;
+  double railHeadWidth;
+  double railBaseWidth;
+  double switchRailLength;
+  double leadCurveRadius;
+  double frogLength;
+  int sleeperCount;
+  double sleeperSpacing;
+} turnout_params_t;
+
+RAILCAPICALL topo_shape_t *create_turnout(turnout_params_t params);
+RAILCAPICALL topo_shape_t *create_turnout_with_place(turnout_params_t params,
+                                                       pnt3d_t position,
+                                                       dir3d_t direction,
+                                                       dir3d_t upDir);
+
+// ===========================================================================
+// 35. Rail Pair (轨排对)
+// ===========================================================================
+typedef struct { pnt3d_t *centerline; int pointCount; double gauge;
+  double superElevation; double railHeight; double railHeadWidth; double railBaseWidth;
+} rail_pair_params_t;
+RAILCAPICALL topo_shape_t *create_rail_pair(rail_pair_params_t params);
+RAILCAPICALL topo_shape_t *create_rail_pair_with_place(rail_pair_params_t params,
+                                                        pnt3d_t position, dir3d_t direction, dir3d_t upDir);
+
+// ===========================================================================
+// 36. Sleeper Layout (轨枕阵列)
+// ===========================================================================
+typedef struct { pnt3d_t *centerline; int pointCount; double length;
+  double width; double height; double spacing; double gauge;
+} sleeper_layout_params_t;
+RAILCAPICALL topo_shape_t *create_sleeper_layout(sleeper_layout_params_t params);
+
+// ===========================================================================
+// 37. Straight Track (直线轨道段)
+// ===========================================================================
+typedef struct { pnt3d_t startPoint; pnt3d_t endPoint; double gauge;
+  double railHeight; double railHeadWidth; double railBaseWidth;
+  double sleeperLength; double sleeperWidth; double sleeperHeight; double sleeperSpacing;
+  double ballastTopWidth; double ballastThickness; double ballastSlope;
+} straight_track_params_t;
+RAILCAPICALL topo_shape_t *create_straight_track(straight_track_params_t params);
+RAILCAPICALL topo_shape_t *create_straight_track_with_place(straight_track_params_t params,
+                                                             pnt3d_t position, dir3d_t direction, dir3d_t upDir);
+
+// ===========================================================================
+// 38. Curve Track (曲线轨道段)
+// ===========================================================================
+typedef struct { pnt3d_t curveCenter; double startAngle; double sweepAngle; double curveRadius;
+  double gauge; double superElevation; double railHeight; double railHeadWidth; double railBaseWidth;
+  double sleeperLength; double sleeperWidth; double sleeperHeight; double sleeperSpacing;
+  double ballastTopWidth; double ballastThickness; double ballastSlope;
+} curve_track_params_t;
+RAILCAPICALL topo_shape_t *create_curve_track(curve_track_params_t params);
+RAILCAPICALL topo_shape_t *create_curve_track_with_place(curve_track_params_t params,
+                                                          pnt3d_t position, dir3d_t direction, dir3d_t upDir);
 
 #ifdef __cplusplus
 }

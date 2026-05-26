@@ -982,31 +982,9 @@ create_sleeper_with_place(sleeper_params_t params, pnt3d_t position,
 // 26. Ballast
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_ballast(ballast_params_t params) {
-  ballast_params cpp_params{params.topWidth, params.thickness, params.sideSlope,
-                             params.length};
-  try {
-    return new topo_shape_t{
-        .shp = std::make_shared<shape>(create_ballast(cpp_params))};
-  } catch (...) {
-    return nullptr;
-  }
-}
-
-RAILCAPICALL topo_shape_t *
-create_ballast_with_place(ballast_params_t params, pnt3d_t position,
-                          dir3d_t direction, dir3d_t upDir) {
-  ballast_params cpp_params{params.topWidth, params.thickness, params.sideSlope,
-                             params.length};
-  gp_Pnt cpp_pos(position.x, position.y, position.z);
-  gp_Dir cpp_dir(direction.x, direction.y, direction.z);
-  gp_Dir cpp_up(upDir.x, upDir.y, upDir.z);
-  try {
-    return new topo_shape_t{
-        .shp = std::make_shared<shape>(
-            create_ballast(cpp_params, cpp_pos, cpp_dir, cpp_up))};
-  } catch (...) {
-    return nullptr;
-  }
+  std::vector<gp_Pnt> pts; for (int i = 0; i < params.pointCount; ++i) pts.push_back(gp_Pnt(params.centerline[i].x, params.centerline[i].y, params.centerline[i].z));
+  ballast_params cpp_params{params.topWidth, params.thickness, params.sideSlope, pts};
+  try { return new topo_shape_t{.shp = std::make_shared<shape>(create_ballast(cpp_params))}; } catch (...) { return nullptr; }
 }
 
 // ===========================================================================
@@ -1141,6 +1119,153 @@ create_mast_assembly_with_place(mast_assembly_params_t params, pnt3d_t position,
   } catch (...) {
     return nullptr;
   }
+}
+
+// ===========================================================================
+// 31. Switch Rail
+// ===========================================================================
+RAILCAPICALL topo_shape_t *create_switch_rail(switch_rail_params_t params) {
+  switch_rail_params cpp_params{params.length, params.railHeight, params.railHeadWidth,
+                                 params.railBaseWidth, params.tipWidth, params.curveRadius,
+                                 params.isLeftHand != 0};
+  try {
+    return new topo_shape_t{.shp = std::make_shared<shape>(create_switch_rail(cpp_params))};
+  } catch (...) { return nullptr; }
+}
+
+RAILCAPICALL topo_shape_t *create_switch_rail_with_place(switch_rail_params_t params,
+                                                          pnt3d_t position,
+                                                          dir3d_t direction, dir3d_t upDir) {
+  switch_rail_params cpp_params{params.length, params.railHeight, params.railHeadWidth,
+                                 params.railBaseWidth, params.tipWidth, params.curveRadius,
+                                 params.isLeftHand != 0};
+  gp_Pnt p(position.x, position.y, position.z);
+  gp_Dir d(direction.x, direction.y, direction.z);
+  gp_Dir u(upDir.x, upDir.y, upDir.z);
+  try {
+    return new topo_shape_t{.shp = std::make_shared<shape>(create_switch_rail(cpp_params, p, d, u))};
+  } catch (...) { return nullptr; }
+}
+
+// ===========================================================================
+// 32. Frog
+// ===========================================================================
+RAILCAPICALL topo_shape_t *create_frog(frog_params_t params) {
+  frog_params cpp_params{params.turnoutNo, params.gauge, params.railHeight,
+                          params.railHeadWidth, params.railBaseWidth};
+  try {
+    return new topo_shape_t{.shp = std::make_shared<shape>(create_frog(cpp_params))};
+  } catch (...) { return nullptr; }
+}
+
+RAILCAPICALL topo_shape_t *create_frog_with_place(frog_params_t params,
+                                                   pnt3d_t position,
+                                                   dir3d_t direction, dir3d_t upDir) {
+  frog_params cpp_params{params.turnoutNo, params.gauge, params.railHeight,
+                          params.railHeadWidth, params.railBaseWidth};
+  gp_Pnt p(position.x, position.y, position.z);
+  gp_Dir d(direction.x, direction.y, direction.z);
+  gp_Dir u(upDir.x, upDir.y, upDir.z);
+  try {
+    return new topo_shape_t{.shp = std::make_shared<shape>(create_frog(cpp_params, p, d, u))};
+  } catch (...) { return nullptr; }
+}
+
+// ===========================================================================
+// 33. Turnout
+// ===========================================================================
+RAILCAPICALL topo_shape_t *create_turnout(turnout_params_t params) {
+  turnout_params cpp_params{params.turnoutNo, params.isLeftHand != 0, params.gauge,
+                             params.railHeight, params.railHeadWidth, params.railBaseWidth,
+                             params.switchRailLength, params.leadCurveRadius, params.frogLength,
+                             params.sleeperCount, params.sleeperSpacing};
+  try {
+    return new topo_shape_t{.shp = std::make_shared<shape>(create_turnout(cpp_params))};
+  } catch (...) { return nullptr; }
+}
+
+RAILCAPICALL topo_shape_t *create_turnout_with_place(turnout_params_t params,
+                                                      pnt3d_t position,
+                                                      dir3d_t direction, dir3d_t upDir) {
+  turnout_params cpp_params{params.turnoutNo, params.isLeftHand != 0, params.gauge,
+                             params.railHeight, params.railHeadWidth, params.railBaseWidth,
+                             params.switchRailLength, params.leadCurveRadius, params.frogLength,
+                             params.sleeperCount, params.sleeperSpacing};
+  gp_Pnt p(position.x, position.y, position.z);
+  gp_Dir d(direction.x, direction.y, direction.z);
+  gp_Dir u(upDir.x, upDir.y, upDir.z);
+  try {
+    return new topo_shape_t{.shp = std::make_shared<shape>(create_turnout(cpp_params, p, d, u))};
+  } catch (...) { return nullptr; }
+}
+
+// ===========================================================================
+// 35. Rail Pair
+// ===========================================================================
+RAILCAPICALL topo_shape_t *create_rail_pair(rail_pair_params_t params) {
+  std::vector<gp_Pnt> pts; for (int i = 0; i < params.pointCount; ++i) pts.push_back(gp_Pnt(params.centerline[i].x, params.centerline[i].y, params.centerline[i].z));
+  rail_pair_params cpp_params{pts, params.gauge, params.superElevation, params.railHeight, params.railHeadWidth, params.railBaseWidth};
+  try { return new topo_shape_t{.shp = std::make_shared<shape>(create_rail_pair(cpp_params))}; } catch (...) { return nullptr; }
+}
+RAILCAPICALL topo_shape_t *create_rail_pair_with_place(rail_pair_params_t params, pnt3d_t position, dir3d_t direction, dir3d_t upDir) {
+  std::vector<gp_Pnt> pts; for (int i = 0; i < params.pointCount; ++i) pts.push_back(gp_Pnt(params.centerline[i].x, params.centerline[i].y, params.centerline[i].z));
+  rail_pair_params cpp_params{pts, params.gauge, params.superElevation, params.railHeight, params.railHeadWidth, params.railBaseWidth};
+  try { return new topo_shape_t{.shp = std::make_shared<shape>(create_rail_pair(cpp_params, gp_Pnt(position.x,position.y,position.z), gp_Dir(direction.x,direction.y,direction.z), gp_Dir(upDir.x,upDir.y,upDir.z)))}; } catch (...) { return nullptr; }
+}
+
+// ===========================================================================
+// 36. Sleeper Layout
+// ===========================================================================
+RAILCAPICALL topo_shape_t *create_sleeper_layout(sleeper_layout_params_t params) {
+  std::vector<gp_Pnt> pts; for (int i = 0; i < params.pointCount; ++i) pts.push_back(gp_Pnt(params.centerline[i].x, params.centerline[i].y, params.centerline[i].z));
+  sleeper_layout_params cpp_params{pts, params.length, params.width, params.height, params.spacing, params.gauge};
+  try { return new topo_shape_t{.shp = std::make_shared<shape>(create_sleeper_layout(cpp_params))}; } catch (...) { return nullptr; }
+}
+
+// ===========================================================================
+// 37. Straight Track
+// ===========================================================================
+RAILCAPICALL topo_shape_t *create_straight_track(straight_track_params_t params) {
+  straight_track_params p{ gp_Pnt(params.startPoint.x,params.startPoint.y,params.startPoint.z),
+    gp_Pnt(params.endPoint.x,params.endPoint.y,params.endPoint.z), params.gauge,
+    params.railHeight, params.railHeadWidth, params.railBaseWidth,
+    params.sleeperLength, params.sleeperWidth, params.sleeperHeight, params.sleeperSpacing,
+    params.ballastTopWidth, params.ballastThickness, params.ballastSlope };
+  try { return new topo_shape_t{.shp = std::make_shared<shape>(create_straight_track(p))}; } catch (...) { return nullptr; }
+}
+RAILCAPICALL topo_shape_t *create_straight_track_with_place(straight_track_params_t params,
+    pnt3d_t position, dir3d_t direction, dir3d_t upDir) {
+  straight_track_params p{ gp_Pnt(params.startPoint.x,params.startPoint.y,params.startPoint.z),
+    gp_Pnt(params.endPoint.x,params.endPoint.y,params.endPoint.z), params.gauge,
+    params.railHeight, params.railHeadWidth, params.railBaseWidth,
+    params.sleeperLength, params.sleeperWidth, params.sleeperHeight, params.sleeperSpacing,
+    params.ballastTopWidth, params.ballastThickness, params.ballastSlope };
+  try { return new topo_shape_t{.shp = std::make_shared<shape>(create_straight_track(p,
+    gp_Pnt(position.x,position.y,position.z), gp_Dir(direction.x,direction.y,direction.z),
+    gp_Dir(upDir.x,upDir.y,upDir.z)))}; } catch (...) { return nullptr; }
+}
+
+// ===========================================================================
+// 38. Curve Track
+// ===========================================================================
+RAILCAPICALL topo_shape_t *create_curve_track(curve_track_params_t params) {
+  curve_track_params p{ gp_Pnt(params.curveCenter.x,params.curveCenter.y,params.curveCenter.z),
+    params.startAngle, params.sweepAngle, params.curveRadius, params.gauge, params.superElevation,
+    params.railHeight, params.railHeadWidth, params.railBaseWidth, params.sleeperLength,
+    params.sleeperWidth, params.sleeperHeight, params.sleeperSpacing,
+    params.ballastTopWidth, params.ballastThickness, params.ballastSlope };
+  try { return new topo_shape_t{.shp = std::make_shared<shape>(create_curve_track(p))}; } catch (...) { return nullptr; }
+}
+RAILCAPICALL topo_shape_t *create_curve_track_with_place(curve_track_params_t params,
+    pnt3d_t position, dir3d_t direction, dir3d_t upDir) {
+  curve_track_params p{ gp_Pnt(params.curveCenter.x,params.curveCenter.y,params.curveCenter.z),
+    params.startAngle, params.sweepAngle, params.curveRadius, params.gauge, params.superElevation,
+    params.railHeight, params.railHeadWidth, params.railBaseWidth, params.sleeperLength,
+    params.sleeperWidth, params.sleeperHeight, params.sleeperSpacing,
+    params.ballastTopWidth, params.ballastThickness, params.ballastSlope };
+  try { return new topo_shape_t{.shp = std::make_shared<shape>(create_curve_track(p,
+    gp_Pnt(position.x,position.y,position.z), gp_Dir(direction.x,direction.y,direction.z),
+    gp_Dir(upDir.x,upDir.y,upDir.z)))}; } catch (...) { return nullptr; }
 }
 
 #ifdef __cplusplus
