@@ -982,8 +982,12 @@ create_sleeper_with_place(sleeper_params_t params, pnt3d_t position,
 // 26. Ballast
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_ballast(ballast_params_t params) {
-  std::vector<gp_Pnt> pts; for (int i = 0; i < params.pointCount; ++i) pts.push_back(gp_Pnt(params.centerline[i].x, params.centerline[i].y, params.centerline[i].z));
-  ballast_params cpp_params{params.topWidth, params.thickness, params.sideSlope, pts};
+  ballast_params cpp_params; cpp_params.topWidth = params.topWidth;
+  cpp_params.thickness = params.thickness; cpp_params.sideSlope = params.sideSlope;
+  for (int i = 0; i < params.pointCount - 1; ++i)
+    cpp_params.centerlineSegments.push_back({centerline_curve_type::LINE,
+      {gp_Pnt(params.centerline[i].x, params.centerline[i].y, params.centerline[i].z),
+       gp_Pnt(params.centerline[i+1].x, params.centerline[i+1].y, params.centerline[i+1].z)}});
   try { return new topo_shape_t{.shp = std::make_shared<shape>(create_ballast(cpp_params))}; } catch (...) { return nullptr; }
 }
 

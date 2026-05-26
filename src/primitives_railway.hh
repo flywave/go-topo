@@ -650,11 +650,23 @@ TopoDS_Shape create_sleeper(const sleeper_params &params,
 // =========================================================================
 // TRACK: 26. Ballast Bed (道床) TYPE=TRACK_BALLAST
 // =========================================================================
+
+// 曲线中心线类型
+enum class centerline_curve_type {
+  LINE = 0,  // 直线段
+  ARC = 1,   // 圆弧段(3点)
+  BEZIER = 2 // 贝塞尔段
+};
+struct centerline_segment {
+  centerline_curve_type type;
+  std::vector<gp_Pnt> points;
+};
+
 struct ballast_params {
-  double topWidth;              // 道床顶宽(mm)
-  double thickness;             // 道床厚度(mm)
-  double sideSlope;             // 道床边坡(1:n)
-  std::vector<gp_Pnt> centerline; // 线路中心线，沿此路径扫掠梯形断面
+  double topWidth;                            // 道床顶宽(mm)
+  double thickness;                           // 道床厚度(mm)
+  double sideSlope;                           // 道床边坡(1:n)
+  std::vector<centerline_segment> centerlineSegments; // 曲线中心线(直线+圆弧+贝塞尔)
 };
 
 TopoDS_Shape create_ballast(const ballast_params &params);
@@ -769,7 +781,7 @@ TopoDS_Shape create_frog(const frog_params &params,
                           const gp_Dir &upDir = gp::DZ());
 
 // =========================================================================
-// TRACK: 33. Turnout (单开道岔)
+// TRACK: 26. Ballast (道床) — 沿曲线中心线扫掠
 // =========================================================================
 struct turnout_params {
   int turnoutNo;               // 道岔号数

@@ -167,7 +167,7 @@ void test_ballast() {
   std::cout << "\n=== Ballast ===" << std::endl;
   ballast_params p;
   p.topWidth = 3600; p.thickness = 350; p.sideSlope = 1.5;
-  p.centerline = {gp_Pnt(0, 0, 0), gp_Pnt(5000, 0, 0)};
+  p.centerlineSegments = {{centerline_curve_type::LINE, {gp_Pnt(0, 0, 0), gp_Pnt(5000, 0, 0)}}};
   test_export(create_ballast(p), "ballast");
 }
 
@@ -244,7 +244,16 @@ int main() {
   run("Suspension Hard Span", test_suspension_hard_span);
   run("Rail 60kg", test_rail);
   run("Sleeper", test_sleeper);
-  run("Ballast", test_ballast);
+  run("Ballast Straight", []{
+    ballast_params p; p.topWidth = 3600; p.thickness = 350; p.sideSlope = 1.5;
+    p.centerlineSegments = {{centerline_curve_type::LINE, {gp_Pnt(0,0,0), gp_Pnt(5000,0,0)}}};
+    test_export(create_ballast(p), "ballast_straight");
+  });
+  run("Ballast Curve", []{
+    ballast_params p; p.topWidth = 3600; p.thickness = 350; p.sideSlope = 1.5;
+    p.centerlineSegments = {{centerline_curve_type::ARC, {gp_Pnt(0,0,0), gp_Pnt(4000,1000,0), gp_Pnt(5000,5000,0)}}};
+    test_export(create_ballast(p), "ballast_curve");
+  });
   run("Straight Track", test_straight_track);
   run("Curve Track", test_curve_track);
   run("Turnout 12#", test_turnout);

@@ -931,7 +931,7 @@ TopoDS_Shape create_steel_mast(const steel_mast_params &params) {
       double z0 = seg * segH;
       double hw0 = w0 / 2.0, hw1 = w1 / 2.0;
 
-      // Web: tapered prism
+      // Web: thin plate in X, spanning Y from -hw0+fT to hw0-fT
       gp_Pnt webBt[4] = {{-L/2, -hw0+fT, z0}, {L/2, -hw0+fT, z0},
                           {L/2, hw0-fT, z0}, {-L/2, hw0-fT, z0}};
       TopoDS_Wire webBw = BRepBuilderAPI_MakePolygon(webBt[0], webBt[1], webBt[2], webBt[3], Standard_True).Wire();
@@ -941,22 +941,22 @@ TopoDS_Shape create_steel_mast(const steel_mast_params &params) {
       BRepOffsetAPI_ThruSections webThru(Standard_True);
       webThru.AddWire(webBw); webThru.AddWire(webTw); webThru.Build();
 
-      // Left flange: tapered box
-      gp_Pnt lfBt[4] = {{-hw0, -hw0, z0}, {-hw0+2*L, -hw0, z0},
-                         {-hw0+2*L, -hw0+fT, z0}, {-hw0, -hw0+fT, z0}};
+      // Left flange: wide plate in X, spanning from -hw0 to hw0, Y=-hw0 to -hw0+fT
+      gp_Pnt lfBt[4] = {{-hw0, -hw0, z0}, {hw0, -hw0, z0},
+                         {hw0, -hw0+fT, z0}, {-hw0, -hw0+fT, z0}};
       TopoDS_Wire lfBw = BRepBuilderAPI_MakePolygon(lfBt[0], lfBt[1], lfBt[2], lfBt[3], Standard_True).Wire();
-      gp_Pnt lfTt[4] = {{-hw1, -hw1, z0+segH}, {-hw1+2*L, -hw1, z0+segH},
-                         {-hw1+2*L, -hw1+fT, z0+segH}, {-hw1, -hw1+fT, z0+segH}};
+      gp_Pnt lfTt[4] = {{-hw1, -hw1, z0+segH}, {hw1, -hw1, z0+segH},
+                         {hw1, -hw1+fT, z0+segH}, {-hw1, -hw1+fT, z0+segH}};
       TopoDS_Wire lfTw = BRepBuilderAPI_MakePolygon(lfTt[0], lfTt[1], lfTt[2], lfTt[3], Standard_True).Wire();
       BRepOffsetAPI_ThruSections lfThru(Standard_True);
       lfThru.AddWire(lfBw); lfThru.AddWire(lfTw); lfThru.Build();
 
-      // Right flange: mirrored
-      gp_Pnt rfBt[4] = {{hw0-2*L, -hw0+fT, z0}, {hw0, -hw0+fT, z0},
-                         {hw0, -hw0, z0}, {hw0-2*L, -hw0, z0}};
+      // Right flange: wide plate, Y from hw0-fT to hw0, X from -hw0 to hw0
+      gp_Pnt rfBt[4] = {{-hw0, hw0-fT, z0}, {hw0, hw0-fT, z0},
+                         {hw0, hw0, z0}, {-hw0, hw0, z0}};
       TopoDS_Wire rfBw = BRepBuilderAPI_MakePolygon(rfBt[0], rfBt[1], rfBt[2], rfBt[3], Standard_True).Wire();
-      gp_Pnt rfTt[4] = {{hw1-2*L, -hw1+fT, z0+segH}, {hw1, -hw1+fT, z0+segH},
-                         {hw1, -hw1, z0+segH}, {hw1-2*L, -hw1, z0+segH}};
+      gp_Pnt rfTt[4] = {{-hw1, hw1-fT, z0+segH}, {hw1, hw1-fT, z0+segH},
+                         {hw1, hw1, z0+segH}, {-hw1, hw1, z0+segH}};
       TopoDS_Wire rfTw = BRepBuilderAPI_MakePolygon(rfTt[0], rfTt[1], rfTt[2], rfTt[3], Standard_True).Wire();
       BRepOffsetAPI_ThruSections rfThru(Standard_True);
       rfThru.AddWire(rfBw); rfThru.AddWire(rfTw); rfThru.Build();
@@ -974,14 +974,13 @@ TopoDS_Shape create_steel_mast(const steel_mast_params &params) {
 
   // ===== LATTICE TYPE (格构式角钢柱) =====
   else {
-    double legW = std::max(L * 3.0, B * 0.06);
+    double legW = std::max(L * 5.0, B * 0.10);
     double legT = L * 0.8;
     double halfB = B / 2.0, halfT = T / 2.0;
 
     auto makeTaperedLeg = [&](double sx, double sy) -> TopoDS_Shape {
       double xb = sx * halfB, yb = sy * halfB;
       double xt = sx * halfT, yt = sy * halfT;
-      // Use circular section (more stable than angle-steel ThruSections)
       gp_Circ bc(gp_Ax2(gp_Pnt(xb, yb, 0), gp::DZ()), legW/2);
       TopoDS_Wire bw = BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(bc)).Wire();
       gp_Circ tc(gp_Ax2(gp_Pnt(xt, yt, H), gp::DZ()), legW*0.6/2);
@@ -995,10 +994,10 @@ TopoDS_Shape create_steel_mast(const steel_mast_params &params) {
                      std::make_pair(1.0, -1.0), std::make_pair(1.0, 1.0)})
       builder.Add(compound, makeTaperedLeg(c.first, c.second));
 
-    int nLevels = std::max(1, (int)(H / 2500));
+    int nLevels = std::max(2, (int)(H / 1200));
     int nSeg = nLevels + 1;
     double segH = H / nSeg;
-    double braceR = legW * 0.10;
+    double braceR = legW * 0.25;
     double gussetSize = legW * 2.5, gussetThick = L * 0.6;
 
     for (int i = 0; i < nSeg; ++i) {
@@ -1057,18 +1056,31 @@ TopoDS_Shape create_steel_mast(const steel_mast_params &params) {
   TopoDS_Shape flange = BRepPrimAPI_MakeBox(flgOrg, fw, fw, fth).Shape();
   builder.Add(compound, flange);
 
-  double ribH = fth * 2.0, ribT = L * 0.6;
-  for (int r = 0; r < 8; ++r) {
-    double a = r * M_PI / 4.0;
-    gp_Pnt r1(halfFW*0.2*cos(a), halfFW*0.2*sin(a), -fth);
-    gp_Pnt r2(halfFW*0.7*cos(a), halfFW*0.7*sin(a), -fth);
-    gp_Pnt r3(halfFW*0.2*cos(a), halfFW*0.2*sin(a), -fth+ribH);
+  // ===== TOP CAP PLATE (柱顶封板) — extend beyond leg centers
+  double twBase = params.topWidth > 0 ? params.topWidth : params.bottomWidth * 0.6;
+  double tw = twBase * 1.2;
+  double capThick = std::max(fth * 0.6, params.wallThickness * 1.2);
+  double halfTW = tw / 2.0;
+  gp_Pnt capOrg(-halfTW, -halfTW, H);
+  TopoDS_Shape topCap = BRepPrimAPI_MakeBox(capOrg, tw, tw, capThick).Shape();
+  builder.Add(compound, topCap);
+
+  if (params.type == steel_mast_type::H_BEAM) {
+  int ribCount = 4;
+  double ribH = fw * 0.25, ribT = L * 1.5;
+  for (int r = 0; r < ribCount; ++r) {
+    double a = r * 2*M_PI / ribCount + M_PI / ribCount;
+    gp_Pnt r1(halfFW*0.15*cos(a), halfFW*0.15*sin(a), -fth);
+    gp_Pnt r2(halfFW*0.85*cos(a), halfFW*0.85*sin(a), -fth);
+    gp_Pnt r3(halfFW*0.15*cos(a), halfFW*0.15*sin(a), -fth+ribH);
     gp_Dir tang(-sin(a), cos(a), 0);
     TopoDS_Wire rw = BRepBuilderAPI_MakePolygon(r1, r2, r3, Standard_True).Wire();
     TopoDS_Face rf = BRepLib_MakeFace(rw).Face();
     TopoDS_Shape rib = BRepPrimAPI_MakePrism(rf, gp_Vec(tang.XYZ()*ribT/2)).Shape();
-    rib = BRepAlgoAPI_Fuse(rib, BRepPrimAPI_MakePrism(rf, gp_Vec(-tang.X()*ribT/2, -tang.Y()*ribT/2, 0)).Shape()).Shape();
+    rib = BRepAlgoAPI_Fuse(rib, BRepPrimAPI_MakePrism(rf,
+        gp_Vec(-tang.X()*ribT/2, -tang.Y()*ribT/2, 0)).Shape()).Shape();
     builder.Add(compound, rib);
+  }
   }
 
   if (params.anchorDiameter > 0 && params.anchorSpacing > 0) {
@@ -2233,59 +2245,46 @@ TopoDS_Shape create_sleeper(const sleeper_params &params,
 // 26. Ballast Bed (道床)
 // =========================================================================
 TopoDS_Shape create_ballast(const ballast_params &params) {
-  if (params.topWidth <= 0 || params.thickness <= 0 || params.centerline.size() < 2)
+  if (params.topWidth <= 0 || params.thickness <= 0 || params.centerlineSegments.empty())
     throw Standard_ConstructionError("Invalid ballast dimensions or centerline");
 
   double slope = params.sideSlope > 0 ? params.sideSlope : 1.5;
   double tw = params.topWidth, th = params.thickness;
   double bw = tw + 2 * slope * th;
-  double bs = std::min(th * 0.25, tw * 0.1);  // bevel size at shoulders
-  int nSeg = 5;  // segments per beveled corner
+  double bs = std::min(th * 0.25, tw * 0.1);
+  int nSeg = 5;
 
+  // Trapezoidal profile (same as before)
   BRepBuilderAPI_MakeWire profile;
-
-  // Bottom flat
   profile.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(0, -bw/2, 0), gp_Pnt(0, bw/2, 0)));
-
-  // Right sharp corner + slope up to bevel start
   profile.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(0, bw/2, 0), gp_Pnt(0, tw/2 + bs, th - bs)));
-
-  // Top-right beveled shoulder
   for (int i = 0; i <= nSeg; ++i) {
-    double t = (double)i / nSeg;
-    double y = tw/2 + bs * (1.0 - t);
-    double z = th - bs * (1.0 - t);
-    if (i < nSeg) {
-      double t2 = (double)(i+1) / nSeg;
-      double y2 = tw/2 + bs * (1.0 - t2);
-      double z2 = th - bs * (1.0 - t2);
-      profile.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(0, y, z), gp_Pnt(0, y2, z2)));
-    }
+    double t = (double)i / nSeg, y = tw/2 + bs * (1.0 - t), z = th - bs * (1.0 - t);
+    if (i < nSeg) { double t2=(double)(i+1)/nSeg; profile.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(0,y,z), gp_Pnt(0,tw/2+bs*(1.0-t2), th-bs*(1.0-t2)))); }
   }
-
-  // Top flat
   profile.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(0, tw/2, th), gp_Pnt(0, -tw/2, th)));
-
-  // Top-left beveled shoulder
   for (int i = 0; i <= nSeg; ++i) {
-    double t = (double)i / nSeg;
-    double y = -tw/2 - bs * t;
-    double z = th - bs * t;
-    if (i < nSeg) {
-      double t2 = (double)(i+1) / nSeg;
-      double y2 = -tw/2 - bs * t2;
-      double z2 = th - bs * t2;
-      profile.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(0, y, z), gp_Pnt(0, y2, z2)));
-    }
+    double t = (double)i / nSeg, y = -tw/2 - bs * t, z = th - bs * t;
+    if (i < nSeg) { double t2=(double)(i+1)/nSeg; profile.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(0,y,z), gp_Pnt(0,-tw/2-bs*t2, th-bs*t2))); }
   }
-
-  // Left slope down
   profile.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(0, -tw/2 - bs, th - bs), gp_Pnt(0, -bw/2, 0)));
 
-  // Centerline path + sweep
+  // Build centerline path from curve segments
   BRepBuilderAPI_MakeWire path;
-  for (size_t i = 0; i < params.centerline.size() - 1; ++i)
-    path.Add(BRepBuilderAPI_MakeEdge(params.centerline[i], params.centerline[i+1]));
+  for (auto &seg : params.centerlineSegments) {
+    if (seg.points.size() < 2) continue;
+    if (seg.type == centerline_curve_type::LINE) {
+      path.Add(BRepBuilderAPI_MakeEdge(seg.points[0], seg.points[1]));
+    } else if (seg.type == centerline_curve_type::ARC && seg.points.size() >= 3) {
+      Handle(Geom_TrimmedCurve) arc = GC_MakeArcOfCircle(seg.points[0], seg.points[1], seg.points[2]);
+      if (arc.IsNull()) continue;
+      path.Add(BRepBuilderAPI_MakeEdge(arc));
+    } else if (seg.type == centerline_curve_type::BEZIER) {
+      Handle(TColgp_HArray1OfPnt) ctrl = new TColgp_HArray1OfPnt(1, (int)seg.points.size());
+      for (size_t i = 0; i < seg.points.size(); ++i) ctrl->SetValue((int)(i+1), seg.points[i]);
+      path.Add(BRepBuilderAPI_MakeEdge(new Geom_BezierCurve(ctrl->Array1())));
+    }
+  }
 
   BRepOffsetAPI_MakePipeShell pipe(path.Wire());
   pipe.Add(profile.Wire());
@@ -2990,9 +2989,11 @@ TopoDS_Shape create_track_section(const track_section_params &params) {
   double totalLen = 0;
   for (size_t i = 0; i < params.centerline.size() - 1; ++i)
     totalLen += params.centerline[i].Distance(params.centerline[i+1]);
-  ballast_params bp;
-  bp.topWidth = params.ballastTopWidth; bp.thickness = params.ballastThickness;
-  bp.sideSlope = params.ballastSlope; bp.centerline = params.centerline;
+  ballast_params bp; bp.topWidth = params.ballastTopWidth;
+  bp.thickness = params.ballastThickness; bp.sideSlope = params.ballastSlope;
+  bp.centerlineSegments = {};
+  for (size_t i = 0; i < params.centerline.size() - 1; ++i)
+    bp.centerlineSegments.push_back({centerline_curve_type::LINE, {params.centerline[i], params.centerline[i+1]}});
   builder.Add(compound, create_ballast(bp));
 
   return compound;
@@ -3041,7 +3042,7 @@ TopoDS_Shape create_straight_track(const straight_track_params &params) {
   // Ballast
   ballast_params bp; bp.topWidth = params.ballastTopWidth;
   bp.thickness = params.ballastThickness; bp.sideSlope = params.ballastSlope;
-  bp.centerline = {params.startPoint, params.endPoint};
+  bp.centerlineSegments = {{centerline_curve_type::LINE, {params.startPoint, params.endPoint}}};
   builder.Add(compound, create_ballast(bp));
 
   return compound;
