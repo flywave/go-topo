@@ -86,6 +86,17 @@ void test_concrete_mast() {
   p.holeDiameter = 30; p.holeSpacingV = 600; p.holeSpacingH = 200;
   p.firstHoleOffset = 500; p.holeRowCount = 4; p.holesPerRow = 2;
   test_export(create_concrete_mast(p), "concrete_mast_holed");
+
+  p.sectionType = concrete_mast_section_type::RECTANGULAR;
+  p.topWidth = 250; p.bottomWidth = 350; p.wallThickness = 60;
+  p.holeDiameter = 0; p.holeRowCount = 0; p.holesPerRow = 0;
+  test_export(create_concrete_mast(p), "concrete_mast_rect");
+
+  p.sectionType = concrete_mast_section_type::RECTANGULAR_HOLED;
+  p.topWidth = 250; p.bottomWidth = 400; p.wallThickness = 0;
+  p.holeDiameter = 240; p.holeSpacingV = 500; p.firstHoleOffset = 300;
+  p.holeRowCount = 0; p.holesPerRow = 0;
+  test_export(create_concrete_mast(p), "concrete_mast_rect_holed");
 }
 
 void test_head_span() {

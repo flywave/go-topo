@@ -262,7 +262,8 @@ TopoDS_Shape create_steel_mast(const steel_mast_params &params,
 enum class concrete_mast_section_type {
   CIRCULAR = 1,     // 环形
   RECTANGULAR = 2,  // 矩形
-  CIRCULAR_HOLED = 3 // 带孔环形
+  CIRCULAR_HOLED = 3, // 带孔环形
+  RECTANGULAR_HOLED = 4 // 矩形挖孔
 };
 
 struct concrete_mast_params {

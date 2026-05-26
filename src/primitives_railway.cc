@@ -788,6 +788,7 @@ TopoDS_Shape create_registration_arm(const registration_arm_params &params) {
     gp_Trsf rot; rot.SetRotation(gp_Ax1(gp::Origin(), gp::DY()), ar);
     tube = BRepBuilderAPI_Transform(tube, rot).Shape();
   }
+
   return tube;
 }
 
@@ -1112,8 +1113,9 @@ TopoDS_Shape create_concrete_mast(const concrete_mast_params &params) {
         }
       }
     }
-  } else {
-    double b = params.bottomWidth, t = params.topWidth > 0 ? params.topWidth : b;
+  } else if (params.sectionType == concrete_mast_section_type::RECTANGULAR) {
+    double b = params.bottomWidth;
+    double t = params.topWidth > 0 ? params.topWidth : b;
     if (std::abs(t - b) > Precision::Confusion()) {
       BRepOffsetAPI_ThruSections gen(Standard_True);
       gp_Pnt bp[4] = {{-b/2, -b/2, 0}, {b/2, -b/2, 0}, {b/2, b/2, 0}, {-b/2, b/2, 0}};
@@ -1128,6 +1130,30 @@ TopoDS_Shape create_concrete_mast(const concrete_mast_params &params) {
       double ib = b - 2*params.wallThickness;
       TopoDS_Shape inner = BRepPrimAPI_MakeBox(gp_Pnt(-ib/2, -ib/2, -1), ib, ib, params.height+2).Shape();
       mast = BRepAlgoAPI_Cut(mast, inner).Shape();
+    }
+  } else if (params.sectionType == concrete_mast_section_type::RECTANGULAR_HOLED) {
+    double b = params.bottomWidth;
+    double t = params.topWidth > 0 ? params.topWidth : b;
+    double thinW = b * 0.45;
+    if (std::abs(t - b) > Precision::Confusion()) {
+      double thinT = t * 0.45;
+      BRepOffsetAPI_ThruSections gen(Standard_True);
+      gp_Pnt bp[4] = {{-thinW/2, -b/2, 0}, {thinW/2, -b/2, 0}, {thinW/2, b/2, 0}, {-thinW/2, b/2, 0}};
+      gen.AddWire(BRepBuilderAPI_MakePolygon(bp[0], bp[1], bp[2], bp[3], Standard_True));
+      gp_Pnt tp[4] = {{-thinT/2, -t/2, (double)params.height}, {thinT/2, -t/2, (double)params.height}, {thinT/2, t/2, (double)params.height}, {-thinT/2, t/2, (double)params.height}};
+      gen.AddWire(BRepBuilderAPI_MakePolygon(tp[0], tp[1], tp[2], tp[3], Standard_True));
+      gen.Build(); mast = gen.Shape();
+    } else {
+      mast = BRepPrimAPI_MakeBox(gp_Pnt(-thinW/2, -b/2, 0), thinW, b, params.height).Shape();
+    }
+    // Round wind holes — diameter proportional to current column width
+    if (params.holeDiameter > 0 && params.holeSpacingV > 0) {
+      for (double z = params.firstHoleOffset; z < params.height; z += params.holeSpacingV) {
+        double curW = b + (t - b) * z / params.height;
+        double holeR = params.holeDiameter * curW / b / 2;
+        TopoDS_Shape h = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-thinW, 0, z), gp::DX(), gp::DZ()), holeR, curW * 4).Shape();
+        mast = BRepAlgoAPI_Cut(mast, h).Shape();
+      }
     }
   }
   return mast;
