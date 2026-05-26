@@ -56,7 +56,7 @@ RAILCAPICALL topo_shape_t *create_cross_arm(cross_arm_params_t params) {
   cross_arm_params cpp_params{
       static_cast<cross_arm_type>(params.ctype),
       params.beamLength,    params.beamHeight,      params.beamWidth,
-      params.beamThickness, params.braceLength,     params.braceDiameter,
+      params.beamThickness, params.beamSpacing, params.braceLength,     params.braceDiameter,
       params.mountHeight,   params.boltSpacing,     params.boltDiameter,
       params.boltCount};
   try {
@@ -73,7 +73,7 @@ create_cross_arm_with_place(cross_arm_params_t params, pnt3d_t position,
   cross_arm_params cpp_params{
       static_cast<cross_arm_type>(params.ctype),
       params.beamLength,    params.beamHeight,      params.beamWidth,
-      params.beamThickness, params.braceLength,     params.braceDiameter,
+      params.beamThickness, params.beamSpacing, params.braceLength,     params.braceDiameter,
       params.mountHeight,   params.boltSpacing,     params.boltDiameter,
       params.boltCount};
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -280,7 +280,7 @@ RAILCAPICALL topo_shape_t *
 create_registration_arm(registration_arm_params_t params) {
   registration_arm_params cpp_params{
       static_cast<registration_arm_type>(params.ctype),
-      params.length, params.outerDiameter, params.wallThickness, params.angle};
+      params.length, params.tubeWidth, params.tubeHeight, params.wallThickness, params.angle, params.isReverse != 0};
   try {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_registration_arm(cpp_params))};
@@ -295,7 +295,7 @@ create_registration_arm_with_place(registration_arm_params_t params,
                                    dir3d_t upDir) {
   registration_arm_params cpp_params{
       static_cast<registration_arm_type>(params.ctype),
-      params.length, params.outerDiameter, params.wallThickness, params.angle};
+      params.length, params.tubeWidth, params.tubeHeight, params.wallThickness, params.angle, params.isReverse != 0};
   gp_Pnt cpp_base(basePoint.x, basePoint.y, basePoint.z);
   gp_Dir cpp_axis(axisDir.x, axisDir.y, axisDir.z);
   gp_Dir cpp_up(upDir.x, upDir.y, upDir.z);

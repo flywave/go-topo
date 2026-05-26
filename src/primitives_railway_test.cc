@@ -57,7 +57,8 @@ void test_cross_arm() {
   std::cout << "\n=== Cross Arm ===" << std::endl;
   cross_arm_params p;
   p.type = cross_arm_type::DOUBLE_FORK;
-  p.beamLength = 3000; p.beamHeight = 100; p.beamWidth = 80; p.beamThickness = 6;
+  p.beamLength = 3000; p.beamHeight = 200; p.beamWidth = 80; p.beamThickness = 6;
+  p.beamSpacing = 1500;  // 上下梁间距=腕臂上下底座安装距
   p.braceLength = 1800; p.braceDiameter = 50;
   p.mountHeight = 6000; p.boltSpacing = 100; p.boltDiameter = 16; p.boltCount = 4;
   test_export(create_cross_arm(p), "cross_arm");
@@ -67,11 +68,11 @@ void test_registration_arm() {
   std::cout << "\n=== Registration Arm ===" << std::endl;
   registration_arm_params p;
   p.type = registration_arm_type::STRAIGHT;
-  p.length = 800; p.outerDiameter = 34; p.wallThickness = 4; p.angle = 0;
+  p.length = 800; p.tubeWidth = 35; p.tubeHeight = 20; p.wallThickness = 4; p.angle = 0; p.isReverse = false;
   test_export(create_registration_arm(p), "registration_arm");
 
   p.type = registration_arm_type::CURVED;
-  test_export(create_registration_arm(p), "registration_arm_curved");
+  test_export(create_registration_arm(p), "registration_arm_bow");
 }
 
 void test_concrete_mast() {

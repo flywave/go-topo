@@ -227,60 +227,42 @@ TopoDS_Shape create_cross_arm(const cross_arm_params &params) {
   if (params.beamLength <= 0 || params.beamHeight <= 0 || params.beamWidth <= 0)
     throw Standard_ConstructionError("Beam dimensions must be positive");
 
-  BRep_Builder builder;
-  TopoDS_Compound compound;
-  builder.MakeCompound(compound);
+  BRep_Builder builder; TopoDS_Compound compound; builder.MakeCompound(compound);
 
-  // Main beam
-  gp_Pnt beamOrigin(-params.beamLength / 2.0, -params.beamWidth / 2.0, 0);
-  TopoDS_Shape beam =
-      BRepPrimAPI_MakeBox(beamOrigin, params.beamLength, params.beamWidth,
-                            params.beamHeight).Shape();
+  double BL = params.beamLength, BH = params.beamHeight, BW = params.beamWidth;
+  double gap = params.beamSpacing > 0 ? params.beamSpacing : BH * 3;
 
-  // Edge fillets on beam corners
-  double filletR = std::min({params.beamHeight, params.beamWidth}) * 0.1;
-  if (filletR > Precision::Confusion()) {
-    BRepFilletAPI_MakeFillet fillet(beam);
-    for (TopExp_Explorer ex(beam, TopAbs_EDGE); ex.More(); ex.Next()) {
-      TopoDS_Edge edge = TopoDS::Edge(ex.Current());
-      gp_Pnt p1 = BRep_Tool::Pnt(TopExp::FirstVertex(edge));
-      gp_Pnt p2 = BRep_Tool::Pnt(TopExp::LastVertex(edge));
-      if (std::abs(p1.Z() - p2.Z()) < Precision::Confusion())
-        fillet.Add(filletR, edge);
-    }
-    fillet.Build();
-    if (fillet.IsDone()) beam = fillet.Shape();
-  }
-  builder.Add(compound, beam);
+  // Upper beam — along Y (perpendicular to track)
+  gp_Pnt ubOrg(0, -BL/2, gap + BH/2);
+  TopoDS_Shape upperBeam = BRepPrimAPI_MakeBox(ubOrg, BW, BL, BH).Shape();
+  builder.Add(compound, upperBeam);
 
-  // Braces
-  double braceLen = params.braceLength > 0 ? params.braceLength : params.beamLength * 0.6;
-  double braceD = params.braceDiameter > 0 ? params.braceDiameter : params.beamWidth * 0.5;
+  // Lower beam
+  gp_Pnt lbOrg(0, -BL/2, -BH/2);
+  TopoDS_Shape lowerBeam = BRepPrimAPI_MakeBox(lbOrg, BW, BL, BH).Shape();
+  builder.Add(compound, lowerBeam);
+
+  // Two diagonal braces — cross at center (定交点固定于立柱)
+  double braceR = BW * 0.25;
   for (int side = -1; side <= 1; side += 2) {
-    double x = side * params.beamLength * 0.2;
-    gp_Ax2 braceAxis(gp_Pnt(x, -params.beamWidth / 2.0, 0), gp::DZ());
-    TopoDS_Shape brace =
-        BRepPrimAPI_MakeCylinder(braceAxis, braceD / 2.0, braceLen).Shape();
-    gp_Trsf rot;
-    rot.SetRotation(gp_Ax1(gp_Pnt(x, -params.beamWidth / 2.0, 0), gp::DY()), -M_PI / 6);
-    brace = BRepBuilderAPI_Transform(brace, rot).Shape();
-    builder.Add(compound, brace);
+    gp_Pnt p1(0, side * BL * 0.45, gap + BH);
+    gp_Pnt p2(0, -side * BL * 0.45, 0);
+    gp_Vec v(p1, p2); double l = v.Magnitude();
+    if (l > Precision::Confusion())
+      builder.Add(compound, BRepPrimAPI_MakeCylinder(gp_Ax2(p1, gp_Dir(v)), braceR, l).Shape());
   }
 
-  // Bolt holes
-  if (params.boltDiameter > 0 && params.boltCount > 0) {
-    double holeR = params.boltDiameter / 2.0;
-    double hs = params.boltSpacing / 2.0;
-    double midZ = params.beamHeight / 2.0;
-    for (int i = 0; i < params.boltCount / 2; ++i) {
-      for (int j = 0; j < 2; ++j) {
-        double hx = (i - (params.boltCount / 4)) * params.boltSpacing * 2;
-        double hy = (j == 0) ? -hs : hs;
-        gp_Ax2 ha(gp_Pnt(hx, hy, midZ), gp::DZ());
-        TopoDS_Shape hole =
-            BRepPrimAPI_MakeCylinder(ha, holeR, params.beamHeight + 2).Shape();
-        beam = BRepAlgoAPI_Cut(beam, hole).Shape();
-      }
+  // Bolt holes in beams for mast connection at center
+  if (params.boltDiameter > 0) {
+    double hr = params.boltDiameter / 2, hs = params.boltSpacing / 2;
+    for (int level = 0; level < 2; ++level) {
+      double z = (level == 0) ? BH/2 : gap + BH + BH/2;
+      for (int bx = -1; bx <= 1; bx += 2) if (params.boltCount >= 3 || bx == 0)
+        for (int by = -1; by <= 1; by += 2) {
+          TopoDS_Shape h = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(bx*hs, by*hs, z - BW/2 - 1), gp::DY()), hr, BW+2).Shape();
+          lowerBeam = BRepAlgoAPI_Cut(lowerBeam, h).Shape();
+          upperBeam = BRepAlgoAPI_Cut(upperBeam, h).Shape();
+        }
     }
   }
 
@@ -705,123 +687,95 @@ TopoDS_Shape create_mast_bracket(const mast_bracket_params &params,
 // 9. Registration Arm (定位器)
 // =========================================================================
 TopoDS_Shape create_registration_arm(const registration_arm_params &params) {
-  if (params.length <= 0 || params.outerDiameter <= 0)
-    throw Standard_ConstructionError("Length and diameter must be positive");
+  if (params.length <= 0 || params.tubeWidth <= 0)
+    throw Standard_ConstructionError("Length and width must be positive");
 
-  double OR = params.outerDiameter / 2.0;
-  double IR = OR - params.wallThickness;
-  if (IR <= 0) IR = OR * 0.85;
+  double W = params.tubeWidth, H = params.tubeHeight > 0 ? params.tubeHeight : W;
+  double t = params.wallThickness > 0 ? params.wallThickness : W * 0.15;
   double L = params.length;
+  double dir = params.isReverse ? -1.0 : 1.0;
+
+  auto makeTube = [&](gp_Pnt org, gp_Dir axis, double len) -> TopoDS_Shape {
+    gp_Pnt outerOrg(org.X() - W/2, org.Y() - H/2, org.Z() - W/2);
+    TopoDS_Shape outer = BRepPrimAPI_MakeBox(outerOrg, W, H, W).Shape();
+    if (t > 0 && W > 2*t && H > 2*t) {
+      TopoDS_Shape inner = BRepPrimAPI_MakeBox(gp_Pnt(org.X()-W/2+t, org.Y()-H/2+t, org.Z()-W/2-1), W-2*t, H-2*t, W+2).Shape();
+      outer = BRepAlgoAPI_Cut(outer, inner).Shape();
+    }
+    // Align along axis, extrude to length
+    gp_Ax3 srcAx(org, gp::DZ(), gp::DX());
+    gp_Dir yDir = gp::DZ().Crossed(axis);
+    gp_Ax3 tgtAx(org, axis, gp_Dir(0,0,1));
+    gp_Trsf tr; tr.SetTransformation(tgtAx, srcAx);
+    return BRepBuilderAPI_Transform(outer, tr).Shape();
+  };
 
   TopoDS_Shape tube;
+  double totalL = (params.type == registration_arm_type::EXTENDED) ? L * 1.3 : L;
 
-  // ===== Tube body =====
   if (params.type == registration_arm_type::STRAIGHT ||
       params.type == registration_arm_type::EXTENDED) {
-    gp_Ax2 outerAxis(gp::Origin(), gp::DX());
-    TopoDS_Shape outerCyl =
-        BRepPrimAPI_MakeCylinder(outerAxis, OR, L).Shape();
-    if (params.wallThickness > 0 && IR > Precision::Confusion()) {
-      TopoDS_Shape innerCyl =
-          BRepPrimAPI_MakeCylinder(outerAxis, IR, L).Shape();
-      tube = BRepAlgoAPI_Cut(outerCyl, innerCyl).Shape();
-    } else {
-      tube = outerCyl;
-    }
-    if (params.type == registration_arm_type::EXTENDED) {
-      double extLen = L * 0.3;
-      gp_Ax2 extAxis(gp_Pnt(L, 0, 0), gp::DX());
-      TopoDS_Shape extCyl =
-          BRepPrimAPI_MakeCylinder(extAxis, OR, extLen).Shape();
-      tube = BRepAlgoAPI_Fuse(tube, extCyl).Shape();
-    }
+    // Tube along X: width in Y, height in Z
+    TopoDS_Shape outer = BRepPrimAPI_MakeBox(gp_Pnt(0, -W/2, -H/2), totalL, W, H).Shape();
+    if (t > 0 && W > 2*t && H > 2*t) {
+      TopoDS_Shape inner = BRepPrimAPI_MakeBox(gp_Pnt(-1, -W/2+t, -H/2+t), totalL+2, W-2*t, H-2*t).Shape();
+      tube = BRepAlgoAPI_Cut(outer, inner).Shape();
+    } else tube = outer;
   } else {
-    // Curved type
-    double straightLen = L * 0.7;
-    double curveLen = L * 0.3;
-    gp_Ax2 outerAxis(gp::Origin(), gp::DX());
-    TopoDS_Shape outerCyl =
-        BRepPrimAPI_MakeCylinder(outerAxis, OR, straightLen).Shape();
-    if (params.wallThickness > 0 && IR > Precision::Confusion()) {
-      TopoDS_Shape innerCyl =
-          BRepPrimAPI_MakeCylinder(outerAxis, IR, straightLen).Shape();
-      tube = BRepAlgoAPI_Cut(outerCyl, innerCyl).Shape();
-    } else {
-      tube = outerCyl;
-    }
-    // Curved tip via Bezier
-    gp_Pnt ts(straightLen, 0, 0);
-    gp_Pnt tm(straightLen + curveLen * 0.5, 0, curveLen * 0.15);
-    gp_Pnt te(straightLen + curveLen, 0, curveLen * 0.3);
-    Handle(TColgp_HArray1OfPnt) bzp = new TColgp_HArray1OfPnt(1, 3);
-    bzp->SetValue(1, ts); bzp->SetValue(2, tm); bzp->SetValue(3, te);
-    Handle(Geom_BezierCurve) bez = new Geom_BezierCurve(bzp->Array1());
-    TopoDS_Edge bezEdge = BRepBuilderAPI_MakeEdge(bez).Edge();
-    BRepBuilderAPI_MakeWire bezWire; bezWire.Add(bezEdge);
-    gp_Ax2 secAx(ts, gp::DX());
-    gp_Circ secCirc(secAx, OR);
-    TopoDS_Wire secWire =
-        BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(secCirc).Edge()).Wire();
-    BRepOffsetAPI_MakePipeShell curvePipe(bezWire.Wire());
-    curvePipe.Add(secWire);
-    curvePipe.SetMode(Standard_True);
-    curvePipe.Build();
+    // Bow-shaped: straight + curved tip
+    double straightLen = L * 0.6;
+    double curveLen = L * 0.4;
+    TopoDS_Shape outer = BRepPrimAPI_MakeBox(gp_Pnt(0, -W/2, -H/2), straightLen, W, H).Shape();
+    if (t > 0 && W > 2*t && H > 2*t) {
+      TopoDS_Shape inner = BRepPrimAPI_MakeBox(gp_Pnt(-1, -W/2+t, -H/2+t), straightLen+2, W-2*t, H-2*t).Shape();
+      tube = BRepAlgoAPI_Cut(outer, inner).Shape();
+    } else tube = outer;
+
+    // Bow curve: gentle downward press at tip (末端缓慢下压)
+    gp_Pnt ts(straightLen, 0, 0), tc(straightLen + curveLen*0.5, 0, -curveLen*0.06);
+    gp_Pnt te(straightLen + curveLen, 0, -curveLen*0.15);
+    Handle(TColgp_HArray1OfPnt) bzp = new TColgp_HArray1OfPnt(1, 4);
+    bzp->SetValue(1, ts); bzp->SetValue(2, tc); bzp->SetValue(3, te);
+    TopoDS_Edge bezEdge = BRepBuilderAPI_MakeEdge(new Geom_BezierCurve(bzp->Array1()));
+    TopoDS_Wire bezWire = BRepBuilderAPI_MakeWire(bezEdge).Wire();
+    // Square section in YZ plane at curve start
+    gp_Pnt sq1(0, -W/2, -H/2), sq2(0, W/2, -H/2), sq3(0, W/2, H/2), sq4(0, -W/2, H/2);
+    TopoDS_Wire sqWire = BRepBuilderAPI_MakePolygon(sq1, sq2, sq3, sq4, Standard_True).Wire();
+    BRepOffsetAPI_MakePipeShell curvePipe(bezWire);
+    curvePipe.Add(sqWire); curvePipe.SetMode(Standard_False); curvePipe.Build();
     if (curvePipe.IsDone() && curvePipe.MakeSolid())
       tube = BRepAlgoAPI_Fuse(tube, curvePipe.Shape()).Shape();
   }
 
-  // ===== 腕臂端连接关节块 (Joint block at cantilever end) =====
-  double jointSize = OR * 2.5;
-  double jointThick = OR * 1.0;
-  gp_Pnt jointOrg(-jointThick * 0.3, -jointSize / 2.0, -jointSize / 2.0);
-  TopoDS_Shape joint =
-      BRepPrimAPI_MakeBox(jointOrg, jointThick, jointSize, jointSize).Shape();
-  // Pin hole through joint (销孔)
-  double pinR = OR * 0.35;
-  gp_Ax2 pinAxis(gp_Pnt(0, -jointSize, 0), gp::DX());
-  TopoDS_Shape pinHole =
-      BRepPrimAPI_MakeCylinder(pinAxis, pinR, jointThick + 2).Shape();
-  joint = BRepAlgoAPI_Cut(joint, pinHole).Shape();
-  gp_Ax2 pinAxis2(gp_Pnt(0, -jointSize, jointSize), gp::DX());
-  TopoDS_Shape pinHole2 =
-      BRepPrimAPI_MakeCylinder(pinAxis2, pinR, jointThick + 2).Shape();
-  joint = BRepAlgoAPI_Cut(joint, pinHole2).Shape();
+
+  // Base end: mounting bracket + movable joint (in YZ plane, at X=0)
+  double jointSize = std::max(W, H) * 1.8, jThick = W * 0.8;
+  gp_Pnt jOrg(-jThick*0.3, -jointSize/2, -jointSize/2);
+  TopoDS_Shape joint = BRepPrimAPI_MakeBox(jOrg, jThick, jointSize, jointSize).Shape();
+  double pinR = W * 0.2;
+  joint = BRepAlgoAPI_Cut(joint, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(0, -jointSize, 0), gp::DX()), pinR, jThick+2).Shape()).Shape();
+  joint = BRepAlgoAPI_Cut(joint, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(0, -jointSize, jointSize), gp::DX()), pinR, jThick+2).Shape()).Shape();
   tube = BRepAlgoAPI_Fuse(tube, joint).Shape();
 
-  // ===== 导线端定位线夹 (Contact wire clamp) =====
-  double totalL = (params.type == registration_arm_type::EXTENDED) ? L * 1.3 : L;
-  double clampW = OR * 1.8;
-  double clampH = OR * 2.5;
-  double clampThick = OR * 0.6;
-  gp_Pnt clampOrg(totalL, -clampW / 2.0, -clampH / 2.0);
-  TopoDS_Shape clamp =
-      BRepPrimAPI_MakeBox(clampOrg, clampThick, clampW, clampH).Shape();
-  // Arc groove for contact wire (弧形槽贴合接触线)
-  double grooveR = OR * 0.6;
-  gp_Ax2 grooveAxis(gp_Pnt(totalL + clampThick / 2.0, 0, -clampH / 4.0),
-                     gp_Dir(0, 1, 0));
-  TopoDS_Shape groove =
-      BRepPrimAPI_MakeCylinder(grooveAxis, grooveR, clampW + 2).Shape();
-  clamp = BRepAlgoAPI_Cut(clamp, groove).Shape();
-  // Clamp bolt holes (螺栓孔)
-  double cbR = OR * 0.2;
-  gp_Ax2 cb1(gp_Pnt(totalL, -clampW * 0.4, -clampH / 2.0), gp::DX());
-  gp_Ax2 cb2(gp_Pnt(totalL, clampW * 0.4, -clampH / 2.0), gp::DX());
-  for (auto &ca : {cb1, cb2}) {
-    TopoDS_Shape ch =
-        BRepPrimAPI_MakeCylinder(ca, cbR, clampThick + 2).Shape();
-    clamp = BRepAlgoAPI_Cut(clamp, ch).Shape();
-  }
+  // Front end: wire clamp at X=totalL, wraps around contact wire (wire runs along X)
+  double clampW = W * 1.5, clampH = H * 1.5, cThick = W * 0.5;
+  double clampX = totalL;
+  double clampZ = (params.type == registration_arm_type::CURVED) ? -(L * 0.4 * 0.15) : 0;
+  gp_Pnt cOrg(clampX, -clampW/2, clampZ - clampH/2);
+  TopoDS_Shape clamp = BRepPrimAPI_MakeBox(cOrg, cThick, clampW, clampH).Shape();
+  double gr = W * 0.35;
+  // Groove along Y (perpendicular to contact wire X-direction)
+  clamp = BRepAlgoAPI_Cut(clamp, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(clampX+cThick/2, 0, clampZ - clampH/4), gp::DY()), gr, clampW+2).Shape()).Shape();
+  double cbR = W * 0.12;
+  clamp = BRepAlgoAPI_Cut(clamp, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(clampX, -clampW*0.4, clampZ - clampH/2), gp::DX()), cbR, cThick+2).Shape()).Shape();
+  clamp = BRepAlgoAPI_Cut(clamp, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(clampX, clampW*0.4, clampZ - clampH/2), gp::DX()), cbR, cThick+2).Shape()).Shape();
   tube = BRepAlgoAPI_Fuse(tube, clamp).Shape();
 
-  // ===== 抬升/下压角 =====
   if (std::abs(params.angle) > Precision::Angular()) {
     double ar = params.angle * M_PI / 180.0;
-    gp_Trsf rot;
-    rot.SetRotation(gp_Ax1(gp::Origin(), gp::DY()), ar);
+    gp_Trsf rot; rot.SetRotation(gp_Ax1(gp::Origin(), gp::DY()), ar);
     tube = BRepBuilderAPI_Transform(tube, rot).Shape();
   }
-
   return tube;
 }
 
@@ -2543,9 +2497,10 @@ TopoDS_Shape create_mast_assembly(const mast_assembly_params &params) {
     registration_arm_params regParams;
     regParams.type = registration_arm_type::STRAIGHT;
     regParams.length = 800;
-    regParams.outerDiameter = 30;
+    regParams.tubeWidth = 30; regParams.tubeHeight = 25;
     regParams.wallThickness = 3;
     regParams.angle = 0;
+    regParams.isReverse = false;
     TopoDS_Shape regArm = create_registration_arm(
         regParams, gp_Pnt(armLen + 580, params.stagger, bracketH - 200),
         gp::DX(), gp::DZ());

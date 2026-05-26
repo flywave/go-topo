@@ -78,6 +78,7 @@ type CrossArmParams struct {
 	BeamHeight    float64
 	BeamWidth     float64
 	BeamThickness float64
+	BeamSpacing  float64
 	BraceLength   float64
 	BraceDiameter float64
 	MountHeight   float64
@@ -93,6 +94,7 @@ func (p *CrossArmParams) to_struct() C.cross_arm_params_t {
 	c.beamHeight = C.double(p.BeamHeight)
 	c.beamWidth = C.double(p.BeamWidth)
 	c.beamThickness = C.double(p.BeamThickness)
+	c.beamSpacing = C.double(p.BeamSpacing)
 	c.braceLength = C.double(p.BraceLength)
 	c.braceDiameter = C.double(p.BraceDiameter)
 	c.mountHeight = C.double(p.MountHeight)
@@ -329,18 +331,22 @@ func CreateMastBracketWithPlace(params MastBracketParams, position Point3, norma
 type RegistrationArmParams struct {
 	Type          int
 	Length        float64
-	OuterDiameter float64
+	TubeWidth     float64
+	TubeHeight    float64
 	WallThickness float64
 	Angle         float64
+	IsReverse     bool
 }
 
 func (p *RegistrationArmParams) to_struct() C.registration_arm_params_t {
 	var c C.registration_arm_params_t
 	c.ctype = C.int(p.Type)
 	c.length = C.double(p.Length)
-	c.outerDiameter = C.double(p.OuterDiameter)
+	c.tubeWidth = C.double(p.TubeWidth)
+	c.tubeHeight = C.double(p.TubeHeight)
 	c.wallThickness = C.double(p.WallThickness)
 	c.angle = C.double(p.Angle)
+	c.isReverse = C.bool(p.IsReverse)
 	return c
 }
 

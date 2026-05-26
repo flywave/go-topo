@@ -55,6 +55,7 @@ struct cross_arm_params {
   double beamHeight;      // 横梁截面高(mm)
   double beamWidth;       // 横梁截面宽(mm)
   double beamThickness;   // 横梁壁厚(mm)
+  double beamSpacing;     // 上下梁间距(mm), 对应腕臂上下底座安装距
   double braceLength;     // 斜撑长度(mm)
   double braceDiameter;   // 斜撑截面直径(mm)
   double mountHeight;     // 安装高度(mm)
@@ -193,11 +194,13 @@ enum class registration_arm_type {
 };
 
 struct registration_arm_params {
-  registration_arm_type type; // 类型
+  registration_arm_type type; // 类型: 1-平直 2-弓型 3-加长
   double length;              // 定位管长度(mm)
-  double outerDiameter;       // 外径(mm)
+  double tubeWidth;           // 方管截面宽(mm)
+  double tubeHeight;          // 方管截面高(mm)
   double wallThickness;       // 壁厚(mm)
   double angle;               // 抬升/下压角(°)
+  bool isReverse;             // 正/反定位器 (反=安装方向相反)
 };
 
 TopoDS_Shape create_registration_arm(const registration_arm_params &params);

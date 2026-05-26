@@ -53,6 +53,7 @@ typedef struct {
   double beamHeight;
   double beamWidth;
   double beamThickness;
+  double beamSpacing;
   double braceLength;
   double braceDiameter;
   double mountHeight;
@@ -171,9 +172,11 @@ create_mast_bracket_with_place(mast_bracket_params_t params, pnt3d_t position,
 typedef struct {
   int ctype;               // registration_arm_type
   double length;
-  double outerDiameter;
+  double tubeWidth;
+  double tubeHeight;
   double wallThickness;
   double angle;
+  bool isReverse;
 } registration_arm_params_t;
 
 RAILCAPICALL topo_shape_t *
