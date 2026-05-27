@@ -182,6 +182,50 @@ void test_switch_rail() {
   test_export(create_switch_rail(p, arcPath, 0, 0), "switch_rail_arc");
 }
 
+void test_wing_rail() {
+  std::cout << "\n=== Wing Rail ===" << std::endl;
+  // Wing rail: short rail with bent shape, wide tip, full profile at heel
+  switch_rail_params p;
+  p.length = 3000; p.railHeight = 176; p.railHeadWidth = 73.02;
+  p.railBaseWidth = 150; p.webThickness = 16.67; p.tipWidth = 15;
+  p.curveRadius = 0; p.isLeftHand = true;
+  // Bent path: runs along frog side, then bends outward
+  double frogAngle = atan2(1.0, 12.0);
+  std::vector<centerline_segment> wingPath = {{centerline_curve_type::LINE, {
+    gp_Pnt(0, 0, 0),
+    gp_Pnt(2000, 100, 0)
+  }}};
+  test_export(create_switch_rail(p, wingPath), "wing_rail_straight");
+  // Bent wing rail (follows frog angle)
+  std::vector<centerline_segment> bentPath = {{centerline_curve_type::LINE, {
+    gp_Pnt(0, 0, 0),
+    gp_Pnt(1500, 50, 0)
+  }}, {centerline_curve_type::LINE, {
+    gp_Pnt(1500, 50, 0),
+    gp_Pnt(3000, 300, 0)
+  }}};
+  test_export(create_switch_rail(p, bentPath), "wing_rail_bent");
+}
+
+void test_frog() {
+  std::cout << "\n=== Frog ===" << std::endl;
+  frog_params p;
+  p.turnoutNo = 12; p.gauge = 1435;
+  p.railHeight = 176; p.railHeadWidth = 73.02; p.railBaseWidth = 150;
+  test_export(create_frog(p), "frog");
+  test_export(create_frog(p, gp_Pnt(5000,0,0), gp::DX(), gp::DZ()), "frog_pos");
+}
+
+void test_guard_rail() {
+  std::cout << "\n=== Guard Rail ===" << std::endl;
+  guard_rail_params p;
+  p.height = 80; p.headWidth = 93; p.baseWidth = 93;
+  p.grooveWidth = 42; p.totalLength = 3600;
+  p.gaugeDistance = 42;
+  test_export(create_guard_rail(p), "guard_rail");
+  test_export(create_guard_rail(p, gp_Pnt(0,0,0), gp_Pnt(3600,0,0)), "guard_rail_line");
+}
+
 void test_sleeper() {
   std::cout << "\n=== Sleeper ===" << std::endl;
   sleeper_params p;
@@ -328,6 +372,9 @@ int main() {
   run("Suspension Hard Span", test_suspension_hard_span);
   run("Rail 132RE", test_rail);
   run("Switch Rail", test_switch_rail);
+  run("Wing Rail", test_wing_rail);
+  run("Frog", test_frog);
+  run("Guard Rail", test_guard_rail);
   run("Sleeper", test_sleeper);
   run("Ballast Straight", []{
     ballast_params p; p.topWidth = 3600; p.thickness = 350; p.sideSlope = 1.5;

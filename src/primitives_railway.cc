@@ -3113,64 +3113,78 @@ TopoDS_Shape create_guard_rail(const guard_rail_params &params) {
   if (params.grooveWidth <= 0)
     throw Standard_ConstructionError("Groove width must be positive");
 
-  double hW = params.headWidth / 2;
-  double bW = params.baseWidth / 2;
-  double gW = params.grooveWidth / 2;
-  double H = params.height;
+  double HW = params.headWidth / 2, BW = params.baseWidth / 2;
+  double GW = params.grooveWidth / 2, H = params.height;
+  
+  // 5-segment guard rail: end(150) → transition(990) → middle(1320) → transition(990) → end(150)
+  // End:  width=35mm, height=42mm; Middle: width=93mm, height=80mm
+  double L=params.totalLength, endW=35.0/93.0, endH=42.0/80.0;
+  double s1=150.0, s2=990.0, s3=1320.0, s4=990.0, s5=150.0;
+  // Sample at key points
+  struct KeyPt { double x; double wf; double hf; };
+  std::vector<KeyPt> kps={
+    {0,          endW, endH},
+    {s1,         endW, endH},
+    {s1+s2,      1.0,  1.0},
+    {s1+s2+s3,   1.0,  1.0},
+    {s1+s2+s3+s4,endW, endH},
+    {L,          endW, endH}
+  };
+  // Add more samples in transition zones for smooth loft
+  std::vector<double> xs;
+  auto addSamples=[&](double x1,double x2,int n){for(int i=0;i<=n;++i)xs.push_back(x1+(x2-x1)*i/n);};
+  addSamples(0,s1,1); addSamples(s1,s1+s2,5); addSamples(s1+s2,s1+s2+s3,3);
+  addSamples(s1+s2+s3,s1+s2+s3+s4,5); addSamples(s1+s2+s3+s4,L,1);
+  std::sort(xs.begin(),xs.end());
+  xs.erase(std::unique(xs.begin(),xs.end(),[](double a,double b){return std::abs(a-b)<1;}),xs.end());
 
-  // U-shaped cross-section profile
-  // Has a groove in the head (typical for guard rail)
-  gp_Pnt p1(-bW, 0, 0);
-  gp_Pnt p2(bW, 0, 0);
-  gp_Pnt p3(bW, 0, H);
-  gp_Pnt p4(gW, 0, H);
-  gp_Pnt p5(gW, 0, H * 0.8);
-  gp_Pnt p6(-gW, 0, H * 0.8);
-  gp_Pnt p7(-gW, 0, H);
-  gp_Pnt p8(-bW, 0, H);
+  auto interp=[&](double x)->std::pair<double,double>{
+    for(size_t i=0;i+1<kps.size();++i){
+      if(x>=kps[i].x-1e-6&&x<=kps[i+1].x+1e-6){
+        double t=(kps[i+1].x>kps[i].x)?(x-kps[i].x)/(kps[i+1].x-kps[i].x):0;
+        return {kps[i].wf+t*(kps[i+1].wf-kps[i].wf),kps[i].hf+t*(kps[i+1].hf-kps[i].hf)};
+      }
+    }
+    return {endW,endH};
+  };
 
-  BRepBuilderAPI_MakeWire wire;
-  wire.Add(BRepBuilderAPI_MakeEdge(p1, p2));
-  wire.Add(BRepBuilderAPI_MakeEdge(p2, p3));
-  wire.Add(BRepBuilderAPI_MakeEdge(p3, p4));
-  wire.Add(BRepBuilderAPI_MakeEdge(p4, p5));
-  wire.Add(BRepBuilderAPI_MakeEdge(p5, p6));
-  wire.Add(BRepBuilderAPI_MakeEdge(p6, p7));
-  wire.Add(BRepBuilderAPI_MakeEdge(p7, p8));
-  wire.Add(BRepBuilderAPI_MakeEdge(p8, p1));
-  TopoDS_Face face = BRepBuilderAPI_MakeFace(wire.Wire()).Face();
-  return BRepPrimAPI_MakePrism(face, gp_Vec(0, 0, params.totalLength)).Shape();
+  BRepOffsetAPI_ThruSections loft(Standard_True,Standard_True);
+  for(double x:xs){
+    std::pair<double,double> ih=interp(x);
+    double wf=ih.first, hf=ih.second;
+    double bW=BW*wf, hW=HW*wf, Hx=H*hf;
+    // H-beam section: full-width flanges top & bottom, narrower web, side grooves
+    auto P=[&](double y,double z){return gp_Pnt(x,y,z);};
+    double gh=Hx*0.25; // groove height (each side)
+    BRepBuilderAPI_MakeWire w;
+    w.Add(BRepBuilderAPI_MakeEdge(P(-bW,0),P(bW,0)));         // bottom flange bottom
+    w.Add(BRepBuilderAPI_MakeEdge(P(bW,0),P(bW,gh)));          // bottom flange right side
+    w.Add(BRepBuilderAPI_MakeEdge(P(bW,gh),P(GW,gh)));         // right step inward (groove bottom)
+    w.Add(BRepBuilderAPI_MakeEdge(P(GW,gh),P(GW,Hx-gh)));      // web right side
+    w.Add(BRepBuilderAPI_MakeEdge(P(GW,Hx-gh),P(bW,Hx-gh)));   // right step outward (groove top)
+    w.Add(BRepBuilderAPI_MakeEdge(P(bW,Hx-gh),P(bW,Hx)));      // top flange right side
+    w.Add(BRepBuilderAPI_MakeEdge(P(bW,Hx),P(-bW,Hx)));        // top flange top
+    w.Add(BRepBuilderAPI_MakeEdge(P(-bW,Hx),P(-bW,Hx-gh)));    // top flange left side
+    w.Add(BRepBuilderAPI_MakeEdge(P(-bW,Hx-gh),P(-GW,Hx-gh))); // left step inward (groove top)
+    w.Add(BRepBuilderAPI_MakeEdge(P(-GW,Hx-gh),P(-GW,gh)));    // web left side
+    w.Add(BRepBuilderAPI_MakeEdge(P(-GW,gh),P(-bW,gh)));       // left step outward (groove bottom)
+    w.Add(BRepBuilderAPI_MakeEdge(P(-bW,gh),P(-bW,0)));        // bottom flange left side
+    loft.AddWire(w.Wire());
+  }
+  loft.Build();
+  if(!loft.IsDone()) throw Standard_ConstructionError("Guard rail loft failed");
+  return loft.Shape();
 }
 
 TopoDS_Shape create_guard_rail(const guard_rail_params &params,
-                               const gp_Pnt &startPoint,
-                               const gp_Pnt &endPoint) {
-  // Create rail along X, then transform
-  rail_params rp;
-  rp.railHeight = params.height;
-  rp.headWidth = params.headWidth;
-  rp.baseWidth = params.baseWidth;
-  rp.standardLength = params.totalLength;
-  rp.headHeight = params.height * 0.4;
-  rp.baseHeight = params.height * 0.2;
-  rp.webThickness = params.baseWidth * 0.2;
-  TopoDS_Shape shape = create_rail(rp);
-
-  gp_Vec vec(startPoint, endPoint);
-  double len = vec.Magnitude();
-  if (len <= Precision::Confusion())
-    return shape;
-
-  double scale = len / params.totalLength;
-  gp_Trsf s;
-  s.SetScale(gp::Origin(), scale);
-  shape = BRepBuilderAPI_Transform(shape, s).Shape();
-
-  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
-  gp_Ax3 targetAx3(startPoint, gp::DZ(), gp_Dir(vec));
-  gp_Trsf t;
-  t.SetTransformation(targetAx3, sourceAx3);
-  return BRepBuilderAPI_Transform(shape, t).Shape();
+                                const gp_Pnt &startPoint,
+                                const gp_Pnt &endPoint) {
+  TopoDS_Shape s = create_guard_rail(params);
+  gp_Vec dir(startPoint, endPoint);
+  if (dir.Magnitude() <= Precision::Confusion()) return s;
+  gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX()), tgt(startPoint, gp::DZ(), gp_Dir(dir));
+  gp_Trsf tr; tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
 }
 
 // =========================================================================
@@ -3449,69 +3463,52 @@ TopoDS_Shape create_frog(const frog_params &params) {
     throw Standard_ConstructionError("Turnout number must be positive");
 
   double frogAngle = atan2(1.0, (double)params.turnoutNo);
-  double gauge = params.gauge;
+  double gauge = params.gauge, halfGauge = gauge / 2.0;
   double frogLen = gauge * params.turnoutNo * 0.3;
   double H = params.railHeight;
-  double hW = params.railHeadWidth / 2.0;
-  double bW = params.railBaseWidth / 2.0;
-
-  auto makePointRail = [&](double yOff, double angle,
-                           double len) -> TopoDS_Shape {
-    // Point rail: triangular tapered beam
-    gp_Pnt b1(-bW, yOff - bW, 0), b2(bW, yOff - bW, 0);
-    gp_Pnt b3(bW, yOff + bW, 0), b4(-bW, yOff + bW, 0);
-    TopoDS_Wire bw =
-        BRepBuilderAPI_MakePolygon(b1, b2, b3, b4, Standard_True).Wire();
-    double tipX = len * cos(frogAngle * 0.5);
-    gp_Pnt t1(-1, yOff - 1, H), t2(1, yOff - 1, H);
-    gp_Pnt t3(1, yOff + 1, H), t4(-1, yOff + 1, H);
-    TopoDS_Wire tw =
-        BRepBuilderAPI_MakePolygon(t1, t2, t3, t4, Standard_True).Wire();
-    BRepOffsetAPI_ThruSections gen(Standard_True);
-    gen.AddWire(bw);
-    gen.AddWire(tw);
-    gen.Build();
-    return gen.Shape();
-  };
+  double hW = params.railHeadWidth / 2.0, bW = params.railBaseWidth / 2.0;
 
   BRep_Builder builder;
   TopoDS_Compound compound;
   builder.MakeCompound(compound);
 
-  // Left point rail tapering right
-  double halfGauge = gauge / 2.0;
-  builder.Add(compound,
-              makePointRail(-halfGauge * 0.3, frogAngle / 2, frogLen * 0.7));
-  // Right point rail tapering left
-  builder.Add(compound,
-              makePointRail(halfGauge * 0.3, -frogAngle / 2, frogLen * 0.7));
+  // Two wing rails crossing near origin with visible gap; point rails between them
+  double halfAngle = frogAngle * 0.5;
+  double wLen = frogLen * 0.6, prLen = frogLen * 0.4;
+  double wOff = wLen * tan(halfAngle);
 
-  // Wing rails on each side
-  for (int side = -1; side <= 1; side += 2) {
-    double y = side * halfGauge;
-    double wingLen = frogLen * 0.6;
-    // Wing rail: bent rail segment tapering toward frog
-    gp_Pnt w1(0, y, 0), w2(frogLen * 0.4, y + side * frogLen * 0.15, 0);
-    gp_Pnt w3(frogLen * 0.8, y + side * frogLen * 0.08, 0);
-    BRepBuilderAPI_MakeWire ww;
-    ww.Add(BRepBuilderAPI_MakeEdge(w1, w2));
-    ww.Add(BRepBuilderAPI_MakeEdge(w2, w3));
-    // Rail section
-    BRepBuilderAPI_MakeWire rw;
-    rw.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(-hW, 0, 0), gp_Pnt(hW, 0, 0)));
-    rw.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(hW, 0, 0), gp_Pnt(hW, 0, H)));
-    rw.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(hW, 0, H), gp_Pnt(-hW, 0, H)));
-    rw.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(-hW, 0, H), gp_Pnt(-hW, 0, 0)));
-    TopoDS_Face rf = BRepLib_MakeFace(rw.Wire()).Face();
-    // Use the wing wire as spine
-    BRepOffsetAPI_MakePipeShell wingPipe(ww.Wire());
-    wingPipe.Add(rw.Wire());
-    wingPipe.SetMode(Standard_False);
-    wingPipe.Build();
-    if (wingPipe.IsDone())
-      builder.Add(compound, wingPipe.Shape());
-  }
+  auto lineSeg = [&](double x1,double y1,double x2,double y2){
+    return std::vector<centerline_segment>{{centerline_curve_type::LINE,{gp_Pnt(x1,y1,0),gp_Pnt(x2,y2,0)}}};
+  };
+  auto pathRail = [&](const std::vector<centerline_segment> &p, double latOff=0){
+    rail_params rp; rp.railHeight=H; rp.headWidth=params.railHeadWidth;
+    rp.baseWidth=params.railBaseWidth; rp.webThickness=params.railBaseWidth*0.12;
+    rp.headHeight=0; rp.baseHeight=0;
+    return create_rail_path(rp, p, latOff, 0);
+  };
 
+  // Wing rails near origin: separated by throat gap (辙叉咽喉)
+  // Upper-right → lower-left (wing rail A)
+  double gap = 130.0; // throat gap between wing rail inner edges
+  builder.Add(compound, pathRail(lineSeg(wLen, wOff, 0, gap*0.5)));
+  builder.Add(compound, pathRail(lineSeg(0, gap*0.5, -wLen, -wOff)));
+  // Lower-right → upper-left (wing rail B)
+  builder.Add(compound, pathRail(lineSeg(wLen, -wOff, 0, -gap*0.5)));
+  builder.Add(compound, pathRail(lineSeg(0, -gap*0.5, -wLen, wOff)));
+
+  // Point rails: visible between wing rails, tip near origin, heel at root
+  switch_rail_params srp;
+  srp.length=prLen; srp.railHeight=H;
+  srp.railHeadWidth=params.railHeadWidth; srp.railBaseWidth=params.railBaseWidth;
+  srp.webThickness=params.railBaseWidth*0.12; srp.tipWidth=10;
+  srp.curveRadius=0; srp.isLeftHand=true;
+  double flangeway = 5.0;
+  // Left point rail (lower side): between wing rails, gap from both
+  double prTipX = -frogLen * 0.05;
+  double prOff = prLen * tan(halfAngle);
+  builder.Add(compound, create_switch_rail(srp, lineSeg(prTipX, -flangeway, -prLen, -(prOff+flangeway))));
+  // Right point rail (upper side)
+  builder.Add(compound, create_switch_rail(srp, lineSeg(prTipX, flangeway, -prLen, prOff+flangeway)));
   return compound;
 }
 
