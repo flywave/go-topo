@@ -161,10 +161,10 @@ void test_suspension_hard_span() {
 void test_rail() {
   std::cout << "\n=== Rail ===" << std::endl;
   rail_params p;
-  p.railHeight = 176; p.headWidth = 70.6; p.baseWidth = 150;
-  p.webThickness = 16.5; p.headHeight = 48.5; p.baseHeight = 30.2;
-  p.headRadius = 13; p.standardLength = 2000;
-  test_export(create_rail(p), "rail_60kg");
+  p.railHeight = 180.98; p.headWidth = 76.2; p.baseWidth = 152.4;
+  p.webThickness = 16.67; p.headHeight = 44.45; p.baseHeight = 30.16;
+  p.headRadius = 31.75; p.standardLength = 2000;
+  test_export(create_rail(p), "rail_132re");
 }
 
 void test_sleeper() {
@@ -268,7 +268,7 @@ int main() {
   run("Hanger Post", test_hanger_post);
   run("Portal Frame", test_portal_frame);
   run("Suspension Hard Span", test_suspension_hard_span);
-  run("Rail 60kg", test_rail);
+  run("Rail 132RE", test_rail);
   run("Sleeper", test_sleeper);
   run("Ballast Straight", []{
     ballast_params p; p.topWidth = 3600; p.thickness = 350; p.sideSlope = 1.5;

@@ -2566,85 +2566,53 @@ TopoDS_Shape create_rail(const rail_params &params) {
     throw Standard_ConstructionError("Rail dimensions must be positive");
 
   const double H = params.railHeight;
-  const double hH = params.headHeight > 0 ? params.headHeight : H * 0.36;
-  const double bH = params.baseHeight > 0 ? params.baseHeight : H * 0.18;
+  const double hH = params.headHeight > 0 ? params.headHeight : H * 0.2456;
+  const double bH = params.baseHeight > 0 ? params.baseHeight : H * 0.1667;
   const double hW = params.headWidth / 2.0;
   const double bW = params.baseWidth / 2.0;
-  const double wT =
-      params.webThickness > 0 ? params.webThickness / 2.0 : bW * 0.22;
+  const double wT = params.webThickness > 0 ? params.webThickness / 2.0 : 8.334;
 
-  // 18-point rail profile in YZ plane (Z=0 at base bottom, Y=0 at centerline)
-  // Head: wide top with rounded corners, slight dome
-  // Web: tapered waist connecting head to base
-  // Base: wide bottom with 1:4 end slopes
+  // 30-point in XY plane, extrude along Z
   BRepBuilderAPI_MakeWire wire;
+  auto L = [&](double y, double z, double y2, double z2) {
+    wire.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(y, z, 0), gp_Pnt(y2, z2, 0)));
+  };
 
-  // Head top surface (3 segments for slight dome)
-  gp_Pnt hTL(-hW, 0, H);
-  gp_Pnt hTC(-hW * 0.7, 0, H + hH * 0.02);
-  gp_Pnt hTM(0, 0, H + hH * 0.03);
-  gp_Pnt hTR(hW * 0.7, 0, H + hH * 0.02);
-  gp_Pnt hTR2(hW, 0, H);
-  wire.Add(BRepBuilderAPI_MakeEdge(hTL, hTC));
-  wire.Add(BRepBuilderAPI_MakeEdge(hTC, hTM));
-  wire.Add(BRepBuilderAPI_MakeEdge(hTM, hTR));
-  wire.Add(BRepBuilderAPI_MakeEdge(hTR, hTR2));
+  // Right half — clockwise from top center
+  L(0, H, hW, H);                                                   // center→right top
+  L(hW, H, hW, H - hH*0.15);                                       // corner bevel
+  L(hW, H-hH*0.15, hW*0.93, H - hH*0.35);
+  L(hW*0.93, H-hH*0.35, hW*0.82, H - hH*0.65);
+  L(hW*0.82, H-hH*0.65, hW*0.65, H - hH*0.85);
+  L(hW*0.65, H-hH*0.85, wT*1.5, H - hH*0.95);
+  L(wT*1.5, H-hH*0.95, wT, H - hH);
 
-  // Head right side: outer vertical + bevel to web
-  gp_Pnt hRB1(hW, 0, H - hH * 0.3);
-  gp_Pnt hRB2(hW * 0.85, 0, H - hH * 0.7);
-  wire.Add(BRepBuilderAPI_MakeEdge(hTR2, hRB1));
-  wire.Add(BRepBuilderAPI_MakeEdge(hRB1, hRB2));
+  L(wT, H-hH, wT, bH + bH*0.5);                                     // web body
+  L(wT, bH+bH*0.5, bW*0.3, bH*0.3);
+  L(bW*0.3, bH*0.3, bW*0.6, bH*0.65);
+  L(bW*0.6, bH*0.65, bW*0.85, bH*0.9);
+  L(bW*0.85, bH*0.9, bW, bH);                                       // base top right
 
-  // Head-web transition (beveled)
-  gp_Pnt hwb(wT, 0, H - hH);
-  wire.Add(BRepBuilderAPI_MakeEdge(hRB2, hwb));
+  L(bW, bH, bW, 0);                                                  // base slope
+  L(bW, 0, -bW, 0);                                                  // bottom flat
+  L(-bW, 0, -bW, bH);                                                // left base slope
 
-  // Web body (tapered waist)
-  gp_Pnt webBot(wT, 0, bH + bH * 0.3);
-  wire.Add(BRepBuilderAPI_MakeEdge(hwb, webBot));
+  L(-bW, bH, -bW*0.85, bH*0.9);                                     // left flare
+  L(-bW*0.85, bH*0.9, -bW*0.6, bH*0.65);
+  L(-bW*0.6, bH*0.65, -bW*0.3, bH*0.3);
+  L(-bW*0.3, bH*0.3, -wT, bH+bH*0.5);
 
-  // Web-base transition (flare to base)
-  gp_Pnt wbFlare(bW * 0.7, 0, bH * 0.5);
-  gp_Pnt wbBase(bW, 0, bH);
-  wire.Add(BRepBuilderAPI_MakeEdge(webBot, wbFlare));
-  wire.Add(BRepBuilderAPI_MakeEdge(wbFlare, wbBase));
-
-  // Base right slope (1:4) and bottom
-  gp_Pnt baseBotR(bW, 0, 0);
-  wire.Add(BRepBuilderAPI_MakeEdge(wbBase, baseBotR));
-
-  // Base bottom flat
-  gp_Pnt baseBotL(-bW, 0, 0);
-  wire.Add(BRepBuilderAPI_MakeEdge(baseBotR, baseBotL));
-
-  // Base left slope (1:4)
-  gp_Pnt baseTopL(-bW, 0, bH);
-  wire.Add(BRepBuilderAPI_MakeEdge(baseBotL, baseTopL));
-
-  // Base left top → web flare
-  gp_Pnt wbFlareL(-bW * 0.7, 0, bH * 0.5);
-  gp_Pnt webBotL(-wT, 0, bH + bH * 0.3);
-  wire.Add(BRepBuilderAPI_MakeEdge(baseTopL, wbFlareL));
-  wire.Add(BRepBuilderAPI_MakeEdge(wbFlareL, webBotL));
-
-  // Web left body
-  gp_Pnt webTopL(-wT, 0, H - hH);
-  wire.Add(BRepBuilderAPI_MakeEdge(webBotL, webTopL));
-
-  // Head-web left transition
-  gp_Pnt hwbL(-hW * 0.85, 0, H - hH * 0.7);
-  gp_Pnt hLB1(-hW, 0, H - hH * 0.3);
-  wire.Add(BRepBuilderAPI_MakeEdge(webTopL, hwbL));
-  wire.Add(BRepBuilderAPI_MakeEdge(hwbL, hLB1));
-  wire.Add(BRepBuilderAPI_MakeEdge(hLB1, hTL)); // close to start
-
-  if (!wire.IsDone())
-    throw Standard_ConstructionError("Rail profile wire failed");
+  L(-wT, bH+bH*0.5, -wT, H - hH);                                   // web left
+  L(-wT, H-hH, -wT*1.5, H - hH*0.95);
+  L(-wT*1.5, H-hH*0.95, -hW*0.65, H - hH*0.85);
+  L(-hW*0.65, H-hH*0.85, -hW*0.82, H - hH*0.65);
+  L(-hW*0.82, H-hH*0.65, -hW*0.93, H - hH*0.35);
+  L(-hW*0.93, H-hH*0.35, -hW, H - hH*0.15);
+  L(-hW, H-hH*0.15, -hW, H);
+  L(-hW, H, 0, H);                                                   // close to center
 
   TopoDS_Face face = BRepLib_MakeFace(wire.Wire()).Face();
-  return BRepPrimAPI_MakePrism(face, gp_Vec(0, 0, params.standardLength))
-      .Shape();
+  return BRepPrimAPI_MakePrism(face, gp_Vec(0, 0, params.standardLength)).Shape();
 }
 
 TopoDS_Shape create_rail(const rail_params &params, const gp_Pnt &startPoint,
