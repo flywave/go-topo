@@ -784,6 +784,10 @@ TopoDS_Shape create_switch_rail(const switch_rail_params &params,
                                  const gp_Pnt &position,
                                  const gp_Dir &direction = gp::DX(),
                                  const gp_Dir &upDir = gp::DZ());
+TopoDS_Shape create_switch_rail(const switch_rail_params &params,
+                                 const std::vector<centerline_segment> &segments,
+                                 double lateralOffset = 0,
+                                 double verticalOffset = 0);
 
 // =========================================================================
 // TRACK: 32. Frog (辙叉)
@@ -805,6 +809,52 @@ TopoDS_Shape create_frog(const frog_params &params,
 // =========================================================================
 // TRACK: 26. Ballast (道床) — 沿曲线中心线扫掠
 // =========================================================================
+// =========================================================================
+// TRACK: 33. Parametric Turnout (参量化道岔)
+// =========================================================================
+
+struct track_curve {                        // 中心线段
+  centerline_curve_type type;               // LINE / ARC / BEZIER
+  std::vector<gp_Pnt> points;
+};
+
+struct turnout_build_params {
+  double gauge;                             // 轨距(mm)
+  double railHeight;                        // 轨高(mm)
+  double railHeadWidth;                     // 轨头宽(mm)
+  double railBaseWidth;                     // 轨底宽(mm)
+  double webThickness;                      // 轨腰厚(mm)
+  double sleeperLength;                     // 枕木长度(mm)
+  double sleeperWidth;                      // 枕木宽度(mm)
+  double sleeperHeight;                     // 枕木高度(mm)
+  double sleeperSpacing;                    // 枕木间距(mm)
+  double ballastTopWidth;                   // 道床顶宽(mm)
+  double ballastThickness;                  // 道床厚度(mm)
+  double ballastSlope;                      // 道床边坡
+};
+
+// 中心线图: 构建节点、分类、生成道岔
+struct centerline_graph {
+  struct node {
+    gp_Pnt pt;
+    std::vector<int> edge_ids;             // 关联的边索引
+    bool is_crossing;                      // 两条贯穿线交叉 → 辙叉
+    bool is_merge;                         // 一条终止于另一条 → 尖轨
+  };
+  std::vector<track_curve> edges;          // 所有边
+  std::vector<node> nodes;                 // 由 build_centerline_graph 计算
+};
+
+centerline_graph build_centerline_graph(const std::vector<track_curve> &edges,
+                                        double tolerance = 1.0);
+
+TopoDS_Shape create_turnout(const centerline_graph &graph,
+                            const turnout_build_params &params);
+
+// =========================================================================
+// TRACK: 33b. Legacy Turnout (旧道岔接口)
+// =========================================================================
+
 struct turnout_params {
   int turnoutNo;               // 道岔号数
   bool isLeftHand;             // 左开/右开

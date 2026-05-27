@@ -2734,9 +2734,9 @@ TopoDS_Shape create_rail_path(const rail_params &params,
     gp_Trsf r; r.SetTransformation(tgt, src);
     rail = BRepBuilderAPI_Transform(rail, r).Shape();
 
-    // Translation only (no rotation applied to mesh)
+    // Translate to path start + lateral/vertical offsets
     gp_Trsf tr;
-    tr.SetTranslation(gp_Vec(perp.XYZ() * lateralOffset + gp::DZ().XYZ() * verticalOffset));
+    tr.SetTranslation(gp_Vec(p0.XYZ() + perp.XYZ() * lateralOffset + gp::DZ().XYZ() * verticalOffset));
     return BRepBuilderAPI_Transform(rail, tr).Shape();
   }
 
@@ -3293,70 +3293,55 @@ TopoDS_Shape create_switch_rail(const switch_rail_params &params) {
   double hW = params.railHeadWidth / 2.0;
   double bW = params.railBaseWidth / 2.0;
   double tW = std::max(params.tipWidth / 2.0, Precision::Confusion());
+  double tB = std::max(tW * (bW / hW), Precision::Confusion()); // base width at tip proportional to head tip
 
-  auto makeProfile = [&](double yHalfFromCenter, double zScale) -> TopoDS_Wire {
-    double y = yHalfFromCenter;
-    double hh = H * 0.36 * zScale;
-    double bh = H * 0.18 * zScale;
-    double hw = hW * zScale, bw = bW * zScale, wt = bw * 0.22;
+  // Cross-section in YZ plane (Y=width, Z=height)
+  // At tip (t=0): narrow width (tW/tB), nearly full height
+  // At heel (t=1): full width (hW/bW), full height
+  auto makeProfile = [&](double xPos, double t) -> TopoDS_Wire {
+    double wsc = t + (1-t) * (tW / hW); // width scale: tW/hW at tip → 1 at heel
+    double hsc = 0.95 + 0.05 * t;        // height scale: 0.95 at tip → 1 at heel
+    double hh = H * 0.36 * hsc, bh = H * 0.18 * hsc;
+    double hw = hW * wsc, bw = bW * wsc, wt = bw * 0.22;
+    double x = xPos, zH = H * hsc;
+    auto P = [&](double y, double z) { return gp_Pnt(x, y, z); };
     BRepBuilderAPI_MakeWire w;
-    w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(-hw, y, H * zScale),
-                                  gp_Pnt(hw, y, H * zScale)));
-    w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(hw, y, H * zScale),
-                                  gp_Pnt(hw, y, H * zScale - hh)));
-    w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(hw, y, H * zScale - hh),
-                                  gp_Pnt(wt, y, H * zScale - hh)));
-    w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(wt, y, H * zScale - hh),
-                                  gp_Pnt(wt, y, bh)));
-    w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(wt, y, bh), gp_Pnt(bw, y, bh)));
-    w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(bw, y, bh), gp_Pnt(bw, y, 0)));
-    w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(bw, y, 0), gp_Pnt(-bw, y, 0)));
-    w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(-bw, y, 0), gp_Pnt(-bw, y, bh)));
-    w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(-bw, y, bh), gp_Pnt(-wt, y, bh)));
-    w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(-wt, y, bh),
-                                  gp_Pnt(-wt, y, H * zScale - hh)));
-    w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(-wt, y, H * zScale - hh),
-                                  gp_Pnt(-hw, y, H * zScale - hh)));
-    w.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(-hw, y, H * zScale - hh),
-                                  gp_Pnt(-hw, y, H * zScale)));
+    w.Add(BRepBuilderAPI_MakeEdge(P(-hw, zH), P(hw, zH)));
+    w.Add(BRepBuilderAPI_MakeEdge(P(hw, zH), P(hw, zH-hh)));
+    w.Add(BRepBuilderAPI_MakeEdge(P(hw, zH-hh), P(wt, zH-hh)));
+    w.Add(BRepBuilderAPI_MakeEdge(P(wt, zH-hh), P(wt, bh)));
+    w.Add(BRepBuilderAPI_MakeEdge(P(wt, bh), P(bw, bh)));
+    w.Add(BRepBuilderAPI_MakeEdge(P(bw, bh), P(bw, 0)));
+    w.Add(BRepBuilderAPI_MakeEdge(P(bw, 0), P(-bw, 0)));
+    w.Add(BRepBuilderAPI_MakeEdge(P(-bw, 0), P(-bw, bh)));
+    w.Add(BRepBuilderAPI_MakeEdge(P(-bw, bh), P(-wt, bh)));
+    w.Add(BRepBuilderAPI_MakeEdge(P(-wt, bh), P(-wt, zH-hh)));
+    w.Add(BRepBuilderAPI_MakeEdge(P(-wt, zH-hh), P(-hw, zH-hh)));
+    w.Add(BRepBuilderAPI_MakeEdge(P(-hw, zH-hh), P(-hw, zH)));
     return w.Wire();
   };
 
-  // Build taper: 3 sections from tip(very thin) to heel(full)
+  // Build taper: N sections from tip(very thin, at x=0) to heel(full, at x=length)
   int nSections = 5;
-  BRepOffsetAPI_ThruSections gen(Standard_True);
+  BRepOffsetAPI_ThruSections gen(Standard_True, Standard_True);
   for (int i = 0; i < nSections; ++i) {
     double t = (double)i / (nSections - 1);
     double x = t * params.length;
-    double scale = 0.05 + 0.95 * t;
-    gen.AddWire(makeProfile(0, scale));
+    gen.AddWire(makeProfile(x, t));
   }
   gen.Build();
   TopoDS_Shape rail = gen.Shape();
-
+  
   // If curved, rotate each section point around the curve center
   if (params.curveRadius > 0) {
-    double curveDir = params.isLeftHand ? 1.0 : -1.0;
-    // Build curved path
     double R = params.curveRadius;
-    double totalAngle = params.length / R;
     int nSeg = 20;
-    std::vector<gp_Pnt> pathPts;
+    BRepOffsetAPI_ThruSections curveGen(Standard_True, Standard_True);
     for (int i = 0; i <= nSeg; ++i) {
-      double a = totalAngle * i / nSeg * curveDir;
-      pathPts.push_back(gp_Pnt(R * sin(a), R * (1 - cos(a)) * curveDir, 0));
+      double t = (double)i / nSeg;
+      double x = t * params.length;
+      curveGen.AddWire(makeProfile(x, t));
     }
-    // Sweep along curved path
-    BRepBuilderAPI_MakeWire pathWire;
-    for (int i = 0; i < nSeg; ++i)
-      pathWire.Add(BRepBuilderAPI_MakeEdge(pathPts[i], pathPts[i + 1]));
-    // Use tip profile and heel profile for the sweep
-    TopoDS_Face tipFace = BRepLib_MakeFace(makeProfile(0, 0.05)).Face();
-    TopoDS_Face heelFace = BRepLib_MakeFace(makeProfile(0, 1.0)).Face();
-    BRepOffsetAPI_ThruSections curveGen(Standard_True);
-    curveGen.AddWire(makeProfile(0, 0.05));
-    curveGen.AddWire(makeProfile(0, 0.3));
-    curveGen.AddWire(makeProfile(0, 1.0));
     curveGen.Build();
     return curveGen.Shape();
   }
@@ -3372,6 +3357,88 @@ TopoDS_Shape create_switch_rail(const switch_rail_params &params,
   gp_Trsf tr;
   tr.SetTransformation(tgt, src);
   return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+// Switch rail along arbitrary path (LINE/ARC/BEZIER) via ThruSections
+TopoDS_Shape create_switch_rail(const switch_rail_params &params,
+                                 const std::vector<centerline_segment> &segments,
+                                 double lateralOffset,
+                                 double verticalOffset) {
+  double H=params.railHeight, hW=params.railHeadWidth/2, bW=params.railBaseWidth/2;
+  double tW=std::max(params.tipWidth/2,Precision::Confusion());
+  double tB=std::max(tW*(bW/hW),Precision::Confusion());
+  double totLen=0;
+  for (auto &s:segments) if (s.points.size()>=2) totLen+=s.points[0].Distance(s.points.back());
+
+  auto makeSection=[&](const gp_Pnt &p,const gp_Dir &t,double prog) {
+    gp_Vec Hv(t.XYZ().Crossed(gp::DZ().XYZ()));
+    gp_Dir Hd=Hv.Magnitude()<Precision::Confusion()?gp::DX():gp_Dir(Hv);
+    gp_Dir Vd=Hd.Crossed(t);
+    double wsc=prog+(1-prog)*(tW/hW);
+    double hsc=0.95+0.05*prog;
+    double hh=H*0.36*hsc, bh=H*0.18*hsc;
+    double hw=hW*wsc, bw=bW*wsc, wt=bw*0.22;
+    auto pt=[&](double y,double z){return p.Translated(gp_Vec(Hd.XYZ()*(y+lateralOffset)+Vd.XYZ()*(z+verticalOffset)));};
+    BRepBuilderAPI_MakeWire w;
+    w.Add(BRepBuilderAPI_MakeEdge(pt(-hw, H*hsc), pt(hw, H*hsc)));
+    w.Add(BRepBuilderAPI_MakeEdge(pt(hw, H*hsc), pt(hw, H*hsc-hh)));
+    w.Add(BRepBuilderAPI_MakeEdge(pt(hw, H*hsc-hh), pt(wt, H*hsc-hh)));
+    w.Add(BRepBuilderAPI_MakeEdge(pt(wt, H*hsc-hh), pt(wt, bh)));
+    w.Add(BRepBuilderAPI_MakeEdge(pt(wt, bh), pt(bw, bh)));
+    w.Add(BRepBuilderAPI_MakeEdge(pt(bw, bh), pt(bw, 0)));
+    w.Add(BRepBuilderAPI_MakeEdge(pt(bw, 0), pt(-bw, 0)));
+    w.Add(BRepBuilderAPI_MakeEdge(pt(-bw, 0), pt(-bw, bh)));
+    w.Add(BRepBuilderAPI_MakeEdge(pt(-bw, bh), pt(-wt, bh)));
+    w.Add(BRepBuilderAPI_MakeEdge(pt(-wt, bh), pt(-wt, H*hsc-hh)));
+    w.Add(BRepBuilderAPI_MakeEdge(pt(-wt, H*hsc-hh), pt(-hw, H*hsc-hh)));
+    w.Add(BRepBuilderAPI_MakeEdge(pt(-hw, H*hsc-hh), pt(-hw, H*hsc)));
+    return w.Wire();
+  };
+
+  struct CR{Handle(Geom_Curve)c;double l;};
+  std::vector<CR> crvs;
+  for (auto &seg:segments) {
+    if (seg.points.size()<2) continue;
+    if (seg.type==centerline_curve_type::LINE) {
+      double d=seg.points[0].Distance(seg.points[1]);
+      crvs.push_back({GC_MakeSegment(seg.points[0],seg.points[1]).Value(),d});
+    } else if (seg.type==centerline_curve_type::ARC && seg.points.size()>=3) {
+      Handle(Geom_TrimmedCurve) arc=GC_MakeArcOfCircle(seg.points[0],seg.points[1],seg.points[2]);
+      if (!arc.IsNull()) {
+        double al=0;
+        Handle(Geom_Curve) bc=arc->BasisCurve();
+        if (!bc.IsNull()) al=Handle(Geom_Circle)::DownCast(bc)->Circ().Radius()*std::abs(arc->LastParameter()-arc->FirstParameter());
+        crvs.push_back({arc,al});
+      }
+    } else if (seg.type==centerline_curve_type::BEZIER) {
+      auto arr=new TColgp_HArray1OfPnt(1,(int)seg.points.size());
+      for (size_t i=0;i<seg.points.size();++i) arr->SetValue((int)(i+1),seg.points[i]);
+      crvs.push_back({new Geom_BezierCurve(arr->Array1()),seg.points.front().Distance(seg.points.back())});
+    }
+  }
+  if (crvs.empty()) throw Standard_ConstructionError("No valid switch rail path");
+
+  double tot=0; for (auto &cr:crvs) tot+=cr.l;
+  int nSec=std::max(3,(int)(tot/500.0));
+  BRepOffsetAPI_ThruSections loft(Standard_True,Standard_True);
+  for (int i=0;i<=nSec;++i) {
+    double target=tot*i/nSec, walked=0, prog=(double)i/nSec;
+    bool found=false;
+    for (auto &cr:crvs) {
+      if (walked+cr.l>=target-1e-9) {
+        double frac=(target-walked)/cr.l;
+        double u=cr.c->FirstParameter()+frac*(cr.c->LastParameter()-cr.c->FirstParameter());
+        gp_Pnt pt; gp_Vec vt; cr.c->D1(u,pt,vt);
+        loft.AddWire(makeSection(pt,gp_Dir(vt),prog));
+        found=true; break;
+      }
+      walked+=cr.l;
+    }
+    if (!found){gp_Pnt pt;gp_Vec vt;crvs.back().c->D1(crvs.back().c->LastParameter(),pt,vt);loft.AddWire(makeSection(pt,gp_Dir(vt),1.0));}
+  }
+  loft.Build();
+  if (!loft.IsDone()) throw Standard_ConstructionError("Switch rail loft failed");
+  return loft.Shape();
 }
 
 // =========================================================================
@@ -3478,21 +3545,35 @@ TopoDS_Shape create_turnout(const turnout_params &params) {
   TopoDS_Compound compound;
   builder.MakeCompound(compound);
 
-  // --- Stock rails (基本轨) ---
-  // Straight stock rail
-  gp_Pnt sl1(0, -halfGauge, 0), sl2(totalLen, -halfGauge, 0);
-  TopoDS_Shape sRail =
-      BRepPrimAPI_MakeCylinder(gp_Ax2(sl1, gp_Dir(sl2.XYZ() - sl1.XYZ())),
-                               params.railHeadWidth / 2, totalLen)
-          .Shape();
-  builder.Add(compound, sRail);
-  // Straight stock rail (other side)
-  gp_Pnt sr1(0, halfGauge, 0), sr2(totalLen, halfGauge, 0);
-  TopoDS_Shape sRail2 =
-      BRepPrimAPI_MakeCylinder(gp_Ax2(sr1, gp_Dir(sr2.XYZ() - sr1.XYZ())),
-                               params.railHeadWidth / 2, totalLen)
-          .Shape();
-  builder.Add(compound, sRail2);
+  double trackZ = 0; // rails sit on top, ballast below
+  double ballastThick = 350;
+  double sleeperH = 200;
+
+  // --- Ballast via create_ballast along centerline ---
+  {
+    ballast_params bp;
+    bp.topWidth = 3600; bp.thickness = ballastThick; bp.sideSlope = 1.5; bp.tiltAngle = 0;
+    bp.centerlineSegments.push_back({centerline_curve_type::LINE,
+      {gp_Pnt(0, 0, 0), gp_Pnt(totalLen, 0, 0)}});
+    builder.Add(compound, create_ballast(bp));
+  }
+
+  // --- Stock rails (基本轨) via create_rail_path ---
+  rail_params rp;
+  rp.railHeight = params.railHeight; rp.headWidth = params.railHeadWidth;
+  rp.baseWidth = params.railBaseWidth; rp.webThickness = params.webThickness;
+  rp.headHeight = 0; rp.baseHeight = 0;
+
+  {
+    std::vector<centerline_segment> path = {{centerline_curve_type::LINE,
+      {gp_Pnt(0, -halfGauge, 0), gp_Pnt(totalLen, -halfGauge, 0)}}};
+    builder.Add(compound, create_rail_path(rp, path, 0, ballastThick + sleeperH - 25));
+  }
+  {
+    std::vector<centerline_segment> path = {{centerline_curve_type::LINE,
+      {gp_Pnt(0, halfGauge, 0), gp_Pnt(totalLen, halfGauge, 0)}}};
+    builder.Add(compound, create_rail_path(rp, path, 0, ballastThick + sleeperH - 25));
+  }
 
   // --- Switch rail (尖轨) ---
   switch_rail_params srp;
@@ -3504,32 +3585,53 @@ TopoDS_Shape create_turnout(const turnout_params &params) {
   srp.curveRadius = R;
   srp.isLeftHand = params.isLeftHand;
   builder.Add(compound,
-              create_switch_rail(srp, gp_Pnt(0, halfGauge * handSign, 0),
+              create_switch_rail(srp, gp_Pnt(0, halfGauge * handSign, ballastThick + sleeperH - 25),
                                  gp::DX(), gp::DZ()));
 
-  // --- Guide curve rail (导曲线轨) ---
-  double curveStart = switchLen * 0.8;
-  double curveEnd = totalLen - frogLen * 0.9;
-  int nCurvePts = 30;
-  std::vector<gp_Pnt> curvePts;
-  for (int i = 0; i <= nCurvePts; ++i) {
-    double t = (double)i / nCurvePts;
-    double a = frogAngle * t * handSign;
-    double x = curveStart + t * (curveEnd - curveStart);
-    double y = halfGauge * handSign - R * (1 - cos(a)) * handSign;
-    curvePts.push_back(gp_Pnt(x, y, 0));
+  // --- Guide curve rails (导曲线轨) — inner (original) + outer (offset by gauge) ---
+  {
+    double curveStart = switchLen * 0.8;
+    double curveEnd = totalLen - frogLen * 0.9;
+    int nPts = 30;
+    // Compute inner rail points + tangent direction at each point
+    struct Pt { double x, y; };
+    std::vector<Pt> inner(nPts + 1);
+    for (int i = 0; i <= nPts; ++i) {
+      double t = (double)i / nPts;
+      double a = frogAngle * t * handSign;
+      inner[i].x = curveStart + t * (curveEnd - curveStart);
+      inner[i].y = halfGauge * handSign - R * (1 - cos(a)) * handSign;
+    }
+    auto build = [&](std::vector<centerline_segment> &segs, const std::vector<Pt> &pts) {
+      segs.clear();
+      for (int i = 0; i < nPts; ++i)
+        segs.push_back({centerline_curve_type::LINE, {gp_Pnt(pts[i].x, pts[i].y, 0), gp_Pnt(pts[i+1].x, pts[i+1].y, 0)}});
+    };
+    // Outer rail: offset at each point by gauge perpendicular to curve
+    std::vector<Pt> outer(nPts + 1);
+    for (int i = 0; i <= nPts; ++i) {
+      double pxn = 0, pyn = handSign; // default perp = ±Y
+      if (i > 0 && i < nPts) {
+        double dx1 = inner[i].x - inner[i-1].x, dy1 = inner[i].y - inner[i-1].y;
+        double dx2 = inner[i+1].x - inner[i].x, dy2 = inner[i+1].y - inner[i].y;
+        double dx = dx1 + dx2, dy = dy1 + dy2;
+        double len = sqrt(dx*dx + dy*dy);
+        if (len > 1e-9) { pxn = -dy/len * handSign; pyn = dx/len * handSign; }
+      } else {
+        double dx = (i == 0) ? inner[1].x - inner[0].x : inner[nPts].x - inner[nPts-1].x;
+        double dy = (i == 0) ? inner[1].y - inner[0].y : inner[nPts].y - inner[nPts-1].y;
+        double len = sqrt(dx*dx + dy*dy);
+        if (len > 1e-9) { pxn = -dy/len * handSign; pyn = dx/len * handSign; }
+      }
+      outer[i].x = inner[i].x + pxn * gauge;
+      outer[i].y = inner[i].y + pyn * gauge;
+    }
+    std::vector<centerline_segment> segsI, segsO;
+    build(segsI, inner);
+    build(segsO, outer);
+    builder.Add(compound, create_rail_path(rp, segsI, 0, ballastThick + sleeperH - 25));
+    builder.Add(compound, create_rail_path(rp, segsO, 0, ballastThick + sleeperH - 25));
   }
-  BRepBuilderAPI_MakeWire cWire;
-  for (int i = 0; i < nCurvePts; ++i)
-    cWire.Add(BRepBuilderAPI_MakeEdge(curvePts[i], curvePts[i + 1]));
-  gp_Circ cs(gp_Ax2(curvePts[0], gp::DZ()), params.railHeadWidth / 2);
-  TopoDS_Wire cSec = BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(cs));
-  BRepOffsetAPI_MakePipeShell cPipe(cWire.Wire());
-  cPipe.Add(cSec);
-  cPipe.SetMode(Standard_True);
-  cPipe.Build();
-  if (cPipe.IsDone())
-    builder.Add(compound, cPipe.Shape());
 
   // --- Frog (辙叉) ---
   frog_params fp;
@@ -3538,34 +3640,33 @@ TopoDS_Shape create_turnout(const turnout_params &params) {
   fp.railHeight = params.railHeight;
   fp.railHeadWidth = params.railHeadWidth;
   fp.railBaseWidth = params.railBaseWidth;
-  builder.Add(compound, create_frog(fp, gp_Pnt(totalLen - frogLen, 0, 0),
+  builder.Add(compound, create_frog(fp, gp_Pnt(totalLen - frogLen, 0, ballastThick + sleeperH - 25),
                                     gp::DX(), gp::DZ()));
 
-  // --- Guard rails (护轨) — short rails inside stock rails at frog ---
+  // --- Guard rails (护轨) via create_rail_path ---
   for (int side = -1; side <= 1; side += 2) {
     double grLen = frogLen * 0.5;
     double grX = totalLen - frogLen * 0.7;
     double grY = side * (halfGauge - 30);
-    gp_Pnt g1(grX, grY, 0), g2(grX + grLen, grY, 0);
-    builder.Add(compound, BRepPrimAPI_MakeCylinder(
-                              gp_Ax2(g1, gp_Dir(g2.XYZ() - g1.XYZ())),
-                              params.railBaseWidth * 0.3, grLen)
-                              .Shape());
+    std::vector<centerline_segment> path = {{centerline_curve_type::LINE,
+      {gp_Pnt(grX, grY, 0), gp_Pnt(grX + grLen, grY, 0)}}};
+    builder.Add(compound, create_rail_path(rp, path, 0, ballastThick + sleeperH - 25));
   }
 
-  // --- Sleepers (岔枕) — variable length ---
-  int nSleepers = std::max(5, params.sleeperCount);
-  double spSpacing =
-      params.sleeperSpacing > 0 ? params.sleeperSpacing : totalLen / nSleepers;
-  for (int i = 0; i < nSleepers; ++i) {
-    double x = i * spSpacing;
+  // --- Sleepers (岔枕) via create_sleeper ---
+  sleeper_params sp;
+  sp.shapeType = sleeper_shape_type::TRAPEZOIDAL;
+  sp.width = 300; sp.height = sleeperH; sp.gauge = gauge;
+  sp.railBaseWidth = params.railBaseWidth; sp.grooveDepth = 25;
+  sp.spacing = params.sleeperSpacing > 0 ? params.sleeperSpacing : 600;
+  int nSleepers = std::max(2, (int)(totalLen / sp.spacing));
+  for (int i = 0; i <= nSleepers; ++i) {
+    double x = i * sp.spacing;
     double t = x / totalLen;
-    double sLen = 2500 + 300 * t; // sleeper length increases along turnout
-    double sH = 200;
-    builder.Add(compound,
-                BRepPrimAPI_MakeBox(gp_Pnt(x - spSpacing / 2, -sLen / 2, -sH),
-                                    spSpacing * 0.8, sLen, sH)
-                    .Shape());
+    sp.length = 2500 + 300 * std::min(t, 1.0);
+    gp_Pnt pos(x, 0, ballastThick);
+    gp_Dir perp(0, 1, 0);
+    builder.Add(compound, create_sleeper(sp, pos, perp, gp::DZ()));
   }
 
   return compound;
@@ -4047,6 +4148,415 @@ TopoDS_Shape create_reg_arm_bracket(const reg_arm_bracket_params &params,
   gp_Trsf tr;
   tr.SetTransformation(tgt, src);
   return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+// =========================================================================
+// Turnout graph construction
+// =========================================================================
+
+static gp_Pnt circle_center_3p(const gp_Pnt &p1, const gp_Pnt &p2, const gp_Pnt &p3) {
+  double x1=p1.X(),y1=p1.Y(),x2=p2.X(),y2=p2.Y(),x3=p3.X(),y3=p3.Y();
+  double d=2*(x1*(y2-y3)+x2*(y3-y1)+x3*(y1-y2));
+  if (std::abs(d)<1e-12) return gp_Pnt(0,0,0);
+  double a1=x1*x1+y1*y1, a2=x2*x2+y2*y2, a3=x3*x3+y3*y3;
+  double cx=(a1*(y2-y3)+a2*(y3-y1)+a3*(y1-y2))/d;
+  double cy=(a1*(x3-x2)+a2*(x1-x3)+a3*(x2-x1))/d;
+  return gp_Pnt(cx, cy, 0);
+}
+
+static double angle_of(const gp_Pnt &c, const gp_Pnt &p) {
+  return atan2(p.Y()-c.Y(), p.X()-c.X());
+}
+
+static bool angle_between(double a, double a1, double a2) {
+  if (a1 <= a2) return a >= a1-1e-6 && a <= a2+1e-6;
+  return a >= a2-1e-6 && a <= a1+1e-6; // CW: a2 <= a <= a1
+}
+
+// Find closest point on segment p1-p2 to p3
+static double dist_to_segment(const gp_Pnt &p1, const gp_Pnt &p2, const gp_Pnt &p3) {
+  double dx=p2.X()-p1.X(), dy=p2.Y()-p1.Y();
+  double len2=dx*dx+dy*dy;
+  if (len2<1e-12) return p1.Distance(p3);
+  double t=((p3.X()-p1.X())*dx+(p3.Y()-p1.Y())*dy)/len2;
+  t=std::max(0.0,std::min(1.0,t));
+  return gp_Pnt(p1.X()+t*dx,p1.Y()+t*dy,0).Distance(p3);
+}
+
+// Find edge-edge intersection points
+static void edge_intersections(const track_curve &a, const track_curve &b,
+                                std::vector<gp_Pnt> &results) {
+  auto line_line = [&](const gp_Pnt &p1,const gp_Pnt &p2,const gp_Pnt &p3,const gp_Pnt &p4) {
+    double x1=p1.X(),y1=p1.Y(),x2=p2.X(),y2=p2.Y(),x3=p3.X(),y3=p3.Y(),x4=p4.X(),y4=p4.Y();
+    double d=(x1-x2)*(y3-y4)-(y1-y2)*(x3-x4);
+    if (std::abs(d)<1e-12) return;
+    double s=((x1-x3)*(y3-y4)-(y1-y3)*(x3-x4))/d;
+    double t=((x1-x3)*(y1-y2)-(y1-y3)*(x1-x2))/d;
+    if (s>=-1e-6&&s<=1+1e-6&&t>=-1e-6&&t<=1+1e-6)
+      results.push_back(gp_Pnt(x1+s*(x2-x1),y1+s*(y2-y1),0));
+  };
+
+  if (a.type==centerline_curve_type::LINE && b.type==centerline_curve_type::LINE) {
+    if (a.points.size()>=2&&b.points.size()>=2)
+      line_line(a.points[0],a.points[1],b.points[0],b.points[1]);
+  } else if (a.type==centerline_curve_type::LINE && b.type==centerline_curve_type::ARC && b.points.size()>=3) {
+    gp_Pnt c=circle_center_3p(b.points[0],b.points[1],b.points[2]);
+    double R=c.Distance(b.points[0]);
+    // Line from l1 to l2
+    gp_Pnt l1=a.points[0],l2=a.points[1];
+    double dx=l2.X()-l1.X(),dy=l2.Y()-l1.Y();
+    double ex=l1.X()-c.X(),ey=l1.Y()-c.Y();
+    double d=dx*dx+dy*dy;
+    double f=2*(dx*ex+dy*ey);
+    double g=ex*ex+ey*ey-R*R;
+    double disc=f*f-4*d*g;
+    if (disc<-1e-9) return;
+    disc=std::max(0.0,disc);
+    for (double sign : {-1.0,1.0}) {
+      double s=(-f+sign*sqrt(disc))/(2*d);
+      if (s>=-1e-6&&s<=1+1e-6) {
+        gp_Pnt pt(l1.X()+s*dx,l1.Y()+s*dy,0);
+        // Check if within arc angle range
+        double a0=angle_of(c,b.points[0]), a2=angle_of(c,b.points[2]);
+        double da=a2-a0;
+        if (da>M_PI) da-=2*M_PI;
+        else if (da<-M_PI) da+=2*M_PI;
+        double pa=angle_of(c,pt);
+        if (angle_between(pa,a0,a0+da))
+          results.push_back(pt);
+      }
+    }
+  } else {
+    // Asymmetric: swap and try (a is ARC, b is LINE)
+    if (b.type==centerline_curve_type::LINE && a.type==centerline_curve_type::ARC) {
+      edge_intersections(b,a,results);
+    } else if (a.type==centerline_curve_type::ARC && b.type==centerline_curve_type::ARC && a.points.size()>=3 && b.points.size()>=3) {
+      gp_Pnt c1=circle_center_3p(a.points[0],a.points[1],a.points[2]);
+      gp_Pnt c2=circle_center_3p(b.points[0],b.points[1],b.points[2]);
+      double R1=c1.Distance(a.points[0]),R2=c2.Distance(b.points[0]);
+      double d=c1.Distance(c2);
+      if (d>R1+R2+1e-6||d<std::abs(R1-R2)-1e-6) return;
+      double ax=(R1*R1-R2*R2+d*d)/(2*d);
+      double h=std::sqrt(std::max(0.0,R1*R1-ax*ax));
+      gp_Pnt pm(c1.X()+ax*(c2.X()-c1.X())/d, c1.Y()+ax*(c2.Y()-c1.Y())/d, 0);
+      double rdx=-h*(c2.Y()-c1.Y())/d, rdy=h*(c2.X()-c1.X())/d;
+      for (double sign : {-1.0,1.0}) {
+        gp_Pnt pt(pm.X()+sign*rdx, pm.Y()+sign*rdy, 0);
+        double pa=angle_of(c1,pt);
+        double a0a=angle_of(c1,a.points[0]), a2a=angle_of(c1,a.points[2]);
+        double da=a2a-a0a; if (da>M_PI) da-=2*M_PI; else if (da<-M_PI) da+=2*M_PI;
+        if (!angle_between(pa,a0a,a0a+da)) continue;
+        a0a=angle_of(c2,b.points[0]); double a2b=angle_of(c2,b.points[2]);
+        da=a2b-a0a; if (da>M_PI) da-=2*M_PI; else if (da<-M_PI) da+=2*M_PI;
+        if (angle_between(pa,a0a,a0a+da))
+          results.push_back(pt);
+      }
+    }
+  }
+}
+
+centerline_graph build_centerline_graph(const std::vector<track_curve> &edges,
+                                        double tolerance) {
+  centerline_graph graph;
+  graph.edges = edges;
+
+  // Helper: find existing node at pt within tolerance
+  auto find_node = [&](const gp_Pnt &pt) -> int {
+    for (size_t i=0;i<graph.nodes.size();++i)
+      if (graph.nodes[i].pt.Distance(pt) < tolerance) return (int)i;
+    return -1;
+  };
+
+  auto add_node = [&](const gp_Pnt &pt) -> int {
+    int idx=(int)graph.nodes.size();
+    graph.nodes.push_back({pt,{},false,false});
+    return idx;
+  };
+
+  // Step 1: add edge endpoints as nodes
+  for (size_t ei=0;ei<edges.size();++ei) {
+    auto &e=edges[ei];
+    if (e.points.size()<2) continue;
+    int si=find_node(e.points[0]);
+    if (si<0) si=add_node(e.points[0]);
+    graph.nodes[si].edge_ids.push_back((int)ei);
+    int ei_node=find_node(e.points.back());
+    if (ei_node<0) ei_node=add_node(e.points.back());
+    graph.nodes[ei_node].edge_ids.push_back((int)ei);
+  }
+
+  // Step 2: classify endpoint nodes that lie on other edges (swap/merge detection)
+  for (size_t ni=0;ni<graph.nodes.size();++ni) {
+    auto &n=graph.nodes[ni];
+    if (n.is_crossing || n.is_merge) continue; // already classified as intersection
+    for (size_t ei=0;ei<edges.size();++ei) {
+      // Check if this edge is already connected to the node at non-endpoint position
+      bool already=false;
+      for (int eid : n.edge_ids) if (eid==(int)ei) { already=true; break; }
+      if (already) continue;
+      auto &e=edges[ei];
+      if (e.points.size()<2) continue;
+      // Check if node lies on edge (within tolerance)
+      double dmin=0;
+      if (e.type==centerline_curve_type::LINE) {
+        dmin=dist_to_segment(e.points[0],e.points[1],n.pt);
+      } else if (e.type==centerline_curve_type::ARC && e.points.size()>=3) {
+        gp_Pnt c=circle_center_3p(e.points[0],e.points[1],e.points[2]);
+        double R=c.Distance(e.points[0]);
+        dmin=std::abs(c.Distance(n.pt)-R);
+        // Also check angular range
+        double a0=angle_of(c,e.points[0]), a2=angle_of(c,e.points[2]);
+        double da=a2-a0; if (da>M_PI) da-=2*M_PI; else if (da<-M_PI) da+=2*M_PI;
+        if (!angle_between(angle_of(c,n.pt),a0,a0+da)) dmin=1e9;
+      } else {
+        // Polyline approximation
+        for (size_t i=0;i+1<e.points.size();++i) {
+          dmin=std::min(dmin,dist_to_segment(e.points[i],e.points[i+1],n.pt));
+        }
+      }
+      if (dmin<tolerance) {
+        n.edge_ids.push_back((int)ei);
+        // This node lies on another edge (e). Check its relation to the CURRENT edge (not 'e'):
+        // The current edge is known via n.edge_ids. Find the edge that has this node at start or end.
+        for (int my_eid : n.edge_ids) {
+          if (my_eid==(int)ei) continue;
+          auto &my_e = edges[my_eid];
+          if (my_e.points.size()<2) continue;
+          if (n.pt.Distance(my_e.points[0])<tolerance)
+            n.is_merge = true; // my_e STARTS at this node on another edge
+          if (n.pt.Distance(my_e.points.back())<tolerance)
+            n.is_crossing = true; // my_e ENDS at this node on another edge
+        }
+      }
+    }
+  }
+
+  // Step 3: find edge-edge intersections (pure crossings, not at endpoints)
+  for (size_t i=0;i<edges.size();++i) {
+    for (size_t j=i+1;j<edges.size();++j) {
+      std::vector<gp_Pnt> pts;
+      edge_intersections(edges[i],edges[j],pts);
+      for (auto &pt : pts) {
+        bool exists=false;
+        for (auto &n : graph.nodes)
+          if (n.pt.Distance(pt)<tolerance) { exists=true; break; }
+        if (!exists) {
+          int nid=add_node(pt);
+          graph.nodes[nid].edge_ids={(int)i,(int)j};
+          graph.nodes[nid].is_crossing=true;
+        }
+      }
+    }
+  }
+
+  return graph;
+}
+
+// =========================================================================
+// 33. Parametric Turnout (参量化道岔)
+// =========================================================================
+
+TopoDS_Shape create_turnout(const centerline_graph &graph,
+                            const turnout_build_params &params) {
+  double halfGauge = params.gauge / 2.0;
+  double trackZ = params.ballastThickness + params.sleeperHeight - 25;
+
+  BRep_Builder builder;
+  TopoDS_Compound compound;
+  builder.MakeCompound(compound);
+
+  rail_params rp;
+  rp.railHeight = params.railHeight; rp.headWidth = params.railHeadWidth;
+  rp.baseWidth = params.railBaseWidth; rp.webThickness = params.webThickness;
+  rp.headHeight = 0; rp.baseHeight = 0;
+
+  // --- 1. Ballast ---
+  {
+    // Find main path (longest edge)
+    int mainEdge = 0;
+    for (size_t i=1;i<graph.edges.size();++i)
+      if (graph.edges[i].points[0].Distance(graph.edges[i].points.back()) >
+          graph.edges[mainEdge].points[0].Distance(graph.edges[mainEdge].points.back()))
+        mainEdge = (int)i;
+    auto &me = graph.edges[mainEdge];
+    ballast_params bp;
+    bp.topWidth = params.ballastTopWidth; bp.thickness = params.ballastThickness;
+    bp.sideSlope = params.ballastSlope; bp.tiltAngle = 0;
+    if (me.type == centerline_curve_type::LINE && me.points.size() >= 2) {
+      bp.centerlineSegments.push_back({centerline_curve_type::LINE, {me.points[0], me.points.back()}});
+    } else if (me.type == centerline_curve_type::ARC && me.points.size() >= 3) {
+      bp.centerlineSegments.push_back({centerline_curve_type::ARC, me.points});
+    } else {
+      for (size_t i=0;i+1<me.points.size();++i)
+        bp.centerlineSegments.push_back({centerline_curve_type::LINE, {me.points[i], me.points[i+1]}});
+    }
+    builder.Add(compound, create_ballast(bp));
+  }
+
+  // --- 2. Rails for each edge (left & right) ---
+  for (size_t ei=0;ei<graph.edges.size();++ei) {
+    auto &edge = graph.edges[ei];
+    if (edge.points.size() < 2) continue;
+    std::vector<centerline_segment> path;
+    if (edge.type == centerline_curve_type::LINE) {
+      path.push_back({centerline_curve_type::LINE, {edge.points[0], edge.points.back()}});
+    } else if (edge.type == centerline_curve_type::ARC && edge.points.size() >= 3) {
+      path.push_back({centerline_curve_type::ARC, edge.points});
+    } else {
+      for (size_t i=0;i+1<edge.points.size();++i)
+        path.push_back({centerline_curve_type::LINE, {edge.points[i], edge.points[i+1]}});
+    }
+    for (int side = -1; side <= 1; side += 2)
+      builder.Add(compound, create_rail_path(rp, path, side * halfGauge, trackZ));
+  }
+  fprintf(stderr, "[turnout] rails done (%zu edges)\n", graph.edges.size());
+
+  // --- 3. Switch rails at merge nodes ---
+  for (auto &n : graph.nodes) {
+    if (!n.is_merge) continue;
+    fprintf(stderr, "[turnout] merge node at (%.1f, %.1f)\n", n.pt.X(), n.pt.Y());
+    int divEdge = -1;
+    for (int eid : n.edge_ids) {
+      if (eid<0||eid>=(int)graph.edges.size()) continue;
+      auto &e = graph.edges[eid];
+      if (e.points.size()<2) continue;
+      if (n.pt.Distance(e.points[0]) < 1.0 || n.pt.Distance(e.points.back()) < 1.0) { divEdge = eid; break; }
+    }
+    if (divEdge < 0) continue;
+    auto &e = graph.edges[divEdge];
+    double swLen = e.points[0].Distance(e.points.back());
+    if (swLen < 10) continue;
+    double curveRadius = (e.type == centerline_curve_type::ARC && e.points.size()>=3) ?
+      circle_center_3p(e.points[0],e.points[1],e.points[2]).Distance(e.points[0]) : 0;
+    switch_rail_params srp;
+    srp.length = swLen;
+    srp.railHeight = params.railHeight; srp.railHeadWidth = params.railHeadWidth;
+    srp.railBaseWidth = params.railBaseWidth; srp.tipWidth = 2;
+    srp.curveRadius = curveRadius;
+    // Determine hand: positive Y offset → left hand
+    gp_Dir dir;
+    if (e.type == centerline_curve_type::LINE) {
+      dir = gp_Dir(e.points.back().X()-e.points[0].X(), e.points.back().Y()-e.points[0].Y(), 0);
+    } else {
+      gp_Pnt c = circle_center_3p(e.points[0],e.points[1],e.points[2]);
+      gp_Vec r(n.pt.X()-c.X(), n.pt.Y()-c.Y(), 0);
+      double x1=e.points[0].X(),y1=e.points[0].Y();
+      double x2=e.points[1].X(),y2=e.points[1].Y();
+      double x3=e.points[2].X(),y3=e.points[2].Y();
+      double cross=(x2-x1)*(y3-y1)-(y2-y1)*(x3-x1);
+      if (cross>0) dir = gp_Dir(-r.Y(),r.X(),0); // CCW
+      else dir = gp_Dir(r.Y(),-r.X(),0); // CW
+    }
+    srp.isLeftHand = (e.points.back().Y() > e.points[0].Y());
+    gp_Pnt swPos(n.pt.X(), n.pt.Y(), trackZ);
+    fprintf(stderr, "[turnout] switch rail len=%.1f curveR=%.1f pos=(%.1f,%.1f)\n", srp.length, srp.curveRadius, swPos.X(), swPos.Y());
+    try { builder.Add(compound, create_switch_rail(srp, swPos, dir, gp::DZ())); }
+    catch (...) { fprintf(stderr, "[turnout] switch rail failed\n"); }
+  }
+
+  // --- 4. Frogs at crossing nodes ---
+  for (auto &n : graph.nodes) {
+    if (!n.is_crossing) continue;
+    fprintf(stderr, "[turnout] crossing node at (%.1f, %.1f)\n", n.pt.X(), n.pt.Y());
+    // Find the two crossing edges
+    int e1=-1, e2=-1;
+    for (int eid : n.edge_ids) {
+      if (eid<0||eid>=(int)graph.edges.size()) continue;
+      if (e1<0) e1=eid; else if (e2<0) e2=eid;
+    }
+    if (e1<0||e2<0) continue;
+    // Determine frog angle from edge directions at crossing
+    auto &ea = graph.edges[e1];
+    auto &eb = graph.edges[e2];
+    auto tangent_at = [&](const track_curve &e, const gp_Pnt &pt) -> gp_Dir {
+      if (e.type==centerline_curve_type::LINE) {
+        return gp_Dir(e.points.back().X()-e.points[0].X(), e.points.back().Y()-e.points[0].Y(), 0);
+      }
+      if (e.type==centerline_curve_type::ARC && e.points.size()>=3) {
+        gp_Pnt c=circle_center_3p(e.points[0],e.points[1],e.points[2]);
+        gp_Vec r(pt.X()-c.X(),pt.Y()-c.Y(),0);
+        // Determine CW/CCW from 3 points
+        double x1=e.points[0].X(),y1=e.points[0].Y();
+        double x2=e.points[1].X(),y2=e.points[1].Y();
+        double x3=e.points[2].X(),y3=e.points[2].Y();
+        double cross=(x2-x1)*(y3-y1)-(y2-y1)*(x3-x1);
+        if (cross>0) return gp_Dir(-r.Y(),r.X(),0); // CCW
+        else return gp_Dir(r.Y(),-r.X(),0); // CW
+      }
+      return gp::DX();
+    };
+    gp_Dir t1 = tangent_at(ea, n.pt);
+    gp_Dir t2 = tangent_at(eb, n.pt);
+    double angle = t1.Angle(t2);
+    gp_Pnt frogPos(n.pt.X(), n.pt.Y(), trackZ);
+    frog_params fp;
+    fp.turnoutNo = std::max(1, (int)(1.0 / tan(std::max(angle, 1e-6))));
+    fp.gauge = params.gauge;
+    fp.railHeight = params.railHeight; fp.railHeadWidth = params.railHeadWidth;
+    fp.railBaseWidth = params.railBaseWidth;
+    fprintf(stderr, "[turnout] frog angle=%.6f rad turnoutNo=%d\n", angle, fp.turnoutNo);
+    try { builder.Add(compound, create_frog(fp, frogPos, gp::DX(), gp::DZ())); }
+    catch (...) { fprintf(stderr, "[turnout] frog failed\n"); }
+
+    // Guard rails on opposite track
+    for (int side = -1; side <= 1; side += 2) {
+      double grLen = params.gauge * 2;
+      if (grLen > 10000) grLen = 5000;
+      double grY = side * (halfGauge - 42);
+      gp_Pnt gs(n.pt.X()-grLen*0.5, grY, 0);
+      gp_Pnt ge(n.pt.X()+grLen*0.5, grY, 0);
+      std::vector<centerline_segment> gpth = {{centerline_curve_type::LINE, {gs, ge}}};
+      try { builder.Add(compound, create_rail_path(rp, gpth, 0, trackZ)); }
+      catch (...) { fprintf(stderr, "[turnout] guard rail failed\n"); }
+    }
+  }
+
+  // --- 5. Sleepers along main track — varying length to cover both rails ---
+  sleeper_params sp;
+  sp.shapeType = sleeper_shape_type::TRAPEZOIDAL;
+  sp.width = params.sleeperWidth; sp.height = params.sleeperHeight;
+  sp.gauge = params.gauge;
+  sp.railBaseWidth = params.railBaseWidth; sp.grooveDepth = 25;
+  sp.spacing = params.sleeperSpacing;
+  // Find the longest straight edge as main path
+  int mainEi = 0;
+  double mainLen = 0;
+  for (size_t i=0;i<graph.edges.size();++i) {
+    double el = graph.edges[i].points.front().Distance(graph.edges[i].points.back());
+    if (el>mainLen) { mainLen=el; mainEi=(int)i; }
+  }
+  auto &me = graph.edges[mainEi];
+  gp_Dir mdir(me.points.back().X()-me.points[0].X(), me.points.back().Y()-me.points[0].Y(), 0);
+  gp_Dir perp = gp::DZ().Crossed(mdir);
+  int ns = std::max(2, (int)(mainLen / sp.spacing));
+  // Precompute max deviation of diverging track from main at each x
+  int divEi = (graph.edges.size()>1) ? 1 : 0;
+  auto sampleDivY = [&](double x) -> double {
+    if (divEi>=(int)graph.edges.size()) return 0;
+    auto &de = graph.edges[divEi];
+    double best=0;
+    for (size_t j=0;j+1<de.points.size();++j) {
+      double x1=de.points[j].X(),y1=de.points[j].Y();
+      double x2=de.points[j+1].X(),y2=de.points[j+1].Y();
+      if (x>=x1-1e-6 && x<=x2+1e-6) {
+        double f=(x2>x1) ? (x-x1)/(x2-x1) : 0;
+        return y1+f*(y2-y1);
+      }
+    }
+    return de.points.back().Y();
+  };
+  for (int i = 0; i <= ns; ++i) {
+    double t = (double)i / ns;
+    double x = me.points[0].X() + t*(me.points.back().X()-me.points[0].X());
+    double y = me.points[0].Y() + t*(me.points.back().Y()-me.points[0].Y());
+    double divY = std::abs(sampleDivY(x));
+    sp.length = params.sleeperLength + 2 * divY;
+    gp_Pnt pos(x, y, params.ballastThickness);
+    try { builder.Add(compound, create_sleeper(sp, pos, perp, gp::DZ())); }
+    catch (...) { fprintf(stderr, "[turnout] sleeper failed\n"); }
+  }
+
+  return compound;
 }
 
 } // namespace topo

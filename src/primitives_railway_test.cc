@@ -167,6 +167,21 @@ void test_rail() {
   test_export(create_rail(p), "rail_132re");
 }
 
+void test_switch_rail() {
+  std::cout << "\n=== Switch Rail ===" << std::endl;
+  switch_rail_params p;
+  p.length = 7700; p.railHeight = 176; p.railHeadWidth = 73.02;
+  p.railBaseWidth = 150; p.webThickness = 16.67; p.tipWidth = 2;
+  p.curveRadius = 0; p.isLeftHand = true;
+  test_export(create_switch_rail(p), "switch_rail_straight");
+  // Path-based: straight LINE
+  std::vector<centerline_segment> path = {{centerline_curve_type::LINE, {gp_Pnt(0,0,0), gp_Pnt(7700,0,0)}}};
+  test_export(create_switch_rail(p, path, 0, 0), "switch_rail_path");
+  // Curved ARC
+  std::vector<centerline_segment> arcPath = {{centerline_curve_type::ARC, {gp_Pnt(0,0,0), gp_Pnt(3850,500,0), gp_Pnt(7700,0,0)}}};
+  test_export(create_switch_rail(p, arcPath, 0, 0), "switch_rail_arc");
+}
+
 void test_sleeper() {
   std::cout << "\n=== Sleeper ===" << std::endl;
   sleeper_params p;
@@ -211,6 +226,47 @@ void test_curve_track() {
   p.sleeperSpacing = 600;
   p.ballastTopWidth = 3600; p.ballastThickness = 350; p.ballastSlope = 1.5;
   test_export(create_curve_track(p), "curve_track");
+}
+
+void test_turnout_new() {
+  std::cout << "\n=== Turnout (Parametric) ===" << std::endl;
+  turnout_build_params bp;
+  bp.gauge = 1435; bp.railHeight = 176; bp.railHeadWidth = 73.02;
+  bp.railBaseWidth = 150; bp.webThickness = 16.67;
+  bp.sleeperLength = 2600; bp.sleeperWidth = 300; bp.sleeperHeight = 200;
+  bp.sleeperSpacing = 600;
+  bp.ballastTopWidth = 3600; bp.ballastThickness = 350; bp.ballastSlope = 1.5;
+
+  // Centerline graph: main line + diverging track crossing it
+  std::vector<track_curve> edges;
+  // Edge 0: main track centerline
+  edges.push_back({centerline_curve_type::LINE, {gp_Pnt(0,0,0), gp_Pnt(25000,0,0)}});
+  // Edge 1: diverging track centerline (frog→switch: y=0 → y=gauge)
+  double g = bp.gauge;
+  edges.push_back({centerline_curve_type::ARC, {
+    gp_Pnt(16000, 0, 0),         // frog: y=0 (crosses main centerline)
+    gp_Pnt(11000, g+500, 0),     // peak: between switch and frog
+    gp_Pnt(7000, g, 0)           // switch: y=gauge (inner rail at gauge/2)
+  }});
+
+  centerline_graph graph = build_centerline_graph(edges);
+  // Merge node at rail level: diverging inner rail = main outer rail at y=gauge/2
+  double hg = bp.gauge / 2.0;
+  bool hasMerge = false;
+  for (auto &n : graph.nodes) if (n.is_merge) hasMerge = true;
+  if (!hasMerge) {
+    centerline_graph::node mn;
+    mn.pt = gp_Pnt(7000, hg, 0);
+    mn.edge_ids = {0, 1};
+    mn.is_merge = true;
+    graph.nodes.push_back(mn);
+  }
+  size_t nCross=0, nMerge=0;
+  for (auto &n : graph.nodes) { if (n.is_crossing) nCross++; if (n.is_merge) nMerge++; }
+  fprintf(stderr, "[turnout] edges=%zu nodes=%zu crossings=%zu merges=%zu\n",
+          graph.edges.size(), graph.nodes.size(), nCross, nMerge);
+
+  test_export(create_turnout(graph, bp), "turnout_graph");
 }
 
 void test_turnout() {
@@ -271,6 +327,7 @@ int main() {
   run("Portal Frame", test_portal_frame);
   run("Suspension Hard Span", test_suspension_hard_span);
   run("Rail 132RE", test_rail);
+  run("Switch Rail", test_switch_rail);
   run("Sleeper", test_sleeper);
   run("Ballast Straight", []{
     ballast_params p; p.topWidth = 3600; p.thickness = 350; p.sideSlope = 1.5;
@@ -285,6 +342,7 @@ int main() {
   run("Straight Track", test_straight_track);
   run("Curve Track", test_curve_track);
   run("Turnout 12#", test_turnout);
+  run("Turnout Graph", test_turnout_new);
   run("Mast Assembly", test_mast_assembly);
 
   std::cout << "\nAll tests completed." << std::endl;
