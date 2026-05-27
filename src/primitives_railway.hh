@@ -682,9 +682,15 @@ struct ballast_params {
   double thickness;                           // 道床厚度(mm)
   double sideSlope;                           // 道床边坡(1:n)
   std::vector<centerline_segment> centerlineSegments; // 曲线中心线(直线+圆弧+贝塞尔)
+  double tiltAngle;                           // 超高倾角(rad), 绕路径切线旋转
 };
 
 TopoDS_Shape create_ballast(const ballast_params &params);
+TopoDS_Shape create_rail_path(const rail_params &params,
+                               const std::vector<centerline_segment> &segments,
+                               double lateralOffset = 0,
+                               double verticalOffset = 0,
+                               double tiltAngle = 0);
 
 // =========================================================================
 // TRACK: 27. Track Slab (轨道板) TYPE=TRACK_SLAB

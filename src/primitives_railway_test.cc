@@ -191,8 +191,8 @@ void test_straight_track() {
   std::cout << "\n=== Straight Track ===" << std::endl;
   straight_track_params p;
   p.startPoint = gp_Pnt(0, 0, 0); p.endPoint = gp_Pnt(5000, 0, 0);
-  p.gauge = 1435; p.railHeight = 176; p.railHeadWidth = 70.6; p.railBaseWidth = 150;
-  p.sleeperLength = 2600; p.sleeperWidth = 300; p.sleeperHeight = 200;
+  p.gauge = 1435; p.railHeight = 176; p.railHeadWidth = 73.02; p.railBaseWidth = 150;
+  p.webThickness = 16.67; p.sleeperLength = 2600; p.sleeperWidth = 300; p.sleeperHeight = 200;
   p.sleeperSpacing = 600;
   p.ballastTopWidth = 3600; p.ballastThickness = 350; p.ballastSlope = 1.5;
   test_export(create_straight_track(p), "straight_track");

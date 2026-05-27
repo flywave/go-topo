@@ -2622,19 +2622,150 @@ TopoDS_Shape create_rail(const rail_params &params, const gp_Pnt &startPoint,
   double len = vec.Magnitude();
   if (len <= Precision::Confusion())
     return shape;
-
-  // Scale to match length, then rotate and translate
   gp_Dir dir(vec);
   double scale = len / params.standardLength;
-  gp_Trsf s;
-  s.SetScale(gp::Origin(), scale);
+  gp_Trsf s; s.SetScale(gp::Origin(), scale);
   shape = BRepBuilderAPI_Transform(shape, s).Shape();
-
   gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
   gp_Ax3 targetAx3(startPoint, gp::DZ(), dir);
-  gp_Trsf t;
-  t.SetTransformation(targetAx3, sourceAx3);
+  gp_Trsf t; t.SetTransformation(targetAx3, sourceAx3);
   return BRepBuilderAPI_Transform(shape, t).Shape();
+}
+
+// Rail on arbitrary path (LINE/ARC/BEZIER) via ThruSections
+TopoDS_Shape create_rail_path(const rail_params &params,
+                               const std::vector<centerline_segment> &segments,
+                               double lateralOffset,
+                               double verticalOffset,
+                               double tiltAngle) {
+  if (segments.empty())
+    throw Standard_ConstructionError("Empty rail path");
+
+  const double H = params.railHeight;
+  const double hH = params.headHeight > 0 ? params.headHeight : H * 0.2456;
+  const double bH = params.baseHeight > 0 ? params.baseHeight : H * 0.1667;
+  const double hW = params.headWidth / 2.0;
+  const double bW = params.baseWidth / 2.0;
+  const double wT = params.webThickness > 0 ? params.webThickness / 2.0 : 8.334;
+
+  // Stock 30-point profile from create_rail as (width, height) pairs
+  struct P2 { double w, h; };
+  std::vector<P2> prof;
+  auto add = [&](double y, double z) { prof.push_back({y, z}); };
+  add(0, H); add(hW, H); add(hW, H-hH*0.15);
+  add(hW*0.93, H-hH*0.35); add(hW*0.82, H-hH*0.65);
+  add(hW*0.65, H-hH*0.85); add(wT*1.5, H-hH*0.95); add(wT, H-hH);
+  add(wT, bH+bH*0.5); add(bW*0.3, bH*0.3); add(bW*0.6, bH*0.65);
+  add(bW*0.85, bH*0.9); add(bW, bH); add(bW, 0);
+  add(-bW, 0); add(-bW, bH); add(-bW*0.85, bH*0.9);
+  add(-bW*0.6, bH*0.65); add(-bW*0.3, bH*0.3); add(-wT, bH+bH*0.5);
+  add(-wT, H-hH); add(-wT*1.5, H-hH*0.95); add(-hW*0.65, H-hH*0.85);
+  add(-hW*0.82, H-hH*0.65); add(-hW*0.93, H-hH*0.35);
+  add(-hW, H-hH*0.15); add(-hW, H); add(0, H);
+
+  // Build section at a path point p with tangent t
+    auto makeSection = [&](const gp_Pnt &p, const gp_Dir &t) {
+    gp_Vec Hv(t.XYZ().Crossed(gp::DZ().XYZ()));
+    gp_Dir Hd = Hv.Magnitude() < Precision::Confusion() ? gp::DX() : gp_Dir(Hv);
+    gp_Dir Vd = Hd.Crossed(t);
+    // Superelevation tilt: rotate (H,V) frame around T using OCCT SetRotation convention
+    if (std::abs(tiltAngle) > Precision::Angular()) {
+      gp_Trsf tilt;
+      tilt.SetRotation(gp_Ax1(gp::Origin(), t), tiltAngle);
+      gp_XYZ hx = Hd.XYZ(); tilt.Transforms(hx); Hd = gp_Dir(hx);
+      gp_XYZ vx = Vd.XYZ(); tilt.Transforms(vx); Vd = gp_Dir(vx);
+    }
+    auto pt = [&](double w, double h) {
+      return p.Translated(gp_Vec(Hd.XYZ() * (w + lateralOffset) + Vd.XYZ() * (h + verticalOffset)));
+    };
+    BRepBuilderAPI_MakeWire w;
+    for (size_t i = 0; i + 1 < prof.size(); ++i)
+      w.Add(BRepBuilderAPI_MakeEdge(pt(prof[i].w, prof[i].h), pt(prof[i+1].w, prof[i+1].h)));
+    return w.Wire();
+  };
+
+  // Build curves, sample, loft
+  struct CR { Handle(Geom_Curve) c; double l; };
+  std::vector<CR> crvs;
+  for (auto &seg : segments) {
+    if (seg.points.size() < 2) continue;
+    if (seg.type == centerline_curve_type::LINE) {
+      double d = seg.points[0].Distance(seg.points[1]);
+      Handle(Geom_Curve) c = GC_MakeSegment(seg.points[0], seg.points[1]).Value();
+      crvs.push_back({c, d});
+    } else if (seg.type == centerline_curve_type::ARC && seg.points.size() >= 3) {
+      Handle(Geom_TrimmedCurve) arc = GC_MakeArcOfCircle(seg.points[0], seg.points[1], seg.points[2]);
+      if (!arc.IsNull()) {
+        double al = 0;
+        Handle(Geom_Curve) bc = arc->BasisCurve();
+        if (!bc.IsNull()) {
+          double r = Handle(Geom_Circle)::DownCast(bc)->Circ().Radius();
+          al = r * std::abs(arc->LastParameter() - arc->FirstParameter());
+        }
+        crvs.push_back({Handle(Geom_Curve)(arc), al});
+      }
+    } else if (seg.type == centerline_curve_type::BEZIER) {
+      Handle(TColgp_HArray1OfPnt) arr = new TColgp_HArray1OfPnt(1, (int)seg.points.size());
+      for (size_t i = 0; i < seg.points.size(); ++i) arr->SetValue((int)(i+1), seg.points[i]);
+      Handle(Geom_Curve) bez = new Geom_BezierCurve(arr->Array1());
+      crvs.push_back({bez, seg.points.front().Distance(seg.points.back())});
+    }
+  }
+  if (crvs.empty()) throw Standard_ConstructionError("No valid rail path");
+
+  double tot = 0;
+  for (auto &cr : crvs) tot += cr.l;
+
+  // LINE paths → build face at origin along Z, extrude along Z, rotate+translate to position
+  if (segments.size() == 1 && segments[0].type == centerline_curve_type::LINE) {
+    gp_Pnt p0; gp_Vec v0;
+    crvs[0].c->D1(crvs[0].c->FirstParameter(), p0, v0);
+    gp_Dir t0(v0);
+    gp_Dir perp = gp::DZ().Crossed(t0);
+
+    // Build profile at origin with standardLength = tot
+    rail_params rp2 = params;
+    rp2.standardLength = tot;
+    TopoDS_Shape rail = create_rail(rp2);
+
+    // Apply rotation: Z→t0 (along track), X→perp (cross-track)
+    gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX());
+    gp_Ax3 tgt(gp::Origin(), t0, perp);
+    gp_Trsf r; r.SetTransformation(tgt, src);
+    rail = BRepBuilderAPI_Transform(rail, r).Shape();
+
+    // Translation only (no rotation applied to mesh)
+    gp_Trsf tr;
+    tr.SetTranslation(gp_Vec(perp.XYZ() * lateralOffset + gp::DZ().XYZ() * verticalOffset));
+    return BRepBuilderAPI_Transform(rail, tr).Shape();
+  }
+
+  // ARC / BEZIER paths → ThruSections loft
+  int nSec = std::max(2, (int)(tot / 500.0));
+  BRepOffsetAPI_ThruSections loft(Standard_True, Standard_True);
+  for (int i = 0; i <= nSec; ++i) {
+    double target = tot * i / nSec;
+    double walked = 0;
+    bool found = false;
+    for (auto &cr : crvs) {
+      if (walked + cr.l >= target - 1e-9) {
+        double frac = (target - walked) / cr.l;
+        double u = cr.c->FirstParameter() + frac * (cr.c->LastParameter() - cr.c->FirstParameter());
+        gp_Pnt pt; gp_Vec vt; cr.c->D1(u, pt, vt);
+        loft.AddWire(makeSection(pt, gp_Dir(vt)));
+        found = true; break;
+      }
+      walked += cr.l;
+    }
+    if (!found) {
+      gp_Pnt pt; gp_Vec vt;
+      crvs.back().c->D1(crvs.back().c->LastParameter(), pt, vt);
+      loft.AddWire(makeSection(pt, gp_Dir(vt)));
+    }
+  }
+  loft.Build();
+  if (!loft.IsDone()) throw Standard_ConstructionError("Rail path loft failed");
+  return loft.Shape();
 }
 
 // =========================================================================
@@ -2761,6 +2892,13 @@ TopoDS_Shape create_ballast(const ballast_params &params) {
     gp_Vec Hv(t.XYZ().Crossed(gp::DZ().XYZ()));
     gp_Dir H = Hv.Magnitude() < Precision::Confusion() ? gp::DX() : gp_Dir(Hv);
     gp_Dir V = H.Crossed(t);
+    // Superelevation tilt: rotate (H,V) frame around T using OCCT SetRotation convention
+    if (std::abs(params.tiltAngle) > Precision::Angular()) {
+      gp_Trsf tilt;
+      tilt.SetRotation(gp_Ax1(gp::Origin(), t), params.tiltAngle);
+      gp_XYZ hx = H.XYZ(); tilt.Transforms(hx); H = gp_Dir(hx);
+      gp_XYZ vx = V.XYZ(); tilt.Transforms(vx); V = gp_Dir(vx);
+    }
 
     auto point = [&](double y, double z) {
       return p.Translated(gp_Vec(H.XYZ() * y + V.XYZ() * z));
@@ -2796,7 +2934,8 @@ TopoDS_Shape create_ballast(const ballast_params &params) {
     if (seg.points.size() < 2) continue;
     if (seg.type == centerline_curve_type::LINE) {
       double d = seg.points[0].Distance(seg.points[1]);
-      curves.push_back({GC_MakeSegment(seg.points[0], seg.points[1]).Value(), d});
+      Handle(Geom_Curve) c = GC_MakeSegment(seg.points[0], seg.points[1]).Value();
+      curves.push_back({c, d});
     } else if (seg.type == centerline_curve_type::ARC && seg.points.size() >= 3) {
       Handle(Geom_TrimmedCurve) arc = GC_MakeArcOfCircle(seg.points[0], seg.points[1], seg.points[2]);
       if (!arc.IsNull()) {
@@ -2807,13 +2946,13 @@ TopoDS_Shape create_ballast(const ballast_params &params) {
           double u1 = arc->FirstParameter(), u2 = arc->LastParameter();
           aLen = r * std::abs(u2 - u1);
         }
-        curves.push_back({arc, aLen});
+        curves.push_back({Handle(Geom_Curve)(arc), aLen});
       }
     } else if (seg.type == centerline_curve_type::BEZIER) {
       Handle(TColgp_HArray1OfPnt) ctrl = new TColgp_HArray1OfPnt(1, (int)seg.points.size());
       for (size_t i = 0; i < seg.points.size(); ++i)
         ctrl->SetValue((int)(i + 1), seg.points[i]);
-      Handle(Geom_BezierCurve) bez = new Geom_BezierCurve(ctrl->Array1());
+      Handle(Geom_Curve) bez = new Geom_BezierCurve(ctrl->Array1());
       double approxLen = seg.points.front().Distance(seg.points.back());
       curves.push_back({bez, approxLen});
     }
@@ -3652,6 +3791,7 @@ TopoDS_Shape create_track_section(const track_section_params &params) {
   ballast_params bp;
   bp.topWidth = params.ballastTopWidth;
   bp.thickness = params.ballastThickness;
+  bp.tiltAngle = 0;
   bp.sideSlope = params.ballastSlope;
   bp.centerlineSegments = {};
   for (size_t i = 0; i < params.centerline.size() - 1; ++i)
@@ -3684,34 +3824,23 @@ TopoDS_Shape create_straight_track(const straight_track_params &params) {
     throw Standard_ConstructionError("Zero length track");
 
   double halfGauge = params.gauge / 2.0;
-  double R = params.railHeadWidth / 2.0;
   gp_Dir tang(dir);
 
   BRep_Builder builder;
   TopoDS_Compound compound;
   builder.MakeCompound(compound);
 
-  // Left & right rails using create_rail
-  double trackZ = params.ballastThickness + params.sleeperHeight - 25;  // groove depth
-  gp_Dir perp = gp_Dir(0, 0, 1).Crossed(tang);
+  // Rails via create_rail_path (unified function: prism for LINE, loft for ARC/BEZIER)
+  double trackZ = params.ballastThickness + params.sleeperHeight - 25;
   rail_params rp;
   rp.railHeight = params.railHeight; rp.headWidth = params.railHeadWidth;
   rp.baseWidth = params.railBaseWidth; rp.webThickness = params.webThickness;
-  rp.headHeight = 0; rp.baseHeight = 0; rp.standardLength = len;
+  rp.headHeight = 0; rp.baseHeight = 0;
 
-  for (int side = -1; side <= 1; side += 2) {
-    TopoDS_Shape rail = create_rail(rp);
-    // Rotate rail so Z→trackDir, Y→perp*side
-    gp_Ax3 srcAx(gp::Origin(), gp::DZ(), gp::DX());
-    gp_Ax3 tgtAx(gp::Origin(), tang, perp);
-    gp_Trsf rot; rot.SetTransformation(tgtAx, srcAx);
-    // Translate to gauge position + height
-    gp_Vec railTr = perp.XYZ() * side * halfGauge;
-    railTr.SetZ(railTr.Z() + trackZ);
-    gp_Trsf trs; trs.SetTranslation(railTr);
-    rail = BRepBuilderAPI_Transform(rail, rot).Shape();
-    rail = BRepBuilderAPI_Transform(rail, trs).Shape();
-    builder.Add(compound, rail);
+  {
+    std::vector<centerline_segment> path = {{centerline_curve_type::LINE, {params.startPoint, params.endPoint}}};
+    for (int side = -1; side <= 1; side += 2)
+      builder.Add(compound, create_rail_path(rp, path, side * halfGauge, trackZ));
   }
 
   // Sleepers
@@ -3720,6 +3849,7 @@ TopoDS_Shape create_straight_track(const straight_track_params &params) {
   sp2.length = params.sleeperLength; sp2.width = params.sleeperWidth;
   sp2.height = params.sleeperHeight; sp2.gauge = params.gauge;
   sp2.railBaseWidth = params.railBaseWidth; sp2.grooveDepth = 25; sp2.spacing = params.sleeperSpacing;
+  gp_Dir perp = gp_Dir(0, 0, 1).Crossed(tang);
   int nSleepers = std::max(1, (int)(len / params.sleeperSpacing));
   for (int i = 0; i <= nSleepers; ++i) {
     double t = (double)i / nSleepers;
@@ -3739,7 +3869,7 @@ TopoDS_Shape create_straight_track(const straight_track_params &params) {
   gp_Pnt bs(0, 0, 0);
   ballast_params bp;
   bp.topWidth = params.ballastTopWidth; bp.thickness = params.ballastThickness;
-  bp.sideSlope = params.ballastSlope;
+  bp.sideSlope = params.ballastSlope; bp.tiltAngle = 0;
   bp.centerlineSegments = {{centerline_curve_type::LINE, {bs, params.endPoint.Translated(gp_Vec(-params.startPoint.X(), -params.startPoint.Y(), 0))}}};
   TopoDS_Shape ballast = create_ballast(bp);
   gp_Trsf blTrs; blTrs.SetTranslation(gp_Vec(params.startPoint.X(), params.startPoint.Y(), 0));
@@ -3780,6 +3910,7 @@ TopoDS_Shape create_curve_track(const curve_track_params &params) {
 
   double trackArcLen = R * totalAngle;
   double trackZ = params.ballastThickness + params.sleeperHeight - 25;
+  double tiltAngle = SE > 0 ? -asin(SE / params.gauge) : 0;
 
   // Ballast — ARC aligned to first & last sleeper center
   int nSleepers = std::max(1, (int)(trackArcLen / params.sleeperSpacing));
@@ -3791,6 +3922,7 @@ TopoDS_Shape create_curve_track(const curve_track_params &params) {
     double aMid = (aFirst + aLast) * 0.5;
     ballast_params bp;
     bp.topWidth = params.ballastTopWidth; bp.thickness = params.ballastThickness; bp.sideSlope = params.ballastSlope;
+    bp.tiltAngle = tiltAngle;
     bp.centerlineSegments.push_back({centerline_curve_type::ARC,
       {gp_Pnt(R*cos(aFirst), R*sin(aFirst), 0),
        gp_Pnt(R*cos(aMid),   R*sin(aMid),   0),
@@ -3804,34 +3936,22 @@ TopoDS_Shape create_curve_track(const curve_track_params &params) {
   rp.baseWidth = params.railBaseWidth; rp.webThickness = params.webThickness;
   rp.headHeight = 0; rp.baseHeight = 0;
 
-  for (int side = -1; side <= 1; side += 2) {
-    for (int i = 0; i < nSeg; ++i) {
-      double a1 = a0 + i * dA, a2 = a1 + dA;
-      double segLen = R * std::abs(dA);
-      gp_Pnt c(R * cos(a1), R * sin(a1), 0);
-      gp_Dir rad(cos(a1), sin(a1), 0);
-      gp_Dir tang(-sin(a1), cos(a1), 0);
-
-      // Rail at gauge offset
-      gp_Pnt rc = c.Translated(gp_Vec(rad.XYZ() * side * halfGauge));
-      rc.SetZ(trackZ + (side > 0 ? SE : 0));
-
-      rp.standardLength = segLen;
-      TopoDS_Shape rail = create_rail(rp);
-      // Rotate Z→tang, X→rad (rail upright, width along radial)
-      gp_Ax3 srcAx(gp::Origin(), gp::DZ(), gp::DX());
-      gp_Ax3 tgtAx(gp::Origin(), tang, rad);
-      gp_Trsf rot; rot.SetTransformation(tgtAx, srcAx);
-      gp_Trsf trs; trs.SetTranslation(gp_Vec(rc.X(), rc.Y(), rc.Z()));
-      rail = BRepBuilderAPI_Transform(rail, rot).Shape();
-      rail = BRepBuilderAPI_Transform(rail, trs).Shape();
-      builder.Add(compound, rail);
-    }
+  // Rails — continuous along full arc via ThruSections
+  {
+    double aEnd = a0 + params.sweepAngle;
+    double aMid = (a0 + aEnd) * 0.5;
+    std::vector<centerline_segment> arcPath = {{centerline_curve_type::ARC,
+      {gp_Pnt(R*cos(a0), R*sin(a0), 0),
+       gp_Pnt(R*cos(aMid), R*sin(aMid), 0),
+       gp_Pnt(R*cos(aEnd), R*sin(aEnd), 0)}}};
+    // Rails tilt with sleeper: same trackZ for both rails, tilt handles superelevation
+    for (int side = -1; side <= 1; side += 2)
+      builder.Add(compound, create_rail_path(rp, arcPath, side * halfGauge, trackZ, tiltAngle));
   }
 
-  // Sleepers — each oriented radially
+  // Sleepers — each oriented radially, tilted by superelevation
   sleeper_params sp2;
-  sp2.shapeType = sleeper_shape_type::RECTANGULAR;
+  sp2.shapeType = sleeper_shape_type::TRAPEZOIDAL;
   sp2.length = params.sleeperLength; sp2.width = params.sleeperWidth;
   sp2.height = params.sleeperHeight; sp2.gauge = params.gauge;
   sp2.railBaseWidth = params.railBaseWidth; sp2.grooveDepth = 25; sp2.spacing = params.sleeperSpacing;
@@ -3848,6 +3968,12 @@ TopoDS_Shape create_curve_track(const curve_track_params &params) {
     gp_Ax3 tgtAx(gp::Origin(), gp::DZ(), rad);
     gp_Trsf rot; rot.SetTransformation(tgtAx, srcAx);
     sleeper = BRepBuilderAPI_Transform(sleeper, rot).Shape();
+    // Tilt around tangent for superelevation (outer rail up, inner down)
+    if (std::abs(tiltAngle) > Precision::Angular()) {
+      gp_Trsf tilt;
+      tilt.SetRotation(gp_Ax1(gp::Origin(), tang), tiltAngle);
+      sleeper = BRepBuilderAPI_Transform(sleeper, tilt).Shape();
+    }
     gp_Trsf trs; trs.SetTranslation(gp_Vec(sp.X(), sp.Y(), sp.Z()));
     sleeper = BRepBuilderAPI_Transform(sleeper, trs).Shape();
     builder.Add(compound, sleeper);
