@@ -564,6 +564,7 @@ typedef struct {
   double width;
   double height;
   double gauge;
+  double railBaseWidth;
   double grooveDepth;
   double spacing;
 } sleeper_params_t;

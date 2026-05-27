@@ -651,6 +651,7 @@ struct sleeper_params {
   double width;           // 宽度(mm)
   double height;          // 高度(mm)
   double gauge;           // 轨距(mm)
+  double railBaseWidth;   // 钢轨底宽(mm), 用于承轨槽宽度
   double grooveDepth;     // 承轨槽深度(mm)
   double spacing;         // 间距(mm)
 };

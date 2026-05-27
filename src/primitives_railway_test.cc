@@ -172,7 +172,7 @@ void test_sleeper() {
   sleeper_params p;
   p.shapeType = sleeper_shape_type::RECTANGULAR;
   p.length = 2600; p.width = 300; p.height = 200;
-  p.gauge = 1435; p.grooveDepth = 30; p.spacing = 600;
+  p.gauge = 1435; p.railBaseWidth = 150; p.grooveDepth = 25; p.spacing = 600;
   test_export(create_sleeper(p), "sleeper_rect");
 
   p.shapeType = sleeper_shape_type::TRAPEZOIDAL;

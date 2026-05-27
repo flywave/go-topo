@@ -1165,6 +1165,7 @@ type SleeperParams struct {
 	Width       float64
 	Height      float64
 	Gauge       float64
+	RailBaseWidth float64
 	GrooveDepth float64
 	Spacing     float64
 }
@@ -1176,6 +1177,7 @@ func (p *SleeperParams) to_struct() C.sleeper_params_t {
 	c.width = C.double(p.Width)
 	c.height = C.double(p.Height)
 	c.gauge = C.double(p.Gauge)
+	c.railBaseWidth = C.double(p.RailBaseWidth)
 	c.grooveDepth = C.double(p.GrooveDepth)
 	c.spacing = C.double(p.Spacing)
 	return c

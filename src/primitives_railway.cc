@@ -2711,29 +2711,30 @@ TopoDS_Shape create_sleeper(const sleeper_params &params) {
         w.Add(BRepBuilderAPI_MakeEdge(sp[p], sp[(p + 1) % 12]));
       gen.AddWire(w.Wire());
     }
-    gen.Build();
-    body = gen.Shape();
-
-    // Fillet all longitudinal edges for smooth appearance
-    double fr = topW * 0.04;
-    try {
-      BRepFilletAPI_MakeFillet fMaker(body);
-      for (TopExp_Explorer ex(body, TopAbs_EDGE); ex.More(); ex.Next())
-        fMaker.Add(fr, TopoDS::Edge(ex.Current()));
-      fMaker.Build();
-      if (fMaker.IsDone())
-        body = fMaker.Shape();
-    } catch (...) {
-    }
-
-    // Rail seats — shallow grooves at correct gauge positions
+    gen.Build(); body = gen.Shape();
+      
+      // Fillet all longitudinal edges for smooth appearance
+      double fr = topW * 0.04;
+      try {
+        BRepFilletAPI_MakeFillet fMaker(body);
+        for (TopExp_Explorer ex(body, TopAbs_EDGE); ex.More(); ex.Next())
+          fMaker.Add(fr, TopoDS::Edge(ex.Current()));
+        fMaker.Build();
+        if (fMaker.IsDone())
+          body = fMaker.Shape();
+      } catch (...) {
+      }
+      
+    // Rail seats
     if (params.grooveDepth > 0 && params.gauge > 0) {
       double hG = params.gauge / 2, gD = params.grooveDepth;
+      double seatL = W * 1.5, seatW = params.railBaseWidth > 0 ? params.railBaseWidth : 140;
       for (int side = -1; side <= 1; side += 2) {
-        double y = side * hG;
+          double x = side * hG;
+        // Shallow groove
         TopoDS_Shape seat =
-            BRepPrimAPI_MakeBox(gp_Pnt(-L * 0.12, y - W * 0.1, H - gD),
-                                L * 0.24, W * 0.2, gD + 1)
+            BRepPrimAPI_MakeBox(gp_Pnt(x - seatW/2, -seatL/2, H - gD),
+                                seatW, seatL, gD + 1)
                 .Shape();
         body = BRepAlgoAPI_Cut(body, seat).Shape();
       }
@@ -2753,18 +2754,6 @@ TopoDS_Shape create_sleeper(const sleeper_params &params) {
                                                    gp_Vec(0, 0, H * 1.5))
                                  .Shape())
                  .Shape();
-    }
-
-    if (params.grooveDepth > 0 && params.gauge > 0) {
-      double hG = params.gauge / 2;
-      for (int side = -1; side <= 1; side += 2)
-        body =
-            BRepAlgoAPI_Cut(body, BRepPrimAPI_MakeBox(
-                                      gp_Pnt(-L * 0.15, side * hG - W * 0.18,
-                                             H - params.grooveDepth),
-                                      L * 0.3, W * 0.35, params.grooveDepth + 1)
-                                      .Shape())
-                .Shape();
     }
   }
 
