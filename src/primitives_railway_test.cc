@@ -205,7 +205,8 @@ void test_curve_track() {
   p.startAngle = 0; p.sweepAngle = M_PI / 4;
   p.curveRadius = 5000;
   p.gauge = 1435; p.superElevation = 80;
-  p.railHeight = 176; p.railHeadWidth = 70.6; p.railBaseWidth = 150;
+  p.railHeight = 180.98; p.railHeadWidth = 76.2; p.railBaseWidth = 152.4;
+  p.webThickness = 16.67;
   p.sleeperLength = 2600; p.sleeperWidth = 300; p.sleeperHeight = 200;
   p.sleeperSpacing = 600;
   p.ballastTopWidth = 3600; p.ballastThickness = 350; p.ballastSlope = 1.5;
@@ -216,7 +217,8 @@ void test_turnout() {
   std::cout << "\n=== Turnout ===" << std::endl;
   turnout_params p;
   p.turnoutNo = 12; p.isLeftHand = true; p.gauge = 1435;
-  p.railHeight = 176; p.railHeadWidth = 70.6; p.railBaseWidth = 150;
+  p.railHeight = 180.98; p.railHeadWidth = 76.2; p.railBaseWidth = 152.4;
+  p.webThickness = 16.67;
   p.switchRailLength = 7700; p.leadCurveRadius = 350000;
   p.frogLength = 6050; p.sleeperCount = 50; p.sleeperSpacing = 600;
   test_export(create_turnout(p), "turnout");

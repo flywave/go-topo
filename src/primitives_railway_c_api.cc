@@ -1147,7 +1147,7 @@ create_mast_assembly_with_place(mast_assembly_params_t params, pnt3d_t position,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_switch_rail(switch_rail_params_t params) {
   switch_rail_params cpp_params{params.length, params.railHeight, params.railHeadWidth,
-                                 params.railBaseWidth, params.tipWidth, params.curveRadius,
+                                 params.railBaseWidth, params.webThickness, params.tipWidth, params.curveRadius,
                                  params.isLeftHand != 0};
   try {
     return new topo_shape_t{.shp = std::make_shared<shape>(create_switch_rail(cpp_params))};
@@ -1158,7 +1158,7 @@ RAILCAPICALL topo_shape_t *create_switch_rail_with_place(switch_rail_params_t pa
                                                           pnt3d_t position,
                                                           dir3d_t direction, dir3d_t upDir) {
   switch_rail_params cpp_params{params.length, params.railHeight, params.railHeadWidth,
-                                 params.railBaseWidth, params.tipWidth, params.curveRadius,
+                                 params.railBaseWidth, params.webThickness, params.tipWidth, params.curveRadius,
                                  params.isLeftHand != 0};
   gp_Pnt p(position.x, position.y, position.z);
   gp_Dir d(direction.x, direction.y, direction.z);
@@ -1197,7 +1197,7 @@ RAILCAPICALL topo_shape_t *create_frog_with_place(frog_params_t params,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_turnout(turnout_params_t params) {
   turnout_params cpp_params{params.turnoutNo, params.isLeftHand != 0, params.gauge,
-                             params.railHeight, params.railHeadWidth, params.railBaseWidth,
+                             params.railHeight, params.railHeadWidth, params.railBaseWidth, params.webThickness,
                              params.switchRailLength, params.leadCurveRadius, params.frogLength,
                              params.sleeperCount, params.sleeperSpacing};
   try {
@@ -1209,7 +1209,7 @@ RAILCAPICALL topo_shape_t *create_turnout_with_place(turnout_params_t params,
                                                       pnt3d_t position,
                                                       dir3d_t direction, dir3d_t upDir) {
   turnout_params cpp_params{params.turnoutNo, params.isLeftHand != 0, params.gauge,
-                             params.railHeight, params.railHeadWidth, params.railBaseWidth,
+                             params.railHeight, params.railHeadWidth, params.railBaseWidth, params.webThickness,
                              params.switchRailLength, params.leadCurveRadius, params.frogLength,
                              params.sleeperCount, params.sleeperSpacing};
   gp_Pnt p(position.x, position.y, position.z);
@@ -1249,7 +1249,7 @@ RAILCAPICALL topo_shape_t *create_sleeper_layout(sleeper_layout_params_t params)
 RAILCAPICALL topo_shape_t *create_straight_track(straight_track_params_t params) {
   straight_track_params p{ gp_Pnt(params.startPoint.x,params.startPoint.y,params.startPoint.z),
     gp_Pnt(params.endPoint.x,params.endPoint.y,params.endPoint.z), params.gauge,
-    params.railHeight, params.railHeadWidth, params.railBaseWidth,
+    params.railHeight, params.railHeadWidth, params.railBaseWidth, params.webThickness,
     params.sleeperLength, params.sleeperWidth, params.sleeperHeight, params.sleeperSpacing,
     params.ballastTopWidth, params.ballastThickness, params.ballastSlope };
   try { return new topo_shape_t{.shp = std::make_shared<shape>(create_straight_track(p))}; } catch (...) { return nullptr; }
@@ -1258,7 +1258,7 @@ RAILCAPICALL topo_shape_t *create_straight_track_with_place(straight_track_param
     pnt3d_t position, dir3d_t direction, dir3d_t upDir) {
   straight_track_params p{ gp_Pnt(params.startPoint.x,params.startPoint.y,params.startPoint.z),
     gp_Pnt(params.endPoint.x,params.endPoint.y,params.endPoint.z), params.gauge,
-    params.railHeight, params.railHeadWidth, params.railBaseWidth,
+    params.railHeight, params.railHeadWidth, params.railBaseWidth, params.webThickness,
     params.sleeperLength, params.sleeperWidth, params.sleeperHeight, params.sleeperSpacing,
     params.ballastTopWidth, params.ballastThickness, params.ballastSlope };
   try { return new topo_shape_t{.shp = std::make_shared<shape>(create_straight_track(p,
@@ -1272,7 +1272,7 @@ RAILCAPICALL topo_shape_t *create_straight_track_with_place(straight_track_param
 RAILCAPICALL topo_shape_t *create_curve_track(curve_track_params_t params) {
   curve_track_params p{ gp_Pnt(params.curveCenter.x,params.curveCenter.y,params.curveCenter.z),
     params.startAngle, params.sweepAngle, params.curveRadius, params.gauge, params.superElevation,
-    params.railHeight, params.railHeadWidth, params.railBaseWidth, params.sleeperLength,
+    params.railHeight, params.railHeadWidth, params.railBaseWidth, params.webThickness, params.sleeperLength,
     params.sleeperWidth, params.sleeperHeight, params.sleeperSpacing,
     params.ballastTopWidth, params.ballastThickness, params.ballastSlope };
   try { return new topo_shape_t{.shp = std::make_shared<shape>(create_curve_track(p))}; } catch (...) { return nullptr; }
@@ -1281,7 +1281,7 @@ RAILCAPICALL topo_shape_t *create_curve_track_with_place(curve_track_params_t pa
     pnt3d_t position, dir3d_t direction, dir3d_t upDir) {
   curve_track_params p{ gp_Pnt(params.curveCenter.x,params.curveCenter.y,params.curveCenter.z),
     params.startAngle, params.sweepAngle, params.curveRadius, params.gauge, params.superElevation,
-    params.railHeight, params.railHeadWidth, params.railBaseWidth, params.sleeperLength,
+    params.railHeight, params.railHeadWidth, params.railBaseWidth, params.webThickness, params.sleeperLength,
     params.sleeperWidth, params.sleeperHeight, params.sleeperSpacing,
     params.ballastTopWidth, params.ballastThickness, params.ballastSlope };
   try { return new topo_shape_t{.shp = std::make_shared<shape>(create_curve_track(p,

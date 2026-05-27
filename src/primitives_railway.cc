@@ -2753,68 +2753,124 @@ TopoDS_Shape create_ballast(const ballast_params &params) {
   double tw = params.topWidth, th = params.thickness;
   double bw = tw + 2 * slope * th;
   double bs = std::min(th * 0.25, tw * 0.1);
-  int nSeg = 5;
+  int nP = 5; // chamfer subdivisions
 
-  // Trapezoidal profile (same as before)
-  BRepBuilderAPI_MakeWire profile;
-  profile.Add(
-      BRepBuilderAPI_MakeEdge(gp_Pnt(0, -bw / 2, 0), gp_Pnt(0, bw / 2, 0)));
-  profile.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(0, bw / 2, 0),
-                                      gp_Pnt(0, tw / 2 + bs, th - bs)));
-  for (int i = 0; i <= nSeg; ++i) {
-    double t = (double)i / nSeg, y = tw / 2 + bs * (1.0 - t),
-           z = th - bs * (1.0 - t);
-    if (i < nSeg) {
-      double t2 = (double)(i + 1) / nSeg;
-      profile.Add(BRepBuilderAPI_MakeEdge(
-          gp_Pnt(0, y, z),
-          gp_Pnt(0, tw / 2 + bs * (1.0 - t2), th - bs * (1.0 - t2))));
-    }
-  }
-  profile.Add(
-      BRepBuilderAPI_MakeEdge(gp_Pnt(0, tw / 2, th), gp_Pnt(0, -tw / 2, th)));
-  for (int i = 0; i <= nSeg; ++i) {
-    double t = (double)i / nSeg, y = -tw / 2 - bs * t, z = th - bs * t;
-    if (i < nSeg) {
-      double t2 = (double)(i + 1) / nSeg;
-      profile.Add(BRepBuilderAPI_MakeEdge(
-          gp_Pnt(0, y, z), gp_Pnt(0, -tw / 2 - bs * t2, th - bs * t2)));
-    }
-  }
-  profile.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(0, -tw / 2 - bs, th - bs),
-                                      gp_Pnt(0, -bw / 2, 0)));
+  // Helper: build a trapezoidal cross-section wire at path point p with tangent t
+  auto makeSection = [&](const gp_Pnt &p, const gp_Dir &t) {
+    // Local frame: H = t × Z (horizontal perpendicular), V = H × t (up)
+    gp_Vec Hv(t.XYZ().Crossed(gp::DZ().XYZ()));
+    gp_Dir H = Hv.Magnitude() < Precision::Confusion() ? gp::DX() : gp_Dir(Hv);
+    gp_Dir V = H.Crossed(t);
 
-  // Build centerline path from curve segments
-  BRepBuilderAPI_MakeWire path;
+    auto point = [&](double y, double z) {
+      return p.Translated(gp_Vec(H.XYZ() * y + V.XYZ() * z));
+    };
+
+    BRepBuilderAPI_MakeWire w;
+    w.Add(BRepBuilderAPI_MakeEdge(point(-bw/2, 0), point(bw/2, 0)));
+    w.Add(BRepBuilderAPI_MakeEdge(point(bw/2, 0), point(tw/2+bs, th-bs)));
+    for (int i = 0; i < nP; ++i) {
+      double t1 = (double)i / nP, t2 = (double)(i+1) / nP;
+      w.Add(BRepBuilderAPI_MakeEdge(
+        point(tw/2+bs*(1-t1), th-bs*(1-t1)),
+        point(tw/2+bs*(1-t2), th-bs*(1-t2))));
+    }
+    w.Add(BRepBuilderAPI_MakeEdge(point(tw/2, th), point(-tw/2, th)));
+    for (int i = 0; i < nP; ++i) {
+      double t1 = (double)i / nP, t2 = (double)(i+1) / nP;
+      w.Add(BRepBuilderAPI_MakeEdge(
+        point(-tw/2-bs*t1, th-bs*t1),
+        point(-tw/2-bs*t2, th-bs*t2)));
+    }
+    w.Add(BRepBuilderAPI_MakeEdge(point(-tw/2-bs, th-bs), point(-bw/2, 0)));
+    return w.Wire();
+  };
+
+  // Build path curves from segments, sample point+tangent pairs
+  struct CurveRef {
+    Handle(Geom_Curve) curve;
+    double len; // approximate total length of this segment
+  };
+  std::vector<CurveRef> curves;
   for (auto &seg : params.centerlineSegments) {
-    if (seg.points.size() < 2)
-      continue;
+    if (seg.points.size() < 2) continue;
     if (seg.type == centerline_curve_type::LINE) {
-      path.Add(BRepBuilderAPI_MakeEdge(seg.points[0], seg.points[1]));
-    } else if (seg.type == centerline_curve_type::ARC &&
-               seg.points.size() >= 3) {
-      Handle(Geom_TrimmedCurve) arc =
-          GC_MakeArcOfCircle(seg.points[0], seg.points[1], seg.points[2]);
-      if (arc.IsNull())
-        continue;
-      path.Add(BRepBuilderAPI_MakeEdge(arc));
+      double d = seg.points[0].Distance(seg.points[1]);
+      curves.push_back({GC_MakeSegment(seg.points[0], seg.points[1]).Value(), d});
+    } else if (seg.type == centerline_curve_type::ARC && seg.points.size() >= 3) {
+      Handle(Geom_TrimmedCurve) arc = GC_MakeArcOfCircle(seg.points[0], seg.points[1], seg.points[2]);
+      if (!arc.IsNull()) {
+        double aLen = 0;
+        Handle(Geom_Curve) bc = arc->BasisCurve();
+        if (!bc.IsNull()) {
+          double r = Handle(Geom_Circle)::DownCast(bc)->Circ().Radius();
+          double u1 = arc->FirstParameter(), u2 = arc->LastParameter();
+          aLen = r * std::abs(u2 - u1);
+        }
+        curves.push_back({arc, aLen});
+      }
     } else if (seg.type == centerline_curve_type::BEZIER) {
-      Handle(TColgp_HArray1OfPnt) ctrl =
-          new TColgp_HArray1OfPnt(1, (int)seg.points.size());
+      Handle(TColgp_HArray1OfPnt) ctrl = new TColgp_HArray1OfPnt(1, (int)seg.points.size());
       for (size_t i = 0; i < seg.points.size(); ++i)
         ctrl->SetValue((int)(i + 1), seg.points[i]);
-      path.Add(BRepBuilderAPI_MakeEdge(new Geom_BezierCurve(ctrl->Array1())));
+      Handle(Geom_BezierCurve) bez = new Geom_BezierCurve(ctrl->Array1());
+      double approxLen = seg.points.front().Distance(seg.points.back());
+      curves.push_back({bez, approxLen});
     }
   }
+  if (curves.empty())
+    throw Standard_ConstructionError("No valid path curves");
 
-  BRepOffsetAPI_MakePipeShell pipe(path.Wire());
-  pipe.Add(profile.Wire());
-  pipe.SetMode(Standard_False);
-  pipe.Build();
-  if (!pipe.IsDone())
-    throw Standard_ConstructionError("Ballast sweep failed");
-  pipe.MakeSolid();
-  return pipe.Shape();
+  // Sample sections at regular arc-length intervals
+  double spacing = 500.0;
+  double totalLen = 0;
+  for (auto &cr : curves) totalLen += cr.len;
+  int nSec = std::max(2, (int)(totalLen / spacing));
+
+  BRepOffsetAPI_ThruSections loft(Standard_True, Standard_True);
+  // First section at start of path
+  if (nSec > 0) {
+    gp_Pnt p0; gp_Vec v0;
+    curves[0].curve->D1(curves[0].curve->FirstParameter(), p0, v0);
+    loft.AddWire(makeSection(p0, gp_Dir(v0)));
+  }
+  // Interior sections at regular intervals along total length
+  for (int i = 1; i < nSec; ++i) {
+    double target = totalLen * i / nSec;
+    double walked = 0;
+    bool found = false;
+    for (auto &cr : curves) {
+      double segLen = cr.len;
+      if (walked + segLen >= target - 1e-9) {
+        double frac = (target - walked) / segLen;
+        double u = cr.curve->FirstParameter() + frac * (cr.curve->LastParameter() - cr.curve->FirstParameter());
+        gp_Pnt pt; gp_Vec vt;
+        cr.curve->D1(u, pt, vt);
+        loft.AddWire(makeSection(pt, gp_Dir(vt)));
+        found = true;
+        break;
+      }
+      walked += segLen;
+    }
+    if (!found) {
+      // fallback: last point of last curve
+      auto &cr = curves.back();
+      gp_Pnt pt; gp_Vec vt;
+      cr.curve->D1(cr.curve->LastParameter(), pt, vt);
+      loft.AddWire(makeSection(pt, gp_Dir(vt)));
+    }
+  }
+  // Last section at end of path
+  {
+    gp_Pnt pn; gp_Vec vn;
+    curves.back().curve->D1(curves.back().curve->LastParameter(), pn, vn);
+    loft.AddWire(makeSection(pn, gp_Dir(vn)));
+  }
+
+  loft.Build();
+  if (!loft.IsDone())
+    throw Standard_ConstructionError("Ballast loft failed");
+  return loft.Shape();
 }
 
 TopoDS_Shape create_track_slab(const track_slab_params &params) {
@@ -3635,36 +3691,59 @@ TopoDS_Shape create_straight_track(const straight_track_params &params) {
   TopoDS_Compound compound;
   builder.MakeCompound(compound);
 
-  // Left & right rails — simple cylinders along direction
+  // Left & right rails using create_rail
+  double trackZ = params.ballastThickness + params.sleeperHeight - 25;  // groove depth
   gp_Dir perp = gp_Dir(0, 0, 1).Crossed(tang);
+  rail_params rp;
+  rp.railHeight = params.railHeight; rp.headWidth = params.railHeadWidth;
+  rp.baseWidth = params.railBaseWidth; rp.webThickness = params.webThickness;
+  rp.headHeight = 0; rp.baseHeight = 0; rp.standardLength = len;
+
   for (int side = -1; side <= 1; side += 2) {
-    gp_Pnt start =
-        params.startPoint.Translated(gp_Vec(perp.XYZ() * side * halfGauge));
-    builder.Add(compound,
-                BRepPrimAPI_MakeCylinder(gp_Ax2(start, tang), R, len).Shape());
+    TopoDS_Shape rail = create_rail(rp);
+    // Rotate rail so Z→trackDir, Y→perp*side
+    gp_Ax3 srcAx(gp::Origin(), gp::DZ(), gp::DX());
+    gp_Ax3 tgtAx(gp::Origin(), tang, perp);
+    gp_Trsf rot; rot.SetTransformation(tgtAx, srcAx);
+    // Translate to gauge position + height
+    gp_Vec railTr = perp.XYZ() * side * halfGauge;
+    railTr.SetZ(railTr.Z() + trackZ);
+    gp_Trsf trs; trs.SetTranslation(railTr);
+    rail = BRepBuilderAPI_Transform(rail, rot).Shape();
+    rail = BRepBuilderAPI_Transform(rail, trs).Shape();
+    builder.Add(compound, rail);
   }
 
   // Sleepers
+  sleeper_params sp2;
+  sp2.shapeType = sleeper_shape_type::TRAPEZOIDAL;
+  sp2.length = params.sleeperLength; sp2.width = params.sleeperWidth;
+  sp2.height = params.sleeperHeight; sp2.gauge = params.gauge;
+  sp2.railBaseWidth = params.railBaseWidth; sp2.grooveDepth = 25; sp2.spacing = params.sleeperSpacing;
   int nSleepers = std::max(1, (int)(len / params.sleeperSpacing));
   for (int i = 0; i <= nSleepers; ++i) {
     double t = (double)i / nSleepers;
     gp_Pnt sp = params.startPoint.Translated(gp_Vec(tang.XYZ() * len * t));
-    gp_Pnt so(sp.X() - params.sleeperSpacing / 2,
-              sp.Y() - params.sleeperLength / 2, sp.Z() - params.sleeperHeight);
-    builder.Add(compound,
-                BRepPrimAPI_MakeBox(so, params.sleeperSpacing * 0.7,
-                                    params.sleeperLength, params.sleeperHeight)
-                    .Shape());
+    TopoDS_Shape sleeper = create_sleeper(sp2);
+    // Rotate sleeper X→perp (length ⊥ track), keep Z up
+    gp_Ax3 srcAx(gp::Origin(), gp::DZ(), gp::DX());
+    gp_Ax3 tgtAx(gp::Origin(), gp::DZ(), perp);
+    gp_Trsf rot; rot.SetTransformation(tgtAx, srcAx);
+    gp_Trsf trs; trs.SetTranslation(gp_Vec(sp.X(), sp.Y(), params.ballastThickness));
+    sleeper = BRepBuilderAPI_Transform(sleeper, rot).Shape();
+    sleeper = BRepBuilderAPI_Transform(sleeper, trs).Shape();
+    builder.Add(compound, sleeper);
   }
 
-  // Ballast
+  // Ballast — local YZ profile at origin, sweep to world endPoint
+  gp_Pnt bs(0, 0, 0);
   ballast_params bp;
-  bp.topWidth = params.ballastTopWidth;
-  bp.thickness = params.ballastThickness;
+  bp.topWidth = params.ballastTopWidth; bp.thickness = params.ballastThickness;
   bp.sideSlope = params.ballastSlope;
-  bp.centerlineSegments = {
-      {centerline_curve_type::LINE, {params.startPoint, params.endPoint}}};
-  builder.Add(compound, create_ballast(bp));
+  bp.centerlineSegments = {{centerline_curve_type::LINE, {bs, params.endPoint.Translated(gp_Vec(-params.startPoint.X(), -params.startPoint.Y(), 0))}}};
+  TopoDS_Shape ballast = create_ballast(bp);
+  gp_Trsf blTrs; blTrs.SetTranslation(gp_Vec(params.startPoint.X(), params.startPoint.Y(), 0));
+  builder.Add(compound, BRepBuilderAPI_Transform(ballast, blTrs).Shape());
 
   return compound;
 }
@@ -3685,91 +3764,93 @@ TopoDS_Shape create_straight_track(const straight_track_params &params,
 // =========================================================================
 TopoDS_Shape create_curve_track(const curve_track_params &params) {
   double R = params.curveRadius;
-  if (R <= Precision::Confusion())
-    throw Standard_ConstructionError("Invalid curve radius");
-
+  if (R <= Precision::Confusion()) throw Standard_ConstructionError("Invalid curve radius");
   double totalAngle = std::abs(params.sweepAngle);
-  if (totalAngle < Precision::Angular())
-    throw Standard_ConstructionError("Invalid sweep angle");
+  if (totalAngle < Precision::Angular()) throw Standard_ConstructionError("Invalid sweep angle");
 
   double halfGauge = params.gauge / 2.0;
   double SE = params.superElevation;
-  int nSeg = std::max(10, (int)(totalAngle * R / 1000));
-  double dA = params.sweepAngle / nSeg;
   double a0 = params.startAngle;
+  double dA = params.sweepAngle / std::max(10, (int)(totalAngle * R / 2000));
+  int nSeg = std::max(1, (int)(totalAngle / std::abs(dA)));
 
   BRep_Builder builder;
   TopoDS_Compound compound;
   builder.MakeCompound(compound);
 
-  // Rail section profile (standard 14-point)
-  double H = params.railHeight, hH = H * 0.36, bH = H * 0.18;
-  double hW = params.railHeadWidth / 2, bW = params.railBaseWidth / 2,
-         wT = bW * 0.22;
+  double trackArcLen = R * totalAngle;
+  double trackZ = params.ballastThickness + params.sleeperHeight - 25;
 
-  auto makeRailInCurve = [&](double yOff, double zOff) {
+  // Ballast — ARC aligned to first & last sleeper center
+  int nSleepers = std::max(1, (int)(trackArcLen / params.sleeperSpacing));
+  double aFirst = a0;
+  double aLast = a0 + nSleepers * params.sleeperSpacing / R;
+
+  // Ballast — ARC from first to last sleeper
+  {
+    double aMid = (aFirst + aLast) * 0.5;
+    ballast_params bp;
+    bp.topWidth = params.ballastTopWidth; bp.thickness = params.ballastThickness; bp.sideSlope = params.ballastSlope;
+    bp.centerlineSegments.push_back({centerline_curve_type::ARC,
+      {gp_Pnt(R*cos(aFirst), R*sin(aFirst), 0),
+       gp_Pnt(R*cos(aMid),   R*sin(aMid),   0),
+       gp_Pnt(R*cos(aLast),  R*sin(aLast),  0)}});
+    builder.Add(compound, create_ballast(bp));
+  }
+
+  // Rails — short rail segments along arc
+  rail_params rp;
+  rp.railHeight = params.railHeight; rp.headWidth = params.railHeadWidth;
+  rp.baseWidth = params.railBaseWidth; rp.webThickness = params.webThickness;
+  rp.headHeight = 0; rp.baseHeight = 0;
+
+  for (int side = -1; side <= 1; side += 2) {
     for (int i = 0; i < nSeg; ++i) {
-      double a1 = a0 + i * dA;
-      gp_Pnt c(R * cos(a1), R * sin(a1), 0);
-      gp_Dir tang(-sin(a1), cos(a1), 0);
-      gp_Dir rad(cos(a1), sin(a1), 0);
-
-      gp_Pnt p1 = c.Translated(gp_Vec(rad.XYZ() * yOff));
-      p1.SetZ(zOff);
-
-      // Simple rail segment as a tilted cylinder along arc
+      double a1 = a0 + i * dA, a2 = a1 + dA;
       double segLen = R * std::abs(dA);
-      TopoDS_Shape railSeg =
-          BRepPrimAPI_MakeCylinder(gp_Ax2(p1, tang), hW, segLen).Shape();
-      builder.Add(compound, railSeg);
+      gp_Pnt c(R * cos(a1), R * sin(a1), 0);
+      gp_Dir rad(cos(a1), sin(a1), 0);
+      gp_Dir tang(-sin(a1), cos(a1), 0);
+
+      // Rail at gauge offset
+      gp_Pnt rc = c.Translated(gp_Vec(rad.XYZ() * side * halfGauge));
+      rc.SetZ(trackZ + (side > 0 ? SE : 0));
+
+      rp.standardLength = segLen;
+      TopoDS_Shape rail = create_rail(rp);
+      // Rotate Z→tang, X→rad (rail upright, width along radial)
+      gp_Ax3 srcAx(gp::Origin(), gp::DZ(), gp::DX());
+      gp_Ax3 tgtAx(gp::Origin(), tang, rad);
+      gp_Trsf rot; rot.SetTransformation(tgtAx, srcAx);
+      gp_Trsf trs; trs.SetTranslation(gp_Vec(rc.X(), rc.Y(), rc.Z()));
+      rail = BRepBuilderAPI_Transform(rail, rot).Shape();
+      rail = BRepBuilderAPI_Transform(rail, trs).Shape();
+      builder.Add(compound, rail);
     }
-  };
-
-  // Inner rail
-  for (int i = 0; i < nSeg; ++i) {
-    double a1 = a0 + i * dA, a2 = a1 + dA;
-    gp_Pnt c(R * cos(a1), R * sin(a1), 0);
-    gp_Pnt cn(R * cos(a2), R * sin(a2), 0);
-    gp_Dir rad(cos(a1), sin(a1), 0);
-
-    gp_Pnt pIn = c.Translated(gp_Vec(rad.XYZ() * -halfGauge));
-    gp_Pnt pInN = cn.Translated(gp_Vec(rad.XYZ() * -halfGauge));
-    double segLen = pIn.Distance(pInN);
-    gp_Vec v(pIn, pInN);
-    if (v.Magnitude() > Precision::Confusion())
-      builder.Add(
-          compound,
-          BRepPrimAPI_MakeCylinder(gp_Ax2(pIn, gp_Dir(v)), hW, segLen).Shape());
   }
 
-  // Outer rail (with superelevation)
-  for (int i = 0; i < nSeg; ++i) {
-    double a1 = a0 + i * dA, a2 = a1 + dA;
-    gp_Pnt c(R * cos(a1), R * sin(a1), 0);
-    gp_Pnt cn(R * cos(a2), R * sin(a2), 0);
-    gp_Dir rad(cos(a1), sin(a1), 0);
-
-    gp_Pnt pOut = c.Translated(gp_Vec(rad.XYZ() * halfGauge));
-    pOut.SetZ(SE);
-    gp_Pnt pOutN = cn.Translated(gp_Vec(rad.XYZ() * halfGauge));
-    pOutN.SetZ(SE);
-    double segLen2 = pOut.Distance(pOutN);
-    gp_Vec v2(pOut, pOutN);
-    if (v2.Magnitude() > Precision::Confusion())
-      builder.Add(compound, BRepPrimAPI_MakeCylinder(gp_Ax2(pOut, gp_Dir(v2)),
-                                                     hW, segLen2)
-                                .Shape());
-  }
-
-  // Sleepers along curve
-  int nSleepers = std::max(2, (int)(totalAngle * R / params.sleeperSpacing));
+  // Sleepers — each oriented radially
+  sleeper_params sp2;
+  sp2.shapeType = sleeper_shape_type::RECTANGULAR;
+  sp2.length = params.sleeperLength; sp2.width = params.sleeperWidth;
+  sp2.height = params.sleeperHeight; sp2.gauge = params.gauge;
+  sp2.railBaseWidth = params.railBaseWidth; sp2.grooveDepth = 25; sp2.spacing = params.sleeperSpacing;
   for (int s = 0; s <= nSleepers; ++s) {
-    double a = a0 + totalAngle * s / nSleepers;
-    double x = R * cos(a), y = R * sin(a);
-    double sl = 2500, sw = params.sleeperWidth, sh = params.sleeperHeight;
-    builder.Add(compound, BRepPrimAPI_MakeBox(
-                              gp_Pnt(x - sw / 2, y - sl / 2, -sh), sw, sl, sh)
-                              .Shape());
+    double dist = s * params.sleeperSpacing;
+    double a = a0 + dist / R;
+    gp_Pnt sp(R * cos(a), R * sin(a), params.ballastThickness);
+    gp_Dir rad(cos(a), sin(a), 0);
+    gp_Dir tang(-sin(a), cos(a), 0);
+
+    TopoDS_Shape sleeper = create_sleeper(sp2);
+    // Rotate sleeper X→rad (sleeper length along radius, perpendicular to track)
+    gp_Ax3 srcAx(gp::Origin(), gp::DZ(), gp::DX());
+    gp_Ax3 tgtAx(gp::Origin(), gp::DZ(), rad);
+    gp_Trsf rot; rot.SetTransformation(tgtAx, srcAx);
+    sleeper = BRepBuilderAPI_Transform(sleeper, rot).Shape();
+    gp_Trsf trs; trs.SetTranslation(gp_Vec(sp.X(), sp.Y(), sp.Z()));
+    sleeper = BRepBuilderAPI_Transform(sleeper, trs).Shape();
+    builder.Add(compound, sleeper);
   }
 
   return compound;

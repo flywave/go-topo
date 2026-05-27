@@ -564,7 +564,7 @@ typedef struct {
   double width;
   double height;
   double gauge;
-  double railBaseWidth;
+  double railBaseWidth; double webThickness;
   double grooveDepth;
   double spacing;
 } sleeper_params_t;
@@ -668,7 +668,7 @@ typedef struct {
   double length;
   double railHeight;
   double railHeadWidth;
-  double railBaseWidth;
+  double railBaseWidth; double webThickness;
   double tipWidth;
   double curveRadius;
   bool isLeftHand;
@@ -688,7 +688,7 @@ typedef struct {
   double gauge;
   double railHeight;
   double railHeadWidth;
-  double railBaseWidth;
+  double railBaseWidth; double webThickness;
 } frog_params_t;
 
 RAILCAPICALL topo_shape_t *create_frog(frog_params_t params);
@@ -706,7 +706,7 @@ typedef struct {
   double gauge;
   double railHeight;
   double railHeadWidth;
-  double railBaseWidth;
+  double railBaseWidth; double webThickness;
   double switchRailLength;
   double leadCurveRadius;
   double frogLength;
@@ -724,7 +724,7 @@ RAILCAPICALL topo_shape_t *create_turnout_with_place(turnout_params_t params,
 // 35. Rail Pair (轨排对)
 // ===========================================================================
 typedef struct { pnt3d_t *centerline; int pointCount; double gauge;
-  double superElevation; double railHeight; double railHeadWidth; double railBaseWidth;
+  double superElevation; double railHeight; double railHeadWidth; double railBaseWidth; double webThickness;
 } rail_pair_params_t;
 RAILCAPICALL topo_shape_t *create_rail_pair(rail_pair_params_t params);
 RAILCAPICALL topo_shape_t *create_rail_pair_with_place(rail_pair_params_t params,
@@ -742,7 +742,7 @@ RAILCAPICALL topo_shape_t *create_sleeper_layout(sleeper_layout_params_t params)
 // 37. Straight Track (直线轨道段)
 // ===========================================================================
 typedef struct { pnt3d_t startPoint; pnt3d_t endPoint; double gauge;
-  double railHeight; double railHeadWidth; double railBaseWidth;
+   double railHeight; double railHeadWidth; double railBaseWidth; double webThickness;
   double sleeperLength; double sleeperWidth; double sleeperHeight; double sleeperSpacing;
   double ballastTopWidth; double ballastThickness; double ballastSlope;
 } straight_track_params_t;
@@ -754,7 +754,7 @@ RAILCAPICALL topo_shape_t *create_straight_track_with_place(straight_track_param
 // 38. Curve Track (曲线轨道段)
 // ===========================================================================
 typedef struct { pnt3d_t curveCenter; double startAngle; double sweepAngle; double curveRadius;
-  double gauge; double superElevation; double railHeight; double railHeadWidth; double railBaseWidth;
+  double gauge; double superElevation; double railHeight; double railHeadWidth; double railBaseWidth; double webThickness;
   double sleeperLength; double sleeperWidth; double sleeperHeight; double sleeperSpacing;
   double ballastTopWidth; double ballastThickness; double ballastSlope;
 } curve_track_params_t;
