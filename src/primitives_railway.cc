@@ -2708,7 +2708,6 @@ TopoDS_Shape create_track_slab(const track_slab_params &params,
 TopoDS_Shape create_fastener(const fastener_params &params) {
     fastener_point_params fp;
     fp.position = gp::Origin();
-    fp.side = 3;
     fp.padThickness = params.padThickness;
     return create_fastener_point(fp);
 }
@@ -2718,10 +2717,7 @@ TopoDS_Shape create_fastener(const fastener_params &params,
                              const gp_Dir &upDir) {
     fastener_point_params fp;
     fp.position = position;
-    fp.side = 3;
     fp.padThickness = params.padThickness;
-    if (!direction.IsEqual(gp::DX(), Precision::Angular()) || !upDir.IsEqual(gp::DZ(), Precision::Angular()))
-        fp.rotation = direction.Angle(gp::DX());
     return create_fastener_point(fp);
 }
 
@@ -3595,18 +3591,65 @@ TopoDS_Shape create_fastener_point(const fastener_point_params &params) {
   BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
   auto addAt = [&](double yOff) {
     gp_Pnt p(params.position.X(), params.position.Y() + yOff, params.position.Z());
-    TopoDS_Shape pad = BRepPrimAPI_MakeBox(gp_Pnt(p.X() - 75, p.Y() - 60, p.Z()), 150, 120, params.padThickness).Shape();
-    for (int bx = -1; bx <= 1; bx += 2)
-      for (int by = -1; by <= 1; by += 2) {
-        TopoDS_Shape h = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(p.X() + bx * 40, p.Y() + by * 35, p.Z() - 1), gp::DZ()), 6, params.padThickness + 2).Shape();
-        pad = BRepAlgoAPI_Cut(pad, h).Shape();
-      }
-    bld.Add(cmp, pad);
-    TopoDS_Shape clip = BRepPrimAPI_MakeBox(gp_Pnt(p.X() - 15, p.Y() - 10, p.Z() + params.padThickness), 30, 20, 30).Shape();
-    bld.Add(cmp, clip);
+
+    // 1. Elastic clip (弹条) — ω形弹条, 7个控制点
+    //   左边U型(P1-P2-P3) + 中间倒U型(P3-P4-P5) + 右边U型(P5-P6-P7)
+    double wireR = 3;
+    double clipHW = 42.0;
+    double clipH = 18.0;
+    double yClipOff = 14.0;
+    double zBase = p.Z() + params.padThickness;
+    TColgp_Array1OfPnt poles(1, 9);
+    poles.SetValue(1, gp_Pnt(p.X() - clipHW * 0.3,    p.Y() + yClipOff * 0.1, zBase));
+    poles.SetValue(2, gp_Pnt(p.X() - clipHW,          p.Y() + yClipOff * 0.1, zBase));
+    poles.SetValue(3, gp_Pnt(p.X() - clipHW * 0.55,   p.Y() + yClipOff * 6.0, zBase + clipH * 0.92));
+    poles.SetValue(4, gp_Pnt(p.X() - clipHW * 0.15,   p.Y(),                  zBase + clipH * 0.08));
+    poles.SetValue(5, gp_Pnt(p.X(),                   p.Y() - yClipOff * 3.0, zBase + clipH * 0.95));
+    poles.SetValue(6, gp_Pnt(p.X() + clipHW * 0.15,   p.Y(),                  zBase + clipH * 0.08));
+    poles.SetValue(7, gp_Pnt(p.X() + clipHW * 0.55,   p.Y() + yClipOff * 6.0, zBase + clipH * 0.92));
+    poles.SetValue(8, gp_Pnt(p.X() + clipHW,          p.Y() + yClipOff * 0.1, zBase));
+    poles.SetValue(9, gp_Pnt(p.X() + clipHW * 0.3,    p.Y() + yClipOff * 0.1, zBase));
+    Handle(Geom_BezierCurve) centerline = new Geom_BezierCurve(poles);
+    TopoDS_Edge pathEdge = BRepBuilderAPI_MakeEdge(centerline).Edge();
+    TopoDS_Wire pathWire = BRepBuilderAPI_MakeWire(pathEdge).Wire();
+
+    gp_Dir pathDir(poles.Value(2).XYZ() - poles.Value(1).XYZ());
+    gp_Ax2 sectionAx(poles.Value(1), pathDir);
+    gp_Circ sectionCirc(sectionAx, wireR);
+    TopoDS_Edge sectionEdge = BRepBuilderAPI_MakeEdge(sectionCirc).Edge();
+    TopoDS_Wire sectionWire = BRepBuilderAPI_MakeWire(sectionEdge).Wire();
+
+    BRepOffsetAPI_MakePipeShell pipe(pathWire);
+    pipe.Add(sectionWire);
+    pipe.SetMode(Standard_True);
+    pipe.Build();
+    if (pipe.IsDone() && pipe.MakeSolid())
+      bld.Add(cmp, pipe.Shape());
+
+    // 2. Bolt assembly (螺栓) at clip center
+    double boltR = 6.0;
+    double nutH = 8.0;
+    double nutR = 12.0;
+    double nutZ = zBase + clipH * 0.6;
+
+    // Screw shaft (螺杆) — cylinder through pad and up through clip
+    TopoDS_Shape screw = BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(p.X(), p.Y()  + yClipOff, p.Z() - 3), gp::DZ()),
+        boltR, nutZ - p.Z() + 3 + nutH).Shape();
+    bld.Add(cmp, screw);
+
+    // Hex nut (六角螺母)
+    BRepBuilderAPI_MakePolygon hexW;
+    for (int i = 0; i < 6; i++) {
+      double a = i * M_PI / 3.0;
+      hexW.Add(gp_Pnt(p.X() + nutR * cos(a), p.Y() + yClipOff + nutR * sin(a), nutZ));
+    }
+    hexW.Close();
+    TopoDS_Face hexF = BRepLib_MakeFace(hexW.Wire()).Face();
+    TopoDS_Shape nut = BRepPrimAPI_MakePrism(hexF, gp_Vec(0, 0, nutH)).Shape();
+    bld.Add(cmp, nut);
   };
-  if (params.side == 3 || params.side == 1) addAt(-751.5);
-  if (params.side == 3 || params.side == 2) addAt(751.5);
+  addAt(0);
   return cmp;
 }
 
@@ -3772,7 +3815,7 @@ TopoDS_Shape create_turnout_assembly(const turnout_assembly_params &params) {
   for (auto &g : params.guardRails) try { bld.Add(cmp, create_guard_rail_curve(g)); } catch (...) {}
   for (auto &s : params.sleepers)   try { bld.Add(cmp, create_sleeper_line(s)); } catch (...) {}
   for (auto &f : params.fasteners)  try {
-    fastener_point_params fp; fp.position = f.position; fp.side = f.side; fp.padThickness = f.padThickness;
+    fastener_point_params fp; fp.position = f.position; fp.padThickness = f.padThickness;
     bld.Add(cmp, create_fastener_point(fp));
   } catch (...) {}
   return cmp;

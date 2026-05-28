@@ -380,6 +380,15 @@ void test_retarder_point() {
   test_export(create_retarder_point(p, gp_Pnt(500,0,0), gp::DX(), gp::DZ()), "retarder_point_pos");
 }
 
+void test_fastener() {
+  std::cout << "\n=== Fastener ===" << std::endl;
+  fastener_params p;
+  p.spacing = 600; p.gauge = 1435;
+  p.padThickness = 10; p.padLength = 200; p.padWidth = 160;
+  test_export(create_fastener(p), "fastener");
+  test_export(create_fastener(p, gp_Pnt(0,0,0), gp::DX(), gp::DZ()), "fastener_pos");
+}
+
 int main() {
   auto run = [](const char *name, auto fn) {
     std::cout << "\n=== " << name << " ===" << std::endl;
@@ -428,6 +437,7 @@ int main() {
   run("Turnout Graph", test_turnout_new);
   run("Mast Assembly", test_mast_assembly);
   run("Retarder Point", test_retarder_point);
+  run("Fastener", test_fastener);
 
   std::cout << "\nAll tests completed." << std::endl;
   return 0;

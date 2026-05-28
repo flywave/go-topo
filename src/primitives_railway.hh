@@ -1079,8 +1079,6 @@ TopoDS_Shape create_sleeper_line(const sleeper_line_params &params);
 // ========== 扣件（点） ==========
 struct fastener_point_params {
   gp_Pnt position;                       // 安装位置
-  double rotation = 0.0;                 // 绕Z轴旋转°
-  int side = 3;                          // 1-LEFT, 2-RIGHT, 3-BOTH
   int type = 1;                          // 1-弹条I型, 2-II型, 3-III型, 4-WJ-7, 5-WJ-8
   double padThickness = 10.0;
 };
