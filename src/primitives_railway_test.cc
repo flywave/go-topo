@@ -169,42 +169,41 @@ void test_rail() {
 
 void test_switch_rail() {
   std::cout << "\n=== Switch Rail ===" << std::endl;
-  switch_rail_params p;
-  p.length = 7700; p.railHeight = 176; p.railHeadWidth = 73.02;
-  p.railBaseWidth = 150; p.webThickness = 16.67; p.tipWidth = 2;
-  p.curveRadius = 0; p.isLeftHand = true;
-  test_export(create_switch_rail(p), "switch_rail_straight");
-  // Path-based: straight LINE
-  std::vector<centerline_segment> path = {{centerline_curve_type::LINE, {gp_Pnt(0,0,0), gp_Pnt(7700,0,0)}}};
-  test_export(create_switch_rail(p, path, 0, 0), "switch_rail_path");
-  // Curved ARC
-  std::vector<centerline_segment> arcPath = {{centerline_curve_type::ARC, {gp_Pnt(0,0,0), gp_Pnt(3850,500,0), gp_Pnt(7700,0,0)}}};
-  test_export(create_switch_rail(p, arcPath, 0, 0), "switch_rail_arc");
+  // Straight switch (delegated to create_rail_curve with SWITCH end)
+  rail_curve_params rp;
+  rp.curve.type = curve_type::LINE;
+  rp.curve.startPoint = gp::Origin();
+  rp.curve.endPoint = gp_Pnt(7700, 0, 0);
+  rp.railHeight = 176; rp.headWidth = 73; rp.baseWidth = 150; rp.webThickness = 16.5;
+  rp.endStart.type = end_treatment_type::SWITCH;
+  rp.endStart.toeWidth = 2;
+  test_export(create_rail_curve(rp), "switch_rail_straight");
+  // Curved switch (ARC path)
+  rp.curve.type = curve_type::ARC;
+  rp.curve.radius = 350000;
+  rp.curve.arcDirection = 1;
+  rp.curve.controlPoints = {gp_Pnt(3850, 500, 0)};
+  test_export(create_rail_curve(rp), "switch_rail_arc");
 }
 
 void test_wing_rail() {
   std::cout << "\n=== Wing Rail ===" << std::endl;
-  // Wing rail: short rail with bent shape, wide tip, full profile at heel
-  switch_rail_params p;
-  p.length = 3000; p.railHeight = 176; p.railHeadWidth = 73.02;
-  p.railBaseWidth = 150; p.webThickness = 16.67; p.tipWidth = 15;
-  p.curveRadius = 0; p.isLeftHand = true;
-  // Bent path: runs along frog side, then bends outward
-  double frogAngle = atan2(1.0, 12.0);
-  std::vector<centerline_segment> wingPath = {{centerline_curve_type::LINE, {
-    gp_Pnt(0, 0, 0),
-    gp_Pnt(2000, 100, 0)
-  }}};
-  test_export(create_switch_rail(p, wingPath), "wing_rail_straight");
-  // Bent wing rail (follows frog angle)
-  std::vector<centerline_segment> bentPath = {{centerline_curve_type::LINE, {
-    gp_Pnt(0, 0, 0),
-    gp_Pnt(1500, 50, 0)
-  }}, {centerline_curve_type::LINE, {
-    gp_Pnt(1500, 50, 0),
-    gp_Pnt(3000, 300, 0)
-  }}};
-  test_export(create_switch_rail(p, bentPath), "wing_rail_bent");
+  // Straight wing rail
+  wing_rail_curve_params wp;
+  wp.curve.type = curve_type::LINE;
+  wp.curve.startPoint = gp::Origin();
+  wp.curve.endPoint = gp_Pnt(3000, 0, 0);
+  wp.channelHeight = 120; wp.flangeWidth = 30; wp.webThickness = 12;
+  test_export(create_wing_rail_curve(wp), "wing_rail_straight");
+  // Bent wing rail (multi-segment: two lines meeting at an angle)
+  // Use ARC to approximate the bend
+  wp.curve.type = curve_type::ARC;
+  wp.curve.radius = 5000;
+  wp.curve.arcDirection = 2;
+  wp.curve.startPoint = gp_Pnt(0, 0, 0);
+  wp.curve.endPoint = gp_Pnt(3000, 300, 0);
+  wp.curve.controlPoints = {gp_Pnt(1500, 50, 0)};
+  test_export(create_wing_rail_curve(wp), "wing_rail_bent");
 }
 
 void test_frog() {
@@ -273,44 +272,59 @@ void test_curve_track() {
 }
 
 void test_turnout_new() {
-  std::cout << "\n=== Turnout (Parametric) ===" << std::endl;
-  turnout_build_params bp;
-  bp.gauge = 1435; bp.railHeight = 176; bp.railHeadWidth = 73.02;
-  bp.railBaseWidth = 150; bp.webThickness = 16.67;
-  bp.sleeperLength = 2600; bp.sleeperWidth = 300; bp.sleeperHeight = 200;
-  bp.sleeperSpacing = 600;
-  bp.ballastTopWidth = 3600; bp.ballastThickness = 350; bp.ballastSlope = 1.5;
+  std::cout << "\n=== Turnout (Element Assembly) ===" << std::endl;
+  turnout_assembly_params tap;
+  tap.turnoutNo = 12;
+  tap.hand = 1;
+  tap.gauge = 1435;
 
-  // Centerline graph: main line + diverging track crossing it
-  std::vector<track_curve> edges;
-  // Edge 0: main track centerline
-  edges.push_back({centerline_curve_type::LINE, {gp_Pnt(0,0,0), gp_Pnt(25000,0,0)}});
-  // Edge 1: diverging track centerline (frog→switch: y=0 → y=gauge)
-  double g = bp.gauge;
-  edges.push_back({centerline_curve_type::ARC, {
-    gp_Pnt(16000, 0, 0),         // frog: y=0 (crosses main centerline)
-    gp_Pnt(11000, g+500, 0),     // peak: between switch and frog
-    gp_Pnt(7000, g, 0)           // switch: y=gauge (inner rail at gauge/2)
-  }});
+  double hg = tap.gauge / 2.0;
+  frog_calculated_params fc = calculate_frog_params(12, tap.gauge);
+  double swLen = fc.switchRailLength;
+  double leadR = fc.leadCurveRadius;
 
-  centerline_graph graph = build_centerline_graph(edges);
-  // Merge node at rail level: diverging inner rail = main outer rail at y=gauge/2
-  double hg = bp.gauge / 2.0;
-  bool hasMerge = false;
-  for (auto &n : graph.nodes) if (n.is_merge) hasMerge = true;
-  if (!hasMerge) {
-    centerline_graph::node mn;
-    mn.pt = gp_Pnt(7000, hg, 0);
-    mn.edge_ids = {0, 1};
-    mn.is_merge = true;
-    graph.nodes.push_back(mn);
+  // Stock rails (LINE)
+  rail_curve_params sr;
+  sr.curve.type = curve_type::LINE;
+  sr.curve.startPoint = gp_Pnt(-swLen - 2000, -hg, 0);
+  sr.curve.endPoint = gp_Pnt(fc.frogTotalLength * 1.2, -hg, 0);
+  sr.railHeight = 176; sr.headWidth = 73; sr.baseWidth = 150; sr.webThickness = 16.5;
+  tap.rails.push_back(sr);
+  sr.curve.startPoint = gp_Pnt(-swLen - 2000, hg, 0);
+  sr.curve.endPoint = gp_Pnt(fc.frogTotalLength * 1.2, hg, 0);
+  tap.rails.push_back(sr);
+
+  // Switch rails (tapered at switch end)
+  rail_curve_params sw_r;
+  sw_r.curve.type = curve_type::LINE;
+  sw_r.curve.startPoint = gp_Pnt(-swLen, -hg, 0);
+  sw_r.curve.endPoint = gp_Pnt(0, -hg, 0);
+  sw_r.endStart.type = end_treatment_type::SWITCH;
+  sw_r.endStart.toeWidth = 2;
+  sw_r.railHeight = 176; sw_r.headWidth = 73; sw_r.baseWidth = 150; sw_r.webThickness = 16.5;
+  tap.rails.push_back(sw_r);
+  // Curved switch on diverging side
+  sw_r.curve.type = curve_type::ARC;
+  sw_r.curve.startPoint = gp_Pnt(-swLen, hg, 0);
+  sw_r.curve.endPoint = gp_Pnt(0, hg, 0);
+  sw_r.curve.radius = leadR;
+  sw_r.curve.arcDirection = 1;
+  tap.rails.push_back(sw_r);
+
+  // Sleepers
+  int sc = 8;
+  for (int i = 0; i < sc; ++i) {
+    double t = (double)i / sc;
+    double x = -swLen + t * (fc.frogTotalLength * 1.2 + swLen);
+    double sl = 2500 + t * 200;
+    sleeper_line_params slp;
+    slp.startPoint = gp_Pnt(x, -sl / 2, 0);
+    slp.endPoint = gp_Pnt(x, sl / 2, 0);
+    slp.width = 260; slp.height = 200; slp.gauge = tap.gauge;
+    tap.sleepers.push_back(slp);
   }
-  size_t nCross=0, nMerge=0;
-  for (auto &n : graph.nodes) { if (n.is_crossing) nCross++; if (n.is_merge) nMerge++; }
-  fprintf(stderr, "[turnout] edges=%zu nodes=%zu crossings=%zu merges=%zu\n",
-          graph.edges.size(), graph.nodes.size(), nCross, nMerge);
 
-  test_export(create_turnout(graph, bp), "turnout_graph");
+  test_export(create_turnout_assembly(tap), "turnout_assembly");
 }
 
 void test_turnout() {

@@ -686,11 +686,6 @@ struct ballast_params {
 };
 
 TopoDS_Shape create_ballast(const ballast_params &params);
-TopoDS_Shape create_rail_path(const rail_params &params,
-                               const std::vector<centerline_segment> &segments,
-                               double lateralOffset = 0,
-                               double verticalOffset = 0,
-                               double tiltAngle = 0);
 
 // =========================================================================
 // TRACK: 27. Track Slab (轨道板) TYPE=TRACK_SLAB
@@ -784,10 +779,6 @@ TopoDS_Shape create_switch_rail(const switch_rail_params &params,
                                  const gp_Pnt &position,
                                  const gp_Dir &direction = gp::DX(),
                                  const gp_Dir &upDir = gp::DZ());
-TopoDS_Shape create_switch_rail(const switch_rail_params &params,
-                                 const std::vector<centerline_segment> &segments,
-                                 double lateralOffset = 0,
-                                 double verticalOffset = 0);
 
 // =========================================================================
 // TRACK: 32. Frog (辙叉)
@@ -807,53 +798,22 @@ TopoDS_Shape create_frog(const frog_params &params,
                           const gp_Dir &upDir = gp::DZ());
 
 // =========================================================================
-// TRACK: 26. Ballast (道床) — 沿曲线中心线扫掠
+// TRACK: 34. Frog Auto-Calculation (辙叉自动查表) — KEPT, used by create_turnout
 // =========================================================================
-// =========================================================================
-// TRACK: 33. Parametric Turnout (参量化道岔)
-// =========================================================================
-
-struct track_curve {                        // 中心线段
-  centerline_curve_type type;               // LINE / ARC / BEZIER
-  std::vector<gp_Pnt> points;
+struct frog_calculated_params {
+  int turnoutNo;
+  double frogAngle;
+  double leadCurveRadius;
+  double switchRailLength;
+  double frogTotalLength;
+  double frogPointLength;
+  double wingRailLength;
+  double guardRailLength;
+  double guardFlangeGroove;
+  double throatWidth;
 };
 
-struct turnout_build_params {
-  double gauge;                             // 轨距(mm)
-  double railHeight;                        // 轨高(mm)
-  double railHeadWidth;                     // 轨头宽(mm)
-  double railBaseWidth;                     // 轨底宽(mm)
-  double webThickness;                      // 轨腰厚(mm)
-  double sleeperLength;                     // 枕木长度(mm)
-  double sleeperWidth;                      // 枕木宽度(mm)
-  double sleeperHeight;                     // 枕木高度(mm)
-  double sleeperSpacing;                    // 枕木间距(mm)
-  double ballastTopWidth;                   // 道床顶宽(mm)
-  double ballastThickness;                  // 道床厚度(mm)
-  double ballastSlope;                      // 道床边坡
-};
-
-// 中心线图: 构建节点、分类、生成道岔
-struct centerline_graph {
-  struct node {
-    gp_Pnt pt;
-    std::vector<int> edge_ids;             // 关联的边索引
-    bool is_crossing;                      // 两条贯穿线交叉 → 辙叉
-    bool is_merge;                         // 一条终止于另一条 → 尖轨
-  };
-  std::vector<track_curve> edges;          // 所有边
-  std::vector<node> nodes;                 // 由 build_centerline_graph 计算
-};
-
-centerline_graph build_centerline_graph(const std::vector<track_curve> &edges,
-                                        double tolerance = 1.0);
-
-TopoDS_Shape create_turnout(const centerline_graph &graph,
-                            const turnout_build_params &params);
-
-// =========================================================================
-// TRACK: 33b. Legacy Turnout (旧道岔接口)
-// =========================================================================
+frog_calculated_params calculate_frog_params(int turnoutNo, double gauge);
 
 struct turnout_params {
   int turnoutNo;               // 道岔号数
@@ -874,28 +834,10 @@ TopoDS_Shape create_turnout(const turnout_params &params);
 TopoDS_Shape create_turnout(const turnout_params &params,
                              const gp_Pnt &position,
                              const gp_Dir &direction = gp::DX(),
-                             const gp_Dir &upDir = gp::DZ());
+                              const gp_Dir &upDir = gp::DZ());
 
 // =========================================================================
-// TRACK: 34. Frog Auto-Calculation (辙叉自动查表)
-// =========================================================================
-struct frog_calculated_params {
-  int turnoutNo;              // 道岔号数
-  double frogAngle;           // 辙叉角(rad)
-  double leadCurveRadius;     // 导曲线半径(mm)
-  double switchRailLength;    // 尖轨长度(mm)
-  double frogTotalLength;     // 辙叉全长(mm)
-  double frogPointLength;     // 心轨长度(mm)
-  double wingRailLength;      // 翼轨长度(mm)
-  double guardRailLength;     // 护轨长度(mm)
-  double guardFlangeGroove;   // 护轨轮缘槽宽(mm)
-  double throatWidth;         // 辙叉咽喉宽度(mm)
-};
-
-frog_calculated_params calculate_frog_params(int turnoutNo, double gauge);
-
-// =========================================================================
-// TRACK: 35. Rail Pair (轨排对) — 通用, 沿任意中心线
+// TRACK: 35. Rail Pair (轨排对)
 // =========================================================================
 struct rail_pair_params {
   std::vector<gp_Pnt> centerline;  // 线路中心线坐标序列
@@ -979,28 +921,7 @@ TopoDS_Shape create_curve_track(const curve_track_params &params);
 TopoDS_Shape create_curve_track(const curve_track_params &params,
                                  const gp_Pnt &position,
                                  const gp_Dir &direction = gp::DX(),
-                                 const gp_Dir &upDir = gp::DZ());
-struct track_section_params {
-  std::vector<gp_Pnt> centerline;  // 线路中心线
-  double gauge;                    // 轨距(mm)
-  double superElevation;          // 超高(mm)
-  double railHeight;               // 轨高(mm)
-  double railHeadWidth;            // 轨头宽(mm)
-  double railBaseWidth;            // 轨底宽(mm)
-  double sleeperLength;            // 轨枕长度(mm)
-  double sleeperWidth;             // 轨枕宽度(mm)
-  double sleeperHeight;            // 轨枕高度(mm)
-  double sleeperSpacing;           // 轨枕间距(mm)
-  double ballastTopWidth;          // 道床顶宽(mm)
-  double ballastThickness;         // 道床厚度(mm)
-  double ballastSlope;             // 道床边坡
-};
-
-TopoDS_Shape create_track_section(const track_section_params &params);
-TopoDS_Shape create_track_section(const track_section_params &params,
-                                   const gp_Pnt &position,
-                                   const gp_Dir &direction = gp::DX(),
-                                   const gp_Dir &upDir = gp::DZ());
+                                  const gp_Dir &upDir = gp::DZ());
 
 // 支柱位姿计算结果 — 由 CalcOcsSpanPositions 推算
 struct OcsMastPosition {
@@ -1054,10 +975,173 @@ struct reg_arm_bracket_params {
 };
 
 TopoDS_Shape create_reg_arm_bracket(const reg_arm_bracket_params &params);
-TopoDS_Shape create_reg_arm_bracket(const reg_arm_bracket_params &params,
+  TopoDS_Shape create_reg_arm_bracket(const reg_arm_bracket_params &params,
+                                      const gp_Pnt &position,
+                                      const gp_Dir &tubeDir = gp::DX(),
+                                      const gp_Dir &upDir = gp::DZ());
+
+// =========================================================================
+// POINT/LINE-DRIVEN TRACK — element-specific public API
+// =========================================================================
+
+// Curve types for track element paths
+enum class curve_type { LINE = 0, ARC = 1, BEZIER = 2 };
+enum class profile_type { RAIL = 0, CHANNEL = 1, PLATE = 2 };
+enum class end_treatment_type { PLANE = 0, SWITCH = 1, SCARF = 2, BELL = 3 };
+
+// End treatment for curve elements (尖轨/斜切/喇叭口)
+struct end_treatment_params {
+  end_treatment_type type = end_treatment_type::PLANE;
+  double toeWidth = 2.0;          // 尖轨尖端宽度
+  double switchLength = 0.0;      // 尖轨段长度
+  double planedStart = 0.0;       // 刨削起始位置
+  int switchType = 1;             // 1-直线尖轨, 2-曲线尖轨
+  double dropValue = 0.0;         // 尖端降低值
+  double scarfAngle = 45.0;       // 斜切角度°
+  double bellLength = 500.0;      // 喇叭口长度
+};
+
+// Curve path definition
+struct curve_params {
+  curve_type type = curve_type::LINE;
+  gp_Pnt startPoint;
+  gp_Pnt endPoint;
+  std::vector<gp_Pnt> controlPoints; // BEZIER
+  double radius = 0.0;               // ARC
+  int arcDirection = 1;              // 1-left, 2-right
+};
+
+// ========== 钢轨（独立曲线） ==========
+struct rail_curve_params {
+  curve_params curve;                    // 空间路径
+  end_treatment_params endStart;         // 起点端部
+  end_treatment_params endFinish;        // 终点端部
+  double railHeight = 176.0;
+  double headWidth = 73.0;
+  double baseWidth = 150.0;
+  double webThickness = 16.5;
+  double headHeight = 48.0;
+  double baseHeight = 28.0;
+  double headRadius = 13.0;
+};
+
+TopoDS_Shape create_rail_curve(const rail_curve_params &params);
+
+// ========== 翼轨（独立曲线） ==========
+struct wing_rail_curve_params {
+  curve_params curve;
+  end_treatment_params endStart;
+  end_treatment_params endFinish;
+  profile_type profile = profile_type::CHANNEL; // CHANNEL or RAIL
+  double channelHeight = 120.0;
+  double grooveWidth = 45.0;
+  double flangeWidth = 20.0;
+  double webThickness = 12.0;
+  double grooveThickness = 15.0;
+  int endConnection = 1;               // 1-weld, 2-bolt, 3-spacer
+};
+
+TopoDS_Shape create_wing_rail_curve(const wing_rail_curve_params &params);
+
+// ========== 护轨（独立曲线） ==========
+struct guard_rail_curve_params {
+  curve_params curve;
+  end_treatment_params endStart;        // BELL end typical
+  end_treatment_params endFinish;
+  profile_type profile = profile_type::CHANNEL;
+  double channelHeight = 120.0;
+  double grooveWidth = 45.0;
+  double flangeWidth = 20.0;
+  double webThickness = 12.0;
+  double grooveThickness = 15.0;
+  double raiseHeight = 0.0;             // 高出基本轨量
+};
+
+TopoDS_Shape create_guard_rail_curve(const guard_rail_curve_params &params);
+
+// ========== 枕木（直线） ==========
+struct sleeper_line_params {
+  gp_Pnt startPoint;                     // 左端
+  gp_Pnt endPoint;                       // 右端
+  double width = 260.0;
+  double height = 200.0;
+  double grooveDepth = 8.0;
+  bool hasEndSlope = true;
+  int sleeperType = 2;                   // 1-YIIF, 2-III, 3-桥枕
+  double gauge = 1435.0;
+  double railBaseWidth = 150.0;          // 钢轨底宽(承轨槽宽)
+  int shapeType = 1;                     // 1-RECTANGULAR, 2-TRAPEZOIDAL(鱼腹式)
+};
+
+TopoDS_Shape create_sleeper_line(const sleeper_line_params &params);
+
+// ========== 扣件（点） ==========
+struct fastener_point_params {
+  gp_Pnt position;                       // 安装位置
+  double rotation = 0.0;                 // 绕Z轴旋转°
+  int side = 3;                          // 1-LEFT, 2-RIGHT, 3-BOTH
+  int type = 1;                          // 1-弹条I型, 2-II型, 3-III型, 4-WJ-7, 5-WJ-8
+  double padThickness = 10.0;
+};
+
+TopoDS_Shape create_fastener_point(const fastener_point_params &params);
+
+// ========== 减速顶（点） ==========
+struct retarder_point_params {
+  gp_Pnt position;
+  double rotation = 0.0;
+  int side = 1;
+  int type = 1;                          // 1-液压, 2-摩擦, 3-可控
+  int mountType = 1;                     // 1-轨内侧, 2-轨外侧, 3-双轨双侧
+  double height = 80.0;
+  double length = 300.0;
+  double width = 150.0;
+};
+
+TopoDS_Shape create_retarder_point(const retarder_point_params &params);
+
+// ========== 道床（由枕木线驱动） ==========
+struct ballast_from_sleepers_params {
+  std::vector<sleeper_line_params> sleepers;
+  double topWidth = 3600.0;
+  double thickness = 300.0;
+  double sideSlope = 1.5;
+  int sectionType = 1;                   // 1-路基梯形, 2-桥梁梯形, 3-隧道矩形
+};
+
+TopoDS_Shape create_ballast_from_sleepers(const ballast_from_sleepers_params &params);
+
+// ========== 道岔（由独立元素组合） ==========
+struct turnout_assembly_params {
+  int turnoutNo = 12;
+  int hand = 1;
+  double gauge = 1435.0;
+  std::vector<rail_curve_params> rails;
+  std::vector<wing_rail_curve_params> wingRails;
+  std::vector<guard_rail_curve_params> guardRails;
+  std::vector<sleeper_line_params> sleepers;
+  std::vector<fastener_point_params> fasteners;
+};
+
+TopoDS_Shape create_turnout_assembly(const turnout_assembly_params &params);
+TopoDS_Shape create_turnout_assembly(const turnout_assembly_params &params,
                                      const gp_Pnt &position,
-                                     const gp_Dir &tubeDir = gp::DX(),
+                                     const gp_Dir &direction = gp::DX(),
                                      const gp_Dir &upDir = gp::DZ());
+
+// ========== 钢轨伸缩调节器 ==========
+struct expansion_joint_params {
+  rail_curve_params stockRail;
+  rail_curve_params switchRail;
+  double expansionCapacity = 400.0;
+  double gauge = 1435.0;
+};
+
+TopoDS_Shape create_expansion_joint(const expansion_joint_params &params);
+TopoDS_Shape create_expansion_joint(const expansion_joint_params &params,
+                                    const gp_Pnt &position,
+                                    const gp_Dir &direction = gp::DX(),
+                                    const gp_Dir &upDir = gp::DZ());
 
 } // namespace topo
 } // namespace flywave
