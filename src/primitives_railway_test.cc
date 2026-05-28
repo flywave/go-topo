@@ -235,6 +235,16 @@ void test_sleeper() {
 
   p.shapeType = sleeper_shape_type::TRAPEZOIDAL;
   test_export(create_sleeper(p), "sleeper_trap");
+
+  // Multi-groove sleeper (岔枕场景: 4条槽, pos沿枕木长度方向)
+  sleeper_line_params sp;
+  sp.startPoint = gp_Pnt(-1500, 0, 0);
+  sp.endPoint = gp_Pnt(1500, 0, 0);
+  sp.width = 300; sp.height = 200; sp.gauge = 1435;
+  sp.grooveWidth = 150; sp.grooveDepth = 25;
+  sp.grooveYs = {-717.75, -350, 350, 717.75};
+  sp.shapeType = 1;
+  test_export(create_sleeper_line(sp), "sleeper_multi");
 }
 
 void test_ballast() {

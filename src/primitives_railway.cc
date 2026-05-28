@@ -2603,9 +2603,9 @@ TopoDS_Shape create_sleeper(const sleeper_params &params) {
     sp.height = params.height;
     sp.grooveDepth = params.grooveDepth;
     sp.gauge = params.gauge;
-    sp.shapeType = (int)params.shapeType;
-    sp.railBaseWidth = params.railBaseWidth;
+    sp.grooveWidth = params.railBaseWidth > 0 ? params.railBaseWidth : 150;
     sp.sleeperType = 2;
+    sp.shapeType = (int)params.shapeType;
     return create_sleeper_line(sp);
 }
 
@@ -3531,17 +3531,27 @@ TopoDS_Shape create_sleeper_line(const sleeper_line_params &params) {
       fm.Build();
       if (fm.IsDone()) body = fm.Shape();
     } catch (...) {}
-    // Rail seats
-    if (params.grooveDepth > 0 && params.gauge > 0) {
-      double hG = params.gauge / 2, gD = params.grooveDepth;
-      double seatW = params.railBaseWidth > 0 ? params.railBaseWidth : 150;
-      double seatL = W * 1.5;
-      for (int side = -1; side <= 1; side += 2) {
+    // Rail seats (承轨槽: 比轨底宽, 沿枕木宽度方向贯通)
+    double gD = params.grooveDepth;
+    double gW = params.grooveWidth;
+    double seatL = params.width * 1.2;  // 贯通枕木宽度并略有余量
+    auto grooveYs = [&]() {
+      if (!params.grooveYs.empty()) return params.grooveYs;
+      return std::vector<double>{-params.gauge / 2.0, params.gauge / 2.0};
+    };
+    std::vector<double> groovy = grooveYs();
+    auto cutGrooves = [&](const TopoDS_Shape &s, double L) {
+      TopoDS_Shape r = s;
+      for (double pos : groovy) {
+        // pos = 沿枕木长度方向(X), 槽沿Y(宽度方向)贯通
         TopoDS_Shape seat = BRepPrimAPI_MakeBox(
-            gp_Pnt(side * hG - seatW / 2, -seatL / 2, H - gD), seatW, seatL, gD + 1).Shape();
-        body = BRepAlgoAPI_Cut(body, seat).Shape();
+            gp_Pnt(pos - gW/2, -seatL/2, params.height - gD), gW, seatL, gD + 1).Shape();
+        r = BRepAlgoAPI_Cut(r, seat).Shape();
       }
-    }
+      return r;
+    };
+    if (params.grooveDepth > Precision::Confusion())
+      body = cutGrooves(body, length);
   } else {
     // RECTANGULAR: simple box aligned to line direction
     gp_Dir ax(dir);
@@ -3550,12 +3560,16 @@ TopoDS_Shape create_sleeper_line(const sleeper_line_params &params) {
     gp_Trsf tr; tr.SetTransformation(tgt, src);
     body = BRepPrimAPI_MakeBox(gp_Pnt(0, -params.width / 2, 0), length, params.width, params.height).Shape();
     body = BRepBuilderAPI_Transform(body, tr).Shape();
-    // Groove cuts
-    if (params.grooveDepth > Precision::Confusion() && params.gauge > 0) {
-      double hg = params.gauge / 2, gw = 150, gd = params.grooveDepth;
-      for (int side = -1; side <= 1; side += 2) {
+    // Groove cuts (承轨槽: 比轨底宽, 沿枕木宽度方向贯通)
+    if (params.grooveDepth > Precision::Confusion()) {
+      auto groovy = params.grooveYs.empty()
+          ? std::vector<double>{-params.gauge / 2.0, params.gauge / 2.0}
+          : params.grooveYs;
+      double seatL = params.width * 1.2;
+      for (double pos : groovy) {
         TopoDS_Shape g = BRepPrimAPI_MakeBox(
-            gp_Pnt(0, side * hg - gw / 2, params.height - gd), length, gw, gd + 1).Shape();
+            gp_Pnt(pos - params.grooveWidth / 2, -seatL / 2, params.height - params.grooveDepth),
+            params.grooveWidth, seatL, params.grooveDepth + 1).Shape();
         body = BRepAlgoAPI_Cut(body, BRepBuilderAPI_Transform(g, tr).Shape()).Shape();
       }
     }

@@ -1065,12 +1065,13 @@ struct sleeper_line_params {
   gp_Pnt endPoint;                       // 右端
   double width = 260.0;
   double height = 200.0;
-  double grooveDepth = 8.0;
   bool hasEndSlope = true;
   int sleeperType = 2;                   // 1-YIIF, 2-III, 3-桥枕
   double gauge = 1435.0;
-  double railBaseWidth = 150.0;          // 钢轨底宽(承轨槽宽)
-  int shapeType = 1;                     // 1-RECTANGULAR, 2-TRAPEZOIDAL(鱼腹式)
+  double grooveWidth = 150.0;              // 承轨槽宽度(mm)
+  double grooveDepth = 8.0;                // 承轨槽深度(mm)
+  std::vector<double> grooveYs;            // 承轨槽Y位置列表(空=自动在±gauge/2)
+  int shapeType = 1;                       // 1-RECTANGULAR, 2-TRAPEZOIDAL(鱼腹式)
 };
 
 TopoDS_Shape create_sleeper_line(const sleeper_line_params &params);
