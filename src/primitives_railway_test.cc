@@ -395,21 +395,35 @@ void test_rail_with_fasteners() {
   std::cout << "\n=== Rail with Fasteners ===" << std::endl;
   BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
 
-  // Rail along X axis (水平方向)
+  // Rail along X axis, base at sleeper-groove level
+  double railZ = 192; // sleeper top(200) - grooveDepth(8)
   rail_params rp;
   rp.railHeight = 180.98; rp.headWidth = 76.2; rp.baseWidth = 152.4;
   rp.webThickness = 16.67; rp.headHeight = 44.45; rp.baseHeight = 30.16;
   rp.headRadius = 31.75; rp.standardLength = 3000;
-  bld.Add(cmp, create_rail(rp, gp_Pnt(0, 0, 0), gp_Pnt(3000, 0, 0)));
+  bld.Add(cmp, create_rail(rp, gp_Pnt(0, 0, railZ), gp_Pnt(3000, 0, railZ)));
 
-  // 扣具沿铁轨方向(X)等距布置, railNormal=DY(轨侧方向)
-  for (int i = 0; i < 5; i++) {
-    double x = 200 + i * 600;
+  // Sleepers (矩形枕木) along Y, every 600mm
+  for (double x = 200; x < 2800; x += 600) {
+    sleeper_line_params sl;
+    sl.startPoint = gp_Pnt(x, -1100, 0);
+    sl.endPoint = gp_Pnt(x, 1100, 0);
+    sl.width = 260;
+    sl.height = 200;
+    sl.grooveDepth = 8;
+    sl.grooveWidth = 155;
+    sl.grooveYs = {1100};  // 承轨槽在枕木中心
+    sl.shapeType = 1;    // RECTANGULAR
+    bld.Add(cmp, create_sleeper_line(sl));
+  }
+
+  // Fasteners along rail (X), pads on sleeper top
+  for (double x = 200; x < 2800; x += 600) {
     fastener_point_params fp;
-    fp.position = gp_Pnt(x, 0, 0);
+    fp.position = gp_Pnt(x, 0, railZ);
     fp.railNormal = gp::DY();
     fp.railBaseWidth = 150.0;
-    fp.padThickness = 30;
+    fp.padThickness = 25;
     bld.Add(cmp, create_fastener_point(fp));
   }
   test_export(cmp, "rail_with_fasteners");
