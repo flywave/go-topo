@@ -1289,6 +1289,45 @@ RAILCAPICALL topo_shape_t *create_curve_track_with_place(curve_track_params_t pa
     gp_Dir(upDir.x,upDir.y,upDir.z)))}; } catch (...) { return nullptr; }
 }
 
+// ===========================================================================
+// 39. Retarder Point
+// ===========================================================================
+RAILCAPICALL topo_shape_t *create_retarder_point(retarder_point_params_t params) {
+  retarder_point_params cpp_params{
+      gp::Origin(),           0.0,          params.side,   params.deviceType,
+      params.mountType,       params.height, params.bodyDiameter,
+      params.capDiameter,     params.capHeight, params.transitionHeight,
+      params.armLength,       params.armWidth,  params.armThickness,
+      params.boltDiameter,    params.portDiameter};
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_retarder_point(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+RAILCAPICALL topo_shape_t *
+create_retarder_point_with_place(retarder_point_params_t params, pnt3d_t position,
+                                 dir3d_t direction, dir3d_t upDir) {
+  retarder_point_params cpp_params{
+      gp::Origin(),           0.0,          params.side,   params.deviceType,
+      params.mountType,       params.height, params.bodyDiameter,
+      params.capDiameter,     params.capHeight, params.transitionHeight,
+      params.armLength,       params.armWidth,  params.armThickness,
+      params.boltDiameter,    params.portDiameter};
+  gp_Pnt cpp_pos(position.x, position.y, position.z);
+  gp_Dir cpp_dir(direction.x, direction.y, direction.z);
+  gp_Dir cpp_up(upDir.x, upDir.y, upDir.z);
+  try {
+    return new topo_shape_t{.shp = std::make_shared<shape>(
+                                create_retarder_point(cpp_params, cpp_pos,
+                                                      cpp_dir, cpp_up))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
 #ifdef __cplusplus
 }
 #endif

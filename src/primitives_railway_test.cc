@@ -368,6 +368,18 @@ void test_reg_arm_bracket() {
   test_export(create_reg_arm_bracket(p), "reg_arm_bracket");
 }
 
+void test_retarder_point() {
+  std::cout << "\n=== Retarder Point ===" << std::endl;
+  retarder_point_params p;
+  p.side = 1; p.type = 1; p.mountType = 1;
+  p.height = 200; p.bodyDiameter = 70; p.capDiameter = 82;
+  p.capHeight = 28; p.transitionHeight = 18;
+  p.armLength = 60; p.armWidth = 20; p.armThickness = 20;
+  p.boltDiameter = 18; p.portDiameter = 18;
+  test_export(create_retarder_point(p), "retarder_point");
+  test_export(create_retarder_point(p, gp_Pnt(500,0,0), gp::DX(), gp::DZ()), "retarder_point_pos");
+}
+
 int main() {
   auto run = [](const char *name, auto fn) {
     std::cout << "\n=== " << name << " ===" << std::endl;
@@ -415,6 +427,7 @@ int main() {
   run("Turnout 12#", test_turnout);
   run("Turnout Graph", test_turnout_new);
   run("Mast Assembly", test_mast_assembly);
+  run("Retarder Point", test_retarder_point);
 
   std::cout << "\nAll tests completed." << std::endl;
   return 0;

@@ -762,6 +762,31 @@ RAILCAPICALL topo_shape_t *create_curve_track(curve_track_params_t params);
 RAILCAPICALL topo_shape_t *create_curve_track_with_place(curve_track_params_t params,
                                                           pnt3d_t position, dir3d_t direction, dir3d_t upDir);
 
+// ===========================================================================
+// 39. Retarder Point (减速顶点)
+// ===========================================================================
+typedef struct {
+  int side;
+  int deviceType;
+  int mountType;
+  double height;
+  double bodyDiameter;
+  double capDiameter;
+  double capHeight;
+  double transitionHeight;
+  double armLength;
+  double armWidth;
+  double armThickness;
+  double boltDiameter;
+  double portDiameter;
+} retarder_point_params_t;
+
+RAILCAPICALL topo_shape_t *create_retarder_point(retarder_point_params_t params);
+RAILCAPICALL topo_shape_t *create_retarder_point_with_place(retarder_point_params_t params,
+                                                             pnt3d_t position,
+                                                             dir3d_t direction,
+                                                             dir3d_t upDir);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,5 +1,6 @@
 #include "primitives_railway.hh"
 
+#include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
@@ -1221,6 +1222,15 @@ TopoDS_Shape create_steel_mast(const steel_mast_params &params) {
   }
 
   return compound;
+}
+TopoDS_Shape create_steel_mast(const steel_mast_params &params,
+                               const gp_Pnt &baseCenter,
+                               const gp_Dir &axisDirection) {
+  TopoDS_Shape s = create_steel_mast(params);
+  gp_Ax3 src(gp::Origin(), gp::DZ()), tgt(baseCenter, axisDirection);
+  gp_Trsf tr;
+  tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
 }
 
 // =========================================================================
@@ -3604,13 +3614,125 @@ TopoDS_Shape create_fastener_point(const fastener_point_params &params) {
 // 减速顶（点）
 // =========================================================================
 TopoDS_Shape create_retarder_point(const retarder_point_params &params) {
-  gp_Pnt p = params.position;
-  TopoDS_Shape body = BRepPrimAPI_MakeBox(gp_Pnt(p.X() - params.length / 2, p.Y() - params.width / 2, p.Z()), params.length, params.width, params.height).Shape();
-  if (params.type == 1) {
-    TopoDS_Shape pist = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(p.X(), p.Y(), p.Z() + params.height), gp::DZ()), params.width * 0.3, params.height * 0.3).Shape();
-    body = BRepAlgoAPI_Fuse(body, pist).Shape();
+  double bodyH = params.height * 0.65;
+  double bodyR = params.bodyDiameter / 2.0;
+  double capR = params.capDiameter / 2.0;
+  double capH = params.capHeight;
+  double transH = params.transitionHeight;
+  double transR = bodyR * 1.08;
+  double armLen = params.armLength;
+  double armW = params.armWidth;
+  double armT = params.armThickness;
+  double boltR = params.boltDiameter / 2.0;
+  double portR = params.portDiameter / 2.0;
+
+  BRep_Builder bld;
+  TopoDS_Compound cmp;
+  bld.MakeCompound(cmp);
+
+  // 1. Main cylindrical body (核心工作筒体)
+  TopoDS_Shape body = BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, 0, 0), gp::DZ()), bodyR, bodyH).Shape();
+  bld.Add(cmp, body);
+
+  // 2. Transition section (短粗圆柱过渡段) — 压入状态,大部分缩入筒体
+  double pistonInset = transH * 0.85; // 压缩行程:活塞压入缸内
+  TopoDS_Shape transition = BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, 0, bodyH - pistonInset), gp::DZ()), transR, transH).Shape();
+  bld.Add(cmp, transition);
+
+  // 3. Rounded top cap (圆顶状顶帽) — 随活塞下沉
+  double capSphereR = capR * 1.05;
+  double domeZ = bodyH - pistonInset + transH + capSphereR * 0.25;
+  TopoDS_Shape sphere = BRepPrimAPI_MakeSphere(
+      gp_Pnt(0, 0, domeZ), capSphereR).Shape();
+  double cutZ = bodyH - pistonInset + transH;
+  TopoDS_Shape cutBox = BRepPrimAPI_MakeBox(
+      gp_Pnt(-capR, -capR, cutZ), 2 * capR, 2 * capR, capSphereR).Shape();
+  TopoDS_Shape cap = BRepAlgoAPI_Common(sphere, cutBox).Shape();
+  bld.Add(cmp, cap);
+
+  // 4. Clamping arms (八字形固定臂,指向铁轨侧) + bolts
+  double armZ = bodyH - pistonInset + transH * 0.3;
+  double armGap = armW * 1;
+  double armTilt = 0.15; // 安装倾角: 臂端略高于根部
+  for (int side = -1; side <= 1; side += 2) {
+    double angle = 0.10;
+    double ax = side * armGap;
+    gp_Pnt armBase(ax, transR, armZ);
+
+    // Arm body: extends in +Y (toward rail), 向上倾斜 + 八字 spread
+    TopoDS_Shape armBox = BRepPrimAPI_MakeBox(
+        gp_Pnt(-armW / 2, 0, -armT / 2), armW, armLen, armT).Shape();
+    gp_Trsf armTrsf;
+    armTrsf.SetTranslation(gp_Vec(ax, transR, armZ));
+    gp_Trsf spreadTrsf;
+    spreadTrsf.SetRotation(gp_Ax1(gp::Origin(), gp::DZ()), side * angle);
+    gp_Trsf tiltTrsf;
+    tiltTrsf.SetRotation(gp_Ax1(gp::Origin(), gp::DX()), armTilt);
+    armTrsf = armTrsf * tiltTrsf * spreadTrsf;
+    BRepBuilderAPI_Transform armXform(armBox, armTrsf);
+    bld.Add(cmp, armXform.Shape());
+
+    // Bolt + nut at arm end, follow same tilt
+    TopoDS_Shape bolt = BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(0, armLen * 0.85, 4), gp::DY()), boltR, 8.0).Shape();
+    BRepBuilderAPI_Transform boltXform(bolt, armTrsf);
+    bld.Add(cmp, boltXform.Shape());
+
+    TopoDS_Shape nut = BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(0, armLen * 0.85, -4), gp::DY()), boltR * 0.85, 6.0).Shape();
+    BRepBuilderAPI_Transform nutXform(nut, armTrsf);
+    bld.Add(cmp, nutXform.Shape());
   }
-  return body;
+
+  // 4b. Cross beam (横梁) connecting both arms to body
+  double crossX = armGap + armW * 0.5;
+  TopoDS_Shape crossBeam = BRepPrimAPI_MakeBox(
+      gp_Pnt(-crossX, -transR * 0.15, armZ - armT ),
+      crossX * 2, transR * 1.2, armT * 2.5).Shape();
+  bld.Add(cmp, crossBeam);
+
+  // 6. Bottom service port (维护接口)
+  double portH = 20.0;
+  TopoDS_Shape port = BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, 0, -portH), gp::DZ()), portR, portH).Shape();
+  bld.Add(cmp, port);
+
+  // Bleed valve detail at port bottom
+  TopoDS_Shape vent = BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, 0, -portH - 6), gp::DZ()), portR * 0.45, 6.0).Shape();
+  bld.Add(cmp, vent);
+
+  // Transform to position
+  if (params.position.Distance(gp::Origin()) > Precision::Confusion() ||
+      fabs(params.rotation) > Precision::Angular()) {
+    gp_Trsf t;
+    t.SetTranslation(gp_Vec(params.position.X(), params.position.Y(),
+                            params.position.Z()));
+    if (fabs(params.rotation) > Precision::Angular()) {
+      gp_Trsf r;
+      r.SetRotation(gp_Ax1(gp::Origin(), gp::DZ()), params.rotation);
+      t = r * t;
+    }
+    BRepBuilderAPI_Transform xform(cmp, t);
+    return xform.Shape();
+  }
+
+  return cmp;
+}
+
+TopoDS_Shape create_retarder_point(const retarder_point_params &params,
+                                   const gp_Pnt &position,
+                                   const gp_Dir &direction,
+                                   const gp_Dir &upDir) {
+  TopoDS_Shape shape = create_retarder_point(params);
+  gp_Dir yDir = upDir.Crossed(direction);
+  gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 tgt(position, upDir, direction);
+  gp_Trsf trsf;
+  trsf.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(shape, trsf).Shape();
 }
 
 // =========================================================================

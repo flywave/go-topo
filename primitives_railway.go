@@ -1952,3 +1952,55 @@ func CreateSleeperLayout(centerline []Point3, length, width, height, spacing, ga
 	return s
 }
 
+// =========================================================================
+// 39. Retarder Point (减速顶点)
+// =========================================================================
+
+type RetarderPointParams struct {
+	Side             int
+	DeviceType       int
+	MountType        int
+	Height           float64
+	BodyDiameter     float64
+	CapDiameter      float64
+	CapHeight        float64
+	TransitionHeight float64
+	ArmLength        float64
+	ArmWidth         float64
+	ArmThickness     float64
+	BoltDiameter     float64
+	PortDiameter     float64
+}
+
+func (p *RetarderPointParams) to_struct() C.retarder_point_params_t {
+	var c C.retarder_point_params_t
+	c.side = C.int(p.Side)
+	c.deviceType = C.int(p.DeviceType)
+	c.mountType = C.int(p.MountType)
+	c.height = C.double(p.Height)
+	c.bodyDiameter = C.double(p.BodyDiameter)
+	c.capDiameter = C.double(p.CapDiameter)
+	c.capHeight = C.double(p.CapHeight)
+	c.transitionHeight = C.double(p.TransitionHeight)
+	c.armLength = C.double(p.ArmLength)
+	c.armWidth = C.double(p.ArmWidth)
+	c.armThickness = C.double(p.ArmThickness)
+	c.boltDiameter = C.double(p.BoltDiameter)
+	c.portDiameter = C.double(p.PortDiameter)
+	return c
+}
+
+func CreateRetarderPoint(params RetarderPointParams) *Shape {
+	shp := C.create_retarder_point(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateRetarderPointWithPlace(params RetarderPointParams, position Point3, direction, upDir Dir3) *Shape {
+	shp := C.create_retarder_point_with_place(params.to_struct(), position.val, direction.val, upDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+

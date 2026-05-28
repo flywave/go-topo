@@ -1091,15 +1091,26 @@ TopoDS_Shape create_fastener_point(const fastener_point_params &params);
 struct retarder_point_params {
   gp_Pnt position;
   double rotation = 0.0;
-  int side = 1;
-  int type = 1;                          // 1-液压, 2-摩擦, 3-可控
-  int mountType = 1;                     // 1-轨内侧, 2-轨外侧, 3-双轨双侧
-  double height = 80.0;
-  double length = 300.0;
-  double width = 150.0;
+  int side = 1;                            // 1-LEFT, 2-RIGHT, 3-BOTH
+  int type = 1;                            // 1-液压, 2-摩擦, 3-可控
+  int mountType = 1;                       // 1-轨内侧, 2-轨外侧, 3-双轨双侧
+  double height = 200.0;                   // 总高度(mm)
+  double bodyDiameter = 70.0;              // 主体筒体直径(mm)
+  double capDiameter = 82.0;               // 顶帽直径(mm,略大于筒体)
+  double capHeight = 28.0;                 // 顶帽垂直高度(mm)
+  double transitionHeight = 18.0;          // 过渡段高度(mm)
+  double armLength = 80.0;                 // 固定臂长度(mm)
+  double armWidth = 28.0;                  // 固定臂宽度(mm)
+  double armThickness = 14.0;              // 固定臂厚度(mm)
+  double boltDiameter = 18.0;              // 螺栓头部直径(mm)
+  double portDiameter = 18.0;              // 底部接口直径(mm)
 };
 
 TopoDS_Shape create_retarder_point(const retarder_point_params &params);
+TopoDS_Shape create_retarder_point(const retarder_point_params &params,
+                                   const gp_Pnt &position,
+                                   const gp_Dir &direction,
+                                   const gp_Dir &upDir);
 
 // ========== 道床（由枕木线驱动） ==========
 struct ballast_from_sleepers_params {
