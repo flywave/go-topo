@@ -3549,17 +3549,17 @@ TopoDS_Face buildRailProfile(double railHeight, double headWidth,
   w.Add(makeEdgeSafe(gp_Pnt(0, -wt, zt), gp_Pnt(0, -hw, zt)));
   w.Add(makeEdgeSafe(gp_Pnt(0, -hw, zt), gp_Pnt(0, -hw, zTop - hr)));
   gp_Circ arcL(gp_Ax2(gp_Pnt(0, -hw + hr, zTop - hr), gp_Dir(1, 0, 0)), hr);
-  w.Add(BRepBuilderAPI_MakeEdge(GC_MakeArcOfCircle(arcL, M_PI / 2, M_PI, false).Value()).Edge());
+  w.Add(BRepBuilderAPI_MakeEdge(GC_MakeArcOfCircle(arcL, M_PI, M_PI / 2, false).Value()).Edge());
+  w.Add(makeEdgeSafe(gp_Pnt(0, -hw + hr, zTop), gp_Pnt(0, hw - hr, zTop)));
   gp_Circ arcR(gp_Ax2(gp_Pnt(0, hw - hr, zTop - hr), gp_Dir(1, 0, 0)), hr);
-  w.Add(BRepBuilderAPI_MakeEdge(GC_MakeArcOfCircle(arcR, 0, M_PI / 2, false).Value()).Edge());
+  w.Add(BRepBuilderAPI_MakeEdge(GC_MakeArcOfCircle(arcR, M_PI / 2, 0, false).Value()).Edge());
   w.Add(makeEdgeSafe(gp_Pnt(0, hw, zTop - hr), gp_Pnt(0, hw, zt)));
   w.Add(makeEdgeSafe(gp_Pnt(0, hw, zt), gp_Pnt(0, wt, zt)));
   w.Add(makeEdgeSafe(gp_Pnt(0, wt, zt), gp_Pnt(0, wt, zw)));
   w.Add(makeEdgeSafe(gp_Pnt(0, wt, zw), gp_Pnt(0, bw, zw)));
   w.Add(makeEdgeSafe(gp_Pnt(0, bw, zw), gp_Pnt(0, bw, 0)));
   w.Add(makeEdgeSafe(gp_Pnt(0, bw, 0), gp_Pnt(0, -bw, 0)));
-  ShapeFix_Wire fx; fx.Load(w.Wire()); fx.Perform();
-  return BRepLib_MakeFace(fx.Wire()).Face();
+  return BRepLib_MakeFace(w.Wire()).Face();
 }
 
 TopoDS_Face buildChannelProfile(double height, double flangeWidth, double webThickness) {
@@ -3571,8 +3571,7 @@ TopoDS_Face buildChannelProfile(double height, double flangeWidth, double webThi
   w.Add(makeEdgeSafe(gp_Pnt(0, hw, height), gp_Pnt(0, fw, height)));
   w.Add(makeEdgeSafe(gp_Pnt(0, fw, height), gp_Pnt(0, fw, 0)));
   w.Add(makeEdgeSafe(gp_Pnt(0, fw, 0), gp_Pnt(0, -fw, 0)));
-  ShapeFix_Wire fx; fx.Load(w.Wire()); fx.Perform();
-  return BRepLib_MakeFace(fx.Wire()).Face();
+  return BRepLib_MakeFace(w.Wire()).Face();
 }
 
 TopoDS_Face buildPlateProfile(double height, double width) {
@@ -3595,11 +3594,50 @@ TopoDS_Shape sweepProfile(const TopoDS_Face &face, const curve_params &curve) {
     TopoDS_Shape moved = BRepBuilderAPI_Transform(face, tr).Shape();
     return BRepPrimAPI_MakePrism(moved, dir).Shape();
   }
-  TopoDS_Wire wire = buildCurveWire(curve);
-  BRepOffsetAPI_MakePipe pipe(wire, face);
-  pipe.Build();
-  if (!pipe.IsDone()) throw Standard_ConstructionError("sweep failed");
-  return pipe.Shape();
+  // ARC/BEZIER: sequential short prisms along the path
+  // Use ThruSections for smooth curved paths
+  Handle(Geom_Curve) c;
+  if (curve.type == curve_type::ARC && curve.controlPoints.size() >= 1)
+    c = GC_MakeArcOfCircle(curve.startPoint, curve.controlPoints[0], curve.endPoint).Value();
+  else if (curve.type == curve_type::ARC && curve.radius > Precision::Confusion()) {
+    gp_Pnt mid((curve.startPoint.X() + curve.endPoint.X()) / 2,
+               (curve.startPoint.Y() + curve.endPoint.Y()) / 2, 0);
+    gp_Dir dir(0, 0, curve.arcDirection == 1 ? 1 : -1);
+    double d2 = curve.startPoint.Distance(curve.endPoint) / 2;
+    double h = sqrt(std::max(0.0, curve.radius * curve.radius - d2 * d2));
+    gp_Pnt center = mid.XYZ() + dir.XYZ() * h;
+    c = GC_MakeArcOfCircle(curve.startPoint, center, curve.endPoint).Value();
+  } else if (curve.type == curve_type::BEZIER) {
+    std::vector<gp_Pnt> pts = curve.controlPoints;
+    pts.insert(pts.begin(), curve.startPoint);
+    pts.push_back(curve.endPoint);
+    TColgp_Array1OfPnt arr(1, (int)pts.size());
+    for (size_t i = 0; i < pts.size(); i++) arr.SetValue((int)(i + 1), pts[i]);
+    c = new Geom_BezierCurve(arr);
+  }
+  if (c.IsNull()) throw Standard_ConstructionError("failed to create curve");
+
+  double t0 = c->FirstParameter(), t1 = c->LastParameter();
+  int nSec = std::max(2, (int)(curve.startPoint.Distance(curve.endPoint) / 500));
+  BRepOffsetAPI_ThruSections loft(Standard_True, Standard_True);
+  for (int i = 0; i <= nSec; i++) {
+    double t = t0 + (t1 - t0) * i / nSec;
+    gp_Pnt pt; gp_Vec vt; c->D1(t, pt, vt);
+    gp_Dir tan(vt);
+    gp_Dir up = gp::DZ();
+    if (std::abs(tan.Dot(up)) > 0.99) up = gp::DY();
+    gp_Dir cross = up.Crossed(tan);
+    gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX());
+    gp_Ax3 tgt(pt, tan, cross);
+    gp_Trsf tr; tr.SetTransformation(tgt, src);
+    TopoDS_Face xf = TopoDS::Face(BRepBuilderAPI_Transform(face, tr).Shape());
+    TopExp_Explorer exp(xf, TopAbs_WIRE);
+    if (!exp.More()) throw Standard_ConstructionError("no wire in face");
+    loft.AddWire(TopoDS::Wire(exp.Current()));
+  }
+  loft.Build();
+  if (!loft.IsDone()) throw Standard_ConstructionError("sweep failed");
+  return loft.Shape();
 }
 
 TopoDS_Shape applyEndTreatment(const TopoDS_Shape &shape,
