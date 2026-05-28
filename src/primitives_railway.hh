@@ -1078,8 +1078,10 @@ TopoDS_Shape create_sleeper_line(const sleeper_line_params &params);
 
 // ========== 扣件（点） ==========
 struct fastener_point_params {
-  gp_Pnt position;                       // 安装位置
+  gp_Pnt position;                       // 铁轨中心线上的扣件位置
+  gp_Dir railNormal = gp::DY();          // 铁轨法向量(垂直于铁轨指向一侧)
   int type = 1;                          // 1-弹条I型, 2-II型, 3-III型, 4-WJ-7, 5-WJ-8
+  double railBaseWidth = 150.0;          // 单根钢轨轨底宽度(mm)
   double padThickness = 10.0;
 };
 

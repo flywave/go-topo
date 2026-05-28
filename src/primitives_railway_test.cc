@@ -1,6 +1,8 @@
 #include "primitives_railway.hh"
+#include <BRep_Builder.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <StlAPI_Writer.hxx>
+#include <Standard_Failure.hxx>
 #include <gp_Pnt.hxx>
 #include <iostream>
 #include <sys/stat.h>
@@ -389,10 +391,45 @@ void test_fastener() {
   test_export(create_fastener(p, gp_Pnt(0,0,0), gp::DX(), gp::DZ()), "fastener_pos");
 }
 
+void test_rail_with_fasteners() {
+  std::cout << "\n=== Rail with Fasteners ===" << std::endl;
+  BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
+
+  // Single fastener to debug
+  try {
+    fastener_point_params fp;
+    fp.position = gp_Pnt(0, 0, 0);
+    fp.railNormal = gp::DY();
+    fp.railBaseWidth = 150.0;
+    fp.padThickness = 10;
+    TopoDS_Shape f = create_fastener_point(fp);
+    bld.Add(cmp, f);
+    std::cout << "  Fastener at origin OK" << std::endl;
+  } catch (Standard_Failure const &e) {
+    std::cerr << "  Fastener at origin FAILED: " << e.GetMessageString() << std::endl;
+  }
+
+  try {
+    fastener_point_params fp;
+    fp.position = gp_Pnt(300, 0, 0);
+    fp.railNormal = gp::DY();
+    fp.railBaseWidth = 150.0;
+    fp.padThickness = 10;
+    TopoDS_Shape f = create_fastener_point(fp);
+    bld.Add(cmp, f);
+    std::cout << "  Fastener at 300 OK" << std::endl;
+  } catch (Standard_Failure const &e) {
+    std::cerr << "  Fastener at 300 FAILED: " << e.GetMessageString() << std::endl;
+  }
+  test_export(cmp, "rail_with_fasteners");
+}
+
+
 int main() {
   auto run = [](const char *name, auto fn) {
     std::cout << "\n=== " << name << " ===" << std::endl;
-    try { fn(); } catch (const std::exception &e) { std::cerr << "  ERROR: " << e.what() << std::endl; }
+    try { fn(); } catch (const Standard_Failure &e) { std::cerr << "  ERROR: " << e.GetMessageString() << std::endl; }
+    catch (const std::exception &e) { std::cerr << "  ERROR: " << e.what() << std::endl; }
     catch (...) { std::cerr << "  ERROR: unknown exception" << std::endl; }
   };
 
@@ -438,6 +475,7 @@ int main() {
   run("Mast Assembly", test_mast_assembly);
   run("Retarder Point", test_retarder_point);
   run("Fastener", test_fastener);
+  run("Rail with Fasteners", test_rail_with_fasteners);
 
   std::cout << "\nAll tests completed." << std::endl;
   return 0;
