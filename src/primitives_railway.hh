@@ -34,6 +34,7 @@ struct messenger_wire_params {
   double diameter;      // 直径(mm)
   double ratedTension;  // 额定张力(kN)
   double structuralHeight; // 结构高度(mm) — 与接触线的垂直距离
+  double sag;           // 弧垂(mm) — 跨中下垂量
 };
 
 TopoDS_Shape create_messenger_wire(const messenger_wire_params &params,

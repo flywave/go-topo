@@ -208,17 +208,48 @@ TopoDS_Shape create_messenger_wire(const messenger_wire_params &params,
     throw Standard_ConstructionError("Diameter must be positive");
 
   double radius = params.diameter / 2.0;
+  gp_Vec spanVec(startPoint, endPoint);
+  double span = spanVec.Magnitude();
+  if (span <= Precision::Confusion())
+    return BRepPrimAPI_MakeCylinder(gp_Ax2(startPoint, gp::DX()), radius, 1)
+        .Shape();
 
-  // Create a circular profile centered at startPoint
-  gp_Ax2 axis(startPoint, gp_Dir(endPoint.XYZ() - startPoint.XYZ()));
-  gp_Circ sectionCircle(axis, radius);
+  // Build parabolic centerline: 3-point Bezier with sag at mid-span
+  double sag = params.sag > 0 ? params.sag : span * 0.02;
+  gp_Pnt mid((startPoint.X() + endPoint.X()) / 2.0,
+             (startPoint.Y() + endPoint.Y()) / 2.0,
+             (startPoint.Z() + endPoint.Z()) / 2.0);
+  mid.Translate(gp_Vec(0, 0, -sag));
+
+  BRepBuilderAPI_MakeWire wireBuilder;
+  Handle(TColgp_HArray1OfPnt) poles = new TColgp_HArray1OfPnt(1, 3);
+  poles->SetValue(1, startPoint);
+  poles->SetValue(2, mid);
+  poles->SetValue(3, endPoint);
+  Handle(Geom_BezierCurve) bezier = new Geom_BezierCurve(poles->Array1());
+  wireBuilder.Add(BRepBuilderAPI_MakeEdge(bezier));
+  TopoDS_Wire pathWire = wireBuilder.Wire();
+
+  // Circular profile in plane perpendicular to path start direction
+  gp_Pnt startP; gp_Vec startV; bezier->D1(0, startP, startV);
+  gp_Dir startDir = gp_Dir(startV);
+  gp_Ax2 profileAxis(startPoint, startDir);
+  gp_Circ sectionCircle(profileAxis, radius);
   TopoDS_Edge sectionEdge = BRepBuilderAPI_MakeEdge(sectionCircle).Edge();
   TopoDS_Wire sectionWire = BRepBuilderAPI_MakeWire(sectionEdge).Wire();
-  TopoDS_Face sectionFace = BRepBuilderAPI_MakeFace(sectionWire).Face();
 
-  // Extrude along path
-  gp_Vec pathVec(startPoint, endPoint);
-  return BRepPrimAPI_MakePrism(sectionFace, pathVec).Shape();
+  // Sweep along the parabolic path
+  BRepOffsetAPI_MakePipeShell pipe(pathWire);
+  pipe.Add(sectionWire);
+  pipe.SetMode(Standard_True);
+  pipe.Build();
+  if (pipe.IsDone() && pipe.MakeSolid())
+    return pipe.Shape();
+
+  // Fallback: straight cylinder
+  return BRepPrimAPI_MakeCylinder(gp_Ax2(startPoint, gp_Dir(spanVec)), radius,
+                                  span)
+      .Shape();
 }
 
 // =========================================================================
@@ -2255,13 +2286,54 @@ TopoDS_Shape create_suspension_cable(const suspension_cable_params &params) {
     throw Standard_ConstructionError("Diameter must be positive");
   double R = params.diameter / 2.0;
   gp_Vec vec(params.startPoint, params.endPoint);
-  double len = vec.Magnitude();
-  if (len < Precision::Confusion())
+  double span = vec.Magnitude();
+  if (span < Precision::Confusion())
     return BRepPrimAPI_MakeCylinder(gp_Ax2(params.startPoint, gp::DX()), R, 1)
         .Shape();
-  // Simplified: straight cylinder along span direction
+
+  if (params.cableType == suspension_cable_type::FIXED_ROPE) {
+    // Straight cylinder
+    return BRepPrimAPI_MakeCylinder(gp_Ax2(params.startPoint, gp_Dir(vec)), R,
+                                    span)
+        .Shape();
+  }
+
+  // Parabolic cable: 3-point Bezier with sag at mid-span
+  double sag = params.sag > 0 ? params.sag : span * 0.05;
+  double sign =
+      (params.cableType == suspension_cable_type::DROPPER) ? 1.0 : -1.0;
+  gp_Pnt mid((params.startPoint.X() + params.endPoint.X()) / 2.0,
+             (params.startPoint.Y() + params.endPoint.Y()) / 2.0,
+             (params.startPoint.Z() + params.endPoint.Z()) / 2.0);
+  mid.Translate(gp_Vec(0, 0, 1) * sag * sign);
+
+  BRepBuilderAPI_MakeWire wireBuilder;
+  Handle(TColgp_HArray1OfPnt) poles = new TColgp_HArray1OfPnt(1, 3);
+  poles->SetValue(1, params.startPoint);
+  poles->SetValue(2, mid);
+  poles->SetValue(3, params.endPoint);
+  Handle(Geom_BezierCurve) bezier = new Geom_BezierCurve(poles->Array1());
+  wireBuilder.Add(BRepBuilderAPI_MakeEdge(bezier));
+  TopoDS_Wire pathWire = wireBuilder.Wire();
+
+  // Circular profile in plane perpendicular to path start
+  gp_Pnt startP; gp_Vec startV; bezier->D1(0, startP, startV);
+  gp_Ax2 profileAxis(params.startPoint, gp_Dir(startV));
+  gp_Circ sectionCircle(profileAxis, R);
+  TopoDS_Edge sectionEdge = BRepBuilderAPI_MakeEdge(sectionCircle).Edge();
+  TopoDS_Wire sectionWire = BRepBuilderAPI_MakeWire(sectionEdge).Wire();
+
+  // Sweep along the parabolic path
+  BRepOffsetAPI_MakePipeShell pipe(pathWire);
+  pipe.Add(sectionWire);
+  pipe.SetMode(Standard_True);
+  pipe.Build();
+  if (pipe.IsDone() && pipe.MakeSolid())
+    return pipe.Shape();
+
+  // Fallback: straight cylinder
   return BRepPrimAPI_MakeCylinder(gp_Ax2(params.startPoint, gp_Dir(vec)), R,
-                                  len)
+                                  span)
       .Shape();
 }
 

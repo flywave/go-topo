@@ -38,6 +38,7 @@ typedef struct {
   double diameter;
   double ratedTension;
   double structuralHeight;
+  double sag;
 } messenger_wire_params_t;
 
 RAILCAPICALL topo_shape_t *

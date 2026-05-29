@@ -51,6 +51,7 @@ type MessengerWireParams struct {
 	Diameter         float64
 	RatedTension     float64
 	StructuralHeight float64
+	Sag              float64
 }
 
 func (p *MessengerWireParams) to_struct() C.messenger_wire_params_t {
@@ -58,6 +59,7 @@ func (p *MessengerWireParams) to_struct() C.messenger_wire_params_t {
 	c.diameter = C.double(p.Diameter)
 	c.ratedTension = C.double(p.RatedTension)
 	c.structuralHeight = C.double(p.StructuralHeight)
+	c.sag = C.double(p.Sag)
 	return c
 }
 

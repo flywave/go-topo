@@ -37,7 +37,7 @@ RAILCAPICALL topo_shape_t *
 create_messenger_wire(messenger_wire_params_t params, pnt3d_t startPoint,
                       pnt3d_t endPoint) {
   messenger_wire_params cpp_params{params.diameter, params.ratedTension,
-                                    params.structuralHeight};
+                                    params.structuralHeight, params.sag};
   gp_Pnt cpp_start(startPoint.x, startPoint.y, startPoint.z);
   gp_Pnt cpp_end(endPoint.x, endPoint.y, endPoint.z);
   try {
