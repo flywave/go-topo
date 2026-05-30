@@ -6129,10 +6129,6 @@ void topo_profile_project_point_list_free(pnt3d_t *points) {
   }
 }
 
-double topo_wrie_length(topo_wire_t wire) {
-  return flywave::topo::wire_length(*cast_to_topo(wire));
-}
-
 pnt3d_t *topo_make_catenary(pnt3d_t p1, pnt3d_t p2, double slack, double maxSag,
                             dir3d_t up, double tessellation, int *point_count) {
   try {

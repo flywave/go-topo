@@ -1591,8 +1591,6 @@ topo_profile_project_point_list(topo_profile_projection_t *proj, pnt3d_t *point,
                                 int count);
 TOPOCAPICALL void topo_profile_project_point_list_free(pnt3d_t *points);
 
-TOPOCAPICALL double topo_wrie_length(topo_wire_t wire);
-
 TOPOCAPICALL pnt3d_t *topo_make_catenary(pnt3d_t p1, pnt3d_t p2, double slack,
                                          double maxSag, dir3d_t up,
                                          double tessellation, int *point_count);

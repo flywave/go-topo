@@ -512,7 +512,7 @@ func WireLength(wire *Wire) float64 {
 	if wire == nil || wire.inner == nil {
 		return 0.0
 	}
-	return float64(C.topo_wrie_length(wire.inner.val))
+	return float64(C.topo_wire_length(wire.inner.val))
 }
 
 func MakeCatenary(p1, p2 Point3, slack, maxSag float64, up Dir3, tessellation float64) []Point3 {
