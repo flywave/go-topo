@@ -492,6 +492,7 @@ if (Object.values(RLPrimitiveType).includes(shapeType as RLPrimitiveType)) {
 | 5 | `float64` vs `float32` 类型不匹配 | go build 报类型错误 | flywave-topovis builder 用 `p.shape.Field` 直接赋值（类型一致） |
 | 6 | WASM link 超时 | make run 卡住 | 设置 `timeout=600000` (10分钟) |
 | 7 | ❌ `tsc` 编译源码目录 | `.js`/`.d.ts`/`.js.map` 被写入 `lib/` 源码目录 | **不要运行 `tsc`**，用 `rollup -c rollup.config.js` 构建。如需类型检查用 `npx tsc --noEmit` |
+| 8 | ❌ `cmake` 编译 go-topo | C++ 静态库由用户手动维护 | **不要运行 cmake**，go-topo 的 C++ 代码修改后由用户手动编译 `cmake --build build/build --config Release && cmake --install build/build --prefix libs/darwin_arm` |
 
 ## 完成的类型
 
@@ -514,7 +515,15 @@ if (Object.values(RLPrimitiveType).includes(shapeType as RLPrimitiveType)) {
 
 - [ ] **2. ContactWire** (接触线) `RAILWAY/ContactWire`
 - [ ] **3. MessengerWire** (承力索) `RAILWAY/MessengerWire`
-- [ ] **4. CrossArm** (横担) `RAILWAY/CrossArm`
+- [x] **4. CrossArm** (横担) `RAILWAY/CrossArm`
+  - ✅ C++ 原点: 几何中心（X 居中, Z 居中于 gap/2）
+  - ✅ topotypes: `railway/railway.go`
+  - ✅ flywave-topovis: `railway/crossarm.go`
+  - ✅ flywave-topovis 测试: `railway_test.go - TestCrossArm`
+  - ✅ Embind 绑定: `primitives_bindings.cc`
+  - ✅ TS 声明: `primitives.d.ts` + `export.json`
+  - ✅ TS Object: `types/railway.ts` + `railway/index.ts`
+  - ✅ WASM 编译: `make topo topo-bindings run gen-ts`
 - [ ] **5. LevelCantilever** (平腕臂) `RAILWAY/LevelCantilever`
 - [ ] **6. SlantCantilever** (斜腕臂) `RAILWAY/SlantCantilever`
 - [ ] **7. CurvedArm** (弯臂) `RAILWAY/CurvedArm`

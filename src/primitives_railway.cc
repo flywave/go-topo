@@ -266,21 +266,25 @@ TopoDS_Shape create_cross_arm(const cross_arm_params &params) {
   double BL = params.beamLength, BH = params.beamHeight, BW = params.beamWidth;
   double gap = params.beamSpacing > 0 ? params.beamSpacing : BH * 3;
 
-  // Upper beam — along Y (perpendicular to track)
-  gp_Pnt ubOrg(0, -BL / 2, gap + BH / 2);
+  // 几何中心居中：X 偏移 -BW/2, Z 偏移 -(gap+BH)/2
+  double xOff = -BW / 2.0;
+  double zOff = -(gap + BH) / 2.0;
+
+  // Upper beam — along Y, Z range: [gap/2, gap/2+BH]
+  gp_Pnt ubOrg(xOff, -BL / 2, zOff + gap + BH / 2);
   TopoDS_Shape upperBeam = BRepPrimAPI_MakeBox(ubOrg, BW, BL, BH).Shape();
   builder.Add(compound, upperBeam);
 
-  // Lower beam
-  gp_Pnt lbOrg(0, -BL / 2, -BH / 2);
+  // Lower beam — Z range: [-gap/2-BH, -gap/2]
+  gp_Pnt lbOrg(xOff, -BL / 2, zOff - BH / 2);
   TopoDS_Shape lowerBeam = BRepPrimAPI_MakeBox(lbOrg, BW, BL, BH).Shape();
   builder.Add(compound, lowerBeam);
 
-  // Two diagonal braces — cross at center (定交点固定于立柱)
+  // Two diagonal braces — cross at center
   double braceR = BW * 0.25;
   for (int side = -1; side <= 1; side += 2) {
-    gp_Pnt p1(0, side * BL * 0.45, gap + BH);
-    gp_Pnt p2(0, -side * BL * 0.45, 0);
+    gp_Pnt p1(0, side * BL * 0.45, zOff + gap + BH);
+    gp_Pnt p2(0, -side * BL * 0.45, zOff);
     gp_Vec v(p1, p2);
     double l = v.Magnitude();
     if (l > Precision::Confusion())
@@ -293,13 +297,13 @@ TopoDS_Shape create_cross_arm(const cross_arm_params &params) {
   if (params.boltDiameter > 0) {
     double hr = params.boltDiameter / 2, hs = params.boltSpacing / 2;
     for (int level = 0; level < 2; ++level) {
-      double z = (level == 0) ? BH / 2 : gap + BH + BH / 2;
+      double zCenter = (level == 0) ? zOff : zOff + gap + BH;
       for (int bx = -1; bx <= 1; bx += 2)
         if (params.boltCount >= 3 || bx == 0)
           for (int by = -1; by <= 1; by += 2) {
             TopoDS_Shape h =
                 BRepPrimAPI_MakeCylinder(
-                    gp_Ax2(gp_Pnt(bx * hs, by * hs, z - BW / 2 - 1), gp::DY()),
+                    gp_Ax2(gp_Pnt(bx * hs, by * hs, zCenter - BW / 2 - 1), gp::DY()),
                     hr, BW + 2)
                     .Shape();
             lowerBeam = BRepAlgoAPI_Cut(lowerBeam, h).Shape();
