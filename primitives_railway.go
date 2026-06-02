@@ -237,6 +237,40 @@ func CreateCurvedArmWithPlace(params CurvedArmParams, position Point3, normal, x
 }
 
 // =========================================================================
+// 6a. Cantilever Brace (斜撑)
+// =========================================================================
+
+type CantileverBraceParams struct {
+	Length        float64
+	OuterDiameter float64
+	WallThickness float64
+	SlantAngle    float64
+}
+
+func (p *CantileverBraceParams) to_struct() C.cantilever_brace_params_t {
+	var c C.cantilever_brace_params_t
+	c.length = C.double(p.Length)
+	c.outerDiameter = C.double(p.OuterDiameter)
+	c.wallThickness = C.double(p.WallThickness)
+	c.slantAngle = C.double(p.SlantAngle)
+	return c
+}
+
+func CreateCantileverBrace(params CantileverBraceParams) *Shape {
+	shp := C.create_cantilever_brace(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateCantileverBraceWithPlace(params CantileverBraceParams, basePoint Point3, axisDir, upDir Dir3) *Shape {
+	shp := C.create_cantilever_brace_with_place(params.to_struct(), basePoint.val, axisDir.val, upDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+// =========================================================================
 // 7. Rod Insulator (棒式绝缘子)
 // =========================================================================
 

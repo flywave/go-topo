@@ -393,21 +393,21 @@ TopoDS_Shape create_slant_cantilever(const slant_cantilever_params &params) {
   double innerRadius = params.outerDiameter / 2 - params.wallThickness;
   double outerRadius = params.outerDiameter / 2;
 
-  // Create tube along Z axis first (vertical), then rotate
-  gp_Ax2 outerAxis(gp::Origin(), gp::DZ());
+  // Create tube along X axis，再绕 Y 旋转实现 +X → -Z 方向倾斜
+  gp_Ax2 outerAxis(gp::Origin(), gp::DX());
   TopoDS_Shape outerCyl =
       BRepPrimAPI_MakeCylinder(outerAxis, outerRadius, params.length).Shape();
 
-  gp_Ax2 innerAxis(gp::Origin(), gp::DZ());
+  gp_Ax2 innerAxis(gp::Origin(), gp::DX());
   TopoDS_Shape innerCyl =
       BRepPrimAPI_MakeCylinder(innerAxis, innerRadius, params.length).Shape();
 
   TopoDS_Shape tube = BRepAlgoAPI_Cut(outerCyl, innerCyl).Shape();
 
-  // Rotate by slant angle around Y axis
+  // 绕 Y 旋转：+X 方向向 +Z 方向倾斜
   double angleRad = params.slantAngle * M_PI / 180.0;
   gp_Trsf rot;
-  rot.SetRotation(gp_Ax1(gp::Origin(), gp::DY()), angleRad);
+  rot.SetRotation(gp_Ax1(gp::Origin(), gp::DY()), -angleRad);
   return BRepBuilderAPI_Transform(tube, rot).Shape();
 }
 
@@ -417,7 +417,51 @@ TopoDS_Shape create_slant_cantilever(const slant_cantilever_params &params,
                                      const gp_Dir &upDir) {
   TopoDS_Shape shape = create_slant_cantilever(params);
 
-  gp_Dir yDir = upDir.Crossed(axisDirection);
+  gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 targetAx3(basePoint, upDir, axisDirection);
+  gp_Trsf transformation;
+  transformation.SetTransformation(targetAx3, sourceAx3);
+
+  return BRepBuilderAPI_Transform(shape, transformation).Shape();
+}
+
+// =========================================================================
+// 6a. Cantilever Brace (斜撑)
+// =========================================================================
+TopoDS_Shape create_cantilever_brace(const cantilever_brace_params &params) {
+  if (params.length <= 0 || params.outerDiameter <= 0)
+    throw Standard_ConstructionError("Length and diameter must be positive");
+  if (params.wallThickness <= 0 ||
+      params.wallThickness >= params.outerDiameter / 2)
+    throw Standard_ConstructionError("Invalid wall thickness");
+
+  double innerRadius = params.outerDiameter / 2 - params.wallThickness;
+  double outerRadius = params.outerDiameter / 2;
+
+  // Create tube along X axis，绕 Y 旋转向 +X → -Z 方向倾斜
+  gp_Ax2 outerAxis(gp::Origin(), gp::DX());
+  TopoDS_Shape outerCyl =
+      BRepPrimAPI_MakeCylinder(outerAxis, outerRadius, params.length).Shape();
+
+  gp_Ax2 innerAxis(gp::Origin(), gp::DX());
+  TopoDS_Shape innerCyl =
+      BRepPrimAPI_MakeCylinder(innerAxis, innerRadius, params.length).Shape();
+
+  TopoDS_Shape tube = BRepAlgoAPI_Cut(outerCyl, innerCyl).Shape();
+
+  // 绕 Y 旋转：+X 方向向 -Z 方向倾斜
+  double angleRad = params.slantAngle * M_PI / 180.0;
+  gp_Trsf rot;
+  rot.SetRotation(gp_Ax1(gp::Origin(), gp::DY()), angleRad);
+  return BRepBuilderAPI_Transform(tube, rot).Shape();
+}
+
+TopoDS_Shape create_cantilever_brace(const cantilever_brace_params &params,
+                                     const gp_Pnt &basePoint,
+                                     const gp_Dir &axisDirection,
+                                     const gp_Dir &upDir) {
+  TopoDS_Shape shape = create_cantilever_brace(params);
+
   gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
   gp_Ax3 targetAx3(basePoint, upDir, axisDirection);
   gp_Trsf transformation;
@@ -879,6 +923,13 @@ TopoDS_Shape create_registration_arm(const registration_arm_params &params) {
     clamp = BRepAlgoAPI_Fuse(clamp, bolt).Shape();
   }
   tube = BRepAlgoAPI_Fuse(tube, clamp).Shape();
+
+  // 将原点移动到 L 型法兰悬空侧中心
+  double xShift = jThick / 2.0 + fLen;
+  double zShift = jZ + fH / 2.0;
+  gp_Trsf originShift;
+  originShift.SetTranslation(gp_Vec(xShift, 0, zShift));
+  tube = BRepBuilderAPI_Transform(tube, originShift).Shape();
 
   if (std::abs(params.angle) > Precision::Angular()) {
     double ar = params.angle * M_PI / 180.0;

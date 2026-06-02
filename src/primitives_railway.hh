@@ -105,6 +105,22 @@ TopoDS_Shape create_slant_cantilever(const slant_cantilever_params &params,
                                      const gp_Dir &upDir = gp::DZ());
 
 // =========================================================================
+// 6a. Cantilever Brace (斜撑) TYPE=OCS_CANT_BRACE
+// =========================================================================
+struct cantilever_brace_params {
+  double length;           // 斜撑长度(mm)
+  double outerDiameter;    // 钢管外径(mm)
+  double wallThickness;    // 壁厚(mm)
+  double slantAngle;       // 倾斜角(°) — 相对水平面，正值向 -Z
+};
+
+TopoDS_Shape create_cantilever_brace(const cantilever_brace_params &params);
+TopoDS_Shape create_cantilever_brace(const cantilever_brace_params &params,
+                                     const gp_Pnt &basePoint,
+                                     const gp_Dir &axisDirection = gp::DX(),
+                                     const gp_Dir &upDir = gp::DZ());
+
+// =========================================================================
 // 6. Curved Arm (弯臂) TYPE=OCS_CURVED_ARM
 // =========================================================================
 enum class curved_arm_type {

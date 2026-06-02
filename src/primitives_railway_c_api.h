@@ -126,6 +126,22 @@ create_curved_arm_with_place(curved_arm_params_t params, pnt3d_t position,
                              dir3d_t normal, dir3d_t xDir);
 
 // ===========================================================================
+// 6a. Cantilever Brace (斜撑)
+// ===========================================================================
+typedef struct {
+  double length;
+  double outerDiameter;
+  double wallThickness;
+  double slantAngle;
+} cantilever_brace_params_t;
+
+RAILCAPICALL topo_shape_t *
+create_cantilever_brace(cantilever_brace_params_t params);
+RAILCAPICALL topo_shape_t *
+create_cantilever_brace_with_place(cantilever_brace_params_t params, pnt3d_t basePoint,
+                                   dir3d_t axisDir, dir3d_t upDir);
+
+// ===========================================================================
 // 7. Rod Insulator (棒式绝缘子)
 // ===========================================================================
 typedef struct {

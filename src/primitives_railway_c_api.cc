@@ -185,9 +185,41 @@ create_curved_arm_with_place(curved_arm_params_t params, pnt3d_t position,
   gp_Dir cpp_norm(normal.x, normal.y, normal.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
   try {
+      return new topo_shape_t{
+          .shp = std::make_shared<shape>(
+              create_curved_arm(cpp_params, cpp_pos, cpp_norm, cpp_xDir))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+// ===========================================================================
+// 6a. Cantilever Brace
+// ===========================================================================
+RAILCAPICALL topo_shape_t *
+create_cantilever_brace(cantilever_brace_params_t params) {
+  cantilever_brace_params cpp_params{params.length, params.outerDiameter,
+                                      params.wallThickness, params.slantAngle};
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(create_cantilever_brace(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+RAILCAPICALL topo_shape_t *
+create_cantilever_brace_with_place(cantilever_brace_params_t params, pnt3d_t basePoint,
+                                   dir3d_t axisDir, dir3d_t upDir) {
+  cantilever_brace_params cpp_params{params.length, params.outerDiameter,
+                                      params.wallThickness, params.slantAngle};
+  gp_Pnt cpp_base(basePoint.x, basePoint.y, basePoint.z);
+  gp_Dir cpp_axis(axisDir.x, axisDir.y, axisDir.z);
+  gp_Dir cpp_up(upDir.x, upDir.y, upDir.z);
+  try {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(
-            create_curved_arm(cpp_params, cpp_pos, cpp_norm, cpp_xDir))};
+            create_cantilever_brace(cpp_params, cpp_base, cpp_axis, cpp_up))};
   } catch (...) {
     return nullptr;
   }

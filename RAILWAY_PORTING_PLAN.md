@@ -524,9 +524,39 @@ if (Object.values(RLPrimitiveType).includes(shapeType as RLPrimitiveType)) {
   - ✅ TS 声明: `primitives.d.ts` + `export.json`
   - ✅ TS Object: `types/railway.ts` + `railway/index.ts`
   - ✅ WASM 编译: `make topo topo-bindings run gen-ts`
-- [ ] **5. LevelCantilever** (平腕臂) `RAILWAY/LevelCantilever`
-- [ ] **6. SlantCantilever** (斜腕臂) `RAILWAY/SlantCantilever`
-- [ ] **7. CurvedArm** (弯臂) `RAILWAY/CurvedArm`
+- [x] **5. LevelCantilever** (平腕臂) `RAILWAY/LevelCantilever`
+  - ✅ C++ 原点: 端面圆心，沿 X 正方向延伸（无需修改）
+  - ✅ topotypes: `railway/railway.go`
+  - ✅ flywave-topovis: `railway/levelcantilever.go`
+  - ✅ flywave-topovis 测试: `railway_test.go - TestLevelCantilever`
+  - ✅ Embind 绑定: `primitives_bindings.cc`
+  - ✅ TS 声明: `primitives.d.ts` + `export.json`
+  - ✅ TS Object: `types/railway.ts` + `railway/index.ts`
+  - ✅ WASM 编译: `make topo-bindings run gen-ts`
+- [x] **6. SlantCantilever** (斜腕臂) `RAILWAY/SlantCantilever`
+  - ✅ C++ 原点: 端面圆心；沿 X 创建、绕 Y 旋转实现 +X → +Z 方向倾斜
+  - ✅ topotypes: `railway/railway.go`
+  - ✅ flywave-topovis: `railway/slantcantilever.go`
+  - ✅ flywave-topovis 测试: `railway_test.go - TestSlantCantilever`
+  - ✅ Embind 绑定: `primitives_bindings.cc`
+  - ✅ TS 声明: `primitives.d.ts` + `export.json`
+  - ✅ TS Object: `types/railway.ts` + `railway/index.ts`
+  - ✅ WASM 编译: `make topo topo-bindings run gen-ts`
+- [ ] **7. CantileverBrace** (斜撑) `RAILWAY/CantileverBrace`
+  - 连接平腕臂和斜腕臂的自由端，组成三角支撑结构
+  - 参数：length / outerDiameter / wallThickness
+  - 长度可根据平腕臂+斜腕臂几何关系自动推算
+  - C++ 实现需新增 struct + function (`create_cantilever_brace`)
+  - 注意：需对 `primitives_railway.{hh,cc}` 新增，go-topo 层需新增
+- [ ] **8. CurvedArm** (弯臂) `RAILWAY/CurvedArm`
+- [ ] **9. MastBracket** (支柱连接座) `RAILWAY/MastBracket`
+- [ ] **10. RegistrationArm** (定位器) `RAILWAY/RegistrationArm`
+- [ ] **11. RegArmBracket** (定位器底座) `RAILWAY/RegArmBracket`
+- [ ] **12. GuyWire** (下锚拉线) `RAILWAY/GuyWire`
+- [ ] **13. SteelMast** (钢支柱) `RAILWAY/SteelMast`
+- [ ] **14. ConcreteMast** (混凝土支柱) `RAILWAY/ConcreteMast`
+- [ ] **15. OcsFoundation** (支柱基础) `RAILWAY/OcsFoundation`
+- [ ] **16. Dropper** (吊弦) `RAILWAY/Dropper`
 - [ ] **8. MastBracket** (支柱连接座) `RAILWAY/MastBracket`
 - [ ] **9. RegistrationArm** (定位器) `RAILWAY/RegistrationArm`
 - [ ] **10. RegArmBracket** (定位器底座) `RAILWAY/RegArmBracket`
@@ -538,55 +568,55 @@ if (Object.values(RLPrimitiveType).includes(shapeType as RLPrimitiveType)) {
 
 ### Group B: OCS Connectors & Hardware (8 types)
 
-- [ ] **16. CantileverBase** (腕臂底座) `RAILWAY/CantileverBase`
-- [ ] **17. MWSaddle** (承力索座) `RAILWAY/MWSaddle`
-- [ ] **18. BalanceWeight** (坠砣) `RAILWAY/BalanceWeight`
-- [ ] **19. WeightRod** (坠砣杆) `RAILWAY/WeightRod`
-- [ ] **20. AnchorFitting** (下锚金具) `RAILWAY/AnchorFitting`
-- [ ] **21. Crossing** (线岔) `RAILWAY/Crossing`
-- [ ] **22. HangerPost** (硬横跨吊柱) `RAILWAY/HangerPost`
-- [ ] **23. PortalFrame** (梁顶门型架) `RAILWAY/PortalFrame`
+- [ ] **17. CantileverBase** (腕臂底座) `RAILWAY/CantileverBase`
+- [ ] **18. MWSaddle** (承力索座) `RAILWAY/MWSaddle`
+- [ ] **19. BalanceWeight** (坠砣) `RAILWAY/BalanceWeight`
+- [ ] **20. WeightRod** (坠砣杆) `RAILWAY/WeightRod`
+- [ ] **21. AnchorFitting** (下锚金具) `RAILWAY/AnchorFitting`
+- [ ] **22. Crossing** (线岔) `RAILWAY/Crossing`
+- [ ] **23. HangerPost** (硬横跨吊柱) `RAILWAY/HangerPost`
+- [ ] **24. PortalFrame** (梁顶门型架) `RAILWAY/PortalFrame`
 
 ### Group C: OCS Composite (5 types)
 
-- [ ] **24. AuxBracket** (附加导线支架) `RAILWAY/AuxBracket`
-- [ ] **25. HeadSpan** (软横跨) `RAILWAY/HeadSpan`
-- [ ] **26. TransverseSpan** (硬横跨) `RAILWAY/TransverseSpan`
-- [ ] **27. SuspensionHardSpan** (悬索式硬横跨) `RAILWAY/SuspensionHardSpan`
-- [ ] **28. MastAssembly** (支柱装配) `RAILWAY/MastAssembly`
+- [ ] **25. AuxBracket** (附加导线支架) `RAILWAY/AuxBracket`
+- [ ] **26. HeadSpan** (软横跨) `RAILWAY/HeadSpan`
+- [ ] **27. TransverseSpan** (硬横跨) `RAILWAY/TransverseSpan`
+- [ ] **28. SuspensionHardSpan** (悬索式硬横跨) `RAILWAY/SuspensionHardSpan`
+- [ ] **29. MastAssembly** (支柱装配) `RAILWAY/MastAssembly`
 
 ### Group D: Track Components (6 types)
 
-- [ ] **29. Rail** (钢轨) `RAILWAY/Rail`
-- [ ] **30. Sleeper** (轨枕) `RAILWAY/Sleeper`
-- [ ] **31. Ballast** (道床) `RAILWAY/Ballast`
-- [ ] **32. TrackSlab** (轨道板) `RAILWAY/TrackSlab`
-- [ ] **33. Fastener** (扣件) `RAILWAY/Fastener`
-- [ ] **34. GuardRail** (护轨) `RAILWAY/GuardRail`
+- [ ] **30. Rail** (钢轨) `RAILWAY/Rail`
+- [ ] **31. Sleeper** (轨枕) `RAILWAY/Sleeper`
+- [ ] **32. Ballast** (道床) `RAILWAY/Ballast`
+- [ ] **33. TrackSlab** (轨道板) `RAILWAY/TrackSlab`
+- [ ] **34. Fastener** (扣件) `RAILWAY/Fastener`
+- [ ] **35. GuardRail** (护轨) `RAILWAY/GuardRail`
 
 ### Group E: Turnout Components (6 types)
 
-- [ ] **35. SwitchRail** (尖轨) `RAILWAY/SwitchRail`
-- [ ] **36. Frog** (辙叉) `RAILWAY/Frog`
-- [ ] **37. Turnout** (道岔) `RAILWAY/Turnout`
-- [ ] **38. SleeperLayout** (轨枕阵列) `RAILWAY/SleeperLayout`
-- [ ] **39. StraightTrack** (直线轨道段) `RAILWAY/StraightTrack`
-- [ ] **40. CurveTrack** (曲线轨道段) `RAILWAY/CurveTrack`
+- [ ] **36. SwitchRail** (尖轨) `RAILWAY/SwitchRail`
+- [ ] **37. Frog** (辙叉) `RAILWAY/Frog`
+- [ ] **38. Turnout** (道岔) `RAILWAY/Turnout`
+- [ ] **39. SleeperLayout** (轨枕阵列) `RAILWAY/SleeperLayout`
+- [ ] **40. StraightTrack** (直线轨道段) `RAILWAY/StraightTrack`
+- [ ] **41. CurveTrack** (曲线轨道段) `RAILWAY/CurveTrack`
 
 ### Group F: Point/Line API (5 types)
 
-- [ ] **41. RailCurve** (钢轨曲线) `RAILWAY/RailCurve`
-- [ ] **42. WingRailCurve** (翼轨曲线) `RAILWAY/WingRailCurve`
-- [ ] **43. GuardRailCurve** (护轨曲线) `RAILWAY/GuardRailCurve`
-- [ ] **44. SleeperLine** (枕木线) `RAILWAY/SleeperLine`
-- [ ] **45. FastenerPoint** (扣件点) `RAILWAY/FastenerPoint`
+- [ ] **42. RailCurve** (钢轨曲线) `RAILWAY/RailCurve`
+- [ ] **43. WingRailCurve** (翼轨曲线) `RAILWAY/WingRailCurve`
+- [ ] **44. GuardRailCurve** (护轨曲线) `RAILWAY/GuardRailCurve`
+- [ ] **45. SleeperLine** (枕木线) `RAILWAY/SleeperLine`
+- [ ] **46. FastenerPoint** (扣件点) `RAILWAY/FastenerPoint`
 
 ### Group G: Special (6 types)
 
-- [ ] **46. SuspensionCable** (悬索) `RAILWAY/SuspensionCable`
-- [ ] **47. PositioningCable** (定位索) `RAILWAY/PositioningCable`
-- [ ] **48. BallastFromSleepers** (枕木道床) `RAILWAY/BallastFromSleepers`
-- [ ] **49. TurnoutAssembly** (道岔组合) `RAILWAY/TurnoutAssembly`
-- [ ] **50. ExpansionJoint** (钢轨伸缩调节器) `RAILWAY/ExpansionJoint`
-- [ ] **51. RetarderPoint** (减速顶) `RAILWAY/RetarderPoint`
-- [ ] **52. RailPair** (轨排对) `RAILWAY/RailPair`
+- [ ] **47. SuspensionCable** (悬索) `RAILWAY/SuspensionCable`
+- [ ] **48. PositioningCable** (定位索) `RAILWAY/PositioningCable`
+- [ ] **49. BallastFromSleepers** (枕木道床) `RAILWAY/BallastFromSleepers`
+- [ ] **50. TurnoutAssembly** (道岔组合) `RAILWAY/TurnoutAssembly`
+- [ ] **51. ExpansionJoint** (钢轨伸缩调节器) `RAILWAY/ExpansionJoint`
+- [ ] **52. RetarderPoint** (减速顶) `RAILWAY/RetarderPoint`
+- [ ] **53. RailPair** (轨排对) `RAILWAY/RailPair`
