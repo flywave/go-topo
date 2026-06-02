@@ -538,8 +538,17 @@ TopoDS_Shape create_rod_insulator(const rod_insulator_params &params) {
   double shedMinorR = shedMajorR * 0.85;
   double innerR = params.innerDiameter / 2.0;
 
+  // 计算偏移量：使原点位于最底面（法兰底面或棒体底面）
+  double flangeH = 0;
+  bool hasFlange = (params.endFitting == end_fitting_type::FLANGE &&
+                    params.flangeDiameter > rodRadius * 2);
+  if (hasFlange) {
+    flangeH = params.height * 0.05;
+  }
+  double zOffset = hasFlange ? flangeH : 0;
+
   // Main rod body — hollow if innerDiameter > 0
-  gp_Ax2 rodAxis(gp::Origin(), gp::DZ());
+  gp_Ax2 rodAxis(gp_Pnt(0, 0, zOffset), gp::DZ());
   TopoDS_Shape rod;
   if (innerR > Precision::Confusion() && innerR < rodRadius) {
     TopoDS_Shape outerCyl =
@@ -551,7 +560,7 @@ TopoDS_Shape create_rod_insulator(const rod_insulator_params &params) {
     rod = BRepPrimAPI_MakeCylinder(rodAxis, rodRadius, params.height).Shape();
   }
 
-  if (params.shedCount == 0)
+  if (params.shedCount == 0 && !hasFlange)
     return rod;
 
   // Build compound: body + all shed rings
@@ -566,7 +575,7 @@ TopoDS_Shape create_rod_insulator(const rod_insulator_params &params) {
   double segH = shedSpacing;
 
   for (int i = 0; i < params.shedCount; ++i) {
-    double zPos = (i + 1) * shedSpacing;
+    double zPos = zOffset + (i + 1) * shedSpacing;
     double r = (i % 2 == 0) ? shedMajorR : shedMinorR;
 
     // 5-point shed profile (references GIM porcelain bushing pattern)
@@ -588,7 +597,8 @@ TopoDS_Shape create_rod_insulator(const rod_insulator_params &params) {
       throw Standard_ConstructionError("Shed wire not closed");
 
     TopoDS_Face face = BRepLib_MakeFace(wire.Wire()).Face();
-    BRepPrimAPI_MakeRevol revol(face, gp_Ax1(gp::Origin(), gp::DZ()));
+    gp_Pnt revolCenter(0, 0, 0);
+    BRepPrimAPI_MakeRevol revol(face, gp_Ax1(revolCenter, gp::DZ()));
     revol.Build();
     TopoDS_Shape shed = revol.Shape();
     if (shed.IsNull())
@@ -598,16 +608,14 @@ TopoDS_Shape create_rod_insulator(const rod_insulator_params &params) {
   }
 
   // End flanges
-  if (params.endFitting == end_fitting_type::FLANGE &&
-      params.flangeDiameter > rodRadius * 2) {
+  if (hasFlange) {
     double flangeR = params.flangeDiameter / 2.0;
-    double flangeH = params.height * 0.05;
-    gp_Ax2 botAxis(gp_Pnt(0, 0, -flangeH), gp::DZ());
+    gp_Ax2 botAxis(gp::Origin(), gp::DZ());
     TopoDS_Shape botFlange =
         BRepPrimAPI_MakeCylinder(botAxis, flangeR, flangeH).Shape();
     builder.Add(compound, botFlange);
 
-    gp_Ax2 topAxis(gp_Pnt(0, 0, params.height), gp::DZ());
+    gp_Ax2 topAxis(gp_Pnt(0, 0, zOffset + params.height), gp::DZ());
     TopoDS_Shape topFlange =
         BRepPrimAPI_MakeCylinder(topAxis, flangeR, flangeH).Shape();
     builder.Add(compound, topFlange);
@@ -2979,7 +2987,7 @@ TopoDS_Shape create_fastener(const fastener_params &params,
 // =========================================================================
 TopoDS_Shape create_guard_rail(const guard_rail_params &params) {
     guard_rail_curve_params gp;
-    gp.curve.type = curve_type::LINE;
+    gp.curve.type = rail_curve_type::LINE;
     gp.curve.startPoint = gp::Origin();
     gp.curve.endPoint = gp_Pnt(params.totalLength, 0, 0);
     gp.channelHeight = params.height;
@@ -2992,7 +3000,7 @@ TopoDS_Shape create_guard_rail(const guard_rail_params &params,
                                 const gp_Pnt &startPoint,
                                const gp_Pnt &endPoint) {
     guard_rail_curve_params gp;
-    gp.curve.type = curve_type::LINE;
+    gp.curve.type = rail_curve_type::LINE;
     gp.curve.startPoint = startPoint;
     gp.curve.endPoint = endPoint;
     gp.channelHeight = params.height;
@@ -3122,7 +3130,7 @@ TopoDS_Shape create_frog(const frog_params &params) {
     double halfG = params.gauge / 2;
     // Point rail A (left incoming)
     rail_curve_params rp;
-    rp.curve.type = curve_type::LINE;
+    rp.curve.type = rail_curve_type::LINE;
     rp.curve.startPoint = gp_Pnt(-fc.frogPointLength, -halfG, 0);
     rp.curve.endPoint = gp_Pnt(0, 0, 0);
     rp.railHeight = params.railHeight;
@@ -3140,7 +3148,7 @@ TopoDS_Shape create_frog(const frog_params &params) {
     try { bld.Add(cmp, create_rail_curve(rp)); } catch (...) {}
     // Wing rails
     wing_rail_curve_params wp;
-    wp.curve.type = curve_type::LINE;
+    wp.curve.type = rail_curve_type::LINE;
     wp.curve.startPoint = gp_Pnt(-fc.wingRailLength * 0.4, -halfG - 50, 0);
     wp.curve.endPoint = gp_Pnt(fc.wingRailLength * 0.6, -halfG - 50, 0);
     wp.channelHeight = params.railHeight * 0.7;
@@ -3179,7 +3187,7 @@ TopoDS_Shape create_turnout(const turnout_params &params) {
     
     // 1. Stock rails
     rail_curve_params sr;
-    sr.curve.type = curve_type::LINE;
+    sr.curve.type = rail_curve_type::LINE;
     sr.curve.startPoint = gp_Pnt(-swLen - 2000, -hg, 0);
     sr.curve.endPoint = gp_Pnt(fc.frogTotalLength * 1.2, -hg, 0);
     sr.railHeight = params.railHeight; sr.headWidth = params.railHeadWidth;
@@ -3191,7 +3199,7 @@ TopoDS_Shape create_turnout(const turnout_params &params) {
     
     // 2. Switch rails (tapered at switch end)
     rail_curve_params sw;
-    sw.curve.type = curve_type::LINE;
+    sw.curve.type = rail_curve_type::LINE;
     sw.curve.startPoint = gp_Pnt(-swLen, -hg, 0);
     sw.curve.endPoint = gp_Pnt(0, -hg, 0);
     sw.endStart.type = end_treatment_type::SWITCH;
@@ -3200,7 +3208,7 @@ TopoDS_Shape create_turnout(const turnout_params &params) {
     sw.baseWidth = params.railBaseWidth; sw.webThickness = params.webThickness;
     tap.rails.push_back(sw);
     // Curved switch on diverging side
-    sw.curve.type = curve_type::ARC;
+    sw.curve.type = rail_curve_type::ARC;
     sw.curve.startPoint = gp_Pnt(-swLen, hg, 0);
     sw.curve.endPoint = gp_Pnt(0, hg, 0);
     sw.curve.radius = leadR;
@@ -3287,7 +3295,7 @@ TopoDS_Shape create_rail_pair(const rail_pair_params &params) {
     BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
     if (params.centerline.size() < 2) return cmp;
     rail_curve_params rp;
-    rp.curve.type = curve_type::LINE;
+    rp.curve.type = rail_curve_type::LINE;
     rp.curve.startPoint = params.centerline[0];
     rp.curve.endPoint = params.centerline[1];
     rp.railHeight = params.railHeight;
@@ -3364,7 +3372,7 @@ TopoDS_Shape create_straight_track(const straight_track_params &params) {
   
   // Rails
   rail_curve_params rp;
-  rp.curve.type = curve_type::LINE;
+  rp.curve.type = rail_curve_type::LINE;
   rp.curve.startPoint = params.startPoint.Translated(gp_Vec(0, -hg, 0));
   rp.curve.endPoint = params.endPoint.Translated(gp_Vec(0, -hg, 0));
   rp.railHeight = params.railHeight; rp.headWidth = params.railHeadWidth;
@@ -3429,7 +3437,7 @@ TopoDS_Shape create_curve_track(const curve_track_params &params) {
   
   // Rails (ARC curves)
   rail_curve_params rp;
-  rp.curve.type = curve_type::ARC;
+  rp.curve.type = rail_curve_type::ARC;
   rp.railHeight = params.railHeight; rp.headWidth = params.railHeadWidth;
   rp.baseWidth = params.railBaseWidth; rp.webThickness = params.webThickness;
   
@@ -3615,10 +3623,10 @@ Handle(Geom_BezierCurve) makeBezier(const std::vector<gp_Pnt> &pts) {
 TopoDS_Wire buildCurveWire(const curve_params &curve) {
   BRepBuilderAPI_MakeWire w;
   switch (curve.type) {
-  case curve_type::LINE:
+  case rail_curve_type::LINE:
     w.Add(makeEdgeSafe(curve.startPoint, curve.endPoint));
     break;
-  case curve_type::ARC: {
+  case rail_curve_type::ARC: {
     Handle(Geom_TrimmedCurve) arc;
     if (curve.controlPoints.size() >= 1)
       arc = GC_MakeArcOfCircle(curve.startPoint, curve.controlPoints[0], curve.endPoint).Value();
@@ -3635,7 +3643,7 @@ TopoDS_Wire buildCurveWire(const curve_params &curve) {
     w.Add(BRepBuilderAPI_MakeEdge(arc).Edge());
     break;
   }
-  case curve_type::BEZIER: {
+  case rail_curve_type::BEZIER: {
     std::vector<gp_Pnt> cpts = curve.controlPoints;
     if (cpts.empty() || cpts.front().Distance(curve.startPoint) > Precision::Confusion())
       cpts.insert(cpts.begin(), curve.startPoint);
@@ -3701,7 +3709,7 @@ TopoDS_Face buildPlateProfile(double height, double width) {
 }
 
 TopoDS_Shape sweepProfile(const TopoDS_Face &face, const curve_params &curve) {
-  if (curve.type == curve_type::LINE) {
+  if (curve.type == rail_curve_type::LINE) {
     gp_Vec dir(curve.startPoint, curve.endPoint);
     if (dir.Magnitude() < Precision::Confusion())
       throw Standard_ConstructionError("zero-length path");
@@ -3710,14 +3718,14 @@ TopoDS_Shape sweepProfile(const TopoDS_Face &face, const curve_params &curve) {
   }
 
   Handle(Geom_Curve) c;
-  if (curve.type == curve_type::BEZIER) {
+  if (curve.type == rail_curve_type::BEZIER) {
     std::vector<gp_Pnt> pts = curve.controlPoints;
     pts.insert(pts.begin(), curve.startPoint);
     pts.push_back(curve.endPoint);
     TColgp_Array1OfPnt arr(1, (int)pts.size());
     for (size_t i = 0; i < pts.size(); i++) arr.SetValue((int)(i + 1), pts[i]);
     c = new Geom_BezierCurve(arr);
-  } else if (curve.type == curve_type::ARC) {
+  } else if (curve.type == rail_curve_type::ARC) {
     if (curve.controlPoints.size() >= 1)
       c = GC_MakeArcOfCircle(curve.startPoint, curve.controlPoints[0], curve.endPoint).Value();
     else if (curve.radius > Precision::Confusion()) {
@@ -3798,10 +3806,10 @@ TopoDS_Shape create_rail_curve(const rail_curve_params &params) {
   rp.headHeight = params.headHeight;
   rp.baseHeight = params.baseHeight;
   rp.headRadius = params.headRadius;
-  centerline_curve_type ct = params.curve.type == curve_type::LINE ? centerline_curve_type::LINE
-    : params.curve.type == curve_type::ARC ? centerline_curve_type::ARC : centerline_curve_type::BEZIER;
+  centerline_curve_type ct = params.curve.type == rail_curve_type::LINE ? centerline_curve_type::LINE
+    : params.curve.type == rail_curve_type::ARC ? centerline_curve_type::ARC : centerline_curve_type::BEZIER;
   std::vector<gp_Pnt> pts = {params.curve.startPoint, params.curve.endPoint};
-  if (params.curve.type == curve_type::ARC && params.curve.controlPoints.size() >= 1)
+  if (params.curve.type == rail_curve_type::ARC && params.curve.controlPoints.size() >= 1)
     pts.insert(pts.begin() + 1, params.curve.controlPoints[0]);
   centerline_segment seg{ct, pts};
   TopoDS_Shape shape = create_rail_path(rp, {seg}, 0, 0, 0);
@@ -3815,7 +3823,7 @@ TopoDS_Shape create_rail_curve(const rail_curve_params &params) {
 // =========================================================================
 TopoDS_Shape create_wing_rail_curve(const wing_rail_curve_params &params) {
   TopoDS_Face face;
-  if (params.profile == profile_type::RAIL)
+  if (params.profile == rail_profile_type::RAIL)
     face = buildRailProfile(120, 50, 100, 12, 40, 20, 10);
   else
     face = buildChannelProfile(params.channelHeight, params.flangeWidth, params.webThickness);

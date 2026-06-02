@@ -173,7 +173,7 @@ void test_switch_rail() {
   std::cout << "\n=== Switch Rail ===" << std::endl;
   // Straight switch (delegated to create_rail_curve with SWITCH end)
   rail_curve_params rp;
-  rp.curve.type = curve_type::LINE;
+  rp.curve.type = rail_curve_type::LINE;
   rp.curve.startPoint = gp::Origin();
   rp.curve.endPoint = gp_Pnt(7700, 0, 0);
   rp.railHeight = 176; rp.headWidth = 73; rp.baseWidth = 150; rp.webThickness = 16.5;
@@ -181,7 +181,7 @@ void test_switch_rail() {
   rp.endStart.toeWidth = 2;
   test_export(create_rail_curve(rp), "switch_rail_straight");
   // Curved switch (ARC path)
-  rp.curve.type = curve_type::ARC;
+  rp.curve.type = rail_curve_type::ARC;
   rp.curve.radius = 350000;
   rp.curve.arcDirection = 1;
   rp.curve.controlPoints = {gp_Pnt(3850, 500, 0)};
@@ -192,14 +192,14 @@ void test_wing_rail() {
   std::cout << "\n=== Wing Rail ===" << std::endl;
   // Straight wing rail
   wing_rail_curve_params wp;
-  wp.curve.type = curve_type::LINE;
+  wp.curve.type = rail_curve_type::LINE;
   wp.curve.startPoint = gp::Origin();
   wp.curve.endPoint = gp_Pnt(3000, 0, 0);
   wp.channelHeight = 120; wp.flangeWidth = 30; wp.webThickness = 12;
   test_export(create_wing_rail_curve(wp), "wing_rail_straight");
   // Bent wing rail (multi-segment: two lines meeting at an angle)
   // Use ARC to approximate the bend
-  wp.curve.type = curve_type::ARC;
+  wp.curve.type = rail_curve_type::ARC;
   wp.curve.radius = 5000;
   wp.curve.arcDirection = 2;
   wp.curve.startPoint = gp_Pnt(0, 0, 0);
@@ -297,7 +297,7 @@ void test_turnout_new() {
 
   // Stock rails (LINE)
   rail_curve_params sr;
-  sr.curve.type = curve_type::LINE;
+  sr.curve.type = rail_curve_type::LINE;
   sr.curve.startPoint = gp_Pnt(-swLen - 2000, -hg, 0);
   sr.curve.endPoint = gp_Pnt(fc.frogTotalLength * 1.2, -hg, 0);
   sr.railHeight = 176; sr.headWidth = 73; sr.baseWidth = 150; sr.webThickness = 16.5;
@@ -308,7 +308,7 @@ void test_turnout_new() {
 
   // Switch rails (tapered at switch end)
   rail_curve_params sw_r;
-  sw_r.curve.type = curve_type::LINE;
+  sw_r.curve.type = rail_curve_type::LINE;
   sw_r.curve.startPoint = gp_Pnt(-swLen, -hg, 0);
   sw_r.curve.endPoint = gp_Pnt(0, -hg, 0);
   sw_r.endStart.type = end_treatment_type::SWITCH;
@@ -316,7 +316,7 @@ void test_turnout_new() {
   sw_r.railHeight = 176; sw_r.headWidth = 73; sw_r.baseWidth = 150; sw_r.webThickness = 16.5;
   tap.rails.push_back(sw_r);
   // Curved switch on diverging side
-  sw_r.curve.type = curve_type::ARC;
+  sw_r.curve.type = rail_curve_type::ARC;
   sw_r.curve.startPoint = gp_Pnt(-swLen, hg, 0);
   sw_r.curve.endPoint = gp_Pnt(0, hg, 0);
   sw_r.curve.radius = leadR;

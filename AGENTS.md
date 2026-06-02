@@ -51,19 +51,18 @@ cmake --install build/build --prefix libs/darwin_arm
 | `mesh.go` / `topo_export.go` | Mesh export via callback |
 | `selector.go` / `workplane.go` / `sketch.go` | Higher-level modeling |
 
-## Key entrypoints
+## Railway primitive porting
 
-| File | Purpose |
-|------|---------|
-| `topo.go` | Core types (Shape, Location, constants) |
-| `shape.go` | Shape methods |
-| `shape_ops.go` | Boolean ops, extrude, sweep, loft, offset |
-| `primitives.go` | Box, sphere, cylinder, prism creation |
-| `geometry.go` | Geometry type constants |
-| `geometry_creator.go` | Curve/surface creation helpers |
-| `dxf.go` / `ifc.go` | DXF/IFC import |
-| `mesh.go` / `topo_export.go` | Mesh export via callback |
-| `selector.go` / `workplane.go` / `sketch.go` | Higher-level modeling |
+All 50+ railway types are being ported across 4 layers. See `RAILWAY_PORTING_PLAN.md`.
+
+**Per-type workflow across 4 layers:**
+1. 🔍 **Optimize C++ origin** (go-topo layer) — review origin/coordinate system
+2. 📝 **Define parametric type** (topotypes layer) — Go struct + JSON tags + Unmarshal
+3. 🏗️ **Write parametric builder** (flywave-topovis layer) — ParametricPrimitive -> CreateXxx
+4. 🔧 **Write Embind binding** (topo.js layer) — C++→JS binding
+5. 📝 **Update TS decls** (topo-wasm) — primitives.d.ts + export.json
+6. 📦 **Write TS Object** (topo-primitives) — TypeScript wrapper class
+7. ✅ **Build WASM + test** — make rebuild + vitest
 
 ## Tests
 

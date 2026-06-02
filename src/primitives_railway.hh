@@ -986,8 +986,8 @@ TopoDS_Shape create_reg_arm_bracket(const reg_arm_bracket_params &params);
 // =========================================================================
 
 // Curve types for track element paths
-enum class curve_type { LINE = 0, ARC = 1, BEZIER = 2 };
-enum class profile_type { RAIL = 0, CHANNEL = 1, PLATE = 2 };
+enum class rail_curve_type { LINE = 0, ARC = 1, BEZIER = 2 };
+enum class rail_profile_type { RAIL = 0, CHANNEL = 1, PLATE = 2 };
 enum class end_treatment_type { PLANE = 0, SWITCH = 1, SCARF = 2, BELL = 3 };
 
 // End treatment for curve elements (尖轨/斜切/喇叭口)
@@ -1004,7 +1004,7 @@ struct end_treatment_params {
 
 // Curve path definition
 struct curve_params {
-  curve_type type = curve_type::LINE;
+  rail_curve_type type = rail_curve_type::LINE;
   gp_Pnt startPoint;
   gp_Pnt endPoint;
   std::vector<gp_Pnt> controlPoints; // BEZIER
@@ -1033,7 +1033,7 @@ struct wing_rail_curve_params {
   curve_params curve;
   end_treatment_params endStart;
   end_treatment_params endFinish;
-  profile_type profile = profile_type::CHANNEL; // CHANNEL or RAIL
+  rail_profile_type profile = rail_profile_type::CHANNEL; // CHANNEL or RAIL
   double channelHeight = 120.0;
   double grooveWidth = 45.0;
   double flangeWidth = 20.0;
@@ -1049,7 +1049,7 @@ struct guard_rail_curve_params {
   curve_params curve;
   end_treatment_params endStart;        // BELL end typical
   end_treatment_params endFinish;
-  profile_type profile = profile_type::CHANNEL;
+  rail_profile_type profile = rail_profile_type::CHANNEL;
   double channelHeight = 120.0;
   double grooveWidth = 45.0;
   double flangeWidth = 20.0;
