@@ -23,9 +23,11 @@
 #include <GC_MakeArcOfCircle.hxx>
 #include <GC_MakeSegment.hxx>
 #include <Geom_BezierCurve.hxx>
+#include <Geom_BSplineCurve.hxx>
 #include <Geom_Circle.hxx>
 #include <Geom_Ellipse.hxx>
 #include <Geom_Plane.hxx>
+#include <GeomAPI_Interpolate.hxx>
 #include <Precision.hxx>
 #include <ShapeFix_Wire.hxx>
 #include <Standard_ConstructionError.hxx>
@@ -1804,33 +1806,138 @@ TopoDS_Shape create_ocs_foundation(const ocs_foundation_params &params,
 
 // =========================================================================
 // 14. Dropper (吊弦)
+// Origin: top of upper crimp tube, extends downward in -Z.
+// Assembly: upper crimp → upper thimble → upper loop arc
+//          → main wire → lower loop arc → lower thimble → lower crimp
+// Loop arcs use 3-point circular arcs (no BSpline twisting).
 // =========================================================================
+
+namespace {
+
+// Teardrop wire via BSpline interpolation (for thimble outline).
+TopoDS_Wire makeTeardropProfile(double width, double height, bool closed) {
+  double w = width / 2.0, h = height;
+  Handle(TColgp_HArray1OfPnt) pts = new TColgp_HArray1OfPnt(1, 6);
+  pts->SetValue(1, gp_Pnt(0, h * 0.9, 0));
+  pts->SetValue(2, gp_Pnt(w * 0.95, h * 0.5, 0));
+  pts->SetValue(3, gp_Pnt(w * 0.6, 0, 0));
+  pts->SetValue(4, gp_Pnt(0, -h, 0));
+  pts->SetValue(5, gp_Pnt(-w * 0.6, 0, 0));
+  pts->SetValue(6, gp_Pnt(-w * 0.95, h * 0.5, 0));
+  GeomAPI_Interpolate interp(pts, closed, 1e-5);
+  interp.Perform();
+  return BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(interp.Curve()).Edge()).Wire();
+}
+
+// Thimble ring: flat teardrop ring, normal along X, in YZ plane.
+TopoDS_Shape makeThimble(double wr, bool isUpper) {
+  double ow = wr * 4.5, oh = wr * 6.0, iw = wr * 1.8, ih = wr * 3.5, tk = wr * 0.8;
+  TopoDS_Wire owr = makeTeardropProfile(ow, oh, true);
+  TopoDS_Shape os = BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(owr).Face(), gp_Vec(tk, 0, 0)).Shape();
+  TopoDS_Wire iwr = makeTeardropProfile(iw, ih, true);
+  TopoDS_Shape ish = BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(iwr).Face(), gp_Vec(tk + 2, 0, 0)).Shape();
+  TopoDS_Shape r = BRepAlgoAPI_Cut(os, ish).Shape();
+  if (!isUpper) {
+    gp_Trsf rot; rot.SetRotation(gp_Ax1(gp::Origin(), gp::DX()), M_PI);
+    r = BRepBuilderAPI_Transform(r, rot).Shape();
+  }
+  return r;
+}
+
+// Create loop wire as a simple 3-point circular arc (no BSpline twisting).
+// Arc lies in YZ plane at X=offset. Upper bulges +Y, lower bulges -Y.
+TopoDS_Shape makeLoopArc(double wr, bool isTop, double startZ) {
+  double offset = wr * 2.0;
+  double R = wr * 3.0;
+  double H = wr * 4.0;
+  int s = isTop ? 1 : -1;
+
+  // Three points define a circular arc
+  gp_Pnt p0(offset, 0, startZ);
+  gp_Pnt p1(offset, s * R, startZ - H * 0.5);
+  gp_Pnt p2(offset, 0, startZ - H);
+
+  Handle(Geom_TrimmedCurve) arc = GC_MakeArcOfCircle(p0, p1, p2).Value();
+  TopoDS_Edge ae = BRepBuilderAPI_MakeEdge(arc).Edge();
+  TopoDS_Wire pathWire = BRepBuilderAPI_MakeWire(ae).Wire();
+
+  gp_Circ prof(gp_Ax2(gp::Origin(), gp_Dir(1, 0, 0)), wr);
+  Handle(Geom_Curve) pc = new Geom_Circle(prof);
+  TopoDS_Edge pe = BRepBuilderAPI_MakeEdge(pc).Edge();
+  TopoDS_Wire pw = BRepBuilderAPI_MakeWire(pe).Wire();
+
+  BRepOffsetAPI_MakePipeShell pipe(pathWire);
+  pipe.Add(pw, Standard_False, Standard_True);
+  pipe.SetMode(Standard_True);
+  pipe.Build();
+  return pipe.IsDone() ? pipe.Shape() : TopoDS_Shape();
+}
+
+} // anonymous namespace
+
 TopoDS_Shape create_dropper(const dropper_params &params) {
   if (params.length <= 0 || params.wireDiameter <= 0)
     throw Standard_ConstructionError("Invalid dimensions");
-  double wr = params.wireDiameter / 2;
-  TopoDS_Shape wire = BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DZ()),
-                                               wr, params.length)
-                          .Shape();
-  if (params.clampLength > 0 && params.clampWidth > 0) {
-    double ch =
-        params.clampThickness > 0 ? params.clampThickness : params.wireDiameter;
-    wire = BRepAlgoAPI_Fuse(wire,
-                            BRepPrimAPI_MakeBox(
-                                gp_Pnt(-params.clampWidth / 2,
-                                       -params.clampWidth / 2, params.length),
-                                params.clampWidth, params.clampWidth, ch)
-                                .Shape())
-               .Shape();
-    wire = BRepAlgoAPI_Fuse(wire, BRepPrimAPI_MakeBox(
-                                      gp_Pnt(-params.clampWidth / 2,
-                                             -params.clampWidth / 2, -ch),
-                                      params.clampWidth, params.clampWidth, ch)
-                                      .Shape())
-               .Shape();
+
+  BRep_Builder builder;
+  TopoDS_Compound compound;
+  builder.MakeCompound(compound);
+
+  double wr = params.wireDiameter / 2.0;
+  double crimpL = wr * 3.5;
+  double crimpR = wr * 1.8;
+  double gap = wr * 0.5;
+
+  // 1. Upper crimp
+  builder.Add(compound, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp::Origin(), gp_Dir(0, 0, -1)), crimpR, crimpL).Shape());
+
+  // 2. Upper thimble
+  {
+    TopoDS_Shape th = makeThimble(wr, true);
+    if (!th.IsNull()) {
+      gp_Trsf t; t.SetTranslation(gp_Vec(wr * 2, 0, -crimpL - gap));
+      builder.Add(compound, BRepBuilderAPI_Transform(th, t).Shape());
+    }
   }
-  return wire;
+
+  // 3. Upper loop arc (3-point, bulges +Y)
+  {
+    TopoDS_Shape loop = makeLoopArc(wr, true, -crimpL);
+    if (!loop.IsNull()) builder.Add(compound, loop);
+  }
+
+  // 4. Main wire
+  {
+    double topZ = -crimpL - wr * 4;
+    double botZ = -params.length + crimpL + wr * 4;
+    double len = botZ - topZ;
+    if (len > 0) builder.Add(compound, BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(0, 0, topZ), gp_Dir(0, 0, -1)), wr, len).Shape());
+  }
+
+  // 5. Lower loop arc (3-point, bulges -Y)
+  {
+    TopoDS_Shape loop = makeLoopArc(wr, false, -params.length + crimpL);
+    if (!loop.IsNull()) builder.Add(compound, loop);
+  }
+
+  // 6. Lower thimble (inverted)
+  {
+    TopoDS_Shape th = makeThimble(wr, false);
+    if (!th.IsNull()) {
+      gp_Trsf t; t.SetTranslation(gp_Vec(wr * 2, 0, -params.length + crimpL + gap));
+      builder.Add(compound, BRepBuilderAPI_Transform(th, t).Shape());
+    }
+  }
+
+  // 7. Lower crimp
+  builder.Add(compound, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, 0, -params.length), gp_Dir(0, 0, -1)), crimpR, crimpL).Shape());
+
+  return compound;
 }
+
 TopoDS_Shape create_dropper(const dropper_params &params,
                             const gp_Pnt &topPoint, const gp_Dir &direction) {
   TopoDS_Shape s = create_dropper(params);

@@ -629,7 +629,16 @@ if (Object.values(RLPrimitiveType).includes(shapeType as RLPrimitiveType)) {
   - ✅ TS Object: `types/railway.ts` + `railway/index.ts`
   - ✅ C++ 测试: `primitives_railway_test.cc - test_ocs_foundation`
   - ⏳ C++ 编译: 需 `cmake --build`
-- [ ] **16. Dropper** (吊弦) `RAILWAY/Dropper`
+- [x] **16. Dropper** (吊弦) `RAILWAY/Dropper`
+  - C++ 重写: 线夹+心形护环(环形托orus)+吊弦线
+  - topotypes: `railway/railway.go` ✓
+  - flywave-topovis: `railway/dropper.go` ✓
+  - flywave-topovis 测试: `railway_test.go - TestDropper` ✓
+  - Embind 绑定: `primitives_bindings.cc` ✓
+  - TS 声明: `primitives.d.ts` + `export.json` ✓
+  - TS Object: `types/railway.ts` + `railway/index.ts` ✓
+  - C++ 测试: `primitives_railway_test.cc - test_dropper` ✓
+  - ⏳ C++ 编译: 需 `cmake --build`
 
 ### Group B: OCS Connectors & Hardware (8 types)
 

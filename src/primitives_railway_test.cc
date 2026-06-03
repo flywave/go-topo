@@ -428,6 +428,15 @@ void test_guy_wire() {
   test_export(create_guy_wire(p), "guy_wire_insulator");
 }
 
+void test_dropper() {
+  std::cout << "\n=== Dropper ===" << std::endl;
+  dropper_params p;
+  p.length = 1500; p.wireDiameter = 6; p.clampLength = 30;
+  p.clampWidth = 20; p.clampThickness = 8; p.conductive = true;
+  test_export(create_dropper(p), "dropper");
+  test_export(create_dropper(p, gp_Pnt(1000, 0, 0), gp::DZ()), "dropper_pos");
+}
+
 void test_ocs_foundation() {
   std::cout << "\n=== OCS Foundation ===" << std::endl;
   ocs_foundation_params p;
@@ -560,6 +569,7 @@ int main() {
   run("Turnout Graph", test_turnout_new);
   run("Mast Assembly", test_mast_assembly);
   run("Guy Wire", test_guy_wire);
+  run("Dropper", test_dropper);
   run("OCS Foundation", test_ocs_foundation);
   run("Retarder Point", test_retarder_point);
   run("Fastener", test_fastener);
