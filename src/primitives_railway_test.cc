@@ -260,9 +260,11 @@ void test_ballast() {
 void test_curved_arm() {
   std::cout << "\n=== Curved Arm ===" << std::endl;
   curved_arm_params p;
+  p.type = curved_arm_type::ARC;
   p.verticalLength = 500; p.horizontalLength = 800;
-  p.bendRadius = 200; p.outerDiameter = 48;
-  p.wallThickness = 3.5; p.flangeThickness = 10;
+  p.bendRadius = 200; p.bendAngle = 90;
+  p.outerDiameter = 48; p.wallThickness = 3.5;
+  p.flangeThickness = 10; p.boltSpacing = 80; p.boltDiameter = 12;
   test_export(create_curved_arm(p), "curved_arm");
   test_export(create_curved_arm(p, gp_Pnt(200,0,0), gp::DZ(), gp::DX()), "curved_arm_pos");
 }
