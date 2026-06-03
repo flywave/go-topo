@@ -490,37 +490,20 @@ TopoDS_Shape create_curved_arm(const curved_arm_params &params) {
   if (R > V || R > H)
     R = std::min(V, H) * 0.5;
 
-  // Build centerline path: vertical straight + quarter-circle arc + horizontal
-  // straight Arc center: (R, 0, V-R), quarter turn from Z-direction to
-  // X-direction
-  gp_Pnt arcCenter(R, 0, V - R);
-
-  // Vertical segment: from origin to arc start point (0, 0, V-R)
+  // Build centerline path using 3-point Bezier (平滑过渡): 
+  // vStart → arcStart (中点) → hEnd (终点)
   gp_Pnt vStart(0, 0, 0);
-  gp_Pnt arcStart(0, 0, V - R);
-
-  // Quarter-circle arc (in XZ plane, from left to top of center)
-  // At parameter 0: arcCenter + (R*cos(0), 0, R*sin(0)) = (R+R, 0, V-R) — right
-  // side At parameter pi/2: arcCenter + (R*cos(pi/2), 0, R*sin(pi/2)) = (R, 0,
-  // V) — top At parameter pi: arcCenter + (R*cos(pi), 0, R*sin(pi)) = (0, 0,
-  // V-R) — left side Arc from pi to pi/2: quarter turn left-to-top (Z-vertical
-  // to X-horizontal)
-  gp_Circ arcCircle(gp_Ax2(arcCenter, gp_Dir(0, -1, 0)), R);
-  Handle(Geom_TrimmedCurve) arcCurve =
-      GC_MakeArcOfCircle(arcCircle, M_PI, M_PI / 2, false).Value();
-
-  // Horizontal segment: from arc end to horizontal end
-  gp_Pnt arcEnd(R, 0, V);
+  gp_Pnt midPnt(V - R, 0, V - R); // 中间控制点保证切线连续
   gp_Pnt hEnd(H, 0, V);
 
-  TopoDS_Edge vertEdge = BRepBuilderAPI_MakeEdge(vStart, arcStart).Edge();
-  TopoDS_Edge arcEdge = BRepBuilderAPI_MakeEdge(arcCurve).Edge();
-  TopoDS_Edge hEdge = BRepBuilderAPI_MakeEdge(arcEnd, hEnd).Edge();
+  Handle(TColgp_HArray1OfPnt) poles = new TColgp_HArray1OfPnt(1, 3);
+  poles->SetValue(1, vStart);
+  poles->SetValue(2, midPnt);
+  poles->SetValue(3, hEnd);
+  Handle(Geom_BezierCurve) bezier = new Geom_BezierCurve(poles->Array1());
 
   BRepBuilderAPI_MakeWire pathMaker;
-  pathMaker.Add(vertEdge);
-  pathMaker.Add(arcEdge);
-  pathMaker.Add(hEdge);
+  pathMaker.Add(BRepBuilderAPI_MakeEdge(bezier));
   TopoDS_Wire pathWire = pathMaker.Wire();
 
   // Circular cross-section at path start
@@ -542,16 +525,26 @@ TopoDS_Shape create_curved_arm(const curved_arm_params &params) {
 
   TopoDS_Shape arm = pipeMaker.Shape();
 
-  // Add mounting flange at base
+  // Add mounting flange at base (向上延伸 1mm 与管道重叠，避免共面融合失败)
+  double zOffset = 0;
   if (params.flangeThickness > 0) {
     double flangeSize = params.outerDiameter * 2;
+    double flangeOverlap = 1.0;
     gp_Pnt flangeOrigin(-flangeSize / 2, -flangeSize / 2,
                         -params.flangeThickness);
     TopoDS_Shape flange =
         BRepPrimAPI_MakeBox(flangeOrigin, flangeSize, flangeSize,
-                            params.flangeThickness)
+                            params.flangeThickness + flangeOverlap)
             .Shape();
     arm = BRepAlgoAPI_Fuse(arm, flange).Shape();
+    zOffset = params.flangeThickness;
+  }
+
+  // 将原点移动到法兰底面中心（安装面）
+  if (zOffset > Precision::Confusion()) {
+    gp_Trsf shift;
+    shift.SetTranslation(gp_Vec(0, 0, zOffset));
+    arm = BRepBuilderAPI_Transform(arm, shift).Shape();
   }
 
   return arm;

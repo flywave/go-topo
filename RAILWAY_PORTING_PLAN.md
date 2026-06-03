@@ -548,7 +548,14 @@ if (Object.values(RLPrimitiveType).includes(shapeType as RLPrimitiveType)) {
   - 长度可根据平腕臂+斜腕臂几何关系自动推算
   - C++ 实现需新增 struct + function (`create_cantilever_brace`)
   - 注意：需对 `primitives_railway.{hh,cc}` 新增，go-topo 层需新增
-- [ ] **8. CurvedArm** (弯臂) `RAILWAY/CurvedArm`
+- [x] **8. CurvedArm** (弯臂) `RAILWAY/CurvedArm`
+  - ✅ C++ 原点: 安装法兰底面中心（z 偏移 flangeThickness）
+  - ✅ topotypes: `railway/railway.go`
+  - ✅ flywave-topovis: `railway/curvedarm.go` + 测试 `TestCurvedArm`
+  - ✅ Embind: `primitives_bindings.cc`
+  - ✅ TS: `primitives.d.ts` + `export.json`
+  - ✅ TS Object: `types/railway.ts` + `railway/index.ts`
+  - ⏳ C++ 编译: 需 `cmake --build` 后 `cmake --install`
 - [ ] **9. MastBracket** (支柱连接座) `RAILWAY/MastBracket`
 - [ ] **10. RegistrationArm** (定位器) `RAILWAY/RegistrationArm`
 - [ ] **11. RegArmBracket** (定位器底座) `RAILWAY/RegArmBracket`

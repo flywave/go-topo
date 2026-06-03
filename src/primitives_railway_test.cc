@@ -257,6 +257,16 @@ void test_ballast() {
   test_export(create_ballast(p), "ballast");
 }
 
+void test_curved_arm() {
+  std::cout << "\n=== Curved Arm ===" << std::endl;
+  curved_arm_params p;
+  p.verticalLength = 500; p.horizontalLength = 800;
+  p.bendRadius = 200; p.outerDiameter = 48;
+  p.wallThickness = 3.5; p.flangeThickness = 10;
+  test_export(create_curved_arm(p), "curved_arm");
+  test_export(create_curved_arm(p, gp_Pnt(200,0,0), gp::DZ(), gp::DX()), "curved_arm_pos");
+}
+
 void test_straight_track() {
   std::cout << "\n=== Straight Track ===" << std::endl;
   straight_track_params p;
@@ -463,6 +473,7 @@ int main() {
   run("Frog", test_frog);
   run("Guard Rail", test_guard_rail);
   run("Sleeper", test_sleeper);
+  run("Curved Arm", test_curved_arm);
   run("Ballast Straight", []{
     ballast_params p; p.topWidth = 3600; p.thickness = 350; p.sideSlope = 1.5;
     p.centerlineSegments = {{centerline_curve_type::LINE, {gp_Pnt(0,0,0), gp_Pnt(5000,0,0)}}};
