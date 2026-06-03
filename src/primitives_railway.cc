@@ -138,48 +138,72 @@ TopoDS_Shape create_contact_wire(const contact_wire_params &params,
   if (params.bottomRadius <= 0)
     throw Standard_ConstructionError("Bottom radius must be positive");
 
-  // Build contact wire cross-section profile:
-  //   Top: clamping area with rounded edge (semi-circle R=topRadius)
-  //   Middle: trapezoidal transition
-  //   Bottom: contact surface arc (R=bottomRadius)
-  //   Sides: grooves (deep grooveDepth, wide grooveWidth)
   const double R = params.diameter / 2.0;
-  const double h = params.diameter * 0.6; // approximate profile height
+  const double h = params.diameter * 0.6;
   const double gD = params.grooveDepth > 0 ? params.grooveDepth : 2.0;
   const double gW = params.grooveWidth > 0 ? params.grooveWidth : 3.0;
   const double bR = params.bottomRadius > 0 ? params.bottomRadius : R * 0.6;
   const double tR = params.topRadius > 0 ? params.topRadius : 3.0;
 
-  // Build profile points (YZ plane, centered on X axis)
-  // Starting from bottom center, going clockwise
-  double bottomArcCenterY = 0;
-  double bottomArcCenterZ = bR;
+  // Profile in YZ plane (extruded along X). Y=horizontal, Z=vertical.
+  // Going clockwise starting from bottom-left.
+  //
+  //   p6(-sh,h)╭──────────╮p5(sh,h)   ← top arc (clamping area)
+  //            │          │
+  //   p7(-sh, ├──────────┤p4(sh, shZ) ← shoulder
+  //     shZ)  │  ┌────┐  │
+  // p8(-R+gD, ├──┤    ├──┤p3(R-gD, gW/2) ← groove top
+  //   gW/2)   │  │    │  │
+  //           │  │    │  │              ← groove
+  // p9(-R+gD, ├──┤    ├──┤p2(R-gD, -gW/2) ← groove bottom
+  //  -gW/2)   │  └────┘  │
+  //           │          │
+  //    p10(-R,0)╲      ╱p1(R,0)         ← bottom-left / bottom-right
+  //              ╲    ╱
+  //               ╲  ╱
+  //           pMid(0,-sag)              ← bottom arc midpoint
 
-  // Key profile points
-  gp_Pnt p0(0, -R, 0);                           // bottom-left
-  gp_Pnt p1(0, -R + gD, -gW / 2);                // groove bottom-left
-  gp_Pnt p2(0, -R + gD, gW / 2);                 // groove bottom-right
-  gp_Pnt p3(0, -R + gD + (h - 2 * bR), gW / 2);  // shoulder-right
-  gp_Pnt p4(0, -R + gD + (h - 2 * bR), -gW / 2); // shoulder-left
-  gp_Pnt p5(0, -R, h);                           // top-left
+  double sh = R * 0.85;  // shoulder half-width (slightly narrower than full width)
+  double sag = (R * R) / (2.0 * bR);  // parabolic sagitta for bottom arc
 
-  // Bottom arc
-  gp_Circ bottomArc(gp_Ax2(gp_Pnt(0, 0, bR), gp_Dir(1, 0, 0)), bR);
+  // Define profile points (all X=0), clockwise from bottom-left
+  gp_Pnt p10(0, -R, 0);                   // bottom-left
+  gp_Pnt pMid(0, 0, -sag);                // bottom arc midpoint (convex downward)
+  gp_Pnt p1(0, R, 0);                     // bottom-right
+  gp_Pnt p2(0, R - gD, -gW / 2);          // right groove bottom
+  gp_Pnt p3(0, R - gD, gW / 2);           // right groove top
+  double shZ = gW / 2.0 + (h - gW) * 0.3;
+  gp_Pnt p4(0, sh, shZ);                  // right shoulder
+  gp_Pnt p5(0, sh, h);                    // right top arc start
+  gp_Pnt p6(0, -sh, h);                   // left top arc end
+  gp_Pnt p7(0, -sh, shZ);                 // left shoulder
+  gp_Pnt p8(0, -R + gD, gW / 2);          // left groove top
+  gp_Pnt p9(0, -R + gD, -gW / 2);         // left groove bottom
+
+  // Bottom arc: 3-point arc through p10(-R,0), pMid(0,-sag), p1(R,0)
   Handle(Geom_TrimmedCurve) bottomArcCurve =
-      GC_MakeArcOfCircle(bottomArc, -M_PI / 2, M_PI / 2, false).Value();
-
+      GC_MakeArcOfCircle(p10, pMid, p1).Value();
   TopoDS_Edge bottomArcEdge = BRepBuilderAPI_MakeEdge(bottomArcCurve).Edge();
-  TopoDS_Edge e1 = BRepBuilderAPI_MakeEdge(p0, p1).Edge();
-  TopoDS_Edge e2 = BRepBuilderAPI_MakeEdge(p1, p2).Edge();
-  TopoDS_Edge e3 = BRepBuilderAPI_MakeEdge(p2, p3).Edge();
-  TopoDS_Edge e4 = BRepBuilderAPI_MakeEdge(p3, p4).Edge();
-  TopoDS_Edge e5 = BRepBuilderAPI_MakeEdge(p4, p5).Edge();
 
-  // Top semi-circle for clamping area
-  gp_Circ topArc(gp_Ax2(gp_Pnt(0, -R + h - tR, -tR), gp_Dir(0, 0, 1)), tR);
+  // Right side (bottom to top)
+  TopoDS_Edge e1 = BRepBuilderAPI_MakeEdge(p1, p2).Edge();
+  TopoDS_Edge e2 = BRepBuilderAPI_MakeEdge(p2, p3).Edge();
+  TopoDS_Edge e3 = BRepBuilderAPI_MakeEdge(p3, p4).Edge();
+  TopoDS_Edge e4 = BRepBuilderAPI_MakeEdge(p4, p5).Edge();
+
+  // Top arc: 3-point arc through p5(sh,h), pTop(0,h+topping), p6(-sh,h)
+  // to create rounded clamping area (convex outward)
+  double topping = std::min(tR, sh * 0.9);
+  gp_Pnt pTop(0, 0, h + topping);
   Handle(Geom_TrimmedCurve) topArcCurve =
-      GC_MakeArcOfCircle(topArc, -M_PI / 2, M_PI / 2, false).Value();
+      GC_MakeArcOfCircle(p5, pTop, p6).Value();
   TopoDS_Edge topArcEdge = BRepBuilderAPI_MakeEdge(topArcCurve).Edge();
+
+  // Left side (top to bottom)
+  TopoDS_Edge e5 = BRepBuilderAPI_MakeEdge(p6, p7).Edge();
+  TopoDS_Edge e6 = BRepBuilderAPI_MakeEdge(p7, p8).Edge();
+  TopoDS_Edge e7 = BRepBuilderAPI_MakeEdge(p8, p9).Edge();
+  TopoDS_Edge e8 = BRepBuilderAPI_MakeEdge(p9, p10).Edge();
 
   BRepBuilderAPI_MakeWire wireMaker;
   wireMaker.Add(bottomArcEdge);
@@ -187,15 +211,82 @@ TopoDS_Shape create_contact_wire(const contact_wire_params &params,
   wireMaker.Add(e2);
   wireMaker.Add(e3);
   wireMaker.Add(e4);
-  wireMaker.Add(e5);
   wireMaker.Add(topArcEdge);
+  wireMaker.Add(e5);
+  wireMaker.Add(e6);
+  wireMaker.Add(e7);
+  wireMaker.Add(e8);
   TopoDS_Wire profileWire = wireMaker.Wire();
 
-  TopoDS_Face profileFace = BRepBuilderAPI_MakeFace(profileWire).Face();
+  gp_Vec spanVec(startPoint, endPoint);
+  double span = spanVec.Magnitude();
+  if (span <= Precision::Confusion())
+    return TopoDS_Shape();
 
-  // Extrude along the path from startPoint to endPoint
-  gp_Vec pathVec(startPoint, endPoint);
-  return BRepPrimAPI_MakePrism(profileFace, pathVec).Shape();
+  double sagVal = params.sag > 0 ? params.sag : span * 0.01;
+
+  if (sagVal <= Precision::Confusion()) {
+    TopoDS_Face profileFace = BRepBuilderAPI_MakeFace(profileWire).Face();
+    return BRepPrimAPI_MakePrism(profileFace, spanVec).Shape();
+  }
+
+  // Build parabolic centerline: 3-point Bezier with sag at mid-span
+  gp_Pnt mid((startPoint.X() + endPoint.X()) / 2.0,
+             (startPoint.Y() + endPoint.Y()) / 2.0,
+             (startPoint.Z() + endPoint.Z()) / 2.0);
+  mid.Translate(gp_Vec(0, 0, -sagVal));
+
+  BRepBuilderAPI_MakeWire pathBuilder;
+  Handle(TColgp_HArray1OfPnt) poles = new TColgp_HArray1OfPnt(1, 3);
+  poles->SetValue(1, startPoint);
+  poles->SetValue(2, mid);
+  poles->SetValue(3, endPoint);
+  Handle(Geom_BezierCurve) bezier = new Geom_BezierCurve(poles->Array1());
+  pathBuilder.Add(BRepBuilderAPI_MakeEdge(bezier));
+  TopoDS_Wire pathWire = pathBuilder.Wire();
+
+  // Position profile in plane perpendicular to path start direction
+  gp_Pnt startP; gp_Vec startV; bezier->D1(0, startP, startV);
+  if (startV.Magnitude() <= Precision::Confusion())
+    startV = spanVec;
+  gp_Dir startDir = gp_Dir(startV);
+
+  // Build profile wire and position at startPoint with normal along startDir
+  // Profile is in YZ plane (X=0), normal = (1,0,0)
+  // We need to rotate so normal aligns with startDir and translate to startPoint
+  BRepBuilderAPI_MakeWire profileWiz;
+  profileWiz.Add(bottomArcEdge);
+  profileWiz.Add(e1);
+  profileWiz.Add(e2);
+  profileWiz.Add(e3);
+  profileWiz.Add(e4);
+  profileWiz.Add(topArcEdge);
+  profileWiz.Add(e5);
+  profileWiz.Add(e6);
+  profileWiz.Add(e7);
+  profileWiz.Add(e8);
+  TopoDS_Wire pw = profileWiz.Wire();
+
+  // Build destination axis: Z = startDir, X & Y perpendicular (auto)
+  gp_Ax2 toAx(startPoint, startDir);
+  // Source axis: profile lies in YZ plane → normal = X axis
+  gp_Ax2 fromAx(gp::Origin(), gp::DX());
+  gp_Trsf trsf;
+  trsf.SetTransformation(fromAx, toAx);
+  BRepBuilderAPI_Transform xf(pw, trsf);
+  TopoDS_Wire positioned = TopoDS::Wire(xf.Shape());
+
+  // Sweep along the parabolic path
+  BRepOffsetAPI_MakePipeShell pipe(pathWire);
+  pipe.Add(positioned);
+  pipe.SetMode(Standard_True);
+  pipe.Build();
+  if (pipe.IsDone() && pipe.MakeSolid())
+    return pipe.Shape();
+
+  // Fallback: straight extrusion
+  TopoDS_Face profileFace = BRepBuilderAPI_MakeFace(profileWire).Face();
+  return BRepPrimAPI_MakePrism(profileFace, spanVec).Shape();
 }
 
 // =========================================================================

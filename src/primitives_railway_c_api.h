@@ -25,6 +25,7 @@ typedef struct {
   double grooveWidth;
   double bottomRadius;
   double topRadius;
+  double sag;
 } contact_wire_params_t;
 
 RAILCAPICALL topo_shape_t *

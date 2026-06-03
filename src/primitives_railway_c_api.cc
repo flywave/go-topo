@@ -18,7 +18,7 @@ create_contact_wire(contact_wire_params_t params, pnt3d_t startPoint,
   contact_wire_params cpp_params{
       params.sectionalArea, params.diameter,       params.ratedTension,
       params.grooveDepth,   params.grooveWidth,    params.bottomRadius,
-      params.topRadius};
+      params.topRadius,     params.sag};
   gp_Pnt cpp_start(startPoint.x, startPoint.y, startPoint.z);
   gp_Pnt cpp_end(endPoint.x, endPoint.y, endPoint.z);
   try {

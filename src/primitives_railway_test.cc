@@ -257,6 +257,26 @@ void test_ballast() {
   test_export(create_ballast(p), "ballast");
 }
 
+void test_contact_wire() {
+  std::cout << "\n=== Contact Wire ===" << std::endl;
+  contact_wire_params p;
+  p.sectionalArea = 120; p.diameter = 14.5; p.ratedTension = 15;
+  p.grooveDepth = 1.5; p.grooveWidth = 2.5; p.bottomRadius = 6.5; p.topRadius = 3.0;
+  p.sag = 0;
+  test_export(create_contact_wire(p, gp::Origin(), gp_Pnt(1000, 0, 0)), "contact_wire");
+  test_export(create_contact_wire(p, gp_Pnt(200, 100, 0), gp_Pnt(1200, 100, 0)), "contact_wire_offset");
+  p.sag = 200;
+  test_export(create_contact_wire(p, gp::Origin(), gp_Pnt(5000, 0, 0)), "contact_wire_sag");
+}
+
+void test_messenger_wire() {
+  std::cout << "\n=== Messenger Wire ===" << std::endl;
+  messenger_wire_params p;
+  p.diameter = 20; p.ratedTension = 20; p.structuralHeight = 1800; p.sag = 500;
+  test_export(create_messenger_wire(p, gp::Origin(), gp_Pnt(3000, 0, 0)), "messenger_wire");
+  test_export(create_messenger_wire(p, gp_Pnt(200, 100, 50), gp_Pnt(3200, 100, 50)), "messenger_wire_offset");
+}
+
 void test_curved_arm() {
   std::cout << "\n=== Curved Arm ===" << std::endl;
   curved_arm_params p;
@@ -475,6 +495,8 @@ int main() {
   run("Frog", test_frog);
   run("Guard Rail", test_guard_rail);
   run("Sleeper", test_sleeper);
+  run("Contact Wire", test_contact_wire);
+  run("Messenger Wire", test_messenger_wire);
   run("Curved Arm", test_curved_arm);
   run("Ballast Straight", []{
     ballast_params p; p.topWidth = 3600; p.thickness = 350; p.sideSlope = 1.5;

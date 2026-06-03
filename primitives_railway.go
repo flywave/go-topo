@@ -22,6 +22,7 @@ type ContactWireParams struct {
 	GrooveWidth   float64
 	BottomRadius  float64
 	TopRadius     float64
+	Sag           float64
 }
 
 func (p *ContactWireParams) to_struct() C.contact_wire_params_t {
@@ -33,6 +34,7 @@ func (p *ContactWireParams) to_struct() C.contact_wire_params_t {
 	c.grooveWidth = C.double(p.GrooveWidth)
 	c.bottomRadius = C.double(p.BottomRadius)
 	c.topRadius = C.double(p.TopRadius)
+	c.sag = C.double(p.Sag)
 	return c
 }
 

@@ -21,6 +21,7 @@ struct contact_wire_params {
   double grooveWidth;        // 沟槽宽度(mm)
   double bottomRadius;       // 底部接触面圆弧半径(mm)
   double topRadius;          // 顶部夹持面圆弧半径(mm)
+  double sag;                // 弛度(mm) — 跨中下垂量, 0=直线
 };
 
 TopoDS_Shape create_contact_wire(const contact_wire_params &params,
