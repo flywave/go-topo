@@ -393,6 +393,19 @@ void test_mast_assembly() {
   test_export(create_mast_assembly(p), "mast_assembly");
 }
 
+void test_mast_bracket() {
+  std::cout << "\n=== Mast Bracket ===" << std::endl;
+  mast_bracket_params p;
+  p.boltSpacing = 200; p.boltDiameter = 18;
+  p.height = 300; p.width = 200; p.thickness = 12;
+  p.insulatorBoltSpacing = 150; p.insulatorBoltDiameter = 16;
+  p.mountAngle = 0;
+  test_export(create_mast_bracket(p), "mast_bracket");
+  test_export(create_mast_bracket(p, gp_Pnt(500,0,0), gp::DX(), gp::DZ()), "mast_bracket_pos");
+  p.mountAngle = 15;
+  test_export(create_mast_bracket(p), "mast_bracket_angle");
+}
+
 void test_reg_arm_bracket() {
   std::cout << "\n=== Reg Arm Bracket ===" << std::endl;
   reg_arm_bracket_params p;
@@ -400,6 +413,38 @@ void test_reg_arm_bracket() {
   p.bracketHeight = 120; p.bracketThickness = 8; p.bracketWidth = 40;
   p.mountHoleDiameter = 20;
   test_export(create_reg_arm_bracket(p), "reg_arm_bracket");
+}
+
+void test_guy_wire() {
+  std::cout << "\n=== Guy Wire ===" << std::endl;
+  guy_wire_params p;
+  p.length = 3000; p.diameter = 16; p.angle = 45; p.ratedTension = 50;
+  p.hasInsulator = false;
+  p.anchorRodDiameter = 20; p.anchorRodLength = 800;
+  p.anchorPlateLength = 300; p.anchorPlateWidth = 200;
+  test_export(create_guy_wire(p), "guy_wire");
+  test_export(create_guy_wire(p, gp_Pnt(2121, 0, -2121), gp::Origin(), gp::DZ()), "guy_wire_pos");
+  p.hasInsulator = true; p.insulatorCount = 3;
+  test_export(create_guy_wire(p), "guy_wire_insulator");
+}
+
+void test_ocs_foundation() {
+  std::cout << "\n=== OCS Foundation ===" << std::endl;
+  ocs_foundation_params p;
+  p.type = foundation_type::FLANGE;
+  p.height = 2000; p.width = 1200; p.length = 1200;
+  p.flangeThickness = 30; p.anchorCount = 4;
+  p.anchorDiameter = 24; p.anchorLength = 600; p.anchorSpacing = 800;
+  test_export(create_ocs_foundation(p), "ocs_foundation_flange");
+  test_export(create_ocs_foundation(p, gp_Pnt(5000,0,0), gp::DZ(), gp::DX()), "ocs_foundation_pos");
+
+  p.type = foundation_type::DIRECT_BURIED;
+  p.flangeThickness = 0; p.anchorCount = 0;
+  test_export(create_ocs_foundation(p), "ocs_foundation_buried");
+
+  p.type = foundation_type::BORED_PILE;
+  p.length = 800; p.width = 800;
+  test_export(create_ocs_foundation(p), "ocs_foundation_pile");
 }
 
 void test_retarder_point() {
@@ -477,6 +522,7 @@ int main() {
     steel_mast_type::LATTICE,8000,300,600,8,12,750,200,24,1}), "steel_mast_lattice"); });
   run("Cross Arm", test_cross_arm);
   run("Registration Arm", test_registration_arm);
+  run("Mast Bracket", test_mast_bracket);
   run("Reg Arm Bracket", test_reg_arm_bracket);
   run("Concrete Mast", test_concrete_mast);
   run("Head Span", test_head_span);
@@ -513,6 +559,8 @@ int main() {
   run("Turnout 12#", test_turnout);
   run("Turnout Graph", test_turnout_new);
   run("Mast Assembly", test_mast_assembly);
+  run("Guy Wire", test_guy_wire);
+  run("OCS Foundation", test_ocs_foundation);
   run("Retarder Point", test_retarder_point);
   run("Fastener", test_fastener);
   run("Rail with Fasteners", test_rail_with_fasteners);

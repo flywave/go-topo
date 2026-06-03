@@ -440,6 +440,7 @@ type GuyWireParams struct {
 	Angle             float64
 	RatedTension      float64
 	HasInsulator      bool
+	InsulatorCount    int
 	AnchorRodDiameter float64
 	AnchorRodLength   float64
 	AnchorPlateLength float64
@@ -453,6 +454,7 @@ func (p *GuyWireParams) to_struct() C.guy_wire_params_t {
 	c.angle = C.double(p.Angle)
 	c.ratedTension = C.double(p.RatedTension)
 	c.hasInsulator = C.bool(p.HasInsulator)
+	c.insulatorCount = C.int(p.InsulatorCount)
 	c.anchorRodDiameter = C.double(p.AnchorRodDiameter)
 	c.anchorRodLength = C.double(p.AnchorRodLength)
 	c.anchorPlateLength = C.double(p.AnchorPlateLength)
@@ -571,6 +573,14 @@ func CreateConcreteMastWithPlace(params ConcreteMastParams, baseCenter Point3, a
 // =========================================================================
 // 13. OCS Foundation (支柱基础)
 // =========================================================================
+
+const (
+	FoundationDirectBuried  = 1
+	FoundationFlange        = 2
+	FoundationBoredPile     = 3
+	FoundationExcavatedPile = 4
+	FoundationAnchor        = 5
+)
 
 type OcsFoundationParams struct {
 	Type            int

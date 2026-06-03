@@ -364,9 +364,9 @@ RAILCAPICALL topo_shape_t *create_guy_wire(guy_wire_params_t params) {
   guy_wire_params cpp_params{
       params.length,           params.diameter,
       params.angle,            params.ratedTension,
-      params.hasInsulator != 0, params.anchorRodDiameter,
-      params.anchorRodLength,  params.anchorPlateLength,
-      params.anchorPlateWidth};
+      params.hasInsulator != 0, params.insulatorCount,
+      params.anchorRodDiameter, params.anchorRodLength,
+      params.anchorPlateLength, params.anchorPlateWidth};
   try {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_guy_wire(cpp_params))};
@@ -381,9 +381,9 @@ create_guy_wire_with_place(guy_wire_params_t params, pnt3d_t anchorPoint,
   guy_wire_params cpp_params{
       params.length,           params.diameter,
       params.angle,            params.ratedTension,
-      params.hasInsulator != 0, params.anchorRodDiameter,
-      params.anchorRodLength,  params.anchorPlateLength,
-      params.anchorPlateWidth};
+      params.hasInsulator != 0, params.insulatorCount,
+      params.anchorRodDiameter, params.anchorRodLength,
+      params.anchorPlateLength, params.anchorPlateWidth};
   gp_Pnt cpp_anchor(anchorPoint.x, anchorPoint.y, anchorPoint.z);
   gp_Pnt cpp_mast(mastPoint.x, mastPoint.y, mastPoint.z);
   gp_Dir cpp_up(upDir.x, upDir.y, upDir.z);

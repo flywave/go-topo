@@ -223,6 +223,7 @@ typedef struct {
   double angle;
   double ratedTension;
   bool hasInsulator;
+  int insulatorCount;
   double anchorRodDiameter;
   double anchorRodLength;
   double anchorPlateLength;

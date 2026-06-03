@@ -513,8 +513,28 @@ if (Object.values(RLPrimitiveType).includes(shapeType as RLPrimitiveType)) {
 
 ### Group A: OCS Individual Components (14 remaining)
 
-- [ ] **2. ContactWire** (接触线) `RAILWAY/ContactWire`
-- [ ] **3. MessengerWire** (承力索) `RAILWAY/MessengerWire`
+- [x] **2. ContactWire** (接触线) `RAILWAY/ContactWire`
+  - C++: 3-point arc + MakePipeShell 驰度支持 ✓
+  - C API: contact_wire_params_t 含 sag ✓
+  - topotypes: `railway/railway.go` ✓
+  - flywave-topovis: `railway/contact_wire.go` ✓
+  - flywave-topovis 测试: `railway_test.go - TestContactWire` ✓
+  - Embind 绑定: `primitives_bindings.cc` ✓
+  - TS 声明: `primitives.d.ts` + `export.json` ✓
+  - TS Object: `types/railway.ts` + `railway/index.ts` ✓
+  - C++ 测试: `primitives_railway_test.cc - test_contact_wire` ✓
+  - ⏳ C++ 编译: 需 `cmake --build`
+- [x] **3. MessengerWire** (承力索) `RAILWAY/MessengerWire`
+  - C++: MakePipeShell 驰度扫掠 ✓
+  - C API: messenger_wire_params_t ✓
+  - topotypes: `railway/railway.go` ✓
+  - flywave-topovis: `railway/messenger_wire.go` ✓
+  - flywave-topovis 测试: `railway_test.go - TestMessengerWire` ✓
+  - Embind 绑定: `primitives_bindings.cc` ✓
+  - TS 声明: `primitives.d.ts` + `export.json` ✓
+  - TS Object: `types/railway.ts` + `railway/index.ts` ✓
+  - C++ 测试: `primitives_railway_test.cc - test_messenger_wire` ✓
+  - ⏳ C++ 编译: 需 `cmake --build`
 - [x] **4. CrossArm** (横担) `RAILWAY/CrossArm`
   - ✅ C++ 原点: 几何中心（X 居中, Z 居中于 gap/2）
   - ✅ topotypes: `railway/railway.go`
@@ -556,22 +576,60 @@ if (Object.values(RLPrimitiveType).includes(shapeType as RLPrimitiveType)) {
   - ✅ TS: `primitives.d.ts` + `export.json`
   - ✅ TS Object: `types/railway.ts` + `railway/index.ts`
   - ⏳ C++ 编译: 需 `cmake --build` 后 `cmake --install`
-- [ ] **9. MastBracket** (支柱连接座) `RAILWAY/MastBracket`
-- [ ] **10. RegistrationArm** (定位器) `RAILWAY/RegistrationArm`
-- [ ] **11. RegArmBracket** (定位器底座) `RAILWAY/RegArmBracket`
-- [ ] **12. GuyWire** (下锚拉线) `RAILWAY/GuyWire`
-- [ ] **13. SteelMast** (钢支柱) `RAILWAY/SteelMast`
-- [ ] **14. ConcreteMast** (混凝土支柱) `RAILWAY/ConcreteMast`
-- [ ] **15. OcsFoundation** (支柱基础) `RAILWAY/OcsFoundation`
+- [x] **9. MastBracket** (支柱连接座) `RAILWAY/MastBracket`
+  - ✅ C++ 原点: 座体板底面中心（Z=0 底面, plateOrg 居中）
+  - ✅ topotypes: `railway/railway.go`
+  - ✅ flywave-topovis: `railway/mastbracket.go`
+  - ✅ flywave-topovis 测试: `railway_test.go - TestMastBracket`
+  - ✅ Embind 绑定: `primitives_bindings.cc`
+  - ✅ TS 声明: `primitives.d.ts` + `export.json`
+  - ✅ TS Object: `types/railway.ts` + `railway/index.ts`
+  - ✅ C++ 测试: `primitives_railway_test.cc - test_mast_bracket`
+  - ⏳ C++ 编译: 需 `cmake --build`
+- [x] **10. RegistrationArm** (定位器) `RAILWAY/RegistrationArm`
+- [x] **11. RegArmBracket** (定位器底座) `RAILWAY/RegArmBracket`
+- [x] **12. GuyWire** (下锚拉线) `RAILWAY/GuyWire`
+  - ✅ C++ 重写: 底座(YZ板)+安装环+缆绳+地锚环+锚筋+锚板+绝缘子
+  - ✅ topotypes: `railway/railway.go`
+  - ✅ flywave-topovis: `railway/guy_wire.go`
+  - ✅ flywave-topovis 测试: `railway_test.go - TestGuyWire`
+  - ✅ Embind 绑定: `primitives_bindings.cc`
+  - ✅ TS 声明: `primitives.d.ts` + `export.json`
+  - ✅ TS Object: `types/railway.ts` + `railway/index.ts`
+  - ✅ C++ 测试: `primitives_railway_test.cc - test_guy_wire`
+  - ⏳ C++ 编译: 需 `cmake --build`
+- [x] **13. SteelMast** (钢支柱) `RAILWAY/SteelMast`
+  - C++ 原点: 柱底法兰顶面（体从 Z=0 开始, 法兰低于原点）
+  - topotypes: `railway/railway.go` ✓
+  - flywave-topovis: `railway/steel_mast.go` ✓
+  - flywave-topovis 测试: `railway_test.go - TestSteelMast` ✓
+  - Embind 绑定: `primitives_bindings.cc` ✓
+  - TS 声明: `primitives.d.ts` + `export.json` ✓
+  - TS Object: `types/railway.ts` + `railway/index.ts` ✓
+  - C++ 测试: `primitives_railway_test.cc` 已有 ✓
+  - ⏳ C++ 编译: 需 `cmake --build`
+- [x] **14. ConcreteMast** (混凝土支柱) `RAILWAY/ConcreteMast`
+  - C++ 原点: 柱底截面中心 ✓
+  - topotypes: `railway/railway.go` ✓
+  - flywave-topovis: `railway/concrete_mast.go` ✓
+  - flywave-topovis 测试: `railway_test.go - TestConcreteMast` ✓
+  - Embind 绑定: `primitives_bindings.cc` ✓
+  - TS 声明: `primitives.d.ts` + `export.json` ✓
+  - TS Object: `types/railway.ts` + `railway/index.ts` ✓
+  - C++ 测试: `primitives_railway_test.cc` 已有 ✓
+  - ⏳ C++ 编译: 需 `cmake --build`
+- [x] **15. OcsFoundation** (支柱基础) `RAILWAY/OcsFoundation`
+  - ✅ C++ 原点: 顶部中心 Z=0, 整体 -Z 方向延伸
+  - ✅ Go const: FoundationDirectBuried/Flange/BoredPile/ExcavatedPile/Anchor
+  - ✅ topotypes: `railway/railway.go`
+  - ✅ flywave-topovis: `railway/ocs_foundation.go`
+  - ✅ flywave-topovis 测试: `railway_test.go - TestOcsFoundation`
+  - ✅ Embind 绑定: `primitives_bindings.cc`
+  - ✅ TS 声明: `primitives.d.ts` + `export.json`
+  - ✅ TS Object: `types/railway.ts` + `railway/index.ts`
+  - ✅ C++ 测试: `primitives_railway_test.cc - test_ocs_foundation`
+  - ⏳ C++ 编译: 需 `cmake --build`
 - [ ] **16. Dropper** (吊弦) `RAILWAY/Dropper`
-- [ ] **8. MastBracket** (支柱连接座) `RAILWAY/MastBracket`
-- [ ] **9. RegistrationArm** (定位器) `RAILWAY/RegistrationArm`
-- [ ] **10. RegArmBracket** (定位器底座) `RAILWAY/RegArmBracket`
-- [ ] **11. GuyWire** (下锚拉线) `RAILWAY/GuyWire`
-- [ ] **12. SteelMast** (钢支柱) `RAILWAY/SteelMast`
-- [ ] **13. ConcreteMast** (混凝土支柱) `RAILWAY/ConcreteMast`
-- [ ] **14. OcsFoundation** (支柱基础) `RAILWAY/OcsFoundation`
-- [ ] **15. Dropper** (吊弦) `RAILWAY/Dropper`
 
 ### Group B: OCS Connectors & Hardware (8 types)
 

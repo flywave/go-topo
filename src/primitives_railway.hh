@@ -231,15 +231,16 @@ TopoDS_Shape create_registration_arm(const registration_arm_params &params,
 // 10. Guy Wire (下锚拉线) TYPE=OCS_GUY_WIRE
 // =========================================================================
 struct guy_wire_params {
-  double length;          // 拉线长度(mm)
-  double diameter;        // 钢丝绳直径(mm)
-  double angle;           // 拉线与水平面夹角(°)
-  double ratedTension;    // 额定张力(kN)
-  bool hasInsulator;      // 是否串接绝缘子
-  double anchorRodDiameter; // 拉线棒直径(mm)
-  double anchorRodLength;   // 拉线棒长度(mm)
-  double anchorPlateLength; // 拉线盘长(mm)
-  double anchorPlateWidth;  // 拉线盘宽(mm)
+  double length;              // 拉线长度(mm)
+  double diameter;            // 钢丝绳直径(mm)
+  double angle;               // 拉线与水平面夹角(°)
+  double ratedTension;        // 额定张力(kN)
+  bool   hasInsulator;        // 是否串接绝缘子
+  int    insulatorCount;      // 绝缘子碟数 (默认2)
+  double anchorRodDiameter;   // 拉线棒直径(mm)
+  double anchorRodLength;     // 拉线棒长度(mm)
+  double anchorPlateLength;   // 拉线盘长(mm)
+  double anchorPlateWidth;    // 拉线盘宽(mm)
 };
 
 TopoDS_Shape create_guy_wire(const guy_wire_params &params);
