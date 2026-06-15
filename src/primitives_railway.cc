@@ -2035,7 +2035,7 @@ TopoDS_Shape create_balance_weight(const balance_weight_params &params) {
       BRepPrimAPI_MakeBox(gp_Pnt(-params.width / 2, -params.thickness / 2, 0),
                           params.width, params.thickness, params.height)
           .Shape();
-  double fr = std::min({params.width, params.thickness, params.height}) * 0.08;
+  double fr = std::min(params.width, std::min(params.thickness, params.height)) * 0.08;
   if (fr > Precision::Confusion()) {
     BRepFilletAPI_MakeFillet fillet(b);
     for (TopExp_Explorer ex(b, TopAbs_EDGE); ex.More(); ex.Next()) {
@@ -3191,7 +3191,8 @@ TopoDS_Shape create_rail_path(const rail_params &params,
     if (seg.points.size() < 2) continue;
     if (seg.type == centerline_curve_type::LINE) {
       double d = seg.points[0].Distance(seg.points[1]);
-      Handle(Geom_Curve) c = GC_MakeSegment(seg.points[0], seg.points[1]).Value();
+      Handle(Geom_TrimmedCurve) tc = GC_MakeSegment(seg.points[0], seg.points[1]).Value();
+      Handle(Geom_Curve) c = tc;
       crvs.push_back({c, d});
     } else if (seg.type == centerline_curve_type::ARC && seg.points.size() >= 3) {
       Handle(Geom_TrimmedCurve) arc = GC_MakeArcOfCircle(seg.points[0], seg.points[1], seg.points[2]);
@@ -4553,10 +4554,10 @@ TopoDS_Shape create_ballast_from_sleepers(const ballast_from_sleepers_params &pa
   if (params.sleepers.empty()) throw Standard_ConstructionError("ballast: no sleepers");
   double minX = 1e38, maxX = -1e38, minY = 1e38, maxY = -1e38, sz = 0;
   for (auto &sl : params.sleepers) {
-    minX = std::min({minX, sl.startPoint.X(), sl.endPoint.X()});
-    maxX = std::max({maxX, sl.startPoint.X(), sl.endPoint.X()});
-    minY = std::min({minY, sl.startPoint.Y(), sl.endPoint.Y()});
-    maxY = std::max({maxY, sl.startPoint.Y(), sl.endPoint.Y()});
+    minX = std::min(minX, std::min(sl.startPoint.X(), sl.endPoint.X()));
+    maxX = std::max(maxX, std::max(sl.startPoint.X(), sl.endPoint.X()));
+    minY = std::min(minY, std::min(sl.startPoint.Y(), sl.endPoint.Y()));
+    maxY = std::max(maxY, std::max(sl.startPoint.Y(), sl.endPoint.Y()));
     sz = sl.startPoint.Z();
   }
   double tw = params.topWidth, th = params.thickness, ss = params.sideSlope;
