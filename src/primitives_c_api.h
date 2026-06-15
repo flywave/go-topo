@@ -827,13 +827,13 @@ typedef enum {
   INSULATOR_MATERIAL_CERAMIC = 1,
   INSULATOR_MATERIAL_GLASS = 2,
   INSULATOR_MATERIAL_COMPOSITE = 3
-};
+} insulator_material_t;
 
-typedef enum { ARRANGEMENT_HORIZONTAL = 1, ARRANGEMENT_VERTICAL = 2 };
+typedef enum { ARRANGEMENT_HORIZONTAL = 1, ARRANGEMENT_VERTICAL = 2 } arrangement_type_t;
 
-typedef enum { APPLICATION_CONDUCTOR = 1, APPLICATION_GROUND_WIRE = 2 };
+typedef enum { APPLICATION_CONDUCTOR = 1, APPLICATION_GROUND_WIRE = 2 } application_type_t;
 
-typedef enum { STRING_TYPE_SUSPENSION = 1, STRING_TYPE_TENSION = 2 };
+typedef enum { STRING_TYPE_SUSPENSION = 1, STRING_TYPE_TENSION = 2 } string_type_t;
 
 typedef struct {
   double majorRadius;
@@ -1090,13 +1090,13 @@ typedef enum {
   MEMBER_TYPE_ANGLE = 1,       // 角钢
   MEMBER_TYPE_TUBE = 2,        // 等径钢管
   MEMBER_TYPE_TAPERED_TUBE = 3 // 锥形钢管
-};
+} member_type_t;
 
 typedef enum {
   ATTACHMENT_TYPE_GROUND_WIRE = 1, // 地线挂点
   ATTACHMENT_TYPE_CONDUCTOR = 2,   // 导线挂点
   ATTACHMENT_TYPE_JUMPER = 3       // 跳线挂点
-};
+} attachment_type_t;
 
 typedef struct {
   char *id;         // 节点编号
@@ -1842,7 +1842,7 @@ PRIMCAPICALL topo_shape_t *
 create_drainage_well_with_place(drainage_well_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t xDir);
 
-typedef enum { PIPE_SUPPORT_SINGLE_SIDE = 1, PIPE_SUPPORT_DOUBLE_SIDE = 2 };
+typedef enum { PIPE_SUPPORT_SINGLE_SIDE = 1, PIPE_SUPPORT_DOUBLE_SIDE = 2 } pipe_support_style_t;
 
 typedef struct {
   int style;
@@ -1863,7 +1863,7 @@ PRIMCAPICALL topo_shape_t *
 create_pipe_support_with_place(pipe_support_params_t params, pnt3d_t position,
                                dir3d_t direction, dir3d_t xDir);
 
-typedef enum { COVER_PLATE_RECTANGLE = 0, COVER_PLATE_SECTOR = 1 };
+typedef enum { COVER_PLATE_RECTANGLE = 0, COVER_PLATE_SECTOR = 1 } cover_plate_type_t;
 
 typedef struct {
   int style;
