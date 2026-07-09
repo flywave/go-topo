@@ -17085,6 +17085,21 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     outerWire = BRepBuilderAPI_MakeWire(outerEdge).Wire();
     break;
   }
+  case water_tunnel_section_style::POLYGON: {
+    if (params.polygon.size() < 3) {
+      throw Standard_ConstructionError(
+          "POLYGON style requires at least 3 polygon vertices");
+    }
+    BRepBuilderAPI_MakePolygon polyMaker;
+    for (const auto &pt : params.polygon) {
+      gp_Pnt projected = sectionAxes.Location().Translated(
+          gp_Vec(pt.Z(), pt.Y(), 0).Transformed(trsf));
+      polyMaker.Add(projected);
+    }
+    polyMaker.Close();
+    outerWire = polyMaker.Wire();
+    break;
+  }
   case water_tunnel_section_style::HORSESHOE: {
     // 马蹄形截面 - 外部轮廓
     double outerWidth = params.width + 2 * params.outerWallThickness +
@@ -17289,6 +17304,11 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     innerWire = BRepBuilderAPI_MakeWire(innerEdge).Wire();
     break;
   }
+  case water_tunnel_section_style::POLYGON: {
+    // 多边形截面无内轮廓，直接使用全部顶点做扫掠
+    innerWire.Nullify();
+    break;
+  }
   case water_tunnel_section_style::HORSESHOE: {
     // 马蹄形截面 - 内部轮廓
     double innerWidth = params.width; // 内净宽
@@ -17365,38 +17385,43 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     throw Standard_ConstructionError("Invalid tunnel section style");
   }
 
-  TopoDS_Shape inner = create_channel_shape(innerWire, path);
+  TopoDS_Shape tunnel;
+  if (innerWire.IsNull()) {
+    tunnel = outer;
+  } else {
+    TopoDS_Shape inner = create_channel_shape(innerWire, path);
 
-  // 处理底部平台
-  if (params.style == water_tunnel_section_style::CIRCULAR &&
-      params.bottomPlatformHeight != 0) {
-    double innerRadius = params.width / 2;
+    // 处理底部平台
+    if (params.style == water_tunnel_section_style::CIRCULAR &&
+        params.bottomPlatformHeight != 0) {
+      double innerRadius = params.width / 2;
 
-    double zoffset = -innerRadius;
-    gp_Pnt p1(0, -innerRadius, -innerRadius + params.bottomPlatformHeight);
-    gp_Pnt p2(0, innerRadius, -innerRadius + params.bottomPlatformHeight);
-    gp_Pnt p3(0, innerRadius, -innerRadius);
-    gp_Pnt p4(0, -innerRadius, -innerRadius);
+      double zoffset = -innerRadius;
+      gp_Pnt p1(0, -innerRadius, -innerRadius + params.bottomPlatformHeight);
+      gp_Pnt p2(0, innerRadius, -innerRadius + params.bottomPlatformHeight);
+      gp_Pnt p3(0, innerRadius, -innerRadius);
+      gp_Pnt p4(0, -innerRadius, -innerRadius);
 
-    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
-        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
-    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
-        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
-    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
-        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
-    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
-        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+      gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+          gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+      gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+          gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+      gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+          gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+      gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+          gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
 
-    TopoDS_Wire tempWire =
-        BRepBuilderAPI_MakePolygon(projectedp1, projectedp2, projectedp3,
-                                   projectedp4, true)
-            .Wire();
-    TopoDS_Shape cutBottom = create_channel_shape(tempWire, path);
+      TopoDS_Wire tempWire =
+          BRepBuilderAPI_MakePolygon(projectedp1, projectedp2, projectedp3,
+                                     projectedp4, true)
+              .Wire();
+      TopoDS_Shape cutBottom = create_channel_shape(tempWire, path);
 
-    inner = BRepAlgoAPI_Cut(inner, cutBottom).Shape();
+      inner = BRepAlgoAPI_Cut(inner, cutBottom).Shape();
+    }
+
+    tunnel = BRepAlgoAPI_Cut(outer, inner).Shape();
   }
-
-  TopoDS_Shape tunnel = BRepAlgoAPI_Cut(outer, inner).Shape();
   builder.Add(result, tunnel);
 
   return result;

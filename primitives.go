@@ -6380,8 +6380,16 @@ func CreateBorehole(params BoreholeParams) (map[string]*Shape, error) {
 	return shapes, nil
 }
 
+const (
+	WaterTunnelStyleRectangular = 1
+	WaterTunnelStyleCityOpening = 2
+	WaterTunnelStyleCircular    = 3
+	WaterTunnelStyleHorseshoe   = 4
+	WaterTunnelStylePolygon     = 5
+)
+
 type WaterTunnelParams struct {
-	Style                int            // 截面样式
+	Style                int            // 截面样式 (1-5)
 	Width                float32        // 内净宽/内径 W (mm)
 	Height               float32        // 内净高 H (mm)
 	TopThickness         float32        // 顶板厚 H1 (mm)
@@ -6394,7 +6402,8 @@ type WaterTunnelParams struct {
 	BottomPlatformHeight float32        // 底部平台高 H5 (mm)
 	CushionExtension     float32        // 垫层滋出 W2 (mm)
 	CushionThickness     float32        // 垫层厚 H3 (mm)
-	Points               []ChannelPoint // 使用切片代替原始指针和计数
+	Polygon              [][3]float64   // 多边形截面顶点 (Style=5)
+	Points               []ChannelPoint // 路径点
 }
 
 func (p *WaterTunnelParams) to_struct() C.water_tunnel_params_t {
@@ -6412,7 +6421,17 @@ func (p *WaterTunnelParams) to_struct() C.water_tunnel_params_t {
 		bottomPlatformHeight: C.double(p.BottomPlatformHeight),
 		cushionExtension:     C.double(p.CushionExtension),
 		cushionThickness:     C.double(p.CushionThickness),
+		polygon_count:        C.int(len(p.Polygon)),
 		point_count:          C.int(len(p.Points)),
+	}
+
+	if len(p.Polygon) > 0 {
+		cParams.polygon = (*C.double)(C.malloc(C.size_t(len(p.Polygon) * 3) * C.sizeof_double))
+		for i, pt := range p.Polygon {
+			*(*C.double)(unsafe.Pointer(uintptr(unsafe.Pointer(cParams.polygon)) + uintptr(i*3)*C.sizeof_double)) = C.double(pt[0])
+			*(*C.double)(unsafe.Pointer(uintptr(unsafe.Pointer(cParams.polygon)) + uintptr(i*3+1)*C.sizeof_double)) = C.double(pt[1])
+			*(*C.double)(unsafe.Pointer(uintptr(unsafe.Pointer(cParams.polygon)) + uintptr(i*3+2)*C.sizeof_double)) = C.double(pt[2])
+		}
 	}
 
 	if len(p.Points) > 0 {
@@ -6431,6 +6450,9 @@ func (p *WaterTunnelParams) to_struct() C.water_tunnel_params_t {
 func CreateWaterTunnel(params WaterTunnelParams) *Shape {
 	cParams := params.to_struct()
 	defer func() {
+		if cParams.polygon != nil {
+			C.free(unsafe.Pointer(cParams.polygon))
+		}
 		if cParams.points != nil {
 			C.free(unsafe.Pointer(cParams.points))
 		}
@@ -6444,6 +6466,9 @@ func CreateWaterTunnel(params WaterTunnelParams) *Shape {
 func CreateWaterTunnelCenterline(params WaterTunnelParams) *Wire {
 	cParams := params.to_struct()
 	defer func() {
+		if cParams.polygon != nil {
+			C.free(unsafe.Pointer(cParams.polygon))
+		}
 		if cParams.points != nil {
 			C.free(unsafe.Pointer(cParams.points))
 		}

@@ -2222,6 +2222,7 @@ enum class water_tunnel_section_style {
   CITYOPENING = 2, // 城市洞形
   CIRCULAR = 3,    // 圆形
   HORSESHOE = 4,   // 马蹄形
+  POLYGON = 5,     // 任意多边形截面（水电厂房等）
 };
 
 // Water Tunnel
@@ -2247,6 +2248,9 @@ struct water_tunnel_params {
 
   // 圆形隧道参数
   double bottomPlatformHeight; // 底部平台高 H5 (mm)
+
+  // 多边形截面参数 (POLYGON style)
+  std::vector<gp_Pnt> polygon; // 截面多边形顶点
 
   // 通用参数
   double cushionExtension; // 垫层滋出 W2 (mm)

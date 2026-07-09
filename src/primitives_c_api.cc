@@ -7785,6 +7785,11 @@ PRIMCAPICALL topo_shape_t *create_water_tunnel(water_tunnel_params_t params) {
     cpp_params.bottomPlatformHeight = params.bottomPlatformHeight;
     cpp_params.cushionExtension = params.cushionExtension;
     cpp_params.cushionThickness = params.cushionThickness;
+    for (int i = 0; i < params.polygon_count; i++) {
+      cpp_params.polygon.push_back(
+          gp_Pnt(params.polygon[i * 3], params.polygon[i * 3 + 1],
+                 params.polygon[i * 3 + 2]));
+    }
     auto pts = params.points;
     for (int i = 0; i < params.point_count; i++) {
       channel_point point;
@@ -7825,6 +7830,11 @@ create_water_tunnel_centerline(water_tunnel_params_t params) {
     cpp_params.bottomPlatformHeight = params.bottomPlatformHeight;
     cpp_params.cushionExtension = params.cushionExtension;
     cpp_params.cushionThickness = params.cushionThickness;
+    for (int i = 0; i < params.polygon_count; i++) {
+      cpp_params.polygon.push_back(
+          gp_Pnt(params.polygon[i * 3], params.polygon[i * 3 + 1],
+                 params.polygon[i * 3 + 2]));
+    }
     auto pts = params.points;
     for (int i = 0; i < params.point_count; i++) {
       channel_point point;

@@ -2277,6 +2277,10 @@ typedef struct {
   // 圆形隧道参数
   double bottomPlatformHeight; // 底部平台高 H5 (mm)
 
+  // 多边形截面参数 (POLYGON style)
+  double *polygon;   // 截面多边形顶点 [x0,y0,z0, x1,y1,z1, ...]
+  int polygon_count; // 顶点数量
+
   // 通用参数
   double cushionExtension; // 垫层滋出 W2 (mm)
   double cushionThickness; // 垫层厚 H3 (mm)
