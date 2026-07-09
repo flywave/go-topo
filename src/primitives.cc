@@ -17090,14 +17090,33 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
       throw Standard_ConstructionError(
           "POLYGON style requires at least 3 polygon vertices");
     }
-    BRepBuilderAPI_MakePolygon polyMaker;
+    double thickness = params.outerWallThickness;
+    if (thickness < 0.01) thickness = 0.1;
+    gp_Pnt centroid(0, 0, 0);
     for (const auto &pt : params.polygon) {
-      gp_Pnt projected = sectionAxes.Location().Translated(
-          gp_Vec(pt.Z(), pt.Y(), 0).Transformed(trsf));
-      polyMaker.Add(projected);
+      centroid += pt;
     }
-    polyMaker.Close();
-    outerWire = polyMaker.Wire();
+    centroid /= params.polygon.size();
+    BRepBuilderAPI_MakePolygon innerPoly, outerPoly;
+    for (const auto &pt : params.polygon) {
+      gp_Pnt inner = sectionAxes.Location().Translated(
+          gp_Vec(pt.Z(), pt.Y(), 0).Transformed(trsf));
+      innerPoly.Add(inner);
+      gp_Vec dir(pt.X() - centroid.X(), pt.Y() - centroid.Y(), pt.Z() - centroid.Z());
+      double len = dir.Magnitude();
+      if (len > 1e-12) {
+        dir /= len;
+      } else {
+        dir = gp_Vec(0, 0, 1);
+      }
+      gp_Pnt outer = sectionAxes.Location().Translated(
+          gp_Vec(pt.Z() + dir.Z() * thickness, pt.Y() + dir.Y() * thickness, 0).Transformed(trsf));
+      outerPoly.Add(outer);
+    }
+    innerPoly.Close();
+    outerPoly.Close();
+    innerWire = innerPoly.Wire();
+    outerWire = outerPoly.Wire();
     break;
   }
   case water_tunnel_section_style::HORSESHOE: {
@@ -17305,8 +17324,7 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     break;
   }
   case water_tunnel_section_style::POLYGON: {
-    // 多边形截面无内轮廓，直接使用全部顶点做扫掠
-    innerWire.Nullify();
+    // 内轮廓已在 outer wire 创建时生成
     break;
   }
   case water_tunnel_section_style::HORSESHOE: {
@@ -17385,43 +17403,38 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     throw Standard_ConstructionError("Invalid tunnel section style");
   }
 
-  TopoDS_Shape tunnel;
-  if (innerWire.IsNull()) {
-    tunnel = outer;
-  } else {
-    TopoDS_Shape inner = create_channel_shape(innerWire, path);
+  TopoDS_Shape inner = create_channel_shape(innerWire, path);
 
-    // 处理底部平台
-    if (params.style == water_tunnel_section_style::CIRCULAR &&
-        params.bottomPlatformHeight != 0) {
-      double innerRadius = params.width / 2;
+  // 处理底部平台
+  if (params.style == water_tunnel_section_style::CIRCULAR &&
+      params.bottomPlatformHeight != 0) {
+    double innerRadius = params.width / 2;
 
-      double zoffset = -innerRadius;
-      gp_Pnt p1(0, -innerRadius, -innerRadius + params.bottomPlatformHeight);
-      gp_Pnt p2(0, innerRadius, -innerRadius + params.bottomPlatformHeight);
-      gp_Pnt p3(0, innerRadius, -innerRadius);
-      gp_Pnt p4(0, -innerRadius, -innerRadius);
+    double zoffset = -innerRadius;
+    gp_Pnt p1(0, -innerRadius, -innerRadius + params.bottomPlatformHeight);
+    gp_Pnt p2(0, innerRadius, -innerRadius + params.bottomPlatformHeight);
+    gp_Pnt p3(0, innerRadius, -innerRadius);
+    gp_Pnt p4(0, -innerRadius, -innerRadius);
 
-      gp_Pnt projectedp1 = sectionAxes.Location().Translated(
-          gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
-      gp_Pnt projectedp2 = sectionAxes.Location().Translated(
-          gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
-      gp_Pnt projectedp3 = sectionAxes.Location().Translated(
-          gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
-      gp_Pnt projectedp4 = sectionAxes.Location().Translated(
-          gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp1 = sectionAxes.Location().Translated(
+        gp_Vec(p1.Z(), p1.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp2 = sectionAxes.Location().Translated(
+        gp_Vec(p2.Z(), p2.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp3 = sectionAxes.Location().Translated(
+        gp_Vec(p3.Z(), p3.Y(), 0).Transformed(trsf));
+    gp_Pnt projectedp4 = sectionAxes.Location().Translated(
+        gp_Vec(p4.Z(), p4.Y(), 0).Transformed(trsf));
 
-      TopoDS_Wire tempWire =
-          BRepBuilderAPI_MakePolygon(projectedp1, projectedp2, projectedp3,
-                                     projectedp4, true)
-              .Wire();
-      TopoDS_Shape cutBottom = create_channel_shape(tempWire, path);
+    TopoDS_Wire tempWire =
+        BRepBuilderAPI_MakePolygon(projectedp1, projectedp2, projectedp3,
+                                   projectedp4, true)
+            .Wire();
+    TopoDS_Shape cutBottom = create_channel_shape(tempWire, path);
 
-      inner = BRepAlgoAPI_Cut(inner, cutBottom).Shape();
-    }
-
-    tunnel = BRepAlgoAPI_Cut(outer, inner).Shape();
+    inner = BRepAlgoAPI_Cut(inner, cutBottom).Shape();
   }
+
+  TopoDS_Shape tunnel = BRepAlgoAPI_Cut(outer, inner).Shape();
   builder.Add(result, tunnel);
 
   return result;
