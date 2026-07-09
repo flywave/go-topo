@@ -17092,12 +17092,13 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     }
     double thickness = params.outerWallThickness;
     if (thickness < 0.01) thickness = 0.1;
-    gp_Pnt centroid(0, 0, 0);
+    gp_XYZ centroid(0, 0, 0);
     for (const auto &pt : params.polygon) {
-      centroid += pt;
+      centroid += pt.XYZ();
     }
     centroid /= params.polygon.size();
-    BRepBuilderAPI_MakePolygon innerPoly, outerPoly;
+    BRepBuilderAPI_MakePolygon innerPoly;
+    BRepBuilderAPI_MakePolygon outerPoly;
     for (const auto &pt : params.polygon) {
       gp_Pnt inner = sectionAxes.Location().Translated(
           gp_Vec(pt.Z(), pt.Y(), 0).Transformed(trsf));
@@ -17113,10 +17114,9 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
           gp_Vec(pt.Z() + dir.Z() * thickness, pt.Y() + dir.Y() * thickness, 0).Transformed(trsf));
       outerPoly.Add(outer);
     }
-    innerPoly.Close();
     outerPoly.Close();
-    innerWire = innerPoly.Wire();
     outerWire = outerPoly.Wire();
+    // innerWire will be set in the inner wire switch below
     break;
   }
   case water_tunnel_section_style::HORSESHOE: {
@@ -17324,7 +17324,18 @@ TopoDS_Shape create_water_tunnel(const water_tunnel_params &params) {
     break;
   }
   case water_tunnel_section_style::POLYGON: {
-    // 内轮廓已在 outer wire 创建时生成
+    if (params.polygon.size() < 3) {
+      throw Standard_ConstructionError(
+          "POLYGON style requires at least 3 polygon vertices");
+    }
+    BRepBuilderAPI_MakePolygon innerPoly;
+    for (const auto &pt : params.polygon) {
+      gp_Pnt inner = sectionAxes.Location().Translated(
+          gp_Vec(pt.Z(), pt.Y(), 0).Transformed(trsf));
+      innerPoly.Add(inner);
+    }
+    innerPoly.Close();
+    innerWire = innerPoly.Wire();
     break;
   }
   case water_tunnel_section_style::HORSESHOE: {
