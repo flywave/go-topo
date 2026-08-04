@@ -3,6 +3,7 @@
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
+#include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakePolygon.hxx>
@@ -19,9 +20,14 @@
 #include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepPrimAPI_MakeRevol.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
+#include <BRepPrimAPI_MakeTorus.hxx>
+#include <BRepTools.hxx>
 #include <BRep_Tool.hxx>
+#include <Bnd_Box.hxx>
 #include <GC_MakeArcOfCircle.hxx>
 #include <GC_MakeSegment.hxx>
+#include <GCPnts_AbscissaPoint.hxx>
+#include <GeomAdaptor_Curve.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_Circle.hxx>
@@ -142,7 +148,7 @@ TopoDS_Shape create_contact_wire(const contact_wire_params &params,
     throw Standard_ConstructionError("Bottom radius must be positive");
 
   const double R = params.diameter / 2.0;
-  const double h = params.diameter * 0.6;
+  const double h = params.diameter * 0.98;  // 截面总高 ≈ 直径 (CTHA 系列近圆形)
   const double gD = params.grooveDepth > 0 ? params.grooveDepth : 2.0;
   const double gW = params.grooveWidth > 0 ? params.grooveWidth : 3.0;
   const double bR = params.bottomRadius > 0 ? params.bottomRadius : R * 0.6;
@@ -170,18 +176,20 @@ TopoDS_Shape create_contact_wire(const contact_wire_params &params,
   double sag = (R * R) / (2.0 * bR);  // parabolic sagitta for bottom arc
 
   // Define profile points (all X=0), clockwise from bottom-left
+  // 沟槽位于截面上部靠近夹持肩 (真实 CTHA 截面特征)
+  const double shZ = h * 0.80;                  // 肩部高度
+  const double zG = shZ - gW * 1.2;             // 沟槽中心高度
   gp_Pnt p10(0, -R, 0);                   // bottom-left
   gp_Pnt pMid(0, 0, -sag);                // bottom arc midpoint (convex downward)
   gp_Pnt p1(0, R, 0);                     // bottom-right
-  gp_Pnt p2(0, R - gD, -gW / 2);          // right groove bottom
-  gp_Pnt p3(0, R - gD, gW / 2);           // right groove top
-  double shZ = gW / 2.0 + (h - gW) * 0.3;
+  gp_Pnt p2(0, R - gD, zG - gW / 2);      // right groove bottom
+  gp_Pnt p3(0, R - gD, zG + gW / 2);      // right groove top
   gp_Pnt p4(0, sh, shZ);                  // right shoulder
   gp_Pnt p5(0, sh, h);                    // right top arc start
   gp_Pnt p6(0, -sh, h);                   // left top arc end
   gp_Pnt p7(0, -sh, shZ);                 // left shoulder
-  gp_Pnt p8(0, -R + gD, gW / 2);          // left groove top
-  gp_Pnt p9(0, -R + gD, -gW / 2);         // left groove bottom
+  gp_Pnt p8(0, -R + gD, zG + gW / 2);     // left groove top
+  gp_Pnt p9(0, -R + gD, zG - gW / 2);     // left groove bottom
 
   // Bottom arc: 3-point arc through p10(-R,0), pMid(0,-sag), p1(R,0)
   Handle(Geom_TrimmedCurve) bottomArcCurve =
@@ -713,19 +721,20 @@ TopoDS_Shape create_rod_insulator(const rod_insulator_params &params) {
     double zPos = zOffset + (i + 1) * shedSpacing;
     double r = (i % 2 == 0) ? shedMajorR : shedMinorR;
 
-    // 5-point shed profile (references GIM porcelain bushing pattern)
-    // basePoint → outer edge → upper lip → inner dip → end point
-    BRepBuilderAPI_MakeWire wire;
+    // 圆弧伞裙截面 (r-z 平面): 下垂底面 → 外缘滴水沿圆角 → 上凸顶面
     gp_Pnt basePt(rodRadius, 0, zPos);
-    gp_Pnt p1(r, 0, zPos);
-    gp_Pnt p2(r * 0.95, 0, zPos + segH * 0.25);
-    gp_Pnt p3(r * 0.7, 0, zPos + segH * 0.4);
-    gp_Pnt endPt(rodRadius, 0, zPos + segH * 0.25);
+    gp_Pnt u1(r, 0, zPos - segH * 0.06);                 // 底面外缘 (略下垂)
+    gp_Pnt u2(r * 1.02, 0, zPos + segH * 0.05);          // 滴水沿
+    gp_Pnt u3(r * 0.98, 0, zPos + segH * 0.16);          // 外缘上
+    gp_Pnt u4((r + rodRadius) / 2, 0, zPos + segH * 0.28); // 顶面弧中
+    gp_Pnt endPt(rodRadius, 0, zPos + segH * 0.22);
 
-    wire.Add(BRepBuilderAPI_MakeEdge(basePt, p1));
-    wire.Add(BRepBuilderAPI_MakeEdge(p1, p2));
-    wire.Add(BRepBuilderAPI_MakeEdge(p2, p3));
-    wire.Add(BRepBuilderAPI_MakeEdge(p3, endPt));
+    BRepBuilderAPI_MakeWire wire;
+    wire.Add(BRepBuilderAPI_MakeEdge(basePt, u1));
+    wire.Add(BRepBuilderAPI_MakeEdge(
+        GC_MakeArcOfCircle(u1, u2, u3).Value()));       // 外缘圆角
+    wire.Add(BRepBuilderAPI_MakeEdge(
+        GC_MakeArcOfCircle(u3, u4, endPt).Value()));    // 上凸顶面
     wire.Add(BRepBuilderAPI_MakeEdge(endPt, basePt));
 
     if (!wire.IsDone())
@@ -748,12 +757,57 @@ TopoDS_Shape create_rod_insulator(const rod_insulator_params &params) {
     gp_Ax2 botAxis(gp::Origin(), gp::DZ());
     TopoDS_Shape botFlange =
         BRepPrimAPI_MakeCylinder(botAxis, flangeR, flangeH).Shape();
-    builder.Add(compound, botFlange);
-
     gp_Ax2 topAxis(gp_Pnt(0, 0, zOffset + params.height), gp::DZ());
     TopoDS_Shape topFlange =
         BRepPrimAPI_MakeCylinder(topAxis, flangeR, flangeH).Shape();
+
+    // 法兰螺栓孔 (分度圆上阵列 4 孔)
+    if (params.flangeBoltSpacing > 0 && params.flangeBoltDiameter > 0) {
+      double br = params.flangeBoltDiameter / 2.0;
+      double bc = params.flangeBoltSpacing / 2.0;
+      for (int k = 0; k < 4; ++k) {
+        double a = k * M_PI / 2.0 + M_PI / 4.0;
+        gp_Pnt hc(bc * std::cos(a), bc * std::sin(a), -1);
+        TopoDS_Shape hole = BRepPrimAPI_MakeCylinder(
+            gp_Ax2(hc, gp::DZ()), br, zOffset + params.height + flangeH + 2).Shape();
+        botFlange = BRepAlgoAPI_Cut(botFlange, hole).Shape();
+        topFlange = BRepAlgoAPI_Cut(topFlange, hole).Shape();
+      }
+    }
+    builder.Add(compound, botFlange);
     builder.Add(compound, topFlange);
+  }
+
+  // 球头端部: 两端球窝球头
+  if (params.endFitting == end_fitting_type::BALL) {
+    double ballR = rodRadius * 1.5;
+    builder.Add(compound, BRepPrimAPI_MakeSphere(
+        gp_Ax2(gp_Pnt(0, 0, zOffset), gp::DZ()), ballR).Shape());
+    builder.Add(compound, BRepPrimAPI_MakeSphere(
+        gp_Ax2(gp_Pnt(0, 0, zOffset + params.height), gp::DZ()), ballR).Shape());
+  }
+
+  // 螺杆端部: 两端螺柱 + 六角螺母
+  if (params.endFitting == end_fitting_type::SCREW) {
+    double studR = rodRadius * 0.55;
+    double studL = params.height * 0.08;
+    double nutR = studR * 1.8, nutH = studR * 1.4;
+    auto stud = [&](double z0, double z1) {
+      double len = z1 - z0;
+      builder.Add(compound, BRepPrimAPI_MakeCylinder(
+          gp_Ax2(gp_Pnt(0, 0, z0), gp::DZ()), studR, len).Shape());
+      BRepBuilderAPI_MakePolygon hex;
+      double zn = len > 0 ? z1 - nutH : z0;
+      for (int k = 0; k < 6; ++k) {
+        double a = k * M_PI / 3.0;
+        hex.Add(gp_Pnt(nutR * std::cos(a), nutR * std::sin(a), zn));
+      }
+      hex.Close();
+      builder.Add(compound, BRepPrimAPI_MakePrism(
+          BRepLib_MakeFace(hex.Wire()).Face(), gp_Vec(0, 0, nutH)).Shape());
+    };
+    stud(zOffset - studL, zOffset);                       // 下螺柱
+    stud(zOffset + params.height, zOffset + params.height + studL); // 上螺柱
   }
 
   return compound;
@@ -827,6 +881,40 @@ TopoDS_Shape create_mast_bracket(const mast_bracket_params &params) {
         plate = BRepAlgoAPI_Cut(plate, hole).Shape();
       }
     }
+  }
+
+  // 抱箍弧带 (圆管支柱, mastDiameter>0): 半圆环带 + 开口螺栓耳
+  if (params.mastDiameter > 0) {
+    double rm = params.mastDiameter / 2.0;
+    double bt = params.thickness * 0.8;
+    double bandH = params.height * 0.5;
+    double xc = -params.thickness / 2.0 - rm; // 柱心 X
+    // 半圆环带: 外筒减内筒, 再取 -X 半侧
+    TopoDS_Shape band = BRepAlgoAPI_Cut(
+        BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(xc, 0, -bandH / 2), gp::DZ()),
+                                 rm + bt, bandH).Shape(),
+        BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(xc, 0, -bandH / 2 - 1), gp::DZ()),
+                                 rm, bandH + 2).Shape()).Shape();
+    band = BRepAlgoAPI_Common(
+        band, BRepPrimAPI_MakeBox(
+                  gp_Pnt(xc - rm - bt - 1, -rm - bt - 1, -bandH / 2 - 1),
+                  rm + bt + 1, 2 * (rm + bt + 1), bandH + 2).Shape()).Shape();
+    // 开口螺栓耳: 带两端 (y=±rm 处) 各一块耳板连接座体, 耳板带横向螺栓孔
+    for (int side = -1; side <= 1; side += 2) {
+      double ey = side * (rm + bt / 2);
+      gp_Pnt earOrg(xc, ey - bt / 2, -bandH / 2);
+      TopoDS_Shape ear = BRepPrimAPI_MakeBox(
+          earOrg, -xc - params.thickness / 2, bt, bandH).Shape();
+      if (params.boltDiameter > 0) {
+        double hr = params.boltDiameter / 2.0;
+        ear = BRepAlgoAPI_Cut(
+            ear, BRepPrimAPI_MakeCylinder(
+                     gp_Ax2(gp_Pnt(xc - 1, ey - bt / 2 - 1, 0), gp::DY()), hr,
+                     bt + 2).Shape()).Shape();
+      }
+      band = BRepAlgoAPI_Fuse(band, ear).Shape();
+    }
+    plate = BRepAlgoAPI_Fuse(plate, band).Shape();
   }
 
   // Apply mount angle
@@ -1689,16 +1777,30 @@ TopoDS_Shape create_concrete_mast(const concrete_mast_params &params) {
                                  params.height)
                  .Shape();
     }
-    // Round wind holes — diameter proportional to current column width
+    // 安装孔 — 仅分布在柱身上部安装段, 支持长圆孔 (holeLength>holeDiameter)
     if (params.holeDiameter > 0 && params.holeSpacingV > 0) {
-      for (double z = params.firstHoleOffset; z < params.height;
-           z += params.holeSpacingV) {
+      double holeLen = std::max(params.holeLength, params.holeDiameter);
+      int maxCount = params.holeRowCount > 0 ? params.holeRowCount : 1000;
+      double zTop = params.height - params.holeSpacingV * 0.5; // 顶部留安装余量
+      int n = 0;
+      for (double z = params.firstHoleOffset + holeLen / 2;
+           z + holeLen / 2 <= zTop && n < maxCount;
+           z += params.holeSpacingV, ++n) {
         double curW = b + (t - b) * z / params.height;
         double holeR = params.holeDiameter * curW / b / 2;
+        double segZ = (holeLen - params.holeDiameter) * curW / b; // 长圆孔直线段
         TopoDS_Shape h = BRepPrimAPI_MakeCylinder(
-                             gp_Ax2(gp_Pnt(-thinW, 0, z), gp::DX(), gp::DZ()),
+                             gp_Ax2(gp_Pnt(-thinW, 0, z - segZ / 2), gp::DX(), gp::DZ()),
                              holeR, curW * 4)
                              .Shape();
+        if (segZ > Precision::Confusion()) {
+          h = BRepAlgoAPI_Fuse(h, BRepPrimAPI_MakeCylinder(
+                  gp_Ax2(gp_Pnt(-thinW, 0, z + segZ / 2), gp::DX(), gp::DZ()),
+                  holeR, curW * 4).Shape()).Shape();
+          h = BRepAlgoAPI_Fuse(h, BRepPrimAPI_MakeBox(
+                  gp_Pnt(-thinW, -holeR, z - segZ / 2), thinW * 2, holeR * 2,
+                  segZ).Shape()).Shape();
+        }
         mast = BRepAlgoAPI_Cut(mast, h).Shape();
       }
     }
@@ -1814,65 +1916,6 @@ TopoDS_Shape create_ocs_foundation(const ocs_foundation_params &params,
 
 namespace {
 
-// Teardrop wire via BSpline interpolation (for thimble outline).
-TopoDS_Wire makeTeardropProfile(double width, double height, bool closed) {
-  double w = width / 2.0, h = height;
-  Handle(TColgp_HArray1OfPnt) pts = new TColgp_HArray1OfPnt(1, 6);
-  pts->SetValue(1, gp_Pnt(0, h * 0.9, 0));
-  pts->SetValue(2, gp_Pnt(w * 0.95, h * 0.5, 0));
-  pts->SetValue(3, gp_Pnt(w * 0.6, 0, 0));
-  pts->SetValue(4, gp_Pnt(0, -h, 0));
-  pts->SetValue(5, gp_Pnt(-w * 0.6, 0, 0));
-  pts->SetValue(6, gp_Pnt(-w * 0.95, h * 0.5, 0));
-  GeomAPI_Interpolate interp(pts, closed, 1e-5);
-  interp.Perform();
-  return BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(interp.Curve()).Edge()).Wire();
-}
-
-// Thimble ring: flat teardrop ring, normal along X, in YZ plane.
-TopoDS_Shape makeThimble(double wr, bool isUpper) {
-  double ow = wr * 4.5, oh = wr * 6.0, iw = wr * 1.8, ih = wr * 3.5, tk = wr * 0.8;
-  TopoDS_Wire owr = makeTeardropProfile(ow, oh, true);
-  TopoDS_Shape os = BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(owr).Face(), gp_Vec(tk, 0, 0)).Shape();
-  TopoDS_Wire iwr = makeTeardropProfile(iw, ih, true);
-  TopoDS_Shape ish = BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(iwr).Face(), gp_Vec(tk + 2, 0, 0)).Shape();
-  TopoDS_Shape r = BRepAlgoAPI_Cut(os, ish).Shape();
-  if (!isUpper) {
-    gp_Trsf rot; rot.SetRotation(gp_Ax1(gp::Origin(), gp::DX()), M_PI);
-    r = BRepBuilderAPI_Transform(r, rot).Shape();
-  }
-  return r;
-}
-
-// Create loop wire as a simple 3-point circular arc (no BSpline twisting).
-// Arc lies in YZ plane at X=offset. Upper bulges +Y, lower bulges -Y.
-TopoDS_Shape makeLoopArc(double wr, bool isTop, double startZ) {
-  double offset = wr * 2.0;
-  double R = wr * 3.0;
-  double H = wr * 4.0;
-  int s = isTop ? 1 : -1;
-
-  // Three points define a circular arc
-  gp_Pnt p0(offset, 0, startZ);
-  gp_Pnt p1(offset, s * R, startZ - H * 0.5);
-  gp_Pnt p2(offset, 0, startZ - H);
-
-  Handle(Geom_TrimmedCurve) arc = GC_MakeArcOfCircle(p0, p1, p2).Value();
-  TopoDS_Edge ae = BRepBuilderAPI_MakeEdge(arc).Edge();
-  TopoDS_Wire pathWire = BRepBuilderAPI_MakeWire(ae).Wire();
-
-  gp_Circ prof(gp_Ax2(gp::Origin(), gp_Dir(1, 0, 0)), wr);
-  Handle(Geom_Curve) pc = new Geom_Circle(prof);
-  TopoDS_Edge pe = BRepBuilderAPI_MakeEdge(pc).Edge();
-  TopoDS_Wire pw = BRepBuilderAPI_MakeWire(pe).Wire();
-
-  BRepOffsetAPI_MakePipeShell pipe(pathWire);
-  pipe.Add(pw, Standard_False, Standard_True);
-  pipe.SetMode(Standard_True);
-  pipe.Build();
-  return pipe.IsDone() ? pipe.Shape() : TopoDS_Shape();
-}
-
 } // anonymous namespace
 
 TopoDS_Shape create_dropper(const dropper_params &params) {
@@ -1883,57 +1926,50 @@ TopoDS_Shape create_dropper(const dropper_params &params) {
   TopoDS_Compound compound;
   builder.MakeCompound(compound);
 
-  double wr = params.wireDiameter / 2.0;
-  double crimpL = wr * 3.5;
-  double crimpR = wr * 1.8;
-  double gap = wr * 0.5;
+  const double wr = params.wireDiameter / 2.0;
+  const double cL = params.clampLength > 0 ? params.clampLength : 60;
+  const double cW = params.clampWidth > 0 ? params.clampWidth : 40;
+  const double cT = params.clampThickness > 0 ? params.clampThickness : 6;
+  const double gripR = 8.0; // 被夹导线半径 (承力索/接触线)
+  const double stemL = wr * 8;
 
-  // 1. Upper crimp
-  builder.Add(compound, BRepPrimAPI_MakeCylinder(
-      gp_Ax2(gp::Origin(), gp_Dir(0, 0, -1)), crimpR, crimpL).Shape());
-
-  // 2. Upper thimble
-  {
-    TopoDS_Shape th = makeThimble(wr, true);
-    if (!th.IsNull()) {
-      gp_Trsf t; t.SetTranslation(gp_Vec(wr * 2, 0, -crimpL - gap));
-      builder.Add(compound, BRepBuilderAPI_Transform(th, t).Shape());
+  // 夹板式线夹: 两块夹板 (XZ 面) + 贯穿螺栓 + 连接短管
+  auto clamp = [&](double zc, double stemDir) {
+    for (int s = -1; s <= 1; s += 2) {
+      double y0 = s > 0 ? gripR : -gripR - cT;
+      builder.Add(compound, BRepPrimAPI_MakeBox(
+          gp_Pnt(-cL / 2, y0, zc - cW / 2), cL, cT, cW).Shape());
     }
-  }
-
-  // 3. Upper loop arc (3-point, bulges +Y)
-  {
-    TopoDS_Shape loop = makeLoopArc(wr, true, -crimpL);
-    if (!loop.IsNull()) builder.Add(compound, loop);
-  }
-
-  // 4. Main wire
-  {
-    double topZ = -crimpL - wr * 4;
-    double botZ = -params.length + crimpL + wr * 4;
-    double len = botZ - topZ;
-    if (len > 0) builder.Add(compound, BRepPrimAPI_MakeCylinder(
-        gp_Ax2(gp_Pnt(0, 0, topZ), gp_Dir(0, 0, -1)), wr, len).Shape());
-  }
-
-  // 5. Lower loop arc (3-point, bulges -Y)
-  {
-    TopoDS_Shape loop = makeLoopArc(wr, false, -params.length + crimpL);
-    if (!loop.IsNull()) builder.Add(compound, loop);
-  }
-
-  // 6. Lower thimble (inverted)
-  {
-    TopoDS_Shape th = makeThimble(wr, false);
-    if (!th.IsNull()) {
-      gp_Trsf t; t.SetTranslation(gp_Vec(wr * 2, 0, -params.length + crimpL + gap));
-      builder.Add(compound, BRepBuilderAPI_Transform(th, t).Shape());
+    for (int s = -1; s <= 1; s += 2) {
+      double bx = s * cL / 4;
+      builder.Add(compound, BRepPrimAPI_MakeCylinder(
+          gp_Ax2(gp_Pnt(bx, -gripR - cT, zc), gp::DY()), cT * 0.6,
+          2 * (gripR + cT)).Shape());
+      // 六角螺母
+      BRepBuilderAPI_MakePolygon hex;
+      for (int k = 0; k < 6; ++k) {
+        double a = k * M_PI / 3.0;
+        hex.Add(gp_Pnt(bx + cT * std::cos(a), gripR + cT, zc + cT * std::sin(a)));
+      }
+      hex.Close();
+      builder.Add(compound, BRepPrimAPI_MakePrism(
+          BRepLib_MakeFace(hex.Wire()).Face(), gp_Vec(0, cT * 0.8, 0)).Shape());
     }
-  }
+    // 连接短管 (线夹 → 吊弦线)
+    double z0 = stemDir > 0 ? zc + cW / 2 : zc - cW / 2 - stemL;
+    builder.Add(compound, BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(0, 0, z0), gp::DZ()), wr * 1.6, stemL).Shape());
+  };
 
-  // 7. Lower crimp
-  builder.Add(compound, BRepPrimAPI_MakeCylinder(
-      gp_Ax2(gp_Pnt(0, 0, -params.length), gp_Dir(0, 0, -1)), crimpR, crimpL).Shape());
+  clamp(-cW / 2, -1);                      // 上端 (承力索侧)
+  clamp(-params.length + cW / 2, +1);      // 下端 (接触线侧)
+
+  // 吊弦线
+  double topZ = -cW / 2 - stemL;
+  double botZ = -params.length + cW / 2 + stemL;
+  if (botZ < topZ)
+    builder.Add(compound, BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(0, 0, botZ), gp::DZ()), wr, topZ - botZ).Shape());
 
   return compound;
 }
@@ -2029,19 +2065,35 @@ TopoDS_Shape create_mw_saddle(const mw_saddle_params &params,
 // 17. Balance Weight (坠砣)
 // =========================================================================
 TopoDS_Shape create_balance_weight(const balance_weight_params &params) {
-  if (params.width <= 0 || params.thickness <= 0 || params.height <= 0)
+  if (params.width <= 0 || params.height <= 0)
     throw Standard_ConstructionError("Invalid dimensions");
+  // 圆形坠砣: 铸铁圆片 + 中心孔 + 径向开口槽 (侧向穿杆)
+  double R = params.width / 2.0;
+  double H = params.height;
   TopoDS_Shape b =
-      BRepPrimAPI_MakeBox(gp_Pnt(-params.width / 2, -params.thickness / 2, 0),
-                          params.width, params.thickness, params.height)
-          .Shape();
-  double fr = std::min(params.width, std::min(params.thickness, params.height)) * 0.08;
+      BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DZ()), R, H).Shape();
+  // 中心孔
+  if (params.centerHoleDiameter > 0) {
+    double hr = params.centerHoleDiameter / 2;
+    b = BRepAlgoAPI_Cut(b, BRepPrimAPI_MakeCylinder(
+                               gp_Ax2(gp_Pnt(0, 0, -1), gp::DZ()), hr, H + 2)
+                               .Shape())
+            .Shape();
+    // 径向开口槽 (从中心孔通到外缘)
+    b = BRepAlgoAPI_Cut(b, BRepPrimAPI_MakeBox(
+                               gp_Pnt(0, -hr * 0.6, -1), R + 1, hr * 1.2, H + 2)
+                               .Shape())
+            .Shape();
+  }
+  // 上下边缘倒圆
+  double fr = std::min(R, H) * 0.08;
   if (fr > Precision::Confusion()) {
     BRepFilletAPI_MakeFillet fillet(b);
     for (TopExp_Explorer ex(b, TopAbs_EDGE); ex.More(); ex.Next()) {
       TopoDS_Edge e = TopoDS::Edge(ex.Current());
       gp_Pnt p1 = BRep_Tool::Pnt(TopExp::FirstVertex(e)),
              p2 = BRep_Tool::Pnt(TopExp::LastVertex(e));
+      // 仅外缘水平圆边 (上下面的外圆)
       if (std::abs(p1.Z() - p2.Z()) < Precision::Confusion() &&
           std::abs(p1.X() - p2.X()) > Precision::Confusion())
         fillet.Add(fr, e);
@@ -2050,12 +2102,6 @@ TopoDS_Shape create_balance_weight(const balance_weight_params &params) {
     if (fillet.IsDone())
       b = fillet.Shape();
   }
-  if (params.centerHoleDiameter > 0)
-    b = BRepAlgoAPI_Cut(b, BRepPrimAPI_MakeCylinder(
-                               gp_Ax2(gp::Origin(), gp::DZ()),
-                               params.centerHoleDiameter / 2, params.height + 2)
-                               .Shape())
-            .Shape();
   return b;
 }
 TopoDS_Shape create_balance_weight(const balance_weight_params &params,
@@ -2106,34 +2152,53 @@ TopoDS_Shape create_anchor_fitting(const anchor_fitting_params &params) {
     throw Standard_ConstructionError("Invalid dimensions");
   double R = params.diameter / 2;
   if (params.type == anchor_fitting_type::ROD_AND_RING) {
-    return BRepAlgoAPI_Fuse(
-               BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DX()), R,
-                                        params.length)
-                   .Shape(),
-               BRepPrimAPI_MakeSphere(
-                   gp_Ax2(gp_Pnt(params.length, 0, 0), gp::DX()), R * 1.5)
-                   .Shape())
-        .Shape();
+    // 杵环杆: 圆钢杆 + 杵头 + U 形环
+    BRep_Builder b; TopoDS_Compound c; b.MakeCompound(c);
+    // 杆体 (留环连接段)
+    double rodL = params.length - R * 2.5;
+    b.Add(c, BRepPrimAPI_MakeCylinder(gp_Ax2(gp::Origin(), gp::DX()), R, rodL).Shape());
+    // 杵头 (球头)
+    b.Add(c, BRepPrimAPI_MakeSphere(gp_Ax2(gp_Pnt(rodL, 0, 0), gp::DX()), R * 1.5).Shape());
+    // 环: 竖直面内 torus, 与杆端颈接
+    double ringR = R * 1.6, ringT = R * 0.5;
+    double ringX = -ringR - R * 0.2;
+    b.Add(c, BRepPrimAPI_MakeTorus(
+        gp_Ax2(gp_Pnt(ringX, 0, 0), gp::DY()), ringR, ringT).Shape());
+    // 环-杆连接颈
+    b.Add(c, BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(-R * 0.2, 0, 0), gp::DX()), R * 0.7, R * 0.4).Shape());
+    return c;
   } else if (params.type == anchor_fitting_type::DOUBLE_EAR) {
-    TopoDS_Shape b = BRepPrimAPI_MakeBox(gp_Pnt(-params.length / 2, -R, -R),
-                                         params.length, R * 2, R * 2)
-                         .Shape();
-    if (R > 0) {
-      b = BRepAlgoAPI_Cut(
-              b, BRepPrimAPI_MakeCylinder(
-                     gp_Ax2(gp_Pnt(-params.length / 3, 0, 0), gp::DY()),
-                     R * 0.4, R * 4)
-                     .Shape())
-              .Shape();
-      b = BRepAlgoAPI_Cut(b,
-                          BRepPrimAPI_MakeCylinder(
-                              gp_Ax2(gp_Pnt(params.length / 3, 0, 0), gp::DY()),
-                              R * 0.4, R * 4)
-                              .Shape())
-              .Shape();
+    // 双耳连接器: 中部连接体 + 两端 U 形叉 (双夹板 + 销孔)
+    BRep_Builder b; TopoDS_Compound c; b.MakeCompound(c);
+    double bodyL = params.length * 0.4;
+    double forkL = params.length * 0.3;
+    double gap = R * 0.9;                    // 叉口半宽
+    double earT = R * 0.55;                  // 耳板厚
+    // 中部连接体 (圆角方块)
+    TopoDS_Shape body = BRepPrimAPI_MakeBox(
+        gp_Pnt(-bodyL / 2, -R, -R), bodyL, R * 2, R * 2).Shape();
+    b.Add(c, body);
+    for (int side = -1; side <= 1; side += 2) {
+      double x0 = side > 0 ? bodyL / 2 : -bodyL / 2 - forkL;
+      for (int e = -1; e <= 1; e += 2) {
+        double y0 = e > 0 ? gap : -gap - earT;
+        TopoDS_Shape ear = BRepPrimAPI_MakeBox(
+            gp_Pnt(x0, y0, -R), forkL, earT, R * 2).Shape();
+        // 耳端倒圆: 用圆柱端头近似
+        ear = BRepAlgoAPI_Fuse(ear, BRepPrimAPI_MakeCylinder(
+            gp_Ax2(gp_Pnt(x0 + forkL, y0, 0), gp::DY()), R, earT).Shape()).Shape();
+        b.Add(c, ear);
+      }
+      // 销孔 (贯穿双耳, 沿 Y)
+      double px = side > 0 ? bodyL / 2 + forkL * 0.6 : -bodyL / 2 - forkL * 0.4;
+      b.Add(c, BRepPrimAPI_MakeCylinder(
+          gp_Ax2(gp_Pnt(px, 0, 0), gp::DY()), R * 0.5, gap + earT).Shape());
     }
-    return b;
+    return c;
   } else {
+    // 楔形线夹: 锥形线夹体 + 导线弧槽 + 楔块
+    BRep_Builder b; TopoDS_Compound c; b.MakeCompound(c);
     gp_Pnt bp[4] = {{-R, -R, 0}, {R, -R, 0}, {R, R, 0}, {-R, R, 0}};
     BRepOffsetAPI_ThruSections gen(Standard_True);
     gen.AddWire(
@@ -2145,7 +2210,26 @@ TopoDS_Shape create_anchor_fitting(const anchor_fitting_params &params) {
     gen.AddWire(
         BRepBuilderAPI_MakePolygon(tp[0], tp[1], tp[2], tp[3], Standard_True));
     gen.Build();
-    return gen.Shape();
+    TopoDS_Shape body = gen.Shape();
+    // 导线槽: 底面半圆弧槽 (沿 Z)
+    body = BRepAlgoAPI_Cut(body, BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(0, 0, -1), gp::DZ()), R * 0.55, params.length + 2).Shape()).Shape();
+    b.Add(c, body);
+    // 楔块: 从侧面插入的小楔台
+    gp_Pnt wb[4] = {{R * 0.3, -R * 0.5, params.length * 0.15},
+                    {R * 1.2, -R * 0.5, params.length * 0.15},
+                    {R * 1.2, R * 0.5, params.length * 0.15},
+                    {R * 0.3, R * 0.5, params.length * 0.15}};
+    gp_Pnt wt[4] = {{R * 0.35, -R * 0.45, params.length * 0.75},
+                    {R * 1.0, -R * 0.45, params.length * 0.75},
+                    {R * 1.0, R * 0.45, params.length * 0.75},
+                    {R * 0.35, R * 0.45, params.length * 0.75}};
+    BRepOffsetAPI_ThruSections wgen(Standard_True);
+    wgen.AddWire(BRepBuilderAPI_MakePolygon(wb[0], wb[1], wb[2], wb[3], Standard_True));
+    wgen.AddWire(BRepBuilderAPI_MakePolygon(wt[0], wt[1], wt[2], wt[3], Standard_True));
+    wgen.Build();
+    b.Add(c, wgen.Shape());
+    return c;
   }
 }
 TopoDS_Shape create_anchor_fitting(const anchor_fitting_params &params,
@@ -3060,71 +3144,199 @@ TopoDS_Shape create_aux_bracket(const aux_bracket_params &params,
 // =========================================================================
 // 24. Rail (钢轨)
 // =========================================================================
+namespace {
+
+// 圆弧边: p0 → p1 经过弧上一点 pm
+TopoDS_Edge railArcEdge(const gp_Pnt &p0, const gp_Pnt &pm, const gp_Pnt &p1) {
+  return BRepBuilderAPI_MakeEdge(GC_MakeArcOfCircle(p0, pm, p1).Value()).Edge();
+}
+
+// 弦中点向理想角点 corner 方向偏移 sagitta, 得到圆弧中点 (凹凸圆角通用)
+gp_Pnt railArcMid(const gp_Pnt &p0, const gp_Pnt &p1, const gp_Pnt &corner,
+                  double radius) {
+  gp_Vec chord(p0, p1);
+  double c = chord.Magnitude();
+  gp_Pnt mid((p0.X() + p1.X()) / 2, (p0.Y() + p1.Y()) / 2, 0);
+  if (c < Precision::Confusion() || radius <= 0)
+    return mid;
+  gp_Vec toK(mid, corner);
+  if (toK.Magnitude() < Precision::Confusion())
+    return mid;
+  double h = std::min(c / 2.0, radius * 0.95);
+  double sag = radius - std::sqrt(std::max(radius * radius - h * h, 1e-9));
+  return mid.Translated(toK.Normalized() * sag);
+}
+
+// 真实钢轨断面 (以 60kg/m 为基准, 按比例适配其他轨型):
+//   R300 踏面圆弧 + R80 轨头侧面 + R13 轨头下圆角
+//   头腰/腰底圆角过渡, 轨底上翼缘斜坡, 轨底边缘小圆角
+// 断面位于 XY 平面 (X=横向, Y=竖向), 轨底中心为原点
+// widthScale/anchorX: 横向缩放 (尖轨单侧刨削用), x' = anchorX + (x-anchorX)*widthScale
+TopoDS_Wire buildRailSectionWire(double railHeight, double headWidth,
+                                 double baseWidth, double webThickness,
+                                 double headHeight, double baseHeight,
+                                 double headRadius, double widthScale = 1.0,
+                                 double anchorX = 0.0) {
+  const double H = railHeight;
+  const double hW = headWidth / 2.0;
+  const double bW = baseWidth / 2.0;
+  const double wT = webThickness > 0 ? webThickness / 2.0 : 8.25;
+  const double hH = headHeight > 0 ? headHeight : H * 0.2456;
+  const double bH = baseHeight > 0 ? baseHeight : H * 0.1667;
+  const double sc = headWidth / 73.0;             // 以 60kg/m 断面为基准的比例
+  const double crnR = std::max(300.0 * sc, hW * 1.2); // 踏面圆弧半径
+  const double sidR = 80.0 * sc;                  // 轨头侧面圆弧半径
+  const double corR = headRadius > 0 ? headRadius : 13.0 * sc; // 轨头下圆角
+  const double fwh = std::min(13.0 * sc, hH * 0.5); // 头腰过渡圆角
+  const double fwb = std::min(25.0 * sc, bH * 0.8); // 腰底过渡圆角
+  const double beR = 2.0 * sc;                    // 轨底边缘圆角
+  const double bEdge = bH * 0.4;                  // 轨底边缘厚度
+
+  // 特征点 (右半, x>=0)
+  const double xc = hW * 0.45;                    // 踏面弧半宽
+  const double s1 = crnR - std::sqrt(crnR * crnR - xc * xc); // 踏面矢高
+  const double ySd = H - hH * 0.40;               // 侧面弧下端
+  const double xUH = hW * 0.92, yUH = H - hH * 0.78; // 头底斜线起点
+  const double xF0 = wT + fwh * 0.85, yF0 = H - hH;  // 头腰圆角起点
+  const double yF1 = H - hH - fwh * 0.85;         // 头腰圆角终点 (x=wT)
+  const double yW = bH + fwb * 0.85;              // 腰底圆角起点 (x=wT)
+  const double xB0 = wT + fwb * 0.85;             // 腰底圆角终点
+  const double mUH = (yF0 - yUH) / (xF0 - xUH);   // 头底斜线斜率
+  const double mBS = (bEdge - bH) / (bW - beR - xB0); // 轨底斜坡斜率
+
+  struct Seg {
+    gp_Pnt p0, pm, p1;
+  };
+  std::vector<Seg> half;
+  auto P = [](double x, double y) { return gp_Pnt(x, y, 0); };
+  auto addLine = [&](double x0, double y0, double x1, double y1) {
+    half.push_back({P(x0, y0), P((x0 + x1) / 2, (y0 + y1) / 2), P(x1, y1)});
+  };
+  auto addArcK = [&](double x0, double y0, double x1, double y1, double kx,
+                     double ky, double R) {
+    half.push_back(
+        {P(x0, y0), railArcMid(P(x0, y0), P(x1, y1), P(kx, ky), R), P(x1, y1)});
+  };
+
+  // 踏面: 圆心在 (0, H-crnR)
+  {
+    double sagH = crnR - std::sqrt(crnR * crnR - (xc / 2) * (xc / 2));
+    half.push_back({P(0, H), P(xc / 2, H - sagH), P(xc, H - s1)});
+  }
+  // 侧面: 过踏面切线与 x=hW 的交角点
+  {
+    double Ky = (H - s1) - xc * (hW - xc) / (crnR - s1);
+    addArcK(xc, H - s1, hW, ySd, hW, Ky, sidR);
+  }
+  // 轨头下圆角
+  addArcK(hW, ySd, xUH, yUH, hW, yUH + mUH * (hW - xUH), corR);
+  // 头底斜线
+  addLine(xUH, yUH, xF0, yF0);
+  // 头腰圆角
+  addArcK(xF0, yF0, wT, yF1, wT, yUH + mUH * (wT - xUH), fwh);
+  // 轨腰
+  addLine(wT, yF1, wT, yW);
+  // 腰底圆角
+  addArcK(wT, yW, xB0, bH, wT, bH + mBS * (wT - xB0), fwb);
+  // 轨底上翼缘斜坡
+  addLine(xB0, bH, bW - beR, bEdge);
+  // 轨底外缘圆角 (凸)
+  addArcK(bW - beR, bEdge, bW, bEdge - beR, bW, bH + mBS * (bW - xB0), beR);
+  // 轨底立面
+  addLine(bW, bEdge - beR, bW, beR);
+  // 轨底底角 (凸)
+  addArcK(bW, beR, bW - beR, 0, bW, 0, beR);
+
+  BRepBuilderAPI_MakeWire wire;
+  auto tx = [&](double x) { return anchorX + (x - anchorX) * widthScale; };
+  auto emit = [&](const Seg &s, double sign, bool rev) {
+    gp_Pnt a(tx(s.p0.X() * sign), s.p0.Y(), 0);
+    gp_Pnt m(tx(s.pm.X() * sign), s.pm.Y(), 0);
+    gp_Pnt b(tx(s.p1.X() * sign), s.p1.Y(), 0);
+    if (rev)
+      std::swap(a, b);
+    bool degenerate = a.Distance(m) < Precision::Confusion() ||
+                      m.Distance(b) < Precision::Confusion();
+    bool collinear = false;
+    if (!degenerate) {
+      gp_Vec v1(a, m), v2(a, b);
+      collinear = std::abs(v1.Normalized().Dot(v2.Normalized())) > 0.999999;
+    }
+    if (degenerate || collinear) {
+      if (a.Distance(b) >= Precision::Confusion())
+        wire.Add(BRepBuilderAPI_MakeEdge(a, b));
+    } else {
+      wire.Add(railArcEdge(a, m, b));
+    }
+  };
+  // 右半: 顶心 → 轨底
+  for (const auto &s : half)
+    emit(s, +1, false);
+  // 轨底底面
+  wire.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(tx(bW - beR), 0, 0),
+                                   gp_Pnt(tx(-(bW - beR)), 0, 0)));
+  // 左半: 轨底 → 顶心 (右半镜像逆序)
+  for (auto it = half.rbegin(); it != half.rend(); ++it)
+    emit(*it, -1, true);
+
+  ShapeFix_Wire fx;
+  fx.Load(wire.Wire());
+  fx.Perform();
+  return fx.Wire();
+}
+
+} // anonymous namespace
+
+// 标准钢轨断面查表 (kg/m: 43/50/60/75), 未识别时返回 60kg/m
+rail_params standard_rail_params(double kgPerMeter) {
+  rail_params p{};
+  p.headRadius = 13.0;
+  p.standardLength = 25000.0;
+  switch ((int)std::round(kgPerMeter)) {
+  case 43:
+    p.railHeight = 140; p.headWidth = 70; p.baseWidth = 114;
+    p.webThickness = 14.5; p.headHeight = 40; p.baseHeight = 27;
+    break;
+  case 50:
+    p.railHeight = 152; p.headWidth = 70; p.baseWidth = 132;
+    p.webThickness = 15.5; p.headHeight = 42; p.baseHeight = 27;
+    break;
+  case 75:
+    p.railHeight = 192; p.headWidth = 75; p.baseWidth = 150;
+    p.webThickness = 20; p.headHeight = 55; p.baseHeight = 32;
+    break;
+  case 60:
+  default:
+    p.railHeight = 176; p.headWidth = 73; p.baseWidth = 150;
+    p.webThickness = 16.5; p.headHeight = 48.5; p.baseHeight = 30.5;
+    break;
+  }
+  return p;
+}
+
 TopoDS_Shape create_rail(const rail_params &params) {
   if (params.railHeight <= 0 || params.headWidth <= 0 || params.baseWidth <= 0)
     throw Standard_ConstructionError("Rail dimensions must be positive");
 
-  const double H = params.railHeight;
-  const double hH = params.headHeight > 0 ? params.headHeight : H * 0.2456;
-  const double bH = params.baseHeight > 0 ? params.baseHeight : H * 0.1667;
-  const double hW = params.headWidth / 2.0;
-  const double bW = params.baseWidth / 2.0;
-  const double wT = params.webThickness > 0 ? params.webThickness / 2.0 : 8.334;
-
-  // 30-point in XY plane, extrude along Z
-  BRepBuilderAPI_MakeWire wire;
-  auto L = [&](double y, double z, double y2, double z2) {
-    wire.Add(BRepBuilderAPI_MakeEdge(gp_Pnt(y, z, 0), gp_Pnt(y2, z2, 0)));
-  };
-
-  // Right half — clockwise from top center
-  L(0, H, hW, H);                                                   // center→right top
-  L(hW, H, hW, H - hH*0.15);                                       // corner bevel
-  L(hW, H-hH*0.15, hW*0.93, H - hH*0.35);
-  L(hW*0.93, H-hH*0.35, hW*0.82, H - hH*0.65);
-  L(hW*0.82, H-hH*0.65, hW*0.65, H - hH*0.85);
-  L(hW*0.65, H-hH*0.85, wT*1.5, H - hH*0.95);
-  L(wT*1.5, H-hH*0.95, wT, H - hH);
-
-  L(wT, H-hH, wT, bH + bH*0.5);                                     // web body
-  L(wT, bH+bH*0.5, bW*0.3, bH*0.3);
-  L(bW*0.3, bH*0.3, bW*0.6, bH*0.65);
-  L(bW*0.6, bH*0.65, bW*0.85, bH*0.9);
-  L(bW*0.85, bH*0.9, bW, bH);                                       // base top right
-
-  L(bW, bH, bW, 0);                                                  // base slope
-  L(bW, 0, -bW, 0);                                                  // bottom flat
-  L(-bW, 0, -bW, bH);                                                // left base slope
-
-  L(-bW, bH, -bW*0.85, bH*0.9);                                     // left flare
-  L(-bW*0.85, bH*0.9, -bW*0.6, bH*0.65);
-  L(-bW*0.6, bH*0.65, -bW*0.3, bH*0.3);
-  L(-bW*0.3, bH*0.3, -wT, bH+bH*0.5);
-
-  L(-wT, bH+bH*0.5, -wT, H - hH);                                   // web left
-  L(-wT, H-hH, -wT*1.5, H - hH*0.95);
-  L(-wT*1.5, H-hH*0.95, -hW*0.65, H - hH*0.85);
-  L(-hW*0.65, H-hH*0.85, -hW*0.82, H - hH*0.65);
-  L(-hW*0.82, H-hH*0.65, -hW*0.93, H - hH*0.35);
-  L(-hW*0.93, H-hH*0.35, -hW, H - hH*0.15);
-  L(-hW, H-hH*0.15, -hW, H);
-  L(-hW, H, 0, H);                                                   // close to center
-
-  TopoDS_Face face = BRepLib_MakeFace(wire.Wire()).Face();
+  TopoDS_Wire wire = buildRailSectionWire(
+      params.railHeight, params.headWidth, params.baseWidth,
+      params.webThickness, params.headHeight, params.baseHeight,
+      params.headRadius);
+  TopoDS_Face face = BRepLib_MakeFace(wire).Face();
   return BRepPrimAPI_MakePrism(face, gp_Vec(0, 0, params.standardLength)).Shape();
 }
 
 TopoDS_Shape create_rail(const rail_params &params, const gp_Pnt &startPoint,
                          const gp_Pnt &endPoint) {
-  TopoDS_Shape shape = create_rail(params);
   gp_Vec vec(startPoint, endPoint);
   double len = vec.Magnitude();
   if (len <= Precision::Confusion())
-    return shape;
+    return create_rail(params);
+  // 按实际长度重建, 不做整体缩放 (缩放会把断面尺寸一起缩错)
+  rail_params rp2 = params;
+  rp2.standardLength = len;
+  TopoDS_Shape shape = create_rail(rp2);
   gp_Dir dir(vec);
-  double scale = len / params.standardLength;
-  gp_Trsf s; s.SetScale(gp::Origin(), scale);
-  shape = BRepBuilderAPI_Transform(shape, s).Shape();
   gp_Dir crossDir = gp::DZ().Crossed(dir);
   gp_Ax3 sourceAx3(gp::Origin(), gp::DZ(), gp::DX());
   gp_Ax3 targetAx3(startPoint, dir, crossDir);
@@ -3141,30 +3353,21 @@ TopoDS_Shape create_rail_path(const rail_params &params,
   if (segments.empty())
     throw Standard_ConstructionError("Empty rail path");
 
-  const double H = params.railHeight;
-  const double hH = params.headHeight > 0 ? params.headHeight : H * 0.2456;
-  const double bH = params.baseHeight > 0 ? params.baseHeight : H * 0.1667;
-  const double hW = params.headWidth / 2.0;
-  const double bW = params.baseWidth / 2.0;
-  const double wT = params.webThickness > 0 ? params.webThickness / 2.0 : 8.334;
-
-  // Stock 30-point profile from create_rail as (width, height) pairs
-  struct P2 { double w, h; };
-  std::vector<P2> prof;
-  auto add = [&](double y, double z) { prof.push_back({y, z}); };
-  add(0, H); add(hW, H); add(hW, H-hH*0.15);
-  add(hW*0.93, H-hH*0.35); add(hW*0.82, H-hH*0.65);
-  add(hW*0.65, H-hH*0.85); add(wT*1.5, H-hH*0.95); add(wT, H-hH);
-  add(wT, bH+bH*0.5); add(bW*0.3, bH*0.3); add(bW*0.6, bH*0.65);
-  add(bW*0.85, bH*0.9); add(bW, bH); add(bW, 0);
-  add(-bW, 0); add(-bW, bH); add(-bW*0.85, bH*0.9);
-  add(-bW*0.6, bH*0.65); add(-bW*0.3, bH*0.3); add(-wT, bH+bH*0.5);
-  add(-wT, H-hH); add(-wT*1.5, H-hH*0.95); add(-hW*0.65, H-hH*0.85);
-  add(-hW*0.82, H-hH*0.65); add(-hW*0.93, H-hH*0.35);
-  add(-hW, H-hH*0.15); add(-hW, H); add(0, H);
+  // 断面模板 (局部坐标: X=横向, Y=竖向, 轨底中心为原点)
+  TopoDS_Wire tmpl = buildRailSectionWire(
+      params.railHeight, params.headWidth, params.baseWidth,
+      params.webThickness, params.headHeight, params.baseHeight,
+      params.headRadius);
+  // 截面坐标架 (Hd, t×Hd, t) 相对轮廓映射 (Hd, Vd, t) 为镜像, 预翻转模板
+  TopoDS_Shape tmplMir;
+  {
+    gp_Trsf flip;
+    flip.SetMirror(gp_Ax2(gp::Origin(), gp::DY()));
+    tmplMir = BRepBuilderAPI_Transform(tmpl, flip).Shape();
+  }
 
   // Build section at a path point p with tangent t
-    auto makeSection = [&](const gp_Pnt &p, const gp_Dir &t) {
+  auto makeSection = [&](const gp_Pnt &p, const gp_Dir &t) {
     gp_Vec Hv(t.XYZ().Crossed(gp::DZ().XYZ()));
     gp_Dir Hd = Hv.Magnitude() < Precision::Confusion() ? gp::DX() : gp_Dir(Hv);
     gp_Dir Vd = Hd.Crossed(t);
@@ -3175,13 +3378,13 @@ TopoDS_Shape create_rail_path(const rail_params &params,
       gp_XYZ hx = Hd.XYZ(); tilt.Transforms(hx); Hd = gp_Dir(hx);
       gp_XYZ vx = Vd.XYZ(); tilt.Transforms(vx); Vd = gp_Dir(vx);
     }
-    auto pt = [&](double w, double h) {
-      return p.Translated(gp_Vec(Hd.XYZ() * (w + lateralOffset) + Vd.XYZ() * (h + verticalOffset)));
-    };
-    BRepBuilderAPI_MakeWire w;
-    for (size_t i = 0; i + 1 < prof.size(); ++i)
-      w.Add(BRepBuilderAPI_MakeEdge(pt(prof[i].w, prof[i].h), pt(prof[i+1].w, prof[i+1].h)));
-    return w.Wire();
+    gp_Pnt o = p.Translated(
+        gp_Vec(Hd.XYZ() * lateralOffset + Vd.XYZ() * verticalOffset));
+    gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX());
+    gp_Ax3 tgt(o, t, Hd);
+    gp_Trsf tr;
+    tr.SetTransformation(tgt, src);
+    return TopoDS::Wire(BRepBuilderAPI_Transform(tmplMir, tr).Shape());
   };
 
   // Build curves, sample, loft
@@ -3402,7 +3605,7 @@ TopoDS_Shape create_guard_rail(const guard_rail_params &params) {
     gp.curve.endPoint = gp_Pnt(params.totalLength, 0, 0);
     gp.channelHeight = params.height;
     gp.grooveWidth = params.grooveWidth;
-    gp.flangeWidth = params.baseWidth;
+    gp.flangeWidth = std::max((params.baseWidth - params.grooveWidth) / 2 - 12.0, 10.0);
     return create_guard_rail_curve(gp);
 }
 
@@ -3415,7 +3618,7 @@ TopoDS_Shape create_guard_rail(const guard_rail_params &params,
     gp.curve.endPoint = endPoint;
     gp.channelHeight = params.height;
     gp.grooveWidth = params.grooveWidth;
-    gp.flangeWidth = params.baseWidth;
+    gp.flangeWidth = std::max((params.baseWidth - params.grooveWidth) / 2 - 12.0, 10.0);
     return create_guard_rail_curve(gp);
 }
 
@@ -3534,38 +3737,106 @@ TopoDS_Shape create_mast_assembly(const mast_assembly_params &params,
 // TRACK: 32. Frog (辙叉) — V-shaped crossing
 // =========================================================================
 TopoDS_Shape create_frog(const frog_params &params) {
-    // Frog = 2 point rails (SWITCH ends) + 2 wing rails
+    // 辙叉 = 4 段心轨 (汇聚到 ~2mm 岔心尖端) + 2 根弯折翼轨 + 2 根护轨
     frog_calculated_params fc = calculate_frog_params(params.turnoutNo, params.gauge);
     BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
-    double halfG = params.gauge / 2;
-    // Point rail A (left incoming)
-    rail_curve_params rp;
-    rp.curve.type = rail_curve_type::LINE;
-    rp.curve.startPoint = gp_Pnt(-fc.frogPointLength, -halfG, 0);
-    rp.curve.endPoint = gp_Pnt(0, 0, 0);
-    rp.railHeight = params.railHeight;
-    rp.headWidth = params.railHeadWidth;
-    rp.baseWidth = params.railBaseWidth;
-    rp.endFinish.type = end_treatment_type::SWITCH;
-    rp.endFinish.toeWidth = 2;
-    try { bld.Add(cmp, create_rail_curve(rp)); } catch (...) {}
-    // Point rail B (right outgoing)
-    rp.curve.startPoint = gp_Pnt(0, 0, 0);
-    rp.curve.endPoint = gp_Pnt(fc.frogPointLength, halfG, 0);
-    rp.endStart.type = end_treatment_type::SWITCH;
-    rp.endStart.toeWidth = 2;
-    rp.endFinish.type = end_treatment_type::PLANE;
-    try { bld.Add(cmp, create_rail_curve(rp)); } catch (...) {}
-    // Wing rails
-    wing_rail_curve_params wp;
-    wp.curve.type = rail_curve_type::LINE;
-    wp.curve.startPoint = gp_Pnt(-fc.wingRailLength * 0.4, -halfG - 50, 0);
-    wp.curve.endPoint = gp_Pnt(fc.wingRailLength * 0.6, -halfG - 50, 0);
-    wp.channelHeight = params.railHeight * 0.7;
-    try { bld.Add(cmp, create_wing_rail_curve(wp)); } catch (...) {}
-    wp.curve.startPoint = gp_Pnt(-fc.wingRailLength * 0.4, halfG + 50, 0);
-    wp.curve.endPoint = gp_Pnt(fc.wingRailLength * 0.6, halfG + 50, 0);
-    try { bld.Add(cmp, create_wing_rail_curve(wp)); } catch (...) {}
+    const double alpha = std::atan2(1.0, (double)params.turnoutNo);
+    const double Lp = fc.frogPointLength;
+    const gp_Pnt O(0, 0, 0);
+
+    // 两条交叉轨线关于 X 轴对称, 夹角 = 辙叉角 alpha
+    const gp_Dir u1(std::cos(alpha / 2), -std::sin(alpha / 2), 0);
+    const gp_Dir u2(std::cos(alpha / 2), +std::sin(alpha / 2), 0);
+    auto along = [](const gp_Dir &u, double s) { return gp_Vec(u.XYZ().Multiplied(s)); };
+
+    // 心轨: 每段以 SWITCH 端刨削汇聚到岔心, 刨削侧朝向另一轨线
+    auto pointRail = [&](const gp_Dir &u, bool outgoing, int planedSide) {
+      rail_curve_params rp;
+      rp.curve.type = rail_curve_type::LINE;
+      rp.curve.startPoint = outgoing ? O : O.Translated(along(u, -Lp));
+      rp.curve.endPoint = outgoing ? O.Translated(along(u, Lp)) : O;
+      rp.railHeight = params.railHeight;
+      rp.headWidth = params.railHeadWidth;
+      rp.baseWidth = params.railBaseWidth;
+      end_treatment_params e;
+      e.type = end_treatment_type::SWITCH;
+      e.toeWidth = 2.0;
+      e.switchLength = Lp * 0.7;
+      e.planedSide = planedSide;
+      (outgoing ? rp.endStart : rp.endFinish) = e;
+      return create_rail_curve(rp);
+    };
+    // u1 线内侧朝 +Y (行进左侧), u2 线内侧朝 -Y (行进右侧)
+    try { bld.Add(cmp, pointRail(u1, false, 1)); } catch (...) {}
+    try { bld.Add(cmp, pointRail(u1, true, 1)); } catch (...) {}
+    try { bld.Add(cmp, pointRail(u2, false, 2)); } catch (...) {}
+    try { bld.Add(cmp, pointRail(u2, true, 2)); } catch (...) {}
+
+    // 翼轨: 普通钢轨断面沿真实线形弯折 — 开口段→咽喉弯折→平直段(44mm轮缘槽)
+    //       →绕岔心弯折→出口平直段→开口段, u2 侧由镜像生成
+    const double groove = fc.guardFlangeGroove;            // 轮缘槽宽 44
+    const double wOff = params.railHeadWidth + groove;     // 翼轨/心轨中心距
+    const double Lw = fc.wingRailLength;
+    const double sB = Lw * 0.30;                           // 出入口平直段
+    const double Lf = Lw * 0.25;                           // 开口段长度
+    const double fl = 46.0;                                // 开口张开量 (槽宽至 ~90)
+    const double csA = std::cos(alpha / 2), snA = std::sin(alpha / 2);
+    auto wingRail = [&](const gp_Dir &u, const gp_Dir &v) {
+      gp_Dir n(-u.Y(), u.X(), 0);   // u 线轮缘槽侧法向 (行进左)
+      gp_Dir nv(v.Y(), -v.X(), 0);  // v 线轮缘槽侧法向 (行进右)
+      // 绕岔心: 两条偏移线的竖直连线位于岔心前 wOff 处
+      const double xq = wOff;
+      const double t1 = (xq - wOff * snA) / csA;
+      gp_Pnt P1 = O.Translated(along(u, -sB) + gp_Vec(n.XYZ().Multiplied(wOff)));
+      gp_Pnt B1 = O.Translated(gp_Vec(n.XYZ().Multiplied(wOff)) + along(u, t1));
+      gp_Pnt B2 = O.Translated(gp_Vec(nv.XYZ().Multiplied(wOff)) + along(v, t1));
+      gp_Pnt E0 = P1.Translated(along(u, -Lf) + gp_Vec(n.XYZ().Multiplied(fl)));
+      gp_Pnt P3 = B2.Translated(along(v, sB));
+      gp_Pnt E1 = P3.Translated(along(v, Lf) + gp_Vec(nv.XYZ().Multiplied(fl)));
+      rail_params rp{};
+      rp.railHeight = params.railHeight;
+      rp.headWidth = params.railHeadWidth;
+      rp.baseWidth = params.railBaseWidth;
+      rp.webThickness = 16.5;
+      rp.headRadius = 13.0;
+      std::vector<centerline_segment> segs = {
+          {centerline_curve_type::LINE, {E0, P1}},
+          {centerline_curve_type::LINE, {P1, B1}},
+          {centerline_curve_type::LINE, {B1, B2}},
+          {centerline_curve_type::LINE, {B2, P3}},
+          {centerline_curve_type::LINE, {P3, E1}}};
+      return create_rail_path(rp, segs, 0, 0, 0);
+    };
+    TopoDS_Shape wing1;
+    try { wing1 = wingRail(u1, u2); bld.Add(cmp, wing1); } catch (...) {}
+    // u2 的翼轨 = u1 翼轨关于 XZ 平面镜像
+    try {
+      gp_Trsf mir;
+      mir.SetMirror(gp_Ax2(O, gp::DY()));
+      bld.Add(cmp, BRepBuilderAPI_Transform(wing1, mir).Shape());
+    } catch (...) {}
+
+    // 护轨: 43kg 旧钢轨断面, 对侧轨线内侧 gauge-groove 处, 两端弯折张开 (喇叭口)
+    const double gOff = params.gauge - groove;
+    const double Lg = fc.guardRailLength;
+    auto guardRail = [&](const gp_Dir &u, double sideSign) {
+      gp_Dir n(-u.Y(), u.X(), 0);
+      gp_Vec off(n.XYZ().Multiplied(sideSign * gOff));
+      gp_Vec flareDir(n.XYZ().Multiplied(-sideSign * 60.0)); // 端部向辙叉侧张开
+      const double bend = 400.0;
+      gp_Pnt sB = O.Translated(along(u, -Lg / 2) + off);
+      gp_Pnt eB = O.Translated(along(u, Lg / 2) + off);
+      gp_Pnt sT = sB.Translated(along(u, -bend) + flareDir);
+      gp_Pnt eT = eB.Translated(along(u, bend) + flareDir);
+      rail_params rp = standard_rail_params(43);
+      std::vector<centerline_segment> segs = {
+          {centerline_curve_type::LINE, {sT, sB}},
+          {centerline_curve_type::LINE, {sB, eB}},
+          {centerline_curve_type::LINE, {eB, eT}}};
+      return create_rail_path(rp, segs, 0, 0, 0);
+    };
+    try { bld.Add(cmp, guardRail(u1, +1)); } catch (...) {}
+    try { bld.Add(cmp, guardRail(u2, -1)); } catch (...) {}
     return cmp;
 }
 
@@ -3583,62 +3854,130 @@ TopoDS_Shape create_frog(const frog_params &params, const gp_Pnt &position,
 // TRACK: 33. Turnout (单开道岔)
 // =========================================================================
 TopoDS_Shape create_turnout(const turnout_params &params) {
-    // Delegated to create_turnout_assembly
+    // 单开道岔布局 (转辙器 → 连接部分 → 辙叉):
+    //   直股: 两基本轨沿 X; 侧股中心线以半径 leadR 从岔始点向 sgn 侧弯出
+    //   辙叉心 = 直股侧轨 (y=sgn*hg) 与侧股外股 (半径 leadR+hg) 的交叉点
     turnout_assembly_params tap;
     tap.turnoutNo = params.turnoutNo;
     tap.hand = params.isLeftHand ? 1 : 2;
     tap.gauge = params.gauge;
-    
+
     frog_calculated_params fc = calculate_frog_params(params.turnoutNo, params.gauge);
-    double hg = params.gauge / 2;
-    double swLen = params.switchRailLength > 0 ? params.switchRailLength : fc.switchRailLength;
-    double leadR = params.leadCurveRadius > 0 ? params.leadCurveRadius : fc.leadCurveRadius;
-    double dirSign = params.isLeftHand ? -1.0 : 1.0;
-    
-    // 1. Stock rails
-    rail_curve_params sr;
-    sr.curve.type = rail_curve_type::LINE;
-    sr.curve.startPoint = gp_Pnt(-swLen - 2000, -hg, 0);
-    sr.curve.endPoint = gp_Pnt(fc.frogTotalLength * 1.2, -hg, 0);
-    sr.railHeight = params.railHeight; sr.headWidth = params.railHeadWidth;
-    sr.baseWidth = params.railBaseWidth; sr.webThickness = params.webThickness;
-    tap.rails.push_back(sr);
-    sr.curve.startPoint = gp_Pnt(-swLen - 2000, hg, 0);
-    sr.curve.endPoint = gp_Pnt(fc.frogTotalLength * 1.2, hg, 0);
-    tap.rails.push_back(sr);
-    
-    // 2. Switch rails (tapered at switch end)
-    rail_curve_params sw;
-    sw.curve.type = rail_curve_type::LINE;
-    sw.curve.startPoint = gp_Pnt(-swLen, -hg, 0);
-    sw.curve.endPoint = gp_Pnt(0, -hg, 0);
-    sw.endStart.type = end_treatment_type::SWITCH;
-    sw.endStart.toeWidth = 2; sw.endStart.switchLength = swLen;
-    sw.railHeight = params.railHeight; sw.headWidth = params.railHeadWidth;
-    sw.baseWidth = params.railBaseWidth; sw.webThickness = params.webThickness;
-    tap.rails.push_back(sw);
-    // Curved switch on diverging side
-    sw.curve.type = rail_curve_type::ARC;
-    sw.curve.startPoint = gp_Pnt(-swLen, hg, 0);
-    sw.curve.endPoint = gp_Pnt(0, hg, 0);
-    sw.curve.radius = leadR;
-    sw.curve.arcDirection = params.isLeftHand ? 1 : 2;
-    tap.rails.push_back(sw);
-    
-    // 3. Sleepers
+    const double hg = params.gauge / 2;
+    const double swLen = params.switchRailLength > 0 ? params.switchRailLength : fc.switchRailLength;
+    const double leadR = params.leadCurveRadius > 0 ? params.leadCurveRadius : fc.leadCurveRadius;
+    const double sgn = params.isLeftHand ? 1.0 : -1.0;
+
+    const double Ro = leadR + hg;                     // 侧股外股半径
+    const double Ri = leadR - hg;                     // 侧股内股半径
+    const double frogX = std::sqrt(Ro * Ro - Ri * Ri); // 辙叉心 X (两轨线交点)
+    const double thFrog = std::asin(frogX / Ro);       // 交叉角 (外股圆上)
+    const double tail = fc.frogTotalLength;
+    const double x0 = -swLen - 2000;                   // 岔前起点
+    const double x1 = frogX + tail;                    // 岔后终点
+
+    // 侧股圆弧 (圆心 (0, sgn*leadR)) 上取点
+    auto circlePt = [&](double R, double th) {
+      return gp_Pnt(R * std::sin(th), sgn * (leadR - R * std::cos(th)), 0);
+    };
+    auto railSeg = [&](rail_curve_params &rp) {
+      rp.railHeight = params.railHeight; rp.headWidth = params.railHeadWidth;
+      rp.baseWidth = params.railBaseWidth; rp.webThickness = params.webThickness;
+      tap.rails.push_back(rp);
+    };
+
+    // 1. 基本轨 (直股两侧)
+    rail_curve_params rp;
+    rp.curve.type = rail_curve_type::LINE;
+    rp.curve.startPoint = gp_Pnt(x0, sgn * hg, 0);
+    rp.curve.endPoint = gp_Pnt(x1, sgn * hg, 0);
+    railSeg(rp);
+    rp.curve.startPoint = gp_Pnt(x0, -sgn * hg, 0);
+    rp.curve.endPoint = gp_Pnt(x1, -sgn * hg, 0);
+    railSeg(rp);
+
+    // 2. 直尖轨 (贴直股侧股侧基本轨, 尖端在岔始点)
+    {
+      rail_curve_params sw;
+      sw.curve.type = rail_curve_type::LINE;
+      sw.curve.startPoint = gp_Pnt(0, sgn * (hg - 2), 0);
+      sw.curve.endPoint = gp_Pnt(swLen, sgn * hg, 0);
+      sw.endStart.type = end_treatment_type::SWITCH;
+      sw.endStart.toeWidth = 2;
+      sw.endStart.switchLength = swLen;
+      sw.endStart.planedSide = sgn > 0 ? 1 : 2; // 刨削侧朝基本轨
+      railSeg(sw);
+    }
+    // 3. 曲尖轨 (贴另一侧基本轨, 沿侧股外股圆弧)
+    {
+      double thS = swLen / Ro;
+      rail_curve_params sw;
+      sw.curve.type = rail_curve_type::ARC;
+      sw.curve.startPoint = circlePt(Ro, 0).Translated(gp_Vec(0, sgn * 2, 0));
+      sw.curve.controlPoints = {circlePt(Ro, thS / 2)};
+      sw.curve.endPoint = circlePt(Ro, thS);
+      sw.endStart.type = end_treatment_type::SWITCH;
+      sw.endStart.toeWidth = 2;
+      sw.endStart.switchLength = swLen;
+      sw.endStart.planedSide = sgn > 0 ? 2 : 1;
+      railSeg(sw);
+    }
+    // 4. 导曲线外股 (曲尖轨跟端 → 过辙叉)
+    {
+      double thS = swLen / Ro;
+      double thE = thFrog + tail / Ro;
+      rail_curve_params cr;
+      cr.curve.type = rail_curve_type::ARC;
+      cr.curve.startPoint = circlePt(Ro, thS);
+      cr.curve.controlPoints = {circlePt(Ro, (thS + thE) / 2)};
+      cr.curve.endPoint = circlePt(Ro, thE);
+      railSeg(cr);
+    }
+    // 5. 导曲线内股 (直尖轨跟端起, 同圆心渐开)
+    {
+      double thE = thFrog + tail / Ri;
+      gp_Pnt p0(swLen, sgn * hg, 0);
+      gp_Pnt p2 = circlePt(Ri, thE);
+      double thM = (std::asin(swLen / Ri) + thE) / 2;
+      rail_curve_params cr;
+      cr.curve.type = rail_curve_type::ARC;
+      cr.curve.startPoint = p0;
+      cr.curve.controlPoints = {circlePt(Ri, thM)};
+      cr.curve.endPoint = p2;
+      railSeg(cr);
+    }
+
+    // 6. 岔枕 (沿直股均布, 转辙区/辙叉区加长)
     int sc = params.sleeperCount;
     for (int i = 0; i < sc; ++i) {
         double t = (double)i / sc;
-        double x = -swLen + t * (fc.frogTotalLength * 1.2 + swLen);
-        double sl = 2500 + t * 200; // varying length
+        double x = x0 + t * (x1 - x0);
+        double sl = 2500 + t * 200;
         sleeper_line_params slp;
         slp.startPoint = gp_Pnt(x, -sl / 2, 0);
         slp.endPoint = gp_Pnt(x, sl / 2, 0);
         slp.width = 260; slp.height = 200; slp.gauge = params.gauge;
         tap.sleepers.push_back(slp);
     }
-    
-    return create_turnout_assembly(tap);
+
+    TopoDS_Shape base = create_turnout_assembly(tap);
+
+    // 7. 辙叉 (心轨+翼轨+护轨): 置于两轨线交点, 旋转半交叉角
+    frog_params fp;
+    fp.turnoutNo = params.turnoutNo;
+    fp.gauge = params.gauge;
+    fp.railHeight = params.railHeight;
+    fp.railHeadWidth = params.railHeadWidth;
+    fp.railBaseWidth = params.railBaseWidth;
+    double half = sgn * thFrog / 2;
+    TopoDS_Shape frog = create_frog(fp, gp_Pnt(frogX, sgn * hg, 0),
+                                    gp_Dir(std::cos(half), std::sin(half), 0),
+                                    gp::DZ());
+
+    BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
+    bld.Add(cmp, base);
+    bld.Add(cmp, frog);
+    return cmp;
 }
 
 TopoDS_Shape create_turnout(const turnout_params &params,
@@ -3704,22 +4043,20 @@ frog_calculated_params calculate_frog_params(int turnoutNo, double gauge) {
 TopoDS_Shape create_rail_pair(const rail_pair_params &params) {
     BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
     if (params.centerline.size() < 2) return cmp;
-    rail_curve_params rp;
-    rp.curve.type = rail_curve_type::LINE;
-    rp.curve.startPoint = params.centerline[0];
-    rp.curve.endPoint = params.centerline[1];
+    rail_params rp{};
     rp.railHeight = params.railHeight;
     rp.headWidth = params.railHeadWidth;
     rp.baseWidth = params.railBaseWidth;
-    // Left rail
-    gp_Trsf lTr; lTr.SetTranslation(gp_Vec(0, -params.gauge / 2, 0));
-    rp.curve.startPoint = params.centerline[0].Translated(gp_Vec(0, -params.gauge / 2, 0));
-    rp.curve.endPoint = params.centerline[1].Translated(gp_Vec(0, -params.gauge / 2, 0));
-    try { bld.Add(cmp, create_rail_curve(rp)); } catch (...) {}
-    // Right rail
-    rp.curve.startPoint = params.centerline[0].Translated(gp_Vec(0, params.gauge / 2, 0));
-    rp.curve.endPoint = params.centerline[1].Translated(gp_Vec(0, params.gauge / 2, 0));
-    try { bld.Add(cmp, create_rail_curve(rp)); } catch (...) {}
+    // 完整折线中心线 → LINE 段序列
+    std::vector<centerline_segment> segs;
+    for (size_t i = 1; i < params.centerline.size(); ++i)
+        segs.push_back({centerline_curve_type::LINE,
+                        {params.centerline[i - 1], params.centerline[i]}});
+    // 超高 → 绕线路切向的倾角 (左右轨同一倾角, 外轨抬高)
+    double tilt = params.gauge > 0
+                      ? std::atan2(params.superElevation, params.gauge) : 0;
+    try { bld.Add(cmp, create_rail_path(rp, segs, -params.gauge / 2, 0, tilt)); } catch (...) {}
+    try { bld.Add(cmp, create_rail_path(rp, segs, params.gauge / 2, 0, tilt)); } catch (...) {}
     return cmp;
 }
 
@@ -3738,29 +4075,33 @@ TopoDS_Shape create_rail_pair(const rail_pair_params &params,
 // TRACK: 36. Sleeper Layout (轨枕阵列)
 // =========================================================================
 TopoDS_Shape create_sleeper_layout(const sleeper_layout_params &params) {
-    if (params.centerline.size() < 2) return TopoDS_Shape();
+    if (params.centerline.size() < 2 || params.spacing <= 0) return TopoDS_Shape();
     BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
-    double totalLen = 0;
-    for (size_t i = 0; i < params.centerline.size() - 1; ++i)
-        totalLen += params.centerline[i].Distance(params.centerline[i + 1]);
-    int count = std::max(1, (int)(totalLen / params.spacing));
-    for (int i = 0; i < count; ++i) {
-        double t = (double)i / count;
-        double d = t * totalLen; double acc = 0;
-        gp_Pnt pos;
-        for (size_t j = 0; j < params.centerline.size() - 1; ++j) {
-            double segL = params.centerline[j].Distance(params.centerline[j + 1]);
-            if (acc + segL >= d || j == params.centerline.size() - 2) {
-                double lt = segL > 0 ? (d - acc) / segL : 0;
-                pos = params.centerline[j].Translated(
-                                                      gp_Vec(params.centerline[j+1].XYZ() - params.centerline[j].XYZ()) * lt);
-                break;
-            }
-            acc += segL;
-        }
+    // 累计弧长
+    std::vector<double> acc(params.centerline.size(), 0);
+    for (size_t i = 1; i < params.centerline.size(); ++i)
+        acc[i] = acc[i - 1] + params.centerline[i - 1].Distance(params.centerline[i]);
+    double totalLen = acc.back();
+    if (totalLen < params.spacing) return TopoDS_Shape();
+    int count = std::max(1, (int)std::floor(totalLen / params.spacing));
+    double step = totalLen / count; // 弧长等间距
+    for (int i = 0; i <= count; ++i) {
+        double d = i * step;
+        // 定位到弧长 d 处并求切向
+        size_t j = 1;
+        while (j < acc.size() - 1 && acc[j] < d) ++j;
+        double segL = acc[j] - acc[j - 1];
+        double lt = segL > Precision::Confusion() ? (d - acc[j - 1]) / segL : 0;
+        gp_Vec tv(params.centerline[j - 1], params.centerline[j]);
+        gp_Pnt pos = params.centerline[j - 1].Translated(tv * lt);
+        if (tv.Magnitude() < Precision::Confusion()) continue;
+        // 轨枕方向 = 切向 × 竖直 (水平面内垂直于线路, 曲线上即径向)
+        gp_Vec sidev(gp_Dir(tv).XYZ().Crossed(gp::DZ().XYZ()));
+        if (sidev.Magnitude() < Precision::Confusion()) sidev = gp::DY().XYZ();
+        gp_Vec side(sidev.Normalized());
         sleeper_line_params sp;
-        sp.startPoint = gp_Pnt(pos.X() - params.length / 2, pos.Y(), pos.Z());
-        sp.endPoint = gp_Pnt(pos.X() + params.length / 2, pos.Y(), pos.Z());
+        sp.startPoint = pos.Translated(side * (-params.length / 2));
+        sp.endPoint = pos.Translated(side * (params.length / 2));
         sp.width = params.width;
         sp.height = params.height;
         sp.gauge = params.gauge;
@@ -3779,40 +4120,46 @@ TopoDS_Shape create_straight_track(const straight_track_params &params) {
   double hg = params.gauge / 2;
   gp_Vec dir(params.startPoint, params.endPoint);
   double len = dir.Magnitude();
-  
+  if (len < Precision::Confusion()) return cmp;
+  gp_Dir tan(dir);
+  // 横向: 水平面内垂直于线路
+  gp_Vec sidev(tan.XYZ().Crossed(gp::DZ().XYZ()));
+  if (sidev.Magnitude() < Precision::Confusion()) sidev = gp::DY().XYZ();
+  gp_Vec side(sidev.Normalized());
+
   // Rails
   rail_curve_params rp;
   rp.curve.type = rail_curve_type::LINE;
-  rp.curve.startPoint = params.startPoint.Translated(gp_Vec(0, -hg, 0));
-  rp.curve.endPoint = params.endPoint.Translated(gp_Vec(0, -hg, 0));
+  rp.curve.startPoint = params.startPoint.Translated(side * (-hg));
+  rp.curve.endPoint = params.endPoint.Translated(side * (-hg));
   rp.railHeight = params.railHeight; rp.headWidth = params.railHeadWidth;
   rp.baseWidth = params.railBaseWidth; rp.webThickness = params.webThickness;
   try { bld.Add(cmp, create_rail_curve(rp)); } catch (...) {}
-  rp.curve.startPoint = params.startPoint.Translated(gp_Vec(0, hg, 0));
-  rp.curve.endPoint = params.endPoint.Translated(gp_Vec(0, hg, 0));
+  rp.curve.startPoint = params.startPoint.Translated(side * hg);
+  rp.curve.endPoint = params.endPoint.Translated(side * hg);
   try { bld.Add(cmp, create_rail_curve(rp)); } catch (...) {}
-  
-  // Sleepers
+
+  // Sleepers (垂直于线路方向, 弧长等距)
   int sc = std::max(2, (int)(len / params.sleeperSpacing));
   for (int i = 0; i < sc; ++i) {
     double t = (double)i / (sc - 1);
     gp_Pnt pos = params.startPoint.Translated(dir * t);
     sleeper_line_params slp;
-    slp.startPoint = gp_Pnt(pos.X() - params.sleeperLength / 2, pos.Y(), pos.Z());
-    slp.endPoint = gp_Pnt(pos.X() + params.sleeperLength / 2, pos.Y(), pos.Z());
+    slp.startPoint = pos.Translated(side * (-params.sleeperLength / 2));
+    slp.endPoint = pos.Translated(side * (params.sleeperLength / 2));
     slp.width = params.sleeperWidth; slp.height = params.sleeperHeight;
     slp.gauge = params.gauge;
     try { bld.Add(cmp, create_sleeper_line(slp)); } catch (...) {}
   }
-  
+
   // Ballast
   ballast_from_sleepers_params bsp;
   for (int i = 0; i < sc; ++i) {
     double t = (double)i / (sc - 1);
     gp_Pnt pos = params.startPoint.Translated(dir * t);
     sleeper_line_params slp;
-    slp.startPoint = gp_Pnt(pos.X(), pos.Y() - params.sleeperLength / 2, pos.Z());
-    slp.endPoint = gp_Pnt(pos.X(), pos.Y() + params.sleeperLength / 2, pos.Z());
+    slp.startPoint = pos.Translated(side * (-params.sleeperLength / 2));
+    slp.endPoint = pos.Translated(side * (params.sleeperLength / 2));
     bsp.sleepers.push_back(slp);
   }
   bsp.topWidth = params.ballastTopWidth;
@@ -3907,64 +4254,52 @@ TopoDS_Shape create_switch_rail(const switch_rail_params &params) {
   if (params.length <= 0 || params.railHeight <= 0)
     throw Standard_ConstructionError("Invalid switch rail dimensions");
 
-  double H = params.railHeight;
-  double hW = params.railHeadWidth / 2.0;
-  double bW = params.railBaseWidth / 2.0;
-  double tW = std::max(params.tipWidth / 2.0, Precision::Confusion());
-  double tB = std::max(tW * (bW / hW), Precision::Confusion()); // base width at tip proportional to head tip
+  const double H = params.railHeight;
+  const double hW = params.railHeadWidth / 2.0;
+  const double tipScale = std::max(params.tipWidth, 2.0) / params.railHeadWidth;
+  // 非刨削侧 (贴基本轨侧) 边缘为锚点, 宽度向刨削侧收缩
+  const double anchor = params.isLeftHand ? -hW : hW;
 
-  // Cross-section in YZ plane (Y=width, Z=height)
-  // At tip (t=0): narrow width (tW/tB), nearly full height
-  // At heel (t=1): full width (hW/bW), full height
-  auto makeProfile = [&](double xPos, double t) -> TopoDS_Wire {
-    double wsc = t + (1-t) * (tW / hW); // width scale: tW/hW at tip → 1 at heel
-    double hsc = 0.95 + 0.05 * t;        // height scale: 0.95 at tip → 1 at heel
-    double hh = H * 0.36 * hsc, bh = H * 0.18 * hsc;
-    double hw = hW * wsc, bw = bW * wsc, wt = bw * 0.22;
-    double x = xPos, zH = H * hsc;
-    auto P = [&](double y, double z) { return gp_Pnt(x, y, z); };
-    BRepBuilderAPI_MakeWire w;
-    w.Add(BRepBuilderAPI_MakeEdge(P(-hw, zH), P(hw, zH)));
-    w.Add(BRepBuilderAPI_MakeEdge(P(hw, zH), P(hw, zH-hh)));
-    w.Add(BRepBuilderAPI_MakeEdge(P(hw, zH-hh), P(wt, zH-hh)));
-    w.Add(BRepBuilderAPI_MakeEdge(P(wt, zH-hh), P(wt, bh)));
-    w.Add(BRepBuilderAPI_MakeEdge(P(wt, bh), P(bw, bh)));
-    w.Add(BRepBuilderAPI_MakeEdge(P(bw, bh), P(bw, 0)));
-    w.Add(BRepBuilderAPI_MakeEdge(P(bw, 0), P(-bw, 0)));
-    w.Add(BRepBuilderAPI_MakeEdge(P(-bw, 0), P(-bw, bh)));
-    w.Add(BRepBuilderAPI_MakeEdge(P(-bw, bh), P(-wt, bh)));
-    w.Add(BRepBuilderAPI_MakeEdge(P(-wt, bh), P(-wt, zH-hh)));
-    w.Add(BRepBuilderAPI_MakeEdge(P(-wt, zH-hh), P(-hw, zH-hh)));
-    w.Add(BRepBuilderAPI_MakeEdge(P(-hw, zH-hh), P(-hw, zH)));
-    return w.Wire();
+  // 断面序列: 尖端 (窄+降低) → 跟端 (全剖面)
+  auto sectionAt = [&](double t) {
+    double wsc = tipScale + (1.0 - tipScale) * t;
+    double hsc = 0.9 + 0.1 * t;
+    return buildRailSectionWire(H * hsc, params.railHeadWidth,
+                                params.railBaseWidth, params.webThickness,
+                                0, 0, 13.0, wsc, anchor);
   };
 
-  // Build taper: N sections from tip(very thin, at x=0) to heel(full, at x=length)
-  int nSections = 5;
-  BRepOffsetAPI_ThruSections gen(Standard_True, Standard_True);
-  for (int i = 0; i < nSections; ++i) {
-    double t = (double)i / (nSections - 1);
-    double x = t * params.length;
-    gen.AddWire(makeProfile(x, t));
-  }
-  gen.Build();
-  TopoDS_Shape rail = gen.Shape();
-  
-  // If curved, rotate each section point around the curve center
-  if (params.curveRadius > 0) {
-    double R = params.curveRadius;
-    int nSeg = 20;
-    BRepOffsetAPI_ThruSections curveGen(Standard_True, Standard_True);
-    for (int i = 0; i <= nSeg; ++i) {
-      double t = (double)i / nSeg;
-      double x = t * params.length;
-      curveGen.AddWire(makeProfile(x, t));
+  const int nSec = 12;
+  BRepOffsetAPI_ThruSections loft(Standard_True, Standard_True);
+  const bool curved = params.curveRadius > Precision::Confusion();
+  const double R = curved ? params.curveRadius : 1.0;
+  const double sgn = params.isLeftHand ? 1.0 : -1.0;
+  for (int i = 0; i <= nSec; ++i) {
+    double t = (double)i / nSec;
+    double s = t * params.length;
+    gp_Pnt p;
+    gp_Dir tan;
+    if (curved) {
+      double th = s / R;
+      p = gp_Pnt(R * std::sin(th), sgn * R * (1 - std::cos(th)), 0);
+      tan = gp_Dir(std::cos(th), sgn * std::sin(th), 0);
+    } else {
+      p = gp_Pnt(s, 0, 0);
+      tan = gp::DX();
     }
-    curveGen.Build();
-    return curveGen.Shape();
+    // 断面坐标架: 局部 X=横向 → lat, 局部 Y=竖向 → up, 法向 → tan
+    gp_Dir lat = gp::DZ().Crossed(tan);
+    gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX());
+    gp_Ax3 tgt(p, tan, lat);
+    gp_Trsf tr;
+    tr.SetTransformation(tgt, src);
+    loft.AddWire(TopoDS::Wire(
+        BRepBuilderAPI_Transform(sectionAt(t), tr).Shape()));
   }
-
-  return rail;
+  loft.Build();
+  if (!loft.IsDone())
+    throw Standard_ConstructionError("Switch rail loft failed");
+  return loft.Shape();
 }
 
 TopoDS_Shape create_switch_rail(const switch_rail_params &params,
@@ -3987,17 +4322,46 @@ TopoDS_Shape create_reg_arm_bracket(const reg_arm_bracket_params &params) {
   double bThick = params.bandThickness > 0 ? params.bandThickness : R * 0.12;
   double bkW = params.bracketWidth > 0 ? params.bracketWidth : bThick * 3;
   double bkH = params.bracketHeight;
-  BRep_Builder b; TopoDS_Compound c; b.MakeCompound(c);
+  double br = params.mountHoleDiameter / 2.0;
   double bw2 = bWidth / 2;
-  b.Add(c, BRepAlgoAPI_Cut(
+  double gapW = bThick * 0.8;
+
+  BRep_Builder b; TopoDS_Compound c; b.MakeCompound(c);
+
+  // 抱箍环带 (绕腕臂管, 管轴 = X), 底部开槽
+  TopoDS_Shape band = BRepAlgoAPI_Cut(
     BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-bw2, 0, 0), gp::DX()), R + bThick, bWidth).Shape(),
-    BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-bw2, 0, 0), gp::DX()), R, bWidth + 2).Shape()).Shape());
-  b.Add(c, BRepPrimAPI_MakeBox(gp_Pnt(-bThick / 2, -bkW / 2, -R - bkH), bThick, bkW, bkH).Shape());
-  if (params.mountHoleDiameter > 0) {
-    double br = params.mountHoleDiameter / 2.0;
-    double bz = -R - bkH * 0.85;
-    b.Add(c, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-bThick / 2 - br * 0.3, 0, bz), gp::DX()), br, bThick + br * 0.6).Shape());
+    BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-bw2 - 1, 0, 0), gp::DX()), R, bWidth + 2).Shape()).Shape();
+  band = BRepAlgoAPI_Cut(
+    band, BRepPrimAPI_MakeBox(gp_Pnt(-bw2 - 1, -gapW / 2, -R - bThick - 1),
+                              bWidth + 2, gapW, bThick + 2).Shape()).Shape();
+  b.Add(c, band);
+
+  // 开口两侧螺栓耳 (带紧固孔)
+  for (int side = -1; side <= 1; side += 2) {
+    double ey = side * (gapW / 2 + bThick / 2);
+    TopoDS_Shape ear = BRepPrimAPI_MakeBox(
+        gp_Pnt(-bw2, ey - bThick / 2, -R - bThick * 2.5), bWidth, bThick,
+        bThick * 1.8).Shape();
+    if (br > 0) {
+      ear = BRepAlgoAPI_Cut(
+          ear, BRepPrimAPI_MakeCylinder(
+                   gp_Ax2(gp_Pnt(-bw2 - 1, ey, -R - bThick * 1.6), gp::DX()),
+                   br, bWidth + 2).Shape()).Shape();
+    }
+    b.Add(c, ear);
   }
+
+  // L 型弯板 (定位器座), 底部带销轴孔
+  TopoDS_Shape plate = BRepPrimAPI_MakeBox(
+      gp_Pnt(-bThick / 2, -bkW / 2, -R - bkH), bThick, bkW, bkH).Shape();
+  if (br > 0) {
+    plate = BRepAlgoAPI_Cut(
+        plate, BRepPrimAPI_MakeCylinder(
+                   gp_Ax2(gp_Pnt(-bThick / 2 - 1, 0, -R - bkH * 0.85), gp::DX()),
+                   br, bThick + 2).Shape()).Shape();
+  }
+  b.Add(c, plate);
   return c;
 }
 
@@ -4066,44 +4430,45 @@ TopoDS_Wire buildCurveWire(const curve_params &curve) {
   return w.Wire();
 }
 
-TopoDS_Face buildRailProfile(double railHeight, double headWidth,
-                              double baseWidth, double webThickness,
-                              double headHeight, double baseHeight,
-                              double headRadius) {
-  double hh = headHeight > 0 ? headHeight : railHeight * 0.3;
-  double bh = baseHeight > 0 ? baseHeight : railHeight * 0.15;
-  double hw = headWidth / 2.0, bw = baseWidth / 2.0, wt = webThickness / 2.0;
-  double hr = headRadius > 0 ? headRadius : 13.0;
-  double zw = bh, zt = railHeight - hh, zTop = railHeight;
+// 槽形截面 (U 形轮缘槽, 开口朝上): 槽底 + 两侧立壁 + 外翼缘, 内槽角圆角
+TopoDS_Face buildChannelProfile(double height, double flangeWidth,
+                                double webThickness, double grooveWidth = 45.0,
+                                double grooveThickness = 15.0) {
+  double gw2 = grooveWidth / 2.0;
+  double wT = webThickness;
+  double bT = grooveThickness;
+  double ow = gw2 + wT + flangeWidth; // 外缘半宽
+  double lipH = bT * 1.6;             // 外翼缘高度
+  double fr = std::min(6.0, gw2 * 0.15); // 内槽角圆角
   BRepBuilderAPI_MakeWire w;
-  w.Add(makeEdgeSafe(gp_Pnt(0, -bw, 0), gp_Pnt(0, -bw, zw)));
-  w.Add(makeEdgeSafe(gp_Pnt(0, -bw, zw), gp_Pnt(0, -wt, zw)));
-  w.Add(makeEdgeSafe(gp_Pnt(0, -wt, zw), gp_Pnt(0, -wt, zt)));
-  w.Add(makeEdgeSafe(gp_Pnt(0, -wt, zt), gp_Pnt(0, -hw, zt)));
-  w.Add(makeEdgeSafe(gp_Pnt(0, -hw, zt), gp_Pnt(0, -hw, zTop - hr)));
-  gp_Circ arcL(gp_Ax2(gp_Pnt(0, -hw + hr, zTop - hr), gp_Dir(1, 0, 0)), hr);
-  w.Add(BRepBuilderAPI_MakeEdge(GC_MakeArcOfCircle(arcL, M_PI / 2, M_PI, false).Value()).Edge());
-  gp_Circ arcR(gp_Ax2(gp_Pnt(0, hw - hr, zTop - hr), gp_Dir(1, 0, 0)), hr);
-  w.Add(BRepBuilderAPI_MakeEdge(GC_MakeArcOfCircle(arcR, 0, M_PI / 2, false).Value()).Edge());
-  w.Add(makeEdgeSafe(gp_Pnt(0, hw, zTop - hr), gp_Pnt(0, hw, zt)));
-  w.Add(makeEdgeSafe(gp_Pnt(0, hw, zt), gp_Pnt(0, wt, zt)));
-  w.Add(makeEdgeSafe(gp_Pnt(0, wt, zt), gp_Pnt(0, wt, zw)));
-  w.Add(makeEdgeSafe(gp_Pnt(0, wt, zw), gp_Pnt(0, bw, zw)));
-  w.Add(makeEdgeSafe(gp_Pnt(0, bw, zw), gp_Pnt(0, bw, 0)));
-  w.Add(makeEdgeSafe(gp_Pnt(0, bw, 0), gp_Pnt(0, -bw, 0)));
-  ShapeFix_Wire fx; fx.Load(w.Wire()); fx.Perform();
-  return BRepLib_MakeFace(fx.Wire()).Face();
-}
-
-TopoDS_Face buildChannelProfile(double height, double flangeWidth, double webThickness) {
-  double hw = webThickness / 2.0, fw = flangeWidth;
-  BRepBuilderAPI_MakeWire w;
-  w.Add(makeEdgeSafe(gp_Pnt(0, -fw, 0), gp_Pnt(0, -fw, height)));
-  w.Add(makeEdgeSafe(gp_Pnt(0, -fw, height), gp_Pnt(0, -hw, height)));
-  w.Add(makeEdgeSafe(gp_Pnt(0, -hw, height), gp_Pnt(0, hw, height)));
-  w.Add(makeEdgeSafe(gp_Pnt(0, hw, height), gp_Pnt(0, fw, height)));
-  w.Add(makeEdgeSafe(gp_Pnt(0, fw, height), gp_Pnt(0, fw, 0)));
-  w.Add(makeEdgeSafe(gp_Pnt(0, fw, 0), gp_Pnt(0, -fw, 0)));
+  auto P = [](double y, double z) { return gp_Pnt(0, y, z); };
+  auto line = [&](double y0, double z0, double y1, double z1) {
+    w.Add(BRepBuilderAPI_MakeEdge(P(y0, z0), P(y1, z1)));
+  };
+  auto fillet = [&](double cx, double cz, double a0deg) {
+    // 以 (cx,cz) 为圆心 fr 半径, 从 a0 到 a0-90° 的四分之一圆弧
+    double a0 = a0deg * M_PI / 180.0, a1 = a0 - M_PI / 2, am = a0 - M_PI / 4;
+    w.Add(BRepBuilderAPI_MakeEdge(
+        GC_MakeArcOfCircle(P(cx + fr * std::cos(a0), cz + fr * std::sin(a0)),
+                           P(cx + fr * std::cos(am), cz + fr * std::sin(am)),
+                           P(cx + fr * std::cos(a1), cz + fr * std::sin(a1)))
+            .Value()));
+  };
+  // 底面 → 右外翼缘 → 右立壁 → 内槽角圆角 → 槽底 → 左内槽角 → 左立壁 → 左外翼缘
+  line(-ow, 0, ow, 0);
+  line(ow, 0, ow, lipH);
+  line(ow, lipH, gw2 + wT, lipH);
+  line(gw2 + wT, lipH, gw2 + wT, height);
+  line(gw2 + wT, height, gw2, height);
+  line(gw2, height, gw2, bT + fr);
+  fillet(gw2 - fr, bT + fr, 0);       // 右内槽角
+  line(gw2 - fr, bT, -(gw2 - fr), bT);
+  fillet(-(gw2 - fr), bT + fr, 270);  // 左内槽角
+  line(-gw2, bT + fr, -gw2, height);
+  line(-gw2, height, -(gw2 + wT), height);
+  line(-(gw2 + wT), height, -(gw2 + wT), lipH);
+  line(-(gw2 + wT), lipH, -ow, lipH);
+  line(-ow, lipH, -ow, 0);
   ShapeFix_Wire fx; fx.Load(w.Wire()); fx.Perform();
   return BRepLib_MakeFace(fx.Wire()).Face();
 }
@@ -4171,35 +4536,192 @@ TopoDS_Shape sweepProfile(const TopoDS_Face &face, const curve_params &curve) {
   return result;
 }
 
+// 从 curve_params 构建 Geom 曲线 (用于端部处理的几何计算)
+Handle(Geom_Curve) pathCurveGeom(const curve_params &curve) {
+  switch (curve.type) {
+  case rail_curve_type::LINE:
+    if (curve.startPoint.Distance(curve.endPoint) < Precision::Confusion())
+      return nullptr;
+    return GC_MakeSegment(curve.startPoint, curve.endPoint).Value();
+  case rail_curve_type::ARC: {
+    if (curve.controlPoints.size() >= 1)
+      return GC_MakeArcOfCircle(curve.startPoint, curve.controlPoints[0],
+                                curve.endPoint).Value();
+    if (curve.radius > Precision::Confusion()) {
+      gp_Pnt mid((curve.startPoint.X() + curve.endPoint.X()) / 2.0,
+                 (curve.startPoint.Y() + curve.endPoint.Y()) / 2.0,
+                 (curve.startPoint.Z() + curve.endPoint.Z()) / 2.0);
+      gp_Dir dir(0, 0, curve.arcDirection == 1 ? 1 : -1);
+      double d2 = curve.startPoint.Distance(curve.endPoint) / 2.0;
+      double h = sqrt(std::max(0.0, curve.radius * curve.radius - d2 * d2));
+      gp_Pnt center = mid.XYZ() + dir.XYZ() * h;
+      return GC_MakeArcOfCircle(curve.startPoint, center, curve.endPoint).Value();
+    }
+    return nullptr;
+  }
+  case rail_curve_type::BEZIER: {
+    std::vector<gp_Pnt> cpts = curve.controlPoints;
+    if (cpts.empty() || cpts.front().Distance(curve.startPoint) > Precision::Confusion())
+      cpts.insert(cpts.begin(), curve.startPoint);
+    if (cpts.back().Distance(curve.endPoint) > Precision::Confusion())
+      cpts.push_back(curve.endPoint);
+    return makeBezier(cpts);
+  }
+  }
+  return nullptr;
+}
+
+// 平面四边形 + 沿竖直方向拉伸成切割楔体
+TopoDS_Shape makeWedge(const gp_Pnt &a, const gp_Pnt &b, const gp_Pnt &c,
+                       const gp_Pnt &d, const gp_Vec &prismVec) {
+  BRepBuilderAPI_MakePolygon poly;
+  poly.Add(a);
+  poly.Add(b);
+  poly.Add(c);
+  poly.Add(d);
+  poly.Close();
+  TopoDS_Face f = BRepBuilderAPI_MakeFace(poly.Wire(), true).Face();
+  return BRepPrimAPI_MakePrism(f, prismVec).Shape();
+}
+
 TopoDS_Shape applyEndTreatment(const TopoDS_Shape &shape,
                                 const end_treatment_params &t,
                                 const curve_params &curve, bool isStart) {
   if (t.type == end_treatment_type::PLANE) return shape;
+
+  // SCARF: 用斜切平面切掉端部
   if (t.type == end_treatment_type::SCARF) {
     gp_Pnt pt = isStart ? curve.startPoint : curve.endPoint;
     gp_Vec dir(curve.startPoint, curve.endPoint);
-    double len = dir.Magnitude();
-    if (len < Precision::Confusion()) return shape;
+    if (dir.Magnitude() < Precision::Confusion()) return shape;
+    gp_Dir outward(dir);
+    if (isStart) outward.Reverse();
     double a = t.scarfAngle * M_PI / 180.0;
-    gp_Dir cd = isStart ? gp_Dir(dir).Rotated(gp_Ax1(pt, gp_Dir(0, 1, 0)), a)
-                       : gp_Dir(dir).Rotated(gp_Ax1(pt, gp_Dir(0, 1, 0)), -a);
-    TopoDS_Shape r = shape;
+    gp_Dir n = outward.Rotated(gp_Ax1(pt, gp::DZ()), a);
+    gp_Ax2 ax(pt, n);
+    TopoDS_Shape box = BRepPrimAPI_MakeBox(ax, 4000, 4000, 4000).Shape();
+    gp_Trsf mv;
+    mv.SetTranslation(gp_Vec(ax.XDirection().XYZ() * -2000 +
+                             ax.YDirection().XYZ() * -2000));
+    box = BRepBuilderAPI_Transform(box, mv).Shape();
+    TopoDS_Shape r = BRepAlgoAPI_Cut(shape, box).Shape();
     return r.IsNull() ? shape : r;
   }
-  if (t.type == end_treatment_type::BELL) {
-    double bl = t.bellLength;
-    if (bl < 1) return shape;
-    gp_Pnt c = isStart ? curve.startPoint : curve.endPoint;
-    gp_Vec d(curve.startPoint, curve.endPoint);
-    gp_Dir ax(d);
-    gp_Dir perp(0, 1, 0);
-    if (std::abs(ax.Dot(perp)) > 0.9) perp = gp_Dir(1, 0, 0);
-    gp_Vec axv(ax.XYZ()), perpv(perp.XYZ());
-    gp_Pnt o = isStart ? c.Translated(-axv * bl - perpv * 30) : c.Translated(-perpv * 30);
-    TopoDS_Shape b = BRepPrimAPI_MakeBox(o, bl, 60, 60).Shape();
-    return BRepAlgoAPI_Fuse(shape, b).Shape();
+
+  // SWITCH: 单侧刨削 — 刨切楔体从全剖面切到尖端, 可选尖端降低
+  if (t.type == end_treatment_type::SWITCH) {
+    Handle(Geom_Curve) c = pathCurveGeom(curve);
+    if (c.IsNull()) return shape;
+    GeomAdaptor_Curve gac(c);
+    double L = GCPnts_AbscissaPoint::Length(gac);
+    double swL = t.switchLength > 0 ? t.switchLength : std::min(1200.0, L * 0.3);
+    if (swL >= L || swL < 50) return shape;
+    double toe = std::max(t.toeWidth, 2.0);
+
+    Bnd_Box bb;
+    BRepBndLib::Add(shape, bb);
+    double x0, y0, z0, x1, y1, z1;
+    bb.Get(x0, y0, z0, x1, y1, z1);
+    double H = z1 - z0;
+
+    // 端点 E 与刨削起点 S
+    double uE = isStart ? c->FirstParameter() : c->LastParameter();
+    double sS = isStart ? swL : L - swL;
+    double uS;
+    try {
+      GCPnts_AbscissaPoint ap(gac, sS, c->FirstParameter());
+      uS = ap.Parameter();
+    } catch (...) { return shape; }
+    gp_Pnt E, S;
+    gp_Vec vE, vS;
+    c->D1(uE, E, vE);
+    c->D1(uS, S, vS);
+    gp_Dir T(vE);                       // 指向端部的行进方向
+    if (isStart) T.Reverse();
+    gp_Vec Hv(T.XYZ().Crossed(gp::DZ().XYZ()));
+    gp_Dir Hd = Hv.Magnitude() < Precision::Confusion() ? gp::DX() : gp_Dir(Hv);
+    double side = (t.planedSide == 1) ? -1.0 : 1.0; // Hd 指向行进右侧
+    gp_Dir Ps(Hd.XYZ() * side);         // 刨削侧方向
+
+    // 刨削侧外缘: 包围盒角点在 Ps 方向的最大投影
+    double hW = 40.0;
+    for (int i = 0; i < 8; ++i) {
+      gp_Pnt cor(i & 1 ? x1 : x0, i & 2 ? y1 : y0, i & 4 ? z1 : z0);
+      hW = std::max(hW, gp_Vec(S, cor).Dot(gp_Vec(Ps.XYZ())));
+    }
+
+    // 刨切楔体: 从 S 处外缘斜切到 E 处半尖宽, 竖直覆盖轨头区域
+    gp_Pnt A = S.Translated(gp_Vec(Ps.XYZ()) * hW);
+    gp_Pnt B = E.Translated(gp_Vec(Ps.XYZ()) * (toe / 2));
+    gp_Pnt C = E.Translated(gp_Vec(Ps.XYZ()) * (hW * 4));
+    gp_Pnt D = S.Translated(gp_Vec(Ps.XYZ()) * (hW * 4));
+    double zBase = z0 + H * 0.2;
+    double zMin = std::min(S.Z(), E.Z());
+    gp_Vec down(0, 0, zBase - zMin);
+    TopoDS_Shape wedge = makeWedge(A.Translated(down), B.Translated(down),
+                                   C.Translated(down), D.Translated(down),
+                                   gp_Vec(0, 0, (z1 + 500) - zBase));
+    TopoDS_Shape r = BRepAlgoAPI_Cut(shape, wedge).Shape();
+    if (r.IsNull()) return shape;
+
+    // 尖端降低: 顶部斜切楔体
+    if (t.dropValue > Precision::Confusion()) {
+      gp_Pnt A2(S.X(), S.Y(), S.Z() + H + 1);
+      gp_Pnt B2(E.X(), E.Y(), E.Z() + H + 1 - t.dropValue);
+      gp_Pnt C2(E.X(), E.Y(), E.Z() + H + 500);
+      gp_Pnt D2(S.X(), S.Y(), S.Z() + H + 500);
+      gp_Vec aside(Ps.XYZ() * -(hW * 4));
+      TopoDS_Shape drop = makeWedge(A2.Translated(aside), B2.Translated(aside),
+                                    C2.Translated(aside), D2.Translated(aside),
+                                    gp_Vec(Ps.XYZ()) * (hW * 8));
+      TopoDS_Shape r2 = BRepAlgoAPI_Cut(r, drop).Shape();
+      if (!r2.IsNull()) r = r2;
+    }
+    return r;
   }
+
   return shape;
+}
+
+// BELL 喇叭口: 从正常槽型截面放样张开到外扩截面
+TopoDS_Shape addBellMouth(const TopoDS_Shape &shape, const curve_params &curve,
+                          bool isStart, double height, double flangeWidth,
+                          double webThickness, double bellLength,
+                          double grooveWidth = 45.0,
+                          double grooveThickness = 15.0) {
+  if (bellLength < 1) return shape;
+  gp_Pnt E = isStart ? curve.startPoint : curve.endPoint;
+  gp_Vec d(curve.startPoint, curve.endPoint);
+  if (d.Magnitude() < Precision::Confusion() || d.Magnitude() <= bellLength)
+    return shape;
+  gp_Dir Tin(d);                 // 指向实体内部的行进方向
+  if (isStart) Tin.Reverse();
+  gp_Dir outward(Tin);
+  outward.Reverse();
+  gp_Pnt S = E.Translated(gp_Vec(outward.XYZ()) * bellLength);
+
+  TopoDS_Face fNorm =
+      buildChannelProfile(height, flangeWidth, webThickness, grooveWidth,
+                          grooveThickness);
+  TopoDS_Face fBell =
+      buildChannelProfile(height, flangeWidth * 2.0, webThickness,
+                          grooveWidth * 1.6, grooveThickness);
+  gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX());
+  auto secWire = [&](const TopoDS_Face &f, const gp_Pnt &p) {
+    gp_Ax3 tgt(p, gp::DZ(), Tin);
+    gp_Trsf tr;
+    tr.SetTransformation(tgt, src);
+    TopoDS_Shape s = BRepBuilderAPI_Transform(f, tr).Shape();
+    return BRepTools::OuterWire(TopoDS::Face(s));
+  };
+  BRepOffsetAPI_ThruSections loft(Standard_True, Standard_True);
+  loft.AddWire(secWire(fNorm, S));
+  loft.AddWire(secWire(fNorm, S.Translated(gp_Vec(Tin.XYZ()) * (bellLength * 0.6))));
+  loft.AddWire(secWire(fBell, E));
+  loft.Build();
+  if (!loft.IsDone()) return shape;
+  TopoDS_Shape r = BRepAlgoAPI_Fuse(shape, loft.Shape()).Shape();
+  return r.IsNull() ? shape : r;
 }
 
 } // anonymous namespace
@@ -4232,14 +4754,38 @@ TopoDS_Shape create_rail_curve(const rail_curve_params &params) {
 // 翼轨（独立曲线）
 // =========================================================================
 TopoDS_Shape create_wing_rail_curve(const wing_rail_curve_params &params) {
-  TopoDS_Face face;
-  if (params.profile == rail_profile_type::RAIL)
-    face = buildRailProfile(120, 50, 100, 12, 40, 20, 10);
-  else
-    face = buildChannelProfile(params.channelHeight, params.flangeWidth, params.webThickness);
+  // RAIL 分支: 真实钢轨断面 (翼轨由普通钢轨弯折而成)
+  if (params.profile == rail_profile_type::RAIL) {
+    rail_params std60 = standard_rail_params(60);
+    rail_curve_params rc;
+    rc.curve = params.curve;
+    rc.endStart = params.endStart;
+    rc.endFinish = params.endFinish;
+    rc.railHeight = std60.railHeight;
+    rc.headWidth = std60.headWidth;
+    rc.baseWidth = std60.baseWidth;
+    rc.webThickness = std60.webThickness;
+    rc.headHeight = std60.headHeight;
+    rc.baseHeight = std60.baseHeight;
+    rc.headRadius = std60.headRadius;
+    return create_rail_curve(rc);
+  }
+  TopoDS_Face face = buildChannelProfile(params.channelHeight, params.flangeWidth,
+                                         params.webThickness, params.grooveWidth,
+                                         params.grooveThickness);
   TopoDS_Shape shape = sweepProfile(face, params.curve);
-  shape = applyEndTreatment(shape, params.endStart, params.curve, true);
-  shape = applyEndTreatment(shape, params.endFinish, params.curve, false);
+  if (params.endStart.type == end_treatment_type::BELL)
+    shape = addBellMouth(shape, params.curve, true, params.channelHeight,
+                         params.flangeWidth, params.webThickness, params.endStart.bellLength,
+                         params.grooveWidth, params.grooveThickness);
+  else
+    shape = applyEndTreatment(shape, params.endStart, params.curve, true);
+  if (params.endFinish.type == end_treatment_type::BELL)
+    shape = addBellMouth(shape, params.curve, false, params.channelHeight,
+                         params.flangeWidth, params.webThickness, params.endFinish.bellLength,
+                         params.grooveWidth, params.grooveThickness);
+  else
+    shape = applyEndTreatment(shape, params.endFinish, params.curve, false);
   return shape;
 }
 
@@ -4247,10 +4793,46 @@ TopoDS_Shape create_wing_rail_curve(const wing_rail_curve_params &params) {
 // 护轨（独立曲线）
 // =========================================================================
 TopoDS_Shape create_guard_rail_curve(const guard_rail_curve_params &params) {
-  TopoDS_Face face = buildChannelProfile(params.channelHeight, params.flangeWidth, params.webThickness);
-  TopoDS_Shape shape = sweepProfile(face, params.curve);
-  shape = applyEndTreatment(shape, params.endStart, params.curve, true);
-  shape = applyEndTreatment(shape, params.endFinish, params.curve, false);
+  TopoDS_Shape shape;
+  if (params.profile == rail_profile_type::RAIL) {
+    // 钢轨改造护轨: 43kg 旧钢轨真实断面
+    rail_params std43 = standard_rail_params(43);
+    rail_curve_params rc;
+    rc.curve = params.curve;
+    rc.endStart = params.endStart;
+    rc.endFinish = params.endFinish;
+    rc.railHeight = std43.railHeight;
+    rc.headWidth = std43.headWidth;
+    rc.baseWidth = std43.baseWidth;
+    rc.webThickness = std43.webThickness;
+    rc.headHeight = std43.headHeight;
+    rc.baseHeight = std43.baseHeight;
+    rc.headRadius = std43.headRadius;
+    shape = create_rail_curve(rc);
+  } else if (params.profile == rail_profile_type::PLATE) {
+    shape = sweepProfile(
+        buildPlateProfile(params.channelHeight, params.flangeWidth * 2),
+        params.curve);
+  } else {
+    TopoDS_Face face = buildChannelProfile(
+        params.channelHeight, params.flangeWidth, params.webThickness,
+        params.grooveWidth, params.grooveThickness);
+    shape = sweepProfile(face, params.curve);
+  }
+  if (params.endStart.type == end_treatment_type::BELL &&
+      params.profile != rail_profile_type::RAIL)
+    shape = addBellMouth(shape, params.curve, true, params.channelHeight,
+                         params.flangeWidth, params.webThickness, params.endStart.bellLength,
+                         params.grooveWidth, params.grooveThickness);
+  else if (params.profile != rail_profile_type::RAIL)
+    shape = applyEndTreatment(shape, params.endStart, params.curve, true);
+  if (params.endFinish.type == end_treatment_type::BELL &&
+      params.profile != rail_profile_type::RAIL)
+    shape = addBellMouth(shape, params.curve, false, params.channelHeight,
+                         params.flangeWidth, params.webThickness, params.endFinish.bellLength,
+                         params.grooveWidth, params.grooveThickness);
+  else if (params.profile != rail_profile_type::RAIL)
+    shape = applyEndTreatment(shape, params.endFinish, params.curve, false);
   if (params.raiseHeight > Precision::Confusion()) {
     gp_Trsf tr; tr.SetTranslation(gp_Vec(0, 0, params.raiseHeight));
     shape = BRepBuilderAPI_Transform(shape, tr).Shape();
@@ -4360,61 +4942,158 @@ TopoDS_Shape create_fastener_point(const fastener_point_params &params) {
   gp_Dir cross = params.railNormal;
   gp_Dir railDir = cross.Crossed(gp::DZ());
   gp_Ax3 originAx3(gp::Origin(), gp::DZ(), gp::DX());
+  const double footTop = params.railBaseWidth * 0.2; // 轨翼顶面 ≈ 轨底高
+
+  // 1. 铁垫板 (垫于轨下垫板之下) + 带肋橡胶垫板 (钢轨正下方)
+  {
+    gp_Ax3 padAx3(params.position, gp::DZ(), railDir);
+    gp_Trsf padTrsf;
+    padTrsf.SetTransformation(padAx3, originAx3);
+    double plL = 170.0;                        // 垫板长 (沿轨向)
+    double plW = params.railBaseWidth + 140.0; // 垫板宽 (横向)
+    TopoDS_Shape plate = BRepPrimAPI_MakeBox(
+        gp_Pnt(-plL / 2, -plW / 2, -params.padThickness), plL, plW,
+        std::max(params.padThickness - 10, 4.0)).Shape();
+    for (int s = -1; s <= 1; s += 2) {
+      plate = BRepAlgoAPI_Cut(plate, BRepPrimAPI_MakeCylinder(
+          gp_Ax2(gp_Pnt(0, s * (plW / 2 - 20), -params.padThickness - 1),
+                 gp::DZ()),
+          11.0, params.padThickness + 2).Shape()).Shape();
+    }
+    bld.Add(cmp, BRepBuilderAPI_Transform(plate, padTrsf).Shape());
+    // 橡胶垫板: 钢轨正下方, 顶面带横向沟槽 (参考实物带肋垫板)
+    double rbW = params.railBaseWidth + 30.0;
+    TopoDS_Shape rubber = BRepPrimAPI_MakeBox(
+        gp_Pnt(-plL / 2, -rbW / 2, -10), plL, rbW, 10).Shape();
+    for (int k = -2; k <= 2; ++k) {
+      rubber = BRepAlgoAPI_Cut(rubber, BRepPrimAPI_MakeBox(
+          gp_Pnt(-plL / 2 - 1, k * rbW / 6 - 2, -4), plL + 2, 4, 4).Shape()).Shape();
+    }
+    bld.Add(cmp, BRepBuilderAPI_Transform(rubber, padTrsf).Shape());
+  }
 
   auto addPad = [&](double sign) {
     gp_Pnt p = params.position.Translated(gp_Vec(cross.XYZ()) * (sign * halfW));
     gp_Ax3 padAx3(p, gp::DZ(), railDir);
     gp_Trsf padTrsf;
     padTrsf.SetTransformation(padAx3, originAx3);
+    auto addLocal = [&](const TopoDS_Shape &s) {
+      bld.Add(cmp, BRepBuilderAPI_Transform(s, padTrsf).Shape());
+    };
+    const double m = sign; // sign=-1 侧镜像 Y (钢轨始终在局部 -Y)
 
-    // 2. Elastic clip (弹条) — ω形弹条, 9个控制点
-    // sign=-1 时 Y 方向镜像,保证两侧弹条指向铁轨
-    double wireR = 5, clipHW = 82, clipH = 18, yCO = 24 * -sign;
-    double zBase = params.padThickness;
-    TColgp_Array1OfPnt poles(1, 11);
-    poles.SetValue(1, gp_Pnt(-clipHW * 0.5,  yCO * 0.1,  zBase));
-    poles.SetValue(2, gp_Pnt(-clipHW,        yCO * 0.1,  zBase));
-    poles.SetValue(3, gp_Pnt(-clipHW * 0.55, yCO * 5.0,  zBase + clipH * 0.92));
-    poles.SetValue(4, gp_Pnt(-clipHW * 0.2,  yCO * 5.0,  zBase + clipH * 0.92));
-    poles.SetValue(5, gp_Pnt(-clipHW * 0.15, 0,          zBase + clipH * 0.08));
-    poles.SetValue(6, gp_Pnt(0,              -yCO * 7.0, zBase + clipH * 0.95));
-    poles.SetValue(7, gp_Pnt(clipHW * 0.15,  0,          zBase + clipH * 0.08));
-    poles.SetValue(8, gp_Pnt(clipHW * 0.2,   yCO * 5.0,  zBase + clipH * 0.92));
-    poles.SetValue(9, gp_Pnt(clipHW * 0.55,  yCO * 5.0,  zBase + clipH * 0.92));
-    poles.SetValue(10, gp_Pnt(clipHW,        yCO * 0.1,  zBase));
-    poles.SetValue(11, gp_Pnt(clipHW * 0.5,  yCO * 0.1,  zBase));
-    Handle(Geom_BezierCurve) bezier = new Geom_BezierCurve(poles);
-    // Build path wire with reversed order if P1→P2 goes backward
-    // so the Bezier tangent at path start is always forward (rightward)
-    TopoDS_Edge bezEdge = BRepBuilderAPI_MakeEdge(bezier).Edge();
-    TopoDS_Wire bezWire = BRepBuilderAPI_MakeWire(bezEdge).Wire();
-    // Create circular section at path start, normal aligned to path tangent
-    gp_Dir startTan(poles.Value(2).XYZ() - poles.Value(1).XYZ());
-    gp_Ax2 secAx(poles.Value(1), startTan);
-    gp_Circ secCirc(secAx, wireR);
-    TopoDS_Edge secEdge = BRepBuilderAPI_MakeEdge(secCirc).Edge();
-    TopoDS_Wire secWire = BRepBuilderAPI_MakeWire(secEdge).Wire();
-    TopoDS_Face secFace = BRepLib_MakeFace(secWire).Face();
-    BRepOffsetAPI_MakePipe pipe(bezWire, secFace);
-    pipe.Build();
-    if (pipe.IsDone())
-      bld.Add(cmp, BRepBuilderAPI_Transform(pipe.Shape(), padTrsf).Shape());
-
-    // 3. Bolt assembly (螺栓) at clip center
-    double boltR = 8.0, nutH = 6.0, nutR = 15.0;
-    double nutZ = zBase + clipH * 0.65 + 3;
-    TopoDS_Shape screw = BRepPrimAPI_MakeCylinder(
-        gp_Ax2(gp_Pnt(0, -yCO*0.1, -3), gp::DZ()), boltR, nutZ + 5 + nutH).Shape();
-    bld.Add(cmp, BRepBuilderAPI_Transform(screw, padTrsf).Shape());
-    BRepBuilderAPI_MakePolygon hexW;
-    for (int i = 0; i < 6; i++) {
-      double a = i * M_PI / 3.0;
-      hexW.Add(gp_Pnt(nutR * cos(a), nutR * sin(a)-yCO*0.1, nutZ));
+    // 2. 铸铁挡板座 (外侧) + 尼龙轨距挡板 (贴轨翼)
+    {
+      const double sbL = 120, sbT = 14;
+      // 挡板座铸件: 底板 + 两侧立墙 + 中心钉孔
+      TopoDS_Shape seat = BRepPrimAPI_MakeBox(
+          gp_Pnt(-sbL / 2, m > 0 ? 8 : -58, 0), sbL, 50, sbT).Shape();
+      seat = BRepAlgoAPI_Cut(seat, BRepPrimAPI_MakeCylinder(
+          gp_Ax2(gp_Pnt(0, m * 42, -1), gp::DZ()), 11.0, sbT + 2).Shape()).Shape();
+      addLocal(seat);
+      for (int s2 = -1; s2 <= 1; s2 += 2) {
+        addLocal(BRepPrimAPI_MakeBox(
+            gp_Pnt(s2 * sbL / 2 - (s2 > 0 ? 14 : 0), m > 0 ? 8 : -58, sbT),
+            14, 50, 22).Shape());
+      }
+      // 尼龙轨距挡板 (白色块, 挡肩与轨翼之间)
+      addLocal(BRepPrimAPI_MakeBox(
+          gp_Pnt(-30, m > 0 ? -10 : -6, 0), 60, 16, 26).Shape());
     }
-    hexW.Close();
-    TopoDS_Face hexF = BRepLib_MakeFace(hexW.Wire()).Face();
-    bld.Add(cmp, BRepBuilderAPI_Transform(
-        BRepPrimAPI_MakePrism(hexF, gp_Vec(0, 0, nutH)).Shape(), padTrsf).Shape());
+
+    // 3. ω 形弹条: 圆钢在水平面内弯曲 (俯视图 ω 形)
+    //    跟端钩 → 外谷 → 后冠(道钉垫圈下) → 长前臂 → 趾端U弯(压轨翼) → 对称
+    {
+      const double wireR = 6.5;
+      const int nP = 17;
+      const gp_Pnt pts[nP] = {
+          {-48, m * 50, 20},          // 跟端钩1 端头
+          {-46, m * 38, 24},          // 跟端钩下弯
+          {-40, m * 26, 26},          // 外谷1
+          {-28, m * 34, 40},          // 起弧
+          {-18, m * 46, 46},          // 后冠1 (垫圈压点)
+          {-9,  m * 38, 44},          //
+          {-14, m * 10, 38},          // 趾端圆弧 (R≈17 钝U)
+          {-12, m * -6, 35},          //
+          {0,   m * -14, footTop + 3},// 趾端底部 (压轨翼顶面)
+          {12,  m * -6, 35},          //
+          {14,  m * 10, 38},          //
+          {9,   m * 38, 44},          //
+          {18,  m * 46, 46},          // 后冠2 (垫圈压点)
+          {28,  m * 34, 40},          //
+          {40,  m * 26, 26},          // 外谷2
+          {46,  m * 38, 24},          // 跟端钩下弯
+          {48,  m * 50, 20},          // 跟端钩2 端头
+      };
+      Handle(TColgp_HArray1OfPnt) arr = new TColgp_HArray1OfPnt(1, nP);
+      for (int i = 0; i < nP; ++i) arr->SetValue(i + 1, pts[i]);
+      GeomAPI_Interpolate interp(arr, Standard_False, 1e-5);
+      interp.Perform();
+      if (interp.IsDone()) {
+        TopoDS_Wire pathW = BRepBuilderAPI_MakeWire(
+            BRepBuilderAPI_MakeEdge(interp.Curve()).Edge()).Wire();
+        gp_Dir tan(pts[1].XYZ() - pts[0].XYZ());
+        gp_Ax2 secAx(pts[0], tan);
+        TopoDS_Wire secW = BRepBuilderAPI_MakeWire(
+            BRepBuilderAPI_MakeEdge(gp_Circ(secAx, wireR)).Edge()).Wire();
+        BRepOffsetAPI_MakePipe pipe(pathW, BRepLib_MakeFace(secW).Face());
+        pipe.Build();
+        if (pipe.IsDone())
+          addLocal(pipe.Shape());
+      }
+    }
+
+    // 4. 螺旋道钉 + 平垫圈 (弹条III型为无螺栓式)
+    if (params.type != 3) {
+      const double bx = 0, by = m * 42;
+      const double shR = 9.0, thR = 12.5, pitch = 6.0;
+      const double zTop = 56;                   // 光杆顶
+      const double zShank = 14;                 // 螺纹段顶
+      const double zBot = -60;                  // 螺纹段底 (旋入轨枕套管)
+      // 道钉主体: 锯齿剖面回转 (螺纹段粗牙 + 光杆)
+      {
+        BRepBuilderAPI_MakeWire prof;
+        auto P = [&](double r, double z) { return gp_Pnt(bx + r, by, z); };
+        prof.Add(BRepBuilderAPI_MakeEdge(P(0, zBot), P(shR * 0.8, zBot)));
+        double z = zBot;
+        while (z + pitch < zShank) {
+          prof.Add(BRepBuilderAPI_MakeEdge(P(z == zBot ? shR * 0.8 : shR, z),
+                                           P(thR, z + pitch / 2)));
+          prof.Add(BRepBuilderAPI_MakeEdge(P(thR, z + pitch / 2),
+                                           P(shR, z + pitch)));
+          z += pitch;
+        }
+        prof.Add(BRepBuilderAPI_MakeEdge(P(shR, z), P(shR, zTop)));
+        prof.Add(BRepBuilderAPI_MakeEdge(P(shR, zTop), P(0, zTop)));
+        prof.Add(BRepBuilderAPI_MakeEdge(P(0, zTop), P(0, zBot)));
+        TopoDS_Face f = BRepLib_MakeFace(prof.Wire()).Face();
+        BRepPrimAPI_MakeRevol rev(f, gp_Ax1(gp_Pnt(bx, by, 0), gp::DZ()));
+        rev.Build();
+        if (rev.IsDone())
+          addLocal(rev.Shape());
+      }
+      // 六角头
+      {
+        BRepBuilderAPI_MakePolygon hex;
+        double hr = 13.0;
+        for (int k = 0; k < 6; ++k) {
+          double a = k * M_PI / 3.0;
+          hex.Add(gp_Pnt(bx + hr * std::cos(a), by + hr * std::sin(a), zTop));
+        }
+        hex.Close();
+        addLocal(BRepPrimAPI_MakePrism(BRepLib_MakeFace(hex.Wire()).Face(),
+                                       gp_Vec(0, 0, 12)).Shape());
+      }
+      // 平垫圈 (压住弹条两后冠)
+      {
+        TopoDS_Shape washer = BRepAlgoAPI_Cut(
+            BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(bx, by, 50), gp::DZ()),
+                                     22.0, 5).Shape(),
+            BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(bx, by, 49), gp::DZ()),
+                                     9.5, 7).Shape()).Shape();
+        addLocal(washer);
+      }
+    }
   };
 
   addPad(-1.0);
@@ -4426,12 +5105,10 @@ TopoDS_Shape create_fastener_point(const fastener_point_params &params) {
 // 减速顶（点）
 // =========================================================================
 TopoDS_Shape create_retarder_point(const retarder_point_params &params) {
-  double bodyH = params.height * 0.65;
+  double bodyH = params.height * 0.5;
   double bodyR = params.bodyDiameter / 2.0;
   double capR = params.capDiameter / 2.0;
   double capH = params.capHeight;
-  double transH = params.transitionHeight;
-  double transR = bodyR * 1.08;
   double armLen = params.armLength;
   double armW = params.armWidth;
   double armT = params.armThickness;
@@ -4442,79 +5119,102 @@ TopoDS_Shape create_retarder_point(const retarder_point_params &params) {
   TopoDS_Compound cmp;
   bld.MakeCompound(cmp);
 
-  // 1. Main cylindrical body (核心工作筒体)
-  TopoDS_Shape body = BRepPrimAPI_MakeCylinder(
-      gp_Ax2(gp_Pnt(0, 0, 0), gp::DZ()), bodyR, bodyH).Shape();
-  bld.Add(cmp, body);
+  // 六角棱柱 (螺栓头/堵头)
+  auto hexPrism = [&](const gp_Pnt &c, double r, double h, const gp_Dir &axis) {
+    gp_Dir u = std::abs(axis.Z()) < 0.9 ? gp_Dir(axis.Crossed(gp::DZ())) : gp::DX();
+    gp_Dir v = axis.Crossed(u);
+    BRepBuilderAPI_MakePolygon hex;
+    for (int k = 0; k < 6; ++k) {
+      double a = k * M_PI / 3.0;
+      hex.Add(c.Translated(gp_Vec(u.XYZ()) * (r * std::cos(a)) +
+                             gp_Vec(v.XYZ()) * (r * std::sin(a))));
+    }
+    hex.Close();
+    return BRepPrimAPI_MakePrism(BRepLib_MakeFace(hex.Wire()).Face(),
+                                 gp_Vec(axis.XYZ()) * h).Shape();
+  };
 
-  // 2. Transition section (短粗圆柱过渡段) — 压入状态,大部分缩入筒体
-  double pistonInset = transH * 0.85; // 压缩行程:活塞压入缸内
-  TopoDS_Shape transition = BRepPrimAPI_MakeCylinder(
-      gp_Ax2(gp_Pnt(0, 0, bodyH - pistonInset), gp::DZ()), transR, transH).Shape();
-  bld.Add(cmp, transition);
+  // 1. 主缸体
+  bld.Add(cmp, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(0, 0, 0), gp::DZ()),
+                                        bodyR, bodyH).Shape());
 
-  // 3. Rounded top cap (圆顶状顶帽) — 随活塞下沉
-  double capSphereR = capR * 1.05;
-  double domeZ = bodyH - pistonInset + transH + capSphereR * 0.25;
-  TopoDS_Shape sphere = BRepPrimAPI_MakeSphere(
-      gp_Pnt(0, 0, domeZ), capSphereR).Shape();
-  double cutZ = bodyH - pistonInset + transH;
-  TopoDS_Shape cutBox = BRepPrimAPI_MakeBox(
-      gp_Pnt(-capR, -capR, cutZ), 2 * capR, 2 * capR, capSphereR).Shape();
-  TopoDS_Shape cap = BRepAlgoAPI_Common(sphere, cutBox).Shape();
-  bld.Add(cmp, cap);
+  // 2. 缸口密封压盖法兰 + 法兰侧堵头 (贴在法兰侧面)
+  bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, 0, bodyH - 8), gp::DZ()), bodyR * 1.12, 8).Shape());
+  bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(bodyR * 0.8, 0, bodyH - 4), gp::DX()), boltR * 0.6,
+      bodyR * 0.55).Shape());
+  bld.Add(cmp, hexPrism(gp_Pnt(bodyR * 1.35, 0, bodyH - 4), boltR * 1.1, 5,
+                        gp::DX()));
 
-  // 4. Clamping arms (八字形固定臂,指向铁轨侧) + bolts
-  double armZ = bodyH - pistonInset + transH * 0.3;
-  double armGap = armW * 1;
-  double armTilt = 0.15; // 安装倾角: 臂端略高于根部
-  for (int side = -1; side <= 1; side += 2) {
-    double angle = 0.10;
-    double ax = side * armGap;
-    gp_Pnt armBase(ax, transR, armZ);
+  // 3. 活塞杆 (压入状态, 外露段约为缸体的一半)
+  double stemR = capR * 0.62;
+  double stemTop = bodyH + params.height * 0.32;
+  bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, 0, bodyH - 10), gp::DZ()), stemR,
+      stemTop - bodyH + 10).Shape());
 
-    // Arm body: extends in +Y (toward rail), 向上倾斜 + 八字 spread
-    TopoDS_Shape armBox = BRepPrimAPI_MakeBox(
-        gp_Pnt(-armW / 2, 0, -armT / 2), armW, armLen, armT).Shape();
-    gp_Trsf armTrsf;
-    armTrsf.SetTranslation(gp_Vec(ax, transR, armZ));
-    gp_Trsf spreadTrsf;
-    spreadTrsf.SetRotation(gp_Ax1(gp::Origin(), gp::DZ()), side * angle);
-    gp_Trsf tiltTrsf;
-    tiltTrsf.SetRotation(gp_Ax1(gp::Origin(), gp::DX()), armTilt);
-    armTrsf = armTrsf * tiltTrsf * spreadTrsf;
-    BRepBuilderAPI_Transform armXform(armBox, armTrsf);
-    bld.Add(cmp, armXform.Shape());
-
-    // Bolt + nut at arm end, follow same tilt
-    TopoDS_Shape bolt = BRepPrimAPI_MakeCylinder(
-        gp_Ax2(gp_Pnt(0, armLen * 0.85, 4), gp::DY()), boltR, 8.0).Shape();
-    BRepBuilderAPI_Transform boltXform(bolt, armTrsf);
-    bld.Add(cmp, boltXform.Shape());
-
-    TopoDS_Shape nut = BRepPrimAPI_MakeCylinder(
-        gp_Ax2(gp_Pnt(0, armLen * 0.85, -4), gp::DY()), boltR * 0.85, 6.0).Shape();
-    BRepBuilderAPI_Transform nutXform(nut, armTrsf);
-    bld.Add(cmp, nutXform.Shape());
+  // 4. 蘑菇顶帽: 帽檐 + 扁平圆顶 (球冠高 ≈ 0.5×capHeight)
+  double rimH = capH * 0.3;
+  bld.Add(cmp, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(0, 0, stemTop), gp::DZ()),
+                                        capR, rimH).Shape());
+  {
+    double rimTop = stemTop + rimH;
+    double domeH = capH * 0.5;
+    double Rs = (capR * capR + domeH * domeH) / (2 * domeH); // 浅球冠半径
+    gp_Pnt center(0, 0, rimTop + domeH - Rs);
+    TopoDS_Shape sphere = BRepPrimAPI_MakeSphere(center, Rs).Shape();
+    TopoDS_Shape cutBox = BRepPrimAPI_MakeBox(
+        gp_Pnt(-capR * 1.2, -capR * 1.2, rimTop), capR * 2.4, capR * 2.4,
+        domeH + Rs).Shape();
+    bld.Add(cmp, BRepAlgoAPI_Common(sphere, cutBox).Shape());
   }
 
-  // 4b. Cross beam (横梁) connecting both arms to body
-  double crossX = armGap + armW * 0.5;
-  TopoDS_Shape crossBeam = BRepPrimAPI_MakeBox(
-      gp_Pnt(-crossX, -transR * 0.15, armZ - armT ),
-      crossX * 2, transR * 1.2, armT * 2.5).Shape();
-  bld.Add(cmp, crossBeam);
+  // 5. 固定臂 ×2 (八字张开, 各带端部竖直夹板 + 双水平六角螺栓)
+  double armZ = bodyH - 10;
+  const double armSpread = 0.21; // 八字张开角 (rad, 单侧 ~12°)
+  for (int side = -1; side <= 1; side += 2) {
+    double x0 = side * armW * 0.85;
+    BRep_Builder ab; TopoDS_Compound arm; ab.MakeCompound(arm);
+    // 肘臂圆管 (铸件弯臂, 根部埋入缸体)
+    ab.Add(arm, BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(x0, -bodyR * 0.2, armZ), gp::DY()), armT,
+        bodyR * 0.6 + armLen).Shape());
+    // 端部竖直夹板
+    ab.Add(arm, BRepPrimAPI_MakeBox(
+        gp_Pnt(x0 - armW * 0.7, bodyR * 0.4 + armLen, armZ - armW * 0.7),
+        armW * 1.4, armT, armW * 1.4).Shape());
+    // 双水平六角螺栓
+    for (int s = -1; s <= 1; s += 2) {
+      double bx = x0 + s * armW * 0.35;
+      double by = bodyR * 0.4 + armLen;
+      ab.Add(arm, BRepPrimAPI_MakeCylinder(
+          gp_Ax2(gp_Pnt(bx, by + armT, armZ), gp::DY()), boltR,
+          armT + 14).Shape());
+      ab.Add(arm, hexPrism(gp_Pnt(bx, by + armT + 14, armZ), boltR * 1.8, 7,
+                           gp::DY()));
+    }
+    // 绕各自臂根向外张开 (外八字)
+    gp_Trsf spread;
+    spread.SetRotation(gp_Ax1(gp_Pnt(x0, 0, armZ), gp::DZ()),
+                       -side * armSpread);
+    bld.Add(cmp, BRepBuilderAPI_Transform(arm, spread).Shape());
+  }
 
-  // 6. Bottom service port (维护接口)
-  double portH = 20.0;
-  TopoDS_Shape port = BRepPrimAPI_MakeCylinder(
-      gp_Ax2(gp_Pnt(0, 0, -portH), gp::DZ()), portR, portH).Shape();
-  bld.Add(cmp, port);
+  // 6. 缸体侧面堵头 ×2 (外凸 4mm)
+  for (int k = 0; k < 2; ++k) {
+    double pz = bodyH * (0.45 + 0.15 * k);
+    bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(0, -bodyR - 4, pz), gp::DY()), boltR * 0.5, 10).Shape());
+  }
 
-  // Bleed valve detail at port bottom
-  TopoDS_Shape vent = BRepPrimAPI_MakeCylinder(
-      gp_Ax2(gp_Pnt(0, 0, -portH - 6), gp::DZ()), portR * 0.45, 6.0).Shape();
-  bld.Add(cmp, vent);
+  // 7. 底部侧向油口 (黄铜接头, 与缸体相连)
+  bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, -bodyR, bodyH * 0.12), gp::DY().Reversed()), portR,
+      14).Shape());
+  bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, -bodyR - 14, bodyH * 0.12), gp::DY().Reversed()),
+      portR * 0.45, 6).Shape());
 
   // Transform to position
   if (params.position.Distance(gp::Origin()) > Precision::Confusion() ||

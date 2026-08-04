@@ -276,7 +276,8 @@ RAILCAPICALL topo_shape_t *create_mast_bracket(mast_bracket_params_t params) {
       params.boltSpacing,          params.boltDiameter,
       params.height,               params.width,
       params.thickness,            params.insulatorBoltSpacing,
-      params.insulatorBoltDiameter, params.mountAngle};
+      params.insulatorBoltDiameter, params.mountAngle,
+      params.mastDiameter};
   try {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_mast_bracket(cpp_params))};
@@ -292,7 +293,8 @@ create_mast_bracket_with_place(mast_bracket_params_t params, pnt3d_t position,
       params.boltSpacing,          params.boltDiameter,
       params.height,               params.width,
       params.thickness,            params.insulatorBoltSpacing,
-      params.insulatorBoltDiameter, params.mountAngle};
+      params.insulatorBoltDiameter, params.mountAngle,
+      params.mastDiameter};
   gp_Pnt cpp_pos(position.x, position.y, position.z);
   gp_Dir cpp_norm(normal.x, normal.y, normal.z);
   gp_Dir cpp_up(upDir.x, upDir.y, upDir.z);
@@ -441,7 +443,7 @@ RAILCAPICALL topo_shape_t *create_concrete_mast(concrete_mast_params_t params) {
       params.height,        params.topWidth,    params.bottomWidth,
       params.wallThickness, params.holeDiameter, params.holeSpacingV,
       params.holeSpacingH,  params.firstHoleOffset, params.holeRowCount,
-      params.holesPerRow};
+      params.holesPerRow,   params.holeLength};
   try {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_concrete_mast(cpp_params))};
@@ -458,7 +460,7 @@ create_concrete_mast_with_place(concrete_mast_params_t params,
       params.height,        params.topWidth,    params.bottomWidth,
       params.wallThickness, params.holeDiameter, params.holeSpacingV,
       params.holeSpacingH,  params.firstHoleOffset, params.holeRowCount,
-      params.holesPerRow};
+      params.holesPerRow,   params.holeLength};
   gp_Pnt cpp_center(baseCenter.x, baseCenter.y, baseCenter.z);
   gp_Dir cpp_axis(axisDir.x, axisDir.y, axisDir.z);
   try {

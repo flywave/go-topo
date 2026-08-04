@@ -177,6 +177,7 @@ typedef struct {
   double insulatorBoltSpacing;
   double insulatorBoltDiameter;
   double mountAngle;
+  double mastDiameter;
 } mast_bracket_params_t;
 
 RAILCAPICALL topo_shape_t *create_mast_bracket(mast_bracket_params_t params);
@@ -272,6 +273,7 @@ typedef struct {
   double firstHoleOffset;
   int holeRowCount;
   int holesPerRow;
+  double holeLength;
 } concrete_mast_params_t;
 
 RAILCAPICALL topo_shape_t *create_concrete_mast(concrete_mast_params_t params);

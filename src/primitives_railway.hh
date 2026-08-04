@@ -194,6 +194,7 @@ struct mast_bracket_params {
   double insulatorBoltSpacing;  // 绝缘子安装孔间距(mm)
   double insulatorBoltDiameter; // 绝缘子安装孔径(mm)
   double mountAngle;            // 安装角度(°)
+  double mastDiameter = 0.0;    // 支柱直径(mm), >0 时生成抱箍弧带
 };
 
 TopoDS_Shape create_mast_bracket(const mast_bracket_params &params);
@@ -299,6 +300,7 @@ struct concrete_mast_params {
   double firstHoleOffset;     // 首孔距柱底距离(mm)
   int holeRowCount;           // 沿高度方向的分组数
   int holesPerRow;            // 每列孔数
+  double holeLength = 0.0;    // 长圆孔总长(mm), 0=圆孔
 };
 
 TopoDS_Shape create_concrete_mast(const concrete_mast_params &params);
@@ -651,6 +653,9 @@ TopoDS_Shape create_rail(const rail_params &params);
 TopoDS_Shape create_rail(const rail_params &params,
                          const gp_Pnt &startPoint,
                          const gp_Pnt &endPoint);
+
+// 标准钢轨断面查表 (kg/m: 43/50/60/75), 未识别时返回 60kg/m
+rail_params standard_rail_params(double kgPerMeter);
 
 // =========================================================================
 // TRACK: 25. Sleeper (轨枕) TYPE=TRACK_SLEEPER_CONC
@@ -1015,6 +1020,7 @@ struct end_treatment_params {
   double switchLength = 0.0;      // 尖轨段长度
   double planedStart = 0.0;       // 刨削起始位置
   int switchType = 1;             // 1-直线尖轨, 2-曲线尖轨
+  int planedSide = 2;             // 刨削侧: 1-行进左侧, 2-行进右侧
   double dropValue = 0.0;         // 尖端降低值
   double scarfAngle = 45.0;       // 斜切角度°
   double bellLength = 500.0;      // 喇叭口长度
@@ -1067,7 +1073,7 @@ struct guard_rail_curve_params {
   curve_params curve;
   end_treatment_params endStart;        // BELL end typical
   end_treatment_params endFinish;
-  rail_profile_type profile = rail_profile_type::CHANNEL;
+  rail_profile_type profile = rail_profile_type::RAIL; // 护轨为旧钢轨断面, 轨面向上
   double channelHeight = 120.0;
   double grooveWidth = 45.0;
   double flangeWidth = 20.0;

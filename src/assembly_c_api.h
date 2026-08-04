@@ -75,6 +75,8 @@ ASAPICALL topo_shape_t **assembly_shapes(assembly_t *as, int *size);
 ASAPICALL topo_compound_t assembly_to_compound(assembly_t *as);
 ASAPICALL assembly_element_t **assembly_get_elements(assembly_t *as, int *size);
 ASAPICALL void assembly_element_list_free(assembly_element_t **list, int size);
+// 仅释放指针数组本身 (元素所有权归各 wrapper 的 finalizer)
+ASAPICALL void assembly_element_list_free_shallow(assembly_element_t **list);
 ASAPICALL const char *assembly_get_name(assembly_t *as);
 ASAPICALL topo_location_t *assembly_get_location(assembly_t *as);
 ASAPICALL color_t assembly_get_color(assembly_t *as);

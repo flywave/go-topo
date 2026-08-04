@@ -69,9 +69,17 @@ All 50+ railway types are being ported across 4 layers. See `RAILWAY_PORTING_PLA
 - `topo_test.go` — basic shape creation, wire ops, multi-segment pipe
 - `shape_ops_test.go` — centerline fitting, wire sampling, shape outline, catenary
 - `dxf_test.go`, `ifc_test.go` — DXF/IFC import (may require external fixture files)
+- `track_geojson_test.go` — GeoJSON 中心线解析 + 正线生成
+- `track_yard_test.go` — 站场生成 (道岔识别 / 菱形交叉)
 
 Run: `go test -v -count=1 ./...`
 Run one test: `go test -v -run TestSampleCenterlineWire ./...`
+
+## GeoJSON 轨道输入 (track_geojson.go / track_yard.go)
+
+- `ParseTrackGeoJSON` / `CreateTrackFromGeoJSON` — 单条中心线 (LineString/Feature/FeatureCollection) → 正线装配 (钢轨×2 + 轨枕 + 道床), 坐标默认米 (coordScale=1000)
+- `CreateYardFromGeoJSON` — FeatureCollection 组网: 端点聚类节点 (50mm 容差) → 度=3 节点识别单开道岔 (自动判定开向/号数/裁剪邻边) → `CreateTurnoutWithPlace`; 边中部相交 → 菱形交叉 → `CreateFrogWithPlace`
+- 道岔号数估计: 侧股 15~35m 弦方向与主向夹角 → snap 到 {9,12,18,30,42}
 
 ## C++ API nil-safety
 
@@ -329,9 +337,11 @@ Input: centerline_graph (edges + nodes)
 
 ### Implementation status
 
-- `create_rail_path` — unified rail generation (LINE→prism, ARC/BEZIER→loft)
+- `create_rail_path` — unified rail generation (LINE→prism, ARC/BEZIER→loft), 真实钢轨断面 (R300 踏面 + R80 侧面 + R13 圆角过渡)
+- `create_rail` — 真实断面拉伸; `standard_rail_params` 提供 43/50/60/75kg 查表
 - `create_ballast` — loft-based ballast with optional tiltAngle
 - `create_sleeper` — TRAPEZOIDAL concrete sleeper with rail seats
 - `create_turnout` — currently hard-coded for 单开道岔, to be refactored to centerline_graph interface
-- `create_switch_rail` — exists, hard-coded taper without centerline alignment
-- `create_frog` — exists, uses simplified box geometry; needs redesign to match centerline graph approach
+- `create_switch_rail` — 单侧刨削渐缩 (锚定基本轨侧边缘), 尖端降值, 支持曲线半径
+- `create_frog` — 4 段心轨 SWITCH 端刨削汇聚 ~2mm 岔心 + 真实线形翼轨×2 (开口→咽喉→平直→绕岔心, 普通钢轨断面) + 43kg 旧钢轨护轨×2 (端部弯折张开喇叭口) (待按 centerline_graph 重构布局)
+- `applyEndTreatment` — PLANE/SCARF(斜切切割)/SWITCH(单侧刨削楔切+降值) 已实现; BELL 由 addBellMouth 放样喇叭口

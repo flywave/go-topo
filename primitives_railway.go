@@ -333,6 +333,7 @@ type MastBracketParams struct {
 	InsulatorBoltSpacing  float64
 	InsulatorBoltDiameter float64
 	MountAngle           float64
+	MastDiameter         float64
 }
 
 func (p *MastBracketParams) to_struct() C.mast_bracket_params_t {
@@ -345,6 +346,7 @@ func (p *MastBracketParams) to_struct() C.mast_bracket_params_t {
 	c.insulatorBoltSpacing = C.double(p.InsulatorBoltSpacing)
 	c.insulatorBoltDiameter = C.double(p.InsulatorBoltDiameter)
 	c.mountAngle = C.double(p.MountAngle)
+	c.mastDiameter = C.double(p.MastDiameter)
 	return c
 }
 
@@ -538,6 +540,7 @@ type ConcreteMastParams struct {
 	FirstHoleOffset float64
 	HoleRowCount    int
 	HolesPerRow     int
+	HoleLength      float64
 }
 
 func (p *ConcreteMastParams) to_struct() C.concrete_mast_params_t {
@@ -553,6 +556,7 @@ func (p *ConcreteMastParams) to_struct() C.concrete_mast_params_t {
 	c.firstHoleOffset = C.double(p.FirstHoleOffset)
 	c.holeRowCount = C.int(p.HoleRowCount)
 	c.holesPerRow = C.int(p.HolesPerRow)
+	c.holeLength = C.double(p.HoleLength)
 	return c
 }
 

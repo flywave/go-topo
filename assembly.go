@@ -270,7 +270,8 @@ func (c *Assembly) ToCompound() *Compound {
 func (c *Assembly) GetElements() []*AssemblyElament {
 	var size C.int
 	elements := C.assembly_get_elements(c.inner.val, &size)
-	defer C.assembly_element_list_free(elements, size)
+	// 元素所有权归各 wrapper 的 finalizer, 仅浅释放指针数组
+	defer C.assembly_element_list_free_shallow(elements)
 	elementsSlice := unsafe.Slice(elements, int(size))
 	var result []*AssemblyElament
 	for i := 0; i < int(size); i++ {

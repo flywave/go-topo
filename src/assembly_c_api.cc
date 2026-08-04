@@ -241,6 +241,10 @@ void assembly_element_list_free(assembly_element_t **list, int size) {
   }
 }
 
+void assembly_element_list_free_shallow(assembly_element_t **list) {
+  delete[] list;
+}
+
 const char *assembly_get_name(assembly_t *as) {
   return as->ptr->name().c_str();
 }

@@ -1,6 +1,8 @@
 #include "primitives_railway.hh"
+#include <BRepBndLib.hxx>
 #include <BRep_Builder.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
+#include <Bnd_Box.hxx>
 #include <StlAPI_Writer.hxx>
 #include <Standard_Failure.hxx>
 #include <gp_Pnt.hxx>
@@ -96,8 +98,8 @@ void test_concrete_mast() {
 
   p.sectionType = concrete_mast_section_type::RECTANGULAR_HOLED;
   p.topWidth = 250; p.bottomWidth = 400; p.wallThickness = 0;
-  p.holeDiameter = 240; p.holeSpacingV = 500; p.firstHoleOffset = 300;
-  p.holeRowCount = 0; p.holesPerRow = 0;
+  p.holeDiameter = 200; p.holeLength = 320; p.holeSpacingV = 600; p.firstHoleOffset = 2800;
+  p.holeRowCount = 9; p.holesPerRow = 1;
   test_export(create_concrete_mast(p), "concrete_mast_rect_holed");
 }
 
@@ -225,6 +227,13 @@ void test_guard_rail() {
   p.gaugeDistance = 42;
   test_export(create_guard_rail(p), "guard_rail");
   test_export(create_guard_rail(p, gp_Pnt(0,0,0), gp_Pnt(3600,0,0)), "guard_rail_line");
+  // 钢轨改造护轨 (43kg 旧钢轨断面, 两端喇叭口)
+  guard_rail_curve_params gp;
+  gp.profile = rail_profile_type::RAIL;
+  gp.curve.type = rail_curve_type::LINE;
+  gp.curve.startPoint = gp::Origin();
+  gp.curve.endPoint = gp_Pnt(3600, 0, 0);
+  test_export(create_guard_rail_curve(gp), "guard_rail_railprofile");
 }
 
 void test_sleeper() {
@@ -515,6 +524,183 @@ void test_rail_with_fasteners() {
   test_export(cmp, "rail_with_fasteners");
 }
 
+// =========================================================================
+// 补充测试: 规范对照用 (关键尺寸打印)
+// =========================================================================
+
+void report_dims(const std::string &name, const TopoDS_Shape &shape) {
+  if (shape.IsNull()) { std::cout << "  [dims] " << name << ": NULL" << std::endl; return; }
+  Bnd_Box bb;
+  BRepBndLib::Add(shape, bb);
+  double x0, y0, z0, x1, y1, z1;
+  bb.Get(x0, y0, z0, x1, y1, z1);
+  printf("  [dims] %-28s %8.1f x %8.1f x %8.1f mm\n", name.c_str(),
+         x1 - x0, y1 - y0, z1 - z0);
+}
+
+// --- 腕臂系统 ---
+void test_cantilevers() {
+  std::cout << "\n=== Cantilevers (腕臂) ===" << std::endl;
+  // 平腕臂: Ø60x4 无缝钢管, 仰角 3°
+  auto lv = create_level_cantilever(level_cantilever_params{2800, 60, 4, 5300, 3});
+  test_export(lv, "level_cantilever");
+  report_dims("level_cantilever(Ø60x2800)", lv);
+  // 斜腕臂: Ø60x4, 倾角 45°
+  auto sl = create_slant_cantilever(slant_cantilever_params{2600, 60, 4, 45});
+  test_export(sl, "slant_cantilever");
+  report_dims("slant_cantilever(Ø60x2600)", sl);
+  // 腕臂斜撑: Ø48x3.5
+  auto br = create_cantilever_brace(cantilever_brace_params{1500, 48, 3.5, 30});
+  test_export(br, "cantilever_brace");
+  report_dims("cantilever_brace(Ø48x1500)", br);
+  // 腕臂底座
+  auto cb = create_cantilever_base(cantilever_base_params{200, 160, 80, 100, 16, 4});
+  test_export(cb, "cantilever_base");
+  report_dims("cantilever_base(200x160x80)", cb);
+  // 承力索座 (JTMH-95: 线径 ~13.5)
+  auto ms = create_mw_saddle(mw_saddle_params{150, 80, 60, 7, 12});
+  test_export(ms, "mw_saddle");
+  report_dims("mw_saddle(150x80x60)", ms);
+}
+
+// --- 补偿装置组件 ---
+void test_compensator_parts() {
+  std::cout << "\n=== Compensator Parts (补偿装置组件) ===" << std::endl;
+  // 坠砣: 圆形铸铁片 Ø380, 厚 75, 中心孔 Ø30, 带径向开口槽
+  auto bw = create_balance_weight(balance_weight_params{380, 75, 75, 30});
+  test_export(bw, "balance_weight");
+  report_dims("balance_weight(Ø380x75)", bw);
+  // 坠砣杆: Ø20 圆钢, 长 2000, 顶端横孔 Ø16
+  auto wr = create_weight_rod(weight_rod_params{20, 2000, 16});
+  test_export(wr, "weight_rod");
+  report_dims("weight_rod(Ø20x2000)", wr);
+  // 下锚金具三件套
+  auto af1 = create_anchor_fitting(anchor_fitting_params{anchor_fitting_type::ROD_AND_RING, 800, 24});
+  test_export(af1, "anchor_fitting_rod_ring");
+  report_dims("rod_ring(L800 Ø24)", af1);
+  auto af2 = create_anchor_fitting(anchor_fitting_params{anchor_fitting_type::DOUBLE_EAR, 400, 30});
+  test_export(af2, "anchor_fitting_double_ear");
+  report_dims("double_ear(L400 Ø30)", af2);
+  auto af3 = create_anchor_fitting(anchor_fitting_params{anchor_fitting_type::WEDGE_CLAMP, 300, 40});
+  test_export(af3, "anchor_fitting_wedge_clamp");
+  report_dims("wedge_clamp(L300 Ø40)", af3);
+}
+
+// --- 线索与线岔 ---
+void test_cables_and_crossing() {
+  std::cout << "\n=== Cables & Crossing (悬索/定位索/线岔) ===" << std::endl;
+  // 悬索三型
+  suspension_cable_params sc;
+  sc.startPoint = gp_Pnt(0, 0, 8000);
+  sc.endPoint = gp_Pnt(30000, 0, 8000);
+  sc.diameter = 13; sc.tension = 0;
+  sc.cableType = suspension_cable_type::CATENARY; sc.sag = 600;
+  auto c1 = create_suspension_cable(sc);
+  test_export(c1, "suspension_cable_catenary");
+  report_dims("cable_catenary(L30m sag600)", c1);
+  sc.cableType = suspension_cable_type::FIXED_ROPE; sc.sag = 0;
+  test_export(create_suspension_cable(sc), "suspension_cable_fixed");
+  sc.cableType = suspension_cable_type::DROPPER; sc.sag = 400;
+  sc.startPoint = gp_Pnt(0, 0, 7000); sc.endPoint = gp_Pnt(30000, 0, 7000);
+  test_export(create_suspension_cable(sc), "suspension_cable_dropper");
+  // 定位索 (可调)
+  positioning_cable_params pc;
+  pc.diameter = 10; pc.topPoint = gp_Pnt(0, 0, 7000);
+  pc.bottomPoint = gp_Pnt(0, 0, 5300); pc.adjustable = true;
+  auto pcable = create_positioning_cable(pc);
+  test_export(pcable, "positioning_cable");
+  report_dims("positioning_cable(L1700)", pcable);
+  // 线岔: 限制管 L1200 Ø38, 接触线 Ø12.9, 导高差 30
+  auto cr = create_crossing(crossing_params{1200, 38, 12.9, 30});
+  test_export(cr, "ocs_crossing");
+  report_dims("ocs_crossing(L1200)", cr);
+}
+
+// --- 附加导线支架 ---
+void test_aux_bracket() {
+  std::cout << "\n=== Aux Bracket (附加导线支架) ===" << std::endl;
+  auto b1 = create_aux_bracket(aux_bracket_params{aux_bracket_type::CROSS_ARM, 7000, 1200, 400, 300, 100, 16});
+  test_export(b1, "aux_bracket_crossarm");
+  report_dims("aux_crossarm(L1200)", b1);
+  auto b2 = create_aux_bracket(aux_bracket_params{aux_bracket_type::WALL_MOUNT, 6000, 300, 500, 200, 100, 16});
+  test_export(b2, "aux_bracket_wall");
+  report_dims("aux_wall(500x200)", b2);
+  auto b3 = create_aux_bracket(aux_bracket_params{aux_bracket_type::DOUBLE_MAST, 7000, 4000, 400, 300, 100, 16});
+  test_export(b3, "aux_bracket_doublemast");
+  report_dims("aux_doublemast(L4000)", b3);
+}
+
+// --- 轨道补充 ---
+void test_track_extras() {
+  std::cout << "\n=== Track Extras (轨道板/轨排/枕木阵列/伸缩调节器) ===" << std::endl;
+  // CRTS III 轨道板: 5600x2500x210, 9 承轨台 @600, CA砂浆 50
+  auto slab = create_track_slab(track_slab_params{5600, 2500, 210, 9, 600, 50});
+  test_export(slab, "track_slab_crts3");
+  report_dims("track_slab(5600x2500x210)", slab);
+
+  // 曲线轨排 (带超高 120mm): 直线 20m + R800m 圆弧
+  std::vector<gp_Pnt> cl;
+  for (double x = 0; x <= 20000; x += 5000) cl.push_back(gp_Pnt(x, 0, 0));
+  double R = 800000;
+  for (int i = 1; i <= 24; ++i) {
+    double th = i * 0.006;
+    cl.push_back(gp_Pnt(20000 + R * sin(th), R - R * cos(th), 0));
+  }
+  auto rp = create_rail_pair(rail_pair_params{cl, 1435, 120, 176, 73, 150});
+  test_export(rp, "rail_pair_curve_se120");
+  report_dims("rail_pair_curve(超高120)", rp);
+
+  // 曲线枕木阵列 (验证径向扇形排布)
+  auto sl = create_sleeper_layout(sleeper_layout_params{cl, 2600, 260, 200, 600, 1435});
+  test_export(sl, "sleeper_layout_curve");
+  report_dims("sleeper_layout_curve", sl);
+
+  // 枕木驱动道床
+  ballast_from_sleepers_params bsp;
+  for (double x = 0; x <= 6000; x += 600) {
+    sleeper_line_params slp;
+    slp.startPoint = gp_Pnt(x, -1300, 0);
+    slp.endPoint = gp_Pnt(x, 1300, 0);
+    bsp.sleepers.push_back(slp);
+  }
+  auto bl = create_ballast_from_sleepers(bsp);
+  test_export(bl, "ballast_from_sleepers");
+  report_dims("ballast_from_sleepers", bl);
+
+  // 钢轨伸缩调节器
+  expansion_joint_params ej;
+  ej.stockRail.curve.type = rail_curve_type::LINE;
+  ej.stockRail.curve.startPoint = gp_Pnt(0, -717.5, 0);
+  ej.stockRail.curve.endPoint = gp_Pnt(6000, -717.5, 0);
+  ej.switchRail.curve.type = rail_curve_type::LINE;
+  ej.switchRail.curve.startPoint = gp_Pnt(0, 717.5, 0);
+  ej.switchRail.curve.endPoint = gp_Pnt(6000, 717.5, 0);
+  ej.switchRail.endStart.type = end_treatment_type::SWITCH;
+  ej.switchRail.endStart.toeWidth = 2;
+  ej.switchRail.endStart.switchLength = 2000;
+  auto ejs = create_expansion_joint(ej);
+  test_export(ejs, "expansion_joint");
+  report_dims("expansion_joint(L6000)", ejs);
+
+  // 标准钢轨断面查表 43/50/60/75
+  for (int kg : {43, 50, 60, 75}) {
+    rail_params sp = standard_rail_params(kg);
+    sp.standardLength = 1000;
+    char nm[32];
+    snprintf(nm, sizeof(nm), "rail_std_%dkg", kg);
+    auto rl = create_rail(sp);
+    test_export(rl, nm);
+    report_dims(nm, rl);
+  }
+
+  // 独立尖轨: 直线 + 曲线 (R=350m)
+  auto swr1 = create_switch_rail(switch_rail_params{7700, 176, 73, 150, 16.5, 2, 0, true});
+  test_export(swr1, "switch_rail_standalone");
+  report_dims("switch_rail(L7700 tip2)", swr1);
+  auto swr2 = create_switch_rail(switch_rail_params{7700, 176, 73, 150, 16.5, 2, 350000, true});
+  test_export(swr2, "switch_rail_curve");
+  report_dims("switch_rail_curve(R350m)", swr2);
+}
 
 int main() {
   auto run = [](const char *name, auto fn) {
@@ -574,6 +760,11 @@ int main() {
   run("Retarder Point", test_retarder_point);
   run("Fastener", test_fastener);
   run("Rail with Fasteners", test_rail_with_fasteners);
+  run("Cantilevers", test_cantilevers);
+  run("Compensator Parts", test_compensator_parts);
+  run("Cables & Crossing", test_cables_and_crossing);
+  run("Aux Bracket", test_aux_bracket);
+  run("Track Extras", test_track_extras);
 
   std::cout << "\nAll tests completed." << std::endl;
   return 0;
