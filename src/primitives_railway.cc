@@ -1936,18 +1936,27 @@ TopoDS_Shape create_dropper(const dropper_params &params) {
   //   导电型侧面带载流环
 
   // 心形护环 (鸡心形: 上尖下圆水滴环, XZ 平面)
+  // 心形护环 (样条构建不对称耳朵形: 顶尖一侧饱满, 底部偏圆非半圆)
   auto thimble = [&](double zc) {
     double tw = wr * 3.0, th = wr * 4.0, tk = wr * 1.6;
     auto ringWire = [&](double s, double y) {
-      BRepBuilderAPI_MakeWire w;
-      gp_Pnt top(0, y, zc + th * s), right(tw * s, y, zc),
-             bot(0, y, zc - tw * s), left(-tw * s, y, zc);
-      // 顶点 → 右侧 → 底部半圆 → 左侧 → 顶点
-      w.Add(BRepBuilderAPI_MakeEdge(top, right));
-      w.Add(BRepBuilderAPI_MakeEdge(
-          GC_MakeArcOfCircle(right, bot, left).Value()));
-      w.Add(BRepBuilderAPI_MakeEdge(left, top));
-      return w.Wire();
+      // 耳朵形轮廓: 顶点 → 右肩 → 右腹(饱满) → 右底 → 底(偏心) → 左底 → 左腹 → 左肩
+      std::vector<gp_Pnt> pts = {
+          gp_Pnt(0, y, zc + th * s),
+          gp_Pnt(tw * 0.82 * s, y, zc + th * 0.58 * s),
+          gp_Pnt(tw * s, y, zc + th * 0.12 * s),
+          gp_Pnt(tw * 0.86 * s, y, zc - tw * 0.5 * s),
+          gp_Pnt(tw * 0.18 * s, y, zc - tw * 0.92 * s),
+          gp_Pnt(-tw * 0.62 * s, y, zc - tw * 0.68 * s),
+          gp_Pnt(-tw * 0.92 * s, y, zc + th * 0.05 * s),
+          gp_Pnt(-tw * 0.62 * s, y, zc + th * 0.62 * s),
+      };
+      Handle(TColgp_HArray1OfPnt) arr = new TColgp_HArray1OfPnt(1, (int)pts.size());
+      for (size_t i = 0; i < pts.size(); ++i) arr->SetValue((int)(i + 1), pts[i]);
+      GeomAPI_Interpolate interp(arr, Standard_True, 1e-5); // 周期闭合样条
+      interp.Perform();
+      return BRepBuilderAPI_MakeWire(
+          BRepBuilderAPI_MakeEdge(interp.Curve()).Edge()).Wire();
     };
     TopoDS_Shape o = BRepPrimAPI_MakePrism(
         BRepBuilderAPI_MakeFace(ringWire(1.0, -tk / 2)).Face(),
@@ -2006,16 +2015,27 @@ TopoDS_Shape create_dropper(const dropper_params &params) {
   const double th = wr * 4.0; // 护环高 (与 thimble 内一致)
   // 钳压管端部 D 形回绕: 双股吊弦线 U 形绕过心形护环底部
   auto wrapLoop = [&](double zStrand, double zBend) {
-    double r = wr * 3.0 + wr; // 绕过护环 (tw=3wr) 的回弯半径
-    gp_Pnt l0(-r, 0, zStrand), l1(-r, 0, zBend), r1(r, 0, zBend), r0(r, 0, zStrand);
-    BRepBuilderAPI_MakeWire path;
-    path.Add(BRepBuilderAPI_MakeEdge(l0, l1));
-    path.Add(BRepBuilderAPI_MakeEdge(
-        GC_MakeArcOfCircle(l1, gp_Pnt(0, 0, zBend - r), r1).Value()));
-    path.Add(BRepBuilderAPI_MakeEdge(r1, r0));
+    double r = wr * 3.0 + wr;
+    // 耳朵状不对称回弯: 一股斜出饱满, 弯底偏心, 另一股陡收 (非标准半圆)
+    std::vector<gp_Pnt> pts = {
+        gp_Pnt(-r * 0.85, 0, zStrand),
+        gp_Pnt(-r * 1.08, 0, (zStrand + zBend) / 2),
+        gp_Pnt(-r * 0.52, 0, zBend - r * 0.58),
+        gp_Pnt(r * 0.42, 0, zBend - r * 0.52),
+        gp_Pnt(r * 0.98, 0, (zStrand + zBend) / 2 + wr),
+        gp_Pnt(r * 0.85, 0, zStrand),
+    };
+    Handle(TColgp_HArray1OfPnt) arr = new TColgp_HArray1OfPnt(1, (int)pts.size());
+    for (size_t i = 0; i < pts.size(); ++i) arr->SetValue((int)(i + 1), pts[i]);
+    GeomAPI_Interpolate interp(arr, Standard_False, 1e-5);
+    interp.Perform();
+    if (!interp.IsDone()) return;
+    TopoDS_Wire pathW = BRepBuilderAPI_MakeWire(
+        BRepBuilderAPI_MakeEdge(interp.Curve()).Edge()).Wire();
+    gp_Dir tan(pts[1].XYZ() - pts[0].XYZ());
     TopoDS_Wire secW = BRepBuilderAPI_MakeWire(
-        BRepBuilderAPI_MakeEdge(gp_Circ(gp_Ax2(l0, gp_Dir(0, 0, -1)), wr)).Edge()).Wire();
-    BRepOffsetAPI_MakePipe pipe(path.Wire(), BRepLib_MakeFace(secW).Face());
+        BRepBuilderAPI_MakeEdge(gp_Circ(gp_Ax2(pts[0], tan), wr)).Edge()).Wire();
+    BRepOffsetAPI_MakePipe pipe(pathW, BRepLib_MakeFace(secW).Face());
     pipe.Build();
     if (pipe.IsDone())
       builder.Add(compound, pipe.Shape());
@@ -2091,23 +2111,23 @@ TopoDS_Shape create_dropper(const dropper_params &params) {
       builder.Add(compound, BRepPrimAPI_MakeCylinder(
           gp_Ax2(gp_Pnt(0, 0, zc - wr * 0.8), gp::DZ()), wr * 2.5, wr * 1.6).Shape());
     };
-    // 上端松弛泪滴环: 线夹侧 → 不对称下垂 → 收回处线箍
+    // 上端松弛泪滴环: 线夹侧 → 不对称下垂 → 收回处线箍 (收回点近端部)
     {
       pipePts({gp_Pnt(cL / 2, 0, -cW),
-               gp_Pnt(cL / 2 + 72, 0, -cW - 45),
-               gp_Pnt(cL / 2 + 82, 0, -cW - 130),
-               gp_Pnt(cL / 2 + 40, 0, -cW - 185),
-               gp_Pnt(wr * 2, 0, -cW - 205)});
-      wireClip(-cW - 205);
+               gp_Pnt(cL / 2 + 66, 0, -cW - 28),
+               gp_Pnt(cL / 2 + 74, 0, -cW - 68),
+               gp_Pnt(cL / 2 + 36, 0, -cW - 92),
+               gp_Pnt(wr * 2, 0, -cW - 100)});
+      wireClip(-cW - 100);
     }
-    // 下端松弛泪滴环: 线夹侧 → 不对称上提 → 收回处线箍
+    // 下端松弛泪滴环: 线夹侧 → 不对称上提 → 收回处线箍 (收回点近端部)
     {
       pipePts({gp_Pnt(cL / 2, 0, -params.length + cW),
-               gp_Pnt(cL / 2 + 58, 0, -params.length + cW + 40),
-               gp_Pnt(cL / 2 + 66, 0, -params.length + cW + 110),
-               gp_Pnt(cL / 2 + 32, 0, -params.length + cW + 155),
-               gp_Pnt(wr * 2, 0, -params.length + cW + 172)});
-      wireClip(-params.length + cW + 172);
+               gp_Pnt(cL / 2 + 54, 0, -params.length + cW + 26),
+               gp_Pnt(cL / 2 + 60, 0, -params.length + cW + 58),
+               gp_Pnt(cL / 2 + 30, 0, -params.length + cW + 84),
+               gp_Pnt(wr * 2, 0, -params.length + cW + 96)});
+      wireClip(-params.length + cW + 96);
     }
   }
 
