@@ -674,6 +674,9 @@ typedef struct {
   int compType;
   double ratedTension;
   bool hasGuyWire;
+  double contactHeight;
+  double structureHeight;
+  double sideOffset;
 } mast_assembly_params_t;
 
 RAILCAPICALL topo_shape_t *
@@ -681,6 +684,123 @@ create_mast_assembly(mast_assembly_params_t params);
 RAILCAPICALL topo_shape_t *
 create_mast_assembly_with_place(mast_assembly_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t upDir);
+
+// ===========================================================================
+// 30b. Weight Stack (坠砣串) / Ratchet Compensator (棘轮补偿装置)
+// ===========================================================================
+typedef struct {
+  int blockCount;
+  double blockDiameter;
+  double blockHeight;
+  double blockGap;
+  double rodDiameter;
+  double rodLength;
+  double holeDiameter;
+} weight_stack_params_t;
+
+typedef struct {
+  double wheelDiameter;
+  double wheelWidth;
+  double ropeDiameter;
+  double strokeLength;
+  weight_stack_params_t stack;
+} ratchet_compensator_params_t;
+
+RAILCAPICALL topo_shape_t *
+create_weight_stack(weight_stack_params_t params);
+RAILCAPICALL topo_shape_t *
+create_weight_stack_at(weight_stack_params_t params, pnt3d_t topPoint);
+RAILCAPICALL topo_shape_t *
+create_ratchet_compensator(ratchet_compensator_params_t params);
+RAILCAPICALL topo_shape_t *
+create_ratchet_compensator_at(ratchet_compensator_params_t params,
+                              pnt3d_t wheelCenter, dir3d_t wheelAxis);
+
+// ===========================================================================
+// 30c. Auxiliary Wire (附加导线本体)
+// ===========================================================================
+typedef struct {
+  double diameter;
+  double sag;
+  double ratedTension;
+} auxiliary_wire_params_t;
+
+RAILCAPICALL topo_shape_t *
+create_auxiliary_wire(auxiliary_wire_params_t params, pnt3d_t startPoint,
+                      pnt3d_t endPoint);
+
+// ===========================================================================
+// 30d. Disconnector (隔离开关) / Arrester (避雷器)
+// ===========================================================================
+typedef struct {
+  double baseLength;
+  double baseWidth;
+  double insulatorHeight;
+  double bladeLength;
+  double openAngle;
+} disconnector_params_t;
+
+RAILCAPICALL topo_shape_t *create_disconnector(disconnector_params_t params);
+RAILCAPICALL topo_shape_t *
+create_disconnector_with_place(disconnector_params_t params, pnt3d_t position,
+                               dir3d_t direction, dir3d_t upDir);
+
+typedef struct {
+  double height;
+  double outerDiameter;
+  double shedDiameter;
+  double shedSpacing;
+  int shedCount;
+} arrester_params_t;
+
+RAILCAPICALL topo_shape_t *create_arrester(arrester_params_t params);
+RAILCAPICALL topo_shape_t *create_arrester_with_place(arrester_params_t params,
+                                                      pnt3d_t position,
+                                                      dir3d_t axisDir);
+
+// ===========================================================================
+// 30e. Pulley Compensator (滑轮补偿装置)
+// ===========================================================================
+typedef struct {
+  double pulleyDiameter;
+  double grooveWidth;
+  int pulleyCount;
+  double ropeDiameter;
+  double strokeLength;
+  weight_stack_params_t stack;
+  bool hasLimitFrame;
+} pulley_compensator_params_t;
+
+RAILCAPICALL topo_shape_t *
+create_pulley_compensator(pulley_compensator_params_t params);
+RAILCAPICALL topo_shape_t *
+create_pulley_compensator_at(pulley_compensator_params_t params,
+                             pnt3d_t pulleyCenter, dir3d_t wheelAxis);
+
+// ===========================================================================
+// 30f. Cantilever Fittings (双套筒连接器 / 套管单耳)
+// ===========================================================================
+typedef struct {
+  double tubeDiameter;
+  double sleeveLength;
+  double wallThickness;
+  double angle;
+  double boltDiameter;
+} sleeve_connector_params_t;
+
+RAILCAPICALL topo_shape_t *
+create_sleeve_connector(sleeve_connector_params_t params);
+
+typedef struct {
+  double tubeDiameter;
+  double sleeveLength;
+  double wallThickness;
+  double earHeight;
+  double earThickness;
+  double holeDiameter;
+} sleeve_ear_params_t;
+
+RAILCAPICALL topo_shape_t *create_sleeve_ear(sleeve_ear_params_t params);
 
 // ===========================================================================
 // 31. Switch Rail (尖轨)

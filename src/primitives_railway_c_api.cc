@@ -1148,7 +1148,8 @@ create_mast_assembly(mast_assembly_params_t params) {
   mast_assembly_params cpp_params{
       params.mastType,   params.mastHeight,    params.cantileverType,
       params.hasCrossArm != 0, params.armDiameter, params.stagger,
-      params.compType,   params.ratedTension,  params.hasGuyWire != 0};
+      params.compType,   params.ratedTension,  params.hasGuyWire != 0,
+      params.contactHeight, params.structureHeight, params.sideOffset};
   try {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_mast_assembly(cpp_params))};
@@ -1163,7 +1164,8 @@ create_mast_assembly_with_place(mast_assembly_params_t params, pnt3d_t position,
   mast_assembly_params cpp_params{
       params.mastType,   params.mastHeight,    params.cantileverType,
       params.hasCrossArm != 0, params.armDiameter, params.stagger,
-      params.compType,   params.ratedTension,  params.hasGuyWire != 0};
+      params.compType,   params.ratedTension,  params.hasGuyWire != 0,
+      params.contactHeight, params.structureHeight, params.sideOffset};
   gp_Pnt cpp_pos(position.x, position.y, position.z);
   gp_Dir cpp_dir(direction.x, direction.y, direction.z);
   gp_Dir cpp_up(upDir.x, upDir.y, upDir.z);
@@ -1171,6 +1173,216 @@ create_mast_assembly_with_place(mast_assembly_params_t params, pnt3d_t position,
     return new topo_shape_t{
         .shp = std::make_shared<shape>(
             create_mast_assembly(cpp_params, cpp_pos, cpp_dir, cpp_up))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+// ===========================================================================
+// 30b. Weight Stack / Ratchet Compensator
+// ===========================================================================
+static weight_stack_params to_cpp(const weight_stack_params_t &p) {
+  weight_stack_params c;
+  c.blockCount = p.blockCount;
+  c.blockDiameter = p.blockDiameter;
+  c.blockHeight = p.blockHeight;
+  c.blockGap = p.blockGap;
+  c.rodDiameter = p.rodDiameter;
+  c.rodLength = p.rodLength;
+  c.holeDiameter = p.holeDiameter;
+  return c;
+}
+
+RAILCAPICALL topo_shape_t *create_weight_stack(weight_stack_params_t params) {
+  try {
+    return new topo_shape_t{std::make_shared<shape>(
+        create_weight_stack(to_cpp(params)))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+RAILCAPICALL topo_shape_t *create_weight_stack_at(weight_stack_params_t params,
+                                                  pnt3d_t topPoint) {
+  try {
+    return new topo_shape_t{std::make_shared<shape>(create_weight_stack(
+        to_cpp(params), gp_Pnt(topPoint.x, topPoint.y, topPoint.z)))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+static ratchet_compensator_params to_cpp(const ratchet_compensator_params_t &p) {
+  ratchet_compensator_params c;
+  c.wheelDiameter = p.wheelDiameter;
+  c.wheelWidth = p.wheelWidth;
+  c.ropeDiameter = p.ropeDiameter;
+  c.strokeLength = p.strokeLength;
+  c.stack = to_cpp(p.stack);
+  return c;
+}
+
+RAILCAPICALL topo_shape_t *
+create_ratchet_compensator(ratchet_compensator_params_t params) {
+  try {
+    return new topo_shape_t{std::make_shared<shape>(
+        create_ratchet_compensator(to_cpp(params)))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+RAILCAPICALL topo_shape_t *
+create_ratchet_compensator_at(ratchet_compensator_params_t params,
+                              pnt3d_t wheelCenter, dir3d_t wheelAxis) {
+  try {
+    return new topo_shape_t{std::make_shared<shape>(create_ratchet_compensator(
+        to_cpp(params), gp_Pnt(wheelCenter.x, wheelCenter.y, wheelCenter.z),
+        gp_Dir(wheelAxis.x, wheelAxis.y, wheelAxis.z)))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+// ===========================================================================
+// 30c. Auxiliary Wire
+// ===========================================================================
+RAILCAPICALL topo_shape_t *
+create_auxiliary_wire(auxiliary_wire_params_t params, pnt3d_t startPoint,
+                      pnt3d_t endPoint) {
+  auxiliary_wire_params cpp_params{params.diameter, params.sag,
+                                   params.ratedTension};
+  try {
+    return new topo_shape_t{std::make_shared<shape>(create_auxiliary_wire(
+        cpp_params, gp_Pnt(startPoint.x, startPoint.y, startPoint.z),
+        gp_Pnt(endPoint.x, endPoint.y, endPoint.z)))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+// ===========================================================================
+// 30d. Disconnector / Arrester
+// ===========================================================================
+RAILCAPICALL topo_shape_t *create_disconnector(disconnector_params_t params) {
+  disconnector_params cpp_params{params.baseLength, params.baseWidth,
+                                 params.insulatorHeight, params.bladeLength,
+                                 params.openAngle};
+  try {
+    return new topo_shape_t{
+        std::make_shared<shape>(create_disconnector(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+RAILCAPICALL topo_shape_t *
+create_disconnector_with_place(disconnector_params_t params, pnt3d_t position,
+                               dir3d_t direction, dir3d_t upDir) {
+  disconnector_params cpp_params{params.baseLength, params.baseWidth,
+                                 params.insulatorHeight, params.bladeLength,
+                                 params.openAngle};
+  try {
+    return new topo_shape_t{std::make_shared<shape>(create_disconnector(
+        cpp_params, gp_Pnt(position.x, position.y, position.z),
+        gp_Dir(direction.x, direction.y, direction.z),
+        gp_Dir(upDir.x, upDir.y, upDir.z)))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+RAILCAPICALL topo_shape_t *create_arrester(arrester_params_t params) {
+  arrester_params cpp_params{params.height, params.outerDiameter,
+                             params.shedDiameter, params.shedSpacing,
+                             params.shedCount};
+  try {
+    return new topo_shape_t{
+        std::make_shared<shape>(create_arrester(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+RAILCAPICALL topo_shape_t *create_arrester_with_place(arrester_params_t params,
+                                                      pnt3d_t position,
+                                                      dir3d_t axisDir) {
+  arrester_params cpp_params{params.height, params.outerDiameter,
+                             params.shedDiameter, params.shedSpacing,
+                             params.shedCount};
+  try {
+    return new topo_shape_t{std::make_shared<shape>(create_arrester(
+        cpp_params, gp_Pnt(position.x, position.y, position.z),
+        gp_Dir(axisDir.x, axisDir.y, axisDir.z)))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+// ===========================================================================
+// 30e. Pulley Compensator
+// ===========================================================================
+RAILCAPICALL topo_shape_t *
+create_pulley_compensator(pulley_compensator_params_t params) {
+  pulley_compensator_params cpp_params;
+  cpp_params.pulleyDiameter = params.pulleyDiameter;
+  cpp_params.grooveWidth = params.grooveWidth;
+  cpp_params.pulleyCount = params.pulleyCount;
+  cpp_params.ropeDiameter = params.ropeDiameter;
+  cpp_params.strokeLength = params.strokeLength;
+  cpp_params.stack = to_cpp(params.stack);
+  cpp_params.hasLimitFrame = params.hasLimitFrame;
+  try {
+    return new topo_shape_t{
+        std::make_shared<shape>(create_pulley_compensator(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+RAILCAPICALL topo_shape_t *
+create_pulley_compensator_at(pulley_compensator_params_t params,
+                             pnt3d_t pulleyCenter, dir3d_t wheelAxis) {
+  pulley_compensator_params cpp_params;
+  cpp_params.pulleyDiameter = params.pulleyDiameter;
+  cpp_params.grooveWidth = params.grooveWidth;
+  cpp_params.pulleyCount = params.pulleyCount;
+  cpp_params.ropeDiameter = params.ropeDiameter;
+  cpp_params.strokeLength = params.strokeLength;
+  cpp_params.stack = to_cpp(params.stack);
+  cpp_params.hasLimitFrame = params.hasLimitFrame;
+  try {
+    return new topo_shape_t{std::make_shared<shape>(create_pulley_compensator(
+        cpp_params, gp_Pnt(pulleyCenter.x, pulleyCenter.y, pulleyCenter.z),
+        gp_Dir(wheelAxis.x, wheelAxis.y, wheelAxis.z)))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+// ===========================================================================
+// 30f. Cantilever Fittings
+// ===========================================================================
+RAILCAPICALL topo_shape_t *
+create_sleeve_connector(sleeve_connector_params_t params) {
+  sleeve_connector_params cpp_params{params.tubeDiameter, params.sleeveLength,
+                                     params.wallThickness, params.angle,
+                                     params.boltDiameter};
+  try {
+    return new topo_shape_t{
+        std::make_shared<shape>(create_sleeve_connector(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+RAILCAPICALL topo_shape_t *create_sleeve_ear(sleeve_ear_params_t params) {
+  sleeve_ear_params cpp_params{params.tubeDiameter, params.sleeveLength,
+                               params.wallThickness, params.earHeight,
+                               params.earThickness, params.holeDiameter};
+  try {
+    return new topo_shape_t{
+        std::make_shared<shape>(create_sleeve_ear(cpp_params))};
   } catch (...) {
     return nullptr;
   }

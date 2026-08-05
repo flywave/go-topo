@@ -702,6 +702,37 @@ void test_track_extras() {
   report_dims("switch_rail_curve(R350m)", swr2);
 }
 
+// --- 补偿装置/开关/避雷器/连接小件 ---
+void test_ocs_devices() {
+  std::cout << "\n=== OCS Devices (补偿/开关/避雷器/小件) ===" << std::endl;
+  auto ws = create_weight_stack(weight_stack_params{});
+  test_export(ws, "weight_stack");
+  report_dims("weight_stack(8块Ø380)", ws);
+  auto rc = create_ratchet_compensator(ratchet_compensator_params{});
+  test_export(rc, "ratchet_compensator");
+  report_dims("ratchet_compensator", rc);
+  auto pc = create_pulley_compensator(pulley_compensator_params{});
+  test_export(pc, "pulley_compensator");
+  report_dims("pulley_compensator", pc);
+  auto dc = create_disconnector(disconnector_params{});
+  test_export(dc, "disconnector");
+  report_dims("disconnector(分闸75°)", dc);
+  auto ar = create_arrester(arrester_params{});
+  test_export(ar, "arrester");
+  report_dims("arrester(H800)", ar);
+  auto sc = create_sleeve_connector(sleeve_connector_params{});
+  test_export(sc, "sleeve_connector");
+  report_dims("sleeve_connector(Ø60/45°)", sc);
+  auto se = create_sleeve_ear(sleeve_ear_params{});
+  test_export(se, "sleeve_ear");
+  report_dims("sleeve_ear(Ø60)", se);
+  // 附加导线 (回流线, 跨距 50m 弛度 500)
+  auto aw = create_auxiliary_wire(auxiliary_wire_params{12, 500, 0},
+                                  gp_Pnt(0, 0, 8000), gp_Pnt(50000, 0, 8000));
+  test_export(aw, "auxiliary_wire");
+  report_dims("auxiliary_wire(L50m)", aw);
+}
+
 int main() {
   auto run = [](const char *name, auto fn) {
     std::cout << "\n=== " << name << " ===" << std::endl;
@@ -765,6 +796,7 @@ int main() {
   run("Cables & Crossing", test_cables_and_crossing);
   run("Aux Bracket", test_aux_bracket);
   run("Track Extras", test_track_extras);
+  run("OCS Devices", test_ocs_devices);
 
   std::cout << "\nAll tests completed." << std::endl;
   return 0;

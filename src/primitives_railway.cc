@@ -278,12 +278,11 @@ TopoDS_Shape create_contact_wire(const contact_wire_params &params,
   profileWiz.Add(e8);
   TopoDS_Wire pw = profileWiz.Wire();
 
-  // Build destination axis: Z = startDir, X & Y perpendicular (auto)
-  gp_Ax2 toAx(startPoint, startDir);
-  // Source axis: profile lies in YZ plane → normal = X axis
-  gp_Ax2 fromAx(gp::Origin(), gp::DX());
+  // Build destination frame: 路径切向 → 局部 X (断面法向), 竖直 → 局部 Z
+  gp_Ax3 srcAx3(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 tgtAx3(startPoint, gp::DZ(), startDir);
   gp_Trsf trsf;
-  trsf.SetTransformation(fromAx, toAx);
+  trsf.SetTransformation(tgtAx3, srcAx3);
   BRepBuilderAPI_Transform xf(pw, trsf);
   TopoDS_Wire positioned = TopoDS::Wire(xf.Shape());
 
@@ -1931,10 +1930,57 @@ TopoDS_Shape create_dropper(const dropper_params &params) {
   const double cW = params.clampWidth > 0 ? params.clampWidth : 40;
   const double cT = params.clampThickness > 0 ? params.clampThickness : 6;
   const double gripR = 8.0; // 被夹导线半径 (承力索/接触线)
-  const double stemL = wr * 8;
 
-  // 夹板式线夹: 两块夹板 (XZ 面) + 贯穿螺栓 + 连接短管
-  auto clamp = [&](double zc, double stemDir) {
+  // D 型整体吊弦 (沿 -Z 悬挂):
+  //   线夹 → 挂环耳板 → 心形护环 → 钳压管 → 吊弦线 → 钳压管 → 心形护环 → 线夹
+  //   导电型侧面带载流环
+
+  // 心形护环 (鸡心形: 上尖下圆水滴环, XZ 平面)
+  auto thimble = [&](double zc) {
+    double tw = wr * 3.0, th = wr * 4.0, tk = wr * 1.6;
+    auto ringWire = [&](double s, double y) {
+      BRepBuilderAPI_MakeWire w;
+      gp_Pnt top(0, y, zc + th * s), right(tw * s, y, zc),
+             bot(0, y, zc - tw * s), left(-tw * s, y, zc);
+      // 顶点 → 右侧 → 底部半圆 → 左侧 → 顶点
+      w.Add(BRepBuilderAPI_MakeEdge(top, right));
+      w.Add(BRepBuilderAPI_MakeEdge(
+          GC_MakeArcOfCircle(right, bot, left).Value()));
+      w.Add(BRepBuilderAPI_MakeEdge(left, top));
+      return w.Wire();
+    };
+    TopoDS_Shape o = BRepPrimAPI_MakePrism(
+        BRepBuilderAPI_MakeFace(ringWire(1.0, -tk / 2)).Face(),
+        gp_Vec(0, tk, 0)).Shape();
+    TopoDS_Shape in = BRepPrimAPI_MakePrism(
+        BRepBuilderAPI_MakeFace(ringWire(0.55, -tk / 2 - 1)).Face(),
+        gp_Vec(0, tk + 2, 0)).Shape();
+    return BRepAlgoAPI_Cut(o, in).Shape();
+  };
+  // 钳压管 (多节肋纹压接管, 3 节)
+  auto crimp = [&](double zTop) {
+    BRep_Builder b; TopoDS_Compound c; b.MakeCompound(c);
+    double seg = wr * 2.2;
+    for (int k = 0; k < 3; ++k) {
+      double rr = (k == 1) ? wr * 1.6 : wr * 1.9;
+      b.Add(c, BRepPrimAPI_MakeCylinder(
+          gp_Ax2(gp_Pnt(0, 0, zTop - seg * (k + 1)), gp::DZ()), rr, seg).Shape());
+    }
+    return TopoDS_Shape(c);
+  };
+  // 挂环耳板 (带销孔; dir=+1 向上伸出, -1 向下伸出)
+  auto earPlate = [&](double zc, int dir) {
+    double z0 = dir > 0 ? zc - cW * 0.05 : zc - cW * 0.35;
+    TopoDS_Shape ear = BRepPrimAPI_MakeBox(
+        gp_Pnt(-cT / 2, -cT, z0), cT, cT * 2, cW * 0.4).Shape();
+    double hz = zc + dir * cW * 0.15;
+    ear = BRepAlgoAPI_Cut(ear, BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(-cT / 2 - 1, 0, hz), gp::DX()), wr * 1.2,
+        cT + 2).Shape()).Shape();
+    return ear;
+  };
+  // 线夹 (夹板×2 + 螺栓×2 + 六角螺母)
+  auto clamp = [&](double zc) {
     for (int s = -1; s <= 1; s += 2) {
       double y0 = s > 0 ? gripR : -gripR - cT;
       builder.Add(compound, BRepPrimAPI_MakeBox(
@@ -1945,7 +1991,6 @@ TopoDS_Shape create_dropper(const dropper_params &params) {
       builder.Add(compound, BRepPrimAPI_MakeCylinder(
           gp_Ax2(gp_Pnt(bx, -gripR - cT, zc), gp::DY()), cT * 0.6,
           2 * (gripR + cT)).Shape());
-      // 六角螺母
       BRepBuilderAPI_MakePolygon hex;
       for (int k = 0; k < 6; ++k) {
         double a = k * M_PI / 3.0;
@@ -1955,21 +2000,116 @@ TopoDS_Shape create_dropper(const dropper_params &params) {
       builder.Add(compound, BRepPrimAPI_MakePrism(
           BRepLib_MakeFace(hex.Wire()).Face(), gp_Vec(0, cT * 0.8, 0)).Shape());
     }
-    // 连接短管 (线夹 → 吊弦线)
-    double z0 = stemDir > 0 ? zc + cW / 2 : zc - cW / 2 - stemL;
-    builder.Add(compound, BRepPrimAPI_MakeCylinder(
-        gp_Ax2(gp_Pnt(0, 0, z0), gp::DZ()), wr * 1.6, stemL).Shape());
   };
 
-  clamp(-cW / 2, -1);                      // 上端 (承力索侧)
-  clamp(-params.length + cW / 2, +1);      // 下端 (接触线侧)
+  // 上端: 承力索吊弦线夹 → 耳板销孔挂心形护环 → 钳压管
+  const double th = wr * 4.0; // 护环高 (与 thimble 内一致)
+  // 钳压管端部 D 形回绕: 双股吊弦线 U 形绕过心形护环底部
+  auto wrapLoop = [&](double zStrand, double zBend) {
+    double r = wr * 3.0 + wr; // 绕过护环 (tw=3wr) 的回弯半径
+    gp_Pnt l0(-r, 0, zStrand), l1(-r, 0, zBend), r1(r, 0, zBend), r0(r, 0, zStrand);
+    BRepBuilderAPI_MakeWire path;
+    path.Add(BRepBuilderAPI_MakeEdge(l0, l1));
+    path.Add(BRepBuilderAPI_MakeEdge(
+        GC_MakeArcOfCircle(l1, gp_Pnt(0, 0, zBend - r), r1).Value()));
+    path.Add(BRepBuilderAPI_MakeEdge(r1, r0));
+    TopoDS_Wire secW = BRepBuilderAPI_MakeWire(
+        BRepBuilderAPI_MakeEdge(gp_Circ(gp_Ax2(l0, gp_Dir(0, 0, -1)), wr)).Edge()).Wire();
+    BRepOffsetAPI_MakePipe pipe(path.Wire(), BRepLib_MakeFace(secW).Face());
+    pipe.Build();
+    if (pipe.IsDone())
+      builder.Add(compound, pipe.Shape());
+  };
 
-  // 吊弦线
-  double topZ = -cW / 2 - stemL;
-  double botZ = -params.length + cW / 2 + stemL;
-  if (botZ < topZ)
+  clamp(-cW / 2);
+  builder.Add(compound, earPlate(-cW / 2, -1));
+  double holeT = -cW / 2 - cW * 0.15;          // 上耳板销孔
+  double zcT = holeT - th * 0.8;               // 护环顶对正销孔
+  builder.Add(compound, thimble(zcT));
+  // 链序: 护环 → D形回绕(U弯在护环底) → 钳压管(在回绕下方) → 调节螺栓 → 吊弦线
+  const double wrapR = wr * 3.0 + wr;          // 回弯半径 (与 wrapLoop 一致)
+  double topBendZ = zcT - wr * 3.0 + 1;        // U弯中心 (护环底)
+  double crimpTopT = topBendZ - wrapR + 2;     // 钳压管顶 (回绕下方搭接)
+  builder.Add(compound, crimp(crimpTopT));
+  wrapLoop(crimpTopT, topBendZ);               // 上端 D 形回绕
+  // 调节固定螺栓 (贴心形护环下方, 横向穿过 D 形回绕双股 + 六角螺母)
+  {
+    double bz = topBendZ + wr * 0.5;           // 贴护环底部, 压住回绕双股
+    builder.Add(compound, BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(0, -16, bz), gp::DY()), wr * 1.5, 32).Shape());
+    BRepBuilderAPI_MakePolygon hex;
+    for (int k = 0; k < 6; ++k) {
+      double a = k * M_PI / 3.0;
+      hex.Add(gp_Pnt(wr * 2.6 * std::cos(a), 16, bz + wr * 2.6 * std::sin(a)));
+    }
+    hex.Close();
+    builder.Add(compound, BRepPrimAPI_MakePrism(
+        BRepLib_MakeFace(hex.Wire()).Face(), gp_Vec(0, wr * 2, 0)).Shape());
+  }
+
+  // 下端: 接触线吊弦线夹 → 耳板(向上)销孔挂心形护环 → D形回绕 → 钳压管
+  clamp(-params.length + cW / 2);
+  builder.Add(compound, earPlate(-params.length + cW / 2, +1));
+  double holeB = -params.length + cW / 2 + cW * 0.15;
+  double zcB = holeB + th * 0.6;               // 护环底对正销孔
+  builder.Add(compound, thimble(zcB));
+  double botBendZ = zcB - wr * 3.0 + 1;        // U弯中心 (护环底下方)
+  double crimpBotB = botBendZ + wrapR - 2;     // 钳压管底
+  builder.Add(compound, crimp(crimpBotB + wr * 6.6));
+  wrapLoop(crimpBotB, botBendZ);               // 下端 D 形回绕
+
+  // 吊弦线 (两钳压管之间)
+  double topZ = crimpTopT - wr * 6.6;
+  double botZ = crimpBotB + wr * 6.6;
+  if (topZ > botZ)
     builder.Add(compound, BRepPrimAPI_MakeCylinder(
         gp_Ax2(gp_Pnt(0, 0, botZ), gp::DZ()), wr, topZ - botZ).Shape());
+
+  // 载流环 (导电型): 仅两端松弛泪滴环 (中部为单根吊弦线, 无并行载流线)
+  // 泪滴环为不对称自然弯 (非工整半圆), 收回处加线箍
+  if (params.conductive) {
+    auto pipePts = [&](std::vector<gp_Pnt> pts) {
+      Handle(TColgp_HArray1OfPnt) arr = new TColgp_HArray1OfPnt(1, (int)pts.size());
+      for (size_t i = 0; i < pts.size(); ++i) arr->SetValue((int)(i + 1), pts[i]);
+      GeomAPI_Interpolate interp(arr, Standard_False, 1e-5);
+      interp.Perform();
+      if (!interp.IsDone()) return;
+      TopoDS_Wire pathW = BRepBuilderAPI_MakeWire(
+          BRepBuilderAPI_MakeEdge(interp.Curve()).Edge()).Wire();
+      gp_Dir tan(pts[1].XYZ() - pts[0].XYZ());
+      TopoDS_Wire secW = BRepBuilderAPI_MakeWire(
+          BRepBuilderAPI_MakeEdge(gp_Circ(gp_Ax2(pts[0], tan), wr * 1.4)).Edge()).Wire();
+      BRepOffsetAPI_MakePipe pipe(pathW, BRepLib_MakeFace(secW).Face());
+      pipe.Build();
+      if (pipe.IsDone())
+        builder.Add(compound, pipe.Shape());
+    };
+    // 线箍 (泪滴环收回处, 捆扎环端与吊弦线)
+    auto wireClip = [&](double zc) {
+      builder.Add(compound, BRepPrimAPI_MakeCylinder(
+          gp_Ax2(gp_Pnt(0, 0, zc - wr * 2.5), gp::DZ()), wr * 2.2, wr * 5).Shape());
+      builder.Add(compound, BRepPrimAPI_MakeCylinder(
+          gp_Ax2(gp_Pnt(0, 0, zc - wr * 0.8), gp::DZ()), wr * 2.5, wr * 1.6).Shape());
+    };
+    // 上端松弛泪滴环: 线夹侧 → 不对称下垂 → 收回处线箍
+    {
+      pipePts({gp_Pnt(cL / 2, 0, -cW),
+               gp_Pnt(cL / 2 + 72, 0, -cW - 45),
+               gp_Pnt(cL / 2 + 82, 0, -cW - 130),
+               gp_Pnt(cL / 2 + 40, 0, -cW - 185),
+               gp_Pnt(wr * 2, 0, -cW - 205)});
+      wireClip(-cW - 205);
+    }
+    // 下端松弛泪滴环: 线夹侧 → 不对称上提 → 收回处线箍
+    {
+      pipePts({gp_Pnt(cL / 2, 0, -params.length + cW),
+               gp_Pnt(cL / 2 + 58, 0, -params.length + cW + 40),
+               gp_Pnt(cL / 2 + 66, 0, -params.length + cW + 110),
+               gp_Pnt(cL / 2 + 32, 0, -params.length + cW + 155),
+               gp_Pnt(wr * 2, 0, -params.length + cW + 172)});
+      wireClip(-params.length + cW + 172);
+    }
+  }
 
   return compound;
 }
@@ -2306,26 +2446,51 @@ TopoDS_Shape create_head_span(const head_span_params &params) {
   TopoDS_Compound compound;
   builder.MakeCompound(compound);
 
-  // Cross catenary — approximated as cylinder along Z at mid-point (simplified)
-  gp_Pnt cl(0, 0, sag + 1000), cr(span, 0, sag + 1000);
-  builder.Add(compound,
-              BRepPrimAPI_MakeCylinder(gp_Ax2(cl, gp_Dir(cr.XYZ() - cl.XYZ())),
-                                       cDia / 2, span)
-                  .Shape());
+  // 布局 (局部: X 跨向 0→span, Z 向上): 横向承力索在上(带弧垂),
+  // 上/下部固定绳水平, 悬挂点处直吊弦连接承力索与固定绳
+  const double zCat = sag + 2000;    // 承力索端部高
+  const double zUp = zCat - sag - 800;  // 上部固定绳 (承力索跨中下方 800)
+  const double zLow = zUp - 600;        // 下部固定绳
 
-  // Fixed ropes
-  gp_Pnt ul(0, 0, sag + 800), ur(span, 0, sag + 800);
-  builder.Add(compound,
-              BRepPrimAPI_MakeCylinder(gp_Ax2(ul, gp_Dir(ur.XYZ() - ul.XYZ())),
-                                       uDia / 2, span)
-                  .Shape());
-  gp_Pnt ll(0, 0, 800), lr(span, 0, 800);
-  builder.Add(compound,
-              BRepPrimAPI_MakeCylinder(gp_Ax2(ll, gp_Dir(lr.XYZ() - ll.XYZ())),
-                                       lDia / 2, span)
-                  .Shape());
-
-  // Insulators
+  // 1. 横向承力索: 上凸弧垂曲线 (复用悬索生成)
+  {
+    suspension_cable_params sc;
+    sc.startPoint = gp_Pnt(0, 0, zCat);
+    sc.endPoint = gp_Pnt(span, 0, zCat);
+    sc.diameter = cDia;
+    sc.sag = sag;
+    sc.cableType = suspension_cable_type::CATENARY;
+    sc.tension = 0;
+    builder.Add(compound, create_suspension_cable(sc));
+  }
+  // 2. 上/下部固定绳 (水平)
+  for (auto &rp : {std::make_pair(zUp, uDia), std::make_pair(zLow, lDia)}) {
+    suspension_cable_params sc;
+    sc.startPoint = gp_Pnt(0, 0, rp.first);
+    sc.endPoint = gp_Pnt(span, 0, rp.first);
+    sc.diameter = rp.second;
+    sc.sag = 0;
+    sc.cableType = suspension_cable_type::FIXED_ROPE;
+    sc.tension = 0;
+    builder.Add(compound, create_suspension_cable(sc));
+  }
+  // 3. 直吊弦 (悬挂点: 跨中对称布置)
+  int nHP = params.hangPointCount > 0 ? params.hangPointCount : 2;
+  double hpSpacing = params.hangPointSpacing > 0 ? params.hangPointSpacing : 4000;
+  for (int i = 0; i < nHP; ++i) {
+    double x = span / 2 + (i - (nHP - 1) / 2.0) * hpSpacing;
+    double t = x / span;
+    double zCatAt = zCat - 4 * sag * t * (1 - t); // 承力索抛物线
+    // 承力索 → 上部固定绳 的直吊弦
+    double drop = zCatAt - zUp;
+    if (drop > 50)
+      builder.Add(compound, BRepPrimAPI_MakeCylinder(
+          gp_Ax2(gp_Pnt(x, 0, zUp), gp::DZ()), 2.5, drop).Shape());
+    // 上部固定绳 → 下部固定绳 的连接吊弦
+    builder.Add(compound, BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(x, 0, zLow), gp::DZ()), 2.5, zUp - zLow).Shape());
+  }
+  // 4. 绝缘子串: 两端沿绳方向 (水平, 向支柱侧伸出)
   if (params.insulatorLength > 0) {
     double iL = params.insulatorLength, iD = iL * 0.2;
     rod_insulator_params rip;
@@ -2342,12 +2507,13 @@ TopoDS_Shape create_head_span(const head_span_params &params) {
     rip.flangeBoltDiameter = iD * 0.18;
     for (int side = 0; side < 2; ++side) {
       double x = side * span;
-      builder.Add(compound, create_rod_insulator(rip, gp_Pnt(x, 0, sag + 1000),
-                                                 gp::DZ()));
-      builder.Add(compound,
-                  create_rod_insulator(rip, gp_Pnt(x, 0, sag + 800), gp::DX()));
-      builder.Add(compound,
-                  create_rod_insulator(rip, gp_Pnt(x, 0, 800), gp::DX()));
+      gp_Dir out = side == 0 ? gp_Dir(-1, 0, 0) : gp_Dir(1, 0, 0);
+      for (double z : {zCat, zUp, zLow}) {
+        gp_Pnt p0(x, 0, z);
+        builder.Add(compound, create_rod_insulator(
+            rip, p0.Translated(gp_Vec(out.XYZ()) * (side == 0 ? iL : 0)),
+            side == 0 ? gp_Dir(1, 0, 0) : gp_Dir(1, 0, 0)));
+      }
     }
   }
   return compound;
@@ -2355,19 +2521,18 @@ TopoDS_Shape create_head_span(const head_span_params &params) {
 TopoDS_Shape create_head_span(const head_span_params &params,
                               const gp_Pnt &leftMast, const gp_Pnt &rightMast,
                               const gp_Dir &upDir) {
-  TopoDS_Shape s = create_head_span(params);
   gp_Vec v(leftMast, rightMast);
   double len = v.Magnitude();
   if (len <= Precision::Confusion())
-    return s;
-  double scale = len / params.span;
-  gp_Trsf sc;
-  sc.SetScale(gp::Origin(), scale);
+    return create_head_span(params);
+  // 按实际跨距重建, 不做整体缩放 (缩放会把绳径/绝缘子一起缩错)
+  head_span_params p2 = params;
+  p2.span = len;
+  TopoDS_Shape s = create_head_span(p2);
   gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX()), tgt(leftMast, upDir, gp_Dir(v));
   gp_Trsf tr;
   tr.SetTransformation(tgt, src);
-  return BRepBuilderAPI_Transform(BRepBuilderAPI_Transform(s, sc).Shape(), tr)
-      .Shape();
+  return BRepBuilderAPI_Transform(s, tr).Shape();
 }
 TopoDS_Shape create_transverse_span(const transverse_span_params &params) {
   if (params.span <= 0 || params.beamHeight <= 0)
@@ -2426,6 +2591,19 @@ TopoDS_Shape create_transverse_span(const transverse_span_params &params) {
                     makeChord(gp_Pnt(topPts[i].X(), y, topPts[i].Z()),
                               gp_Pnt(botPts[i + 1].X(), y, botPts[i + 1].Z()),
                               webR * 0.8));
+      }
+      // 上下弦面水平横联 (每隔一节间 X 形交叉) → 空间桁架
+      if (i % 2 == 0) {
+        for (int lvl = 0; lvl < 2; ++lvl) {
+          double z = lvl == 0 ? botPts[i].Z() : topPts[i].Z();
+          double zN = lvl == 0 ? botPts[i + 1].Z() : topPts[i + 1].Z();
+          builder.Add(compound,
+                      makeChord(gp_Pnt(topPts[i].X(), -bw / 2, z),
+                                gp_Pnt(topPts[i + 1].X(), bw / 2, zN), webR * 0.6));
+          builder.Add(compound,
+                      makeChord(gp_Pnt(topPts[i].X(), bw / 2, z),
+                                gp_Pnt(topPts[i + 1].X(), -bw / 2, zN), webR * 0.6));
+        }
       }
     }
   } else if (params.beamType == beam_section_type::BOX) {
@@ -2496,6 +2674,23 @@ TopoDS_Shape create_transverse_span(const transverse_span_params &params) {
                                     .Shape());
         }
       }
+    }
+  }
+
+  // 两端立柱 (格构式钢柱, 梁底 z=0 向下延伸至基础)
+  if (params.mastHeight > 0) {
+    double mw = params.mastWidth > 0 ? params.mastWidth : 400;
+    steel_mast_params mp{steel_mast_type::LATTICE, params.mastHeight,
+                         mw * 0.7, mw, 8, 12, mw * 1.5, 200, 24, 1};
+    for (int side = -1; side <= 1; side += 2) {
+      TopoDS_Shape mast = create_steel_mast(mp);
+      gp_Trsf t;
+      t.SetTranslation(gp_Vec(side * span / 2, 0, -params.mastHeight));
+      builder.Add(compound, BRepBuilderAPI_Transform(mast, t).Shape());
+      // 梁-柱连接节点板
+      builder.Add(compound, BRepPrimAPI_MakeBox(
+          gp_Pnt(side * span / 2 - mw * 0.4, -bw / 2 - 20, -30),
+          mw * 0.8, bw + 40, 30).Shape());
     }
   }
 
@@ -3626,96 +3821,113 @@ TopoDS_Shape create_guard_rail(const guard_rail_params &params,
 // 30. Mast Assembly (支柱装配)
 // =========================================================================
 TopoDS_Shape create_mast_assembly(const mast_assembly_params &params) {
-  // Start with mast
-  steel_mast_params mastParams;
-  mastParams.type = steel_mast_type::H_BEAM;
-  mastParams.height = params.mastHeight;
-  mastParams.topWidth = 200;
-  mastParams.bottomWidth = 300;
-  mastParams.wallThickness = 10;
-  mastParams.flangeThickness = 16;
-  mastParams.flangeWidth = 350;
-  mastParams.anchorSpacing = 200;
-  mastParams.anchorDiameter = 24;
-  mastParams.segmentCount = 1;
-  TopoDS_Shape result = create_steel_mast(mastParams);
+  // 局部坐标: 原点=柱底中心, +X=指向线路, +Y=沿线路, Z=向上
+  // 尺寸链: 平腕臂高 = 导高+结构高度-150; 下底座 = 平腕臂-1300
+  BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
+  const double CH = params.contactHeight > 0 ? params.contactHeight : 5300;
+  const double SH = params.structureHeight > 0 ? params.structureHeight : 1400;
+  const double CX = params.sideOffset > 0 ? params.sideOffset : 2900;
+  const double messengerZ = CH + SH;
+  const double mastHalf = 150.0;
+  const double armD = params.armDiameter > 0 ? params.armDiameter : 60;
 
-  // Cantilever system
-  if (params.cantileverType > 0) {
-    double armDiam = params.armDiameter > 0 ? params.armDiameter : 60;
-    double armLen = 2500;
-
-    // Mast bracket at specified height
-    mast_bracket_params bracketParams;
-    bracketParams.boltSpacing = 80;
-    bracketParams.boltDiameter = 16;
-    bracketParams.height = 150;
-    bracketParams.width = 120;
-    bracketParams.thickness = 12;
-    bracketParams.insulatorBoltSpacing = 60;
-    bracketParams.insulatorBoltDiameter = 14;
-    bracketParams.mountAngle = 0;
-    double bracketH = params.mastHeight * 0.7;
-    TopoDS_Shape bracket = create_mast_bracket(
-        bracketParams, gp_Pnt(0, 0, bracketH), gp::DX(), gp::DZ());
-    result = BRepAlgoAPI_Fuse(result, bracket).Shape();
-
-    // Rod insulator
-    rod_insulator_params rodParams;
-    rodParams.type = rod_insulator_type::SOLID;
-    rodParams.height = 500;
-    rodParams.outerDiameter = 80;
-    rodParams.innerDiameter = 0;
-    rodParams.shedDiameter = 140;
-    rodParams.shedSpacing = 60;
-    rodParams.shedCount = 6;
-    rodParams.endFitting = end_fitting_type::FLANGE;
-    rodParams.flangeDiameter = 100;
-    rodParams.flangeBoltSpacing = 70;
-    rodParams.flangeBoltDiameter = 12;
-    TopoDS_Shape insulator =
-        create_rod_insulator(rodParams, gp_Pnt(80, 0, bracketH), gp::DX());
-    result = BRepAlgoAPI_Fuse(result, insulator).Shape();
-
-    // Level cantilever
-    level_cantilever_params levelParams;
-    levelParams.length = armLen;
-    levelParams.outerDiameter = armDiam;
-    levelParams.wallThickness = 4;
-    levelParams.mountHeight = bracketH + 80;
-    levelParams.riseAngle = 0;
-    TopoDS_Shape level = create_level_cantilever(
-        levelParams, gp_Pnt(580, 0, bracketH), gp::DX(), gp::DZ());
-    result = BRepAlgoAPI_Fuse(result, level).Shape();
-
-    if (params.cantileverType == 2) {
-      // Slanted cantilever (double arm)
-      slant_cantilever_params slantParams;
-      slantParams.length = armLen * 0.9;
-      slantParams.outerDiameter = armDiam;
-      slantParams.wallThickness = 4;
-      slantParams.slantAngle = 45;
-      TopoDS_Shape slant = create_slant_cantilever(
-          slantParams, gp_Pnt(80, 0, bracketH - 100), gp::DX(), gp::DZ());
-      result = BRepAlgoAPI_Fuse(result, slant).Shape();
-    }
-
-    // Registration arm at cantilever tip
-    registration_arm_params regParams;
-    regParams.type = registration_arm_type::STRAIGHT;
-    regParams.length = 800;
-    regParams.tubeWidth = 30;
-    regParams.tubeHeight = 25;
-    regParams.wallThickness = 3;
-    regParams.angle = 0;
-    regParams.isReverse = false;
-    TopoDS_Shape regArm = create_registration_arm(
-        regParams, gp_Pnt(armLen + 580, params.stagger, bracketH - 200),
-        gp::DX(), gp::DZ());
-    result = BRepAlgoAPI_Fuse(result, regArm).Shape();
+  // 1. 支柱
+  if (params.mastType == 2) {
+    concrete_mast_params mp{};
+    mp.sectionType = concrete_mast_section_type::CIRCULAR;
+    mp.height = params.mastHeight;
+    mp.topWidth = 250; mp.bottomWidth = 350; mp.wallThickness = 60;
+    bld.Add(cmp, create_concrete_mast(mp));
+  } else {
+    steel_mast_params mp{steel_mast_type::H_BEAM, params.mastHeight, 200, 300,
+                         10, 16, 350, 200, 24, 1};
+    bld.Add(cmp, create_steel_mast(mp));
   }
 
-  return result;
+  if (params.cantileverType > 0) {
+    const double levelZ = messengerZ - 150;   // 平腕臂轴线高
+    const double lowerZ = levelZ - 1300;      // 下底座高
+    const double insLen = 700;                // 棒式绝缘子长
+    const double bracketT = 80;
+    const double armStartX = mastHalf + bracketT + insLen;
+    const double tipX = CX - params.stagger;  // 定位点 X (拉出值偏向支柱为正)
+    const double armLen = tipX - armStartX;
+    const double rise = 3.0 * M_PI / 180.0;
+
+    // 2. 支柱连接座 ×2
+    mast_bracket_params bp;
+    bp.boltSpacing = 80; bp.boltDiameter = 16;
+    bp.height = 150; bp.width = 120; bp.thickness = 12;
+    bp.insulatorBoltSpacing = 60; bp.insulatorBoltDiameter = 14;
+    bp.mountAngle = 0; bp.mastDiameter = 0;
+    bld.Add(cmp, create_mast_bracket(bp, gp_Pnt(mastHalf, 0, levelZ), gp::DX(), gp::DZ()));
+    bld.Add(cmp, create_mast_bracket(bp, gp_Pnt(mastHalf, 0, lowerZ), gp::DX(), gp::DZ()));
+
+    // 3. 棒式绝缘子 ×2 (沿腕臂轴)
+    rod_insulator_params rip;
+    rip.type = rod_insulator_type::SOLID;
+    rip.height = insLen; rip.outerDiameter = 80; rip.innerDiameter = 0;
+    rip.shedDiameter = 150; rip.shedSpacing = 65; rip.shedCount = 8;
+    rip.endFitting = end_fitting_type::FLANGE;
+    rip.flangeDiameter = 110; rip.flangeBoltSpacing = 80; rip.flangeBoltDiameter = 12;
+    bld.Add(cmp, create_rod_insulator(rip, gp_Pnt(mastHalf + bracketT, 0, levelZ), gp::DX()));
+    bld.Add(cmp, create_rod_insulator(rip, gp_Pnt(mastHalf + bracketT, 0, lowerZ), gp::DX()));
+
+    // 4. 平腕臂 (仰角 3°)
+    level_cantilever_params lp{armLen, armD, 4, levelZ, 3};
+    bld.Add(cmp, create_level_cantilever(lp, gp_Pnt(armStartX, 0, levelZ), gp::DX(), gp::DZ()));
+
+    // 5. 斜腕臂 (下绝缘子端 → 平腕臂 65% 处, 三角桁架)
+    {
+      double jointX = armStartX + armLen * 0.65;
+      double jointZ = levelZ + armLen * 0.65 * std::tan(rise);
+      gp_Pnt sl0(armStartX, 0, lowerZ), sl1(jointX, 0, jointZ);
+      gp_Vec slv(sl0, sl1);
+      slant_cantilever_params sp{slv.Magnitude(), armD, 4, 45};
+      bld.Add(cmp, create_slant_cantilever(sp, sl0, gp_Dir(slv), gp::DZ()));
+    }
+
+    // 6. 承力索座 (平腕臂外端顶面, 线槽沿 Y=线路方向)
+    {
+      mw_saddle_params sp2{150, 80, 60, 7, 12};
+      double sz = messengerZ + 7 - 60; // 线槽底 = 承力索高
+      bld.Add(cmp, create_mw_saddle(sp2, gp_Pnt(tipX - 250, 0, sz), gp::DZ(), gp::DX()));
+    }
+
+    // 7. 定位器 (平腕臂端部 → 接触线点)
+    {
+      gp_Pnt r0(tipX - 150, 0, levelZ + armLen * std::tan(rise));
+      gp_Pnt r1(tipX, 0, CH + 30);
+      gp_Vec rv(r0, r1);
+      registration_arm_params rp2;
+      rp2.type = registration_arm_type::STRAIGHT;
+      rp2.length = rv.Magnitude();
+      rp2.tubeWidth = 34; rp2.tubeHeight = 30; rp2.wallThickness = 3;
+      rp2.angle = 0; rp2.isReverse = false;
+      bld.Add(cmp, create_registration_arm(rp2, r0, gp_Dir(rv), gp::DZ()));
+    }
+
+    // 8. 补偿装置 (锚柱): 棘轮 + 坠砣串
+    if (params.compType > 0) {
+      ratchet_compensator_params rp3;
+      TopoDS_Shape comp = create_ratchet_compensator(
+          rp3, gp_Pnt(mastHalf + 260, -250, messengerZ + 260), gp::DY());
+      bld.Add(cmp, comp);
+    }
+
+    // 9. 下锚拉线
+    if (params.hasGuyWire) {
+      guy_wire_params gp2;
+      gp2.length = 9000; gp2.diameter = 11; gp2.angle = 45;
+      gp2.ratedTension = params.ratedTension;
+      gp2.hasInsulator = true; gp2.insulatorCount = 2;
+      gp2.anchorRodDiameter = 20; gp2.anchorRodLength = 1800;
+      gp2.anchorPlateLength = 600; gp2.anchorPlateWidth = 400;
+      bld.Add(cmp, create_guy_wire(gp2, gp_Pnt(-4500, 0, -200),
+                                   gp_Pnt(0, 0, params.mastHeight * 0.75)));
+    }
+  }
+  return cmp;
 }
 
 TopoDS_Shape create_mast_assembly(const mast_assembly_params &params,
@@ -3729,6 +3941,376 @@ TopoDS_Shape create_mast_assembly(const mast_assembly_params &params,
   gp_Trsf t;
   t.SetTransformation(targetAx3, sourceAx3);
   return BRepBuilderAPI_Transform(shape, t).Shape();
+}
+
+// =========================================================================
+// 30b. Weight Stack (坠砣串) / Ratchet Compensator (棘轮补偿装置)
+// =========================================================================
+TopoDS_Shape create_weight_stack(const weight_stack_params &params) {
+  // 局部: 杆顶在原点, 串向下 (-Z) 悬挂
+  BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
+  double rr = params.rodDiameter / 2;
+  // 坠砣杆
+  bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, 0, -params.rodLength), gp::DZ()), rr,
+      params.rodLength).Shape());
+  // 底部托盘
+  bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, 0, -params.rodLength), gp::DZ()),
+      params.blockDiameter * 0.35, 10).Shape());
+  // 坠砣叠放
+  double z = -params.rodLength + 10;
+  for (int i = 0; i < params.blockCount; ++i) {
+    balance_weight_params bp{params.blockDiameter, params.blockHeight,
+                             params.blockHeight, params.holeDiameter};
+    bld.Add(cmp, create_balance_weight(bp, gp_Pnt(0, 0, z), gp::DZ(), gp::DX()));
+    z += params.blockHeight + params.blockGap;
+  }
+  return cmp;
+}
+
+TopoDS_Shape create_weight_stack(const weight_stack_params &params,
+                                 const gp_Pnt &topPoint) {
+  TopoDS_Shape s = create_weight_stack(params);
+  gp_Trsf tr;
+  tr.SetTranslation(gp_Vec(topPoint.XYZ()));
+  return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+TopoDS_Shape create_ratchet_compensator(const ratchet_compensator_params &params) {
+  // 局部: 棘轮中心在原点, 轴向 Y; 坠砣串悬挂于轮下方
+  BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
+  const double wr = params.wheelDiameter / 2;
+  const double ww = params.wheelWidth;
+  // 棘轮盘
+  TopoDS_Shape wheel = BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, -ww / 2, 0), gp::DY()), wr, ww).Shape();
+  // 中心轴孔
+  wheel = BRepAlgoAPI_Cut(wheel, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, -ww / 2 - 1, 0), gp::DY()), wr * 0.1, ww + 2).Shape()).Shape();
+  // 减重孔 ×4
+  for (int k = 0; k < 4; ++k) {
+    double a = k * M_PI / 2 + M_PI / 4;
+    wheel = BRepAlgoAPI_Cut(wheel, BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(wr * 0.55 * std::cos(a), -ww / 2 - 1,
+                      wr * 0.55 * std::sin(a)),
+               gp::DY()),
+        wr * 0.16, ww + 2).Shape()).Shape();
+  }
+  // 轮缘 V 形绳槽 (回转切除)
+  {
+    double gw = params.ropeDiameter + 2;
+    BRepBuilderAPI_MakeWire tri;
+    gp_Pnt t0(wr + 1, 0, -gw / 2), t1(wr + 1, 0, gw / 2),
+           t2(wr - gw * 0.8, 0, 0);
+    tri.Add(BRepBuilderAPI_MakeEdge(t0, t1));
+    tri.Add(BRepBuilderAPI_MakeEdge(t1, t2));
+    tri.Add(BRepBuilderAPI_MakeEdge(t2, t0));
+    TopoDS_Face f = BRepLib_MakeFace(tri.Wire()).Face();
+    BRepPrimAPI_MakeRevol rev(f, gp_Ax1(gp::Origin(), gp::DY()));
+    rev.Build();
+    if (rev.IsDone())
+      wheel = BRepAlgoAPI_Cut(wheel, rev.Shape()).Shape();
+  }
+  bld.Add(cmp, wheel);
+  // 安装支架 (轮后侧)
+  bld.Add(cmp, BRepPrimAPI_MakeBox(
+      gp_Pnt(-wr - 20, -ww * 0.8, -wr * 0.4), 20, ww * 1.6, wr * 0.8).Shape());
+  // 补偿绳 (轮底 → 坠砣串顶)
+  double stackTopZ = -wr - params.ropeDiameter;
+  bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, 0, stackTopZ - params.strokeLength), gp::DZ()),
+      params.ropeDiameter / 2, params.strokeLength).Shape());
+  // 坠砣串
+  bld.Add(cmp, create_weight_stack(
+      params.stack, gp_Pnt(0, 0, stackTopZ - params.strokeLength)));
+  return cmp;
+}
+
+TopoDS_Shape create_ratchet_compensator(const ratchet_compensator_params &params,
+                                        const gp_Pnt &wheelCenter,
+                                        const gp_Dir &wheelAxis) {
+  TopoDS_Shape s = create_ratchet_compensator(params);
+  gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 tgt(wheelCenter, gp::DZ(), gp::DX());
+  gp_Trsf tr;
+  tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+// =========================================================================
+// 30c. Auxiliary Wire (附加导线本体)
+// =========================================================================
+TopoDS_Shape create_auxiliary_wire(const auxiliary_wire_params &params,
+                                   const gp_Pnt &startPoint,
+                                   const gp_Pnt &endPoint) {
+  suspension_cable_params sc;
+  sc.startPoint = startPoint;
+  sc.endPoint = endPoint;
+  sc.diameter = params.diameter;
+  sc.sag = params.sag;
+  sc.cableType = suspension_cable_type::CATENARY;
+  sc.tension = params.ratedTension;
+  return create_suspension_cable(sc);
+}
+
+// =========================================================================
+// 30d. Disconnector (隔离开关) / Arrester (避雷器)
+// =========================================================================
+TopoDS_Shape create_disconnector(const disconnector_params &params) {
+  // 局部: 底座中心原点, 触刀沿 X, Z 向上
+  BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
+  const double bL = params.baseLength, bW = params.baseWidth;
+  const double insH = params.insulatorHeight;
+  // 1. 底座 + 安装孔
+  TopoDS_Shape base = BRepPrimAPI_MakeBox(
+      gp_Pnt(-bL / 2, -bW / 2, 0), bL, bW, 16).Shape();
+  for (int s = -1; s <= 1; s += 2)
+    base = BRepAlgoAPI_Cut(base, BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(s * (bL / 2 - 40), 0, -1), gp::DZ()), 9, 18).Shape()).Shape();
+  bld.Add(cmp, base);
+  // 2. 支柱绝缘子 ×2 (简化为带伞裙棒式)
+  rod_insulator_params rip;
+  rip.type = rod_insulator_type::SOLID;
+  rip.height = insH; rip.outerDiameter = 70; rip.innerDiameter = 0;
+  rip.shedDiameter = 120; rip.shedSpacing = 55; rip.shedCount = 6;
+  rip.endFitting = end_fitting_type::FLANGE;
+  rip.flangeDiameter = 90; rip.flangeBoltSpacing = 65; rip.flangeBoltDiameter = 10;
+  double insX = bL / 2 - 100;
+  bld.Add(cmp, create_rod_insulator(rip, gp_Pnt(-insX, 0, 16), gp::DZ()));
+  bld.Add(cmp, create_rod_insulator(rip, gp_Pnt(insX, 0, 16), gp::DZ()));
+  double topZ = 16 + insH;
+  // 3. 静触头 ×2 (导电块 + 接线端子)
+  for (int s = -1; s <= 1; s += 2) {
+    bld.Add(cmp, BRepPrimAPI_MakeBox(
+        gp_Pnt(s * insX - 30, -25, topZ), 60, 50, 20).Shape());
+    bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(s * insX, 0, topZ + 20), gp::DZ()), 8, 25).Shape());
+  }
+  // 4. 动触刀 (铰链于左侧, 分闸旋转 openAngle)
+  {
+    double bl = params.bladeLength;
+    TopoDS_Shape blade = BRepPrimAPI_MakeBox(
+        gp_Pnt(0, -12, -8), bl, 24, 16).Shape();
+    double a = params.openAngle * M_PI / 180.0;
+    gp_Trsf rot;
+    rot.SetRotation(gp_Ax1(gp_Pnt(-insX, 0, topZ + 28), gp::DY()), -a);
+    bld.Add(cmp, BRepBuilderAPI_Transform(blade, rot).Shape());
+    // 铰链销
+    bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(-insX, -30, topZ + 28), gp::DY()), 10, 60).Shape());
+  }
+  // 5. 操作机构箱
+  bld.Add(cmp, BRepPrimAPI_MakeBox(
+      gp_Pnt(-bL / 2 - 60, -bW / 2, 0), 60, bW, insH * 0.5).Shape());
+  return cmp;
+}
+
+TopoDS_Shape create_disconnector(const disconnector_params &params,
+                                 const gp_Pnt &position, const gp_Dir &direction,
+                                 const gp_Dir &upDir) {
+  TopoDS_Shape s = create_disconnector(params);
+  gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 tgt(position, upDir, direction);
+  gp_Trsf tr;
+  tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+TopoDS_Shape create_arrester(const arrester_params &params) {
+  // 局部: 底面中心原点, Z 向上
+  BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
+  const double R = params.outerDiameter / 2;
+  const double H = params.height;
+  const double flangeH = H * 0.06;
+  // 1. 下法兰 (带安装孔)
+  {
+    TopoDS_Shape fl = BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp::Origin(), gp::DZ()), R * 1.25, flangeH).Shape();
+    for (int k = 0; k < 4; ++k) {
+      double a = k * M_PI / 2 + M_PI / 4;
+      fl = BRepAlgoAPI_Cut(fl, BRepPrimAPI_MakeCylinder(
+          gp_Ax2(gp_Pnt(R * 0.95 * std::cos(a), R * 0.95 * std::sin(a), -1),
+                 gp::DZ()), 6, flangeH + 2).Shape()).Shape();
+    }
+    bld.Add(cmp, fl);
+  }
+  // 2. 阀片柱主体
+  bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, 0, flangeH), gp::DZ()), R, H - 2 * flangeH).Shape());
+  // 3. 伞裙 (回转体, 同棒式绝缘子)
+  double sp = params.shedSpacing > 0 ? params.shedSpacing
+                                     : (H - 2 * flangeH) / (params.shedCount + 1);
+  for (int i = 0; i < params.shedCount; ++i) {
+    double zPos = flangeH + (i + 1) * sp;
+    double r = params.shedDiameter / 2;
+    BRepBuilderAPI_MakeWire wire;
+    gp_Pnt basePt(R, 0, zPos), u1(r, 0, zPos - sp * 0.06),
+           u2(r * 1.02, 0, zPos + sp * 0.05), u3(r * 0.98, 0, zPos + sp * 0.16),
+           u4((r + R) / 2, 0, zPos + sp * 0.28), endPt(R, 0, zPos + sp * 0.22);
+    wire.Add(BRepBuilderAPI_MakeEdge(basePt, u1));
+    wire.Add(BRepBuilderAPI_MakeEdge(GC_MakeArcOfCircle(u1, u2, u3).Value()));
+    wire.Add(BRepBuilderAPI_MakeEdge(GC_MakeArcOfCircle(u3, u4, endPt).Value()));
+    wire.Add(BRepBuilderAPI_MakeEdge(endPt, basePt));
+    BRepPrimAPI_MakeRevol revol(BRepLib_MakeFace(wire.Wire()).Face(),
+                                gp_Ax1(gp::Origin(), gp::DZ()));
+    revol.Build();
+    if (revol.IsDone())
+      bld.Add(cmp, revol.Shape());
+  }
+  // 4. 上法兰 + 接线端子
+  bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, 0, H - flangeH), gp::DZ()), R * 1.25, flangeH).Shape());
+  bld.Add(cmp, BRepPrimAPI_MakeBox(
+      gp_Pnt(-15, -10, H), 30, 20, 8).Shape());
+  return cmp;
+}
+
+TopoDS_Shape create_arrester(const arrester_params &params,
+                             const gp_Pnt &position,
+                             const gp_Dir &axisDirection) {
+  TopoDS_Shape s = create_arrester(params);
+  gp_Ax3 src(gp::Origin(), gp::DZ());
+  gp_Ax3 tgt(position, axisDirection);
+  gp_Trsf tr;
+  tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+// =========================================================================
+// 30e. Pulley Compensator (滑轮补偿装置)
+// =========================================================================
+TopoDS_Shape create_pulley_compensator(const pulley_compensator_params &params) {
+  // 局部: 定滑轮中心原点, 轴向 Y; 动滑轮+坠砣串在下方
+  BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
+  const double pr = params.pulleyDiameter / 2;
+  const double rr = params.ropeDiameter / 2;
+  const double gw = params.grooveWidth;
+  auto pulley = [&](const gp_Pnt &c) {
+    TopoDS_Shape w = BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(c.X(), c.Y() - gw / 2, c.Z()), gp::DY()), pr, gw).Shape();
+    // 绳槽
+    BRepBuilderAPI_MakeWire tri;
+    gp_Pnt t0(pr + 1, 0, -gw / 2 + 1), t1(pr + 1, 0, gw / 2 - 1),
+           t2(pr - rr, 0, 0);
+    tri.Add(BRepBuilderAPI_MakeEdge(t0, t1));
+    tri.Add(BRepBuilderAPI_MakeEdge(t1, t2));
+    tri.Add(BRepBuilderAPI_MakeEdge(t2, t0));
+    BRepPrimAPI_MakeRevol rev(BRepLib_MakeFace(tri.Wire()).Face(),
+                              gp_Ax1(gp::Origin(), gp::DY()));
+    rev.Build();
+    if (rev.IsDone()) {
+      gp_Trsf mv;
+      mv.SetTranslation(gp_Vec(c.XYZ()));
+      w = BRepAlgoAPI_Cut(w, BRepBuilderAPI_Transform(rev.Shape(), mv).Shape()).Shape();
+    }
+    // 中心孔
+    w = BRepAlgoAPI_Cut(w, BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(c.X(), c.Y() - gw / 2 - 1, c.Z()), gp::DY()), pr * 0.12,
+        gw + 2).Shape()).Shape();
+    return w;
+  };
+  // 定滑轮 (原点) + 支架
+  bld.Add(cmp, pulley(gp::Origin()));
+  bld.Add(cmp, BRepPrimAPI_MakeBox(
+      gp_Pnt(-pr - 20, -gw, -pr * 0.4), 20, gw * 2, pr * 0.8).Shape());
+  // 动滑轮 (下方行程中点)
+  double movZ = -params.strokeLength * 0.5;
+  bld.Add(cmp, pulley(gp_Pnt(0, 0, movZ)));
+  // 补偿绳: 定滑轮 → 动滑轮 → 上返 (简化 U 形绕法)
+  bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(-pr + rr, 0, movZ), gp::DZ()), rr, -movZ).Shape());
+  bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(pr - rr, 0, movZ), gp::DZ()), rr, -movZ).Shape());
+  // 动滑轮 → 坠砣串
+  double stackTop = movZ - pr - 50;
+  bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(0, 0, stackTop), gp::DZ()), rr, 50).Shape());
+  bld.Add(cmp, create_weight_stack(params.stack, gp_Pnt(0, 0, stackTop)));
+  // 坠砣限制架 (四角立杆 + 上下环框)
+  if (params.hasLimitFrame) {
+    double fr = params.stack.blockDiameter * 0.65;
+    double zBot = stackTop - params.stack.rodLength - 20;
+    for (int sx = -1; sx <= 1; sx += 2)
+      for (int sy = -1; sy <= 1; sy += 2)
+        bld.Add(cmp, BRepPrimAPI_MakeCylinder(
+            gp_Ax2(gp_Pnt(sx * fr, sy * fr, zBot), gp::DZ()), 6,
+            stackTop - zBot).Shape());
+    for (double z : {zBot, stackTop}) {
+      for (int sx = -1; sx <= 1; sx += 2)
+        bld.Add(cmp, BRepPrimAPI_MakeBox(
+            gp_Pnt(sx > 0 ? fr : -fr - 12, -fr - 6, z - 6), 12, 2 * (fr + 6), 12).Shape());
+    }
+  }
+  return cmp;
+}
+
+TopoDS_Shape create_pulley_compensator(const pulley_compensator_params &params,
+                                       const gp_Pnt &pulleyCenter,
+                                       const gp_Dir &wheelAxis) {
+  TopoDS_Shape s = create_pulley_compensator(params);
+  gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX());
+  gp_Ax3 tgt(pulleyCenter, gp::DZ(), gp::DX());
+  gp_Trsf tr;
+  tr.SetTransformation(tgt, src);
+  return BRepBuilderAPI_Transform(s, tr).Shape();
+}
+
+// =========================================================================
+// 30f. Cantilever Fittings (双套筒连接器 / 套管单耳)
+// =========================================================================
+TopoDS_Shape create_sleeve_connector(const sleeve_connector_params &params) {
+  // 局部: 套筒1 沿 X, 套筒2 绕 Y 旋转 angle, 交于原点
+  BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
+  double R = params.tubeDiameter / 2;
+  double ro = R + params.wallThickness;
+  double sl = params.sleeveLength;
+  auto sleeve = [&](const gp_Trsf &rot) {
+    TopoDS_Shape s = BRepAlgoAPI_Cut(
+        BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-sl / 2, 0, 0), gp::DX()), ro, sl).Shape(),
+        BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(-sl / 2 - 1, 0, 0), gp::DX()), R, sl + 2).Shape()).Shape();
+    // 紧固螺栓 (中部, 沿 Z)
+    TopoDS_Shape bolt = BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(0, 0, -ro - 2), gp::DZ()), params.boltDiameter / 2,
+        2 * ro + 4).Shape();
+    s = BRepAlgoAPI_Fuse(s, bolt).Shape();
+    return BRepBuilderAPI_Transform(s, rot).Shape();
+  };
+  gp_Trsf id;
+  bld.Add(cmp, sleeve(id));
+  gp_Trsf rot;
+  rot.SetRotation(gp_Ax1(gp::Origin(), gp::DY()), params.angle * M_PI / 180.0);
+  bld.Add(cmp, sleeve(rot));
+  return cmp;
+}
+
+TopoDS_Shape create_sleeve_ear(const sleeve_ear_params &params) {
+  // 局部: 套筒沿 X, 耳板向上 (+Z)
+  BRep_Builder bld; TopoDS_Compound cmp; bld.MakeCompound(cmp);
+  double R = params.tubeDiameter / 2;
+  double ro = R + params.wallThickness;
+  bld.Add(cmp, BRepAlgoAPI_Cut(
+      BRepPrimAPI_MakeCylinder(
+          gp_Ax2(gp_Pnt(-params.sleeveLength / 2, 0, 0), gp::DX()), ro,
+          params.sleeveLength).Shape(),
+      BRepPrimAPI_MakeCylinder(
+          gp_Ax2(gp_Pnt(-params.sleeveLength / 2 - 1, 0, 0), gp::DX()), R,
+          params.sleeveLength + 2).Shape()).Shape());
+  // 单耳板 (端部圆角)
+  TopoDS_Shape ear = BRepPrimAPI_MakeBox(
+      gp_Pnt(-params.earThickness / 2, -params.sleeveLength * 0.3, 0),
+      params.earThickness, params.sleeveLength * 0.6, ro + params.earHeight).Shape();
+  ear = BRepAlgoAPI_Fuse(ear, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(-params.earThickness / 2, 0, ro + params.earHeight),
+             gp::DX()),
+      params.sleeveLength * 0.3, params.earThickness).Shape()).Shape();
+  // 耳孔
+  ear = BRepAlgoAPI_Cut(ear, BRepPrimAPI_MakeCylinder(
+      gp_Ax2(gp_Pnt(-params.earThickness / 2 - 1, 0, ro + params.earHeight),
+             gp::DX()),
+      params.holeDiameter / 2, params.earThickness + 2).Shape()).Shape();
+  bld.Add(cmp, ear);
+  return cmp;
 }
 
 // =========================================================================

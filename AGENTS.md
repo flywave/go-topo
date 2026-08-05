@@ -81,6 +81,13 @@ Run one test: `go test -v -run TestSampleCenterlineWire ./...`
 - `CreateYardFromGeoJSON` — FeatureCollection 组网: 端点聚类节点 (50mm 容差) → 度=3 节点识别单开道岔 (自动判定开向/号数/裁剪邻边) → `CreateTurnoutWithPlace`; 边中部相交 → 菱形交叉 → `CreateFrogWithPlace`
 - 道岔号数估计: 侧股 15~35m 弦方向与主向夹角 → snap 到 {9,12,18,30,42}
 
+## 接触网锚段生成 (ocs_anchor.go)
+
+- `CreateAnchorSection(AnchorSectionInput)` — 线路中心线 + 锚段规格 → 完整锚段装配: 支柱装配×N (`CalcOcsSpanPositions` 柱位, 端柱自动带补偿装置+拉线) + 跨间承力索(弛度 1.5%跨距) + 接触线(之字拉出值, 缺省 ±300) + 吊弦群 (间距 8m, 长度按两索抛物线求差)
+- `CreateRatchetCompensator` / `CreateWeightStack` — 棘轮补偿装置 (轮盘+V形绳槽+减重孔+补偿绳+坠砣串)
+- `CreateAuxiliaryWire` — 附加导线本体 (带弛度扫掠)
+- `create_mast_assembly` 已按导高/结构高度/CX 尺寸链重构: 上下连接座→棒式绝缘子→平腕臂(仰角3°)→斜腕臂(三角桁架 65% 处对接)→承力索座→定位器(拉出值)
+
 ## C++ API nil-safety
 
 The C API layer (`src/workplane_c_api.cc`) now handles `nullptr` for optional pointer parameters (those with C++ defaults). The Go wrapper forwards `nil` as `NULL`. Methods with "required" semantics still panic on `nil` — this is intentional.

@@ -776,6 +776,9 @@ struct mast_assembly_params {
   int compType;           // 0-无, 1-棘轮, 2-滑轮
   double ratedTension;    // 设计补偿张力(kN)
   bool hasGuyWire;        // 是否设下锚拉线
+  double contactHeight = 5300.0;    // 导高(mm)
+  double structureHeight = 1400.0;  // 结构高度(mm)
+  double sideOffset = 2900.0;       // 支柱侧面限界 CX(mm, 柱中心至线路中心)
 };
 
 TopoDS_Shape create_mast_assembly(const mast_assembly_params &params);
@@ -783,6 +786,123 @@ TopoDS_Shape create_mast_assembly(const mast_assembly_params &params,
                                   const gp_Pnt &position,
                                   const gp_Dir &direction = gp::DX(),
                                   const gp_Dir &upDir = gp::DZ());
+
+// =========================================================================
+// 30b. Weight Stack (坠砣串) / Ratchet Compensator (棘轮补偿装置)
+// =========================================================================
+struct weight_stack_params {
+  int blockCount = 8;          // 坠砣块数
+  double blockDiameter = 380;  // 坠砣直径(mm)
+  double blockHeight = 75;     // 单块高(mm)
+  double blockGap = 2.0;       // 块间间隙(mm)
+  double rodDiameter = 20;     // 坠砣杆径(mm)
+  double rodLength = 1200;     // 坠砣杆长(mm)
+  double holeDiameter = 30;    // 坠砣中心孔径(mm)
+};
+
+TopoDS_Shape create_weight_stack(const weight_stack_params &params);
+TopoDS_Shape create_weight_stack(const weight_stack_params &params,
+                                 const gp_Pnt &topPoint);
+
+struct ratchet_compensator_params {
+  double wheelDiameter = 400;    // 棘轮直径(mm)
+  double wheelWidth = 60;        // 棘轮宽(mm)
+  double ropeDiameter = 9;       // 补偿绳径(mm)
+  double strokeLength = 1200;    // 补偿行程(mm)
+  weight_stack_params stack;     // 坠砣串
+};
+
+TopoDS_Shape create_ratchet_compensator(const ratchet_compensator_params &params);
+TopoDS_Shape create_ratchet_compensator(const ratchet_compensator_params &params,
+                                        const gp_Pnt &wheelCenter,
+                                        const gp_Dir &wheelAxis = gp::DY());
+
+// =========================================================================
+// 30c. Auxiliary Wire (附加导线本体: 供电线/回流线/架空地线)
+// =========================================================================
+struct auxiliary_wire_params {
+  double diameter;       // 导线外径(mm)
+  double sag;            // 跨中弛度(mm)
+  double ratedTension;   // 额定张力(kN, 仅记录)
+};
+
+TopoDS_Shape create_auxiliary_wire(const auxiliary_wire_params &params,
+                                   const gp_Pnt &startPoint,
+                                   const gp_Pnt &endPoint);
+
+// =========================================================================
+// 30d. Disconnector (隔离开关) / Arrester (避雷器)
+// =========================================================================
+struct disconnector_params {
+  double baseLength = 900;       // 底座长(mm)
+  double baseWidth = 220;        // 底座宽(mm)
+  double insulatorHeight = 600;  // 支柱绝缘子高(mm)
+  double bladeLength = 800;      // 触刀长(mm)
+  double openAngle = 75;         // 分闸角度(°), 0=合闸
+};
+
+TopoDS_Shape create_disconnector(const disconnector_params &params);
+TopoDS_Shape create_disconnector(const disconnector_params &params,
+                                 const gp_Pnt &position,
+                                 const gp_Dir &direction = gp::DX(),
+                                 const gp_Dir &upDir = gp::DZ());
+
+struct arrester_params {
+  double height = 800;          // 总高(mm)
+  double outerDiameter = 120;   // 阀片柱外径(mm)
+  double shedDiameter = 160;    // 伞裙直径(mm)
+  double shedSpacing = 60;      // 伞裙间距(mm)
+  int shedCount = 8;            // 伞裙数
+};
+
+TopoDS_Shape create_arrester(const arrester_params &params);
+TopoDS_Shape create_arrester(const arrester_params &params,
+                             const gp_Pnt &position,
+                             const gp_Dir &axisDirection = gp::DZ());
+
+// =========================================================================
+// 30e. Pulley Compensator (滑轮补偿装置)
+// =========================================================================
+struct pulley_compensator_params {
+  double pulleyDiameter = 250;   // 滑轮直径(mm)
+  double grooveWidth = 14;       // 绳槽宽(mm)
+  int pulleyCount = 2;           // 动滑轮数
+  double ropeDiameter = 9;       // 补偿绳径(mm)
+  double strokeLength = 1000;    // 补偿行程(mm)
+  weight_stack_params stack;     // 坠砣串
+  bool hasLimitFrame = true;     // 坠砣限制架
+};
+
+TopoDS_Shape create_pulley_compensator(const pulley_compensator_params &params);
+TopoDS_Shape create_pulley_compensator(const pulley_compensator_params &params,
+                                       const gp_Pnt &pulleyCenter,
+                                       const gp_Dir &wheelAxis = gp::DY());
+
+// =========================================================================
+// 30f. Cantilever Fittings (腕臂连接小件: 双套筒连接器 / 套管单耳)
+// =========================================================================
+struct sleeve_connector_params {
+  double tubeDiameter = 60;    // 被连接管径(mm)
+  double sleeveLength = 120;   // 套筒长(mm)
+  double wallThickness = 5;    // 套筒壁厚(mm)
+  double angle = 45;           // 两套筒夹角(°)
+  double boltDiameter = 12;    // 紧固螺栓径(mm)
+};
+
+// 双套筒连接器: 两套筒成夹角相交 (斜腕臂↔平腕臂)
+TopoDS_Shape create_sleeve_connector(const sleeve_connector_params &params);
+
+struct sleeve_ear_params {
+  double tubeDiameter = 60;    // 管径(mm)
+  double sleeveLength = 100;   // 套筒长(mm)
+  double wallThickness = 5;    // 壁厚(mm)
+  double earHeight = 60;       // 耳板高(mm)
+  double earThickness = 8;     // 耳板厚(mm)
+  double holeDiameter = 16;    // 耳孔径(mm)
+};
+
+// 套管单耳: 套筒 + 单耳板 (定位管吊线/支撑连接)
+TopoDS_Shape create_sleeve_ear(const sleeve_ear_params &params);
 
 // =========================================================================
 // TRACK: 31. Switch Rail (尖轨)

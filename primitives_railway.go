@@ -1395,6 +1395,9 @@ type MastAssemblyParams struct {
 	CompType        int
 	RatedTension    float64
 	HasGuyWire      bool
+	ContactHeight   float64 // 导高(mm), 默认 5300
+	StructureHeight float64 // 结构高度(mm), 默认 1400
+	SideOffset      float64 // 侧面限界 CX(mm), 默认 2900
 }
 
 func (p *MastAssemblyParams) to_struct() C.mast_assembly_params_t {
@@ -1408,7 +1411,291 @@ func (p *MastAssemblyParams) to_struct() C.mast_assembly_params_t {
 	c.compType = C.int(p.CompType)
 	c.ratedTension = C.double(p.RatedTension)
 	c.hasGuyWire = C.bool(p.HasGuyWire)
+	c.contactHeight = C.double(p.ContactHeight)
+	c.structureHeight = C.double(p.StructureHeight)
+	c.sideOffset = C.double(p.SideOffset)
 	return c
+}
+
+// =========================================================================
+// 坠砣串 / 棘轮补偿装置 / 附加导线
+// =========================================================================
+
+type WeightStackParams struct {
+	BlockCount    int
+	BlockDiameter float64
+	BlockHeight   float64
+	BlockGap      float64
+	RodDiameter   float64
+	RodLength     float64
+	HoleDiameter  float64
+}
+
+func (p *WeightStackParams) to_struct() C.weight_stack_params_t {
+	return C.weight_stack_params_t{
+		blockCount: C.int(p.BlockCount), blockDiameter: C.double(p.BlockDiameter),
+		blockHeight: C.double(p.BlockHeight), blockGap: C.double(p.BlockGap),
+		rodDiameter: C.double(p.RodDiameter), rodLength: C.double(p.RodLength),
+		holeDiameter: C.double(p.HoleDiameter),
+	}
+}
+
+func (p *WeightStackParams) withDefaults() {
+	if p.BlockCount <= 0 { p.BlockCount = 8 }
+	if p.BlockDiameter <= 0 { p.BlockDiameter = 380 }
+	if p.BlockHeight <= 0 { p.BlockHeight = 75 }
+	if p.BlockGap <= 0 { p.BlockGap = 2 }
+	if p.RodDiameter <= 0 { p.RodDiameter = 20 }
+	if p.RodLength <= 0 { p.RodLength = 1200 }
+	if p.HoleDiameter <= 0 { p.HoleDiameter = 30 }
+}
+
+func CreateWeightStack(params WeightStackParams) *Shape {
+	params.withDefaults()
+	s := &Shape{inner: &innerShape{val: C.create_weight_stack(params.to_struct())}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateWeightStackAt(params WeightStackParams, topPoint Point3) *Shape {
+	params.withDefaults()
+	s := &Shape{inner: &innerShape{val: C.create_weight_stack_at(params.to_struct(), topPoint.val)}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type RatchetCompensatorParams struct {
+	WheelDiameter float64
+	WheelWidth    float64
+	RopeDiameter  float64
+	StrokeLength  float64
+	Stack         WeightStackParams
+}
+
+func (p *RatchetCompensatorParams) withDefaults() {
+	if p.WheelDiameter <= 0 { p.WheelDiameter = 400 }
+	if p.WheelWidth <= 0 { p.WheelWidth = 60 }
+	if p.RopeDiameter <= 0 { p.RopeDiameter = 9 }
+	if p.StrokeLength <= 0 { p.StrokeLength = 1200 }
+	p.Stack.withDefaults()
+}
+
+func (p *RatchetCompensatorParams) to_struct() C.ratchet_compensator_params_t {
+	return C.ratchet_compensator_params_t{
+		wheelDiameter: C.double(p.WheelDiameter), wheelWidth: C.double(p.WheelWidth),
+		ropeDiameter: C.double(p.RopeDiameter), strokeLength: C.double(p.StrokeLength),
+		stack: p.Stack.to_struct(),
+	}
+}
+
+func CreateRatchetCompensator(params RatchetCompensatorParams) *Shape {
+	params.withDefaults()
+	s := &Shape{inner: &innerShape{val: C.create_ratchet_compensator(params.to_struct())}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateRatchetCompensatorAt(params RatchetCompensatorParams, wheelCenter Point3, wheelAxis Dir3) *Shape {
+	params.withDefaults()
+	s := &Shape{inner: &innerShape{val: C.create_ratchet_compensator_at(params.to_struct(), wheelCenter.val, wheelAxis.val)}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type AuxiliaryWireParams struct {
+	Diameter      float64
+	Sag           float64
+	RatedTension  float64
+}
+
+func CreateAuxiliaryWire(params AuxiliaryWireParams, startPoint, endPoint Point3) *Shape {
+	c := C.auxiliary_wire_params_t{
+		diameter: C.double(params.Diameter), sag: C.double(params.Sag),
+		ratedTension: C.double(params.RatedTension),
+	}
+	s := &Shape{inner: &innerShape{val: C.create_auxiliary_wire(c, startPoint.val, endPoint.val)}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+// =========================================================================
+// 隔离开关 / 避雷器
+// =========================================================================
+
+type DisconnectorParams struct {
+	BaseLength      float64 // 默认 900
+	BaseWidth       float64 // 默认 220
+	InsulatorHeight float64 // 默认 600
+	BladeLength     float64 // 默认 800
+	OpenAngle       float64 // 分闸角度°, 默认 75
+}
+
+func (p *DisconnectorParams) withDefaults() {
+	if p.BaseLength <= 0 { p.BaseLength = 900 }
+	if p.BaseWidth <= 0 { p.BaseWidth = 220 }
+	if p.InsulatorHeight <= 0 { p.InsulatorHeight = 600 }
+	if p.BladeLength <= 0 { p.BladeLength = 800 }
+	if p.OpenAngle <= 0 { p.OpenAngle = 75 }
+}
+
+func (p *DisconnectorParams) to_struct() C.disconnector_params_t {
+	return C.disconnector_params_t{
+		baseLength: C.double(p.BaseLength), baseWidth: C.double(p.BaseWidth),
+		insulatorHeight: C.double(p.InsulatorHeight), bladeLength: C.double(p.BladeLength),
+		openAngle: C.double(p.OpenAngle),
+	}
+}
+
+func CreateDisconnector(params DisconnectorParams) *Shape {
+	params.withDefaults()
+	s := &Shape{inner: &innerShape{val: C.create_disconnector(params.to_struct())}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateDisconnectorWithPlace(params DisconnectorParams, position Point3, direction, upDir Dir3) *Shape {
+	params.withDefaults()
+	s := &Shape{inner: &innerShape{val: C.create_disconnector_with_place(params.to_struct(), position.val, direction.val, upDir.val)}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type ArresterParams struct {
+	Height        float64 // 默认 800
+	OuterDiameter float64 // 默认 120
+	ShedDiameter  float64 // 默认 160
+	ShedSpacing   float64 // 默认 60
+	ShedCount     int     // 默认 8
+}
+
+func (p *ArresterParams) withDefaults() {
+	if p.Height <= 0 { p.Height = 800 }
+	if p.OuterDiameter <= 0 { p.OuterDiameter = 120 }
+	if p.ShedDiameter <= 0 { p.ShedDiameter = 160 }
+	if p.ShedSpacing <= 0 { p.ShedSpacing = 60 }
+	if p.ShedCount <= 0 { p.ShedCount = 8 }
+}
+
+func (p *ArresterParams) to_struct() C.arrester_params_t {
+	return C.arrester_params_t{
+		height: C.double(p.Height), outerDiameter: C.double(p.OuterDiameter),
+		shedDiameter: C.double(p.ShedDiameter), shedSpacing: C.double(p.ShedSpacing),
+		shedCount: C.int(p.ShedCount),
+	}
+}
+
+func CreateArrester(params ArresterParams) *Shape {
+	params.withDefaults()
+	s := &Shape{inner: &innerShape{val: C.create_arrester(params.to_struct())}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateArresterWithPlace(params ArresterParams, position Point3, axisDir Dir3) *Shape {
+	params.withDefaults()
+	s := &Shape{inner: &innerShape{val: C.create_arrester_with_place(params.to_struct(), position.val, axisDir.val)}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+// =========================================================================
+// 滑轮补偿装置
+// =========================================================================
+
+type PulleyCompensatorParams struct {
+	PulleyDiameter float64 // 默认 250
+	GrooveWidth    float64 // 默认 14
+	PulleyCount    int     // 默认 2
+	RopeDiameter   float64 // 默认 9
+	StrokeLength   float64 // 默认 1000
+	Stack          WeightStackParams
+	HasLimitFrame  bool
+}
+
+func (p *PulleyCompensatorParams) withDefaults() {
+	if p.PulleyDiameter <= 0 { p.PulleyDiameter = 250 }
+	if p.GrooveWidth <= 0 { p.GrooveWidth = 14 }
+	if p.PulleyCount <= 0 { p.PulleyCount = 2 }
+	if p.RopeDiameter <= 0 { p.RopeDiameter = 9 }
+	if p.StrokeLength <= 0 { p.StrokeLength = 1000 }
+	p.Stack.withDefaults()
+}
+
+func (p *PulleyCompensatorParams) to_struct() C.pulley_compensator_params_t {
+	return C.pulley_compensator_params_t{
+		pulleyDiameter: C.double(p.PulleyDiameter), grooveWidth: C.double(p.GrooveWidth),
+		pulleyCount: C.int(p.PulleyCount), ropeDiameter: C.double(p.RopeDiameter),
+		strokeLength: C.double(p.StrokeLength), stack: p.Stack.to_struct(),
+		hasLimitFrame: C.bool(p.HasLimitFrame),
+	}
+}
+
+func CreatePulleyCompensator(params PulleyCompensatorParams) *Shape {
+	params.withDefaults()
+	s := &Shape{inner: &innerShape{val: C.create_pulley_compensator(params.to_struct())}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreatePulleyCompensatorAt(params PulleyCompensatorParams, pulleyCenter Point3, wheelAxis Dir3) *Shape {
+	params.withDefaults()
+	s := &Shape{inner: &innerShape{val: C.create_pulley_compensator_at(params.to_struct(), pulleyCenter.val, wheelAxis.val)}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+// =========================================================================
+// 腕臂连接小件: 双套筒连接器 / 套管单耳
+// =========================================================================
+
+type SleeveConnectorParams struct {
+	TubeDiameter  float64 // 默认 60
+	SleeveLength  float64 // 默认 120
+	WallThickness float64 // 默认 5
+	Angle         float64 // 两套筒夹角°, 默认 45
+	BoltDiameter  float64 // 默认 12
+}
+
+func CreateSleeveConnector(params SleeveConnectorParams) *Shape {
+	if params.TubeDiameter <= 0 { params.TubeDiameter = 60 }
+	if params.SleeveLength <= 0 { params.SleeveLength = 120 }
+	if params.WallThickness <= 0 { params.WallThickness = 5 }
+	if params.Angle <= 0 { params.Angle = 45 }
+	if params.BoltDiameter <= 0 { params.BoltDiameter = 12 }
+	c := C.sleeve_connector_params_t{
+		tubeDiameter: C.double(params.TubeDiameter), sleeveLength: C.double(params.SleeveLength),
+		wallThickness: C.double(params.WallThickness), angle: C.double(params.Angle),
+		boltDiameter: C.double(params.BoltDiameter),
+	}
+	s := &Shape{inner: &innerShape{val: C.create_sleeve_connector(c)}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+type SleeveEarParams struct {
+	TubeDiameter  float64 // 默认 60
+	SleeveLength  float64 // 默认 100
+	WallThickness float64 // 默认 5
+	EarHeight     float64 // 默认 60
+	EarThickness  float64 // 默认 8
+	HoleDiameter  float64 // 默认 16
+}
+
+func CreateSleeveEar(params SleeveEarParams) *Shape {
+	if params.TubeDiameter <= 0 { params.TubeDiameter = 60 }
+	if params.SleeveLength <= 0 { params.SleeveLength = 100 }
+	if params.WallThickness <= 0 { params.WallThickness = 5 }
+	if params.EarHeight <= 0 { params.EarHeight = 60 }
+	if params.EarThickness <= 0 { params.EarThickness = 8 }
+	if params.HoleDiameter <= 0 { params.HoleDiameter = 16 }
+	c := C.sleeve_ear_params_t{
+		tubeDiameter: C.double(params.TubeDiameter), sleeveLength: C.double(params.SleeveLength),
+		wallThickness: C.double(params.WallThickness), earHeight: C.double(params.EarHeight),
+		earThickness: C.double(params.EarThickness), holeDiameter: C.double(params.HoleDiameter),
+	}
+	s := &Shape{inner: &innerShape{val: C.create_sleeve_ear(c)}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
 }
 
 func CreateMastAssembly(params MastAssemblyParams) *Shape {
