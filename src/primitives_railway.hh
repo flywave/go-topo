@@ -434,6 +434,8 @@ struct anchor_fitting_params {
   double diameter;          // 直径/规格(mm)
 };
 
+// 原点约定: 连接点 (与拉线/线索连接处) 位于原点 — ROD_AND_RING=环心,
+// DOUBLE_EAR=-X 侧销孔, WEDGE_CLAMP=线索入口 (底面中心/导线槽轴线)
 TopoDS_Shape create_anchor_fitting(const anchor_fitting_params &params);
 TopoDS_Shape create_anchor_fitting(const anchor_fitting_params &params,
                                    const gp_Pnt &position,
@@ -969,9 +971,9 @@ struct turnout_params {
   double webThickness;           // 轨腰厚(mm)
   double switchRailLength;      // 尖轨长度(mm)
   double leadCurveRadius;       // 导曲线半径(mm)
-  double frogLength;            // 辙叉长度(mm)
+  double frogLength;            // 辙叉长度(mm) — reserved, 当前未生效 (辙叉尺寸由 turnoutNo 查表推算)
   int sleeperCount;             // 岔枕数量
-  double sleeperSpacing;        // 岔枕间距(mm)
+  double sleeperSpacing;        // 岔枕间距(mm), >0 时优先于 sleeperCount 按间距推算数量
 };
 
 TopoDS_Shape create_turnout(const turnout_params &params);

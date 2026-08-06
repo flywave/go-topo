@@ -12,7 +12,9 @@ package topo
 */
 import "C"
 import (
+	"fmt"
 	"runtime"
+	"strings"
 	"unsafe"
 )
 
@@ -118,6 +120,11 @@ func (c *innerAssemblyConstraintParm) free() {
 
 type Assembly struct {
 	inner *innerAssembly
+	// parametric 本装配自身的参数化配方 (可选, 见 assembly_parametric.go)
+	parametric *ParametricData
+	// childParametrics 顶层子元素的参数化配方树, key 为子元素名
+	// C++ 侧 AddAssembly 为深拷贝, 配方无法挂在 C++ 对象上, 仅在 Go 侧维护
+	childParametrics map[string]*parametricNode
 }
 
 type innerAssembly struct {
@@ -177,6 +184,17 @@ func (c *Assembly) AddAssembly(obj *Assembly, loc *TopoLocation, name string, co
 		cloc = loc.inner.val
 	}
 	C.assembly_add_assembly(c.inner.val, obj.inner.val, cloc, cname, color_)
+	// 同步子装配的参数化配方树 (C++ 侧深拷贝, 配方仅在 Go 侧维护)
+	if obj.parametric != nil || len(obj.childParametrics) > 0 {
+		finalName := name
+		if finalName == "" {
+			finalName = obj.GetName()
+		}
+		if c.childParametrics == nil {
+			c.childParametrics = map[string]*parametricNode{}
+		}
+		c.childParametrics[finalName] = &parametricNode{data: obj.parametric, children: obj.childParametrics}
+	}
 	return c
 }
 
@@ -184,7 +202,56 @@ func (c *Assembly) Remove(name string) *Assembly {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	C.assembly_remove(c.inner.val, cname)
+	delete(c.childParametrics, name)
 	return c
+}
+
+// SetLocation 更新顶层元素的变换, 找不到返回 error
+// 注意: C API 无元素写接口, 内部为 remove + re-add, 元素顺序会变到末尾
+func (c *Assembly) SetLocation(name string, loc *TopoLocation) error {
+	if strings.Contains(name, "/") {
+		return fmt.Errorf("assembly: SetLocation only supports top-level elements, got %q", name)
+	}
+	for _, ch := range c.Children() {
+		if ch.GetName() == name {
+			savedParams := c.childParametrics[name]
+			c.Remove(name)
+			// color 传 nil, AddAssembly 会保留子装配原有的颜色
+			c.AddAssembly(ch, loc, name, nil)
+			// Remove 会清掉配方记录, 这里恢复 (再编辑不丢参数化数据)
+			if savedParams != nil {
+				c.childParametrics[name] = savedParams
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("assembly: no element named %q", name)
+}
+
+// Replace 保留 name/location/color/参数化配方, 替换顶层元素的几何, 找不到返回 error
+// 注意: 同 SetLocation, 内部为 remove + re-add, 元素顺序会变到末尾
+func (c *Assembly) Replace(name string, shape *Shape) error {
+	if shape == nil || shape.inner == nil {
+		return fmt.Errorf("assembly: Replace with nil shape")
+	}
+	if strings.Contains(name, "/") {
+		return fmt.Errorf("assembly: Replace only supports top-level elements, got %q", name)
+	}
+	for _, ch := range c.Children() {
+		if ch.GetName() == name {
+			loc := ch.GetLocation()
+			color := ch.GetColor()
+			savedParams := c.childParametrics[name]
+			c.Remove(name)
+			c.AddObject(NewAssemblyObjectFromShpe(*shape), loc, name, color)
+			// Remove 会清掉配方记录, 这里恢复 (再编辑不丢参数化数据)
+			if savedParams != nil {
+				c.childParametrics[name] = savedParams
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("assembly: no element named %q", name)
 }
 
 func (c *Assembly) Constrain(q1, q2 string, kind int, param *AssemblyConstraintParm) *Assembly {
@@ -250,7 +317,8 @@ func (c *Assembly) ExportTo(path string, mode int) *Assembly {
 func (c *Assembly) Shapes() []*Shape {
 	var size C.int
 	shapes := C.assembly_shapes(c.inner.val, &size)
-	defer C.topo_shape_list_free(shapes, size)
+	// 不能调 topo_shape_list_free: 它会 delete 每个 wrapper, 而 wrapper 所有权归各 Go 对象的 finalizer
+	// (C 侧无 shallow free, new[] 的指针数组本身无法配对释放, 仅泄漏数组本身)
 	shapesSlice := unsafe.Slice(shapes, int(size))
 	var result []*Shape
 	for i := 0; i < int(size); i++ {
@@ -282,6 +350,19 @@ func (c *Assembly) GetElements() []*AssemblyElament {
 	return result
 }
 
+// Get 按名查找元素 (顶层对象用短名, 嵌套元素用 "a/b" 相对路径, 与 Remove 语义一致)
+// 注意: 返回元素的 Location 是从根累计的世界变换
+func (c *Assembly) Get(name string) (*AssemblyElament, bool) {
+	root := c.GetName()
+	for _, el := range c.GetElements() {
+		en := el.GetName()
+		if en == name || en == root+"/"+name {
+			return el, true
+		}
+	}
+	return nil, false
+}
+
 func (c *Assembly) GetName() string {
 	return C.GoString(C.assembly_get_name(c.inner.val))
 }
@@ -305,7 +386,8 @@ func (c *Assembly) GetObject() *AssemblyObject {
 func (c *Assembly) Children() []*Assembly {
 	var size C.int
 	children := C.assembly_children(c.inner.val, &size)
-	defer C.assembly_list_free(children, size)
+	// 不能调 assembly_list_free: 它会 delete 每个 wrapper, 而 wrapper 所有权归各 Go 对象的 finalizer
+	// (C 侧无 shallow free, new[] 的指针数组本身无法配对释放, 仅泄漏数组本身)
 	childrenSlice := unsafe.Slice(children, int(size))
 	var result []*Assembly
 	for i := 0; i < int(size); i++ {

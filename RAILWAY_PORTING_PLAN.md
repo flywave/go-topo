@@ -7,15 +7,20 @@ go-topo/                           ← C++ kernel + Go cgo bindings (ALREADY DON
   └── src/primitives_railway.{hh,cc}     ← 52+ C++ types + C API
   └── primitives_railway.go             ← Go CreateXxx() functions
 
-topotypes/                         ← Parametric type definitions (Go structs)
+topotypes/                         ← Parametric type definitions (Go structs) — 54 类型全部完成
   └── railway/railway.go          ← {Base, Shape, Xxx struct, NewXxx(), Unmarshal}
+  └── railway/layout.go           ← AnchorSection / Yard 布局级契约 (镜像 ocs_layout.go / yard_layout.go)
   └── parametric.go               ← case railway.Major: dispatch (已添加，后续免改)
 
-flywave-topovis/                   ← Parametric builders (topotypes → go-topo shapes)
+flywave-topovis/                   ← Parametric builders (topotypes → go-topo shapes) — 52 构件 + 2 区段全部完成
   └── railway/
-      ├── railway.go              ← BasePrimitive + CreatePrimitive() type switch
+      ├── railway.go              ← BasePrimitive + CreatePrimitive() type switch (54 类型)
+      ├── parametric.go           ← BuildAssembly + 配方闭环 (54 个 RAILWAY/Xxx 注册进 go-topo builder 注册表)
+      ├── anchor_section.go       ← 锚段区段生成器 (BuildAssembly, Spec→布局→装配)
+      ├── yard.go                 ← 站场区段生成器 (BuildAssembly, YardLayout→装配)
       └── rod_insulator.go        ← RodInsulatorPrimitive (每类型一个文件)
   └── parametric.go               ← case railway.Major: dispatch (已添加，后续免改)
+  └── component/parametric.go     ← 组件层 railway 分支 (已添加，后续免改)
 
 topo.js/                           ← WASM/JS SDK
   └── src/primitives_bindings.cc  ← Embind C++→JS bindings
@@ -509,9 +514,11 @@ if (Object.values(RLPrimitiveType).includes(shapeType as RLPrimitiveType)) {
 
 ---
 
-## 待移植类型清单 (51 types)
+## 类型移植进度清单
 
-### Group A: OCS Individual Components (14 remaining)
+> **2026-08 进度刷新 (2)**: 52 个构件 + 2 个区段生成器 (AnchorSection/Yard) 的 **go-topo → topotypes → flywave-topovis → topo.js (Embind) → topo-primitives (TS 类) 五层已全部贯通**。WASM 侧: 58 个 `create_*` 铁路函数绑定 (75+2 导出符号), topo-primitives 52 个 Primitive 类 (`lib/railway/index.ts`), TS layout 闭环 (`lib/railway/anchor_section.ts` / `lib/railway/yard.ts`, 与 Go layout JSON 互通), vitest 回归 `pnpm --filter topo-primitives test` (52 类冒烟 + 20 项 layout 断言移植)。topo-example GUI 层仍仅类型 1-16 接入。清单中 Group F 全部及 Group G 部分类型未纳入 52 类型注册表, 仍保持未移植状态。
+
+### Group A: OCS Individual Components (14 types, 全栈含 WASM/TS 已完成)
 
 - [x] **2. ContactWire** (接触线) `RAILWAY/ContactWire`
   - C++: 3-point arc + MakePipeShell 驰度支持 ✓
@@ -562,12 +569,10 @@ if (Object.values(RLPrimitiveType).includes(shapeType as RLPrimitiveType)) {
   - ✅ TS 声明: `primitives.d.ts` + `export.json`
   - ✅ TS Object: `types/railway.ts` + `railway/index.ts`
   - ✅ WASM 编译: `make topo topo-bindings run gen-ts`
-- [ ] **7. CantileverBrace** (斜撑) `RAILWAY/CantileverBrace`
+- [x] **7. CantileverBrace** (斜撑) `RAILWAY/CantileverBrace`
   - 连接平腕臂和斜腕臂的自由端，组成三角支撑结构
   - 参数：length / outerDiameter / wallThickness
-  - 长度可根据平腕臂+斜腕臂几何关系自动推算
-  - C++ 实现需新增 struct + function (`create_cantilever_brace`)
-  - 注意：需对 `primitives_railway.{hh,cc}` 新增，go-topo 层需新增
+  - ✅ 五层已贯通 (go-topo / topotypes / topovis / Embind / TS Primitive 类)
 - [x] **8. CurvedArm** (弯臂) `RAILWAY/CurvedArm`
   - ✅ C++ 原点: 安装法兰底面中心（z 偏移 flangeThickness）
   - ✅ topotypes: `railway/railway.go`
@@ -642,42 +647,52 @@ if (Object.values(RLPrimitiveType).includes(shapeType as RLPrimitiveType)) {
 
 ### Group B: OCS Connectors & Hardware (8 types)
 
-- [ ] **17. CantileverBase** (腕臂底座) `RAILWAY/CantileverBase`
-- [ ] **18. MWSaddle** (承力索座) `RAILWAY/MWSaddle`
-- [ ] **19. BalanceWeight** (坠砣) `RAILWAY/BalanceWeight`
-- [ ] **20. WeightRod** (坠砣杆) `RAILWAY/WeightRod`
-- [ ] **21. AnchorFitting** (下锚金具) `RAILWAY/AnchorFitting`
-- [ ] **22. Crossing** (线岔) `RAILWAY/Crossing`
-- [ ] **23. HangerPost** (硬横跨吊柱) `RAILWAY/HangerPost`
-- [ ] **24. PortalFrame** (梁顶门型架) `RAILWAY/PortalFrame`
+> ✅ go-topo / topotypes / topovis / topo.js (Embind) / topo-primitives 五层已贯通
+
+- [x] **17. CantileverBase** (腕臂底座) `RAILWAY/CantileverBase`
+- [x] **18. MWSaddle** (承力索座) `RAILWAY/MWSaddle`
+- [x] **19. BalanceWeight** (坠砣) `RAILWAY/BalanceWeight`
+- [x] **20. WeightRod** (坠砣杆) `RAILWAY/WeightRod`
+- [x] **21. AnchorFitting** (下锚金具) `RAILWAY/AnchorFitting`
+- [x] **22. Crossing** (线岔) `RAILWAY/Crossing`
+- [x] **23. HangerPost** (硬横跨吊柱) `RAILWAY/HangerPost`
+- [x] **24. PortalFrame** (梁顶门型架) `RAILWAY/PortalFrame`
 
 ### Group C: OCS Composite (5 types)
 
-- [ ] **25. AuxBracket** (附加导线支架) `RAILWAY/AuxBracket`
-- [ ] **26. HeadSpan** (软横跨) `RAILWAY/HeadSpan`
-- [ ] **27. TransverseSpan** (硬横跨) `RAILWAY/TransverseSpan`
-- [ ] **28. SuspensionHardSpan** (悬索式硬横跨) `RAILWAY/SuspensionHardSpan`
-- [ ] **29. MastAssembly** (支柱装配) `RAILWAY/MastAssembly`
+> ✅ 五层已贯通 (含 Embind + TS Primitive 类)
+
+- [x] **25. AuxBracket** (附加导线支架) `RAILWAY/AuxBracket`
+- [x] **26. HeadSpan** (软横跨) `RAILWAY/HeadSpan`
+- [x] **27. TransverseSpan** (硬横跨) `RAILWAY/TransverseSpan`
+- [x] **28. SuspensionHardSpan** (悬索式硬横跨) `RAILWAY/SuspensionHardSpan`
+- [x] **29. MastAssembly** (支柱装配) `RAILWAY/MastAssembly`
 
 ### Group D: Track Components (6 types)
 
-- [ ] **30. Rail** (钢轨) `RAILWAY/Rail`
-- [ ] **31. Sleeper** (轨枕) `RAILWAY/Sleeper`
-- [ ] **32. Ballast** (道床) `RAILWAY/Ballast`
-- [ ] **33. TrackSlab** (轨道板) `RAILWAY/TrackSlab`
-- [ ] **34. Fastener** (扣件) `RAILWAY/Fastener`
-- [ ] **35. GuardRail** (护轨) `RAILWAY/GuardRail`
+> ✅ 五层已贯通 (含 Embind + TS Primitive 类)
+
+- [x] **30. Rail** (钢轨) `RAILWAY/Rail`
+- [x] **31. Sleeper** (轨枕) `RAILWAY/Sleeper`
+- [x] **32. Ballast** (道床) `RAILWAY/Ballast`
+- [x] **33. TrackSlab** (轨道板) `RAILWAY/TrackSlab`
+- [x] **34. Fastener** (扣件) `RAILWAY/Fastener`
+- [x] **35. GuardRail** (护轨) `RAILWAY/GuardRail`
 
 ### Group E: Turnout Components (6 types)
 
-- [ ] **36. SwitchRail** (尖轨) `RAILWAY/SwitchRail`
-- [ ] **37. Frog** (辙叉) `RAILWAY/Frog`
-- [ ] **38. Turnout** (道岔) `RAILWAY/Turnout`
-- [ ] **39. SleeperLayout** (轨枕阵列) `RAILWAY/SleeperLayout`
-- [ ] **40. StraightTrack** (直线轨道段) `RAILWAY/StraightTrack`
-- [ ] **41. CurveTrack** (曲线轨道段) `RAILWAY/CurveTrack`
+> ✅ 五层已贯通 (含 Embind + TS Primitive 类)
+
+- [x] **36. SwitchRail** (尖轨) `RAILWAY/SwitchRail`
+- [x] **37. Frog** (辙叉) `RAILWAY/Frog`
+- [x] **38. Turnout** (道岔) `RAILWAY/Turnout`
+- [x] **39. SleeperLayout** (轨枕阵列) `RAILWAY/SleeperLayout`
+- [x] **40. StraightTrack** (直线轨道段) `RAILWAY/StraightTrack`
+- [x] **41. CurveTrack** (曲线轨道段) `RAILWAY/CurveTrack`
 
 ### Group F: Point/Line API (5 types)
+
+> 未纳入 52 类型注册表, 三层均未移植 (保留为候选; 点/线 API 能力已由 create_rail_path 等内部覆盖)
 
 - [ ] **42. RailCurve** (钢轨曲线) `RAILWAY/RailCurve`
 - [ ] **43. WingRailCurve** (翼轨曲线) `RAILWAY/WingRailCurve`
@@ -685,12 +700,27 @@ if (Object.values(RLPrimitiveType).includes(shapeType as RLPrimitiveType)) {
 - [ ] **45. SleeperLine** (枕木线) `RAILWAY/SleeperLine`
 - [ ] **46. FastenerPoint** (扣件点) `RAILWAY/FastenerPoint`
 
-### Group G: Special (6 types)
+### Group G: Special (7 types)
 
-- [ ] **47. SuspensionCable** (悬索) `RAILWAY/SuspensionCable`
-- [ ] **48. PositioningCable** (定位索) `RAILWAY/PositioningCable`
-- [ ] **49. BallastFromSleepers** (枕木道床) `RAILWAY/BallastFromSleepers`
-- [ ] **50. TurnoutAssembly** (道岔组合) `RAILWAY/TurnoutAssembly`
-- [ ] **51. ExpansionJoint** (钢轨伸缩调节器) `RAILWAY/ExpansionJoint`
-- [ ] **52. RetarderPoint** (减速顶) `RAILWAY/RetarderPoint`
-- [ ] **53. RailPair** (轨排对) `RAILWAY/RailPair`
+- [ ] **47. SuspensionCable** (悬索) `RAILWAY/SuspensionCable` — 未纳入注册表, 未移植
+- [x] **48. PositioningCable** (定位索) `RAILWAY/PositioningCable` — ✅ 五层已贯通 (含 Embind + TS Primitive 类)
+- [ ] **49. BallastFromSleepers** (枕木道床) `RAILWAY/BallastFromSleepers` — 未纳入注册表, 未移植
+- [ ] **50. TurnoutAssembly** (道岔组合) `RAILWAY/TurnoutAssembly` — 未纳入注册表, 未移植
+- [ ] **51. ExpansionJoint** (钢轨伸缩调节器) `RAILWAY/ExpansionJoint` — 未纳入注册表, 未移植
+- [x] **52. RetarderPoint** (减速顶) `RAILWAY/RetarderPoint` — ✅ 五层已贯通 (含 Embind + TS Primitive 类)
+- [x] **53. RailPair** (轨排对) `RAILWAY/RailPair` — ✅ 五层已贯通 (含 Embind + TS Primitive 类)
+
+### 区段生成器 (layout 类型, 54 类型中的 2 个)
+
+- [x] **AnchorSection** (接触网锚段) `RAILWAY/AnchorSection`
+  - topotypes: `railway/layout.go` (AnchorSectionSpec/Masts/Spans, 镜像 go-topo `ocs_layout.go`) ✓
+  - flywave-topovis: `railway/anchor_section.go` (`BuildAssembly`: 只给 Spec 则算布局再生成, Masts 非空则布局确定性再生成) ✓
+  - E2E: `railway/e2e_test.go - TestEndToEndAnchorSection` (TopoData JSON → 分发 → 导出 → 改 mast_1 拉出值+柱高 → 重建 → 网格化 → bbox 断言) ✓
+  - topo.js: `computeAnchorSectionLayout` / `createAnchorSectionFromLayout` (`topo-primitives/lib/railway/anchor_section.ts`), layout JSON 与 Go 互通 ✓
+  - vitest: `topo-primitives/test/railway_layout.test.ts` (计算口径/JSON 往返/命名唯一/编辑再生成 bbox) ✓
+- [x] **Yard** (站场) `RAILWAY/Yard`
+  - topotypes: `railway/layout.go` (YardTrackLayout/YardTurnoutLayout/YardCrossingLayout, 镜像 go-topo `yard_layout.go`) ✓
+  - flywave-topovis: `railway/yard.go` (`BuildAssembly` → `CreateYardFromLayout`) ✓
+  - E2E: `railway/e2e_test.go - TestEndToEndYard` (改 TurnoutNo 12→9 并清 0 SwitchRailLength/LeadCurveRadius → 重建 → bbox 收窄断言) ✓
+  - topo.js: `computeYardLayout` / `createYardFromLayout` (`topo-primitives/lib/railway/yard.ts`), 道岔/菱形交叉识别, layout JSON 与 Go 互通 ✓
+  - vitest: `topo-primitives/test/railway_layout.test.ts` (识别/JSON 往返/编辑再生成) ✓

@@ -14,8 +14,8 @@ Go bindings for a C++ 3D topological geometry modeling library (OpenCASCADE-base
 
 ```sh
 # Build C++ libs (Apple Silicon example)
-cmake -S . -B build/build -G "Xcode"
-cmake --build build/build --config Release
+cmake -S . -B build -G "Xcode"
+cmake --build build --config Release
 
 # Test Go package (requires prebuilt libs in libs/)
 go test ./...
@@ -27,13 +27,15 @@ Go cgo link flags are in the `#cgo` directives of each `.go` file — they refer
 
 - `go.mod` has `replace` directives pointing to `../gltf` and `../go-mst` — those repos must exist as sibling directories
 - Go tests require CGO and the prebuilt static libraries; they will fail without them
+- After rebuilding the C++ libs, run `go clean -cache` before `go test` — the Go build cache does not notice external `.a` updates and will keep linking the stale archive
+- On this machine, prefix cgo builds/tests with `CC=/usr/bin/clang CXX=/usr/bin/clang++` — an OpenHarmony clang earlier in PATH breaks the build
 - Tests that read DXF/IFC STEP files may need fixture data not checked into this repo
 
 ## C++ rebuild
 
 ```sh
-cmake -S . -B build/build -G "Xcode" && cmake --build build/build --config Release
-cmake --install build/build --prefix libs/darwin_arm
+cmake -S . -B build -G "Xcode" && cmake --build build --config Release
+cmake --install build --prefix libs/darwin_arm
 ```
 
 ## Key entrypoints
@@ -44,7 +46,9 @@ cmake --install build/build --prefix libs/darwin_arm
 | `shape.go` | Shape methods |
 | `shape_ops.go` | Boolean ops, extrude, sweep, loft, offset |
 | `primitives.go` | Box, sphere, cylinder, prism creation |
-| `primitives_railway.go` | Railway OCS & track primitives (30 types) |
+| `primitives_railway.go` | Railway OCS & track primitives (50+ types) |
+| `assembly_parametric.go` | Assembly parametric data (ParametricData, Export/RebuildFromParametric, builder registry) |
+| `ocs_layout.go` | Anchor-section layout round-trip (ComputeAnchorSectionLayout / CreateAnchorSectionFromLayout) |
 | `geometry.go` | Geometry type constants |
 | `geometry_creator.go` | Curve/surface creation helpers |
 | `dxf.go` / `ifc.go` | DXF/IFC import |
@@ -75,15 +79,18 @@ All 50+ railway types are being ported across 4 layers. See `RAILWAY_PORTING_PLA
 Run: `go test -v -count=1 ./...`
 Run one test: `go test -v -run TestSampleCenterlineWire ./...`
 
-## GeoJSON 轨道输入 (track_geojson.go / track_yard.go)
+## GeoJSON 轨道输入 (track_geojson.go / track_yard.go / yard_layout.go)
 
 - `ParseTrackGeoJSON` / `CreateTrackFromGeoJSON` — 单条中心线 (LineString/Feature/FeatureCollection) → 正线装配 (钢轨×2 + 轨枕 + 道床), 坐标默认米 (coordScale=1000)
 - `CreateYardFromGeoJSON` — FeatureCollection 组网: 端点聚类节点 (50mm 容差) → 度=3 节点识别单开道岔 (自动判定开向/号数/裁剪邻边) → `CreateTurnoutWithPlace`; 边中部相交 → 菱形交叉 → `CreateFrogWithPlace`
+- 站场布局闭环 (yard_layout.go): `ComputeYardLayout` 纯识别计算 → `YardLayout` (Tracks 原始中心线+TrimS/TrimE 裁剪弧长+Props / Turnouts 开向号数+CreateTurnoutWithPlace 全参 / Crossings, 全 JSON tag, `ToJSON`/`YardLayoutFromJSON`) 可存库/前端编辑校正 → `CreateYardFromLayout` 确定性再生成; `CreateYardFromGeoJSON` = Compute + FromLayout, `CreateYardFromGeoJSONWithLayout` 同时返回装配+布局; 子件命名 `rails_i`/`sleepers_i`/`turnout_i`/`crossing_i` 唯一, 全部经 `AddObjectParams` 挂配方 (type `yard_rails`/`yard_sleepers`/`yard_turnout`/`yard_crossing`, builder 已在 yard_layout.go init 注册), 支持 `ExportParametric`→`RebuildFromParametric` 往返
 - 道岔号数估计: 侧股 15~35m 弦方向与主向夹角 → snap 到 {9,12,18,30,42}
 
-## 接触网锚段生成 (ocs_anchor.go)
+## 接触网锚段生成 (ocs_anchor.go / ocs_layout.go)
 
 - `CreateAnchorSection(AnchorSectionInput)` — 线路中心线 + 锚段规格 → 完整锚段装配: 支柱装配×N (`CalcOcsSpanPositions` 柱位, 端柱自动带补偿装置+拉线) + 跨间承力索(弛度 1.5%跨距) + 接触线(之字拉出值, 缺省 ±300) + 吊弦群 (间距 8m, 长度按两索抛物线求差)
+- 布局闭环 (ocs_layout.go): `ComputeAnchorSectionLayout` 纯计算全部中间数据 → `AnchorSectionLayout` (Spec/Masts/Spans/Droppers, 全 JSON tag, `ToJSON`/`AnchorSectionLayoutFromJSON`) 可存库/前端编辑 → `CreateAnchorSectionFromLayout` 确定性再生成; `CreateAnchorSectionWithLayout` 同时返回装配+布局
+- 装配结构: 根容器 "anchor_section", 子件唯一命名 `mast_i`/`cw_i`/`mw_i`/`dropper_{span}_{idx}`; 支柱局部生成 (原点=柱底中心, +X 朝线路) + Location 放置 (可 `SetLocation` 移动单柱), 线索/吊弦世界坐标烘焙; 所有子件经 `AddObjectParams` 挂配方 (type `ocs_mast`/`ocs_contact_wire`/`ocs_messenger_wire`/`ocs_dropper`, builder 已在 ocs_layout.go init 注册), 支持 `ExportParametric`→`RebuildFromParametric` 往返
 - `CreateRatchetCompensator` / `CreateWeightStack` — 棘轮补偿装置 (轮盘+V形绳槽+减重孔+补偿绳+坠砣串)
 - `CreateAuxiliaryWire` — 附加导线本体 (带弛度扫掠)
 - `create_mast_assembly` 已按导高/结构高度/CX 尺寸链重构: 上下连接座→棒式绝缘子→平腕臂(仰角3°)→斜腕臂(三角桁架 65% 处对接)→承力索座→定位器(拉出值)
@@ -346,9 +353,13 @@ Input: centerline_graph (edges + nodes)
 
 - `create_rail_path` — unified rail generation (LINE→prism, ARC/BEZIER→loft), 真实钢轨断面 (R300 踏面 + R80 侧面 + R13 圆角过渡)
 - `create_rail` — 真实断面拉伸; `standard_rail_params` 提供 43/50/60/75kg 查表
-- `create_ballast` — loft-based ballast with optional tiltAngle
+- `create_ballast` — 沿完整中心线 (LINE/ARC/BEZIER 多段, 支持坡度) ThruSections 放样梯形断面, 顶面与中心线齐平, 两端沿切向外延 500mm, tiltAngle 超高倾角生效 (绕切向旋转断面); `create_straight_track`/`create_curve_track` 均经此生成道床 (curve_track 超高 → tilt = -sign(sweep)·atan(se/gauge))
+- `create_crossing` — 线岔: 交角由 mainDir/branchDir 实算, 限制管横跨两接触线交叉点上方, 两端线夹固定 (线夹距交叉点 s = L/(2·sin(α/2)))
+- 格构式钢柱主肢为等边角钢 L 断面放样 (`makeAngleSteelProfile`, 角跟朝外), 不再是圆管
 - `create_sleeper` — TRAPEZOIDAL concrete sleeper with rail seats
-- `create_turnout` — currently hard-coded for 单开道岔, to be refactored to centerline_graph interface
+- `create_turnout` — currently hard-coded for 单开道岔, to be refactored to centerline_graph interface; sleeperSpacing 已生效, frogLength 为 reserved 字段暂未生效
+- `CreatePositioningCableWithPlace` / `CreateStraightTrackWithPlace` / `CreateCurveTrackWithPlace` — 几何端点/圆心从 params 移出作显式函数参数 (params 内对应字段已标 Deprecated)
+- `create_anchor_fitting` — 三种类型原点统一为连接点; ratchet/pulley with_place 的 wheelAxis、head_span 左端绝缘子方向、sleeper_line TRAPEZOIDAL 端点放置已修复; frog/turnout 等静默 catch 改为 `warn_part_failed` 日志
 - `create_switch_rail` — 单侧刨削渐缩 (锚定基本轨侧边缘), 尖端降值, 支持曲线半径
 - `create_frog` — 4 段心轨 SWITCH 端刨削汇聚 ~2mm 岔心 + 真实线形翼轨×2 (开口→咽喉→平直→绕岔心, 普通钢轨断面) + 43kg 旧钢轨护轨×2 (端部弯折张开喇叭口) (待按 centerline_graph 重构布局)
 - `applyEndTreatment` — PLANE/SCARF(斜切切割)/SWITCH(单侧刨削楔切+降值) 已实现; BELL 由 addBellMouth 放样喇叭口

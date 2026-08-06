@@ -15,14 +15,14 @@ import (
 // =========================================================================
 
 type ContactWireParams struct {
-	SectionalArea float64
-	Diameter      float64
-	RatedTension  float64
-	GrooveDepth   float64
-	GrooveWidth   float64
-	BottomRadius  float64
-	TopRadius     float64
-	Sag           float64
+	SectionalArea float64 `json:"sectionalArea"`
+	Diameter      float64 `json:"diameter"`
+	RatedTension  float64 `json:"ratedTension"`
+	GrooveDepth   float64 `json:"grooveDepth"`
+	GrooveWidth   float64 `json:"grooveWidth"`
+	BottomRadius  float64 `json:"bottomRadius"`
+	TopRadius     float64 `json:"topRadius"`
+	Sag           float64 `json:"sag"`
 }
 
 func (p *ContactWireParams) to_struct() C.contact_wire_params_t {
@@ -50,10 +50,10 @@ func CreateContactWire(params ContactWireParams, startPoint, endPoint Point3) *S
 // =========================================================================
 
 type MessengerWireParams struct {
-	Diameter         float64
-	RatedTension     float64
-	StructuralHeight float64
-	Sag              float64
+	Diameter         float64 `json:"diameter"`
+	RatedTension     float64 `json:"ratedTension"`
+	StructuralHeight float64 `json:"structuralHeight"`
+	Sag              float64 `json:"sag"`
 }
 
 func (p *MessengerWireParams) to_struct() C.messenger_wire_params_t {
@@ -77,18 +77,18 @@ func CreateMessengerWire(params MessengerWireParams, startPoint, endPoint Point3
 // =========================================================================
 
 type CrossArmParams struct {
-	Type          int
-	BeamLength    float64
-	BeamHeight    float64
-	BeamWidth     float64
-	BeamThickness float64
-	BeamSpacing  float64
-	BraceLength   float64
-	BraceDiameter float64
-	MountHeight   float64
-	BoltSpacing   float64
-	BoltDiameter  float64
-	BoltCount     int
+	Type          int     `json:"crossArmType"`
+	BeamLength    float64 `json:"beamLength"`
+	BeamHeight    float64 `json:"beamHeight"`
+	BeamWidth     float64 `json:"beamWidth"`
+	BeamThickness float64 `json:"beamThickness"`
+	BeamSpacing   float64 `json:"beamSpacing"`
+	BraceLength   float64 `json:"braceLength"`
+	BraceDiameter float64 `json:"braceDiameter"`
+	MountHeight   float64 `json:"mountHeight"`
+	BoltSpacing   float64 `json:"boltSpacing"`
+	BoltDiameter  float64 `json:"boltDiameter"`
+	BoltCount     int     `json:"boltCount"`
 }
 
 func (p *CrossArmParams) to_struct() C.cross_arm_params_t {
@@ -127,11 +127,11 @@ func CreateCrossArmWithPlace(params CrossArmParams, position Point3, normal, xDi
 // =========================================================================
 
 type LevelCantileverParams struct {
-	Length        float64
-	OuterDiameter float64
-	WallThickness float64
-	MountHeight   float64
-	RiseAngle     float64
+	Length        float64 `json:"length"`
+	OuterDiameter float64 `json:"outerDiameter"`
+	WallThickness float64 `json:"wallThickness"`
+	MountHeight   float64 `json:"mountHeight"`
+	RiseAngle     float64 `json:"riseAngle"`
 }
 
 func (p *LevelCantileverParams) to_struct() C.level_cantilever_params_t {
@@ -163,10 +163,10 @@ func CreateLevelCantileverWithPlace(params LevelCantileverParams, basePoint Poin
 // =========================================================================
 
 type SlantCantileverParams struct {
-	Length        float64
-	OuterDiameter float64
-	WallThickness float64
-	SlantAngle    float64
+	Length        float64 `json:"length"`
+	OuterDiameter float64 `json:"outerDiameter"`
+	WallThickness float64 `json:"wallThickness"`
+	SlantAngle    float64 `json:"slantAngle"`
 }
 
 func (p *SlantCantileverParams) to_struct() C.slant_cantilever_params_t {
@@ -197,16 +197,16 @@ func CreateSlantCantileverWithPlace(params SlantCantileverParams, basePoint Poin
 // =========================================================================
 
 type CurvedArmParams struct {
-	Type            int
-	VerticalLength  float64
-	HorizontalLength float64
-	BendRadius      float64
-	BendAngle       float64
-	OuterDiameter   float64
-	WallThickness   float64
-	FlangeThickness float64
-	BoltSpacing     float64
-	BoltDiameter    float64
+	Type             int     `json:"curvedArmType"`
+	VerticalLength   float64 `json:"verticalLength"`
+	HorizontalLength float64 `json:"horizontalLength"`
+	BendRadius       float64 `json:"bendRadius"`
+	BendAngle        float64 `json:"bendAngle"`
+	OuterDiameter    float64 `json:"outerDiameter"`
+	WallThickness    float64 `json:"wallThickness"`
+	FlangeThickness  float64 `json:"flangeThickness"`
+	BoltSpacing      float64 `json:"boltSpacing"`
+	BoltDiameter     float64 `json:"boltDiameter"`
 }
 
 func (p *CurvedArmParams) to_struct() C.curved_arm_params_t {
@@ -243,10 +243,10 @@ func CreateCurvedArmWithPlace(params CurvedArmParams, position Point3, normal, x
 // =========================================================================
 
 type CantileverBraceParams struct {
-	Length        float64
-	OuterDiameter float64
-	WallThickness float64
-	SlantAngle    float64
+	Length        float64 `json:"length"`
+	OuterDiameter float64 `json:"outerDiameter"`
+	WallThickness float64 `json:"wallThickness"`
+	SlantAngle    float64 `json:"slantAngle"`
 }
 
 func (p *CantileverBraceParams) to_struct() C.cantilever_brace_params_t {
@@ -277,17 +277,17 @@ func CreateCantileverBraceWithPlace(params CantileverBraceParams, basePoint Poin
 // =========================================================================
 
 type RodInsulatorParams struct {
-	Type              int
-	Height            float64
-	OuterDiameter     float64
-	InnerDiameter     float64
-	ShedDiameter      float64
-	ShedSpacing       float64
-	ShedCount         int
-	EndFitting        int
-	FlangeDiameter    float64
-	FlangeBoltSpacing float64
-	FlangeBoltDiameter float64
+	Type               int     `json:"insulatorType"`
+	Height             float64 `json:"height"`
+	OuterDiameter      float64 `json:"outerDiameter"`
+	InnerDiameter      float64 `json:"innerDiameter"`
+	ShedDiameter       float64 `json:"shedDiameter"`
+	ShedSpacing        float64 `json:"shedSpacing"`
+	ShedCount          int     `json:"shedCount"`
+	EndFitting         int     `json:"endFitting"`
+	FlangeDiameter     float64 `json:"flangeDiameter"`
+	FlangeBoltSpacing  float64 `json:"flangeBoltSpacing"`
+	FlangeBoltDiameter float64 `json:"flangeBoltDiameter"`
 }
 
 func (p *RodInsulatorParams) to_struct() C.rod_insulator_params_t {
@@ -325,15 +325,15 @@ func CreateRodInsulatorWithPlace(params RodInsulatorParams, basePoint Point3, ax
 // =========================================================================
 
 type MastBracketParams struct {
-	BoltSpacing          float64
-	BoltDiameter         float64
-	Height               float64
-	Width                float64
-	Thickness            float64
-	InsulatorBoltSpacing  float64
-	InsulatorBoltDiameter float64
-	MountAngle           float64
-	MastDiameter         float64
+	BoltSpacing           float64 `json:"boltSpacing"`
+	BoltDiameter          float64 `json:"boltDiameter"`
+	Height                float64 `json:"height"`
+	Width                 float64 `json:"width"`
+	Thickness             float64 `json:"thickness"`
+	InsulatorBoltSpacing  float64 `json:"insulatorBoltSpacing"`
+	InsulatorBoltDiameter float64 `json:"insulatorBoltDiameter"`
+	MountAngle            float64 `json:"mountAngle"`
+	MastDiameter          float64 `json:"mastDiameter"`
 }
 
 func (p *MastBracketParams) to_struct() C.mast_bracket_params_t {
@@ -369,13 +369,13 @@ func CreateMastBracketWithPlace(params MastBracketParams, position Point3, norma
 // =========================================================================
 
 type RegistrationArmParams struct {
-	Type          int
-	Length        float64
-	TubeWidth     float64
-	TubeHeight    float64
-	WallThickness float64
-	Angle         float64
-	IsReverse     bool
+	Type          int     `json:"armType"`
+	Length        float64 `json:"length"`
+	TubeWidth     float64 `json:"tubeWidth"`
+	TubeHeight    float64 `json:"tubeHeight"`
+	WallThickness float64 `json:"wallThickness"`
+	Angle         float64 `json:"angle"`
+	IsReverse     bool    `json:"isReverse"`
 }
 
 func (p *RegistrationArmParams) to_struct() C.registration_arm_params_t {
@@ -409,13 +409,13 @@ func CreateRegistrationArmWithPlace(params RegistrationArmParams, basePoint Poin
 // =========================================================================
 
 type RegArmBracketParams struct {
-	TubeDiameter      float64
-	BandWidth         float64
-	BandThickness     float64
-	BracketHeight     float64
-	BracketThickness  float64
-	BracketWidth      float64
-	MountHoleDiameter float64
+	TubeDiameter      float64 `json:"tubeDiameter"`
+	BandWidth         float64 `json:"bandWidth"`
+	BandThickness     float64 `json:"bandThickness"`
+	BracketHeight     float64 `json:"bracketHeight"`
+	BracketThickness  float64 `json:"bracketThickness"`
+	BracketWidth      float64 `json:"bracketWidth"`
+	MountHoleDiameter float64 `json:"mountHoleDiameter"`
 }
 
 func CreateRegArmBracket(params RegArmBracketParams) *Shape {
@@ -437,16 +437,16 @@ func CreateRegArmBracket(params RegArmBracketParams) *Shape {
 // =========================================================================
 
 type GuyWireParams struct {
-	Length            float64
-	Diameter          float64
-	Angle             float64
-	RatedTension      float64
-	HasInsulator      bool
-	InsulatorCount    int
-	AnchorRodDiameter float64
-	AnchorRodLength   float64
-	AnchorPlateLength float64
-	AnchorPlateWidth  float64
+	Length            float64 `json:"length"`
+	Diameter          float64 `json:"diameter"`
+	Angle             float64 `json:"angle"`
+	RatedTension      float64 `json:"ratedTension"`
+	HasInsulator      bool    `json:"hasInsulator"`
+	InsulatorCount    int     `json:"insulatorCount"`
+	AnchorRodDiameter float64 `json:"anchorRodDiameter"`
+	AnchorRodLength   float64 `json:"anchorRodLength"`
+	AnchorPlateLength float64 `json:"anchorPlateLength"`
+	AnchorPlateWidth  float64 `json:"anchorPlateWidth"`
 }
 
 func (p *GuyWireParams) to_struct() C.guy_wire_params_t {
@@ -483,16 +483,16 @@ func CreateGuyWireWithPlace(params GuyWireParams, anchorPoint, mastPoint Point3,
 // =========================================================================
 
 type SteelMastParams struct {
-	Type            int
-	Height          float64
-	TopWidth        float64
-	BottomWidth     float64
-	WallThickness   float64
-	FlangeThickness float64
-	FlangeWidth     float64
-	AnchorSpacing   float64
-	AnchorDiameter  float64
-	SegmentCount    int
+	Type            int     `json:"mastType"`
+	Height          float64 `json:"height"`
+	TopWidth        float64 `json:"topWidth"`
+	BottomWidth     float64 `json:"bottomWidth"`
+	WallThickness   float64 `json:"wallThickness"`
+	FlangeThickness float64 `json:"flangeThickness"`
+	FlangeWidth     float64 `json:"flangeWidth"`
+	AnchorSpacing   float64 `json:"anchorSpacing"`
+	AnchorDiameter  float64 `json:"anchorDiameter"`
+	SegmentCount    int     `json:"segmentCount"`
 }
 
 func (p *SteelMastParams) to_struct() C.steel_mast_params_t {
@@ -529,18 +529,18 @@ func CreateSteelMastWithPlace(params SteelMastParams, baseCenter Point3, axisDir
 // =========================================================================
 
 type ConcreteMastParams struct {
-	SectionType     int
-	Height          float64
-	TopWidth        float64
-	BottomWidth     float64
-	WallThickness   float64
-	HoleDiameter    float64
-	HoleSpacingV    float64
-	HoleSpacingH    float64
-	FirstHoleOffset float64
-	HoleRowCount    int
-	HolesPerRow     int
-	HoleLength      float64
+	SectionType     int     `json:"sectionType"`
+	Height          float64 `json:"height"`
+	TopWidth        float64 `json:"topWidth"`
+	BottomWidth     float64 `json:"bottomWidth"`
+	WallThickness   float64 `json:"wallThickness"`
+	HoleDiameter    float64 `json:"holeDiameter"`
+	HoleSpacingV    float64 `json:"holeSpacingV"`
+	HoleSpacingH    float64 `json:"holeSpacingH"`
+	FirstHoleOffset float64 `json:"firstHoleOffset"`
+	HoleRowCount    int     `json:"holeRowCount"`
+	HolesPerRow     int     `json:"holesPerRow"`
+	HoleLength      float64 `json:"holeLength"`
 }
 
 func (p *ConcreteMastParams) to_struct() C.concrete_mast_params_t {
@@ -587,15 +587,15 @@ const (
 )
 
 type OcsFoundationParams struct {
-	Type            int
-	Height          float64
-	Width           float64
-	Length          float64
-	FlangeThickness float64
-	AnchorCount     int
-	AnchorDiameter  float64
-	AnchorLength    float64
-	AnchorSpacing   float64
+	Type            int     `json:"foundationType"`
+	Height          float64 `json:"height"`
+	Width           float64 `json:"width"`
+	Length          float64 `json:"length"`
+	FlangeThickness float64 `json:"flangeThickness"`
+	AnchorCount     int     `json:"anchorCount"`
+	AnchorDiameter  float64 `json:"anchorDiameter"`
+	AnchorLength    float64 `json:"anchorLength"`
+	AnchorSpacing   float64 `json:"anchorSpacing"`
 }
 
 func (p *OcsFoundationParams) to_struct() C.ocs_foundation_params_t {
@@ -631,12 +631,12 @@ func CreateOcsFoundationWithPlace(params OcsFoundationParams, position Point3, n
 // =========================================================================
 
 type DropperParams struct {
-	Length         float64
-	WireDiameter   float64
-	ClampLength    float64
-	ClampWidth     float64
-	ClampThickness float64
-	Conductive     bool
+	Length         float64 `json:"length"`
+	WireDiameter   float64 `json:"wireDiameter"`
+	ClampLength    float64 `json:"clampLength"`
+	ClampWidth     float64 `json:"clampWidth"`
+	ClampThickness float64 `json:"clampThickness"`
+	Conductive     bool    `json:"conductive"`
 }
 
 func (p *DropperParams) to_struct() C.dropper_params_t {
@@ -669,12 +669,12 @@ func CreateDropperWithPlace(params DropperParams, topPoint Point3, direction Dir
 // =========================================================================
 
 type CantileverBaseParams struct {
-	Length      float64
-	Width       float64
-	Height      float64
-	BoltSpacing float64
-	BoltDiameter float64
-	BoltCount   int
+	Length       float64 `json:"length"`
+	Width        float64 `json:"width"`
+	Height       float64 `json:"height"`
+	BoltSpacing  float64 `json:"boltSpacing"`
+	BoltDiameter float64 `json:"boltDiameter"`
+	BoltCount    int     `json:"boltCount"`
 }
 
 func (p *CantileverBaseParams) to_struct() C.cantilever_base_params_t {
@@ -707,11 +707,11 @@ func CreateCantileverBaseWithPlace(params CantileverBaseParams, position Point3,
 // =========================================================================
 
 type MWSaddleParams struct {
-	Length       float64
-	Width        float64
-	Height       float64
-	GrooveRadius float64
-	BoltDiameter float64
+	Length       float64 `json:"length"`
+	Width        float64 `json:"width"`
+	Height       float64 `json:"height"`
+	GrooveRadius float64 `json:"grooveRadius"`
+	BoltDiameter float64 `json:"boltDiameter"`
 }
 
 func (p *MWSaddleParams) to_struct() C.mw_saddle_params_t {
@@ -743,10 +743,10 @@ func CreateMWSaddleWithPlace(params MWSaddleParams, position Point3, normal, xDi
 // =========================================================================
 
 type BalanceWeightParams struct {
-	Width             float64
-	Thickness         float64
-	Height            float64
-	CenterHoleDiameter float64
+	Width              float64 `json:"width"`
+	Thickness          float64 `json:"thickness"`
+	Height             float64 `json:"height"`
+	CenterHoleDiameter float64 `json:"centerHoleDiameter"`
 }
 
 func (p *BalanceWeightParams) to_struct() C.balance_weight_params_t {
@@ -777,9 +777,9 @@ func CreateBalanceWeightWithPlace(params BalanceWeightParams, position Point3, n
 // =========================================================================
 
 type WeightRodParams struct {
-	RodDiameter   float64
-	RodLength     float64
-	TopHoleDiameter float64
+	RodDiameter     float64 `json:"rodDiameter"`
+	RodLength       float64 `json:"rodLength"`
+	TopHoleDiameter float64 `json:"topHoleDiameter"`
 }
 
 func (p *WeightRodParams) to_struct() C.weight_rod_params_t {
@@ -809,9 +809,9 @@ func CreateWeightRodWithPlace(params WeightRodParams, position Point3, axisDir D
 // =========================================================================
 
 type AnchorFittingParams struct {
-	Type     int
-	Length   float64
-	Diameter float64
+	Type     int     `json:"fittingType"`
+	Length   float64 `json:"length"`
+	Diameter float64 `json:"diameter"`
 }
 
 func (p *AnchorFittingParams) to_struct() C.anchor_fitting_params_t {
@@ -841,10 +841,10 @@ func CreateAnchorFittingWithPlace(params AnchorFittingParams, position Point3, d
 // =========================================================================
 
 type CrossingParams struct {
-	LimitPipeLength float64
-	PipeDiameter   float64
-	WireDiameter   float64
-	HeightDiff     float64
+	LimitPipeLength float64 `json:"limitPipeLength"`
+	PipeDiameter    float64 `json:"pipeDiameter"`
+	WireDiameter    float64 `json:"wireDiameter"`
+	HeightDiff      float64 `json:"heightDiff"`
 }
 
 func (p *CrossingParams) to_struct() C.crossing_params_t {
@@ -875,14 +875,14 @@ func CreateCrossingWithPlace(params CrossingParams, crossPoint Point3, mainDir, 
 // =========================================================================
 
 type HeadSpanParams struct {
-	Span                float64
-	HangPointCount      int
-	HangPointSpacing    float64
-	CrossCatenaryDiameter float64
-	CrossCatenarySag    float64
-	UpperRopeDiameter   float64
-	LowerRopeDiameter   float64
-	InsulatorLength     float64
+	Span                  float64 `json:"span"`
+	HangPointCount        int     `json:"hangPointCount"`
+	HangPointSpacing      float64 `json:"hangPointSpacing"`
+	CrossCatenaryDiameter float64 `json:"crossCatenaryDiameter"`
+	CrossCatenarySag      float64 `json:"crossCatenarySag"`
+	UpperRopeDiameter     float64 `json:"upperRopeDiameter"`
+	LowerRopeDiameter     float64 `json:"lowerRopeDiameter"`
+	InsulatorLength       float64 `json:"insulatorLength"`
 }
 
 func (p *HeadSpanParams) to_struct() C.head_span_params_t {
@@ -917,13 +917,13 @@ func CreateHeadSpanWithPlace(params HeadSpanParams, leftMast, rightMast Point3, 
 // =========================================================================
 
 type TransverseSpanParams struct {
-	Span          float64
-	BeamType      int
-	BeamHeight    float64
-	BeamWidth     float64
-	BeamThickness float64
-	MastHeight    float64
-	MastWidth     float64
+	Span          float64 `json:"span"`
+	BeamType      int     `json:"beamType"`
+	BeamHeight    float64 `json:"beamHeight"`
+	BeamWidth     float64 `json:"beamWidth"`
+	BeamThickness float64 `json:"beamThickness"`
+	MastHeight    float64 `json:"mastHeight"`
+	MastWidth     float64 `json:"mastWidth"`
 }
 
 func (p *TransverseSpanParams) to_struct() C.transverse_span_params_t {
@@ -949,7 +949,7 @@ func CreateTransverseSpanWithPlace(params TransverseSpanParams, position Point3,
 	shp := C.create_transverse_span_with_place(params.to_struct(), position.val, direction.val, upDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
- 	return s
+	return s
 }
 
 // =========================================================================
@@ -957,16 +957,16 @@ func CreateTransverseSpanWithPlace(params TransverseSpanParams, position Point3,
 // =========================================================================
 
 type HangerPostParams struct {
-	SectionType        int
-	Length             float64
-	SectionSize        float64
-	WallThickness      float64
-	TopFlangeSize      float64
-	TopFlangeThick     float64
-	BottomFlangeSize   float64
-	BottomFlangeThick  float64
-	BoltDiameter       float64
-	BoltSpacing        float64
+	SectionType       int     `json:"sectionType"`
+	Length            float64 `json:"length"`
+	SectionSize       float64 `json:"sectionSize"`
+	WallThickness     float64 `json:"wallThickness"`
+	TopFlangeSize     float64 `json:"topFlangeSize"`
+	TopFlangeThick    float64 `json:"topFlangeThick"`
+	BottomFlangeSize  float64 `json:"bottomFlangeSize"`
+	BottomFlangeThick float64 `json:"bottomFlangeThick"`
+	BoltDiameter      float64 `json:"boltDiameter"`
+	BoltSpacing       float64 `json:"boltSpacing"`
 }
 
 func (p *HangerPostParams) to_struct() C.hanger_post_params_t {
@@ -1003,20 +1003,20 @@ func CreateHangerPostWithPlace(params HangerPostParams, position Point3, directi
 // =========================================================================
 
 type PortalFrameParams struct {
-	FrameHeight      float64
-	FrameWidth       float64
-	PostDiameter     float64
-	PostWallThick    float64
-	BeamDiameter     float64
-	BeamWallThick    float64
-	BeamLength       float64
-	BasePlateLength  float64
-	BasePlateWidth   float64
-	BasePlateThick   float64
-	HangPointCount   int
-	HangPointSpacing float64
-	BoltSpacing      float64
-	BoltDiameter     float64
+	FrameHeight      float64 `json:"frameHeight"`
+	FrameWidth       float64 `json:"frameWidth"`
+	PostDiameter     float64 `json:"postDiameter"`
+	PostWallThick    float64 `json:"postWallThick"`
+	BeamDiameter     float64 `json:"beamDiameter"`
+	BeamWallThick    float64 `json:"beamWallThick"`
+	BeamLength       float64 `json:"beamLength"`
+	BasePlateLength  float64 `json:"basePlateLength"`
+	BasePlateWidth   float64 `json:"basePlateWidth"`
+	BasePlateThick   float64 `json:"basePlateThick"`
+	HangPointCount   int     `json:"hangPointCount"`
+	HangPointSpacing float64 `json:"hangPointSpacing"`
+	BoltSpacing      float64 `json:"boltSpacing"`
+	BoltDiameter     float64 `json:"boltDiameter"`
 }
 
 func (p *PortalFrameParams) to_struct() C.portal_frame_params_t {
@@ -1057,16 +1057,16 @@ func CreatePortalFrameWithPlace(params PortalFrameParams, position Point3, direc
 // =========================================================================
 
 type SuspensionHardSpanParams struct {
-	Span                float64
-	MastHeight          float64
-	MastWidth           float64
-	CableDiameter       float64
-	CableSag            float64
-	DropperCableDiameter float64
-	DropperCount        int
-	DropperSpacing      float64
-	InsulatorLength     float64
-	InsulatorDiameter   float64
+	Span                 float64 `json:"span"`
+	MastHeight           float64 `json:"mastHeight"`
+	MastWidth            float64 `json:"mastWidth"`
+	CableDiameter        float64 `json:"cableDiameter"`
+	CableSag             float64 `json:"cableSag"`
+	DropperCableDiameter float64 `json:"dropperCableDiameter"`
+	DropperCount         int     `json:"dropperCount"`
+	DropperSpacing       float64 `json:"dropperSpacing"`
+	InsulatorLength      float64 `json:"insulatorLength"`
+	InsulatorDiameter    float64 `json:"insulatorDiameter"`
 }
 
 func (p *SuspensionHardSpanParams) to_struct() C.suspension_hard_span_params_t {
@@ -1103,10 +1103,12 @@ func CreateSuspensionHardSpanWithPlace(params SuspensionHardSpanParams, position
 // =========================================================================
 
 type PositioningCableParams struct {
-	Diameter    float64
-	TopPoint    Point3
-	BottomPoint Point3
-	Adjustable  bool
+	Diameter float64 `json:"diameter"`
+	// Deprecated: 几何端点不再内嵌, 请使用 CreatePositioningCableWithPlace 传入 topPoint/bottomPoint
+	TopPoint Point3 `json:"topPoint"`
+	// Deprecated: 几何端点不再内嵌, 请使用 CreatePositioningCableWithPlace 传入 topPoint/bottomPoint
+	BottomPoint Point3 `json:"bottomPoint"`
+	Adjustable  bool   `json:"adjustable"`
 }
 
 func (p *PositioningCableParams) to_struct() C.positioning_cable_params_t {
@@ -1125,18 +1127,24 @@ func CreatePositioningCable(params PositioningCableParams) *Shape {
 	return s
 }
 
+func CreatePositioningCableWithPlace(params PositioningCableParams, topPoint, bottomPoint Point3) *Shape {
+	params.TopPoint = topPoint
+	params.BottomPoint = bottomPoint
+	return CreatePositioningCable(params)
+}
+
 // =========================================================================
 // 23. Auxiliary Bracket (附加导线安装支架)
 // =========================================================================
 
 type AuxBracketParams struct {
-	Type          int
-	MountHeight   float64
-	OverhangLength float64
-	BracketLength float64
-	BracketWidth  float64
-	BoltSpacing   float64
-	BoltDiameter  float64
+	Type           int     `json:"bracketType"`
+	MountHeight    float64 `json:"mountHeight"`
+	OverhangLength float64 `json:"overhangLength"`
+	BracketLength  float64 `json:"bracketLength"`
+	BracketWidth   float64 `json:"bracketWidth"`
+	BoltSpacing    float64 `json:"boltSpacing"`
+	BoltDiameter   float64 `json:"boltDiameter"`
 }
 
 func (p *AuxBracketParams) to_struct() C.aux_bracket_params_t {
@@ -1170,14 +1178,14 @@ func CreateAuxBracketWithPlace(params AuxBracketParams, position Point3, normal,
 // =========================================================================
 
 type RailParams struct {
-	RailHeight    float64
-	HeadWidth     float64
-	BaseWidth     float64
-	WebThickness  float64
-	HeadHeight    float64
-	BaseHeight    float64
-	HeadRadius    float64
-	StandardLength float64
+	RailHeight     float64 `json:"railHeight"`
+	HeadWidth      float64 `json:"headWidth"`
+	BaseWidth      float64 `json:"baseWidth"`
+	WebThickness   float64 `json:"webThickness"`
+	HeadHeight     float64 `json:"headHeight"`
+	BaseHeight     float64 `json:"baseHeight"`
+	HeadRadius     float64 `json:"headRadius"`
+	StandardLength float64 `json:"standardLength"`
 }
 
 func (p *RailParams) to_struct() C.rail_params_t {
@@ -1212,14 +1220,14 @@ func CreateRailWithPlace(params RailParams, startPoint, endPoint Point3) *Shape 
 // =========================================================================
 
 type SleeperParams struct {
-	ShapeType   int
-	Length      float64
-	Width       float64
-	Height      float64
-	Gauge       float64
-	RailBaseWidth float64
-	GrooveDepth float64
-	Spacing     float64
+	ShapeType     int     `json:"shapeType"`
+	Length        float64 `json:"length"`
+	Width         float64 `json:"width"`
+	Height        float64 `json:"height"`
+	Gauge         float64 `json:"gauge"`
+	RailBaseWidth float64 `json:"railBaseWidth"`
+	GrooveDepth   float64 `json:"grooveDepth"`
+	Spacing       float64 `json:"spacing"`
 }
 
 func (p *SleeperParams) to_struct() C.sleeper_params_t {
@@ -1257,7 +1265,9 @@ func CreateSleeperWithPlace(params SleeperParams, position Point3, direction, up
 
 func CreateBallastAlongPath(centerline []Point3, topWidth, thickness, sideSlope float64) *Shape {
 	pts := make([]C.pnt3d_t, len(centerline))
-	for i, p := range centerline { pts[i] = p.val }
+	for i, p := range centerline {
+		pts[i] = p.val
+	}
 	var cp C.ballast_params_t
 	cp.topWidth = C.double(topWidth)
 	cp.thickness = C.double(thickness)
@@ -1274,12 +1284,12 @@ func CreateBallastAlongPath(centerline []Point3, topWidth, thickness, sideSlope 
 // =========================================================================
 
 type TrackSlabParams struct {
-	Length                float64
-	Width                 float64
-	Thickness             float64
-	RailSeatCount         int
-	RailSeatSpacing       float64
-	CementAsphaltThickness float64
+	Length                 float64 `json:"length"`
+	Width                  float64 `json:"width"`
+	Thickness              float64 `json:"thickness"`
+	RailSeatCount          int     `json:"railSeatCount"`
+	RailSeatSpacing        float64 `json:"railSeatSpacing"`
+	CementAsphaltThickness float64 `json:"cementAsphaltThickness"`
 }
 
 func (p *TrackSlabParams) to_struct() C.track_slab_params_t {
@@ -1312,11 +1322,11 @@ func CreateTrackSlabWithPlace(params TrackSlabParams, position Point3, direction
 // =========================================================================
 
 type FastenerParams struct {
-	Spacing      float64
-	Gauge        float64
-	PadThickness float64
-	PadLength    float64
-	PadWidth     float64
+	Spacing      float64 `json:"spacing"`
+	Gauge        float64 `json:"gauge"`
+	PadThickness float64 `json:"padThickness"`
+	PadLength    float64 `json:"padLength"`
+	PadWidth     float64 `json:"padWidth"`
 }
 
 func (p *FastenerParams) to_struct() C.fastener_params_t {
@@ -1348,12 +1358,12 @@ func CreateFastenerWithPlace(params FastenerParams, position Point3, direction, 
 // =========================================================================
 
 type GuardRailParams struct {
-	Height       float64
-	HeadWidth    float64
-	BaseWidth    float64
-	GrooveWidth  float64
-	TotalLength  float64
-	GaugeDistance float64
+	Height        float64 `json:"height"`
+	HeadWidth     float64 `json:"headWidth"`
+	BaseWidth     float64 `json:"baseWidth"`
+	GrooveWidth   float64 `json:"grooveWidth"`
+	TotalLength   float64 `json:"totalLength"`
+	GaugeDistance float64 `json:"gaugeDistance"`
 }
 
 func (p *GuardRailParams) to_struct() C.guard_rail_params_t {
@@ -1386,18 +1396,18 @@ func CreateGuardRailWithPlace(params GuardRailParams, startPoint, endPoint Point
 // =========================================================================
 
 type MastAssemblyParams struct {
-	MastType        int
-	MastHeight      float64
-	CantileverType  int
-	HasCrossArm     bool
-	ArmDiameter     float64
-	Stagger         float64
-	CompType        int
-	RatedTension    float64
-	HasGuyWire      bool
-	ContactHeight   float64 // 导高(mm), 默认 5300
-	StructureHeight float64 // 结构高度(mm), 默认 1400
-	SideOffset      float64 // 侧面限界 CX(mm), 默认 2900
+	MastType        int     `json:"mastType"`
+	MastHeight      float64 `json:"mastHeight"`
+	CantileverType  int     `json:"cantileverType"`
+	HasCrossArm     bool    `json:"hasCrossArm"`
+	ArmDiameter     float64 `json:"armDiameter"`
+	Stagger         float64 `json:"stagger"`
+	CompType        int     `json:"compType"`
+	RatedTension    float64 `json:"ratedTension"`
+	HasGuyWire      bool    `json:"hasGuyWire"`
+	ContactHeight   float64 `json:"contactHeight"`   // 导高(mm), 默认 5300
+	StructureHeight float64 `json:"structureHeight"` // 结构高度(mm), 默认 1400
+	SideOffset      float64 `json:"sideOffset"`      // 侧面限界 CX(mm), 默认 2900
 }
 
 func (p *MastAssemblyParams) to_struct() C.mast_assembly_params_t {
@@ -1422,13 +1432,13 @@ func (p *MastAssemblyParams) to_struct() C.mast_assembly_params_t {
 // =========================================================================
 
 type WeightStackParams struct {
-	BlockCount    int
-	BlockDiameter float64
-	BlockHeight   float64
-	BlockGap      float64
-	RodDiameter   float64
-	RodLength     float64
-	HoleDiameter  float64
+	BlockCount    int     `json:"blockCount"`
+	BlockDiameter float64 `json:"blockDiameter"`
+	BlockHeight   float64 `json:"blockHeight"`
+	BlockGap      float64 `json:"blockGap"`
+	RodDiameter   float64 `json:"rodDiameter"`
+	RodLength     float64 `json:"rodLength"`
+	HoleDiameter  float64 `json:"holeDiameter"`
 }
 
 func (p *WeightStackParams) to_struct() C.weight_stack_params_t {
@@ -1441,13 +1451,27 @@ func (p *WeightStackParams) to_struct() C.weight_stack_params_t {
 }
 
 func (p *WeightStackParams) withDefaults() {
-	if p.BlockCount <= 0 { p.BlockCount = 8 }
-	if p.BlockDiameter <= 0 { p.BlockDiameter = 380 }
-	if p.BlockHeight <= 0 { p.BlockHeight = 75 }
-	if p.BlockGap <= 0 { p.BlockGap = 2 }
-	if p.RodDiameter <= 0 { p.RodDiameter = 20 }
-	if p.RodLength <= 0 { p.RodLength = 1200 }
-	if p.HoleDiameter <= 0 { p.HoleDiameter = 30 }
+	if p.BlockCount <= 0 {
+		p.BlockCount = 8
+	}
+	if p.BlockDiameter <= 0 {
+		p.BlockDiameter = 380
+	}
+	if p.BlockHeight <= 0 {
+		p.BlockHeight = 75
+	}
+	if p.BlockGap <= 0 {
+		p.BlockGap = 2
+	}
+	if p.RodDiameter <= 0 {
+		p.RodDiameter = 20
+	}
+	if p.RodLength <= 0 {
+		p.RodLength = 1200
+	}
+	if p.HoleDiameter <= 0 {
+		p.HoleDiameter = 30
+	}
 }
 
 func CreateWeightStack(params WeightStackParams) *Shape {
@@ -1465,18 +1489,26 @@ func CreateWeightStackAt(params WeightStackParams, topPoint Point3) *Shape {
 }
 
 type RatchetCompensatorParams struct {
-	WheelDiameter float64
-	WheelWidth    float64
-	RopeDiameter  float64
-	StrokeLength  float64
-	Stack         WeightStackParams
+	WheelDiameter float64           `json:"wheelDiameter"`
+	WheelWidth    float64           `json:"wheelWidth"`
+	RopeDiameter  float64           `json:"ropeDiameter"`
+	StrokeLength  float64           `json:"strokeLength"`
+	Stack         WeightStackParams `json:"stack"`
 }
 
 func (p *RatchetCompensatorParams) withDefaults() {
-	if p.WheelDiameter <= 0 { p.WheelDiameter = 400 }
-	if p.WheelWidth <= 0 { p.WheelWidth = 60 }
-	if p.RopeDiameter <= 0 { p.RopeDiameter = 9 }
-	if p.StrokeLength <= 0 { p.StrokeLength = 1200 }
+	if p.WheelDiameter <= 0 {
+		p.WheelDiameter = 400
+	}
+	if p.WheelWidth <= 0 {
+		p.WheelWidth = 60
+	}
+	if p.RopeDiameter <= 0 {
+		p.RopeDiameter = 9
+	}
+	if p.StrokeLength <= 0 {
+		p.StrokeLength = 1200
+	}
 	p.Stack.withDefaults()
 }
 
@@ -1503,9 +1535,9 @@ func CreateRatchetCompensatorAt(params RatchetCompensatorParams, wheelCenter Poi
 }
 
 type AuxiliaryWireParams struct {
-	Diameter      float64
-	Sag           float64
-	RatedTension  float64
+	Diameter     float64 `json:"diameter"`
+	Sag          float64 `json:"sag"`
+	RatedTension float64 `json:"ratedTension"`
 }
 
 func CreateAuxiliaryWire(params AuxiliaryWireParams, startPoint, endPoint Point3) *Shape {
@@ -1523,19 +1555,29 @@ func CreateAuxiliaryWire(params AuxiliaryWireParams, startPoint, endPoint Point3
 // =========================================================================
 
 type DisconnectorParams struct {
-	BaseLength      float64 // 默认 900
-	BaseWidth       float64 // 默认 220
-	InsulatorHeight float64 // 默认 600
-	BladeLength     float64 // 默认 800
-	OpenAngle       float64 // 分闸角度°, 默认 75
+	BaseLength      float64 `json:"baseLength"`      // 默认 900
+	BaseWidth       float64 `json:"baseWidth"`       // 默认 220
+	InsulatorHeight float64 `json:"insulatorHeight"` // 默认 600
+	BladeLength     float64 `json:"bladeLength"`     // 默认 800
+	OpenAngle       float64 `json:"openAngle"`       // 分闸角度°, 默认 75
 }
 
 func (p *DisconnectorParams) withDefaults() {
-	if p.BaseLength <= 0 { p.BaseLength = 900 }
-	if p.BaseWidth <= 0 { p.BaseWidth = 220 }
-	if p.InsulatorHeight <= 0 { p.InsulatorHeight = 600 }
-	if p.BladeLength <= 0 { p.BladeLength = 800 }
-	if p.OpenAngle <= 0 { p.OpenAngle = 75 }
+	if p.BaseLength <= 0 {
+		p.BaseLength = 900
+	}
+	if p.BaseWidth <= 0 {
+		p.BaseWidth = 220
+	}
+	if p.InsulatorHeight <= 0 {
+		p.InsulatorHeight = 600
+	}
+	if p.BladeLength <= 0 {
+		p.BladeLength = 800
+	}
+	if p.OpenAngle <= 0 {
+		p.OpenAngle = 75
+	}
 }
 
 func (p *DisconnectorParams) to_struct() C.disconnector_params_t {
@@ -1561,19 +1603,29 @@ func CreateDisconnectorWithPlace(params DisconnectorParams, position Point3, dir
 }
 
 type ArresterParams struct {
-	Height        float64 // 默认 800
-	OuterDiameter float64 // 默认 120
-	ShedDiameter  float64 // 默认 160
-	ShedSpacing   float64 // 默认 60
-	ShedCount     int     // 默认 8
+	Height        float64 `json:"height"`        // 默认 800
+	OuterDiameter float64 `json:"outerDiameter"` // 默认 120
+	ShedDiameter  float64 `json:"shedDiameter"`  // 默认 160
+	ShedSpacing   float64 `json:"shedSpacing"`   // 默认 60
+	ShedCount     int     `json:"shedCount"`     // 默认 8
 }
 
 func (p *ArresterParams) withDefaults() {
-	if p.Height <= 0 { p.Height = 800 }
-	if p.OuterDiameter <= 0 { p.OuterDiameter = 120 }
-	if p.ShedDiameter <= 0 { p.ShedDiameter = 160 }
-	if p.ShedSpacing <= 0 { p.ShedSpacing = 60 }
-	if p.ShedCount <= 0 { p.ShedCount = 8 }
+	if p.Height <= 0 {
+		p.Height = 800
+	}
+	if p.OuterDiameter <= 0 {
+		p.OuterDiameter = 120
+	}
+	if p.ShedDiameter <= 0 {
+		p.ShedDiameter = 160
+	}
+	if p.ShedSpacing <= 0 {
+		p.ShedSpacing = 60
+	}
+	if p.ShedCount <= 0 {
+		p.ShedCount = 8
+	}
 }
 
 func (p *ArresterParams) to_struct() C.arrester_params_t {
@@ -1603,21 +1655,31 @@ func CreateArresterWithPlace(params ArresterParams, position Point3, axisDir Dir
 // =========================================================================
 
 type PulleyCompensatorParams struct {
-	PulleyDiameter float64 // 默认 250
-	GrooveWidth    float64 // 默认 14
-	PulleyCount    int     // 默认 2
-	RopeDiameter   float64 // 默认 9
-	StrokeLength   float64 // 默认 1000
-	Stack          WeightStackParams
-	HasLimitFrame  bool
+	PulleyDiameter float64           `json:"pulleyDiameter"` // 默认 250
+	GrooveWidth    float64           `json:"grooveWidth"`    // 默认 14
+	PulleyCount    int               `json:"pulleyCount"`    // 默认 2
+	RopeDiameter   float64           `json:"ropeDiameter"`   // 默认 9
+	StrokeLength   float64           `json:"strokeLength"`   // 默认 1000
+	Stack          WeightStackParams `json:"stack"`
+	HasLimitFrame  bool              `json:"hasLimitFrame"`
 }
 
 func (p *PulleyCompensatorParams) withDefaults() {
-	if p.PulleyDiameter <= 0 { p.PulleyDiameter = 250 }
-	if p.GrooveWidth <= 0 { p.GrooveWidth = 14 }
-	if p.PulleyCount <= 0 { p.PulleyCount = 2 }
-	if p.RopeDiameter <= 0 { p.RopeDiameter = 9 }
-	if p.StrokeLength <= 0 { p.StrokeLength = 1000 }
+	if p.PulleyDiameter <= 0 {
+		p.PulleyDiameter = 250
+	}
+	if p.GrooveWidth <= 0 {
+		p.GrooveWidth = 14
+	}
+	if p.PulleyCount <= 0 {
+		p.PulleyCount = 2
+	}
+	if p.RopeDiameter <= 0 {
+		p.RopeDiameter = 9
+	}
+	if p.StrokeLength <= 0 {
+		p.StrokeLength = 1000
+	}
 	p.Stack.withDefaults()
 }
 
@@ -1649,19 +1711,29 @@ func CreatePulleyCompensatorAt(params PulleyCompensatorParams, pulleyCenter Poin
 // =========================================================================
 
 type SleeveConnectorParams struct {
-	TubeDiameter  float64 // 默认 60
-	SleeveLength  float64 // 默认 120
-	WallThickness float64 // 默认 5
-	Angle         float64 // 两套筒夹角°, 默认 45
-	BoltDiameter  float64 // 默认 12
+	TubeDiameter  float64 `json:"tubeDiameter"`  // 默认 60
+	SleeveLength  float64 `json:"sleeveLength"`  // 默认 120
+	WallThickness float64 `json:"wallThickness"` // 默认 5
+	Angle         float64 `json:"angle"`         // 两套筒夹角°, 默认 45
+	BoltDiameter  float64 `json:"boltDiameter"`  // 默认 12
 }
 
 func CreateSleeveConnector(params SleeveConnectorParams) *Shape {
-	if params.TubeDiameter <= 0 { params.TubeDiameter = 60 }
-	if params.SleeveLength <= 0 { params.SleeveLength = 120 }
-	if params.WallThickness <= 0 { params.WallThickness = 5 }
-	if params.Angle <= 0 { params.Angle = 45 }
-	if params.BoltDiameter <= 0 { params.BoltDiameter = 12 }
+	if params.TubeDiameter <= 0 {
+		params.TubeDiameter = 60
+	}
+	if params.SleeveLength <= 0 {
+		params.SleeveLength = 120
+	}
+	if params.WallThickness <= 0 {
+		params.WallThickness = 5
+	}
+	if params.Angle <= 0 {
+		params.Angle = 45
+	}
+	if params.BoltDiameter <= 0 {
+		params.BoltDiameter = 12
+	}
 	c := C.sleeve_connector_params_t{
 		tubeDiameter: C.double(params.TubeDiameter), sleeveLength: C.double(params.SleeveLength),
 		wallThickness: C.double(params.WallThickness), angle: C.double(params.Angle),
@@ -1673,21 +1745,33 @@ func CreateSleeveConnector(params SleeveConnectorParams) *Shape {
 }
 
 type SleeveEarParams struct {
-	TubeDiameter  float64 // 默认 60
-	SleeveLength  float64 // 默认 100
-	WallThickness float64 // 默认 5
-	EarHeight     float64 // 默认 60
-	EarThickness  float64 // 默认 8
-	HoleDiameter  float64 // 默认 16
+	TubeDiameter  float64 `json:"tubeDiameter"`  // 默认 60
+	SleeveLength  float64 `json:"sleeveLength"`  // 默认 100
+	WallThickness float64 `json:"wallThickness"` // 默认 5
+	EarHeight     float64 `json:"earHeight"`     // 默认 60
+	EarThickness  float64 `json:"earThickness"`  // 默认 8
+	HoleDiameter  float64 `json:"holeDiameter"`  // 默认 16
 }
 
 func CreateSleeveEar(params SleeveEarParams) *Shape {
-	if params.TubeDiameter <= 0 { params.TubeDiameter = 60 }
-	if params.SleeveLength <= 0 { params.SleeveLength = 100 }
-	if params.WallThickness <= 0 { params.WallThickness = 5 }
-	if params.EarHeight <= 0 { params.EarHeight = 60 }
-	if params.EarThickness <= 0 { params.EarThickness = 8 }
-	if params.HoleDiameter <= 0 { params.HoleDiameter = 16 }
+	if params.TubeDiameter <= 0 {
+		params.TubeDiameter = 60
+	}
+	if params.SleeveLength <= 0 {
+		params.SleeveLength = 100
+	}
+	if params.WallThickness <= 0 {
+		params.WallThickness = 5
+	}
+	if params.EarHeight <= 0 {
+		params.EarHeight = 60
+	}
+	if params.EarThickness <= 0 {
+		params.EarThickness = 8
+	}
+	if params.HoleDiameter <= 0 {
+		params.HoleDiameter = 16
+	}
 	c := C.sleeve_ear_params_t{
 		tubeDiameter: C.double(params.TubeDiameter), sleeveLength: C.double(params.SleeveLength),
 		wallThickness: C.double(params.WallThickness), earHeight: C.double(params.EarHeight),
@@ -1717,13 +1801,13 @@ func CreateMastAssemblyWithPlace(params MastAssemblyParams, position Point3, dir
 // =========================================================================
 
 type SwitchRailParams struct {
-	Length        float64
-	RailHeight    float64
-	RailHeadWidth float64
-	RailBaseWidth float64
-	TipWidth      float64
-	CurveRadius   float64
-	IsLeftHand    bool
+	Length        float64 `json:"length"`
+	RailHeight    float64 `json:"railHeight"`
+	RailHeadWidth float64 `json:"railHeadWidth"`
+	RailBaseWidth float64 `json:"railBaseWidth"`
+	TipWidth      float64 `json:"tipWidth"`
+	CurveRadius   float64 `json:"curveRadius"`
+	IsLeftHand    bool    `json:"isLeftHand"`
 }
 
 func (p *SwitchRailParams) to_struct() C.switch_rail_params_t {
@@ -1757,11 +1841,11 @@ func CreateSwitchRailWithPlace(params SwitchRailParams, position Point3, directi
 // =========================================================================
 
 type FrogParams struct {
-	TurnoutNo     int
-	Gauge         float64
-	RailHeight    float64
-	RailHeadWidth float64
-	RailBaseWidth float64
+	TurnoutNo     int     `json:"turnoutNo"`
+	Gauge         float64 `json:"gauge"`
+	RailHeight    float64 `json:"railHeight"`
+	RailHeadWidth float64 `json:"railHeadWidth"`
+	RailBaseWidth float64 `json:"railBaseWidth"`
 }
 
 func (p *FrogParams) to_struct() C.frog_params_t {
@@ -1793,17 +1877,17 @@ func CreateFrogWithPlace(params FrogParams, position Point3, direction, upDir Di
 // =========================================================================
 
 type TurnoutParams struct {
-	TurnoutNo        int
-	IsLeftHand       bool
-	Gauge            float64
-	RailHeight       float64
-	RailHeadWidth    float64
-	RailBaseWidth    float64
-	SwitchRailLength float64
-	LeadCurveRadius  float64
-	FrogLength       float64
-	SleeperCount     int
-	SleeperSpacing   float64
+	TurnoutNo        int     `json:"turnoutNo"`
+	IsLeftHand       bool    `json:"isLeftHand"`
+	Gauge            float64 `json:"gauge"`
+	RailHeight       float64 `json:"railHeight"`
+	RailHeadWidth    float64 `json:"railHeadWidth"`
+	RailBaseWidth    float64 `json:"railBaseWidth"`
+	SwitchRailLength float64 `json:"switchRailLength"`
+	LeadCurveRadius  float64 `json:"leadCurveRadius"`
+	FrogLength       float64 `json:"frogLength"`
+	SleeperCount     int     `json:"sleeperCount"`
+	SleeperSpacing   float64 `json:"sleeperSpacing"`
 }
 
 func (p *TurnoutParams) to_struct() C.turnout_params_t {
@@ -1852,26 +1936,26 @@ const (
 
 // 轨道区段描述
 type TrackSegment struct {
-	SegType      TrackSegmentType
-	Points       []Point3  // 本段坐标序列
-	Length       float64   // 弧长(mm)
-	CurveRadius  float64   // 曲线半径(mm), 直线=0
-	SuperElevation float64 // 超高(mm)
-	StartMileage float64   // 起始里程(m)
+	SegType        TrackSegmentType `json:"segType"`
+	Points         []Point3         `json:"points"`         // 本段坐标序列
+	Length         float64          `json:"length"`         // 弧长(mm)
+	CurveRadius    float64          `json:"curveRadius"`    // 曲线半径(mm), 直线=0
+	SuperElevation float64          `json:"superElevation"` // 超高(mm)
+	StartMileage   float64          `json:"startMileage"`   // 起始里程(m)
 }
 
 // 道岔段参数 — 从中心线分岔点 + GeoJSON 属性推算
 type TurnoutSegment struct {
-	Position        Point3  // 岔心位置 (理论中心)
-	MainDirection   Dir3    // 直股方向
-	BranchDirection Dir3    // 侧股方向
-	Hand            string  // "left" / "right"
-	TurnoutNo       int     // 道岔号数
-	FrogAngle       float64 // 辙叉角(rad)
-	FrogLength      float64 // 辙叉长度
-	SwitchRailLen   float64 // 尖轨长度
-	LeadCurveRadius float64 // 导曲线半径
-	TotalLength     float64 // 道岔全长
+	Position        Point3  `json:"position"`        // 岔心位置 (理论中心)
+	MainDirection   Dir3    `json:"mainDirection"`   // 直股方向
+	BranchDirection Dir3    `json:"branchDirection"` // 侧股方向
+	Hand            string  `json:"hand"`            // "left" / "right"
+	TurnoutNo       int     `json:"turnoutNo"`       // 道岔号数
+	FrogAngle       float64 `json:"frogAngle"`       // 辙叉角(rad)
+	FrogLength      float64 `json:"frogLength"`      // 辙叉长度
+	SwitchRailLen   float64 `json:"switchRailLen"`   // 尖轨长度
+	LeadCurveRadius float64 `json:"leadCurveRadius"` // 导曲线半径
+	TotalLength     float64 `json:"totalLength"`     // 道岔全长
 }
 
 // DetectTrackSegments 从中心线点序列识别曲线段类型: 直线/圆曲线/缓和曲线/道岔
@@ -1883,17 +1967,20 @@ func DetectTrackSegments(centerline []Point3) []TrackSegment {
 
 	// 对每个内部点拟合三点圆, 计算曲率和圆心
 	type curveInfo struct {
-		radius   float64 // 曲率半径, 1e8=近视直线
-		centerX  float64
-		centerY  float64
+		radius    float64 // 曲率半径, 1e8=近视直线
+		centerX   float64
+		centerY   float64
 		curvature float64 // 1/radius
 	}
 	infos := make([]curveInfo, len(centerline))
 
 	for i := 1; i < len(centerline)-1; i++ {
-		x1 := float64(centerline[i-1].val.x); y1 := float64(centerline[i-1].val.y)
-		x2 := float64(centerline[i].val.x); y2 := float64(centerline[i].val.y)
-		x3 := float64(centerline[i+1].val.x); y3 := float64(centerline[i+1].val.y)
+		x1 := float64(centerline[i-1].val.x)
+		y1 := float64(centerline[i-1].val.y)
+		x2 := float64(centerline[i].val.x)
+		y2 := float64(centerline[i].val.y)
+		x3 := float64(centerline[i+1].val.x)
+		y3 := float64(centerline[i+1].val.y)
 
 		// 三点共线判定
 		cross := (x2-x1)*(y3-y1) - (y2-y1)*(x3-x1)
@@ -1922,8 +2009,8 @@ func DetectTrackSegments(centerline []Point3) []TrackSegment {
 	infos[len(infos)-1] = infos[len(infos)-2]
 
 	// 曲率分类阈值
-	const kStraight = 0.000005  // 曲率<此值→直线 (r>200km)
-	const kMergeTol = 0.000001  // 相邻点曲率差<此值→同类
+	const kStraight = 0.000005 // 曲率<此值→直线 (r>200km)
+	const kMergeTol = 0.000001 // 相邻点曲率差<此值→同类
 
 	// 区分段类型: 0=直线, 1=圆曲线, 2=缓和曲线
 	types := make([]int, len(infos))
@@ -1952,7 +2039,9 @@ func DetectTrackSegments(centerline []Point3) []TrackSegment {
 	mileage := 0.0
 
 	addSegment := func(s, e int, t int) {
-		if e <= s { return }
+		if e <= s {
+			return
+		}
 		pts := make([]Point3, e-s+2)
 		copy(pts, centerline[s:min(e+2, len(centerline))])
 		l := 0.0
@@ -1962,14 +2051,18 @@ func DetectTrackSegments(centerline []Point3) []TrackSegment {
 			l += math.Sqrt(dx*dx + dy*dy)
 		}
 		segType := SegmentStraight
-		if t == 1 { segType = SegmentCurve }
-		if t == 2 { segType = SegmentTransition }
+		if t == 1 {
+			segType = SegmentCurve
+		}
+		if t == 2 {
+			segType = SegmentTransition
+		}
 		mid := (s + e) / 2
 		seg := TrackSegment{
-			SegType:     segType,
-			Points:      pts,
-			Length:      l,
-			CurveRadius: infos[mid].radius,
+			SegType:      segType,
+			Points:       pts,
+			Length:       l,
+			CurveRadius:  infos[mid].radius,
 			StartMileage: mileage / 1000,
 		}
 		// 曲线段补充圆心方向
@@ -2001,11 +2094,11 @@ func CalcTurnoutSegment(
 	gauge float64,
 ) TurnoutSegment {
 	t := TurnoutSegment{
-		Position:      crossPoint,
-		MainDirection: mainDir,
+		Position:        crossPoint,
+		MainDirection:   mainDir,
 		BranchDirection: branchDir,
-		Hand:          hand,
-		TurnoutNo:     turnoutNo,
+		Hand:            hand,
+		TurnoutNo:       turnoutNo,
 	}
 
 	// 辙叉角 α = arctan(1/N)
@@ -2014,17 +2107,29 @@ func CalcTurnoutSegment(
 	// 参数查表
 	switch turnoutNo {
 	case 9:
-		t.LeadCurveRadius = 180000; t.SwitchRailLen = 6450; t.TotalLength = 29569
+		t.LeadCurveRadius = 180000
+		t.SwitchRailLen = 6450
+		t.TotalLength = 29569
 	case 12:
-		t.LeadCurveRadius = 350000; t.SwitchRailLen = 7700; t.TotalLength = 37800
+		t.LeadCurveRadius = 350000
+		t.SwitchRailLen = 7700
+		t.TotalLength = 37800
 	case 18:
-		t.LeadCurveRadius = 800000; t.SwitchRailLen = 12500; t.TotalLength = 56700
+		t.LeadCurveRadius = 800000
+		t.SwitchRailLen = 12500
+		t.TotalLength = 56700
 	case 30:
-		t.LeadCurveRadius = 2700000; t.SwitchRailLen = 15400; t.TotalLength = 94500
+		t.LeadCurveRadius = 2700000
+		t.SwitchRailLen = 15400
+		t.TotalLength = 94500
 	case 42:
-		t.LeadCurveRadius = 5000000; t.SwitchRailLen = 19200; t.TotalLength = 132300
+		t.LeadCurveRadius = 5000000
+		t.SwitchRailLen = 19200
+		t.TotalLength = 132300
 	default:
-		t.LeadCurveRadius = 350000; t.SwitchRailLen = 7700; t.TotalLength = 37800
+		t.LeadCurveRadius = 350000
+		t.SwitchRailLen = 7700
+		t.TotalLength = 37800
 	}
 
 	// 辙叉长度= 轨距 × 号数 / 2
@@ -2037,49 +2142,67 @@ func CalcTurnoutSegment(
 func CalcFrogTable(turnoutNo int, gauge float64) (frogAngleRad, frogLength, leadCurveR, switchLen, totalLen float64) {
 	frogAngleRad = math.Atan(1.0 / float64(turnoutNo))
 	switch turnoutNo {
-	case 9: leadCurveR = 180000; switchLen = 6450; totalLen = 29569
-	case 12: leadCurveR = 350000; switchLen = 7700; totalLen = 37800
-	case 18: leadCurveR = 800000; switchLen = 12500; totalLen = 56700
-	case 30: leadCurveR = 2700000; switchLen = 15400; totalLen = 94500
-	case 42: leadCurveR = 5000000; switchLen = 19200; totalLen = 132300
-	default: leadCurveR = 350000; switchLen = 7700; totalLen = 37800
+	case 9:
+		leadCurveR = 180000
+		switchLen = 6450
+		totalLen = 29569
+	case 12:
+		leadCurveR = 350000
+		switchLen = 7700
+		totalLen = 37800
+	case 18:
+		leadCurveR = 800000
+		switchLen = 12500
+		totalLen = 56700
+	case 30:
+		leadCurveR = 2700000
+		switchLen = 15400
+		totalLen = 94500
+	case 42:
+		leadCurveR = 5000000
+		switchLen = 19200
+		totalLen = 132300
+	default:
+		leadCurveR = 350000
+		switchLen = 7700
+		totalLen = 37800
 	}
 	frogLength = gauge * float64(turnoutNo) * 0.28
 	return
 }
 
 type OcsMastPosition struct {
-	Mileage           float64 // 里程(m)
-	Position          Point3  // 柱底中心
-	MastHeight        float64 // 柱高(mm)
-	BeamBottomZ       float64 // 横梁底部 Z
-	ContactWireZ      float64 // 接触线 Z
-	MessengerWireZ    float64 // 承力索 Z
-	Stagger           float64 // 拉出值(mm)
-	HangerPostLength  float64 // 吊柱长度
-	BracketMountZ     float64 // 腕臂底座 Z
-	InsulatorMountZ   float64 // 绝缘子 Z
-	RegistrationArmZ  float64 // 定位器 Z
-	IsTensionMast     bool   // 是否锚柱
+	Mileage          float64 `json:"mileage"`          // 里程(m)
+	Position         Point3  `json:"position"`         // 柱底中心
+	MastHeight       float64 `json:"mastHeight"`       // 柱高(mm)
+	BeamBottomZ      float64 `json:"beamBottomZ"`      // 横梁底部 Z
+	ContactWireZ     float64 `json:"contactWireZ"`     // 接触线 Z
+	MessengerWireZ   float64 `json:"messengerWireZ"`   // 承力索 Z
+	Stagger          float64 `json:"stagger"`          // 拉出值(mm)
+	HangerPostLength float64 `json:"hangerPostLength"` // 吊柱长度
+	BracketMountZ    float64 `json:"bracketMountZ"`    // 腕臂底座 Z
+	InsulatorMountZ  float64 `json:"insulatorMountZ"`  // 绝缘子 Z
+	RegistrationArmZ float64 `json:"registrationArmZ"` // 定位器 Z
+	IsTensionMast    bool    `json:"isTensionMast"`    // 是否锚柱
 }
 
 type OcsSpanInput struct {
-	Centerline      []Point3 // 线路中心线
-	ContactHeight   float64  // 导高 默认 5300
-	StructureHeight float64  // 结构高度 默认 1400
-	StaggerTable    []float64 // 拉出值
-	SpanLength      float64  // 标准跨距 默认 50000
-	MastHeight      float64  // 支柱高度
-	HasCompensator  bool     // 两端设补偿
+	Centerline      []Point3  `json:"centerline"`      // 线路中心线
+	ContactHeight   float64   `json:"contactHeight"`   // 导高 默认 5300
+	StructureHeight float64   `json:"structureHeight"` // 结构高度 默认 1400
+	StaggerTable    []float64 `json:"staggerTable"`    // 拉出值
+	SpanLength      float64   `json:"spanLength"`      // 标准跨距 默认 50000
+	MastHeight      float64   `json:"mastHeight"`      // 支柱高度
+	HasCompensator  bool      `json:"hasCompensator"`  // 两端设补偿
 }
 
 type OcsSpanOutput struct {
-	Masts          []OcsMastPosition
-	TotalLength    float64
-	MastCount      int
-	BeamBottomZ    float64
-	ContactWireZ   float64
-	MessengerWireZ float64
+	Masts          []OcsMastPosition `json:"masts"`
+	TotalLength    float64           `json:"totalLength"`
+	MastCount      int               `json:"mastCount"`
+	BeamBottomZ    float64           `json:"beamBottomZ"`
+	ContactWireZ   float64           `json:"contactWireZ"`
+	MessengerWireZ float64           `json:"messengerWireZ"`
 }
 
 func CalcOcsSpanPositions(input OcsSpanInput) OcsSpanOutput {
@@ -2089,13 +2212,21 @@ func CalcOcsSpanPositions(input OcsSpanInput) OcsSpanOutput {
 	}
 
 	CH := input.ContactHeight
-	if CH <= 0 { CH = 5300 }
+	if CH <= 0 {
+		CH = 5300
+	}
 	SH := input.StructureHeight
-	if SH <= 0 { SH = 1400 }
+	if SH <= 0 {
+		SH = 1400
+	}
 	MH := input.MastHeight
-	if MH <= 0 { MH = 8000 }
+	if MH <= 0 {
+		MH = 8000
+	}
 	spanLen := input.SpanLength
-	if spanLen <= 0 { spanLen = 50000 }
+	if spanLen <= 0 {
+		spanLen = 50000
+	}
 
 	beamBottomZ := CH + SH
 	systemMargin := 800.0
@@ -2118,7 +2249,9 @@ func CalcOcsSpanPositions(input OcsSpanInput) OcsSpanOutput {
 	}
 	out.TotalLength = totalLen
 	out.MastCount = int(totalLen/spanLen) + 1
-	if out.MastCount < 2 { out.MastCount = 2 }
+	if out.MastCount < 2 {
+		out.MastCount = 2
+	}
 
 	mastSpacing := totalLen / float64(out.MastCount-1)
 
@@ -2133,8 +2266,15 @@ func CalcOcsSpanPositions(input OcsSpanInput) OcsSpanOutput {
 			segLen := math.Sqrt(dx*dx + dy*dy + dz*dz)
 			if acc+segLen >= dist || j == len(input.Centerline)-2 {
 				t := 0.0
-				if segLen > 0 { t = (dist - acc) / segLen }
-				if t < 0 { t = 0 }; if t > 1 { t = 1 }
+				if segLen > 0 {
+					t = (dist - acc) / segLen
+				}
+				if t < 0 {
+					t = 0
+				}
+				if t > 1 {
+					t = 1
+				}
 				px := float64(input.Centerline[j].val.x) + dx*t
 				py := float64(input.Centerline[j].val.y) + dy*t
 				pz := float64(input.Centerline[j].val.z) + dz*t
@@ -2144,21 +2284,23 @@ func CalcOcsSpanPositions(input OcsSpanInput) OcsSpanOutput {
 			acc += segLen
 		}
 		stagger := 0.0
-		if m < len(input.StaggerTable) { stagger = input.StaggerTable[m] }
+		if m < len(input.StaggerTable) {
+			stagger = input.StaggerTable[m]
+		}
 
 		mp := OcsMastPosition{
-			Mileage:         dist / 1000,
-			Position:        pos,
-			MastHeight:      MH,
-			BeamBottomZ:     beamBottomZ,
-			ContactWireZ:    CH,
-			MessengerWireZ:  CH + SH,
-			Stagger:         stagger,
+			Mileage:          dist / 1000,
+			Position:         pos,
+			MastHeight:       MH,
+			BeamBottomZ:      beamBottomZ,
+			ContactWireZ:     CH,
+			MessengerWireZ:   CH + SH,
+			Stagger:          stagger,
 			HangerPostLength: MH - beamBottomZ - float64(systemMargin)*0.5,
-			BracketMountZ:   beamBottomZ - 100,
-			InsulatorMountZ: beamBottomZ - 600,
+			BracketMountZ:    beamBottomZ - 100,
+			InsulatorMountZ:  beamBottomZ - 600,
 			RegistrationArmZ: CH,
-			IsTensionMast:   input.HasCompensator && (m == 0 || m == out.MastCount-1),
+			IsTensionMast:    input.HasCompensator && (m == 0 || m == out.MastCount-1),
 		}
 		out.Masts = append(out.Masts, mp)
 	}
@@ -2170,19 +2312,21 @@ func CalcOcsSpanPositions(input OcsSpanInput) OcsSpanOutput {
 // =========================================================================
 
 type StraightTrackParams struct {
-	StartPoint       Point3
-	EndPoint         Point3
-	Gauge            float64
-	RailHeight       float64
-	RailHeadWidth    float64
-	RailBaseWidth    float64
-	SleeperLength    float64
-	SleeperWidth     float64
-	SleeperHeight    float64
-	SleeperSpacing   float64
-	BallastTopWidth  float64
-	BallastThickness float64
-	BallastSlope     float64
+	// Deprecated: 几何端点不再内嵌, 请使用 CreateStraightTrackWithPlace 传入 startPoint/endPoint
+	StartPoint Point3 `json:"startPoint"`
+	// Deprecated: 几何端点不再内嵌, 请使用 CreateStraightTrackWithPlace 传入 startPoint/endPoint
+	EndPoint         Point3  `json:"endPoint"`
+	Gauge            float64 `json:"gauge"`
+	RailHeight       float64 `json:"railHeight"`
+	RailHeadWidth    float64 `json:"railHeadWidth"`
+	RailBaseWidth    float64 `json:"railBaseWidth"`
+	SleeperLength    float64 `json:"sleeperLength"`
+	SleeperWidth     float64 `json:"sleeperWidth"`
+	SleeperHeight    float64 `json:"sleeperHeight"`
+	SleeperSpacing   float64 `json:"sleeperSpacing"`
+	BallastTopWidth  float64 `json:"ballastTopWidth"`
+	BallastThickness float64 `json:"ballastThickness"`
+	BallastSlope     float64 `json:"ballastSlope"`
 }
 
 func CreateStraightTrack(params StraightTrackParams) *Shape {
@@ -2205,27 +2349,34 @@ func CreateStraightTrack(params StraightTrackParams) *Shape {
 	return s
 }
 
+func CreateStraightTrackWithPlace(params StraightTrackParams, startPoint, endPoint Point3) *Shape {
+	params.StartPoint = startPoint
+	params.EndPoint = endPoint
+	return CreateStraightTrack(params)
+}
+
 // =========================================================================
 // 38. Curve Track (曲线轨道段)
 // =========================================================================
 
 type CurveTrackParams struct {
-	CurveCenter      Point3
-	StartAngle       float64
-	SweepAngle       float64
-	CurveRadius      float64
-	Gauge            float64
-	SuperElevation   float64
-	RailHeight       float64
-	RailHeadWidth    float64
-	RailBaseWidth    float64
-	SleeperLength    float64
-	SleeperWidth     float64
-	SleeperHeight    float64
-	SleeperSpacing   float64
-	BallastTopWidth  float64
-	BallastThickness float64
-	BallastSlope     float64
+	// Deprecated: 几何圆心不再内嵌, 请使用 CreateCurveTrackWithPlace 传入 curveCenter
+	CurveCenter      Point3  `json:"curveCenter"`
+	StartAngle       float64 `json:"startAngle"`
+	SweepAngle       float64 `json:"sweepAngle"`
+	CurveRadius      float64 `json:"curveRadius"`
+	Gauge            float64 `json:"gauge"`
+	SuperElevation   float64 `json:"superElevation"`
+	RailHeight       float64 `json:"railHeight"`
+	RailHeadWidth    float64 `json:"railHeadWidth"`
+	RailBaseWidth    float64 `json:"railBaseWidth"`
+	SleeperLength    float64 `json:"sleeperLength"`
+	SleeperWidth     float64 `json:"sleeperWidth"`
+	SleeperHeight    float64 `json:"sleeperHeight"`
+	SleeperSpacing   float64 `json:"sleeperSpacing"`
+	BallastTopWidth  float64 `json:"ballastTopWidth"`
+	BallastThickness float64 `json:"ballastThickness"`
+	BallastSlope     float64 `json:"ballastSlope"`
 }
 
 func CreateCurveTrack(params CurveTrackParams) *Shape {
@@ -2251,13 +2402,20 @@ func CreateCurveTrack(params CurveTrackParams) *Shape {
 	return s
 }
 
+func CreateCurveTrackWithPlace(params CurveTrackParams, curveCenter Point3) *Shape {
+	params.CurveCenter = curveCenter
+	return CreateCurveTrack(params)
+}
+
 // =========================================================================
 // 35. Rail Pair (轨排对)
 // =========================================================================
 
 func CreateRailPairFromPoints(centerline []Point3, gauge, superElevation, railHeight, railHeadWidth, railBaseWidth float64) *Shape {
 	pts := make([]C.pnt3d_t, len(centerline))
-	for i, p := range centerline { pts[i] = p.val }
+	for i, p := range centerline {
+		pts[i] = p.val
+	}
 	var cParams C.rail_pair_params_t
 	cParams.centerline = &pts[0]
 	cParams.pointCount = C.int(len(pts))
@@ -2277,7 +2435,9 @@ func CreateRailPairFromPoints(centerline []Point3, gauge, superElevation, railHe
 
 func CreateSleeperLayout(centerline []Point3, length, width, height, spacing, gauge float64) *Shape {
 	pts := make([]C.pnt3d_t, len(centerline))
-	for i, p := range centerline { pts[i] = p.val }
+	for i, p := range centerline {
+		pts[i] = p.val
+	}
 	var cParams C.sleeper_layout_params_t
 	cParams.centerline = &pts[0]
 	cParams.pointCount = C.int(len(pts))
@@ -2296,19 +2456,19 @@ func CreateSleeperLayout(centerline []Point3, length, width, height, spacing, ga
 // =========================================================================
 
 type RetarderPointParams struct {
-	Side             int
-	DeviceType       int
-	MountType        int
-	Height           float64
-	BodyDiameter     float64
-	CapDiameter      float64
-	CapHeight        float64
-	TransitionHeight float64
-	ArmLength        float64
-	ArmWidth         float64
-	ArmThickness     float64
-	BoltDiameter     float64
-	PortDiameter     float64
+	Side             int     `json:"side"`
+	DeviceType       int     `json:"deviceType"`
+	MountType        int     `json:"mountType"`
+	Height           float64 `json:"height"`
+	BodyDiameter     float64 `json:"bodyDiameter"`
+	CapDiameter      float64 `json:"capDiameter"`
+	CapHeight        float64 `json:"capHeight"`
+	TransitionHeight float64 `json:"transitionHeight"`
+	ArmLength        float64 `json:"armLength"`
+	ArmWidth         float64 `json:"armWidth"`
+	ArmThickness     float64 `json:"armThickness"`
+	BoltDiameter     float64 `json:"boltDiameter"`
+	PortDiameter     float64 `json:"portDiameter"`
 }
 
 func (p *RetarderPointParams) to_struct() C.retarder_point_params_t {
@@ -2342,4 +2502,3 @@ func CreateRetarderPointWithPlace(params RetarderPointParams, position Point3, d
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
-
