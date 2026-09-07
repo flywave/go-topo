@@ -172,11 +172,13 @@ func (s *CompSolid) Copy() *CompSolid {
 }
 
 func (s *CompSolid) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
+	defer runtime.KeepAlive(m)
 	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(false))
 }
 
 func (s *CompSolid) MeshWithTexture(m *MeshReceiver, tolerance, deflection, angle float64) {
 	m.hasTexCoords = true
+	defer runtime.KeepAlive(m)
 	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(true))
 }
 
@@ -233,7 +235,7 @@ func (s *CompSolid) GetSurfaceColour() Color {
 }
 
 func (s *CompSolid) GetCurveColour() Color {
-	return Color{val: C.topo_shape_get_surface_colour(s.inner.val.shp)}
+	return Color{val: C.topo_shape_get_curve_colour(s.inner.val.shp)}
 }
 
 func (s *CompSolid) GetLabel() string {
@@ -475,6 +477,9 @@ func (s *CompSolid) Boolean(tool *Solid, op int) int {
 }
 
 func (s *CompSolid) Fillet(edges []Edge, radius []float64) int {
+	if len(edges) == 0 || len(radius) == 0 {
+		return 0
+	}
 	cshp := C.malloc(C.size_t(len(edges)) * C.size_t(unsafe.Sizeof(C.struct__topo_edge_t{})))
 	defer C.free(cshp)
 	cshpSlice := (*[1<<30 - 1]C.struct__topo_edge_t)(cshp)[:len(edges):len(edges)]
@@ -485,6 +490,9 @@ func (s *CompSolid) Fillet(edges []Edge, radius []float64) int {
 }
 
 func (s *CompSolid) Chamfer(edges []Edge, distances []float64) int {
+	if len(edges) == 0 || len(distances) == 0 {
+		return 0
+	}
 	cshp := C.malloc(C.size_t(len(edges)) * C.size_t(unsafe.Sizeof(C.struct__topo_edge_t{})))
 	defer C.free(cshp)
 	cshpSlice := (*[1<<30 - 1]C.struct__topo_edge_t)(cshp)[:len(edges):len(edges)]

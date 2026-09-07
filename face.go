@@ -192,11 +192,13 @@ func (s *Face) Copy() *Face {
 }
 
 func (s *Face) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
+	defer runtime.KeepAlive(m)
 	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(false))
 }
 
 func (s *Face) MeshWithTexture(m *MeshReceiver, tolerance, deflection, angle float64) {
 	m.hasTexCoords = true
+	defer runtime.KeepAlive(m)
 	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(true))
 }
 
@@ -253,7 +255,7 @@ func (s *Face) GetSurfaceColour() Color {
 }
 
 func (s *Face) GetCurveColour() Color {
-	return Color{val: C.topo_shape_get_surface_colour(s.inner.val.shp)}
+	return Color{val: C.topo_shape_get_curve_colour(s.inner.val.shp)}
 }
 
 func (s *Face) GetLabel() string {
@@ -637,7 +639,7 @@ func (f *Face) Isolines(params []float64, direction string) []*Edge {
 	if edges == nil {
 		return nil
 	}
-	defer C.free(unsafe.Pointer(edges))
+	defer C.topo_free_array(unsafe.Pointer(edges))
 
 	edgeSlice := (*[1 << 30]C.struct__topo_edge_t)(unsafe.Pointer(edges))[:resultCount:resultCount]
 	result := make([]*Edge, resultCount)
@@ -662,7 +664,7 @@ func (f *Face) InnerWires() []*Wire {
 	if wires == nil {
 		return nil
 	}
-	defer C.free(unsafe.Pointer(wires))
+	defer C.topo_free_array(unsafe.Pointer(wires))
 
 	wireSlice := (*[1 << 30]C.struct__topo_wire_t)(unsafe.Pointer(wires))[:count:count]
 	result := make([]*Wire, count)

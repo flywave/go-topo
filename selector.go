@@ -127,7 +127,7 @@ func customSelectorFunc(user_data unsafe.Pointer, shapes **C.struct__topo_shape_
 		shp := &Shape{inner: &innerShape{val: shapesSlice[i]}}
 		shapes_[i] = shp
 	}
-	shapes_ = (*(*func([]*Shape) []*Shape)(user_data))(shapes_)
+	shapes_ = (callbackValue(user_data).(func([]*Shape) []*Shape))(shapes_)
 	*index = C.int(len(shapes_))
 	if len(shapes_) == 0 {
 		return nil
@@ -140,7 +140,9 @@ func customSelectorFunc(user_data unsafe.Pointer, shapes **C.struct__topo_shape_
 }
 
 func NewCustomSelector(f func(shapes []*Shape) []*Shape) *Selector {
-	c := &Selector{inner: &innerSelector{C.selector_custom_selector_create(unsafe.Pointer(&f), (*[0]byte)(C.customSelectorFunc))}}
+	h := registerCallback(f)
+	defer unregisterCallback(h)
+	c := &Selector{inner: &innerSelector{C.selector_custom_selector_create(h, (*[0]byte)(C.customSelectorFunc))}}
 	runtime.SetFinalizer(c.inner, (*innerSelector).free)
 	return c
 }

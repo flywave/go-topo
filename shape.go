@@ -221,11 +221,13 @@ func (s *Shape) Share() *Shape {
 }
 
 func (s *Shape) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) int8 {
+	defer runtime.KeepAlive(m)
 	return int8(C.topo_shape_mesh(s.inner.val, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(false)))
 }
 
 func (s *Shape) MeshWithTexture(m *MeshReceiver, tolerance, deflection, angle float64) int8 {
 	m.hasTexCoords = true
+	defer runtime.KeepAlive(m)
 	return int8(C.topo_shape_mesh(s.inner.val, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(true)))
 }
 
@@ -282,7 +284,7 @@ func (s *Shape) GetSurfaceColour() Color {
 }
 
 func (s *Shape) GetCurveColour() Color {
-	return Color{val: C.topo_shape_get_surface_colour(s.inner.val)}
+	return Color{val: C.topo_shape_get_curve_colour(s.inner.val)}
 }
 
 func (s *Shape) GetLabel() string {

@@ -170,9 +170,7 @@ func (s *Wire) SetOrientation(t int) {
 }
 
 func (s *Wire) GetLocation() *TopoLocation {
-	sp := &TopoLocation{inner: &innerTopoLocation{val: C.topo_shape_get_location(s.inner.val.shp)}}
-	runtime.SetFinalizer(sp.inner, (*innerShape).free)
-	return sp
+	return newTopoLocation(C.topo_shape_get_location(s.inner.val.shp))
 }
 
 func (s *Wire) SetLocation(t *TopoLocation) {
@@ -192,11 +190,13 @@ func (s *Wire) Copy() *Wire {
 }
 
 func (s *Wire) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
+	defer runtime.KeepAlive(m)
 	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(false))
 }
 
 func (s *Wire) MeshWithTexture(m *MeshReceiver, tolerance, deflection, angle float64) {
 	m.hasTexCoords = true
+	defer runtime.KeepAlive(m)
 	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(true))
 }
 
@@ -253,7 +253,7 @@ func (s *Wire) GetSurfaceColour() Color {
 }
 
 func (s *Wire) GetCurveColour() Color {
-	return Color{val: C.topo_shape_get_surface_colour(s.inner.val.shp)}
+	return Color{val: C.topo_shape_get_curve_colour(s.inner.val.shp)}
 }
 
 func (s *Wire) GetLabel() string {
@@ -314,8 +314,8 @@ func (t *Wire) IsClosed() bool {
 	return bool(C.topo_wire_is_closed(t.inner.val))
 }
 
-func (t *Wire) Length() int {
-	return int(C.topo_wire_length(t.inner.val))
+func (t *Wire) Length() float64 {
+	return float64(C.topo_wire_length(t.inner.val))
 }
 
 func (t *Wire) ToCurves3d() {
@@ -369,6 +369,9 @@ func (w *Wire) ParamAtPoint(pt Point3) float64 {
 
 func (w *Wire) Params(pts []Point3, tol float64) []float64 {
 	count := len(pts)
+	if count == 0 {
+		return nil
+	}
 	cPoints := make([]C.pnt3d_t, count)
 	params := make([]float64, count)
 
@@ -383,6 +386,9 @@ func (w *Wire) Params(pts []Point3, tol float64) []float64 {
 
 func (w *Wire) ParamsLength(locations []float64) []float64 {
 	count := len(locations)
+	if count == 0 {
+		return nil
+	}
 	params := make([]float64, count)
 	C.topo_wire_params_length(w.inner.val, (*C.double)(&locations[0]),
 		C.int(count), (*C.double)(&params[0]))
@@ -395,6 +401,9 @@ func (w *Wire) TangentAt(param float64) Dir3 {
 
 func (w *Wire) Tangents(params []float64) []Dir3 {
 	count := len(params)
+	if count == 0 {
+		return nil
+	}
 	tangents := make([]Dir3, count)
 	cParams := make([]float64, count)
 	copy(cParams, params)
@@ -427,6 +436,9 @@ func (w *Wire) PositionAt(d float64, mode int) Point3 {
 
 func (w *Wire) Positions(ds []float64, mode int) []Point3 {
 	count := len(ds)
+	if count == 0 {
+		return nil
+	}
 	points := make([]Point3, count)
 	cPoints := make([]C.pnt3d_t, count)
 	cDs := make([]float64, count)
@@ -452,8 +464,8 @@ func (w *Wire) SampleUniform(n float64) ([]Point3, []float64) {
 	C.topo_wire_sample_uniform(w.inner.val, C.double(n), &cPoints, &pointCount,
 		&cParams, &paramCount)
 	defer func() {
-		C.free(unsafe.Pointer(cPoints))
-		C.free(unsafe.Pointer(cParams))
+		C.topo_free_array(unsafe.Pointer(cPoints))
+		C.topo_free_array(unsafe.Pointer(cParams))
 	}()
 
 	points := make([]Point3, pointCount)
@@ -478,7 +490,7 @@ func (w *Wire) LocationAt(d float64, mode, frame int, planar bool) *TopoLocation
 	if loc == nil {
 		return nil
 	}
-	return &TopoLocation{inner: &innerTopoLocation{val: loc}}
+	return newTopoLocation(loc)
 }
 
 func (w *Wire) Locations(ds []float64, mode, frame int, planar bool) []*TopoLocation {
@@ -521,6 +533,7 @@ func (w *Wire) Projected(f *Face, direction Vector3, closest bool) ([]*Shape, in
 
 	for i := range resultSlice {
 		shapes[i] = &Shape{inner: &innerShape{val: resultSlice[i]}}
+		runtime.SetFinalizer(shapes[i].inner, (*innerShape).free)
 	}
 
 	return shapes, int(ret)
@@ -533,6 +546,9 @@ func (w *Wire) CurvatureAt(d float64, mode int, resolution float64) float64 {
 
 func (w *Wire) Curvatures(ds []float64, mode int, resolution float64) []float64 {
 	count := len(ds)
+	if count == 0 {
+		return nil
+	}
 	curvatures := make([]float64, count)
 	cDs := make([]float64, count)
 	copy(cDs, ds)
@@ -621,6 +637,9 @@ func TopoMakeWireFromTwoWire(p1 Wire, p2 Edge) *Wire {
 }
 
 func TopoMakeWireFromEdges(edges []Edge) *Wire {
+	if len(edges) == 0 {
+		return nil
+	}
 	es := make([]C.struct__topo_edge_t, len(edges))
 	for i := range edges {
 		es[i] = edges[i].inner.val
@@ -631,6 +650,9 @@ func TopoMakeWireFromEdges(edges []Edge) *Wire {
 }
 
 func TopoMakeWireFromWires(wires []Wire) *Wire {
+	if len(wires) == 0 {
+		return nil
+	}
 	es := make([]C.struct__topo_wire_t, len(wires))
 	for i := range wires {
 		es[i] = wires[i].inner.val
@@ -669,6 +691,9 @@ func TopoMakeWireFromCombine(wires []Wire, tol float64) []*Wire {
 	for i := range wires {
 		es[i] = wires[i].inner.val
 	}
+	if len(wires) == 0 {
+		return nil
+	}
 	var count C.int
 	val := C.topo_make_wire_from_combine(&es[0], C.int(len(wires)), C.double(tol), &count)
 	if val == nil {
@@ -705,12 +730,20 @@ func TopoMakeWireFromCombineCurve(points [][]Point3, curveTypes []SweepCurveType
 
 	// 分配C内存来存储每个曲线的点数据
 	cPointCounts := make([]C.int, curveCount)
+	curvePointBuffers := make([]unsafe.Pointer, 0, curveCount)
+	defer func() {
+		// 每条曲线的点数组由本函数分配、C 侧只读, 必须逐个释放
+		for _, buf := range curvePointBuffers {
+			C.free(buf)
+		}
+	}()
 	for i, pts := range points {
 		pointCount := len(pts)
 		cPointCounts[i] = C.int(pointCount)
 
 		// 为当前曲线分配点数组内存
 		curvePoints := C.malloc(C.size_t(pointCount) * C.size_t(unsafe.Sizeof(C.pnt3d_t{})))
+		curvePointBuffers = append(curvePointBuffers, curvePoints)
 
 		// 将点数据复制到C内存
 		for j := 0; j < pointCount; j++ {

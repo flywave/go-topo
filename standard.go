@@ -11,6 +11,8 @@ package topo
 */
 import "C"
 
+import "encoding/json"
+
 type PlaneName string
 
 const (
@@ -52,6 +54,21 @@ func (d Point3) Data() [3]float64 {
 	return [3]float64{float64(d.val.x), float64(d.val.y), float64(d.val.z)}
 }
 
+// MarshalJSON 序列化为 [x,y,z] 数组; 不实现时内嵌 C struct 字段会序列化成 {},
+// 导致布局/参数 JSON 往返后坐标归零。
+func (d Point3) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.Data())
+}
+
+func (d *Point3) UnmarshalJSON(b []byte) error {
+	var a [3]float64
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+	*d = NewPoint3(a)
+	return nil
+}
+
 func NewPoint3(d [3]float64) Point3 {
 	var o C.struct__pnt3d_t
 	o.x = C.double(d[0])
@@ -82,6 +99,19 @@ type Dir3 struct {
 
 func (d Dir3) Data() [3]float64 {
 	return [3]float64{float64(d.val.x), float64(d.val.y), float64(d.val.z)}
+}
+
+func (d Dir3) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.Data())
+}
+
+func (d *Dir3) UnmarshalJSON(b []byte) error {
+	var a [3]float64
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+	*d = NewDir3FromXYZ(a)
+	return nil
 }
 
 func NewDir3FromVector(v Vector3) Dir3 {
@@ -1002,9 +1032,9 @@ func NewColor(c [3]float64) Color {
 
 func NewColorFromByte(c [3]byte) Color {
 	var m C.struct__color_t
-	m.r = C.double(c[0] / 255)
-	m.g = C.double(c[1] / 255)
-	m.b = C.double(c[2] / 255)
+	m.r = C.double(float64(c[0]) / 255.0)
+	m.g = C.double(float64(c[1]) / 255.0)
+	m.b = C.double(float64(c[2]) / 255.0)
 	return Color{val: m}
 }
 

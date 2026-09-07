@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 pnt3d_t *convert_points_to_capi(const std::vector<gp_Pnt> &points,
-                                int *out_count) {
+                                int *out_count) { try {
   *out_count = static_cast<int>(points.size());
   pnt3d_t *result = (pnt3d_t *)malloc(*out_count * sizeof(pnt3d_t));
   for (int i = 0; i < *out_count; ++i) {
@@ -19,6 +19,14 @@ pnt3d_t *convert_points_to_capi(const std::vector<gp_Pnt> &points,
     result[i].z = points[i].Z();
   }
   return result;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 PRIMCAPICALL topo_shape_t *create_sphere(sphere_params_t params) {
@@ -811,7 +819,7 @@ topo_wire_t create_wire_centerline(wire_params_t params) {
 }
 
 PRIMCAPICALL pnt3d_t *sample_wire_points(wire_params_t params,
-                                         double tessellation, int *out_count) {
+                                         double tessellation, int *out_count) { try {
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.numFitPoints; i++) {
     points.push_back(gp_Pnt(params.fitPoints[i].x, params.fitPoints[i].y,
@@ -829,6 +837,14 @@ PRIMCAPICALL pnt3d_t *sample_wire_points(wire_params_t params,
   };
   auto spoints = sample_wire(cppParams, tessellation);
   return convert_points_to_capi(spoints, out_count);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 PRIMCAPICALL topo_shape_t *create_cable(cable_params_t params) {
@@ -873,7 +889,7 @@ topo_wire_t create_cable_centerline(cable_params_t params) {
 }
 
 PRIMCAPICALL pnt3d_t *sample_cable_points(cable_params_t params,
-                                          double tessellation, int *out_count) {
+                                          double tessellation, int *out_count) { try {
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.numInflectionPoints; i++) {
     points.push_back(gp_Pnt(params.inflectionPoints[i].x,
@@ -887,6 +903,14 @@ PRIMCAPICALL pnt3d_t *sample_cable_points(cable_params_t params,
       params.diameter};
   auto spoints = sample_cable(cppParams, tessellation);
   return convert_points_to_capi(spoints, out_count);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_with_place(cable_params_t params,
@@ -920,7 +944,7 @@ PRIMCAPICALL topo_shape_t *create_cable_with_place(cable_params_t params,
 PRIMCAPICALL pnt3d_t *
 sample_curve_points(const pnt3d_t *control_points, const int *point_counts,
                     int array_count, const curve_type_t *curve_types,
-                    int curve_type_count, double tessellation, int *out_count) {
+                    int curve_type_count, double tessellation, int *out_count) { try {
   // 参数检查
   if (!control_points || !point_counts || !curve_types || !out_count ||
       array_count <= 0 || curve_type_count <= 0) {
@@ -960,6 +984,14 @@ sample_curve_points(const pnt3d_t *control_points, const int *point_counts,
   }
 
   return result;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 PRIMCAPICALL topo_shape_t *create_curve_cable(curve_cable_params_t params) {
@@ -1819,7 +1851,7 @@ topo_wire_t create_transmission_centerline(transmission_line_params_t params,
 PRIMCAPICALL pnt3d_t *
 sample_transmission_line_points(transmission_line_params_t params,
                                 pnt3d_t startPoint, pnt3d_t endPoint,
-                                double tessellation, int *out_count) {
+                                double tessellation, int *out_count) { try {
   transmission_line_params cppParams{params.ctype,
                                      params.sectionalArea,
                                      params.outsideDiameter,
@@ -1833,6 +1865,14 @@ sample_transmission_line_points(transmission_line_params_t params,
   auto spoints =
       sample_transmission_line(cppParams, cppStart, cppEnd, tessellation);
   return convert_points_to_capi(spoints, out_count);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 PRIMCAPICALL topo_shape_t *
@@ -3344,7 +3384,7 @@ topo_wire_t create_channel_centerline(channel_point_t *points, int pointCount) {
 PRIMCAPICALL pnt3d_t *sample_channel_points(const channel_point_t *points,
                                             int point_count,
                                             double tessellation,
-                                            int *out_count) {
+                                            int *out_count) { try {
   // 参数检查
   if (!points || !out_count || point_count <= 0) {
     return nullptr;
@@ -3373,6 +3413,14 @@ PRIMCAPICALL pnt3d_t *sample_channel_points(const channel_point_t *points,
   }
 
   return result;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 PRIMCAPICALL topo_shape_t *create_pipe_row(pipe_row_params_t params) {
@@ -4371,22 +4419,40 @@ create_drainage_well_with_place(drainage_well_params_t params, pnt3d_t position,
 }
 
 // 辅助函数用于设置 pnt2d_t 数组元素
-PRIMCAPICALL void pnt2d_t_array_set(pnt2d_t *array, int index, pnt2d_t value) {
+PRIMCAPICALL void pnt2d_t_array_set(pnt2d_t *array, int index, pnt2d_t value) { try {
   if (array != NULL) {
     array[index] = value;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
 // 辅助函数用于设置 double 数组元素
-PRIMCAPICALL void double_array_set(double *array, int index, double value) {
+PRIMCAPICALL void double_array_set(double *array, int index, double value) { try {
   if (array != NULL) {
     array[index] = value;
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-PRIMCAPICALL void int_array_set(int *array, int index, int value) {
+PRIMCAPICALL void int_array_set(int *array, int index, int value) { try {
   if (array != NULL) {
     array[index] = value;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
@@ -4817,7 +4883,7 @@ PRIMCAPICALL topo_shape_t *create_prism_with_place(prism_params_t params,
 PRIMCAPICALL pnt3d_t *
 sample_segment_points(const pnt3d_t *wires, const int *wire_counts,
                       int wire_array_count, const segment_type_t *segments,
-                      int segment_count, double tessellation, int *out_count) {
+                      int segment_count, double tessellation, int *out_count) { try {
   // 参数检查
   if (!wires || !wire_counts || !segments || !out_count ||
       wire_array_count <= 0 || segment_count <= 0) {
@@ -4855,6 +4921,14 @@ sample_segment_points(const pnt3d_t *wires, const int *wire_counts,
   }
 
   return result;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params) {
@@ -6114,7 +6188,7 @@ create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
 }
 
 static std::vector<std::vector<gp_Pnt>>
-convert_wires(pnt3d_t **wires, int *wire_counts, int wire_array_count) {
+convert_wires(pnt3d_t **wires, int *wire_counts, int wire_array_count) { try {
   std::vector<std::vector<gp_Pnt>> result;
   for (int i = 0; i < wire_array_count; i++) {
     std::vector<gp_Pnt> wire;
@@ -6124,10 +6198,18 @@ convert_wires(pnt3d_t **wires, int *wire_counts, int wire_array_count) {
     result.push_back(wire);
   }
   return result;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return std::vector<std::vector<gp_Pnt>>{};
+  }
+  catch (...) {
+    return std::vector<std::vector<gp_Pnt>>{};
+  }
 }
 
 static std::vector<profile_layer> convert_layers(profile_layer_t *layers,
-                                                 int layer_count) {
+                                                 int layer_count) { try {
   std::vector<profile_layer> result;
   for (int i = 0; i < layer_count; i++) {
     profile_layer layer;
@@ -6135,7 +6217,8 @@ static std::vector<profile_layer> convert_layers(profile_layer_t *layers,
 
     // 转换剖面类型
     for (int j = 0; j < layers[i].profile_count; j++) {
-      switch (layers[i].profiles[i].type_) {
+      // 注意: 判别与取值都必须用 j (旧实现误用 i, 多层时越界读/类型错配)
+      switch (layers[i].profiles[j].type_) {
       case PROFILE_TYPE_TRIANGLE: {
         auto &tri = layers[i].profiles[j].triangle;
         layer.profiles.emplace_back(
@@ -6145,7 +6228,7 @@ static std::vector<profile_layer> convert_layers(profile_layer_t *layers,
         break;
       }
       case PROFILE_TYPE_RECTANGLE: {
-        auto &rect = layers[i].profiles[i].rectangle;
+        auto &rect = layers[i].profiles[j].rectangle;
         layer.profiles.emplace_back(
             rectangle_profile(gp_Pnt(rect.p1.x, rect.p1.y, rect.p1.z),
                               gp_Pnt(rect.p2.x, rect.p2.y, rect.p2.z)));
@@ -6254,6 +6337,14 @@ static std::vector<profile_layer> convert_layers(profile_layer_t *layers,
     result.push_back(layer);
   }
   return result;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return std::vector<profile_layer>{};
+  }
+  catch (...) {
+    return std::vector<profile_layer>{};
+  }
 }
 
 PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure(
@@ -7763,10 +7854,16 @@ PRIMCAPICALL topo_shape_t **create_borehole(borehole_params_t params,
   }
 }
 
-PRIMCAPICALL void free_borehole_results(topo_shape_t **results, int count) {
+PRIMCAPICALL void free_borehole_results(topo_shape_t **results, int count) { try {
   if (!results)
     return;
   free(results);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
 PRIMCAPICALL topo_shape_t *create_water_tunnel(water_tunnel_params_t params) {

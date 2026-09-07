@@ -178,8 +178,8 @@ std::shared_ptr<workplane> workplane::split(bool keepTop, bool keepBottom) {
   auto topCutBox = this->_rect(maxDim, maxDim)->_extrude(maxDim);
   auto bottomCutBox = this->_rect(maxDim, maxDim)->_extrude(-maxDim);
 
-  auto top = *topo::cut(s, {bottomCutBox});
-  auto bottom = *topo::cut(s, {topCutBox});
+  auto top = topo::checked(topo::cut(s, {bottomCutBox}), "cut");
+  auto bottom = topo::checked(topo::cut(s, {topCutBox}), "cut");
 
   std::vector<shape_object> rv;
   if (keepTop && keepBottom) {
@@ -197,7 +197,7 @@ std::shared_ptr<workplane> workplane::split(bool keepTop, bool keepBottom) {
 
 std::shared_ptr<workplane> workplane::split(const shape &splitter) {
   solid s = find_solid();
-  std::vector<shape_object> rv = {*topo::split(s, splitter)};
+  std::vector<shape_object> rv = {topo::checked(topo::split(s, splitter), "split")};
   return this->new_object(rv);
 }
 
@@ -210,7 +210,7 @@ std::shared_ptr<workplane> workplane::split(const workplane &splitter) {
     }
   }
 
-  std::vector<shape_object> rv = {*topo::split(s, tools)};
+  std::vector<shape_object> rv = {topo::checked(topo::split(s, tools), "split")};
   this->merge_tags(splitter);
   return this->new_object(rv);
 }
@@ -1013,7 +1013,7 @@ std::shared_ptr<workplane> workplane::shell(double thickness,
     throw std::runtime_error("Unknown join type: " + kind);
   }
 
-  shape shp = *topo::shelling(s, faces, thickness, 1.0E-4, joinType);
+  shape shp = topo::checked(topo::shelling(s, faces, thickness, 1.0E-4, joinType), "shelling");
   return new_shape_object(std::vector<shape>({shp}));
 }
 
@@ -1033,7 +1033,7 @@ std::shared_ptr<workplane> workplane::fillet(double radius) {
     throw std::runtime_error("Fillet requires that edges be selected");
   }
 
-  shape result = *topo::fillet(s, edgeList, radius);
+  shape result = topo::checked(topo::fillet(s, edgeList, radius), "fillet");
   return new_shape_object(std::vector<shape>({result.clean()}));
 }
 
@@ -1056,9 +1056,9 @@ std::shared_ptr<workplane> workplane::chamfer(double length,
 
   shape result;
   if (length2) {
-    result = *topo::chamfer(s, edgeList, length, *length2);
+    result = topo::checked(topo::chamfer(s, edgeList, length, *length2), "chamfer");
   } else {
-    result = *topo::chamfer(s, edgeList, length);
+    result = topo::checked(topo::chamfer(s, edgeList, length), "chamfer");
   }
 
   return new_shape_object(std::vector<shape>({result}));
@@ -2101,7 +2101,7 @@ workplane::csk_hole(double diameter, double cskDiameter, double cskAngle,
   double r = cskDiameter / 2.0;
   double h = r / std::tan(cskAngle * M_PI / 180.0 / 2.0);
   solid csk = solid::make_solid_from_cone(r, 0.0, h, center, boreDir);
-  shape res = *topo::fuse({hole, csk});
+  shape res = topo::checked(topo::fuse({hole, csk}), "fuse");
 
   return cut_each([res](const topo_location &loc) { return res.moved(loc); },
                   true, clean);
@@ -2129,8 +2129,8 @@ std::shared_ptr<workplane> workplane::twist_extrude(double distance,
 
   std::vector<shape> shapes;
   for (auto &f : faces) {
-    shapes.push_back(*topo::extrude_linear_with_rotation(f, _plane->origin(),
-                                                         eDir, angleDegrees));
+    shapes.push_back(topo::checked(topo::extrude_linear_with_rotation(f, _plane->origin(),
+                                                         eDir, angleDegrees), "extrude_linear_with_rotation"));
   }
 
   shape r = compound::make_compound(shapes).fuse({});
@@ -2304,7 +2304,7 @@ std::shared_ptr<workplane> workplane::combine_with_base(
 shape workplane::fuse_with_base(const shape &obj) {
   shape baseSolid = find_type({shape_object_type::solid}, true, true);
   if (baseSolid) {
-    return *topo::fuse({baseSolid, obj});
+    return topo::checked(topo::fuse({baseSolid, obj}), "fuse");
   } else if (obj.shape_type() == TopAbs_COMPOUND) {
     return obj.cast<compound>()->fuse({});
   }
@@ -2314,7 +2314,7 @@ shape workplane::fuse_with_base(const shape &obj) {
 shape workplane::cut_from_base(const shape &obj) {
   shape baseSolid = find_type({shape_object_type::solid}, true, true);
   if (baseSolid) {
-    return *topo::cut(baseSolid, obj);
+    return topo::checked(topo::cut(baseSolid, obj), "cut");
   }
   return obj;
 }
@@ -2336,7 +2336,7 @@ workplane::combine(bool clean, bool glue, const boost::optional<double> &tol) {
   if (items.size() > 1) {
     std::vector<shape> shapes(items.begin() + 1, items.end());
     shapes.push_back(s);
-    s = *topo::fuse(shapes, tol ? *tol : 0.0001, glue);
+    s = topo::checked(topo::fuse(shapes, tol ? *tol : 0.0001, glue), "fuse");
   }
 
   if (clean) {
@@ -2388,9 +2388,9 @@ std::shared_ptr<workplane> workplane::_union_(
   shape solidRef = find_type({shape_object_type::solid}, true, true);
   if (solidRef) {
     newS.push_back(solidRef);
-    r = *topo::fuse(newS, tol ? *tol : 0.0001, glue);
+    r = topo::checked(topo::fuse(newS, tol ? *tol : 0.0001, glue), "fuse");
   } else if (newS.size() > 1) {
-    r = *topo::fuse(newS, tol ? *tol : 0.0001, glue);
+    r = topo::checked(topo::fuse(newS, tol ? *tol : 0.0001, glue), "fuse");
   } else if (!newS.empty()) {
     r = newS[0];
   } else {
@@ -2437,7 +2437,7 @@ std::shared_ptr<workplane> workplane::_cut(
     throw std::runtime_error("Invalid type for cutting");
   }
 
-  shape newS = *topo::cut(solidRef, solidToCut, tol ? *tol : 0.0001);
+  shape newS = topo::checked(topo::cut(solidRef, solidToCut, tol ? *tol : 0.0001), "cut");
   if (clean) {
     newS = newS.clean();
   }
@@ -2480,7 +2480,7 @@ std::shared_ptr<workplane> workplane::_intersect(
   }
 
   shape newS =
-      *topo::intersect(solidRef, solidToIntersect, tol ? *tol : 0.0001);
+      topo::checked(topo::intersect(solidRef, solidToIntersect, tol ? *tol : 0.0001), "intersect");
   if (clean) {
     newS = newS.clean();
   }
@@ -2514,7 +2514,7 @@ workplane::_cut_blind(boost::variant<double, face_index_type, face> until,
   if (auto dist = boost::get<double>(&until)) {
     shape toCut = _extrude(*dist, both, taper, {}, false);
     solid solidRef = find_solid();
-    s = *topo::cut(solidRef, toCut);
+    s = topo::checked(topo::cut(solidRef, toCut), "cut");
   } else if (auto tp = boost::get<face_index_type>(&until)) {
     int faceIndex = static_cast<int>(*tp);
     s = _extrude(boost::none, both, taper,
@@ -2548,8 +2548,8 @@ std::shared_ptr<workplane> workplane::cut_thru_all(bool clean, double taper) {
     throw std::runtime_error("No pending wires to cut with");
   }
 
-  shape s = *topo::dprism(solidRef, face(), wires, boost::none, taper, nullptr,
-                          true, false);
+  shape s = topo::checked(topo::dprism(solidRef, face(), wires, boost::none, taper, nullptr,
+                          true, false), "dprism");
   if (clean) {
     s = s.clean();
   }
@@ -2582,7 +2582,7 @@ std::shared_ptr<workplane> workplane::loft(bool ruled, bool combine,
     throw std::runtime_error("More than one wire or face is required");
   }
 
-  shape r = *topo::loft(toLoft, true, ruled);
+  shape r = topo::checked(topo::loft(toLoft, true, ruled), "loft");
   return combine_with_base(r, combine, clean);
 }
 
@@ -2690,26 +2690,26 @@ shape workplane::_extrude(const boost::optional<double> &distance, bool both,
         limitFace = boost::get<topo::face>(*upToFace);
       }
 
-      res = *topo::dprism(res, topo::face(), {face}, boost::none, taperAngle,
-                          &limitFace, additive);
+      res = topo::checked(topo::dprism(res, topo::face(), {face}, boost::none, taperAngle,
+                          &limitFace, additive), "dprism");
 
       if (both) {
         auto facesList2 = _get_intersected_faces(face, eDir.Multiplied(-1.0),
                                                  direction, both);
         auto limitFace2 = facesList2[boost::get<int>(*upToFace)];
-        res = *topo::dprism(res, topo::face(), {face}, boost::none, taperAngle,
-                            &limitFace2, additive);
+        res = topo::checked(topo::dprism(res, topo::face(), {face}, boost::none, taperAngle,
+                            &limitFace2, additive), "dprism");
       }
     }
     return res;
   } else {
     std::vector<shape> toFuse;
     for (auto &face : faces) {
-      shape s1 = *topo::extrude_linear(face, eDir, taperAngle);
+      shape s1 = topo::checked(topo::extrude_linear(face, eDir, taperAngle), "extrude_linear");
       if (both) {
         shape s2 =
-            *topo::extrude_linear(face, eDir.Multiplied(-1.0), taperAngle);
-        toFuse.push_back(*topo::fuse({s1, s2}, true));
+            topo::checked(topo::extrude_linear(face, eDir.Multiplied(-1.0), taperAngle), "extrude_linear");
+        toFuse.push_back(topo::checked(topo::fuse({s1, s2}, true), "fuse"));
       } else {
         toFuse.push_back(s1);
       }
@@ -2799,7 +2799,7 @@ shape workplane::_sweep(
   if (!multisection) {
     for (auto &f : get_faces()) {
       toFuse.push_back(
-          *topo::sweep(f, pathWire, makeSolid, isFrenet, &mode, transition));
+          topo::checked(topo::sweep(f, pathWire, makeSolid, isFrenet, &mode, transition), "sweep"));
     }
   } else {
     std::vector<shape> sections;
@@ -2814,7 +2814,7 @@ shape workplane::_sweep(
       }
     }
     toFuse.push_back(
-        *topo::sweep_multi(sections, pathWire, makeSolid, isFrenet, &mode));
+        topo::checked(topo::sweep_multi(sections, pathWire, makeSolid, isFrenet, &mode), "sweep_multi"));
   }
 
   return compound::make_compound(toFuse);
@@ -3137,7 +3137,7 @@ std::shared_ptr<workplane> workplane::section(double height) {
   gp_Pnt basePnt = _plane->origin() + _plane->z_dir() * height;
   face plane = face::make_plane(basePnt, _plane->z_dir());
 
-  shape r = *topo::intersect(solidRef, plane);
+  shape r = topo::checked(topo::intersect(solidRef, plane), "intersect");
 
   return new_object({r});
 }

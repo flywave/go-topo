@@ -1240,23 +1240,49 @@ sketch &sketch::solve() {
     }
   }
 
+  // 收集参与求解的实体 tag 顺序表 (与 entities/geoms 下标一一对应)。
+  // 旧实现用 e2i[tag] 直接索引: 约束引用未收集实体时静默插入 0,
+  // entities 为空时 result.first[idx] 越界段错误。
+  std::vector<std::string> entity_tags(entities.size());
+  std::vector<bool> tag_set(entities.size(), false);
+  for (const auto &pair : tags_) {
+    if (pair.second.empty())
+      continue;
+    auto it = e2i.find(pair.first);
+    if (it == e2i.end())
+      continue;
+    if (it->second < entity_tags.size() && !tag_set[it->second]) {
+      entity_tags[it->second] = pair.first;
+      tag_set[it->second] = true;
+    }
+  }
+
   std::vector<sketch_constraint> constraint_list;
   for (const auto &c : constraints_) {
-    auto tag1 = c.tags[0];
-    auto idx1 = e2i[tag1];
+    auto it1 = e2i.find(c.tags[0]);
+    if (it1 == e2i.end())
+      continue; // 引用了未参与求解的实体 (点/非线圆几何), 跳过该约束
+    auto idx1 = it1->second;
 
     if (c.tags.size() == 1) {
-      std::pair<size_t, boost::optional<size_t>> entities{
+      std::pair<size_t, boost::optional<size_t>> ents{
           idx1, boost::optional<size_t>()};
-      sketch_constraint constraint = {entities, c.kind, c.param};
+      sketch_constraint constraint = {ents, c.kind, c.param};
       constraint_list.emplace_back(constraint);
     } else {
-      auto tag2 = c.tags[1];
-      auto idx2 = e2i[tag2];
-      std::pair<size_t, boost::optional<size_t>> entities{idx1, idx2};
-      sketch_constraint constraint = {entities, c.kind, c.param};
+      auto it2 = e2i.find(c.tags[1]);
+      if (it2 == e2i.end())
+        continue;
+      auto idx2 = it2->second;
+      std::pair<size_t, boost::optional<size_t>> ents{idx1, idx2};
+      sketch_constraint constraint = {ents, c.kind, c.param};
       constraint_list.emplace_back(constraint);
     }
+  }
+
+  if (entities.empty()) {
+    // 无可解实体, 不进求解器 (空实体 + 非空约束会越界)
+    return *this;
   }
 
   sketch_solver solver(entities, constraint_list, geoms);
@@ -1266,19 +1292,20 @@ sketch &sketch::solve() {
   }
   solve_status_["x"] = result.first;
 
-  for (const auto &combined : boost::combine(geoms, e2i)) {
-    const auto &geom_type = boost::get<0>(combined);
-    const auto &kv = boost::get<1>(combined);
-    const auto tag = kv.first;
-    const auto idx = kv.second;
-    const auto &sol = result.first[idx];
+  // 按收集时的顺序回写解 (旧实现 boost::combine(geoms, e2i) 把向量与
+  // 哈希表配对, 迭代顺序不对应导致几何重建错乱)
+  for (size_t i = 0; i < geoms.size(); ++i) {
+    if (i >= result.first.size() || !tag_set[i])
+      continue;
+    const auto tag = entity_tags[i];
+    const auto &sol = result.first[i];
 
-    if (geom_type == geom_type::LINE) {
+    if (geoms[i] == geom_type::LINE) {
       auto p1 = topo_vector(sol[0], sol[1]);
       auto p2 = topo_vector(sol[2], sol[3]);
       auto new_edge = edge::make_edge(p1, p2);
       tags_[tag][0] = new_edge;
-    } else if (geom_type == geom_type::CIRCLE) {
+    } else if (geoms[i] == geom_type::CIRCLE) {
       arc_dof dof = arc_dof{{sol[0], sol[1], sol[2], sol[3], sol[4]}};
       auto p1 = arc_first(dof);
       auto p2 = arc_point(dof, 0.5);

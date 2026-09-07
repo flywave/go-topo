@@ -3671,7 +3671,11 @@ TopoDS_Shape create_rail_path(const rail_params &params,
     if (seg.points.size() < 2) continue;
     if (seg.type == centerline_curve_type::LINE) {
       double d = seg.points[0].Distance(seg.points[1]);
+      if (d <= Precision::Confusion())
+        continue; // 零长度段 (起终点重合) 无法生成曲线, 跳过
       Handle(Geom_TrimmedCurve) tc = GC_MakeSegment(seg.points[0], seg.points[1]).Value();
+      if (tc.IsNull())
+        continue;
       Handle(Geom_Curve) c = tc;
       crvs.push_back({c, d});
     } else if (seg.type == centerline_curve_type::ARC && seg.points.size() >= 3) {
@@ -3696,33 +3700,49 @@ TopoDS_Shape create_rail_path(const rail_params &params,
 
   double tot = 0;
   for (auto &cr : crvs) tot += cr.l;
+  if (tot <= Precision::Confusion())
+    throw Standard_ConstructionError("Degenerate rail path length");
 
   // LINE paths → build face at origin along Z, extrude along Z, rotate+translate to position
   if (segments.size() == 1 && segments[0].type == centerline_curve_type::LINE) {
     gp_Pnt p0; gp_Vec v0;
     crvs[0].c->D1(crvs[0].c->FirstParameter(), p0, v0);
     gp_Dir t0(v0);
-    gp_Dir perp = gp::DZ().Crossed(t0);
+    // 与放样路径 makeSection 完全一致的坐标架: Hd = t×DZ, Vd = Hd×t,
+    // 含超高倾角 tilt (旧实现偏移方向相反且丢弃 tilt, 导致单段直线与
+    // 多段折线生成的左右股钢轨互换)
+    gp_Vec Hv(t0.XYZ().Crossed(gp::DZ().XYZ()));
+    gp_Dir Hd = Hv.Magnitude() < Precision::Confusion() ? gp::DX() : gp_Dir(Hv);
+    gp_Dir Vd = Hd.Crossed(t0);
+    if (std::abs(tiltAngle) > Precision::Angular()) {
+      gp_Trsf tilt;
+      tilt.SetRotation(gp_Ax1(gp::Origin(), t0), tiltAngle);
+      gp_XYZ hx = Hd.XYZ(); tilt.Transforms(hx); Hd = gp_Dir(hx);
+      gp_XYZ vx = Vd.XYZ(); tilt.Transforms(vx); Vd = gp_Dir(vx);
+    }
 
     // Build profile at origin with standardLength = tot
     rail_params rp2 = params;
     rp2.standardLength = tot;
     TopoDS_Shape rail = create_rail(rp2);
 
-    // Apply rotation: Z→t0 (along track), X→perp (cross-track)
+    // Apply rotation: Z→t0 (along track), X→DZ×t0 (= -Hd, 此朝向下断面
+    // 与放样路径的预翻转断面朝向一致)
     gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX());
-    gp_Ax3 tgt(gp::Origin(), t0, perp);
+    gp_Ax3 tgt(gp::Origin(), t0, Hd.Reversed());
     gp_Trsf r; r.SetTransformation(tgt, src);
     rail = BRepBuilderAPI_Transform(rail, r).Shape();
 
-    // Translate to path start + lateral/vertical offsets
+    // Translate to path start + lateral/vertical offsets (沿 Hd/Vd, 与放样一致)
     gp_Trsf tr;
-    tr.SetTranslation(gp_Vec(p0.XYZ() + perp.XYZ() * lateralOffset + gp::DZ().XYZ() * verticalOffset));
+    tr.SetTranslation(gp_Vec(p0.XYZ() + Hd.XYZ() * lateralOffset + Vd.XYZ() * verticalOffset));
     return BRepBuilderAPI_Transform(rail, tr).Shape();
   }
 
   // ARC / BEZIER paths → ThruSections loft
-  int nSec = std::max(2, (int)(tot / 500.0));
+  // 截面数上限: 长中心线按 ~500mm 采样会无界增长 (10km=20000 截面,
+  // ThruSections 复杂度超线性), 封顶后放大采样间距
+  int nSec = std::max(2, std::min(512, (int)(tot / 500.0)));
   BRepOffsetAPI_ThruSections loft(Standard_True, Standard_True);
   for (int i = 0; i <= nSec; ++i) {
     double target = tot * i / nSec;
@@ -3865,7 +3885,9 @@ TopoDS_Shape create_ballast(const ballast_params &params) {
   for (auto &cr : crvs) tot += cr.l;
 
   // ThruSections 放样; 两端沿切向各外延 500mm (与旧行为一致, 道床长出端部)
-  int nSec = std::max(2, (int)(tot / 500.0));
+  // 截面数上限: 长中心线按 ~500mm 采样会无界增长 (10km=20000 截面,
+  // ThruSections 复杂度超线性), 封顶后放大采样间距
+  int nSec = std::max(2, std::min(512, (int)(tot / 500.0)));
   BRepOffsetAPI_ThruSections loft(Standard_True, Standard_True);
   {
     gp_Pnt p; gp_Vec v;
@@ -4917,7 +4939,12 @@ TopoDS_Shape create_straight_track(const straight_track_params &params) {
   try { bld.Add(cmp, create_rail_curve(rp)); } catch (...) { warn_part_failed("create_straight_track", "right rail"); }
 
   // Sleepers (垂直于线路方向, 弧长等距)
+  if (!(params.sleeperSpacing > Precision::Confusion()))
+    throw Standard_ConstructionError("sleeperSpacing must be positive");
   int sc = std::max(2, (int)(len / params.sleeperSpacing));
+  // 上限防护: 极小间距会把轨枕循环放大到数亿次
+  if (sc > 100000)
+    throw Standard_ConstructionError("sleeperSpacing too small for track length");
   for (int i = 0; i < sc; ++i) {
     double t = (double)i / (sc - 1);
     gp_Pnt pos = params.startPoint.Translated(dir * t);
@@ -4986,7 +5013,12 @@ TopoDS_Shape create_curve_track(const curve_track_params &params) {
   
   // Sleepers (radially arranged)
   double arcLen = fabs(sweep) * R;
+  if (!(params.sleeperSpacing > Precision::Confusion()))
+    throw Standard_ConstructionError("sleeperSpacing must be positive");
+  // 上限防护: 极小间距会把轨枕循环放大到数亿次
   int sc = std::max(2, (int)(arcLen / params.sleeperSpacing));
+  if (sc > 100000)
+    throw Standard_ConstructionError("sleeperSpacing too small for track length");
   for (int i = 0; i < sc; ++i) {
     double a = startA + sweep * (double)i / (sc - 1);
     double cx = params.curveCenter.X(), cy = params.curveCenter.Y();
@@ -5306,25 +5338,23 @@ TopoDS_Shape sweepProfile(const TopoDS_Face &face, const curve_params &curve) {
   }
   if (c.IsNull()) throw Standard_ConstructionError("failed to create curve");
 
-  double t0 = c->FirstParameter(), t1 = c->LastParameter();
-  int nSeg = std::max(20, (int)(curve.startPoint.Distance(curve.endPoint) / 30));
-  TopoDS_Shape result;
-  bool first = true;
-  for (int i = 0; i < nSeg; i++) {
-    double ta = t0 + (t1 - t0) * i / nSeg;
-    double tb = t0 + (t1 - t0) * (i + 1) / nSeg;
-    gp_Pnt pa; c->D0(ta, pa);
-    gp_Pnt pb; c->D0(tb, pb);
-    gp_Vec seg(pa, pb);
-    if (seg.Magnitude() < 0.01) continue;
-    gp_Ax3 src(gp::Origin(), gp::DZ(), gp::DX());
-    gp_Ax3 tgt(pa, gp::DZ(), gp_Dir(seg));
-    gp_Trsf tr; tr.SetTransformation(tgt, src);
-    TopoDS_Shape prism = BRepPrimAPI_MakePrism(BRepBuilderAPI_Transform(face, tr).Shape(), seg).Shape();
-    if (first) { result = prism; first = false; }
-    else result = BRepAlgoAPI_Fuse(result, prism).Shape();
+  // 沿曲线用 MakePipeShell 一次扫掠成形。
+  // 旧实现按 ~30mm 逐段 prism 再两两 Fuse: O(n) 次布尔并, 25m 护轨 ≈ 833 段,
+  // 长中心线下耗时/内存无界增长直至假死。
+  TopoDS_Wire spine = BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(c).Edge()).Wire();
+  BRepOffsetAPI_MakePipeShell maker(spine);
+  // 副法线固定为 +Z, 截面随路径转动 (与旧实现的恒定 DZ 坐标架一致)
+  maker.SetMode(gp_Dir(0, 0, 1)); // 副法线固定 +Z
+  maker.SetTransitionMode(BRepBuilderAPI_Transformed);
+  for (TopExp_Explorer exp(face, TopAbs_WIRE); exp.More(); exp.Next()) {
+    maker.Add(TopoDS::Wire(exp.Current()), Standard_False);
   }
-  return result;
+  maker.Build();
+  if (!maker.IsDone()) {
+    throw Standard_ConstructionError("sweep profile failed");
+  }
+  maker.MakeSolid();
+  return maker.Shape();
 }
 
 // 从 curve_params 构建 Geom 曲线 (用于端部处理的几何计算)

@@ -9,92 +9,216 @@
 extern "C" {
 #endif
 
-void shape_object_free(shape_object_t *obj) {
+void shape_object_free(shape_object_t *obj) { try {
   if (obj) {
     delete obj;
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-shape_object_t *shape_object_create_from_shape(topo_shape_t *shape) {
+shape_object_t *shape_object_create_from_shape(topo_shape_t *shape) { try {
   return new shape_object_t{.obj = *shape->shp};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-shape_object_t *shape_object_create_from_vector(topo_vector_t *vector) {
+shape_object_t *shape_object_create_from_vector(topo_vector_t *vector) { try {
   return new shape_object_t{.obj = vector->vec};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-shape_object_t *shape_object_create_from_location(topo_location_t *location) {
+shape_object_t *shape_object_create_from_location(topo_location_t *location) { try {
   return new shape_object_t{.obj = location->loc};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-shape_object_t *shape_object_create_from_sketch(sketch_t *sketch) {
+shape_object_t *shape_object_create_from_sketch(sketch_t *sketch) { try {
   return new shape_object_t{.obj = sketch->ptr};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-shape_object_t *shape_object_create() {
+shape_object_t *shape_object_create() { try {
   return new shape_object_t{.obj = boost::blank{}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-int shape_object_type(shape_object_t *obj) {
+int shape_object_type(shape_object_t *obj) { try {
   return static_cast<int>(
       flywave::topo::workplane::get_shape_object_type(obj->obj));
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-topo_shape_t *shape_object_get_shape(shape_object_t *obj) {
+topo_shape_t *shape_object_get_shape(shape_object_t *obj) { try {
   if (auto shp = boost::get<flywave::topo::shape>(&obj->obj)) {
     return new topo_shape_t{.shp =
                                 std::make_shared<flywave::topo::shape>(*shp)};
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-topo_vector_t *shape_object_get_vector(shape_object_t *obj) {
+topo_vector_t *shape_object_get_vector(shape_object_t *obj) { try {
   if (auto vec = boost::get<flywave::topo::topo_vector>(&obj->obj)) {
     return new topo_vector_t{.vec = *vec};
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-topo_location_t *shape_object_get_location(shape_object_t *obj) {
+topo_location_t *shape_object_get_location(shape_object_t *obj) { try {
   if (auto loc = boost::get<flywave::topo::topo_location>(&obj->obj)) {
     return new topo_location_t{.loc = *loc};
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-sketch_t *shape_object_get_sketch(shape_object_t *obj) {
+sketch_t *shape_object_get_sketch(shape_object_t *obj) { try {
   if (auto sk = boost::get<std::shared_ptr<flywave::topo::sketch>>(&obj->obj)) {
     return new sketch_t{.ptr = *sk};
   }
   return nullptr;
-}
-
-workplane_t *workplane_create() {
-  return new workplane_t{.ptr = std::make_shared<flywave::topo::workplane>()};
-}
-
-workplane_t *workplane_create_from_plane(topo_plane_t *plane,
-                                         topo_vector_t *origin) {
-  return new workplane_t{.ptr = std::make_shared<flywave::topo::workplane>(
-                             plane->plane,
-                             origin ? &origin->vec : nullptr)};
-}
-
-workplane_t *workplane_create_from_name(const char *planeName,
-                                        topo_vector_t *origin) {
-  return new workplane_t{.ptr = std::make_shared<flywave::topo::workplane>(
-                             planeName, origin ? &origin->vec : nullptr)};
-}
-
-void workplane_free(workplane_t *wp) {
-  if (wp) {
-    delete wp;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
   }
 }
 
-topo_shape_t *workplane_value(workplane_t *wp) {
+workplane_t *workplane_create() { try {
+  return new workplane_t{.ptr = std::make_shared<flywave::topo::workplane>()};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
+}
+
+workplane_t *workplane_create_from_plane(topo_plane_t *plane,
+                                         topo_vector_t *origin) { try {
+  return new workplane_t{.ptr = std::make_shared<flywave::topo::workplane>(
+                             plane->plane,
+                             origin ? &origin->vec : nullptr)};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
+}
+
+workplane_t *workplane_create_from_name(const char *planeName,
+                                        topo_vector_t *origin) { try {
+  return new workplane_t{.ptr = std::make_shared<flywave::topo::workplane>(
+                             planeName, origin ? &origin->vec : nullptr)};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
+}
+
+void workplane_free(workplane_t *wp) { try {
+  if (wp) {
+    delete wp;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+topo_shape_t *workplane_value(workplane_t *wp) { try {
   return new topo_shape_t{
       .shp = std::make_shared<flywave::topo::shape>(wp->ptr->value())};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 #define SAFE_CALL(wp, expr)                                                    \
@@ -125,7 +249,13 @@ workplane_t *workplane_workplane(workplane_t *wp, double offset, bool invert,
   return new workplane_t{.ptr = result};
 }
 
-void workplane_tag(workplane_t *wp, const char *name) { wp->ptr->tag(name); }
+void workplane_tag(workplane_t *wp, const char *name) { try { wp->ptr->tag(name);   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
 workplane_t *workplane_split(workplane_t *wp, bool keepTop, bool keepBottom) {
   return new workplane_t{
@@ -144,20 +274,38 @@ workplane_t *workplane_split_with_workplane(workplane_t *wp,
       .ptr = SAFE_CALL(wp, return wp->ptr->split(*splitter->ptr))};
 }
 
-void workplane_add(workplane_t *wp, workplane_t *other) {
+void workplane_add(workplane_t *wp, workplane_t *other) { try {
   wp->ptr->add(*other->ptr);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-void workplane_add_shape(workplane_t *wp, shape_object_t *obj) {
+void workplane_add_shape(workplane_t *wp, shape_object_t *obj) { try {
   wp->ptr->add(obj->obj);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-void workplane_add_shapes(workplane_t *wp, shape_object_t **objs, int size) {
+void workplane_add_shapes(workplane_t *wp, shape_object_t **objs, int size) { try {
   std::vector<flywave::topo::shape_object> objs_;
   for (int i = 0; i < size; ++i) {
     objs_.push_back(objs[i]->obj);
   }
   wp->ptr->add(objs_);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
 workplane_t *workplane_from_tagged(workplane_t *wp, const char *tag) {
@@ -166,11 +314,19 @@ workplane_t *workplane_from_tagged(workplane_t *wp, const char *tag) {
 }
 
 topo_solid_t workplane_find_solid(workplane_t *wp, bool searchStack,
-                                  bool searchParents) {
+                                  bool searchParents) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shape>(
               wp->ptr->find_solid(searchStack, searchParents))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 workplane_t *workplane_vertices(workplane_t *wp, const char *selector,
@@ -781,9 +937,17 @@ workplane_t *workplane_close(workplane_t *wp) {
   return new workplane_t{.ptr = result};
 }
 
-double workplane_largest_dimension(workplane_t *wp) {
+double workplane_largest_dimension(workplane_t *wp) { try {
   auto result = wp->ptr->largest_dimension();
   return result;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
 workplane_t *workplane_cut_each(workplane_t *wp, void *userdata,
@@ -1221,7 +1385,13 @@ workplane_t *workplane_section(workplane_t *wp, double height) {
   return new workplane_t{.ptr = result};
 }
 
-void workplane_to_pending(workplane_t *wp) { wp->ptr->to_pending(); }
+void workplane_to_pending(workplane_t *wp) { try { wp->ptr->to_pending();   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
 workplane_t *workplane_offset2d(workplane_t *wp, double d, int kind,
                                 bool forConstruction) {
@@ -1321,21 +1491,41 @@ workplane_t *workplane_sort(workplane_t *wp, void *userdate,
 }
 
 void workplane_invoke(workplane_t *wp, void *userdate,
-                      workplane_t *(*fcn)(void *userdate)) {
+                      workplane_t *(*fcn)(void *userdate)) { try {
   auto result = fcn(userdate);
   *wp = *result;
   delete result;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-void workplane_export_to(workplane_t *wp, const char *path) {
+void workplane_export_to(workplane_t *wp, const char *path) { try {
   if (!wp || !wp->ptr) return;
   if (!path) return;
   wp->ptr->export_to(path);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-sketch_t *workplane_sketck(workplane_t *wp) {
+sketch_t *workplane_sketck(workplane_t *wp) { try {
   auto result = wp->ptr->sketch();
   return new sketch_t{.ptr = result};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 workplane_t *workplane_first(workplane_t *wp) {
@@ -1358,7 +1548,7 @@ workplane_t *workplane_end(workplane_t *wp, int n) {
   return new workplane_t{.ptr = result};
 }
 
-workplane_t **workplane_all(workplane_t *wp, int *count) {
+workplane_t **workplane_all(workplane_t *wp, int *count) { try {
   auto results = wp->ptr->all();
   *count = static_cast<int>(results.size());
   auto arr = new workplane_t *[*count];
@@ -1366,18 +1556,29 @@ workplane_t **workplane_all(workplane_t *wp, int *count) {
     arr[i] = new workplane_t{.ptr = results[i]};
   }
   return arr;
-}
-
-void workplane_list_free(workplane_t **list, int count) {
-  if (list) {
-    for (int i = 0; i < count; i++) {
-      delete list[i];
-    }
-    delete[] list;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
   }
 }
 
-topo_shape_t **workplane_shapes(workplane_t *wp, int *count) {
+// 所有权契约: 数组元素的所有权转移给调用方, 本函数仅释放指针数组本身。
+void workplane_list_free(workplane_t **list, int count) { try {
+  (void)count;
+  delete[] list;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+topo_shape_t **workplane_shapes(workplane_t *wp, int *count) { try {
   auto shapes = wp->ptr->shapes();
   *count = static_cast<int>(shapes.size());
   auto arr = new topo_shape_t *[*count];
@@ -1386,27 +1587,42 @@ topo_shape_t **workplane_shapes(workplane_t *wp, int *count) {
         .shp = std::make_shared<flywave::topo::shape>(shapes[i])};
   }
   return arr;
-}
-
-void shape_list_free(topo_shape_t **list, int count) {
-  if (list) {
-    for (int i = 0; i < count; i++) {
-      delete list[i];
-    }
-    delete[] list;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
   }
 }
 
-void shape_objects_free(shape_object_t **list, int count) {
-  if (list) {
-    for (int i = 0; i < count; i++) {
-      delete list[i];
-    }
-    delete[] list;
+// 所有权契约: 数组元素的所有权转移给调用方 (由 topo_shape_free 逐个释放),
+// 本函数仅释放指针数组本身。
+void shape_list_free(topo_shape_t **list, int count) { try {
+  (void)count;
+  delete[] list;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
-shape_object_t **workplane_vals(workplane_t *wp, int *count) {
+// 所有权契约: 数组元素的所有权转移给调用方, 本函数仅释放指针数组本身。
+void shape_objects_free(shape_object_t **list, int count) { try {
+  (void)count;
+  delete[] list;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+shape_object_t **workplane_vals(workplane_t *wp, int *count) { try {
   auto vals = wp->ptr->vals();
   *count = static_cast<int>(vals.size());
   auto arr = new shape_object_t *[*count];
@@ -1414,28 +1630,96 @@ shape_object_t **workplane_vals(workplane_t *wp, int *count) {
     arr[i] = new shape_object_t{.obj = vals[i]};
   }
   return arr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-shape_object_t *workplane_val(workplane_t *wp) {
+shape_object_t *workplane_val(workplane_t *wp) { try {
   auto val = wp->ptr->val();
   return new shape_object_t{.obj = val};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-int workplane_size(workplane_t *wp) {
+int workplane_size(workplane_t *wp) { try {
   return static_cast<int>(wp->ptr->size());
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-bool workplane_has_parent(workplane_t *wp) { return wp->ptr->has_parent(); }
+bool workplane_has_parent(workplane_t *wp) { try {
+  if (!wp || !wp->ptr)
+    return false;
+  return wp->ptr->has_parent();
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return false;
+  }
+  catch (...) {
+    return false;
+  }
+}
 
-workplane_t *workplane_parent(workplane_t *wp) {
+workplane_t *workplane_parent(workplane_t *wp) { try {
+  if (!wp || !wp->ptr)
+    return nullptr;
   auto parent = wp->ptr->parent();
   return new workplane_t{.ptr = parent};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-bool workplane_has_error(workplane_t *wp) { return wp->ptr->has_error(); }
+bool workplane_has_error(workplane_t *wp) { try {
+  if (!wp || !wp->ptr)
+    return false;
+  return wp->ptr->has_error();
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return false;
+  }
+  catch (...) {
+    return false;
+  }
+}
 
-const char *workplane_error(workplane_t *wp) {
+const char *workplane_error(workplane_t *wp) { try {
+  if (!wp || !wp->ptr)
+    return "";
   return wp->ptr->error().c_str();
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 #ifdef __cplusplus

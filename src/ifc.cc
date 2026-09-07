@@ -130,7 +130,7 @@ bool ifc_convert::load() {
 
 std::string ifc_convert::get_version() {
   if (!_file) {
-    return nullptr;
+    return std::string();
   }
   return _file->good() == IfcParse::file_open_status::SUCCESS
              ? _file->header().file_description().implementation_level()

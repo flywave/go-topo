@@ -534,15 +534,17 @@ public:
     if (this->has_error()) {
       return this->shared_from_this();
     }
-    std::shared_ptr<workplane> ret;
     try {
-      ret = func();
+      auto ret = func();
+      return ret;
     } catch (const std::exception &e) {
       this->ctx()->set_error(e.what());
     } catch (...) {
       this->ctx()->set_error("Unknown error occurred");
     }
-    return ret;
+    // 出错时返回自身 (置好错误状态), 而不是空指针 —— 否则调用方经
+    // workplane_has_error 检查时会解引用空 ptr 直接段错误。
+    return this->shared_from_this();
   }
 
 protected:

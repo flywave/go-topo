@@ -1264,6 +1264,9 @@ func CreateSleeperWithPlace(params SleeperParams, position Point3, direction, up
 // BallastParams — 梯形道床，沿中心线路径扫掠生成
 
 func CreateBallastAlongPath(centerline []Point3, topWidth, thickness, sideSlope float64) *Shape {
+	if len(centerline) < 2 {
+		return nil
+	}
 	pts := make([]C.pnt3d_t, len(centerline))
 	for i, p := range centerline {
 		pts[i] = p.val
@@ -1410,7 +1413,28 @@ type MastAssemblyParams struct {
 	SideOffset      float64 `json:"sideOffset"`      // 侧面限界 CX(mm), 默认 2900
 }
 
+// withDefaults 兜底零值参数 (如 RebuildFromParametric 读到残缺 JSON),
+// 避免 mastHeight=0 / contactHeight=0 直接进入 C 侧生成退化几何。
+func (p *MastAssemblyParams) withDefaults() {
+	if p.MastHeight <= 0 {
+		p.MastHeight = 8000
+	}
+	if p.ContactHeight <= 0 {
+		p.ContactHeight = 5300
+	}
+	if p.StructureHeight <= 0 {
+		p.StructureHeight = 1400
+	}
+	if p.SideOffset <= 0 {
+		p.SideOffset = 2900
+	}
+	if p.ArmDiameter <= 0 {
+		p.ArmDiameter = 60
+	}
+}
+
 func (p *MastAssemblyParams) to_struct() C.mast_assembly_params_t {
+	p.withDefaults()
 	var c C.mast_assembly_params_t
 	c.mastType = C.int(p.MastType)
 	c.mastHeight = C.double(p.MastHeight)
@@ -1990,14 +2014,13 @@ func DetectTrackSegments(centerline []Point3) []TrackSegment {
 			continue
 		}
 
-		// 三点圆拟合: 中垂线交点法求圆心
-		mx1, my1 := (x1+x2)/2, (y1+y2)/2
-		mx2, my2 := (x2+x3)/2, (y2+y3)/2
-		k1 := (x2 - x1) / (y1 - y2)
-		k2 := (x3 - x2) / (y2 - y3)
+		// 三点圆拟合: 外接圆心公式 (分母为 2 倍有向面积, 已由上方共线判定保证非零,
+		// 避免旧中垂线法在水平/垂直弦处除零产生 NaN)
+		d := 2 * cross
+		a1, a2, a3 := x1*x1+y1*y1, x2*x2+y2*y2, x3*x3+y3*y3
 
-		cx := (my2 - my1 + k1*mx1 - k2*mx2) / (k1 - k2)
-		cy := k1*(cx-mx1) + my1
+		cx := (a1*(y2-y3) + a2*(y3-y1) + a3*(y1-y2)) / d
+		cy := (a1*(x3-x2) + a2*(x1-x3) + a3*(x2-x1)) / d
 		r := math.Sqrt((cx-x1)*(cx-x1) + (cy-y1)*(cy-y1))
 
 		infos[i].radius = r
@@ -2042,8 +2065,9 @@ func DetectTrackSegments(centerline []Point3) []TrackSegment {
 		if e <= s {
 			return
 		}
-		pts := make([]Point3, e-s+2)
-		copy(pts, centerline[s:min(e+2, len(centerline))])
+		end := min(e+2, len(centerline))
+		pts := make([]Point3, end-s)
+		copy(pts, centerline[s:end])
 		l := 0.0
 		for j := 1; j < len(pts); j++ {
 			dx := float64(pts[j].val.x - pts[j-1].val.x)
@@ -2248,7 +2272,10 @@ func CalcOcsSpanPositions(input OcsSpanInput) OcsSpanOutput {
 		totalLen += math.Sqrt(float64(dx*dx + dy*dy + dz*dz))
 	}
 	out.TotalLength = totalLen
-	out.MastCount = int(totalLen/spanLen) + 1
+	// 柱数向上取整, 保证实际跨距 mastSpacing <= SpanLength;
+	// 旧实现 int(totalLen/spanLen)+1 会让实际跨距最大膨胀到近 2 倍标准跨距,
+	// 与 ocs_layout 按标准跨距计算的弛度/吊弦数不一致。
+	out.MastCount = int(math.Ceil(totalLen/spanLen)) + 1
 	if out.MastCount < 2 {
 		out.MastCount = 2
 	}
@@ -2412,6 +2439,9 @@ func CreateCurveTrackWithPlace(params CurveTrackParams, curveCenter Point3) *Sha
 // =========================================================================
 
 func CreateRailPairFromPoints(centerline []Point3, gauge, superElevation, railHeight, railHeadWidth, railBaseWidth float64) *Shape {
+	if len(centerline) < 2 {
+		return nil
+	}
 	pts := make([]C.pnt3d_t, len(centerline))
 	for i, p := range centerline {
 		pts[i] = p.val
@@ -2434,6 +2464,9 @@ func CreateRailPairFromPoints(centerline []Point3, gauge, superElevation, railHe
 // =========================================================================
 
 func CreateSleeperLayout(centerline []Point3, length, width, height, spacing, gauge float64) *Shape {
+	if len(centerline) < 2 {
+		return nil
+	}
 	pts := make([]C.pnt3d_t, len(centerline))
 	for i, p := range centerline {
 		pts[i] = p.val

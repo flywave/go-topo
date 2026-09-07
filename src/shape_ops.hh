@@ -232,5 +232,15 @@ std::vector<std::vector<gp_Pnt>> get_shape_outline(const shape &shp,
                                                    int numSamples = 200,
                                                    bool simplify = false);
 
+
+// 解引用 boost::optional<shape>: 为空时抛出异常 (由上层 SAFE_CALL / try 捕获),
+// 杜绝裸 * 解引用未初始化存储导致的堆破坏与 UB。
+inline shape checked(boost::optional<shape> opt, const char *what) {
+  if (!opt) {
+    throw std::runtime_error(std::string(what) + " operation failed");
+  }
+  return std::move(*opt);
+}
+
 } // namespace topo
 } // namespace flywave

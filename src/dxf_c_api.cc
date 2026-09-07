@@ -36,46 +36,90 @@ typedef struct _dxf_text_entity_t {
   flywave::dxf::dxf_text_entity entity;
 } dxf_text_entity_t;
 
-dxf_reader_t *dxf_open_reader(const char *filename) {
+dxf_reader_t *dxf_open_reader(const char *filename) { try {
   auto reader = std::make_unique<flywave::dxf::dxf_shape_reader>(filename);
   reader->do_read();
   return new dxf_reader_t{.reader = std::move(reader)};
-}
-
-void dxf_reader_free(dxf_reader_t *p) {
-  if (p) {
-    delete p;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
   }
 }
 
-_Bool dxf_reader_is_failed(dxf_reader_t *p) {
+void dxf_reader_free(dxf_reader_t *p) { try {
+  if (p) {
+    delete p;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+_Bool dxf_reader_is_failed(dxf_reader_t *p) { try {
   if (p) {
     return p->reader->failed();
   }
   return false;
-}
-
-void dxf_reader_do_read(dxf_reader_t *p) {
-  if (p) {
-    p->reader->do_read();
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return false;
+  }
+  catch (...) {
+    return false;
   }
 }
 
-const char *dxf_reader_get_error(dxf_reader_t *p) {
+void dxf_reader_do_read(dxf_reader_t *p) { try {
+  if (p) {
+    p->reader->do_read();
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+const char *dxf_reader_get_error(dxf_reader_t *p) { try {
   if (p) {
     return p->reader->error().c_str();
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-_Bool dxf_reader_has_error(dxf_reader_t *p) {
+_Bool dxf_reader_has_error(dxf_reader_t *p) { try {
   if (p) {
     return !p->reader->error().empty();
   }
   return false;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return false;
+  }
+  catch (...) {
+    return false;
+  }
 }
 
-const char **dxf_reader_get_layer_names(dxf_reader_t *p, int *count) {
+const char **dxf_reader_get_layer_names(dxf_reader_t *p, int *count) { try {
   if (p) {
     const auto &layers = p->reader->shape_layers();
     *count = static_cast<int>(layers.size());
@@ -87,20 +131,42 @@ const char **dxf_reader_get_layer_names(dxf_reader_t *p, int *count) {
     return names;
   }
   return nullptr;
-}
-
-void dxf_layer_names_free(const char **names) {
-  if (names) {
-    delete[] names;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
   }
 }
 
-dxf_shape_entity_layer_t *dxf_shape_entity_layer_new() {
+void dxf_layer_names_free(const char **names) { try {
+  if (names) {
+    delete[] names;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+dxf_shape_entity_layer_t *dxf_shape_entity_layer_new() { try {
   return new dxf_shape_entity_layer_t;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 dxf_shape_entity_layer_t *dxf_reader_get_shape_entity_layer(dxf_reader_t *p,
-                                                            const char *name) {
+                                                            const char *name) { try {
   if (p) {
     const auto &layers = p->reader->shape_layers();
     auto it = layers.find(name);
@@ -109,72 +175,150 @@ dxf_shape_entity_layer_t *dxf_reader_get_shape_entity_layer(dxf_reader_t *p,
     }
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 void dxf_shape_entity_layer_add(dxf_shape_entity_layer_t *p,
-                                dxf_shape_entity_t *entity) {
+                                dxf_shape_entity_t *entity) { try {
   if (p) {
     p->entities.push_back(entity->entity);
   }
-}
-
-void dxf_shape_entity_layer_free(dxf_shape_entity_layer_t *p) {
-  if (p) {
-    delete p;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
-int dxf_shape_entity_layer_get_count(dxf_shape_entity_layer_t *p) {
+void dxf_shape_entity_layer_free(dxf_shape_entity_layer_t *p) { try {
+  if (p) {
+    delete p;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+int dxf_shape_entity_layer_get_count(dxf_shape_entity_layer_t *p) { try {
   if (p) {
     return static_cast<int>(p->entities.size());
   }
   return 0;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 dxf_shape_entity_t *
-dxf_shape_entity_layer_get_entity(dxf_shape_entity_layer_t *p, int index) {
-  if (p) {
+dxf_shape_entity_layer_get_entity(dxf_shape_entity_layer_t *p, int index) { try {
+  if (p && index >= 0 &&
+      index < static_cast<int>(p->entities.size())) {
     return new dxf_shape_entity_t{.entity = p->entities[index]};
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-dxf_shape_entity_t *dxf_shape_entity_new(topo_shape_t *shape, int color) {
+dxf_shape_entity_t *dxf_shape_entity_new(topo_shape_t *shape, int color) { try {
   return new dxf_shape_entity_t{.entity = flywave::dxf::dxf_shape_entity{
                                     .color = color,
                                     .shape = shape->shp->value(),
                                 }};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-void dxf_shape_entity_free(dxf_shape_entity_t *p) {
+void dxf_shape_entity_free(dxf_shape_entity_t *p) { try {
   if (p) {
     delete p;
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-color_t dxf_shape_entity_get_color(dxf_shape_entity_t *p) {
+color_t dxf_shape_entity_get_color(dxf_shape_entity_t *p) { try {
   if (p) {
     auto index = p->entity.color;
+    if (index < 0 || index > 255) {
+      return color_t{0, 0, 0};
+    }
     auto rgb = flywave::dxf::aci_table[index];
-    return color_t{double(rgb.second.r / 255), double(rgb.second.g / 255),
-                   double(rgb.second.b / 255)};
+    return color_t{double(rgb.second.r / 255.0), double(rgb.second.g / 255.0),
+                   double(rgb.second.b / 255.0)};
   }
   return color_t{0, 0, 0};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return color_t{};
+  }
+  catch (...) {
+    return color_t{};
+  }
 }
 
-topo_shape_t *dxf_shape_entity_get_shape(dxf_shape_entity_t *p) {
+topo_shape_t *dxf_shape_entity_get_shape(dxf_shape_entity_t *p) { try {
   if (p) {
     return new topo_shape_t{
         .shp = std::make_shared<flywave::topo::shape>(p->entity.shape)};
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-dxf_text_entity_layer_t *dxf_text_entity_layer_new() {
+dxf_text_entity_layer_t *dxf_text_entity_layer_new() { try {
   return new dxf_text_entity_layer_t;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 dxf_text_entity_layer_t *dxf_reader_get_text_entity_layer(dxf_reader_t *p,
-                                                          const char *name) {
+                                                          const char *name) { try {
   if (p) {
     const auto &layers = p->reader->text_layers();
     auto it = layers.find(name);
@@ -183,103 +327,205 @@ dxf_text_entity_layer_t *dxf_reader_get_text_entity_layer(dxf_reader_t *p,
     }
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 void dxf_text_entity_layer_add_entity(dxf_text_entity_layer_t *p,
-                                      dxf_text_entity_t *entity) {
+                                      dxf_text_entity_t *entity) { try {
   if (p) {
     p->entities.push_back(entity->entity);
   }
-}
-
-void dxf_text_entity_layer_free(dxf_text_entity_layer_t *p) {
-  if (p) {
-    delete p;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
-int dxf_text_entity_layer_get_count(dxf_text_entity_layer_t *p) {
+void dxf_text_entity_layer_free(dxf_text_entity_layer_t *p) { try {
+  if (p) {
+    delete p;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+int dxf_text_entity_layer_get_count(dxf_text_entity_layer_t *p) { try {
   if (p) {
     return static_cast<int>(p->entities.size());
   }
   return 0;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
 dxf_text_entity_t *dxf_text_entity_layer_get_entity(dxf_text_entity_layer_t *p,
-                                                    int index) {
+                                                    int index) { try {
   if (p) {
     return new dxf_text_entity_t{.entity = p->entities[index]};
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 dxf_text_entity_t *dxf_text_entity_new(const char *text, pnt3d_t position,
                                        double height, double rotation,
-                                       int color) {
+                                       int color) { try {
   return new dxf_text_entity_t{
       .entity = flywave::dxf::dxf_text_entity{
           text, gp_Pnt(position.x, position.y, position.z), gp_Vec(0, 0, 1),
           gp_Vec(1, 0, 0), height, rotation, color}};
-}
-
-void dxf_text_entity_free(dxf_text_entity_t *p) {
-  if (p) {
-    delete p;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
   }
 }
 
-const char *dxf_text_entity_get_text(dxf_text_entity_t *p) {
+void dxf_text_entity_free(dxf_text_entity_t *p) { try {
+  if (p) {
+    delete p;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+const char *dxf_text_entity_get_text(dxf_text_entity_t *p) { try {
   if (p) {
     return p->entity.text.c_str();
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-pnt3d_t dxf_text_entity_get_position(dxf_text_entity_t *p) {
+pnt3d_t dxf_text_entity_get_position(dxf_text_entity_t *p) { try {
   if (p) {
     return pnt3d_t{p->entity.position.X(), p->entity.position.Y(),
                    p->entity.position.Z()};
   }
   return pnt3d_t{0, 0, 0};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return pnt3d_t{};
+  }
+  catch (...) {
+    return pnt3d_t{};
+  }
 }
 
-vec3d_t dxf_text_entity_get_normal(dxf_text_entity_t *p) {
+vec3d_t dxf_text_entity_get_normal(dxf_text_entity_t *p) { try {
   if (p) {
     return vec3d_t{p->entity.normal.X(), p->entity.normal.Y(),
                    p->entity.normal.Z()};
   }
   return vec3d_t{0, 0, 0};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return vec3d_t{};
+  }
+  catch (...) {
+    return vec3d_t{};
+  }
 }
 
-vec3d_t dxf_text_entity_get_x_axis_dir(dxf_text_entity_t *p) {
+vec3d_t dxf_text_entity_get_x_axis_dir(dxf_text_entity_t *p) { try {
   if (p) {
     return vec3d_t{p->entity.x_axis_dir.X(), p->entity.x_axis_dir.Y(),
                    p->entity.x_axis_dir.Z()};
   }
   return vec3d_t{0, 0, 0};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return vec3d_t{};
+  }
+  catch (...) {
+    return vec3d_t{};
+  }
 }
 
-dxf_writer_t *dxf_open_writer(const char *filename) {
+dxf_writer_t *dxf_open_writer(const char *filename) { try {
   auto writer = std::make_unique<flywave::dxf::dxf_shape_writer>(filename);
   return new dxf_writer_t{.writer = std::move(writer)};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-void dxf_writer_free(dxf_writer_t *p) {
+void dxf_writer_free(dxf_writer_t *p) { try {
   if (p) {
     delete p;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
 void dxf_writer_add_shape(dxf_writer_t *p, const char *layerName,
-                          topo_shape_t *shape, int index) {
+                          topo_shape_t *shape, int index) { try {
   if (p) {
     p->writer->add_shape(layerName, *shape->shp, index);
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
 void dxf_writer_add_text(dxf_writer_t *p, const char *layerName,
                          const char *text, pnt3d_t position, double height,
-                         double rotation, int index) {
+                         double rotation, int index) { try {
   if (p) {
     p->writer->add_text(layerName,
                         flywave::dxf::dxf_text_entity{
@@ -287,37 +533,69 @@ void dxf_writer_add_text(dxf_writer_t *p, const char *layerName,
                             gp_Vec(0, 0, 1), gp_Vec(1, 0, 0), height, rotation,
                             index});
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
 void dxf_writer_add_shape_layer(dxf_writer_t *p, const char *name,
-                                dxf_shape_entity_layer_t *layer) {
+                                dxf_shape_entity_layer_t *layer) { try {
   if (p) {
     std::vector<std::pair<TopoDS_Shape, flywave::dxf::color_index_t>> shapes;
     for (int i = 0; i < dxf_shape_entity_layer_get_count(layer); ++i) {
       auto entity = dxf_shape_entity_layer_get_entity(layer, i);
+      if (!entity)
+        continue;
       shapes.emplace_back(entity->entity.shape, entity->entity.color);
+      dxf_shape_entity_free(entity); // get_entity 每次 new, 用完即释放
     }
     p->writer->add_shape_layer(name, shapes);
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
 void dxf_writer_add_text_layer(dxf_writer_t *p, const char *name,
-                               dxf_text_entity_layer_t *layer) {
+                               dxf_text_entity_layer_t *layer) { try {
   if (p) {
     std::vector<flywave::dxf::dxf_text_entity> texts;
     for (int i = 0; i < dxf_text_entity_layer_get_count(layer); ++i) {
       auto entity = dxf_text_entity_layer_get_entity(layer, i);
+      if (!entity)
+        continue;
       texts.push_back(entity->entity);
+      dxf_text_entity_free(entity); // get_entity 每次 new, 用完即释放
     }
     p->writer->add_text_layer(name, texts);
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-_Bool dxf_writer_write(dxf_writer_t *p) {
+_Bool dxf_writer_write(dxf_writer_t *p) { try {
   if (p) {
     return p->writer->write();
   }
   return false;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return false;
+  }
+  catch (...) {
+    return false;
+  }
 }
 
 #ifdef __cplusplus

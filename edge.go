@@ -192,11 +192,13 @@ func (s *Edge) Copy() *Edge {
 }
 
 func (s *Edge) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
+	defer runtime.KeepAlive(m)
 	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(false))
 }
 
 func (s *Edge) MeshWithTexture(m *MeshReceiver, tolerance, deflection, angle float64) {
 	m.hasTexCoords = true
+	defer runtime.KeepAlive(m)
 	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(true))
 }
 
@@ -253,7 +255,7 @@ func (s *Edge) GetSurfaceColour() Color {
 }
 
 func (s *Edge) GetCurveColour() Color {
-	return Color{val: C.topo_shape_get_surface_colour(s.inner.val.shp)}
+	return Color{val: C.topo_shape_get_curve_colour(s.inner.val.shp)}
 }
 
 func (s *Edge) GetLabel() string {
@@ -521,8 +523,8 @@ func (e *Edge) SampleUniform(n float64) ([]Point3, []float64) {
 	C.topo_edge_sample_uniform(e.inner.val, C.double(n), &cPoints, &pointCount,
 		&cParams, &paramCount)
 	defer func() {
-		C.free(unsafe.Pointer(cPoints))
-		C.free(unsafe.Pointer(cParams))
+		C.topo_free_array(unsafe.Pointer(cPoints))
+		C.topo_free_array(unsafe.Pointer(cParams))
 	}()
 
 	points := make([]Point3, pointCount)
@@ -547,7 +549,7 @@ func (e *Edge) LocationAt(d float64, mode, frame int, planar bool) *TopoLocation
 	if loc == nil {
 		return nil
 	}
-	return &TopoLocation{inner: &innerTopoLocation{val: loc}}
+	return newTopoLocation(loc)
 }
 
 func (e *Edge) Locations(ds []float64, mode, frame int, planar bool) []*TopoLocation {

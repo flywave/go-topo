@@ -473,10 +473,13 @@ WORKPLANECAPICALL workplane_t *workplane_last(workplane_t *wp);
 WORKPLANECAPICALL workplane_t *workplane_end(workplane_t *wp, int n);
 
 WORKPLANECAPICALL workplane_t **workplane_all(workplane_t *wp, int *count);
+// 所有权契约: 仅释放指针数组本身, 元素所有权已转移给调用方。
 WORKPLANECAPICALL void workplane_list_free(workplane_t **list, int count);
 WORKPLANECAPICALL topo_shape_t **workplane_shapes(workplane_t *wp, int *count);
+// 所有权契约: 仅释放指针数组本身, 元素所有权已转移给调用方。
 WORKPLANECAPICALL void shape_list_free(topo_shape_t **list, int count);
 WORKPLANECAPICALL shape_object_t **workplane_vals(workplane_t *wp, int *count);
+// 所有权契约: 仅释放指针数组本身, 元素所有权已转移给调用方。
 WORKPLANECAPICALL void shape_objects_free(shape_object_t **list, int count);
 WORKPLANECAPICALL shape_object_t *workplane_val(workplane_t *wp);
 WORKPLANECAPICALL int workplane_size(workplane_t *wp);

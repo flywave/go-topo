@@ -10026,6 +10026,11 @@ TopoDS_Shape create_u_shaped_ring(const u_shaped_ring_params &params) {
 
   double chord = params.height + params.thickness; // 开口高度即弦长
   double half_chord = chord / 2;
+  // 弦长超过 2*radius 时圆弧不存在, sqrt 会得到 NaN 并在后续 MakeEdge 崩溃
+  if (half_chord >= params.radius) {
+    throw Standard_ConstructionError(
+        "U-shaped ring: (height+thickness)/2 must be smaller than radius");
+  }
   double arcHeight =
       params.radius - sqrt(pow(params.radius, 2) - pow(half_chord, 2));
 
@@ -10046,6 +10051,10 @@ TopoDS_Shape create_u_shaped_ring(const u_shaped_ring_params &params) {
   TopoDS_Edge edge1 = BRepBuilderAPI_MakeEdge(pathStart, arcStart).Edge();
   Handle(Geom_TrimmedCurve) arc =
       GC_MakeArcOfCircle(arcStart, arcCenter, arcEnd).Value();
+  if (arc.IsNull()) {
+    throw Standard_ConstructionError(
+        "U-shaped ring: failed to build the arc segment");
+  }
   TopoDS_Edge arcEdge = BRepBuilderAPI_MakeEdge(arc).Edge();
   TopoDS_Edge edge3 = BRepBuilderAPI_MakeEdge(arcEnd, pathEnd).Edge();
 

@@ -192,11 +192,13 @@ func (s *Solid) Copy() *Solid {
 }
 
 func (s *Solid) Mesh(m *MeshReceiver, tolerance, deflection, angle float64) {
+	defer runtime.KeepAlive(m)
 	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(false))
 }
 
 func (s *Solid) MeshWithTexture(m *MeshReceiver, tolerance, deflection, angle float64) {
 	m.hasTexCoords = true
+	defer runtime.KeepAlive(m)
 	C.topo_shape_mesh(s.inner.val.shp, m.inner.val, C.double(tolerance), C.double(deflection), C.double(angle), C.bool(true))
 }
 
@@ -253,7 +255,7 @@ func (s *Solid) GetSurfaceColour() Color {
 }
 
 func (s *Solid) GetCurveColour() Color {
-	return Color{val: C.topo_shape_get_surface_colour(s.inner.val.shp)}
+	return Color{val: C.topo_shape_get_curve_colour(s.inner.val.shp)}
 }
 
 func (s *Solid) GetLabel() string {
@@ -344,7 +346,7 @@ func (s *Solid) InnerShells() []*Shell {
 	if cShells == nil || count == 0 {
 		return nil
 	}
-	defer C.free(unsafe.Pointer(cShells))
+	defer C.topo_free_array(unsafe.Pointer(cShells))
 
 	shells := make([]*Shell, int(count))
 	ccShellsSlice := (*[1 << 30]C.struct__topo_shell_t)(unsafe.Pointer(cShells))[:count:count]
@@ -626,7 +628,11 @@ func (s *Solid) Fillet(edges []Edge, radius []float64) int {
 }
 
 func (s *Solid) Chamfer(edges []Edge, distances []float64) int {
+	if len(edges) == 0 || len(distances) == 0 {
+		return 0
+	}
 	cEdges := C.malloc(C.size_t(len(edges)) * C.size_t(unsafe.Sizeof(C.struct__topo_edge_t{})))
+	defer C.free(cEdges)
 	edgesSlice := (*[1<<30 - 1]C.struct__topo_edge_t)(cEdges)[:len(edges)]
 
 	for i := range edges {

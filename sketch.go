@@ -181,6 +181,9 @@ func (c *Sketch) FaceFromWire(wire *Wire, angle float64, tag string) *Sketch {
 }
 
 func (c *Sketch) FaceFromEdges(edges []*Edge, angle float64, tag string) *Sketch {
+	if len(edges) == 0 {
+		return nil
+	}
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
 	ces := make([]*C.struct__topo_edge_t, len(edges))
@@ -339,6 +342,9 @@ func (c *Sketch) Tag(tag string) *Sketch {
 }
 
 func (c *Sketch) Select(tags []string) *Sketch {
+	if len(tags) == 0 {
+		return nil
+	}
 	cstrs := make([]*C.char, len(tags))
 	for i := 0; i < len(tags); i++ {
 		cstrs[i] = C.CString(tags[i])
@@ -501,6 +507,9 @@ func (c *Sketch) ArcFromCenter(center *TopoVector, radius, startAngle, deltaAngl
 }
 
 func (c *Sketch) Spline(points []*TopoVector, tag string, forConstruction bool) *Sketch {
+	if len(points) == 0 {
+		return nil
+	}
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
 	cpoints := make([]*C.struct__topo_vector_t, len(points))
@@ -512,6 +521,9 @@ func (c *Sketch) Spline(points []*TopoVector, tag string, forConstruction bool) 
 }
 
 func (c *Sketch) SplineWithTangents(points []*TopoVector, tangents1, tangents2 *TopoVector, periodic bool, tag string, forConstruction bool) *Sketch {
+	if len(points) == 0 {
+		return nil
+	}
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
 	cpoints := make([]*C.struct__topo_vector_t, len(points))
@@ -531,6 +543,9 @@ func (c *Sketch) SplineWithTangents(points []*TopoVector, tangents1, tangents2 *
 }
 
 func (c *Sketch) Bezier(points []*TopoVector, tag string, forConstruction bool) *Sketch {
+	if len(points) == 0 {
+		return nil
+	}
 	cstr := C.CString(tag)
 	defer C.free(unsafe.Pointer(cstr))
 	cpoints := make([]*C.struct__topo_vector_t, len(points))
@@ -589,6 +604,9 @@ func (c *Sketch) Copy() *Sketch {
 }
 
 func (c *Sketch) Moved(locs []*TopoLocation) *Sketch {
+	if len(locs) == 0 {
+		return nil
+	}
 	clocs := make([]*C.struct__topo_location_t, len(locs))
 	for i := 0; i < len(locs); i++ {
 		clocs[i] = locs[i].inner.val
@@ -650,7 +668,7 @@ func (c *Sketch) Replace() *Sketch {
 
 //export eachForFaceFunc
 func eachForFaceFunc(userData unsafe.Pointer, loc *C.struct__topo_location_t) C.struct__topo_face_t {
-	fn := *(*func(*TopoLocation) *Face)(userData)
+	fn := callbackValue(userData).(func(*TopoLocation) *Face)
 	lloc := &TopoLocation{inner: &innerTopoLocation{val: loc}}
 	runtime.SetFinalizer(lloc.inner, (*innerTopoLocation).free)
 	f := fn(lloc)
@@ -663,14 +681,16 @@ func (c *Sketch) EachForFace(fn func(*TopoLocation) *Face, mode int, tag string,
 	f := func(loc *TopoLocation) *Face {
 		return fn(loc)
 	}
-	C.sketch_each_for_face(c.inner.val, unsafe.Pointer(&f), (*[0]byte)(C.eachForFaceFunc), C.int(mode), cstr, C.bool(ignoreSelection))
+	h := registerCallback(f)
+	defer unregisterCallback(h)
+	C.sketch_each_for_face(c.inner.val, h, (*[0]byte)(C.eachForFaceFunc), C.int(mode), cstr, C.bool(ignoreSelection))
 	runtime.KeepAlive(f)
 	return c
 }
 
 //export eachForSketchFunc
 func eachForSketchFunc(userData unsafe.Pointer, loc *C.struct__topo_location_t) *C.struct__sketch_t {
-	fn := *(*func(*TopoLocation) *Sketch)(userData)
+	fn := callbackValue(userData).(func(*TopoLocation) *Sketch)
 	lloc := &TopoLocation{inner: &innerTopoLocation{val: loc}}
 	runtime.SetFinalizer(lloc.inner, (*innerTopoLocation).free)
 	s := fn(lloc)
@@ -683,14 +703,16 @@ func (c *Sketch) EachForSketch(fn func(*TopoLocation) *Sketch, mode int, tag str
 	f := func(loc *TopoLocation) *Sketch {
 		return fn(loc)
 	}
-	C.sketch_each_for_sketch(c.inner.val, unsafe.Pointer(&f), (*[0]byte)(C.eachForSketchFunc), C.int(mode), cstr, C.bool(ignoreSelection))
+	h := registerCallback(f)
+	defer unregisterCallback(h)
+	C.sketch_each_for_sketch(c.inner.val, h, (*[0]byte)(C.eachForSketchFunc), C.int(mode), cstr, C.bool(ignoreSelection))
 	runtime.KeepAlive(f)
 	return c
 }
 
 //export eachForCompoundFunc
 func eachForCompoundFunc(userData unsafe.Pointer, loc *C.struct__topo_location_t) C.struct__topo_compound_t {
-	fn := *(*func(*TopoLocation) *Compound)(userData)
+	fn := callbackValue(userData).(func(*TopoLocation) *Compound)
 	lloc := &TopoLocation{inner: &innerTopoLocation{val: loc}}
 	runtime.SetFinalizer(lloc.inner, (*innerTopoLocation).free)
 	c := fn(lloc)
@@ -703,14 +725,16 @@ func (c *Sketch) EachForCompound(fn func(*TopoLocation) *Compound, mode int, tag
 	f := func(loc *TopoLocation) *Compound {
 		return fn(loc)
 	}
-	C.sketch_each_for_compound(c.inner.val, unsafe.Pointer(&f), (*[0]byte)(C.eachForCompoundFunc), C.int(mode), cstr, C.bool(ignoreSelection))
+	h := registerCallback(f)
+	defer unregisterCallback(h)
+	C.sketch_each_for_compound(c.inner.val, h, (*[0]byte)(C.eachForCompoundFunc), C.int(mode), cstr, C.bool(ignoreSelection))
 	runtime.KeepAlive(f)
 	return c
 }
 
 //export sketchFilterFunc
 func sketchFilterFunc(userData unsafe.Pointer, val *C.struct__sketch_val_t) C.bool {
-	fn := *(*func(*SketchObject) bool)(userData)
+	fn := callbackValue(userData).(func(*SketchObject) bool)
 	obj := &SketchObject{inner: &innerSketchObject{val: val}}
 	runtime.SetFinalizer(obj.inner, (*innerSketchObject).free)
 	return C.bool(fn(obj))
@@ -720,28 +744,32 @@ func (c *Sketch) Filter(fn func(*SketchObject) bool) *Sketch {
 	f := func(val *SketchObject) bool {
 		return fn(val)
 	}
-	C.sketch_filter(c.inner.val, unsafe.Pointer(&f), (*[0]byte)(C.sketchFilterFunc))
+	h := registerCallback(f)
+	defer unregisterCallback(h)
+	C.sketch_filter(c.inner.val, h, (*[0]byte)(C.sketchFilterFunc))
 	runtime.KeepAlive(f)
 	return c
 }
 
 //export sketchMapFunc
 func sketchMapFunc(userData unsafe.Pointer, val *C.struct__sketch_val_t) *C.struct__sketch_val_t {
-	fn := *(*func(*SketchObject) *SketchObject)(userData)
+	fn := callbackValue(userData).(func(*SketchObject) *SketchObject)
 	obj := &SketchObject{inner: &innerSketchObject{val: val}}
 	runtime.SetFinalizer(obj.inner, (*innerSketchObject).free)
 	return fn(obj).inner.val
 }
 
 func (c *Sketch) Map(fn func(*SketchObject) *SketchObject) *Sketch {
-	C.sketch_map(c.inner.val, unsafe.Pointer(&fn), (*[0]byte)(C.sketchMapFunc))
+	h := registerCallback(fn)
+	defer unregisterCallback(h)
+	C.sketch_map(c.inner.val, h, (*[0]byte)(C.sketchMapFunc))
 	runtime.KeepAlive(fn)
 	return c
 }
 
 //export sketchApplyFunc
 func sketchApplyFunc(userData unsafe.Pointer, vals **C.struct__sketch_val_t, num C.int) **C.struct__sketch_val_t {
-	fn := *(*func([]*SketchObject) []*SketchObject)(userData)
+	fn := callbackValue(userData).(func([]*SketchObject) []*SketchObject)
 	vals_ := make([]*SketchObject, num)
 	valsSlice := unsafe.Slice(vals, num)
 	for i := 0; i < int(num); i++ {
@@ -763,14 +791,16 @@ func sketchApplyFunc(userData unsafe.Pointer, vals **C.struct__sketch_val_t, num
 }
 
 func (c *Sketch) Apply(fn func([]*SketchObject) []*SketchObject) *Sketch {
-	C.sketch_apply(c.inner.val, unsafe.Pointer(&fn), (*[0]byte)(C.sketchApplyFunc))
+	h := registerCallback(fn)
+	defer unregisterCallback(h)
+	C.sketch_apply(c.inner.val, h, (*[0]byte)(C.sketchApplyFunc))
 	runtime.KeepAlive(fn)
 	return c
 }
 
 //export sketchSortFunc
 func sketchSortFunc(userData unsafe.Pointer, val1 *C.struct__sketch_val_t, val2 *C.struct__sketch_val_t) C.bool {
-	fn := *(*func(*SketchObject, *SketchObject) bool)(userData)
+	fn := callbackValue(userData).(func(*SketchObject, *SketchObject) bool)
 	o1 := &SketchObject{inner: &innerSketchObject{val: val1}}
 	runtime.SetFinalizer(o1.inner, (*innerSketchObject).free)
 	o2 := &SketchObject{inner: &innerSketchObject{val: val2}}
@@ -779,7 +809,9 @@ func sketchSortFunc(userData unsafe.Pointer, val1 *C.struct__sketch_val_t, val2 
 }
 
 func (c *Sketch) Sort(fn func(*SketchObject, *SketchObject) bool) *Sketch {
-	C.sketch_sort(c.inner.val, unsafe.Pointer(&fn), (*[0]byte)(C.sketchSortFunc))
+	h := registerCallback(fn)
+	defer unregisterCallback(h)
+	C.sketch_sort(c.inner.val, h, (*[0]byte)(C.sketchSortFunc))
 	runtime.KeepAlive(fn)
 	return c
 }

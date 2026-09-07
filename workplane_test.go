@@ -348,7 +348,9 @@ func TestWorkplaneFilletChamfer(t *testing.T) {
 	t.Run("fillet on box edges", func(t *testing.T) {
 		wp := NewNamedWorkplane("XY")
 		r1 := wp.BoxCorners(10, 10, 10)
-		r2 := r1.Faces(">Z", "").Edges("%circle", "")
+		// 顶面 4 条直边做圆角 (方体上没有圆边, 原 %circle 选择器匹配为空,
+		// fillet 会因 "edges be selected" 报错)
+		r2 := r1.Faces(">Z", "").Edges("", "")
 		r3 := r2.Fillet(1)
 		if err := r3.Err(); err != nil {
 			t.Fatalf("Fillet error: %v", err)

@@ -59,54 +59,134 @@ dir2d_t make_dir2d_from_point(pnt2d_t p1, pnt2d_t p2) {
   }
 }
 
-axis1_t make_axis(pnt3d_t p, dir3d_t v) {
+axis1_t make_axis(pnt3d_t p, dir3d_t v) { try {
   gp_Ax1 ax1{cast_to_gp(p), cast_to_gp(v)};
   return cast_from_gp(ax1);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return axis1_t{};
+  }
+  catch (...) {
+    return axis1_t{};
+  }
 }
 
-axis2_t make_axis2_from_nvx(pnt3d_t p, dir3d_t N, dir3d_t Vx) {
+axis2_t make_axis2_from_nvx(pnt3d_t p, dir3d_t N, dir3d_t Vx) { try {
   gp_Ax2 ax2{gp_Pnt(cast_to_gp(p)), cast_to_gp(N), cast_to_gp(Vx)};
   return cast_from_gp(ax2);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return axis2_t{};
+  }
+  catch (...) {
+    return axis2_t{};
+  }
 }
 
-axis2_t make_axis2(pnt3d_t p, dir3d_t v) {
+axis2_t make_axis2(pnt3d_t p, dir3d_t v) { try {
   gp_Ax2 ax2{gp_Pnt(cast_to_gp(p)), cast_to_gp(v)};
   return cast_from_gp(ax2);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return axis2_t{};
+  }
+  catch (...) {
+    return axis2_t{};
+  }
 }
 
-axis3_t make_axis3(axis2_t a) {
+axis3_t make_axis3(axis2_t a) { try {
   gp_Ax3 ax3{cast_to_gp(a)};
   return cast_from_gp(ax3);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return axis3_t{};
+  }
+  catch (...) {
+    return axis3_t{};
+  }
 }
 
-axis3_t make_axis3_from_nvx(pnt3d_t p, dir3d_t N, dir3d_t Vx) {
+axis3_t make_axis3_from_nvx(pnt3d_t p, dir3d_t N, dir3d_t Vx) { try {
   gp_Ax3 ax3{gp_Pnt(cast_to_gp(p)), cast_to_gp(N), cast_to_gp(Vx)};
   return cast_from_gp(ax3);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return axis3_t{};
+  }
+  catch (...) {
+    return axis3_t{};
+  }
 }
 
-axis3_t make_axis3_from_v(pnt3d_t p, dir3d_t v) {
+axis3_t make_axis3_from_v(pnt3d_t p, dir3d_t v) { try {
   gp_Ax3 ax3{gp_Pnt(cast_to_gp(p)), cast_to_gp(v)};
   return cast_from_gp(ax3);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return axis3_t{};
+  }
+  catch (...) {
+    return axis3_t{};
+  }
 }
 
-axis2d_t make_axis2d(pnt2d_t p, dir2d_t v) {
+axis2d_t make_axis2d(pnt2d_t p, dir2d_t v) { try {
   gp_Ax2d ax2{gp_Pnt2d(cast_to_gp(p)), cast_to_gp(v)};
   return cast_from_gp(ax2);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return axis2d_t{};
+  }
+  catch (...) {
+    return axis2d_t{};
+  }
 }
 
-axis22d_t make_axis22d(axis2d_t a) {
+axis22d_t make_axis22d(axis2d_t a) { try {
   gp_Ax22d ax2{cast_to_gp(a)};
   return cast_from_gp(ax2);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return axis22d_t{};
+  }
+  catch (...) {
+    return axis22d_t{};
+  }
 }
 
-axis22d_t make_axis22d_from_v(pnt2d_t p, dir2d_t v) {
+axis22d_t make_axis22d_from_v(pnt2d_t p, dir2d_t v) { try {
   gp_Ax22d ax2{gp_Pnt2d(cast_to_gp(p)), cast_to_gp(v)};
   return cast_from_gp(ax2);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return axis22d_t{};
+  }
+  catch (...) {
+    return axis22d_t{};
+  }
 }
 
-axis22d_t make_axis22d_from_vxy(pnt2d_t p, dir2d_t vx, dir2d_t vy) {
+axis22d_t make_axis22d_from_vxy(pnt2d_t p, dir2d_t vx, dir2d_t vy) { try {
   gp_Ax22d ax2{gp_Pnt2d(cast_to_gp(p)), cast_to_gp(vx), cast_to_gp(vy)};
   return cast_from_gp(ax2);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return axis22d_t{};
+  }
+  catch (...) {
+    return axis22d_t{};
+  }
 }
 
 circ_t make_circ_from_axis2(axis2_t a, double radius) {
@@ -312,9 +392,17 @@ cylinder_t make_cylinder_from_axis2(axis2_t a, double radius) {
   }
 }
 
-cylinder_t make_cylinder_from_cylinder_point(cylinder_t a, pnt3d_t p) {
+cylinder_t make_cylinder_from_cylinder_point(cylinder_t a, pnt3d_t p) { try {
   gce_MakeCylinder mc(cast_to_gp(a), gp_Pnt(cast_to_gp(p)));
   return cast_from_gp(mc.Value());
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return cylinder_t{};
+  }
+  catch (...) {
+    return cylinder_t{};
+  }
 }
 
 cylinder_t make_cylinder_from_cylinder_dist(cylinder_t a, double dist) {
@@ -823,18 +911,42 @@ plane_t make_plane_from_axis1(axis1_t a) {
   }
 }
 
-sphere_t make_sphere_from_axis3(axis3_t a, double radius) {
+sphere_t make_sphere_from_axis3(axis3_t a, double radius) { try {
   return cast_from_gp(gp_Sphere(cast_to_gp(a), radius));
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return sphere_t{};
+  }
+  catch (...) {
+    return sphere_t{};
+  }
 }
 
 torus_t make_torus_from_axis3(axis3_t a, double major_radius,
-                              double minor_radius) {
+                              double minor_radius) { try {
   return cast_from_gp(gp_Torus(cast_to_gp(a), major_radius, minor_radius));
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return torus_t{};
+  }
+  catch (...) {
+    return torus_t{};
+  }
 }
 
-torus_t make_torus_from_elips(elips_t el) {
+torus_t make_torus_from_elips(elips_t el) { try {
   return make_torus_from_axis3(make_axis3(el.a2), el.major_radius,
                                el.minor_radius);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return torus_t{};
+  }
+  catch (...) {
+    return torus_t{};
+  }
 }
 
 #ifdef __cplusplus

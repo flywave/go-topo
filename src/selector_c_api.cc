@@ -21,15 +21,19 @@ selector_t *selector_custom_selector_create(
       int retSize = 0;
       auto rets =
           func(user_data, shapes_, static_cast<int>(shapes.size()), &retSize);
+      // 先读取返回结果再释放输入 wrapper: Go 回调透传输入时 rets 与
+      // shapes_ 别名, 先 delete 会造成 use-after-free (堆破坏的来源)。
+      std::vector<flywave::topo::shape> outs;
+      outs.reserve(retSize);
+      for (int i = 0; i < retSize; ++i) {
+        if (rets[i] && rets[i]->shp) {
+          outs.push_back(*(rets[i]->shp));
+        }
+      }
       for (int i = 0; i < shapes.size(); ++i) {
         delete shapes_[i];
       }
       delete[] shapes_;
-      std::vector<flywave::topo::shape> outs;
-      outs.reserve(retSize);
-      for (int i = 0; i < retSize; ++i) {
-        outs.push_back(*(rets[i]->shp));
-      }
       return outs;
     };
 
@@ -41,9 +45,15 @@ selector_t *selector_custom_selector_create(
   }
 }
 
-void selector_free(selector_t *sel) {
+void selector_free(selector_t *sel) { try {
   if (sel) {
     delete sel;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 

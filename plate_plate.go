@@ -429,6 +429,9 @@ func NewLinearScalarConstraintDim1(ppc []PinpointConstraint, coffes []XYZ) *Line
 }
 
 func NewLinearScalarConstraintDim2(ppc []PinpointConstraint, coffes [][]XYZ) *LinearScalarConstraint {
+	if len(ppc) == 0 || len(coffes) == 0 || len(coffes[0]) == 0 {
+		return nil
+	}
 	ppcc := make([]*C.struct__plate_pinpoint_constraint_t, len(ppc))
 	for i := range ppc {
 		ppcc[i] = ppc[i].inner.val
@@ -438,12 +441,15 @@ func NewLinearScalarConstraintDim2(ppc []PinpointConstraint, coffes [][]XYZ) *Li
 	inw := make([]C.struct__xyz_t, col*row)
 
 	for i := 0; i < row; i++ {
+		if len(coffes[i]) != col {
+			return nil
+		}
 		for j := 0; j < col; j++ {
-			inw[i*col+j] = coffes[j][i].val
+			inw[i*col+j] = coffes[i][j].val
 		}
 	}
 	p := &LinearScalarConstraint{inner: &innerLinearScalarConstraint{val: C.plate_linear_scalar_constraint_new_2dim(&ppcc[0], C.int(len(ppc)), &inw[0], C.int(row), C.int(col))}}
-	runtime.SetFinalizer(p.inner, (*innerGlobalTranslationConstraint).free)
+	runtime.SetFinalizer(p.inner, (*innerLinearScalarConstraint).free)
 	return p
 }
 

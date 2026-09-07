@@ -12,62 +12,140 @@
 extern "C" {
 #endif
 
-void topo_shape_free(topo_shape_t *p) {
+void topo_shape_free(topo_shape_t *p) { try {
   if (p) {
     delete p;
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-topo_shape_t *topo_shape_share(topo_shape_t *p) {
+topo_shape_t *topo_shape_share(topo_shape_t *p) { try {
   if (p) {
     return new topo_shape_t{.shp = p->shp};
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-topo_solid_t topo_make_solid() {
+topo_solid_t topo_make_solid() { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>()}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
-_Bool topo_shape_is_null(topo_shape_t *p) {
+_Bool topo_shape_is_null(topo_shape_t *p) { try {
   if (p) {
     return p->shp->is_null();
   }
   return false;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return false;
+  }
+  catch (...) {
+    return false;
+  }
 }
 
-_Bool topo_shape_is_valid(topo_shape_t *p) {
+_Bool topo_shape_is_valid(topo_shape_t *p) { try {
   if (p) {
     return p->shp->is_valid();
   }
   return false;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return false;
+  }
+  catch (...) {
+    return false;
+  }
 }
 
-_Bool topo_shape_equals(topo_shape_t *p, topo_shape_t *o) {
+_Bool topo_shape_equals(topo_shape_t *p, topo_shape_t *o) { try {
   if (p != NULL && o != NULL && p != o) {
     return p->shp->equals(*o->shp);
   }
   return true;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return false;
+  }
+  catch (...) {
+    return false;
+  }
 }
 
-int topo_shape_type(topo_shape_t *p) {
+int topo_shape_type(topo_shape_t *p) { try {
   return static_cast<int>(p->shp->type());
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-bbox_t topo_shape_bounding_box(topo_shape_t *p) {
+bbox_t topo_shape_bounding_box(topo_shape_t *p) { try {
   auto b = p->shp->bounding_box();
   return cast_from_gp(b);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return bbox_t{};
+  }
+  catch (...) {
+    return bbox_t{};
+  }
 }
 
-int topo_shape_hash_code(topo_shape_t *p) { return p->shp->hash_code(); }
+int topo_shape_hash_code(topo_shape_t *p) { try { return p->shp->hash_code();   }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
+}
 
-int topo_shape_transform(topo_shape_t *p, trsf_t mat) {
+int topo_shape_transform(topo_shape_t *p, trsf_t mat) { try {
   if (p) {
     auto t = cast_to_gp(mat);
     return p->shp->transform(t);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 #define CATCH_SHAPE_OP(RET_ON_ERR) \
@@ -239,376 +317,782 @@ topo_shape_t *topo_shape_mirrored_from_axis2(topo_shape_t *p, axis2_t a) {
   return nullptr;
 }
 
-int topo_shape_get_orientation(topo_shape_t *p) {
+int topo_shape_get_orientation(topo_shape_t *p) { try {
   return static_cast<int>(p->shp->get_orientation());
-}
-
-void topo_shape_set_orientation(topo_shape_t *p, int ori) {
-  if (p) {
-    p->shp->set_orientation(static_cast<flywave::topo::orientation>(ori));
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
   }
 }
 
-topo_location_t *topo_shape_get_location(topo_shape_t *p) {
+void topo_shape_set_orientation(topo_shape_t *p, int ori) { try {
+  if (p) {
+    p->shp->set_orientation(static_cast<flywave::topo::orientation>(ori));
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+topo_location_t *topo_shape_get_location(topo_shape_t *p) { try {
   return new topo_location_t{.loc = p->shp->location()};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-void topo_shape_set_location(topo_shape_t *p, topo_location_t *loc) {
+void topo_shape_set_location(topo_shape_t *p, topo_location_t *loc) { try {
   p->shp->set_location(loc->loc);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-_Bool topo_shape_fix_shape(topo_shape_t *p) { return p->shp->fix_shape(); }
+_Bool topo_shape_fix_shape(topo_shape_t *p) { try { return p->shp->fix_shape();   }
+  catch (const std::exception &e) {
+    (void)e;
+    return false;
+  }
+  catch (...) {
+    return false;
+  }
+}
 
-topo_shape_t *topo_shape_copy(topo_shape_t *p) {
+topo_shape_t *topo_shape_copy(topo_shape_t *p) { try {
   return new topo_shape_t{
       .shp = std::make_shared<flywave::topo::shape>(p->shp->copy())};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 int topo_shape_mesh(topo_shape_t *p, topo_mesh_receiver_t *receiver,
                     double tolerance, double deflection, double angle,
-                    _Bool uv_coords) {
+                    _Bool uv_coords) { try {
   if (p) {
     return p->shp->write_triangulation(*receiver->recv, tolerance, deflection,
                                        angle, uv_coords);
   }
   return 1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-void topo_shape_set_surface_colour(topo_shape_t *p, color_t c) {
+void topo_shape_set_surface_colour(topo_shape_t *p, color_t c) { try {
   if (p) {
     p->shp->set_surface_colour(cast_to_gp(c));
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-void topo_shape_set_curve_colour(topo_shape_t *p, color_t c) {
+void topo_shape_set_curve_colour(topo_shape_t *p, color_t c) { try {
   if (p) {
     p->shp->set_curve_colour(cast_to_gp(c));
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-void topo_shape_set_label(topo_shape_t *p, const char *name) {
+void topo_shape_set_label(topo_shape_t *p, const char *name) { try {
   if (p) {
     p->shp->set_label(name);
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-void topo_shape_set_u_origin(topo_shape_t *p, double u) {
+void topo_shape_set_u_origin(topo_shape_t *p, double u) { try {
   if (p) {
     p->shp->set_u_origin(u);
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-void topo_shape_set_v_origin(topo_shape_t *p, double v) {
+void topo_shape_set_v_origin(topo_shape_t *p, double v) { try {
   if (p) {
     p->shp->set_v_origin(v);
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-void topo_shape_set_u_repeat(topo_shape_t *p, double u) {
+void topo_shape_set_u_repeat(topo_shape_t *p, double u) { try {
   if (p) {
     p->shp->set_u_repeat(u);
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-void topo_shape_set_v_repeat(topo_shape_t *p, double v) {
+void topo_shape_set_v_repeat(topo_shape_t *p, double v) { try {
   if (p) {
     p->shp->set_v_repeat(v);
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-void topo_shape_set_scale_v(topo_shape_t *p, double v) {
+void topo_shape_set_scale_v(topo_shape_t *p, double v) { try {
   if (p) {
     p->shp->set_scale_v(v);
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-void topo_shape_set_scale_u(topo_shape_t *p, double u) {
+void topo_shape_set_scale_u(topo_shape_t *p, double u) { try {
   if (p) {
     p->shp->set_scale_u(u);
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-void topo_shape_set_auto_scale_size_on_u(topo_shape_t *p, double u) {
+void topo_shape_set_auto_scale_size_on_u(topo_shape_t *p, double u) { try {
   if (p) {
     p->shp->set_auto_scale_size_on_u(u);
   }
-}
-
-void topo_shape_set_auto_scale_size_on_v(topo_shape_t *p, double v) {
-  if (p) {
-    p->shp->set_auto_scale_size_on_v(v);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
-void topo_shape_set_txture_map_type(topo_shape_t *p, int t) {
+void topo_shape_set_auto_scale_size_on_v(topo_shape_t *p, double v) { try {
+  if (p) {
+    p->shp->set_auto_scale_size_on_v(v);
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+void topo_shape_set_txture_map_type(topo_shape_t *p, int t) { try {
   if (p) {
     p->shp->set_txture_map_type(
         static_cast<flywave::topo::texture_mapping_rule>(t));
   }
-}
-
-void topo_shape_set_rotation_angle(topo_shape_t *p, double angle) {
-  if (p) {
-    p->shp->set_rotation_angle(angle);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
-color_t topo_shape_get_surface_colour(topo_shape_t *p) {
+void topo_shape_set_rotation_angle(topo_shape_t *p, double angle) { try {
+  if (p) {
+    p->shp->set_rotation_angle(angle);
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+color_t topo_shape_get_surface_colour(topo_shape_t *p) { try {
   if (p) {
     return cast_from_gp(p->shp->surface_colour());
   }
   return color_t{0., 0., 0.};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return color_t{};
+  }
+  catch (...) {
+    return color_t{};
+  }
 }
 
-color_t topo_shape_get_curve_colour(topo_shape_t *p) {
+color_t topo_shape_get_curve_colour(topo_shape_t *p) { try {
   if (p) {
     return cast_from_gp(p->shp->curve_colour());
   }
   return color_t{0., 0., 0.};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return color_t{};
+  }
+  catch (...) {
+    return color_t{};
+  }
 }
 
-const char *topo_shape_get_label(topo_shape_t *p) {
+const char *topo_shape_get_label(topo_shape_t *p) { try {
   if (p) {
     return p->shp->label();
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-double topo_shape_get_u_origin(topo_shape_t *p) {
+double topo_shape_get_u_origin(topo_shape_t *p) { try {
   if (p) {
     return p->shp->get_u_origin();
   }
   return 0.;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-double topo_shape_get_v_origin(topo_shape_t *p) {
+double topo_shape_get_v_origin(topo_shape_t *p) { try {
   if (p) {
     return p->shp->get_v_origin();
   }
   return 0.;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-double topo_shape_get_u_repeat(topo_shape_t *p) {
+double topo_shape_get_u_repeat(topo_shape_t *p) { try {
   if (p) {
     return p->shp->get_u_repeat();
   }
   return 1.;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-double topo_shape_get_v_repeat(topo_shape_t *p) {
+double topo_shape_get_v_repeat(topo_shape_t *p) { try {
   if (p) {
     return p->shp->get_v_repeat();
   }
   return 1.;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-double topo_shape_get_scale_v(topo_shape_t *p) {
+double topo_shape_get_scale_v(topo_shape_t *p) { try {
   if (p) {
     return p->shp->get_scale_v();
   }
   return 1.;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-double topo_shape_get_scale_u(topo_shape_t *p) {
+double topo_shape_get_scale_u(topo_shape_t *p) { try {
   if (p) {
     return p->shp->get_scale_u();
   }
   return 1.;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-double topo_shape_get_auto_scale_size_on_u(topo_shape_t *p) {
+double topo_shape_get_auto_scale_size_on_u(topo_shape_t *p) { try {
   if (p) {
     return p->shp->get_auto_scale_size_on_u();
   }
   return 1.;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-double topo_shape_get_auto_scale_size_on_v(topo_shape_t *p) {
+double topo_shape_get_auto_scale_size_on_v(topo_shape_t *p) { try {
   if (p) {
     return p->shp->get_auto_scale_size_on_v();
   }
   return 1.;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-int topo_shape_get_txture_map_type(topo_shape_t *p) {
+int topo_shape_get_txture_map_type(topo_shape_t *p) { try {
   if (p) {
     return p->shp->get_txture_map_type();
   }
   return TextureNormal;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-double topo_shape_get_rotation_angle(topo_shape_t *p) {
+double topo_shape_get_rotation_angle(topo_shape_t *p) { try {
   if (p) {
     return p->shp->get_rotation_angle();
   }
   return 1.;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-_Bool topo_shape_surface_colour(topo_shape_t *p, double *colour) {
+_Bool topo_shape_surface_colour(topo_shape_t *p, double *colour) { try {
   if (p) {
     return p->shp->surface_colour(colour);
   }
   return false;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return false;
+  }
+  catch (...) {
+    return false;
+  }
 }
 
-pnt3d_t topo_shape_centre_of_mass(topo_shape_t *p) {
+pnt3d_t topo_shape_centre_of_mass(topo_shape_t *p) { try {
   if (p) {
     return cast_from_gp(p->shp->centre_of_mass());
   }
   return pnt3d_t{0, 0, 0};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return pnt3d_t{};
+  }
+  catch (...) {
+    return pnt3d_t{};
+  }
 }
 
-double topo_shape_compute_mass(topo_shape_t *p) {
+double topo_shape_compute_mass(topo_shape_t *p) { try {
   if (p) {
     return p->shp->compute_mass();
   }
   return 0.;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-double topo_shape_compute_area(topo_shape_t *p) {
+double topo_shape_compute_area(topo_shape_t *p) { try {
   if (p) {
     return p->shp->compute_area();
   }
   return 0.;
-}
-
-topo_vertex_t topo_vertex_new(double x, double y, double z) {
-  return topo_vertex_t{
-      .shp = new topo_shape_t{
-          .shp = std::make_shared<flywave::topo::vertex>(x, y, z)}};
-}
-
-void topo_vertex_free(topo_vertex_t t) {
-  if (t.shp) {
-    delete t.shp;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
   }
 }
 
-pnt3d_t topo_vertex_get_point(topo_vertex_t t) {
+topo_vertex_t topo_vertex_new(double x, double y, double z) { try {
+  return topo_vertex_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::vertex>(x, y, z)}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_vertex_t{};
+  }
+  catch (...) {
+    return topo_vertex_t{};
+  }
+}
+
+void topo_vertex_free(topo_vertex_t t) { try {
+  if (t.shp) {
+    delete t.shp;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+pnt3d_t topo_vertex_get_point(topo_vertex_t t) { try {
   auto opt = cast_to_topo(t);
   if (opt) {
     gp_Pnt pt = (*opt);
     return cast_from_gp(pt);
   }
   return pnt3d_t{0., 0., 0.};
-}
-
-topo_wire_t topo_make_wire() {
-  return topo_wire_t{
-      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>()}};
-}
-
-void topo_wire_free(topo_wire_t t) {
-  if (t.shp) {
-    delete t.shp;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return pnt3d_t{};
+  }
+  catch (...) {
+    return pnt3d_t{};
   }
 }
 
-topo_wire_t topo_make_polygon() {
+topo_wire_t topo_make_wire() { try {
+  return topo_wire_t{
+      .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>()}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_wire_t{};
+  }
+  catch (...) {
+    return topo_wire_t{};
+  }
+}
+
+void topo_wire_free(topo_wire_t t) { try {
+  if (t.shp) {
+    delete t.shp;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+topo_wire_t topo_make_polygon() { try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_polygon())}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_wire_t{};
+  }
+  catch (...) {
+    return topo_wire_t{};
+  }
 }
 
-topo_wire_t topo_make_polygon_from_two_point(pnt3d_t P1, pnt3d_t P2) {
+topo_wire_t topo_make_polygon_from_two_point(pnt3d_t P1, pnt3d_t P2) { try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_polygon(
                                       cast_to_gp(P1), cast_to_gp(P2)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_wire_t{};
+  }
+  catch (...) {
+    return topo_wire_t{};
+  }
 }
 
 topo_wire_t topo_make_polygon_from_three_point(pnt3d_t P1, pnt3d_t P2,
-                                               pnt3d_t P3, _Bool Close) {
+                                               pnt3d_t P3, _Bool Close) { try {
   return topo_wire_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::wire>(
               flywave::topo::wire::make_polygon(cast_to_gp(P1), cast_to_gp(P2),
                                                 cast_to_gp(P3), Close))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_wire_t{};
+  }
+  catch (...) {
+    return topo_wire_t{};
+  }
 }
 
 topo_wire_t topo_make_polygon_from_four_point(pnt3d_t P1, pnt3d_t P2,
                                               pnt3d_t P3, pnt3d_t P4,
-                                              _Bool Close) {
+                                              _Bool Close) { try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_polygon(
                                       cast_to_gp(P1), cast_to_gp(P2),
                                       cast_to_gp(P3), cast_to_gp(P4), Close))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_wire_t{};
+  }
+  catch (...) {
+    return topo_wire_t{};
+  }
 }
 
-topo_wire_t topo_make_polygon_two_vertex(topo_vertex_t V1, topo_vertex_t V2) {
+topo_wire_t topo_make_polygon_two_vertex(topo_vertex_t V1, topo_vertex_t V2) { try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_polygon(
                                       *cast_to_topo(V1), *cast_to_topo(V2)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_wire_t{};
+  }
+  catch (...) {
+    return topo_wire_t{};
+  }
 }
 
 topo_wire_t topo_make_polygon_from_three_vertex(topo_vertex_t V1,
                                                 topo_vertex_t V2,
-                                                topo_vertex_t V3, _Bool Close) {
+                                                topo_vertex_t V3, _Bool Close) { try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_polygon(
                                       *cast_to_topo(V1), *cast_to_topo(V2),
                                       *cast_to_topo(V3), Close))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_wire_t{};
+  }
+  catch (...) {
+    return topo_wire_t{};
+  }
 }
 
 topo_wire_t topo_make_polygon_from_four_vertex(topo_vertex_t V1,
                                                topo_vertex_t V2,
                                                topo_vertex_t V3,
-                                               topo_vertex_t V4, _Bool Close) {
+                                               topo_vertex_t V4, _Bool Close) { try {
   return topo_wire_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::wire>(
               flywave::topo::wire::make_polygon(
                   *cast_to_topo(V1), *cast_to_topo(V2), *cast_to_topo(V3),
                   *cast_to_topo(V4), Close))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_wire_t{};
+  }
+  catch (...) {
+    return topo_wire_t{};
+  }
 }
 
-topo_wire_t topo_make_wire_from_edge(topo_edge_t E) {
+topo_wire_t topo_make_wire_from_edge(topo_edge_t E) { try {
   return topo_wire_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::wire>(
               flywave::topo::wire::make_wire(*cast_to_topo(E)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_wire_t{};
+  }
+  catch (...) {
+    return topo_wire_t{};
+  }
 }
 
-topo_wire_t topo_make_wire_from_two_edge(topo_edge_t E1, topo_edge_t E2) {
+topo_wire_t topo_make_wire_from_two_edge(topo_edge_t E1, topo_edge_t E2) { try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_wire(
                                       *cast_to_topo(E1), *cast_to_topo(E2)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_wire_t{};
+  }
+  catch (...) {
+    return topo_wire_t{};
+  }
 }
 
 topo_wire_t topo_make_wire_from_three_edge(topo_edge_t E1, topo_edge_t E2,
-                                           topo_edge_t E3) {
+                                           topo_edge_t E3) { try {
   return topo_wire_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::wire>(
               flywave::topo::wire::make_wire(
                   *cast_to_topo(E1), *cast_to_topo(E2), *cast_to_topo(E3)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_wire_t{};
+  }
+  catch (...) {
+    return topo_wire_t{};
+  }
 }
 
 topo_wire_t topo_make_wire_from_four_edge(topo_edge_t E1, topo_edge_t E2,
-                                          topo_edge_t E3, topo_edge_t E4) {
+                                          topo_edge_t E3, topo_edge_t E4) { try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_wire(
                                       *cast_to_topo(E1), *cast_to_topo(E2),
                                       *cast_to_topo(E3), *cast_to_topo(E4)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_wire_t{};
+  }
+  catch (...) {
+    return topo_wire_t{};
+  }
 }
 
-topo_wire_t topo_make_wire_from_wire(topo_wire_t W) {
+topo_wire_t topo_make_wire_from_wire(topo_wire_t W) { try {
   return topo_wire_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::wire>(
               flywave::topo::wire::make_wire(*cast_to_topo(W)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_wire_t{};
+  }
+  catch (...) {
+    return topo_wire_t{};
+  }
 }
 
-topo_wire_t topo_make_wire_from_two_wire(topo_wire_t W, topo_edge_t E) {
+topo_wire_t topo_make_wire_from_two_wire(topo_wire_t W, topo_edge_t E) { try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_wire(
                                       *cast_to_topo(W), *cast_to_topo(E)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_wire_t{};
+  }
+  catch (...) {
+    return topo_wire_t{};
+  }
 }
 
 topo_wire_t topo_make_wire_from_edges(topo_edge_t *edges, int count) {
@@ -766,7 +1250,13 @@ topo_wire_t *topo_make_wire_from_combine(topo_wire_t *wires, int count,
   }
 }
 
-void topo_wire_list_free(topo_wire_t *wires, int count) { delete[] wires; }
+void topo_wire_list_free(topo_wire_t *wires, int count) { try { delete[] wires;   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
 topo_wire_t topo_wire_stitch(topo_wire_t w1, topo_wire_t w2) {
   try {
@@ -922,7 +1412,7 @@ int topo_wire_offset(topo_wire_t w, double distance, int joinType) {
 }
 
 int topo_wire_fillet(topo_wire_t w, topo_vertex_t *vertices, int vertcount,
-                     double *radius, int radcount) {
+                     double *radius, int radcount) { try {
   auto opt = cast_to_topo(w);
   if (opt) {
     std::vector<flywave::topo::vertex> ows;
@@ -936,10 +1426,18 @@ int topo_wire_fillet(topo_wire_t w, topo_vertex_t *vertices, int vertcount,
     return opt->fillet(ows, ors);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_wire_chamfer(topo_wire_t w, topo_vertex_t *vertices, int vertcount,
-                      double *distances, int distcount) {
+                      double *distances, int distcount) { try {
   auto opt = cast_to_topo(w);
   if (opt) {
     std::vector<flywave::topo::vertex> ows;
@@ -953,6 +1451,14 @@ int topo_wire_chamfer(topo_wire_t w, topo_vertex_t *vertices, int vertcount,
     return opt->chamfer(ows, ors);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 void topo_wire_bounds(topo_wire_t w, double *min, double *max) {
@@ -1222,12 +1728,28 @@ int topo_wire_projected(topo_wire_t w, topo_face_t f, vec3d_t direction,
   }
 }
 
-void topo_shape_list_free(topo_shape_t **result, int result_count) {
-  if (result) {
-    for (int i = 0; i < result_count; i++) {
-      delete result[i];
-    }
-    delete[] result;
+// 所有权契约: 数组元素的所有权转移给调用方 (由 topo_shape_free 逐个释放),
+// 本函数仅释放指针数组本身, 不得 delete 元素。
+// 释放 C++ new[] 分配的数组 (POD 值数组)。Go 侧不得对这些指针用 free(),
+// 否则与 new[] 的分配器不匹配 (UB)。
+TOPOCAPICALL void topo_free_array(void *arr) { try { ::operator delete[](arr);   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+// 所有权契约: 数组元素的所有权转移给调用方 (由 topo_shape_free 逐个释放),
+// 本函数仅释放指针数组本身, 不得 delete 元素。
+void topo_shape_list_free(topo_shape_t **result, int result_count) { try {
+  (void)result_count;
+  delete[] result;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
@@ -1266,9 +1788,15 @@ topo_edge_t topo_make_edge() {
   }
 }
 
-void topo_edge_free(topo_edge_t t) {
+void topo_edge_free(topo_edge_t t) { try {
   if (t.shp) {
     delete t.shp;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
@@ -2352,81 +2880,157 @@ topo_edge_t topo_edge_make_bezier(pnt3d_t *points, int pntcount) {
   }
 }
 
-bool topo_edge_is_seam(topo_edge_t e, topo_face_t f) {
+bool topo_edge_is_seam(topo_edge_t e, topo_face_t f) { try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->is_seam(*cast_to_topo(f));
   }
   return false;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return false;
+  }
+  catch (...) {
+    return false;
+  }
 }
 
-bool topo_edge_is_degenerated(topo_edge_t e) {
+bool topo_edge_is_degenerated(topo_edge_t e) { try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->is_degenerated();
   }
   return false;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return false;
+  }
+  catch (...) {
+    return false;
+  }
 }
 
-bool topo_edge_is_closed(topo_edge_t e) {
+bool topo_edge_is_closed(topo_edge_t e) { try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->is_closed();
   }
   return false;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return false;
+  }
+  catch (...) {
+    return false;
+  }
 }
 
-bool topo_edge_is_inifinite(topo_edge_t e) {
+bool topo_edge_is_inifinite(topo_edge_t e) { try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->is_inifinite();
   }
   return false;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return false;
+  }
+  catch (...) {
+    return false;
+  }
 }
 
-int topo_edge_num_vertices(topo_edge_t e) {
+int topo_edge_num_vertices(topo_edge_t e) { try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->num_vertices();
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
-double topo_edge_length(topo_edge_t e) {
+double topo_edge_length(topo_edge_t e) { try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->length();
   }
   return 0.0;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-float topo_edge_tolerance(topo_edge_t e) {
+float topo_edge_tolerance(topo_edge_t e) { try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->tolerance();
   }
   return 0.0f;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-bool topo_edge_is_curve3d(topo_edge_t e) {
+bool topo_edge_is_curve3d(topo_edge_t e) { try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->is_curve3d();
   }
   return false;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return false;
+  }
+  catch (...) {
+    return false;
+  }
 }
 
-void topo_edge_convert_to_curve3d(topo_edge_t e) {
+void topo_edge_convert_to_curve3d(topo_edge_t e) { try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->convert_to_curve3d();
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-void topo_edge_reverse(topo_edge_t e) {
+void topo_edge_reverse(topo_edge_t e) { try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->reverse();
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
@@ -2724,180 +3328,362 @@ void topo_edge_curvatures(topo_edge_t e, double *ds, int count,
   }
 }
 
-topo_face_t topo_make_face() {
+topo_face_t topo_make_face() { try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>()}};
-}
-
-void topo_face_free(topo_face_t t) {
-  if (t.shp) {
-    delete t.shp;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
   }
 }
 
-topo_face_t topo_face_make_face(topo_face_t F) {
+void topo_face_free(topo_face_t t) { try {
+  if (t.shp) {
+    delete t.shp;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+topo_face_t topo_face_make_face(topo_face_t F) { try {
   return topo_face_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::face>(
               flywave::topo::face::make_face(*cast_to_topo(F)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
-topo_face_t topo_face_make_face_from_plane(plane_t P) {
+topo_face_t topo_face_make_face_from_plane(plane_t P) { try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(cast_to_gp(P)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
-topo_face_t topo_face_make_face_from_cylinder(cylinder_t C) {
+topo_face_t topo_face_make_face_from_cylinder(cylinder_t C) { try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(cast_to_gp(C)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
-topo_face_t topo_face_make_face_from_cone(cone_t C) {
+topo_face_t topo_face_make_face_from_cone(cone_t C) { try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(cast_to_gp(C)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
-topo_face_t topo_face_make_face_from_sphere(sphere_t S) {
+topo_face_t topo_face_make_face_from_sphere(sphere_t S) { try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(cast_to_gp(S)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
-topo_face_t topo_face_make_face_from_torus(torus_t C) {
+topo_face_t topo_face_make_face_from_torus(torus_t C) { try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(cast_to_gp(C)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t topo_face_make_face_from_surface(geom_surface_t *S,
-                                             double TolDegen) {
+                                             double TolDegen) { try {
   return topo_face_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::face>(
               flywave::topo::face::make_face(S->handle, TolDegen))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t topo_face_make_face_from_plane_p(plane_t P, double UMin,
                                              double UMax, double VMin,
-                                             double VMax) {
+                                             double VMax) { try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(
                                       cast_to_gp(P), UMin, UMax, VMin, VMax))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t topo_face_make_face_from_cylinder_p(cylinder_t C, double UMin,
                                                 double UMax, double VMin,
-                                                double VMax) {
+                                                double VMax) { try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(
                                       cast_to_gp(C), UMin, UMax, VMin, VMax))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t topo_face_make_face_from_cone_p(cone_t C, double UMin, double UMax,
-                                            double VMin, double VMax) {
+                                            double VMin, double VMax) { try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(
                                       cast_to_gp(C), UMin, UMax, VMin, VMax))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t topo_face_make_face_from_sphere_p(sphere_t S, double UMin,
                                               double UMax, double VMin,
-                                              double VMax) {
+                                              double VMax) { try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(
                                       cast_to_gp(S), UMin, UMax, VMin, VMax))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t topo_face_make_face_from_torus_p(torus_t C, double UMin,
                                              double UMax, double VMin,
-                                             double VMax) {
+                                             double VMax) { try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(
                                       cast_to_gp(C), UMin, UMax, VMin, VMax))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t topo_face_make_face_from_surface_p(geom_surface_t *S, double UMin,
                                                double UMax, double VMin,
-                                               double VMax, double TolDegen) {
+                                               double VMax, double TolDegen) { try {
   return topo_face_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::face>(
               flywave::topo::face::make_face(S->handle, UMin, UMax, VMin, VMax,
                                              TolDegen))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t topo_face_make_face_from_wire_onlyplane(topo_wire_t W,
-                                                    _Bool OnlyPlane) {
+                                                    _Bool OnlyPlane) { try {
   return topo_face_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::face>(
               flywave::topo::face::make_face(*cast_to_topo(W), OnlyPlane))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t topo_face_make_face_from_plane_wire(plane_t P, topo_wire_t W,
-                                                _Bool Inside) {
+                                                _Bool Inside) { try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(
                                  cast_to_gp(P), *cast_to_topo(W), Inside))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t topo_face_make_face_from_cylinder_wire(cylinder_t C, topo_wire_t W,
-                                                   _Bool Inside) {
+                                                   _Bool Inside) { try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(
                                  cast_to_gp(C), *cast_to_topo(W), Inside))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t topo_face_make_face_from_cone_wire(cone_t C, topo_wire_t W,
-                                               _Bool Inside) {
+                                               _Bool Inside) { try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(
                                  cast_to_gp(C), *cast_to_topo(W), Inside))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t topo_face_make_face_from_sphere_wire(sphere_t S, topo_wire_t W,
-                                                 _Bool Inside) {
+                                                 _Bool Inside) { try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(
                                  cast_to_gp(S), *cast_to_topo(W), Inside))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t topo_face_make_face_from_torus_wire(torus_t C, topo_wire_t W,
-                                                _Bool Inside) {
+                                                _Bool Inside) { try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(
                                  cast_to_gp(C), *cast_to_topo(W), Inside))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t topo_face_make_face_from_surface_wire(geom_surface_t *S,
-                                                  topo_wire_t W, _Bool Inside) {
+                                                  topo_wire_t W, _Bool Inside) { try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(
                                       S->handle, *cast_to_topo(W), Inside))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
-topo_face_t topo_face_make_face_from_face_wire(topo_face_t F, topo_wire_t W) {
+topo_face_t topo_face_make_face_from_face_wire(topo_face_t F, topo_wire_t W) { try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(
                                       *cast_to_topo(F), *cast_to_topo(W)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
-topo_face_t topo_face_make_face_from_wire(topo_wire_t *wires, int count) {
+topo_face_t topo_face_make_face_from_wire(topo_wire_t *wires, int count) { try {
   std::vector<flywave::topo::wire> ows;
   for (int i = 0; i < count; i++) {
     ows.emplace_back(*cast_to_topo(wires[i]));
@@ -2905,10 +3691,18 @@ topo_face_t topo_face_make_face_from_wire(topo_wire_t *wires, int count) {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(ows))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t topo_face_make_face_from_egdes(topo_edge_t *edges, int edgecount,
-                                           pnt3d_t *points, int pcount) {
+                                           pnt3d_t *points, int pcount) { try {
   std::vector<flywave::topo::edge> oes;
   std::vector<gp_Pnt> ops;
   for (int i = 0; i < edgecount; i++) {
@@ -2921,9 +3715,17 @@ topo_face_t topo_face_make_face_from_egdes(topo_edge_t *edges, int edgecount,
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(oes, ops))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
-topo_face_t topo_face_make_face_from_points(pnt3d_t *points, int count) {
+topo_face_t topo_face_make_face_from_points(pnt3d_t *points, int count) { try {
   std::vector<gp_Pnt> ops;
   for (int i = 0; i < count; i++) {
     ops.emplace_back(cast_to_gp(points[i]));
@@ -2931,6 +3733,14 @@ topo_face_t topo_face_make_face_from_points(pnt3d_t *points, int count) {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(ops))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
 topo_face_t *topo_face_make_from_wires(topo_wire_t outer, topo_wire_t *inners,
@@ -2958,7 +3768,13 @@ topo_face_t *topo_face_make_from_wires(topo_wire_t outer, topo_wire_t *inners,
   }
 }
 
-void topo_face_list_free(topo_face_t *faces, int count) { delete[] faces; }
+void topo_face_list_free(topo_face_t *faces, int count) { try { delete[] faces;   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
 topo_face_t topo_face_make_complex(topo_shape_t **edges, int edge_count,
                                    topo_shape_t **constraints,
@@ -3063,86 +3879,166 @@ topo_face_t topo_face_make_spline_approx(pnt3d_t *points, int *point_counts,
   }
 }
 
-int topo_face_num_wires(topo_face_t f) {
+int topo_face_num_wires(topo_face_t f) { try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->num_wires();
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
-int topo_face_num_faces(topo_face_t f) {
+int topo_face_num_faces(topo_face_t f) { try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->num_faces();
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
-double topo_face_area(topo_face_t f) {
+double topo_face_area(topo_face_t f) { try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->area();
   }
   return 0.0;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-float topo_face_tolerance(topo_face_t f) {
+float topo_face_tolerance(topo_face_t f) { try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->tolerance();
   }
   return 0.0f;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-bbox_t topo_face_inertia(topo_face_t f) {
+bbox_t topo_face_inertia(topo_face_t f) { try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return cast_from_gp(opt->inertia());
   }
   return bbox_t{0, 0, 0, 0, 0, 0};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return bbox_t{};
+  }
+  catch (...) {
+    return bbox_t{};
+  }
 }
 
-pnt3d_t topo_face_centre_of_mass(topo_face_t f) {
+pnt3d_t topo_face_centre_of_mass(topo_face_t f) { try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return cast_from_gp(opt->centre_of_mass());
   }
   return pnt3d_t{0, 0, 0};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return pnt3d_t{};
+  }
+  catch (...) {
+    return pnt3d_t{};
+  }
 }
 
-topo_plane_t *topo_face_to_plane(topo_face_t f) {
+topo_plane_t *topo_face_to_plane(topo_face_t f) { try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return new topo_plane_t{.plane =
                                 flywave::topo::topo_plane(opt->to_plane())};
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-int topo_face_offset(topo_face_t f, double offset, double tolerance) {
+int topo_face_offset(topo_face_t f, double offset, double tolerance) { try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->offset(offset, tolerance);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_face_extrude(topo_face_t f, topo_shape_t *shp, pnt3d_t p1,
-                      pnt3d_t p2) {
+                      pnt3d_t p2) { try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->extrude(*shp->shp, cast_to_gp(p1), cast_to_gp(p2));
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_face_revolve(topo_face_t f, topo_shape_t *shp, pnt3d_t p1, pnt3d_t p2,
-                      double angle) {
+                      double angle) { try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->revolve(*shp->shp, cast_to_gp(p1), cast_to_gp(p2), angle);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_face_sweep(topo_face_t f, topo_wire_t spine, topo_shape_t **profiles,
@@ -3181,7 +4077,7 @@ int topo_face_sweep_wire(topo_face_t f, topo_wire_t spine,
 }
 
 int topo_face_loft(topo_face_t f, topo_shape_t **profiles, int profilesCount,
-                   bool ruled, double tolerance) {
+                   bool ruled, double tolerance) { try {
   auto opt = cast_to_topo(f);
   if (opt) {
     std::vector<flywave::topo::shape> prs;
@@ -3191,15 +4087,31 @@ int topo_face_loft(topo_face_t f, topo_shape_t **profiles, int profilesCount,
     return opt->loft(prs, ruled, tolerance);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
-int topo_face_boolean(topo_face_t f, topo_face_t tool, int op) {
+int topo_face_boolean(topo_face_t f, topo_face_t tool, int op) { try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->boolean(*cast_to_topo(tool),
                         static_cast<flywave::topo::bool_op_type>(op));
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 void topo_face_uv_bounds(topo_face_t f, double *u_min, double *u_max,
@@ -3471,407 +4383,789 @@ topo_wire_t *topo_face_inner_wires(topo_face_t f, int *count) {
   }
 }
 
-topo_shell_t topo_make_shell() {
+topo_shell_t topo_make_shell() { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>()}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
-void topo_shell_free(topo_shell_t t) {
+void topo_shell_free(topo_shell_t t) { try {
   if (t.shp) {
     delete t.shp;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
 topo_shell_t topo_shell_make_shell_from_surface(geom_surface_t *S,
-                                                _Bool Segment) {
+                                                _Bool Segment) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell(S->handle, Segment))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_surface_p(geom_surface_t *S,
                                                   double UMin, double UMax,
                                                   double VMin, double VMax,
-                                                  _Bool Segment) {
+                                                  _Bool Segment) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell(S->handle, UMin, UMax, VMin,
                                                VMax, Segment))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
-topo_shell_t topo_shell_make_shell_from_box(double dx, double dy, double dz) {
+topo_shell_t topo_shell_make_shell_from_box(double dx, double dy, double dz) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_box(dx, dy, dz))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_box_point(pnt3d_t P, double dx,
-                                                  double dy, double dz) {
+                                                  double dy, double dz) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_box(
                                       cast_to_gp(P), dx, dy, dz))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
-topo_shell_t topo_shell_make_shell_from_box_two_point(pnt3d_t P1, pnt3d_t P2) {
+topo_shell_t topo_shell_make_shell_from_box_two_point(pnt3d_t P1, pnt3d_t P2) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_box(
                                       cast_to_gp(P1), cast_to_gp(P2)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_box_axis2(axis2_t Axes, double dx,
-                                                  double dy, double dz) {
+                                                  double dy, double dz) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_box(
                                       cast_to_gp(Axes), dx, dy, dz))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
-topo_shell_t topo_shell_make_shell_from_cylinder(double R, double H) {
+topo_shell_t topo_shell_make_shell_from_cylinder(double R, double H) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_cylinder(R, H))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_cylinder_angle(double R, double H,
-                                                       double Angle) {
+                                                       double Angle) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_cylinder(R, H, Angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_cylinder_axis2(axis2_t Axes, double R,
-                                                       double H) {
+                                                       double H) { try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_cylinder(
                                   cast_to_gp(Axes), R, H))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_cylinder_axis2_angle(axis2_t Axes,
                                                              double R, double H,
-                                                             double Angle) {
+                                                             double Angle) { try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_cylinder(
                                   cast_to_gp(Axes), R, H, Angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
-topo_shell_t topo_shell_make_shell_from_cone(double R1, double R2, double H) {
+topo_shell_t topo_shell_make_shell_from_cone(double R1, double R2, double H) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_cone(R1, R2, H))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_cone_angle(double R1, double R2,
-                                                   double H, double angle) {
+                                                   double H, double angle) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_cone(R1, R2, H, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_cone_axis2(axis2_t Axes, double R1,
-                                                   double R2, double H) {
+                                                   double R2, double H) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_cone(
                                       cast_to_gp(Axes), R1, R2, H))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_cone_axis2_angle(axis2_t Axes,
                                                          double R1, double R2,
                                                          double H,
-                                                         double angle) {
+                                                         double angle) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_cone(
                                       cast_to_gp(Axes), R1, R2, H, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
-topo_shell_t topo_shell_make_shell_from_revolution(geom_curve_t *Meridian) {
+topo_shell_t topo_shell_make_shell_from_revolution(geom_curve_t *Meridian) { try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_revolution(
                                   Meridian->handle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_angle(geom_curve_t *Meridian,
-                                                         double angle) {
+                                                         double angle) { try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_revolution(
                                   Meridian->handle, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_limit(geom_curve_t *Meridian,
                                                          double VMin,
-                                                         double VMax) {
+                                                         double VMax) { try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_revolution(
                                   Meridian->handle, VMin, VMax))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_limit_angle(
-    geom_curve_t *Meridian, double VMin, double VMax, double angle) {
+    geom_curve_t *Meridian, double VMin, double VMax, double angle) { try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_revolution(
                                   Meridian->handle, VMin, VMax, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t
 topo_shell_make_shell_from_revolution_axis2(axis2_t Axes,
-                                            geom_curve_t *Meridian) {
+                                            geom_curve_t *Meridian) { try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_revolution(
                                   cast_to_gp(Axes), Meridian->handle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_axis2_angle(
-    axis2_t Axes, geom_curve_t *Meridian, double angle) {
+    axis2_t Axes, geom_curve_t *Meridian, double angle) { try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_revolution(
                                   cast_to_gp(Axes), Meridian->handle, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_axis2_limit(
-    axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax) {
+    axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_revolution(
                   cast_to_gp(Axes), Meridian->handle, VMin, VMax))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_axis2_limit_angle(
     axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax,
-    double angle) {
+    double angle) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_revolution(
                   cast_to_gp(Axes), Meridian->handle, VMin, VMax, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
-topo_shell_t topo_shell_make_shell_from_sphere(double R) {
+topo_shell_t topo_shell_make_shell_from_sphere(double R) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_sphere(R))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
-topo_shell_t topo_shell_make_shell_from_sphere_angle(double R, double angle) {
+topo_shell_t topo_shell_make_shell_from_sphere_angle(double R, double angle) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_sphere(R, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_two_angle(double R,
                                                          double angle1,
-                                                         double angle2) {
+                                                         double angle2) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
                                       R, angle1, angle2))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_three_angle(double R,
                                                            double angle1,
                                                            double angle2,
-                                                           double angle3) {
+                                                           double angle3) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
                                       R, angle1, angle2, angle3))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_center_raduis(pnt3d_t Center,
-                                                             double R) {
+                                                             double R) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
                                       cast_to_gp(Center), R))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_center_angle(pnt3d_t Center,
                                                             double R,
-                                                            double angle) {
+                                                            double angle) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
                                       cast_to_gp(Center), R, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_center_two_angle(pnt3d_t Center,
                                                                 double R,
                                                                 double angle1,
-                                                                double angle2) {
+                                                                double angle2) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
                                       cast_to_gp(Center), R, angle1, angle2))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_center_three_angle(
-    pnt3d_t Center, double R, double angle1, double angle2, double angle3) {
+    pnt3d_t Center, double R, double angle1, double angle2, double angle3) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_sphere(
                   cast_to_gp(Center), R, angle1, angle2, angle3))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
-topo_shell_t topo_shell_make_shell_from_sphere_axis2(axis2_t Axis, double R) {
+topo_shell_t topo_shell_make_shell_from_sphere_axis2(axis2_t Axis, double R) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
                                       cast_to_gp(Axis), R))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_axis2_raduis(axis2_t Axis,
                                                             double R,
-                                                            double angle) {
+                                                            double angle) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
                                       cast_to_gp(Axis), R, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_axis2_two_angle(axis2_t Axis,
                                                                double R,
                                                                double angle1,
-                                                               double angle2) {
+                                                               double angle2) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
                                       cast_to_gp(Axis), R, angle1, angle2))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_axis2_three_angle(
-    axis2_t Axis, double R, double angle1, double angle2, double angle3) {
+    axis2_t Axis, double R, double angle1, double angle2, double angle3) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_sphere(
                   cast_to_gp(Axis), R, angle1, angle2, angle3))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
-topo_shell_t topo_shell_make_shell_from_torus(double R1, double R2) {
+topo_shell_t topo_shell_make_shell_from_torus(double R1, double R2) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_torus(R1, R2))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_angle(double R1, double R2,
-                                                    double angle) {
+                                                    double angle) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_torus(R1, R2, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_two_angle(double R1, double R2,
                                                         double angle1,
-                                                        double angle2) {
+                                                        double angle2) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_torus(
                                       R1, R2, angle1, angle2))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_three_angle(double R1, double R2,
                                                           double angle1,
                                                           double angle2,
-                                                          double angle) {
+                                                          double angle) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_torus(
                                       R1, R2, angle1, angle2, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_axis2(axis2_t Axes, double R1,
-                                                    double R2) {
+                                                    double R2) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_torus(
                                       cast_to_gp(Axes), R1, R2))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_axis2_angle(axis2_t Axes,
                                                           double R1, double R2,
-                                                          double angle) {
+                                                          double angle) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_torus(
                                       cast_to_gp(Axes), R1, R2, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_axis2_two_angle(
-    axis2_t Axes, double R1, double R2, double angle1, double angle2) {
+    axis2_t Axes, double R1, double R2, double angle1, double angle2) { try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_torus(
                                   cast_to_gp(Axes), R1, R2, angle1, angle2))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_axis2_three_angle(
     axis2_t Axes, double R1, double R2, double angle1, double angle2,
-    double angle) {
+    double angle) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_torus(
                   cast_to_gp(Axes), R1, R2, angle1, angle2, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_wedge(double dx, double dy, double dz,
-                                              double ltx) {
+                                              double ltx) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_wedge(dx, dy, dz, ltx))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_wedge_axis2(axis2_t Axes, double dx,
                                                     double dy, double dz,
-                                                    double ltx) {
+                                                    double ltx) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_wedge(
                                       cast_to_gp(Axes), dx, dy, dz, ltx))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_wedge_limit(double dx, double dy,
                                                     double dz, double xmin,
                                                     double zmin, double xmax,
-                                                    double zmax) {
+                                                    double zmax) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_wedge(
                                       dx, dy, dz, xmin, zmin, xmax, zmax))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 topo_shell_t topo_shell_make_shell_from_wedge_axis2_limit(
     axis2_t Axes, double dx, double dy, double dz, double xmin, double zmin,
-    double xmax, double zmax) {
+    double xmax, double zmax) { try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
               flywave::topo::shell::make_shell_from_wedge(
                   cast_to_gp(Axes), dx, dy, dz, xmin, zmin, xmax, zmax))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_shell_t{};
+  }
+  catch (...) {
+    return topo_shell_t{};
+  }
 }
 
 int topo_shell_sweep(topo_shell_t ss, topo_wire_t spine,
@@ -3908,45 +5202,83 @@ int topo_shell_sweep_wire(topo_shell_t ss, topo_wire_t spine,
   return -1;
 }
 
-void topo_solid_free(topo_solid_t t) {
+void topo_solid_free(topo_solid_t t) { try {
   if (t.shp) {
     delete t.shp;
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
-topo_solid_t topo_solid_make_solid_from_comp_solid(topo_comp_solid_t S) {
+topo_solid_t topo_solid_make_solid_from_comp_solid(topo_comp_solid_t S) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid(*cast_to_topo(S)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
-topo_solid_t topo_solid_make_solid_from_shell(topo_shell_t S) {
+topo_solid_t topo_solid_make_solid_from_shell(topo_shell_t S) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid(*cast_to_topo(S)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_two_shell(topo_shell_t S1,
-                                                  topo_shell_t S2) {
+                                                  topo_shell_t S2) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid(
                                       *cast_to_topo(S1), *cast_to_topo(S2)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_three_shell(topo_shell_t S1,
                                                     topo_shell_t S2,
-                                                    topo_shell_t S3) {
+                                                    topo_shell_t S3) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid(
                   *cast_to_topo(S1), *cast_to_topo(S2), *cast_to_topo(S3)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_shells(topo_shell_t *shells,
-                                               int count) {
+                                               int count) { try {
   std::vector<flywave::topo::shell> shels;
   for (int i = 0; i < count; i++) {
     shels.emplace_back(*cast_to_topo(shells[i]));
@@ -3954,25 +5286,49 @@ topo_solid_t topo_solid_make_solid_from_shells(topo_shell_t *shells,
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid(shels))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
-topo_solid_t topo_solid_make_solid_from_solid(topo_solid_t So) {
+topo_solid_t topo_solid_make_solid_from_solid(topo_solid_t So) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid(*cast_to_topo(So)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_solid_shell(topo_solid_t So,
-                                                    topo_shell_t S) {
+                                                    topo_shell_t S) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid(
                                       *cast_to_topo(So), *cast_to_topo(S)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_faces(topo_face_t *faces, int count,
-                                              double tolerance) {
+                                              double tolerance) { try {
   std::vector<flywave::topo::face> cfaces;
   for (int i = 0; i < count; i++) {
     cfaces.emplace_back(*cast_to_topo(faces[i]));
@@ -3981,379 +5337,739 @@ topo_solid_t topo_solid_make_solid_from_faces(topo_face_t *faces, int count,
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid(cfaces, tolerance))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
-topo_solid_t topo_solid_make_solid_from_box(double dx, double dy, double dz) {
+topo_solid_t topo_solid_make_solid_from_box(double dx, double dy, double dz) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_box(dx, dy, dz))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_box_point(pnt3d_t P, double dx,
-                                                  double dy, double dz) {
+                                                  double dy, double dz) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_box(
                                       cast_to_gp(P), dx, dy, dz))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
-topo_solid_t topo_solid_make_solid_from_box_two_point(pnt3d_t P1, pnt3d_t P2) {
+topo_solid_t topo_solid_make_solid_from_box_two_point(pnt3d_t P1, pnt3d_t P2) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_box(
                                       cast_to_gp(P1), cast_to_gp(P2)))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_box_axis2(axis2_t Axes, double dx,
-                                                  double dy, double dz) {
+                                                  double dy, double dz) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_box(
                                       cast_to_gp(Axes), dx, dy, dz))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
-topo_solid_t topo_solid_make_solid_from_cylinder(double R, double H) {
+topo_solid_t topo_solid_make_solid_from_cylinder(double R, double H) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_cylinder(R, H))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_cylinder_angle(double R, double H,
-                                                       double Angle) {
+                                                       double Angle) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_cylinder(R, H, Angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_cylinder_axis2(axis2_t Axes, double R,
-                                                       double H) {
+                                                       double H) { try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_cylinder(
                                   cast_to_gp(Axes), R, H))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_cylinder_axis2_angle(axis2_t Axes,
                                                              double R, double H,
-                                                             double Angle) {
+                                                             double Angle) { try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_cylinder(
                                   cast_to_gp(Axes), R, H, Angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
-topo_solid_t topo_solid_make_solid_from_cone(double R1, double R2, double H) {
+topo_solid_t topo_solid_make_solid_from_cone(double R1, double R2, double H) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_cone(R1, R2, H))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_cone_angle(double R1, double R2,
-                                                   double H, double angle) {
+                                                   double H, double angle) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_cone(R1, R2, H, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_cone_axis2(axis2_t Axes, double R1,
-                                                   double R2, double H) {
+                                                   double R2, double H) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_cone(
                                       cast_to_gp(Axes), R1, R2, H))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_cone_axis2_angle(axis2_t Axes,
                                                          double R1, double R2,
                                                          double H,
-                                                         double angle) {
+                                                         double angle) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_cone(
                                       cast_to_gp(Axes), R1, R2, H, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
-topo_solid_t topo_solid_make_solid_from_revolution(geom_curve_t *Meridian) {
+topo_solid_t topo_solid_make_solid_from_revolution(geom_curve_t *Meridian) { try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_revolution(
                                   Meridian->handle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_angle(geom_curve_t *Meridian,
-                                                         double angle) {
+                                                         double angle) { try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_revolution(
                                   Meridian->handle, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_limit(geom_curve_t *Meridian,
                                                          double VMin,
-                                                         double VMax) {
+                                                         double VMax) { try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_revolution(
                                   Meridian->handle, VMin, VMax))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_limit_angle(
-    geom_curve_t *Meridian, double VMin, double VMax, double angle) {
+    geom_curve_t *Meridian, double VMin, double VMax, double angle) { try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_revolution(
                                   Meridian->handle, VMin, VMax, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t
 topo_solid_make_solid_from_revolution_axis2(axis2_t Axes,
-                                            geom_curve_t *Meridian) {
+                                            geom_curve_t *Meridian) { try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_revolution(
                                   cast_to_gp(Axes), Meridian->handle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_axis2_angle(
-    axis2_t Axes, geom_curve_t *Meridian, double angle) {
+    axis2_t Axes, geom_curve_t *Meridian, double angle) { try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_revolution(
                                   cast_to_gp(Axes), Meridian->handle, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_axis2_limit(
-    axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax) {
+    axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_revolution(
                   cast_to_gp(Axes), Meridian->handle, VMin, VMax))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_axis2_limit_angle(
     axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax,
-    double angle) {
+    double angle) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_revolution(
                   cast_to_gp(Axes), Meridian->handle, VMin, VMax, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
-topo_solid_t topo_solid_make_solid_from_sphere(double R) {
+topo_solid_t topo_solid_make_solid_from_sphere(double R) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_sphere(R))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
-topo_solid_t topo_solid_make_solid_from_sphere_angle(double R, double angle) {
+topo_solid_t topo_solid_make_solid_from_sphere_angle(double R, double angle) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_sphere(R, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_two_angle(double R,
                                                          double angle1,
-                                                         double angle2) {
+                                                         double angle2) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
                                       R, angle1, angle2))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_three_angle(double R,
                                                            double angle1,
                                                            double angle2,
-                                                           double angle3) {
+                                                           double angle3) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
                                       R, angle1, angle2, angle3))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_center_raduis(pnt3d_t Center,
-                                                             double R) {
+                                                             double R) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
                                       cast_to_gp(Center), R))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_center_angle(pnt3d_t Center,
                                                             double R,
-                                                            double angle) {
+                                                            double angle) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
                                       cast_to_gp(Center), R, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_center_two_angle(pnt3d_t Center,
                                                                 double R,
                                                                 double angle1,
-                                                                double angle2) {
+                                                                double angle2) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
                                       cast_to_gp(Center), R, angle1, angle2))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_center_three_angle(
-    pnt3d_t Center, double R, double angle1, double angle2, double angle3) {
+    pnt3d_t Center, double R, double angle1, double angle2, double angle3) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_sphere(
                   cast_to_gp(Center), R, angle1, angle2, angle3))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
-topo_solid_t topo_solid_make_solid_from_sphere_axis2(axis2_t Axis, double R) {
+topo_solid_t topo_solid_make_solid_from_sphere_axis2(axis2_t Axis, double R) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
                                       cast_to_gp(Axis), R))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_axis2_angle(axis2_t Axis,
                                                            double R,
-                                                           double angle) {
+                                                           double angle) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
                                       cast_to_gp(Axis), R, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_axis2_two_angle(axis2_t Axis,
                                                                double R,
                                                                double angle1,
-                                                               double angle2) {
+                                                               double angle2) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
                                       cast_to_gp(Axis), R, angle1, angle2))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_axis2_three_angle(
-    axis2_t Axis, double R, double angle1, double angle2, double angle3) {
+    axis2_t Axis, double R, double angle1, double angle2, double angle3) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_sphere(
                   cast_to_gp(Axis), R, angle1, angle2, angle3))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
-topo_solid_t topo_solid_make_solid_from_torus(double R1, double R2) {
+topo_solid_t topo_solid_make_solid_from_torus(double R1, double R2) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_torus(R1, R2))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_angle(double R1, double R2,
-                                                    double angle) {
+                                                    double angle) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_torus(R1, R2, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_two_angle(double R1, double R2,
                                                         double angle1,
-                                                        double angle2) {
+                                                        double angle2) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_torus(
                                       R1, R2, angle1, angle2))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_three_angle(double R1, double R2,
                                                           double angle1,
                                                           double angle2,
-                                                          double angle) {
+                                                          double angle) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_torus(
                                       R1, R2, angle1, angle2, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_axis2(axis2_t Axes, double R1,
-                                                    double R2) {
+                                                    double R2) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_torus(
                                       cast_to_gp(Axes), R1, R2))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_axis2_angle(axis2_t Axes,
                                                           double R1, double R2,
-                                                          double angle) {
+                                                          double angle) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_torus(
                                       cast_to_gp(Axes), R1, R2, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_axis2_two_angle(
-    axis2_t Axes, double R1, double R2, double angle1, double angle2) {
+    axis2_t Axes, double R1, double R2, double angle1, double angle2) { try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_torus(
                                   cast_to_gp(Axes), R1, R2, angle1, angle2))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_axis2_three_angle(
     axis2_t Axes, double R1, double R2, double angle1, double angle2,
-    double angle) {
+    double angle) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_torus(
                   cast_to_gp(Axes), R1, R2, angle1, angle2, angle))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_wedge(double dx, double dy, double dz,
-                                              double ltx) {
+                                              double ltx) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_wedge(dx, dy, dz, ltx))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_wedge_axis2(axis2_t Axes, double dx,
                                                     double dy, double dz,
-                                                    double ltx) {
+                                                    double ltx) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_wedge(
                                       cast_to_gp(Axes), dx, dy, dz, ltx))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_wedge_limit(double dx, double dy,
                                                     double dz, double xmin,
                                                     double zmin, double xmax,
-                                                    double zmax) {
+                                                    double zmax) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_wedge(
                                       dx, dy, dz, xmin, zmin, xmax, zmax))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_wedge_axis2_limit(
     axis2_t Axes, double dx, double dy, double dz, double xmin, double zmin,
-    double xmax, double zmax) {
+    double xmax, double zmax) { try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
               flywave::topo::solid::make_solid_from_wedge(
                   cast_to_gp(Axes), dx, dy, dz, xmin, zmin, xmax, zmax))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_solid_t{};
+  }
+  catch (...) {
+    return topo_solid_t{};
+  }
 }
 
 topo_solid_t topo_solid_make_solid_from_loft(topo_wire_t *wires, int count,
@@ -4510,52 +6226,100 @@ _Bool topo_solid_is_inside(topo_solid_t s, pnt3d_t p, double tol) {
   }
 }
 
-int topo_solid_num_solids(topo_solid_t s) {
+int topo_solid_num_solids(topo_solid_t s) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->num_solids();
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
-int topo_solid_num_faces(topo_solid_t s) {
+int topo_solid_num_faces(topo_solid_t s) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->num_faces();
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
-double topo_solid_area(topo_solid_t s) {
+double topo_solid_area(topo_solid_t s) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->area();
   }
   return 0.0;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-double topo_solid_volume(topo_solid_t s) {
+double topo_solid_volume(topo_solid_t s) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->volume();
   }
   return 0.0;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-bbox_t topo_solid_inertia(topo_solid_t s) {
+bbox_t topo_solid_inertia(topo_solid_t s) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return cast_from_gp(opt->inertia());
   }
   return bbox_t{0, 0, 0, 0, 0, 0};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return bbox_t{};
+  }
+  catch (...) {
+    return bbox_t{};
+  }
 }
 
-pnt3d_t topo_solid_centre_of_mass(topo_solid_t s) {
+pnt3d_t topo_solid_centre_of_mass(topo_solid_t s) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return cast_from_gp(opt->centre_of_mass());
   }
   return pnt3d_t{0, 0, 0};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return pnt3d_t{};
+  }
+  catch (...) {
+    return pnt3d_t{};
+  }
 }
 
 int topo_solid_extrude_with_rotation(topo_solid_t s, topo_wire_t outerWire,
@@ -4579,7 +6343,7 @@ int topo_solid_extrude_with_rotation(topo_solid_t s, topo_wire_t outerWire,
 int topo_solid_extrude_with_rotation_from_face(topo_solid_t s, topo_face_t face,
                                                pnt3d_t vecCenter,
                                                vec3d_t vecNormal,
-                                               double angleDegrees) {
+                                               double angleDegrees) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->extrude_with_rotation(*cast_to_topo(face),
@@ -4587,36 +6351,68 @@ int topo_solid_extrude_with_rotation_from_face(topo_solid_t s, topo_face_t face,
                                       cast_to_gp(vecNormal), angleDegrees);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
-int topo_solid_extrude(topo_solid_t s, topo_face_t f, pnt3d_t p1, pnt3d_t p2) {
+int topo_solid_extrude(topo_solid_t s, topo_face_t f, pnt3d_t p1, pnt3d_t p2) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->extrude(*cast_to_topo(f), cast_to_gp(p1), cast_to_gp(p2));
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
-int topo_solid_extrude_from_dir(topo_solid_t s, topo_face_t f, vec3d_t dir) {
+int topo_solid_extrude_from_dir(topo_solid_t s, topo_face_t f, vec3d_t dir) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->extrude(*cast_to_topo(f), cast_to_gp(dir));
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_revolve(topo_solid_t s, topo_face_t f, pnt3d_t p1, pnt3d_t p2,
-                       double angle) {
+                       double angle) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->revolve(*cast_to_topo(f), cast_to_gp(p1), cast_to_gp(p2),
                         angle);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_loft(topo_solid_t s, topo_shape_t **profiles, int count,
-                    _Bool ruled, double tolerance) {
+                    _Bool ruled, double tolerance) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     std::vector<flywave::topo::shape> prs;
@@ -4626,14 +6422,30 @@ int topo_solid_loft(topo_solid_t s, topo_shape_t **profiles, int count,
     return opt->loft(prs, ruled, tolerance);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
-int topo_solid_pipe(topo_solid_t s, topo_face_t f, topo_wire_t w) {
+int topo_solid_pipe(topo_solid_t s, topo_face_t f, topo_wire_t w) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->pipe(*cast_to_topo(f), *cast_to_topo(w));
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 // 实现函数
@@ -4641,6 +6453,14 @@ TOPOCAPICALL int topo_solid_sweep_compound(topo_solid_t s, topo_wire_t spine,
                                            topo_sweep_profile_t *profiles,
                                            int profile_count, int corner_mode) {
   try {
+    auto solidOpt = cast_to_topo(s);
+    if (!solidOpt) {
+      return -1;
+    }
+    auto spineOpt = cast_to_topo(spine);
+    if (!spineOpt) {
+      return -1;
+    }
 
     std::vector<flywave::topo::solid::sweep_profile> cpp_profiles;
     for (int i = 0; i < profile_count; i++) {
@@ -4654,8 +6474,7 @@ TOPOCAPICALL int topo_solid_sweep_compound(topo_solid_t s, topo_wire_t spine,
       cpp_profiles.push_back(profile);
     }
 
-    auto result = reinterpret_cast<flywave::topo::solid *>(s.shp)->sweep(
-        *cast_to_topo(spine), cpp_profiles, corner_mode);
+    auto result = solidOpt->sweep(*spineOpt, cpp_profiles, corner_mode);
 
     return result;
   } catch (...) {
@@ -4711,7 +6530,7 @@ int topo_solid_boolean(topo_solid_t s, topo_solid_t tool, int op) {
 }
 
 int topo_solid_fillet(topo_solid_t s, topo_edge_t *edges, int count,
-                      double *radius, int rcount) {
+                      double *radius, int rcount) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     std::vector<flywave::topo::edge> es;
@@ -4725,10 +6544,18 @@ int topo_solid_fillet(topo_solid_t s, topo_edge_t *edges, int count,
     return opt->fillet(es, ras);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_chamfer(topo_solid_t s, topo_edge_t *edges, int count,
-                       double *distances, int dcount) {
+                       double *distances, int dcount) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     std::vector<flywave::topo::edge> es;
@@ -4742,10 +6569,18 @@ int topo_solid_chamfer(topo_solid_t s, topo_edge_t *edges, int count,
     return opt->chamfer(es, ras);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_shelling(topo_solid_t s, topo_face_t *faces, int count,
-                        double offset, double tolerance) {
+                        double offset, double tolerance) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     std::vector<flywave::topo::face> es;
@@ -4755,19 +6590,35 @@ int topo_solid_shelling(topo_solid_t s, topo_face_t *faces, int count,
     return opt->shelling(es, offset, tolerance);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_offset(topo_solid_t s, topo_face_t f, double offset,
-                      double tolerance) {
+                      double tolerance) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->offset(*cast_to_topo(f), offset, tolerance);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_draft(topo_solid_t s, topo_face_t *faces, int count, dir3d_t d,
-                     double angle, plane_t p) {
+                     double angle, plane_t p) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     std::vector<flywave::topo::face> es;
@@ -4777,153 +6628,273 @@ int topo_solid_draft(topo_solid_t s, topo_face_t *faces, int count, dir3d_t d,
     return opt->draft(es, cast_to_gp(d), angle, cast_to_gp(p));
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_evolved_from_face(topo_solid_t s, topo_face_t Spine,
-                                 topo_wire_t Profil) {
+                                 topo_wire_t Profil) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->evolved(*cast_to_topo(Spine), *cast_to_topo(Profil));
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_evolved_from_wire(topo_solid_t s, topo_wire_t Spine,
-                                 topo_wire_t Profil) {
+                                 topo_wire_t Profil) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->evolved(*cast_to_topo(Spine), *cast_to_topo(Profil));
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_feat_prism(topo_solid_t s, topo_face_t f, dir3d_t d,
-                          double height, _Bool fuse) {
+                          double height, _Bool fuse) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_prism(*cast_to_topo(f), cast_to_gp(d), height, fuse);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_feat_prism_for_range(topo_solid_t s, topo_face_t f, dir3d_t d,
                                     topo_face_t from, topo_face_t end,
-                                    _Bool fuse) {
+                                    _Bool fuse) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_prism(*cast_to_topo(f), cast_to_gp(d), *cast_to_topo(from),
                            *cast_to_topo(end), fuse);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_feat_prism_for_until(topo_solid_t s, topo_face_t f, dir3d_t d,
-                                    topo_face_t until, _Bool fuse) {
+                                    topo_face_t until, _Bool fuse) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_prism(*cast_to_topo(f), cast_to_gp(d),
                            *cast_to_topo(until), fuse);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_feat_draft_prism(topo_solid_t s, topo_face_t f, double angle,
-                                double height, _Bool fuse) {
+                                double height, _Bool fuse) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_draft_prism(*cast_to_topo(f), angle, height, fuse);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_feat_draft_prism_for_range(topo_solid_t s, topo_face_t f,
                                           double angle, topo_face_t from,
-                                          topo_face_t end, _Bool fuse) {
+                                          topo_face_t end, _Bool fuse) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_draft_prism(*cast_to_topo(f), angle, *cast_to_topo(from),
                                  *cast_to_topo(end), fuse);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_feat_draft_prism_for_until(topo_solid_t s, topo_face_t f,
                                           double angle, topo_face_t until,
-                                          _Bool fuse) {
+                                          _Bool fuse) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_draft_prism(*cast_to_topo(f), angle, *cast_to_topo(until),
                                  fuse);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_feat_revol_for_range(topo_solid_t s, topo_face_t f, axis1_t Axes,
                                     topo_face_t from, topo_face_t end,
-                                    _Bool fuse) {
+                                    _Bool fuse) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_revol(*cast_to_topo(f), cast_to_gp(Axes),
                            *cast_to_topo(from), *cast_to_topo(end), fuse);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_feat_revol_for_until(topo_solid_t s, topo_face_t f, axis1_t Axes,
-                                    topo_face_t until, _Bool fuse) {
+                                    topo_face_t until, _Bool fuse) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_revol(*cast_to_topo(f), cast_to_gp(Axes),
                            *cast_to_topo(until), fuse);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_feat_pipe_for_range(topo_solid_t s, topo_face_t f,
                                    topo_wire_t Spine, topo_face_t from,
-                                   topo_face_t end, _Bool fuse) {
+                                   topo_face_t end, _Bool fuse) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_pipe(*cast_to_topo(f), *cast_to_topo(Spine),
                           *cast_to_topo(from), *cast_to_topo(end), fuse);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_feat_pipe_for_until(topo_solid_t s, topo_face_t f,
                                    topo_wire_t Spine, topo_face_t until,
-                                   _Bool fuse) {
+                                   _Bool fuse) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_pipe(*cast_to_topo(f), *cast_to_topo(Spine),
                           *cast_to_topo(until), fuse);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_linear_form(topo_solid_t s, topo_wire_t w,
                            geom_plane_surface_t *p, dir3d_t d, dir3d_t d1,
-                           _Bool fuse) {
+                           _Bool fuse) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->linear_form(*cast_to_topo(w), p->handle, cast_to_gp(d),
                             cast_to_gp(d1), fuse);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 int topo_solid_revolution_form(topo_solid_t s, topo_wire_t w,
                                geom_plane_surface_t *p, axis1_t Axes, double h1,
-                               double h2, _Bool fuse) {
+                               double h2, _Bool fuse) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->revolution_form(*cast_to_topo(w), p->handle, cast_to_gp(Axes),
                                 h1, h2, fuse);
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
-topo_face_t topo_solid_section_face(topo_solid_t s, pnt3d_t pnt, pnt3d_t nor) {
+topo_face_t topo_solid_section_face(topo_solid_t s, pnt3d_t pnt, pnt3d_t nor) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     auto fopt = opt->section(cast_to_gp(pnt), cast_to_gp(nor));
@@ -4934,14 +6905,30 @@ topo_face_t topo_solid_section_face(topo_solid_t s, pnt3d_t pnt, pnt3d_t nor) {
     }
   }
   return topo_face_t{nullptr};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_face_t{};
+  }
+  catch (...) {
+    return topo_face_t{};
+  }
 }
 
-int topo_solid_convert_to_nurbs(topo_solid_t s) {
+int topo_solid_convert_to_nurbs(topo_solid_t s) { try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->convert_to_nurbs();
   }
   return -1;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return -1;
+  }
+  catch (...) {
+    return -1;
+  }
 }
 
 topo_shell_t topo_solid_outer_shell(topo_solid_t s) {
@@ -4978,10 +6965,18 @@ topo_shell_t *topo_solid_inner_shells(topo_solid_t s, int *count) {
   return nullptr;
 }
 
-topo_compound_t topo_make_compound() {
+topo_compound_t topo_make_compound() { try {
   return topo_compound_t{
       .shp =
           new topo_shape_t{.shp = std::make_shared<flywave::topo::compound>()}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_compound_t{};
+  }
+  catch (...) {
+    return topo_compound_t{};
+  }
 }
 
 topo_compound_t topo_make_text(const char *text, double size, const char *font,
@@ -5060,13 +7055,19 @@ topo_compound_t topo_make_text_with_height(const char *text, double size,
   }
 }
 
-void topo_compound_free(topo_compound_t t) {
+void topo_compound_free(topo_compound_t t) { try {
   if (t.shp) {
     delete t.shp;
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-topo_compound_t topo_compound_make_compound(topo_shape_t **S, int count) {
+topo_compound_t topo_compound_make_compound(topo_shape_t **S, int count) { try {
   std::vector<flywave::topo::shape> sps;
   for (int i = 0; i < count; i++) {
     sps.emplace_back(*S[i]->shp);
@@ -5074,51 +7075,101 @@ topo_compound_t topo_compound_make_compound(topo_shape_t **S, int count) {
   return topo_compound_t{.shp = new topo_shape_t{
                              .shp = std::make_shared<flywave::topo::compound>(
                                  flywave::topo::compound::make_compound(sps))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_compound_t{};
+  }
+  catch (...) {
+    return topo_compound_t{};
+  }
 }
 
-void topo_compound_remove(topo_compound_t t, topo_shape_t *s) {
+void topo_compound_remove(topo_compound_t t, topo_shape_t *s) { try {
   auto opt = cast_to_topo(t);
   if (opt) {
     opt->remove(*s->shp);
   }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
 topo_compound_t topo_compound_cut(topo_compound_t t, topo_shape_t **toCut,
-                                  int count, double tol) {
+                                  int count, double tol) { try {
+  auto opt = cast_to_topo(t);
+  if (!opt) {
+    return topo_compound_t{};
+  }
   std::vector<flywave::topo::shape> sps;
   for (int i = 0; i < count; i++) {
     sps.emplace_back(*toCut[i]->shp);
   }
   return topo_compound_t{.shp = new topo_shape_t{
                              .shp = std::make_shared<flywave::topo::compound>(
-                                 flywave::topo::compound::make_compound(sps))}};
+                                 opt->cut(sps, tol))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_compound_t{};
+  }
+  catch (...) {
+    return topo_compound_t{};
+  }
 }
 
 topo_compound_t topo_compound_fuse(topo_compound_t t, topo_shape_t **toFuse,
-                                   int count, bool glue, double tol) {
+                                   int count, bool glue, double tol) { try {
+  auto opt = cast_to_topo(t);
+  if (!opt) {
+    return topo_compound_t{};
+  }
   std::vector<flywave::topo::shape> sps;
   for (int i = 0; i < count; i++) {
     sps.emplace_back(*toFuse[i]->shp);
   }
   return topo_compound_t{.shp = new topo_shape_t{
                              .shp = std::make_shared<flywave::topo::compound>(
-                                 flywave::topo::compound::make_compound(sps))}};
+                                 opt->fuse(sps, glue, tol))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_compound_t{};
+  }
+  catch (...) {
+    return topo_compound_t{};
+  }
 }
 
 topo_compound_t topo_compound_intersect(topo_compound_t t,
                                         topo_shape_t **toIntersect, int count,
-                                        double tol) {
+                                        double tol) { try {
+  auto opt = cast_to_topo(t);
+  if (!opt) {
+    return topo_compound_t{};
+  }
   std::vector<flywave::topo::shape> sps;
   for (int i = 0; i < count; i++) {
     sps.emplace_back(*toIntersect[i]->shp);
   }
   return topo_compound_t{.shp = new topo_shape_t{
                              .shp = std::make_shared<flywave::topo::compound>(
-                                 flywave::topo::compound::make_compound(sps))}};
+                                 opt->intersect(sps, tol))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_compound_t{};
+  }
+  catch (...) {
+    return topo_compound_t{};
+  }
 }
 
 topo_compound_t topo_compound_ancestors(topo_compound_t t, topo_shape_t *s,
-                                        int kind) {
+                                        int kind) { try {
   auto opt = cast_to_topo(t);
   if (opt) {
     auto fopt = opt->ancestors(*s->shp, static_cast<TopAbs_ShapeEnum>(kind));
@@ -5129,10 +7180,18 @@ topo_compound_t topo_compound_ancestors(topo_compound_t t, topo_shape_t *s,
     }
   }
   return topo_compound_t{nullptr};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_compound_t{};
+  }
+  catch (...) {
+    return topo_compound_t{};
+  }
 }
 
 topo_compound_t topo_compound_siblings(topo_compound_t t, topo_shape_t *shape,
-                                       int kind, int level) {
+                                       int kind, int level) { try {
   auto opt = cast_to_topo(t);
   if (opt) {
     auto fopt =
@@ -5144,21 +7203,43 @@ topo_compound_t topo_compound_siblings(topo_compound_t t, topo_shape_t *shape,
     }
   }
   return topo_compound_t{nullptr};
-}
-
-topo_comp_solid_t topo_make_comp_solid() {
-  return topo_comp_solid_t{
-      .shp = new topo_shape_t{
-          .shp = std::make_shared<flywave::topo::comp_solid>()}};
-}
-
-void topo_comp_solid_free(topo_comp_solid_t t) {
-  if (t.shp) {
-    delete t.shp;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_compound_t{};
+  }
+  catch (...) {
+    return topo_compound_t{};
   }
 }
 
-topo_comp_solid_t topo_comp_solid_make_comp_solid(topo_solid_t *S, int count) {
+topo_comp_solid_t topo_make_comp_solid() { try {
+  return topo_comp_solid_t{
+      .shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::comp_solid>()}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_comp_solid_t{};
+  }
+  catch (...) {
+    return topo_comp_solid_t{};
+  }
+}
+
+void topo_comp_solid_free(topo_comp_solid_t t) { try {
+  if (t.shp) {
+    delete t.shp;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+topo_comp_solid_t topo_comp_solid_make_comp_solid(topo_solid_t *S, int count) { try {
   std::vector<flywave::topo::solid> sps;
   for (int i = 0; i < count; i++) {
     sps.emplace_back(*cast_to_topo(S[i]));
@@ -5167,6 +7248,14 @@ topo_comp_solid_t topo_comp_solid_make_comp_solid(topo_solid_t *S, int count) {
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::comp_solid>(
               flywave::topo::comp_solid::make_comp_solid(sps))}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_comp_solid_t{};
+  }
+  catch (...) {
+    return topo_comp_solid_t{};
+  }
 }
 
 class go_mesh_receiver : public flywave::topo::mesh_receiver {
@@ -5213,7 +7302,7 @@ extern void appendNodeNormUv(void *ctx, int face, pnt3d_t p, pnt3d_t n,
 extern void appendNode(void *ctx, int face, pnt3d_t p);
 extern void appendTriangle(void *ctx, int face, int a, int b, int c);
 
-topo_mesh_receiver_t *topo_mesh_receiver_new(mesh_receiver_cb_t cb) {
+topo_mesh_receiver_t *topo_mesh_receiver_new(mesh_receiver_cb_t cb) { try {
   cb.begin = begin;
   cb.end = end;
   cb.append_face = appendFace;
@@ -5224,290 +7313,674 @@ topo_mesh_receiver_t *topo_mesh_receiver_new(mesh_receiver_cb_t cb) {
   return new topo_mesh_receiver_t{
       .recv = std::unique_ptr<flywave::topo::mesh_receiver>(
           new go_mesh_receiver(cb))};
-}
-
-void topo_mesh_receiver_free(topo_mesh_receiver_t *p) {
-  if (p) {
-    delete p;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
   }
 }
 
-topo_location_t *topo_location_new(trsf_t t) {
+void topo_mesh_receiver_free(topo_mesh_receiver_t *p) { try {
+  if (p) {
+    delete p;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+topo_location_t *topo_location_new(trsf_t t) { try {
   return new topo_location_t{.loc =
                                  flywave::topo::topo_location{cast_to_gp(t)}};
-}
-
-void topo_location_free(topo_location_t *p) {
-  if (p) {
-    delete p;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
   }
 }
 
-trsf_t topo_location_get_trsf(topo_location_t *p) {
+void topo_location_free(topo_location_t *p) { try {
+  if (p) {
+    delete p;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+trsf_t topo_location_get_trsf(topo_location_t *p) { try {
   if (p) {
     return cast_from_gp(gp_Trsf(p->loc));
   }
   return trsf_t{};
-}
-
-void topo_location_list_free(topo_location_t **result, int result_count) {
-  if (result) {
-    for (int i = 0; i < result_count; i++) {
-      delete result[i];
-    }
-    delete[] result;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return trsf_t{};
+  }
+  catch (...) {
+    return trsf_t{};
   }
 }
 
-void topo_shape_to_stl(topo_shape_t *p, char *str) {
+// 所有权契约: 数组元素的所有权转移给调用方 (由 topo_location_free 逐个释放),
+// 本函数仅释放指针数组本身, 不得 delete 元素。
+void topo_location_list_free(topo_location_t **result, int result_count) { try {
+  (void)result_count;
+  delete[] result;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+void topo_shape_to_stl(topo_shape_t *p, char *str) { try {
   StlAPI_Writer writer = StlAPI_Writer();
   writer.Write(p->shp->value(), str);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-topo_comp_solid_iterator_t *topo_comp_solid_iterator_make(topo_shape_t *shp) {
+topo_comp_solid_iterator_t *topo_comp_solid_iterator_make(topo_shape_t *shp) { try {
   return new topo_comp_solid_iterator_t{
       .iter = flywave::topo::comp_solid_iterator{*shp->shp}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-void topo_comp_solid_iterator_reset(topo_comp_solid_iterator_t *it) {
+void topo_comp_solid_iterator_reset(topo_comp_solid_iterator_t *it) { try {
   it->iter.reset();
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-void topo_comp_solid_iterator_free(topo_comp_solid_iterator_t *it) {
+void topo_comp_solid_iterator_free(topo_comp_solid_iterator_t *it) { try {
   delete it;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-topo_shape_t *topo_comp_solid_iterator_next(topo_comp_solid_iterator_t *it) {
+topo_shape_t *topo_comp_solid_iterator_next(topo_comp_solid_iterator_t *it) { try {
   boost::optional<flywave::topo::comp_solid> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{
         .shp = std::make_shared<flywave::topo::comp_solid>(*opt)};
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-topo_compound_iterator_t *topo_compound_iterator_make(topo_shape_t *shp) {
+topo_compound_iterator_t *topo_compound_iterator_make(topo_shape_t *shp) { try {
   return new topo_compound_iterator_t{
       .iter = flywave::topo::compound_iterator{*shp->shp}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-void topo_compound_iterator_reset(topo_compound_iterator_t *it) {
+void topo_compound_iterator_reset(topo_compound_iterator_t *it) { try {
   it->iter.reset();
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-void topo_compound_iterator_free(topo_compound_iterator_t *it) { delete it; }
+void topo_compound_iterator_free(topo_compound_iterator_t *it) { try { delete it;   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
-topo_shape_t *topo_compound_iterator_next(topo_compound_iterator_t *it) {
+topo_shape_t *topo_compound_iterator_next(topo_compound_iterator_t *it) { try {
   boost::optional<flywave::topo::compound> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{
         .shp = std::make_shared<flywave::topo::compound>(*opt)};
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-topo_edge_iterator_t *topo_edge_iterator_make(topo_shape_t *shp) {
+topo_edge_iterator_t *topo_edge_iterator_make(topo_shape_t *shp) { try {
   return new topo_edge_iterator_t{.iter =
                                       flywave::topo::edge_iterator{*shp->shp}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-void topo_edge_iterator_free(topo_edge_iterator_t *it) { delete it; }
+void topo_edge_iterator_free(topo_edge_iterator_t *it) { try { delete it;   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
-void topo_edge_iterator_reset(topo_edge_iterator_t *it) { it->iter.reset(); }
+void topo_edge_iterator_reset(topo_edge_iterator_t *it) { try { it->iter.reset();   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
-topo_shape_t *topo_edge_iterator_next(topo_edge_iterator_t *it) {
+topo_shape_t *topo_edge_iterator_next(topo_edge_iterator_t *it) { try {
   boost::optional<flywave::topo::edge> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(*opt)};
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-topo_face_iterator_t *topo_face_iterator_make(topo_shape_t *shp) {
+topo_face_iterator_t *topo_face_iterator_make(topo_shape_t *shp) { try {
   return new topo_face_iterator_t{.iter =
                                       flywave::topo::face_iterator{*shp->shp}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-void topo_face_iterator_free(topo_face_iterator_t *it) { delete it; }
+void topo_face_iterator_free(topo_face_iterator_t *it) { try { delete it;   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
-void topo_face_iterator_reset(topo_face_iterator_t *it) { it->iter.reset(); }
+void topo_face_iterator_reset(topo_face_iterator_t *it) { try { it->iter.reset();   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
-topo_shape_t *topo_face_iterator_next(topo_face_iterator_t *it) {
+topo_shape_t *topo_face_iterator_next(topo_face_iterator_t *it) { try {
   boost::optional<flywave::topo::face> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(*opt)};
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-topo_shell_iterator_t *topo_shell_iterator_make(topo_shape_t *shp) {
+topo_shell_iterator_t *topo_shell_iterator_make(topo_shape_t *shp) { try {
   return new topo_shell_iterator_t{
       .iter = flywave::topo::shell_iterator{*shp->shp}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-void topo_shell_iterator_free(topo_shell_iterator_t *it) { delete it; }
+void topo_shell_iterator_free(topo_shell_iterator_t *it) { try { delete it;   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
-void topo_shell_iterator_reset(topo_shell_iterator_t *it) { it->iter.reset(); }
+void topo_shell_iterator_reset(topo_shell_iterator_t *it) { try { it->iter.reset();   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
-topo_shape_t *topo_shell_iterator_next(topo_shell_iterator_t *it) {
+topo_shape_t *topo_shell_iterator_next(topo_shell_iterator_t *it) { try {
   boost::optional<flywave::topo::shell> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{.shp =
                                 std::make_shared<flywave::topo::shell>(*opt)};
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-topo_solid_iterator_t *topo_solid_iterator_make(topo_shape_t *shp) {
+topo_solid_iterator_t *topo_solid_iterator_make(topo_shape_t *shp) { try {
   return new topo_solid_iterator_t{
       .iter = flywave::topo::solid_iterator{*shp->shp}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-void topo_solid_iterator_free(topo_solid_iterator_t *it) { delete it; }
+void topo_solid_iterator_free(topo_solid_iterator_t *it) { try { delete it;   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
-void topo_solid_iterator_reset(topo_solid_iterator_t *it) { it->iter.reset(); }
+void topo_solid_iterator_reset(topo_solid_iterator_t *it) { try { it->iter.reset();   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
-topo_shape_t *topo_solid_iterator_next(topo_solid_iterator_t *it) {
+topo_shape_t *topo_solid_iterator_next(topo_solid_iterator_t *it) { try {
   boost::optional<flywave::topo::solid> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{.shp =
                                 std::make_shared<flywave::topo::solid>(*opt)};
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-topo_vertex_iterator_t *topo_vertex_iterator_make(topo_shape_t *shp) {
+topo_vertex_iterator_t *topo_vertex_iterator_make(topo_shape_t *shp) { try {
   return new topo_vertex_iterator_t{
       .iter = flywave::topo::vertex_iterator{*shp->shp}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-void topo_vertex_iterator_free(topo_vertex_iterator_t *it) { delete it; }
+void topo_vertex_iterator_free(topo_vertex_iterator_t *it) { try { delete it;   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
-void topo_vertex_iterator_reset(topo_vertex_iterator_t *it) {
+void topo_vertex_iterator_reset(topo_vertex_iterator_t *it) { try {
   it->iter.reset();
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
-topo_shape_t *topo_vertex_iterator_next(topo_vertex_iterator_t *it) {
+topo_shape_t *topo_vertex_iterator_next(topo_vertex_iterator_t *it) { try {
   boost::optional<flywave::topo::vertex> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{.shp =
                                 std::make_shared<flywave::topo::vertex>(*opt)};
   }
   return nullptr;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-topo_wire_iterator_t *topo_wire_iterator_make(topo_shape_t *shp) {
+topo_wire_iterator_t *topo_wire_iterator_make(topo_shape_t *shp) { try {
   return new topo_wire_iterator_t{.iter =
                                       flywave::topo::wire_iterator{*shp->shp}};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-void topo_wire_iterator_free(topo_wire_iterator_t *it) { delete it; }
+void topo_wire_iterator_free(topo_wire_iterator_t *it) { try { delete it;   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
-void topo_wire_iterator_reset(topo_wire_iterator_t *it) { it->iter.reset(); }
+void topo_wire_iterator_reset(topo_wire_iterator_t *it) { try { it->iter.reset();   }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
 
-topo_shape_t *topo_wire_iterator_next(topo_wire_iterator_t *it) {
+topo_shape_t *topo_wire_iterator_next(topo_wire_iterator_t *it) { try {
   boost::optional<flywave::topo::wire> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(*opt)};
   }
   return nullptr;
-}
-
-topo_vector_t *topo_vector_new(double x, double y, double z) {
-  return new topo_vector_t{.vec = flywave::topo::topo_vector(x, y, z)};
-}
-
-void topo_vector_free(topo_vector_t *p) {
-  if (p) {
-    delete p;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
   }
 }
 
-double topo_vector_get_x(topo_vector_t *p) {
+topo_vector_t *topo_vector_new(double x, double y, double z) { try {
+  return new topo_vector_t{.vec = flywave::topo::topo_vector(x, y, z)};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
+}
+
+void topo_vector_free(topo_vector_t *p) { try {
+  if (p) {
+    delete p;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+double topo_vector_get_x(topo_vector_t *p) { try {
   if (p) {
     return p->vec.x();
   }
   return 0;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-double topo_vector_get_y(topo_vector_t *p) {
+double topo_vector_get_y(topo_vector_t *p) { try {
   if (p) {
     return p->vec.y();
   }
   return 0;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-double topo_vector_get_z(topo_vector_t *p) {
+double topo_vector_get_z(topo_vector_t *p) { try {
   if (p) {
     return p->vec.z();
   }
   return 0;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
-topo_plane_t *topo_plane_new(pnt3d_t *origin, dir3d_t *xDir, vec3d_t *normal) {
+topo_plane_t *topo_plane_new(pnt3d_t *origin, dir3d_t *xDir, vec3d_t *normal) { try {
   return new topo_plane_t{.plane = flywave::topo::topo_plane(
                               flywave::topo::topo_vector(cast_to_gp(*origin)),
                               flywave::topo::topo_vector(cast_to_gp(*xDir)),
                               flywave::topo::topo_vector(cast_to_gp(*normal)))};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
-topo_plane_t *topo_plane_new_from_named(const char *name, pnt3d_t *origin) {
+topo_plane_t *topo_plane_new_from_named(const char *name, pnt3d_t *origin) { try {
   flywave::topo::topo_vector vec =
       origin ? flywave::topo::topo_vector(cast_to_gp(*origin))
              : flywave::topo::topo_vector(0, 0, 0);
   return new topo_plane_t{
       .plane = flywave::topo::topo_plane::named(std::string(name), vec)};
-}
-
-void topo_plane_free(topo_plane_t *p) {
-  if (p) {
-    delete p;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
   }
 }
 
-pnt3d_t topo_plane_get_origin(topo_plane_t *p) {
+void topo_plane_free(topo_plane_t *p) { try {
+  if (p) {
+    delete p;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+pnt3d_t topo_plane_get_origin(topo_plane_t *p) { try {
   if (p) {
     return cast_from_gp(p->plane.origin().to_pnt());
   }
   return pnt3d_t{};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return pnt3d_t{};
+  }
+  catch (...) {
+    return pnt3d_t{};
+  }
 }
 
-dir3d_t topo_plane_get_x_dir(topo_plane_t *p) {
+dir3d_t topo_plane_get_x_dir(topo_plane_t *p) { try {
   if (p) {
     return cast_from_gp(p->plane.x_dir().to_dir());
   }
   return dir3d_t{};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return dir3d_t{};
+  }
+  catch (...) {
+    return dir3d_t{};
+  }
 }
 
-dir3d_t topo_plane_get_y_dir(topo_plane_t *p) {
+dir3d_t topo_plane_get_y_dir(topo_plane_t *p) { try {
   if (p) {
     return cast_from_gp(p->plane.y_dir().to_dir());
   }
   return dir3d_t{};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return dir3d_t{};
+  }
+  catch (...) {
+    return dir3d_t{};
+  }
 }
 
-dir3d_t topo_plane_get_z_dir(topo_plane_t *p) {
+dir3d_t topo_plane_get_z_dir(topo_plane_t *p) { try {
   if (p) {
     return cast_from_gp(p->plane.z_dir().to_dir());
   }
   return dir3d_t{};
-}
-
-topo_bbox_t *topo_bbox_new(bbox_t bbox) {
-  return new topo_bbox_t{
-      .bbox = flywave::topo::topo_bbox(bbox.minx, bbox.miny, bbox.minz,
-                                       bbox.maxx, bbox.maxy, bbox.maxz)};
-}
-
-topo_bbox_t *topo_bbox_new_from_shape(topo_shape_t *p) { return nullptr; }
-
-void topo_bbox_free(topo_bbox_t *p) {
-  if (p) {
-    delete p;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return dir3d_t{};
+  }
+  catch (...) {
+    return dir3d_t{};
   }
 }
 
-bbox_t topo_bbox_get_bbox(topo_bbox_t *p) {
+topo_bbox_t *topo_bbox_new(bbox_t bbox) { try {
+  return new topo_bbox_t{
+      .bbox = flywave::topo::topo_bbox(bbox.minx, bbox.miny, bbox.minz,
+                                       bbox.maxx, bbox.maxy, bbox.maxz)};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
+}
+
+topo_bbox_t *topo_bbox_new_from_shape(topo_shape_t *p) { try { return nullptr;   }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
+}
+
+void topo_bbox_free(topo_bbox_t *p) { try {
+  if (p) {
+    delete p;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+bbox_t topo_bbox_get_bbox(topo_bbox_t *p) { try {
   if (p) {
     bbox_t bbox{
         .minx = p->bbox.x_min(),
@@ -5520,23 +7993,53 @@ bbox_t topo_bbox_get_bbox(topo_bbox_t *p) {
     return bbox;
   }
   return bbox_t{};
-}
-
-topo_matrix_t *topo_matrix_new(trsf_t t) {
-  return new topo_matrix_t{.mat = flywave::topo::topo_matrix(cast_to_gp(t))};
-}
-
-void topo_matrix_free(topo_matrix_t *p) {
-  if (p) {
-    delete p;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return bbox_t{};
+  }
+  catch (...) {
+    return bbox_t{};
   }
 }
 
-double topo_matrix_get_value(topo_matrix_t *p, int row, int col) {
+topo_matrix_t *topo_matrix_new(trsf_t t) { try {
+  return new topo_matrix_t{.mat = flywave::topo::topo_matrix(cast_to_gp(t))};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
+}
+
+void topo_matrix_free(topo_matrix_t *p) { try {
+  if (p) {
+    delete p;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
+}
+
+double topo_matrix_get_value(topo_matrix_t *p, int row, int col) { try {
   if (p) {
     return p->mat.get(row, col);
   }
   return 0;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return 0;
+  }
+  catch (...) {
+    return 0;
+  }
 }
 
 // Boolean operations
@@ -5972,15 +8475,23 @@ TOPOCAPICALL pnt3d_t topo_combined_center_of_bound_box(topo_shape_t **objects,
   }
 }
 
-topo_shape_t *read_shape_from_step_file(const char *filename) {
+topo_shape_t *read_shape_from_step_file(const char *filename) { try {
   std::string f{filename};
   auto res = flywave::topo::read_shape_from_step(f);
   auto shp = std::make_shared<flywave::topo::shape>(res);
   return new _topo_shape_t{.shp = shp};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 TOPOCAPICALL char *topo_shape_write_to_step_buffer(topo_shape_t *shape,
-                                                   int *buffer_size) {
+                                                   int *buffer_size) { try {
   if (!shape || !buffer_size)
     return nullptr;
   std::string stepStr = flywave::topo::write_shape_to_step(*shape->shp);
@@ -5994,16 +8505,22 @@ TOPOCAPICALL char *topo_shape_write_to_step_buffer(topo_shape_t *shape,
   buffer[*buffer_size] = '\0';
 
   return buffer;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 TOPOCAPICALL topo_shape_and_location_t **
-read_shapes_from_step_file(const char *filename, int *count) {
+read_shapes_from_step_file(const char *filename, int *count) { try {
   if (!filename || !count)
     return nullptr;
 
-  if (*count == 0) {
-    return nullptr;
-  }
+  // count 是出参, 入参值无意义, 不得据此提前返回
   std::vector<flywave::topo::shape_and_location> shapes =
       flywave::topo::read_shapes_from_step(filename);
   *count = shapes.size();
@@ -6022,13 +8539,31 @@ read_shapes_from_step_file(const char *filename, int *count) {
   }
 
   return result;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
 }
 
 TOPOCAPICALL void free_shapes_from_step(topo_shape_and_location_t **shapes,
-                                        int count) {
+                                        int count) { try {
   if (!shapes)
     return;
+  // 所有权契约: 元素 (shape/location wrapper) 的所有权已转移给调用方,
+  // 由其 finalizer 经 topo_shape_free / topo_location_free 逐个释放;
+  // 本函数仅释放 malloc 的指针数组本身。
+  (void)count;
   free(shapes);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
+  }
 }
 
 topo_wire_sample_point_t *topo_wire_sample_at_distances(topo_wire_t wire,
@@ -6056,7 +8591,7 @@ topo_wire_sample_point_t *topo_wire_sample_at_distances(topo_wire_t wire,
   }
 }
 
-void topo_wire_sample_list_free(topo_wire_sample_point_t *samples, int count) {
+void topo_wire_sample_list_free(topo_wire_sample_point_t *samples, int count) { try {
   if (samples) {
     for (int i = 0; i < count; i++) {
       if (samples[i].edge.shp) {
@@ -6064,6 +8599,12 @@ void topo_wire_sample_list_free(topo_wire_sample_point_t *samples, int count) {
       }
     }
     delete[] samples;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
@@ -6082,7 +8623,7 @@ topo_wire_t topo_wire_clip_between_distances(topo_wire_t wire,
 }
 
 topo_profile_projection_t
-topo_calc_profile_projection(topo_wire_t path, dir3d_t upDir, double *offset) {
+topo_calc_profile_projection(topo_wire_t path, dir3d_t upDir, double *offset) { try {
   topo_profile_projection_t result;
   boost::optional<double> posOpt =
       offset ? boost::optional<double>{*offset} : boost::none;
@@ -6093,15 +8634,31 @@ topo_calc_profile_projection(topo_wire_t path, dir3d_t upDir, double *offset) {
   result.tangent = cast_from_gp(section.tangent);
   result.position = cast_from_gp(section.position);
   return result;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return topo_profile_projection_t{};
+  }
+  catch (...) {
+    return topo_profile_projection_t{};
+  }
 }
 
 pnt3d_t topo_profile_project_point(topo_profile_projection_t *proj,
-                                   pnt3d_t point) {
+                                   pnt3d_t point) { try {
   gp_Ax2 axes = cast_to_gp(proj->axes);
   gp_Trsf trsf = cast_to_gp(proj->trsf);
   gp_Pnt out =
       axes.Location().Translated(gp_Vec(point.z, point.y, 0).Transformed(trsf));
   return cast_from_gp(out);
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return pnt3d_t{};
+  }
+  catch (...) {
+    return pnt3d_t{};
+  }
 }
 
 pnt3d_t *topo_profile_project_point_list(topo_profile_projection_t *proj,
@@ -6123,9 +8680,15 @@ pnt3d_t *topo_profile_project_point_list(topo_profile_projection_t *proj,
   }
 }
 
-void topo_profile_project_point_list_free(pnt3d_t *points) {
+void topo_profile_project_point_list_free(pnt3d_t *points) { try {
   if (points) {
     delete[] points;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
@@ -6154,9 +8717,15 @@ pnt3d_t *topo_make_catenary(pnt3d_t p1, pnt3d_t p2, double slack, double maxSag,
   }
 }
 
-void topo_free_catenary_points(pnt3d_t *points) {
+void topo_free_catenary_points(pnt3d_t *points) { try {
   if (points) {
     free(points);
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
@@ -6277,9 +8846,15 @@ TOPOCAPICALL pnt3d_t *topo_sample_centerline_wire(topo_wire_t centerline,
   }
 }
 
-TOPOCAPICALL void topo_free_points(pnt3d_t *points) {
+TOPOCAPICALL void topo_free_points(pnt3d_t *points) { try {
   if (points) {
     delete[] points;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 
@@ -6325,13 +8900,19 @@ TOPOCAPICALL void topo_shape_get_outline(topo_shape_t *p, int numSamples,
   }
 }
 
-TOPOCAPICALL void topo_free_outline_points(pnt3d_t **outlines, int *outline_sizes, int outline_count) {
+TOPOCAPICALL void topo_free_outline_points(pnt3d_t **outlines, int *outline_sizes, int outline_count) { try {
   if (outlines && outline_sizes) {
     for (int i = 0; i < outline_count; i++) {
       delete[] outlines[i];
     }
     delete[] outlines;
     delete[] outline_sizes;
+  }
+  }
+  catch (const std::exception &e) {
+    (void)e;
+  }
+  catch (...) {
   }
 }
 

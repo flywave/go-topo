@@ -125,14 +125,14 @@ toFusedCAF(const std::shared_ptr<assembly> &assy, bool glue = false,
     const auto &pair = shape_color_pairs[0];
     if (pair.first.shape_type() != TopAbs_COMPOUND) {
       if (glue) {
-        auto fused = *topo::fuse({pair.first}, tol ? *tol : 0.0f, glue);
+        auto fused = topo::checked(topo::fuse({pair.first}, tol ? *tol : 0.0f, glue), "fuse");
         top_level_shape = compound::make_compound({fused}).value();
         shape_color_pairs = {{fused, pair.second}};
       } else {
         top_level_shape = compound::make_compound({pair.first}).value();
       }
     } else {
-      auto fused = *topo::fuse({pair.first}, tol ? *tol : 0.0f, glue);
+      auto fused = topo::checked(topo::fuse({pair.first}, tol ? *tol : 0.0f, glue), "fuse");
       top_level_shape = compound::make_compound({fused}).value();
       shape_color_pairs = {{fused, pair.second}};
     }
@@ -789,7 +789,12 @@ assembly &assembly::solve(int verbosity) {
 
     std::vector<gp_Trsf> locs(ents.size());
     for (const auto &entry : ents) {
-      locs[entry.second] = *objects_.find(entry.first)->second->loc_;
+      auto it = objects_.find(entry.first);
+      if (it == objects_.end()) {
+        throw std::runtime_error("Constraint references unknown object: " +
+                                 entry.first);
+      }
+      locs[entry.second] = *it->second->loc_;
     }
 
     std::vector<assembly_constraint> constraint_pods;
@@ -819,7 +824,11 @@ assembly &assembly::solve(int verbosity) {
 
     for (const auto &entry : ents) {
       if (entry.first != name_) {
-        objects_.find(entry.first)->second->loc_ =
+        auto it = objects_.find(entry.first);
+        if (it == objects_.end()) {
+          continue;
+        }
+        it->second->loc_ =
             std::make_shared<topo_location>(*root_loc_inv *
                                             solve_result.first[entry.second]);
       }

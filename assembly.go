@@ -317,8 +317,11 @@ func (c *Assembly) ExportTo(path string, mode int) *Assembly {
 func (c *Assembly) Shapes() []*Shape {
 	var size C.int
 	shapes := C.assembly_shapes(c.inner.val, &size)
-	// 不能调 topo_shape_list_free: 它会 delete 每个 wrapper, 而 wrapper 所有权归各 Go 对象的 finalizer
-	// (C 侧无 shallow free, new[] 的指针数组本身无法配对释放, 仅泄漏数组本身)
+	if shapes == nil {
+		return nil
+	}
+	// 元素所有权归各 Go 对象的 finalizer, topo_shape_list_free 仅浅释放指针数组
+	defer C.topo_shape_list_free(shapes, size)
 	shapesSlice := unsafe.Slice(shapes, int(size))
 	var result []*Shape
 	for i := 0; i < int(size); i++ {
@@ -386,8 +389,11 @@ func (c *Assembly) GetObject() *AssemblyObject {
 func (c *Assembly) Children() []*Assembly {
 	var size C.int
 	children := C.assembly_children(c.inner.val, &size)
-	// 不能调 assembly_list_free: 它会 delete 每个 wrapper, 而 wrapper 所有权归各 Go 对象的 finalizer
-	// (C 侧无 shallow free, new[] 的指针数组本身无法配对释放, 仅泄漏数组本身)
+	if children == nil {
+		return nil
+	}
+	// 元素所有权归各 Go 对象的 finalizer, 仅浅释放指针数组
+	defer C.assembly_list_free_shallow(children)
 	childrenSlice := unsafe.Slice(children, int(size))
 	var result []*Assembly
 	for i := 0; i < int(size); i++ {

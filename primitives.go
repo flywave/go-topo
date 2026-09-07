@@ -458,17 +458,28 @@ func (p *StretchedBodyParams) to_struct() C.stretched_body_params_t {
 }
 
 func CreateStretchedBody(params StretchedBodyParams) *Shape {
-	shp := C.create_stretched_body(params.to_struct())
+	cParams := params.to_struct()
+	defer freeStretchedBodyParams(cParams)
+	shp := C.create_stretched_body(cParams)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
 }
 
 func CreateStretchedBodyWithPlace(params StretchedBodyParams, basePoint Point3, axisDir Dir3) *Shape {
-	shp := C.create_stretched_body_with_place(params.to_struct(), basePoint.val, axisDir.val)
+	cParams := params.to_struct()
+	defer freeStretchedBodyParams(cParams)
+	shp := C.create_stretched_body_with_place(cParams, basePoint.val, axisDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
+}
+
+// to_struct 分配的 points 缓冲由 C 侧只读, 调用后立即释放
+func freeStretchedBodyParams(c C.stretched_body_params_t) {
+	if c.points != nil {
+		C.free(unsafe.Pointer(c.points))
+	}
 }
 
 type PorcelainBushingParams struct {
@@ -940,12 +951,17 @@ func (p *CurveCableParams) to_struct() C.curve_cable_params_t {
 	if len(p.Segments) > 0 {
 		// Allocate memory for segments
 		c.segments = (*C.curve_segment_t)(C.malloc(C.size_t(len(p.Segments)) * C.sizeof_curve_segment_t))
-		c.curveTypes = (*C.curve_type_t)(C.malloc(C.size_t(len(p.CurveTypes)) * C.sizeof_curve_type_t))
+		// curveTypes 必须与 Segments 一一对应, 按 Segments 数量分配, 越界即堆溢出
+		c.curveTypes = (*C.curve_type_t)(C.malloc(C.size_t(len(p.Segments)) * C.sizeof_curve_type_t))
 
 		for i, seg := range p.Segments {
 			// Set curve type
+			var ct int
+			if i < len(p.CurveTypes) {
+				ct = int(p.CurveTypes[i])
+			}
 			*(*C.curve_type_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.curveTypes)) + uintptr(i)*C.sizeof_curve_type_t)) =
-				C.curve_type_t(p.CurveTypes[i])
+				C.curve_type_t(ct)
 
 			// Set segment data
 			segmentPtr := (*C.curve_segment_t)(unsafe.Pointer(uintptr(unsafe.Pointer(c.segments)) + uintptr(i)*C.sizeof_curve_segment_t))
@@ -1008,6 +1024,9 @@ func CreateCurveCableWithPlace(params CurveCableParams, position Point3, directi
 }
 
 func SampleCurvePoints(controlPoints [][]Point3, curveTypes []CurveType, tessellation float64) []Point3 {
+	if len(controlPoints) == 0 || len(curveTypes) != len(controlPoints) {
+		return nil
+	}
 	var pointCounts []C.int
 	var allPoints []C.pnt3d_t
 	for _, points := range controlPoints {
@@ -2041,6 +2060,8 @@ func CreateTransmissionLine(params TransmissionLineParams, startPoint Point3, en
 
 func CreateTransmissionCenterline(params TransmissionLineParams, startPoint Point3, endPoint Point3) *Wire {
 	cParams := params.to_struct()
+	defer C.free(unsafe.Pointer(cParams.ctype))
+
 	wire := C.create_transmission_centerline(cParams, startPoint.val, endPoint.val)
 	w := &Wire{inner: &innerWire{val: wire}}
 	runtime.SetFinalizer(w.inner, (*innerWire).free)
@@ -5162,6 +5183,9 @@ const (
 )
 
 func SampleSegmentPoints(wires [][]Point3, segments []SegmentType, tessellation float64) []Point3 {
+	if len(wires) == 0 || len(segments) != len(wires) {
+		return nil
+	}
 	var wireCounts []C.int
 	var allPoints []C.pnt3d_t
 	for _, wire := range wires {
@@ -6426,7 +6450,7 @@ func (p *WaterTunnelParams) to_struct() C.water_tunnel_params_t {
 	}
 
 	if len(p.Polygon) > 0 {
-		cParams.polygon = (*C.double)(C.malloc(C.size_t(len(p.Polygon) * 3) * C.sizeof_double))
+		cParams.polygon = (*C.double)(C.malloc(C.size_t(len(p.Polygon)*3) * C.sizeof_double))
 		for i, pt := range p.Polygon {
 			*(*C.double)(unsafe.Pointer(uintptr(unsafe.Pointer(cParams.polygon)) + uintptr(i*3)*C.sizeof_double)) = C.double(pt[0])
 			*(*C.double)(unsafe.Pointer(uintptr(unsafe.Pointer(cParams.polygon)) + uintptr(i*3+1)*C.sizeof_double)) = C.double(pt[1])

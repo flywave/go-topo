@@ -48,7 +48,11 @@ func (t *DxfReader) DoRead() {
 }
 
 func (t *DxfReader) GetError() string {
-	return C.GoString(C.dxf_reader_get_error(t.inner.val))
+	p := C.dxf_reader_get_error(t.inner.val)
+	if p == nil {
+		return ""
+	}
+	return C.GoString(p)
 }
 
 func (t *DxfReader) HasError() bool {
@@ -259,7 +263,11 @@ func (t *innerDxfTextEntity) free() {
 }
 
 func (t *DxfTextEntity) GetText() string {
-	return C.GoString(C.dxf_text_entity_get_text(t.inner.val))
+	p := C.dxf_text_entity_get_text(t.inner.val)
+	if p == nil {
+		return ""
+	}
+	return C.GoString(p)
 }
 
 func (t *DxfTextEntity) GetPosition() Point3 {

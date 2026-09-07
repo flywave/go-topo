@@ -1181,7 +1181,7 @@ create_mast_assembly_with_place(mast_assembly_params_t params, pnt3d_t position,
 // ===========================================================================
 // 30b. Weight Stack / Ratchet Compensator
 // ===========================================================================
-static weight_stack_params to_cpp(const weight_stack_params_t &p) {
+static weight_stack_params to_cpp(const weight_stack_params_t &p) { try {
   weight_stack_params c;
   c.blockCount = p.blockCount;
   c.blockDiameter = p.blockDiameter;
@@ -1191,6 +1191,14 @@ static weight_stack_params to_cpp(const weight_stack_params_t &p) {
   c.rodLength = p.rodLength;
   c.holeDiameter = p.holeDiameter;
   return c;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return weight_stack_params{};
+  }
+  catch (...) {
+    return weight_stack_params{};
+  }
 }
 
 RAILCAPICALL topo_shape_t *create_weight_stack(weight_stack_params_t params) {
@@ -1212,7 +1220,7 @@ RAILCAPICALL topo_shape_t *create_weight_stack_at(weight_stack_params_t params,
   }
 }
 
-static ratchet_compensator_params to_cpp(const ratchet_compensator_params_t &p) {
+static ratchet_compensator_params to_cpp(const ratchet_compensator_params_t &p) { try {
   ratchet_compensator_params c;
   c.wheelDiameter = p.wheelDiameter;
   c.wheelWidth = p.wheelWidth;
@@ -1220,6 +1228,14 @@ static ratchet_compensator_params to_cpp(const ratchet_compensator_params_t &p) 
   c.strokeLength = p.strokeLength;
   c.stack = to_cpp(p.stack);
   return c;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return ratchet_compensator_params{};
+  }
+  catch (...) {
+    return ratchet_compensator_params{};
+  }
 }
 
 RAILCAPICALL topo_shape_t *

@@ -83,6 +83,8 @@ ASAPICALL color_t assembly_get_color(assembly_t *as);
 ASAPICALL assembly_object_t *assembly_get_object(assembly_t *as);
 ASAPICALL assembly_t **assembly_children(assembly_t *as, int *size);
 ASAPICALL void assembly_list_free(assembly_t **list, int size);
+// 仅释放指针数组本身, 元素所有权归调用方。
+ASAPICALL void assembly_list_free_shallow(assembly_t **list);
 
 SKETCHCAPICALL bool assembly_has_error(assembly_t *as);
 SKETCHCAPICALL const char *assembly_error(assembly_t *as);

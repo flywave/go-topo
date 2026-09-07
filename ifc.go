@@ -72,6 +72,9 @@ func (c *IfcConverter) Load(filename string) bool {
 
 func (c *IfcConverter) GetVersion() string {
 	ver := C.ifc_convert_get_version(c.inner.ptr)
+	if ver == nil {
+		return ""
+	}
 	defer C.free(unsafe.Pointer(ver))
 	return C.GoString(ver)
 }
@@ -864,7 +867,12 @@ func (p *IfcProperty) GetString() string {
 func (p *IfcProperty) GetBitset() []byte {
 	size := 0
 	bits := C.ifc_property_get_bitset(p.inner.ptr, (*C.int)(unsafe.Pointer(&size)))
-	return C.GoBytes(unsafe.Pointer(bits), C.int(size))
+	byteLen := (size + 7) / 8
+	if bits == nil || byteLen == 0 {
+		return nil
+	}
+	defer C.ifc_property_free_vector(unsafe.Pointer(bits))
+	return C.GoBytes(unsafe.Pointer(bits), C.int(byteLen))
 }
 
 func (p *IfcProperty) GetIntVector() []int32 {
@@ -908,12 +916,14 @@ func (p *IfcProperty) GetBitsetVector() [][]byte {
 
 	for i := 0; i < count; i++ {
 		size := int(sizes[i])
-		bits := *(*[]byte)(unsafe.Pointer(&struct {
-			ptr *C.uchar
-			len int
-		}{*(**C.uchar)(unsafe.Pointer(uintptr(unsafe.Pointer(vec)) + uintptr(i)*unsafe.Sizeof(*vec))), size}))
-		result[i] = make([]byte, size)
-		copy(result[i], bits)
+		byteLen := (size + 7) / 8
+		elemPtr := *(**C.uchar)(unsafe.Pointer(uintptr(unsafe.Pointer(vec)) + uintptr(i)*unsafe.Sizeof(*vec)))
+		result[i] = make([]byte, byteLen)
+		if elemPtr != nil && byteLen > 0 {
+			copy(result[i], (*[1 << 30]byte)(unsafe.Pointer(elemPtr))[:byteLen:byteLen])
+		}
+		// 元素所有权归调用方, 逐个释放
+		C.ifc_property_free_vector(unsafe.Pointer(elemPtr))
 	}
 	return result
 }
@@ -926,8 +936,8 @@ func (p *IfcProperty) GetIntMatrix() [][]int32 {
 		return nil
 	}
 	defer func() {
-		matrixSlice := (*[1 << 30]unsafe.Pointer)(unsafe.Pointer(&matrix))[:rows:rows]
-		C.ifc_property_free_matrix(&matrixSlice[0], C.int(rows))
+		// matrix 指向 C 侧行指针数组, 直接转成 void** 释放
+		C.ifc_property_free_matrix((*unsafe.Pointer)(unsafe.Pointer(matrix)), C.int(rows))
 	}()
 
 	result := make([][]int32, rows)
@@ -949,8 +959,7 @@ func (p *IfcProperty) GetDoubleMatrix() [][]float64 {
 		return nil
 	}
 	defer func() {
-		matrixSlice := (*[1 << 30]unsafe.Pointer)(unsafe.Pointer(&matrix))[:rows:rows]
-		C.ifc_property_free_matrix(&matrixSlice[0], C.int(rows))
+		C.ifc_property_free_matrix((*unsafe.Pointer)(unsafe.Pointer(matrix)), C.int(rows))
 	}()
 
 	result := make([][]float64, rows)
