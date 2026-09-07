@@ -1,4 +1,6 @@
 #include "topo_c_api.h"
+#include "cgo_lock.hh"
+
 #include "geometry_impl.hh"
 #include "shape.hh"
 #include "shape_ops.hh"
@@ -12,7 +14,8 @@
 extern "C" {
 #endif
 
-void topo_shape_free(topo_shape_t *p) { try {
+void topo_shape_free(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     delete p;
   }
@@ -24,7 +27,8 @@ void topo_shape_free(topo_shape_t *p) { try {
   }
 }
 
-topo_shape_t *topo_shape_share(topo_shape_t *p) { try {
+topo_shape_t *topo_shape_share(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return new topo_shape_t{.shp = p->shp};
   }
@@ -39,7 +43,8 @@ topo_shape_t *topo_shape_share(topo_shape_t *p) { try {
   }
 }
 
-topo_solid_t topo_make_solid() { try {
+topo_solid_t topo_make_solid() {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>()}};
   }
@@ -52,11 +57,13 @@ topo_solid_t topo_make_solid() { try {
   }
 }
 
-_Bool topo_shape_is_null(topo_shape_t *p) { try {
-  if (p) {
-    return p->shp->is_null();
+_Bool topo_shape_is_null(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
+  if (!p) {
+    // 空句柄即 null shape (此前返回 false, 导致失败路径被 Go 侧误判为有效)
+    return true;
   }
-  return false;
+  return p->shp->is_null();
   }
   catch (const std::exception &e) {
     (void)e;
@@ -67,7 +74,8 @@ _Bool topo_shape_is_null(topo_shape_t *p) { try {
   }
 }
 
-_Bool topo_shape_is_valid(topo_shape_t *p) { try {
+_Bool topo_shape_is_valid(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->is_valid();
   }
@@ -82,7 +90,8 @@ _Bool topo_shape_is_valid(topo_shape_t *p) { try {
   }
 }
 
-_Bool topo_shape_equals(topo_shape_t *p, topo_shape_t *o) { try {
+_Bool topo_shape_equals(topo_shape_t *p, topo_shape_t *o) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p != NULL && o != NULL && p != o) {
     return p->shp->equals(*o->shp);
   }
@@ -97,7 +106,8 @@ _Bool topo_shape_equals(topo_shape_t *p, topo_shape_t *o) { try {
   }
 }
 
-int topo_shape_type(topo_shape_t *p) { try {
+int topo_shape_type(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return static_cast<int>(p->shp->type());
   }
   catch (const std::exception &e) {
@@ -109,7 +119,8 @@ int topo_shape_type(topo_shape_t *p) { try {
   }
 }
 
-bbox_t topo_shape_bounding_box(topo_shape_t *p) { try {
+bbox_t topo_shape_bounding_box(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto b = p->shp->bounding_box();
   return cast_from_gp(b);
   }
@@ -122,7 +133,8 @@ bbox_t topo_shape_bounding_box(topo_shape_t *p) { try {
   }
 }
 
-int topo_shape_hash_code(topo_shape_t *p) { try { return p->shp->hash_code();   }
+int topo_shape_hash_code(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return p->shp->hash_code();   }
   catch (const std::exception &e) {
     (void)e;
     return 0;
@@ -132,7 +144,8 @@ int topo_shape_hash_code(topo_shape_t *p) { try { return p->shp->hash_code();   
   }
 }
 
-int topo_shape_transform(topo_shape_t *p, trsf_t mat) { try {
+int topo_shape_transform(topo_shape_t *p, trsf_t mat) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     auto t = cast_to_gp(mat);
     return p->shp->transform(t);
@@ -153,6 +166,7 @@ int topo_shape_transform(topo_shape_t *p, trsf_t mat) { try {
   catch (...) { return RET_ON_ERR; }
 
 int topo_shape_translate(topo_shape_t *p, vec3d_t delta) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try { return p->shp->translate(cast_to_gp(delta)); }
     CATCH_SHAPE_OP(-1)
@@ -162,6 +176,7 @@ int topo_shape_translate(topo_shape_t *p, vec3d_t delta) {
 
 int topo_shape_rotate_from_two_point(topo_shape_t *p, double angle, pnt3d_t p1,
                                      pnt3d_t p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try { return p->shp->rotate(angle, cast_to_gp(p1), cast_to_gp(p2)); }
     CATCH_SHAPE_OP(-1)
@@ -170,6 +185,7 @@ int topo_shape_rotate_from_two_point(topo_shape_t *p, double angle, pnt3d_t p1,
 }
 
 int topo_shape_rotate_from_axis1(topo_shape_t *p, double angle, axis1_t a) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try { return p->shp->rotate(angle, cast_to_gp(a)); }
     CATCH_SHAPE_OP(-1)
@@ -178,6 +194,7 @@ int topo_shape_rotate_from_axis1(topo_shape_t *p, double angle, axis1_t a) {
 }
 
 int topo_shape_rotate_from_quaternion(topo_shape_t *p, quaternion_t q) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try { return p->shp->rotate(cast_to_gp(q)); }
     CATCH_SHAPE_OP(-1)
@@ -186,6 +203,7 @@ int topo_shape_rotate_from_quaternion(topo_shape_t *p, quaternion_t q) {
 }
 
 int topo_shape_scale(topo_shape_t *p, double angle, pnt3d_t a) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try { return p->shp->scale(cast_to_gp(a), angle); }
     CATCH_SHAPE_OP(-1)
@@ -195,6 +213,7 @@ int topo_shape_scale(topo_shape_t *p, double angle, pnt3d_t a) {
 
 int topo_shape_mirror_from_point_norm(topo_shape_t *p, pnt3d_t pnt,
                                       pnt3d_t ner) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try { return p->shp->mirror(cast_to_gp(pnt), cast_to_gp(ner)); }
     CATCH_SHAPE_OP(-1)
@@ -203,6 +222,7 @@ int topo_shape_mirror_from_point_norm(topo_shape_t *p, pnt3d_t pnt,
 }
 
 int topo_shape_mirror_from_axis1(topo_shape_t *p, axis1_t a) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try { return p->shp->mirror(cast_to_gp(a)); }
     CATCH_SHAPE_OP(-1)
@@ -211,6 +231,7 @@ int topo_shape_mirror_from_axis1(topo_shape_t *p, axis1_t a) {
 }
 
 int topo_shape_mirror_from_axis2(topo_shape_t *p, axis2_t a) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try { return p->shp->mirror(cast_to_gp(a)); }
     CATCH_SHAPE_OP(-1)
@@ -219,6 +240,7 @@ int topo_shape_mirror_from_axis2(topo_shape_t *p, axis2_t a) {
 }
 
 topo_shape_t *topo_shape_transformed(topo_shape_t *p, trsf_t t) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try {
       return new topo_shape_t{
@@ -230,6 +252,7 @@ topo_shape_t *topo_shape_transformed(topo_shape_t *p, trsf_t t) {
 }
 
 topo_shape_t *topo_shape_translated(topo_shape_t *p, vec3d_t delta) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try {
       return new topo_shape_t{
@@ -242,6 +265,7 @@ topo_shape_t *topo_shape_translated(topo_shape_t *p, vec3d_t delta) {
 
 topo_shape_t *topo_shape_rotated_from_two_point(topo_shape_t *p, double angle,
                                                  pnt3d_t p1, pnt3d_t p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try {
       return new topo_shape_t{
@@ -254,6 +278,7 @@ topo_shape_t *topo_shape_rotated_from_two_point(topo_shape_t *p, double angle,
 
 topo_shape_t *topo_shape_rotated_from_axis1(topo_shape_t *p, double angle,
                                             axis1_t a) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try {
       return new topo_shape_t{
@@ -266,6 +291,7 @@ topo_shape_t *topo_shape_rotated_from_axis1(topo_shape_t *p, double angle,
 
 topo_shape_t *topo_shape_rotated_from_quaternion(topo_shape_t *p,
                                                  quaternion_t q) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try {
       return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
@@ -276,6 +302,7 @@ topo_shape_t *topo_shape_rotated_from_quaternion(topo_shape_t *p,
 }
 
 topo_shape_t *topo_shape_scaled(topo_shape_t *p, double angle, pnt3d_t a) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try {
       return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
@@ -287,6 +314,7 @@ topo_shape_t *topo_shape_scaled(topo_shape_t *p, double angle, pnt3d_t a) {
 
 topo_shape_t *topo_shape_mirrored_from_point_norm(topo_shape_t *p, pnt3d_t pnt,
                                                   pnt3d_t ner) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try {
       return new topo_shape_t{
@@ -298,6 +326,7 @@ topo_shape_t *topo_shape_mirrored_from_point_norm(topo_shape_t *p, pnt3d_t pnt,
 }
 
 topo_shape_t *topo_shape_mirrored_from_axis1(topo_shape_t *p, axis1_t a) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try {
       return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
@@ -308,6 +337,7 @@ topo_shape_t *topo_shape_mirrored_from_axis1(topo_shape_t *p, axis1_t a) {
 }
 
 topo_shape_t *topo_shape_mirrored_from_axis2(topo_shape_t *p, axis2_t a) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (p) {
     try {
       return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(
@@ -317,7 +347,8 @@ topo_shape_t *topo_shape_mirrored_from_axis2(topo_shape_t *p, axis2_t a) {
   return nullptr;
 }
 
-int topo_shape_get_orientation(topo_shape_t *p) { try {
+int topo_shape_get_orientation(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return static_cast<int>(p->shp->get_orientation());
   }
   catch (const std::exception &e) {
@@ -329,7 +360,8 @@ int topo_shape_get_orientation(topo_shape_t *p) { try {
   }
 }
 
-void topo_shape_set_orientation(topo_shape_t *p, int ori) { try {
+void topo_shape_set_orientation(topo_shape_t *p, int ori) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->shp->set_orientation(static_cast<flywave::topo::orientation>(ori));
   }
@@ -341,7 +373,8 @@ void topo_shape_set_orientation(topo_shape_t *p, int ori) { try {
   }
 }
 
-topo_location_t *topo_shape_get_location(topo_shape_t *p) { try {
+topo_location_t *topo_shape_get_location(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_location_t{.loc = p->shp->location()};
   }
   catch (const std::exception &e) {
@@ -353,7 +386,8 @@ topo_location_t *topo_shape_get_location(topo_shape_t *p) { try {
   }
 }
 
-void topo_shape_set_location(topo_shape_t *p, topo_location_t *loc) { try {
+void topo_shape_set_location(topo_shape_t *p, topo_location_t *loc) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   p->shp->set_location(loc->loc);
   }
   catch (const std::exception &e) {
@@ -363,7 +397,8 @@ void topo_shape_set_location(topo_shape_t *p, topo_location_t *loc) { try {
   }
 }
 
-_Bool topo_shape_fix_shape(topo_shape_t *p) { try { return p->shp->fix_shape();   }
+_Bool topo_shape_fix_shape(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return p->shp->fix_shape();   }
   catch (const std::exception &e) {
     (void)e;
     return false;
@@ -373,7 +408,8 @@ _Bool topo_shape_fix_shape(topo_shape_t *p) { try { return p->shp->fix_shape(); 
   }
 }
 
-topo_shape_t *topo_shape_copy(topo_shape_t *p) { try {
+topo_shape_t *topo_shape_copy(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_shape_t{
       .shp = std::make_shared<flywave::topo::shape>(p->shp->copy())};
   }
@@ -388,7 +424,8 @@ topo_shape_t *topo_shape_copy(topo_shape_t *p) { try {
 
 int topo_shape_mesh(topo_shape_t *p, topo_mesh_receiver_t *receiver,
                     double tolerance, double deflection, double angle,
-                    _Bool uv_coords) { try {
+                    _Bool uv_coords) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->write_triangulation(*receiver->recv, tolerance, deflection,
                                        angle, uv_coords);
@@ -404,7 +441,8 @@ int topo_shape_mesh(topo_shape_t *p, topo_mesh_receiver_t *receiver,
   }
 }
 
-void topo_shape_set_surface_colour(topo_shape_t *p, color_t c) { try {
+void topo_shape_set_surface_colour(topo_shape_t *p, color_t c) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->shp->set_surface_colour(cast_to_gp(c));
   }
@@ -416,7 +454,8 @@ void topo_shape_set_surface_colour(topo_shape_t *p, color_t c) { try {
   }
 }
 
-void topo_shape_set_curve_colour(topo_shape_t *p, color_t c) { try {
+void topo_shape_set_curve_colour(topo_shape_t *p, color_t c) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->shp->set_curve_colour(cast_to_gp(c));
   }
@@ -428,7 +467,8 @@ void topo_shape_set_curve_colour(topo_shape_t *p, color_t c) { try {
   }
 }
 
-void topo_shape_set_label(topo_shape_t *p, const char *name) { try {
+void topo_shape_set_label(topo_shape_t *p, const char *name) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->shp->set_label(name);
   }
@@ -440,7 +480,8 @@ void topo_shape_set_label(topo_shape_t *p, const char *name) { try {
   }
 }
 
-void topo_shape_set_u_origin(topo_shape_t *p, double u) { try {
+void topo_shape_set_u_origin(topo_shape_t *p, double u) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->shp->set_u_origin(u);
   }
@@ -452,7 +493,8 @@ void topo_shape_set_u_origin(topo_shape_t *p, double u) { try {
   }
 }
 
-void topo_shape_set_v_origin(topo_shape_t *p, double v) { try {
+void topo_shape_set_v_origin(topo_shape_t *p, double v) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->shp->set_v_origin(v);
   }
@@ -464,7 +506,8 @@ void topo_shape_set_v_origin(topo_shape_t *p, double v) { try {
   }
 }
 
-void topo_shape_set_u_repeat(topo_shape_t *p, double u) { try {
+void topo_shape_set_u_repeat(topo_shape_t *p, double u) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->shp->set_u_repeat(u);
   }
@@ -476,7 +519,8 @@ void topo_shape_set_u_repeat(topo_shape_t *p, double u) { try {
   }
 }
 
-void topo_shape_set_v_repeat(topo_shape_t *p, double v) { try {
+void topo_shape_set_v_repeat(topo_shape_t *p, double v) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->shp->set_v_repeat(v);
   }
@@ -488,7 +532,8 @@ void topo_shape_set_v_repeat(topo_shape_t *p, double v) { try {
   }
 }
 
-void topo_shape_set_scale_v(topo_shape_t *p, double v) { try {
+void topo_shape_set_scale_v(topo_shape_t *p, double v) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->shp->set_scale_v(v);
   }
@@ -500,7 +545,8 @@ void topo_shape_set_scale_v(topo_shape_t *p, double v) { try {
   }
 }
 
-void topo_shape_set_scale_u(topo_shape_t *p, double u) { try {
+void topo_shape_set_scale_u(topo_shape_t *p, double u) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->shp->set_scale_u(u);
   }
@@ -512,7 +558,8 @@ void topo_shape_set_scale_u(topo_shape_t *p, double u) { try {
   }
 }
 
-void topo_shape_set_auto_scale_size_on_u(topo_shape_t *p, double u) { try {
+void topo_shape_set_auto_scale_size_on_u(topo_shape_t *p, double u) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->shp->set_auto_scale_size_on_u(u);
   }
@@ -524,7 +571,8 @@ void topo_shape_set_auto_scale_size_on_u(topo_shape_t *p, double u) { try {
   }
 }
 
-void topo_shape_set_auto_scale_size_on_v(topo_shape_t *p, double v) { try {
+void topo_shape_set_auto_scale_size_on_v(topo_shape_t *p, double v) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->shp->set_auto_scale_size_on_v(v);
   }
@@ -536,7 +584,8 @@ void topo_shape_set_auto_scale_size_on_v(topo_shape_t *p, double v) { try {
   }
 }
 
-void topo_shape_set_txture_map_type(topo_shape_t *p, int t) { try {
+void topo_shape_set_txture_map_type(topo_shape_t *p, int t) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->shp->set_txture_map_type(
         static_cast<flywave::topo::texture_mapping_rule>(t));
@@ -549,7 +598,8 @@ void topo_shape_set_txture_map_type(topo_shape_t *p, int t) { try {
   }
 }
 
-void topo_shape_set_rotation_angle(topo_shape_t *p, double angle) { try {
+void topo_shape_set_rotation_angle(topo_shape_t *p, double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->shp->set_rotation_angle(angle);
   }
@@ -561,7 +611,8 @@ void topo_shape_set_rotation_angle(topo_shape_t *p, double angle) { try {
   }
 }
 
-color_t topo_shape_get_surface_colour(topo_shape_t *p) { try {
+color_t topo_shape_get_surface_colour(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return cast_from_gp(p->shp->surface_colour());
   }
@@ -576,7 +627,8 @@ color_t topo_shape_get_surface_colour(topo_shape_t *p) { try {
   }
 }
 
-color_t topo_shape_get_curve_colour(topo_shape_t *p) { try {
+color_t topo_shape_get_curve_colour(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return cast_from_gp(p->shp->curve_colour());
   }
@@ -591,7 +643,8 @@ color_t topo_shape_get_curve_colour(topo_shape_t *p) { try {
   }
 }
 
-const char *topo_shape_get_label(topo_shape_t *p) { try {
+const char *topo_shape_get_label(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->label();
   }
@@ -606,7 +659,8 @@ const char *topo_shape_get_label(topo_shape_t *p) { try {
   }
 }
 
-double topo_shape_get_u_origin(topo_shape_t *p) { try {
+double topo_shape_get_u_origin(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->get_u_origin();
   }
@@ -621,7 +675,8 @@ double topo_shape_get_u_origin(topo_shape_t *p) { try {
   }
 }
 
-double topo_shape_get_v_origin(topo_shape_t *p) { try {
+double topo_shape_get_v_origin(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->get_v_origin();
   }
@@ -636,7 +691,8 @@ double topo_shape_get_v_origin(topo_shape_t *p) { try {
   }
 }
 
-double topo_shape_get_u_repeat(topo_shape_t *p) { try {
+double topo_shape_get_u_repeat(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->get_u_repeat();
   }
@@ -651,7 +707,8 @@ double topo_shape_get_u_repeat(topo_shape_t *p) { try {
   }
 }
 
-double topo_shape_get_v_repeat(topo_shape_t *p) { try {
+double topo_shape_get_v_repeat(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->get_v_repeat();
   }
@@ -666,7 +723,8 @@ double topo_shape_get_v_repeat(topo_shape_t *p) { try {
   }
 }
 
-double topo_shape_get_scale_v(topo_shape_t *p) { try {
+double topo_shape_get_scale_v(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->get_scale_v();
   }
@@ -681,7 +739,8 @@ double topo_shape_get_scale_v(topo_shape_t *p) { try {
   }
 }
 
-double topo_shape_get_scale_u(topo_shape_t *p) { try {
+double topo_shape_get_scale_u(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->get_scale_u();
   }
@@ -696,7 +755,8 @@ double topo_shape_get_scale_u(topo_shape_t *p) { try {
   }
 }
 
-double topo_shape_get_auto_scale_size_on_u(topo_shape_t *p) { try {
+double topo_shape_get_auto_scale_size_on_u(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->get_auto_scale_size_on_u();
   }
@@ -711,7 +771,8 @@ double topo_shape_get_auto_scale_size_on_u(topo_shape_t *p) { try {
   }
 }
 
-double topo_shape_get_auto_scale_size_on_v(topo_shape_t *p) { try {
+double topo_shape_get_auto_scale_size_on_v(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->get_auto_scale_size_on_v();
   }
@@ -726,7 +787,8 @@ double topo_shape_get_auto_scale_size_on_v(topo_shape_t *p) { try {
   }
 }
 
-int topo_shape_get_txture_map_type(topo_shape_t *p) { try {
+int topo_shape_get_txture_map_type(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->get_txture_map_type();
   }
@@ -741,7 +803,8 @@ int topo_shape_get_txture_map_type(topo_shape_t *p) { try {
   }
 }
 
-double topo_shape_get_rotation_angle(topo_shape_t *p) { try {
+double topo_shape_get_rotation_angle(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->get_rotation_angle();
   }
@@ -756,7 +819,8 @@ double topo_shape_get_rotation_angle(topo_shape_t *p) { try {
   }
 }
 
-_Bool topo_shape_surface_colour(topo_shape_t *p, double *colour) { try {
+_Bool topo_shape_surface_colour(topo_shape_t *p, double *colour) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->surface_colour(colour);
   }
@@ -771,7 +835,8 @@ _Bool topo_shape_surface_colour(topo_shape_t *p, double *colour) { try {
   }
 }
 
-pnt3d_t topo_shape_centre_of_mass(topo_shape_t *p) { try {
+pnt3d_t topo_shape_centre_of_mass(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return cast_from_gp(p->shp->centre_of_mass());
   }
@@ -786,7 +851,8 @@ pnt3d_t topo_shape_centre_of_mass(topo_shape_t *p) { try {
   }
 }
 
-double topo_shape_compute_mass(topo_shape_t *p) { try {
+double topo_shape_compute_mass(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->compute_mass();
   }
@@ -801,7 +867,8 @@ double topo_shape_compute_mass(topo_shape_t *p) { try {
   }
 }
 
-double topo_shape_compute_area(topo_shape_t *p) { try {
+double topo_shape_compute_area(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->shp->compute_area();
   }
@@ -816,7 +883,8 @@ double topo_shape_compute_area(topo_shape_t *p) { try {
   }
 }
 
-topo_vertex_t topo_vertex_new(double x, double y, double z) { try {
+topo_vertex_t topo_vertex_new(double x, double y, double z) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_vertex_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::vertex>(x, y, z)}};
@@ -830,7 +898,8 @@ topo_vertex_t topo_vertex_new(double x, double y, double z) { try {
   }
 }
 
-void topo_vertex_free(topo_vertex_t t) { try {
+void topo_vertex_free(topo_vertex_t t) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (t.shp) {
     delete t.shp;
   }
@@ -842,7 +911,8 @@ void topo_vertex_free(topo_vertex_t t) { try {
   }
 }
 
-pnt3d_t topo_vertex_get_point(topo_vertex_t t) { try {
+pnt3d_t topo_vertex_get_point(topo_vertex_t t) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(t);
   if (opt) {
     gp_Pnt pt = (*opt);
@@ -859,7 +929,8 @@ pnt3d_t topo_vertex_get_point(topo_vertex_t t) { try {
   }
 }
 
-topo_wire_t topo_make_wire() { try {
+topo_wire_t topo_make_wire() {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>()}};
   }
@@ -872,7 +943,8 @@ topo_wire_t topo_make_wire() { try {
   }
 }
 
-void topo_wire_free(topo_wire_t t) { try {
+void topo_wire_free(topo_wire_t t) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (t.shp) {
     delete t.shp;
   }
@@ -884,7 +956,8 @@ void topo_wire_free(topo_wire_t t) { try {
   }
 }
 
-topo_wire_t topo_make_polygon() { try {
+topo_wire_t topo_make_polygon() {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_polygon())}};
@@ -898,7 +971,8 @@ topo_wire_t topo_make_polygon() { try {
   }
 }
 
-topo_wire_t topo_make_polygon_from_two_point(pnt3d_t P1, pnt3d_t P2) { try {
+topo_wire_t topo_make_polygon_from_two_point(pnt3d_t P1, pnt3d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_polygon(
@@ -914,7 +988,8 @@ topo_wire_t topo_make_polygon_from_two_point(pnt3d_t P1, pnt3d_t P2) { try {
 }
 
 topo_wire_t topo_make_polygon_from_three_point(pnt3d_t P1, pnt3d_t P2,
-                                               pnt3d_t P3, _Bool Close) { try {
+                                               pnt3d_t P3, _Bool Close) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_wire_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::wire>(
@@ -932,7 +1007,8 @@ topo_wire_t topo_make_polygon_from_three_point(pnt3d_t P1, pnt3d_t P2,
 
 topo_wire_t topo_make_polygon_from_four_point(pnt3d_t P1, pnt3d_t P2,
                                               pnt3d_t P3, pnt3d_t P4,
-                                              _Bool Close) { try {
+                                              _Bool Close) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_polygon(
@@ -948,7 +1024,8 @@ topo_wire_t topo_make_polygon_from_four_point(pnt3d_t P1, pnt3d_t P2,
   }
 }
 
-topo_wire_t topo_make_polygon_two_vertex(topo_vertex_t V1, topo_vertex_t V2) { try {
+topo_wire_t topo_make_polygon_two_vertex(topo_vertex_t V1, topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_polygon(
@@ -965,7 +1042,8 @@ topo_wire_t topo_make_polygon_two_vertex(topo_vertex_t V1, topo_vertex_t V2) { t
 
 topo_wire_t topo_make_polygon_from_three_vertex(topo_vertex_t V1,
                                                 topo_vertex_t V2,
-                                                topo_vertex_t V3, _Bool Close) { try {
+                                                topo_vertex_t V3, _Bool Close) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_polygon(
@@ -984,7 +1062,8 @@ topo_wire_t topo_make_polygon_from_three_vertex(topo_vertex_t V1,
 topo_wire_t topo_make_polygon_from_four_vertex(topo_vertex_t V1,
                                                topo_vertex_t V2,
                                                topo_vertex_t V3,
-                                               topo_vertex_t V4, _Bool Close) { try {
+                                               topo_vertex_t V4, _Bool Close) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_wire_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::wire>(
@@ -1001,7 +1080,8 @@ topo_wire_t topo_make_polygon_from_four_vertex(topo_vertex_t V1,
   }
 }
 
-topo_wire_t topo_make_wire_from_edge(topo_edge_t E) { try {
+topo_wire_t topo_make_wire_from_edge(topo_edge_t E) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_wire_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::wire>(
@@ -1016,7 +1096,8 @@ topo_wire_t topo_make_wire_from_edge(topo_edge_t E) { try {
   }
 }
 
-topo_wire_t topo_make_wire_from_two_edge(topo_edge_t E1, topo_edge_t E2) { try {
+topo_wire_t topo_make_wire_from_two_edge(topo_edge_t E1, topo_edge_t E2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_wire(
@@ -1032,7 +1113,8 @@ topo_wire_t topo_make_wire_from_two_edge(topo_edge_t E1, topo_edge_t E2) { try {
 }
 
 topo_wire_t topo_make_wire_from_three_edge(topo_edge_t E1, topo_edge_t E2,
-                                           topo_edge_t E3) { try {
+                                           topo_edge_t E3) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_wire_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::wire>(
@@ -1049,7 +1131,8 @@ topo_wire_t topo_make_wire_from_three_edge(topo_edge_t E1, topo_edge_t E2,
 }
 
 topo_wire_t topo_make_wire_from_four_edge(topo_edge_t E1, topo_edge_t E2,
-                                          topo_edge_t E3, topo_edge_t E4) { try {
+                                          topo_edge_t E3, topo_edge_t E4) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_wire(
@@ -1065,7 +1148,8 @@ topo_wire_t topo_make_wire_from_four_edge(topo_edge_t E1, topo_edge_t E2,
   }
 }
 
-topo_wire_t topo_make_wire_from_wire(topo_wire_t W) { try {
+topo_wire_t topo_make_wire_from_wire(topo_wire_t W) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_wire_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::wire>(
@@ -1080,7 +1164,8 @@ topo_wire_t topo_make_wire_from_wire(topo_wire_t W) { try {
   }
 }
 
-topo_wire_t topo_make_wire_from_two_wire(topo_wire_t W, topo_edge_t E) { try {
+topo_wire_t topo_make_wire_from_two_wire(topo_wire_t W, topo_edge_t E) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_wire_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(
                                   flywave::topo::wire::make_wire(
@@ -1096,6 +1181,7 @@ topo_wire_t topo_make_wire_from_two_wire(topo_wire_t W, topo_edge_t E) { try {
 }
 
 topo_wire_t topo_make_wire_from_edges(topo_edge_t *edges, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::edge> oes;
     for (int i = 0; i < count; i++) {
@@ -1110,6 +1196,7 @@ topo_wire_t topo_make_wire_from_edges(topo_edge_t *edges, int count) {
 }
 
 topo_wire_t topo_make_wire_from_wries(topo_wire_t *wires, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::wire> ows;
     for (int i = 0; i < count; i++) {
@@ -1124,6 +1211,7 @@ topo_wire_t topo_make_wire_from_wries(topo_wire_t *wires, int count) {
 }
 
 topo_wire_t topo_make_wire_from_rect(double width, double height) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_wire_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::wire>(
@@ -1135,6 +1223,7 @@ topo_wire_t topo_make_wire_from_rect(double width, double height) {
 
 topo_wire_t topo_make_wire_from_circle(double radius, pnt3d_t center,
                                        dir3d_t normal) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_wire_t{
         .shp = new topo_shape_t{
@@ -1151,6 +1240,7 @@ topo_wire_t topo_make_wire_from_ellipse(double x_radius, double y_radius,
                                         dir3d_t xDir, double angle1,
                                         double angle2, double rotation_angle,
                                         _Bool closed) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_wire_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::wire>(
@@ -1167,6 +1257,7 @@ topo_wire_t topo_make_wire_from_helix(double pitch, double height,
                                       double radius, pnt3d_t center,
                                       dir3d_t dir, double angle,
                                       _Bool lefthand) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_wire_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::wire>(
@@ -1182,6 +1273,7 @@ topo_wire_t topo_make_wire_from_combine_curve(pnt3d_t **points,
                                               int *point_counts,
                                               int curve_count,
                                               int *curve_types) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     // 转换点数据
     std::vector<std::vector<gp_Pnt>> cpp_points;
@@ -1228,6 +1320,7 @@ topo_wire_t topo_make_wire_from_combine_curve(pnt3d_t **points,
 
 topo_wire_t *topo_make_wire_from_combine(topo_wire_t *wires, int count,
                                          double tol, int *retCount) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::shape> ows;
     for (int i = 0; i < count; i++) {
@@ -1250,7 +1343,8 @@ topo_wire_t *topo_make_wire_from_combine(topo_wire_t *wires, int count,
   }
 }
 
-void topo_wire_list_free(topo_wire_t *wires, int count) { try { delete[] wires;   }
+void topo_wire_list_free(topo_wire_t *wires, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { delete[] wires;   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -1259,6 +1353,7 @@ void topo_wire_list_free(topo_wire_t *wires, int count) { try { delete[] wires; 
 }
 
 topo_wire_t topo_wire_stitch(topo_wire_t w1, topo_wire_t w2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_wire_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::shape>(
@@ -1269,6 +1364,7 @@ topo_wire_t topo_wire_stitch(topo_wire_t w1, topo_wire_t w2) {
 }
 
 int topo_wire_num_vertices(topo_wire_t w) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(w);
     if (opt) {
@@ -1281,6 +1377,7 @@ int topo_wire_num_vertices(topo_wire_t w) {
 }
 
 int topo_wire_num_edges(topo_wire_t w) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(w);
     if (opt) {
@@ -1293,6 +1390,7 @@ int topo_wire_num_edges(topo_wire_t w) {
 }
 
 bool topo_wire_is_closed(topo_wire_t w) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(w);
     if (opt) {
@@ -1305,6 +1403,7 @@ bool topo_wire_is_closed(topo_wire_t w) {
 }
 
 double topo_wire_length(topo_wire_t w) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(w);
     if (opt) {
@@ -1317,6 +1416,7 @@ double topo_wire_length(topo_wire_t w) {
 }
 
 void topo_wire_convert_to_curves3d(topo_wire_t w) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(w);
     if (opt) {
@@ -1328,6 +1428,7 @@ void topo_wire_convert_to_curves3d(topo_wire_t w) {
 
 topo_wire_t *topo_wire_offset2d(topo_wire_t w, double distance, int joinType,
                                 int *retCount) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(w);
     if (opt) {
@@ -1352,6 +1453,7 @@ topo_wire_t *topo_wire_offset2d(topo_wire_t w, double distance, int joinType,
 
 topo_wire_t topo_wire_fillet2d(topo_wire_t w, topo_vertex_t *vertices,
                                int vertcount, double radius) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(w);
     if (opt) {
@@ -1371,6 +1473,7 @@ topo_wire_t topo_wire_fillet2d(topo_wire_t w, topo_vertex_t *vertices,
 
 topo_wire_t topo_wire_chamfer2d(topo_wire_t w, topo_vertex_t *vertices,
                                 int vertcount, double distance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(w);
     if (opt) {
@@ -1388,6 +1491,7 @@ topo_wire_t topo_wire_chamfer2d(topo_wire_t w, topo_vertex_t *vertices,
 }
 
 int topo_wire_project(topo_wire_t w, topo_face_t f) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(w);
     if (opt) {
@@ -1400,6 +1504,7 @@ int topo_wire_project(topo_wire_t w, topo_face_t f) {
 }
 
 int topo_wire_offset(topo_wire_t w, double distance, int joinType) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(w);
     if (opt) {
@@ -1412,7 +1517,8 @@ int topo_wire_offset(topo_wire_t w, double distance, int joinType) {
 }
 
 int topo_wire_fillet(topo_wire_t w, topo_vertex_t *vertices, int vertcount,
-                     double *radius, int radcount) { try {
+                     double *radius, int radcount) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(w);
   if (opt) {
     std::vector<flywave::topo::vertex> ows;
@@ -1437,7 +1543,8 @@ int topo_wire_fillet(topo_wire_t w, topo_vertex_t *vertices, int vertcount,
 }
 
 int topo_wire_chamfer(topo_wire_t w, topo_vertex_t *vertices, int vertcount,
-                      double *distances, int distcount) { try {
+                      double *distances, int distcount) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(w);
   if (opt) {
     std::vector<flywave::topo::vertex> ows;
@@ -1462,6 +1569,7 @@ int topo_wire_chamfer(topo_wire_t w, topo_vertex_t *vertices, int vertcount,
 }
 
 void topo_wire_bounds(topo_wire_t w, double *min, double *max) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto bounds = cast_to_topo(w)->bounds();
     *min = bounds.first;
@@ -1472,6 +1580,7 @@ void topo_wire_bounds(topo_wire_t w, double *min, double *max) {
 }
 
 pnt3d_t topo_wire_start_point(topo_wire_t w) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pnt3d_t result = {0, 0, 0};
   try {
     auto point = cast_to_topo(w)->start_point();
@@ -1484,6 +1593,7 @@ pnt3d_t topo_wire_start_point(topo_wire_t w) {
 }
 
 pnt3d_t topo_wire_end_point(topo_wire_t w) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pnt3d_t result = {0, 0, 0};
   try {
     auto point = cast_to_topo(w)->end_point();
@@ -1496,6 +1606,7 @@ pnt3d_t topo_wire_end_point(topo_wire_t w) {
 }
 
 double topo_wire_param_at(topo_wire_t w, double d) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return cast_to_topo(w)->param_at(d);
   } catch (...) {
@@ -1504,6 +1615,7 @@ double topo_wire_param_at(topo_wire_t w, double d) {
 }
 
 double topo_wire_param_at_point(topo_wire_t w, pnt3d_t pt) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     gp_Pnt point(pt.x, pt.y, pt.z);
     return cast_to_topo(w)->param_at(point);
@@ -1514,6 +1626,7 @@ double topo_wire_param_at_point(topo_wire_t w, pnt3d_t pt) {
 
 void topo_wire_params(topo_wire_t w, pnt3d_t *pts, int count, double *params,
                       double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<gp_Pnt> points;
     for (int i = 0; i < count; i++) {
@@ -1532,6 +1645,7 @@ void topo_wire_params(topo_wire_t w, pnt3d_t *pts, int count, double *params,
 
 void topo_wire_params_length(topo_wire_t w, double *locations, int count,
                              double *params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<double> locs(locations, locations + count);
     auto result = cast_to_topo(w)->params_length(locs);
@@ -1546,6 +1660,7 @@ void topo_wire_params_length(topo_wire_t w, double *locations, int count,
 }
 
 dir3d_t topo_wire_tangent_at(topo_wire_t w, double param) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   dir3d_t result = {0, 0, 0};
   try {
     auto dir = cast_to_topo(w)->tangent_at(param);
@@ -1559,6 +1674,7 @@ dir3d_t topo_wire_tangent_at(topo_wire_t w, double param) {
 
 void topo_wire_tangents(topo_wire_t w, double *params, int count,
                         dir3d_t *tangents) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<double> paramVec(params, params + count);
     auto result = cast_to_topo(w)->tangents(paramVec);
@@ -1575,6 +1691,7 @@ void topo_wire_tangents(topo_wire_t w, double *params, int count,
 }
 
 dir3d_t topo_wire_normal(topo_wire_t w) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   dir3d_t result = {0, 0, 0};
   try {
     auto dir = cast_to_topo(w)->normal();
@@ -1587,6 +1704,7 @@ dir3d_t topo_wire_normal(topo_wire_t w) {
 }
 
 pnt3d_t topo_wire_center(topo_wire_t w) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pnt3d_t result = {0, 0, 0};
   try {
     auto point = cast_to_topo(w)->center();
@@ -1599,6 +1717,7 @@ pnt3d_t topo_wire_center(topo_wire_t w) {
 }
 
 double topo_wire_radius(topo_wire_t w) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return cast_to_topo(w)->radius();
   } catch (...) {
@@ -1607,6 +1726,7 @@ double topo_wire_radius(topo_wire_t w) {
 }
 
 pnt3d_t topo_wire_position_at(topo_wire_t w, double d, int mode) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pnt3d_t result = {0, 0, 0};
   try {
     auto point = cast_to_topo(w)->position_at(
@@ -1621,6 +1741,7 @@ pnt3d_t topo_wire_position_at(topo_wire_t w, double d, int mode) {
 
 void topo_wire_positions(topo_wire_t w, double *ds, int count, pnt3d_t *points,
                          int mode) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<double> dVec(ds, ds + count);
     auto result = cast_to_topo(w)->positions(
@@ -1640,6 +1761,7 @@ void topo_wire_positions(topo_wire_t w, double *ds, int count, pnt3d_t *points,
 void topo_wire_sample_uniform(topo_wire_t w, double n, pnt3d_t **points,
                               int *point_count, double **params,
                               int *param_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto result = cast_to_topo(w)->sample_uniform(n);
 
@@ -1668,6 +1790,7 @@ void topo_wire_sample_uniform(topo_wire_t w, double n, pnt3d_t **points,
 
 topo_location_t *topo_wire_location_at(topo_wire_t w, double d, int mode,
                                        int frame, bool planar) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto loc = cast_to_topo(w)->location_at(
         d, static_cast<flywave::topo::wire::ParamMode>(mode),
@@ -1681,6 +1804,7 @@ topo_location_t *topo_wire_location_at(topo_wire_t w, double d, int mode,
 topo_location_t **topo_wire_locations(topo_wire_t w, double *ds, int count,
                                       int mode, int frame, bool planar,
                                       int *result_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<double> dVec(ds, ds + count);
     auto result = cast_to_topo(w)->locations(
@@ -1702,6 +1826,7 @@ topo_location_t **topo_wire_locations(topo_wire_t w, double *ds, int count,
 int topo_wire_projected(topo_wire_t w, topo_face_t f, vec3d_t direction,
                         bool closest, topo_shape_t ***result,
                         int *result_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     gp_Vec dir(direction.x, direction.y, direction.z);
     auto proj = cast_to_topo(w)->projected(*cast_to_topo(f), dir, closest);
@@ -1732,7 +1857,8 @@ int topo_wire_projected(topo_wire_t w, topo_face_t f, vec3d_t direction,
 // 本函数仅释放指针数组本身, 不得 delete 元素。
 // 释放 C++ new[] 分配的数组 (POD 值数组)。Go 侧不得对这些指针用 free(),
 // 否则与 new[] 的分配器不匹配 (UB)。
-TOPOCAPICALL void topo_free_array(void *arr) { try { ::operator delete[](arr);   }
+TOPOCAPICALL void topo_free_array(void *arr) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { ::operator delete[](arr);   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -1742,7 +1868,8 @@ TOPOCAPICALL void topo_free_array(void *arr) { try { ::operator delete[](arr);  
 
 // 所有权契约: 数组元素的所有权转移给调用方 (由 topo_shape_free 逐个释放),
 // 本函数仅释放指针数组本身, 不得 delete 元素。
-void topo_shape_list_free(topo_shape_t **result, int result_count) { try {
+void topo_shape_list_free(topo_shape_t **result, int result_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   (void)result_count;
   delete[] result;
   }
@@ -1755,6 +1882,7 @@ void topo_shape_list_free(topo_shape_t **result, int result_count) { try {
 
 double topo_wire_curvature_at(topo_wire_t w, double d, int mode,
                               double resolution) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return cast_to_topo(w)->curvature_at(
         d, static_cast<flywave::topo::wire::ParamMode>(mode), resolution);
@@ -1765,6 +1893,7 @@ double topo_wire_curvature_at(topo_wire_t w, double d, int mode,
 
 void topo_wire_curvatures(topo_wire_t w, double *ds, int count,
                           double *curvatures, int mode, double resolution) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<double> dVec(ds, ds + count);
     auto result = cast_to_topo(w)->curvatures(
@@ -1780,6 +1909,7 @@ void topo_wire_curvatures(topo_wire_t w, double *ds, int count,
 }
 
 topo_edge_t topo_make_edge() {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::edge>()}};
@@ -1788,7 +1918,8 @@ topo_edge_t topo_make_edge() {
   }
 }
 
-void topo_edge_free(topo_edge_t t) { try {
+void topo_edge_free(topo_edge_t t) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (t.shp) {
     delete t.shp;
   }
@@ -1801,6 +1932,7 @@ void topo_edge_free(topo_edge_t t) { try {
 }
 
 topo_edge_t topo_edge_make_edge_from_points(pnt3d_t *pts, int size) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> vec;
   for (int i = 0; i < size; i++) {
     vec.emplace_back(cast_to_gp(pts[i]));
@@ -1816,6 +1948,7 @@ topo_edge_t topo_edge_make_edge_from_points(pnt3d_t *pts, int size) {
 
 topo_edge_t topo_edge_make_edge_from_two_vertex(topo_vertex_t V1,
                                                 topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::edge>(
@@ -1827,6 +1960,7 @@ topo_edge_t topo_edge_make_edge_from_two_vertex(topo_vertex_t V1,
 }
 
 topo_edge_t topo_edge_make_edge_from_two_point(pnt3d_t P1, pnt3d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
@@ -1838,6 +1972,7 @@ topo_edge_t topo_edge_make_edge_from_two_point(pnt3d_t P1, pnt3d_t P2) {
 }
 
 topo_edge_t topo_edge_make_edge_from_line(line_t L) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::edge>(
@@ -1848,6 +1983,7 @@ topo_edge_t topo_edge_make_edge_from_line(line_t L) {
 }
 
 topo_edge_t topo_edge_make_edge_from_line_p(line_t L, double p1, double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -1860,6 +1996,7 @@ topo_edge_t topo_edge_make_edge_from_line_p(line_t L, double p1, double p2) {
 
 topo_edge_t topo_edge_make_edge_from_line_point(line_t L, pnt3d_t P1,
                                                 pnt3d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -1873,6 +2010,7 @@ topo_edge_t topo_edge_make_edge_from_line_point(line_t L, pnt3d_t P1,
 
 topo_edge_t topo_edge_make_edge_from_line_vertex(line_t L, topo_vertex_t V1,
                                                  topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -1885,6 +2023,7 @@ topo_edge_t topo_edge_make_edge_from_line_vertex(line_t L, topo_vertex_t V1,
 }
 
 topo_edge_t topo_edge_make_edge_from_circ(circ_t L) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::edge>(
@@ -1895,6 +2034,7 @@ topo_edge_t topo_edge_make_edge_from_circ(circ_t L) {
 }
 
 topo_edge_t topo_edge_make_edge_from_circ_p(circ_t L, double p1, double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -1907,6 +2047,7 @@ topo_edge_t topo_edge_make_edge_from_circ_p(circ_t L, double p1, double p2) {
 
 topo_edge_t topo_edge_make_edge_from_circ_point(circ_t L, pnt3d_t P1,
                                                 pnt3d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -1920,6 +2061,7 @@ topo_edge_t topo_edge_make_edge_from_circ_point(circ_t L, pnt3d_t P1,
 
 topo_edge_t topo_edge_make_edge_from_circ_vertex(circ_t L, topo_vertex_t V1,
                                                  topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -1932,6 +2074,7 @@ topo_edge_t topo_edge_make_edge_from_circ_vertex(circ_t L, topo_vertex_t V1,
 }
 
 topo_edge_t topo_edge_make_edge_from_elips(elips_t L) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::edge>(
@@ -1942,6 +2085,7 @@ topo_edge_t topo_edge_make_edge_from_elips(elips_t L) {
 }
 
 topo_edge_t topo_edge_make_edge_from_elips_p(elips_t L, double p1, double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -1954,6 +2098,7 @@ topo_edge_t topo_edge_make_edge_from_elips_p(elips_t L, double p1, double p2) {
 
 topo_edge_t topo_edge_make_edge_from_elips_point(elips_t L, pnt3d_t P1,
                                                  pnt3d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -1967,6 +2112,7 @@ topo_edge_t topo_edge_make_edge_from_elips_point(elips_t L, pnt3d_t P1,
 
 topo_edge_t topo_edge_make_edge_from_elips_vertex(elips_t L, topo_vertex_t V1,
                                                   topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -1979,6 +2125,7 @@ topo_edge_t topo_edge_make_edge_from_elips_vertex(elips_t L, topo_vertex_t V1,
 }
 
 topo_edge_t topo_edge_make_edge_from_hyper(hyperbola_t L) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::edge>(
@@ -1990,6 +2137,7 @@ topo_edge_t topo_edge_make_edge_from_hyper(hyperbola_t L) {
 
 topo_edge_t topo_edge_make_edge_from_hyper_p(hyperbola_t L, double p1,
                                              double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2002,6 +2150,7 @@ topo_edge_t topo_edge_make_edge_from_hyper_p(hyperbola_t L, double p1,
 
 topo_edge_t topo_edge_make_edge_from_hyper_point(hyperbola_t L, pnt3d_t P1,
                                                  pnt3d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2016,6 +2165,7 @@ topo_edge_t topo_edge_make_edge_from_hyper_point(hyperbola_t L, pnt3d_t P1,
 topo_edge_t topo_edge_make_edge_from_hyper_vertex(hyperbola_t L,
                                                   topo_vertex_t V1,
                                                   topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2028,6 +2178,7 @@ topo_edge_t topo_edge_make_edge_from_hyper_vertex(hyperbola_t L,
 }
 
 topo_edge_t topo_edge_make_edge_from_parab(parabola_t L) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::edge>(
@@ -2039,6 +2190,7 @@ topo_edge_t topo_edge_make_edge_from_parab(parabola_t L) {
 
 topo_edge_t topo_edge_make_edge_from_parab_p(parabola_t L, double p1,
                                              double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2051,6 +2203,7 @@ topo_edge_t topo_edge_make_edge_from_parab_p(parabola_t L, double p1,
 
 topo_edge_t topo_edge_make_edge_from_parab_point(parabola_t L, pnt3d_t P1,
                                                  pnt3d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2065,6 +2218,7 @@ topo_edge_t topo_edge_make_edge_from_parab_point(parabola_t L, pnt3d_t P1,
 topo_edge_t topo_edge_make_edge_from_parab_vertex(parabola_t L,
                                                   topo_vertex_t V1,
                                                   topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2077,6 +2231,7 @@ topo_edge_t topo_edge_make_edge_from_parab_vertex(parabola_t L,
 }
 
 topo_edge_t topo_edge_make_edgee_from_curve(geom_curve_t *L) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::edge>(
@@ -2088,6 +2243,7 @@ topo_edge_t topo_edge_make_edgee_from_curve(geom_curve_t *L) {
 
 topo_edge_t topo_edge_make_edge_from_curve_p(geom_curve_t *L, double p1,
                                              double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2100,6 +2256,7 @@ topo_edge_t topo_edge_make_edge_from_curve_p(geom_curve_t *L, double p1,
 
 topo_edge_t topo_edge_make_edge_from_curve_point(geom_curve_t *L, pnt3d_t P1,
                                                  pnt3d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2114,6 +2271,7 @@ topo_edge_t topo_edge_make_edge_from_curve_point(geom_curve_t *L, pnt3d_t P1,
 topo_edge_t topo_edge_make_edge_from_curve_vertex(geom_curve_t *L,
                                                   topo_vertex_t V1,
                                                   topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2128,6 +2286,7 @@ topo_edge_t topo_edge_make_edge_from_curve_vertex(geom_curve_t *L,
 topo_edge_t topo_edge_make_edgee_from_curve_point_p(geom_curve_t *L, pnt3d_t P1,
                                                     pnt3d_t P2, double p1,
                                                     double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2143,6 +2302,7 @@ topo_edge_t topo_edge_make_edge_from_curve_vertex_p(geom_curve_t *L,
                                                     topo_vertex_t V1,
                                                     topo_vertex_t V2, double p1,
                                                     double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2156,6 +2316,7 @@ topo_edge_t topo_edge_make_edge_from_curve_vertex_p(geom_curve_t *L,
 
 topo_edge_t topo_edge_make_edge_from_curve_surface(geom2d_curve_t *L,
                                                    geom_surface_t *S) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2169,6 +2330,7 @@ topo_edge_t topo_edge_make_edge_from_curve_surface(geom2d_curve_t *L,
 topo_edge_t topo_edge_make_edge_from_curve_surface_p(geom2d_curve_t *L,
                                                      geom_surface_t *S,
                                                      double p1, double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2183,6 +2345,7 @@ topo_edge_t topo_edge_make_edge_from_curve_surface_point(geom2d_curve_t *L,
                                                          geom_surface_t *S,
                                                          pnt3d_t P1,
                                                          pnt3d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2198,6 +2361,7 @@ topo_edge_t topo_edge_make_edge_from_curve_surface_vertex(geom2d_curve_t *L,
                                                           geom_surface_t *S,
                                                           topo_vertex_t V1,
                                                           topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
@@ -2212,6 +2376,7 @@ topo_edge_t topo_edge_make_edge_from_curve_surface_vertex(geom2d_curve_t *L,
 topo_edge_t topo_edge_make_edge_from_curve_surface_point_p(
     geom2d_curve_t *L, geom_surface_t *S, pnt3d_t P1, pnt3d_t P2, double p1,
     double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
@@ -2226,6 +2391,7 @@ topo_edge_t topo_edge_make_edge_from_curve_surface_point_p(
 topo_edge_t topo_edge_make_edge_from_curve_surface_vertex_p(
     geom2d_curve_t *L, geom_surface_t *S, topo_vertex_t V1, topo_vertex_t V2,
     double p1, double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
@@ -2239,6 +2405,7 @@ topo_edge_t topo_edge_make_edge_from_curve_surface_vertex_p(
 
 topo_edge_t topo_edge_make_edge2d_from_two_vertex(topo_vertex_t V1,
                                                   topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::edge>(
@@ -2250,6 +2417,7 @@ topo_edge_t topo_edge_make_edge2d_from_two_vertex(topo_vertex_t V1,
 }
 
 topo_edge_t topo_edge_make_edge2d_from_two_point(pnt2d_t P1, pnt2d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
@@ -2261,6 +2429,7 @@ topo_edge_t topo_edge_make_edge2d_from_two_point(pnt2d_t P1, pnt2d_t P2) {
 }
 
 topo_edge_t topo_edge_make_edge2d_from_line(line2d_t L) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2273,6 +2442,7 @@ topo_edge_t topo_edge_make_edge2d_from_line(line2d_t L) {
 
 topo_edge_t topo_edge_make_edge2d_from_line_p(line2d_t L, double p1,
                                               double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2285,6 +2455,7 @@ topo_edge_t topo_edge_make_edge2d_from_line_p(line2d_t L, double p1,
 
 topo_edge_t topo_edge_make_edge2d_from_line_point(line2d_t L, pnt2d_t P1,
                                                   pnt2d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2298,6 +2469,7 @@ topo_edge_t topo_edge_make_edge2d_from_line_point(line2d_t L, pnt2d_t P1,
 
 topo_edge_t topo_edge_make_edge2d_from_line_vertex(line2d_t L, topo_vertex_t V1,
                                                    topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2310,6 +2482,7 @@ topo_edge_t topo_edge_make_edge2d_from_line_vertex(line2d_t L, topo_vertex_t V1,
 }
 
 topo_edge_t topo_edge_make_edge2d_from_circ(circ2d_t L) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2322,6 +2495,7 @@ topo_edge_t topo_edge_make_edge2d_from_circ(circ2d_t L) {
 
 topo_edge_t topo_edge_make_edge2d_from_circ_p(circ2d_t L, double p1,
                                               double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2334,6 +2508,7 @@ topo_edge_t topo_edge_make_edge2d_from_circ_p(circ2d_t L, double p1,
 
 topo_edge_t topo_edge_make_edge2d_from_circ_point(circ2d_t L, pnt2d_t P1,
                                                   pnt2d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2347,6 +2522,7 @@ topo_edge_t topo_edge_make_edge2d_from_circ_point(circ2d_t L, pnt2d_t P1,
 
 topo_edge_t topo_edge_make_edge2d_from_circ_vertex(circ2d_t L, topo_vertex_t V1,
                                                    topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2359,6 +2535,7 @@ topo_edge_t topo_edge_make_edge2d_from_circ_vertex(circ2d_t L, topo_vertex_t V1,
 }
 
 topo_edge_t topo_edge_make_edge2d_from_elips(elips2d_t L) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2371,6 +2548,7 @@ topo_edge_t topo_edge_make_edge2d_from_elips(elips2d_t L) {
 
 topo_edge_t topo_edge_make_edge2d_from_elips_p(elips2d_t L, double p1,
                                                double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2383,6 +2561,7 @@ topo_edge_t topo_edge_make_edge2d_from_elips_p(elips2d_t L, double p1,
 
 topo_edge_t topo_edge_make_edge2d_from_elips_point(elips2d_t L, pnt2d_t P1,
                                                    pnt2d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2397,6 +2576,7 @@ topo_edge_t topo_edge_make_edge2d_from_elips_point(elips2d_t L, pnt2d_t P1,
 topo_edge_t topo_edge_make_edge2d_from_elips_vertex(elips2d_t L,
                                                     topo_vertex_t V1,
                                                     topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2409,6 +2589,7 @@ topo_edge_t topo_edge_make_edge2d_from_elips_vertex(elips2d_t L,
 }
 
 topo_edge_t topo_edge_make_edge2d_from_hyper(hyperbola2d_t L) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2421,6 +2602,7 @@ topo_edge_t topo_edge_make_edge2d_from_hyper(hyperbola2d_t L) {
 
 topo_edge_t topo_edge_make_edge2d_from_hyper_p(hyperbola2d_t L, double p1,
                                                double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2433,6 +2615,7 @@ topo_edge_t topo_edge_make_edge2d_from_hyper_p(hyperbola2d_t L, double p1,
 
 topo_edge_t topo_edge_make_edge2d_from_hyper_point(hyperbola2d_t L, pnt2d_t P1,
                                                    pnt2d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2447,6 +2630,7 @@ topo_edge_t topo_edge_make_edge2d_from_hyper_point(hyperbola2d_t L, pnt2d_t P1,
 topo_edge_t topo_edge_make_edge2d_from_hyper_vertex(hyperbola2d_t L,
                                                     topo_vertex_t V1,
                                                     topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2459,6 +2643,7 @@ topo_edge_t topo_edge_make_edge2d_from_hyper_vertex(hyperbola2d_t L,
 }
 
 topo_edge_t topo_edge_make_edge2d_from_parab(parabola2d_t L) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2471,6 +2656,7 @@ topo_edge_t topo_edge_make_edge2d_from_parab(parabola2d_t L) {
 
 topo_edge_t topo_edge_make_edge2d_from_parab_p(parabola2d_t L, double p1,
                                                double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2483,6 +2669,7 @@ topo_edge_t topo_edge_make_edge2d_from_parab_p(parabola2d_t L, double p1,
 
 topo_edge_t topo_edge_make_edge2d_from_parab_point(parabola2d_t L, pnt2d_t P1,
                                                    pnt2d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2497,6 +2684,7 @@ topo_edge_t topo_edge_make_edge2d_from_parab_point(parabola2d_t L, pnt2d_t P1,
 topo_edge_t topo_edge_make_edge2d_from_parab_vertex(parabola2d_t L,
                                                     topo_vertex_t V1,
                                                     topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2509,6 +2697,7 @@ topo_edge_t topo_edge_make_edge2d_from_parab_vertex(parabola2d_t L,
 }
 
 topo_edge_t topo_edge_make_edge2d_from_curve(geom2d_curve_t *L) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::edge>(
@@ -2519,6 +2708,7 @@ topo_edge_t topo_edge_make_edge2d_from_curve(geom2d_curve_t *L) {
 }
 topo_edge_t topo_edge_make_edge2d_from_curve_p(geom2d_curve_t *L, double p1,
                                                double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2531,6 +2721,7 @@ topo_edge_t topo_edge_make_edge2d_from_curve_p(geom2d_curve_t *L, double p1,
 
 topo_edge_t topo_edge_make_edge2d_from_curve_point(geom2d_curve_t *L,
                                                    pnt2d_t P1, pnt2d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2545,6 +2736,7 @@ topo_edge_t topo_edge_make_edge2d_from_curve_point(geom2d_curve_t *L,
 topo_edge_t topo_edge_make_edge2d_from_curve_vertex(geom2d_curve_t *L,
                                                     topo_vertex_t V1,
                                                     topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2559,6 +2751,7 @@ topo_edge_t topo_edge_make_edge2d_from_curve_vertex(geom2d_curve_t *L,
 topo_edge_t topo_edge_make_edge2d_from_curve_point_p(geom2d_curve_t *L,
                                                      pnt2d_t P1, pnt2d_t P2,
                                                      double p1, double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2574,6 +2767,7 @@ topo_edge_t topo_edge_make_edge2d_from_curve_vertex_p(geom2d_curve_t *L,
                                                       topo_vertex_t V1,
                                                       topo_vertex_t V2,
                                                       double p1, double p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2586,6 +2780,7 @@ topo_edge_t topo_edge_make_edge2d_from_curve_vertex_p(geom2d_curve_t *L,
 }
 
 topo_edge_t topo_edge_make_polygon() {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
@@ -2596,6 +2791,7 @@ topo_edge_t topo_edge_make_polygon() {
 }
 
 topo_edge_t topo_edge_make_polygon_from_two_point(pnt3d_t P1, pnt3d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
@@ -2608,6 +2804,7 @@ topo_edge_t topo_edge_make_polygon_from_two_point(pnt3d_t P1, pnt3d_t P2) {
 
 topo_edge_t topo_edge_make_polygon_from_three_point(pnt3d_t P1, pnt3d_t P2,
                                                     pnt3d_t P3, _Bool Close) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2622,6 +2819,7 @@ topo_edge_t topo_edge_make_polygon_from_three_point(pnt3d_t P1, pnt3d_t P2,
 topo_edge_t topo_edge_make_polygon_from_four_point(pnt3d_t P1, pnt3d_t P2,
                                                    pnt3d_t P3, pnt3d_t P4,
                                                    _Bool Close) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::edge>(
@@ -2635,6 +2833,7 @@ topo_edge_t topo_edge_make_polygon_from_four_point(pnt3d_t P1, pnt3d_t P2,
 
 topo_edge_t topo_edge_make_polygon_from_two_vertex(topo_vertex_t V1,
                                                    topo_vertex_t V2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::edge>(
@@ -2649,6 +2848,7 @@ topo_edge_t topo_edge_make_polygon_from_three_vertex(topo_vertex_t V1,
                                                      topo_vertex_t V2,
                                                      topo_vertex_t V3,
                                                      _Bool Close) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(
@@ -2665,6 +2865,7 @@ topo_edge_t topo_edge_make_polygon_from_four_vertex(topo_vertex_t V1,
                                                     topo_vertex_t V3,
                                                     topo_vertex_t V4,
                                                     _Bool Close) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2679,6 +2880,7 @@ topo_edge_t topo_edge_make_polygon_from_four_vertex(topo_vertex_t V1,
 
 topo_edge_t topo_edge_make_polygon_from_vertices(topo_vertex_t *vertices,
                                                  int vertcount, _Bool Close) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<flywave::topo::vertex> oes;
   for (int i = 0; i < vertcount; i++) {
     oes.emplace_back(
@@ -2696,6 +2898,7 @@ topo_edge_t topo_edge_make_polygon_from_vertices(topo_vertex_t *vertices,
 
 topo_edge_t topo_edge_make_polygonn_from_points(pnt3d_t *vertexs, int vertcount,
                                                 _Bool Close) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> oes;
   for (int i = 0; i < vertcount; i++) {
     oes.emplace_back(cast_to_gp(vertexs[i]));
@@ -2710,6 +2913,7 @@ topo_edge_t topo_edge_make_polygonn_from_points(pnt3d_t *vertexs, int vertcount,
 }
 
 topo_edge_t topo_edge_make_rect(double width, double height) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::edge>(
@@ -2721,6 +2925,7 @@ topo_edge_t topo_edge_make_rect(double width, double height) {
 
 topo_edge_t topo_edge_make_spline(pnt3d_t *vertexs, int vertcount, double tol,
                                   bool periodic) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<gp_Pnt> oes;
     for (int i = 0; i < vertcount; i++) {
@@ -2738,6 +2943,7 @@ topo_edge_t topo_edge_make_spline(pnt3d_t *vertexs, int vertcount, double tol,
 topo_edge_t topo_edge_make_spline_from_tangents_and_parameters(
     pnt3d_t *points, int pntcount, vec3d_t *tangents, int tancount,
     double *parameters, int paramcount, double tol, bool periodic, bool scale) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<gp_Pnt> oes;
     for (int i = 0; i < pntcount; i++) {
@@ -2765,6 +2971,7 @@ topo_edge_t topo_edge_make_spline_from_tangents_and_parameters(
 topo_edge_t topo_edge_make_spline_approx(pnt3d_t *points, int pntcount,
                                          double tolerance, double *smoothing,
                                          int minDegree, int maxDegree) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<gp_Pnt> oes;
     for (int i = 0; i < pntcount; i++) {
@@ -2788,6 +2995,7 @@ topo_edge_t topo_edge_make_spline_approx(pnt3d_t *points, int pntcount,
 topo_edge_t topo_edge_make_catenary(pnt3d_t p1, pnt3d_t p2, double slack,
                                     double maxSag, dir3d_t up,
                                     double tessellation) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::edge>(
@@ -2802,6 +3010,7 @@ topo_edge_t topo_edge_make_catenary(pnt3d_t p1, pnt3d_t p2, double slack,
 topo_edge_t topo_edge_make_circle(double radius, pnt3d_t center, vec3d_t normal,
                                   double angle1, double angle2,
                                   bool orientation) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{new topo_shape_t{std::make_shared<flywave::topo::edge>(
         flywave::topo::edge::make_circle(radius, cast_to_gp(center),
@@ -2816,6 +3025,7 @@ topo_edge_t topo_edge_make_ellipse(double majorRadius, double minorRadius,
                                    pnt3d_t center, vec3d_t normal,
                                    vec3d_t xnormal, double angle1,
                                    double angle2, int sense) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{.shp = new topo_shape_t{
                            .shp = std::make_shared<flywave::topo::edge>(
@@ -2829,6 +3039,7 @@ topo_edge_t topo_edge_make_ellipse(double majorRadius, double minorRadius,
 }
 
 topo_edge_t topo_edge_make_three_point_arc(pnt3d_t v1, pnt3d_t v2, pnt3d_t v3) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2842,6 +3053,7 @@ topo_edge_t topo_edge_make_three_point_arc(pnt3d_t v1, pnt3d_t v2, pnt3d_t v3) {
 
 topo_edge_t topo_edge_make_circle_center_arc(pnt3d_t v1, pnt3d_t center,
                                              pnt3d_t v2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2855,6 +3067,7 @@ topo_edge_t topo_edge_make_circle_center_arc(pnt3d_t v1, pnt3d_t center,
 
 topo_edge_t topo_edge_make_tangent_arc(pnt3d_t v1, vec3d_t tangent,
                                        pnt3d_t v3) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return topo_edge_t{
         .shp = new topo_shape_t{
@@ -2867,6 +3080,7 @@ topo_edge_t topo_edge_make_tangent_arc(pnt3d_t v1, vec3d_t tangent,
 }
 
 topo_edge_t topo_edge_make_bezier(pnt3d_t *points, int pntcount) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<gp_Pnt> oes;
     for (int i = 0; i < pntcount; i++) {
@@ -2880,7 +3094,8 @@ topo_edge_t topo_edge_make_bezier(pnt3d_t *points, int pntcount) {
   }
 }
 
-bool topo_edge_is_seam(topo_edge_t e, topo_face_t f) { try {
+bool topo_edge_is_seam(topo_edge_t e, topo_face_t f) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->is_seam(*cast_to_topo(f));
@@ -2896,7 +3111,8 @@ bool topo_edge_is_seam(topo_edge_t e, topo_face_t f) { try {
   }
 }
 
-bool topo_edge_is_degenerated(topo_edge_t e) { try {
+bool topo_edge_is_degenerated(topo_edge_t e) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->is_degenerated();
@@ -2912,7 +3128,8 @@ bool topo_edge_is_degenerated(topo_edge_t e) { try {
   }
 }
 
-bool topo_edge_is_closed(topo_edge_t e) { try {
+bool topo_edge_is_closed(topo_edge_t e) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->is_closed();
@@ -2928,7 +3145,8 @@ bool topo_edge_is_closed(topo_edge_t e) { try {
   }
 }
 
-bool topo_edge_is_inifinite(topo_edge_t e) { try {
+bool topo_edge_is_inifinite(topo_edge_t e) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->is_inifinite();
@@ -2944,7 +3162,8 @@ bool topo_edge_is_inifinite(topo_edge_t e) { try {
   }
 }
 
-int topo_edge_num_vertices(topo_edge_t e) { try {
+int topo_edge_num_vertices(topo_edge_t e) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->num_vertices();
@@ -2960,7 +3179,8 @@ int topo_edge_num_vertices(topo_edge_t e) { try {
   }
 }
 
-double topo_edge_length(topo_edge_t e) { try {
+double topo_edge_length(topo_edge_t e) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->length();
@@ -2976,7 +3196,8 @@ double topo_edge_length(topo_edge_t e) { try {
   }
 }
 
-float topo_edge_tolerance(topo_edge_t e) { try {
+float topo_edge_tolerance(topo_edge_t e) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->tolerance();
@@ -2992,7 +3213,8 @@ float topo_edge_tolerance(topo_edge_t e) { try {
   }
 }
 
-bool topo_edge_is_curve3d(topo_edge_t e) { try {
+bool topo_edge_is_curve3d(topo_edge_t e) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->is_curve3d();
@@ -3008,7 +3230,8 @@ bool topo_edge_is_curve3d(topo_edge_t e) { try {
   }
 }
 
-void topo_edge_convert_to_curve3d(topo_edge_t e) { try {
+void topo_edge_convert_to_curve3d(topo_edge_t e) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->convert_to_curve3d();
@@ -3021,7 +3244,8 @@ void topo_edge_convert_to_curve3d(topo_edge_t e) { try {
   }
 }
 
-void topo_edge_reverse(topo_edge_t e) { try {
+void topo_edge_reverse(topo_edge_t e) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(e);
   if (opt) {
     return opt->reverse();
@@ -3035,6 +3259,7 @@ void topo_edge_reverse(topo_edge_t e) { try {
 }
 
 void topo_edge_bounds(topo_edge_t e, double *min, double *max) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto bounds = cast_to_topo(e)->bounds();
     *min = bounds.first;
@@ -3045,6 +3270,7 @@ void topo_edge_bounds(topo_edge_t e, double *min, double *max) {
 }
 
 pnt3d_t topo_edge_start_point(topo_edge_t e) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pnt3d_t result = {0, 0, 0};
   try {
     auto point = cast_to_topo(e)->start_point();
@@ -3057,6 +3283,7 @@ pnt3d_t topo_edge_start_point(topo_edge_t e) {
 }
 
 pnt3d_t topo_edge_end_point(topo_edge_t e) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pnt3d_t result = {0, 0, 0};
   try {
     auto point = cast_to_topo(e)->end_point();
@@ -3069,6 +3296,7 @@ pnt3d_t topo_edge_end_point(topo_edge_t e) {
 }
 
 double topo_edge_param_at(topo_edge_t e, double d) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return cast_to_topo(e)->param_at(d);
   } catch (...) {
@@ -3077,6 +3305,7 @@ double topo_edge_param_at(topo_edge_t e, double d) {
 }
 
 double topo_edge_param_at_point(topo_edge_t e, pnt3d_t pt) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     gp_Pnt point(pt.x, pt.y, pt.z);
     return cast_to_topo(e)->param_at(point);
@@ -3087,6 +3316,7 @@ double topo_edge_param_at_point(topo_edge_t e, pnt3d_t pt) {
 
 void topo_edge_params(topo_edge_t e, pnt3d_t *pts, int count, double *params,
                       double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<gp_Pnt> points;
     for (int i = 0; i < count; i++) {
@@ -3105,6 +3335,7 @@ void topo_edge_params(topo_edge_t e, pnt3d_t *pts, int count, double *params,
 
 void topo_edge_params_length(topo_edge_t e, double *locations, int count,
                              double *params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<double> locs(locations, locations + count);
     auto result = cast_to_topo(e)->params_length(locs);
@@ -3119,6 +3350,7 @@ void topo_edge_params_length(topo_edge_t e, double *locations, int count,
 }
 
 dir3d_t topo_edge_tangent_at(topo_edge_t e, double param) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   dir3d_t result = {0, 0, 0};
   try {
     auto dir = cast_to_topo(e)->tangent_at(param);
@@ -3132,6 +3364,7 @@ dir3d_t topo_edge_tangent_at(topo_edge_t e, double param) {
 
 void topo_edge_tangents(topo_edge_t e, double *params, int count,
                         dir3d_t *tangents) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<double> paramVec(params, params + count);
     auto result = cast_to_topo(e)->tangents(paramVec);
@@ -3148,6 +3381,7 @@ void topo_edge_tangents(topo_edge_t e, double *params, int count,
 }
 
 dir3d_t topo_edge_normal(topo_edge_t e) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   dir3d_t result = {0, 0, 0};
   try {
     auto dir = cast_to_topo(e)->normal();
@@ -3160,6 +3394,7 @@ dir3d_t topo_edge_normal(topo_edge_t e) {
 }
 
 pnt3d_t topo_edge_center(topo_edge_t e) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pnt3d_t result = {0, 0, 0};
   try {
     auto point = cast_to_topo(e)->center();
@@ -3172,6 +3407,7 @@ pnt3d_t topo_edge_center(topo_edge_t e) {
 }
 
 double topo_edge_radius(topo_edge_t e) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return cast_to_topo(e)->radius();
   } catch (...) {
@@ -3180,6 +3416,7 @@ double topo_edge_radius(topo_edge_t e) {
 }
 
 pnt3d_t topo_edge_position_at(topo_edge_t e, double d, int mode) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pnt3d_t result = {0, 0, 0};
   try {
     auto point = cast_to_topo(e)->position_at(
@@ -3194,6 +3431,7 @@ pnt3d_t topo_edge_position_at(topo_edge_t e, double d, int mode) {
 
 void topo_edge_positions(topo_edge_t e, double *ds, int count, pnt3d_t *points,
                          int mode) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<double> dVec(ds, ds + count);
     auto result = cast_to_topo(e)->positions(
@@ -3213,6 +3451,7 @@ void topo_edge_positions(topo_edge_t e, double *ds, int count, pnt3d_t *points,
 void topo_edge_sample_uniform(topo_edge_t e, double n, pnt3d_t **points,
                               int *point_count, double **params,
                               int *param_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto result = cast_to_topo(e)->sample_uniform(n);
 
@@ -3241,6 +3480,7 @@ void topo_edge_sample_uniform(topo_edge_t e, double n, pnt3d_t **points,
 
 topo_location_t *topo_edge_location_at(topo_edge_t e, double d, int mode,
                                        int frame, bool planar) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto loc = cast_to_topo(e)->location_at(
         d, static_cast<flywave::topo::edge::ParamMode>(mode),
@@ -3254,6 +3494,7 @@ topo_location_t *topo_edge_location_at(topo_edge_t e, double d, int mode,
 topo_location_t **topo_edge_locations(topo_edge_t e, double *ds, int count,
                                       int mode, int frame, bool planar,
                                       int *result_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<double> dVec(ds, ds + count);
     auto result = cast_to_topo(e)->locations(
@@ -3275,6 +3516,7 @@ topo_location_t **topo_edge_locations(topo_edge_t e, double *ds, int count,
 int topo_edge_projected(topo_edge_t e, topo_face_t f, vec3d_t direction,
                         bool closest, topo_shape_t ***result,
                         int *result_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     gp_Vec dir(direction.x, direction.y, direction.z);
     auto proj = cast_to_topo(e)->projected(*cast_to_topo(f), dir, closest);
@@ -3304,6 +3546,7 @@ int topo_edge_projected(topo_edge_t e, topo_face_t f, vec3d_t direction,
 
 double topo_edge_curvature_at(topo_edge_t e, double d, int mode,
                               double resolution) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return cast_to_topo(e)->curvature_at(
         d, static_cast<flywave::topo::edge::ParamMode>(mode), resolution);
@@ -3314,6 +3557,7 @@ double topo_edge_curvature_at(topo_edge_t e, double d, int mode,
 
 void topo_edge_curvatures(topo_edge_t e, double *ds, int count,
                           double *curvatures, int mode, double resolution) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<double> dVec(ds, ds + count);
     auto result = cast_to_topo(e)->curvatures(
@@ -3328,7 +3572,8 @@ void topo_edge_curvatures(topo_edge_t e, double *ds, int count,
   }
 }
 
-topo_face_t topo_make_face() { try {
+topo_face_t topo_make_face() {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>()}};
   }
@@ -3341,7 +3586,8 @@ topo_face_t topo_make_face() { try {
   }
 }
 
-void topo_face_free(topo_face_t t) { try {
+void topo_face_free(topo_face_t t) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (t.shp) {
     delete t.shp;
   }
@@ -3353,7 +3599,8 @@ void topo_face_free(topo_face_t t) { try {
   }
 }
 
-topo_face_t topo_face_make_face(topo_face_t F) { try {
+topo_face_t topo_face_make_face(topo_face_t F) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::face>(
@@ -3368,7 +3615,8 @@ topo_face_t topo_face_make_face(topo_face_t F) { try {
   }
 }
 
-topo_face_t topo_face_make_face_from_plane(plane_t P) { try {
+topo_face_t topo_face_make_face_from_plane(plane_t P) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(cast_to_gp(P)))}};
@@ -3382,7 +3630,8 @@ topo_face_t topo_face_make_face_from_plane(plane_t P) { try {
   }
 }
 
-topo_face_t topo_face_make_face_from_cylinder(cylinder_t C) { try {
+topo_face_t topo_face_make_face_from_cylinder(cylinder_t C) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(cast_to_gp(C)))}};
@@ -3396,7 +3645,8 @@ topo_face_t topo_face_make_face_from_cylinder(cylinder_t C) { try {
   }
 }
 
-topo_face_t topo_face_make_face_from_cone(cone_t C) { try {
+topo_face_t topo_face_make_face_from_cone(cone_t C) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(cast_to_gp(C)))}};
@@ -3410,7 +3660,8 @@ topo_face_t topo_face_make_face_from_cone(cone_t C) { try {
   }
 }
 
-topo_face_t topo_face_make_face_from_sphere(sphere_t S) { try {
+topo_face_t topo_face_make_face_from_sphere(sphere_t S) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(cast_to_gp(S)))}};
@@ -3424,7 +3675,8 @@ topo_face_t topo_face_make_face_from_sphere(sphere_t S) { try {
   }
 }
 
-topo_face_t topo_face_make_face_from_torus(torus_t C) { try {
+topo_face_t topo_face_make_face_from_torus(torus_t C) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(cast_to_gp(C)))}};
@@ -3439,7 +3691,8 @@ topo_face_t topo_face_make_face_from_torus(torus_t C) { try {
 }
 
 topo_face_t topo_face_make_face_from_surface(geom_surface_t *S,
-                                             double TolDegen) { try {
+                                             double TolDegen) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::face>(
@@ -3456,7 +3709,8 @@ topo_face_t topo_face_make_face_from_surface(geom_surface_t *S,
 
 topo_face_t topo_face_make_face_from_plane_p(plane_t P, double UMin,
                                              double UMax, double VMin,
-                                             double VMax) { try {
+                                             double VMax) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(
@@ -3473,7 +3727,8 @@ topo_face_t topo_face_make_face_from_plane_p(plane_t P, double UMin,
 
 topo_face_t topo_face_make_face_from_cylinder_p(cylinder_t C, double UMin,
                                                 double UMax, double VMin,
-                                                double VMax) { try {
+                                                double VMax) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(
@@ -3489,7 +3744,8 @@ topo_face_t topo_face_make_face_from_cylinder_p(cylinder_t C, double UMin,
 }
 
 topo_face_t topo_face_make_face_from_cone_p(cone_t C, double UMin, double UMax,
-                                            double VMin, double VMax) { try {
+                                            double VMin, double VMax) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(
@@ -3506,7 +3762,8 @@ topo_face_t topo_face_make_face_from_cone_p(cone_t C, double UMin, double UMax,
 
 topo_face_t topo_face_make_face_from_sphere_p(sphere_t S, double UMin,
                                               double UMax, double VMin,
-                                              double VMax) { try {
+                                              double VMax) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(
@@ -3523,7 +3780,8 @@ topo_face_t topo_face_make_face_from_sphere_p(sphere_t S, double UMin,
 
 topo_face_t topo_face_make_face_from_torus_p(torus_t C, double UMin,
                                              double UMax, double VMin,
-                                             double VMax) { try {
+                                             double VMax) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(
@@ -3540,7 +3798,8 @@ topo_face_t topo_face_make_face_from_torus_p(torus_t C, double UMin,
 
 topo_face_t topo_face_make_face_from_surface_p(geom_surface_t *S, double UMin,
                                                double UMax, double VMin,
-                                               double VMax, double TolDegen) { try {
+                                               double VMax, double TolDegen) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::face>(
@@ -3557,7 +3816,8 @@ topo_face_t topo_face_make_face_from_surface_p(geom_surface_t *S, double UMin,
 }
 
 topo_face_t topo_face_make_face_from_wire_onlyplane(topo_wire_t W,
-                                                    _Bool OnlyPlane) { try {
+                                                    _Bool OnlyPlane) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::face>(
@@ -3573,7 +3833,8 @@ topo_face_t topo_face_make_face_from_wire_onlyplane(topo_wire_t W,
 }
 
 topo_face_t topo_face_make_face_from_plane_wire(plane_t P, topo_wire_t W,
-                                                _Bool Inside) { try {
+                                                _Bool Inside) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(
@@ -3589,7 +3850,8 @@ topo_face_t topo_face_make_face_from_plane_wire(plane_t P, topo_wire_t W,
 }
 
 topo_face_t topo_face_make_face_from_cylinder_wire(cylinder_t C, topo_wire_t W,
-                                                   _Bool Inside) { try {
+                                                   _Bool Inside) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(
@@ -3605,7 +3867,8 @@ topo_face_t topo_face_make_face_from_cylinder_wire(cylinder_t C, topo_wire_t W,
 }
 
 topo_face_t topo_face_make_face_from_cone_wire(cone_t C, topo_wire_t W,
-                                               _Bool Inside) { try {
+                                               _Bool Inside) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(
@@ -3621,7 +3884,8 @@ topo_face_t topo_face_make_face_from_cone_wire(cone_t C, topo_wire_t W,
 }
 
 topo_face_t topo_face_make_face_from_sphere_wire(sphere_t S, topo_wire_t W,
-                                                 _Bool Inside) { try {
+                                                 _Bool Inside) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(
@@ -3637,7 +3901,8 @@ topo_face_t topo_face_make_face_from_sphere_wire(sphere_t S, topo_wire_t W,
 }
 
 topo_face_t topo_face_make_face_from_torus_wire(torus_t C, topo_wire_t W,
-                                                _Bool Inside) { try {
+                                                _Bool Inside) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{.shp = new topo_shape_t{
                          .shp = std::make_shared<flywave::topo::face>(
                              flywave::topo::face::make_face(
@@ -3653,7 +3918,8 @@ topo_face_t topo_face_make_face_from_torus_wire(torus_t C, topo_wire_t W,
 }
 
 topo_face_t topo_face_make_face_from_surface_wire(geom_surface_t *S,
-                                                  topo_wire_t W, _Bool Inside) { try {
+                                                  topo_wire_t W, _Bool Inside) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(
@@ -3668,7 +3934,8 @@ topo_face_t topo_face_make_face_from_surface_wire(geom_surface_t *S,
   }
 }
 
-topo_face_t topo_face_make_face_from_face_wire(topo_face_t F, topo_wire_t W) { try {
+topo_face_t topo_face_make_face_from_face_wire(topo_face_t F, topo_wire_t W) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_face_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(
                                   flywave::topo::face::make_face(
@@ -3683,7 +3950,8 @@ topo_face_t topo_face_make_face_from_face_wire(topo_face_t F, topo_wire_t W) { t
   }
 }
 
-topo_face_t topo_face_make_face_from_wire(topo_wire_t *wires, int count) { try {
+topo_face_t topo_face_make_face_from_wire(topo_wire_t *wires, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   std::vector<flywave::topo::wire> ows;
   for (int i = 0; i < count; i++) {
     ows.emplace_back(*cast_to_topo(wires[i]));
@@ -3702,7 +3970,8 @@ topo_face_t topo_face_make_face_from_wire(topo_wire_t *wires, int count) { try {
 }
 
 topo_face_t topo_face_make_face_from_egdes(topo_edge_t *edges, int edgecount,
-                                           pnt3d_t *points, int pcount) { try {
+                                           pnt3d_t *points, int pcount) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   std::vector<flywave::topo::edge> oes;
   std::vector<gp_Pnt> ops;
   for (int i = 0; i < edgecount; i++) {
@@ -3725,7 +3994,8 @@ topo_face_t topo_face_make_face_from_egdes(topo_edge_t *edges, int edgecount,
   }
 }
 
-topo_face_t topo_face_make_face_from_points(pnt3d_t *points, int count) { try {
+topo_face_t topo_face_make_face_from_points(pnt3d_t *points, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   std::vector<gp_Pnt> ops;
   for (int i = 0; i < count; i++) {
     ops.emplace_back(cast_to_gp(points[i]));
@@ -3745,6 +4015,7 @@ topo_face_t topo_face_make_face_from_points(pnt3d_t *points, int count) { try {
 
 topo_face_t *topo_face_make_from_wires(topo_wire_t outer, topo_wire_t *inners,
                                        int inner_count, int *result_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::wire> innerWires;
     for (int i = 0; i < inner_count; i++) {
@@ -3768,7 +4039,8 @@ topo_face_t *topo_face_make_from_wires(topo_wire_t outer, topo_wire_t *inners,
   }
 }
 
-void topo_face_list_free(topo_face_t *faces, int count) { try { delete[] faces;   }
+void topo_face_list_free(topo_face_t *faces, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { delete[] faces;   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -3783,6 +4055,7 @@ topo_face_t topo_face_make_complex(topo_shape_t **edges, int edge_count,
                                    bool anisotropy, double tol2d, double tol3d,
                                    double tol_angle, double tol_curv,
                                    int max_degree, int max_segments) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<boost::variant<flywave::topo::wire, flywave::topo::edge>>
         edgeVec;
@@ -3825,6 +4098,7 @@ topo_face_t topo_face_make_complex(topo_shape_t **edges, int edge_count,
 
 topo_face_t topo_face_make_plane(pnt3d_t base_point, dir3d_t direction,
                                  double *length, double *width) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     gp_Pnt basePnt(base_point.x, base_point.y, base_point.z);
     gp_Dir dir(direction.x, direction.y, direction.z);
@@ -3850,6 +4124,7 @@ topo_face_t topo_face_make_spline_approx(pnt3d_t *points, int *point_counts,
                                          int point_array_size, double tol,
                                          double *smoothing, int min_degree,
                                          int max_degree) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<std::vector<gp_Pnt>> pointVec;
     int offset = 0;
@@ -3879,7 +4154,8 @@ topo_face_t topo_face_make_spline_approx(pnt3d_t *points, int *point_counts,
   }
 }
 
-int topo_face_num_wires(topo_face_t f) { try {
+int topo_face_num_wires(topo_face_t f) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->num_wires();
@@ -3895,7 +4171,8 @@ int topo_face_num_wires(topo_face_t f) { try {
   }
 }
 
-int topo_face_num_faces(topo_face_t f) { try {
+int topo_face_num_faces(topo_face_t f) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->num_faces();
@@ -3911,7 +4188,8 @@ int topo_face_num_faces(topo_face_t f) { try {
   }
 }
 
-double topo_face_area(topo_face_t f) { try {
+double topo_face_area(topo_face_t f) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->area();
@@ -3927,7 +4205,8 @@ double topo_face_area(topo_face_t f) { try {
   }
 }
 
-float topo_face_tolerance(topo_face_t f) { try {
+float topo_face_tolerance(topo_face_t f) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->tolerance();
@@ -3943,7 +4222,8 @@ float topo_face_tolerance(topo_face_t f) { try {
   }
 }
 
-bbox_t topo_face_inertia(topo_face_t f) { try {
+bbox_t topo_face_inertia(topo_face_t f) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return cast_from_gp(opt->inertia());
@@ -3959,7 +4239,8 @@ bbox_t topo_face_inertia(topo_face_t f) { try {
   }
 }
 
-pnt3d_t topo_face_centre_of_mass(topo_face_t f) { try {
+pnt3d_t topo_face_centre_of_mass(topo_face_t f) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return cast_from_gp(opt->centre_of_mass());
@@ -3975,7 +4256,8 @@ pnt3d_t topo_face_centre_of_mass(topo_face_t f) { try {
   }
 }
 
-topo_plane_t *topo_face_to_plane(topo_face_t f) { try {
+topo_plane_t *topo_face_to_plane(topo_face_t f) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return new topo_plane_t{.plane =
@@ -3991,7 +4273,8 @@ topo_plane_t *topo_face_to_plane(topo_face_t f) { try {
   }
 }
 
-int topo_face_offset(topo_face_t f, double offset, double tolerance) { try {
+int topo_face_offset(topo_face_t f, double offset, double tolerance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->offset(offset, tolerance);
@@ -4008,7 +4291,8 @@ int topo_face_offset(topo_face_t f, double offset, double tolerance) { try {
 }
 
 int topo_face_extrude(topo_face_t f, topo_shape_t *shp, pnt3d_t p1,
-                      pnt3d_t p2) { try {
+                      pnt3d_t p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->extrude(*shp->shp, cast_to_gp(p1), cast_to_gp(p2));
@@ -4025,7 +4309,8 @@ int topo_face_extrude(topo_face_t f, topo_shape_t *shp, pnt3d_t p1,
 }
 
 int topo_face_revolve(topo_face_t f, topo_shape_t *shp, pnt3d_t p1, pnt3d_t p2,
-                      double angle) { try {
+                      double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->revolve(*shp->shp, cast_to_gp(p1), cast_to_gp(p2), angle);
@@ -4043,6 +4328,7 @@ int topo_face_revolve(topo_face_t f, topo_shape_t *shp, pnt3d_t p1, pnt3d_t p2,
 
 int topo_face_sweep(topo_face_t f, topo_wire_t spine, topo_shape_t **profiles,
                     int profilesCount, int cornerMode) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(f);
     if (opt) {
@@ -4061,6 +4347,7 @@ int topo_face_sweep(topo_face_t f, topo_wire_t spine, topo_shape_t **profiles,
 int topo_face_sweep_wire(topo_face_t f, topo_wire_t spine,
                          topo_wire_t *profiles, int profilesCount,
                          int cornerMode) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(f);
     if (opt) {
@@ -4077,7 +4364,8 @@ int topo_face_sweep_wire(topo_face_t f, topo_wire_t spine,
 }
 
 int topo_face_loft(topo_face_t f, topo_shape_t **profiles, int profilesCount,
-                   bool ruled, double tolerance) { try {
+                   bool ruled, double tolerance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(f);
   if (opt) {
     std::vector<flywave::topo::shape> prs;
@@ -4097,7 +4385,8 @@ int topo_face_loft(topo_face_t f, topo_shape_t **profiles, int profilesCount,
   }
 }
 
-int topo_face_boolean(topo_face_t f, topo_face_t tool, int op) { try {
+int topo_face_boolean(topo_face_t f, topo_face_t tool, int op) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(f);
   if (opt) {
     return opt->boolean(*cast_to_topo(tool),
@@ -4116,6 +4405,7 @@ int topo_face_boolean(topo_face_t f, topo_face_t tool, int op) { try {
 
 void topo_face_uv_bounds(topo_face_t f, double *u_min, double *u_max,
                          double *v_min, double *v_max) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto bounds = cast_to_topo(f)->uv_bounds();
     *u_min = std::get<0>(bounds);
@@ -4128,6 +4418,7 @@ void topo_face_uv_bounds(topo_face_t f, double *u_min, double *u_max,
 }
 
 void topo_face_param_at(topo_face_t f, pnt3d_t pt, double *u, double *v) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     gp_Pnt point(pt.x, pt.y, pt.z);
     auto params = cast_to_topo(f)->param_at(point);
@@ -4140,6 +4431,7 @@ void topo_face_param_at(topo_face_t f, pnt3d_t pt, double *u, double *v) {
 
 void topo_face_params(topo_face_t f, pnt3d_t *pts, int count, double *us,
                       double *vs, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<gp_Pnt> points;
     for (int i = 0; i < count; i++) {
@@ -4158,6 +4450,7 @@ void topo_face_params(topo_face_t f, pnt3d_t *pts, int count, double *us,
 }
 
 pnt3d_t topo_face_position_at(topo_face_t f, double u, double v) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pnt3d_t result = {0, 0, 0};
   try {
     auto point = cast_to_topo(f)->position_at(u, v);
@@ -4171,6 +4464,7 @@ pnt3d_t topo_face_position_at(topo_face_t f, double u, double v) {
 
 void topo_face_positions(topo_face_t f, double *us, double *vs, int count,
                          pnt3d_t *points) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<std::pair<double, double>> uvs;
     for (int i = 0; i < count; i++) {
@@ -4190,6 +4484,7 @@ void topo_face_positions(topo_face_t f, double *us, double *vs, int count,
 }
 
 vec3d_t topo_face_normal_at(topo_face_t f, pnt3d_t *location) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   vec3d_t result = {0, 0, 0};
   try {
     gp_Pnt loc(location ? location->x : 0, location ? location->y : 0,
@@ -4205,6 +4500,7 @@ vec3d_t topo_face_normal_at(topo_face_t f, pnt3d_t *location) {
 
 void topo_face_normal_at_uv(topo_face_t f, double u, double v, vec3d_t *normal,
                             pnt3d_t *point) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto result = cast_to_topo(f)->normal_at(u, v);
     normal->x = result.first.X();
@@ -4221,6 +4517,7 @@ void topo_face_normal_at_uv(topo_face_t f, double u, double v, vec3d_t *normal,
 
 void topo_face_normals(topo_face_t f, double *us, double *vs, int count,
                        vec3d_t *normals, pnt3d_t *points) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<double> uVec(us, us + count);
     std::vector<double> vVec(vs, vs + count);
@@ -4244,6 +4541,7 @@ void topo_face_normals(topo_face_t f, double *us, double *vs, int count,
 
 topo_face_t topo_face_fillet2d(topo_face_t f, double radius,
                                topo_vertex_t *vertices, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::vertex> verts;
     for (int i = 0; i < count; i++) {
@@ -4260,6 +4558,7 @@ topo_face_t topo_face_fillet2d(topo_face_t f, double radius,
 
 topo_face_t topo_face_chamfer2d(topo_face_t f, double distance,
                                 topo_vertex_t *vertices, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::vertex> verts;
     for (int i = 0; i < count; i++) {
@@ -4275,6 +4574,7 @@ topo_face_t topo_face_chamfer2d(topo_face_t f, double distance,
 }
 
 topo_solid_t topo_face_thicken(topo_face_t f, double thickness) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto result = cast_to_topo(f)->thicken(thickness);
     return topo_solid_t{
@@ -4287,6 +4587,7 @@ topo_solid_t topo_face_thicken(topo_face_t f, double thickness) {
 
 topo_face_t topo_face_project(topo_face_t f, topo_face_t other,
                               vec3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     gp_Vec dir(direction.x, direction.y, direction.z);
     auto result = cast_to_topo(f)->project(*cast_to_topo(other), dir);
@@ -4299,6 +4600,7 @@ topo_face_t topo_face_project(topo_face_t f, topo_face_t other,
 }
 
 topo_face_t topo_face_to_arcs(topo_face_t f, double tolerance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto result = cast_to_topo(f)->to_arcs(tolerance);
     return topo_face_t{
@@ -4311,6 +4613,7 @@ topo_face_t topo_face_to_arcs(topo_face_t f, double tolerance) {
 
 topo_face_t topo_face_trim(topo_face_t f, double u0, double u1, double v0,
                            double v1, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto result = cast_to_topo(f)->trim(u0, u1, v0, v1, tol);
     return topo_face_t{
@@ -4323,6 +4626,7 @@ topo_face_t topo_face_trim(topo_face_t f, double u0, double u1, double v0,
 
 topo_edge_t topo_face_isoline(topo_face_t f, double param,
                               const char *direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::string dir = direction ? direction : "v";
     auto result = cast_to_topo(f)->isoline(param, dir);
@@ -4336,6 +4640,7 @@ topo_edge_t topo_face_isoline(topo_face_t f, double param,
 
 topo_edge_t *topo_face_isolines(topo_face_t f, double *params, int count,
                                 const char *direction, int *result_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<double> paramVec(params, params + count);
     std::string dir = direction ? direction : "v";
@@ -4356,6 +4661,7 @@ topo_edge_t *topo_face_isolines(topo_face_t f, double *params, int count,
 }
 
 topo_wire_t topo_face_outer_wire(topo_face_t f) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto result = cast_to_topo(f)->outer_wire();
     return topo_wire_t{
@@ -4367,6 +4673,7 @@ topo_wire_t topo_face_outer_wire(topo_face_t f) {
 }
 
 topo_wire_t *topo_face_inner_wires(topo_face_t f, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto result = cast_to_topo(f)->inner_wires();
     auto *wires = new topo_wire_t[result.size()];
@@ -4383,7 +4690,8 @@ topo_wire_t *topo_face_inner_wires(topo_face_t f, int *count) {
   }
 }
 
-topo_shell_t topo_make_shell() { try {
+topo_shell_t topo_make_shell() {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>()}};
   }
@@ -4396,7 +4704,8 @@ topo_shell_t topo_make_shell() { try {
   }
 }
 
-void topo_shell_free(topo_shell_t t) { try {
+void topo_shell_free(topo_shell_t t) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (t.shp) {
     delete t.shp;
   }
@@ -4409,7 +4718,8 @@ void topo_shell_free(topo_shell_t t) { try {
 }
 
 topo_shell_t topo_shell_make_shell_from_surface(geom_surface_t *S,
-                                                _Bool Segment) { try {
+                                                _Bool Segment) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -4427,7 +4737,8 @@ topo_shell_t topo_shell_make_shell_from_surface(geom_surface_t *S,
 topo_shell_t topo_shell_make_shell_from_surface_p(geom_surface_t *S,
                                                   double UMin, double UMax,
                                                   double VMin, double VMax,
-                                                  _Bool Segment) { try {
+                                                  _Bool Segment) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -4443,7 +4754,8 @@ topo_shell_t topo_shell_make_shell_from_surface_p(geom_surface_t *S,
   }
 }
 
-topo_shell_t topo_shell_make_shell_from_box(double dx, double dy, double dz) { try {
+topo_shell_t topo_shell_make_shell_from_box(double dx, double dy, double dz) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -4459,7 +4771,8 @@ topo_shell_t topo_shell_make_shell_from_box(double dx, double dy, double dz) { t
 }
 
 topo_shell_t topo_shell_make_shell_from_box_point(pnt3d_t P, double dx,
-                                                  double dy, double dz) { try {
+                                                  double dy, double dz) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_box(
@@ -4474,7 +4787,8 @@ topo_shell_t topo_shell_make_shell_from_box_point(pnt3d_t P, double dx,
   }
 }
 
-topo_shell_t topo_shell_make_shell_from_box_two_point(pnt3d_t P1, pnt3d_t P2) { try {
+topo_shell_t topo_shell_make_shell_from_box_two_point(pnt3d_t P1, pnt3d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_box(
@@ -4490,7 +4804,8 @@ topo_shell_t topo_shell_make_shell_from_box_two_point(pnt3d_t P1, pnt3d_t P2) { 
 }
 
 topo_shell_t topo_shell_make_shell_from_box_axis2(axis2_t Axes, double dx,
-                                                  double dy, double dz) { try {
+                                                  double dy, double dz) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_box(
@@ -4505,7 +4820,8 @@ topo_shell_t topo_shell_make_shell_from_box_axis2(axis2_t Axes, double dx,
   }
 }
 
-topo_shell_t topo_shell_make_shell_from_cylinder(double R, double H) { try {
+topo_shell_t topo_shell_make_shell_from_cylinder(double R, double H) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -4521,7 +4837,8 @@ topo_shell_t topo_shell_make_shell_from_cylinder(double R, double H) { try {
 }
 
 topo_shell_t topo_shell_make_shell_from_cylinder_angle(double R, double H,
-                                                       double Angle) { try {
+                                                       double Angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -4537,7 +4854,8 @@ topo_shell_t topo_shell_make_shell_from_cylinder_angle(double R, double H,
 }
 
 topo_shell_t topo_shell_make_shell_from_cylinder_axis2(axis2_t Axes, double R,
-                                                       double H) { try {
+                                                       double H) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_cylinder(
@@ -4554,7 +4872,8 @@ topo_shell_t topo_shell_make_shell_from_cylinder_axis2(axis2_t Axes, double R,
 
 topo_shell_t topo_shell_make_shell_from_cylinder_axis2_angle(axis2_t Axes,
                                                              double R, double H,
-                                                             double Angle) { try {
+                                                             double Angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_cylinder(
@@ -4569,7 +4888,8 @@ topo_shell_t topo_shell_make_shell_from_cylinder_axis2_angle(axis2_t Axes,
   }
 }
 
-topo_shell_t topo_shell_make_shell_from_cone(double R1, double R2, double H) { try {
+topo_shell_t topo_shell_make_shell_from_cone(double R1, double R2, double H) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -4585,7 +4905,8 @@ topo_shell_t topo_shell_make_shell_from_cone(double R1, double R2, double H) { t
 }
 
 topo_shell_t topo_shell_make_shell_from_cone_angle(double R1, double R2,
-                                                   double H, double angle) { try {
+                                                   double H, double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -4601,7 +4922,8 @@ topo_shell_t topo_shell_make_shell_from_cone_angle(double R1, double R2,
 }
 
 topo_shell_t topo_shell_make_shell_from_cone_axis2(axis2_t Axes, double R1,
-                                                   double R2, double H) { try {
+                                                   double R2, double H) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_cone(
@@ -4619,7 +4941,8 @@ topo_shell_t topo_shell_make_shell_from_cone_axis2(axis2_t Axes, double R1,
 topo_shell_t topo_shell_make_shell_from_cone_axis2_angle(axis2_t Axes,
                                                          double R1, double R2,
                                                          double H,
-                                                         double angle) { try {
+                                                         double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_cone(
@@ -4634,7 +4957,8 @@ topo_shell_t topo_shell_make_shell_from_cone_axis2_angle(axis2_t Axes,
   }
 }
 
-topo_shell_t topo_shell_make_shell_from_revolution(geom_curve_t *Meridian) { try {
+topo_shell_t topo_shell_make_shell_from_revolution(geom_curve_t *Meridian) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_revolution(
@@ -4650,7 +4974,8 @@ topo_shell_t topo_shell_make_shell_from_revolution(geom_curve_t *Meridian) { try
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_angle(geom_curve_t *Meridian,
-                                                         double angle) { try {
+                                                         double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_revolution(
@@ -4667,7 +4992,8 @@ topo_shell_t topo_shell_make_shell_from_revolution_angle(geom_curve_t *Meridian,
 
 topo_shell_t topo_shell_make_shell_from_revolution_limit(geom_curve_t *Meridian,
                                                          double VMin,
-                                                         double VMax) { try {
+                                                         double VMax) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_revolution(
@@ -4683,7 +5009,8 @@ topo_shell_t topo_shell_make_shell_from_revolution_limit(geom_curve_t *Meridian,
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_limit_angle(
-    geom_curve_t *Meridian, double VMin, double VMax, double angle) { try {
+    geom_curve_t *Meridian, double VMin, double VMax, double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_revolution(
@@ -4700,7 +5027,8 @@ topo_shell_t topo_shell_make_shell_from_revolution_limit_angle(
 
 topo_shell_t
 topo_shell_make_shell_from_revolution_axis2(axis2_t Axes,
-                                            geom_curve_t *Meridian) { try {
+                                            geom_curve_t *Meridian) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_revolution(
@@ -4716,7 +5044,8 @@ topo_shell_make_shell_from_revolution_axis2(axis2_t Axes,
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_axis2_angle(
-    axis2_t Axes, geom_curve_t *Meridian, double angle) { try {
+    axis2_t Axes, geom_curve_t *Meridian, double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_revolution(
@@ -4732,7 +5061,8 @@ topo_shell_t topo_shell_make_shell_from_revolution_axis2_angle(
 }
 
 topo_shell_t topo_shell_make_shell_from_revolution_axis2_limit(
-    axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax) { try {
+    axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -4750,7 +5080,8 @@ topo_shell_t topo_shell_make_shell_from_revolution_axis2_limit(
 
 topo_shell_t topo_shell_make_shell_from_revolution_axis2_limit_angle(
     axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax,
-    double angle) { try {
+    double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -4766,7 +5097,8 @@ topo_shell_t topo_shell_make_shell_from_revolution_axis2_limit_angle(
   }
 }
 
-topo_shell_t topo_shell_make_shell_from_sphere(double R) { try {
+topo_shell_t topo_shell_make_shell_from_sphere(double R) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -4781,7 +5113,8 @@ topo_shell_t topo_shell_make_shell_from_sphere(double R) { try {
   }
 }
 
-topo_shell_t topo_shell_make_shell_from_sphere_angle(double R, double angle) { try {
+topo_shell_t topo_shell_make_shell_from_sphere_angle(double R, double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -4798,7 +5131,8 @@ topo_shell_t topo_shell_make_shell_from_sphere_angle(double R, double angle) { t
 
 topo_shell_t topo_shell_make_shell_from_sphere_two_angle(double R,
                                                          double angle1,
-                                                         double angle2) { try {
+                                                         double angle2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
@@ -4816,7 +5150,8 @@ topo_shell_t topo_shell_make_shell_from_sphere_two_angle(double R,
 topo_shell_t topo_shell_make_shell_from_sphere_three_angle(double R,
                                                            double angle1,
                                                            double angle2,
-                                                           double angle3) { try {
+                                                           double angle3) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
@@ -4832,7 +5167,8 @@ topo_shell_t topo_shell_make_shell_from_sphere_three_angle(double R,
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_center_raduis(pnt3d_t Center,
-                                                             double R) { try {
+                                                             double R) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
@@ -4849,7 +5185,8 @@ topo_shell_t topo_shell_make_shell_from_sphere_center_raduis(pnt3d_t Center,
 
 topo_shell_t topo_shell_make_shell_from_sphere_center_angle(pnt3d_t Center,
                                                             double R,
-                                                            double angle) { try {
+                                                            double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
@@ -4867,7 +5204,8 @@ topo_shell_t topo_shell_make_shell_from_sphere_center_angle(pnt3d_t Center,
 topo_shell_t topo_shell_make_shell_from_sphere_center_two_angle(pnt3d_t Center,
                                                                 double R,
                                                                 double angle1,
-                                                                double angle2) { try {
+                                                                double angle2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
@@ -4883,7 +5221,8 @@ topo_shell_t topo_shell_make_shell_from_sphere_center_two_angle(pnt3d_t Center,
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_center_three_angle(
-    pnt3d_t Center, double R, double angle1, double angle2, double angle3) { try {
+    pnt3d_t Center, double R, double angle1, double angle2, double angle3) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -4899,7 +5238,8 @@ topo_shell_t topo_shell_make_shell_from_sphere_center_three_angle(
   }
 }
 
-topo_shell_t topo_shell_make_shell_from_sphere_axis2(axis2_t Axis, double R) { try {
+topo_shell_t topo_shell_make_shell_from_sphere_axis2(axis2_t Axis, double R) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
@@ -4916,7 +5256,8 @@ topo_shell_t topo_shell_make_shell_from_sphere_axis2(axis2_t Axis, double R) { t
 
 topo_shell_t topo_shell_make_shell_from_sphere_axis2_raduis(axis2_t Axis,
                                                             double R,
-                                                            double angle) { try {
+                                                            double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
@@ -4934,7 +5275,8 @@ topo_shell_t topo_shell_make_shell_from_sphere_axis2_raduis(axis2_t Axis,
 topo_shell_t topo_shell_make_shell_from_sphere_axis2_two_angle(axis2_t Axis,
                                                                double R,
                                                                double angle1,
-                                                               double angle2) { try {
+                                                               double angle2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_sphere(
@@ -4950,7 +5292,8 @@ topo_shell_t topo_shell_make_shell_from_sphere_axis2_two_angle(axis2_t Axis,
 }
 
 topo_shell_t topo_shell_make_shell_from_sphere_axis2_three_angle(
-    axis2_t Axis, double R, double angle1, double angle2, double angle3) { try {
+    axis2_t Axis, double R, double angle1, double angle2, double angle3) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -4966,7 +5309,8 @@ topo_shell_t topo_shell_make_shell_from_sphere_axis2_three_angle(
   }
 }
 
-topo_shell_t topo_shell_make_shell_from_torus(double R1, double R2) { try {
+topo_shell_t topo_shell_make_shell_from_torus(double R1, double R2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -4982,7 +5326,8 @@ topo_shell_t topo_shell_make_shell_from_torus(double R1, double R2) { try {
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_angle(double R1, double R2,
-                                                    double angle) { try {
+                                                    double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -4999,7 +5344,8 @@ topo_shell_t topo_shell_make_shell_from_torus_angle(double R1, double R2,
 
 topo_shell_t topo_shell_make_shell_from_torus_two_angle(double R1, double R2,
                                                         double angle1,
-                                                        double angle2) { try {
+                                                        double angle2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_torus(
@@ -5017,7 +5363,8 @@ topo_shell_t topo_shell_make_shell_from_torus_two_angle(double R1, double R2,
 topo_shell_t topo_shell_make_shell_from_torus_three_angle(double R1, double R2,
                                                           double angle1,
                                                           double angle2,
-                                                          double angle) { try {
+                                                          double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_torus(
@@ -5033,7 +5380,8 @@ topo_shell_t topo_shell_make_shell_from_torus_three_angle(double R1, double R2,
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_axis2(axis2_t Axes, double R1,
-                                                    double R2) { try {
+                                                    double R2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_torus(
@@ -5050,7 +5398,8 @@ topo_shell_t topo_shell_make_shell_from_torus_axis2(axis2_t Axes, double R1,
 
 topo_shell_t topo_shell_make_shell_from_torus_axis2_angle(axis2_t Axes,
                                                           double R1, double R2,
-                                                          double angle) { try {
+                                                          double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_torus(
@@ -5066,7 +5415,8 @@ topo_shell_t topo_shell_make_shell_from_torus_axis2_angle(axis2_t Axes,
 }
 
 topo_shell_t topo_shell_make_shell_from_torus_axis2_two_angle(
-    axis2_t Axes, double R1, double R2, double angle1, double angle2) { try {
+    axis2_t Axes, double R1, double R2, double angle1, double angle2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::shell>(
                               flywave::topo::shell::make_shell_from_torus(
@@ -5083,7 +5433,8 @@ topo_shell_t topo_shell_make_shell_from_torus_axis2_two_angle(
 
 topo_shell_t topo_shell_make_shell_from_torus_axis2_three_angle(
     axis2_t Axes, double R1, double R2, double angle1, double angle2,
-    double angle) { try {
+    double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -5100,7 +5451,8 @@ topo_shell_t topo_shell_make_shell_from_torus_axis2_three_angle(
 }
 
 topo_shell_t topo_shell_make_shell_from_wedge(double dx, double dy, double dz,
-                                              double ltx) { try {
+                                              double ltx) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -5117,7 +5469,8 @@ topo_shell_t topo_shell_make_shell_from_wedge(double dx, double dy, double dz,
 
 topo_shell_t topo_shell_make_shell_from_wedge_axis2(axis2_t Axes, double dx,
                                                     double dy, double dz,
-                                                    double ltx) { try {
+                                                    double ltx) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_wedge(
@@ -5135,7 +5488,8 @@ topo_shell_t topo_shell_make_shell_from_wedge_axis2(axis2_t Axes, double dx,
 topo_shell_t topo_shell_make_shell_from_wedge_limit(double dx, double dy,
                                                     double dz, double xmin,
                                                     double zmin, double xmax,
-                                                    double zmax) { try {
+                                                    double zmax) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::shell>(
                                   flywave::topo::shell::make_shell_from_wedge(
@@ -5152,7 +5506,8 @@ topo_shell_t topo_shell_make_shell_from_wedge_limit(double dx, double dy,
 
 topo_shell_t topo_shell_make_shell_from_wedge_axis2_limit(
     axis2_t Axes, double dx, double dy, double dz, double xmin, double zmin,
-    double xmax, double zmax) { try {
+    double xmax, double zmax) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_shell_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shell>(
@@ -5170,6 +5525,7 @@ topo_shell_t topo_shell_make_shell_from_wedge_axis2_limit(
 
 int topo_shell_sweep(topo_shell_t ss, topo_wire_t spine,
                      topo_shape_t **profiles, int count, int cornerMode) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(ss);
     if (opt) {
@@ -5187,6 +5543,7 @@ int topo_shell_sweep(topo_shell_t ss, topo_wire_t spine,
 
 int topo_shell_sweep_wire(topo_shell_t ss, topo_wire_t spine,
                           topo_wire_t *profiles, int count, int cornerMode) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(ss);
     if (opt) {
@@ -5202,7 +5559,8 @@ int topo_shell_sweep_wire(topo_shell_t ss, topo_wire_t spine,
   return -1;
 }
 
-void topo_solid_free(topo_solid_t t) { try {
+void topo_solid_free(topo_solid_t t) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (t.shp) {
     delete t.shp;
   }
@@ -5213,7 +5571,8 @@ void topo_solid_free(topo_solid_t t) { try {
   catch (...) {
   }
 }
-topo_solid_t topo_solid_make_solid_from_comp_solid(topo_comp_solid_t S) { try {
+topo_solid_t topo_solid_make_solid_from_comp_solid(topo_comp_solid_t S) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5228,7 +5587,8 @@ topo_solid_t topo_solid_make_solid_from_comp_solid(topo_comp_solid_t S) { try {
   }
 }
 
-topo_solid_t topo_solid_make_solid_from_shell(topo_shell_t S) { try {
+topo_solid_t topo_solid_make_solid_from_shell(topo_shell_t S) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5244,7 +5604,8 @@ topo_solid_t topo_solid_make_solid_from_shell(topo_shell_t S) { try {
 }
 
 topo_solid_t topo_solid_make_solid_from_two_shell(topo_shell_t S1,
-                                                  topo_shell_t S2) { try {
+                                                  topo_shell_t S2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid(
@@ -5261,7 +5622,8 @@ topo_solid_t topo_solid_make_solid_from_two_shell(topo_shell_t S1,
 
 topo_solid_t topo_solid_make_solid_from_three_shell(topo_shell_t S1,
                                                     topo_shell_t S2,
-                                                    topo_shell_t S3) { try {
+                                                    topo_shell_t S3) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5278,7 +5640,8 @@ topo_solid_t topo_solid_make_solid_from_three_shell(topo_shell_t S1,
 }
 
 topo_solid_t topo_solid_make_solid_from_shells(topo_shell_t *shells,
-                                               int count) { try {
+                                               int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   std::vector<flywave::topo::shell> shels;
   for (int i = 0; i < count; i++) {
     shels.emplace_back(*cast_to_topo(shells[i]));
@@ -5296,7 +5659,8 @@ topo_solid_t topo_solid_make_solid_from_shells(topo_shell_t *shells,
   }
 }
 
-topo_solid_t topo_solid_make_solid_from_solid(topo_solid_t So) { try {
+topo_solid_t topo_solid_make_solid_from_solid(topo_solid_t So) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5312,7 +5676,8 @@ topo_solid_t topo_solid_make_solid_from_solid(topo_solid_t So) { try {
 }
 
 topo_solid_t topo_solid_make_solid_from_solid_shell(topo_solid_t So,
-                                                    topo_shell_t S) { try {
+                                                    topo_shell_t S) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid(
@@ -5328,7 +5693,8 @@ topo_solid_t topo_solid_make_solid_from_solid_shell(topo_solid_t So,
 }
 
 topo_solid_t topo_solid_make_solid_from_faces(topo_face_t *faces, int count,
-                                              double tolerance) { try {
+                                              double tolerance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   std::vector<flywave::topo::face> cfaces;
   for (int i = 0; i < count; i++) {
     cfaces.emplace_back(*cast_to_topo(faces[i]));
@@ -5347,7 +5713,8 @@ topo_solid_t topo_solid_make_solid_from_faces(topo_face_t *faces, int count,
   }
 }
 
-topo_solid_t topo_solid_make_solid_from_box(double dx, double dy, double dz) { try {
+topo_solid_t topo_solid_make_solid_from_box(double dx, double dy, double dz) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5363,7 +5730,8 @@ topo_solid_t topo_solid_make_solid_from_box(double dx, double dy, double dz) { t
 }
 
 topo_solid_t topo_solid_make_solid_from_box_point(pnt3d_t P, double dx,
-                                                  double dy, double dz) { try {
+                                                  double dy, double dz) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_box(
@@ -5378,7 +5746,8 @@ topo_solid_t topo_solid_make_solid_from_box_point(pnt3d_t P, double dx,
   }
 }
 
-topo_solid_t topo_solid_make_solid_from_box_two_point(pnt3d_t P1, pnt3d_t P2) { try {
+topo_solid_t topo_solid_make_solid_from_box_two_point(pnt3d_t P1, pnt3d_t P2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_box(
@@ -5394,7 +5763,8 @@ topo_solid_t topo_solid_make_solid_from_box_two_point(pnt3d_t P1, pnt3d_t P2) { 
 }
 
 topo_solid_t topo_solid_make_solid_from_box_axis2(axis2_t Axes, double dx,
-                                                  double dy, double dz) { try {
+                                                  double dy, double dz) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_box(
@@ -5409,7 +5779,8 @@ topo_solid_t topo_solid_make_solid_from_box_axis2(axis2_t Axes, double dx,
   }
 }
 
-topo_solid_t topo_solid_make_solid_from_cylinder(double R, double H) { try {
+topo_solid_t topo_solid_make_solid_from_cylinder(double R, double H) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5425,7 +5796,8 @@ topo_solid_t topo_solid_make_solid_from_cylinder(double R, double H) { try {
 }
 
 topo_solid_t topo_solid_make_solid_from_cylinder_angle(double R, double H,
-                                                       double Angle) { try {
+                                                       double Angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5441,7 +5813,8 @@ topo_solid_t topo_solid_make_solid_from_cylinder_angle(double R, double H,
 }
 
 topo_solid_t topo_solid_make_solid_from_cylinder_axis2(axis2_t Axes, double R,
-                                                       double H) { try {
+                                                       double H) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_cylinder(
@@ -5458,7 +5831,8 @@ topo_solid_t topo_solid_make_solid_from_cylinder_axis2(axis2_t Axes, double R,
 
 topo_solid_t topo_solid_make_solid_from_cylinder_axis2_angle(axis2_t Axes,
                                                              double R, double H,
-                                                             double Angle) { try {
+                                                             double Angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_cylinder(
@@ -5473,7 +5847,8 @@ topo_solid_t topo_solid_make_solid_from_cylinder_axis2_angle(axis2_t Axes,
   }
 }
 
-topo_solid_t topo_solid_make_solid_from_cone(double R1, double R2, double H) { try {
+topo_solid_t topo_solid_make_solid_from_cone(double R1, double R2, double H) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5489,7 +5864,8 @@ topo_solid_t topo_solid_make_solid_from_cone(double R1, double R2, double H) { t
 }
 
 topo_solid_t topo_solid_make_solid_from_cone_angle(double R1, double R2,
-                                                   double H, double angle) { try {
+                                                   double H, double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5505,7 +5881,8 @@ topo_solid_t topo_solid_make_solid_from_cone_angle(double R1, double R2,
 }
 
 topo_solid_t topo_solid_make_solid_from_cone_axis2(axis2_t Axes, double R1,
-                                                   double R2, double H) { try {
+                                                   double R2, double H) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_cone(
@@ -5523,7 +5900,8 @@ topo_solid_t topo_solid_make_solid_from_cone_axis2(axis2_t Axes, double R1,
 topo_solid_t topo_solid_make_solid_from_cone_axis2_angle(axis2_t Axes,
                                                          double R1, double R2,
                                                          double H,
-                                                         double angle) { try {
+                                                         double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_cone(
@@ -5538,7 +5916,8 @@ topo_solid_t topo_solid_make_solid_from_cone_axis2_angle(axis2_t Axes,
   }
 }
 
-topo_solid_t topo_solid_make_solid_from_revolution(geom_curve_t *Meridian) { try {
+topo_solid_t topo_solid_make_solid_from_revolution(geom_curve_t *Meridian) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_revolution(
@@ -5554,7 +5933,8 @@ topo_solid_t topo_solid_make_solid_from_revolution(geom_curve_t *Meridian) { try
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_angle(geom_curve_t *Meridian,
-                                                         double angle) { try {
+                                                         double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_revolution(
@@ -5571,7 +5951,8 @@ topo_solid_t topo_solid_make_solid_from_revolution_angle(geom_curve_t *Meridian,
 
 topo_solid_t topo_solid_make_solid_from_revolution_limit(geom_curve_t *Meridian,
                                                          double VMin,
-                                                         double VMax) { try {
+                                                         double VMax) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_revolution(
@@ -5587,7 +5968,8 @@ topo_solid_t topo_solid_make_solid_from_revolution_limit(geom_curve_t *Meridian,
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_limit_angle(
-    geom_curve_t *Meridian, double VMin, double VMax, double angle) { try {
+    geom_curve_t *Meridian, double VMin, double VMax, double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_revolution(
@@ -5604,7 +5986,8 @@ topo_solid_t topo_solid_make_solid_from_revolution_limit_angle(
 
 topo_solid_t
 topo_solid_make_solid_from_revolution_axis2(axis2_t Axes,
-                                            geom_curve_t *Meridian) { try {
+                                            geom_curve_t *Meridian) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_revolution(
@@ -5620,7 +6003,8 @@ topo_solid_make_solid_from_revolution_axis2(axis2_t Axes,
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_axis2_angle(
-    axis2_t Axes, geom_curve_t *Meridian, double angle) { try {
+    axis2_t Axes, geom_curve_t *Meridian, double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_revolution(
@@ -5636,7 +6020,8 @@ topo_solid_t topo_solid_make_solid_from_revolution_axis2_angle(
 }
 
 topo_solid_t topo_solid_make_solid_from_revolution_axis2_limit(
-    axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax) { try {
+    axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5654,7 +6039,8 @@ topo_solid_t topo_solid_make_solid_from_revolution_axis2_limit(
 
 topo_solid_t topo_solid_make_solid_from_revolution_axis2_limit_angle(
     axis2_t Axes, geom_curve_t *Meridian, double VMin, double VMax,
-    double angle) { try {
+    double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5670,7 +6056,8 @@ topo_solid_t topo_solid_make_solid_from_revolution_axis2_limit_angle(
   }
 }
 
-topo_solid_t topo_solid_make_solid_from_sphere(double R) { try {
+topo_solid_t topo_solid_make_solid_from_sphere(double R) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5685,7 +6072,8 @@ topo_solid_t topo_solid_make_solid_from_sphere(double R) { try {
   }
 }
 
-topo_solid_t topo_solid_make_solid_from_sphere_angle(double R, double angle) { try {
+topo_solid_t topo_solid_make_solid_from_sphere_angle(double R, double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5702,7 +6090,8 @@ topo_solid_t topo_solid_make_solid_from_sphere_angle(double R, double angle) { t
 
 topo_solid_t topo_solid_make_solid_from_sphere_two_angle(double R,
                                                          double angle1,
-                                                         double angle2) { try {
+                                                         double angle2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
@@ -5720,7 +6109,8 @@ topo_solid_t topo_solid_make_solid_from_sphere_two_angle(double R,
 topo_solid_t topo_solid_make_solid_from_sphere_three_angle(double R,
                                                            double angle1,
                                                            double angle2,
-                                                           double angle3) { try {
+                                                           double angle3) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
@@ -5736,7 +6126,8 @@ topo_solid_t topo_solid_make_solid_from_sphere_three_angle(double R,
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_center_raduis(pnt3d_t Center,
-                                                             double R) { try {
+                                                             double R) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
@@ -5753,7 +6144,8 @@ topo_solid_t topo_solid_make_solid_from_sphere_center_raduis(pnt3d_t Center,
 
 topo_solid_t topo_solid_make_solid_from_sphere_center_angle(pnt3d_t Center,
                                                             double R,
-                                                            double angle) { try {
+                                                            double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
@@ -5771,7 +6163,8 @@ topo_solid_t topo_solid_make_solid_from_sphere_center_angle(pnt3d_t Center,
 topo_solid_t topo_solid_make_solid_from_sphere_center_two_angle(pnt3d_t Center,
                                                                 double R,
                                                                 double angle1,
-                                                                double angle2) { try {
+                                                                double angle2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
@@ -5787,7 +6180,8 @@ topo_solid_t topo_solid_make_solid_from_sphere_center_two_angle(pnt3d_t Center,
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_center_three_angle(
-    pnt3d_t Center, double R, double angle1, double angle2, double angle3) { try {
+    pnt3d_t Center, double R, double angle1, double angle2, double angle3) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5803,7 +6197,8 @@ topo_solid_t topo_solid_make_solid_from_sphere_center_three_angle(
   }
 }
 
-topo_solid_t topo_solid_make_solid_from_sphere_axis2(axis2_t Axis, double R) { try {
+topo_solid_t topo_solid_make_solid_from_sphere_axis2(axis2_t Axis, double R) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
@@ -5820,7 +6215,8 @@ topo_solid_t topo_solid_make_solid_from_sphere_axis2(axis2_t Axis, double R) { t
 
 topo_solid_t topo_solid_make_solid_from_sphere_axis2_angle(axis2_t Axis,
                                                            double R,
-                                                           double angle) { try {
+                                                           double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
@@ -5838,7 +6234,8 @@ topo_solid_t topo_solid_make_solid_from_sphere_axis2_angle(axis2_t Axis,
 topo_solid_t topo_solid_make_solid_from_sphere_axis2_two_angle(axis2_t Axis,
                                                                double R,
                                                                double angle1,
-                                                               double angle2) { try {
+                                                               double angle2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_sphere(
@@ -5854,7 +6251,8 @@ topo_solid_t topo_solid_make_solid_from_sphere_axis2_two_angle(axis2_t Axis,
 }
 
 topo_solid_t topo_solid_make_solid_from_sphere_axis2_three_angle(
-    axis2_t Axis, double R, double angle1, double angle2, double angle3) { try {
+    axis2_t Axis, double R, double angle1, double angle2, double angle3) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5870,7 +6268,8 @@ topo_solid_t topo_solid_make_solid_from_sphere_axis2_three_angle(
   }
 }
 
-topo_solid_t topo_solid_make_solid_from_torus(double R1, double R2) { try {
+topo_solid_t topo_solid_make_solid_from_torus(double R1, double R2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5886,7 +6285,8 @@ topo_solid_t topo_solid_make_solid_from_torus(double R1, double R2) { try {
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_angle(double R1, double R2,
-                                                    double angle) { try {
+                                                    double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -5903,7 +6303,8 @@ topo_solid_t topo_solid_make_solid_from_torus_angle(double R1, double R2,
 
 topo_solid_t topo_solid_make_solid_from_torus_two_angle(double R1, double R2,
                                                         double angle1,
-                                                        double angle2) { try {
+                                                        double angle2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_torus(
@@ -5921,7 +6322,8 @@ topo_solid_t topo_solid_make_solid_from_torus_two_angle(double R1, double R2,
 topo_solid_t topo_solid_make_solid_from_torus_three_angle(double R1, double R2,
                                                           double angle1,
                                                           double angle2,
-                                                          double angle) { try {
+                                                          double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_torus(
@@ -5937,7 +6339,8 @@ topo_solid_t topo_solid_make_solid_from_torus_three_angle(double R1, double R2,
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_axis2(axis2_t Axes, double R1,
-                                                    double R2) { try {
+                                                    double R2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_torus(
@@ -5954,7 +6357,8 @@ topo_solid_t topo_solid_make_solid_from_torus_axis2(axis2_t Axes, double R1,
 
 topo_solid_t topo_solid_make_solid_from_torus_axis2_angle(axis2_t Axes,
                                                           double R1, double R2,
-                                                          double angle) { try {
+                                                          double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_torus(
@@ -5970,7 +6374,8 @@ topo_solid_t topo_solid_make_solid_from_torus_axis2_angle(axis2_t Axes,
 }
 
 topo_solid_t topo_solid_make_solid_from_torus_axis2_two_angle(
-    axis2_t Axes, double R1, double R2, double angle1, double angle2) { try {
+    axis2_t Axes, double R1, double R2, double angle1, double angle2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{.shp = new topo_shape_t{
                           .shp = std::make_shared<flywave::topo::solid>(
                               flywave::topo::solid::make_solid_from_torus(
@@ -5987,7 +6392,8 @@ topo_solid_t topo_solid_make_solid_from_torus_axis2_two_angle(
 
 topo_solid_t topo_solid_make_solid_from_torus_axis2_three_angle(
     axis2_t Axes, double R1, double R2, double angle1, double angle2,
-    double angle) { try {
+    double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -6004,7 +6410,8 @@ topo_solid_t topo_solid_make_solid_from_torus_axis2_three_angle(
 }
 
 topo_solid_t topo_solid_make_solid_from_wedge(double dx, double dy, double dz,
-                                              double ltx) { try {
+                                              double ltx) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -6021,7 +6428,8 @@ topo_solid_t topo_solid_make_solid_from_wedge(double dx, double dy, double dz,
 
 topo_solid_t topo_solid_make_solid_from_wedge_axis2(axis2_t Axes, double dx,
                                                     double dy, double dz,
-                                                    double ltx) { try {
+                                                    double ltx) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_wedge(
@@ -6039,7 +6447,8 @@ topo_solid_t topo_solid_make_solid_from_wedge_axis2(axis2_t Axes, double dx,
 topo_solid_t topo_solid_make_solid_from_wedge_limit(double dx, double dy,
                                                     double dz, double xmin,
                                                     double zmin, double xmax,
-                                                    double zmax) { try {
+                                                    double zmax) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{.shp = std::make_shared<flywave::topo::solid>(
                                   flywave::topo::solid::make_solid_from_wedge(
@@ -6056,7 +6465,8 @@ topo_solid_t topo_solid_make_solid_from_wedge_limit(double dx, double dy,
 
 topo_solid_t topo_solid_make_solid_from_wedge_axis2_limit(
     axis2_t Axes, double dx, double dy, double dz, double xmin, double zmin,
-    double xmax, double zmax) { try {
+    double xmax, double zmax) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::solid>(
@@ -6074,6 +6484,7 @@ topo_solid_t topo_solid_make_solid_from_wedge_axis2_limit(
 
 topo_solid_t topo_solid_make_solid_from_loft(topo_wire_t *wires, int count,
                                              _Bool ruled) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::wire> wireVec;
     for (int i = 0; i < count; i++) {
@@ -6091,6 +6502,7 @@ topo_solid_t topo_solid_make_solid_from_loft(topo_wire_t *wires, int count,
 int topo_solid_extrude_with_rotation_from_wire(
     topo_solid_t s, topo_wire_t outerWire, topo_wire_t *innerWires,
     int innerCount, pnt3d_t vecCenter, vec3d_t vecNormal, double angleDegrees) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::wire> innerWireVec;
     for (int i = 0; i < innerCount; i++) {
@@ -6111,6 +6523,7 @@ int topo_solid_sweep_multi_from_vector(topo_solid_t s, topo_shape_t **profiles,
                                        int count, topo_shape_t *path,
                                        _Bool makeSolid, _Bool isFrenet,
                                        topo_vector_t *vec) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<boost::variant<flywave::topo::wire, flywave::topo::face>>
         profileVec;
@@ -6138,6 +6551,7 @@ int topo_solid_sweep_multi_from_wire(topo_solid_t s, topo_shape_t **profiles,
                                      int count, topo_shape_t *path,
                                      _Bool makeSolid, _Bool isFrenet,
                                      topo_wire_t *wire) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<boost::variant<flywave::topo::wire, flywave::topo::face>>
         profileVec;
@@ -6165,6 +6579,7 @@ int topo_solid_sweep_multi_from_edge(topo_solid_t s, topo_shape_t **profiles,
                                      int count, topo_shape_t *path,
                                      _Bool makeSolid, _Bool isFrenet,
                                      topo_edge_t *edge) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<boost::variant<flywave::topo::wire, flywave::topo::face>>
         profileVec;
@@ -6189,6 +6604,7 @@ int topo_solid_sweep_multi_from_edge(topo_solid_t s, topo_shape_t **profiles,
 }
 
 int topo_solid_split(topo_solid_t s, topo_shape_t **splitters, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::shape> splitterVec;
     for (int i = 0; i < count; i++) {
@@ -6201,6 +6617,7 @@ int topo_solid_split(topo_solid_t s, topo_shape_t **splitters, int count) {
 }
 
 topo_wire_t topo_solid_section_wire(topo_solid_t s, pnt3d_t pnt, pnt3d_t nor) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     gp_Pnt point(pnt.x, pnt.y, pnt.z);
     gp_Pnt normal(nor.x, nor.y, nor.z);
@@ -6218,6 +6635,7 @@ topo_wire_t topo_solid_section_wire(topo_solid_t s, pnt3d_t pnt, pnt3d_t nor) {
 }
 
 _Bool topo_solid_is_inside(topo_solid_t s, pnt3d_t p, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     gp_Pnt point(p.x, p.y, p.z);
     return cast_to_topo(s)->is_inside(point, tol);
@@ -6226,7 +6644,8 @@ _Bool topo_solid_is_inside(topo_solid_t s, pnt3d_t p, double tol) {
   }
 }
 
-int topo_solid_num_solids(topo_solid_t s) { try {
+int topo_solid_num_solids(topo_solid_t s) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->num_solids();
@@ -6242,7 +6661,8 @@ int topo_solid_num_solids(topo_solid_t s) { try {
   }
 }
 
-int topo_solid_num_faces(topo_solid_t s) { try {
+int topo_solid_num_faces(topo_solid_t s) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->num_faces();
@@ -6258,7 +6678,8 @@ int topo_solid_num_faces(topo_solid_t s) { try {
   }
 }
 
-double topo_solid_area(topo_solid_t s) { try {
+double topo_solid_area(topo_solid_t s) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->area();
@@ -6274,7 +6695,8 @@ double topo_solid_area(topo_solid_t s) { try {
   }
 }
 
-double topo_solid_volume(topo_solid_t s) { try {
+double topo_solid_volume(topo_solid_t s) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->volume();
@@ -6290,7 +6712,8 @@ double topo_solid_volume(topo_solid_t s) { try {
   }
 }
 
-bbox_t topo_solid_inertia(topo_solid_t s) { try {
+bbox_t topo_solid_inertia(topo_solid_t s) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return cast_from_gp(opt->inertia());
@@ -6306,7 +6729,8 @@ bbox_t topo_solid_inertia(topo_solid_t s) { try {
   }
 }
 
-pnt3d_t topo_solid_centre_of_mass(topo_solid_t s) { try {
+pnt3d_t topo_solid_centre_of_mass(topo_solid_t s) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return cast_from_gp(opt->centre_of_mass());
@@ -6326,6 +6750,7 @@ int topo_solid_extrude_with_rotation(topo_solid_t s, topo_wire_t outerWire,
                                      topo_wire_t *innerWires, int innerCount,
                                      pnt3d_t vecCenter, vec3d_t vecNormal,
                                      double angleDegrees) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::wire> innerWireVec;
     for (int i = 0; i < innerCount; i++) {
@@ -6343,7 +6768,8 @@ int topo_solid_extrude_with_rotation(topo_solid_t s, topo_wire_t outerWire,
 int topo_solid_extrude_with_rotation_from_face(topo_solid_t s, topo_face_t face,
                                                pnt3d_t vecCenter,
                                                vec3d_t vecNormal,
-                                               double angleDegrees) { try {
+                                               double angleDegrees) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->extrude_with_rotation(*cast_to_topo(face),
@@ -6361,7 +6787,8 @@ int topo_solid_extrude_with_rotation_from_face(topo_solid_t s, topo_face_t face,
   }
 }
 
-int topo_solid_extrude(topo_solid_t s, topo_face_t f, pnt3d_t p1, pnt3d_t p2) { try {
+int topo_solid_extrude(topo_solid_t s, topo_face_t f, pnt3d_t p1, pnt3d_t p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->extrude(*cast_to_topo(f), cast_to_gp(p1), cast_to_gp(p2));
@@ -6377,7 +6804,8 @@ int topo_solid_extrude(topo_solid_t s, topo_face_t f, pnt3d_t p1, pnt3d_t p2) { 
   }
 }
 
-int topo_solid_extrude_from_dir(topo_solid_t s, topo_face_t f, vec3d_t dir) { try {
+int topo_solid_extrude_from_dir(topo_solid_t s, topo_face_t f, vec3d_t dir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->extrude(*cast_to_topo(f), cast_to_gp(dir));
@@ -6394,7 +6822,8 @@ int topo_solid_extrude_from_dir(topo_solid_t s, topo_face_t f, vec3d_t dir) { tr
 }
 
 int topo_solid_revolve(topo_solid_t s, topo_face_t f, pnt3d_t p1, pnt3d_t p2,
-                       double angle) { try {
+                       double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->revolve(*cast_to_topo(f), cast_to_gp(p1), cast_to_gp(p2),
@@ -6412,7 +6841,8 @@ int topo_solid_revolve(topo_solid_t s, topo_face_t f, pnt3d_t p1, pnt3d_t p2,
 }
 
 int topo_solid_loft(topo_solid_t s, topo_shape_t **profiles, int count,
-                    _Bool ruled, double tolerance) { try {
+                    _Bool ruled, double tolerance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     std::vector<flywave::topo::shape> prs;
@@ -6432,7 +6862,8 @@ int topo_solid_loft(topo_solid_t s, topo_shape_t **profiles, int count,
   }
 }
 
-int topo_solid_pipe(topo_solid_t s, topo_face_t f, topo_wire_t w) { try {
+int topo_solid_pipe(topo_solid_t s, topo_face_t f, topo_wire_t w) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->pipe(*cast_to_topo(f), *cast_to_topo(w));
@@ -6452,6 +6883,7 @@ int topo_solid_pipe(topo_solid_t s, topo_face_t f, topo_wire_t w) { try {
 TOPOCAPICALL int topo_solid_sweep_compound(topo_solid_t s, topo_wire_t spine,
                                            topo_sweep_profile_t *profiles,
                                            int profile_count, int corner_mode) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto solidOpt = cast_to_topo(s);
     if (!solidOpt) {
@@ -6484,6 +6916,7 @@ TOPOCAPICALL int topo_solid_sweep_compound(topo_solid_t s, topo_wire_t spine,
 
 int topo_solid_sweep(topo_solid_t s, topo_wire_t spine, topo_shape_t **profiles,
                      int count, int cornerMode) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(s);
     if (opt) {
@@ -6501,6 +6934,7 @@ int topo_solid_sweep(topo_solid_t s, topo_wire_t spine, topo_shape_t **profiles,
 
 int topo_solid_sweep_wire(topo_solid_t s, topo_wire_t spine,
                           topo_wire_t *profiles, int count, int cornerMode) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(s);
     if (opt) {
@@ -6517,6 +6951,7 @@ int topo_solid_sweep_wire(topo_solid_t s, topo_wire_t spine,
 }
 
 int topo_solid_boolean(topo_solid_t s, topo_solid_t tool, int op) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto opt = cast_to_topo(s);
   if (opt) {
     try {
@@ -6530,7 +6965,8 @@ int topo_solid_boolean(topo_solid_t s, topo_solid_t tool, int op) {
 }
 
 int topo_solid_fillet(topo_solid_t s, topo_edge_t *edges, int count,
-                      double *radius, int rcount) { try {
+                      double *radius, int rcount) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     std::vector<flywave::topo::edge> es;
@@ -6555,7 +6991,8 @@ int topo_solid_fillet(topo_solid_t s, topo_edge_t *edges, int count,
 }
 
 int topo_solid_chamfer(topo_solid_t s, topo_edge_t *edges, int count,
-                       double *distances, int dcount) { try {
+                       double *distances, int dcount) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     std::vector<flywave::topo::edge> es;
@@ -6580,7 +7017,8 @@ int topo_solid_chamfer(topo_solid_t s, topo_edge_t *edges, int count,
 }
 
 int topo_solid_shelling(topo_solid_t s, topo_face_t *faces, int count,
-                        double offset, double tolerance) { try {
+                        double offset, double tolerance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     std::vector<flywave::topo::face> es;
@@ -6601,7 +7039,8 @@ int topo_solid_shelling(topo_solid_t s, topo_face_t *faces, int count,
 }
 
 int topo_solid_offset(topo_solid_t s, topo_face_t f, double offset,
-                      double tolerance) { try {
+                      double tolerance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->offset(*cast_to_topo(f), offset, tolerance);
@@ -6618,7 +7057,8 @@ int topo_solid_offset(topo_solid_t s, topo_face_t f, double offset,
 }
 
 int topo_solid_draft(topo_solid_t s, topo_face_t *faces, int count, dir3d_t d,
-                     double angle, plane_t p) { try {
+                     double angle, plane_t p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     std::vector<flywave::topo::face> es;
@@ -6639,7 +7079,8 @@ int topo_solid_draft(topo_solid_t s, topo_face_t *faces, int count, dir3d_t d,
 }
 
 int topo_solid_evolved_from_face(topo_solid_t s, topo_face_t Spine,
-                                 topo_wire_t Profil) { try {
+                                 topo_wire_t Profil) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->evolved(*cast_to_topo(Spine), *cast_to_topo(Profil));
@@ -6656,7 +7097,8 @@ int topo_solid_evolved_from_face(topo_solid_t s, topo_face_t Spine,
 }
 
 int topo_solid_evolved_from_wire(topo_solid_t s, topo_wire_t Spine,
-                                 topo_wire_t Profil) { try {
+                                 topo_wire_t Profil) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->evolved(*cast_to_topo(Spine), *cast_to_topo(Profil));
@@ -6673,7 +7115,8 @@ int topo_solid_evolved_from_wire(topo_solid_t s, topo_wire_t Spine,
 }
 
 int topo_solid_feat_prism(topo_solid_t s, topo_face_t f, dir3d_t d,
-                          double height, _Bool fuse) { try {
+                          double height, _Bool fuse) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_prism(*cast_to_topo(f), cast_to_gp(d), height, fuse);
@@ -6691,7 +7134,8 @@ int topo_solid_feat_prism(topo_solid_t s, topo_face_t f, dir3d_t d,
 
 int topo_solid_feat_prism_for_range(topo_solid_t s, topo_face_t f, dir3d_t d,
                                     topo_face_t from, topo_face_t end,
-                                    _Bool fuse) { try {
+                                    _Bool fuse) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_prism(*cast_to_topo(f), cast_to_gp(d), *cast_to_topo(from),
@@ -6709,7 +7153,8 @@ int topo_solid_feat_prism_for_range(topo_solid_t s, topo_face_t f, dir3d_t d,
 }
 
 int topo_solid_feat_prism_for_until(topo_solid_t s, topo_face_t f, dir3d_t d,
-                                    topo_face_t until, _Bool fuse) { try {
+                                    topo_face_t until, _Bool fuse) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_prism(*cast_to_topo(f), cast_to_gp(d),
@@ -6727,7 +7172,8 @@ int topo_solid_feat_prism_for_until(topo_solid_t s, topo_face_t f, dir3d_t d,
 }
 
 int topo_solid_feat_draft_prism(topo_solid_t s, topo_face_t f, double angle,
-                                double height, _Bool fuse) { try {
+                                double height, _Bool fuse) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_draft_prism(*cast_to_topo(f), angle, height, fuse);
@@ -6745,7 +7191,8 @@ int topo_solid_feat_draft_prism(topo_solid_t s, topo_face_t f, double angle,
 
 int topo_solid_feat_draft_prism_for_range(topo_solid_t s, topo_face_t f,
                                           double angle, topo_face_t from,
-                                          topo_face_t end, _Bool fuse) { try {
+                                          topo_face_t end, _Bool fuse) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_draft_prism(*cast_to_topo(f), angle, *cast_to_topo(from),
@@ -6764,7 +7211,8 @@ int topo_solid_feat_draft_prism_for_range(topo_solid_t s, topo_face_t f,
 
 int topo_solid_feat_draft_prism_for_until(topo_solid_t s, topo_face_t f,
                                           double angle, topo_face_t until,
-                                          _Bool fuse) { try {
+                                          _Bool fuse) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_draft_prism(*cast_to_topo(f), angle, *cast_to_topo(until),
@@ -6783,7 +7231,8 @@ int topo_solid_feat_draft_prism_for_until(topo_solid_t s, topo_face_t f,
 
 int topo_solid_feat_revol_for_range(topo_solid_t s, topo_face_t f, axis1_t Axes,
                                     topo_face_t from, topo_face_t end,
-                                    _Bool fuse) { try {
+                                    _Bool fuse) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_revol(*cast_to_topo(f), cast_to_gp(Axes),
@@ -6801,7 +7250,8 @@ int topo_solid_feat_revol_for_range(topo_solid_t s, topo_face_t f, axis1_t Axes,
 }
 
 int topo_solid_feat_revol_for_until(topo_solid_t s, topo_face_t f, axis1_t Axes,
-                                    topo_face_t until, _Bool fuse) { try {
+                                    topo_face_t until, _Bool fuse) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_revol(*cast_to_topo(f), cast_to_gp(Axes),
@@ -6820,7 +7270,8 @@ int topo_solid_feat_revol_for_until(topo_solid_t s, topo_face_t f, axis1_t Axes,
 
 int topo_solid_feat_pipe_for_range(topo_solid_t s, topo_face_t f,
                                    topo_wire_t Spine, topo_face_t from,
-                                   topo_face_t end, _Bool fuse) { try {
+                                   topo_face_t end, _Bool fuse) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_pipe(*cast_to_topo(f), *cast_to_topo(Spine),
@@ -6839,7 +7290,8 @@ int topo_solid_feat_pipe_for_range(topo_solid_t s, topo_face_t f,
 
 int topo_solid_feat_pipe_for_until(topo_solid_t s, topo_face_t f,
                                    topo_wire_t Spine, topo_face_t until,
-                                   _Bool fuse) { try {
+                                   _Bool fuse) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->feat_pipe(*cast_to_topo(f), *cast_to_topo(Spine),
@@ -6858,7 +7310,8 @@ int topo_solid_feat_pipe_for_until(topo_solid_t s, topo_face_t f,
 
 int topo_solid_linear_form(topo_solid_t s, topo_wire_t w,
                            geom_plane_surface_t *p, dir3d_t d, dir3d_t d1,
-                           _Bool fuse) { try {
+                           _Bool fuse) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->linear_form(*cast_to_topo(w), p->handle, cast_to_gp(d),
@@ -6877,7 +7330,8 @@ int topo_solid_linear_form(topo_solid_t s, topo_wire_t w,
 
 int topo_solid_revolution_form(topo_solid_t s, topo_wire_t w,
                                geom_plane_surface_t *p, axis1_t Axes, double h1,
-                               double h2, _Bool fuse) { try {
+                               double h2, _Bool fuse) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->revolution_form(*cast_to_topo(w), p->handle, cast_to_gp(Axes),
@@ -6894,7 +7348,8 @@ int topo_solid_revolution_form(topo_solid_t s, topo_wire_t w,
   }
 }
 
-topo_face_t topo_solid_section_face(topo_solid_t s, pnt3d_t pnt, pnt3d_t nor) { try {
+topo_face_t topo_solid_section_face(topo_solid_t s, pnt3d_t pnt, pnt3d_t nor) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     auto fopt = opt->section(cast_to_gp(pnt), cast_to_gp(nor));
@@ -6915,7 +7370,8 @@ topo_face_t topo_solid_section_face(topo_solid_t s, pnt3d_t pnt, pnt3d_t nor) { 
   }
 }
 
-int topo_solid_convert_to_nurbs(topo_solid_t s) { try {
+int topo_solid_convert_to_nurbs(topo_solid_t s) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(s);
   if (opt) {
     return opt->convert_to_nurbs();
@@ -6932,6 +7388,7 @@ int topo_solid_convert_to_nurbs(topo_solid_t s) { try {
 }
 
 topo_shell_t topo_solid_outer_shell(topo_solid_t s) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(s);
     if (opt) {
@@ -6947,6 +7404,7 @@ topo_shell_t topo_solid_outer_shell(topo_solid_t s) {
 }
 
 topo_shell_t *topo_solid_inner_shells(topo_solid_t s, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto opt = cast_to_topo(s);
     if (opt) {
@@ -6965,7 +7423,8 @@ topo_shell_t *topo_solid_inner_shells(topo_solid_t s, int *count) {
   return nullptr;
 }
 
-topo_compound_t topo_make_compound() { try {
+topo_compound_t topo_make_compound() {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_compound_t{
       .shp =
           new topo_shape_t{.shp = std::make_shared<flywave::topo::compound>()}};
@@ -6982,6 +7441,7 @@ topo_compound_t topo_make_compound() { try {
 topo_compound_t topo_make_text(const char *text, double size, const char *font,
                                const char *fontPath, int kind, int halign,
                                int valign, topo_plane_t *position) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto cpp_plane =
         position ? position->plane : flywave::topo::topo_plane::named("XY");
@@ -7002,6 +7462,7 @@ topo_compound_t topo_make_text_with_spine(const char *text, double size,
                                           topo_wire_t *spine, bool planar,
                                           const char *font, const char *path,
                                           int kind, int halign, int valign) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto result = flywave::topo::compound::make_text(
         text, size, *cast_to_topo(*spine), planar, font ? font : "Arial",
@@ -7019,6 +7480,7 @@ topo_compound_t topo_make_text_with_spine(const char *text, double size,
 topo_compound_t topo_make_text_with_spine_and_base(
     const char *text, double size, topo_wire_t *spine, topo_face_t *base,
     const char *font, const char *path, int kind, int halign, int valign) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto result = flywave::topo::compound::make_text(
         text, size, *cast_to_topo(*spine), *cast_to_topo(*base),
@@ -7039,6 +7501,7 @@ topo_compound_t topo_make_text_with_height(const char *text, double size,
                                            const char *fontPath, int kind,
                                            int halign, int valign,
                                            topo_plane_t *position) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto cpp_plane =
         position ? position->plane : flywave::topo::topo_plane::named("XY");
@@ -7055,7 +7518,8 @@ topo_compound_t topo_make_text_with_height(const char *text, double size,
   }
 }
 
-void topo_compound_free(topo_compound_t t) { try {
+void topo_compound_free(topo_compound_t t) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (t.shp) {
     delete t.shp;
   }
@@ -7067,7 +7531,8 @@ void topo_compound_free(topo_compound_t t) { try {
   }
 }
 
-topo_compound_t topo_compound_make_compound(topo_shape_t **S, int count) { try {
+topo_compound_t topo_compound_make_compound(topo_shape_t **S, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   std::vector<flywave::topo::shape> sps;
   for (int i = 0; i < count; i++) {
     sps.emplace_back(*S[i]->shp);
@@ -7085,7 +7550,8 @@ topo_compound_t topo_compound_make_compound(topo_shape_t **S, int count) { try {
   }
 }
 
-void topo_compound_remove(topo_compound_t t, topo_shape_t *s) { try {
+void topo_compound_remove(topo_compound_t t, topo_shape_t *s) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(t);
   if (opt) {
     opt->remove(*s->shp);
@@ -7099,7 +7565,8 @@ void topo_compound_remove(topo_compound_t t, topo_shape_t *s) { try {
 }
 
 topo_compound_t topo_compound_cut(topo_compound_t t, topo_shape_t **toCut,
-                                  int count, double tol) { try {
+                                  int count, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(t);
   if (!opt) {
     return topo_compound_t{};
@@ -7122,7 +7589,8 @@ topo_compound_t topo_compound_cut(topo_compound_t t, topo_shape_t **toCut,
 }
 
 topo_compound_t topo_compound_fuse(topo_compound_t t, topo_shape_t **toFuse,
-                                   int count, bool glue, double tol) { try {
+                                   int count, bool glue, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(t);
   if (!opt) {
     return topo_compound_t{};
@@ -7146,7 +7614,8 @@ topo_compound_t topo_compound_fuse(topo_compound_t t, topo_shape_t **toFuse,
 
 topo_compound_t topo_compound_intersect(topo_compound_t t,
                                         topo_shape_t **toIntersect, int count,
-                                        double tol) { try {
+                                        double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(t);
   if (!opt) {
     return topo_compound_t{};
@@ -7169,7 +7638,8 @@ topo_compound_t topo_compound_intersect(topo_compound_t t,
 }
 
 topo_compound_t topo_compound_ancestors(topo_compound_t t, topo_shape_t *s,
-                                        int kind) { try {
+                                        int kind) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(t);
   if (opt) {
     auto fopt = opt->ancestors(*s->shp, static_cast<TopAbs_ShapeEnum>(kind));
@@ -7191,7 +7661,8 @@ topo_compound_t topo_compound_ancestors(topo_compound_t t, topo_shape_t *s,
 }
 
 topo_compound_t topo_compound_siblings(topo_compound_t t, topo_shape_t *shape,
-                                       int kind, int level) { try {
+                                       int kind, int level) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto opt = cast_to_topo(t);
   if (opt) {
     auto fopt =
@@ -7213,7 +7684,8 @@ topo_compound_t topo_compound_siblings(topo_compound_t t, topo_shape_t *shape,
   }
 }
 
-topo_comp_solid_t topo_make_comp_solid() { try {
+topo_comp_solid_t topo_make_comp_solid() {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_comp_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::comp_solid>()}};
@@ -7227,7 +7699,8 @@ topo_comp_solid_t topo_make_comp_solid() { try {
   }
 }
 
-void topo_comp_solid_free(topo_comp_solid_t t) { try {
+void topo_comp_solid_free(topo_comp_solid_t t) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (t.shp) {
     delete t.shp;
   }
@@ -7239,7 +7712,8 @@ void topo_comp_solid_free(topo_comp_solid_t t) { try {
   }
 }
 
-topo_comp_solid_t topo_comp_solid_make_comp_solid(topo_solid_t *S, int count) { try {
+topo_comp_solid_t topo_comp_solid_make_comp_solid(topo_solid_t *S, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   std::vector<flywave::topo::solid> sps;
   for (int i = 0; i < count; i++) {
     sps.emplace_back(*cast_to_topo(S[i]));
@@ -7302,7 +7776,8 @@ extern void appendNodeNormUv(void *ctx, int face, pnt3d_t p, pnt3d_t n,
 extern void appendNode(void *ctx, int face, pnt3d_t p);
 extern void appendTriangle(void *ctx, int face, int a, int b, int c);
 
-topo_mesh_receiver_t *topo_mesh_receiver_new(mesh_receiver_cb_t cb) { try {
+topo_mesh_receiver_t *topo_mesh_receiver_new(mesh_receiver_cb_t cb) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   cb.begin = begin;
   cb.end = end;
   cb.append_face = appendFace;
@@ -7323,7 +7798,8 @@ topo_mesh_receiver_t *topo_mesh_receiver_new(mesh_receiver_cb_t cb) { try {
   }
 }
 
-void topo_mesh_receiver_free(topo_mesh_receiver_t *p) { try {
+void topo_mesh_receiver_free(topo_mesh_receiver_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     delete p;
   }
@@ -7335,7 +7811,8 @@ void topo_mesh_receiver_free(topo_mesh_receiver_t *p) { try {
   }
 }
 
-topo_location_t *topo_location_new(trsf_t t) { try {
+topo_location_t *topo_location_new(trsf_t t) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_location_t{.loc =
                                  flywave::topo::topo_location{cast_to_gp(t)}};
   }
@@ -7348,7 +7825,8 @@ topo_location_t *topo_location_new(trsf_t t) { try {
   }
 }
 
-void topo_location_free(topo_location_t *p) { try {
+void topo_location_free(topo_location_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     delete p;
   }
@@ -7360,7 +7838,8 @@ void topo_location_free(topo_location_t *p) { try {
   }
 }
 
-trsf_t topo_location_get_trsf(topo_location_t *p) { try {
+trsf_t topo_location_get_trsf(topo_location_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return cast_from_gp(gp_Trsf(p->loc));
   }
@@ -7377,7 +7856,8 @@ trsf_t topo_location_get_trsf(topo_location_t *p) { try {
 
 // 所有权契约: 数组元素的所有权转移给调用方 (由 topo_location_free 逐个释放),
 // 本函数仅释放指针数组本身, 不得 delete 元素。
-void topo_location_list_free(topo_location_t **result, int result_count) { try {
+void topo_location_list_free(topo_location_t **result, int result_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   (void)result_count;
   delete[] result;
   }
@@ -7388,7 +7868,8 @@ void topo_location_list_free(topo_location_t **result, int result_count) { try {
   }
 }
 
-void topo_shape_to_stl(topo_shape_t *p, char *str) { try {
+void topo_shape_to_stl(topo_shape_t *p, char *str) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   StlAPI_Writer writer = StlAPI_Writer();
   writer.Write(p->shp->value(), str);
   }
@@ -7399,7 +7880,8 @@ void topo_shape_to_stl(topo_shape_t *p, char *str) { try {
   }
 }
 
-topo_comp_solid_iterator_t *topo_comp_solid_iterator_make(topo_shape_t *shp) { try {
+topo_comp_solid_iterator_t *topo_comp_solid_iterator_make(topo_shape_t *shp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_comp_solid_iterator_t{
       .iter = flywave::topo::comp_solid_iterator{*shp->shp}};
   }
@@ -7412,7 +7894,8 @@ topo_comp_solid_iterator_t *topo_comp_solid_iterator_make(topo_shape_t *shp) { t
   }
 }
 
-void topo_comp_solid_iterator_reset(topo_comp_solid_iterator_t *it) { try {
+void topo_comp_solid_iterator_reset(topo_comp_solid_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   it->iter.reset();
   }
   catch (const std::exception &e) {
@@ -7422,7 +7905,8 @@ void topo_comp_solid_iterator_reset(topo_comp_solid_iterator_t *it) { try {
   }
 }
 
-void topo_comp_solid_iterator_free(topo_comp_solid_iterator_t *it) { try {
+void topo_comp_solid_iterator_free(topo_comp_solid_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   delete it;
   }
   catch (const std::exception &e) {
@@ -7432,7 +7916,8 @@ void topo_comp_solid_iterator_free(topo_comp_solid_iterator_t *it) { try {
   }
 }
 
-topo_shape_t *topo_comp_solid_iterator_next(topo_comp_solid_iterator_t *it) { try {
+topo_shape_t *topo_comp_solid_iterator_next(topo_comp_solid_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   boost::optional<flywave::topo::comp_solid> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{
@@ -7449,7 +7934,8 @@ topo_shape_t *topo_comp_solid_iterator_next(topo_comp_solid_iterator_t *it) { tr
   }
 }
 
-topo_compound_iterator_t *topo_compound_iterator_make(topo_shape_t *shp) { try {
+topo_compound_iterator_t *topo_compound_iterator_make(topo_shape_t *shp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_compound_iterator_t{
       .iter = flywave::topo::compound_iterator{*shp->shp}};
   }
@@ -7462,7 +7948,8 @@ topo_compound_iterator_t *topo_compound_iterator_make(topo_shape_t *shp) { try {
   }
 }
 
-void topo_compound_iterator_reset(topo_compound_iterator_t *it) { try {
+void topo_compound_iterator_reset(topo_compound_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   it->iter.reset();
   }
   catch (const std::exception &e) {
@@ -7472,7 +7959,8 @@ void topo_compound_iterator_reset(topo_compound_iterator_t *it) { try {
   }
 }
 
-void topo_compound_iterator_free(topo_compound_iterator_t *it) { try { delete it;   }
+void topo_compound_iterator_free(topo_compound_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { delete it;   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -7480,7 +7968,8 @@ void topo_compound_iterator_free(topo_compound_iterator_t *it) { try { delete it
   }
 }
 
-topo_shape_t *topo_compound_iterator_next(topo_compound_iterator_t *it) { try {
+topo_shape_t *topo_compound_iterator_next(topo_compound_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   boost::optional<flywave::topo::compound> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{
@@ -7497,7 +7986,8 @@ topo_shape_t *topo_compound_iterator_next(topo_compound_iterator_t *it) { try {
   }
 }
 
-topo_edge_iterator_t *topo_edge_iterator_make(topo_shape_t *shp) { try {
+topo_edge_iterator_t *topo_edge_iterator_make(topo_shape_t *shp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_edge_iterator_t{.iter =
                                       flywave::topo::edge_iterator{*shp->shp}};
   }
@@ -7510,7 +8000,8 @@ topo_edge_iterator_t *topo_edge_iterator_make(topo_shape_t *shp) { try {
   }
 }
 
-void topo_edge_iterator_free(topo_edge_iterator_t *it) { try { delete it;   }
+void topo_edge_iterator_free(topo_edge_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { delete it;   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -7518,7 +8009,8 @@ void topo_edge_iterator_free(topo_edge_iterator_t *it) { try { delete it;   }
   }
 }
 
-void topo_edge_iterator_reset(topo_edge_iterator_t *it) { try { it->iter.reset();   }
+void topo_edge_iterator_reset(topo_edge_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { it->iter.reset();   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -7526,7 +8018,8 @@ void topo_edge_iterator_reset(topo_edge_iterator_t *it) { try { it->iter.reset()
   }
 }
 
-topo_shape_t *topo_edge_iterator_next(topo_edge_iterator_t *it) { try {
+topo_shape_t *topo_edge_iterator_next(topo_edge_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   boost::optional<flywave::topo::edge> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{.shp = std::make_shared<flywave::topo::edge>(*opt)};
@@ -7542,7 +8035,8 @@ topo_shape_t *topo_edge_iterator_next(topo_edge_iterator_t *it) { try {
   }
 }
 
-topo_face_iterator_t *topo_face_iterator_make(topo_shape_t *shp) { try {
+topo_face_iterator_t *topo_face_iterator_make(topo_shape_t *shp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_face_iterator_t{.iter =
                                       flywave::topo::face_iterator{*shp->shp}};
   }
@@ -7555,7 +8049,8 @@ topo_face_iterator_t *topo_face_iterator_make(topo_shape_t *shp) { try {
   }
 }
 
-void topo_face_iterator_free(topo_face_iterator_t *it) { try { delete it;   }
+void topo_face_iterator_free(topo_face_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { delete it;   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -7563,7 +8058,8 @@ void topo_face_iterator_free(topo_face_iterator_t *it) { try { delete it;   }
   }
 }
 
-void topo_face_iterator_reset(topo_face_iterator_t *it) { try { it->iter.reset();   }
+void topo_face_iterator_reset(topo_face_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { it->iter.reset();   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -7571,7 +8067,8 @@ void topo_face_iterator_reset(topo_face_iterator_t *it) { try { it->iter.reset()
   }
 }
 
-topo_shape_t *topo_face_iterator_next(topo_face_iterator_t *it) { try {
+topo_shape_t *topo_face_iterator_next(topo_face_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   boost::optional<flywave::topo::face> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{.shp = std::make_shared<flywave::topo::face>(*opt)};
@@ -7587,7 +8084,8 @@ topo_shape_t *topo_face_iterator_next(topo_face_iterator_t *it) { try {
   }
 }
 
-topo_shell_iterator_t *topo_shell_iterator_make(topo_shape_t *shp) { try {
+topo_shell_iterator_t *topo_shell_iterator_make(topo_shape_t *shp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_shell_iterator_t{
       .iter = flywave::topo::shell_iterator{*shp->shp}};
   }
@@ -7600,7 +8098,8 @@ topo_shell_iterator_t *topo_shell_iterator_make(topo_shape_t *shp) { try {
   }
 }
 
-void topo_shell_iterator_free(topo_shell_iterator_t *it) { try { delete it;   }
+void topo_shell_iterator_free(topo_shell_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { delete it;   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -7608,7 +8107,8 @@ void topo_shell_iterator_free(topo_shell_iterator_t *it) { try { delete it;   }
   }
 }
 
-void topo_shell_iterator_reset(topo_shell_iterator_t *it) { try { it->iter.reset();   }
+void topo_shell_iterator_reset(topo_shell_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { it->iter.reset();   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -7616,7 +8116,8 @@ void topo_shell_iterator_reset(topo_shell_iterator_t *it) { try { it->iter.reset
   }
 }
 
-topo_shape_t *topo_shell_iterator_next(topo_shell_iterator_t *it) { try {
+topo_shape_t *topo_shell_iterator_next(topo_shell_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   boost::optional<flywave::topo::shell> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{.shp =
@@ -7633,7 +8134,8 @@ topo_shape_t *topo_shell_iterator_next(topo_shell_iterator_t *it) { try {
   }
 }
 
-topo_solid_iterator_t *topo_solid_iterator_make(topo_shape_t *shp) { try {
+topo_solid_iterator_t *topo_solid_iterator_make(topo_shape_t *shp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_solid_iterator_t{
       .iter = flywave::topo::solid_iterator{*shp->shp}};
   }
@@ -7646,7 +8148,8 @@ topo_solid_iterator_t *topo_solid_iterator_make(topo_shape_t *shp) { try {
   }
 }
 
-void topo_solid_iterator_free(topo_solid_iterator_t *it) { try { delete it;   }
+void topo_solid_iterator_free(topo_solid_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { delete it;   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -7654,7 +8157,8 @@ void topo_solid_iterator_free(topo_solid_iterator_t *it) { try { delete it;   }
   }
 }
 
-void topo_solid_iterator_reset(topo_solid_iterator_t *it) { try { it->iter.reset();   }
+void topo_solid_iterator_reset(topo_solid_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { it->iter.reset();   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -7662,7 +8166,8 @@ void topo_solid_iterator_reset(topo_solid_iterator_t *it) { try { it->iter.reset
   }
 }
 
-topo_shape_t *topo_solid_iterator_next(topo_solid_iterator_t *it) { try {
+topo_shape_t *topo_solid_iterator_next(topo_solid_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   boost::optional<flywave::topo::solid> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{.shp =
@@ -7679,7 +8184,8 @@ topo_shape_t *topo_solid_iterator_next(topo_solid_iterator_t *it) { try {
   }
 }
 
-topo_vertex_iterator_t *topo_vertex_iterator_make(topo_shape_t *shp) { try {
+topo_vertex_iterator_t *topo_vertex_iterator_make(topo_shape_t *shp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_vertex_iterator_t{
       .iter = flywave::topo::vertex_iterator{*shp->shp}};
   }
@@ -7692,7 +8198,8 @@ topo_vertex_iterator_t *topo_vertex_iterator_make(topo_shape_t *shp) { try {
   }
 }
 
-void topo_vertex_iterator_free(topo_vertex_iterator_t *it) { try { delete it;   }
+void topo_vertex_iterator_free(topo_vertex_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { delete it;   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -7700,7 +8207,8 @@ void topo_vertex_iterator_free(topo_vertex_iterator_t *it) { try { delete it;   
   }
 }
 
-void topo_vertex_iterator_reset(topo_vertex_iterator_t *it) { try {
+void topo_vertex_iterator_reset(topo_vertex_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   it->iter.reset();
   }
   catch (const std::exception &e) {
@@ -7710,7 +8218,8 @@ void topo_vertex_iterator_reset(topo_vertex_iterator_t *it) { try {
   }
 }
 
-topo_shape_t *topo_vertex_iterator_next(topo_vertex_iterator_t *it) { try {
+topo_shape_t *topo_vertex_iterator_next(topo_vertex_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   boost::optional<flywave::topo::vertex> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{.shp =
@@ -7727,7 +8236,8 @@ topo_shape_t *topo_vertex_iterator_next(topo_vertex_iterator_t *it) { try {
   }
 }
 
-topo_wire_iterator_t *topo_wire_iterator_make(topo_shape_t *shp) { try {
+topo_wire_iterator_t *topo_wire_iterator_make(topo_shape_t *shp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_wire_iterator_t{.iter =
                                       flywave::topo::wire_iterator{*shp->shp}};
   }
@@ -7740,7 +8250,8 @@ topo_wire_iterator_t *topo_wire_iterator_make(topo_shape_t *shp) { try {
   }
 }
 
-void topo_wire_iterator_free(topo_wire_iterator_t *it) { try { delete it;   }
+void topo_wire_iterator_free(topo_wire_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { delete it;   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -7748,7 +8259,8 @@ void topo_wire_iterator_free(topo_wire_iterator_t *it) { try { delete it;   }
   }
 }
 
-void topo_wire_iterator_reset(topo_wire_iterator_t *it) { try { it->iter.reset();   }
+void topo_wire_iterator_reset(topo_wire_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { it->iter.reset();   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -7756,7 +8268,8 @@ void topo_wire_iterator_reset(topo_wire_iterator_t *it) { try { it->iter.reset()
   }
 }
 
-topo_shape_t *topo_wire_iterator_next(topo_wire_iterator_t *it) { try {
+topo_shape_t *topo_wire_iterator_next(topo_wire_iterator_t *it) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   boost::optional<flywave::topo::wire> opt = it->iter.next();
   if (opt) {
     return new topo_shape_t{.shp = std::make_shared<flywave::topo::wire>(*opt)};
@@ -7772,7 +8285,8 @@ topo_shape_t *topo_wire_iterator_next(topo_wire_iterator_t *it) { try {
   }
 }
 
-topo_vector_t *topo_vector_new(double x, double y, double z) { try {
+topo_vector_t *topo_vector_new(double x, double y, double z) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_vector_t{.vec = flywave::topo::topo_vector(x, y, z)};
   }
   catch (const std::exception &e) {
@@ -7784,7 +8298,8 @@ topo_vector_t *topo_vector_new(double x, double y, double z) { try {
   }
 }
 
-void topo_vector_free(topo_vector_t *p) { try {
+void topo_vector_free(topo_vector_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     delete p;
   }
@@ -7796,7 +8311,8 @@ void topo_vector_free(topo_vector_t *p) { try {
   }
 }
 
-double topo_vector_get_x(topo_vector_t *p) { try {
+double topo_vector_get_x(topo_vector_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->vec.x();
   }
@@ -7811,7 +8327,8 @@ double topo_vector_get_x(topo_vector_t *p) { try {
   }
 }
 
-double topo_vector_get_y(topo_vector_t *p) { try {
+double topo_vector_get_y(topo_vector_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->vec.y();
   }
@@ -7826,7 +8343,8 @@ double topo_vector_get_y(topo_vector_t *p) { try {
   }
 }
 
-double topo_vector_get_z(topo_vector_t *p) { try {
+double topo_vector_get_z(topo_vector_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->vec.z();
   }
@@ -7841,7 +8359,8 @@ double topo_vector_get_z(topo_vector_t *p) { try {
   }
 }
 
-topo_plane_t *topo_plane_new(pnt3d_t *origin, dir3d_t *xDir, vec3d_t *normal) { try {
+topo_plane_t *topo_plane_new(pnt3d_t *origin, dir3d_t *xDir, vec3d_t *normal) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_plane_t{.plane = flywave::topo::topo_plane(
                               flywave::topo::topo_vector(cast_to_gp(*origin)),
                               flywave::topo::topo_vector(cast_to_gp(*xDir)),
@@ -7856,7 +8375,8 @@ topo_plane_t *topo_plane_new(pnt3d_t *origin, dir3d_t *xDir, vec3d_t *normal) { 
   }
 }
 
-topo_plane_t *topo_plane_new_from_named(const char *name, pnt3d_t *origin) { try {
+topo_plane_t *topo_plane_new_from_named(const char *name, pnt3d_t *origin) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   flywave::topo::topo_vector vec =
       origin ? flywave::topo::topo_vector(cast_to_gp(*origin))
              : flywave::topo::topo_vector(0, 0, 0);
@@ -7872,7 +8392,8 @@ topo_plane_t *topo_plane_new_from_named(const char *name, pnt3d_t *origin) { try
   }
 }
 
-void topo_plane_free(topo_plane_t *p) { try {
+void topo_plane_free(topo_plane_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     delete p;
   }
@@ -7884,7 +8405,8 @@ void topo_plane_free(topo_plane_t *p) { try {
   }
 }
 
-pnt3d_t topo_plane_get_origin(topo_plane_t *p) { try {
+pnt3d_t topo_plane_get_origin(topo_plane_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return cast_from_gp(p->plane.origin().to_pnt());
   }
@@ -7899,7 +8421,8 @@ pnt3d_t topo_plane_get_origin(topo_plane_t *p) { try {
   }
 }
 
-dir3d_t topo_plane_get_x_dir(topo_plane_t *p) { try {
+dir3d_t topo_plane_get_x_dir(topo_plane_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return cast_from_gp(p->plane.x_dir().to_dir());
   }
@@ -7914,7 +8437,8 @@ dir3d_t topo_plane_get_x_dir(topo_plane_t *p) { try {
   }
 }
 
-dir3d_t topo_plane_get_y_dir(topo_plane_t *p) { try {
+dir3d_t topo_plane_get_y_dir(topo_plane_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return cast_from_gp(p->plane.y_dir().to_dir());
   }
@@ -7929,7 +8453,8 @@ dir3d_t topo_plane_get_y_dir(topo_plane_t *p) { try {
   }
 }
 
-dir3d_t topo_plane_get_z_dir(topo_plane_t *p) { try {
+dir3d_t topo_plane_get_z_dir(topo_plane_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return cast_from_gp(p->plane.z_dir().to_dir());
   }
@@ -7944,7 +8469,8 @@ dir3d_t topo_plane_get_z_dir(topo_plane_t *p) { try {
   }
 }
 
-topo_bbox_t *topo_bbox_new(bbox_t bbox) { try {
+topo_bbox_t *topo_bbox_new(bbox_t bbox) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_bbox_t{
       .bbox = flywave::topo::topo_bbox(bbox.minx, bbox.miny, bbox.minz,
                                        bbox.maxx, bbox.maxy, bbox.maxz)};
@@ -7958,7 +8484,8 @@ topo_bbox_t *topo_bbox_new(bbox_t bbox) { try {
   }
 }
 
-topo_bbox_t *topo_bbox_new_from_shape(topo_shape_t *p) { try { return nullptr;   }
+topo_bbox_t *topo_bbox_new_from_shape(topo_shape_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return nullptr;   }
   catch (const std::exception &e) {
     (void)e;
     return nullptr;
@@ -7968,7 +8495,8 @@ topo_bbox_t *topo_bbox_new_from_shape(topo_shape_t *p) { try { return nullptr;  
   }
 }
 
-void topo_bbox_free(topo_bbox_t *p) { try {
+void topo_bbox_free(topo_bbox_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     delete p;
   }
@@ -7980,7 +8508,8 @@ void topo_bbox_free(topo_bbox_t *p) { try {
   }
 }
 
-bbox_t topo_bbox_get_bbox(topo_bbox_t *p) { try {
+bbox_t topo_bbox_get_bbox(topo_bbox_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     bbox_t bbox{
         .minx = p->bbox.x_min(),
@@ -8003,7 +8532,8 @@ bbox_t topo_bbox_get_bbox(topo_bbox_t *p) { try {
   }
 }
 
-topo_matrix_t *topo_matrix_new(trsf_t t) { try {
+topo_matrix_t *topo_matrix_new(trsf_t t) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_matrix_t{.mat = flywave::topo::topo_matrix(cast_to_gp(t))};
   }
   catch (const std::exception &e) {
@@ -8015,7 +8545,8 @@ topo_matrix_t *topo_matrix_new(trsf_t t) { try {
   }
 }
 
-void topo_matrix_free(topo_matrix_t *p) { try {
+void topo_matrix_free(topo_matrix_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     delete p;
   }
@@ -8027,7 +8558,8 @@ void topo_matrix_free(topo_matrix_t *p) { try {
   }
 }
 
-double topo_matrix_get_value(topo_matrix_t *p, int row, int col) { try {
+double topo_matrix_get_value(topo_matrix_t *p, int row, int col) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->mat.get(row, col);
   }
@@ -8045,6 +8577,7 @@ double topo_matrix_get_value(topo_matrix_t *p, int row, int col) { try {
 // Boolean operations
 TOPOCAPICALL topo_shape_t *topo_fuse(topo_shape_t **shapes, int count,
                                      double tol, bool glue) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::shape> shapeVec;
     for (int i = 0; i < count; i++) {
@@ -8062,6 +8595,7 @@ TOPOCAPICALL topo_shape_t *topo_fuse(topo_shape_t **shapes, int count,
 
 TOPOCAPICALL topo_shape_t *topo_cut(topo_shape_t *shp, topo_shape_t *tool,
                                     double tol, bool glue) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto result = flywave::topo::cut(*shp->shp, *tool->shp, tol, glue);
     if (result) {
@@ -8076,6 +8610,7 @@ TOPOCAPICALL topo_shape_t *topo_cut(topo_shape_t *shp, topo_shape_t *tool,
 TOPOCAPICALL topo_shape_t *topo_cut_multi(topo_shape_t *shp,
                                           topo_shape_t **toCuts, int count,
                                           double tol, bool glue) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::shape> toCutVec;
     for (int i = 0; i < count; i++) {
@@ -8094,6 +8629,7 @@ TOPOCAPICALL topo_shape_t *topo_cut_multi(topo_shape_t *shp,
 TOPOCAPICALL topo_shape_t *topo_intersect(topo_shape_t *shp,
                                           topo_shape_t *toIntersect, double tol,
                                           bool glue) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto result =
         flywave::topo::intersect(*shp->shp, *toIntersect->shp, tol, glue);
@@ -8110,6 +8646,7 @@ TOPOCAPICALL topo_shape_t *topo_intersect_multi(topo_shape_t *shp,
                                                 topo_shape_t **toIntersects,
                                                 int count, double tol,
                                                 bool glue) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::shape> toIntersectVec;
     for (int i = 0; i < count; i++) {
@@ -8128,6 +8665,7 @@ TOPOCAPICALL topo_shape_t *topo_intersect_multi(topo_shape_t *shp,
 
 TOPOCAPICALL topo_shape_t *
 topo_split(topo_shape_t *shp, topo_shape_t **splitters, int count, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::shape> splitterVec;
     for (int i = 0; i < count; i++) {
@@ -8148,6 +8686,7 @@ TOPOCAPICALL topo_face_t *
 topo_faces_intersected_by_line(topo_shape_t *shp, pnt3d_t point, dir3d_t axis,
                                double tolerance,
                                intersection_direction_t direction, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     gp_Pnt p(point.x, point.y, point.z);
     gp_Dir d(axis.x, axis.y, axis.z);
@@ -8171,6 +8710,7 @@ topo_faces_intersected_by_line(topo_shape_t *shp, pnt3d_t point, dir3d_t axis,
 // Modeling operations
 TOPOCAPICALL topo_shape_t *topo_fill(topo_shape_t *shp,
                                      topo_shape_t **constraints, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::shape> constraintVec;
     for (int i = 0; i < count; i++) {
@@ -8190,6 +8730,7 @@ TOPOCAPICALL topo_shape_t *topo_shelling(topo_shape_t *shp,
                                          topo_face_t *faceList, int faceCount,
                                          double thickness, double tolerance,
                                          int joinType) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::face> faces;
     for (int i = 0; i < faceCount; i++) {
@@ -8209,6 +8750,7 @@ TOPOCAPICALL topo_shape_t *topo_shelling(topo_shape_t *shp,
 
 TOPOCAPICALL topo_shape_t *topo_fillet(topo_shape_t *shp, topo_edge_t *edges,
                                        int edgeCount, double radius) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::edge> edgeVec;
     for (int i = 0; i < edgeCount; i++) {
@@ -8228,6 +8770,7 @@ TOPOCAPICALL topo_shape_t *topo_chamfer(topo_shape_t *baseShape,
                                         topo_edge_t *edges, int edgeCount,
                                         double distance1, double distance2,
                                         bool hasDistance2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::edge> edgeVec;
     for (int i = 0; i < edgeCount; i++) {
@@ -8249,6 +8792,7 @@ TOPOCAPICALL topo_shape_t *topo_chamfer(topo_shape_t *baseShape,
 // Extrusion operations
 TOPOCAPICALL topo_shape_t *topo_extrude(topo_shape_t *shape,
                                         vec3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     gp_Vec dir(direction.x, direction.y, direction.z);
     auto result = flywave::topo::extrude(*shape->shp, dir);
@@ -8264,6 +8808,7 @@ TOPOCAPICALL topo_shape_t *topo_extrude(topo_shape_t *shape,
 TOPOCAPICALL topo_shape_t *
 topo_extrude_linear(topo_wire_t outerWire, topo_wire_t *innerWires,
                     int innerCount, vec3d_t vecNormal, double taper) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::wire> innerWireVec;
     for (int i = 0; i < innerCount; i++) {
@@ -8284,6 +8829,7 @@ topo_extrude_linear(topo_wire_t outerWire, topo_wire_t *innerWires,
 TOPOCAPICALL topo_shape_t *topo_extrude_linear_with_rotation(
     topo_wire_t outerWire, topo_wire_t *innerWires, int innerCount,
     pnt3d_t center, vec3d_t normal, double angleDegrees) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::wire> innerWireVec;
     for (int i = 0; i < innerCount; i++) {
@@ -8306,6 +8852,7 @@ TOPOCAPICALL topo_shape_t *topo_extrude_linear_with_rotation(
 TOPOCAPICALL topo_shape_t *topo_revolve(topo_shape_t *shape, pnt3d_t axisPoint,
                                         dir3d_t axisDirection,
                                         double angleDegrees) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     gp_Pnt p(axisPoint.x, axisPoint.y, axisPoint.z);
     gp_Dir d(axisDirection.x, axisDirection.y, axisDirection.z);
@@ -8323,6 +8870,7 @@ TOPOCAPICALL topo_shape_t *
 topo_revolve_wire(topo_wire_t outerWire, topo_wire_t *innerWires,
                   int innerCount, double angleDegrees, pnt3d_t axisStart,
                   pnt3d_t axisEnd) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::wire> innerWireVec;
     for (int i = 0; i < innerCount; i++) {
@@ -8347,6 +8895,7 @@ TOPOCAPICALL topo_shape_t *topo_sweep(topo_wire_t outerWire,
                                       topo_shape_t *path, bool makeSolid,
                                       bool isFrenet, topo_shape_t *mode,
                                       transition_mode_t transitionMode) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::wire> innerWireVec;
     for (int i = 0; i < innerCount; i++) {
@@ -8368,6 +8917,7 @@ TOPOCAPICALL topo_shape_t *topo_sweep(topo_wire_t outerWire,
 TOPOCAPICALL topo_shape_t *topo_sweep_multi(topo_shape_t **profiles, int count,
                                             topo_shape_t *path, bool makeSolid,
                                             bool isFrenet, topo_shape_t *mode) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::shape> profileVec;
     for (int i = 0; i < count; i++) {
@@ -8390,6 +8940,7 @@ TOPOCAPICALL topo_shape_t *
 topo_loft(topo_shape_t **profiles, int count, bool cap, bool ruled,
           const char *continuity, const char *parametrization, int degree,
           bool compat, bool smoothing, double *weights) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::shape> profileVec;
     for (int i = 0; i < count; i++) {
@@ -8412,6 +8963,7 @@ topo_loft(topo_shape_t **profiles, int count, bool cap, bool ruled,
 // Other operations
 TOPOCAPICALL topo_shape_t *topo_offset(topo_shape_t *shape, double offset,
                                        bool cap, bool both, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto result = flywave::topo::offset(*shape->shp, offset, cap, both, tol);
     if (result) {
@@ -8424,6 +8976,7 @@ TOPOCAPICALL topo_shape_t *topo_offset(topo_shape_t *shape, double offset,
 }
 
 TOPOCAPICALL topo_shape_t *topo_clean(topo_shape_t *shape) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto result = flywave::topo::clean(*shape->shp);
     if (result) {
@@ -8438,6 +8991,7 @@ TOPOCAPICALL topo_shape_t *topo_clean(topo_shape_t *shape) {
 // Utility functions
 TOPOCAPICALL void topo_closest(topo_shape_t *shape1, topo_shape_t *shape2,
                                pnt3d_t *p1, pnt3d_t *p2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto result = flywave::topo::closest(*shape1->shp, *shape2->shp);
     *p1 = cast_from_gp(result.first);
@@ -8449,6 +9003,7 @@ TOPOCAPICALL void topo_closest(topo_shape_t *shape1, topo_shape_t *shape2,
 }
 
 TOPOCAPICALL pnt3d_t topo_combined_center(topo_shape_t **objects, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::shape> objectVec;
     for (int i = 0; i < count; i++) {
@@ -8463,6 +9018,7 @@ TOPOCAPICALL pnt3d_t topo_combined_center(topo_shape_t **objects, int count) {
 
 TOPOCAPICALL pnt3d_t topo_combined_center_of_bound_box(topo_shape_t **objects,
                                                        int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<flywave::topo::shape> objectVec;
     for (int i = 0; i < count; i++) {
@@ -8475,7 +9031,8 @@ TOPOCAPICALL pnt3d_t topo_combined_center_of_bound_box(topo_shape_t **objects,
   }
 }
 
-topo_shape_t *read_shape_from_step_file(const char *filename) { try {
+topo_shape_t *read_shape_from_step_file(const char *filename) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   std::string f{filename};
   auto res = flywave::topo::read_shape_from_step(f);
   auto shp = std::make_shared<flywave::topo::shape>(res);
@@ -8491,7 +9048,8 @@ topo_shape_t *read_shape_from_step_file(const char *filename) { try {
 }
 
 TOPOCAPICALL char *topo_shape_write_to_step_buffer(topo_shape_t *shape,
-                                                   int *buffer_size) { try {
+                                                   int *buffer_size) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!shape || !buffer_size)
     return nullptr;
   std::string stepStr = flywave::topo::write_shape_to_step(*shape->shp);
@@ -8516,7 +9074,8 @@ TOPOCAPICALL char *topo_shape_write_to_step_buffer(topo_shape_t *shape,
 }
 
 TOPOCAPICALL topo_shape_and_location_t **
-read_shapes_from_step_file(const char *filename, int *count) { try {
+read_shapes_from_step_file(const char *filename, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!filename || !count)
     return nullptr;
 
@@ -8550,7 +9109,8 @@ read_shapes_from_step_file(const char *filename, int *count) { try {
 }
 
 TOPOCAPICALL void free_shapes_from_step(topo_shape_and_location_t **shapes,
-                                        int count) { try {
+                                        int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!shapes)
     return;
   // 所有权契约: 元素 (shape/location wrapper) 的所有权已转移给调用方,
@@ -8570,6 +9130,7 @@ topo_wire_sample_point_t *topo_wire_sample_at_distances(topo_wire_t wire,
                                                         double *distances,
                                                         int count,
                                                         int *result_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<double> dists(distances, distances + count);
     auto samples =
@@ -8591,7 +9152,8 @@ topo_wire_sample_point_t *topo_wire_sample_at_distances(topo_wire_t wire,
   }
 }
 
-void topo_wire_sample_list_free(topo_wire_sample_point_t *samples, int count) { try {
+void topo_wire_sample_list_free(topo_wire_sample_point_t *samples, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (samples) {
     for (int i = 0; i < count; i++) {
       if (samples[i].edge.shp) {
@@ -8611,6 +9173,7 @@ void topo_wire_sample_list_free(topo_wire_sample_point_t *samples, int count) { 
 topo_wire_t topo_wire_clip_between_distances(topo_wire_t wire,
                                              double start_distance,
                                              double end_distance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto clipped = flywave::topo::clip_wire_between_distances(
         *cast_to_topo(wire), start_distance, end_distance);
@@ -8623,7 +9186,8 @@ topo_wire_t topo_wire_clip_between_distances(topo_wire_t wire,
 }
 
 topo_profile_projection_t
-topo_calc_profile_projection(topo_wire_t path, dir3d_t upDir, double *offset) { try {
+topo_calc_profile_projection(topo_wire_t path, dir3d_t upDir, double *offset) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   topo_profile_projection_t result;
   boost::optional<double> posOpt =
       offset ? boost::optional<double>{*offset} : boost::none;
@@ -8645,7 +9209,8 @@ topo_calc_profile_projection(topo_wire_t path, dir3d_t upDir, double *offset) { 
 }
 
 pnt3d_t topo_profile_project_point(topo_profile_projection_t *proj,
-                                   pnt3d_t point) { try {
+                                   pnt3d_t point) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   gp_Ax2 axes = cast_to_gp(proj->axes);
   gp_Trsf trsf = cast_to_gp(proj->trsf);
   gp_Pnt out =
@@ -8663,6 +9228,7 @@ pnt3d_t topo_profile_project_point(topo_profile_projection_t *proj,
 
 pnt3d_t *topo_profile_project_point_list(topo_profile_projection_t *proj,
                                          pnt3d_t *points, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     gp_Ax2 axes = cast_to_gp(proj->axes);
     gp_Trsf trsf = cast_to_gp(proj->trsf);
@@ -8680,7 +9246,8 @@ pnt3d_t *topo_profile_project_point_list(topo_profile_projection_t *proj,
   }
 }
 
-void topo_profile_project_point_list_free(pnt3d_t *points) { try {
+void topo_profile_project_point_list_free(pnt3d_t *points) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (points) {
     delete[] points;
   }
@@ -8694,6 +9261,7 @@ void topo_profile_project_point_list_free(pnt3d_t *points) { try {
 
 pnt3d_t *topo_make_catenary(pnt3d_t p1, pnt3d_t p2, double slack, double maxSag,
                             dir3d_t up, double tessellation, int *point_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     gp_Pnt gp_p1(p1.x, p1.y, p1.z);
     gp_Pnt gp_p2(p2.x, p2.y, p2.z);
@@ -8717,7 +9285,8 @@ pnt3d_t *topo_make_catenary(pnt3d_t p1, pnt3d_t p2, double slack, double maxSag,
   }
 }
 
-void topo_free_catenary_points(pnt3d_t *points) { try {
+void topo_free_catenary_points(pnt3d_t *points) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (points) {
     free(points);
   }
@@ -8731,6 +9300,7 @@ void topo_free_catenary_points(pnt3d_t *points) { try {
 
 TOPOCAPICALL topo_shape_t *
 topo_clip_with_4d(topo_shape_t *shape, const work_progress_params_t *params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     flywave::topo::work_progress_params cpp_params; 
     if (params->direction) {
@@ -8770,6 +9340,7 @@ topo_clip_with_4d(topo_shape_t *shape, const work_progress_params_t *params) {
 
 TOPOCAPICALL topo_wire_t topo_fit_centerline_from_shape(
     topo_shape_t *shape, int numSamples, double smoothingFactor) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (!shape)
     return {nullptr};
   try {
@@ -8791,6 +9362,7 @@ TOPOCAPICALL topo_wire_t topo_fit_centerline_from_shape(
 
 TOPOCAPICALL topo_wire_t topo_centerline_points_to_wire(pnt3d_t *points,
                                                         int point_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (!points || point_count <= 0)
     return {nullptr};
   std::vector<gp_Pnt> pts;
@@ -8809,6 +9381,7 @@ TOPOCAPICALL topo_wire_t topo_centerline_points_to_wire(pnt3d_t *points,
 TOPOCAPICALL double
 topo_compute_shape_max_radius_from_centerline(topo_shape_t *shape,
                                               topo_wire_t centerline) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (!shape || !centerline.shp)
     return -1.0;
   try {
@@ -8822,6 +9395,7 @@ topo_compute_shape_max_radius_from_centerline(topo_shape_t *shape,
 TOPOCAPICALL pnt3d_t *topo_sample_centerline_wire(topo_wire_t centerline,
                                                   int numSamples, bool simplify,
                                                   int *point_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (!centerline.shp || !point_count)
     return nullptr;
   try {
@@ -8846,7 +9420,8 @@ TOPOCAPICALL pnt3d_t *topo_sample_centerline_wire(topo_wire_t centerline,
   }
 }
 
-TOPOCAPICALL void topo_free_points(pnt3d_t *points) { try {
+TOPOCAPICALL void topo_free_points(pnt3d_t *points) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (points) {
     delete[] points;
   }
@@ -8860,6 +9435,7 @@ TOPOCAPICALL void topo_free_points(pnt3d_t *points) { try {
 
 TOPOCAPICALL topo_shape_t *
 topo_create_bounding_centerline_shape(double radius, topo_wire_t path) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (!path.shp)
     return nullptr;
   try {
@@ -8874,6 +9450,7 @@ topo_create_bounding_centerline_shape(double radius, topo_wire_t path) {
 TOPOCAPICALL void topo_shape_get_outline(topo_shape_t *p, int numSamples, 
                                         bool simplify, pnt3d_t ***outlines, 
                                         int **outline_sizes, int *outline_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (!p || !outlines || !outline_sizes || !outline_count)
     return;
   
@@ -8900,7 +9477,8 @@ TOPOCAPICALL void topo_shape_get_outline(topo_shape_t *p, int numSamples,
   }
 }
 
-TOPOCAPICALL void topo_free_outline_points(pnt3d_t **outlines, int *outline_sizes, int outline_count) { try {
+TOPOCAPICALL void topo_free_outline_points(pnt3d_t **outlines, int *outline_sizes, int outline_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (outlines && outline_sizes) {
     for (int i = 0; i < outline_count; i++) {
       delete[] outlines[i];

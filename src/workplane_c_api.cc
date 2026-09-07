@@ -1,4 +1,5 @@
 #include "workplane_c_api.h"
+#include "cgo_lock.hh"
 #include "selector_impl.hh"
 #include "sketch_impl.hh"
 #include "topo_impl.hh"
@@ -9,7 +10,8 @@
 extern "C" {
 #endif
 
-void shape_object_free(shape_object_t *obj) { try {
+void shape_object_free(shape_object_t *obj) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (obj) {
     delete obj;
   }
@@ -21,7 +23,8 @@ void shape_object_free(shape_object_t *obj) { try {
   }
 }
 
-shape_object_t *shape_object_create_from_shape(topo_shape_t *shape) { try {
+shape_object_t *shape_object_create_from_shape(topo_shape_t *shape) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new shape_object_t{.obj = *shape->shp};
   }
   catch (const std::exception &e) {
@@ -33,7 +36,8 @@ shape_object_t *shape_object_create_from_shape(topo_shape_t *shape) { try {
   }
 }
 
-shape_object_t *shape_object_create_from_vector(topo_vector_t *vector) { try {
+shape_object_t *shape_object_create_from_vector(topo_vector_t *vector) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new shape_object_t{.obj = vector->vec};
   }
   catch (const std::exception &e) {
@@ -45,7 +49,8 @@ shape_object_t *shape_object_create_from_vector(topo_vector_t *vector) { try {
   }
 }
 
-shape_object_t *shape_object_create_from_location(topo_location_t *location) { try {
+shape_object_t *shape_object_create_from_location(topo_location_t *location) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new shape_object_t{.obj = location->loc};
   }
   catch (const std::exception &e) {
@@ -57,7 +62,8 @@ shape_object_t *shape_object_create_from_location(topo_location_t *location) { t
   }
 }
 
-shape_object_t *shape_object_create_from_sketch(sketch_t *sketch) { try {
+shape_object_t *shape_object_create_from_sketch(sketch_t *sketch) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new shape_object_t{.obj = sketch->ptr};
   }
   catch (const std::exception &e) {
@@ -69,7 +75,8 @@ shape_object_t *shape_object_create_from_sketch(sketch_t *sketch) { try {
   }
 }
 
-shape_object_t *shape_object_create() { try {
+shape_object_t *shape_object_create() {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new shape_object_t{.obj = boost::blank{}};
   }
   catch (const std::exception &e) {
@@ -81,7 +88,8 @@ shape_object_t *shape_object_create() { try {
   }
 }
 
-int shape_object_type(shape_object_t *obj) { try {
+int shape_object_type(shape_object_t *obj) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return static_cast<int>(
       flywave::topo::workplane::get_shape_object_type(obj->obj));
   }
@@ -94,7 +102,8 @@ int shape_object_type(shape_object_t *obj) { try {
   }
 }
 
-topo_shape_t *shape_object_get_shape(shape_object_t *obj) { try {
+topo_shape_t *shape_object_get_shape(shape_object_t *obj) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (auto shp = boost::get<flywave::topo::shape>(&obj->obj)) {
     return new topo_shape_t{.shp =
                                 std::make_shared<flywave::topo::shape>(*shp)};
@@ -110,7 +119,8 @@ topo_shape_t *shape_object_get_shape(shape_object_t *obj) { try {
   }
 }
 
-topo_vector_t *shape_object_get_vector(shape_object_t *obj) { try {
+topo_vector_t *shape_object_get_vector(shape_object_t *obj) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (auto vec = boost::get<flywave::topo::topo_vector>(&obj->obj)) {
     return new topo_vector_t{.vec = *vec};
   }
@@ -125,7 +135,8 @@ topo_vector_t *shape_object_get_vector(shape_object_t *obj) { try {
   }
 }
 
-topo_location_t *shape_object_get_location(shape_object_t *obj) { try {
+topo_location_t *shape_object_get_location(shape_object_t *obj) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (auto loc = boost::get<flywave::topo::topo_location>(&obj->obj)) {
     return new topo_location_t{.loc = *loc};
   }
@@ -140,7 +151,8 @@ topo_location_t *shape_object_get_location(shape_object_t *obj) { try {
   }
 }
 
-sketch_t *shape_object_get_sketch(shape_object_t *obj) { try {
+sketch_t *shape_object_get_sketch(shape_object_t *obj) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (auto sk = boost::get<std::shared_ptr<flywave::topo::sketch>>(&obj->obj)) {
     return new sketch_t{.ptr = *sk};
   }
@@ -155,7 +167,8 @@ sketch_t *shape_object_get_sketch(shape_object_t *obj) { try {
   }
 }
 
-workplane_t *workplane_create() { try {
+workplane_t *workplane_create() {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new workplane_t{.ptr = std::make_shared<flywave::topo::workplane>()};
   }
   catch (const std::exception &e) {
@@ -168,7 +181,8 @@ workplane_t *workplane_create() { try {
 }
 
 workplane_t *workplane_create_from_plane(topo_plane_t *plane,
-                                         topo_vector_t *origin) { try {
+                                         topo_vector_t *origin) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new workplane_t{.ptr = std::make_shared<flywave::topo::workplane>(
                              plane->plane,
                              origin ? &origin->vec : nullptr)};
@@ -183,7 +197,8 @@ workplane_t *workplane_create_from_plane(topo_plane_t *plane,
 }
 
 workplane_t *workplane_create_from_name(const char *planeName,
-                                        topo_vector_t *origin) { try {
+                                        topo_vector_t *origin) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new workplane_t{.ptr = std::make_shared<flywave::topo::workplane>(
                              planeName, origin ? &origin->vec : nullptr)};
   }
@@ -196,7 +211,8 @@ workplane_t *workplane_create_from_name(const char *planeName,
   }
 }
 
-void workplane_free(workplane_t *wp) { try {
+void workplane_free(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (wp) {
     delete wp;
   }
@@ -208,7 +224,8 @@ void workplane_free(workplane_t *wp) { try {
   }
 }
 
-topo_shape_t *workplane_value(workplane_t *wp) { try {
+topo_shape_t *workplane_value(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_shape_t{
       .shp = std::make_shared<flywave::topo::shape>(wp->ptr->value())};
   }
@@ -227,11 +244,13 @@ topo_shape_t *workplane_value(workplane_t *wp) { try {
        : (wp)->ptr->safe_call([&]() { expr; }))
 
 workplane_t *workplane_clean(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{.ptr = SAFE_CALL(wp, return wp->ptr->clean())};
 }
 
 workplane_t *workplane_workplane(workplane_t *wp, double offset, bool invert,
                                  int centerOption, topo_vector_t *origin) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->create(
               offset, invert,
@@ -249,7 +268,8 @@ workplane_t *workplane_workplane(workplane_t *wp, double offset, bool invert,
   return new workplane_t{.ptr = result};
 }
 
-void workplane_tag(workplane_t *wp, const char *name) { try { wp->ptr->tag(name);   }
+void workplane_tag(workplane_t *wp, const char *name) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { wp->ptr->tag(name);   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -258,23 +278,27 @@ void workplane_tag(workplane_t *wp, const char *name) { try { wp->ptr->tag(name)
 }
 
 workplane_t *workplane_split(workplane_t *wp, bool keepTop, bool keepBottom) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->split(keepTop, keepBottom))};
 }
 
 workplane_t *workplane_split_with_shape(workplane_t *wp,
                                         topo_shape_t *splitter) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->split(*splitter->shp))};
 }
 
 workplane_t *workplane_split_with_workplane(workplane_t *wp,
                                             workplane_t *splitter) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->split(*splitter->ptr))};
 }
 
-void workplane_add(workplane_t *wp, workplane_t *other) { try {
+void workplane_add(workplane_t *wp, workplane_t *other) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   wp->ptr->add(*other->ptr);
   }
   catch (const std::exception &e) {
@@ -284,7 +308,8 @@ void workplane_add(workplane_t *wp, workplane_t *other) { try {
   }
 }
 
-void workplane_add_shape(workplane_t *wp, shape_object_t *obj) { try {
+void workplane_add_shape(workplane_t *wp, shape_object_t *obj) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   wp->ptr->add(obj->obj);
   }
   catch (const std::exception &e) {
@@ -294,7 +319,8 @@ void workplane_add_shape(workplane_t *wp, shape_object_t *obj) { try {
   }
 }
 
-void workplane_add_shapes(workplane_t *wp, shape_object_t **objs, int size) { try {
+void workplane_add_shapes(workplane_t *wp, shape_object_t **objs, int size) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   std::vector<flywave::topo::shape_object> objs_;
   for (int i = 0; i < size; ++i) {
     objs_.push_back(objs[i]->obj);
@@ -309,12 +335,14 @@ void workplane_add_shapes(workplane_t *wp, shape_object_t **objs, int size) { tr
 }
 
 workplane_t *workplane_from_tagged(workplane_t *wp, const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{.ptr =
                              SAFE_CALL(wp, return wp->ptr->from_tagged(tag))};
 }
 
 topo_solid_t workplane_find_solid(workplane_t *wp, bool searchStack,
-                                  bool searchParents) { try {
+                                  bool searchParents) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return topo_solid_t{
       .shp = new topo_shape_t{
           .shp = std::make_shared<flywave::topo::shape>(
@@ -331,86 +359,101 @@ topo_solid_t workplane_find_solid(workplane_t *wp, bool searchStack,
 
 workplane_t *workplane_vertices(workplane_t *wp, const char *selector,
                                 const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->vertices(selector, tag))};
 }
 workplane_t *workplane_vertices_with_selector(workplane_t *wp, selector_t *sel,
                                               const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->vertices(sel->ptr, tag))};
 }
 
 workplane_t *workplane_faces(workplane_t *wp, const char *selector,
                              const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->faces(selector, tag))};
 }
 workplane_t *workplane_faces_with_selector(workplane_t *wp, selector_t *sel,
                                            const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->faces(sel->ptr, tag))};
 }
 
 workplane_t *workplane_edges(workplane_t *wp, const char *selector,
                              const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->edges(selector, tag))};
 }
 workplane_t *workplane_edges_with_selector(workplane_t *wp, selector_t *sel,
                                            const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->edges(sel->ptr, tag))};
 }
 
 workplane_t *workplane_wires(workplane_t *wp, const char *selector,
                              const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->wires(selector, tag))};
 }
 
 workplane_t *workplane_wires_with_selector(workplane_t *wp, selector_t *sel,
                                            const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->wires(sel->ptr, tag))};
 }
 
 workplane_t *workplane_solids(workplane_t *wp, const char *selector,
                               const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->solids(selector, tag))};
 }
 
 workplane_t *workplane_solids_with_selector(workplane_t *wp, selector_t *sel,
                                             const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->solids(sel->ptr, tag))};
 }
 
 workplane_t *workplane_shells(workplane_t *wp, const char *selector,
                               const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->shells(selector, tag))};
 }
 
 workplane_t *workplane_shells_with_selector(workplane_t *wp, selector_t *sel,
                                             const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->shells(sel->ptr, tag))};
 }
 
 workplane_t *workplane_compounds(workplane_t *wp, const char *selector,
                                  const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->compounds(selector, tag))};
 }
 
 workplane_t *workplane_compounds_with_selector(workplane_t *wp, selector_t *sel,
                                                const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->compounds(sel->ptr, tag))};
 }
 
 workplane_t *workplane_ancestors(workplane_t *wp, int kind, const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(
           wp, return wp->ptr->ancestors(static_cast<TopAbs_ShapeEnum>(kind),
@@ -420,6 +463,7 @@ workplane_t *workplane_ancestors(workplane_t *wp, int kind, const char *tag) {
 
 workplane_t *workplane_siblings(workplane_t *wp, int kind, int level,
                                 const char *tag) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(
           wp, return wp->ptr->siblings(
@@ -430,6 +474,7 @@ workplane_t *workplane_siblings(workplane_t *wp, int kind, int level,
 workplane_t *workplane_rotate_about_center(workplane_t *wp,
                                            topo_vector_t *axisEndPoint,
                                            double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Pnt end(axisEndPoint ? gp_Pnt(axisEndPoint->vec.x(), axisEndPoint->vec.y(),
                                     axisEndPoint->vec.z())
                           : gp_Pnt(0, 0, 0));
@@ -440,6 +485,7 @@ workplane_t *workplane_rotate_about_center(workplane_t *wp,
 
 workplane_t *workplane_rotate(workplane_t *wp, topo_vector_t *axisStart,
                               topo_vector_t *axisEnd, double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Pnt start(axisStart ? gp_Pnt(axisStart->vec.x(), axisStart->vec.y(),
                                    axisStart->vec.z())
                          : gp_Pnt(0, 0, 0));
@@ -453,6 +499,7 @@ workplane_t *workplane_rotate(workplane_t *wp, topo_vector_t *axisStart,
 
 workplane_t *workplane_mirror(workplane_t *wp, const char *planeName,
                               topo_vector_t *basePoint) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Pnt bp = basePoint ? gp_Pnt(basePoint->vec.x(), basePoint->vec.y(),
                                   basePoint->vec.z())
                         : gp_Pnt();
@@ -463,6 +510,7 @@ workplane_t *workplane_mirror(workplane_t *wp, const char *planeName,
 workplane_t *workplane_mirror_with_normal(workplane_t *wp,
                                           topo_vector_t *normal,
                                           topo_vector_t *basePoint) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Vec n;
   if (normal) {
     n = static_cast<gp_Vec>(normal->vec);
@@ -477,6 +525,7 @@ workplane_t *workplane_mirror_with_normal(workplane_t *wp,
 workplane_t *workplane_mirror_with_name(workplane_t *wp, const char *planeName,
                                         topo_vector_t *basePoint,
                                         bool unionResult) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Pnt bp = basePoint ? gp_Pnt(basePoint->vec.x(), basePoint->vec.y(),
                                   basePoint->vec.z())
                         : gp_Pnt();
@@ -489,6 +538,7 @@ workplane_t *workplane_mirror_with_face(workplane_t *wp,
                                         topo_face_t *mirrorFace,
                                         topo_vector_t *basePoint,
                                         bool unionResult) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Pnt bp = basePoint ? gp_Pnt(basePoint->vec.x(), basePoint->vec.y(),
                                   basePoint->vec.z())
                         : gp_Pnt();
@@ -500,6 +550,7 @@ workplane_t *workplane_mirror_with_face(workplane_t *wp,
 }
 
 workplane_t *workplane_translate(workplane_t *wp, topo_vector_t *vec) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (!vec)
     return new workplane_t{.ptr = wp->ptr};
   return new workplane_t{
@@ -508,21 +559,25 @@ workplane_t *workplane_translate(workplane_t *wp, topo_vector_t *vec) {
 
 workplane_t *workplane_shell(workplane_t *wp, double thickness,
                              const char *kind) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->shell(thickness, kind))};
 }
 
 workplane_t *workplane_fillet(workplane_t *wp, double radius) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{.ptr = SAFE_CALL(wp, return wp->ptr->fillet(radius))};
 }
 
 workplane_t *workplane_chamfer(workplane_t *wp, double length, double length2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->chamfer(length, length2))};
 }
 
 workplane_t *workplane_transformed(workplane_t *wp, topo_vector_t *rotate,
                                    topo_vector_t *offset) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Vec r;
   if (rotate) {
     r = static_cast<gp_Vec>(rotate->vec);
@@ -538,6 +593,7 @@ workplane_t *workplane_transformed(workplane_t *wp, topo_vector_t *rotate,
 workplane_t *workplane_rarray(workplane_t *wp, double xSpacing, double ySpacing,
                               int xCount, int yCount, bool centerX,
                               bool centerY) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(
           wp, return wp->ptr->rarray(xSpacing, ySpacing, xCount, yCount,
@@ -547,6 +603,7 @@ workplane_t *workplane_rarray(workplane_t *wp, double xSpacing, double ySpacing,
 workplane_t *workplane_polar_array(workplane_t *wp, double radius,
                                    double startAngle, double angle, int count,
                                    bool fill, bool rotate) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{.ptr = SAFE_CALL(wp, return wp->ptr->polar_array(
                                                   radius, startAngle, angle,
                                                   count, fill, rotate))};
@@ -554,6 +611,7 @@ workplane_t *workplane_polar_array(workplane_t *wp, double radius,
 
 workplane_t *workplane_push_points(workplane_t *wp, topo_location_t **locs,
                                    int size) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<flywave::topo::topo_location> locs_;
   for (int i = 0; i < size; ++i) {
     locs_.push_back(locs[i]->loc);
@@ -564,6 +622,7 @@ workplane_t *workplane_push_points(workplane_t *wp, topo_location_t **locs,
 
 workplane_t *workplane_push_points_with_vector(workplane_t *wp,
                                                topo_vector_t **vecs, int size) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<flywave::topo::topo_vector> vecs_;
   for (int i = 0; i < size; ++i) {
     vecs_.push_back(vecs[i]->vec);
@@ -573,11 +632,13 @@ workplane_t *workplane_push_points_with_vector(workplane_t *wp,
 }
 
 workplane_t *workplane_center(workplane_t *wp, double x, double y) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{.ptr = SAFE_CALL(wp, return wp->ptr->center(x, y))};
 }
 
 workplane_t *workplane_line_to(workplane_t *wp, double x, double y,
                                bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->line_to(x, y, forConstruction))};
 }
@@ -585,6 +646,7 @@ workplane_t *workplane_line_to(workplane_t *wp, double x, double y,
 workplane_t *workplane_bezier(workplane_t *wp, topo_vector_t **points, int size,
                               bool forConstruction, bool includeCurrent,
                               bool makeWire) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<flywave::topo::topo_vector> points_;
   for (int i = 0; i < size; ++i) {
     points_.push_back(points[i]->vec);
@@ -596,6 +658,7 @@ workplane_t *workplane_bezier(workplane_t *wp, topo_vector_t **points, int size,
 
 workplane_t *workplane_line(workplane_t *wp, double xDist, double yDist,
                             bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr =
           SAFE_CALL(wp, return wp->ptr->line(xDist, yDist, forConstruction))};
@@ -603,30 +666,35 @@ workplane_t *workplane_line(workplane_t *wp, double xDist, double yDist,
 
 workplane_t *workplane_vline(workplane_t *wp, double distance,
                              bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->vline(distance, forConstruction))};
 }
 
 workplane_t *workplane_hline(workplane_t *wp, double distance,
                              bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->hline(distance, forConstruction))};
 }
 
 workplane_t *workplane_vline_to(workplane_t *wp, double yCoord,
                                 bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->vline_to(yCoord, forConstruction))};
 }
 
 workplane_t *workplane_hline_to(workplane_t *wp, double xCoord,
                                 bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->hline_to(xCoord, forConstruction))};
 }
 
 workplane_t *workplane_polar_line(workplane_t *wp, double distance,
                                   double angle, bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(
           wp, return wp->ptr->polar_line(distance, angle, forConstruction))};
@@ -634,22 +702,26 @@ workplane_t *workplane_polar_line(workplane_t *wp, double distance,
 
 workplane_t *workplane_polar_line_to(workplane_t *wp, double distance,
                                      double angle, bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(
           wp, return wp->ptr->polar_line_to(distance, angle, forConstruction))};
 }
 
 workplane_t *workplane_move_to(workplane_t *wp, double x, double y) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{.ptr = SAFE_CALL(wp, return wp->ptr->move_to(x, y))};
 }
 
 workplane_t *workplane_move(workplane_t *wp, double xDist, double yDist) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{.ptr =
                              SAFE_CALL(wp, return wp->ptr->move(xDist, yDist))};
 }
 
 workplane_t *workplane_slot2d(workplane_t *wp, double length, double diameter,
                               double angle) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   return new workplane_t{
       .ptr = SAFE_CALL(wp, return wp->ptr->slot2d(length, diameter, angle))};
 }
@@ -659,6 +731,7 @@ workplane_t *workplane_spline(workplane_t *wp, topo_vector_t **points, int size,
                               int size2, bool scale, double tol,
                               bool forConstruction, bool includeCurrent,
                               bool makeWire) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> pts;
   for (int i = 0; i < size; i++) {
     pts.push_back(
@@ -686,6 +759,7 @@ workplane_t *workplane_spline_approx(workplane_t *wp, topo_vector_t **points,
                                      int maxDeg, topo_vector_t *smoothing,
                                      bool forConstruction, bool includeCurrent,
                                      bool makeWire) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> pts;
   for (int i = 0; i < size; i++) {
     pts.push_back(
@@ -710,6 +784,7 @@ workplane_t *workplane_parametric_curve(workplane_t *wp, void *userdata,
                                         double tol, int minDeg, int maxDeg,
                                         topo_vector_t *smoothing,
                                         bool makeWire) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto wrapper = [func, userdata](double t) {
     pnt3d_t p = func(userdata, t);
     return gp_Pnt(p.x, p.y, p.z);
@@ -729,6 +804,7 @@ workplane_parametric_surface(workplane_t *wp, void *userdata,
                              pnt3d_t (*func)(void *userdata, double, double),
                              int N, double start, double stop, double tol,
                              int minDeg, int maxDeg, topo_vector_t *smoothing) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto wrapper = [func, userdata](double u, double v) {
     pnt3d_t p = func(userdata, u, v);
     return gp_Pnt(p.x, p.y, p.z);
@@ -748,6 +824,7 @@ workplane_t *workplane_ellipse_arc(workplane_t *wp, double x_radius,
                                    double angle2, double rotation_angle,
                                    int sense, bool forConstruction,
                                    bool startAtCurrent, bool makeWire) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result =
       SAFE_CALL(wp, return wp->ptr->ellipse_arc(
                         x_radius, y_radius, angle1, angle2, rotation_angle,
@@ -758,6 +835,7 @@ workplane_t *workplane_ellipse_arc(workplane_t *wp, double x_radius,
 workplane_t *workplane_three_point_arc(workplane_t *wp, topo_vector_t *point1,
                                        topo_vector_t *point2,
                                        bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Pnt p1(point1->vec.x(), point1->vec.y(), point1->vec.z());
   gp_Pnt p2(point2->vec.x(), point2->vec.y(), point2->vec.z());
 
@@ -768,6 +846,7 @@ workplane_t *workplane_three_point_arc(workplane_t *wp, topo_vector_t *point1,
 
 workplane_t *workplane_sagitta_arc(workplane_t *wp, topo_vector_t *endPoint,
                                    double sag, bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Pnt ep(endPoint->vec.x(), endPoint->vec.y(), endPoint->vec.z());
   auto result =
       SAFE_CALL(wp, return wp->ptr->sagitta_arc(ep, sag, forConstruction));
@@ -776,6 +855,7 @@ workplane_t *workplane_sagitta_arc(workplane_t *wp, topo_vector_t *endPoint,
 
 workplane_t *workplane_radius_arc(workplane_t *wp, topo_vector_t *endPoint,
                                   double radius, bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Pnt ep(endPoint->vec.x(), endPoint->vec.y(), endPoint->vec.z());
   auto result =
       SAFE_CALL(wp, return wp->ptr->radius_arc(ep, radius, forConstruction));
@@ -785,6 +865,7 @@ workplane_t *workplane_radius_arc(workplane_t *wp, topo_vector_t *endPoint,
 workplane_t *workplane_tangent_arc_point(workplane_t *wp,
                                          topo_vector_t *endpoint,
                                          bool forConstruction, bool relative) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Pnt ep(endpoint->vec.x(), endpoint->vec.y(), endpoint->vec.z());
   auto result = SAFE_CALL(
       wp, return wp->ptr->tangent_arc_point(ep, forConstruction, relative));
@@ -792,16 +873,19 @@ workplane_t *workplane_tangent_arc_point(workplane_t *wp,
 }
 
 workplane_t *workplane_mirror_y(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->mirror_y());
   return new workplane_t{.ptr = result};
 }
 
 workplane_t *workplane_mirror_x(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->mirror_x());
   return new workplane_t{.ptr = result};
 }
 
 workplane_t *workplane_consolidate_wires(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->consolidate_wires());
   return new workplane_t{.ptr = result};
 }
@@ -810,6 +894,7 @@ workplane_t *workplane_each(workplane_t *wp, void *userdata,
                             void (*func)(void *userdata, shape_object_t *),
                             bool useLocalCoordinates, bool combine,
                             bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto wrapper =
       [func, userdata](
           flywave::topo::shape_object &obj) -> flywave::topo::shape_object {
@@ -827,6 +912,7 @@ workplane_t *workplane_eachpoint(workplane_t *wp, void *userdata,
                                  void (*func)(void *userdata, shape_object_t *),
                                  bool useLocalCoordinates, bool combine,
                                  bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto wrapper = [func, userdata](
                      flywave::topo::topo_location loc) -> flywave::topo::shape {
     shape_object_t sobj{loc};
@@ -847,6 +933,7 @@ workplane_t *workplane_eachpoint_with_shape(workplane_t *wp,
                                             topo_shape_t *shapeObj,
                                             bool useLocalCoordinates,
                                             bool combine, bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result =
       SAFE_CALL(wp, return wp->ptr->eachpoint(
                         *shapeObj->shp, useLocalCoordinates, combine, clean));
@@ -857,6 +944,7 @@ workplane_t *workplane_eachpoint_with_workplane(workplane_t *wp,
                                                 workplane_t *wp2,
                                                 bool useLocalCoordinates,
                                                 bool combine, bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result =
       SAFE_CALL(wp, return wp->ptr->eachpoint(*wp2->ptr, useLocalCoordinates,
                                               combine, clean));
@@ -867,6 +955,7 @@ workplane_t *workplane_eachpoint_with_location(
     workplane_t *wp, void *userdata,
     topo_shape_t *(*func)(void *userdata, topo_location_t *loc),
     bool useLocalCoordinates, bool combine, bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto wrapper = [func, userdata](const flywave::topo::topo_location &p) {
     topo_location_t loc{.loc = p};
     return *func(userdata, &loc)->shp;
@@ -879,6 +968,7 @@ workplane_t *workplane_eachpoint_with_location(
 
 workplane_t *workplane_rect(workplane_t *wp, double xLen, double yLen,
                             bool centerX, bool centerY, bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->rect(xLen, yLen, std::make_pair(centerX, centerY),
                                forConstruction));
@@ -887,6 +977,7 @@ workplane_t *workplane_rect(workplane_t *wp, double xLen, double yLen,
 
 workplane_t *workplane_rect_all(workplane_t *wp, double xLen, double yLen,
                                 bool centerAll, bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->rect(xLen, yLen, centerAll, forConstruction));
   return new workplane_t{.ptr = result};
@@ -894,6 +985,7 @@ workplane_t *workplane_rect_all(workplane_t *wp, double xLen, double yLen,
 
 workplane_t *workplane_circle(workplane_t *wp, double radius,
                               bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (!wp || !wp->ptr) {
     std::cerr << "workplane_circle: null wp or ptr!" << std::endl;
     return new workplane_t{};
@@ -905,6 +997,7 @@ workplane_t *workplane_circle(workplane_t *wp, double radius,
 workplane_t *workplane_ellipse(workplane_t *wp, double x_radius,
                                double y_radius, double rotation_angle,
                                bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result =
       SAFE_CALL(wp, return wp->ptr->ellipse(x_radius, y_radius, rotation_angle,
                                             forConstruction));
@@ -913,6 +1006,7 @@ workplane_t *workplane_ellipse(workplane_t *wp, double x_radius,
 
 workplane_t *workplane_polygon(workplane_t *wp, int nSides, double diameter,
                                bool forConstruction, bool circumscribed) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result =
       SAFE_CALL(wp, return wp->ptr->polygon(nSides, diameter, forConstruction,
                                             circumscribed));
@@ -922,6 +1016,7 @@ workplane_t *workplane_polygon(workplane_t *wp, int nSides, double diameter,
 workplane_t *workplane_polyline(workplane_t *wp, topo_vector_t **points,
                                 int size, bool forConstruction,
                                 bool includeCurrent) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> pts;
   for (int i = 0; i < size; i++) {
     pts.push_back(
@@ -933,11 +1028,13 @@ workplane_t *workplane_polyline(workplane_t *wp, topo_vector_t **points,
 }
 
 workplane_t *workplane_close(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->close());
   return new workplane_t{.ptr = result};
 }
 
-double workplane_largest_dimension(workplane_t *wp) { try {
+double workplane_largest_dimension(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto result = wp->ptr->largest_dimension();
   return result;
   }
@@ -954,6 +1051,7 @@ workplane_t *workplane_cut_each(workplane_t *wp, void *userdata,
                                 topo_shape_t *(*fcn)(void *userdata,
                                                      topo_location_t *loc),
                                 bool useLocalCoordinates, bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto wrapper = [fcn, userdata](flywave::topo::topo_location loc) {
     topo_location_t loc_ = {.loc = loc};
     return *fcn(userdata, &loc_)->shp;
@@ -966,6 +1064,7 @@ workplane_t *workplane_cut_each(workplane_t *wp, void *userdata,
 workplane_t *workplane_cbore_hole(workplane_t *wp, double diameter,
                                    double cboreDiameter, double cboreDepth,
                                    double *depth, bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result =
       SAFE_CALL(wp, return wp->ptr->cbore_hole(
                         diameter, cboreDiameter, cboreDepth,
@@ -977,6 +1076,7 @@ workplane_t *workplane_cbore_hole(workplane_t *wp, double diameter,
 workplane_t *workplane_csk_hole(workplane_t *wp, double diameter,
                                  double cskDiameter, double cskAngle,
                                  double *depth, bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->csk_hole(
                                   diameter, cskDiameter, cskAngle,
                                   depth ? boost::optional<double>(*depth)
@@ -987,6 +1087,7 @@ workplane_t *workplane_csk_hole(workplane_t *wp, double diameter,
 
 workplane_t *workplane_hole(workplane_t *wp, double diameter, double *depth,
                              bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->hole(
               diameter, depth ? boost::optional<double>(*depth) : boost::none,
@@ -997,6 +1098,7 @@ workplane_t *workplane_hole(workplane_t *wp, double diameter, double *depth,
 workplane_t *workplane_twist_extrude(workplane_t *wp, double distance,
                                      double angleDegrees, bool combine,
                                      bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->twist_extrude(
                                   distance, angleDegrees, combine, clean));
   return new workplane_t{.ptr = result};
@@ -1004,6 +1106,7 @@ workplane_t *workplane_twist_extrude(workplane_t *wp, double distance,
 
 workplane_t *workplane_extrude(workplane_t *wp, double distance, bool combine,
                                 bool clean, bool both, double *taper) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->extrude(
               distance, combine, clean, both,
@@ -1016,6 +1119,7 @@ workplane_t *workplane_extrude(workplane_t *wp, double distance, bool combine,
 workplane_t *workplane_extrude_with_face_type(workplane_t *wp, int index_type,
                                               bool combine, bool clean,
                                               bool both, double *taper) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result =
       SAFE_CALL(wp, return wp->ptr->extrude(
                         index_type, combine, clean, both,
@@ -1026,6 +1130,7 @@ workplane_t *workplane_extrude_with_face_type(workplane_t *wp, int index_type,
 workplane_t *workplane_extrude_with_face(workplane_t *wp, topo_face_t *face,
                                          bool combine, bool clean, bool both,
                                          double *taper) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->extrude(
               *face->shp->shp->cast<flywave::topo::face>(), combine, clean,
@@ -1037,6 +1142,7 @@ workplane_t *workplane_sweep(workplane_t *wp, workplane_t *path,
                              bool multisection, bool makeSolid, bool isFrenet,
                              bool combine, bool clean, int transition,
                              topo_vector_t *normal, workplane_t *auxSpine) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->sweep(
               *path->ptr, multisection, makeSolid, isFrenet, combine, clean,
@@ -1051,6 +1157,7 @@ workplane_t *workplane_sweep_with_wire(workplane_t *wp, topo_wire_t *path,
                                        bool isFrenet, bool combine, bool clean,
                                        int transition, topo_vector_t *normal,
                                        workplane_t *auxSpine) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->sweep(
               *path->shp->shp->cast<flywave::topo::wire>(), multisection,
@@ -1066,6 +1173,7 @@ workplane_t *workplane_sweep_with_edge(workplane_t *wp, topo_edge_t *path,
                                        bool isFrenet, bool combine, bool clean,
                                        int transition, topo_vector_t *normal,
                                        workplane_t *auxSpine) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->sweep(
               *path->shp->shp->cast<flywave::topo::edge>(), multisection,
@@ -1078,6 +1186,7 @@ workplane_t *workplane_sweep_with_edge(workplane_t *wp, topo_edge_t *path,
 
 workplane_t *workplane_union(workplane_t *wp, workplane_t *other, bool clean,
                              bool glue, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result =
       SAFE_CALL(wp, return wp->ptr->union_(*other->ptr, clean, glue, tol));
   return new workplane_t{.ptr = result};
@@ -1085,6 +1194,7 @@ workplane_t *workplane_union(workplane_t *wp, workplane_t *other, bool clean,
 
 workplane_t *workplane_union_with_solid(workplane_t *wp, topo_solid_t *other,
                                         bool clean, bool glue, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->union_(*other->shp->shp->cast<flywave::topo::solid>(),
                                  clean, glue, tol));
@@ -1094,6 +1204,7 @@ workplane_t *workplane_union_with_solid(workplane_t *wp, topo_solid_t *other,
 workplane_t *workplane_union_with_compound(workplane_t *wp,
                                            topo_compound_t *other, bool clean,
                                            bool glue, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp,
       return wp->ptr->union_(*other->shp->shp->cast<flywave::topo::compound>(),
@@ -1103,12 +1214,14 @@ workplane_t *workplane_union_with_compound(workplane_t *wp,
 
 workplane_t *workplane_cut(workplane_t *wp, workplane_t *other, bool clean,
                            double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->cut(*other->ptr, clean, tol));
   return new workplane_t{.ptr = result};
 }
 
 workplane_t *workplane_cut_with_solid(workplane_t *wp, topo_solid_t *other,
                                       bool clean, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->cut(*other->shp->shp->cast<flywave::topo::solid>(),
                               clean, tol));
@@ -1118,6 +1231,7 @@ workplane_t *workplane_cut_with_solid(workplane_t *wp, topo_solid_t *other,
 workplane_t *workplane_cut_with_compound(workplane_t *wp,
                                          topo_compound_t *other, bool clean,
                                          double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->cut(*other->shp->shp->cast<flywave::topo::compound>(),
                               clean, tol));
@@ -1126,6 +1240,7 @@ workplane_t *workplane_cut_with_compound(workplane_t *wp,
 
 workplane_t *workplane_intersect(workplane_t *wp, workplane_t *other,
                                  bool clean, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result =
       SAFE_CALL(wp, return wp->ptr->intersect(*other->ptr, clean, tol));
   return new workplane_t{.ptr = result};
@@ -1134,6 +1249,7 @@ workplane_t *workplane_intersect(workplane_t *wp, workplane_t *other,
 workplane_t *workplane_intersect_with_solid(workplane_t *wp,
                                             topo_solid_t *other, bool clean,
                                             double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->intersect(
               *other->shp->shp->cast<flywave::topo::solid>(), clean, tol));
@@ -1143,6 +1259,7 @@ workplane_t *workplane_intersect_with_solid(workplane_t *wp,
 workplane_t *workplane_intersect_with_compound(workplane_t *wp,
                                                topo_compound_t *other,
                                                bool clean, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->intersect(
               *other->shp->shp->cast<flywave::topo::compound>(), clean, tol));
@@ -1151,6 +1268,7 @@ workplane_t *workplane_intersect_with_compound(workplane_t *wp,
 
 workplane_t *workplane_cut_blind(workplane_t *wp, double distance, bool clean,
                                  bool both, double taper) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result =
       SAFE_CALL(wp, return wp->ptr->cut_blind(distance, clean, both, taper));
   return new workplane_t{.ptr = result};
@@ -1159,6 +1277,7 @@ workplane_t *workplane_cut_blind(workplane_t *wp, double distance, bool clean,
 workplane_t *workplane_cut_blind_with_until_face(workplane_t *wp, int untilFace,
                                                  bool clean, bool both,
                                                  double taper) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result =
       SAFE_CALL(wp, return wp->ptr->cut_blind(
                         static_cast<flywave::topo::face_index_type>(untilFace),
@@ -1169,6 +1288,7 @@ workplane_t *workplane_cut_blind_with_until_face(workplane_t *wp, int untilFace,
 workplane_t *workplane_cut_blind_with_face(workplane_t *wp, topo_face_t *face,
                                            bool clean, bool both,
                                            double taper) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->cut_blind(
                                   *face->shp->shp->cast<flywave::topo::face>(),
                                   clean, both, taper));
@@ -1178,6 +1298,7 @@ workplane_t *workplane_cut_blind_with_face(workplane_t *wp, topo_face_t *face,
 workplane_t *workplane_revolve(workplane_t *wp, topo_vector_t *axisStart,
                                topo_vector_t *axisEnd, double angleDegrees,
                                bool combine, bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Pnt start(axisStart ? gp_Pnt(axisStart->vec.x(), axisStart->vec.y(),
                                    axisStart->vec.z())
                          : gp_Pnt(0, 0, 0));
@@ -1201,6 +1322,7 @@ workplane_t *workplane_interp_plate(workplane_t *wp, topo_vector_t **points,
                                     int nbIter, bool anisotropy, double tol2d,
                                     double tol3d, double tolAng, double tolCurv,
                                     int maxDeg, int maxSegments) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> pts;
   for (int i = 0; i < size; i++) {
     pts.push_back(
@@ -1218,6 +1340,7 @@ workplane_t *workplane_interp_plate_with_edges(
     int size2, double thickness, bool combine, bool clean, int degree,
     int nbPtsOnCur, int nbIter, bool anisotropy, double tol2d, double tol3d,
     double tolAng, double tolCurv, int maxDeg, int maxSegments) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<flywave::topo::edge> edgeList;
   for (int i = 0; i < size; i++) {
     edgeList.push_back(*edges[i]->shp->shp->cast<flywave::topo::edge>());
@@ -1239,6 +1362,7 @@ workplane_t *workplane_interp_plate_with_workplane(
     double thickness, bool combine, bool clean, int degree, int nbPtsOnCur,
     int nbIter, bool anisotropy, double tol2d, double tol3d, double tolAng,
     double tolCurv, int maxDeg, int maxSegments) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> pts;
   for (int i = 0; i < size; i++) {
     pts.push_back(
@@ -1254,6 +1378,7 @@ workplane_t *workplane_interp_plate_with_workplane(
 workplane_t *workplane_box(workplane_t *wp, double length, double width,
                            double height, bool centerX, bool centerY,
                            bool centerZ, bool combine, bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->box(length, width, height,
                                                   {centerX, centerY, centerZ},
                                                   combine, clean));
@@ -1263,6 +1388,7 @@ workplane_t *workplane_box(workplane_t *wp, double length, double width,
 workplane_t *workplane_box_all(workplane_t *wp, double length, double width,
                                double height, bool centerAll, bool combine,
                                bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->box(length, width, height,
                                                   centerAll, combine, clean));
   return new workplane_t{.ptr = result};
@@ -1273,6 +1399,7 @@ workplane_t *workplane_sphere(workplane_t *wp, double radius,
                               double angle2, double angle3, bool centerX,
                               bool centerY, bool centerZ, bool combine,
                               bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Dir dir(direct ? gp_Dir(direct->vec.x(), direct->vec.y(), direct->vec.z())
                     : gp_Dir(0, 0, 1));
   auto result = SAFE_CALL(
@@ -1285,6 +1412,7 @@ workplane_t *workplane_sphere_all(workplane_t *wp, double radius,
                                   topo_vector_t *direct, double angle1,
                                   double angle2, double angle3, bool centerAll,
                                   bool combine, bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Dir dir(direct ? gp_Dir(direct->vec.x(), direct->vec.y(), direct->vec.z())
                     : gp_Dir(0, 0, 1));
   auto result =
@@ -1297,6 +1425,7 @@ workplane_t *workplane_cylinder(workplane_t *wp, double height, double radius,
                                 topo_vector_t *direct, double angle,
                                 bool centerX, bool centerY, bool centerZ,
                                 bool combine, bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Dir dir(direct ? gp_Dir(direct->vec.x(), direct->vec.y(), direct->vec.z())
                     : gp_Dir(0, 0, 1));
   auto result = SAFE_CALL(wp, return wp->ptr->cylinder(
@@ -1309,6 +1438,7 @@ workplane_t *workplane_cylinder_all(workplane_t *wp, double height,
                                     double radius, topo_vector_t *direct,
                                     double angle, bool centerAll, bool combine,
                                     bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Dir dir(direct ? gp_Dir(direct->vec.x(), direct->vec.y(), direct->vec.z())
                     : gp_Dir(0, 0, 1));
   auto result =
@@ -1322,6 +1452,7 @@ workplane_t *workplane_wedge(workplane_t *wp, double dx, double dy, double dz,
                              topo_vector_t *pnt, topo_vector_t *dir,
                              bool centerX, bool centerY, bool centerZ,
                              bool combine, bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Pnt point(pnt ? gp_Pnt(pnt->vec.x(), pnt->vec.y(), pnt->vec.z())
                    : gp_Pnt(0, 0, 0));
   gp_Dir direction(dir ? gp_Dir(dir->vec.x(), dir->vec.y(), dir->vec.z())
@@ -1338,6 +1469,7 @@ workplane_t *workplane_wedge_all(workplane_t *wp, double dx, double dy,
                                  double xmax, double zmax, topo_vector_t *pnt,
                                  topo_vector_t *dir, bool centerAll,
                                  bool combine, bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   gp_Pnt point(pnt ? gp_Pnt(pnt->vec.x(), pnt->vec.y(), pnt->vec.z())
                    : gp_Pnt(0, 0, 0));
   gp_Dir direction(dir ? gp_Dir(dir->vec.x(), dir->vec.y(), dir->vec.z())
@@ -1350,17 +1482,20 @@ workplane_t *workplane_wedge_all(workplane_t *wp, double dx, double dy,
 
 workplane_t *workplane_combine(workplane_t *wp, bool clean, bool glue,
                                double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->combine(clean, glue, tol));
   return new workplane_t{.ptr = result};
 }
 
 workplane_t *workplane_cut_thru_all(workplane_t *wp, double taper, bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->cut_thru_all(clean, taper));
   return new workplane_t{.ptr = result};
 }
 
 workplane_t *workplane_loft(workplane_t *wp, bool ruled, bool combine,
                             bool clean) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->loft(ruled, combine, clean));
   return new workplane_t{.ptr = result};
 }
@@ -1369,6 +1504,7 @@ workplane_t *workplane_text(workplane_t *wp, const char *txt, double fontsize,
                             double distance, bool cut, bool combine, bool clean,
                             const char *font, const char *fontPath, int kind,
                             int halign, int valign) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result =
       SAFE_CALL(wp, return wp->ptr->text(
                         txt, fontsize, distance, cut, combine, clean, font,
@@ -1381,11 +1517,13 @@ workplane_t *workplane_text(workplane_t *wp, const char *txt, double fontsize,
 }
 
 workplane_t *workplane_section(workplane_t *wp, double height) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->section(height));
   return new workplane_t{.ptr = result};
 }
 
-void workplane_to_pending(workplane_t *wp) { try { wp->ptr->to_pending();   }
+void workplane_to_pending(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { wp->ptr->to_pending();   }
   catch (const std::exception &e) {
     (void)e;
   }
@@ -1395,6 +1533,7 @@ void workplane_to_pending(workplane_t *wp) { try { wp->ptr->to_pending();   }
 
 workplane_t *workplane_offset2d(workplane_t *wp, double d, int kind,
                                 bool forConstruction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->offset2d(d, static_cast<GeomAbs_JoinType>(kind),
                                    forConstruction));
@@ -1403,6 +1542,7 @@ workplane_t *workplane_offset2d(workplane_t *wp, double d, int kind,
 
 workplane_t *workplane_place_sketch(workplane_t *wp, sketch_t **sketches,
                                     int size) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<std::shared_ptr<flywave::topo::sketch>> sketchList;
   for (int i = 0; i < size; i++) {
     sketchList.push_back(sketches[i]->ptr);
@@ -1412,16 +1552,19 @@ workplane_t *workplane_place_sketch(workplane_t *wp, sketch_t **sketches,
 }
 
 workplane_t *workplane_get(workplane_t *wp, int index) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return (*wp->ptr)[index]);
   return new workplane_t{.ptr = result};
 }
 
 workplane_t *workplane_get_range(workplane_t *wp, int start, int end) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return (*wp->ptr)[std::make_pair(start, end)]);
   return new workplane_t{.ptr = result};
 }
 
 workplane_t *workplane_get_indices(workplane_t *wp, int *indices, int size) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<int> idxList(indices, indices + size);
   auto result = SAFE_CALL(wp, return (*wp->ptr)[idxList]);
   return new workplane_t{.ptr = result};
@@ -1430,6 +1573,7 @@ workplane_t *workplane_get_indices(workplane_t *wp, int *indices, int size) {
 workplane_t *workplane_filter(workplane_t *wp, void *userdate,
                               bool (*predicate)(void *userdate,
                                                 shape_object_t *)) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->filter(
               [predicate, userdate](const flywave::topo::shape_object &obj) {
@@ -1442,6 +1586,7 @@ workplane_t *workplane_filter(workplane_t *wp, void *userdate,
 workplane_t *workplane_map(workplane_t *wp, void *userdate,
                            shape_object_t *(*mapper)(void *userdate,
                                                      shape_object_t *)) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->map(
               [mapper, userdate](const flywave::topo::shape_object &obj) {
@@ -1456,6 +1601,7 @@ workplane_t *workplane_apply(workplane_t *wp, void *userdate,
                              shape_object_t **(*applier)(void *userdate,
                                                          shape_object_t **,
                                                          int)) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->apply(
               [applier,
@@ -1479,6 +1625,7 @@ workplane_t *workplane_apply(workplane_t *wp, void *userdate,
 workplane_t *workplane_sort(workplane_t *wp, void *userdate,
                             bool (*comparator)(void *userdate, shape_object_t *,
                                                shape_object_t *)) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(
       wp, return wp->ptr->sort(
               [comparator, userdate](const flywave::topo::shape_object &a,
@@ -1491,7 +1638,8 @@ workplane_t *workplane_sort(workplane_t *wp, void *userdate,
 }
 
 void workplane_invoke(workplane_t *wp, void *userdate,
-                      workplane_t *(*fcn)(void *userdate)) { try {
+                      workplane_t *(*fcn)(void *userdate)) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto result = fcn(userdate);
   *wp = *result;
   delete result;
@@ -1503,7 +1651,8 @@ void workplane_invoke(workplane_t *wp, void *userdate,
   }
 }
 
-void workplane_export_to(workplane_t *wp, const char *path) { try {
+void workplane_export_to(workplane_t *wp, const char *path) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!wp || !wp->ptr) return;
   if (!path) return;
   wp->ptr->export_to(path);
@@ -1515,7 +1664,8 @@ void workplane_export_to(workplane_t *wp, const char *path) { try {
   }
 }
 
-sketch_t *workplane_sketck(workplane_t *wp) { try {
+sketch_t *workplane_sketck(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto result = wp->ptr->sketch();
   return new sketch_t{.ptr = result};
   }
@@ -1529,26 +1679,31 @@ sketch_t *workplane_sketck(workplane_t *wp) { try {
 }
 
 workplane_t *workplane_first(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->first());
   return new workplane_t{.ptr = result};
 }
 
 workplane_t *workplane_item(workplane_t *wp, int i) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->item(i));
   return new workplane_t{.ptr = result};
 }
 
 workplane_t *workplane_last(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->last());
   return new workplane_t{.ptr = result};
 }
 
 workplane_t *workplane_end(workplane_t *wp, int n) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auto result = SAFE_CALL(wp, return wp->ptr->end(n));
   return new workplane_t{.ptr = result};
 }
 
-workplane_t **workplane_all(workplane_t *wp, int *count) { try {
+workplane_t **workplane_all(workplane_t *wp, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto results = wp->ptr->all();
   *count = static_cast<int>(results.size());
   auto arr = new workplane_t *[*count];
@@ -1567,7 +1722,8 @@ workplane_t **workplane_all(workplane_t *wp, int *count) { try {
 }
 
 // 所有权契约: 数组元素的所有权转移给调用方, 本函数仅释放指针数组本身。
-void workplane_list_free(workplane_t **list, int count) { try {
+void workplane_list_free(workplane_t **list, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   (void)count;
   delete[] list;
   }
@@ -1578,7 +1734,8 @@ void workplane_list_free(workplane_t **list, int count) { try {
   }
 }
 
-topo_shape_t **workplane_shapes(workplane_t *wp, int *count) { try {
+topo_shape_t **workplane_shapes(workplane_t *wp, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto shapes = wp->ptr->shapes();
   *count = static_cast<int>(shapes.size());
   auto arr = new topo_shape_t *[*count];
@@ -1599,7 +1756,8 @@ topo_shape_t **workplane_shapes(workplane_t *wp, int *count) { try {
 
 // 所有权契约: 数组元素的所有权转移给调用方 (由 topo_shape_free 逐个释放),
 // 本函数仅释放指针数组本身。
-void shape_list_free(topo_shape_t **list, int count) { try {
+void shape_list_free(topo_shape_t **list, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   (void)count;
   delete[] list;
   }
@@ -1611,7 +1769,8 @@ void shape_list_free(topo_shape_t **list, int count) { try {
 }
 
 // 所有权契约: 数组元素的所有权转移给调用方, 本函数仅释放指针数组本身。
-void shape_objects_free(shape_object_t **list, int count) { try {
+void shape_objects_free(shape_object_t **list, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   (void)count;
   delete[] list;
   }
@@ -1622,7 +1781,8 @@ void shape_objects_free(shape_object_t **list, int count) { try {
   }
 }
 
-shape_object_t **workplane_vals(workplane_t *wp, int *count) { try {
+shape_object_t **workplane_vals(workplane_t *wp, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto vals = wp->ptr->vals();
   *count = static_cast<int>(vals.size());
   auto arr = new shape_object_t *[*count];
@@ -1640,7 +1800,8 @@ shape_object_t **workplane_vals(workplane_t *wp, int *count) { try {
   }
 }
 
-shape_object_t *workplane_val(workplane_t *wp) { try {
+shape_object_t *workplane_val(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto val = wp->ptr->val();
   return new shape_object_t{.obj = val};
   }
@@ -1653,7 +1814,8 @@ shape_object_t *workplane_val(workplane_t *wp) { try {
   }
 }
 
-int workplane_size(workplane_t *wp) { try {
+int workplane_size(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return static_cast<int>(wp->ptr->size());
   }
   catch (const std::exception &e) {
@@ -1665,7 +1827,8 @@ int workplane_size(workplane_t *wp) { try {
   }
 }
 
-bool workplane_has_parent(workplane_t *wp) { try {
+bool workplane_has_parent(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!wp || !wp->ptr)
     return false;
   return wp->ptr->has_parent();
@@ -1679,7 +1842,8 @@ bool workplane_has_parent(workplane_t *wp) { try {
   }
 }
 
-workplane_t *workplane_parent(workplane_t *wp) { try {
+workplane_t *workplane_parent(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!wp || !wp->ptr)
     return nullptr;
   auto parent = wp->ptr->parent();
@@ -1694,7 +1858,8 @@ workplane_t *workplane_parent(workplane_t *wp) { try {
   }
 }
 
-bool workplane_has_error(workplane_t *wp) { try {
+bool workplane_has_error(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!wp || !wp->ptr)
     return false;
   return wp->ptr->has_error();
@@ -1708,7 +1873,8 @@ bool workplane_has_error(workplane_t *wp) { try {
   }
 }
 
-const char *workplane_error(workplane_t *wp) { try {
+const char *workplane_error(workplane_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!wp || !wp->ptr)
     return "";
   return wp->ptr->error().c_str();

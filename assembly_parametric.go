@@ -100,8 +100,13 @@ func (c *Assembly) exportParametricNode(self *ParametricData, children map[strin
 	el := &ParametricElement{Name: c.GetName()}
 	d := c.GetLocation().Trsf().Data()
 	el.Location = &d
-	r, g, b := c.GetColor().RGBD()
-	el.Color = &[3]float64{r, g, b}
+	// 颜色仅在合法范围内导出: 未设颜色的装配经 C++ color() 会得到
+	// Quantity_Color 默认值, 但历史上可能读到垃圾值 (含 NaN / 越界),
+	// 这类值会让重建侧 Quantity_Color 构造抛异常
+	if r, g, b := c.GetColor().RGBD(); r == r && g == g && b == b &&
+		r >= 0 && r <= 1 && g >= 0 && g <= 1 && b >= 0 && b <= 1 {
+		el.Color = &[3]float64{r, g, b}
+	}
 	if self != nil {
 		el.Type = self.Type
 		el.Params = self.Params

@@ -362,7 +362,7 @@ func TestCreateUShapedRing(t *testing.T) {
 	shp := CreateUShapedRing(UShapedRingParams{
 		Thickness: 0.02,
 		Height:    0.1,
-		Radius:    0.03,
+		Radius:    0.08, // 必须 > (height+thickness)/2 = 0.06
 		Length:    0.05,
 	})
 	if shp == nil || shp.IsNull() {
@@ -377,7 +377,7 @@ func TestCreateUShapedRingWithPlace(t *testing.T) {
 	shp := CreateUShapedRingWithPlace(UShapedRingParams{
 		Thickness: 0.02,
 		Height:    0.1,
-		Radius:    0.03,
+		Radius:    0.08, // 必须 > (height+thickness)/2 = 0.06
 		Length:    0.05,
 	}, pos, normal, xDir)
 	if shp == nil || shp.IsNull() {

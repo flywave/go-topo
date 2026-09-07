@@ -1,5 +1,10 @@
 #pragma once
 
+#include <BRepBuilderAPI_TransitionMode.hxx>
+#include <TopoDS.hxx>
+#include <TopoDS_Compound.hxx>
+#include <TopoDS_Edge.hxx>
+#include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Wire.hxx>
 #include <gp_Ax2.hxx>
@@ -2616,6 +2621,121 @@ struct borehole_params {
 
 std::map<std::string, TopoDS_Shape>
 create_borehole(const borehole_params &params);
+
+
+// ==================================================================
+// 内部共享辅助函数 (primitives.cc 按专业拆分后, 跨实现文件使用的函数在此统一声明)
+// ==================================================================
+
+bool IsHoleEdge(const TopoDS_Edge &edge, const TopoDS_Compound &holes);
+bool IsOuterWireCCW(const TopoDS_Wire &wire);
+bool IsParallel(const gp_Dir &dir1, const gp_Dir &dir2);
+double calculate_length_difference(double angle_deg, double thickness);
+std::pair<double, gp_Pnt>
+compute_profile_radius_and_center(const shape_profile &profile);
+TopoDS_Face create_annular_face(double OR, double IR, double angle);
+TopoDS_Wire create_channel_profile(double height, double flangeWidth,
+                                   double webThickness,
+                                   double flangeThickness);
+TopoDS_Shape create_channel_shape(
+    TopoDS_Shape section, TopoDS_Wire pathWire,
+    BRepBuilderAPI_TransitionMode mode = BRepBuilderAPI_Transformed);
+TopoDS_Shape create_circular_section(double length, double radius,
+                                     double wallThickness, bool isOuter);
+TopoDS_Shape create_disk_insulator(const insulator_params &params);
+TopoDS_Shape create_four_way_circle_well_part(double length, double width,
+                                              double height, double length1,
+                                              double width1, double length2,
+                                              double width2, double wellRadius,
+                                              double weelheight,
+                                              double zoffset);
+TopoDS_Shape create_four_way_corner_working_well_part(
+    double length, double width, double height, double length1, double width1,
+    double length2, double width2, double cornerLength, double cornerWidth,
+    double zoffset);
+TopoDS_Shape
+create_four_way_open_cut_tunnel(const four_way_well_params &params);
+TopoDS_Shape create_four_way_round_working_well_part(
+    double length, double width, double height, double length1, double width1,
+    double length2, double width2, double cornerRadius, double zoffset);
+TopoDS_Shape
+create_four_way_underground_tunnel(const four_way_well_params &params);
+TopoDS_Shape create_four_way_working_well(const four_way_well_params &params);
+TopoDS_Shape create_horseshoe_section(double length, double width,
+                                      double height, double arcHeight,
+                                      double wallThickness, bool isOuter);
+TopoDS_Wire create_ibeam_profile(double height, double flangeWidth,
+                                 double webThickness, double flangeThickness);
+TopoDS_Shape create_indoor_cable_terminal(const cable_terminal_params &params);
+TopoDS_Compound create_normal_pipe_section(const pipe_row_params &params);
+TopoDS_Wire create_oriented_wire(const gp_Ax2 &system, double radius,
+                                 double angle, bool isHole);
+TopoDS_Shape
+create_outdoor_cable_terminal(const cable_terminal_params &params);
+std::pair<TopoDS_Shape, TopoDS_Shape>
+create_pipe_connection(const pipe_endpoint &endpoint,
+                       const gp_Pnt &joint_center, const gp_Ax3 &joint_coord,
+                       bool is_output, double scale);
+std::tuple<TopoDS_Shape, TopoDS_Wire, std::pair<gp_Dir, gp_Dir>>
+create_pipe_helper(const pipe_params &params);
+TopoDS_Shape
+create_pipe_transition(const shape_profile &profile1, const gp_Dir &normal1,
+                       const shape_profile &profile2, const gp_Dir &normal2,
+                       const gp_Pnt &position, const gp_Dir &upDir);
+TopoDS_Compound create_pull_pipe_section(const pipe_row_params &params);
+TopoDS_Shape create_rectangular_beam(double width, double height, double length,
+                                     const gp_Pnt &center);
+TopoDS_Shape create_rectangular_section(double length, double width,
+                                        double height, double wallThickness,
+                                        double topThickness,
+                                        double bottomThickness, bool isOuter);
+TopoDS_Shape create_rod_insulator(const insulator_params &params);
+TopoDS_Shape create_rounded_base(double D, double H4, double z_bottom);
+TopoDS_Shape create_shape_from_profile(const shape_profile &profile,
+                                       bool isFace,
+                                       gp_Ax2 *sectionAxes = nullptr);
+TopoDS_Shape create_simple_pipe(flywave::topo::circ_profile maxProfile,
+                                TopoDS_Wire pathWire, const gp_Dir &upDir);
+TopoDS_Shape create_straight_tunnel_well(const tunnel_well_params &params);
+TopoDS_Shape create_straight_well(const tunnel_well_params &params);
+TopoDS_Wire create_t_steel_profile(double height, double width,
+                                   double webThickness,
+                                   double flangeThickness);
+TopoDS_Shape create_three_way_chamfer_round_corner_working_well_part(
+    double length, double width, double height, double length1, double width1,
+    double cornerLength2, double cornerRadius, double angle, double yoffset,
+    double zoffset);
+TopoDS_Shape create_three_way_circle_well_part(double length, double width,
+                                               double height, double length1,
+                                               double width1, double wellRadius,
+                                               double weelheight,
+                                               double zoffset);
+TopoDS_Shape create_three_way_corner_working_well_part(
+    double length, double width, double height, double length1, double width1,
+    double cornerLength, double cornerWidth, double zoffset);
+TopoDS_Shape
+create_three_way_double_shaft_tunnel(const three_way_well_params &params);
+TopoDS_Shape
+create_three_way_open_cut_tunnel(const three_way_well_params &params);
+TopoDS_Shape create_three_way_rectangular_well_part(
+    double length, double width, double height, double length1, double width1,
+    double wellWidth, double weelheight, double zoffset);
+TopoDS_Shape create_three_way_round_working_well_part(
+    double length, double width, double height, double length1, double width1,
+    double cornerRadius, double zoffset);
+TopoDS_Shape
+create_three_way_underground_tunnel(const three_way_well_params &params);
+TopoDS_Shape
+create_three_way_working_well(const three_way_well_params &params);
+TopoDS_Shape create_transition_section(const tunnel_well_params &params,
+                                       bool isOuter);
+TopoDS_Shape create_transition_shape(const TopoDS_Shape &profile,
+                                     const pipe_endpoint &endpoint,
+                                     const gp_Vec &direction, double scale);
+TopoDS_Wire make_wire_from_segments(
+    const std::vector<std::vector<gp_Pnt>> &wires,
+    const boost::optional<std::vector<segment_type>> &segment_types);
+shape_profile scale_profile(const shape_profile &profile, double scale);
 
 } // namespace topo
 } // namespace flywave

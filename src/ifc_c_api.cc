@@ -1,4 +1,5 @@
 #include "ifc_c_api.h"
+#include "cgo_lock.hh"
 #include "ifc.hh"
 #include "ifc_impl.hh"
 #include "shape.hh"
@@ -52,7 +53,8 @@ template <typename T> void free_object_vector(T **objects) {
 extern "C" {
 #endif
 
-ifc_convert_t *ifc_convert_new() { try { return new ifc_convert_t{nullptr};   }
+ifc_convert_t *ifc_convert_new() {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return new ifc_convert_t{nullptr};   }
   catch (const std::exception &e) {
     (void)e;
     return nullptr;
@@ -62,7 +64,8 @@ ifc_convert_t *ifc_convert_new() { try { return new ifc_convert_t{nullptr};   }
   }
 }
 
-void ifc_convert_free(ifc_convert_t *p) { try {
+void ifc_convert_free(ifc_convert_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     delete p;
   }
@@ -75,6 +78,7 @@ void ifc_convert_free(ifc_convert_t *p) { try {
 }
 
 _Bool ifc_convert_load(ifc_convert_t *p, const char *filename) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   if (!p)
     return false;
   try {
@@ -88,7 +92,8 @@ _Bool ifc_convert_load(ifc_convert_t *p, const char *filename) {
   }
 }
 
-char *ifc_convert_get_version(ifc_convert_t *p) { try {
+char *ifc_convert_get_version(ifc_convert_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!p || !p->ct)
     return nullptr;
   return strdup(p->ct->get_version().c_str());
@@ -102,7 +107,8 @@ char *ifc_convert_get_version(ifc_convert_t *p) { try {
   }
 }
 
-ifc_data_t *ifc_convert_get_data(ifc_convert_t *p) { try {
+ifc_data_t *ifc_convert_get_data(ifc_convert_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!p)
     return nullptr;
   auto data = p->ct->get_data();
@@ -119,7 +125,8 @@ ifc_data_t *ifc_convert_get_data(ifc_convert_t *p) { try {
   }
 }
 
-ifc_element_t **ifc_convert_get_elements(ifc_convert_t *p, int *count) { try {
+ifc_element_t **ifc_convert_get_elements(ifc_convert_t *p, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!p || !p->ct) {
     *count = 0;
     return nullptr;
@@ -157,7 +164,8 @@ ifc_element_t **ifc_convert_get_elements(ifc_convert_t *p, int *count) { try {
 }
 
 ifc_triangulation_t **ifc_convert_get_triangulations(ifc_convert_t *p,
-                                                     int *count) { try {
+                                                     int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!p || !p->ct) {
     *count = 0;
     return nullptr;
@@ -193,7 +201,8 @@ ifc_triangulation_t **ifc_convert_get_triangulations(ifc_convert_t *p,
   }
 }
 
-ifc_element_t **ifc_get_elements(const char *filename, int *count) { try {
+ifc_element_t **ifc_get_elements(const char *filename, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto ct = flywave::ifc::get_convert(filename);
   if (!ct) {
     *count = 0;
@@ -231,7 +240,8 @@ ifc_element_t **ifc_get_elements(const char *filename, int *count) { try {
   }
 }
 
-ifc_triangulation_t **ifc_get_triangulations(const char *filename, int *count) { try {
+ifc_triangulation_t **ifc_get_triangulations(const char *filename, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto ct = flywave::ifc::get_convert(filename);
   if (!ct) {
     *count = 0;
@@ -268,7 +278,8 @@ ifc_triangulation_t **ifc_get_triangulations(const char *filename, int *count) {
   }
 }
 
-void ifc_triangulations_free(ifc_triangulation_t **shps) { try {
+void ifc_triangulations_free(ifc_triangulation_t **shps) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (shps) {
          delete []shps;
     }
@@ -281,7 +292,8 @@ void ifc_triangulations_free(ifc_triangulation_t **shps) { try {
 }
 
 ifc_triangulation_t *ifc_get_triangulation(ifc_triangulation_t **triangulations,
-                                           int index) { try {
+                                           int index) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return triangulations[index];
   }
   catch (const std::exception &e) {
@@ -293,7 +305,8 @@ ifc_triangulation_t *ifc_get_triangulation(ifc_triangulation_t **triangulations,
   }
 }
 
-_Bool is_ifc_file(const char *filename) { try {
+_Bool is_ifc_file(const char *filename) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto v = flywave::ifc::get_version(filename);
   return !v.empty();
   }
@@ -306,7 +319,8 @@ _Bool is_ifc_file(const char *filename) { try {
   }
 }
 
-void ifc_elements_free(ifc_element_t **shps) { try {
+void ifc_elements_free(ifc_element_t **shps) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (shps) {
       for(int i=0;shps[i]!=nullptr;i++){
           if(shps[i]->transform!=nullptr){
@@ -324,7 +338,8 @@ void ifc_elements_free(ifc_element_t **shps) { try {
   }
 }
 
-int ifc_element_get_id(ifc_element_t *p) { try { return p->id;   }
+int ifc_element_get_id(ifc_element_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return p->id;   }
   catch (const std::exception &e) {
     (void)e;
     return 0;
@@ -334,7 +349,8 @@ int ifc_element_get_id(ifc_element_t *p) { try { return p->id;   }
   }
 }
 
-int ifc_element_get_parent_id(ifc_element_t *p) { try { return p->parent_id;   }
+int ifc_element_get_parent_id(ifc_element_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return p->parent_id;   }
   catch (const std::exception &e) {
     (void)e;
     return 0;
@@ -344,7 +360,8 @@ int ifc_element_get_parent_id(ifc_element_t *p) { try { return p->parent_id;   }
   }
 }
 
-const char *ifc_element_get_name(ifc_element_t *p) { try { return p->name.c_str();   }
+const char *ifc_element_get_name(ifc_element_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return p->name.c_str();   }
   catch (const std::exception &e) {
     (void)e;
     return nullptr;
@@ -354,7 +371,8 @@ const char *ifc_element_get_name(ifc_element_t *p) { try { return p->name.c_str(
   }
 }
 
-const char *ifc_element_get_guid(ifc_element_t *p) { try { return p->guid.c_str();   }
+const char *ifc_element_get_guid(ifc_element_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return p->guid.c_str();   }
   catch (const std::exception &e) {
     (void)e;
     return nullptr;
@@ -364,7 +382,8 @@ const char *ifc_element_get_guid(ifc_element_t *p) { try { return p->guid.c_str(
   }
 }
 
-const double *ifc_element_get_transform(ifc_element_t *p) { try { return p->transform;   }
+const double *ifc_element_get_transform(ifc_element_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return p->transform;   }
   catch (const std::exception &e) {
     (void)e;
     return nullptr;
@@ -375,7 +394,8 @@ const double *ifc_element_get_transform(ifc_element_t *p) { try { return p->tran
 }
 
 
-topo_shape_t *ifc_element_get_shape(ifc_element_t *p) { try {
+topo_shape_t *ifc_element_get_shape(ifc_element_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new topo_shape_t{
       .shp = p->shp,
   };
@@ -389,7 +409,8 @@ topo_shape_t *ifc_element_get_shape(ifc_element_t *p) { try {
   }
 }
 
-const char *ifc_element_get_type(ifc_element_t *p) { try { return p->type.c_str();   }
+const char *ifc_element_get_type(ifc_element_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return p->type.c_str();   }
   catch (const std::exception &e) {
     (void)e;
     return nullptr;
@@ -399,7 +420,8 @@ const char *ifc_element_get_type(ifc_element_t *p) { try { return p->type.c_str(
   }
 }
 
-ifc_element_t *ifc_get_element(ifc_element_t **elements, int index) { try {
+ifc_element_t *ifc_get_element(ifc_element_t **elements, int index) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return elements[index];
   }
   catch (const std::exception &e) {
@@ -411,7 +433,8 @@ ifc_element_t *ifc_get_element(ifc_element_t **elements, int index) { try {
   }
 }
 
-void ifc_triangulation_free(ifc_triangulation_t *p) { try {
+void ifc_triangulation_free(ifc_triangulation_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
       if(p->transform!=nullptr){
           delete [] p->transform;
@@ -426,7 +449,8 @@ void ifc_triangulation_free(ifc_triangulation_t *p) { try {
   }
 }
 
-const double *ifc_triangulation_get_verts(ifc_triangulation_t *p, int *count) { try {
+const double *ifc_triangulation_get_verts(ifc_triangulation_t *p, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto &tri = p->tri;
   *count = static_cast<int>(tri->verts().size());
   return tri->verts().data();
@@ -440,7 +464,8 @@ const double *ifc_triangulation_get_verts(ifc_triangulation_t *p, int *count) { 
   }
 }
 
-const int *ifc_triangulation_get_faces(ifc_triangulation_t *p, int *count) { try {
+const int *ifc_triangulation_get_faces(ifc_triangulation_t *p, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto &tri = p->tri;
   *count = static_cast<int>(tri->faces().size());
   return tri->faces().data();
@@ -455,7 +480,8 @@ const int *ifc_triangulation_get_faces(ifc_triangulation_t *p, int *count) { try
 }
 
 const double *ifc_triangulation_get_normals(ifc_triangulation_t *p,
-                                            int *count) { try {
+                                            int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto &tri = p->tri;
   *count = static_cast<int>(tri->normals().size());
   return tri->normals().data();
@@ -469,7 +495,8 @@ const double *ifc_triangulation_get_normals(ifc_triangulation_t *p,
   }
 }
 
-const int *ifc_triangulation_get_edges(ifc_triangulation_t *p, int *count) { try {
+const int *ifc_triangulation_get_edges(ifc_triangulation_t *p, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto &tri = p->tri;
   *count = static_cast<int>(tri->edges().size());
   return tri->edges().data();
@@ -483,7 +510,8 @@ const int *ifc_triangulation_get_edges(ifc_triangulation_t *p, int *count) { try
   }
 }
 
-const double *ifc_triangulation_get_uvs(ifc_triangulation_t *p, int *count) { try {
+const double *ifc_triangulation_get_uvs(ifc_triangulation_t *p, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto &tri = p->tri;
   *count = static_cast<int>(tri->uvs().size());
   return tri->uvs().data();
@@ -498,7 +526,8 @@ const double *ifc_triangulation_get_uvs(ifc_triangulation_t *p, int *count) { tr
 }
 
 const int *ifc_triangulation_get_material_ids(ifc_triangulation_t *p,
-                                              int *count) { try {
+                                              int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto &tri = p->tri;
   *count = static_cast<int>(tri->material_ids().size());
   return tri->material_ids().data();
@@ -512,7 +541,8 @@ const int *ifc_triangulation_get_material_ids(ifc_triangulation_t *p,
   }
 }
 
-const int *ifc_triangulation_get_item_ids(ifc_triangulation_t *p, int *count) { try {
+const int *ifc_triangulation_get_item_ids(ifc_triangulation_t *p, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto &tri = p->tri;
   *count = static_cast<int>(tri->item_ids().size());
   return tri->item_ids().data();
@@ -526,7 +556,8 @@ const int *ifc_triangulation_get_item_ids(ifc_triangulation_t *p, int *count) { 
   }
 }
 
-int ifc_triangulation_get_id(ifc_triangulation_t *p) { try { return p->id;   }
+int ifc_triangulation_get_id(ifc_triangulation_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return p->id;   }
   catch (const std::exception &e) {
     (void)e;
     return 0;
@@ -536,7 +567,8 @@ int ifc_triangulation_get_id(ifc_triangulation_t *p) { try { return p->id;   }
   }
 }
 
-int ifc_triangulation_get_parent_id(ifc_triangulation_t *p) { try { return p->parent_id;   }
+int ifc_triangulation_get_parent_id(ifc_triangulation_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return p->parent_id;   }
   catch (const std::exception &e) {
     (void)e;
     return 0;
@@ -546,7 +578,8 @@ int ifc_triangulation_get_parent_id(ifc_triangulation_t *p) { try { return p->pa
   }
 }
 
-const char *ifc_triangulation_get_name(ifc_triangulation_t *p) { try { return p->name.c_str();   }
+const char *ifc_triangulation_get_name(ifc_triangulation_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return p->name.c_str();   }
   catch (const std::exception &e) {
     (void)e;
     return nullptr;
@@ -556,7 +589,8 @@ const char *ifc_triangulation_get_name(ifc_triangulation_t *p) { try { return p-
   }
 }
 
-const char *ifc_triangulation_get_guid(ifc_triangulation_t *p) { try { return p->guid.c_str();   }
+const char *ifc_triangulation_get_guid(ifc_triangulation_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return p->guid.c_str();   }
   catch (const std::exception &e) {
     (void)e;
     return nullptr;
@@ -566,7 +600,8 @@ const char *ifc_triangulation_get_guid(ifc_triangulation_t *p) { try { return p-
   }
 }
 
-const char *ifc_triangulation_get_type(ifc_triangulation_t *p) { try { return p->type.c_str();   }
+const char *ifc_triangulation_get_type(ifc_triangulation_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return p->type.c_str();   }
   catch (const std::exception &e) {
     (void)e;
     return nullptr;
@@ -576,7 +611,8 @@ const char *ifc_triangulation_get_type(ifc_triangulation_t *p) { try { return p-
   }
 }
 
-const double *ifc_triangulation_get_transform(ifc_triangulation_t *p) { try {
+const double *ifc_triangulation_get_transform(ifc_triangulation_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return p->transform;
   }
   catch (const std::exception &e) {
@@ -589,7 +625,8 @@ const double *ifc_triangulation_get_transform(ifc_triangulation_t *p) { try {
 }
 
 const int *ifc_triangulation_get_edges_item_ids(ifc_triangulation_t *p,
-                                                int *count) { try {
+                                                int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto &tri = p->tri;
   *count = static_cast<int>(tri->edges_item_ids().size());
   return tri->edges_item_ids().data();
@@ -604,7 +641,8 @@ const int *ifc_triangulation_get_edges_item_ids(ifc_triangulation_t *p,
 }
 
 ifc_triangulation_material_t *
-ifc_triangulation_get_materials(ifc_triangulation_t *p, int *count) { try {
+ifc_triangulation_get_materials(ifc_triangulation_t *p, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto &tri = p->tri;
   auto &materials = tri->materials();
   *count = static_cast<int>(materials.size());
@@ -623,7 +661,8 @@ ifc_triangulation_get_materials(ifc_triangulation_t *p, int *count) { try {
   }
 }
 
-void ifc_triangulation_materials_free(ifc_triangulation_material_t *mtls) { try {
+void ifc_triangulation_materials_free(ifc_triangulation_material_t *mtls) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (mtls) {
     delete[] mtls;
   }
@@ -636,7 +675,8 @@ void ifc_triangulation_materials_free(ifc_triangulation_material_t *mtls) { try 
 }
 
 const char *
-ifc_triangulation_material_get_name(ifc_triangulation_material_t *mtl) { try {
+ifc_triangulation_material_get_name(ifc_triangulation_material_t *mtl) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return mtl->mtl->name.c_str();
   }
   catch (const std::exception &e) {
@@ -649,7 +689,8 @@ ifc_triangulation_material_get_name(ifc_triangulation_material_t *mtl) { try {
 }
 
 ifc_color_t
-ifc_triangulation_material_get_diffuse(ifc_triangulation_material_t *mtl) { try {
+ifc_triangulation_material_get_diffuse(ifc_triangulation_material_t *mtl) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   const auto &c = mtl->mtl->diffuse;
   return ifc_color_t{c.r(), c.g(), c.b()};
   }
@@ -663,7 +704,8 @@ ifc_triangulation_material_get_diffuse(ifc_triangulation_material_t *mtl) { try 
 }
 
 ifc_color_t
-ifc_triangulation_material_get_surface(ifc_triangulation_material_t *mtl) { try {
+ifc_triangulation_material_get_surface(ifc_triangulation_material_t *mtl) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   const auto &c = mtl->mtl->surface;
   return ifc_color_t{c.r(), c.g(), c.b()};
   }
@@ -677,7 +719,8 @@ ifc_triangulation_material_get_surface(ifc_triangulation_material_t *mtl) { try 
 }
 
 ifc_color_t
-ifc_triangulation_material_get_specular(ifc_triangulation_material_t *mtl) { try {
+ifc_triangulation_material_get_specular(ifc_triangulation_material_t *mtl) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   const auto &c = mtl->mtl->specular;
   return ifc_color_t{c.r(), c.g(), c.b()};
   }
@@ -691,7 +734,8 @@ ifc_triangulation_material_get_specular(ifc_triangulation_material_t *mtl) { try
 }
 
 double
-ifc_triangulation_material_get_specularity(ifc_triangulation_material_t *mtl) { try {
+ifc_triangulation_material_get_specularity(ifc_triangulation_material_t *mtl) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return mtl->mtl->specularity;
   }
   catch (const std::exception &e) {
@@ -704,7 +748,8 @@ ifc_triangulation_material_get_specularity(ifc_triangulation_material_t *mtl) { 
 }
 
 double
-ifc_triangulation_material_get_transparency(ifc_triangulation_material_t *mtl) { try {
+ifc_triangulation_material_get_transparency(ifc_triangulation_material_t *mtl) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return mtl->mtl->transparency;
   }
   catch (const std::exception &e) {
@@ -715,7 +760,8 @@ ifc_triangulation_material_get_transparency(ifc_triangulation_material_t *mtl) {
     return 0;
   }
 }
-int ifc_triangulation_material_size() { try {
+int ifc_triangulation_material_size() {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
     return sizeof(ifc_triangulation_material_t);
   }
   catch (const std::exception &e) {
@@ -727,7 +773,8 @@ int ifc_triangulation_material_size() { try {
   }
 }
 
-IFCCAPICALL void ifc_header_free(ifc_header_t *header) { try {
+IFCCAPICALL void ifc_header_free(ifc_header_t *header) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (header) {
     delete header;
   }
@@ -741,7 +788,8 @@ IFCCAPICALL void ifc_header_free(ifc_header_t *header) { try {
 
 // FileDescription 相关函数实现
 IFCCAPICALL const char *
-ifc_header_get_implementation_level(ifc_header_t *header) { try {
+ifc_header_get_implementation_level(ifc_header_t *header) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return header ? header->header.file_description.implementation_level.c_str()
                 : nullptr;
   }
@@ -755,7 +803,8 @@ ifc_header_get_implementation_level(ifc_header_t *header) { try {
 }
 
 IFCCAPICALL const char **ifc_header_get_descriptions(ifc_header_t *header,
-                                                     int *count) { try {
+                                                     int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!header || !count)
     return nullptr;
 
@@ -778,7 +827,8 @@ IFCCAPICALL const char **ifc_header_get_descriptions(ifc_header_t *header,
   }
 }
 
-IFCCAPICALL void ifc_header_free_descriptions(const char **descriptions) { try {
+IFCCAPICALL void ifc_header_free_descriptions(const char **descriptions) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (descriptions) {
     delete[] descriptions;
   }
@@ -791,7 +841,8 @@ IFCCAPICALL void ifc_header_free_descriptions(const char **descriptions) { try {
 }
 
 // FileName 相关函数实现
-IFCCAPICALL const char *ifc_header_get_filename(ifc_header_t *header) { try {
+IFCCAPICALL const char *ifc_header_get_filename(ifc_header_t *header) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return header ? header->header.file_name.name.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -804,7 +855,8 @@ IFCCAPICALL const char *ifc_header_get_filename(ifc_header_t *header) { try {
 }
 
 IFCCAPICALL const char **ifc_header_get_authors(ifc_header_t *header,
-                                                int *count) { try {
+                                                int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!header || !count)
     return nullptr;
 
@@ -827,7 +879,8 @@ IFCCAPICALL const char **ifc_header_get_authors(ifc_header_t *header,
   }
 }
 
-IFCCAPICALL void ifc_header_free_authors(const char **authors) { try {
+IFCCAPICALL void ifc_header_free_authors(const char **authors) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (authors) {
     delete[] authors;
   }
@@ -840,7 +893,8 @@ IFCCAPICALL void ifc_header_free_authors(const char **authors) { try {
 }
 
 IFCCAPICALL const char **ifc_header_get_organizations(ifc_header_t *header,
-                                                      int *count) { try {
+                                                      int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!header || !count)
     return nullptr;
 
@@ -863,7 +917,8 @@ IFCCAPICALL const char **ifc_header_get_organizations(ifc_header_t *header,
   }
 }
 
-IFCCAPICALL void ifc_header_free_organizations(const char **organizations) { try {
+IFCCAPICALL void ifc_header_free_organizations(const char **organizations) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (organizations) {
     delete[] organizations;
   }
@@ -875,7 +930,8 @@ IFCCAPICALL void ifc_header_free_organizations(const char **organizations) { try
   }
 }
 
-IFCCAPICALL const char *ifc_header_get_timestamp(ifc_header_t *header) { try {
+IFCCAPICALL const char *ifc_header_get_timestamp(ifc_header_t *header) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return header ? header->header.file_name.time_stamp.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -888,7 +944,8 @@ IFCCAPICALL const char *ifc_header_get_timestamp(ifc_header_t *header) { try {
 }
 
 IFCCAPICALL const char *
-ifc_header_get_preprocessor_version(ifc_header_t *header) { try {
+ifc_header_get_preprocessor_version(ifc_header_t *header) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return header ? header->header.file_name.preprocessor_version.c_str()
                 : nullptr;
   }
@@ -902,7 +959,8 @@ ifc_header_get_preprocessor_version(ifc_header_t *header) { try {
 }
 
 IFCCAPICALL const char *
-ifc_header_get_originating_system(ifc_header_t *header) { try {
+ifc_header_get_originating_system(ifc_header_t *header) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return header ? header->header.file_name.originating_system.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -914,7 +972,8 @@ ifc_header_get_originating_system(ifc_header_t *header) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_header_get_authorization(ifc_header_t *header) { try {
+IFCCAPICALL const char *ifc_header_get_authorization(ifc_header_t *header) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return header ? header->header.file_name.authorization.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -928,7 +987,8 @@ IFCCAPICALL const char *ifc_header_get_authorization(ifc_header_t *header) { try
 
 // FileSchema 相关函数实现
 IFCCAPICALL const char **ifc_header_get_schema_identifiers(ifc_header_t *header,
-                                                           int *count) { try {
+                                                           int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!header || !count)
     return nullptr;
 
@@ -951,7 +1011,8 @@ IFCCAPICALL const char **ifc_header_get_schema_identifiers(ifc_header_t *header,
   }
 }
 
-IFCCAPICALL void ifc_header_free_schema_identifiers(const char **identifiers) { try {
+IFCCAPICALL void ifc_header_free_schema_identifiers(const char **identifiers) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (identifiers) {
     delete[] identifiers;
   }
@@ -963,7 +1024,8 @@ IFCCAPICALL void ifc_header_free_schema_identifiers(const char **identifiers) { 
   }
 }
 
-IFCCAPICALL void ifc_unit_free(ifc_unit_t *unit) { try {
+IFCCAPICALL void ifc_unit_free(ifc_unit_t *unit) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (unit) {
     delete unit;
   }
@@ -975,7 +1037,8 @@ IFCCAPICALL void ifc_unit_free(ifc_unit_t *unit) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_unit_get_type(ifc_unit_t *unit) { try {
+IFCCAPICALL const char *ifc_unit_get_type(ifc_unit_t *unit) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return unit ? unit->unit.type.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -987,7 +1050,8 @@ IFCCAPICALL const char *ifc_unit_get_type(ifc_unit_t *unit) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_unit_get_name(ifc_unit_t *unit) { try {
+IFCCAPICALL const char *ifc_unit_get_name(ifc_unit_t *unit) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return unit ? unit->unit.name.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -999,7 +1063,8 @@ IFCCAPICALL const char *ifc_unit_get_name(ifc_unit_t *unit) { try {
   }
 }
 
-IFCCAPICALL _Bool ifc_unit_has_SI_equivalent(ifc_unit_t *unit) { try {
+IFCCAPICALL _Bool ifc_unit_has_SI_equivalent(ifc_unit_t *unit) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return unit ? unit->unit.SI_equivalent.is_initialized() : false;
   }
   catch (const std::exception &e) {
@@ -1011,7 +1076,8 @@ IFCCAPICALL _Bool ifc_unit_has_SI_equivalent(ifc_unit_t *unit) { try {
   }
 }
 
-IFCCAPICALL double ifc_unit_get_SI_equivalent(ifc_unit_t *unit) { try {
+IFCCAPICALL double ifc_unit_get_SI_equivalent(ifc_unit_t *unit) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!unit || !unit->unit.SI_equivalent) {
     return 0.0;
   }
@@ -1026,7 +1092,8 @@ IFCCAPICALL double ifc_unit_get_SI_equivalent(ifc_unit_t *unit) { try {
   }
 }
 
-IFCCAPICALL void ifc_property_free(ifc_property_t *property) { try {
+IFCCAPICALL void ifc_property_free(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (property) {
     delete property;
   }
@@ -1038,7 +1105,8 @@ IFCCAPICALL void ifc_property_free(ifc_property_t *property) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_property_get_name(ifc_property_t *property) { try {
+IFCCAPICALL const char *ifc_property_get_name(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return property ? property->property.name.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1050,7 +1118,8 @@ IFCCAPICALL const char *ifc_property_get_name(ifc_property_t *property) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_property_get_type(ifc_property_t *property) { try {
+IFCCAPICALL const char *ifc_property_get_type(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return property ? property->property.type.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1062,7 +1131,8 @@ IFCCAPICALL const char *ifc_property_get_type(ifc_property_t *property) { try {
   }
 }
 
-IFCCAPICALL _Bool ifc_property_is_null(ifc_property_t *property) { try {
+IFCCAPICALL _Bool ifc_property_is_null(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return property
              ? boost::get<boost::blank>(&property->property.value) != nullptr
              : false;
@@ -1076,7 +1146,8 @@ IFCCAPICALL _Bool ifc_property_is_null(ifc_property_t *property) { try {
   }
 }
 
-IFCCAPICALL _Bool ifc_property_is_int(ifc_property_t *property) { try {
+IFCCAPICALL _Bool ifc_property_is_int(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return property ? boost::get<int>(&property->property.value) != nullptr
                   : false;
   }
@@ -1089,7 +1160,8 @@ IFCCAPICALL _Bool ifc_property_is_int(ifc_property_t *property) { try {
   }
 }
 
-IFCCAPICALL _Bool ifc_property_is_bool(ifc_property_t *property) { try {
+IFCCAPICALL _Bool ifc_property_is_bool(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return property ? boost::get<bool>(&property->property.value) != nullptr
                   : false;
   }
@@ -1102,7 +1174,8 @@ IFCCAPICALL _Bool ifc_property_is_bool(ifc_property_t *property) { try {
   }
 }
 
-IFCCAPICALL _Bool ifc_property_is_double(ifc_property_t *property) { try {
+IFCCAPICALL _Bool ifc_property_is_double(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return property ? boost::get<double>(&property->property.value) != nullptr
                   : false;
   }
@@ -1115,7 +1188,8 @@ IFCCAPICALL _Bool ifc_property_is_double(ifc_property_t *property) { try {
   }
 }
 
-IFCCAPICALL _Bool ifc_property_is_string(ifc_property_t *property) { try {
+IFCCAPICALL _Bool ifc_property_is_string(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return property
              ? boost::get<std::string>(&property->property.value) != nullptr
              : false;
@@ -1129,7 +1203,8 @@ IFCCAPICALL _Bool ifc_property_is_string(ifc_property_t *property) { try {
   }
 }
 
-IFCCAPICALL _Bool ifc_property_is_bitset(ifc_property_t *property) { try {
+IFCCAPICALL _Bool ifc_property_is_bitset(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property)
     return false;
   return property->property.value.type() == typeid(boost::dynamic_bitset<>);
@@ -1143,7 +1218,8 @@ IFCCAPICALL _Bool ifc_property_is_bitset(ifc_property_t *property) { try {
   }
 }
 
-IFCCAPICALL _Bool ifc_property_is_int_vector(ifc_property_t *property) { try {
+IFCCAPICALL _Bool ifc_property_is_int_vector(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property)
     return false;
   return property->property.value.type() == typeid(std::vector<int>);
@@ -1157,7 +1233,8 @@ IFCCAPICALL _Bool ifc_property_is_int_vector(ifc_property_t *property) { try {
   }
 }
 
-IFCCAPICALL _Bool ifc_property_is_double_vector(ifc_property_t *property) { try {
+IFCCAPICALL _Bool ifc_property_is_double_vector(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property)
     return false;
   return property->property.value.type() == typeid(std::vector<double>);
@@ -1171,7 +1248,8 @@ IFCCAPICALL _Bool ifc_property_is_double_vector(ifc_property_t *property) { try 
   }
 }
 
-IFCCAPICALL _Bool ifc_property_is_string_vector(ifc_property_t *property) { try {
+IFCCAPICALL _Bool ifc_property_is_string_vector(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property)
     return false;
   return property->property.value.type() == typeid(std::vector<std::string>);
@@ -1185,7 +1263,8 @@ IFCCAPICALL _Bool ifc_property_is_string_vector(ifc_property_t *property) { try 
   }
 }
 
-IFCCAPICALL _Bool ifc_property_is_bitset_vector(ifc_property_t *property) { try {
+IFCCAPICALL _Bool ifc_property_is_bitset_vector(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property)
     return false;
   return property->property.value.type() ==
@@ -1200,7 +1279,8 @@ IFCCAPICALL _Bool ifc_property_is_bitset_vector(ifc_property_t *property) { try 
   }
 }
 
-IFCCAPICALL _Bool ifc_property_is_int_matrix(ifc_property_t *property) { try {
+IFCCAPICALL _Bool ifc_property_is_int_matrix(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property)
     return false;
   return property->property.value.type() ==
@@ -1215,7 +1295,8 @@ IFCCAPICALL _Bool ifc_property_is_int_matrix(ifc_property_t *property) { try {
   }
 }
 
-IFCCAPICALL _Bool ifc_property_is_double_matrix(ifc_property_t *property) { try {
+IFCCAPICALL _Bool ifc_property_is_double_matrix(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property)
     return false;
   return property->property.value.type() ==
@@ -1230,7 +1311,8 @@ IFCCAPICALL _Bool ifc_property_is_double_matrix(ifc_property_t *property) { try 
   }
 }
 
-IFCCAPICALL int ifc_property_get_int(ifc_property_t *property) { try {
+IFCCAPICALL int ifc_property_get_int(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property || !ifc_property_is_int(property))
     return 0;
   return boost::get<int>(property->property.value);
@@ -1244,7 +1326,8 @@ IFCCAPICALL int ifc_property_get_int(ifc_property_t *property) { try {
   }
 }
 
-IFCCAPICALL _Bool ifc_property_get_bool(ifc_property_t *property) { try {
+IFCCAPICALL _Bool ifc_property_get_bool(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property || !ifc_property_is_bool(property))
     return false;
   return boost::get<bool>(property->property.value);
@@ -1258,7 +1341,8 @@ IFCCAPICALL _Bool ifc_property_get_bool(ifc_property_t *property) { try {
   }
 }
 
-IFCCAPICALL double ifc_property_get_double(ifc_property_t *property) { try {
+IFCCAPICALL double ifc_property_get_double(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property || !ifc_property_is_double(property))
     return 0.0;
   return boost::get<double>(property->property.value);
@@ -1272,7 +1356,8 @@ IFCCAPICALL double ifc_property_get_double(ifc_property_t *property) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_property_get_string(ifc_property_t *property) { try {
+IFCCAPICALL const char *ifc_property_get_string(ifc_property_t *property) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property || !ifc_property_is_string(property))
     return nullptr;
   return boost::get<std::string>(property->property.value).c_str();
@@ -1287,7 +1372,8 @@ IFCCAPICALL const char *ifc_property_get_string(ifc_property_t *property) { try 
 }
 
 IFCCAPICALL const unsigned char *
-ifc_property_get_bitset(ifc_property_t *property, int *size) { try {
+ifc_property_get_bitset(ifc_property_t *property, int *size) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property || !size || !ifc_property_is_bitset(property))
     return nullptr;
 
@@ -1314,7 +1400,8 @@ ifc_property_get_bitset(ifc_property_t *property, int *size) { try {
 }
 
 IFCCAPICALL const int *ifc_property_get_int_vector(ifc_property_t *property,
-                                                   int *count) { try {
+                                                   int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property || !count || !ifc_property_is_int_vector(property))
     return nullptr;
 
@@ -1334,7 +1421,8 @@ IFCCAPICALL const int *ifc_property_get_int_vector(ifc_property_t *property,
 }
 
 IFCCAPICALL const double *
-ifc_property_get_double_vector(ifc_property_t *property, int *count) { try {
+ifc_property_get_double_vector(ifc_property_t *property, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property || !count || !ifc_property_is_double_vector(property))
     return nullptr;
 
@@ -1354,7 +1442,8 @@ ifc_property_get_double_vector(ifc_property_t *property, int *count) { try {
 }
 
 IFCCAPICALL const char **
-ifc_property_get_string_vector(ifc_property_t *property, int *count) { try {
+ifc_property_get_string_vector(ifc_property_t *property, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property || !count || !ifc_property_is_string_vector(property))
     return nullptr;
 
@@ -1377,7 +1466,8 @@ ifc_property_get_string_vector(ifc_property_t *property, int *count) { try {
 
 IFCCAPICALL unsigned char **
 ifc_property_get_bitset_vector(ifc_property_t *property, int *count,
-                               int **sizes) { try {
+                               int **sizes) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property || !count || !sizes || !ifc_property_is_bitset_vector(property))
     return nullptr;
 
@@ -1410,7 +1500,8 @@ ifc_property_get_bitset_vector(ifc_property_t *property, int *count,
 }
 
 IFCCAPICALL const int **ifc_property_get_int_matrix(ifc_property_t *property,
-                                                    int *rows, int *cols) { try {
+                                                    int *rows, int *cols) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property || !rows || !cols || !ifc_property_is_int_matrix(property))
     return nullptr;
 
@@ -1444,7 +1535,8 @@ IFCCAPICALL const int **ifc_property_get_int_matrix(ifc_property_t *property,
 }
 
 IFCCAPICALL const double **
-ifc_property_get_double_matrix(ifc_property_t *property, int *rows, int *cols) { try {
+ifc_property_get_double_matrix(ifc_property_t *property, int *rows, int *cols) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!property || !rows || !cols || !ifc_property_is_double_matrix(property))
     return nullptr;
 
@@ -1478,7 +1570,8 @@ ifc_property_get_double_matrix(ifc_property_t *property, int *rows, int *cols) {
 
 // 元素可能是 new unsigned char[] / new int[] / new double[] / new char*[]
 // 等 POD 数组, 统一用无类型 operator delete[] 释放, 避免跨类型 delete[] 的 UB。
-IFCCAPICALL void ifc_property_free_vector(void *vec) { try {
+IFCCAPICALL void ifc_property_free_vector(void *vec) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (vec) {
     ::operator delete[](vec);
   }
@@ -1490,7 +1583,8 @@ IFCCAPICALL void ifc_property_free_vector(void *vec) { try {
   }
 }
 
-IFCCAPICALL void ifc_property_free_matrix(void **matrix, int rows) { try {
+IFCCAPICALL void ifc_property_free_matrix(void **matrix, int rows) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!matrix)
     return;
 
@@ -1508,7 +1602,8 @@ IFCCAPICALL void ifc_property_free_matrix(void **matrix, int rows) { try {
   }
 }
 
-IFCCAPICALL void ifc_property_set_free(ifc_property_set_t *ps) { try {
+IFCCAPICALL void ifc_property_set_free(ifc_property_set_t *ps) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (ps) {
     delete ps;
   }
@@ -1520,7 +1615,8 @@ IFCCAPICALL void ifc_property_set_free(ifc_property_set_t *ps) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_property_set_get_id(ifc_property_set_t *ps) { try {
+IFCCAPICALL const char *ifc_property_set_get_id(ifc_property_set_t *ps) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return ps ? ps->ps.id.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1532,7 +1628,8 @@ IFCCAPICALL const char *ifc_property_set_get_id(ifc_property_set_t *ps) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_property_set_get_name(ifc_property_set_t *ps) { try {
+IFCCAPICALL const char *ifc_property_set_get_name(ifc_property_set_t *ps) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return ps ? ps->ps.name.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1545,7 +1642,8 @@ IFCCAPICALL const char *ifc_property_set_get_name(ifc_property_set_t *ps) { try 
 }
 
 IFCCAPICALL ifc_property_t **
-ifc_property_set_get_properties(ifc_property_set_t *ps, int *count) { try {
+ifc_property_set_get_properties(ifc_property_set_t *ps, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!ps || !count)
     return nullptr;
 
@@ -1568,7 +1666,8 @@ ifc_property_set_get_properties(ifc_property_set_t *ps, int *count) { try {
   }
 }
 
-IFCCAPICALL void ifc_property_set_free_properties(ifc_property_t **properties) { try {
+IFCCAPICALL void ifc_property_set_free_properties(ifc_property_t **properties) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!properties)
     return;
   delete[] properties;
@@ -1580,7 +1679,8 @@ IFCCAPICALL void ifc_property_set_free_properties(ifc_property_t **properties) {
   }
 }
 
-IFCCAPICALL void ifc_quantity_free(ifc_quantity_t *quantity) { try {
+IFCCAPICALL void ifc_quantity_free(ifc_quantity_t *quantity) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (quantity) {
     delete quantity;
   }
@@ -1592,7 +1692,8 @@ IFCCAPICALL void ifc_quantity_free(ifc_quantity_t *quantity) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_quantity_get_type(ifc_quantity_t *quantity) { try {
+IFCCAPICALL const char *ifc_quantity_get_type(ifc_quantity_t *quantity) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return quantity ? quantity->quantity.type.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1604,7 +1705,8 @@ IFCCAPICALL const char *ifc_quantity_get_type(ifc_quantity_t *quantity) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_quantity_get_name(ifc_quantity_t *quantity) { try {
+IFCCAPICALL const char *ifc_quantity_get_name(ifc_quantity_t *quantity) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return quantity ? quantity->quantity.name.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1616,7 +1718,8 @@ IFCCAPICALL const char *ifc_quantity_get_name(ifc_quantity_t *quantity) { try {
   }
 }
 
-IFCCAPICALL double ifc_quantity_get_value(ifc_quantity_t *quantity) { try {
+IFCCAPICALL double ifc_quantity_get_value(ifc_quantity_t *quantity) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return quantity ? quantity->quantity.value : 0.0;
   }
   catch (const std::exception &e) {
@@ -1628,7 +1731,8 @@ IFCCAPICALL double ifc_quantity_get_value(ifc_quantity_t *quantity) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_quantity_get_unit(ifc_quantity_t *quantity) { try {
+IFCCAPICALL const char *ifc_quantity_get_unit(ifc_quantity_t *quantity) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return quantity ? quantity->quantity.unit.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1640,7 +1744,8 @@ IFCCAPICALL const char *ifc_quantity_get_unit(ifc_quantity_t *quantity) { try {
   }
 }
 
-IFCCAPICALL void ifc_element_quantity_free(ifc_element_quantity_t *eq) { try {
+IFCCAPICALL void ifc_element_quantity_free(ifc_element_quantity_t *eq) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (eq) {
     delete eq;
   }
@@ -1653,7 +1758,8 @@ IFCCAPICALL void ifc_element_quantity_free(ifc_element_quantity_t *eq) { try {
 }
 
 IFCCAPICALL const char *
-ifc_element_quantity_get_id(ifc_element_quantity_t *eq) { try {
+ifc_element_quantity_get_id(ifc_element_quantity_t *eq) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return eq ? eq->quantity.id.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1666,7 +1772,8 @@ ifc_element_quantity_get_id(ifc_element_quantity_t *eq) { try {
 }
 
 IFCCAPICALL const char *
-ifc_element_quantity_get_name(ifc_element_quantity_t *eq) { try {
+ifc_element_quantity_get_name(ifc_element_quantity_t *eq) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return eq ? eq->quantity.name.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1679,7 +1786,8 @@ ifc_element_quantity_get_name(ifc_element_quantity_t *eq) { try {
 }
 
 IFCCAPICALL ifc_quantity_t **
-ifc_element_quantity_get_quantities(ifc_element_quantity_t *eq, int *count) { try {
+ifc_element_quantity_get_quantities(ifc_element_quantity_t *eq, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!eq || !count)
     return nullptr;
 
@@ -1703,7 +1811,8 @@ ifc_element_quantity_get_quantities(ifc_element_quantity_t *eq, int *count) { tr
 }
 
 IFCCAPICALL void
-ifc_element_quantity_free_quantities(ifc_quantity_t **quantities) { try {
+ifc_element_quantity_free_quantities(ifc_quantity_t **quantities) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!quantities)
     return;
   delete[] quantities;
@@ -1715,7 +1824,8 @@ ifc_element_quantity_free_quantities(ifc_quantity_t **quantities) { try {
   }
 }
 
-IFCCAPICALL void ifc_task_time_free(ifc_task_time_t *tt) { try {
+IFCCAPICALL void ifc_task_time_free(ifc_task_time_t *tt) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (tt) {
     delete tt;
   }
@@ -1727,7 +1837,8 @@ IFCCAPICALL void ifc_task_time_free(ifc_task_time_t *tt) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_task_time_get_schedule_start(ifc_task_time_t *tt) { try {
+IFCCAPICALL const char *ifc_task_time_get_schedule_start(ifc_task_time_t *tt) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return tt ? tt->time.schedule_start.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1739,7 +1850,8 @@ IFCCAPICALL const char *ifc_task_time_get_schedule_start(ifc_task_time_t *tt) { 
   }
 }
 
-IFCCAPICALL const char *ifc_task_time_get_schedule_finish(ifc_task_time_t *tt) { try {
+IFCCAPICALL const char *ifc_task_time_get_schedule_finish(ifc_task_time_t *tt) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return tt ? tt->time.schedule_finish.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1751,7 +1863,8 @@ IFCCAPICALL const char *ifc_task_time_get_schedule_finish(ifc_task_time_t *tt) {
   }
 }
 
-IFCCAPICALL const char *ifc_task_time_get_actual_start(ifc_task_time_t *tt) { try {
+IFCCAPICALL const char *ifc_task_time_get_actual_start(ifc_task_time_t *tt) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return tt ? tt->time.actual_start.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1763,7 +1876,8 @@ IFCCAPICALL const char *ifc_task_time_get_actual_start(ifc_task_time_t *tt) { tr
   }
 }
 
-IFCCAPICALL const char *ifc_task_time_get_actual_finish(ifc_task_time_t *tt) { try {
+IFCCAPICALL const char *ifc_task_time_get_actual_finish(ifc_task_time_t *tt) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return tt ? tt->time.actual_finish.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1775,7 +1889,8 @@ IFCCAPICALL const char *ifc_task_time_get_actual_finish(ifc_task_time_t *tt) { t
   }
 }
 
-IFCCAPICALL const char *ifc_task_time_get_free_float(ifc_task_time_t *tt) { try {
+IFCCAPICALL const char *ifc_task_time_get_free_float(ifc_task_time_t *tt) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return tt ? tt->time.free_float.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1787,7 +1902,8 @@ IFCCAPICALL const char *ifc_task_time_get_free_float(ifc_task_time_t *tt) { try 
   }
 }
 
-IFCCAPICALL const char *ifc_task_time_get_total_float(ifc_task_time_t *tt) { try {
+IFCCAPICALL const char *ifc_task_time_get_total_float(ifc_task_time_t *tt) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return tt ? tt->time.total_float.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1799,7 +1915,8 @@ IFCCAPICALL const char *ifc_task_time_get_total_float(ifc_task_time_t *tt) { try
   }
 }
 
-IFCCAPICALL _Bool ifc_task_time_is_critical(ifc_task_time_t *tt) { try {
+IFCCAPICALL _Bool ifc_task_time_is_critical(ifc_task_time_t *tt) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return tt ? tt->time.is_critical : false;
   }
   catch (const std::exception &e) {
@@ -1811,7 +1928,8 @@ IFCCAPICALL _Bool ifc_task_time_is_critical(ifc_task_time_t *tt) { try {
   }
 }
 
-IFCCAPICALL void ifc_task_free(ifc_task_t *task) { try {
+IFCCAPICALL void ifc_task_free(ifc_task_t *task) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (task) {
     delete task;
   }
@@ -1824,7 +1942,8 @@ IFCCAPICALL void ifc_task_free(ifc_task_t *task) { try {
 }
 
 // 基本属性实现
-IFCCAPICALL const char *ifc_task_get_id(ifc_task_t *task) { try {
+IFCCAPICALL const char *ifc_task_get_id(ifc_task_t *task) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return task ? task->task.id.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1836,7 +1955,8 @@ IFCCAPICALL const char *ifc_task_get_id(ifc_task_t *task) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_task_get_name(ifc_task_t *task) { try {
+IFCCAPICALL const char *ifc_task_get_name(ifc_task_t *task) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return task ? task->task.name.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1848,7 +1968,8 @@ IFCCAPICALL const char *ifc_task_get_name(ifc_task_t *task) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_task_get_status(ifc_task_t *task) { try {
+IFCCAPICALL const char *ifc_task_get_status(ifc_task_t *task) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return task ? task->task.status.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1860,7 +1981,8 @@ IFCCAPICALL const char *ifc_task_get_status(ifc_task_t *task) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_task_get_description(ifc_task_t *task) { try {
+IFCCAPICALL const char *ifc_task_get_description(ifc_task_t *task) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return task ? task->task.description.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1872,7 +1994,8 @@ IFCCAPICALL const char *ifc_task_get_description(ifc_task_t *task) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_task_get_object_type(ifc_task_t *task) { try {
+IFCCAPICALL const char *ifc_task_get_object_type(ifc_task_t *task) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return task ? task->task.object_type.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1884,7 +2007,8 @@ IFCCAPICALL const char *ifc_task_get_object_type(ifc_task_t *task) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_task_get_work_method(ifc_task_t *task) { try {
+IFCCAPICALL const char *ifc_task_get_work_method(ifc_task_t *task) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return task ? task->task.work_method.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -1896,7 +2020,8 @@ IFCCAPICALL const char *ifc_task_get_work_method(ifc_task_t *task) { try {
   }
 }
 
-IFCCAPICALL int ifc_task_get_priority(ifc_task_t *task) { try {
+IFCCAPICALL int ifc_task_get_priority(ifc_task_t *task) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return task ? task->task.priority : 0;
   }
   catch (const std::exception &e) {
@@ -1908,7 +2033,8 @@ IFCCAPICALL int ifc_task_get_priority(ifc_task_t *task) { try {
   }
 }
 
-IFCCAPICALL _Bool ifc_task_is_milestone(ifc_task_t *task) { try {
+IFCCAPICALL _Bool ifc_task_is_milestone(ifc_task_t *task) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return task ? task->task.is_milestone : false;
   }
   catch (const std::exception &e) {
@@ -1920,7 +2046,8 @@ IFCCAPICALL _Bool ifc_task_is_milestone(ifc_task_t *task) { try {
   }
 }
 
-IFCCAPICALL ifc_task_time_t *ifc_task_get_task_time(ifc_task_t *task) { try {
+IFCCAPICALL ifc_task_time_t *ifc_task_get_task_time(ifc_task_t *task) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!task || !task->task.task_time)
     return nullptr;
   return new _ifc_task_time_t{*task->task.task_time};
@@ -1935,7 +2062,8 @@ IFCCAPICALL ifc_task_time_t *ifc_task_get_task_time(ifc_task_t *task) { try {
 }
 
 IFCCAPICALL const char **ifc_task_get_predecessors(ifc_task_t *task,
-                                                   int *count) { try {
+                                                   int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!task || !count)
     return nullptr;
   return get_string_vector(task->task.predecessor_tasks, count);
@@ -1949,7 +2077,8 @@ IFCCAPICALL const char **ifc_task_get_predecessors(ifc_task_t *task,
   }
 }
 
-IFCCAPICALL const char **ifc_task_get_successors(ifc_task_t *task, int *count) { try {
+IFCCAPICALL const char **ifc_task_get_successors(ifc_task_t *task, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!task || !count)
     return nullptr;
   return get_string_vector(task->task.successor_tasks, count);
@@ -1964,7 +2093,8 @@ IFCCAPICALL const char **ifc_task_get_successors(ifc_task_t *task, int *count) {
 }
 
 // 子任务
-IFCCAPICALL ifc_task_t **ifc_task_get_subtasks(ifc_task_t *task, int *count) { try {
+IFCCAPICALL ifc_task_t **ifc_task_get_subtasks(ifc_task_t *task, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!task || !count)
     return nullptr;
 
@@ -1988,7 +2118,8 @@ IFCCAPICALL ifc_task_t **ifc_task_get_subtasks(ifc_task_t *task, int *count) { t
 }
 
 // 列表释放函数
-IFCCAPICALL void ifc_task_free_string_list(const char **list) { try {
+IFCCAPICALL void ifc_task_free_string_list(const char **list) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (list)
     delete[] list;
   }
@@ -1999,7 +2130,8 @@ IFCCAPICALL void ifc_task_free_string_list(const char **list) { try {
   }
 }
 
-IFCCAPICALL void ifc_task_free_subtasks(ifc_task_t **subtasks) { try {
+IFCCAPICALL void ifc_task_free_subtasks(ifc_task_t **subtasks) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!subtasks)
     return;
 
@@ -2012,7 +2144,8 @@ IFCCAPICALL void ifc_task_free_subtasks(ifc_task_t **subtasks) { try {
   }
 }
 
-IFCCAPICALL void ifc_work_time_free(ifc_work_time_t *wt) { try {
+IFCCAPICALL void ifc_work_time_free(ifc_work_time_t *wt) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (wt) {
     delete wt;
   }
@@ -2024,7 +2157,8 @@ IFCCAPICALL void ifc_work_time_free(ifc_work_time_t *wt) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_work_time_get_name(ifc_work_time_t *wt) { try {
+IFCCAPICALL const char *ifc_work_time_get_name(ifc_work_time_t *wt) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return wt ? wt->tm.name.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2036,7 +2170,8 @@ IFCCAPICALL const char *ifc_work_time_get_name(ifc_work_time_t *wt) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_work_time_get_start_time(ifc_work_time_t *wt) { try {
+IFCCAPICALL const char *ifc_work_time_get_start_time(ifc_work_time_t *wt) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return wt ? wt->tm.start_time.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2048,7 +2183,8 @@ IFCCAPICALL const char *ifc_work_time_get_start_time(ifc_work_time_t *wt) { try 
   }
 }
 
-IFCCAPICALL const char *ifc_work_time_get_finish_time(ifc_work_time_t *wt) { try {
+IFCCAPICALL const char *ifc_work_time_get_finish_time(ifc_work_time_t *wt) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return wt ? wt->tm.finish_time.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2060,7 +2196,8 @@ IFCCAPICALL const char *ifc_work_time_get_finish_time(ifc_work_time_t *wt) { try
   }
 }
 
-IFCCAPICALL void ifc_work_calendar_free(ifc_work_calendar_t *wc) { try {
+IFCCAPICALL void ifc_work_calendar_free(ifc_work_calendar_t *wc) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (wc) {
     delete wc;
   }
@@ -2072,7 +2209,8 @@ IFCCAPICALL void ifc_work_calendar_free(ifc_work_calendar_t *wc) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_work_calendar_get_id(ifc_work_calendar_t *wc) { try {
+IFCCAPICALL const char *ifc_work_calendar_get_id(ifc_work_calendar_t *wc) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return wc ? wc->wc.id.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2084,7 +2222,8 @@ IFCCAPICALL const char *ifc_work_calendar_get_id(ifc_work_calendar_t *wc) { try 
   }
 }
 
-IFCCAPICALL const char *ifc_work_calendar_get_name(ifc_work_calendar_t *wc) { try {
+IFCCAPICALL const char *ifc_work_calendar_get_name(ifc_work_calendar_t *wc) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return wc ? wc->wc.name.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2097,7 +2236,8 @@ IFCCAPICALL const char *ifc_work_calendar_get_name(ifc_work_calendar_t *wc) { tr
 }
 
 IFCCAPICALL ifc_work_time_t **
-ifc_work_calendar_get_working_times(ifc_work_calendar_t *wc, int *count) { try {
+ifc_work_calendar_get_working_times(ifc_work_calendar_t *wc, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!wc || !count)
     return nullptr;
 
@@ -2121,7 +2261,8 @@ ifc_work_calendar_get_working_times(ifc_work_calendar_t *wc, int *count) { try {
 }
 
 IFCCAPICALL void
-ifc_work_calendar_free_working_times(ifc_work_time_t **working_times) { try {
+ifc_work_calendar_free_working_times(ifc_work_time_t **working_times) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!working_times)
     return;
   delete[] working_times;
@@ -2133,7 +2274,8 @@ ifc_work_calendar_free_working_times(ifc_work_time_t **working_times) { try {
   }
 }
 
-IFCCAPICALL void ifc_work_schedule_free(ifc_work_schedule_t *ws) { try {
+IFCCAPICALL void ifc_work_schedule_free(ifc_work_schedule_t *ws) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (ws) {
     delete ws;
   }
@@ -2145,7 +2287,8 @@ IFCCAPICALL void ifc_work_schedule_free(ifc_work_schedule_t *ws) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_work_schedule_get_id(ifc_work_schedule_t *ws) { try {
+IFCCAPICALL const char *ifc_work_schedule_get_id(ifc_work_schedule_t *ws) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return ws ? ws->ws.id.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2157,7 +2300,8 @@ IFCCAPICALL const char *ifc_work_schedule_get_id(ifc_work_schedule_t *ws) { try 
   }
 }
 
-IFCCAPICALL const char *ifc_work_schedule_get_name(ifc_work_schedule_t *ws) { try {
+IFCCAPICALL const char *ifc_work_schedule_get_name(ifc_work_schedule_t *ws) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return ws ? ws->ws.name.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2170,7 +2314,8 @@ IFCCAPICALL const char *ifc_work_schedule_get_name(ifc_work_schedule_t *ws) { tr
 }
 
 IFCCAPICALL ifc_task_t **ifc_work_schedule_get_tasks(ifc_work_schedule_t *ws,
-                                                     int *count) { try {
+                                                     int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!ws || !count)
     return nullptr;
 
@@ -2193,7 +2338,8 @@ IFCCAPICALL ifc_task_t **ifc_work_schedule_get_tasks(ifc_work_schedule_t *ws,
   }
 }
 
-IFCCAPICALL void ifc_work_schedule_free_tasks(ifc_task_t **tasks) { try {
+IFCCAPICALL void ifc_work_schedule_free_tasks(ifc_task_t **tasks) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!tasks)
     return;
 
@@ -2206,7 +2352,8 @@ IFCCAPICALL void ifc_work_schedule_free_tasks(ifc_task_t **tasks) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_work_schedule_get_purpose(ifc_work_schedule_t *ws) { try {
+IFCCAPICALL const char *ifc_work_schedule_get_purpose(ifc_work_schedule_t *ws) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!ws)
     return NULL;
   return ws->ws.purpose.c_str();
@@ -2221,7 +2368,8 @@ IFCCAPICALL const char *ifc_work_schedule_get_purpose(ifc_work_schedule_t *ws) {
 }
 
 IFCCAPICALL const char *
-ifc_work_schedule_get_start_time(ifc_work_schedule_t *ws) { try {
+ifc_work_schedule_get_start_time(ifc_work_schedule_t *ws) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!ws)
     return NULL;
   return ws->ws.start_time.c_str();
@@ -2236,7 +2384,8 @@ ifc_work_schedule_get_start_time(ifc_work_schedule_t *ws) { try {
 }
 
 IFCCAPICALL const char *
-ifc_work_schedule_get_finish_time(ifc_work_schedule_t *ws) { try {
+ifc_work_schedule_get_finish_time(ifc_work_schedule_t *ws) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!ws)
     return NULL;
   return ws->ws.finish_time.c_str();
@@ -2250,7 +2399,8 @@ ifc_work_schedule_get_finish_time(ifc_work_schedule_t *ws) { try {
   }
 }
 
-IFCCAPICALL double ifc_work_schedule_get_duration(ifc_work_schedule_t *ws) { try {
+IFCCAPICALL double ifc_work_schedule_get_duration(ifc_work_schedule_t *ws) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!ws)
     return 0.0;
   return ws->ws.duration;
@@ -2264,7 +2414,8 @@ IFCCAPICALL double ifc_work_schedule_get_duration(ifc_work_schedule_t *ws) { try
   }
 }
 
-IFCCAPICALL double ifc_work_schedule_get_total_float(ifc_work_schedule_t *ws) { try {
+IFCCAPICALL double ifc_work_schedule_get_total_float(ifc_work_schedule_t *ws) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!ws)
     return 0.0;
   return ws->ws.total_float;
@@ -2279,7 +2430,8 @@ IFCCAPICALL double ifc_work_schedule_get_total_float(ifc_work_schedule_t *ws) { 
 }
 
 IFCCAPICALL const char **ifc_work_schedule_get_creators(ifc_work_schedule_t *ws,
-                                                        int *count) { try {
+                                                        int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!ws || !count)
     return NULL;
 
@@ -2302,7 +2454,8 @@ IFCCAPICALL const char **ifc_work_schedule_get_creators(ifc_work_schedule_t *ws,
   }
 }
 
-IFCCAPICALL void ifc_work_schedule_free_creators(const char **creators) { try {
+IFCCAPICALL void ifc_work_schedule_free_creators(const char **creators) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (creators) {
     free(creators);
   }
@@ -2313,7 +2466,8 @@ IFCCAPICALL void ifc_work_schedule_free_creators(const char **creators) { try {
   catch (...) {
   }
 }
-IFCCAPICALL void ifc_work_plan_free(ifc_work_plan_t *wp) { try {
+IFCCAPICALL void ifc_work_plan_free(ifc_work_plan_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (wp) {
     delete wp;
   }
@@ -2325,7 +2479,8 @@ IFCCAPICALL void ifc_work_plan_free(ifc_work_plan_t *wp) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_work_plan_get_id(ifc_work_plan_t *wp) { try {
+IFCCAPICALL const char *ifc_work_plan_get_id(ifc_work_plan_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return wp ? wp->wp.id.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2337,7 +2492,8 @@ IFCCAPICALL const char *ifc_work_plan_get_id(ifc_work_plan_t *wp) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_work_plan_get_name(ifc_work_plan_t *wp) { try {
+IFCCAPICALL const char *ifc_work_plan_get_name(ifc_work_plan_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return wp ? wp->wp.name.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2350,7 +2506,8 @@ IFCCAPICALL const char *ifc_work_plan_get_name(ifc_work_plan_t *wp) { try {
 }
 
 IFCCAPICALL const char **
-ifc_work_plan_get_work_schedule_ids(ifc_work_plan_t *wp, int *count) { try {
+ifc_work_plan_get_work_schedule_ids(ifc_work_plan_t *wp, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!wp || !count)
     return nullptr;
 
@@ -2373,7 +2530,8 @@ ifc_work_plan_get_work_schedule_ids(ifc_work_plan_t *wp, int *count) { try {
   }
 }
 
-IFCCAPICALL void ifc_work_plan_free_work_schedule_ids(const char **ids) { try {
+IFCCAPICALL void ifc_work_plan_free_work_schedule_ids(const char **ids) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (ids) {
     delete[] ids;
   }
@@ -2385,7 +2543,8 @@ IFCCAPICALL void ifc_work_plan_free_work_schedule_ids(const char **ids) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_work_plan_get_purpose(ifc_work_plan_t *wp) { try {
+IFCCAPICALL const char *ifc_work_plan_get_purpose(ifc_work_plan_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!wp)
     return NULL;
   return wp->wp.purpose.c_str();
@@ -2399,7 +2558,8 @@ IFCCAPICALL const char *ifc_work_plan_get_purpose(ifc_work_plan_t *wp) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_work_plan_get_start_time(ifc_work_plan_t *wp) { try {
+IFCCAPICALL const char *ifc_work_plan_get_start_time(ifc_work_plan_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!wp)
     return NULL;
   return wp->wp.start_time.c_str();
@@ -2413,7 +2573,8 @@ IFCCAPICALL const char *ifc_work_plan_get_start_time(ifc_work_plan_t *wp) { try 
   }
 }
 
-IFCCAPICALL const char *ifc_work_plan_get_finish_time(ifc_work_plan_t *wp) { try {
+IFCCAPICALL const char *ifc_work_plan_get_finish_time(ifc_work_plan_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!wp)
     return NULL;
   return wp->wp.finish_time.c_str();
@@ -2427,7 +2588,8 @@ IFCCAPICALL const char *ifc_work_plan_get_finish_time(ifc_work_plan_t *wp) { try
   }
 }
 
-IFCCAPICALL double ifc_work_plan_get_duration(ifc_work_plan_t *wp) { try {
+IFCCAPICALL double ifc_work_plan_get_duration(ifc_work_plan_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!wp)
     return 0.0;
   return wp->wp.duration;
@@ -2441,7 +2603,8 @@ IFCCAPICALL double ifc_work_plan_get_duration(ifc_work_plan_t *wp) { try {
   }
 }
 
-IFCCAPICALL double ifc_work_plan_get_total_float(ifc_work_plan_t *wp) { try {
+IFCCAPICALL double ifc_work_plan_get_total_float(ifc_work_plan_t *wp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!wp)
     return 0.0;
   return wp->wp.total_float;
@@ -2456,7 +2619,8 @@ IFCCAPICALL double ifc_work_plan_get_total_float(ifc_work_plan_t *wp) { try {
 }
 
 IFCCAPICALL const char **ifc_work_plan_get_creators(ifc_work_plan_t *wp,
-                                                    int *count) { try {
+                                                    int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!wp || !count)
     return NULL;
 
@@ -2479,7 +2643,8 @@ IFCCAPICALL const char **ifc_work_plan_get_creators(ifc_work_plan_t *wp,
   }
 }
 
-IFCCAPICALL void ifc_work_plan_free_creators(const char **creators) { try {
+IFCCAPICALL void ifc_work_plan_free_creators(const char **creators) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (creators) {
     free(creators);
   }
@@ -2490,7 +2655,8 @@ IFCCAPICALL void ifc_work_plan_free_creators(const char **creators) { try {
   catch (...) {
   }
 }
-IFCCAPICALL void ifc_connection_free(ifc_connection_t *conn) { try {
+IFCCAPICALL void ifc_connection_free(ifc_connection_t *conn) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (conn) {
     delete conn;
   }
@@ -2502,7 +2668,8 @@ IFCCAPICALL void ifc_connection_free(ifc_connection_t *conn) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_connection_get_id(ifc_connection_t *conn) { try {
+IFCCAPICALL const char *ifc_connection_get_id(ifc_connection_t *conn) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return conn ? conn->con.id.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2515,7 +2682,8 @@ IFCCAPICALL const char *ifc_connection_get_id(ifc_connection_t *conn) { try {
 }
 
 IFCCAPICALL const char *
-ifc_connection_get_relating_element_id(ifc_connection_t *conn) { try {
+ifc_connection_get_relating_element_id(ifc_connection_t *conn) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return conn ? conn->con.relating_element_id.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2528,7 +2696,8 @@ ifc_connection_get_relating_element_id(ifc_connection_t *conn) { try {
 }
 
 IFCCAPICALL const char *
-ifc_connection_get_related_element_id(ifc_connection_t *conn) { try {
+ifc_connection_get_related_element_id(ifc_connection_t *conn) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return conn ? conn->con.related_element_id.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2540,7 +2709,8 @@ ifc_connection_get_related_element_id(ifc_connection_t *conn) { try {
   }
 }
 
-IFCCAPICALL void ifc_type_object_free(ifc_type_object_t *obj) { try {
+IFCCAPICALL void ifc_type_object_free(ifc_type_object_t *obj) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (obj) {
     delete obj;
   }
@@ -2552,7 +2722,8 @@ IFCCAPICALL void ifc_type_object_free(ifc_type_object_t *obj) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_type_object_get_id(ifc_type_object_t *obj) { try {
+IFCCAPICALL const char *ifc_type_object_get_id(ifc_type_object_t *obj) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return obj ? obj->obj.id.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2564,7 +2735,8 @@ IFCCAPICALL const char *ifc_type_object_get_id(ifc_type_object_t *obj) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_type_object_get_name(ifc_type_object_t *obj) { try {
+IFCCAPICALL const char *ifc_type_object_get_name(ifc_type_object_t *obj) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return obj ? obj->obj.name.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2577,7 +2749,8 @@ IFCCAPICALL const char *ifc_type_object_get_name(ifc_type_object_t *obj) { try {
 }
 
 IFCCAPICALL ifc_property_set_t **
-ifc_type_object_get_property_sets(ifc_type_object_t *obj, int *count) { try {
+ifc_type_object_get_property_sets(ifc_type_object_t *obj, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!obj || !count)
     return nullptr;
 
@@ -2601,7 +2774,8 @@ ifc_type_object_get_property_sets(ifc_type_object_t *obj, int *count) { try {
 }
 
 IFCCAPICALL void
-ifc_type_object_free_property_sets(ifc_property_set_t **psets) { try {
+ifc_type_object_free_property_sets(ifc_property_set_t **psets) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!psets)
     return;
   delete[] psets;
@@ -2613,7 +2787,8 @@ ifc_type_object_free_property_sets(ifc_property_set_t **psets) { try {
   }
 }
 
-IFCCAPICALL void ifc_layer_free(ifc_layer_t *layer) { try {
+IFCCAPICALL void ifc_layer_free(ifc_layer_t *layer) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (layer) {
     delete layer;
   }
@@ -2625,7 +2800,8 @@ IFCCAPICALL void ifc_layer_free(ifc_layer_t *layer) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_layer_get_name(ifc_layer_t *layer) { try {
+IFCCAPICALL const char *ifc_layer_get_name(ifc_layer_t *layer) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return layer ? layer->lyr.name.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2637,7 +2813,8 @@ IFCCAPICALL const char *ifc_layer_get_name(ifc_layer_t *layer) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_layer_get_id(ifc_layer_t *layer) { try {
+IFCCAPICALL const char *ifc_layer_get_id(ifc_layer_t *layer) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return layer ? layer->lyr.id.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2650,7 +2827,8 @@ IFCCAPICALL const char *ifc_layer_get_id(ifc_layer_t *layer) { try {
 }
 
 IFCCAPICALL const char **ifc_layer_get_assigned_elements(ifc_layer_t *layer,
-                                                         int *count) { try {
+                                                         int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!layer || !count)
     return nullptr;
 
@@ -2673,7 +2851,8 @@ IFCCAPICALL const char **ifc_layer_get_assigned_elements(ifc_layer_t *layer,
   }
 }
 
-IFCCAPICALL const char *ifc_layer_get_description(ifc_layer_t *layer) { try {
+IFCCAPICALL const char *ifc_layer_get_description(ifc_layer_t *layer) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return layer ? layer->lyr.description.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2685,7 +2864,8 @@ IFCCAPICALL const char *ifc_layer_get_description(ifc_layer_t *layer) { try {
   }
 }
 
-IFCCAPICALL void ifc_layer_free_assigned_elements(const char **elements) { try {
+IFCCAPICALL void ifc_layer_free_assigned_elements(const char **elements) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (elements) {
     delete[] elements;
   }
@@ -2697,7 +2877,8 @@ IFCCAPICALL void ifc_layer_free_assigned_elements(const char **elements) { try {
   }
 }
 
-IFCCAPICALL void ifc_material_free(ifc_material_t *mtl) { try {
+IFCCAPICALL void ifc_material_free(ifc_material_t *mtl) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (mtl) {
     delete mtl;
   }
@@ -2709,7 +2890,8 @@ IFCCAPICALL void ifc_material_free(ifc_material_t *mtl) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_material_get_id(ifc_material_t *mtl) { try {
+IFCCAPICALL const char *ifc_material_get_id(ifc_material_t *mtl) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return mtl ? mtl->mtl.id.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2721,7 +2903,8 @@ IFCCAPICALL const char *ifc_material_get_id(ifc_material_t *mtl) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_material_get_name(ifc_material_t *mtl) { try {
+IFCCAPICALL const char *ifc_material_get_name(ifc_material_t *mtl) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return mtl ? mtl->mtl.name.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2733,7 +2916,8 @@ IFCCAPICALL const char *ifc_material_get_name(ifc_material_t *mtl) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_material_get_description(ifc_material_t *mtl) { try {
+IFCCAPICALL const char *ifc_material_get_description(ifc_material_t *mtl) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return mtl ? mtl->mtl.description.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2745,7 +2929,8 @@ IFCCAPICALL const char *ifc_material_get_description(ifc_material_t *mtl) { try 
   }
 }
 
-IFCCAPICALL const char *ifc_material_get_category(ifc_material_t *mtl) { try {
+IFCCAPICALL const char *ifc_material_get_category(ifc_material_t *mtl) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return mtl ? mtl->mtl.category.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2757,7 +2942,8 @@ IFCCAPICALL const char *ifc_material_get_category(ifc_material_t *mtl) { try {
   }
 }
 
-IFCCAPICALL void ifc_group_free(ifc_group_t *group) { try {
+IFCCAPICALL void ifc_group_free(ifc_group_t *group) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (group) {
     delete group;
   }
@@ -2769,7 +2955,8 @@ IFCCAPICALL void ifc_group_free(ifc_group_t *group) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_group_get_id(ifc_group_t *group) { try {
+IFCCAPICALL const char *ifc_group_get_id(ifc_group_t *group) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return group ? group->group.id.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2781,7 +2968,8 @@ IFCCAPICALL const char *ifc_group_get_id(ifc_group_t *group) { try {
   }
 }
 
-IFCCAPICALL const char *ifc_group_get_name(ifc_group_t *group) { try {
+IFCCAPICALL const char *ifc_group_get_name(ifc_group_t *group) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return group ? group->group.name.c_str() : nullptr;
   }
   catch (const std::exception &e) {
@@ -2794,7 +2982,8 @@ IFCCAPICALL const char *ifc_group_get_name(ifc_group_t *group) { try {
 }
 
 IFCCAPICALL const char **ifc_group_get_member_ids(ifc_group_t *group,
-                                                  int *count) { try {
+                                                  int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!group || !count)
     return nullptr;
 
@@ -2817,7 +3006,8 @@ IFCCAPICALL const char **ifc_group_get_member_ids(ifc_group_t *group,
   }
 }
 
-IFCCAPICALL void ifc_group_free_member_ids(const char **member_ids) { try {
+IFCCAPICALL void ifc_group_free_member_ids(const char **member_ids) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (member_ids) {
     delete[] member_ids;
   }
@@ -2829,7 +3019,8 @@ IFCCAPICALL void ifc_group_free_member_ids(const char **member_ids) { try {
   }
 }
 
-IFCCAPICALL void ifc_data_free(ifc_data_t *data) { try {
+IFCCAPICALL void ifc_data_free(ifc_data_t *data) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (data) {
     delete data;
   }
@@ -2841,7 +3032,8 @@ IFCCAPICALL void ifc_data_free(ifc_data_t *data) { try {
   }
 }
 
-IFCCAPICALL ifc_header_t *ifc_data_get_header(ifc_data_t *data) { try {
+IFCCAPICALL ifc_header_t *ifc_data_get_header(ifc_data_t *data) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!data)
     return nullptr;
   return new _ifc_header_t{data->data->header};
@@ -2855,7 +3047,8 @@ IFCCAPICALL ifc_header_t *ifc_data_get_header(ifc_data_t *data) { try {
   }
 }
 
-IFCCAPICALL ifc_unit_t **ifc_data_get_units(ifc_data_t *data, int *count) { try {
+IFCCAPICALL ifc_unit_t **ifc_data_get_units(ifc_data_t *data, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!data || !count)
     return nullptr;
   return get_object_vector<_ifc_unit_t, ifcopenshell::data::IfcUnit>(
@@ -2871,7 +3064,8 @@ IFCCAPICALL ifc_unit_t **ifc_data_get_units(ifc_data_t *data, int *count) { try 
 }
 
 IFCCAPICALL ifc_property_set_t **ifc_data_get_properties(ifc_data_t *data,
-                                                         int *count) { try {
+                                                         int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!data || !count)
     return nullptr;
   return get_object_vector<_ifc_property_set_t,
@@ -2888,7 +3082,8 @@ IFCCAPICALL ifc_property_set_t **ifc_data_get_properties(ifc_data_t *data,
 }
 
 IFCCAPICALL ifc_element_quantity_t **ifc_data_get_quantities(ifc_data_t *data,
-                                                             int *count) { try {
+                                                             int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!data || !count)
     return nullptr;
   return get_object_vector<_ifc_element_quantity_t,
@@ -2905,7 +3100,8 @@ IFCCAPICALL ifc_element_quantity_t **ifc_data_get_quantities(ifc_data_t *data,
 }
 
 IFCCAPICALL ifc_work_schedule_t **ifc_data_get_work_schedules(ifc_data_t *data,
-                                                              int *count) { try {
+                                                              int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!data || !count)
     return nullptr;
   return get_object_vector<_ifc_work_schedule_t,
@@ -2922,7 +3118,8 @@ IFCCAPICALL ifc_work_schedule_t **ifc_data_get_work_schedules(ifc_data_t *data,
 }
 
 IFCCAPICALL ifc_work_plan_t **ifc_data_get_work_plans(ifc_data_t *data,
-                                                      int *count) { try {
+                                                      int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!data || !count)
     return nullptr;
   return get_object_vector<_ifc_work_plan_t, ifcopenshell::data::IfcWorkPlan>(
@@ -2938,7 +3135,8 @@ IFCCAPICALL ifc_work_plan_t **ifc_data_get_work_plans(ifc_data_t *data,
 }
 
 IFCCAPICALL ifc_work_calendar_t **ifc_data_get_calendars(ifc_data_t *data,
-                                                         int *count) { try {
+                                                         int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!data || !count)
     return nullptr;
   return get_object_vector<_ifc_work_calendar_t,
@@ -2955,7 +3153,8 @@ IFCCAPICALL ifc_work_calendar_t **ifc_data_get_calendars(ifc_data_t *data,
 }
 
 IFCCAPICALL ifc_connection_t **ifc_data_get_connections(ifc_data_t *data,
-                                                        int *count) { try {
+                                                        int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!data || !count)
     return nullptr;
   return get_object_vector<_ifc_connection_t,
@@ -2972,7 +3171,8 @@ IFCCAPICALL ifc_connection_t **ifc_data_get_connections(ifc_data_t *data,
 }
 
 IFCCAPICALL ifc_type_object_t **ifc_data_get_types(ifc_data_t *data,
-                                                   int *count) { try {
+                                                   int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!data || !count)
     return nullptr;
   return get_object_vector<_ifc_type_object_t,
@@ -2988,7 +3188,8 @@ IFCCAPICALL ifc_type_object_t **ifc_data_get_types(ifc_data_t *data,
   }
 }
 
-IFCCAPICALL ifc_layer_t **ifc_data_get_layers(ifc_data_t *data, int *count) { try {
+IFCCAPICALL ifc_layer_t **ifc_data_get_layers(ifc_data_t *data, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!data || !count)
     return nullptr;
   return get_object_vector<_ifc_layer_t, ifcopenshell::data::IfcLayer>(
@@ -3004,7 +3205,8 @@ IFCCAPICALL ifc_layer_t **ifc_data_get_layers(ifc_data_t *data, int *count) { tr
 }
 
 IFCCAPICALL ifc_material_t **ifc_data_get_materials(ifc_data_t *data,
-                                                    int *count) { try {
+                                                    int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!data || !count)
     return nullptr;
   return get_object_vector<_ifc_material_t, ifcopenshell::data::IfcMaterial>(
@@ -3019,7 +3221,8 @@ IFCCAPICALL ifc_material_t **ifc_data_get_materials(ifc_data_t *data,
   }
 }
 
-IFCCAPICALL ifc_group_t **ifc_data_get_groups(ifc_data_t *data, int *count) { try {
+IFCCAPICALL ifc_group_t **ifc_data_get_groups(ifc_data_t *data, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!data || !count)
     return nullptr;
   return get_object_vector<_ifc_group_t, ifcopenshell::data::IfcGroup>(
@@ -3034,7 +3237,8 @@ IFCCAPICALL ifc_group_t **ifc_data_get_groups(ifc_data_t *data, int *count) { tr
   }
 }
 
-IFCCAPICALL ifc_rel_defines_by_type_t **ifc_data_get_rel_defines_by_types(ifc_data_t *data, int *count){ try {
+IFCCAPICALL ifc_rel_defines_by_type_t **ifc_data_get_rel_defines_by_types(ifc_data_t *data, int *count){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!data || !count)
     return nullptr;
   return get_object_vector<_ifc_rel_defines_by_type_t, ifcopenshell::data::IfcRelDefinesByType>(
@@ -3049,7 +3253,8 @@ IFCCAPICALL ifc_rel_defines_by_type_t **ifc_data_get_rel_defines_by_types(ifc_da
   }
 }
 
-IFCCAPICALL ifc_rel_defines_by_properties_t **ifc_data_get_rel_defines_by_properties(ifc_data_t *data, int *count){ try {
+IFCCAPICALL ifc_rel_defines_by_properties_t **ifc_data_get_rel_defines_by_properties(ifc_data_t *data, int *count){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!data || !count)
     return nullptr;
   return get_object_vector<_ifc_rel_defines_by_properties_t, ifcopenshell::data::IfcRelDefinesByProperties>(
@@ -3066,7 +3271,8 @@ IFCCAPICALL ifc_rel_defines_by_properties_t **ifc_data_get_rel_defines_by_proper
 
 
 
-IFCCAPICALL void ifc_data_free_units(ifc_unit_t **units) { try {
+IFCCAPICALL void ifc_data_free_units(ifc_unit_t **units) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   free_object_vector(units);
   }
   catch (const std::exception &e) {
@@ -3076,7 +3282,8 @@ IFCCAPICALL void ifc_data_free_units(ifc_unit_t **units) { try {
   }
 }
 
-IFCCAPICALL void ifc_data_free_properties(ifc_property_set_t **properties) { try {
+IFCCAPICALL void ifc_data_free_properties(ifc_property_set_t **properties) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   free_object_vector(properties);
   }
   catch (const std::exception &e) {
@@ -3086,7 +3293,8 @@ IFCCAPICALL void ifc_data_free_properties(ifc_property_set_t **properties) { try
   }
 }
 
-IFCCAPICALL void ifc_data_free_quantities(ifc_element_quantity_t **quantities) { try {
+IFCCAPICALL void ifc_data_free_quantities(ifc_element_quantity_t **quantities) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   free_object_vector(quantities);
   }
   catch (const std::exception &e) {
@@ -3096,7 +3304,8 @@ IFCCAPICALL void ifc_data_free_quantities(ifc_element_quantity_t **quantities) {
   }
 }
 
-IFCCAPICALL void ifc_data_free_work_schedules(ifc_work_schedule_t **schedules) { try {
+IFCCAPICALL void ifc_data_free_work_schedules(ifc_work_schedule_t **schedules) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   free_object_vector(schedules);
   }
   catch (const std::exception &e) {
@@ -3106,7 +3315,8 @@ IFCCAPICALL void ifc_data_free_work_schedules(ifc_work_schedule_t **schedules) {
   }
 }
 
-IFCCAPICALL void ifc_data_free_work_plans(ifc_work_plan_t **plans) { try {
+IFCCAPICALL void ifc_data_free_work_plans(ifc_work_plan_t **plans) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   free_object_vector(plans);
   }
   catch (const std::exception &e) {
@@ -3116,7 +3326,8 @@ IFCCAPICALL void ifc_data_free_work_plans(ifc_work_plan_t **plans) { try {
   }
 }
 
-IFCCAPICALL void ifc_data_free_calendars(ifc_work_calendar_t **calendars) { try {
+IFCCAPICALL void ifc_data_free_calendars(ifc_work_calendar_t **calendars) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   free_object_vector(calendars);
   }
   catch (const std::exception &e) {
@@ -3126,7 +3337,8 @@ IFCCAPICALL void ifc_data_free_calendars(ifc_work_calendar_t **calendars) { try 
   }
 }
 
-IFCCAPICALL void ifc_data_free_connections(ifc_connection_t **connections) { try {
+IFCCAPICALL void ifc_data_free_connections(ifc_connection_t **connections) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   free_object_vector(connections);
   }
   catch (const std::exception &e) {
@@ -3136,7 +3348,8 @@ IFCCAPICALL void ifc_data_free_connections(ifc_connection_t **connections) { try
   }
 }
 
-IFCCAPICALL void ifc_data_free_types(ifc_type_object_t **types) { try {
+IFCCAPICALL void ifc_data_free_types(ifc_type_object_t **types) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   free_object_vector(types);
   }
   catch (const std::exception &e) {
@@ -3146,7 +3359,8 @@ IFCCAPICALL void ifc_data_free_types(ifc_type_object_t **types) { try {
   }
 }
 
-IFCCAPICALL void ifc_data_free_layers(ifc_layer_t **layers) { try {
+IFCCAPICALL void ifc_data_free_layers(ifc_layer_t **layers) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   free_object_vector(layers);
   }
   catch (const std::exception &e) {
@@ -3156,7 +3370,8 @@ IFCCAPICALL void ifc_data_free_layers(ifc_layer_t **layers) { try {
   }
 }
 
-IFCCAPICALL void ifc_data_free_materials(ifc_material_t **materials) { try {
+IFCCAPICALL void ifc_data_free_materials(ifc_material_t **materials) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   free_object_vector(materials);
   }
   catch (const std::exception &e) {
@@ -3166,7 +3381,8 @@ IFCCAPICALL void ifc_data_free_materials(ifc_material_t **materials) { try {
   }
 }
 
-IFCCAPICALL void ifc_data_free_groups(ifc_group_t **groups) { try {
+IFCCAPICALL void ifc_data_free_groups(ifc_group_t **groups) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   free_object_vector(groups);
   }
   catch (const std::exception &e) {
@@ -3176,7 +3392,8 @@ IFCCAPICALL void ifc_data_free_groups(ifc_group_t **groups) { try {
   }
 }
 
-IFCCAPICALL void ifc_data_free_rel_defines_by_types(ifc_rel_defines_by_type_t **rdts) { try {
+IFCCAPICALL void ifc_data_free_rel_defines_by_types(ifc_rel_defines_by_type_t **rdts) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   free_object_vector(rdts);
   }
   catch (const std::exception &e) {
@@ -3186,7 +3403,8 @@ IFCCAPICALL void ifc_data_free_rel_defines_by_types(ifc_rel_defines_by_type_t **
   }
 }
 
-IFCCAPICALL void ifc_data_free_rel_defines_by_properties(ifc_rel_defines_by_properties_t **rdts){ try {
+IFCCAPICALL void ifc_data_free_rel_defines_by_properties(ifc_rel_defines_by_properties_t **rdts){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   free_object_vector(rdts);
   }
   catch (const std::exception &e) {
@@ -3197,7 +3415,8 @@ IFCCAPICALL void ifc_data_free_rel_defines_by_properties(ifc_rel_defines_by_prop
 }
 
 // IfcTimePeriod 相关函数实现
-IFCCAPICALL const char *ifc_time_period_get_start_time(ifc_time_period_t *tp) { try {
+IFCCAPICALL const char *ifc_time_period_get_start_time(ifc_time_period_t *tp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return tp->tp.start_time.c_str();
   }
   catch (const std::exception &e) {
@@ -3209,7 +3428,8 @@ IFCCAPICALL const char *ifc_time_period_get_start_time(ifc_time_period_t *tp) { 
   }
 }
 
-IFCCAPICALL const char *ifc_time_period_get_end_time(ifc_time_period_t *tp) { try {
+IFCCAPICALL const char *ifc_time_period_get_end_time(ifc_time_period_t *tp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return tp->tp.end_time.c_str();
   }
   catch (const std::exception &e) {
@@ -3221,7 +3441,8 @@ IFCCAPICALL const char *ifc_time_period_get_end_time(ifc_time_period_t *tp) { tr
   }
 }
 
-IFCCAPICALL void ifc_time_period_free(ifc_time_period_t *tp) { try {
+IFCCAPICALL void ifc_time_period_free(ifc_time_period_t *tp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (tp) {
     delete tp;
   }
@@ -3235,7 +3456,8 @@ IFCCAPICALL void ifc_time_period_free(ifc_time_period_t *tp) { try {
 
 // IfcRecurrencePattern 基本属性函数实现
 IFCCAPICALL int
-ifc_recurrence_pattern_get_position(ifc_recurrence_pattern_t *rp) { try {
+ifc_recurrence_pattern_get_position(ifc_recurrence_pattern_t *rp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return rp->rp.position;
   }
   catch (const std::exception &e) {
@@ -3248,7 +3470,8 @@ ifc_recurrence_pattern_get_position(ifc_recurrence_pattern_t *rp) { try {
 }
 
 IFCCAPICALL int
-ifc_recurrence_pattern_get_interval(ifc_recurrence_pattern_t *rp) { try {
+ifc_recurrence_pattern_get_interval(ifc_recurrence_pattern_t *rp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return rp->rp.interval;
   }
   catch (const std::exception &e) {
@@ -3261,7 +3484,8 @@ ifc_recurrence_pattern_get_interval(ifc_recurrence_pattern_t *rp) { try {
 }
 
 IFCCAPICALL int
-ifc_recurrence_pattern_get_occurrences(ifc_recurrence_pattern_t *rp) { try {
+ifc_recurrence_pattern_get_occurrences(ifc_recurrence_pattern_t *rp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return rp->rp.occurrences;
   }
   catch (const std::exception &e) {
@@ -3276,7 +3500,8 @@ ifc_recurrence_pattern_get_occurrences(ifc_recurrence_pattern_t *rp) { try {
 // IfcRecurrencePattern 数组属性函数实现
 IFCCAPICALL const double *
 ifc_recurrence_pattern_get_day_components(ifc_recurrence_pattern_t *rp,
-                                          int *count) { try {
+                                          int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   *count = rp->rp.day_component.size();
   return rp->rp.day_component.data();
   }
@@ -3291,7 +3516,8 @@ ifc_recurrence_pattern_get_day_components(ifc_recurrence_pattern_t *rp,
 
 IFCCAPICALL const double *
 ifc_recurrence_pattern_get_weekday_components(ifc_recurrence_pattern_t *rp,
-                                              int *count) { try {
+                                              int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   *count = rp->rp.weekday_component.size();
   return rp->rp.weekday_component.data();
   }
@@ -3306,7 +3532,8 @@ ifc_recurrence_pattern_get_weekday_components(ifc_recurrence_pattern_t *rp,
 
 IFCCAPICALL const double *
 ifc_recurrence_pattern_get_month_components(ifc_recurrence_pattern_t *rp,
-                                            int *count) { try {
+                                            int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   *count = rp->rp.month_component.size();
   return rp->rp.month_component.data();
   }
@@ -3321,7 +3548,8 @@ ifc_recurrence_pattern_get_month_components(ifc_recurrence_pattern_t *rp,
 
 IFCCAPICALL ifc_time_period_t **
 ifc_recurrence_pattern_get_time_periods(ifc_recurrence_pattern_t *rp,
-                                        int *count) { try {
+                                        int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!rp || !count) {
     return nullptr;
   }
@@ -3345,7 +3573,8 @@ ifc_recurrence_pattern_get_time_periods(ifc_recurrence_pattern_t *rp,
   }
 }
 
-IFCCAPICALL void ifc_recurrence_pattern_free(ifc_recurrence_pattern_t *rp) { try {
+IFCCAPICALL void ifc_recurrence_pattern_free(ifc_recurrence_pattern_t *rp) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (rp) {
     delete rp;
   }
@@ -3360,7 +3589,8 @@ IFCCAPICALL void ifc_recurrence_pattern_free(ifc_recurrence_pattern_t *rp) { try
 // 所有权契约: 元素由调用方经 ifc_time_period_free 逐个释放,
 // 本函数仅释放指针数组本身。
 IFCCAPICALL void
-ifc_recurrence_pattern_free_time_periods(ifc_time_period_t **periods) { try {
+ifc_recurrence_pattern_free_time_periods(ifc_time_period_t **periods) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (periods) {
     delete[] periods;
   }
@@ -3373,7 +3603,8 @@ ifc_recurrence_pattern_free_time_periods(ifc_time_period_t **periods) { try {
 }
 
 IFCCAPICALL ifc_recurrence_pattern_t *
-ifc_work_time_get_recurrence_pattern(ifc_work_time_t *wt) { try {
+ifc_work_time_get_recurrence_pattern(ifc_work_time_t *wt) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!wt)
     return NULL;
 
@@ -3390,7 +3621,8 @@ ifc_work_time_get_recurrence_pattern(ifc_work_time_t *wt) { try {
   }
 }
 
-IFCCAPICALL const char * ifc_rel_defines_by_type_get_id(ifc_rel_defines_by_type_t *rdt){ try {
+IFCCAPICALL const char * ifc_rel_defines_by_type_get_id(ifc_rel_defines_by_type_t *rdt){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return rdt->rdt.id.c_str();
   }
   catch (const std::exception &e) {
@@ -3402,7 +3634,8 @@ IFCCAPICALL const char * ifc_rel_defines_by_type_get_id(ifc_rel_defines_by_type_
   }
 }
 
-IFCCAPICALL const char * ifc_rel_defines_by_type_get_name(ifc_rel_defines_by_type_t *rdt){ try {
+IFCCAPICALL const char * ifc_rel_defines_by_type_get_name(ifc_rel_defines_by_type_t *rdt){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return rdt->rdt.name.c_str();
   }
   catch (const std::exception &e) {
@@ -3414,7 +3647,8 @@ IFCCAPICALL const char * ifc_rel_defines_by_type_get_name(ifc_rel_defines_by_typ
   }
 }
 
-IFCCAPICALL const char * ifc_rel_defines_by_type_get_desc(ifc_rel_defines_by_type_t *rdt){ try {
+IFCCAPICALL const char * ifc_rel_defines_by_type_get_desc(ifc_rel_defines_by_type_t *rdt){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return rdt->rdt.desc.c_str();
   }
   catch (const std::exception &e) {
@@ -3426,7 +3660,8 @@ IFCCAPICALL const char * ifc_rel_defines_by_type_get_desc(ifc_rel_defines_by_typ
   }
 }
 
-IFCCAPICALL const char * ifc_rel_defines_by_type_get_type_obj_id(ifc_rel_defines_by_type_t *rdt){ try {
+IFCCAPICALL const char * ifc_rel_defines_by_type_get_type_obj_id(ifc_rel_defines_by_type_t *rdt){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return rdt->rdt.type_object_id.c_str();
   }
   catch (const std::exception &e) {
@@ -3438,7 +3673,8 @@ IFCCAPICALL const char * ifc_rel_defines_by_type_get_type_obj_id(ifc_rel_defines
   }
 }
 
-IFCCAPICALL const char ** ifc_rel_defines_by_type_get_obj_ids(ifc_rel_defines_by_type_t *rdt, int *count){ try {
+IFCCAPICALL const char ** ifc_rel_defines_by_type_get_obj_ids(ifc_rel_defines_by_type_t *rdt, int *count){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
     if (!rdt || !count) {
     return nullptr;
   }
@@ -3467,7 +3703,8 @@ IFCCAPICALL const char ** ifc_rel_defines_by_type_get_obj_ids(ifc_rel_defines_by
   }
 }
 
-IFCCAPICALL void ifc_rel_defines_by_type_free_obj_ids(const char **ids) { try {
+IFCCAPICALL void ifc_rel_defines_by_type_free_obj_ids(const char **ids) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (ids) {
     delete[] ids;
   }
@@ -3478,7 +3715,8 @@ IFCCAPICALL void ifc_rel_defines_by_type_free_obj_ids(const char **ids) { try {
   catch (...) {
   }
 }
-IFCCAPICALL void ifc_rel_defines_by_type_free(ifc_rel_defines_by_type_t *rdt){ try {
+IFCCAPICALL void ifc_rel_defines_by_type_free(ifc_rel_defines_by_type_t *rdt){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
     if (rdt) {
     delete rdt;
   }
@@ -3491,7 +3729,8 @@ IFCCAPICALL void ifc_rel_defines_by_type_free(ifc_rel_defines_by_type_t *rdt){ t
 }
 
 
-IFCCAPICALL const char * ifc_rel_defines_by_properties_get_id(ifc_rel_defines_by_properties_t *rdt){ try {
+IFCCAPICALL const char * ifc_rel_defines_by_properties_get_id(ifc_rel_defines_by_properties_t *rdt){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return rdt->rdt.id.c_str();
   }
   catch (const std::exception &e) {
@@ -3502,7 +3741,8 @@ IFCCAPICALL const char * ifc_rel_defines_by_properties_get_id(ifc_rel_defines_by
     return nullptr;
   }
 }
-IFCCAPICALL const char * ifc_rel_defines_by_properties_get_name(ifc_rel_defines_by_properties_t *rdt){ try {
+IFCCAPICALL const char * ifc_rel_defines_by_properties_get_name(ifc_rel_defines_by_properties_t *rdt){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return rdt->rdt.name.c_str();
   }
   catch (const std::exception &e) {
@@ -3514,7 +3754,8 @@ IFCCAPICALL const char * ifc_rel_defines_by_properties_get_name(ifc_rel_defines_
   }
 }
 
-IFCCAPICALL const char * ifc_rel_defines_by_properties_get_desc(ifc_rel_defines_by_properties_t *rdt){ try {
+IFCCAPICALL const char * ifc_rel_defines_by_properties_get_desc(ifc_rel_defines_by_properties_t *rdt){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return rdt->rdt.desc.c_str();
   }
   catch (const std::exception &e) {
@@ -3526,7 +3767,8 @@ IFCCAPICALL const char * ifc_rel_defines_by_properties_get_desc(ifc_rel_defines_
   }
 }
 
-IFCCAPICALL const char ** ifc_rel_defines_by_properties_get_obj_ids(ifc_rel_defines_by_properties_t *rdt, int *count){ try {
+IFCCAPICALL const char ** ifc_rel_defines_by_properties_get_obj_ids(ifc_rel_defines_by_properties_t *rdt, int *count){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
      if (!rdt || !count) {
     return nullptr;
   }
@@ -3552,7 +3794,8 @@ IFCCAPICALL const char ** ifc_rel_defines_by_properties_get_obj_ids(ifc_rel_defi
     return nullptr;
   }
 }
-IFCCAPICALL const char* ifc_rel_defines_by_properties_get_propertyset_id(ifc_rel_defines_by_properties_t *rdt){ try {
+IFCCAPICALL const char* ifc_rel_defines_by_properties_get_propertyset_id(ifc_rel_defines_by_properties_t *rdt){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
     return  rdt->rdt.propertyset_id.c_str();
   }
   catch (const std::exception &e) {
@@ -3564,7 +3807,8 @@ IFCCAPICALL const char* ifc_rel_defines_by_properties_get_propertyset_id(ifc_rel
   }
 }
 
-IFCCAPICALL void ifc_rel_defines_by_properties_free(ifc_rel_defines_by_properties_t *rdt){ try {
+IFCCAPICALL void ifc_rel_defines_by_properties_free(ifc_rel_defines_by_properties_t *rdt){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (rdt) {
     delete rdt;
   }
@@ -3576,7 +3820,8 @@ IFCCAPICALL void ifc_rel_defines_by_properties_free(ifc_rel_defines_by_propertie
   }
 }
 
-IFCCAPICALL void ifc_rel_defines_by_properties_free_obj_ids(const char **ids){ try {
+IFCCAPICALL void ifc_rel_defines_by_properties_free_obj_ids(const char **ids){
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (ids) {
     delete[] ids;
   }

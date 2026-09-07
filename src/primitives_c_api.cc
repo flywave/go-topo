@@ -1,5 +1,7 @@
 #include "primitives_c_api.h"
+#include "cgo_lock.hh"
 #include "primitives.hh"
+#include <cstdio>
 #include "shape.hh"
 #include "topo_impl.hh"
 
@@ -10,7 +12,8 @@ extern "C" {
 #endif
 
 pnt3d_t *convert_points_to_capi(const std::vector<gp_Pnt> &points,
-                                int *out_count) { try {
+                                int *out_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   *out_count = static_cast<int>(points.size());
   pnt3d_t *result = (pnt3d_t *)malloc(*out_count * sizeof(pnt3d_t));
   for (int i = 0; i < *out_count; ++i) {
@@ -30,6 +33,7 @@ pnt3d_t *convert_points_to_capi(const std::vector<gp_Pnt> &points,
 }
 
 PRIMCAPICALL topo_shape_t *create_sphere(sphere_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   sphere_params cpp_params{params.radius};
   try {
     return new topo_shape_t{
@@ -41,6 +45,7 @@ PRIMCAPICALL topo_shape_t *create_sphere(sphere_params_t params) {
 
 PRIMCAPICALL topo_shape_t *create_sphere_with_place(sphere_params_t params,
                                                     pnt3d_t center) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   sphere_params cpp_params{params.radius};
   gp_Pnt cpp_center(center.x, center.y, center.z);
 
@@ -54,6 +59,7 @@ PRIMCAPICALL topo_shape_t *create_sphere_with_place(sphere_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_rotational_ellipsoid(rotational_ellipsoid_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   rotational_ellipsoid_params cpp_params{
       params.polarRadius, params.equatorialRadius, params.height};
   try {
@@ -67,6 +73,7 @@ create_rotational_ellipsoid(rotational_ellipsoid_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_rotational_ellipsoid_with_place(rotational_ellipsoid_params_t params,
                                        pnt3d_t center, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   rotational_ellipsoid_params cpp_params{
       params.polarRadius, params.equatorialRadius, params.height};
   gp_Pnt cpp_center(center.x, center.y, center.z);
@@ -81,6 +88,7 @@ create_rotational_ellipsoid_with_place(rotational_ellipsoid_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_cuboid(cuboid_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cuboid_params cpp_params{params.length, params.width, params.height};
   try {
     return new topo_shape_t{
@@ -94,6 +102,7 @@ PRIMCAPICALL topo_shape_t *create_cuboid_with_place(cuboid_params_t params,
                                                     pnt3d_t center,
                                                     dir3d_t xDir,
                                                     dir3d_t zDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cuboid_params cpp_params{params.length, params.width, params.height};
   gp_Pnt cpp_center(center.x, center.y, center.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
@@ -107,6 +116,7 @@ PRIMCAPICALL topo_shape_t *create_cuboid_with_place(cuboid_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_diamond_frustum(diamond_frustum_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   diamond_frustum cpp_params{params.topDiag1, params.topDiag2,
                              params.bottomDiag1, params.bottomDiag2,
                              params.height};
@@ -121,6 +131,7 @@ PRIMCAPICALL topo_shape_t *create_diamond_frustum(diamond_frustum_t params) {
 PRIMCAPICALL topo_shape_t *
 create_diamond_frustum_with_place(diamond_frustum_t params, pnt3d_t position,
                                   dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   diamond_frustum cpp_params{params.topDiag1, params.topDiag2,
                              params.bottomDiag1, params.bottomDiag2,
                              params.height};
@@ -138,6 +149,7 @@ create_diamond_frustum_with_place(diamond_frustum_t params, pnt3d_t position,
 
 PRIMCAPICALL topo_shape_t *
 create_offset_rectangular_table(offset_rectangular_table_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   offset_rectangular_table_params cpp_params{
       params.topLength,   params.topWidth, params.bottomLength,
       params.bottomWidth, params.height,   params.xOffset,
@@ -153,6 +165,7 @@ create_offset_rectangular_table(offset_rectangular_table_params_t params) {
 PRIMCAPICALL topo_shape_t *create_offset_rectangular_table_with_place(
     offset_rectangular_table_params_t params, pnt3d_t position, dir3d_t normal,
     dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   offset_rectangular_table_params cpp_params{
       params.topLength,   params.topWidth, params.bottomLength,
       params.bottomWidth, params.height,   params.xOffset,
@@ -170,6 +183,7 @@ PRIMCAPICALL topo_shape_t *create_offset_rectangular_table_with_place(
 }
 
 PRIMCAPICALL topo_shape_t *create_cylinder(cylinder_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cylinder_params cpp_params{params.radius, params.height};
   try {
     return new topo_shape_t{
@@ -182,6 +196,7 @@ PRIMCAPICALL topo_shape_t *create_cylinder(cylinder_params_t params) {
 PRIMCAPICALL topo_shape_t *create_cylinder_with_place(cylinder_params_t params,
                                                       pnt3d_t baseCenter,
                                                       dir3d_t axisDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cylinder_params cpp_params{params.radius, params.height};
   gp_Pnt cpp_baseCenter(baseCenter.x, baseCenter.y, baseCenter.z);
   gp_Dir cpp_axisDir(axisDir.x, axisDir.y, axisDir.z);
@@ -195,6 +210,7 @@ PRIMCAPICALL topo_shape_t *create_cylinder_with_place(cylinder_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_sharp_bent_cylinder(sharp_bent_cylinder_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   sharp_bent_cylinder_params cpp_params{params.radius, params.length,
                                         params.bendAngle};
   try {
@@ -209,6 +225,7 @@ PRIMCAPICALL topo_shape_t *
 create_sharp_bent_cylinder_with_place(sharp_bent_cylinder_params_t params,
                                       pnt3d_t bendPoint, dir3d_t initialDir,
                                       dir3d_t bendPlaneNormal) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   sharp_bent_cylinder_params cpp_params{params.radius, params.length,
                                         params.bendAngle};
   gp_Pnt cpp_bendPoint(bendPoint.x, bendPoint.y, bendPoint.z);
@@ -226,6 +243,7 @@ create_sharp_bent_cylinder_with_place(sharp_bent_cylinder_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_truncated_cone(truncated_cone_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   truncated_cone_params cpp_params{params.topRadius, params.bottomRadius,
                                    params.height};
   try {
@@ -239,6 +257,7 @@ create_truncated_cone(truncated_cone_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_truncated_cone_with_place(truncated_cone_params_t params,
                                  pnt3d_t baseCenter, dir3d_t axisDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   truncated_cone_params cpp_params{params.topRadius, params.bottomRadius,
                                    params.height};
   gp_Pnt cpp_baseCenter(baseCenter.x, baseCenter.y, baseCenter.z);
@@ -254,6 +273,7 @@ create_truncated_cone_with_place(truncated_cone_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_eccentric_truncated_cone(eccentric_truncated_cone_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   eccentric_truncated_cone_params cpp_params{
       params.topRadius, params.bottomRadius, params.height, params.topXOffset,
       params.topYOffset};
@@ -268,6 +288,7 @@ create_eccentric_truncated_cone(eccentric_truncated_cone_params_t params) {
 PRIMCAPICALL topo_shape_t *create_eccentric_truncated_cone_with_place(
     eccentric_truncated_cone_params_t params, pnt3d_t baseCenter,
     dir3d_t axisDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   eccentric_truncated_cone_params cpp_params{
       params.topRadius, params.bottomRadius, params.height, params.topXOffset,
       params.topYOffset};
@@ -283,6 +304,7 @@ PRIMCAPICALL topo_shape_t *create_eccentric_truncated_cone_with_place(
 }
 
 PRIMCAPICALL topo_shape_t *create_ring(ring_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   ring_params cpp_params{params.ringRadius, params.tubeRadius, params.angle};
   try {
     return new topo_shape_t{
@@ -296,6 +318,7 @@ PRIMCAPICALL topo_shape_t *create_ring_with_place(ring_params_t params,
                                                   pnt3d_t center,
                                                   dir3d_t normal,
                                                   dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   ring_params cpp_params{params.ringRadius, params.tubeRadius, params.angle};
   gp_Pnt cpp_center(center.x, center.y, center.z);
   gp_Dir cpp_normal(normal.x, normal.y, normal.z);
@@ -310,6 +333,7 @@ PRIMCAPICALL topo_shape_t *create_ring_with_place(ring_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_rectangular_ring(rectangular_ring_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   rectangular_ring_params cpp_params{params.tubeRadius, params.filletRadius,
                                      params.length, params.width};
   try {
@@ -324,6 +348,7 @@ PRIMCAPICALL topo_shape_t *
 create_rectangular_ring_with_place(rectangular_ring_params_t params,
                                    pnt3d_t center, dir3d_t normal,
                                    dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   rectangular_ring_params cpp_params{params.tubeRadius, params.filletRadius,
                                      params.length, params.width};
   gp_Pnt cpp_center(center.x, center.y, center.z);
@@ -339,6 +364,7 @@ create_rectangular_ring_with_place(rectangular_ring_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_elliptic_ring(elliptic_ring_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   elliptic_ring_params cpp_params{params.tubeRadius, params.majorRadius,
                                   params.minorRadius};
   try {
@@ -352,6 +378,7 @@ PRIMCAPICALL topo_shape_t *create_elliptic_ring(elliptic_ring_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_elliptic_ring_with_place(elliptic_ring_params_t params, pnt3d_t center,
                                 dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   elliptic_ring_params cpp_params{params.tubeRadius, params.majorRadius,
                                   params.minorRadius};
   gp_Pnt cpp_center(center.x, center.y, center.z);
@@ -367,6 +394,7 @@ create_elliptic_ring_with_place(elliptic_ring_params_t params, pnt3d_t center,
 
 PRIMCAPICALL topo_shape_t *
 create_circular_gasket(circular_gasket_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   circular_gasket_params cpp_params{params.outerRadius, params.innerRadius,
                                     params.height, params.angle};
   try {
@@ -381,6 +409,7 @@ PRIMCAPICALL topo_shape_t *
 create_circular_gasket_with_place(circular_gasket_params_t params,
                                   pnt3d_t center, dir3d_t normal,
                                   dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   circular_gasket_params cpp_params{params.outerRadius, params.innerRadius,
                                     params.height, params.angle};
   gp_Pnt cpp_center(center.x, center.y, center.z);
@@ -396,6 +425,7 @@ create_circular_gasket_with_place(circular_gasket_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_table_gasket(table_gasket_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   table_gasket_params cpp_params{params.topRadius, params.outerRadius,
                                  params.innerRadius, params.height,
                                  params.angle};
@@ -410,6 +440,7 @@ PRIMCAPICALL topo_shape_t *create_table_gasket(table_gasket_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_table_gasket_with_place(table_gasket_params_t params, pnt3d_t center,
                                dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   table_gasket_params cpp_params{params.topRadius, params.outerRadius,
                                  params.innerRadius, params.height,
                                  params.angle};
@@ -425,6 +456,7 @@ create_table_gasket_with_place(table_gasket_params_t params, pnt3d_t center,
 }
 
 PRIMCAPICALL topo_shape_t *create_square_gasket(square_gasket_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   square_gasket_params cpp_params{params.outerLength, params.outerWidth,
                                   params.innerLength, params.innerWidth,
                                   params.height,      params.cornerType,
@@ -440,6 +472,7 @@ PRIMCAPICALL topo_shape_t *create_square_gasket(square_gasket_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_square_gasket_with_place(square_gasket_params_t params, pnt3d_t center,
                                 dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   square_gasket_params cpp_params{params.outerLength, params.outerWidth,
                                   params.innerLength, params.innerWidth,
                                   params.height,      params.cornerType,
@@ -457,6 +490,7 @@ create_square_gasket_with_place(square_gasket_params_t params, pnt3d_t center,
 
 PRIMCAPICALL topo_shape_t *
 create_stretched_body(stretched_body_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.numPoints; ++i) {
     points.push_back(
@@ -476,6 +510,7 @@ create_stretched_body(stretched_body_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_stretched_body_with_place(stretched_body_params_t params,
                                  pnt3d_t basePoint, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.numPoints; ++i) {
     points.push_back(
@@ -497,6 +532,7 @@ create_stretched_body_with_place(stretched_body_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_porcelain_bushing(porcelain_bushing_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   porcelain_bushing_params cpp_params{params.height, params.radius,
                                       params.bigSkirtRadius,
                                       params.smallSkirtRadius, params.count};
@@ -511,6 +547,7 @@ create_porcelain_bushing(porcelain_bushing_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_porcelain_bushing_with_place(porcelain_bushing_params_t params,
                                     pnt3d_t basePoint, dir3d_t axisDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   porcelain_bushing_params cpp_params{params.height, params.radius,
                                       params.bigSkirtRadius,
                                       params.smallSkirtRadius, params.count};
@@ -527,6 +564,7 @@ create_porcelain_bushing_with_place(porcelain_bushing_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_cone_porcelain_bushing(cone_porcelain_bushing_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cone_porcelain_bushing_params cpp_params{params.height,
                                            params.bottomRadius,
                                            params.topRadius,
@@ -546,6 +584,7 @@ create_cone_porcelain_bushing(cone_porcelain_bushing_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cone_porcelain_bushing_with_place(cone_porcelain_bushing_params_t params,
                                          pnt3d_t basePoint, dir3d_t axisDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cone_porcelain_bushing_params cpp_params{params.height,
                                            params.bottomRadius,
                                            params.topRadius,
@@ -567,6 +606,7 @@ create_cone_porcelain_bushing_with_place(cone_porcelain_bushing_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_insulator_string(insulator_string_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   insulator_string_params cpp_params{
       params.count,     params.spacing,        params.insulatorCount,
       params.height,    params.bigSkirtRadius, params.smallSkirtRadius,
@@ -584,6 +624,7 @@ PRIMCAPICALL topo_shape_t *
 create_insulator_string_with_place(insulator_string_params_t params,
                                    pnt3d_t position, dir3d_t direction,
                                    dir3d_t upDirection) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   insulator_string_params cpp_params{
       params.count,     params.spacing,        params.insulatorCount,
       params.height,    params.bigSkirtRadius, params.smallSkirtRadius,
@@ -603,6 +644,7 @@ create_insulator_string_with_place(insulator_string_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_vtype_insulator(vtype_insulator_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   vtype_insulator_params cpp_params{
       params.frontSpacing,     params.backSpacing, params.insulatorCount,
       params.height,           params.radius,      params.bigSkirtRadius,
@@ -620,6 +662,7 @@ PRIMCAPICALL topo_shape_t *
 create_vtype_insulator_with_place(vtype_insulator_params_t params,
                                   pnt3d_t position, dir3d_t direction,
                                   dir3d_t upDirection) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   vtype_insulator_params cpp_params{
       params.frontSpacing,     params.backSpacing, params.insulatorCount,
       params.height,           params.radius,      params.bigSkirtRadius,
@@ -639,6 +682,7 @@ create_vtype_insulator_with_place(vtype_insulator_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_terminal_block(terminal_block_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   terminal_block_params cpp_params{params.length,        params.width,
                                    params.thickness,     params.chamferLength,
                                    params.columnSpacing, params.rowSpacing,
@@ -656,6 +700,7 @@ PRIMCAPICALL topo_shape_t *
 create_terminal_block_with_place(terminal_block_params_t params,
                                  pnt3d_t position, dir3d_t lengthDir,
                                  dir3d_t widthDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   terminal_block_params cpp_params{params.length,        params.width,
                                    params.thickness,     params.chamferLength,
                                    params.columnSpacing, params.rowSpacing,
@@ -675,6 +720,7 @@ create_terminal_block_with_place(terminal_block_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_rectangular_fixed_plate(rectangular_fixed_plate_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   rectangular_fixed_plate_params cpp_params{
       params.length,        params.width,         params.thickness,
       params.columnSpacing, params.rowSpacing,    params.columnCount,
@@ -690,6 +736,7 @@ create_rectangular_fixed_plate(rectangular_fixed_plate_params_t params) {
 PRIMCAPICALL topo_shape_t *create_rectangular_fixed_plate_with_place(
     rectangular_fixed_plate_params_t params, pnt3d_t position,
     dir3d_t lengthDir, dir3d_t widthDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   rectangular_fixed_plate_params cpp_params{
       params.length,        params.width,         params.thickness,
       params.columnSpacing, params.rowSpacing,    params.columnCount,
@@ -708,6 +755,7 @@ PRIMCAPICALL topo_shape_t *create_rectangular_fixed_plate_with_place(
 
 PRIMCAPICALL topo_shape_t *
 create_circular_fixed_plate(circular_fixed_plate_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   circular_fixed_plate_params cpp_params{
       params.length,      params.width,     params.thickness,
       params.ringRadius,  params.holeCount, params.hasMiddleHole,
@@ -724,6 +772,7 @@ PRIMCAPICALL topo_shape_t *
 create_circular_fixed_plate_with_place(circular_fixed_plate_params_t params,
                                        pnt3d_t position, dir3d_t lengthDir,
                                        dir3d_t widthDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   circular_fixed_plate_params cpp_params{
       params.length,      params.width,     params.thickness,
       params.ringRadius,  params.holeCount, params.hasMiddleHole,
@@ -741,20 +790,23 @@ create_circular_fixed_plate_with_place(circular_fixed_plate_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_wire(wire_params_t params) {
-  std::vector<gp_Pnt> points;
-  for (int i = 0; i < params.numFitPoints; i++) {
-    points.push_back(gp_Pnt(params.fitPoints[i].x, params.fitPoints[i].y,
-                            params.fitPoints[i].z));
-  }
-  wire_params cpp_params{
-      gp_Pnt(params.startPoint.x, params.startPoint.y, params.startPoint.z),
-      gp_Pnt(params.endPoint.x, params.endPoint.y, params.endPoint.z),
-      gp_Dir(params.startDir.x, params.startDir.y, params.startDir.z),
-      gp_Dir(params.endDir.x, params.endDir.y, params.endDir.z),
-      params.sag,
-      params.diameter,
-      points};
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  fprintf(stderr, "DEBUG: create_wire wrapper v2 entered\n");
   try {
+    // 构造必须在 try 内: gp_Dir 遇 NaN/零向量会抛 Standard_ConstructionError
+    std::vector<gp_Pnt> points;
+    for (int i = 0; i < params.numFitPoints; i++) {
+      points.push_back(gp_Pnt(params.fitPoints[i].x, params.fitPoints[i].y,
+                              params.fitPoints[i].z));
+    }
+    wire_params cpp_params{
+        gp_Pnt(params.startPoint.x, params.startPoint.y, params.startPoint.z),
+        gp_Pnt(params.endPoint.x, params.endPoint.y, params.endPoint.z),
+        gp_Dir(params.startDir.x, params.startDir.y, params.startDir.z),
+        gp_Dir(params.endDir.x, params.endDir.y, params.endDir.z),
+        params.sag,
+        params.diameter,
+        points};
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_wire(cpp_params))};
   } catch (...) {
@@ -766,25 +818,26 @@ PRIMCAPICALL topo_shape_t *create_wire_with_place(wire_params_t params,
                                                   pnt3d_t position,
                                                   dir3d_t direction,
                                                   dir3d_t upDirection) {
-  std::vector<gp_Pnt> points;
-  for (int i = 0; i < params.numFitPoints; i++) {
-    points.push_back(gp_Pnt(params.fitPoints[i].x, params.fitPoints[i].y,
-                            params.fitPoints[i].z));
-  }
-
-  wire_params cpp_params{
-      gp_Pnt(params.startPoint.x, params.startPoint.y, params.startPoint.z),
-      gp_Pnt(params.endPoint.x, params.endPoint.y, params.endPoint.z),
-      gp_Dir(params.startDir.x, params.startDir.y, params.startDir.z),
-      gp_Dir(params.endDir.x, params.endDir.y, params.endDir.z),
-      params.sag,
-      params.diameter,
-      points,
-  };
-  gp_Pnt cpp_position(position.x, position.y, position.z);
-  gp_Dir cpp_direction(direction.x, direction.y, direction.z);
-  gp_Dir cpp_upDirection(upDirection.x, upDirection.y, upDirection.z);
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
+    // 构造必须在 try 内: gp_Dir 遇 NaN/零向量会抛 Standard_ConstructionError
+    std::vector<gp_Pnt> points;
+    for (int i = 0; i < params.numFitPoints; i++) {
+      points.push_back(gp_Pnt(params.fitPoints[i].x, params.fitPoints[i].y,
+                              params.fitPoints[i].z));
+    }
+    wire_params cpp_params{
+        gp_Pnt(params.startPoint.x, params.startPoint.y, params.startPoint.z),
+        gp_Pnt(params.endPoint.x, params.endPoint.y, params.endPoint.z),
+        gp_Dir(params.startDir.x, params.startDir.y, params.startDir.z),
+        gp_Dir(params.endDir.x, params.endDir.y, params.endDir.z),
+        params.sag,
+        params.diameter,
+        points,
+    };
+    gp_Pnt cpp_position(position.x, position.y, position.z);
+    gp_Dir cpp_direction(direction.x, direction.y, direction.z);
+    gp_Dir cpp_upDirection(upDirection.x, upDirection.y, upDirection.z);
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_wire(
             cpp_params, cpp_position, cpp_direction, cpp_upDirection))};
@@ -794,6 +847,7 @@ PRIMCAPICALL topo_shape_t *create_wire_with_place(wire_params_t params,
 }
 
 topo_wire_t create_wire_centerline(wire_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.numFitPoints; i++) {
     points.push_back(gp_Pnt(params.fitPoints[i].x, params.fitPoints[i].y,
@@ -819,7 +873,8 @@ topo_wire_t create_wire_centerline(wire_params_t params) {
 }
 
 PRIMCAPICALL pnt3d_t *sample_wire_points(wire_params_t params,
-                                         double tessellation, int *out_count) { try {
+                                         double tessellation, int *out_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.numFitPoints; i++) {
     points.push_back(gp_Pnt(params.fitPoints[i].x, params.fitPoints[i].y,
@@ -848,6 +903,7 @@ PRIMCAPICALL pnt3d_t *sample_wire_points(wire_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_cable(cable_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.numInflectionPoints; i++) {
     points.push_back(gp_Pnt(params.inflectionPoints[i].x,
@@ -868,6 +924,7 @@ PRIMCAPICALL topo_shape_t *create_cable(cable_params_t params) {
 }
 
 topo_wire_t create_cable_centerline(cable_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.numInflectionPoints; i++) {
     points.push_back(gp_Pnt(params.inflectionPoints[i].x,
@@ -889,7 +946,8 @@ topo_wire_t create_cable_centerline(cable_params_t params) {
 }
 
 PRIMCAPICALL pnt3d_t *sample_cable_points(cable_params_t params,
-                                          double tessellation, int *out_count) { try {
+                                          double tessellation, int *out_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.numInflectionPoints; i++) {
     points.push_back(gp_Pnt(params.inflectionPoints[i].x,
@@ -917,6 +975,7 @@ PRIMCAPICALL topo_shape_t *create_cable_with_place(cable_params_t params,
                                                    pnt3d_t position,
                                                    dir3d_t direction,
                                                    dir3d_t upDirection) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.numInflectionPoints; i++) {
     points.push_back(gp_Pnt(params.inflectionPoints[i].x,
@@ -944,7 +1003,8 @@ PRIMCAPICALL topo_shape_t *create_cable_with_place(cable_params_t params,
 PRIMCAPICALL pnt3d_t *
 sample_curve_points(const pnt3d_t *control_points, const int *point_counts,
                     int array_count, const curve_type_t *curve_types,
-                    int curve_type_count, double tessellation, int *out_count) { try {
+                    int curve_type_count, double tessellation, int *out_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   // 参数检查
   if (!control_points || !point_counts || !curve_types || !out_count ||
       array_count <= 0 || curve_type_count <= 0) {
@@ -995,6 +1055,7 @@ sample_curve_points(const pnt3d_t *control_points, const int *point_counts,
 }
 
 PRIMCAPICALL topo_shape_t *create_curve_cable(curve_cable_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<std::vector<gp_Pnt>> cpp_controlPoints;
     std::vector<curve_type> cpp_curveTypes;
@@ -1030,6 +1091,7 @@ PRIMCAPICALL topo_shape_t *create_curve_cable(curve_cable_params_t params) {
 }
 
 topo_wire_t create_curve_cable_centerline(curve_cable_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<std::vector<gp_Pnt>> cpp_controlPoints;
     std::vector<curve_type> cpp_curveTypes;
@@ -1068,6 +1130,7 @@ topo_wire_t create_curve_cable_centerline(curve_cable_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_curve_cable_with_place(curve_cable_params_t params, pnt3d_t position,
                               dir3d_t direction, dir3d_t upDirection) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::vector<std::vector<gp_Pnt>> cpp_controlPoints;
     std::vector<curve_type> cpp_curveTypes;
@@ -1108,6 +1171,7 @@ create_curve_cable_with_place(curve_cable_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_angle_steel(angle_steel_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   angle_steel_params cpp_params{params.L1, params.L2, params.X, params.length};
   try {
     return new topo_shape_t{
@@ -1120,6 +1184,7 @@ PRIMCAPICALL topo_shape_t *create_angle_steel(angle_steel_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_angle_steel_with_place(angle_steel_params_t params, pnt3d_t position,
                               dir3d_t xDir, dir3d_t longEdgeDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   angle_steel_params cpp_params{params.L1, params.L2, params.X, params.length};
   gp_Pnt cpp_position(position.x, position.y, position.z);
   gp_Dir cpp_xDir(xDir.x, xDir.y, xDir.z);
@@ -1135,6 +1200,7 @@ create_angle_steel_with_place(angle_steel_params_t params, pnt3d_t position,
 
 PRIMCAPICALL topo_shape_t *
 create_i_shaped_steel(i_shaped_steel_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   i_shaped_steel_params cpp_params{params.height, params.flangeWidth,
                                    params.webThickness, params.flangeThickness,
                                    params.length};
@@ -1149,6 +1215,7 @@ create_i_shaped_steel(i_shaped_steel_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_i_shaped_steel_with_place(i_shaped_steel_params_t params,
                                  pnt3d_t position, dir3d_t xDir, dir3d_t zDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   i_shaped_steel_params cpp_params{params.height, params.flangeWidth,
                                    params.webThickness, params.flangeThickness,
                                    params.length};
@@ -1165,6 +1232,7 @@ create_i_shaped_steel_with_place(i_shaped_steel_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_channel_steel(channel_steel_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   channel_steel_params cpp_params{params.height, params.flangeWidth,
                                   params.webThickness, params.flangeThickness,
                                   params.length};
@@ -1179,6 +1247,7 @@ PRIMCAPICALL topo_shape_t *create_channel_steel(channel_steel_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_channel_steel_with_place(channel_steel_params_t params, pnt3d_t position,
                                 dir3d_t xDir, dir3d_t zDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   channel_steel_params cpp_params{params.height, params.flangeWidth,
                                   params.webThickness, params.flangeThickness,
                                   params.length};
@@ -1194,6 +1263,7 @@ create_channel_steel_with_place(channel_steel_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_t_steel(t_steel_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   t_steel_params cpp_params{params.height, params.width, params.webThickness,
                             params.flangeThickness, params.length};
   try {
@@ -1208,6 +1278,7 @@ PRIMCAPICALL topo_shape_t *create_t_steel_with_place(t_steel_params_t params,
                                                      pnt3d_t position,
                                                      dir3d_t xDir,
                                                      dir3d_t zDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   t_steel_params cpp_params{params.height, params.width, params.webThickness,
                             params.flangeThickness, params.length};
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -1222,6 +1293,7 @@ PRIMCAPICALL topo_shape_t *create_t_steel_with_place(t_steel_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_bored_pile_base(bored_pile_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   bored_pile_params cpp_params{params.H1, params.H2, params.H3,
                                params.H4, params.d,  params.D};
   try {
@@ -1235,6 +1307,7 @@ PRIMCAPICALL topo_shape_t *create_bored_pile_base(bored_pile_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_bored_pile_base_with_place(bored_pile_params_t params, pnt3d_t position,
                                   dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   bored_pile_params cpp_params{params.H1, params.H2, params.H3,
                                params.H4, params.d,  params.D};
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -1249,6 +1322,7 @@ create_bored_pile_base_with_place(bored_pile_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_pile_cap_base(pile_cap_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.ZCOUNT; i++) {
     points.push_back(gp_Pnt(params.ZPOSTARRAY[i].x, params.ZPOSTARRAY[i].y,
@@ -1269,6 +1343,7 @@ PRIMCAPICALL topo_shape_t *create_pile_cap_base(pile_cap_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_pile_cap_base_with_place(pile_cap_params_t params, pnt3d_t position,
                                 dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.ZCOUNT; i++) {
     points.push_back(gp_Pnt(params.ZPOSTARRAY[i].x, params.ZPOSTARRAY[i].y,
@@ -1290,6 +1365,7 @@ create_pile_cap_base_with_place(pile_cap_params_t params, pnt3d_t position,
 
 PRIMCAPICALL topo_shape_t *
 create_rock_anchor_base(rock_anchor_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.ZCOUNT; i++) {
     points.push_back(gp_Pnt(params.ZPOSTARRAY[i].x, params.ZPOSTARRAY[i].y,
@@ -1308,6 +1384,7 @@ create_rock_anchor_base(rock_anchor_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_rock_anchor_base_with_place(rock_anchor_params_t params,
                                    pnt3d_t position, dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.ZCOUNT; i++) {
     points.push_back(gp_Pnt(params.ZPOSTARRAY[i].x, params.ZPOSTARRAY[i].y,
@@ -1328,6 +1405,7 @@ create_rock_anchor_base_with_place(rock_anchor_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_rock_pile_cap_base(rock_pile_cap_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.ZCOUNT; i++) {
     points.push_back(gp_Pnt(params.ZPOSTARRAY[i].x, params.ZPOSTARRAY[i].y,
@@ -1347,6 +1425,7 @@ create_rock_pile_cap_base(rock_pile_cap_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_rock_pile_cap_base_with_place(rock_pile_cap_params_t params,
                                      pnt3d_t position, dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> points;
   for (int i = 0; i < params.ZCOUNT; i++) {
     points.push_back(gp_Pnt(params.ZPOSTARRAY[i].x, params.ZPOSTARRAY[i].y,
@@ -1368,6 +1447,7 @@ create_rock_pile_cap_base_with_place(rock_pile_cap_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_embedded_rock_anchor_base(embedded_rock_anchor_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   embedded_rock_anchor_params cpp_params{params.H1, params.H2, params.H3,
                                          params.d, params.D};
   try {
@@ -1380,6 +1460,7 @@ create_embedded_rock_anchor_base(embedded_rock_anchor_params_t params) {
 
 PRIMCAPICALL topo_shape_t *create_embedded_rock_anchor_base_with_place(
     embedded_rock_anchor_params_t params, pnt3d_t position, dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   embedded_rock_anchor_params cpp_params{params.H1, params.H2, params.H3,
                                          params.d, params.D};
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -1395,6 +1476,7 @@ PRIMCAPICALL topo_shape_t *create_embedded_rock_anchor_base_with_place(
 
 PRIMCAPICALL topo_shape_t *
 create_inclined_rock_anchor_base(inclined_rock_anchor_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   inclined_rock_anchor_params cpp_params{
       params.H1, params.H2, params.d,  params.D,      params.B,
       params.L,  params.e1, params.e2, params.alpha1, params.alpha2};
@@ -1408,6 +1490,7 @@ create_inclined_rock_anchor_base(inclined_rock_anchor_params_t params) {
 
 PRIMCAPICALL topo_shape_t *create_inclined_rock_anchor_base_with_place(
     inclined_rock_anchor_params_t params, pnt3d_t position, dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   inclined_rock_anchor_params cpp_params{
       params.H1, params.H2, params.d,  params.D,      params.B,
       params.L,  params.e1, params.e2, params.alpha1, params.alpha2};
@@ -1424,6 +1507,7 @@ PRIMCAPICALL topo_shape_t *create_inclined_rock_anchor_base_with_place(
 
 PRIMCAPICALL topo_shape_t *
 create_excavated_base(excavated_base_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   excavated_base_params cpp_params{params.H1,    params.H2, params.H3,
                                    params.d,     params.D,  params.alpha1,
                                    params.alpha2};
@@ -1438,6 +1522,7 @@ create_excavated_base(excavated_base_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_excavated_base_with_place(excavated_base_params_t params,
                                  pnt3d_t position, dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   excavated_base_params cpp_params{params.H1,    params.H2, params.H3,
                                    params.d,     params.D,  params.alpha1,
                                    params.alpha2};
@@ -1453,6 +1538,7 @@ create_excavated_base_with_place(excavated_base_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_step_base(step_base_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   step_base_params cpp_params{params.H,  params.H1, params.H2, params.H3,
                               params.b,  params.B1, params.B2, params.B3,
                               params.L1, params.L2, params.L3, params.N};
@@ -1467,6 +1553,7 @@ PRIMCAPICALL topo_shape_t *create_step_base(step_base_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_step_base_with_place(step_base_params_t params, pnt3d_t position,
                             dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   step_base_params cpp_params{params.H,  params.H1, params.H2, params.H3,
                               params.b,  params.B1, params.B2, params.B3,
                               params.L1, params.L2, params.L3, params.N};
@@ -1482,6 +1569,7 @@ create_step_base_with_place(step_base_params_t params, pnt3d_t position,
 
 PRIMCAPICALL topo_shape_t *
 create_step_plate_base(step_plate_base_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   step_plate_base_params cpp_params{
       params.H,  params.H1, params.H2, params.H3,     params.b,      params.L1,
       params.L2, params.B1, params.B2, params.alpha1, params.alpha2, params.N};
@@ -1496,6 +1584,7 @@ create_step_plate_base(step_plate_base_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_step_plate_base_with_place(step_plate_base_params_t params,
                                   pnt3d_t position, dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   step_plate_base_params cpp_params{
       params.H,  params.H1, params.H2, params.H3,     params.b,      params.L1,
       params.L2, params.B1, params.B2, params.alpha1, params.alpha2, params.N};
@@ -1512,6 +1601,7 @@ create_step_plate_base_with_place(step_plate_base_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_sloped_base_base(sloped_base_base_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   sloped_base_base_params cpp_params{
       params.H1, params.H2, params.H3, params.b,      params.L1,
       params.L2, params.B1, params.B2, params.alpha1, params.alpha2};
@@ -1526,6 +1616,7 @@ create_sloped_base_base(sloped_base_base_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_sloped_base_base_with_place(sloped_base_base_params_t params,
                                    pnt3d_t position, dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   sloped_base_base_params cpp_params{
       params.H1, params.H2, params.H3, params.b,      params.L1,
       params.L2, params.B1, params.B2, params.alpha1, params.alpha2};
@@ -1542,6 +1633,7 @@ create_sloped_base_base_with_place(sloped_base_base_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_composite_caisson_base(composite_caisson_base_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   composite_caisson_base_params cpp_params{
       params.H1, params.H2, params.H3, params.H4, params.b, params.D,
       params.t,  params.B1, params.B2, params.L1, params.L2};
@@ -1556,6 +1648,7 @@ create_composite_caisson_base(composite_caisson_base_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_composite_caisson_base_with_place(composite_caisson_base_params_t params,
                                          pnt3d_t position, dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   composite_caisson_base_params cpp_params{
       params.H1, params.H2, params.H3, params.H4, params.b, params.D,
       params.t,  params.B1, params.B2, params.L1, params.L2};
@@ -1571,6 +1664,7 @@ create_composite_caisson_base_with_place(composite_caisson_base_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_raft_base(raft_base_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   raft_base_params cpp_params{params.H1, params.H2, params.H3,
                               params.b1, params.b2, params.B1,
                               params.B2, params.L1, params.L2};
@@ -1585,6 +1679,7 @@ PRIMCAPICALL topo_shape_t *create_raft_base(raft_base_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_raft_base_with_place(raft_base_params_t params, pnt3d_t position,
                             dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   raft_base_params cpp_params{params.H1, params.H2, params.H3,
                               params.b1, params.b2, params.B1,
                               params.B2, params.L1, params.L2};
@@ -1600,6 +1695,7 @@ create_raft_base_with_place(raft_base_params_t params, pnt3d_t position,
 
 PRIMCAPICALL topo_shape_t *
 create_direct_buried_base(direct_buried_base_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   direct_buried_base_params cpp_params{params.H1, params.H2, params.d,
                                        params.D,  params.B,  params.t};
   try {
@@ -1613,6 +1709,7 @@ create_direct_buried_base(direct_buried_base_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_direct_buried_base_with_place(direct_buried_base_params_t params,
                                      pnt3d_t position, dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   direct_buried_base_params cpp_params{params.H1, params.H2, params.d,
                                        params.D,  params.B,  params.t};
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -1628,6 +1725,7 @@ create_direct_buried_base_with_place(direct_buried_base_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_steel_sleeve_base(steel_sleeve_base_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   steel_sleeve_base_params cpp_params{
       params.H1, params.H2, params.H3, params.H4, params.d,
       params.D1, params.D2, params.t,  params.B1, params.B2};
@@ -1642,6 +1740,7 @@ create_steel_sleeve_base(steel_sleeve_base_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_steel_sleeve_base_with_place(steel_sleeve_base_params_t params,
                                     pnt3d_t position, dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   steel_sleeve_base_params cpp_params{
       params.H1, params.H2, params.H3, params.H4, params.d,
       params.D1, params.D2, params.t,  params.B1, params.B2};
@@ -1658,6 +1757,7 @@ create_steel_sleeve_base_with_place(steel_sleeve_base_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_precast_column_base(precast_column_base_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   precast_column_base_params cpp_params{params.H1, params.H2, params.H3,
                                         params.d,  params.B1, params.B2,
                                         params.L1, params.L2};
@@ -1672,6 +1772,7 @@ create_precast_column_base(precast_column_base_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_precast_column_base_with_place(precast_column_base_params_t params,
                                       pnt3d_t position, dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   precast_column_base_params cpp_params{params.H1, params.H2, params.H3,
                                         params.d,  params.B1, params.B2,
                                         params.L1, params.L2};
@@ -1688,6 +1789,7 @@ create_precast_column_base_with_place(precast_column_base_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_precast_pinned_base(precast_pinned_base_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   precast_pinned_base_params cpp_params{
       params.H1, params.H2, params.H3, params.d, params.B1, params.B2,
       params.L1, params.L2, params.B,  params.H, params.L};
@@ -1702,6 +1804,7 @@ create_precast_pinned_base(precast_pinned_base_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_precast_pinned_base_with_place(precast_pinned_base_params_t params,
                                       pnt3d_t position, dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   precast_pinned_base_params cpp_params{
       params.H1, params.H2, params.H3, params.d, params.B1, params.B2,
       params.L1, params.L2, params.B,  params.H, params.L};
@@ -1718,6 +1821,7 @@ create_precast_pinned_base_with_place(precast_pinned_base_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_precast_metal_support_base(precast_metal_support_base_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   precast_metal_support_base_params cpp_params{
       params.H1,
       params.H2,
@@ -1745,6 +1849,7 @@ create_precast_metal_support_base(precast_metal_support_base_params_t params) {
 PRIMCAPICALL topo_shape_t *create_precast_metal_support_base_with_place(
     precast_metal_support_base_params_t params, pnt3d_t position,
     dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   precast_metal_support_base_params cpp_params{
       params.H1,
       params.H2,
@@ -1774,6 +1879,7 @@ PRIMCAPICALL topo_shape_t *create_precast_metal_support_base_with_place(
 
 PRIMCAPICALL topo_shape_t *create_precast_concrete_support_base(
     precast_concrete_support_base_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   precast_concrete_support_base_params cpp_params{
       params.H1, params.H2, params.H3, params.H4, params.H5,
       params.b1, params.b2, params.b3, params.B1, params.B2,
@@ -1790,6 +1896,7 @@ PRIMCAPICALL topo_shape_t *create_precast_concrete_support_base(
 PRIMCAPICALL topo_shape_t *create_precast_concrete_support_base_with_place(
     precast_concrete_support_base_params_t params, pnt3d_t position,
     dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   precast_concrete_support_base_params cpp_params{
       params.H1, params.H2, params.H3, params.H4, params.H5,
       params.b1, params.b2, params.b3, params.B1, params.B2,
@@ -1808,6 +1915,7 @@ PRIMCAPICALL topo_shape_t *create_precast_concrete_support_base_with_place(
 PRIMCAPICALL topo_shape_t *
 create_transmission_line(transmission_line_params_t params, pnt3d_t startPoint,
                          pnt3d_t endPoint) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   transmission_line_params cpp_params{params.ctype,
                                       params.sectionalArea,
                                       params.outsideDiameter,
@@ -1829,6 +1937,7 @@ create_transmission_line(transmission_line_params_t params, pnt3d_t startPoint,
 topo_wire_t create_transmission_centerline(transmission_line_params_t params,
                                            pnt3d_t startPoint,
                                            pnt3d_t endPoint) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   transmission_line_params cpp_params{params.ctype,
                                       params.sectionalArea,
                                       params.outsideDiameter,
@@ -1851,7 +1960,8 @@ topo_wire_t create_transmission_centerline(transmission_line_params_t params,
 PRIMCAPICALL pnt3d_t *
 sample_transmission_line_points(transmission_line_params_t params,
                                 pnt3d_t startPoint, pnt3d_t endPoint,
-                                double tessellation, int *out_count) { try {
+                                double tessellation, int *out_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   transmission_line_params cppParams{params.ctype,
                                      params.sectionalArea,
                                      params.outsideDiameter,
@@ -1877,6 +1987,7 @@ sample_transmission_line_points(transmission_line_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_composite_insulator(insulator_composite_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   // 转换复合绝缘子参数
   boost::variant<double, composite_insulator_params> radius;
   if (params.insulator.isComposite) {
@@ -1921,6 +2032,7 @@ create_composite_insulator(insulator_composite_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_composite_insulator_with_place(insulator_composite_params_t params,
                                       pnt3d_t position, dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   // 转换复合绝缘子参数
   boost::variant<double, composite_insulator_params> radius;
   if (params.insulator.isComposite) {
@@ -1968,6 +2080,7 @@ create_composite_insulator_with_place(insulator_composite_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_single_hook_anchor(single_hook_anchor_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   single_hook_anchor_params cpp_params{
       params.boltDiameter,
       params.exposedLength,
@@ -1993,6 +2106,7 @@ PRIMCAPICALL topo_shape_t *
 create_single_hook_anchor_with_place(single_hook_anchor_params_t params,
                                      pnt3d_t position, dir3d_t normal,
                                      dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   single_hook_anchor_params cpp_params{
       params.boltDiameter,
       params.exposedLength,
@@ -2020,6 +2134,7 @@ create_single_hook_anchor_with_place(single_hook_anchor_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_triple_hook_anchor(triple_hook_anchor_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   triple_hook_anchor_params cpp_params{
       params.boltDiameter,
       params.exposedLength,
@@ -2047,6 +2162,7 @@ PRIMCAPICALL topo_shape_t *
 create_triple_hook_anchor_with_place(triple_hook_anchor_params_t params,
                                      pnt3d_t position, dir3d_t normal,
                                      dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   triple_hook_anchor_params cpp_params{
       params.boltDiameter,
       params.exposedLength,
@@ -2075,6 +2191,7 @@ create_triple_hook_anchor_with_place(triple_hook_anchor_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_ribbed_anchor(ribbed_anchor_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   ribbed_anchor_params cpp_params{
       params.boltDiameter,
       params.exposedLength,
@@ -2103,6 +2220,7 @@ PRIMCAPICALL topo_shape_t *create_ribbed_anchor(ribbed_anchor_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_ribbed_anchor_with_place(ribbed_anchor_params_t params, pnt3d_t position,
                                 dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   ribbed_anchor_params cpp_params{
       params.boltDiameter,
       params.exposedLength,
@@ -2133,6 +2251,7 @@ create_ribbed_anchor_with_place(ribbed_anchor_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_nut_anchor(nut_anchor_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   nut_anchor_params cpp_params{
       params.boltDiameter,
       params.exposedLength,
@@ -2158,6 +2277,7 @@ PRIMCAPICALL topo_shape_t *create_nut_anchor(nut_anchor_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_nut_anchor_with_place(nut_anchor_params_t params, pnt3d_t position,
                              dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   nut_anchor_params cpp_params{
       params.boltDiameter,
       params.exposedLength,
@@ -2186,6 +2306,7 @@ create_nut_anchor_with_place(nut_anchor_params_t params, pnt3d_t position,
 
 PRIMCAPICALL topo_shape_t *
 create_triple_arm_anchor(triple_arm_anchor_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   triple_arm_anchor_params cpp_params{
       params.boltDiameter,
       params.exposedLength,
@@ -2213,6 +2334,7 @@ PRIMCAPICALL topo_shape_t *
 create_triple_arm_anchor_with_place(triple_arm_anchor_params_t params,
                                     pnt3d_t position, dir3d_t normal,
                                     dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   triple_arm_anchor_params cpp_params{
       params.boltDiameter,
       params.exposedLength,
@@ -2242,6 +2364,7 @@ create_triple_arm_anchor_with_place(triple_arm_anchor_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_positioning_plate_anchor(positioning_plate_anchor_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   positioning_plate_anchor_params cpp_params{
       params.boltDiameter,
       params.exposedLength,
@@ -2269,6 +2392,7 @@ create_positioning_plate_anchor(positioning_plate_anchor_params_t params) {
 PRIMCAPICALL topo_shape_t *create_positioning_plate_anchor_with_place(
     positioning_plate_anchor_params_t params, pnt3d_t position, dir3d_t normal,
     dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   positioning_plate_anchor_params cpp_params{
       params.boltDiameter,
       params.exposedLength,
@@ -2298,6 +2422,7 @@ PRIMCAPICALL topo_shape_t *create_positioning_plate_anchor_with_place(
 }
 
 PRIMCAPICALL topo_shape_t *create_stub_angle(stub_angle_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   stub_angle_params cpp_params{params.legWidth, params.thickness, params.slope,
                                params.exposedLength, params.anchorLength};
   try {
@@ -2311,6 +2436,7 @@ PRIMCAPICALL topo_shape_t *create_stub_angle(stub_angle_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_stub_angle_with_place(stub_angle_params_t params, pnt3d_t position,
                              dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   stub_angle_params cpp_params{params.legWidth, params.thickness, params.slope,
                                params.exposedLength, params.anchorLength};
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -2326,6 +2452,7 @@ create_stub_angle_with_place(stub_angle_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_stub_tube(stub_tube_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   stub_tube_params cpp_params{params.diameter, params.thickness, params.slope,
                               params.exposedLength, params.anchorLength};
   try {
@@ -2339,6 +2466,7 @@ PRIMCAPICALL topo_shape_t *create_stub_tube(stub_tube_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_stub_tube_with_place(stub_tube_params_t params, pnt3d_t position,
                             dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   stub_tube_params cpp_params{params.diameter, params.thickness, params.slope,
                               params.exposedLength, params.anchorLength};
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -2354,6 +2482,7 @@ create_stub_tube_with_place(stub_tube_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_wire(cable_wire_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     // 将C数组转换为C++ vector
     std::vector<gp_Pnt> points;
@@ -2376,6 +2505,7 @@ PRIMCAPICALL topo_shape_t *create_cable_wire(cable_wire_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cable_wire_with_place(cable_wire_params_t params, pnt3d_t position,
                              dir3d_t direction, dir3d_t upDirection) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     // 将C数组转换为C++ vector
     std::vector<gp_Pnt> points;
@@ -2402,6 +2532,7 @@ create_cable_wire_with_place(cable_wire_params_t params, pnt3d_t position,
 }
  
 PRIMCAPICALL topo_wire_t create_cable_wire_centerline(cable_wire_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_wire_params cpp_params;
   try {
     // 转换路径点集
@@ -2423,6 +2554,7 @@ PRIMCAPICALL topo_wire_t create_cable_wire_centerline(cable_wire_params_t params
 }
 
 PRIMCAPICALL topo_shape_t *create_pole_tower(pole_tower_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pole_tower_params cpp_params;
 
   // 转换呼高信息
@@ -2522,6 +2654,7 @@ PRIMCAPICALL topo_shape_t *create_pole_tower(pole_tower_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_pole_tower_with_place(pole_tower_params_t params, pnt3d_t position,
                              dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pole_tower_params cpp_params;
 
   // 转换呼高信息
@@ -2623,6 +2756,7 @@ create_pole_tower_with_place(pole_tower_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_joint(cable_joint_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_joint_params cpp_params{params.length, params.outerDiameter,
                                 params.terminalLength, params.innerDiameter};
   try {
@@ -2636,6 +2770,7 @@ PRIMCAPICALL topo_shape_t *create_cable_joint(cable_joint_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cable_joint_with_place(cable_joint_params_t params, pnt3d_t position,
                               dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_joint_params cpp_params{params.length, params.outerDiameter,
                                 params.terminalLength, params.innerDiameter};
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -2652,6 +2787,7 @@ create_cable_joint_with_place(cable_joint_params_t params, pnt3d_t position,
 
 PRIMCAPICALL topo_shape_t *
 create_optical_fiber_box(optical_fiber_box_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   optical_fiber_box_params cpp_params{params.length, params.height,
                                       params.width};
   try {
@@ -2666,6 +2802,7 @@ PRIMCAPICALL topo_shape_t *
 create_optical_fiber_box_with_place(optical_fiber_box_params_t params,
                                     pnt3d_t position, dir3d_t direction,
                                     dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   optical_fiber_box_params cpp_params{params.length, params.height,
                                       params.width};
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -2682,6 +2819,7 @@ create_optical_fiber_box_with_place(optical_fiber_box_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_cable_terminal(cable_terminal_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_terminal_params cpp_params{
       .sort = static_cast<cable_terminal_type>(params.sort),
       .height = params.height,
@@ -2722,6 +2860,7 @@ create_cable_terminal(cable_terminal_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cable_terminal_with_place(cable_terminal_params_t params,
                                  pnt3d_t position, dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_terminal_params cpp_params{
       .sort = static_cast<cable_terminal_type>(params.sort),
       .height = params.height,
@@ -2764,6 +2903,7 @@ create_cable_terminal_with_place(cable_terminal_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_cable_accessory(cable_accessory_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_accessory_params cpp_params{static_cast<cable_box_type>(params.ctype),
                                     params.length,
                                     params.width,
@@ -2784,6 +2924,7 @@ PRIMCAPICALL topo_shape_t *
 create_cable_accessory_with_place(cable_accessory_params_t params,
                                   pnt3d_t position, dir3d_t normal,
                                   dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_accessory_params cpp_params{static_cast<cable_box_type>(params.ctype),
                                     params.length,
                                     params.width,
@@ -2805,6 +2946,7 @@ create_cable_accessory_with_place(cable_accessory_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_bracket(cable_bracket_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_bracket_params cpp_params{params.length,       params.rootHeight,
                                   params.rootWidth,    params.width,
                                   params.topThickness, params.rootThickness};
@@ -2833,6 +2975,7 @@ PRIMCAPICALL topo_shape_t *create_cable_bracket(cable_bracket_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cable_bracket_with_place(cable_bracket_params_t params, pnt3d_t position,
                                 dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_bracket_params cpp_params{params.length,       params.rootHeight,
                                   params.rootWidth,    params.width,
                                   params.topThickness, params.rootThickness};
@@ -2864,6 +3007,7 @@ create_cable_bracket_with_place(cable_bracket_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_clamp(cable_clamp_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_clamp_params cpp_params{static_cast<cable_clamp_type>(params.ctype),
                                 params.diameter, params.thickness,
                                 params.width};
@@ -2878,6 +3022,7 @@ PRIMCAPICALL topo_shape_t *create_cable_clamp(cable_clamp_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cable_clamp_with_place(cable_clamp_params_t params, pnt3d_t position,
                               dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_clamp_params cpp_params{static_cast<cable_clamp_type>(params.ctype),
                                 params.diameter, params.thickness,
                                 params.width};
@@ -2895,6 +3040,7 @@ create_cable_clamp_with_place(cable_clamp_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_pole(cable_pole_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_pole_params cpp_params{params.specification ? params.specification : "",
                                params.length,
                                params.radius,
@@ -2921,6 +3067,7 @@ PRIMCAPICALL topo_shape_t *create_cable_pole(cable_pole_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cable_pole_with_place(cable_pole_params_t params, pnt3d_t position,
                              dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_pole_params cpp_params{params.specification ? params.specification : "",
                                params.length,
                                params.radius,
@@ -2949,6 +3096,7 @@ create_cable_pole_with_place(cable_pole_params_t params, pnt3d_t position,
 
 PRIMCAPICALL topo_shape_t *
 create_ground_flat_iron(ground_flat_iron_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   ground_flat_iron_params cpp_params{params.length, params.height,
                                      params.thickness};
   try {
@@ -2963,6 +3111,7 @@ PRIMCAPICALL topo_shape_t *
 create_ground_flat_iron_with_place(ground_flat_iron_params_t params,
                                    pnt3d_t position, dir3d_t normal,
                                    dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   ground_flat_iron_params cpp_params{params.length, params.height,
                                      params.thickness};
 
@@ -2979,6 +3128,7 @@ create_ground_flat_iron_with_place(ground_flat_iron_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_embedded_part(embedded_part_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   embedded_part_params cpp_params{params.length, params.radius, params.height,
                                   params.materialRadius, params.lowerLength};
   try {
@@ -2992,6 +3142,7 @@ PRIMCAPICALL topo_shape_t *create_embedded_part(embedded_part_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_embedded_part_with_place(embedded_part_params_t params, pnt3d_t position,
                                 dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   embedded_part_params cpp_params{params.length, params.radius, params.height,
                                   params.materialRadius, params.lowerLength};
 
@@ -3008,6 +3159,7 @@ create_embedded_part_with_place(embedded_part_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_u_shaped_ring(u_shaped_ring_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   u_shaped_ring_params cpp_params{params.thickness, params.height,
                                   params.radius, params.length};
   try {
@@ -3021,6 +3173,7 @@ PRIMCAPICALL topo_shape_t *create_u_shaped_ring(u_shaped_ring_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_u_shaped_ring_with_place(u_shaped_ring_params_t params, pnt3d_t position,
                                 dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   u_shaped_ring_params cpp_params{params.thickness, params.height,
                                   params.radius, params.length};
 
@@ -3037,6 +3190,7 @@ create_u_shaped_ring_with_place(u_shaped_ring_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_lifting_eye(lifting_eye_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   lifting_eye_params cpp_params{params.height, params.ringRadius,
                                 params.pipeDiameter};
   try {
@@ -3050,6 +3204,7 @@ PRIMCAPICALL topo_shape_t *create_lifting_eye(lifting_eye_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_lifting_eye_with_place(lifting_eye_params_t params, pnt3d_t position,
                               dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   lifting_eye_params cpp_params{params.height, params.ringRadius,
                                 params.pipeDiameter};
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -3065,6 +3220,7 @@ create_lifting_eye_with_place(lifting_eye_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_corner_well(corner_well_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   corner_well_params cpp_params{
       params.leftLength,       params.rightLength,     params.width,
       params.height,           params.topThickness,    params.bottomThickness,
@@ -3081,6 +3237,7 @@ PRIMCAPICALL topo_shape_t *create_corner_well(corner_well_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_corner_well_with_place(corner_well_params_t params, pnt3d_t position,
                               dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   corner_well_params cpp_params{
       params.leftLength,       params.rightLength,     params.width,
       params.height,           params.topThickness,    params.bottomThickness,
@@ -3099,6 +3256,7 @@ create_corner_well_with_place(corner_well_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_tunnel_well(tunnel_well_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   tunnel_well_params cpp_params{
       static_cast<tunnel_well_type>(params.ctype),
       params.length,
@@ -3132,6 +3290,7 @@ PRIMCAPICALL topo_shape_t *create_tunnel_well(tunnel_well_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_tunnel_well_with_place(tunnel_well_params_t params, pnt3d_t position,
                               dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   tunnel_well_params cpp_params{
       static_cast<tunnel_well_type>(params.ctype),
       params.length,
@@ -3168,6 +3327,7 @@ create_tunnel_well_with_place(tunnel_well_params_t params, pnt3d_t position,
 
 PRIMCAPICALL topo_shape_t *
 create_three_way_well(three_way_well_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   three_way_well_params cpp_params{
       static_cast<three_way_well_type>(params.ctype),
       static_cast<corner_style>(params.cornerType),
@@ -3222,6 +3382,7 @@ PRIMCAPICALL topo_shape_t *
 create_three_way_well_with_place(three_way_well_params_t params,
                                  pnt3d_t position, dir3d_t mainDirection,
                                  dir3d_t branchDirection) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   three_way_well_params cpp_params{
       static_cast<three_way_well_type>(params.ctype),
       static_cast<corner_style>(params.cornerType),
@@ -3277,6 +3438,7 @@ create_three_way_well_with_place(three_way_well_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_four_way_well(four_way_well_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   four_way_well_params cpp_params{
       static_cast<four_way_well_type>(params.ctype),
       params.length,
@@ -3318,6 +3480,7 @@ PRIMCAPICALL topo_shape_t *create_four_way_well(four_way_well_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_four_way_well_with_place(four_way_well_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t xDirection) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   four_way_well_params cpp_params{
       static_cast<four_way_well_type>(params.ctype),
       params.length,
@@ -3361,6 +3524,7 @@ create_four_way_well_with_place(four_way_well_params_t params, pnt3d_t position,
 }
 
 topo_wire_t create_channel_centerline(channel_point_t *points, int pointCount) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   // 转换输入数据
   std::vector<channel_point> cpp_points;
   for (int i = 0; i < pointCount; ++i) {
@@ -3384,7 +3548,8 @@ topo_wire_t create_channel_centerline(channel_point_t *points, int pointCount) {
 PRIMCAPICALL pnt3d_t *sample_channel_points(const channel_point_t *points,
                                             int point_count,
                                             double tessellation,
-                                            int *out_count) { try {
+                                            int *out_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   // 参数检查
   if (!points || !out_count || point_count <= 0) {
     return nullptr;
@@ -3424,6 +3589,7 @@ PRIMCAPICALL pnt3d_t *sample_channel_points(const channel_point_t *points,
 }
 
 PRIMCAPICALL topo_shape_t *create_pipe_row(pipe_row_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pipe_row_params cpp_params{static_cast<pipe_row_type>(params.pipeType),
                              params.hasEnclosure,
                              params.enclosureWidth,
@@ -3469,6 +3635,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_row_with_place(pipe_row_params_t params,
                                                       pnt3d_t position,
                                                       dir3d_t normal,
                                                       dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pipe_row_params cpp_params{static_cast<pipe_row_type>(params.pipeType),
                              params.hasEnclosure,
                              params.enclosureWidth,
@@ -3515,6 +3682,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_row_with_place(pipe_row_params_t params,
 }
 
 PRIMCAPICALL topo_wire_t create_pipe_row_centerline(pipe_row_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pipe_row_params cpp_params{static_cast<pipe_row_type>(params.pipeType),
                              params.hasEnclosure,
                              params.enclosureWidth,
@@ -3564,6 +3732,7 @@ PRIMCAPICALL topo_wire_t create_pipe_row_centerline(pipe_row_params_t params) {
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_trench(cable_trench_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_trench_params cpp_params{params.width,
                                  params.height,
                                  params.coverWidth,
@@ -3595,6 +3764,7 @@ PRIMCAPICALL topo_shape_t *create_cable_trench(cable_trench_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cable_trench_with_place(cable_trench_params_t params, pnt3d_t position,
                                dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_trench_params cpp_params{params.width,
                                  params.height,
                                  params.coverWidth,
@@ -3630,6 +3800,7 @@ create_cable_trench_with_place(cable_trench_params_t params, pnt3d_t position,
 
 PRIMCAPICALL topo_wire_t
 create_cable_trench_centerline(cable_trench_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_trench_params cpp_params{params.width,
                                  params.height,
                                  params.coverWidth,
@@ -3667,6 +3838,7 @@ create_cable_trench_centerline(cable_trench_params_t params) {
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_tunnel(cable_tunnel_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_tunnel_params cpp_params{
       static_cast<connection_section_style>(params.style),
       params.width,
@@ -3700,6 +3872,7 @@ PRIMCAPICALL topo_shape_t *create_cable_tunnel(cable_tunnel_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cable_tunnel_with_place(cable_tunnel_params_t params, pnt3d_t position,
                                dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_tunnel_params cpp_params{
       static_cast<connection_section_style>(params.style),
       params.width,
@@ -3736,6 +3909,7 @@ create_cable_tunnel_with_place(cable_tunnel_params_t params, pnt3d_t position,
 }
 PRIMCAPICALL topo_wire_t
 create_cable_tunnel_centerline(cable_tunnel_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_tunnel_params cpp_params{
       static_cast<connection_section_style>(params.style),
       params.width,
@@ -3775,6 +3949,7 @@ create_cable_tunnel_centerline(cable_tunnel_params_t params) {
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_tray(cable_tray_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_tray_params cpp_params{static_cast<cable_tray_style>(params.style),
                                params.columnDiameter,
                                params.columnHeight,
@@ -3822,6 +3997,7 @@ PRIMCAPICALL topo_shape_t *create_cable_tray(cable_tray_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cable_tray_with_place(cable_tray_params_t params, pnt3d_t position,
                              dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_tray_params cpp_params{static_cast<cable_tray_style>(params.style),
                                params.columnDiameter,
                                params.columnHeight,
@@ -3865,6 +4041,7 @@ create_cable_tray_with_place(cable_tray_params_t params, pnt3d_t position,
 }
 PRIMCAPICALL topo_wire_t
 create_cable_tray_centerline(cable_tray_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_tray_params cpp_params{static_cast<cable_tray_style>(params.style),
                                params.columnDiameter,
                                params.columnHeight,
@@ -3911,6 +4088,7 @@ create_cable_tray_centerline(cable_tray_params_t params) {
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_L_beam(cable_L_beam_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_L_beam_params cpp_params{params.length, params.width, params.height};
   try {
     return new topo_shape_t{
@@ -3923,6 +4101,7 @@ PRIMCAPICALL topo_shape_t *create_cable_L_beam(cable_L_beam_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cable_L_beam_with_place(cable_L_beam_params_t params, pnt3d_t position,
                                dir3d_t xDir, dir3d_t zDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_L_beam_params cpp_params{params.length, params.width, params.height};
 
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -3937,6 +4116,7 @@ create_cable_L_beam_with_place(cable_L_beam_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_manhole(manhole_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   manhole_params cpp_params{static_cast<manhole_style>(params.style),
                             params.length, params.width, params.height,
                             params.wallThickness};
@@ -3952,6 +4132,7 @@ PRIMCAPICALL topo_shape_t *create_manhole_with_place(manhole_params_t params,
                                                      pnt3d_t position,
                                                      dir3d_t direction,
                                                      dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   manhole_params cpp_params{static_cast<manhole_style>(params.style),
                             params.length, params.width, params.height,
                             params.wallThickness};
@@ -3969,6 +4150,7 @@ PRIMCAPICALL topo_shape_t *create_manhole_with_place(manhole_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_manhole_cover(manhole_cover_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   manhole_cover_params cpp_params{
       static_cast<manhole_cover_style>(params.style), params.length,
       params.width, params.thickness};
@@ -3983,6 +4165,7 @@ PRIMCAPICALL topo_shape_t *create_manhole_cover(manhole_cover_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_manhole_cover_with_place(manhole_cover_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   manhole_cover_params cpp_params{
       static_cast<manhole_cover_style>(params.style), params.length,
       params.width, params.thickness};
@@ -4000,6 +4183,7 @@ create_manhole_cover_with_place(manhole_cover_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_ladder(ladder_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   ladder_params cpp_params{params.length, params.width, params.thickness};
   try {
     return new topo_shape_t{
@@ -4013,6 +4197,7 @@ PRIMCAPICALL topo_shape_t *create_ladder_with_place(ladder_params_t params,
                                                     pnt3d_t position,
                                                     dir3d_t direction,
                                                     dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   ladder_params cpp_params{params.length, params.width, params.thickness};
 
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -4028,6 +4213,7 @@ PRIMCAPICALL topo_shape_t *create_ladder_with_place(ladder_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_sump(sump_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   sump_params cpp_params{params.length, params.width, params.depth,
                          params.bottomThickness};
   try {
@@ -4042,6 +4228,7 @@ PRIMCAPICALL topo_shape_t *create_sump_with_place(sump_params_t params,
                                                   pnt3d_t position,
                                                   dir3d_t normal,
                                                   dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   sump_params cpp_params{params.length, params.width, params.depth,
                          params.bottomThickness};
 
@@ -4058,6 +4245,7 @@ PRIMCAPICALL topo_shape_t *create_sump_with_place(sump_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_footpath(footpath_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   footpath_params cpp_params{params.height, params.width};
 
   if (params.pointCount > 0) {
@@ -4080,6 +4268,7 @@ PRIMCAPICALL topo_shape_t *create_footpath_with_place(footpath_params_t params,
                                                       pnt3d_t position,
                                                       dir3d_t direction,
                                                       dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   footpath_params cpp_params{params.height, params.width};
 
   if (params.pointCount > 0) {
@@ -4104,6 +4293,7 @@ PRIMCAPICALL topo_shape_t *create_footpath_with_place(footpath_params_t params,
 }
 
 PRIMCAPICALL topo_wire_t create_footpath_centerline(footpath_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   footpath_params cpp_params{params.height, params.width};
 
   if (params.pointCount > 0) {
@@ -4132,6 +4322,7 @@ PRIMCAPICALL topo_wire_t create_footpath_centerline(footpath_params_t params) {
 }
 
 PRIMCAPICALL topo_shape_t *create_shaft_chamber(shaft_chamber_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   shaft_chamber_params cpp_params{
       params.supportWallThickness, params.supportDiameter,
       params.supportHeight,        params.topThickness,
@@ -4148,6 +4339,7 @@ PRIMCAPICALL topo_shape_t *create_shaft_chamber(shaft_chamber_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_shaft_chamber_with_place(shaft_chamber_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   shaft_chamber_params cpp_params{
       params.supportWallThickness, params.supportDiameter,
       params.supportHeight,        params.topThickness,
@@ -4168,6 +4360,7 @@ create_shaft_chamber_with_place(shaft_chamber_params_t params, pnt3d_t position,
 
 PRIMCAPICALL topo_shape_t *create_tunnel_compartment_partition(
     tunnel_compartment_partition_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     tunnel_compartment_partition_params cpp_params;
     cpp_params.width = params.width;
@@ -4184,6 +4377,7 @@ PRIMCAPICALL topo_shape_t *create_tunnel_compartment_partition(
 PRIMCAPICALL topo_shape_t *create_tunnel_compartment_partition_with_place(
     tunnel_compartment_partition_params_t params, pnt3d_t position,
     dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     tunnel_compartment_partition_params cpp_params;
     cpp_params.width = params.width;
@@ -4207,6 +4401,7 @@ PRIMCAPICALL topo_shape_t *create_tunnel_compartment_partition_with_place(
 
 PRIMCAPICALL topo_shape_t *
 create_tunnel_partition_board(tunnel_partition_board_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   tunnel_partition_board_params cpp_params{
       static_cast<tunnel_partition_board_style>(params.style), params.length,
       params.width, params.thickness};
@@ -4238,6 +4433,7 @@ PRIMCAPICALL topo_shape_t *
 create_tunnel_partition_board_with_place(tunnel_partition_board_params_t params,
                                          pnt3d_t position, dir3d_t normal,
                                          dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   tunnel_partition_board_params cpp_params{
       static_cast<tunnel_partition_board_style>(params.style), params.length,
       params.width, params.thickness};
@@ -4266,6 +4462,7 @@ create_tunnel_partition_board_with_place(tunnel_partition_board_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_ventilation_pavilion(ventilation_pavilion_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   ventilation_pavilion_params cpp_params{
       params.topLength, params.middleLength, params.bottomLength,
       params.topWidth,  params.middleWidth,  params.bottomWidth,
@@ -4282,6 +4479,7 @@ PRIMCAPICALL topo_shape_t *
 create_ventilation_pavilion_with_place(ventilation_pavilion_params_t params,
                                        pnt3d_t position, dir3d_t direction,
                                        dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   ventilation_pavilion_params cpp_params{
       params.topLength, params.middleLength, params.bottomLength,
       params.topWidth,  params.middleWidth,  params.bottomWidth,
@@ -4300,6 +4498,7 @@ create_ventilation_pavilion_with_place(ventilation_pavilion_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_straight_ventilation_duct(straight_ventilation_duct_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   straight_ventilation_duct_params cpp_params{
       params.diameter, params.wallThickness, params.height};
   try {
@@ -4313,6 +4512,7 @@ create_straight_ventilation_duct(straight_ventilation_duct_params_t params) {
 PRIMCAPICALL topo_shape_t *create_straight_ventilation_duct_with_place(
     straight_ventilation_duct_params_t params, pnt3d_t position,
     dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   straight_ventilation_duct_params cpp_params{
       params.diameter, params.wallThickness, params.height};
   gp_Pnt cpp_position(position.x, position.y, position.z);
@@ -4329,6 +4529,7 @@ PRIMCAPICALL topo_shape_t *create_straight_ventilation_duct_with_place(
 
 PRIMCAPICALL topo_shape_t *
 create_oblique_ventilation_duct(oblique_ventilation_duct_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   oblique_ventilation_duct_params cpp_params{params.hoodRoomLength,
                                              params.hoodRoomWidth,
                                              params.hoodRoomHeight,
@@ -4357,6 +4558,7 @@ create_oblique_ventilation_duct(oblique_ventilation_duct_params_t params) {
 PRIMCAPICALL topo_shape_t *create_oblique_ventilation_duct_with_place(
     oblique_ventilation_duct_params_t params, pnt3d_t position,
     dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   oblique_ventilation_duct_params cpp_params{params.hoodRoomLength,
                                              params.hoodRoomWidth,
                                              params.hoodRoomHeight,
@@ -4387,6 +4589,7 @@ PRIMCAPICALL topo_shape_t *create_oblique_ventilation_duct_with_place(
 }
 
 PRIMCAPICALL topo_shape_t *create_drainage_well(drainage_well_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   drainage_well_params cpp_params{
       params.length,          params.width,        params.height,
       params.neckDiameter,    params.neckHeight,   params.cushionExtension,
@@ -4402,6 +4605,7 @@ PRIMCAPICALL topo_shape_t *create_drainage_well(drainage_well_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_drainage_well_with_place(drainage_well_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   drainage_well_params cpp_params{
       params.length,          params.width,        params.height,
       params.neckDiameter,    params.neckHeight,   params.cushionExtension,
@@ -4419,7 +4623,8 @@ create_drainage_well_with_place(drainage_well_params_t params, pnt3d_t position,
 }
 
 // 辅助函数用于设置 pnt2d_t 数组元素
-PRIMCAPICALL void pnt2d_t_array_set(pnt2d_t *array, int index, pnt2d_t value) { try {
+PRIMCAPICALL void pnt2d_t_array_set(pnt2d_t *array, int index, pnt2d_t value) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (array != NULL) {
     array[index] = value;
   }
@@ -4432,7 +4637,8 @@ PRIMCAPICALL void pnt2d_t_array_set(pnt2d_t *array, int index, pnt2d_t value) { 
 }
 
 // 辅助函数用于设置 double 数组元素
-PRIMCAPICALL void double_array_set(double *array, int index, double value) { try {
+PRIMCAPICALL void double_array_set(double *array, int index, double value) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (array != NULL) {
     array[index] = value;
   }
@@ -4444,7 +4650,8 @@ PRIMCAPICALL void double_array_set(double *array, int index, double value) { try
   }
 }
 
-PRIMCAPICALL void int_array_set(int *array, int index, int value) { try {
+PRIMCAPICALL void int_array_set(int *array, int index, int value) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (array != NULL) {
     array[index] = value;
   }
@@ -4457,6 +4664,7 @@ PRIMCAPICALL void int_array_set(int *array, int index, int value) { try {
 }
 
 PRIMCAPICALL topo_shape_t *create_pipe_support(pipe_support_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pipe_support_params cpp_params{static_cast<pipe_support_style>(params.style),
                                  params.count};
 
@@ -4490,6 +4698,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_support(pipe_support_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_pipe_support_with_place(pipe_support_params_t params, pnt3d_t position,
                                dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pipe_support_params cpp_params{static_cast<pipe_support_style>(params.style),
                                  params.count};
 
@@ -4517,6 +4726,7 @@ create_pipe_support_with_place(pipe_support_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_cover_plate(cover_plate_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cover_plate_params cpp_params{static_cast<cover_plate_style>(params.style),
                                 params.length,
                                 params.width,
@@ -4534,6 +4744,7 @@ PRIMCAPICALL topo_shape_t *create_cover_plate(cover_plate_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cover_plate_with_place(cover_plate_params_t params, pnt3d_t position,
                               dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cover_plate_params cpp_params{static_cast<cover_plate_style>(params.style),
                                 params.length,
                                 params.width,
@@ -4553,6 +4764,7 @@ create_cover_plate_with_place(cover_plate_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_cable_ray(cable_ray_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_ray_params cpp_params{params.outerLength, params.outerHeight,
                               params.innerLength, params.innerHeight,
                               params.coverThickness};
@@ -4567,6 +4779,7 @@ PRIMCAPICALL topo_shape_t *create_cable_ray(cable_ray_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cable_ray_with_place(cable_ray_params_t params, pnt3d_t position,
                             dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cable_ray_params cpp_params{params.outerLength, params.outerHeight,
                               params.innerLength, params.innerHeight,
                               params.coverThickness};
@@ -4583,6 +4796,7 @@ create_cable_ray_with_place(cable_ray_params_t params, pnt3d_t position,
 }
 
 topo_shape_t *create_revol(revol_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   // 将C结构体转换为C++参数
   revol_params cpp_params;
   cpp_params.angle = params.angle;
@@ -4658,6 +4872,7 @@ topo_shape_t *create_revol(revol_params_t params) {
 
 topo_shape_t *create_revol_with_place(revol_params_t params, pnt3d_t position,
                                       dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   revol_params cpp_params;
   cpp_params.angle = params.angle;
   cpp_params.axis = gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)); // 默认轴
@@ -4730,6 +4945,7 @@ topo_shape_t *create_revol_with_place(revol_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_prism(prism_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   prism_params cpp_params;
 
   // 根据剖面类型转换剖面
@@ -4804,6 +5020,7 @@ PRIMCAPICALL topo_shape_t *create_prism_with_place(prism_params_t params,
                                                    pnt3d_t position,
                                                    dir3d_t direction,
                                                    dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   prism_params cpp_params;
 
   // 根据剖面类型转换剖面
@@ -4883,7 +5100,8 @@ PRIMCAPICALL topo_shape_t *create_prism_with_place(prism_params_t params,
 PRIMCAPICALL pnt3d_t *
 sample_segment_points(const pnt3d_t *wires, const int *wire_counts,
                       int wire_array_count, const segment_type_t *segments,
-                      int segment_count, double tessellation, int *out_count) { try {
+                      int segment_count, double tessellation, int *out_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   // 参数检查
   if (!wires || !wire_counts || !segments || !out_count ||
       wire_array_count <= 0 || segment_count <= 0) {
@@ -4932,6 +5150,7 @@ sample_segment_points(const pnt3d_t *wires, const int *wire_counts,
 }
 
 PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pipe_params cpp_params;
 
   // 转换路径点
@@ -5115,6 +5334,7 @@ PRIMCAPICALL topo_shape_t *create_pipe(pipe_params_t params) {
 topo_shape_t *create_pipe_with_split_distances(pipe_params_t params,
                                                double start_distance,
                                                double end_distance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pipe_params cpp_params;
 
   // 转换路径点
@@ -5298,6 +5518,7 @@ topo_shape_t *create_pipe_with_split_distances(pipe_params_t params,
 }
 
 topo_wire_t create_pipe_centerline(pipe_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pipe_params cpp_params;
 
   // 转换路径点
@@ -5348,6 +5569,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_with_place(pipe_params_t params,
                                                   pnt3d_t position,
                                                   dir3d_t direction,
                                                   dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pipe_params cpp_params;
 
   // 转换路径点
@@ -5535,6 +5757,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_with_place(pipe_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_multi_segment_pipe(multi_segment_pipe_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   multi_segment_pipe_params cpp_params;
 
   // 转换路径点
@@ -5736,6 +5959,7 @@ create_multi_segment_pipe(multi_segment_pipe_params_t params) {
 topo_shape_t *create_multi_segment_pipe_with_split_distances(
     multi_segment_pipe_params_t params, double start_distance,
     double end_distance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   multi_segment_pipe_params cpp_params;
 
   // 转换路径点
@@ -5938,6 +6162,7 @@ topo_shape_t *create_multi_segment_pipe_with_split_distances(
 
 topo_wire_t
 create_multi_segment_pipe_centerline(multi_segment_pipe_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   multi_segment_pipe_params cpp_params;
 
   // 转换路径点
@@ -5991,6 +6216,7 @@ PRIMCAPICALL topo_shape_t *
 create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
                                      pnt3d_t position, dir3d_t direction,
                                      dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   multi_segment_pipe_params cpp_params;
 
   // 转换路径点
@@ -6188,7 +6414,8 @@ create_multi_segment_pipe_with_place(multi_segment_pipe_params_t params,
 }
 
 static std::vector<std::vector<gp_Pnt>>
-convert_wires(pnt3d_t **wires, int *wire_counts, int wire_array_count) { try {
+convert_wires(pnt3d_t **wires, int *wire_counts, int wire_array_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   std::vector<std::vector<gp_Pnt>> result;
   for (int i = 0; i < wire_array_count; i++) {
     std::vector<gp_Pnt> wire;
@@ -6209,7 +6436,8 @@ convert_wires(pnt3d_t **wires, int *wire_counts, int wire_array_count) { try {
 }
 
 static std::vector<profile_layer> convert_layers(profile_layer_t *layers,
-                                                 int layer_count) { try {
+                                                 int layer_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   std::vector<profile_layer> result;
   for (int i = 0; i < layer_count; i++) {
     profile_layer layer;
@@ -6349,6 +6577,7 @@ static std::vector<profile_layer> convert_layers(profile_layer_t *layers,
 
 PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure(
     multi_layer_extrusion_structure_params_t params, int *out_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     multi_layer_extrusion_structure_params cpp_params;
     cpp_params.wires = convert_wires(params.wires, params.wire_counts,
@@ -6429,6 +6658,7 @@ PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure(
 
 PRIMCAPICALL topo_wire_t create_multi_layer_extrusion_structure_centerline(
     multi_layer_extrusion_structure_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     multi_layer_extrusion_structure_params cpp_params;
     cpp_params.wires = convert_wires(params.wires, params.wire_counts,
@@ -6488,6 +6718,7 @@ PRIMCAPICALL topo_wire_t create_multi_layer_extrusion_structure_centerline(
 PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure_with_place(
     multi_layer_extrusion_structure_params_t params, pnt3d_t position,
     dir3d_t direction, dir3d_t xDir, int *out_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     multi_layer_extrusion_structure_params cpp_params;
     cpp_params.wires = convert_wires(params.wires, params.wire_counts,
@@ -6564,6 +6795,7 @@ PRIMCAPICALL topo_shape_t **create_multi_layer_extrusion_structure_with_place(
 }
 
 PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pipe_joint_params cpp_params;
 
   // 转换输入端点
@@ -6851,6 +7083,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_joint(pipe_joint_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_pipe_joint_with_place(pipe_joint_params_t params, pnt3d_t position,
                              dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pipe_joint_params cpp_params;
 
   // 转换输入端点
@@ -7138,6 +7371,7 @@ create_pipe_joint_with_place(pipe_joint_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_catenary(catenary_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   catenary_params cpp_params;
 
   try {
@@ -7221,6 +7455,7 @@ PRIMCAPICALL topo_shape_t *create_catenary_with_place(catenary_params_t params,
                                                       pnt3d_t position,
                                                       dir3d_t direction,
                                                       dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   catenary_params cpp_params;
   try {
     // 转换端点
@@ -7304,6 +7539,7 @@ PRIMCAPICALL topo_shape_t *create_catenary_with_place(catenary_params_t params,
   }
 }
 PRIMCAPICALL topo_wire_t create_catenary_centerline(catenary_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   catenary_params cpp_params;
   try {
     // 转换端点
@@ -7326,6 +7562,7 @@ PRIMCAPICALL topo_wire_t create_catenary_centerline(catenary_params_t params) {
   }
 }
 PRIMCAPICALL topo_shape_t *create_box_shape(box_shape_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   box_shape_params cpp_params{
       gp_Pnt(params.point1.x, params.point1.y, params.point1.z),
       gp_Pnt(params.point2.x, params.point2.y, params.point2.z)};
@@ -7340,6 +7577,7 @@ PRIMCAPICALL topo_shape_t *create_box_shape(box_shape_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_box_shape_with_place(box_shape_params_t params, pnt3d_t position,
                             dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   box_shape_params cpp_params{
       gp_Pnt(params.point1.x, params.point1.y, params.point1.z),
       gp_Pnt(params.point2.x, params.point2.y, params.point2.z)};
@@ -7357,6 +7595,7 @@ create_box_shape_with_place(box_shape_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_cone_shape(cone_shape_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cone_shape_params cpp_params{
       params.radius1, params.radius2, params.height,
       params.angle ? boost::optional<double>(*params.angle) : boost::none};
@@ -7371,6 +7610,7 @@ PRIMCAPICALL topo_shape_t *create_cone_shape(cone_shape_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_cone_shape_with_place(cone_shape_params_t params, pnt3d_t position,
                              dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cone_shape_params cpp_params{
       params.radius1, params.radius2, params.height,
       params.angle ? boost::optional<double>(*params.angle) : boost::none};
@@ -7389,6 +7629,7 @@ create_cone_shape_with_place(cone_shape_params_t params, pnt3d_t position,
 
 PRIMCAPICALL topo_shape_t *
 create_cylinder_shape(cylinder_shape_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cylinder_shape_params cpp_params{
       params.radius, params.height,
       params.angle ? boost::optional<double>(*params.angle) : boost::none};
@@ -7404,6 +7645,7 @@ PRIMCAPICALL topo_shape_t *
 create_cylinder_shape_with_place(cylinder_shape_params_t params,
                                  pnt3d_t position, dir3d_t direction,
                                  dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cylinder_shape_params cpp_params{
       params.radius, params.height,
       params.angle ? boost::optional<double>(*params.angle) : boost::none};
@@ -7422,6 +7664,7 @@ create_cylinder_shape_with_place(cylinder_shape_params_t params,
 
 PRIMCAPICALL topo_shape_t *
 create_revolution_shape(revolution_shape_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   revolution_shape_params cpp_params;
 
   // 转换子午线点
@@ -7452,6 +7695,7 @@ PRIMCAPICALL topo_shape_t *
 create_revolution_shape_with_place(revolution_shape_params_t params,
                                    pnt3d_t position, dir3d_t direction,
                                    dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   revolution_shape_params cpp_params;
 
   // 转换子午线点
@@ -7484,6 +7728,7 @@ create_revolution_shape_with_place(revolution_shape_params_t params,
 }
 
 PRIMCAPICALL topo_shape_t *create_sphere_shape(sphere_shape_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   sphere_shape_params cpp_params{
       params.center ? boost::optional<gp_Pnt>(gp_Pnt(
                           params.center->x, params.center->y, params.center->z))
@@ -7503,6 +7748,7 @@ PRIMCAPICALL topo_shape_t *create_sphere_shape(sphere_shape_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_sphere_shape_with_place(sphere_shape_params_t params, pnt3d_t position,
                                dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   sphere_shape_params cpp_params{
       params.center ? boost::optional<gp_Pnt>(gp_Pnt(
                           params.center->x, params.center->y, params.center->z))
@@ -7525,6 +7771,7 @@ create_sphere_shape_with_place(sphere_shape_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_torus_shape(torus_shape_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   torus_shape_params cpp_params{
       params.radius1, params.radius2,
       params.angle1 ? boost::optional<double>(*params.angle1) : boost::none,
@@ -7541,6 +7788,7 @@ PRIMCAPICALL topo_shape_t *create_torus_shape(torus_shape_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_torus_shape_with_place(torus_shape_params_t params, pnt3d_t position,
                               dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   torus_shape_params cpp_params{
       params.radius1, params.radius2,
       params.angle1 ? boost::optional<double>(*params.angle1) : boost::none,
@@ -7560,6 +7808,7 @@ create_torus_shape_with_place(torus_shape_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_wedge_shape(wedge_shape_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   wedge_shape_params cpp_params;
   cpp_params.edge = gp_Pnt(params.edge.x, params.edge.y, params.edge.z);
 
@@ -7589,6 +7838,7 @@ PRIMCAPICALL topo_shape_t *create_wedge_shape(wedge_shape_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_wedge_shape_with_place(wedge_shape_params_t params, pnt3d_t position,
                               dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   wedge_shape_params cpp_params;
   cpp_params.edge = gp_Pnt(params.edge.x, params.edge.y, params.edge.z);
 
@@ -7621,6 +7871,7 @@ create_wedge_shape_with_place(wedge_shape_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_pipe_shape(pipe_shape_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pipe_shape_params cpp_params;
 
   // 转换管道线
@@ -7700,6 +7951,7 @@ PRIMCAPICALL topo_shape_t *create_pipe_shape(pipe_shape_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_pipe_shape_with_place(pipe_shape_params_t params, pnt3d_t position,
                              dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pipe_shape_params cpp_params;
 
   // 转换管道线
@@ -7782,6 +8034,7 @@ create_pipe_shape_with_place(pipe_shape_params_t params, pnt3d_t position,
 }
 
 PRIMCAPICALL topo_shape_t *create_step_shape(step_shape_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     step_shape_params cpp_params;
     cpp_params.name = params.name ? std::string(params.name) : "";
@@ -7797,6 +8050,7 @@ PRIMCAPICALL topo_shape_t *create_step_shape(step_shape_params_t params) {
 PRIMCAPICALL topo_shape_t *
 create_step_shape_with_place(step_shape_params_t params, pnt3d_t position,
                              dir3d_t direction, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     step_shape_params cpp_params;
     cpp_params.name = params.name ? std::string(params.name) : "";
@@ -7815,6 +8069,7 @@ create_step_shape_with_place(step_shape_params_t params, pnt3d_t position,
 
 PRIMCAPICALL topo_shape_t **create_borehole(borehole_params_t params,
                                             int *out_count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     borehole_params cpp_params;
     cpp_params.diameter = params.diameter;
@@ -7854,7 +8109,8 @@ PRIMCAPICALL topo_shape_t **create_borehole(borehole_params_t params,
   }
 }
 
-PRIMCAPICALL void free_borehole_results(topo_shape_t **results, int count) { try {
+PRIMCAPICALL void free_borehole_results(topo_shape_t **results, int count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (!results)
     return;
   free(results);
@@ -7867,6 +8123,7 @@ PRIMCAPICALL void free_borehole_results(topo_shape_t **results, int count) { try
 }
 
 PRIMCAPICALL topo_shape_t *create_water_tunnel(water_tunnel_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     water_tunnel_params cpp_params;
     cpp_params.style = water_tunnel_section_style(params.style);
@@ -7912,6 +8169,7 @@ PRIMCAPICALL topo_shape_t *create_water_tunnel(water_tunnel_params_t params) {
 
 PRIMCAPICALL topo_wire_t
 create_water_tunnel_centerline(water_tunnel_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     water_tunnel_params cpp_params;
     cpp_params.style = water_tunnel_section_style(params.style);

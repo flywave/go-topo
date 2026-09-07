@@ -1,4 +1,5 @@
 #include "primitives_railway_c_api.h"
+#include "cgo_lock.hh"
 #include "primitives_railway.hh"
 #include "shape.hh"
 #include "topo_impl.hh"
@@ -15,6 +16,7 @@ extern "C" {
 RAILCAPICALL topo_shape_t *
 create_contact_wire(contact_wire_params_t params, pnt3d_t startPoint,
                     pnt3d_t endPoint) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   contact_wire_params cpp_params{
       params.sectionalArea, params.diameter,       params.ratedTension,
       params.grooveDepth,   params.grooveWidth,    params.bottomRadius,
@@ -36,6 +38,7 @@ create_contact_wire(contact_wire_params_t params, pnt3d_t startPoint,
 RAILCAPICALL topo_shape_t *
 create_messenger_wire(messenger_wire_params_t params, pnt3d_t startPoint,
                       pnt3d_t endPoint) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   messenger_wire_params cpp_params{params.diameter, params.ratedTension,
                                     params.structuralHeight, params.sag};
   gp_Pnt cpp_start(startPoint.x, startPoint.y, startPoint.z);
@@ -53,6 +56,7 @@ create_messenger_wire(messenger_wire_params_t params, pnt3d_t startPoint,
 // 3. Cross Arm
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_cross_arm(cross_arm_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cross_arm_params cpp_params{
       static_cast<cross_arm_type>(params.ctype),
       params.beamLength,    params.beamHeight,      params.beamWidth,
@@ -70,6 +74,7 @@ RAILCAPICALL topo_shape_t *create_cross_arm(cross_arm_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_cross_arm_with_place(cross_arm_params_t params, pnt3d_t position,
                             dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cross_arm_params cpp_params{
       static_cast<cross_arm_type>(params.ctype),
       params.beamLength,    params.beamHeight,      params.beamWidth,
@@ -93,6 +98,7 @@ create_cross_arm_with_place(cross_arm_params_t params, pnt3d_t position,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *
 create_level_cantilever(level_cantilever_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   level_cantilever_params cpp_params{params.length,   params.outerDiameter,
                                       params.wallThickness, params.mountHeight,
                                       params.riseAngle};
@@ -108,6 +114,7 @@ RAILCAPICALL topo_shape_t *
 create_level_cantilever_with_place(level_cantilever_params_t params,
                                    pnt3d_t basePoint, dir3d_t axisDir,
                                    dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   level_cantilever_params cpp_params{params.length,   params.outerDiameter,
                                       params.wallThickness, params.mountHeight,
                                       params.riseAngle};
@@ -128,6 +135,7 @@ create_level_cantilever_with_place(level_cantilever_params_t params,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *
 create_slant_cantilever(slant_cantilever_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   slant_cantilever_params cpp_params{params.length, params.outerDiameter,
                                       params.wallThickness, params.slantAngle};
   try {
@@ -142,6 +150,7 @@ RAILCAPICALL topo_shape_t *
 create_slant_cantilever_with_place(slant_cantilever_params_t params,
                                    pnt3d_t basePoint, dir3d_t axisDir,
                                    dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   slant_cantilever_params cpp_params{params.length, params.outerDiameter,
                                       params.wallThickness, params.slantAngle};
   gp_Pnt cpp_base(basePoint.x, basePoint.y, basePoint.z);
@@ -160,6 +169,7 @@ create_slant_cantilever_with_place(slant_cantilever_params_t params,
 // 6. Curved Arm
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_curved_arm(curved_arm_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   curved_arm_params cpp_params{
       static_cast<curved_arm_type>(params.ctype),
       params.verticalLength,   params.horizontalLength, params.bendRadius,
@@ -176,6 +186,7 @@ RAILCAPICALL topo_shape_t *create_curved_arm(curved_arm_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_curved_arm_with_place(curved_arm_params_t params, pnt3d_t position,
                              dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   curved_arm_params cpp_params{
       static_cast<curved_arm_type>(params.ctype),
       params.verticalLength,   params.horizontalLength, params.bendRadius,
@@ -198,6 +209,7 @@ create_curved_arm_with_place(curved_arm_params_t params, pnt3d_t position,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *
 create_cantilever_brace(cantilever_brace_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cantilever_brace_params cpp_params{params.length, params.outerDiameter,
                                       params.wallThickness, params.slantAngle};
   try {
@@ -211,6 +223,7 @@ create_cantilever_brace(cantilever_brace_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_cantilever_brace_with_place(cantilever_brace_params_t params, pnt3d_t basePoint,
                                    dir3d_t axisDir, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cantilever_brace_params cpp_params{params.length, params.outerDiameter,
                                       params.wallThickness, params.slantAngle};
   gp_Pnt cpp_base(basePoint.x, basePoint.y, basePoint.z);
@@ -230,6 +243,7 @@ create_cantilever_brace_with_place(cantilever_brace_params_t params, pnt3d_t bas
 // ===========================================================================
 RAILCAPICALL topo_shape_t *
 create_rod_insulator(rod_insulator_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   rod_insulator_params cpp_params{
       static_cast<rod_insulator_type>(params.ctype),
       params.height,           params.outerDiameter,
@@ -249,6 +263,7 @@ create_rod_insulator(rod_insulator_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_rod_insulator_with_place(rod_insulator_params_t params, pnt3d_t basePoint,
                                 dir3d_t axisDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   rod_insulator_params cpp_params{
       static_cast<rod_insulator_type>(params.ctype),
       params.height,           params.outerDiameter,
@@ -272,6 +287,7 @@ create_rod_insulator_with_place(rod_insulator_params_t params, pnt3d_t basePoint
 // 8. Mast Bracket
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_mast_bracket(mast_bracket_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   mast_bracket_params cpp_params{
       params.boltSpacing,          params.boltDiameter,
       params.height,               params.width,
@@ -289,6 +305,7 @@ RAILCAPICALL topo_shape_t *create_mast_bracket(mast_bracket_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_mast_bracket_with_place(mast_bracket_params_t params, pnt3d_t position,
                                dir3d_t normal, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   mast_bracket_params cpp_params{
       params.boltSpacing,          params.boltDiameter,
       params.height,               params.width,
@@ -312,6 +329,7 @@ create_mast_bracket_with_place(mast_bracket_params_t params, pnt3d_t position,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *
 create_registration_arm(registration_arm_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   registration_arm_params cpp_params{
       static_cast<registration_arm_type>(params.ctype),
       params.length, params.tubeWidth, params.tubeHeight, params.wallThickness, params.angle, params.isReverse != 0};
@@ -327,6 +345,7 @@ RAILCAPICALL topo_shape_t *
 create_registration_arm_with_place(registration_arm_params_t params,
                                    pnt3d_t basePoint, dir3d_t axisDir,
                                    dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   registration_arm_params cpp_params{
       static_cast<registration_arm_type>(params.ctype),
       params.length, params.tubeWidth, params.tubeHeight, params.wallThickness, params.angle, params.isReverse != 0};
@@ -346,12 +365,14 @@ create_registration_arm_with_place(registration_arm_params_t params,
 // 9b. Reg Arm Bracket
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_reg_arm_bracket(reg_arm_bracket_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   reg_arm_bracket_params p{params.tubeDiameter, params.bandWidth, params.bandThickness,
     params.bracketHeight, params.bracketThickness, params.bracketWidth, params.mountHoleDiameter};
   try { return new topo_shape_t{.shp = std::make_shared<shape>(create_reg_arm_bracket(p))}; } catch (...) { return nullptr; }
 }
 RAILCAPICALL topo_shape_t *create_reg_arm_bracket_with_place(reg_arm_bracket_params_t params,
     pnt3d_t position, dir3d_t tubeDir, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   reg_arm_bracket_params p{params.tubeDiameter, params.bandWidth, params.bandThickness,
     params.bracketHeight, params.bracketThickness, params.bracketWidth, params.mountHoleDiameter};
   try { return new topo_shape_t{.shp = std::make_shared<shape>(create_reg_arm_bracket(p,
@@ -363,6 +384,7 @@ RAILCAPICALL topo_shape_t *create_reg_arm_bracket_with_place(reg_arm_bracket_par
 // 10. Guy Wire
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_guy_wire(guy_wire_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   guy_wire_params cpp_params{
       params.length,           params.diameter,
       params.angle,            params.ratedTension,
@@ -380,6 +402,7 @@ RAILCAPICALL topo_shape_t *create_guy_wire(guy_wire_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_guy_wire_with_place(guy_wire_params_t params, pnt3d_t anchorPoint,
                            pnt3d_t mastPoint, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   guy_wire_params cpp_params{
       params.length,           params.diameter,
       params.angle,            params.ratedTension,
@@ -402,6 +425,7 @@ create_guy_wire_with_place(guy_wire_params_t params, pnt3d_t anchorPoint,
 // 11. Steel Mast
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_steel_mast(steel_mast_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   steel_mast_params cpp_params{
       static_cast<steel_mast_type>(params.ctype),
       params.height,         params.topWidth,       params.bottomWidth,
@@ -418,6 +442,7 @@ RAILCAPICALL topo_shape_t *create_steel_mast(steel_mast_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_steel_mast_with_place(steel_mast_params_t params, pnt3d_t baseCenter,
                              dir3d_t axisDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   steel_mast_params cpp_params{
       static_cast<steel_mast_type>(params.ctype),
       params.height,         params.topWidth,       params.bottomWidth,
@@ -438,6 +463,7 @@ create_steel_mast_with_place(steel_mast_params_t params, pnt3d_t baseCenter,
 // 12. Concrete Mast
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_concrete_mast(concrete_mast_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   concrete_mast_params cpp_params{
       static_cast<concrete_mast_section_type>(params.sectionType),
       params.height,        params.topWidth,    params.bottomWidth,
@@ -455,6 +481,7 @@ RAILCAPICALL topo_shape_t *create_concrete_mast(concrete_mast_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_concrete_mast_with_place(concrete_mast_params_t params,
                                 pnt3d_t baseCenter, dir3d_t axisDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   concrete_mast_params cpp_params{
       static_cast<concrete_mast_section_type>(params.sectionType),
       params.height,        params.topWidth,    params.bottomWidth,
@@ -477,6 +504,7 @@ create_concrete_mast_with_place(concrete_mast_params_t params,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *
 create_ocs_foundation(ocs_foundation_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   ocs_foundation_params cpp_params{
       static_cast<foundation_type>(params.ctype),
       params.height,          params.width,
@@ -495,6 +523,7 @@ RAILCAPICALL topo_shape_t *
 create_ocs_foundation_with_place(ocs_foundation_params_t params,
                                  pnt3d_t position, dir3d_t normal,
                                  dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   ocs_foundation_params cpp_params{
       static_cast<foundation_type>(params.ctype),
       params.height,          params.width,
@@ -517,6 +546,7 @@ create_ocs_foundation_with_place(ocs_foundation_params_t params,
 // 14. Dropper
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_dropper(dropper_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   dropper_params cpp_params{params.length,     params.wireDiameter,
                              params.clampLength, params.clampWidth,
                              params.clampThickness,
@@ -532,6 +562,7 @@ RAILCAPICALL topo_shape_t *create_dropper(dropper_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_dropper_with_place(dropper_params_t params, pnt3d_t topPoint,
                           dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   dropper_params cpp_params{params.length,     params.wireDiameter,
                              params.clampLength, params.clampWidth,
                              params.clampThickness,
@@ -552,6 +583,7 @@ create_dropper_with_place(dropper_params_t params, pnt3d_t topPoint,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *
 create_cantilever_base(cantilever_base_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cantilever_base_params cpp_params{params.length, params.width, params.height,
                                      params.boltSpacing, params.boltDiameter,
                                      params.boltCount};
@@ -566,6 +598,7 @@ create_cantilever_base(cantilever_base_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_cantilever_base_with_place(cantilever_base_params_t params, pnt3d_t position,
                                   dir3d_t normal, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   cantilever_base_params cpp_params{params.length, params.width, params.height,
                                      params.boltSpacing, params.boltDiameter,
                                      params.boltCount};
@@ -585,6 +618,7 @@ create_cantilever_base_with_place(cantilever_base_params_t params, pnt3d_t posit
 // 16. MW Saddle
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_mw_saddle(mw_saddle_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   mw_saddle_params cpp_params{params.length, params.width, params.height,
                                params.grooveRadius, params.boltDiameter};
   try {
@@ -598,6 +632,7 @@ RAILCAPICALL topo_shape_t *create_mw_saddle(mw_saddle_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_mw_saddle_with_place(mw_saddle_params_t params, pnt3d_t position,
                             dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   mw_saddle_params cpp_params{params.length, params.width, params.height,
                                params.grooveRadius, params.boltDiameter};
   gp_Pnt cpp_pos(position.x, position.y, position.z);
@@ -617,6 +652,7 @@ create_mw_saddle_with_place(mw_saddle_params_t params, pnt3d_t position,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *
 create_balance_weight(balance_weight_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   balance_weight_params cpp_params{
       params.width, params.thickness, params.height, params.centerHoleDiameter};
   try {
@@ -630,6 +666,7 @@ create_balance_weight(balance_weight_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_balance_weight_with_place(balance_weight_params_t params, pnt3d_t position,
                                  dir3d_t normal, dir3d_t xDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   balance_weight_params cpp_params{
       params.width, params.thickness, params.height, params.centerHoleDiameter};
   gp_Pnt cpp_pos(position.x, position.y, position.z);
@@ -648,6 +685,7 @@ create_balance_weight_with_place(balance_weight_params_t params, pnt3d_t positio
 // 18. Weight Rod
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_weight_rod(weight_rod_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   weight_rod_params cpp_params{params.rodDiameter, params.rodLength,
                                 params.topHoleDiameter};
   try {
@@ -661,6 +699,7 @@ RAILCAPICALL topo_shape_t *create_weight_rod(weight_rod_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_weight_rod_with_place(weight_rod_params_t params, pnt3d_t position,
                              dir3d_t axisDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   weight_rod_params cpp_params{params.rodDiameter, params.rodLength,
                                 params.topHoleDiameter};
   gp_Pnt cpp_pos(position.x, position.y, position.z);
@@ -679,6 +718,7 @@ create_weight_rod_with_place(weight_rod_params_t params, pnt3d_t position,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *
 create_anchor_fitting(anchor_fitting_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   anchor_fitting_params cpp_params{
       static_cast<anchor_fitting_type>(params.ctype), params.length,
       params.diameter};
@@ -693,6 +733,7 @@ create_anchor_fitting(anchor_fitting_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_anchor_fitting_with_place(anchor_fitting_params_t params, pnt3d_t position,
                                   dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   anchor_fitting_params cpp_params{
       static_cast<anchor_fitting_type>(params.ctype), params.length,
       params.diameter};
@@ -712,6 +753,7 @@ create_anchor_fitting_with_place(anchor_fitting_params_t params, pnt3d_t positio
 // 20. Crossing
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_crossing(crossing_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   crossing_params cpp_params{params.limitPipeLength, params.pipeDiameter,
                               params.wireDiameter, params.heightDiff};
   try {
@@ -725,6 +767,7 @@ RAILCAPICALL topo_shape_t *create_crossing(crossing_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_crossing_with_place(crossing_params_t params, pnt3d_t crossPoint,
                            dir3d_t mainDir, dir3d_t branchDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   crossing_params cpp_params{params.limitPipeLength, params.pipeDiameter,
                               params.wireDiameter, params.heightDiff};
   gp_Pnt cpp_cp(crossPoint.x, crossPoint.y, crossPoint.z);
@@ -743,6 +786,7 @@ create_crossing_with_place(crossing_params_t params, pnt3d_t crossPoint,
 // 21. Head Span
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_head_span(head_span_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   head_span_params cpp_params{
       params.span,          params.hangPointCount, params.hangPointSpacing,
       params.crossCatenaryDiameter, params.crossCatenarySag,
@@ -759,6 +803,7 @@ RAILCAPICALL topo_shape_t *create_head_span(head_span_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_head_span_with_place(head_span_params_t params, pnt3d_t leftMast,
                             pnt3d_t rightMast, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   head_span_params cpp_params{
       params.span,          params.hangPointCount, params.hangPointSpacing,
       params.crossCatenaryDiameter, params.crossCatenarySag,
@@ -781,6 +826,7 @@ create_head_span_with_place(head_span_params_t params, pnt3d_t leftMast,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *
 create_transverse_span(transverse_span_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   transverse_span_params cpp_params{
       params.span,           static_cast<beam_section_type>(params.beamType),
       params.beamHeight,     params.beamWidth,
@@ -797,6 +843,7 @@ create_transverse_span(transverse_span_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_transverse_span_with_place(transverse_span_params_t params, pnt3d_t position,
                                    dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   transverse_span_params cpp_params{
       params.span,           static_cast<beam_section_type>(params.beamType),
       params.beamHeight,     params.beamWidth,
@@ -818,6 +865,7 @@ create_transverse_span_with_place(transverse_span_params_t params, pnt3d_t posit
 // 22b. Hanger Post
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_hanger_post(hanger_post_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   hanger_post_params cpp_params{
       static_cast<hanger_post_section_type>(params.sectionType),
       params.length,         params.sectionSize,    params.wallThickness,
@@ -832,6 +880,7 @@ RAILCAPICALL topo_shape_t *create_hanger_post(hanger_post_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_hanger_post_with_place(hanger_post_params_t params, pnt3d_t position,
                                dir3d_t direction) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   hanger_post_params cpp_params{
       static_cast<hanger_post_section_type>(params.sectionType),
       params.length,         params.sectionSize,    params.wallThickness,
@@ -850,6 +899,7 @@ create_hanger_post_with_place(hanger_post_params_t params, pnt3d_t position,
 // 22c. Portal Frame
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_portal_frame(portal_frame_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   portal_frame_params cpp_params{
       params.frameHeight,    params.frameWidth,     params.postDiameter,
       params.postWallThick,  params.beamDiameter,   params.beamWallThick,
@@ -865,6 +915,7 @@ RAILCAPICALL topo_shape_t *create_portal_frame(portal_frame_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_portal_frame_with_place(portal_frame_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   portal_frame_params cpp_params{
       params.frameHeight,    params.frameWidth,     params.postDiameter,
       params.postWallThick,  params.beamDiameter,   params.beamWallThick,
@@ -886,6 +937,7 @@ create_portal_frame_with_place(portal_frame_params_t params, pnt3d_t position,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *
 create_suspension_hard_span(suspension_hard_span_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   suspension_hard_span_params cpp_params{
       params.span,           params.mastHeight, params.mastWidth,
       params.cableDiameter,  params.cableSag,   params.dropperCableDiameter,
@@ -901,6 +953,7 @@ RAILCAPICALL topo_shape_t *
 create_suspension_hard_span_with_place(suspension_hard_span_params_t params,
                                         pnt3d_t position,
                                         dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   suspension_hard_span_params cpp_params{
       params.span,           params.mastHeight, params.mastWidth,
       params.cableDiameter,  params.cableSag,   params.dropperCableDiameter,
@@ -921,6 +974,7 @@ create_suspension_hard_span_with_place(suspension_hard_span_params_t params,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *
 create_positioning_cable(positioning_cable_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   positioning_cable_params cpp_params{
       params.diameter,
       gp_Pnt(params.topPoint.x, params.topPoint.y, params.topPoint.z),
@@ -936,6 +990,7 @@ create_positioning_cable(positioning_cable_params_t params) {
 // 23. Aux Bracket
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_aux_bracket(aux_bracket_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   aux_bracket_params cpp_params{
       static_cast<aux_bracket_type>(params.ctype),
       params.mountHeight,   params.overhangLength, params.bracketLength,
@@ -951,6 +1006,7 @@ RAILCAPICALL topo_shape_t *create_aux_bracket(aux_bracket_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_aux_bracket_with_place(aux_bracket_params_t params, pnt3d_t position,
                               dir3d_t normal, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   aux_bracket_params cpp_params{
       static_cast<aux_bracket_type>(params.ctype),
       params.mountHeight,   params.overhangLength, params.bracketLength,
@@ -971,6 +1027,7 @@ create_aux_bracket_with_place(aux_bracket_params_t params, pnt3d_t position,
 // 24. Rail
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_rail(rail_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   rail_params cpp_params{params.railHeight, params.headWidth,  params.baseWidth,
                           params.webThickness, params.headHeight, params.baseHeight,
                           params.headRadius,   params.standardLength};
@@ -985,6 +1042,7 @@ RAILCAPICALL topo_shape_t *create_rail(rail_params_t params) {
 RAILCAPICALL topo_shape_t *create_rail_with_place(rail_params_t params,
                                                   pnt3d_t startPoint,
                                                   pnt3d_t endPoint) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   rail_params cpp_params{params.railHeight, params.headWidth,  params.baseWidth,
                           params.webThickness, params.headHeight, params.baseHeight,
                           params.headRadius,   params.standardLength};
@@ -1002,6 +1060,7 @@ RAILCAPICALL topo_shape_t *create_rail_with_place(rail_params_t params,
 // 25. Sleeper
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_sleeper(sleeper_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   sleeper_params cpp_params{static_cast<sleeper_shape_type>(params.shapeType), params.length, params.width, params.height,
                              params.gauge, params.railBaseWidth, params.grooveDepth, params.spacing};
   try {
@@ -1015,6 +1074,7 @@ RAILCAPICALL topo_shape_t *create_sleeper(sleeper_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_sleeper_with_place(sleeper_params_t params, pnt3d_t position,
                           dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   sleeper_params cpp_params{static_cast<sleeper_shape_type>(params.shapeType), params.length, params.width, params.height,
                              params.gauge, params.railBaseWidth, params.grooveDepth, params.spacing};
   gp_Pnt cpp_pos(position.x, position.y, position.z);
@@ -1033,6 +1093,7 @@ create_sleeper_with_place(sleeper_params_t params, pnt3d_t position,
 // 26. Ballast
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_ballast(ballast_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   ballast_params cpp_params; cpp_params.topWidth = params.topWidth;
   cpp_params.thickness = params.thickness; cpp_params.sideSlope = params.sideSlope;
   for (int i = 0; i < params.pointCount - 1; ++i)
@@ -1046,6 +1107,7 @@ RAILCAPICALL topo_shape_t *create_ballast(ballast_params_t params) {
 // 27. Track Slab
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_track_slab(track_slab_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   track_slab_params cpp_params{
       params.length, params.width, params.thickness, params.railSeatCount,
       params.railSeatSpacing, params.cementAsphaltThickness};
@@ -1060,6 +1122,7 @@ RAILCAPICALL topo_shape_t *create_track_slab(track_slab_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_track_slab_with_place(track_slab_params_t params, pnt3d_t position,
                              dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   track_slab_params cpp_params{
       params.length, params.width, params.thickness, params.railSeatCount,
       params.railSeatSpacing, params.cementAsphaltThickness};
@@ -1079,6 +1142,7 @@ create_track_slab_with_place(track_slab_params_t params, pnt3d_t position,
 // 28. Fastener
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_fastener(fastener_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   fastener_params cpp_params{params.spacing,  params.gauge,
                               params.padThickness, params.padLength,
                               params.padWidth};
@@ -1093,6 +1157,7 @@ RAILCAPICALL topo_shape_t *create_fastener(fastener_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_fastener_with_place(fastener_params_t params, pnt3d_t position,
                            dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   fastener_params cpp_params{params.spacing,  params.gauge,
                               params.padThickness, params.padLength,
                               params.padWidth};
@@ -1112,6 +1177,7 @@ create_fastener_with_place(fastener_params_t params, pnt3d_t position,
 // 29. Guard Rail
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_guard_rail(guard_rail_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   guard_rail_params cpp_params{
       params.height,    params.headWidth, params.baseWidth,
       params.grooveWidth, params.totalLength, params.gaugeDistance};
@@ -1126,6 +1192,7 @@ RAILCAPICALL topo_shape_t *create_guard_rail(guard_rail_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_guard_rail_with_place(guard_rail_params_t params, pnt3d_t startPoint,
                              pnt3d_t endPoint) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   guard_rail_params cpp_params{
       params.height,    params.headWidth, params.baseWidth,
       params.grooveWidth, params.totalLength, params.gaugeDistance};
@@ -1145,6 +1212,7 @@ create_guard_rail_with_place(guard_rail_params_t params, pnt3d_t startPoint,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *
 create_mast_assembly(mast_assembly_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   mast_assembly_params cpp_params{
       params.mastType,   params.mastHeight,    params.cantileverType,
       params.hasCrossArm != 0, params.armDiameter, params.stagger,
@@ -1161,6 +1229,7 @@ create_mast_assembly(mast_assembly_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_mast_assembly_with_place(mast_assembly_params_t params, pnt3d_t position,
                                 dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   mast_assembly_params cpp_params{
       params.mastType,   params.mastHeight,    params.cantileverType,
       params.hasCrossArm != 0, params.armDiameter, params.stagger,
@@ -1181,7 +1250,8 @@ create_mast_assembly_with_place(mast_assembly_params_t params, pnt3d_t position,
 // ===========================================================================
 // 30b. Weight Stack / Ratchet Compensator
 // ===========================================================================
-static weight_stack_params to_cpp(const weight_stack_params_t &p) { try {
+static weight_stack_params to_cpp(const weight_stack_params_t &p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   weight_stack_params c;
   c.blockCount = p.blockCount;
   c.blockDiameter = p.blockDiameter;
@@ -1202,6 +1272,7 @@ static weight_stack_params to_cpp(const weight_stack_params_t &p) { try {
 }
 
 RAILCAPICALL topo_shape_t *create_weight_stack(weight_stack_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return new topo_shape_t{std::make_shared<shape>(
         create_weight_stack(to_cpp(params)))};
@@ -1212,6 +1283,7 @@ RAILCAPICALL topo_shape_t *create_weight_stack(weight_stack_params_t params) {
 
 RAILCAPICALL topo_shape_t *create_weight_stack_at(weight_stack_params_t params,
                                                   pnt3d_t topPoint) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return new topo_shape_t{std::make_shared<shape>(create_weight_stack(
         to_cpp(params), gp_Pnt(topPoint.x, topPoint.y, topPoint.z)))};
@@ -1220,7 +1292,8 @@ RAILCAPICALL topo_shape_t *create_weight_stack_at(weight_stack_params_t params,
   }
 }
 
-static ratchet_compensator_params to_cpp(const ratchet_compensator_params_t &p) { try {
+static ratchet_compensator_params to_cpp(const ratchet_compensator_params_t &p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   ratchet_compensator_params c;
   c.wheelDiameter = p.wheelDiameter;
   c.wheelWidth = p.wheelWidth;
@@ -1240,6 +1313,7 @@ static ratchet_compensator_params to_cpp(const ratchet_compensator_params_t &p) 
 
 RAILCAPICALL topo_shape_t *
 create_ratchet_compensator(ratchet_compensator_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return new topo_shape_t{std::make_shared<shape>(
         create_ratchet_compensator(to_cpp(params)))};
@@ -1251,6 +1325,7 @@ create_ratchet_compensator(ratchet_compensator_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_ratchet_compensator_at(ratchet_compensator_params_t params,
                               pnt3d_t wheelCenter, dir3d_t wheelAxis) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     return new topo_shape_t{std::make_shared<shape>(create_ratchet_compensator(
         to_cpp(params), gp_Pnt(wheelCenter.x, wheelCenter.y, wheelCenter.z),
@@ -1266,6 +1341,7 @@ create_ratchet_compensator_at(ratchet_compensator_params_t params,
 RAILCAPICALL topo_shape_t *
 create_auxiliary_wire(auxiliary_wire_params_t params, pnt3d_t startPoint,
                       pnt3d_t endPoint) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   auxiliary_wire_params cpp_params{params.diameter, params.sag,
                                    params.ratedTension};
   try {
@@ -1281,6 +1357,7 @@ create_auxiliary_wire(auxiliary_wire_params_t params, pnt3d_t startPoint,
 // 30d. Disconnector / Arrester
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_disconnector(disconnector_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   disconnector_params cpp_params{params.baseLength, params.baseWidth,
                                  params.insulatorHeight, params.bladeLength,
                                  params.openAngle};
@@ -1295,6 +1372,7 @@ RAILCAPICALL topo_shape_t *create_disconnector(disconnector_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_disconnector_with_place(disconnector_params_t params, pnt3d_t position,
                                dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   disconnector_params cpp_params{params.baseLength, params.baseWidth,
                                  params.insulatorHeight, params.bladeLength,
                                  params.openAngle};
@@ -1309,6 +1387,7 @@ create_disconnector_with_place(disconnector_params_t params, pnt3d_t position,
 }
 
 RAILCAPICALL topo_shape_t *create_arrester(arrester_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   arrester_params cpp_params{params.height, params.outerDiameter,
                              params.shedDiameter, params.shedSpacing,
                              params.shedCount};
@@ -1323,6 +1402,7 @@ RAILCAPICALL topo_shape_t *create_arrester(arrester_params_t params) {
 RAILCAPICALL topo_shape_t *create_arrester_with_place(arrester_params_t params,
                                                       pnt3d_t position,
                                                       dir3d_t axisDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   arrester_params cpp_params{params.height, params.outerDiameter,
                              params.shedDiameter, params.shedSpacing,
                              params.shedCount};
@@ -1340,6 +1420,7 @@ RAILCAPICALL topo_shape_t *create_arrester_with_place(arrester_params_t params,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *
 create_pulley_compensator(pulley_compensator_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pulley_compensator_params cpp_params;
   cpp_params.pulleyDiameter = params.pulleyDiameter;
   cpp_params.grooveWidth = params.grooveWidth;
@@ -1359,6 +1440,7 @@ create_pulley_compensator(pulley_compensator_params_t params) {
 RAILCAPICALL topo_shape_t *
 create_pulley_compensator_at(pulley_compensator_params_t params,
                              pnt3d_t pulleyCenter, dir3d_t wheelAxis) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   pulley_compensator_params cpp_params;
   cpp_params.pulleyDiameter = params.pulleyDiameter;
   cpp_params.grooveWidth = params.grooveWidth;
@@ -1381,6 +1463,7 @@ create_pulley_compensator_at(pulley_compensator_params_t params,
 // ===========================================================================
 RAILCAPICALL topo_shape_t *
 create_sleeve_connector(sleeve_connector_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   sleeve_connector_params cpp_params{params.tubeDiameter, params.sleeveLength,
                                      params.wallThickness, params.angle,
                                      params.boltDiameter};
@@ -1393,6 +1476,7 @@ create_sleeve_connector(sleeve_connector_params_t params) {
 }
 
 RAILCAPICALL topo_shape_t *create_sleeve_ear(sleeve_ear_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   sleeve_ear_params cpp_params{params.tubeDiameter, params.sleeveLength,
                                params.wallThickness, params.earHeight,
                                params.earThickness, params.holeDiameter};
@@ -1408,6 +1492,7 @@ RAILCAPICALL topo_shape_t *create_sleeve_ear(sleeve_ear_params_t params) {
 // 31. Switch Rail
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_switch_rail(switch_rail_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   switch_rail_params cpp_params{params.length, params.railHeight, params.railHeadWidth,
                                  params.railBaseWidth, params.webThickness, params.tipWidth, params.curveRadius,
                                  params.isLeftHand != 0};
@@ -1419,6 +1504,7 @@ RAILCAPICALL topo_shape_t *create_switch_rail(switch_rail_params_t params) {
 RAILCAPICALL topo_shape_t *create_switch_rail_with_place(switch_rail_params_t params,
                                                           pnt3d_t position,
                                                           dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   switch_rail_params cpp_params{params.length, params.railHeight, params.railHeadWidth,
                                  params.railBaseWidth, params.webThickness, params.tipWidth, params.curveRadius,
                                  params.isLeftHand != 0};
@@ -1434,6 +1520,7 @@ RAILCAPICALL topo_shape_t *create_switch_rail_with_place(switch_rail_params_t pa
 // 32. Frog
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_frog(frog_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   frog_params cpp_params{params.turnoutNo, params.gauge, params.railHeight,
                           params.railHeadWidth, params.railBaseWidth};
   try {
@@ -1444,6 +1531,7 @@ RAILCAPICALL topo_shape_t *create_frog(frog_params_t params) {
 RAILCAPICALL topo_shape_t *create_frog_with_place(frog_params_t params,
                                                    pnt3d_t position,
                                                    dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   frog_params cpp_params{params.turnoutNo, params.gauge, params.railHeight,
                           params.railHeadWidth, params.railBaseWidth};
   gp_Pnt p(position.x, position.y, position.z);
@@ -1458,6 +1546,7 @@ RAILCAPICALL topo_shape_t *create_frog_with_place(frog_params_t params,
 // 33. Turnout
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_turnout(turnout_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   turnout_params cpp_params{params.turnoutNo, params.isLeftHand != 0, params.gauge,
                              params.railHeight, params.railHeadWidth, params.railBaseWidth, params.webThickness,
                              params.switchRailLength, params.leadCurveRadius, params.frogLength,
@@ -1470,6 +1559,7 @@ RAILCAPICALL topo_shape_t *create_turnout(turnout_params_t params) {
 RAILCAPICALL topo_shape_t *create_turnout_with_place(turnout_params_t params,
                                                       pnt3d_t position,
                                                       dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   turnout_params cpp_params{params.turnoutNo, params.isLeftHand != 0, params.gauge,
                              params.railHeight, params.railHeadWidth, params.railBaseWidth, params.webThickness,
                              params.switchRailLength, params.leadCurveRadius, params.frogLength,
@@ -1486,11 +1576,13 @@ RAILCAPICALL topo_shape_t *create_turnout_with_place(turnout_params_t params,
 // 35. Rail Pair
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_rail_pair(rail_pair_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> pts; for (int i = 0; i < params.pointCount; ++i) pts.push_back(gp_Pnt(params.centerline[i].x, params.centerline[i].y, params.centerline[i].z));
   rail_pair_params cpp_params{pts, params.gauge, params.superElevation, params.railHeight, params.railHeadWidth, params.railBaseWidth};
   try { return new topo_shape_t{.shp = std::make_shared<shape>(create_rail_pair(cpp_params))}; } catch (...) { return nullptr; }
 }
 RAILCAPICALL topo_shape_t *create_rail_pair_with_place(rail_pair_params_t params, pnt3d_t position, dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> pts; for (int i = 0; i < params.pointCount; ++i) pts.push_back(gp_Pnt(params.centerline[i].x, params.centerline[i].y, params.centerline[i].z));
   rail_pair_params cpp_params{pts, params.gauge, params.superElevation, params.railHeight, params.railHeadWidth, params.railBaseWidth};
   try { return new topo_shape_t{.shp = std::make_shared<shape>(create_rail_pair(cpp_params, gp_Pnt(position.x,position.y,position.z), gp_Dir(direction.x,direction.y,direction.z), gp_Dir(upDir.x,upDir.y,upDir.z)))}; } catch (...) { return nullptr; }
@@ -1500,6 +1592,7 @@ RAILCAPICALL topo_shape_t *create_rail_pair_with_place(rail_pair_params_t params
 // 36. Sleeper Layout
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_sleeper_layout(sleeper_layout_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   std::vector<gp_Pnt> pts; for (int i = 0; i < params.pointCount; ++i) pts.push_back(gp_Pnt(params.centerline[i].x, params.centerline[i].y, params.centerline[i].z));
   sleeper_layout_params cpp_params{pts, params.length, params.width, params.height, params.spacing, params.gauge};
   try { return new topo_shape_t{.shp = std::make_shared<shape>(create_sleeper_layout(cpp_params))}; } catch (...) { return nullptr; }
@@ -1509,6 +1602,7 @@ RAILCAPICALL topo_shape_t *create_sleeper_layout(sleeper_layout_params_t params)
 // 37. Straight Track
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_straight_track(straight_track_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   straight_track_params p{ gp_Pnt(params.startPoint.x,params.startPoint.y,params.startPoint.z),
     gp_Pnt(params.endPoint.x,params.endPoint.y,params.endPoint.z), params.gauge,
     params.railHeight, params.railHeadWidth, params.railBaseWidth, params.webThickness,
@@ -1518,6 +1612,7 @@ RAILCAPICALL topo_shape_t *create_straight_track(straight_track_params_t params)
 }
 RAILCAPICALL topo_shape_t *create_straight_track_with_place(straight_track_params_t params,
     pnt3d_t position, dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   straight_track_params p{ gp_Pnt(params.startPoint.x,params.startPoint.y,params.startPoint.z),
     gp_Pnt(params.endPoint.x,params.endPoint.y,params.endPoint.z), params.gauge,
     params.railHeight, params.railHeadWidth, params.railBaseWidth, params.webThickness,
@@ -1532,6 +1627,7 @@ RAILCAPICALL topo_shape_t *create_straight_track_with_place(straight_track_param
 // 38. Curve Track
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_curve_track(curve_track_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   curve_track_params p{ gp_Pnt(params.curveCenter.x,params.curveCenter.y,params.curveCenter.z),
     params.startAngle, params.sweepAngle, params.curveRadius, params.gauge, params.superElevation,
     params.railHeight, params.railHeadWidth, params.railBaseWidth, params.webThickness, params.sleeperLength,
@@ -1541,6 +1637,7 @@ RAILCAPICALL topo_shape_t *create_curve_track(curve_track_params_t params) {
 }
 RAILCAPICALL topo_shape_t *create_curve_track_with_place(curve_track_params_t params,
     pnt3d_t position, dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   curve_track_params p{ gp_Pnt(params.curveCenter.x,params.curveCenter.y,params.curveCenter.z),
     params.startAngle, params.sweepAngle, params.curveRadius, params.gauge, params.superElevation,
     params.railHeight, params.railHeadWidth, params.railBaseWidth, params.webThickness, params.sleeperLength,
@@ -1555,6 +1652,7 @@ RAILCAPICALL topo_shape_t *create_curve_track_with_place(curve_track_params_t pa
 // 39. Retarder Point
 // ===========================================================================
 RAILCAPICALL topo_shape_t *create_retarder_point(retarder_point_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   retarder_point_params cpp_params{
       gp::Origin(),           0.0,          params.side,   params.deviceType,
       params.mountType,       params.height, params.bodyDiameter,
@@ -1572,6 +1670,7 @@ RAILCAPICALL topo_shape_t *create_retarder_point(retarder_point_params_t params)
 RAILCAPICALL topo_shape_t *
 create_retarder_point_with_place(retarder_point_params_t params, pnt3d_t position,
                                  dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   retarder_point_params cpp_params{
       gp::Origin(),           0.0,          params.side,   params.deviceType,
       params.mountType,       params.height, params.bodyDiameter,

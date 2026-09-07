@@ -31,6 +31,21 @@ Go cgo link flags are in the `#cgo` directives of each `.go` file — they refer
 - On this machine, prefix cgo builds/tests with `CC=/usr/bin/clang CXX=/usr/bin/clang++` — an OpenHarmony clang earlier in PATH breaks the build
 - Tests that read DXF/IFC STEP files may need fixture data not checked into this repo
 
+## C++ primitives file layout
+
+`primitives.cc` 已按专业拆分 (声明统一在 `primitives.hh` 单一入口, CMake GLOB 自动收集):
+
+| 文件 | 职责 |
+|------|------|
+| `primitives_base.cc` | 基础: 基本几何体、型钢、垫片、通用采样与剖面/过渡辅助 |
+| `primitives_substation.cc` | GIM 变电: 套管、支柱绝缘子、端子板、设备固定板 |
+| `primitives_transmission.cc` | GIM 输电: 导线与弧垂、杆塔、绝缘子串、杆塔基础、锚具金具 |
+| `primitives_cable.cc` | GIM 电缆工程: 电缆本体与附件、桥架、电缆沟、隧道、工井、排管、通风 |
+| `primitives_water.cc` | 水利工程: 输水隧道、排水井、集水坑、钻孔 |
+| `primitives_railway.cc` | 铁路 (OCS/轨道/道岔), 独立头文件 `primitives_railway.hh` |
+
+新增跨专业使用的内部函数时, 声明加到 `primitives.hh` 末尾的"内部共享辅助函数"区。
+
 ## C++ rebuild
 
 ```sh

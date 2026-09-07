@@ -1,4 +1,5 @@
 #include "selector_c_api.h"
+#include "cgo_lock.hh"
 #include "selector.hh"
 #include "selector_impl.hh"
 #include "topo_impl.hh"
@@ -10,6 +11,7 @@ extern "C" {
 selector_t *selector_custom_selector_create(
     void *user_data,
     topo_shape_t **(*func)(void *user_data, topo_shape_t **, int, int *)) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto func_ = [func,
                   user_data](const std::vector<flywave::topo::shape> &shapes) {
@@ -45,7 +47,8 @@ selector_t *selector_custom_selector_create(
   }
 }
 
-void selector_free(selector_t *sel) { try {
+void selector_free(selector_t *sel) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (sel) {
     delete sel;
   }
@@ -58,6 +61,7 @@ void selector_free(selector_t *sel) { try {
 }
 
 selector_t *selector_nearest_to_point_selector_create(topo_vector_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto sel = new selector_t{
         .ptr =
@@ -70,6 +74,7 @@ selector_t *selector_nearest_to_point_selector_create(topo_vector_t *p) {
 
 selector_t *selector_box_selector_create(topo_vector_t *p0, topo_vector_t *p1,
                                         bool use_bb) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto sel =
         new selector_t{.ptr = std::make_shared<flywave::topo::box_selector>(
@@ -82,6 +87,7 @@ selector_t *selector_box_selector_create(topo_vector_t *p0, topo_vector_t *p1,
 
 selector_t *selector_radius_nth_selector_create(int n, bool direction_max,
                                                 double tolerance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto sel = new selector_t{
         .ptr = std::make_shared<flywave::topo::radius_nth_selector>(
@@ -95,6 +101,7 @@ selector_t *selector_radius_nth_selector_create(int n, bool direction_max,
 selector_t *selector_center_nth_selector_create(topo_vector_t *dir, int n,
                                                 bool direction_max,
                                                 double tolerance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto sel = new selector_t{
         .ptr = std::make_shared<flywave::topo::center_nth_selector>(
@@ -108,6 +115,7 @@ selector_t *selector_center_nth_selector_create(topo_vector_t *dir, int n,
 selector_t *selector_direction_minmax_selector_create(topo_vector_t *dir,
                                                       bool direction_max,
                                                       double tolerance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto sel = new selector_t{
         .ptr = std::make_shared<flywave::topo::direction_minmax_selector>(
@@ -120,6 +128,7 @@ selector_t *selector_direction_minmax_selector_create(topo_vector_t *dir,
 
 selector_t *selector_parallel_dir_selector_create(topo_vector_t *dir,
                                                   double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto sel = new selector_t{
         .ptr = std::make_shared<flywave::topo::parallel_dir_selector>(dir->vec,
@@ -131,6 +140,7 @@ selector_t *selector_parallel_dir_selector_create(topo_vector_t *dir,
 }
 
 selector_t *selector_dir_selector_create(topo_vector_t *dir, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto sel = new selector_t{
         .ptr = std::make_shared<flywave::topo::dir_selector>(dir->vec, tol)};
@@ -142,6 +152,7 @@ selector_t *selector_dir_selector_create(topo_vector_t *dir, double tol) {
 
 selector_t *selector_perpendicular_dir_selector_create(topo_vector_t *dir,
                                                        double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto sel = new selector_t{
         .ptr = std::make_shared<flywave::topo::perpendicular_dir_selector>(
@@ -155,6 +166,7 @@ selector_t *selector_perpendicular_dir_selector_create(topo_vector_t *dir,
 selector_t *selector_direction_nth_selector_create(topo_vector_t *dir, int n,
                                                    bool direction_max,
                                                    double tolerance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto sel = new selector_t{
         .ptr = std::make_shared<flywave::topo::direction_nth_selector>(
@@ -167,6 +179,7 @@ selector_t *selector_direction_nth_selector_create(topo_vector_t *dir, int n,
 
 selector_t *selector_length_nth_selector_create(int n, bool direction_max,
                                                 double tolerance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto sel = new selector_t{
         .ptr = std::make_shared<flywave::topo::length_nth_selector>(
@@ -178,6 +191,7 @@ selector_t *selector_length_nth_selector_create(int n, bool direction_max,
 }
 
 selector_t *selector_type_selector_create(int type) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto sel =
         new selector_t{.ptr = std::make_shared<flywave::topo::type_selector>(
@@ -190,6 +204,7 @@ selector_t *selector_type_selector_create(int type) {
 
 selector_t *selector_area_nth_selector_create(int n, bool direction_max,
                                               double tolerance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto sel =
         new selector_t{.ptr = std::make_shared<flywave::topo::area_nth_selector>(
@@ -201,6 +216,7 @@ selector_t *selector_area_nth_selector_create(int n, bool direction_max,
 }
 
 selector_t *selector_and_selector_create(selector_t *left, selector_t *right) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto sel =
         new selector_t{.ptr = std::make_shared<flywave::topo::and_selector>(
@@ -212,6 +228,7 @@ selector_t *selector_and_selector_create(selector_t *left, selector_t *right) {
 }
 
 selector_t *selector_or_selector_create(selector_t *left, selector_t *right) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto sel = new selector_t{.ptr = std::make_shared<flywave::topo::or_selector>(
                                   left->ptr, right->ptr)};
@@ -223,6 +240,7 @@ selector_t *selector_or_selector_create(selector_t *left, selector_t *right) {
 
 selector_t *selector_subtract_selector_create(selector_t *left,
                                               selector_t *right) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto sel =
         new selector_t{.ptr = std::make_shared<flywave::topo::subtract_selector>(
@@ -234,6 +252,7 @@ selector_t *selector_subtract_selector_create(selector_t *left,
 }
 
 selector_t *selector_not_selector_create(selector_t *sel) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     auto new_sel = new selector_t{
         .ptr = std::make_shared<flywave::topo::not_selector>(sel->ptr)};
@@ -244,6 +263,7 @@ selector_t *selector_not_selector_create(selector_t *sel) {
 }
 
 selector_t *selector_string_syntax_selector_create(const char *selector_str) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
     std::string s(selector_str ? selector_str : "");
     auto sel = new selector_t{

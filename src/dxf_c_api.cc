@@ -1,4 +1,5 @@
 #include "dxf_c_api.h"
+#include "cgo_lock.hh"
 #include "aci_table.hh"
 #include "dxf_shape.hh"
 #include "shape.hh"
@@ -36,7 +37,8 @@ typedef struct _dxf_text_entity_t {
   flywave::dxf::dxf_text_entity entity;
 } dxf_text_entity_t;
 
-dxf_reader_t *dxf_open_reader(const char *filename) { try {
+dxf_reader_t *dxf_open_reader(const char *filename) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto reader = std::make_unique<flywave::dxf::dxf_shape_reader>(filename);
   reader->do_read();
   return new dxf_reader_t{.reader = std::move(reader)};
@@ -50,7 +52,8 @@ dxf_reader_t *dxf_open_reader(const char *filename) { try {
   }
 }
 
-void dxf_reader_free(dxf_reader_t *p) { try {
+void dxf_reader_free(dxf_reader_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     delete p;
   }
@@ -62,7 +65,8 @@ void dxf_reader_free(dxf_reader_t *p) { try {
   }
 }
 
-_Bool dxf_reader_is_failed(dxf_reader_t *p) { try {
+_Bool dxf_reader_is_failed(dxf_reader_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->reader->failed();
   }
@@ -77,7 +81,8 @@ _Bool dxf_reader_is_failed(dxf_reader_t *p) { try {
   }
 }
 
-void dxf_reader_do_read(dxf_reader_t *p) { try {
+void dxf_reader_do_read(dxf_reader_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->reader->do_read();
   }
@@ -89,7 +94,8 @@ void dxf_reader_do_read(dxf_reader_t *p) { try {
   }
 }
 
-const char *dxf_reader_get_error(dxf_reader_t *p) { try {
+const char *dxf_reader_get_error(dxf_reader_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->reader->error().c_str();
   }
@@ -104,7 +110,8 @@ const char *dxf_reader_get_error(dxf_reader_t *p) { try {
   }
 }
 
-_Bool dxf_reader_has_error(dxf_reader_t *p) { try {
+_Bool dxf_reader_has_error(dxf_reader_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return !p->reader->error().empty();
   }
@@ -119,7 +126,8 @@ _Bool dxf_reader_has_error(dxf_reader_t *p) { try {
   }
 }
 
-const char **dxf_reader_get_layer_names(dxf_reader_t *p, int *count) { try {
+const char **dxf_reader_get_layer_names(dxf_reader_t *p, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     const auto &layers = p->reader->shape_layers();
     *count = static_cast<int>(layers.size());
@@ -141,7 +149,8 @@ const char **dxf_reader_get_layer_names(dxf_reader_t *p, int *count) { try {
   }
 }
 
-void dxf_layer_names_free(const char **names) { try {
+void dxf_layer_names_free(const char **names) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (names) {
     delete[] names;
   }
@@ -153,7 +162,8 @@ void dxf_layer_names_free(const char **names) { try {
   }
 }
 
-dxf_shape_entity_layer_t *dxf_shape_entity_layer_new() { try {
+dxf_shape_entity_layer_t *dxf_shape_entity_layer_new() {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new dxf_shape_entity_layer_t;
   }
   catch (const std::exception &e) {
@@ -166,7 +176,8 @@ dxf_shape_entity_layer_t *dxf_shape_entity_layer_new() { try {
 }
 
 dxf_shape_entity_layer_t *dxf_reader_get_shape_entity_layer(dxf_reader_t *p,
-                                                            const char *name) { try {
+                                                            const char *name) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     const auto &layers = p->reader->shape_layers();
     auto it = layers.find(name);
@@ -186,7 +197,8 @@ dxf_shape_entity_layer_t *dxf_reader_get_shape_entity_layer(dxf_reader_t *p,
 }
 
 void dxf_shape_entity_layer_add(dxf_shape_entity_layer_t *p,
-                                dxf_shape_entity_t *entity) { try {
+                                dxf_shape_entity_t *entity) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->entities.push_back(entity->entity);
   }
@@ -198,7 +210,8 @@ void dxf_shape_entity_layer_add(dxf_shape_entity_layer_t *p,
   }
 }
 
-void dxf_shape_entity_layer_free(dxf_shape_entity_layer_t *p) { try {
+void dxf_shape_entity_layer_free(dxf_shape_entity_layer_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     delete p;
   }
@@ -210,7 +223,8 @@ void dxf_shape_entity_layer_free(dxf_shape_entity_layer_t *p) { try {
   }
 }
 
-int dxf_shape_entity_layer_get_count(dxf_shape_entity_layer_t *p) { try {
+int dxf_shape_entity_layer_get_count(dxf_shape_entity_layer_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return static_cast<int>(p->entities.size());
   }
@@ -225,7 +239,8 @@ int dxf_shape_entity_layer_get_count(dxf_shape_entity_layer_t *p) { try {
   }
 }
 dxf_shape_entity_t *
-dxf_shape_entity_layer_get_entity(dxf_shape_entity_layer_t *p, int index) { try {
+dxf_shape_entity_layer_get_entity(dxf_shape_entity_layer_t *p, int index) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p && index >= 0 &&
       index < static_cast<int>(p->entities.size())) {
     return new dxf_shape_entity_t{.entity = p->entities[index]};
@@ -241,7 +256,8 @@ dxf_shape_entity_layer_get_entity(dxf_shape_entity_layer_t *p, int index) { try 
   }
 }
 
-dxf_shape_entity_t *dxf_shape_entity_new(topo_shape_t *shape, int color) { try {
+dxf_shape_entity_t *dxf_shape_entity_new(topo_shape_t *shape, int color) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new dxf_shape_entity_t{.entity = flywave::dxf::dxf_shape_entity{
                                     .color = color,
                                     .shape = shape->shp->value(),
@@ -256,7 +272,8 @@ dxf_shape_entity_t *dxf_shape_entity_new(topo_shape_t *shape, int color) { try {
   }
 }
 
-void dxf_shape_entity_free(dxf_shape_entity_t *p) { try {
+void dxf_shape_entity_free(dxf_shape_entity_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     delete p;
   }
@@ -268,7 +285,8 @@ void dxf_shape_entity_free(dxf_shape_entity_t *p) { try {
   }
 }
 
-color_t dxf_shape_entity_get_color(dxf_shape_entity_t *p) { try {
+color_t dxf_shape_entity_get_color(dxf_shape_entity_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     auto index = p->entity.color;
     if (index < 0 || index > 255) {
@@ -289,7 +307,8 @@ color_t dxf_shape_entity_get_color(dxf_shape_entity_t *p) { try {
   }
 }
 
-topo_shape_t *dxf_shape_entity_get_shape(dxf_shape_entity_t *p) { try {
+topo_shape_t *dxf_shape_entity_get_shape(dxf_shape_entity_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return new topo_shape_t{
         .shp = std::make_shared<flywave::topo::shape>(p->entity.shape)};
@@ -305,7 +324,8 @@ topo_shape_t *dxf_shape_entity_get_shape(dxf_shape_entity_t *p) { try {
   }
 }
 
-dxf_text_entity_layer_t *dxf_text_entity_layer_new() { try {
+dxf_text_entity_layer_t *dxf_text_entity_layer_new() {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new dxf_text_entity_layer_t;
   }
   catch (const std::exception &e) {
@@ -318,7 +338,8 @@ dxf_text_entity_layer_t *dxf_text_entity_layer_new() { try {
 }
 
 dxf_text_entity_layer_t *dxf_reader_get_text_entity_layer(dxf_reader_t *p,
-                                                          const char *name) { try {
+                                                          const char *name) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     const auto &layers = p->reader->text_layers();
     auto it = layers.find(name);
@@ -338,7 +359,8 @@ dxf_text_entity_layer_t *dxf_reader_get_text_entity_layer(dxf_reader_t *p,
 }
 
 void dxf_text_entity_layer_add_entity(dxf_text_entity_layer_t *p,
-                                      dxf_text_entity_t *entity) { try {
+                                      dxf_text_entity_t *entity) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->entities.push_back(entity->entity);
   }
@@ -350,7 +372,8 @@ void dxf_text_entity_layer_add_entity(dxf_text_entity_layer_t *p,
   }
 }
 
-void dxf_text_entity_layer_free(dxf_text_entity_layer_t *p) { try {
+void dxf_text_entity_layer_free(dxf_text_entity_layer_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     delete p;
   }
@@ -362,7 +385,8 @@ void dxf_text_entity_layer_free(dxf_text_entity_layer_t *p) { try {
   }
 }
 
-int dxf_text_entity_layer_get_count(dxf_text_entity_layer_t *p) { try {
+int dxf_text_entity_layer_get_count(dxf_text_entity_layer_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return static_cast<int>(p->entities.size());
   }
@@ -378,7 +402,8 @@ int dxf_text_entity_layer_get_count(dxf_text_entity_layer_t *p) { try {
 }
 
 dxf_text_entity_t *dxf_text_entity_layer_get_entity(dxf_text_entity_layer_t *p,
-                                                    int index) { try {
+                                                    int index) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return new dxf_text_entity_t{.entity = p->entities[index]};
   }
@@ -395,7 +420,8 @@ dxf_text_entity_t *dxf_text_entity_layer_get_entity(dxf_text_entity_layer_t *p,
 
 dxf_text_entity_t *dxf_text_entity_new(const char *text, pnt3d_t position,
                                        double height, double rotation,
-                                       int color) { try {
+                                       int color) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   return new dxf_text_entity_t{
       .entity = flywave::dxf::dxf_text_entity{
           text, gp_Pnt(position.x, position.y, position.z), gp_Vec(0, 0, 1),
@@ -410,7 +436,8 @@ dxf_text_entity_t *dxf_text_entity_new(const char *text, pnt3d_t position,
   }
 }
 
-void dxf_text_entity_free(dxf_text_entity_t *p) { try {
+void dxf_text_entity_free(dxf_text_entity_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     delete p;
   }
@@ -422,7 +449,8 @@ void dxf_text_entity_free(dxf_text_entity_t *p) { try {
   }
 }
 
-const char *dxf_text_entity_get_text(dxf_text_entity_t *p) { try {
+const char *dxf_text_entity_get_text(dxf_text_entity_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->entity.text.c_str();
   }
@@ -437,7 +465,8 @@ const char *dxf_text_entity_get_text(dxf_text_entity_t *p) { try {
   }
 }
 
-pnt3d_t dxf_text_entity_get_position(dxf_text_entity_t *p) { try {
+pnt3d_t dxf_text_entity_get_position(dxf_text_entity_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return pnt3d_t{p->entity.position.X(), p->entity.position.Y(),
                    p->entity.position.Z()};
@@ -453,7 +482,8 @@ pnt3d_t dxf_text_entity_get_position(dxf_text_entity_t *p) { try {
   }
 }
 
-vec3d_t dxf_text_entity_get_normal(dxf_text_entity_t *p) { try {
+vec3d_t dxf_text_entity_get_normal(dxf_text_entity_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return vec3d_t{p->entity.normal.X(), p->entity.normal.Y(),
                    p->entity.normal.Z()};
@@ -469,7 +499,8 @@ vec3d_t dxf_text_entity_get_normal(dxf_text_entity_t *p) { try {
   }
 }
 
-vec3d_t dxf_text_entity_get_x_axis_dir(dxf_text_entity_t *p) { try {
+vec3d_t dxf_text_entity_get_x_axis_dir(dxf_text_entity_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return vec3d_t{p->entity.x_axis_dir.X(), p->entity.x_axis_dir.Y(),
                    p->entity.x_axis_dir.Z()};
@@ -485,7 +516,8 @@ vec3d_t dxf_text_entity_get_x_axis_dir(dxf_text_entity_t *p) { try {
   }
 }
 
-dxf_writer_t *dxf_open_writer(const char *filename) { try {
+dxf_writer_t *dxf_open_writer(const char *filename) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   auto writer = std::make_unique<flywave::dxf::dxf_shape_writer>(filename);
   return new dxf_writer_t{.writer = std::move(writer)};
   }
@@ -498,7 +530,8 @@ dxf_writer_t *dxf_open_writer(const char *filename) { try {
   }
 }
 
-void dxf_writer_free(dxf_writer_t *p) { try {
+void dxf_writer_free(dxf_writer_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     delete p;
   }
@@ -511,7 +544,8 @@ void dxf_writer_free(dxf_writer_t *p) { try {
 }
 
 void dxf_writer_add_shape(dxf_writer_t *p, const char *layerName,
-                          topo_shape_t *shape, int index) { try {
+                          topo_shape_t *shape, int index) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->writer->add_shape(layerName, *shape->shp, index);
   }
@@ -525,7 +559,8 @@ void dxf_writer_add_shape(dxf_writer_t *p, const char *layerName,
 
 void dxf_writer_add_text(dxf_writer_t *p, const char *layerName,
                          const char *text, pnt3d_t position, double height,
-                         double rotation, int index) { try {
+                         double rotation, int index) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     p->writer->add_text(layerName,
                         flywave::dxf::dxf_text_entity{
@@ -542,7 +577,8 @@ void dxf_writer_add_text(dxf_writer_t *p, const char *layerName,
 }
 
 void dxf_writer_add_shape_layer(dxf_writer_t *p, const char *name,
-                                dxf_shape_entity_layer_t *layer) { try {
+                                dxf_shape_entity_layer_t *layer) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     std::vector<std::pair<TopoDS_Shape, flywave::dxf::color_index_t>> shapes;
     for (int i = 0; i < dxf_shape_entity_layer_get_count(layer); ++i) {
@@ -563,7 +599,8 @@ void dxf_writer_add_shape_layer(dxf_writer_t *p, const char *name,
 }
 
 void dxf_writer_add_text_layer(dxf_writer_t *p, const char *name,
-                               dxf_text_entity_layer_t *layer) { try {
+                               dxf_text_entity_layer_t *layer) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     std::vector<flywave::dxf::dxf_text_entity> texts;
     for (int i = 0; i < dxf_text_entity_layer_get_count(layer); ++i) {
@@ -583,7 +620,8 @@ void dxf_writer_add_text_layer(dxf_writer_t *p, const char *name,
   }
 }
 
-_Bool dxf_writer_write(dxf_writer_t *p) { try {
+_Bool dxf_writer_write(dxf_writer_t *p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (p) {
     return p->writer->write();
   }

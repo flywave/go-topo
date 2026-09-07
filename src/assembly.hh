@@ -110,8 +110,12 @@ public:
   bool has_color() const { return color_ != nullptr; }
 
   const Quantity_Color &color() const {
-    if (!color_)
-      return Quantity_Color();
+    if (!color_) {
+      // 未设颜色时不可返回临时对象的引用 (悬垂 → 调用方读到栈垃圾),
+      // 返回函数内 static 常量, 语义等同默认白色
+      static const Quantity_Color defaultColor;
+      return defaultColor;
+    }
     return *color_;
   }
 
