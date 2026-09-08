@@ -1729,11 +1729,16 @@ shape clip_with_topo4d(const shape &shape, const work_progress_params &params) {
 
   if (!params.original_path.is_null()) {
     originalPathWire = params.original_path.value();
-    if (!params.radius) {
-      boundPipe = extract_bounding_pipe_from_shape(
-          shape, params.direction.get_ptr(), 100, false);
-    } else if (params.radius) {
+    if (params.radius) {
       boundPipe = bounding_pipe{.radius = *params.radius};
+    } else {
+      // 未给半径: 沿原始路径采样估计, 不允许留未初始化半径
+      boundPipe.radius =
+          compute_max_radius_to_wire(shape.value(), originalPathWire);
+      if (!(boundPipe.radius > Precision::Confusion())) {
+        throw Standard_ConstructionError(
+            "Failed to estimate bounding pipe radius from original path");
+      }
     }
   } else if (params.points.size() != 0 && params.radius) {
     boundPipe =

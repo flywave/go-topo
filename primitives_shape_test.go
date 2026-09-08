@@ -209,8 +209,8 @@ func TestCreatePipe(t *testing.T) {
 
 	t.Run("CircularArcPipe", func(t *testing.T) {
 		shp := CreatePipe(PipeParams{
-			Wire:     []Point3{NewPoint3([3]float64{0, 0, 0}), NewPoint3([3]float64{50, 50, 0}), NewPoint3([3]float64{100, 0, 0})},
-			Profiles: []ShapeProfile{circProf5, circProf10},
+			Wire:           []Point3{NewPoint3([3]float64{0, 0, 0}), NewPoint3([3]float64{50, 50, 0}), NewPoint3([3]float64{100, 0, 0})},
+			Profiles:       []ShapeProfile{circProf5, circProf10},
 			SegmentType:    SegmentTypeThreePointArc,
 			TransitionMode: TransitionTransformed,
 		})
@@ -221,8 +221,8 @@ func TestCreatePipe(t *testing.T) {
 
 	t.Run("CircularCenterArcPipe", func(t *testing.T) {
 		shp := CreatePipe(PipeParams{
-			Wire:     []Point3{NewPoint3([3]float64{0, 0, 0}), NewPoint3([3]float64{50, 0, 0}), NewPoint3([3]float64{100, 0, 0})},
-			Profiles: []ShapeProfile{circProf6, circProf10},
+			Wire:           []Point3{NewPoint3([3]float64{0, 0, 0}), NewPoint3([3]float64{50, 0, 0}), NewPoint3([3]float64{100, 0, 0})},
+			Profiles:       []ShapeProfile{circProf6, circProf10},
 			SegmentType:    SegmentTypeCircleCenterArc,
 			TransitionMode: TransitionTransformed,
 		})
@@ -851,7 +851,7 @@ func TestCreateWedgeShape(t *testing.T) {
 	t.Run("LimitedWedge", func(t *testing.T) {
 		ltx := 12.0
 		shp := CreateWedgeShape(WedgeShapeParams{
-			Edge: NewPoint3([3]float64{25, 15, 8}),
+			Edge:  NewPoint3([3]float64{25, 15, 8}),
 			Limit: &WedgeFaceLimit{Values: [4]float64{10.0, 5.0, 15.0, 7.0}},
 			Ltx:   &ltx,
 		})
@@ -1008,5 +1008,52 @@ func TestMultiSegmentPipeWithSplitDistances(t *testing.T) {
 	}, 2.0, 5.0)
 	if shp == nil || shp.IsNull() {
 		t.Fatal("Failed to create polygonal profile pipe with split distances")
+	}
+}
+
+// bim4d 工作量依赖体积统计: 拆分段必须产出正质量实体且体积占比精确
+func TestCreatePipeSplitVolumeRatio(t *testing.T) {
+	prof := circProfile([3]float64{0, 0, 0}, [3]float64{0, 0, 1}, 5.0)
+	params := PipeParams{
+		Wire:           []Point3{NewPoint3([3]float64{0, 0, 0}), NewPoint3([3]float64{100, 0, 0})},
+		Profiles:       []ShapeProfile{prof},
+		SegmentType:    SegmentTypeLine,
+		TransitionMode: TransitionTransformed,
+	}
+
+	full := CreatePipe(params)
+	if full == nil || full.IsNull() {
+		t.Fatal("Failed to create full pipe")
+	}
+	fullVol := full.ComputeMass()
+	// 直线段曾产出负质量壳体, 必须为正实体 (期望 ≈ π·25·100 ≈ 7854)
+	if fullVol <= 0 {
+		t.Fatalf("straight pipe mass %.2f is not positive", fullVol)
+	}
+	if fullVol < 0.9*math.Pi*25*100 || fullVol > 1.1*math.Pi*25*100 {
+		t.Errorf("straight pipe volume %.1f not near π·25·100 ≈ %.1f", fullVol, math.Pi*25*100)
+	}
+
+	cases := []struct {
+		name       string
+		start, end float64
+		expect     float64
+	}{
+		{"split[0,80]", 0.0, 80.0, 0.8},
+		{"split[20,80]", 20.0, 80.0, 0.6},
+		{"split[40,100]", 40.0, 100.0, 0.6},
+		{"split[0,-1] full", 0.0, -1.0, 1.0},
+	}
+	for _, c := range cases {
+		part := CreatePipeWithSplitDistances(params, c.start, c.end)
+		if part == nil || part.IsNull() {
+			t.Errorf("%s: returned nil", c.name)
+			continue
+		}
+		v := part.ComputeMass()
+		ratio := v / fullVol
+		if math.Abs(ratio-c.expect) > 0.02 {
+			t.Errorf("%s: volume ratio %.4f not near %.2f (vol=%.1f)", c.name, ratio, c.expect, v)
+		}
 	}
 }

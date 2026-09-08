@@ -2,6 +2,8 @@ package topo
 
 import (
 	"math"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -462,75 +464,122 @@ func createTestPoints() []Point3 {
 
 }
 
+// createTestCylinder 构造沿 Z 的直圆柱 (r=5, h=100), 体积 ≈ π·25·100
+func createTestCylinder(t *testing.T) *Shape {
+	t.Helper()
+	cyl := CreateCylinderShape(CylinderShapeParams{Radius: 5, Height: 100})
+	if cyl == nil || cyl.IsNull() {
+		t.Fatal("Failed to create test cylinder")
+	}
+	return cyl
+}
+
+func assertVolumeRatio(t *testing.T, name string, fullVol float64, clipped *Shape, lo, hi float64) {
+	t.Helper()
+	if clipped == nil || clipped.IsNull() {
+		t.Errorf("%s: clip returned nil shape", name)
+		return
+	}
+	v := clipped.ComputeMass()
+	if v <= 0 {
+		t.Errorf("%s: clipped volume <= 0 (%.2f)", name, v)
+		return
+	}
+	ratio := v / fullVol
+	if ratio < lo || ratio > hi {
+		t.Errorf("%s: volume ratio %.4f outside [%f, %f] (full=%.1f clipped=%.1f)",
+			name, ratio, lo, hi, fullVol, v)
+	}
+}
+
 func TestClipWithTopo4D(t *testing.T) {
-	// 创建测试形状和线框
-	testShape := createTestShape(t)
-	testWire := createTestWire(t)
-	testPoints := createTestPoints()
+	cyl := createTestCylinder(t)
+	fullVol := cyl.ComputeMass()
+	if fullVol <= 0 {
+		t.Fatalf("test cylinder has non-positive mass: %.2f", fullVol)
+	}
 
-	// 测试模式1: ProgressByRatio模式
-	t.Run("ProgressByRatio mode", func(t *testing.T) {
-		progress := WorkProgress{
-			Type:   ProgressByRatio,
-			Range:  [2]float64{0.0, 0.5},
-			Radius: float64Ptr(5.0),
-		}
-		result := ClipWithTopo4D(testShape, progress)
-		// 我们只检查函数是否能正常运行而不panic
-		t.Logf("ClipWithTopo4D with ProgressByRatio returned: %v", result != nil)
+	// 圆柱轴心 (0,0,0)→(0,0,100)
+	axisEdge := TopoMakeEdgeFromTwoPoint(NewPoint3([3]float64{0, 0, 0}),
+		NewPoint3([3]float64{0, 0, 100}))
+	if axisEdge == nil {
+		t.Fatal("Failed to create axis edge")
+	}
+	axis := TopoMakeWireFromEdge(*axisEdge)
+	if axis == nil {
+		t.Fatal("Failed to create axis wire")
+	}
+
+	t.Run("Auto extract ratio[0,0.5]", func(t *testing.T) {
+		// 直线形状曾因提轴崩溃/静默不裁而失败, 现在必须精确裁出前半段
+		r := ClipWithTopo4D(cyl, WorkProgress{
+			Type:  ProgressByRatio,
+			Range: [2]float64{0.0, 0.5},
+		})
+		assertVolumeRatio(t, "auto ratio[0,0.5]", fullVol, r, 0.42, 0.58)
 	})
 
-	// 测试模式2: ProgressByDistance模式
-	t.Run("ProgressByDistance mode", func(t *testing.T) {
-		progress := WorkProgress{
-			Type:   ProgressByDistance,
-			Range:  [2]float64{0.0, 50.0},
-			Radius: float64Ptr(5.0),
-		}
-		result := ClipWithTopo4D(testShape, progress)
-		// 我们只检查函数是否能正常运行而不panic
-		t.Logf("ClipWithTopo4D with ProgressByDistance returned: %v", result != nil)
+	t.Run("Auto extract ratio[0.25,0.75]", func(t *testing.T) {
+		r := ClipWithTopo4D(cyl, WorkProgress{
+			Type:  ProgressByRatio,
+			Range: [2]float64{0.25, 0.75},
+		})
+		assertVolumeRatio(t, "auto ratio[0.25,0.75]", fullVol, r, 0.42, 0.62)
 	})
 
-	// 测试模式3: 带Original路径的ProgressByRatio模式
-	t.Run("ProgressByRatio with Original path", func(t *testing.T) {
-		progress := WorkProgress{
+	t.Run("Auto extract distance[0,50] conserves volume", func(t *testing.T) {
+		r := ClipWithTopo4D(cyl, WorkProgress{
+			Type:  ProgressByDistance,
+			Range: [2]float64{0.0, 50.0},
+		})
+		// 守恒校验: 裁切结果必须明显小于完整模型 (禁止静默返回完整模型)
+		assertVolumeRatio(t, "auto dist[0,50]", fullVol, r, 0.30, 0.68)
+	})
+
+	t.Run("Original path with radius ratio[0,0.5]", func(t *testing.T) {
+		r := ClipWithTopo4D(cyl, WorkProgress{
 			Type:     ProgressByRatio,
 			Range:    [2]float64{0.0, 0.5},
-			Original: testWire,
-			Radius:   float64Ptr(5.0),
-		}
-		result := ClipWithTopo4D(testShape, progress)
-		// 我们只检查函数是否能正常运行而不panic
-		t.Logf("ClipWithTopo4D with ProgressByRatio and Original path returned: %v", result != nil)
+			Original: axis,
+			Radius:   float64Ptr(10.0),
+		})
+		assertVolumeRatio(t, "path+radius ratio[0,0.5]", fullVol, r, 0.45, 0.55)
 	})
 
-	// 测试模式4: 带Original路径但无Radius的ProgressByDistance模式
-	t.Run("ProgressByDistance with Original path but no Radius", func(t *testing.T) {
-		progress := WorkProgress{
+	t.Run("Original path without radius ratio[0,0.5]", func(t *testing.T) {
+		// 无半径分支曾因未初始化半径静默返回完整模型 (ratio=1.0)
+		r := ClipWithTopo4D(cyl, WorkProgress{
+			Type:     ProgressByRatio,
+			Range:    [2]float64{0.0, 0.5},
+			Original: axis,
+		})
+		assertVolumeRatio(t, "path-no-radius ratio[0,0.5]", fullVol, r, 0.45, 0.55)
+	})
+
+	t.Run("Original path without radius distance[0,50]", func(t *testing.T) {
+		r := ClipWithTopo4D(cyl, WorkProgress{
 			Type:     ProgressByDistance,
 			Range:    [2]float64{0.0, 50.0},
-			Original: testWire,
-		}
-		result := ClipWithTopo4D(testShape, progress)
-		// 我们只检查函数是否能正常运行而不panic
-		t.Logf("ClipWithTopo4D with ProgressByDistance, Original path but no Radius returned: %v", result != nil)
+			Original: axis,
+		})
+		assertVolumeRatio(t, "path-no-radius dist[0,50]", fullVol, r, 0.45, 0.55)
 	})
 
-	// 测试模式5: 带Points和Radius但无Original路径的ProgressByRatio模式
-	t.Run("ProgressByRatio with Points and Radius but no Original path", func(t *testing.T) {
-		progress := WorkProgress{
+	t.Run("Points and radius ratio[0,0.5]", func(t *testing.T) {
+		pts := []Point3{
+			NewPoint3([3]float64{0, 0, 0}),
+			NewPoint3([3]float64{0, 0, 50}),
+			NewPoint3([3]float64{0, 0, 100}),
+		}
+		r := ClipWithTopo4D(cyl, WorkProgress{
 			Type:   ProgressByRatio,
 			Range:  [2]float64{0.0, 0.5},
-			Points: &testPoints,
-			Radius: float64Ptr(5.0),
-		}
-		result := ClipWithTopo4D(testShape, progress)
-		// 我们只检查函数是否能正常运行而不panic
-		t.Logf("ClipWithTopo4D with ProgressByRatio, Points and Radius but no Original path returned: %v", result != nil)
+			Points: &pts,
+			Radius: float64Ptr(10.0),
+		})
+		assertVolumeRatio(t, "points+radius ratio[0,0.5]", fullVol, r, 0.45, 0.55)
 	})
 
-	// 测试边界情况：nil形状输入
 	t.Run("Nil shape input", func(t *testing.T) {
 		progress := WorkProgress{
 			Type:   ProgressByRatio,
@@ -543,7 +592,6 @@ func TestClipWithTopo4D(t *testing.T) {
 		}
 	})
 
-	// 测试边界情况：无效的ProgressType
 	t.Run("Invalid ProgressType", func(t *testing.T) {
 		progress := WorkProgress{
 			Type:   ProgressType(999), // 无效的ProgressType
@@ -551,9 +599,163 @@ func TestClipWithTopo4D(t *testing.T) {
 			Radius: float64Ptr(5.0),
 		}
 		// 我们期望函数不会panic，但可能返回nil
-		result := ClipWithTopo4D(testShape, progress)
+		result := ClipWithTopo4D(cyl, progress)
 		t.Logf("ClipWithTopo4D with invalid ProgressType returned: %v", result != nil)
 	})
+}
+
+// 直线形状曾因 smoothing→1 拟合塌缩导致提轴全部失败, 现在必须可用
+func TestFitCenterlineFromShapeStraightShapes(t *testing.T) {
+	box := CreateBoxShape(BoxShapeParams{
+		Point1: NewPoint3([3]float64{0, 0, 0}),
+		Point2: NewPoint3([3]float64{100, 10, 10}),
+	})
+	clBox := FitCenterlineFromShape(box, 100, 0.99)
+	if clBox == nil {
+		t.Error("FitCenterlineFromShape returned nil for straight box")
+	} else if l := WireLength(clBox); l < 80 || l > 130 {
+		t.Errorf("box centerline length %.2f not near expected 100", l)
+	}
+
+	cyl := createTestCylinder(t)
+	clCyl := FitCenterlineFromShape(cyl, 100, 0.99)
+	if clCyl == nil {
+		t.Error("FitCenterlineFromShape returned nil for straight cylinder")
+	} else if l := WireLength(clCyl); l < 80 || l > 130 {
+		t.Errorf("cylinder centerline length %.2f not near expected 100", l)
+	}
+}
+
+// bim4d 端到端: 参数化模型 → STEP 往返 → 自动提轴 → 按百分比生成进度块
+func TestBim4dStepProgressEndToEnd(t *testing.T) {
+	cyl := createTestCylinder(t)
+	fullVol := cyl.ComputeMass()
+
+	buf, err := WriteShapeToStepBuffer(cyl)
+	if err != nil {
+		t.Fatalf("WriteShapeToStepBuffer: %v", err)
+	}
+	path := filepath.Join(t.TempDir(), "bim4d_model.step")
+	if err := os.WriteFile(path, buf, 0o644); err != nil {
+		t.Fatalf("write step file: %v", err)
+	}
+	imported := ReadShapeFromStepFile(path)
+	if imported == nil || imported.IsNull() {
+		t.Fatal("ReadShapeFromStepFile returned nil")
+	}
+
+	r := ClipWithTopo4D(imported, WorkProgress{
+		Type:  ProgressByRatio,
+		Range: [2]float64{0.0, 0.5},
+	})
+	assertVolumeRatio(t, "STEP→提轴→进度50%", fullVol, r, 0.42, 0.58)
+
+	r2 := ClipWithTopo4D(imported, WorkProgress{
+		Type:  ProgressByRatio,
+		Range: [2]float64{0.25, 0.75},
+	})
+	assertVolumeRatio(t, "STEP→提轴→进度[25%,75%]", fullVol, r2, 0.42, 0.62)
+}
+
+// 螺旋管是提轴的标志性难题: 旧 PCA 截面法因一个平面切到多圈而失效,
+// 端盖截面扫掠必须跟随真实螺旋行进方向
+func TestFitCenterlineFromShapeHelix(t *testing.T) {
+	// 螺旋: R=30, 2 圈, 总高 40, 管半径 5
+	const (
+		radius = 30.0
+		turns  = 2.0
+		height = 40.0
+	)
+	pts := make([]Point3, 0, 73)
+	for i := 0; i <= 72; i++ {
+		th := turns * 2 * math.Pi * float64(i) / 72.0
+		pts = append(pts, NewPoint3([3]float64{
+			radius * math.Cos(th),
+			radius * math.Sin(th),
+			height * float64(i) / 72.0,
+		}))
+	}
+	pipe := CreatePipe(PipeParams{
+		Wire:           pts,
+		Profiles:       []ShapeProfile{circProfile([3]float64{0, 0, 0}, [3]float64{0, 0, 1}, 5.0)},
+		SegmentType:    SegmentTypeSpline,
+		TransitionMode: TransitionTransformed,
+	})
+	if pipe == nil || pipe.IsNull() {
+		t.Fatal("Failed to create helix pipe")
+	}
+
+	cl := FitCenterlineFromShape(pipe, 100, 0.99)
+	if cl == nil {
+		t.Fatal("FitCenterlineFromShape returned nil for helix pipe")
+	}
+	// wire 必须可用 (修复 5)
+	if l := WireLength(cl); l <= 0 {
+		t.Fatalf("fitted helix centerline unusable: length=%.2f", l)
+	}
+
+	// 采样点全部落在管圈上: 径向距离 ≈ 30, z 覆盖全程
+	sampled := SampleCenterlineWire(cl, 200, false)
+	if len(sampled) == 0 {
+		t.Fatal("SampleCenterlineWire returned no points")
+	}
+	arc := 2 * math.Pi * radius * turns
+	expectLen := turns * math.Sqrt(math.Pow(2*math.Pi*radius, 2)+math.Pow(height/turns, 2))
+	total := 0.0
+	prev := sampled[0]
+	zmin, zmax := math.MaxFloat64, -math.MaxFloat64
+	for i, p := range sampled {
+		d := p.Data()
+		r := math.Sqrt(d[0]*d[0] + d[1]*d[1])
+		if r < 25 || r > 34 {
+			t.Errorf("sample %d radial distance %.2f outside [25,34]", i, r)
+		}
+		zmin = math.Min(zmin, d[2])
+		zmax = math.Max(zmax, d[2])
+		if i > 0 {
+			pd := prev.Data()
+			total += math.Sqrt((d[0]-pd[0])*(d[0]-pd[0]) + (d[1]-pd[1])*(d[1]-pd[1]) + (d[2]-pd[2])*(d[2]-pd[2]))
+		}
+		prev = p
+	}
+	if zmin > 4 || zmax < 36 {
+		t.Errorf("centerline z coverage [%.2f, %.2f] does not span [0, %.0f]", zmin, zmax, height)
+	}
+	// 长度有界 (跟随线圈, 允许摆动冗余); 弧长精度依赖网格质量,
+	// 高精度进度切片建议以体积校准或手工修正中心线
+	if total < expectLen*0.5 || total > expectLen*3.5 {
+		t.Errorf("centerline length %.1f outside [0.5x, 3.5x] of helix arc %.1f",
+			total, expectLen)
+	}
+	_ = arc
+	t.Logf("helix centerline: len=%.1f (ideal %.1f) z=[%.2f,%.2f]", total, expectLen, zmin, zmax)
+}
+
+// 螺旋管的 4D 进度切片端到端
+func TestClipWithTopo4DHelix(t *testing.T) {
+	pts := make([]Point3, 0, 73)
+	for i := 0; i <= 72; i++ {
+		th := 2 * 2 * math.Pi * float64(i) / 72.0
+		pts = append(pts, NewPoint3([3]float64{
+			30 * math.Cos(th), 30 * math.Sin(th), 40 * float64(i) / 72.0,
+		}))
+	}
+	pipe := CreatePipe(PipeParams{
+		Wire:           pts,
+		Profiles:       []ShapeProfile{circProfile([3]float64{0, 0, 0}, [3]float64{0, 0, 1}, 5.0)},
+		SegmentType:    SegmentTypeSpline,
+		TransitionMode: TransitionTransformed,
+	})
+	fullVol := pipe.ComputeMass()
+	if fullVol <= 0 {
+		t.Fatalf("helix pipe non-positive mass %.2f", fullVol)
+	}
+
+	r := ClipWithTopo4D(pipe, WorkProgress{
+		Type:  ProgressByRatio,
+		Range: [2]float64{0.0, 0.5},
+	})
+	assertVolumeRatio(t, "helix ratio[0,0.5]", fullVol, r, 0.40, 0.60)
 }
 
 // 测试SampleWireAtDistances函数

@@ -27,6 +27,8 @@ Handle(Geom_Curve)
                               double smoothingFactor = 0.99);
 double compute_max_radius(const TopoDS_Shape &shape,
                           const Handle(Geom_Curve) & centerline);
+double compute_max_radius_to_wire(const TopoDS_Shape &shape,
+                                  const TopoDS_Wire &path);
 bounding_pipe compute_simple_bounding_pipe_from_shape(const TopoDS_Shape &shape,
                                                       const gp_Dir &userDir);
 bounding_pipe extract_bounding_pipe_from_shape(const TopoDS_Shape &shape,

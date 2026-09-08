@@ -9346,8 +9346,9 @@ TOPOCAPICALL topo_wire_t topo_fit_centerline_from_shape(
   try {
     auto w = flywave::topo::fit_centerline_from_shape(*shape->shp, numSamples,
                                                       smoothingFactor);
+    // 必须以派生类型 wire 存储: cast_to_topo 用 dynamic_cast<wire*> 还原
     return topo_wire_t{.shp = new topo_shape_t{
-                           .shp = std::make_shared<flywave::topo::shape>(w)}};
+                           .shp = std::make_shared<flywave::topo::wire>(w)}};
   } catch (...) {
         try {
         std::rethrow_exception(std::current_exception());
@@ -9371,8 +9372,9 @@ TOPOCAPICALL topo_wire_t topo_centerline_points_to_wire(pnt3d_t *points,
   }
   try {
     auto w = flywave::topo::centerline_points_to_wire(pts);
+    // 必须以派生类型 wire 存储: cast_to_topo 用 dynamic_cast<wire*> 还原
     return topo_wire_t{.shp = new topo_shape_t{
-                           .shp = std::make_shared<flywave::topo::shape>(w)}};
+                           .shp = std::make_shared<flywave::topo::wire>(w)}};
   } catch (...) {
     return {nullptr};
   }

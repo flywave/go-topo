@@ -2633,16 +2633,22 @@ TopoDS_Shape create_shape_from_profile(const shape_profile &profile,
     }
 
     TopoDS_Shape operator()(const polygon_profile &prof) const {
-      // 创建外轮廓线框(应确保是逆时针方向)
+      // 创建外轮廓线框(应确保是逆时针方向)。
+      // 用户剖面常带首尾重复的闭合点: 重复点会产生退化边, 导致
+      // 面/拉伸体 BRepCheck 无效, 必须先去重再显式闭合
+      std::vector<gp_Pnt> pts(prof.edges.begin(), prof.edges.end());
+      while (pts.size() >= 2 &&
+             pts.front().IsEqual(pts.back(), Precision::Confusion())) {
+        pts.pop_back();
+      }
+      if (pts.size() < 3) {
+        return TopoDS_Shape();
+      }
       BRepBuilderAPI_MakePolygon polyBuilder;
-      for (const auto &point : prof.edges) {
+      for (const auto &point : pts) {
         polyBuilder.Add(point.Transformed(_transform));
       }
-      if (!prof.edges.empty() &&
-          !prof.edges.front().IsEqual(prof.edges.back(),
-                                      Precision::Confusion())) {
-        polyBuilder.Add(prof.edges.front().Transformed(_transform));
-      }
+      polyBuilder.Close();
       TopoDS_Wire outerWire = polyBuilder.Wire();
 
       // 检查并修正外轮廓方向
@@ -2878,6 +2884,18 @@ TopoDS_Wire make_wire_from_segments(
 }
 
 
+// 拉伸面法向与拉伸方向相反时得到内翻实体 (体积为负), 统一翻正
+static TopoDS_Shape orient_solid_positive(const TopoDS_Shape &solid) {
+  GProp_GProps props;
+  BRepGProp::VolumeProperties(solid, props);
+  if (props.Mass() < 0.0) {
+    TopoDS_Shape reversed = solid;
+    reversed.Reverse();
+    return reversed;
+  }
+  return solid;
+}
+
 std::tuple<TopoDS_Shape, TopoDS_Wire, std::pair<gp_Dir, gp_Dir>>
 create_pipe_helper(const pipe_params &params) {
   if (params.profiles.size() != 1 && params.profiles.size() != 2) {
@@ -2920,22 +2938,34 @@ create_pipe_helper(const pipe_params &params) {
     }
     straightAxes = gp_Ax2(gp_Pnt(0, 0, 0), tanDir, refDir);
 
+    // 用面而非线框拉伸: 线框棱柱是无端盖壳体, 体积为负
     TopoDS_Shape outer = create_shape_from_profile(
-        params.profiles[0], false, &straightAxes);
+        params.profiles[0], true, &straightAxes);
     if (outer.IsNull()) {
       throw Standard_ConstructionError("Invalid outer profile for pipe");
     }
     gp_Vec extrusionVec(BRep_Tool::Pnt(v1), BRep_Tool::Pnt(v2));
-    TopoDS_Shape result = BRepPrimAPI_MakePrism(outer, extrusionVec).Shape();
+    TopoDS_Shape result =
+        orient_solid_positive(BRepPrimAPI_MakePrism(outer, extrusionVec).Shape());
+    // 复杂轮廓 (如渐开线齿形) 的拉伸体可能拓扑无效 (实测 ShapeFix 对其
+    // 段崩溃, 不可用): 退回线框棱柱壳体 (旧行为, 拓扑有效)
+    if (!BRepCheck_Analyzer(result).IsValid()) {
+      TopoDS_Shape shellProf = create_shape_from_profile(
+          params.profiles[0], false, &straightAxes);
+      if (shellProf.IsNull()) {
+        throw Standard_ConstructionError("Invalid outer profile for pipe");
+      }
+      result = BRepPrimAPI_MakePrism(shellProf, extrusionVec).Shape();
+    }
     if (params.inner_profiles &&
         !params.inner_profiles->empty()) {
       TopoDS_Shape inner = create_shape_from_profile(
-          (*params.inner_profiles)[0], false, &straightAxes);
+          (*params.inner_profiles)[0], true, &straightAxes);
       if (inner.IsNull()) {
         throw Standard_ConstructionError("Invalid inner profile for pipe");
       }
-      TopoDS_Shape innerSolid =
-          BRepPrimAPI_MakePrism(inner, extrusionVec).Shape();
+      TopoDS_Shape innerSolid = orient_solid_positive(
+          BRepPrimAPI_MakePrism(inner, extrusionVec).Shape());
       BRepAlgoAPI_Cut cutOp(result, innerSolid);
       cutOp.Build();
       if (!cutOp.IsDone()) {
