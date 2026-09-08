@@ -6,6 +6,47 @@
 
 using namespace flywave::topo;
 
+// C++ 链接的静态转换辅助函数, 必须位于 extern "C" 块之外 (C 链接不支持重载)
+static weight_stack_params to_cpp(const weight_stack_params_t &p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
+  weight_stack_params c;
+  c.blockCount = p.blockCount;
+  c.blockDiameter = p.blockDiameter;
+  c.blockHeight = p.blockHeight;
+  c.blockGap = p.blockGap;
+  c.rodDiameter = p.rodDiameter;
+  c.rodLength = p.rodLength;
+  c.holeDiameter = p.holeDiameter;
+  return c;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return weight_stack_params{};
+  }
+  catch (...) {
+    return weight_stack_params{};
+  }
+}
+
+static ratchet_compensator_params to_cpp(const ratchet_compensator_params_t &p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
+  ratchet_compensator_params c;
+  c.wheelDiameter = p.wheelDiameter;
+  c.wheelWidth = p.wheelWidth;
+  c.ropeDiameter = p.ropeDiameter;
+  c.strokeLength = p.strokeLength;
+  c.stack = to_cpp(p.stack);
+  return c;
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return ratchet_compensator_params{};
+  }
+  catch (...) {
+    return ratchet_compensator_params{};
+  }
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1250,27 +1291,6 @@ create_mast_assembly_with_place(mast_assembly_params_t params, pnt3d_t position,
 // ===========================================================================
 // 30b. Weight Stack / Ratchet Compensator
 // ===========================================================================
-static weight_stack_params to_cpp(const weight_stack_params_t &p) {
-  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  weight_stack_params c;
-  c.blockCount = p.blockCount;
-  c.blockDiameter = p.blockDiameter;
-  c.blockHeight = p.blockHeight;
-  c.blockGap = p.blockGap;
-  c.rodDiameter = p.rodDiameter;
-  c.rodLength = p.rodLength;
-  c.holeDiameter = p.holeDiameter;
-  return c;
-  }
-  catch (const std::exception &e) {
-    (void)e;
-    return weight_stack_params{};
-  }
-  catch (...) {
-    return weight_stack_params{};
-  }
-}
-
 RAILCAPICALL topo_shape_t *create_weight_stack(weight_stack_params_t params) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   try {
@@ -1289,25 +1309,6 @@ RAILCAPICALL topo_shape_t *create_weight_stack_at(weight_stack_params_t params,
         to_cpp(params), gp_Pnt(topPoint.x, topPoint.y, topPoint.z)))};
   } catch (...) {
     return nullptr;
-  }
-}
-
-static ratchet_compensator_params to_cpp(const ratchet_compensator_params_t &p) {
-  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  ratchet_compensator_params c;
-  c.wheelDiameter = p.wheelDiameter;
-  c.wheelWidth = p.wheelWidth;
-  c.ropeDiameter = p.ropeDiameter;
-  c.strokeLength = p.strokeLength;
-  c.stack = to_cpp(p.stack);
-  return c;
-  }
-  catch (const std::exception &e) {
-    (void)e;
-    return ratchet_compensator_params{};
-  }
-  catch (...) {
-    return ratchet_compensator_params{};
   }
 }
 

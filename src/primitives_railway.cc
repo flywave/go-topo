@@ -33,6 +33,7 @@
 #include <Geom_Circle.hxx>
 #include <Geom_Ellipse.hxx>
 #include <Geom_Plane.hxx>
+#include <Geom_TrimmedCurve.hxx>
 #include <GeomAPI_Interpolate.hxx>
 #include <Precision.hxx>
 #include <ShapeFix_Wire.hxx>
@@ -5363,11 +5364,11 @@ Handle(Geom_Curve) pathCurveGeom(const curve_params &curve) {
   case rail_curve_type::LINE:
     if (curve.startPoint.Distance(curve.endPoint) < Precision::Confusion())
       return nullptr;
-    return GC_MakeSegment(curve.startPoint, curve.endPoint).Value();
+    return Handle(Geom_Curve)(GC_MakeSegment(curve.startPoint, curve.endPoint).Value());
   case rail_curve_type::ARC: {
     if (curve.controlPoints.size() >= 1)
-      return GC_MakeArcOfCircle(curve.startPoint, curve.controlPoints[0],
-                                curve.endPoint).Value();
+      return Handle(Geom_Curve)(GC_MakeArcOfCircle(curve.startPoint, curve.controlPoints[0],
+                                curve.endPoint).Value());
     if (curve.radius > Precision::Confusion()) {
       gp_Pnt mid((curve.startPoint.X() + curve.endPoint.X()) / 2.0,
                  (curve.startPoint.Y() + curve.endPoint.Y()) / 2.0,
@@ -5376,7 +5377,7 @@ Handle(Geom_Curve) pathCurveGeom(const curve_params &curve) {
       double d2 = curve.startPoint.Distance(curve.endPoint) / 2.0;
       double h = sqrt(std::max(0.0, curve.radius * curve.radius - d2 * d2));
       gp_Pnt center = mid.XYZ() + dir.XYZ() * h;
-      return GC_MakeArcOfCircle(curve.startPoint, center, curve.endPoint).Value();
+      return Handle(Geom_Curve)(GC_MakeArcOfCircle(curve.startPoint, center, curve.endPoint).Value());
     }
     return nullptr;
   }
