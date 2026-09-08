@@ -130,7 +130,9 @@ AddAssembly 解引用空包装 → SIGSEGV
 finalizer 并发释放与主线程 OCC 调用的竞争仍是背景风险之一, 全局递归锁
 (`src/cgo_lock.hh`) 将约 1400 个 C API 入口串行化, 作为结构性缓解保留。
 
-### 6.3 最终验证状态
+### 6.3 最终验证状态 ✓
 
 - 加固套件:351 用例 0 失败 0 崩溃 0 挂死
-- 常规套件:除 `TestCustomPolygonPipe`(已在本轮修复)外全部通过
+- **常规全量套件:216.6s 完整通过,0 失败 0 崩溃**(含此前失败的
+  TestCustomPolygonPipe;color() 悬垂引用修复后,间歇 abort 亦未再复现——
+  证实该根因链是既往间歇崩溃的主要堆破坏源)
