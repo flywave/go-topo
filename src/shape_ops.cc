@@ -177,13 +177,29 @@ boost::optional<shape> fuse(const std::vector<shape> &shapes, double tol,
     builder.SetOperation(BOPAlgo_Operation::BOPAlgo_FUSE);
     set_builder_options(builder, tol, glue);
 
-    builder.AddArgument(shapes[0]);
+    // Flatten compound arguments to avoid OCC undefined behavior
+    // with self-intersecting compound operands.
+    std::vector<TopoDS_Shape> flatArgs;
+    append_flattened(flatArgs, shapes[0].value());
+    for (const auto &a : flatArgs) {
+      builder.AddArgument(a);
+    }
+
     for (size_t i = 1; i < shapes.size(); ++i) {
-      builder.AddTool(shapes[i]);
+      std::vector<TopoDS_Shape> flatTools;
+      append_flattened(flatTools, shapes[i].value());
+      for (const auto &t : flatTools) {
+        builder.AddTool(t);
+      }
     }
     builder.Perform();
 
     return boost::make_optional<shape>(builder.Shape());
+  } catch (const Standard_Failure &e) {
+    std::cerr << "OCCT error in fuse operation: "
+              << (e.GetMessageString() ? e.GetMessageString() : "unknown")
+              << std::endl;
+    return boost::none;
   } catch (const std::exception &e) {
     std::cerr << "Error in fuse operation: " << e.what() << std::endl;
     return boost::none;
@@ -201,12 +217,26 @@ boost::optional<shape> cut(const shape &shp, const shape &toCut, double tol,
     builder.SetOperation(BOPAlgo_Operation::BOPAlgo_CUT);
     set_builder_options(builder, tol, glue);
 
-    builder.AddArgument(shp.value());
-    builder.AddTool(toCut);
+    std::vector<TopoDS_Shape> flatArgs;
+    append_flattened(flatArgs, shp.value());
+    for (const auto &a : flatArgs) {
+      builder.AddArgument(a);
+    }
+
+    std::vector<TopoDS_Shape> flatTools;
+    append_flattened(flatTools, toCut.value());
+    for (const auto &t : flatTools) {
+      builder.AddTool(t);
+    }
 
     builder.Perform();
 
     return boost::make_optional<shape>(builder.Shape());
+  } catch (const Standard_Failure &e) {
+    std::cerr << "OCCT error in cut operation: "
+              << (e.GetMessageString() ? e.GetMessageString() : "unknown")
+              << std::endl;
+    return boost::none;
   } catch (const std::exception &e) {
     std::cerr << "Error in fuse operation: " << e.what() << std::endl;
     return boost::none;
@@ -224,17 +254,26 @@ boost::optional<shape> cut(const shape &shp, const std::vector<shape> &toCuts,
     builder.SetOperation(BOPAlgo_Operation::BOPAlgo_CUT);
     set_builder_options(builder, tol, glue);
 
-    builder.AddArgument(shp.value());
+    std::vector<TopoDS_Shape> flatArgs;
+    append_flattened(flatArgs, shp.value());
+    for (const auto &a : flatArgs) {
+      builder.AddArgument(a);
+    }
 
     TopTools_ListOfShape theShapes;
     for (const auto &toCut : toCuts) {
-      theShapes.Append(toCut.value());
+      append_flattened(theShapes, toCut.value());
     }
     builder.SetTools(theShapes);
 
     builder.Perform();
 
     return boost::make_optional<shape>(builder.Shape());
+  } catch (const Standard_Failure &e) {
+    std::cerr << "OCCT error in cut operation: "
+              << (e.GetMessageString() ? e.GetMessageString() : "unknown")
+              << std::endl;
+    return boost::none;
   } catch (const std::exception &e) {
     std::cerr << "Error in fuse operation: " << e.what() << std::endl;
     return boost::none;
@@ -252,12 +291,26 @@ boost::optional<shape> intersect(const shape &shp, const shape &toIntersect,
     builder.SetOperation(BOPAlgo_Operation::BOPAlgo_COMMON);
     set_builder_options(builder, tol, glue);
 
-    builder.AddArgument(shp);
-    builder.AddTool(toIntersect);
+    std::vector<TopoDS_Shape> flatArgs;
+    append_flattened(flatArgs, shp.value());
+    for (const auto &a : flatArgs) {
+      builder.AddArgument(a);
+    }
+
+    std::vector<TopoDS_Shape> flatTools;
+    append_flattened(flatTools, toIntersect.value());
+    for (const auto &t : flatTools) {
+      builder.AddTool(t);
+    }
 
     builder.Perform();
 
     return boost::make_optional<shape>(builder.Shape());
+  } catch (const Standard_Failure &e) {
+    std::cerr << "OCCT error in intersect operation: "
+              << (e.GetMessageString() ? e.GetMessageString() : "unknown")
+              << std::endl;
+    return boost::none;
   } catch (const std::exception &e) {
     std::cerr << "Error in fuse operation: " << e.what() << std::endl;
     return boost::none;
@@ -276,16 +329,25 @@ boost::optional<shape> intersect(const shape &shp,
     builder.SetOperation(BOPAlgo_Operation::BOPAlgo_COMMON);
     set_builder_options(builder, tol, glue);
 
-    builder.AddArgument(shp);
+    std::vector<TopoDS_Shape> flatArgs;
+    append_flattened(flatArgs, shp.value());
+    for (const auto &a : flatArgs) {
+      builder.AddArgument(a);
+    }
 
     TopTools_ListOfShape theShapes;
     for (const auto &toIntersect : toIntersects) {
-      theShapes.Append(toIntersect.value());
+      append_flattened(theShapes, toIntersect.value());
     }
     builder.SetTools(theShapes);
     builder.Perform();
 
     return boost::make_optional<shape>(builder.Shape());
+  } catch (const Standard_Failure &e) {
+    std::cerr << "OCCT error in intersect operation: "
+              << (e.GetMessageString() ? e.GetMessageString() : "unknown")
+              << std::endl;
+    return boost::none;
   } catch (const std::exception &e) {
     std::cerr << "Error in fuse operation: " << e.what() << std::endl;
     return boost::none;

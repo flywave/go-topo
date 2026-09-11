@@ -114,6 +114,14 @@ Run one test: `go test -v -run TestSampleCenterlineWire ./...`
 
 The C API layer (`src/workplane_c_api.cc`) now handles `nullptr` for optional pointer parameters (those with C++ defaults). The Go wrapper forwards `nil` as `NULL`. Methods with "required" semantics still panic on `nil` — this is intentional.
 
+## Compound boolean flattening
+
+Only **pure-solid compounds** (all descendants are `SOLID` / `COMPSOLID`) are recursively flattened into sibling operands before being added to OCC boolean argument/tool lists — this prevents undefined behavior when a compound contains self-overlapping solids. Compounds containing `WIRE`/`EDGE`/`FACE`/`SHELL` or mixed types are kept as single operands, because their shared-boundary topology has "same domain" semantics that break when flattened (shared vertices/edges are treated as self-interference). The flattening is implemented via `is_all_solids()` + `append_flattened()` in `src/shape_ops.hh` and applied in both `compound::bool_op` (`src/compound.cc`) and the free functions in `src/shape_ops.cc`.
+
+## OCC exception boundary
+
+All C++ boolean operations (`compound::bool_op`, `shape_ops.cc` fuse/cut/intersect) catch `Standard_Failure` (OCC exceptions that do not inherit `std::exception` in some OCCT builds) and translate them to `std::runtime_error` or `boost::none` respectively, preventing OCC exceptions from escaping the C++ boundary. The `catch (const Standard_Failure&)` clause is placed before `catch (const std::exception&)` for compatibility with both OCCT build variants.
+
 ## Turnout parametric design (道岔参量化)
 
 ### Core concept

@@ -13,6 +13,9 @@
 #include <BOPAlgo_CheckStatus.hxx>
 #include <BRepCheck.hxx>
 #include <GeomAbs_JoinType.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopTools_ListOfShape.hxx>
+#include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Shape.hxx>
 
@@ -240,6 +243,71 @@ inline shape checked(boost::optional<shape> opt, const char *what) {
     throw std::runtime_error(std::string(what) + " operation failed");
   }
   return std::move(*opt);
+}
+
+// 判断 shape 的所有子孙 (递归) 是否全部为实体类型 (SOLID / COMPSOLID)。
+// 用于决定 compound 是否可以安全拍平: 纯实体 compound 的兄弟重叠是
+// OCC fuse/cut 的正常支持场景; 含 WIRE/EDGE/FACE/SHELL 的 compound 携带
+// 共享边界拓扑, 拍平后共享边界被当作自干涉, 会导致操作失败。
+inline bool is_all_solids(const TopoDS_Shape &shp) {
+  if (shp.IsNull()) {
+    return false;
+  }
+  if (shp.ShapeType() == TopAbs_COMPOUND) {
+    for (TopoDS_Iterator it(shp); it.More(); it.Next()) {
+      if (!is_all_solids(it.Value())) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return shp.ShapeType() == TopAbs_SOLID ||
+         shp.ShapeType() == TopAbs_COMPSOLID;
+}
+
+// 若 shp 是"纯实体 compound" (所有子孙均为 SOLID/COMPSOLID), 递归展开
+// 为兄弟操作数逐个加入列表 — 避免子体自干涉的 OCC 未定义行为。
+// 含 WIRE/EDGE/FACE/SHELL 或混合类型的 compound 整体加入, 保持原语义。
+// 空 shape / 非 compound 保持原行为; 空 compound 保持原行为 (避免产生空操作数列表)。
+inline void append_flattened(TopTools_ListOfShape &list,
+                             const TopoDS_Shape &shp) {
+  if (shp.IsNull()) {
+    return;
+  }
+  if (shp.ShapeType() == TopAbs_COMPOUND && is_all_solids(shp)) {
+    TopTools_ListOfShape tmp;
+    for (TopoDS_Iterator it(shp); it.More(); it.Next()) {
+      append_flattened(tmp, it.Value());
+    }
+    if (!tmp.IsEmpty()) {
+      for (TopTools_ListIteratorOfListOfShape it(tmp); it.More(); it.Next()) {
+        list.Append(it.Value());
+      }
+    } else {
+      list.Append(shp); // Empty compound → keep as-is to avoid empty arg list
+    }
+  } else {
+    list.Append(shp);
+  }
+}
+
+// 同上, vector 重载。
+inline void append_flattened(std::vector<TopoDS_Shape> &vec,
+                             const TopoDS_Shape &shp) {
+  if (shp.IsNull()) {
+    return;
+  }
+  if (shp.ShapeType() == TopAbs_COMPOUND && is_all_solids(shp)) {
+    size_t before = vec.size();
+    for (TopoDS_Iterator it(shp); it.More(); it.Next()) {
+      append_flattened(vec, it.Value());
+    }
+    if (vec.size() == before) {
+      vec.push_back(shp); // Empty compound → keep as-is
+    }
+  } else {
+    vec.push_back(shp);
+  }
 }
 
 } // namespace topo

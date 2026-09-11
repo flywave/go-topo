@@ -3,6 +3,8 @@
 #include "shape_ops.hh"
 #include "wire.hh"
 
+#include <Standard_Failure.hxx>
+
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepAlgoAPI_Common.hxx>
@@ -211,26 +213,35 @@ compound compound::bool_op(const std::vector<shape> &objects,
     throw std::invalid_argument("No objects provided for boolean operation");
   }
 
-  TopTools_ListOfShape args;
-  for (const auto &obj : objects) {
-    args.Append(obj.value());
+  try {
+    TopTools_ListOfShape args;
+    for (const auto &obj : objects) {
+      append_flattened(args, obj.value());
+    }
+    op.SetArguments(args);
+
+    TopTools_ListOfShape _tools;
+
+    for (const auto &tool : tools) {
+      append_flattened(_tools, tool.value());
+    }
+
+    op.SetTools(_tools);
+
+    op.Build();
+    if (!op.IsDone()) {
+      throw std::runtime_error("Boolean operation failed");
+    }
+
+    return compound(op.Shape());
+  } catch (Standard_Failure &e) {
+    const Standard_CString msg = e.GetMessageString();
+    if (msg != nullptr && strlen(msg) > 1) {
+      throw std::runtime_error(msg);
+    } else {
+      throw std::runtime_error("Boolean operation failed with OCCT error");
+    }
   }
-  op.SetArguments(args);
-
-  TopTools_ListOfShape _tools;
-
-  for (const auto &tool : tools) {
-    _tools.Append(tool.value());
-  }
-
-  op.SetTools(_tools);
-
-  op.Build();
-  if (!op.IsDone()) {
-    throw std::runtime_error("Boolean operation failed");
-  }
-
-  return compound(op.Shape());
 }
 
 compound compound::cut(const std::vector<shape> &toCut, double tol) const {

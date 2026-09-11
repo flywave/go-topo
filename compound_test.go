@@ -383,3 +383,98 @@ func TestCompoundCutIntersect(t *testing.T) {
 		}
 	})
 }
+
+// Regression tests for compound flattening in boolean operations.
+// Before the fix, passing a compound with self-overlapping children as a
+// boolean operand caused OCC undefined behavior, yielding wrong results.
+
+func TestCompoundBoolNestedFlatten(t *testing.T) {
+	// compound{box(0..100³), box(0..200³)} fuse box(0..50³) → bbox ≈ 200³
+	box1 := CreateBoxShape(BoxShapeParams{
+		Point1: NewPoint3([3]float64{0, 0, 0}),
+		Point2: NewPoint3([3]float64{100, 100, 100}),
+	})
+	box2 := CreateBoxShape(BoxShapeParams{
+		Point1: NewPoint3([3]float64{0, 0, 0}),
+		Point2: NewPoint3([3]float64{200, 200, 200}),
+	})
+	nested := TopoCompoundMake([]Shape{*box1, *box2})
+
+	tool := CreateBoxShape(BoxShapeParams{
+		Point1: NewPoint3([3]float64{0, 0, 0}),
+		Point2: NewPoint3([3]float64{50, 50, 50}),
+	})
+
+	result := nested.Fuse([]*Shape{tool}, false, 0.001)
+	if result == nil {
+		t.Fatal("Fuse returned nil for nested compound")
+	}
+
+	bb := result.BBox().Data()
+	// bbox min should be ≈ 0, max should be ≈ 200 in all axes
+	const eps = 1.0
+	if bb[0] > eps || bb[1] > eps || bb[2] > eps {
+		t.Errorf("bbox min = (%.1f, %.1f, %.1f), expected ≈ (0, 0, 0)", bb[0], bb[1], bb[2])
+	}
+	if bb[3] < 200-eps || bb[4] < 200-eps || bb[5] < 200-eps {
+		t.Errorf("bbox max = (%.1f, %.1f, %.1f), expected ≈ (200, 200, 200)", bb[3], bb[4], bb[5])
+	}
+}
+
+func TestCompoundBoolNonOverlapFlatten(t *testing.T) {
+	// Non-overlapping compound fuse — must still work after flattening.
+	// compound{box(0..100沿X), box(150..250沿X)} fuse box(50..160沿X) → bbox X ≈ 250
+	box1 := CreateBoxShape(BoxShapeParams{
+		Point1: NewPoint3([3]float64{0, 0, 0}),
+		Point2: NewPoint3([3]float64{100, 100, 100}),
+	})
+	box2 := CreateBoxShape(BoxShapeParams{
+		Point1: NewPoint3([3]float64{150, 0, 0}),
+		Point2: NewPoint3([3]float64{250, 100, 100}),
+	})
+	compound := TopoCompoundMake([]Shape{*box1, *box2})
+
+	tool := CreateBoxShape(BoxShapeParams{
+		Point1: NewPoint3([3]float64{50, 0, 0}),
+		Point2: NewPoint3([3]float64{160, 100, 100}),
+	})
+
+	result := compound.Fuse([]*Shape{tool}, false, 0.001)
+	if result == nil {
+		t.Fatal("Fuse returned nil for non-overlapping compound")
+	}
+
+	bb := result.BBox().Data()
+	const eps = 1.0
+	if bb[3] < 250-eps {
+		t.Errorf("bbox X max = %.1f, expected ≈ 250", bb[3])
+	}
+}
+
+func TestCompoundBoolCutDegenerate(t *testing.T) {
+	// compound{box(0..100), box(0..200)} cut box(0..200) → no panic
+	box1 := CreateBoxShape(BoxShapeParams{
+		Point1: NewPoint3([3]float64{0, 0, 0}),
+		Point2: NewPoint3([3]float64{100, 100, 100}),
+	})
+	box2 := CreateBoxShape(BoxShapeParams{
+		Point1: NewPoint3([3]float64{0, 0, 0}),
+		Point2: NewPoint3([3]float64{200, 200, 200}),
+	})
+	nested := TopoCompoundMake([]Shape{*box1, *box2})
+
+	tool := CreateBoxShape(BoxShapeParams{
+		Point1: NewPoint3([3]float64{0, 0, 0}),
+		Point2: NewPoint3([3]float64{200, 200, 200}),
+	})
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("Cut panicked: %v", r)
+		}
+	}()
+
+	result := nested.Cut([]*Shape{tool}, 0.001)
+	// result may be nil (empty cut) or a valid compound — both are acceptable
+	_ = result
+}
