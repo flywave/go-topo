@@ -173,6 +173,12 @@ public:
                     const sketch_constraint_value &arg);
   sketch &solve();
 
+  const std::map<std::string, boost::variant<double, int, std::string,
+                                             std::vector<std::vector<double>>>> &
+  solve_status() const {
+    return solve_status_;
+  }
+
   std::shared_ptr<sketch> copy() const;
   std::shared_ptr<sketch> moved(const std::vector<topo_location> &locs) const;
   std::shared_ptr<sketch> located(const topo_location &loc) const;

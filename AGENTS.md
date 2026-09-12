@@ -7,7 +7,7 @@ Go bindings for a C++ 3D topological geometry modeling library (OpenCASCADE-base
 - Go package root: `package topo` — cgo wrappers calling C API layer
 - C++ source: `src/` — compiled to `libtopo.a` via CMake
 - Prebuilt libs: `libs/{darwin,darwin_arm,linux,linux_arm,windows}/`
-- External C++ deps: `external/` (OpenCASCADE, Ipopt, Boost, Eigen, Freetype, Fontconfig, etc.)
+- External C++ deps: `external/` (OpenCASCADE, NLopt, Boost, Eigen, Freetype, Fontconfig, etc.)
 - Go-only deps: `github.com/flywave/go3d`, `golang.org/x/image`
 
 ## Build

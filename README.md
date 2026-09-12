@@ -152,7 +152,7 @@ go test -v -run "Test_example_" .
 
 ## Dependencies
 
-**C++ (vendored):** OpenCASCADE, Boost 1.67, Ipopt, Eigen, IFC, fontconfig, freetype, ICU, NLopt, METIS, LAPACK/BLAS, MA27, libxml2, libexpat, zlib, RapidJSON
+**C++ (vendored):** OpenCASCADE, Boost 1.67, Eigen, IFC, fontconfig, freetype, ICU, NLopt, libxml2, libexpat, zlib, RapidJSON
 
 **Go:** `github.com/flywave/go3d`, `golang.org/x/image`
 

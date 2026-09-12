@@ -1,9 +1,7 @@
 #include "solver.hh"
-#ifndef __EMSCRIPTEN__
-#include <IpIpoptApplication.hpp>
-#include <IpSolveStatistics.hpp>
-#include <IpTNLP.hpp>
-#endif
+
+#include <nlopt.hpp>
+
 #include <boost/variant.hpp>
 #include <gp_Dir.hxx>
 #include <gp_Lin.hxx>
@@ -12,14 +10,11 @@
 #include <gp_Quaternion.hxx>
 #include <gp_Trsf.hxx>
 #include <cmath>
+#include <chrono>
 #include <memory>
 #include <set>
 #include <stdexcept>
 #include <vector>
-
-#ifndef __EMSCRIPTEN__
-using namespace Ipopt;
-#endif
 
 namespace flywave {
 namespace topo {
@@ -55,9 +50,7 @@ DOF6 location_to_dof6(const gp_Trsf &loc) {
 }
 } // namespace
 
-#ifndef __EMSCRIPTEN__
-
-class constraint_problem : public TNLP {
+class constraint_problem {
 private:
   constraint_solver &solver_;
   std::vector<gp_Trsf> initial_transforms_;
@@ -68,22 +61,11 @@ private:
   std::vector<gp_Trsf> final_transforms_;
   std::set<size_t> lockedSet_;
 
+public:
   bool is_locked(size_t entityIdx) const {
     return lockedSet_.count(entityIdx) > 0;
   }
 
-  static gp_Trsf build_transform(const double *T, const double *R) {
-    gp_Trsf transform;
-    double a = R[0], b = R[1], c = R[2];
-    double m = a * a + b * b + c * c;
-
-    transform.SetRotation(gp_Quaternion(2 * a / (m + 1), 2 * b / (m + 1),
-                                        2 * c / (m + 1), (1 - m) / (m + 1)));
-    transform.SetTranslationPart(gp_Vec(T[0], T[1], T[2]));
-    return transform;
-  }
-
-public:
   constraint_problem(constraint_solver &solver)
       : solver_(solver), initial_transforms_(solver.initial_transforms_),
         constraints_(solver.constraints_), lockedEntities_(solver.locked_),
@@ -102,7 +84,8 @@ public:
 
     double w = quat.W();
     if (std::abs(w + 1.0) < 1e-12) {
-      double norm = std::sqrt(quat.X() * quat.X() + quat.Y() * quat.Y() + quat.Z() * quat.Z());
+      double norm = std::sqrt(quat.X() * quat.X() + quat.Y() * quat.Y() +
+                              quat.Z() * quat.Z());
       if (norm < 1e-12) {
         R[0] = R[1] = R[2] = 0.0;
       } else {
@@ -131,228 +114,10 @@ public:
     return transform;
   }
 
-  bool get_nlp_info(Index &n, Index &m, Index &nnz_jac_g, Index &nnz_h_lag,
-                    IndexStyleEnum &index_style) override {
-    n = static_cast<Index>(ne_ * 6);
-    m = static_cast<Index>(constraints_.size());
-    nnz_jac_g = 0;
-    for (Index i = 0; i < m; i++) {
-      const auto &entityIndices = std::get<3>(constraints_[i]);
-      nnz_jac_g += static_cast<Index>(entityIndices.size()) * 6;
-    }
-    nnz_h_lag = 0;
-    index_style = TNLP::C_STYLE;
-    return true;
-  }
+  size_t num_entities() const { return ne_; }
+  size_t num_constraints() const { return constraints_.size(); }
 
-  bool get_bounds_info(Index n, Number *x_l, Number *x_u, Index m, Number *g_l,
-                       Number *g_u) override {
-    for (Index i = 0; i < n; i++) {
-      x_l[i] = -1e20;
-      x_u[i] = 1e20;
-    }
-
-    for (Index i = 0; i < ne_; i++) {
-      if (is_locked(i)) {
-        x_l[i * 6] = x_u[i * 6] = 0;
-        x_l[i * 6 + 1] = x_u[i * 6 + 1] = 0;
-        x_l[i * 6 + 2] = x_u[i * 6 + 2] = 0;
-        x_l[i * 6 + 3] = x_u[i * 6 + 3] = 0;
-        x_l[i * 6 + 4] = x_u[i * 6 + 4] = 0;
-        x_l[i * 6 + 5] = x_u[i * 6 + 5] = 0;
-      }
-    }
-
-    for (Index i = 0; i < m; i++) {
-      g_l[i] = g_u[i] = 0;
-    }
-
-    return true;
-  }
-
-  bool get_starting_point(Index n, bool init_x, Number *x, bool init_z,
-                          Number *z_L, Number *z_U, Index m, bool init_lambda,
-                          Number *lambda) override {
-    for (Index i = 0; i < n; i++) {
-      x[i] = 0;
-    }
-    return true;
-  }
-
-  bool eval_f(Index n, const Number *x, bool new_x,
-              Number &obj_value) override {
-    obj_value = 0.0;
-
-    for (size_t ci = 0; ci < constraints_.size(); ci++) {
-      const auto &constraint = constraints_[ci];
-      constraint_kind kind = std::get<1>(constraint);
-      const auto &param = std::get<2>(constraint);
-      const auto &entityIndices = std::get<3>(constraint);
-
-      std::vector<double> vars;
-      std::vector<double> inits;
-
-      for (int entityIdx : entityIndices) {
-        auto dof = location_to_dof6(initial_transforms_[entityIdx]);
-        auto T0 = std::get<0>(dof);
-        auto R0 = std::get<1>(dof);
-        inits.insert(inits.end(), T0.begin(), T0.end());
-        inits.insert(inits.end(), R0.begin(), R0.end());
-
-        for (int i = 0; i < 6; i++) {
-          vars.push_back(x[entityIdx * 6 + i]);
-        }
-      }
-
-      obj_value += compute_constraint_value(kind, inits, vars, param, scale_);
-    }
-
-    for (Index i = 0; i < n; i++) {
-      if (!is_locked(i / 6)) {
-        obj_value += 1e-16 * x[i] * x[i];
-      }
-    }
-
-    return true;
-  }
-
-  bool eval_grad_f(Index n, const Number *x, bool new_x,
-                   Number *grad_f) override {
-    std::fill(grad_f, grad_f + n, 0.0);
-
-    for (const auto &constraint : constraints_) {
-      const auto &markers = std::get<0>(constraint);
-      constraint_kind kind = std::get<1>(constraint);
-      const auto &param = std::get<2>(constraint);
-      const auto &entityIndices = std::get<3>(constraint);
-
-      std::vector<double> vars;
-      std::vector<double> inits;
-      std::vector<Index> var_indices;
-
-      for (int entityIdx : entityIndices) {
-        auto dof = location_to_dof6(initial_transforms_[entityIdx]);
-        auto T0 = std::get<0>(dof);
-        auto R0 = std::get<1>(dof);
-
-        inits.insert(inits.end(), T0.begin(), T0.end());
-        inits.insert(inits.end(), R0.begin(), R0.end());
-
-        for (int i = 0; i < 6; i++) {
-          vars.push_back(x[entityIdx * 6 + i]);
-          var_indices.push_back(entityIdx * 6 + i);
-        }
-      }
-
-      std::vector<double> constraint_grad(vars.size(), 0.0);
-      compute_constraint_gradient(kind, inits, vars, param, scale_,
-                                  constraint_grad);
-
-      for (size_t i = 0; i < var_indices.size(); i++) {
-        grad_f[var_indices[i]] += constraint_grad[i];
-      }
-    }
-
-    for (Index i = 0; i < n; i++) {
-      if (!is_locked(i / 6)) {
-        grad_f[i] += 2.0 * 1e-16 * x[i];
-      }
-    }
-
-    return true;
-  }
-
-  bool eval_g(Index n, const Number *x, bool new_x, Index m,
-              Number *g) override {
-    for (Index i = 0; i < m; i++) {
-      const auto &markers = std::get<0>(constraints_[i]);
-      constraint_kind kind = std::get<1>(constraints_[i]);
-      const auto &param = std::get<2>(constraints_[i]);
-      const auto &entityIndices = std::get<3>(constraints_[i]);
-
-      std::vector<double> vars;
-      std::vector<double> inits;
-
-      for (int entityIdx : entityIndices) {
-        auto dof = location_to_dof6(initial_transforms_[entityIdx]);
-        auto T0 = std::get<0>(dof);
-        auto R0 = std::get<1>(dof);
-        inits.insert(inits.end(), T0.begin(), T0.end());
-        inits.insert(inits.end(), R0.begin(), R0.end());
-
-        for (int j = 0; j < 6; j++) {
-          vars.push_back(x[entityIdx * 6 + j]);
-        }
-      }
-
-      g[i] = compute_constraint_value(kind, inits, vars, param, scale_);
-    }
-
-    return true;
-  }
-
-  bool eval_jac_g(Index n, const Number *x, bool new_x, Index m, Index nele_jac,
-                  Index *iRow, Index *jCol, Number *values) override {
-    if (values == nullptr) {
-      Index index = 0;
-      for (Index i = 0; i < m; i++) {
-        const auto &entityIndices = std::get<3>(constraints_[i]);
-        for (int entityIdx : entityIndices) {
-          for (Index j = 0; j < 6; j++) {
-            iRow[index] = i;
-            jCol[index] = entityIdx * 6 + j;
-            index++;
-          }
-        }
-      }
-      return true;
-    }
-
-    Index index = 0;
-    for (Index i = 0; i < m; i++) {
-      const auto &markers = std::get<0>(constraints_[i]);
-      constraint_kind kind = std::get<1>(constraints_[i]);
-      const auto &param = std::get<2>(constraints_[i]);
-      const auto &entityIndices = std::get<3>(constraints_[i]);
-
-      std::vector<double> vars;
-      std::vector<double> inits;
-      std::vector<Index> var_indices;
-
-      for (int entityIdx : entityIndices) {
-        auto dof = location_to_dof6(initial_transforms_[entityIdx]);
-        auto T0 = std::get<0>(dof);
-        auto R0 = std::get<1>(dof);
-        inits.insert(inits.end(), T0.begin(), T0.end());
-        inits.insert(inits.end(), R0.begin(), R0.end());
-
-        for (int j = 0; j < 6; j++) {
-          vars.push_back(x[entityIdx * 6 + j]);
-          var_indices.push_back(entityIdx * 6 + j);
-        }
-      }
-
-      std::vector<double> constraint_jac(vars.size(), 0.0);
-      compute_constraint_jacobian(kind, inits, vars, param, scale_,
-                                  constraint_jac);
-
-      for (double val : constraint_jac) {
-        values[index++] = val;
-      }
-    }
-
-    return true;
-  }
-
-  const std::vector<gp_Trsf> &final_transforms() const {
-    return final_transforms_;
-  }
-
-  void finalize_solution(SolverReturn status, Index n, const Number *x,
-                         const Number *z_L, const Number *z_U, Index m,
-                         const Number *g, const Number *lambda,
-                         Number obj_value, const IpoptData *ip_data,
-                         IpoptCalculatedQuantities *ip_cq) override {
+  void set_final_transforms(const std::vector<double> &x) {
     final_transforms_.clear();
     final_transforms_.reserve(initial_transforms_.size());
 
@@ -363,6 +128,10 @@ public:
       gp_Trsf delta = build_transform(T, R);
       final_transforms_.push_back(initial_transforms_[i] * delta);
     }
+  }
+
+  const std::vector<gp_Trsf> &final_transforms() const {
+    return final_transforms_;
   }
 
   static double compute_constraint_value(
@@ -440,8 +209,8 @@ public:
 
       gp_Pnt p(0, 0, 0);
       gp_Pln pln(gp_Ax3(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)));
-      return point_in_plane_cost(p, pln, T1_0, R1_0, T2_0, R2_0, T1, R1, T2, R2,
-                                 offset, scale);
+      return point_in_plane_cost(p, pln, T1_0, R1_0, T2_0, R2_0, T1, R1, T2,
+                                 R2, offset, scale);
     }
 
     case constraint_kind::PointOnLine: {
@@ -466,8 +235,8 @@ public:
 
       gp_Pnt p(0, 0, 0);
       gp_Lin line(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)));
-      return point_on_line_cost(p, line, T1_0, R1_0, T2_0, R2_0, T1, R1, T2, R2,
-                                tolerance, scale);
+      return point_on_line_cost(p, line, T1_0, R1_0, T2_0, R2_0, T1, R1, T2,
+                                R2, tolerance, scale);
     }
 
     case constraint_kind::FixedPoint: {
@@ -559,8 +328,8 @@ public:
       gp_Vec T2_0(inits[6], inits[7], inits[8]);
       gp_Vec T2(vars[6], vars[7], vars[8]);
       gp_Pnt p1(0, 0, 0), p2(0, 0, 0);
-      double pointCost = point_cost(p1, p2, T1_0, R1_0, T2_0, R2_0, T1, R1, T2,
-                                    R2, distTol, scale);
+      double pointCost = point_cost(p1, p2, T1_0, R1_0, T2_0, R2_0, T1, R1,
+                                    T2, R2, distTol, scale);
 
       return axisCost + pointCost;
     }
@@ -605,138 +374,157 @@ public:
     compute_constraint_gradient(kind, inits, vars, param, scale, jac);
   }
 
-private:
-  double evaluate_constraint(const assembly_constraint &c,
-                             const Number *x) const {
-    const auto &markers = std::get<0>(c);
-    constraint_kind kind = std::get<1>(c);
-    const auto &param = std::get<2>(c);
-    const auto &entityIndices = std::get<3>(c);
+  // --- NLopt callbacks ---
 
-    std::vector<const double *> Ts, Rs;
-    for (int entityIdx : entityIndices) {
-      Ts.push_back(&x[entityIdx * 6]);
-      Rs.push_back(&x[entityIdx * 6 + 3]);
-    }
+  static double nlopt_objective(const std::vector<double> &x,
+                                std::vector<double> &grad, void *data) {
+    auto *self = static_cast<constraint_problem *>(data);
+    double obj = 0.0;
 
-    auto make_vec = [](const double *data) {
-      return gp_Vec(data[0], data[1], data[2]);
-    };
+    try {
+      // Sum of constraint values
+      for (const auto &constraint : self->constraints_) {
+        const auto &entityIndices = std::get<3>(constraint);
+        constraint_kind kind = std::get<1>(constraint);
+        const auto &param = std::get<2>(constraint);
 
-    gp_Vec zero_vec(0, 0, 0);
+        // Skip marker-only constraints (e.g. Fixed) with no entity indices
+        if (entityIndices.empty())
+          continue;
 
-    switch (kind) {
-    case constraint_kind::Point: {
-      auto p1 = boost::get<gp_Pnt>(markers[0]);
-      auto p2 = boost::get<gp_Pnt>(markers[1]);
-      double tolerance =
-          param.type() == typeid(double) ? boost::get<double>(param) : 0.0;
+        std::vector<double> vars;
+        std::vector<double> inits;
 
-      return point_cost(p1, p2, zero_vec, zero_vec,       // T1_0, R1_0
-                        zero_vec, zero_vec,               // T2_0, R2_0
-                        make_vec(Ts[0]), make_vec(Rs[0]), // T1, R1
-                        make_vec(Ts[1]), make_vec(Rs[1]), // T2, R2
-                        tolerance, scale_);
-    }
-    case constraint_kind::Axis: {
-      auto d1 = boost::get<gp_Dir>(markers[0]);
-      auto d2 = boost::get<gp_Dir>(markers[1]);
-      double angle =
-          param.type() == typeid(double) ? boost::get<double>(param) : M_PI;
+        for (int entityIdx : entityIndices) {
+          auto dof = location_to_dof6(self->initial_transforms_[entityIdx]);
+          auto T0 = std::get<0>(dof);
+          auto R0 = std::get<1>(dof);
+          inits.insert(inits.end(), T0.begin(), T0.end());
+          inits.insert(inits.end(), R0.begin(), R0.end());
 
-      return axis_cost(d1, d2, zero_vec, zero_vec,       // T1_0, R1_0
-                       zero_vec, zero_vec,               // T2_0, R2_0
-                       make_vec(Ts[0]), make_vec(Rs[0]), // T1, R1
-                       make_vec(Ts[1]), make_vec(Rs[1]), // T2, R2
-                       angle, scale_);
-    }
-    case constraint_kind::PointInPlane: {
-      auto p = boost::get<gp_Pnt>(markers[0]);
-      auto plane = boost::get<gp_Pln>(markers[1]);
-      double offset =
-          param.type() == typeid(double) ? boost::get<double>(param) : 0.0;
+          for (int i = 0; i < 6; i++) {
+            vars.push_back(x[entityIdx * 6 + i]);
+          }
+        }
 
-      return point_in_plane_cost(p, plane, zero_vec, zero_vec,     // T1_0, R1_0
-                                 zero_vec, zero_vec,               // T2_0, R2_0
-                                 make_vec(Ts[0]), make_vec(Rs[0]), // T1, R1
-                                 make_vec(Ts[1]), make_vec(Rs[1]), // T2, R2
-                                 offset, scale_);
-    }
-    case constraint_kind::PointOnLine: {
-      auto p = boost::get<gp_Pnt>(markers[0]);
-      auto line = boost::get<gp_Lin>(markers[1]);
-      double tolerance =
-          param.type() == typeid(double) ? boost::get<double>(param) : 0.0;
-
-      return point_on_line_cost(p, line, zero_vec, zero_vec,      // T1_0, R1_0
-                                zero_vec, zero_vec,               // T2_0, R2_0
-                                make_vec(Ts[0]), make_vec(Rs[0]), // T1, R1
-                                make_vec(Ts[1]), make_vec(Rs[1]), // T2, R2
-                                tolerance, scale_);
-    }
-    case constraint_kind::FixedPoint: {
-      auto p = boost::get<gp_Pnt>(markers[0]);
-      gp_Vec target;
-      if (param.type() == typeid(std::array<double, 3>)) {
-        auto t = boost::get<std::array<double, 3>>(param);
-        target = gp_Vec(std::get<0>(t), std::get<1>(t), std::get<2>(t));
+        obj += compute_constraint_value(kind, inits, vars, param,
+                                        self->scale_);
       }
 
-      return fixed_point_cost(p, zero_vec, zero_vec,            // T1_0, R1_0
-                              make_vec(Ts[0]), make_vec(Rs[0]), // T1, R1
-                              target, scale_);
-    }
-    case constraint_kind::FixedAxis: {
-      auto d = boost::get<gp_Dir>(markers[0]);
-      gp_Vec target;
-      if (param.type() == typeid(std::array<double, 3>)) {
-        auto t = boost::get<std::array<double, 3>>(param);
-        target = gp_Vec(std::get<0>(t), std::get<1>(t), std::get<2>(t));
+      // Tikhonov regularization
+      for (size_t i = 0; i < x.size(); i++) {
+        if (!self->is_locked(i / 6)) {
+          obj += 1e-16 * x[i] * x[i];
+        }
       }
 
-      return fixed_axis_cost(d, zero_vec, zero_vec,            // T1_0, R1_0
-                             make_vec(Ts[0]), make_vec(Rs[0]), // T1, R1
-                             target, scale_);
+      // Gradient
+      if (!grad.empty()) {
+        std::fill(grad.begin(), grad.end(), 0.0);
+
+        for (const auto &constraint : self->constraints_) {
+          constraint_kind kind = std::get<1>(constraint);
+          const auto &param = std::get<2>(constraint);
+          const auto &entityIndices = std::get<3>(constraint);
+
+          if (entityIndices.empty())
+            continue;
+
+          std::vector<double> vars;
+          std::vector<double> inits;
+          std::vector<size_t> var_indices;
+
+          for (int entityIdx : entityIndices) {
+            auto dof = location_to_dof6(self->initial_transforms_[entityIdx]);
+            auto T0 = std::get<0>(dof);
+            auto R0 = std::get<1>(dof);
+
+            inits.insert(inits.end(), T0.begin(), T0.end());
+            inits.insert(inits.end(), R0.begin(), R0.end());
+
+            for (int i = 0; i < 6; i++) {
+              vars.push_back(x[entityIdx * 6 + i]);
+              var_indices.push_back(entityIdx * 6 + i);
+            }
+          }
+
+          std::vector<double> constraint_grad(vars.size(), 0.0);
+          compute_constraint_gradient(kind, inits, vars, param, self->scale_,
+                                      constraint_grad);
+
+          for (size_t i = 0; i < var_indices.size(); i++) {
+            grad[var_indices[i]] += constraint_grad[i];
+          }
+        }
+
+        for (size_t i = 0; i < x.size(); i++) {
+          if (!self->is_locked(i / 6)) {
+            grad[i] += 2.0 * 1e-16 * x[i];
+          }
+        }
+      }
+    } catch (const std::exception &e) {
+      return 1e20;
+    } catch (...) {
+      return 1e20;
     }
-    case constraint_kind::FixedRotation: {
-      std::array<double, 3> eulerAngles{0, 0, 0};
-      if (param.type() == typeid(std::array<double, 3>)) {
-        eulerAngles = boost::get<std::array<double, 3>>(param);
+
+    return obj;
+  }
+
+  // NLopt mfunc callback (C-style signature with gradient pointer)
+  // IMPORTANT: must evaluate at the CURRENT iterate x, not at initial_transforms_,
+  // otherwise the Jacobian is constant and SLSQP may converge prematurely.
+  static void nlopt_constraint(unsigned m, double *result, unsigned n,
+                                const double *x,
+                                double * /*gradient — not needed*/,
+                                void *data) {
+    auto *self = static_cast<constraint_problem *>(data);
+
+    for (unsigned i = 0; i < m; i++) {
+      const auto &entityIndices = std::get<3>(self->constraints_[i]);
+      constraint_kind kind = std::get<1>(self->constraints_[i]);
+      const auto &param = std::get<2>(self->constraints_[i]);
+
+      // Marker-only constraints are always satisfied (return 0)
+      if (entityIndices.empty()) {
+        result[i] = 0.0;
+        continue;
       }
 
-      return fixed_rotation_cost(zero_vec, zero_vec,               // T1_0, R1_0
-                                 make_vec(Ts[0]), make_vec(Rs[0]), // T1, R1
-                                 eulerAngles, scale_);
-    }
-    case constraint_kind::Plane: {
-      auto d1 = boost::get<gp_Dir>(markers[0]);
-      auto d2 = boost::get<gp_Dir>(markers[1]);
-      auto p1 = boost::get<gp_Pnt>(markers[2]);
-      auto p2 = boost::get<gp_Pnt>(markers[3]);
+      std::vector<double> vars;
+      std::vector<double> inits;
 
-      double angleTol = 0.0, distTol = 0.0;
-      if (param.type() == typeid(std::array<double, 2>)) {
-        auto p = boost::get<std::array<double, 2>>(param);
-        angleTol = std::get<0>(p);
-        distTol = std::get<1>(p);
+      for (int entityIdx : entityIndices) {
+        // Read initial transform for reference
+        auto dof = location_to_dof6(self->initial_transforms_[entityIdx]);
+        auto T0 = std::get<0>(dof);
+        auto R0 = std::get<1>(dof);
+        inits.insert(inits.end(), T0.begin(), T0.end());
+        inits.insert(inits.end(), R0.begin(), R0.end());
+
+        // Read CURRENT iterate from x
+        for (int j = 0; j < 6; j++) {
+          vars.push_back(x[entityIdx * 6 + j]);
+        }
       }
 
-      double axisCost = axis_cost(
-          d1, d2, zero_vec, zero_vec, zero_vec, zero_vec, make_vec(Ts[0]),
-          make_vec(Rs[0]), make_vec(Ts[1]), make_vec(Rs[1]), angleTol, scale_);
+      result[i] =
+          compute_constraint_value(kind, inits, vars, param, self->scale_);
+    }
+  }
 
-      double pointCost = point_cost(
-          p1, p2, zero_vec, zero_vec, zero_vec, zero_vec, make_vec(Ts[0]),
-          make_vec(Rs[0]), make_vec(Ts[1]), make_vec(Rs[1]), distTol, scale_);
+  // --- Geometry helpers (unchanged) ---
 
-      return axisCost + pointCost;
-    }
-    case constraint_kind::Fixed: {
-      return 0.0;
-    }
-    default:
-      throw std::runtime_error("Unsupported constraint type");
-    }
+  static gp_Trsf build_transform(const double *T, const double *R) {
+    gp_Trsf transform;
+    double a = R[0], b = R[1], c = R[2];
+    double m = a * a + b * b + c * c;
+
+    transform.SetRotation(gp_Quaternion(2 * a / (m + 1), 2 * b / (m + 1),
+                                        2 * c / (m + 1), (1 - m) / (m + 1)));
+    transform.SetTranslationPart(gp_Vec(T[0], T[1], T[2]));
+    return transform;
   }
 
   static std::pair<double, gp_Vec> quaternion(const gp_Vec &R) {
@@ -938,7 +726,6 @@ private:
     return dummy;
   }
 };
-#endif
 
 constraint_solver::constraint_solver(
     const std::vector<gp_Trsf> &entities,
@@ -951,51 +738,82 @@ constraint_solver::constraint_solver(
   initial_transforms_ = entities;
 }
 
-#ifdef __EMSCRIPTEN__
 std::pair<std::vector<gp_Trsf>, std::map<std::string, double>>
 constraint_solver::solve(int verbosity) {
-  std::vector<gp_Trsf> transforms = initial_transforms_;
-  std::map<std::string, double> stats;
-  stats["iter_count"] = 0;
-  stats["solve_time"] = 0.0;
-  stats["final_obj"] = 0.0;
-  return std::make_pair(transforms, stats);
-}
-#else
-std::pair<std::vector<gp_Trsf>, std::map<std::string, double>>
-constraint_solver::solve(int verbosity) {
-  Ipopt::SmartPtr<Ipopt::IpoptApplication> app = IpoptApplicationFactory();
+  size_t n = ne_ * 6;
+  size_t m = constraints_.size();
 
-  app->Options()->SetNumericValue("tol", 1e-14);
-  app->Options()->SetNumericValue("acceptable_obj_change_tol", 1e-12);
-  app->Options()->SetIntegerValue("acceptable_iter", 1);
-  app->Options()->SetStringValue("hessian_approximation", "exact");
-  app->Options()->SetStringValue("nlp_scaling_method", "none");
-  app->Options()->SetStringValue("honor_original_bounds", "yes");
-  app->Options()->SetNumericValue("bound_relax_factor", 0);
-  app->Options()->SetIntegerValue("print_level", verbosity);
-  app->Options()->SetStringValue("sb", verbosity == 0 ? "yes" : "no");
-  app->Options()->SetStringValue("print_timing_statistics", "no");
+  constraint_problem problem(*this);
 
-  Ipopt::SmartPtr<constraint_problem> nlp = new constraint_problem(*this);
-  app->Initialize();
-  Ipopt::ApplicationReturnStatus status = app->OptimizeTNLP(nlp);
-
-  std::vector<gp_Trsf> trans;
-  std::map<std::string, double> stats;
-
-  if (status == Ipopt::Solve_Succeeded ||
-      status == Ipopt::Solved_To_Acceptable_Level) {
-    trans = nlp->final_transforms();
-    stats["iter_count"] = app->Statistics()->IterationCount();
-    stats["solve_time"] = app->Statistics()->TotalWallclockTime();
-    stats["final_obj"] = app->Statistics()->FinalObjective();
-  } else {
-    throw std::runtime_error("Ipopt failed to solve the problem");
+  if (n == 0) {
+    throw std::runtime_error("No entities to solve");
   }
 
-  return std::make_pair(trans, stats);
+  auto start_time = std::chrono::high_resolution_clock::now();
+
+  try {
+    nlopt::opt opt(nlopt::LD_SLSQP, static_cast<unsigned>(n));
+
+    opt.set_min_objective(constraint_problem::nlopt_objective, &problem);
+
+    // Variable bounds
+    std::vector<double> lb(n, -1e20);
+    std::vector<double> ub(n, 1e20);
+
+    for (size_t i = 0; i < ne_; i++) {
+      if (problem.is_locked(i)) {
+        lb[i * 6] = ub[i * 6] = 0;
+        lb[i * 6 + 1] = ub[i * 6 + 1] = 0;
+        lb[i * 6 + 2] = ub[i * 6 + 2] = 0;
+        lb[i * 6 + 3] = ub[i * 6 + 3] = 0;
+        lb[i * 6 + 4] = ub[i * 6 + 4] = 0;
+        lb[i * 6 + 5] = ub[i * 6 + 5] = 0;
+      }
+    }
+
+    opt.set_lower_bounds(lb);
+    opt.set_upper_bounds(ub);
+
+    // Tolerances — no equality constraints; the objective already encodes
+    // all constraint violations as penalties, so SLSQP minimizes them freely.
+    opt.set_xtol_rel(1e-12);
+    opt.set_ftol_rel(0.0);
+    opt.set_ftol_abs(0.0);
+    opt.set_maxeval(500);
+
+    // Starting point
+    std::vector<double> x(n, 0.0);
+
+    // Optimize
+    double minf = 0.0;
+    nlopt::result result = nlopt::FAILURE;
+    try {
+      result = opt.optimize(x, minf);
+    } catch (const nlopt::roundoff_limited &) {
+      // 部分结果可用 (NLopt 文档建议), 继续使用当前 x
+    } catch (const nlopt::forced_stop &) {
+      // 同上
+    }
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    double solve_time =
+        std::chrono::duration<double>(end_time - start_time).count();
+
+    // Build final transforms from solution
+    problem.set_final_transforms(x);
+
+    std::map<std::string, double> stats;
+    stats["iter_count"] = static_cast<double>(opt.get_numevals());
+    stats["solve_time"] = solve_time;
+    stats["final_obj"] = minf;
+
+    return std::make_pair(problem.final_transforms(), stats);
+
+  } catch (const std::exception &e) {
+    throw std::runtime_error(
+        std::string("NLopt solver error: ") + e.what());
+  }
 }
-#endif
+
 } // namespace topo
 } // namespace flywave

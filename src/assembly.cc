@@ -802,7 +802,18 @@ assembly &assembly::solve(int verbosity) {
     for (const auto &c : constraints_) {
       auto pods = c.to_pods();
       for (const auto &pod : pods) {
-        constraint_pods.push_back(pod);
+        // Fill in entityIndices from the ents map
+        auto filled = pod;
+        auto &objNames = c.objects;
+        std::vector<int> &ei = std::get<3>(filled);
+        ei.clear();
+        for (const auto &name : objNames) {
+          auto it = ents.find(name);
+          if (it != ents.end()) {
+            ei.push_back(static_cast<int>(it->second));
+          }
+        }
+        constraint_pods.push_back(filled);
       }
     }
 
@@ -828,9 +839,8 @@ assembly &assembly::solve(int verbosity) {
         if (it == objects_.end()) {
           continue;
         }
-        it->second->loc_ =
-            std::make_shared<topo_location>(*root_loc_inv *
-                                            solve_result.first[entry.second]);
+        it->second->loc_ = std::make_shared<topo_location>(
+            *root_loc_inv * solve_result.first[entry.second]);
       }
     }
   } catch (const std::exception &e) {

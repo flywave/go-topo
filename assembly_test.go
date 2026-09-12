@@ -2,6 +2,7 @@ package topo
 
 import (
 	"encoding/json"
+	"math"
 	"strings"
 	"testing"
 )
@@ -446,7 +447,7 @@ func TestAssemblyConstraint_Solve(t *testing.T) {
 		as.Constrain("root", "part", asmPoint, NewAssemblyConstraintParmFromDouble(0))
 		as.Solve(0)
 		if err := as.HasError(); err {
-			t.Logf("Solve error (Ipopt issue in prebuilt lib): %v", err)
+			t.Fatalf("NLopt solve failed: %v", err)
 		}
 	})
 
@@ -456,7 +457,7 @@ func TestAssemblyConstraint_Solve(t *testing.T) {
 		as.Constrain1("part", asmFixedPoint, NewAssemblyConstraintParmFromDouble3(0, 0, 5))
 		as.Solve(0)
 		if err := as.HasError(); err {
-			t.Logf("Solve error (Ipopt issue in prebuilt lib): %v", err)
+			t.Fatalf("NLopt solve failed: %v", err)
 		}
 	})
 }
@@ -475,7 +476,7 @@ func TestAssemblySolve_EdgeCases(t *testing.T) {
 		as.Constrain("root", "part", asmPoint, NewAssemblyConstraintParmFromDouble(0))
 		as.Solve(0)
 		if err := as.HasError(); err {
-			t.Logf("multiple solves error (Ipopt issue): %v", err)
+			t.Fatalf("NLopt multiple solves failed: %v", err)
 		}
 	})
 	t.Run("constrain after solve", func(t *testing.T) {
@@ -484,7 +485,53 @@ func TestAssemblySolve_EdgeCases(t *testing.T) {
 		as.Constrain("root", "part", asmPoint, NewAssemblyConstraintParmFromDouble(0))
 		as.Solve(0)
 		if err := as.HasError(); err {
-			t.Logf("constrain after solve error (Ipopt issue): %v", err)
+			t.Fatalf("NLopt constrain-after-solve failed: %v", err)
+		}
+	})
+}
+
+func TestAssemblySolve_GeometricVerification(t *testing.T) {
+	t.Run("FixedPoint solve moves part to target", func(t *testing.T) {
+		as := makeAssemblyWithChild("root", "part")
+		as.Constrain1("root", asmFixed, NewAssemblyConstraintParmFromDouble(0))
+		as.Constrain1("part", asmFixedPoint, NewAssemblyConstraintParmFromDouble3(0, 0, 5))
+		as.Solve(0)
+		if as.HasError() {
+			t.Fatalf("FixedPoint solve error: %v", as.Error())
+		}
+		el, ok := as.Get("part")
+		if !ok {
+			t.Fatal("expected to find element 'part'")
+		}
+		m := el.GetLocation().Trsf().Data()
+		if math.Abs(m[11]-5) > 1e-6 {
+			t.Fatalf("expected part z≈5, got (%v,%v,%v)", m[3], m[7], m[11])
+		}
+		bb := as.ToCompound().BBox().Data()
+		if bb[5] < 6.0 {
+			t.Fatalf("expected compound zMax≈7.5 after move, got %v", bb[5])
+		}
+	})
+
+	t.Run("Point solve pulls displaced part back to root origin", func(t *testing.T) {
+		as := makeAssemblyWithChild("root", "part")
+		loc := NewTopoLocation(NewTrsfTranslationFromVector(NewVector3([3]float64{20, 20, 20})))
+		if err := as.SetLocation("part", loc); err != nil {
+			t.Fatalf("SetLocation error: %v", err)
+		}
+		as.Constrain1("root", asmFixed, NewAssemblyConstraintParmFromDouble(0))
+		as.Constrain("root", "part", asmPoint, NewAssemblyConstraintParmFromDouble(0))
+		as.Solve(0)
+		if as.HasError() {
+			t.Fatalf("Point solve error: %v", as.Error())
+		}
+		el, ok := as.Get("part")
+		if !ok {
+			t.Fatal("expected to find element 'part'")
+		}
+		m := el.GetLocation().Trsf().Data()
+		if math.Abs(m[3]) > 1e-4 || math.Abs(m[7]) > 1e-4 || math.Abs(m[11]) > 1e-4 {
+			t.Fatalf("expected part back at origin, got (%v,%v,%v)", m[3], m[7], m[11])
 		}
 	})
 }
@@ -497,11 +544,11 @@ func TestAssemblyConstraint_QueryWithSelector(t *testing.T) {
 		as.Constrain("root?faces@>Z", "part?faces@>Z", asmPlane,
 			NewAssemblyConstraintParmFromDouble2(0, 0))
 		if err := as.HasError(); err {
-			t.Logf("face selector error: %v", err)
+			t.Logf("face selector constraint error (selector parsing may need work): %v", err)
 		} else {
 			as.Solve(0)
 			if err := as.HasError(); err {
-				t.Logf("face selector solve error: %v", err)
+				t.Logf("face selector solve error (selector result may be invalid): %v", err)
 			}
 		}
 	})
