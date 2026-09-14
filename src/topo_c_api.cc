@@ -9152,14 +9152,19 @@ topo_wire_sample_point_t *topo_wire_sample_at_distances(topo_wire_t wire,
   }
 }
 
+// 所有权契约: 元素所有权随数组转移给调用方 (由 topo_edge_free / Go 侧
+// finalizer 逐个释放), 本函数仅释放数组本身 —— 与 topo_shape_list_free 一致
+// (见其上方注释, 1869-1870 行)。
+//
+// 此前这里逐个 delete 了 samples[i].edge.shp。Go 侧 shape_ops.go 把每个
+// edge 按值拷出后为它挂了 finalizer, 于是同一指针被释放两次: 一次在这里,
+// 一次在 finalizer 跑 topo_edge_free 时。二次释放发生在 GC 时机, 表现为
+// 与调用点无关的 SIGBUS (实测崩在 runtime.runfinq → innerEdge.free), 并会
+// 破坏堆导致别处的断言随机抖动。
 void topo_wire_sample_list_free(topo_wire_sample_point_t *samples, int count) {
+  (void)count; // 保留形参以维持 ABI; 元素不再在此释放
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
   if (samples) {
-    for (int i = 0; i < count; i++) {
-      if (samples[i].edge.shp) {
-        delete samples[i].edge.shp;
-      }
-    }
     delete[] samples;
   }
   }
