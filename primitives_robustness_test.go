@@ -62,7 +62,11 @@ func TestMain(m *testing.M) {
 		}
 		os.Exit(code)
 	}
-	os.Exit(m.Run())
+	code := m.Run()
+	if err := writeGoldenDump(); err != nil {
+		fmt.Fprintln(os.Stderr, "golden dump failed:", err)
+	}
+	os.Exit(code)
 }
 
 // robSafeRun 捕获用例内的 Go panic (C++ 崩溃无法捕获, 由子进程退出码体现)。

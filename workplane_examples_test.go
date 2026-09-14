@@ -9,6 +9,7 @@ func Test_example_rectangularPlate(t *testing.T) {
 	wp := NewWorkplane()
 	r := wp.BoxCentered(2.0, 2.0, 0.5)
 	r.ExportTo("example_01_rectangular_plate.step")
+	recordGolden(t, "example_01_rectangular_plate", r)
 }
 
 func Test_example_plateWithHole(t *testing.T) {
@@ -17,12 +18,14 @@ func Test_example_plateWithHole(t *testing.T) {
 	r := wp.BoxCentered(length, height, thickness)
 	r = r.Faces(">Z", "").Workplane(0, false, 0, nil).HoleThrough(centerHoleDia)
 	r.ExportTo("example_02_plate_with_hole.step")
+	recordGolden(t, "example_02_plate_with_hole", r)
 }
 
 func Test_example_extrudePrism(t *testing.T) {
 	wp := NewWorkplane()
 	r := wp.CircleCentered(2.0).RectCentered(0.5, 0.75).ExtrudeSimple(0.5)
 	r.ExportTo("example_03_extrude_prism.step")
+	recordGolden(t, "example_03_extrude_prism", r)
 }
 
 func Test_example_lineAndArc(t *testing.T) {
@@ -32,6 +35,7 @@ func Test_example_lineAndArc(t *testing.T) {
 	r = r.ThreePointArc(NewTopoVector(1.0, 1.5, 0), NewTopoVector(0.0, 1.0, 0), false)
 	r = r.Close().ExtrudeSimple(0.25)
 	r.ExportTo("example_04_line_and_arc.step")
+	recordGolden(t, "example_04_line_and_arc", r)
 }
 
 func Test_example_moveWorkPoint(t *testing.T) {
@@ -41,6 +45,7 @@ func Test_example_moveWorkPoint(t *testing.T) {
 	r = r.Center(-1.5, 1.5).CircleCentered(0.25)
 	r = r.ExtrudeSimple(0.25)
 	r.ExportTo("example_05_move_work_point.step")
+	recordGolden(t, "example_05_move_work_point", r)
 }
 
 func Test_example_pointList(t *testing.T) {
@@ -54,6 +59,7 @@ func Test_example_pointList(t *testing.T) {
 	r := wp.CircleCentered(2.0).PushPointsWithVector(pts).CircleCentered(0.25)
 	r = r.ExtrudeSimple(0.125)
 	r.ExportTo("example_06_point_list.step")
+	recordGolden(t, "example_06_point_list", r)
 }
 
 func Test_example_polygon(t *testing.T) {
@@ -65,6 +71,7 @@ func Test_example_polygon(t *testing.T) {
 	}
 	r = r.Faces(">Z", "").Workplane(0, false, 0, nil).PushPointsWithVector(pts).PolygonSimple(6, 1.0).CutThruAll(0, true)
 	r.ExportTo("example_07_polygon.step")
+	recordGolden(t, "example_07_polygon", r)
 }
 
 func Test_example_polyline(t *testing.T) {
@@ -82,6 +89,7 @@ func Test_example_polyline(t *testing.T) {
 	wp := NewWorkplane()
 	r := wp.Polyline(pts, false, false).MirrorY().ExtrudeSimple(L)
 	r.ExportTo("example_08_polyline.step")
+	recordGolden(t, "example_08_polyline", r)
 }
 
 func Test_example_splineEdge(t *testing.T) {
@@ -99,6 +107,7 @@ func Test_example_splineEdge(t *testing.T) {
 	r = r.Spline(sPnts, false, nil, false, 0.01, false, true, false).Close()
 	r = r.ExtrudeSimple(0.5)
 	r.ExportTo("example_09_spline_edge.step")
+	recordGolden(t, "example_09_spline_edge", r)
 }
 
 func Test_example_mirrorGeometry2D(t *testing.T) {
@@ -107,6 +116,7 @@ func Test_example_mirrorGeometry2D(t *testing.T) {
 	r = r.VLine(0.5, false).HLine(-0.25, false).VLine(-0.25, false).HLineTo(0.0, false)
 	r = r.MirrorY().ExtrudeSimple(0.25)
 	r.ExportTo("example_10_mirror_geometry_2d.step")
+	recordGolden(t, "example_10_mirror_geometry_2d", r)
 }
 
 func Test_example_mirror3D(t *testing.T) {
@@ -153,6 +163,7 @@ func Test_example_mirror3D(t *testing.T) {
 
 	result = result.Add(mirXYNeg).Add(mirXYPos).Add(mirZYNeg).Add(mirZYPos)
 	result.ExportTo("example_11_mirror_3d.step")
+	recordGolden(t, "example_11_mirror_3d", result)
 }
 
 func Test_example_mirrorByFace(t *testing.T) {
@@ -160,6 +171,7 @@ func Test_example_mirrorByFace(t *testing.T) {
 	r := wp.Line(0, 1, false).Line(1, 0, false).Line(0, -0.5, false).Close().ExtrudeSimple(1)
 	r = r.MirrorWithName("XY", NewTopoVector(1, 0, 0), true)
 	r.ExportTo("example_12_mirror_by_face.step")
+	recordGolden(t, "example_12_mirror_by_face", r)
 }
 
 func Test_example_workplaneOnFace(t *testing.T) {
@@ -167,6 +179,7 @@ func Test_example_workplaneOnFace(t *testing.T) {
 	r := wp.BoxCentered(2, 3, 0.5)
 	r = r.Faces(">Z", "").Workplane(0, false, 0, nil).HoleThrough(0.5)
 	r.ExportTo("example_13_workplane_on_face.step")
+	recordGolden(t, "example_13_workplane_on_face", r)
 }
 
 func Test_example_workplaneOnVertex(t *testing.T) {
@@ -175,6 +188,7 @@ func Test_example_workplaneOnVertex(t *testing.T) {
 	r = r.Faces(">Z", "").Vertices("<XY", "")
 	r = r.Workplane(0, false, 1, nil).CircleCentered(1.0).CutThruAll(0, true)
 	r.ExportTo("example_14_workplane_on_vertex.step")
+	recordGolden(t, "example_14_workplane_on_vertex", r)
 }
 
 func Test_example_offsetWorkplane(t *testing.T) {
@@ -182,6 +196,7 @@ func Test_example_offsetWorkplane(t *testing.T) {
 	r := wp.BoxCentered(3, 2, 0.5)
 	r = r.Faces("<X", "").Workplane(0.75, false, 0, nil).CircleCentered(1.0).ExtrudeSimple(0.5)
 	r.ExportTo("example_15_offset_workplane.step")
+	recordGolden(t, "example_15_offset_workplane", r)
 }
 
 func Test_example_copyWorkplane(t *testing.T) {
@@ -191,6 +206,7 @@ func Test_example_copyWorkplane(t *testing.T) {
 	r2 := wp2.CircleCentered(1).ExtrudeSimple(10)
 	r = r.Add(r2)
 	r.ExportTo("example_16_copy_workplane.step")
+	recordGolden(t, "example_16_copy_workplane", r)
 }
 
 func Test_example_transformedWorkplane(t *testing.T) {
@@ -200,6 +216,7 @@ func Test_example_transformedWorkplane(t *testing.T) {
 	r = r.Transform(NewTopoVector(60, 0, 0), NewTopoVector(0, -1.5, 1.0))
 	r = r.RectAll(1.5, 1.5, true, true).Vertices("", "").HoleThrough(0.25)
 	r.ExportTo("example_17_transformed_workplane.step")
+	recordGolden(t, "example_17_transformed_workplane", r)
 }
 
 func Test_example_constructionGeometry(t *testing.T) {
@@ -208,20 +225,24 @@ func Test_example_constructionGeometry(t *testing.T) {
 	r = r.Faces(">Z", "").Workplane(0, false, 0, nil)
 	r = r.RectAll(1.5, 1.5, true, true).Vertices("", "").HoleThrough(0.125)
 	r.ExportTo("example_18_construction_geometry.step")
+	recordGolden(t, "example_18_construction_geometry", r)
 }
 
 func Test_example_shell(t *testing.T) {
 	wp := NewWorkplane()
 	r1 := wp.BoxCentered(2, 2, 2).Shell(-0.1, "")
 	r1.ExportTo("example_19_shell_negative.step")
+	recordGolden(t, "example_19_shell_negative", r1)
 
 	wp2 := NewWorkplane()
 	r2 := wp2.BoxCentered(2, 2, 2).Shell(0.1, "")
 	r2.ExportTo("example_19_shell_positive.step")
+	recordGolden(t, "example_19_shell_positive", r2)
 
 	wp3 := NewWorkplane()
 	r3 := wp3.BoxCentered(2, 2, 2).Faces("+Z", "").Shell(0.1, "")
 	r3.ExportTo("example_19_shell_face_removal.step")
+	recordGolden(t, "example_19_shell_face_removal", r3)
 }
 
 func Test_example_loft(t *testing.T) {
@@ -230,6 +251,7 @@ func Test_example_loft(t *testing.T) {
 	r = r.Faces(">Z", "").CircleCentered(1.5)
 	r = r.Workplane(3.0, false, 0, nil).RectCentered(0.75, 0.5).LoftSimple()
 	r.ExportTo("example_20_loft.step")
+	recordGolden(t, "example_20_loft", r)
 }
 
 func Test_example_extrudeToFace(t *testing.T) {
@@ -237,6 +259,7 @@ func Test_example_extrudeToFace(t *testing.T) {
 	r := wp.CircleCentered(2).RevolveSimple(180)
 	r = r.Center(-20, 0).Workplane(0, false, 0, nil).RectCentered(20, 4).ExtrudeSimple(10)
 	r.ExportTo("example_21_extrude_to_face.step")
+	recordGolden(t, "example_21_extrude_to_face", r)
 }
 
 func Test_example_cboreAndCskHole(t *testing.T) {
@@ -246,6 +269,7 @@ func Test_example_cboreAndCskHole(t *testing.T) {
 	r = r.RectAll(3.5, 1.5, true, true).Vertices("", "")
 	r = r.CboreHole(0.125, 0.25, 0.125, nil, true)
 	r.ExportTo("example_22_cbore_hole.step")
+	recordGolden(t, "example_22_cbore_hole", r)
 }
 
 func Test_example_offset2D(t *testing.T) {
@@ -258,12 +282,14 @@ func Test_example_offset2D(t *testing.T) {
 
 	result := original.Add(intersection).Add(arc)
 	result.ExportTo("example_23_offset_2d.step")
+	recordGolden(t, "example_23_offset_2d", result)
 }
 
 func Test_example_fillet(t *testing.T) {
 	wp := NewWorkplane()
 	r := wp.BoxCentered(3, 3, 0.5).Edges("|Z", "").Fillet(0.125)
 	r.ExportTo("example_24_fillet.step")
+	recordGolden(t, "example_24_fillet", r)
 }
 
 func Test_example_tag(t *testing.T) {
@@ -272,6 +298,7 @@ func Test_example_tag(t *testing.T) {
 	r = r.Center(-3, 0).CircleCentered(1).ExtrudeSimple(3)
 	r = r.Center(6, 0).CircleCentered(1).ExtrudeSimple(2)
 	r.ExportTo("example_25_tag.step")
+	recordGolden(t, "example_25_tag", r)
 }
 
 func Test_example_bearingHolder(t *testing.T) {
@@ -283,6 +310,7 @@ func Test_example_bearingHolder(t *testing.T) {
 	r = r.RectAll(length-padding, height-padding, true, true).Vertices("", "")
 	r = r.CboreHole(2.4, 4.4, 2.1, nil, true)
 	r.ExportTo("example_26_bearing_holder.step")
+	recordGolden(t, "example_26_bearing_holder", r)
 }
 
 func Test_example_split(t *testing.T) {
@@ -291,6 +319,7 @@ func Test_example_split(t *testing.T) {
 	r = r.Faces(">Z", "").Workplane(0, false, 0, nil).CircleCentered(0.25).CutThruAll(0, true)
 	r = r.Faces(">Y", "").Workplane(-0.5, false, 0, nil).Split(true, false)
 	r.ExportTo("example_27_split.step")
+	recordGolden(t, "example_27_split", r)
 }
 
 func Test_example_occBottle(t *testing.T) {
@@ -302,6 +331,7 @@ func Test_example_occBottle(t *testing.T) {
 	p = p.Faces(">Z", "").Workplane(0, false, 1, nil).CircleCentered(3.0).ExtrudeSimple(2.0)
 	r := p.Faces(">Z", "").Shell(0.3, "")
 	r.ExportTo("example_28_occ_bottle.step")
+	recordGolden(t, "example_28_occ_bottle", r)
 }
 
 func Test_example_enclosure(t *testing.T) {
@@ -344,6 +374,7 @@ func Test_example_enclosure(t *testing.T) {
 	box = box.ExtrudeSimple(-(pOuterHeight + pLipHeight - pThickness))
 
 	box.ExportTo("example_29_enclosure.step")
+	recordGolden(t, "example_29_enclosure", box)
 }
 
 func Test_example_legoBrick(t *testing.T) {
@@ -381,6 +412,7 @@ func Test_example_legoBrick(t *testing.T) {
 		tmp = tmp.CircleCentered(thick).ExtrudeSimple(height - thick)
 	}
 	s.ExportTo("example_30_lego_brick.step")
+	recordGolden(t, "example_30_lego_brick", s)
 	_ = tmp
 }
 
@@ -403,6 +435,7 @@ func Test_example_braille(t *testing.T) {
 	base = base.Faces(">Z", "").Workplane(0, false, 0, nil)
 	base = base.PushPointsWithVector(dotPositions).CircleCentered(dotDiameter / 2).ExtrudeSimple(dotHeight)
 	base.ExportTo("example_31_braille.step")
+	recordGolden(t, "example_31_braille", base)
 }
 
 func Test_example_panelConnectors(t *testing.T) {
@@ -428,6 +461,7 @@ func Test_example_panelConnectors(t *testing.T) {
 		result = result.Workplane(1, false, 1, nil).Center(25, yOff).CircleCentered(1.6).CutThruAll(0, true)
 	}
 	result.ExportTo("example_32_panel_connectors.step")
+	recordGolden(t, "example_32_panel_connectors", result)
 }
 
 func Test_example_cycloidalGear(t *testing.T) {
@@ -461,4 +495,5 @@ func Test_example_cycloidalGear(t *testing.T) {
 	r = r.TwistExtrude(15, 90, true, true)
 	r = r.Faces(">Z", "").Workplane(0, false, 0, nil).CircleCentered(2).CutThruAll(0, true)
 	r.ExportTo("example_33_cycloidal_gear.step")
+	recordGolden(t, "example_33_cycloidal_gear", r)
 }

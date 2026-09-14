@@ -1159,7 +1159,13 @@ std::vector<face> face::make_from_wires(const wire &outer,
     throw std::runtime_error("make_from_wires: null wire after TopoDS::Wire");
   }
   BRepBuilderAPI_MakeFace faceBuilder(wireRef);
-  faceBuilder.Add(wireRef);
+  // The constructor above already registers `wireRef` as the face's outer wire.
+  // Adding it a second time here registered the *same* wire as an inner wire too,
+  // and OCCT answers a coincident inner/outer pair with a compound holding two
+  // coincident faces. Callers that extrude one face per entry (workplane's
+  // get_faces fallback) then built two overlapping prisms: a solid with exactly
+  // twice the volume and isValid() == false. Only genuinely different wires may
+  // be added, as make_face(std::vector<wire>&) already does below.
 
   for (const wire &w : inners) {
     TopoDS_Shape innerStable(w.value());

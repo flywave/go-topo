@@ -94,6 +94,23 @@ All 50+ railway types are being ported across 4 layers. See `RAILWAY_PORTING_PLA
 Run: `go test -v -count=1 ./...`
 Run one test: `go test -v -run TestSampleCenterlineWire ./...`
 
+## Workplane 示例 bbox 导出 (workplane_examples_test.go / goldens_dump_test.go)
+
+`workplane_examples_test.go` 的 35 个 `ExportTo` 调用点旁各有一行 `recordGolden(t, "<key>", <wp>)`。设置 `GOLDEN_DUMP=<path>` 时收集各示例 `Value()` bbox 并在 `m.Run()` 后写成 JSON; 不设置时零副作用。topo.js 侧 `packages/topo-primitives/test/cq/goldens.json` 即这份数据 (口径 = `Value()` 栈首对象 bbox), 再生成流程见 topo.js `AGENTS.md`。
+
+- **不要用导出的 `.step` 反推 golden**: STEP 往返对镜像/偏移/多实体示例不等价 (实测 11/16/23 偏差达 5 倍)。
+- 只编 C++ 库时用 `cmake --build build --target topo` —— 全量 `cmake --build build` 会连带重编 `external/icu`。
+
+## 面构造的绕向 (`face::make_from_wires`) — 已分析, 未修复
+
+OCCT 把与外环**同绕向**的内环读成凸台而非孔: 面拓扑正确但材料侧反了, 面积被加上而非减掉 (1080 = (200+16)*5 而非 920), 实体 `isValid()` false。
+
+修复方案**已验证成立**: 建面后跑 `ShapeFix_Face::FixOrientation()` (与 `face::make_face(wire, vector<wire>)` 同法), 并以 `all_wires_inside` (`BRepClass_FaceClassifier` 判内环取样点是否真在外环内) 为闸门。**闸门不可省** —— `workplane::get_faces()` 把首条之后的 wire 一律当内环, 对互不相交的轮廓 (braille 例的 6 个独立圆) 是误判, 无闸门修复会把那种情形压平 (braille golden 由 50×30×1.5 变 21×11×0)。带闸门后 35 条 golden 保住 34 条。
+
+**未落地的唯一原因**: 剩下的 `example_29_enclosure` 是 `safe_call` 退化链, 其 golden 记录的是**链在哪一步冻结**而非几何。修复会移动冻结点, 且 WASM 与 Go 的冻结状态分叉 (WASM 侧抛裸指针异常, Go 侧返回几何)。两侧 OCCT 同为 7.7.2 同一份源码, 所以这不是版本差异, 而是本文档 "OCC exception boundary" 与 topo.js `AGENTS.md` 记载的「Go 静默退化 / JS 抛异常」语义分歧。**落地前提**: 先决定那 7 条退化 golden 该如何断言。
+
+回归: `face_wire_winding_test.go` (同绕向用例 skip 并注明原因)。
+
 ## GeoJSON 轨道输入 (track_geojson.go / track_yard.go / yard_layout.go)
 
 - `ParseTrackGeoJSON` / `CreateTrackFromGeoJSON` — 单条中心线 (LineString/Feature/FeatureCollection) → 正线装配 (钢轨×2 + 轨枕 + 道床), 坐标默认米 (coordScale=1000)
@@ -109,6 +126,27 @@ Run one test: `go test -v -run TestSampleCenterlineWire ./...`
 - `CreateRatchetCompensator` / `CreateWeightStack` — 棘轮补偿装置 (轮盘+V形绳槽+减重孔+补偿绳+坠砣串)
 - `CreateAuxiliaryWire` — 附加导线本体 (带弛度扫掠)
 - `create_mast_assembly` 已按导高/结构高度/CX 尺寸链重构: 上下连接座→棒式绝缘子→平腕臂(仰角3°)→斜腕臂(三角桁架 65% 处对接)→承力索座→定位器(拉出值)
+
+## C API 数组元素所有权 (已修复一处违反)
+
+约定: 数组返回型 API (返回 `topo_xxx_t *`) 的**元素所有权随数组转移给调用方**, 配对的 `*_free` **只释放数组本身, 不得 delete 元素**。`topo_shape_list_free` 上方的注释 (topo_c_api.cc:1869) 是这条契约的原文。
+
+**`topo_wire_sample_list_free` 曾违反它**: 它逐个 `delete samples[i].edge.shp` 后又 `delete[]`。Go 侧 `shape_ops.go` 把每个 edge 按值拷出并挂 finalizer, 于是同一 `topo_shape_t*` 被释放两次 —— 一次在这里, 一次在 finalizer 跑 `topo_edge_free` 时。二次释放发生在 GC 时机, 表现为与调用点无关的 **SIGBUS**: 实测崩在 `runtime.runfinq → innerEdge.free → topo_edge_free` (edge.go:668), 且会破坏堆, 让别处的断言随机抖动。修复即去掉元素 delete。
+
+排查手法: 这类崩溃的栈落在**析构/finalizer**里, 与最初触发它的测试相隔很远, 别按崩溃点附近的功能去猜。用「换回未修复的 lib 重跑」做对照可确认因果关系。
+
+## 已知残留: TestFitCenterlineRobustness 约 7% 抖动 (非缺陷)
+
+`bounding_pipe.cc` 的中心线拟合在**近退化几何**上结果有微幅抖动, 表现为 `TestFitCenterlineRobustness` 约 7% 的运行失败, 且每次失败的子用例不同 (实测: 一次 `Helix_tight_coil` 返回 nil, 另一次 `U-bend` 长度短 17%)。
+
+实测定位 (2026-09):
+
+- 同一 shape 在同一进程内连续拟合 8 次: `[165.33487, 165.32172 ×4, 165.33487, 165.32172 ×2]` —— **同输入不同输出**, 抖动在拟合内部, 非 shape 构造。
+- 提取出的点序列指纹跨进程逐位一致, 但**三角面序列指纹会变** → 变动源自 OCCT 三角剖分的面序。
+- 代码已堵住两个已知不确定性来源 (`collect_mesh_triangles` 里的注释): `BRepTools::Clean` 清网格缓存, 以及串行网格化 (`isInParallel=false`)。剩下的是 OCCT 内部行为, 从 go-topo 侧无法再收窄。
+- 抖动幅度本身极小 (0.008%), 但 `U-bend`(半环) / `tight helix`(螺距≈管径) 这类边界几何会把它放大到超出测试容差; 拟合的守卫是**刻意**"宁可返回空也不输出失真轴线" (bounding_pipe.cc:659-661 注释)。
+
+结论: 这是 best-effort 启发式在边界几何上的固有抖动, 不是可修的缺陷。若要消除, 应在测试侧定夺 (放宽那两个子用例的容差 / 允许文档化的"拒绝返回")。
 
 ## C++ API nil-safety
 
