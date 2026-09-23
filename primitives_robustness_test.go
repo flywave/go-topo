@@ -140,6 +140,11 @@ func TestNothingRobust(t *testing.T) {} // 子进程占位, 实际逻辑在 Test
 
 // ---------------------------------------------------------------- 结果断言
 
+// robExpectValid 单参断言: 形状非空且有效 (边界合法值用)
+func robExpectValid(sh *Shape) error {
+	return robExpectShape(sh, nil)
+}
+
 func robExpectShape(sh *Shape, err error) error {
 	if err != nil {
 		return err
@@ -261,6 +266,32 @@ func robMutHuge(v interface{}) interface{} {
 		nil)
 }
 
+// robMutTiny 全部浮点缩至 1e-3 倍 (下限 1e-4, 避免全零): 极小但通常仍合法的尺寸,
+// 探测 OCC 对小尺寸/容错的鲁棒性。
+func robMutTiny(v interface{}) interface{} {
+	return robMutate(v,
+		func(f reflect.Value) {
+			x := f.Float()
+			if x != 0 {
+				t := x * 1e-3
+				if math.Abs(t) < 1e-4 {
+					t = math.Copysign(1e-4, t)
+				}
+				f.SetFloat(t)
+			}
+		},
+		func(f reflect.Value) { f.SetInt(1) },
+		nil)
+}
+
+// robMutHuge1e6 全部浮点放大 1e6 倍: 极大合法尺寸, 探测 OCC 精度上界鲁棒性。
+func robMutHuge1e6(v interface{}) interface{} {
+	return robMutate(v,
+		func(f reflect.Value) { f.SetFloat(f.Float() * 1e6) },
+		func(f reflect.Value) { f.SetInt(2000) },
+		nil)
+}
+
 func robMutNoSlice(v interface{}) interface{} {
 	return robMutate(v,
 		nil, nil,
@@ -278,19 +309,25 @@ func paramCases(name string, valid interface{}, call func(p interface{}) (*Shape
 	muts := []struct {
 		suffix string
 		fn     func(interface{}) interface{}
+		assert string // "reject" = 必须确定性拒绝(nil/null/invalid); "" = 不崩溃即可
 	}{
-		{"zero", robMutZero},
-		{"negative", robMutNegative},
-		{"nan", robMutNaN},
-		{"huge", robMutHuge},
-		{"noslice", robMutNoSlice},
+		// 参数化选项对齐后: 全零/全负必然违反"必须为正"类值域, 应在 Go 边界确定性拒绝
+		{"zero", robMutZero, "reject"},
+		{"negative", robMutNegative, "reject"},
+		{"nan", robMutNaN, ""},
+		{"huge", robMutHuge, ""},
+		{"huge1e6", robMutHuge1e6, ""},
+		{"tiny", robMutTiny, ""},
+		{"noslice", robMutNoSlice, ""},
 	}
 	for _, m := range muts {
 		m := m
 		out = append(out, robCase{name + "/" + m.suffix, func() error {
-			// 防御目标: 不崩溃即可 (返回值不校验)
-			_, _ = call(m.fn(valid))
-			return nil
+			sh, _ := call(m.fn(valid))
+			if m.assert == "reject" {
+				return robExpectCleanReject(sh)
+			}
+			return nil // 其余防御目标: 不崩溃即可 (返回值不校验)
 		}})
 	}
 	return out
@@ -347,6 +384,71 @@ var robArcPoints = []ChannelPoint{
 func buildRobustCases() map[string]robCase {
 	var cs []robCase
 
+	// ================= 边界合法值 (规范值域端点, 必须产出有效形状) =================
+	const twoPiF = float32(6.2831855)
+	cs = append(cs,
+		c("Boundary/RotationalEllipsoid/H恰为2LR", func() error {
+			return robExpectValid(CreateRotationalEllipsoid(RotationalEllipsoidParams{PolarRadius: 100, EquatorialRadius: 60, Height: 200}))
+		}),
+		c("Boundary/Table/锥顶TL=TL2=0", func() error {
+			return robExpectValid(CreateDiamondFrustum(DiamondFrustumParams{TopDiag1: 0, TopDiag2: 0, BottomDiag1: 100, BottomDiag2: 100, Height: 60}))
+		}),
+		c("Boundary/TruncatedCone/TR=BR(等径)", func() error {
+			return robExpectValid(CreateTruncatedCone(TruncatedConeParams{TopRadius: 40, BottomRadius: 40, Height: 90}))
+		}),
+		c("Boundary/TruncatedCone/TR=0(圆锥)", func() error {
+			return robExpectValid(CreateTruncatedCone(TruncatedConeParams{TopRadius: 0, BottomRadius: 60, Height: 120}))
+		}),
+		c("Boundary/Ring/Rad=2π整圆", func() error {
+			return robExpectValid(CreateRing(RingParams{RingRadius: 90, TubeRadius: 12, Angle: twoPiF}))
+		}),
+		c("Boundary/Ring/极小弧Rad→0", func() error {
+			return robExpectValid(CreateRing(RingParams{RingRadius: 90, TubeRadius: 12, Angle: 0.01}))
+		}),
+		c("Boundary/Ring/极小整环", func() error {
+			return robExpectValid(CreateRing(RingParams{RingRadius: 2, TubeRadius: 0.5, Angle: twoPiF}))
+		}),
+		c("Boundary/CircularGasket/Rad=2π整圆", func() error {
+			return robExpectValid(CreateCircularGasket(CircularGasketParams{OuterRadius: 80, InnerRadius: 50, Height: 10, Angle: twoPiF}))
+		}),
+		c("Boundary/TableGasket/Rad=2π整圆", func() error {
+			return robExpectValid(CreateTableGasket(TableGasketParams{TopRadius: 65, OuterRadius: 80, InnerRadius: 50, Height: 10, Angle: twoPiF}))
+		}),
+		c("Boundary/SquareGasket/CT=1无倒角", func() error {
+			return robExpectValid(CreateSquareGasket(SquareGasketParams{OuterLength: 80, OuterWidth: 60, InnerLength: 50, InnerWidth: 35, Height: 8, CornerType: 1, CornerParam: 0}))
+		}),
+		c("Boundary/SquareGasket/切角CL=上限-ε", func() error {
+			return robExpectValid(CreateSquareGasket(SquareGasketParams{OuterLength: 80, OuterWidth: 60, InnerLength: 50, InnerWidth: 35, Height: 8, CornerType: 3, CornerParam: 54}))
+		}),
+		c("Boundary/EllipticRing/W接近L", func() error {
+			return robExpectValid(CreateEllipticRing(EllipticRingParams{TubeRadius: 6, MajorRadius: 80, MinorRadius: 79}))
+		}),
+		c("Boundary/PorcelainBushing/R1=R2", func() error {
+			return robExpectValid(CreatePorcelainBushing(PorcelainBushingParams{Height: 300, Radius: 40, BigSkirtRadius: 80, SmallSkirtRadius: 80, Count: 5}))
+		}),
+		c("Boundary/InsulatorString/D恰>2R1", func() error {
+			return robExpectValid(CreateInsulatorString(InsulatorStringParams{Count: 1, Spacing: 251, InsulatorCount: 8, Height: 50, BigSkirtRadius: 125, SmallSkirtRadius: 100, Radius: 15, FrontLength: 40, BackLength: 40, SplitCount: 1}))
+		}),
+		c("Boundary/BoredPile/D=d无扩底", func() error {
+			return robExpectValid(CreateBoredPileBase(BoredPileParams{H1: 1000, H2: 300, H3: 500, H4: 30, Diameter: 200, D: 200}))
+		}),
+		c("Boundary/Raft/H3=0无主梁", func() error {
+			return robExpectValid(CreateRaftBase(RaftBaseParams{H1: 100, H2: 100, H3: 0, Beam1: 30, Beam2: 30, B1: 500, B2: 400, L1: 800, L2: 600}))
+		}),
+		c("Boundary/AngleSteel/等边L1=L2", func() error {
+			return robExpectValid(CreateAngleSteel(AngleSteelParams{L1: 50, L2: 50, X: 5, Length: 600}))
+		}),
+		c("Boundary/ManholeCover/圆形W=0", func() error {
+			return robExpectValid(CreateManholeCover(ManholeCoverParams{Style: 1, Length: 700, Width: 0, Thickness: 60}))
+		}),
+		c("Boundary/Cable/无虚交点直缆", func() error {
+			return robExpectValid(CreateCable(CableParams{StartPoint: NewPoint3([3]float64{0, 0, 0}), EndPoint: NewPoint3([3]float64{2000, 0, 0}), Diameter: 60}))
+		}),
+		c("Boundary/CylinderShape/极小尺寸", func() error {
+			return robExpectValid(CreateCylinderShape(CylinderShapeParams{Radius: 0.01, Height: 0.05}))
+		}),
+	)
+
 	// ================= base 基础 =================
 	cs = append(cs, c("Defense/CreateStepShape/garbage-content", func() error {
 		// 非法 STEP 内容必须干净失败, 不得崩溃
@@ -372,9 +474,9 @@ func buildRobustCases() map[string]robCase {
 
 	// ================= GIM 输电 =================
 	for _, f := range []struct {
-		name string
+		name  string
 		valid interface{}
-		call func(interface{}) (*Shape, error)
+		call  func(interface{}) (*Shape, error)
 	}{
 		{"CreateBoredPileBase", BoredPileParams{H1: 100, H2: 30, H3: 50, H4: 3, D: 20, Diameter: 5},
 			func(p interface{}) (*Shape, error) { return CreateBoredPileBase(p.(BoredPileParams)), nil }},
@@ -388,9 +490,13 @@ func buildRobustCases() map[string]robCase {
 			ZPosArray: []Point3{NewPoint3([3]float64{0, 0, 0}), NewPoint3([3]float64{150, 0, 0})}},
 			func(p interface{}) (*Shape, error) { return CreateRockAnchorBase(p.(RockAnchorParams)), nil }},
 		{"CreateEmbeddedRockAnchorBase", EmbeddedRockAnchorParams{H1: 50, H2: 30, H3: 20, Diameter: 25, D: 100},
-			func(p interface{}) (*Shape, error) { return CreateEmbeddedRockAnchorBase(p.(EmbeddedRockAnchorParams)), nil }},
+			func(p interface{}) (*Shape, error) {
+				return CreateEmbeddedRockAnchorBase(p.(EmbeddedRockAnchorParams)), nil
+			}},
 		{"CreateInclinedRockAnchorBase", InclinedRockAnchorParams{H1: 50, H2: 30, Diameter: 25, D: 100, B: 60, L: 200, E1: 20, E2: 15, Alpha1: 15, Alpha2: 20},
-			func(p interface{}) (*Shape, error) { return CreateInclinedRockAnchorBase(p.(InclinedRockAnchorParams)), nil }},
+			func(p interface{}) (*Shape, error) {
+				return CreateInclinedRockAnchorBase(p.(InclinedRockAnchorParams)), nil
+			}},
 		{"CreateExcavatedBase", ExcavatedBaseParams{H1: 100, H2: 50, H3: 30, D: 40, Diameter: 30, Alpha1: 10, Alpha2: 10},
 			func(p interface{}) (*Shape, error) { return CreateExcavatedBase(p.(ExcavatedBaseParams)), nil }},
 		{"CreateStepBase", StepBaseParams{H: 150, H1: 50, H2: 50, H3: 50, B: 30, B1: 100, B2: 150, B3: 200, L1: 100, L2: 150, L3: 200, N: 3},
@@ -400,7 +506,9 @@ func buildRobustCases() map[string]robCase {
 		{"CreateSlopedBaseBase", SlopedBaseBaseParams{H1: 100, H2: 60, H3: 40, B: 30, L1: 200, L2: 300, B1: 50, B2: 60, Alpha1: 15, Alpha2: 15},
 			func(p interface{}) (*Shape, error) { return CreateSlopedBaseBase(p.(SlopedBaseBaseParams)), nil }},
 		{"CreateCompositeCaissonBase", CompositeCaissonBaseParams{H1: 100, H2: 30, H3: 50, H4: 200, B: 15, D: 200, T: 15, B1: 200, B2: 250, L1: 300, L2: 350},
-			func(p interface{}) (*Shape, error) { return CreateCompositeCaissonBase(p.(CompositeCaissonBaseParams)), nil }},
+			func(p interface{}) (*Shape, error) {
+				return CreateCompositeCaissonBase(p.(CompositeCaissonBaseParams)), nil
+			}},
 		{"CreateRaftBase", RaftBaseParams{H1: 100, H2: 100, H3: 50, Beam1: 30, Beam2: 30, B1: 500, B2: 400, L1: 800, L2: 600},
 			func(p interface{}) (*Shape, error) { return CreateRaftBase(p.(RaftBaseParams)), nil }},
 		{"CreateDirectBuriedBase", DirectBuriedBaseParams{H1: 500, H2: 100, D: 600, Diameter: 300, B: 0, T: 20},
@@ -413,9 +521,13 @@ func buildRobustCases() map[string]robCase {
 			func(p interface{}) (*Shape, error) { return CreatePrecastPinnedBase(p.(PrecastPinnedBaseParams)), nil }},
 		{"CreatePrecastMetalSupportBase", PrecastMetalSupportBaseParams{H1: 40, H2: 400, H3: 20, H4: 20, B1: 800, B2: 600, Beam1: 30, Beam2: 30, L1: 1000, L2: 800, S1: 40, S2: 20, N1: 3, N2: 9,
 			HX: []float32{100, 100, 100}},
-			func(p interface{}) (*Shape, error) { return CreatePrecastMetalSupportBase(p.(PrecastMetalSupportBaseParams)), nil }},
+			func(p interface{}) (*Shape, error) {
+				return CreatePrecastMetalSupportBase(p.(PrecastMetalSupportBaseParams)), nil
+			}},
 		{"CreatePrecastConcreteSupportBase", PrecastConcreteSupportBaseParams{H1: 200, H2: 150, H3: 120, H4: 80, H5: 50, Beam1: 60, Beam2: 50, Beam3: 40, B1: 300, B2: 280, L1: 400, L2: 380, S1: 100, N1: 3},
-			func(p interface{}) (*Shape, error) { return CreatePrecastConcreteSupportBase(p.(PrecastConcreteSupportBaseParams)), nil }},
+			func(p interface{}) (*Shape, error) {
+				return CreatePrecastConcreteSupportBase(p.(PrecastConcreteSupportBaseParams)), nil
+			}},
 		{"CreateSingleHookAnchor", SingleHookAnchorParams{BoltDiameter: 0.24, ExposedLength: 0.2, NutCount: 2, NutHeight: 0.075, NutOD: 0.6, WasherCount: 2, WasherShape: WasherShapeTypeRound, WasherSize: 0.65, WasherThickness: 0.015, AnchorLength: 1.5, HookStraightLength: 0.6, HookDiameter: 0.6},
 			func(p interface{}) (*Shape, error) { return CreateSingleHookAnchor(p.(SingleHookAnchorParams)), nil }},
 		{"CreateTripleHookAnchor", TripleHookAnchorParams{BoltDiameter: 0.24, ExposedLength: 0.2, NutCount: 2, NutHeight: 0.075, NutOD: 0.6, WasherCount: 2, WasherShape: WasherShapeTypeRound, WasherSize: 0.65, WasherThickness: 0.015, AnchorLength: 1.5, HookStraightLengthA: 0.6, HookStraightLengthB: 0.5, HookDiameter: 0.6, AnchorBarDiameter: 0.1},
@@ -427,7 +539,9 @@ func buildRobustCases() map[string]robCase {
 		{"CreateTripleArmAnchor", TripleArmAnchorParams{BoltDiameter: 0.2, ExposedLength: 0.4, NutCount: 2, NutHeight: 0.1, NutOD: 0.6, WasherCount: 2, WasherShape: WasherShapeTypeRound, WasherSize: 0.65, WasherThickness: 0.015, AnchorLength: 1.5, ArmDiameter: 0.12, ArmStraightLength: 0.6, ArmBendLength: 0.4, ArmBendAngle: float32(math.Pi / 4)},
 			func(p interface{}) (*Shape, error) { return CreateTripleArmAnchor(p.(TripleArmAnchorParams)), nil }},
 		{"CreatePositioningPlateAnchor", PositioningPlateAnchorParams{BoltDiameter: 0.24, ExposedLength: 0.2, NutCount: 2, NutHeight: 0.075, NutOD: 0.6, WasherCount: 2, WasherShape: WasherShapeTypeRound, WasherSize: 0.65, WasherThickness: 0.015, AnchorLength: 1.5, PlateLength: 0.9, PlateThickness: 0.03, ToBaseDistance: 0.1, ToBottomDistance: 0.1, GroutHoleDiameter: 0.05},
-			func(p interface{}) (*Shape, error) { return CreatePositioningPlateAnchor(p.(PositioningPlateAnchorParams)), nil }},
+			func(p interface{}) (*Shape, error) {
+				return CreatePositioningPlateAnchor(p.(PositioningPlateAnchorParams)), nil
+			}},
 		{"CreateStubAngle", StubAngleParams{LegWidth: 0.2, Thickness: 0.02, Slope: 5, ExposedLength: 0.1, AnchorLength: 1.2},
 			func(p interface{}) (*Shape, error) { return CreateStubAngle(p.(StubAngleParams)), nil }},
 		{"CreateStubTube", StubTubeParams{Diameter: 0.2, Thickness: 0.015, Slope: 5, ExposedLength: 0.1, AnchorLength: 1.2},
@@ -478,12 +592,12 @@ func buildRobustCases() map[string]robCase {
 			func(p interface{}) (*Shape, error) { return CreateThreeWayWell(p.(ThreeWayWellParams)), nil }},
 		{"CreateFourWayWell", FourWayWellParams{Ctype: FourWayWellWorking, Length: 200, Width: 80, Height: 60, CornerStyle: CornerStyleRounded, CornerRadius: 30,
 			BranchLength: 100, BranchWidth: 80, TopThickness: 10, BottomThickness: 10,
-			LeftSection:  FourWayWellSection{SectionType: ConnectionSectionRectangular, Length: 60, Width: 80, Height: 90, ArcHeight: 15},
-			RightSection: FourWayWellSection{SectionType: ConnectionSectionRectangular, Length: 60, Width: 80, Height: 90, ArcHeight: 15},
+			LeftSection:        FourWayWellSection{SectionType: ConnectionSectionRectangular, Length: 60, Width: 80, Height: 90, ArcHeight: 15},
+			RightSection:       FourWayWellSection{SectionType: ConnectionSectionRectangular, Length: 60, Width: 80, Height: 90, ArcHeight: 15},
 			OuterWallThickness: 5, InnerWallThickness: 3, CushionExtension: 10, CushionThickness: 15},
 			func(p interface{}) (*Shape, error) { return CreateFourWayWell(p.(FourWayWellParams)), nil }},
 		{"CreatePipeRow", PipeRowParams{PipeType: PipeRowTypeNormal, HasEnclosure: false, BaseExtension: 20, BaseThickness: 5,
-			PipePositions: []Point2{NewPoint2([2]float64{-50, 40}), NewPoint2([2]float64{0, 40}), NewPoint2([2]float64{50, 40})},
+			PipePositions:      []Point2{NewPoint2([2]float64{-50, 40}), NewPoint2([2]float64{0, 40}), NewPoint2([2]float64{50, 40})},
 			PipeInnerDiameters: []float32{20, 30, 20}, PipeWallThicknesses: []float32{4, 4, 4}, Points: robChannelPoints},
 			func(p interface{}) (*Shape, error) { return CreatePipeRow(p.(PipeRowParams)), nil }},
 		{"CreateCableTrench", CableTrenchParams{Width: 60, Height: 80, CoverWidth: 64, CoverThickness: 5, BaseExtension: 10, BaseThickness: 15,
@@ -493,7 +607,7 @@ func buildRobustCases() map[string]robCase {
 			CushionExtension: 5, CushionThickness: 8, Points: robChannelPoints},
 			func(p interface{}) (*Shape, error) { return CreateCableTunnel(p.(CableTunnelParams)), nil }},
 		{"CreateCableTray", CableTrayParams{Style: 1, ColumnDiameter: 40, ColumnHeight: 100, Span: 400, Width: 60, Height: 30, TopPlateHeight: 5, ArcHeight: 55, WallThickness: 3,
-			PipePositions: []Point2{NewPoint2([2]float64{-20, 15}), NewPoint2([2]float64{0, 15}), NewPoint2([2]float64{20, 15})},
+			PipePositions:      []Point2{NewPoint2([2]float64{-20, 15}), NewPoint2([2]float64{0, 15}), NewPoint2([2]float64{20, 15})},
 			PipeInnerDiameters: []float32{10, 10, 10}, PipeWallThicknesses: []float32{2, 2, 2}, Points: robChannelPoints},
 			func(p interface{}) (*Shape, error) { return CreateCableTray(p.(CableTrayParams)), nil }},
 		{"CreateCableLBeam", CableLBeamParams{Length: 300, Width: 150, Height: 200},
@@ -508,22 +622,30 @@ func buildRobustCases() map[string]robCase {
 			func(p interface{}) (*Shape, error) { return CreateLadder(p.(LadderParams)), nil }},
 		{"CreatePipeSupport", PipeSupportParams{Style: PipeSupportSingleSide, Count: 2,
 			Positions: []Point2{NewPoint2([2]float64{-20, 16}), NewPoint2([2]float64{20, 16})},
-			Radii: []float32{8, 8}, Length: 100, Width: 18, Height: 20},
+			Radii:     []float32{8, 8}, Length: 100, Width: 18, Height: 20},
 			func(p interface{}) (*Shape, error) { return CreatePipeSupport(p.(PipeSupportParams)), nil }},
 		{"CreateCoverPlate", CoverPlateParams{Style: CoverPlateRectangle, Length: 200, Width: 100, SmallRadius: 0, LargeRadius: 0, Thickness: 10},
 			func(p interface{}) (*Shape, error) { return CreateCoverPlate(p.(CoverPlateParams)), nil }},
 		{"CreateShaftChamber", ShaftChamberParams{SupportWallThickness: 20, SupportDiameter: 110, SupportHeight: 50, TopThickness: 8, InnerDiameter: 80, WorkingHeight: 120, OuterWallThickness: 15, InnerWallThickness: 10},
 			func(p interface{}) (*Shape, error) { return CreateShaftChamber(p.(ShaftChamberParams)), nil }},
 		{"CreateTunnelCompartmentPartition", TunnelCompartmentPartitionParams{Width: 300, Thickness: 15},
-			func(p interface{}) (*Shape, error) { return CreateTunnelCompartmentPartition(p.(TunnelCompartmentPartitionParams)), nil }},
+			func(p interface{}) (*Shape, error) {
+				return CreateTunnelCompartmentPartition(p.(TunnelCompartmentPartitionParams)), nil
+			}},
 		{"CreateVentilationPavilion", VentilationPavilionParams{TopLength: 400, MiddleLength: 300, BottomLength: 400, TopWidth: 350, MiddleWidth: 250, BottomWidth: 350, TopHeight: 50, Height: 150, BaseHeight: 30},
-			func(p interface{}) (*Shape, error) { return CreateVentilationPavilion(p.(VentilationPavilionParams)), nil }},
+			func(p interface{}) (*Shape, error) {
+				return CreateVentilationPavilion(p.(VentilationPavilionParams)), nil
+			}},
 		{"CreateStraightVentilationDuct", StraightVentilationDuctParams{Diameter: 200, WallThickness: 10, Height: 500},
-			func(p interface{}) (*Shape, error) { return CreateStraightVentilationDuct(p.(StraightVentilationDuctParams)), nil }},
+			func(p interface{}) (*Shape, error) {
+				return CreateStraightVentilationDuct(p.(StraightVentilationDuctParams)), nil
+			}},
 		{"CreateObliqueVentilationDuct", ObliqueVentilationDuctParams{HoodRoomLength: 200, HoodRoomWidth: 150, HoodRoomHeight: 200, HoodWallThickness: 10,
 			DuctCenterHeight: 80, DuctLeftDistance: 80, DuctDiameter: 120, DuctWallThickness: 8, DuctLength: 300, DuctHeightDifference: 50,
 			BaseLength: 220, BaseWidth: 180, BaseHeight: 10, BaseRoomLength: 200, BaseRoomWallThickness: 10, BaseRoomWidth: 180, BaseRoomHeight: 180},
-			func(p interface{}) (*Shape, error) { return CreateObliqueVentilationDuct(p.(ObliqueVentilationDuctParams)), nil }},
+			func(p interface{}) (*Shape, error) {
+				return CreateObliqueVentilationDuct(p.(ObliqueVentilationDuctParams)), nil
+			}},
 	} {
 		f := f
 		cs = append(cs, paramCases("Cable/"+f.name, f.valid, f.call)...)
@@ -610,9 +732,9 @@ func buildRobustCases() map[string]robCase {
 // 合法参数产出非空但 BRepCheck_Analyzer 判定无效的形状 (既有问题, 与拆分无关)。
 // 套件对这些用例降级为 SKIP 并保留记录; 几何修复后应移出本表恢复严格校验。
 var robKnownGeometryIssues = map[string]string{
-	"Transmission/CreateBoredPileBase/normal":        "BRepCheck invalid (历史遗留)",
-	"Transmission/CreatePileCapBase/normal":          "BRepCheck invalid (历史遗留)",
-	"Cable/CreateCableTray/normal":                   "BRepCheck invalid (历史遗留)",
+	"Transmission/CreateBoredPileBase/normal":           "BRepCheck invalid (历史遗留)",
+	"Transmission/CreatePileCapBase/normal":             "BRepCheck invalid (历史遗留)",
+	"Cable/CreateCableTray/normal":                      "BRepCheck invalid (历史遗留)",
 	"Transmission/CreatePrecastMetalSupportBase/normal": "BRepCheck invalid (历史遗留)",
 	"Usability/WithPlace/bored-pile":                    "BRepCheck invalid (历史遗留, 同 BoredPileBase)",
 }

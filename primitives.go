@@ -28,7 +28,7 @@ func (p *SphereParams) to_struct() C.sphere_params_t {
 }
 
 func CreateSphere(params SphereParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_sphere(params.to_struct())
@@ -38,7 +38,7 @@ func CreateSphere(params SphereParams) *Shape {
 }
 
 func CreateSphereWithPlace(params SphereParams, center Point3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_sphere_with_place(params.to_struct(), center.val)
@@ -62,7 +62,7 @@ func (p *RotationalEllipsoidParams) to_struct() C.rotational_ellipsoid_params_t 
 }
 
 func CreateRotationalEllipsoid(params RotationalEllipsoidParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_rotational_ellipsoid(params.to_struct())
@@ -72,7 +72,7 @@ func CreateRotationalEllipsoid(params RotationalEllipsoidParams) *Shape {
 }
 
 func CreateRotationalEllipsoidWithPlace(params RotationalEllipsoidParams, center Point3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_rotational_ellipsoid_with_place(params.to_struct(), center.val, xDir.val)
@@ -96,7 +96,7 @@ func (p *CuboidParams) to_struct() C.cuboid_params_t {
 }
 
 func CreateCuboid(params CuboidParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cuboid(params.to_struct())
@@ -106,7 +106,7 @@ func CreateCuboid(params CuboidParams) *Shape {
 }
 
 func CreateCuboidWithPlace(params CuboidParams, center Point3, xDir Dir3, zDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cuboid_with_place(params.to_struct(), center.val, xDir.val, zDir.val)
@@ -134,7 +134,7 @@ func (p *DiamondFrustumParams) to_struct() C.diamond_frustum_t {
 }
 
 func CreateDiamondFrustum(params DiamondFrustumParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_diamond_frustum(params.to_struct())
@@ -144,7 +144,7 @@ func CreateDiamondFrustum(params DiamondFrustumParams) *Shape {
 }
 
 func CreateDiamondFrustumWithPlace(params DiamondFrustumParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_diamond_frustum_with_place(params.to_struct(), position.val, normal.val, xDir.val)
@@ -176,7 +176,7 @@ func (p *OffsetRectangularTableParams) to_struct() C.offset_rectangular_table_pa
 }
 
 func CreateOffsetRectangularTable(params OffsetRectangularTableParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_offset_rectangular_table(params.to_struct())
@@ -186,7 +186,7 @@ func CreateOffsetRectangularTable(params OffsetRectangularTableParams) *Shape {
 }
 
 func CreateOffsetRectangularTableWithPlace(params OffsetRectangularTableParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_offset_rectangular_table_with_place(params.to_struct(), position.val, normal.val, xDir.val)
@@ -210,7 +210,7 @@ func (p *SharpBentCylinderParams) to_struct() C.sharp_bent_cylinder_params_t {
 }
 
 func CreateSharpBentCylinder(params SharpBentCylinderParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_sharp_bent_cylinder(params.to_struct())
@@ -220,7 +220,7 @@ func CreateSharpBentCylinder(params SharpBentCylinderParams) *Shape {
 }
 
 func CreateSharpBentCylinderWithPlace(params SharpBentCylinderParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_sharp_bent_cylinder_with_place(params.to_struct(), position.val, normal.val, xDir.val)
@@ -244,7 +244,7 @@ func (p *TruncatedConeParams) to_struct() C.truncated_cone_params_t {
 }
 
 func CreateTruncatedCone(params TruncatedConeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_truncated_cone(params.to_struct())
@@ -254,7 +254,7 @@ func CreateTruncatedCone(params TruncatedConeParams) *Shape {
 }
 
 func CreateTruncatedConeWithPlace(params TruncatedConeParams, basePoint Point3, axisDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_truncated_cone_with_place(params.to_struct(), basePoint.val, axisDir.val)
@@ -282,7 +282,7 @@ func (p *EccentricTruncatedConeParams) to_struct() C.eccentric_truncated_cone_pa
 }
 
 func CreateEccentricTruncatedCone(params EccentricTruncatedConeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_eccentric_truncated_cone(params.to_struct())
@@ -292,7 +292,7 @@ func CreateEccentricTruncatedCone(params EccentricTruncatedConeParams) *Shape {
 }
 
 func CreateEccentricTruncatedConeWithPlace(params EccentricTruncatedConeParams, basePoint Point3, axisDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_eccentric_truncated_cone_with_place(params.to_struct(), basePoint.val, axisDir.val)
@@ -308,6 +308,7 @@ type RingParams struct {
 }
 
 func (p *RingParams) to_struct() C.ring_params_t {
+	p.normalizeSpecDefaults() // 规范: Rad 默认 2PI
 	var c C.ring_params_t
 	c.ringRadius = C.double(p.RingRadius)
 	c.tubeRadius = C.double(p.TubeRadius)
@@ -316,7 +317,7 @@ func (p *RingParams) to_struct() C.ring_params_t {
 }
 
 func CreateRing(params RingParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_ring(params.to_struct())
@@ -326,7 +327,7 @@ func CreateRing(params RingParams) *Shape {
 }
 
 func CreateRingWithPlace(params RingParams, center Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_ring_with_place(params.to_struct(), center.val, normal.val, xDir.val)
@@ -352,7 +353,7 @@ func (p *RectangularRingParams) to_struct() C.rectangular_ring_params_t {
 }
 
 func CreateRectangularRing(params RectangularRingParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_rectangular_ring(params.to_struct())
@@ -362,7 +363,7 @@ func CreateRectangularRing(params RectangularRingParams) *Shape {
 }
 
 func CreateRectangularRingWithPlace(params RectangularRingParams, center Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_rectangular_ring_with_place(params.to_struct(), center.val, normal.val, xDir.val)
@@ -386,7 +387,7 @@ func (p *EllipticRingParams) to_struct() C.elliptic_ring_params_t {
 }
 
 func CreateEllipticRing(params EllipticRingParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_elliptic_ring(params.to_struct())
@@ -396,7 +397,7 @@ func CreateEllipticRing(params EllipticRingParams) *Shape {
 }
 
 func CreateEllipticRingWithPlace(params EllipticRingParams, center Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_elliptic_ring_with_place(params.to_struct(), center.val, normal.val, xDir.val)
@@ -413,6 +414,7 @@ type CircularGasketParams struct {
 }
 
 func (p *CircularGasketParams) to_struct() C.circular_gasket_params_t {
+	p.normalizeSpecDefaults() // 规范: Rad 默认 2PI
 	var c C.circular_gasket_params_t
 	c.outerRadius = C.double(p.OuterRadius)
 	c.innerRadius = C.double(p.InnerRadius)
@@ -422,7 +424,7 @@ func (p *CircularGasketParams) to_struct() C.circular_gasket_params_t {
 }
 
 func CreateCircularGasket(params CircularGasketParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_circular_gasket(params.to_struct())
@@ -432,7 +434,7 @@ func CreateCircularGasket(params CircularGasketParams) *Shape {
 }
 
 func CreateCircularGasketWithPlace(params CircularGasketParams, center Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_circular_gasket_with_place(params.to_struct(), center.val, normal.val, xDir.val)
@@ -450,6 +452,7 @@ type TableGasketParams struct {
 }
 
 func (p *TableGasketParams) to_struct() C.table_gasket_params_t {
+	p.normalizeSpecDefaults() // 规范: Rad 默认 2PI
 	var c C.table_gasket_params_t
 	c.topRadius = C.double(p.TopRadius)
 	c.outerRadius = C.double(p.OuterRadius)
@@ -460,7 +463,7 @@ func (p *TableGasketParams) to_struct() C.table_gasket_params_t {
 }
 
 func CreateTableGasket(params TableGasketParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_table_gasket(params.to_struct())
@@ -470,7 +473,7 @@ func CreateTableGasket(params TableGasketParams) *Shape {
 }
 
 func CreateTableGasketWithPlace(params TableGasketParams, center Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_table_gasket_with_place(params.to_struct(), center.val, normal.val, xDir.val)
@@ -502,7 +505,7 @@ func (p *SquareGasketParams) to_struct() C.square_gasket_params_t {
 }
 
 func CreateSquareGasket(params SquareGasketParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_square_gasket(params.to_struct())
@@ -512,7 +515,7 @@ func CreateSquareGasket(params SquareGasketParams) *Shape {
 }
 
 func CreateSquareGasketWithPlace(params SquareGasketParams, center Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_square_gasket_with_place(params.to_struct(), center.val, normal.val, xDir.val)
@@ -542,7 +545,7 @@ func (p *StretchedBodyParams) to_struct() C.stretched_body_params_t {
 }
 
 func CreateStretchedBody(params StretchedBodyParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -554,7 +557,7 @@ func CreateStretchedBody(params StretchedBodyParams) *Shape {
 }
 
 func CreateStretchedBodyWithPlace(params StretchedBodyParams, basePoint Point3, axisDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -591,7 +594,7 @@ func (p *PorcelainBushingParams) to_struct() C.porcelain_bushing_params_t {
 }
 
 func CreatePorcelainBushing(params PorcelainBushingParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_porcelain_bushing(params.to_struct())
@@ -601,7 +604,7 @@ func CreatePorcelainBushing(params PorcelainBushingParams) *Shape {
 }
 
 func CreatePorcelainBushingWithPlace(params PorcelainBushingParams, basePoint Point3, axisDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_porcelain_bushing_with_place(params.to_struct(), basePoint.val, axisDir.val)
@@ -635,7 +638,7 @@ func (p *ConePorcelainBushingParams) to_struct() C.cone_porcelain_bushing_params
 }
 
 func CreateConePorcelainBushing(params ConePorcelainBushingParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cone_porcelain_bushing(params.to_struct())
@@ -645,7 +648,7 @@ func CreateConePorcelainBushing(params ConePorcelainBushingParams) *Shape {
 }
 
 func CreateConePorcelainBushingWithPlace(params ConePorcelainBushingParams, basePoint Point3, axisDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cone_porcelain_bushing_with_place(params.to_struct(), basePoint.val, axisDir.val)
@@ -683,7 +686,7 @@ func (p *InsulatorStringParams) to_struct() C.insulator_string_params_t {
 }
 
 func CreateInsulatorString(params InsulatorStringParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_insulator_string(params.to_struct())
@@ -693,7 +696,7 @@ func CreateInsulatorString(params InsulatorStringParams) *Shape {
 }
 
 func CreateInsulatorStringWithPlace(params InsulatorStringParams, position Point3, direction Dir3, upDirection Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_insulator_string_with_place(params.to_struct(), position.val, direction.val, upDirection.val)
@@ -731,7 +734,7 @@ func (p *VTypeInsulatorParams) to_struct() C.vtype_insulator_params_t {
 }
 
 func CreateVTypeInsulator(params VTypeInsulatorParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_vtype_insulator(params.to_struct())
@@ -741,7 +744,7 @@ func CreateVTypeInsulator(params VTypeInsulatorParams) *Shape {
 }
 
 func CreateVTypeInsulatorWithPlace(params VTypeInsulatorParams, position Point3, direction Dir3, upDirection Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_vtype_insulator_with_place(params.to_struct(), position.val, direction.val, upDirection.val)
@@ -779,7 +782,7 @@ func (p *TerminalBlockParams) to_struct() C.terminal_block_params_t {
 }
 
 func CreateTerminalBlock(params TerminalBlockParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_terminal_block(params.to_struct())
@@ -789,7 +792,7 @@ func CreateTerminalBlock(params TerminalBlockParams) *Shape {
 }
 
 func CreateTerminalBlockWithPlace(params TerminalBlockParams, position Point3, lengthDir Dir3, widthDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_terminal_block_with_place(params.to_struct(), position.val, lengthDir.val, widthDir.val)
@@ -825,7 +828,7 @@ func (p *RectangularFixedPlateParams) to_struct() C.rectangular_fixed_plate_para
 }
 
 func CreateRectangularFixedPlate(params RectangularFixedPlateParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_rectangular_fixed_plate(params.to_struct())
@@ -835,7 +838,7 @@ func CreateRectangularFixedPlate(params RectangularFixedPlateParams) *Shape {
 }
 
 func CreateRectangularFixedPlateWithPlace(params RectangularFixedPlateParams, position Point3, lengthDir Dir3, widthDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_rectangular_fixed_plate_with_place(params.to_struct(), position.val, lengthDir.val, widthDir.val)
@@ -867,7 +870,7 @@ func (p *CircularFixedPlateParams) to_struct() C.circular_fixed_plate_params_t {
 }
 
 func CreateCircularFixedPlate(params CircularFixedPlateParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_circular_fixed_plate(params.to_struct())
@@ -877,7 +880,7 @@ func CreateCircularFixedPlate(params CircularFixedPlateParams) *Shape {
 }
 
 func CreateCircularFixedPlateWithPlace(params CircularFixedPlateParams, position Point3, lengthDir Dir3, widthDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_circular_fixed_plate_with_place(params.to_struct(), position.val, lengthDir.val, widthDir.val)
@@ -923,7 +926,7 @@ func freeWireParams(c C.wire_params_t) {
 }
 
 func CreateWire(params WireParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -936,7 +939,7 @@ func CreateWire(params WireParams) *Shape {
 }
 
 func CreateWireWithPlace(params WireParams, position Point3, direction Dir3, upDirection Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -1018,7 +1021,7 @@ func freeCableParams(c C.cable_params_t) {
 }
 
 func CreateCable(params CableParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -1040,7 +1043,7 @@ func CreateCableCenterline(params CableParams) *Wire {
 }
 
 func CreateCableWithPlace(params CableParams, position Point3, direction Dir3, upDirection Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -1139,7 +1142,7 @@ func freeCurveCableParams(c C.curve_cable_params_t) {
 }
 
 func CreateCurveCable(params CurveCableParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -1161,7 +1164,7 @@ func CreateCurveCableCenterline(params CurveCableParams) *Wire {
 }
 
 func CreateCurveCableWithPlace(params CurveCableParams, position Point3, direction Dir3, upDirection Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -1219,6 +1222,7 @@ type AngleSteelParams struct {
 }
 
 func (p *AngleSteelParams) to_struct() C.angle_steel_params_t {
+	p.normalizeSpecDefaults() // 规范: 不等边角钢长肢在前
 	var c C.angle_steel_params_t
 	c.L1 = C.double(p.L1)
 	c.L2 = C.double(p.L2)
@@ -1228,7 +1232,7 @@ func (p *AngleSteelParams) to_struct() C.angle_steel_params_t {
 }
 
 func CreateAngleSteel(params AngleSteelParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_angle_steel(params.to_struct())
@@ -1238,7 +1242,7 @@ func CreateAngleSteel(params AngleSteelParams) *Shape {
 }
 
 func CreateAngleSteelWithPlace(params AngleSteelParams, position Point3, xDir Dir3, longEdgeDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_angle_steel_with_place(params.to_struct(), position.val, xDir.val, longEdgeDir.val)
@@ -1266,7 +1270,7 @@ func (p *IShapedSteelParams) to_struct() C.i_shaped_steel_params_t {
 }
 
 func CreateIShapedSteel(params IShapedSteelParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_i_shaped_steel(params.to_struct())
@@ -1276,7 +1280,7 @@ func CreateIShapedSteel(params IShapedSteelParams) *Shape {
 }
 
 func CreateIShapedSteelWithPlace(params IShapedSteelParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_i_shaped_steel_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
@@ -1304,7 +1308,7 @@ func (p *ChannelSteelParams) to_struct() C.channel_steel_params_t {
 }
 
 func CreateChannelSteel(params ChannelSteelParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_channel_steel(params.to_struct())
@@ -1314,7 +1318,7 @@ func CreateChannelSteel(params ChannelSteelParams) *Shape {
 }
 
 func CreateChannelSteelWithPlace(params ChannelSteelParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_channel_steel_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
@@ -1342,7 +1346,7 @@ func (p *TSteelParams) to_struct() C.t_steel_params_t {
 }
 
 func CreateTSteel(params TSteelParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_t_steel(params.to_struct())
@@ -1352,7 +1356,7 @@ func CreateTSteel(params TSteelParams) *Shape {
 }
 
 func CreateTSteelWithPlace(params TSteelParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_t_steel_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
@@ -1382,7 +1386,7 @@ func (p *BoredPileParams) to_struct() C.bored_pile_params_t {
 }
 
 func CreateBoredPileBase(params BoredPileParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_bored_pile_base(params.to_struct())
@@ -1392,7 +1396,7 @@ func CreateBoredPileBase(params BoredPileParams) *Shape {
 }
 
 func CreateBoredPileBaseWithPlace(params BoredPileParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_bored_pile_base_with_place(params.to_struct(), position.val, direction.val)
@@ -1440,7 +1444,7 @@ func (p *RockPileCapParams) to_struct() C.rock_pile_cap_params_t {
 }
 
 func CreateRockPileCapBase(params RockPileCapParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	if len(params.ZPosArray) == 0 || int(params.ZCount) != len(params.ZPosArray) {
@@ -1460,7 +1464,7 @@ func CreateRockPileCapBase(params RockPileCapParams) *Shape {
 }
 
 func CreateRockPileCapBaseWithPlace(params RockPileCapParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -1523,7 +1527,7 @@ func (p *PileCapParams) to_struct() C.pile_cap_params_t {
 }
 
 func CreatePileCapBase(params PileCapParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	if len(params.ZPosArray) == 0 || int(params.ZCount) != len(params.ZPosArray) {
@@ -1543,7 +1547,7 @@ func CreatePileCapBase(params PileCapParams) *Shape {
 }
 
 func CreatePileCapBaseWithPlace(params PileCapParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -1588,7 +1592,7 @@ func (p *RockAnchorParams) to_struct() C.rock_anchor_params_t {
 }
 
 func CreateRockAnchorBase(params RockAnchorParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	if len(params.ZPosArray) == 0 || int(params.ZCount) != len(params.ZPosArray) {
@@ -1608,7 +1612,7 @@ func CreateRockAnchorBase(params RockAnchorParams) *Shape {
 }
 
 func CreateRockAnchorBaseWithPlace(params RockAnchorParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -1643,7 +1647,7 @@ func (p *EmbeddedRockAnchorParams) to_struct() C.embedded_rock_anchor_params_t {
 }
 
 func CreateEmbeddedRockAnchorBase(params EmbeddedRockAnchorParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_embedded_rock_anchor_base(params.to_struct())
@@ -1653,7 +1657,7 @@ func CreateEmbeddedRockAnchorBase(params EmbeddedRockAnchorParams) *Shape {
 }
 
 func CreateEmbeddedRockAnchorBaseWithPlace(params EmbeddedRockAnchorParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_embedded_rock_anchor_base_with_place(params.to_struct(), position.val, direction.val)
@@ -1691,7 +1695,7 @@ func (p *InclinedRockAnchorParams) to_struct() C.inclined_rock_anchor_params_t {
 }
 
 func CreateInclinedRockAnchorBase(params InclinedRockAnchorParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_inclined_rock_anchor_base(params.to_struct())
@@ -1701,7 +1705,7 @@ func CreateInclinedRockAnchorBase(params InclinedRockAnchorParams) *Shape {
 }
 
 func CreateInclinedRockAnchorBaseWithPlace(params InclinedRockAnchorParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_inclined_rock_anchor_base_with_place(params.to_struct(), position.val, direction.val)
@@ -1733,7 +1737,7 @@ func (p *ExcavatedBaseParams) to_struct() C.excavated_base_params_t {
 }
 
 func CreateExcavatedBase(params ExcavatedBaseParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_excavated_base(params.to_struct())
@@ -1743,7 +1747,7 @@ func CreateExcavatedBase(params ExcavatedBaseParams) *Shape {
 }
 
 func CreateExcavatedBaseWithPlace(params ExcavatedBaseParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_excavated_base_with_place(params.to_struct(), position.val, direction.val)
@@ -1785,7 +1789,7 @@ func (p *StepBaseParams) to_struct() C.step_base_params_t {
 }
 
 func CreateStepBase(params StepBaseParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_step_base(params.to_struct())
@@ -1795,7 +1799,7 @@ func CreateStepBase(params StepBaseParams) *Shape {
 }
 
 func CreateStepBaseWithPlace(params StepBaseParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_step_base_with_place(params.to_struct(), position.val, direction.val)
@@ -1837,7 +1841,7 @@ func (p *StepPlateBaseParams) to_struct() C.step_plate_base_params_t {
 }
 
 func CreateStepPlateBase(params StepPlateBaseParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_step_plate_base(params.to_struct())
@@ -1847,7 +1851,7 @@ func CreateStepPlateBase(params StepPlateBaseParams) *Shape {
 }
 
 func CreateStepPlateBaseWithPlace(params StepPlateBaseParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_step_plate_base_with_place(params.to_struct(), position.val, direction.val)
@@ -1885,7 +1889,7 @@ func (p *SlopedBaseBaseParams) to_struct() C.sloped_base_base_params_t {
 }
 
 func CreateSlopedBaseBase(params SlopedBaseBaseParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_sloped_base_base(params.to_struct())
@@ -1895,7 +1899,7 @@ func CreateSlopedBaseBase(params SlopedBaseBaseParams) *Shape {
 }
 
 func CreateSlopedBaseBaseWithPlace(params SlopedBaseBaseParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_sloped_base_base_with_place(params.to_struct(), position.val, direction.val)
@@ -1935,7 +1939,7 @@ func (p *CompositeCaissonBaseParams) to_struct() C.composite_caisson_base_params
 }
 
 func CreateCompositeCaissonBase(params CompositeCaissonBaseParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_composite_caisson_base(params.to_struct())
@@ -1945,7 +1949,7 @@ func CreateCompositeCaissonBase(params CompositeCaissonBaseParams) *Shape {
 }
 
 func CreateCompositeCaissonBaseWithPlace(params CompositeCaissonBaseParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_composite_caisson_base_with_place(params.to_struct(), position.val, direction.val)
@@ -1981,7 +1985,7 @@ func (p *RaftBaseParams) to_struct() C.raft_base_params_t {
 }
 
 func CreateRaftBase(params RaftBaseParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_raft_base(params.to_struct())
@@ -1991,7 +1995,7 @@ func CreateRaftBase(params RaftBaseParams) *Shape {
 }
 
 func CreateRaftBaseWithPlace(params RaftBaseParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_raft_base_with_place(params.to_struct(), position.val, direction.val)
@@ -2021,7 +2025,7 @@ func (p *DirectBuriedBaseParams) to_struct() C.direct_buried_base_params_t {
 }
 
 func CreateDirectBuriedBase(params DirectBuriedBaseParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_direct_buried_base(params.to_struct())
@@ -2031,7 +2035,7 @@ func CreateDirectBuriedBase(params DirectBuriedBaseParams) *Shape {
 }
 
 func CreateDirectBuriedBaseWithPlace(params DirectBuriedBaseParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_direct_buried_base_with_place(params.to_struct(), position.val, direction.val)
@@ -2069,7 +2073,7 @@ func (p *SteelSleeveBaseParams) to_struct() C.steel_sleeve_base_params_t {
 }
 
 func CreateSteelSleeveBase(params SteelSleeveBaseParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_steel_sleeve_base(params.to_struct())
@@ -2079,7 +2083,7 @@ func CreateSteelSleeveBase(params SteelSleeveBaseParams) *Shape {
 }
 
 func CreateSteelSleeveBaseWithPlace(params SteelSleeveBaseParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_steel_sleeve_base_with_place(params.to_struct(), position.val, direction.val)
@@ -2113,7 +2117,7 @@ func (p *PrecastColumnBaseParams) to_struct() C.precast_column_base_params_t {
 }
 
 func CreatePrecastColumnBase(params PrecastColumnBaseParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_precast_column_base(params.to_struct())
@@ -2123,7 +2127,7 @@ func CreatePrecastColumnBase(params PrecastColumnBaseParams) *Shape {
 }
 
 func CreatePrecastColumnBaseWithPlace(params PrecastColumnBaseParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_precast_column_base_with_place(params.to_struct(), position.val, direction.val)
@@ -2163,7 +2167,7 @@ func (p *PrecastPinnedBaseParams) to_struct() C.precast_pinned_base_params_t {
 }
 
 func CreatePrecastPinnedBase(params PrecastPinnedBaseParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_precast_pinned_base(params.to_struct())
@@ -2173,7 +2177,7 @@ func CreatePrecastPinnedBase(params PrecastPinnedBaseParams) *Shape {
 }
 
 func CreatePrecastPinnedBaseWithPlace(params PrecastPinnedBaseParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_precast_pinned_base_with_place(params.to_struct(), position.val, direction.val)
@@ -2228,7 +2232,7 @@ func (p *PrecastMetalSupportBaseParams) to_struct() C.precast_metal_support_base
 }
 
 func CreatePrecastMetalSupportBase(params PrecastMetalSupportBaseParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -2245,7 +2249,7 @@ func CreatePrecastMetalSupportBase(params PrecastMetalSupportBaseParams) *Shape 
 }
 
 func CreatePrecastMetalSupportBaseWithPlace(params PrecastMetalSupportBaseParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -2298,7 +2302,7 @@ func (p *PrecastConcreteSupportBaseParams) to_struct() C.precast_concrete_suppor
 }
 
 func CreatePrecastConcreteSupportBase(params PrecastConcreteSupportBaseParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_precast_concrete_support_base(params.to_struct())
@@ -2308,7 +2312,7 @@ func CreatePrecastConcreteSupportBase(params PrecastConcreteSupportBaseParams) *
 }
 
 func CreatePrecastConcreteSupportBaseWithPlace(params PrecastConcreteSupportBaseParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_precast_concrete_support_base_with_place(params.to_struct(), position.val, direction.val)
@@ -2340,7 +2344,7 @@ func (p *TransmissionLineParams) to_struct() C.transmission_line_params_t {
 }
 
 func CreateTransmissionLine(params TransmissionLineParams, startPoint Point3, endPoint Point3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -2514,7 +2518,7 @@ func (p *InsulatorCompositeParams) to_struct() C.insulator_composite_params_t {
 }
 
 func CreateCompositeInsulator(params InsulatorCompositeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -2527,7 +2531,7 @@ func CreateCompositeInsulator(params InsulatorCompositeParams) *Shape {
 }
 
 func CreateCompositeInsulatorWithPlace(params InsulatorCompositeParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -2579,7 +2583,7 @@ func (p *SingleHookAnchorParams) to_struct() C.single_hook_anchor_params_t {
 }
 
 func CreateSingleHookAnchor(params SingleHookAnchorParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_single_hook_anchor(params.to_struct())
@@ -2589,7 +2593,7 @@ func CreateSingleHookAnchor(params SingleHookAnchorParams) *Shape {
 }
 
 func CreateSingleHookAnchorWithPlace(params SingleHookAnchorParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_single_hook_anchor_with_place(params.to_struct(), position.val, normal.val, xDir.val)
@@ -2635,7 +2639,7 @@ func (p *TripleHookAnchorParams) to_struct() C.triple_hook_anchor_params_t {
 }
 
 func CreateTripleHookAnchor(params TripleHookAnchorParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_triple_hook_anchor(params.to_struct())
@@ -2645,7 +2649,7 @@ func CreateTripleHookAnchor(params TripleHookAnchorParams) *Shape {
 }
 
 func CreateTripleHookAnchorWithPlace(params TripleHookAnchorParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_triple_hook_anchor_with_place(params.to_struct(), position.val, normal.val, xDir.val)
@@ -2695,7 +2699,7 @@ func (p *RibbedAnchorParams) to_struct() C.ribbed_anchor_params_t {
 }
 
 func CreateRibbedAnchor(params RibbedAnchorParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_ribbed_anchor(params.to_struct())
@@ -2705,7 +2709,7 @@ func CreateRibbedAnchor(params RibbedAnchorParams) *Shape {
 }
 
 func CreateRibbedAnchorWithPlace(params RibbedAnchorParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_ribbed_anchor_with_place(params.to_struct(), position.val, normal.val, xDir.val)
@@ -2749,7 +2753,7 @@ func (p *NutAnchorParams) to_struct() C.nut_anchor_params_t {
 }
 
 func CreateNutAnchor(params NutAnchorParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_nut_anchor(params.to_struct())
@@ -2759,7 +2763,7 @@ func CreateNutAnchor(params NutAnchorParams) *Shape {
 }
 
 func CreateNutAnchorWithPlace(params NutAnchorParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_nut_anchor_with_place(params.to_struct(), position.val, normal.val, xDir.val)
@@ -2805,7 +2809,7 @@ func (p *TripleArmAnchorParams) to_struct() C.triple_arm_anchor_params_t {
 }
 
 func CreateTripleArmAnchor(params TripleArmAnchorParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_triple_arm_anchor(params.to_struct())
@@ -2815,7 +2819,7 @@ func CreateTripleArmAnchor(params TripleArmAnchorParams) *Shape {
 }
 
 func CreateTripleArmAnchorWithPlace(params TripleArmAnchorParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_triple_arm_anchor_with_place(params.to_struct(), position.val, normal.val, xDir.val)
@@ -2863,7 +2867,7 @@ func (p *PositioningPlateAnchorParams) to_struct() C.positioning_plate_anchor_pa
 }
 
 func CreatePositioningPlateAnchor(params PositioningPlateAnchorParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_positioning_plate_anchor(params.to_struct())
@@ -2873,7 +2877,7 @@ func CreatePositioningPlateAnchor(params PositioningPlateAnchorParams) *Shape {
 }
 
 func CreatePositioningPlateAnchorWithPlace(params PositioningPlateAnchorParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_positioning_plate_anchor_with_place(params.to_struct(), position.val, normal.val, xDir.val)
@@ -2901,7 +2905,7 @@ func (p *StubAngleParams) to_struct() C.stub_angle_params_t {
 }
 
 func CreateStubAngle(params StubAngleParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -2912,7 +2916,7 @@ func CreateStubAngle(params StubAngleParams) *Shape {
 }
 
 func CreateStubAngleWithPlace(params StubAngleParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -2941,7 +2945,7 @@ func (p *StubTubeParams) to_struct() C.stub_tube_params_t {
 }
 
 func CreateStubTube(params StubTubeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -2952,7 +2956,7 @@ func CreateStubTube(params StubTubeParams) *Shape {
 }
 
 func CreateStubTubeWithPlace(params StubTubeParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -2982,7 +2986,7 @@ func (p *CableWireParams) to_struct() C.cable_wire_params_t {
 }
 
 func CreateCableWire(params CableWireParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3005,7 +3009,7 @@ func CreateCableWireCenterline(params CableWireParams) *Wire {
 }
 
 func CreateCableWireWithPlace(params CableWireParams, position Point3, direction Dir3, upDirection Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3188,7 +3192,7 @@ func (p *PoleTowerParams) to_struct() C.pole_tower_params_t {
 }
 
 func CreatePoleTower(params PoleTowerParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3256,7 +3260,7 @@ func CreatePoleTower(params PoleTowerParams) *Shape {
 }
 
 func CreatePoleTowerWithPlace(params PoleTowerParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3340,7 +3344,7 @@ func (p *CableJointParams) to_struct() C.cable_joint_params_t {
 }
 
 func CreateCableJoint(params CableJointParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cable_joint(params.to_struct())
@@ -3350,7 +3354,7 @@ func CreateCableJoint(params CableJointParams) *Shape {
 }
 
 func CreateCableJointWithPlace(params CableJointParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cable_joint_with_place(params.to_struct(), position.val, direction.val, xDir.val)
@@ -3374,7 +3378,7 @@ func (p *OpticalFiberBoxParams) to_struct() C.optical_fiber_box_params_t {
 }
 
 func CreateOpticalFiberBox(params OpticalFiberBoxParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_optical_fiber_box(params.to_struct())
@@ -3384,7 +3388,7 @@ func CreateOpticalFiberBox(params OpticalFiberBoxParams) *Shape {
 }
 
 func CreateOpticalFiberBoxWithPlace(params OpticalFiberBoxParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_optical_fiber_box_with_place(params.to_struct(), position.val, direction.val, xDir.val)
@@ -3472,7 +3476,7 @@ func (p *CableTerminalParams) to_struct() C.cable_terminal_params_t {
 }
 
 func CreateCableTerminal(params CableTerminalParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cable_terminal(params.to_struct())
@@ -3482,7 +3486,7 @@ func CreateCableTerminal(params CableTerminalParams) *Shape {
 }
 
 func CreateCableTerminalWithPlace(params CableTerminalParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cable_terminal_with_place(params.to_struct(), position.val, direction.val)
@@ -3524,7 +3528,7 @@ func (p *CableAccessoryParams) to_struct() C.cable_accessory_params_t {
 }
 
 func CreateCableAccessory(params CableAccessoryParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cable_accessory(params.to_struct())
@@ -3534,7 +3538,7 @@ func CreateCableAccessory(params CableAccessoryParams) *Shape {
 }
 
 func CreateCableAccessoryWithPlace(params CableAccessoryParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cable_accessory_with_place(params.to_struct(), position.val, normal.val, xDir.val)
@@ -3582,7 +3586,7 @@ func (p *CableBracketParams) to_struct() C.cable_bracket_params_t {
 }
 
 func CreateCableBracket(params CableBracketParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3602,7 +3606,7 @@ func CreateCableBracket(params CableBracketParams) *Shape {
 }
 
 func CreateCableBracketWithPlace(params CableBracketParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3647,7 +3651,7 @@ func (p *CableClampParams) to_struct() C.cable_clamp_params_t {
 }
 
 func CreateCableClamp(params CableClampParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cable_clamp(params.to_struct())
@@ -3657,7 +3661,7 @@ func CreateCableClamp(params CableClampParams) *Shape {
 }
 
 func CreateCableClampWithPlace(params CableClampParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cable_clamp_with_place(params.to_struct(), position.val, normal.val, xDir.val)
@@ -3699,7 +3703,7 @@ func (p *CablePoleParams) to_struct() C.cable_pole_params_t {
 }
 
 func CreateCablePole(params CablePoleParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3717,7 +3721,7 @@ func CreateCablePole(params CablePoleParams) *Shape {
 }
 
 func CreateCablePoleWithPlace(params CablePoleParams, position Point3, direction Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3749,7 +3753,7 @@ func (p *GroundFlatIronParams) to_struct() C.ground_flat_iron_params_t {
 }
 
 func CreateGroundFlatIron(params GroundFlatIronParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3760,7 +3764,7 @@ func CreateGroundFlatIron(params GroundFlatIronParams) *Shape {
 }
 
 func CreateGroundFlatIronWithPlace(params GroundFlatIronParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3789,7 +3793,7 @@ func (p *EmbeddedPartParams) to_struct() C.embedded_part_params_t {
 }
 
 func CreateEmbeddedPart(params EmbeddedPartParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3800,7 +3804,7 @@ func CreateEmbeddedPart(params EmbeddedPartParams) *Shape {
 }
 
 func CreateEmbeddedPartWithPlace(params EmbeddedPartParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3827,7 +3831,7 @@ func (p *UShapedRingParams) to_struct() C.u_shaped_ring_params_t {
 }
 
 func CreateUShapedRing(params UShapedRingParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3838,7 +3842,7 @@ func CreateUShapedRing(params UShapedRingParams) *Shape {
 }
 
 func CreateUShapedRingWithPlace(params UShapedRingParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3890,7 +3894,7 @@ func (p *LiftingEyeParams) to_struct() C.lifting_eye_params_t {
 }
 
 func CreateLiftingEye(params LiftingEyeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3901,7 +3905,7 @@ func CreateLiftingEye(params LiftingEyeParams) *Shape {
 }
 
 func CreateLiftingEyeWithPlace(params LiftingEyeParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3942,7 +3946,7 @@ func (p *CornerWellParams) to_struct() C.corner_well_params_t {
 }
 
 func CreateCornerWell(params CornerWellParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -3953,7 +3957,7 @@ func CreateCornerWell(params CornerWellParams) *Shape {
 }
 
 func CreateCornerWellWithPlace(params CornerWellParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -4014,7 +4018,7 @@ func (p *TunnelWellParams) to_struct() C.tunnel_well_params_t {
 }
 
 func CreateTunnelWell(params TunnelWellParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -4025,7 +4029,7 @@ func CreateTunnelWell(params TunnelWellParams) *Shape {
 }
 
 func CreateTunnelWellWithPlace(params TunnelWellParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -4126,7 +4130,7 @@ func (p *ThreeWayWellParams) to_struct() C.three_way_well_params_t {
 }
 
 func CreateThreeWayWell(params ThreeWayWellParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_three_way_well(params.to_struct())
@@ -4136,7 +4140,7 @@ func CreateThreeWayWell(params ThreeWayWellParams) *Shape {
 }
 
 func CreateThreeWayWellWithPlace(params ThreeWayWellParams, position Point3, mainDirection Dir3, branchDirection Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_three_way_well_with_place(params.to_struct(), position.val, mainDirection.val, branchDirection.val)
@@ -4231,7 +4235,7 @@ func (p *FourWayWellParams) to_struct() C.four_way_well_params_t {
 }
 
 func CreateFourWayWell(params FourWayWellParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_four_way_well(params.to_struct())
@@ -4241,7 +4245,7 @@ func CreateFourWayWell(params FourWayWellParams) *Shape {
 }
 
 func CreateFourWayWellWithPlace(params FourWayWellParams, position Point3, direction Dir3, xDirection Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_four_way_well_with_place(params.to_struct(), position.val, direction.val, xDirection.val)
@@ -4388,7 +4392,7 @@ func (p *PipeRowParams) to_struct() C.pipe_row_params_t {
 }
 
 func CreatePipeRow(params PipeRowParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	// 空中心线/空管位会使 C++ 深处直接解引用空数据 (SIGSEGV), 边界拒绝
@@ -4404,7 +4408,7 @@ func CreatePipeRow(params PipeRowParams) *Shape {
 }
 
 func CreatePipeRowWithPlace(params PipeRowParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_pipe_row_with_place(params.to_struct(), position.val, normal.val, xDir.val)
@@ -4462,7 +4466,7 @@ func (p *CableTrenchParams) to_struct() C.cable_trench_params_t {
 }
 
 func CreateCableTrench(params CableTrenchParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	if len(params.Points) < 2 {
@@ -4482,7 +4486,7 @@ func CreateCableTrench(params CableTrenchParams) *Shape {
 }
 
 func CreateCableTrenchWithPlace(params CableTrenchParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -4556,7 +4560,7 @@ func (p *CableTunnelParams) to_struct() C.cable_tunnel_params_t {
 }
 
 func CreateCableTunnel(params CableTunnelParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	if len(params.Points) < 2 {
@@ -4576,7 +4580,7 @@ func CreateCableTunnel(params CableTunnelParams) *Shape {
 }
 
 func CreateCableTunnelWithPlace(params CableTunnelParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -4677,7 +4681,7 @@ func (p *CableTrayParams) to_struct() C.cable_tray_params_t {
 }
 
 func CreateCableTray(params CableTrayParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	if len(params.Points) < 2 {
@@ -4707,7 +4711,7 @@ func CreateCableTray(params CableTrayParams) *Shape {
 }
 
 func CreateCableTrayWithPlace(params CableTrayParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -4771,7 +4775,7 @@ func (p *CableLBeamParams) to_struct() C.cable_L_beam_params_t {
 }
 
 func CreateCableLBeam(params CableLBeamParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cable_L_beam(params.to_struct())
@@ -4781,7 +4785,7 @@ func CreateCableLBeam(params CableLBeamParams) *Shape {
 }
 
 func CreateCableLBeamWithPlace(params CableLBeamParams, position Point3, xDir Dir3, zDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cable_L_beam_with_place(params.to_struct(), position.val, xDir.val, zDir.val)
@@ -4809,7 +4813,7 @@ func (p *ManholeParams) to_struct() C.manhole_params_t {
 }
 
 func CreateManhole(params ManholeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_manhole(params.to_struct())
@@ -4819,7 +4823,7 @@ func CreateManhole(params ManholeParams) *Shape {
 }
 
 func CreateManholeWithPlace(params ManholeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_manhole_with_place(params.to_struct(), position.val, direction.val, xDir.val)
@@ -4845,7 +4849,7 @@ func (p *ManholeCoverParams) to_struct() C.manhole_cover_params_t {
 }
 
 func CreateManholeCover(params ManholeCoverParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_manhole_cover(params.to_struct())
@@ -4855,7 +4859,7 @@ func CreateManholeCover(params ManholeCoverParams) *Shape {
 }
 
 func CreateManholeCoverWithPlace(params ManholeCoverParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_manhole_cover_with_place(params.to_struct(), position.val, direction.val, xDir.val)
@@ -4879,7 +4883,7 @@ func (p *LadderParams) to_struct() C.ladder_params_t {
 }
 
 func CreateLadder(params LadderParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_ladder(params.to_struct())
@@ -4889,7 +4893,7 @@ func CreateLadder(params LadderParams) *Shape {
 }
 
 func CreateLadderWithPlace(params LadderParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_ladder_with_place(params.to_struct(), position.val, direction.val, xDir.val)
@@ -4915,7 +4919,7 @@ func (p *SumpParams) to_struct() C.sump_params_t {
 }
 
 func CreateSump(params SumpParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_sump(params.to_struct())
@@ -4925,7 +4929,7 @@ func CreateSump(params SumpParams) *Shape {
 }
 
 func CreateSumpWithPlace(params SumpParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_sump_with_place(params.to_struct(), position.val, normal.val, xDir.val)
@@ -4961,7 +4965,7 @@ func (p *FootpathParams) to_struct() C.footpath_params_t {
 }
 
 func CreateFootpath(params FootpathParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	if len(params.Points) < 2 {
@@ -4974,7 +4978,7 @@ func CreateFootpath(params FootpathParams) *Shape {
 }
 
 func CreateFootpathWithPlace(params FootpathParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_footpath_with_place(params.to_struct(), position.val, direction.val, xDir.val)
@@ -5015,7 +5019,7 @@ func (p *ShaftChamberParams) to_struct() C.shaft_chamber_params_t {
 }
 
 func CreateShaftChamber(params ShaftChamberParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_shaft_chamber(params.to_struct())
@@ -5025,7 +5029,7 @@ func CreateShaftChamber(params ShaftChamberParams) *Shape {
 }
 
 func CreateShaftChamberWithPlace(params ShaftChamberParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_shaft_chamber_with_place(params.to_struct(), position.val, direction.val, xDir.val)
@@ -5047,7 +5051,7 @@ func (p *TunnelCompartmentPartitionParams) to_struct() C.tunnel_compartment_part
 }
 
 func CreateTunnelCompartmentPartition(params TunnelCompartmentPartitionParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_tunnel_compartment_partition(params.to_struct())
@@ -5057,7 +5061,7 @@ func CreateTunnelCompartmentPartition(params TunnelCompartmentPartitionParams) *
 }
 
 func CreateTunnelCompartmentPartitionWithPlace(params TunnelCompartmentPartitionParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_tunnel_compartment_partition_with_place(params.to_struct(), position.val, normal.val, xDir.val)
@@ -5101,8 +5105,7 @@ func (p *TunnelPartitionBoardParams) to_struct() C.tunnel_partition_board_params
 	}
 
 	if len(p.HoleStyles) > 0 {
-		size := C.size_t(C.int(0))
-		c.holeStyles = (*C.int)(C.malloc(C.size_t(len(p.HoleStyles)) * size))
+		c.holeStyles = (*C.int)(C.malloc(C.size_t(len(p.HoleStyles)) * C.sizeof_int))
 		for i, style := range p.HoleStyles {
 			C.int_array_set(c.holeStyles, C.int(i), C.int(style))
 		}
@@ -5123,7 +5126,7 @@ func (p *TunnelPartitionBoardParams) to_struct() C.tunnel_partition_board_params
 }
 
 func CreateTunnelPartitionBoard(params TunnelPartitionBoardParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -5149,7 +5152,7 @@ func CreateTunnelPartitionBoard(params TunnelPartitionBoardParams) *Shape {
 }
 
 func CreateTunnelPartitionBoardWithPlace(params TunnelPartitionBoardParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -5217,7 +5220,7 @@ func (p *ObliqueVentilationDuctParams) to_struct() C.oblique_ventilation_duct_pa
 }
 
 func CreateObliqueVentilationDuct(params ObliqueVentilationDuctParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_oblique_ventilation_duct(params.to_struct())
@@ -5227,7 +5230,7 @@ func CreateObliqueVentilationDuct(params ObliqueVentilationDuctParams) *Shape {
 }
 
 func CreateObliqueVentilationDuctWithPlace(params ObliqueVentilationDuctParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_oblique_ventilation_duct_with_place(params.to_struct(), position.val, direction.val, xDir.val)
@@ -5263,7 +5266,7 @@ func (p *VentilationPavilionParams) to_struct() C.ventilation_pavilion_params_t 
 }
 
 func CreateVentilationPavilion(params VentilationPavilionParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_ventilation_pavilion(params.to_struct())
@@ -5273,7 +5276,7 @@ func CreateVentilationPavilion(params VentilationPavilionParams) *Shape {
 }
 
 func CreateVentilationPavilionWithPlace(params VentilationPavilionParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_ventilation_pavilion_with_place(params.to_struct(), position.val, direction.val, xDir.val)
@@ -5297,7 +5300,7 @@ func (p *StraightVentilationDuctParams) to_struct() C.straight_ventilation_duct_
 }
 
 func CreateStraightVentilationDuct(params StraightVentilationDuctParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_straight_ventilation_duct(params.to_struct())
@@ -5307,7 +5310,7 @@ func CreateStraightVentilationDuct(params StraightVentilationDuctParams) *Shape 
 }
 
 func CreateStraightVentilationDuctWithPlace(params StraightVentilationDuctParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_straight_ventilation_duct_with_place(params.to_struct(), position.val, direction.val, xDir.val)
@@ -5341,7 +5344,7 @@ func (p *DrainageWellParams) to_struct() C.drainage_well_params_t {
 }
 
 func CreateDrainageWell(params DrainageWellParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_drainage_well(params.to_struct())
@@ -5351,7 +5354,7 @@ func CreateDrainageWell(params DrainageWellParams) *Shape {
 }
 
 func CreateDrainageWellWithPlace(params DrainageWellParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_drainage_well_with_place(params.to_struct(), position.val, direction.val, xDir.val)
@@ -5400,7 +5403,7 @@ func (p *PipeSupportParams) to_struct() C.pipe_support_params_t {
 }
 
 func CreatePipeSupport(params PipeSupportParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	if len(params.Positions) == 0 || len(params.Radii) != len(params.Positions) {
@@ -5423,7 +5426,7 @@ func CreatePipeSupport(params PipeSupportParams) *Shape {
 }
 
 func CreatePipeSupportWithPlace(params PipeSupportParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -5468,7 +5471,7 @@ func (p *CoverPlateParams) to_struct() C.cover_plate_params_t {
 }
 
 func CreateCoverPlate(params CoverPlateParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cover_plate(params.to_struct())
@@ -5478,7 +5481,7 @@ func CreateCoverPlate(params CoverPlateParams) *Shape {
 }
 
 func CreateCoverPlateWithPlace(params CoverPlateParams, position Point3, normal Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cover_plate_with_place(params.to_struct(), position.val, normal.val, xDir.val)
@@ -5506,7 +5509,7 @@ func (p *CableRayParams) to_struct() C.cable_ray_params_t {
 }
 
 func CreateCableRay(params CableRayParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cable_ray(params.to_struct())
@@ -5516,7 +5519,7 @@ func CreateCableRay(params CableRayParams) *Shape {
 }
 
 func CreateCableRayWithPlace(params CableRayParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	shp := C.create_cable_ray_with_place(params.to_struct(), position.val, direction.val, xDir.val)
@@ -5709,7 +5712,7 @@ func (p *RevolParams) to_struct() C.revol_params_t {
 }
 
 func CreateRevol(params RevolParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -5721,7 +5724,7 @@ func CreateRevol(params RevolParams) *Shape {
 }
 
 func CreateRevolWithPlace(params RevolParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -5751,7 +5754,7 @@ func (p *PrismParams) to_struct() C.prism_params_t {
 }
 
 func CreatePrism(params PrismParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -5763,7 +5766,7 @@ func CreatePrism(params PrismParams) *Shape {
 }
 
 func CreatePrismWithPlace(params PrismParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -5914,7 +5917,7 @@ func (p *PipeParams) to_struct() C.pipe_params_t {
 }
 
 func CreatePipe(params PipeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -5946,7 +5949,7 @@ func CreatePipe(params PipeParams) *Shape {
 }
 
 func CreatePipeWithSplitDistances(params PipeParams, startDistance, endDistance float64) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	// 分割区间前置校验: 0-0 等退化区间与 NaN 在 C++ 侧虽已确定性拒绝,
@@ -5971,7 +5974,7 @@ func CreatePipeCenterline(params PipeParams) *Wire {
 }
 
 func CreatePipeWithPlace(params PipeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6107,7 +6110,7 @@ func freeMultiSegmentPipeParams(params C.multi_segment_pipe_params_t) {
 }
 
 func CreateMultiSegmentPipe(params MultiSegmentPipeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6119,7 +6122,7 @@ func CreateMultiSegmentPipe(params MultiSegmentPipeParams) *Shape {
 }
 
 func CreateMultiSegmentPipeWithSplitDistances(params MultiSegmentPipeParams, startDistance, endDistance float64) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	if startDistance != startDistance || endDistance != endDistance ||
@@ -6144,7 +6147,7 @@ func CreateMultiSegmentPipeCenterline(params MultiSegmentPipeParams) *Wire {
 }
 
 func CreateMultiSegmentPipeWithPlace(params MultiSegmentPipeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6295,7 +6298,7 @@ func freeMultiLayerParams(c C.multi_layer_extrusion_structure_params_t) {
 }
 
 func CreateMultiLayerExtrusionStructure(params MultiLayerExtrusionStructureParams) (map[string]*Shape, error) {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil, errNaNParams
 	}
 	cParams := params.toStruct()
@@ -6334,7 +6337,7 @@ func CreateMultiLayerExtrusionStructureCenterline(params MultiLayerExtrusionStru
 }
 
 func CreateMultiLayerExtrusionStructureWithPlace(params MultiLayerExtrusionStructureParams, position Point3, direction Dir3, xDir Dir3) (map[string]*Shape, error) {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil, errNaNParams
 	}
 	cParams := params.toStruct()
@@ -6491,7 +6494,7 @@ func freePipeJointParams(params C.pipe_joint_params_t) {
 }
 
 func CreatePipeJoint(params PipeJointParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6503,7 +6506,7 @@ func CreatePipeJoint(params PipeJointParams) *Shape {
 }
 
 func CreatePipeJointWithPlace(params PipeJointParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6548,7 +6551,7 @@ func (p *CatenaryParams) to_struct() C.catenary_params_t {
 }
 
 func CreateCatenary(params CatenaryParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6560,7 +6563,7 @@ func CreateCatenary(params CatenaryParams) *Shape {
 }
 
 func CreateCatenaryWithPlace(params CatenaryParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6594,7 +6597,7 @@ func (p *BoxShapeParams) to_struct() C.box_shape_params_t {
 }
 
 func CreateBoxShape(params BoxShapeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6605,7 +6608,7 @@ func CreateBoxShape(params BoxShapeParams) *Shape {
 }
 
 func CreateBoxShapeWithPlace(params BoxShapeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6640,7 +6643,7 @@ func (p *ConeShapeParams) to_struct() C.cone_shape_params_t {
 }
 
 func CreateConeShape(params ConeShapeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6651,7 +6654,7 @@ func CreateConeShape(params ConeShapeParams) *Shape {
 }
 
 func CreateConeShapeWithPlace(params ConeShapeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6684,7 +6687,7 @@ func (p *CylinderShapeParams) to_struct() C.cylinder_shape_params_t {
 }
 
 func CreateCylinderShape(params CylinderShapeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6695,7 +6698,7 @@ func CreateCylinderShape(params CylinderShapeParams) *Shape {
 }
 
 func CreateCylinderShapeWithPlace(params CylinderShapeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6741,7 +6744,7 @@ func (p *SphereShapeParams) to_struct() C.sphere_shape_params_t {
 }
 
 func CreateSphereShape(params SphereShapeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6752,7 +6755,7 @@ func CreateSphereShape(params SphereShapeParams) *Shape {
 }
 
 func CreateSphereShapeWithPlace(params SphereShapeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6791,7 +6794,7 @@ func (p *TorusShapeParams) to_struct() C.torus_shape_params_t {
 }
 
 func CreateTorusShape(params TorusShapeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6802,7 +6805,7 @@ func CreateTorusShape(params TorusShapeParams) *Shape {
 }
 
 func CreateTorusShapeWithPlace(params TorusShapeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6848,7 +6851,7 @@ func (p *RevolutionShapeParams) to_struct() C.revolution_shape_params_t {
 }
 
 func CreateRevolutionShape(params RevolutionShapeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6865,7 +6868,7 @@ func CreateRevolutionShape(params RevolutionShapeParams) *Shape {
 }
 
 func CreateRevolutionShapeWithPlace(params RevolutionShapeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6915,7 +6918,7 @@ func (p *WedgeShapeParams) to_struct() C.wedge_shape_params_t {
 }
 
 func CreateWedgeShape(params WedgeShapeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6926,7 +6929,7 @@ func CreateWedgeShape(params WedgeShapeParams) *Shape {
 }
 
 func CreateWedgeShapeWithPlace(params WedgeShapeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6963,7 +6966,7 @@ func (p *PipeShapeParams) to_struct() C.pipe_shape_params_t {
 }
 
 func CreatePipeShape(params PipeShapeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -6975,7 +6978,7 @@ func CreatePipeShape(params PipeShapeParams) *Shape {
 }
 
 func CreatePipeShapeWithPlace(params PipeShapeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.to_struct()
@@ -7004,7 +7007,7 @@ func freeStepParams(c C.step_shape_params_t) {
 }
 
 func CreateStepShape(params StepShapeParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.toStruct()
@@ -7017,7 +7020,7 @@ func CreateStepShape(params StepShapeParams) *Shape {
 }
 
 func CreateStepShapeWithPlace(params StepShapeParams, position Point3, direction Dir3, xDir Dir3) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	cParams := params.toStruct()
@@ -7081,7 +7084,7 @@ func freeBoreholeParams(c C.borehole_params_t) {
 }
 
 func CreateBorehole(params BoreholeParams) (map[string]*Shape, error) {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil, errNaNParams
 	}
 	cParams := params.to_struct()
@@ -7178,7 +7181,7 @@ func (p *WaterTunnelParams) to_struct() C.water_tunnel_params_t {
 }
 
 func CreateWaterTunnel(params WaterTunnelParams) *Shape {
-	if hasNaN(params) {
+	if rejectParams(params) {
 		return nil // NaN 参数在 C++ 深处引发段错误, 边界拒绝
 	}
 	if len(params.Points) < 2 {

@@ -60,6 +60,8 @@
 #include <Precision.hxx>
 #include <STEPControl_Reader.hxx>
 #include <ShapeFix_Shape.hxx>
+#include <ShapeFix_Solid.hxx>
+#include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <Standard_ConstructionError.hxx>
 #include <TColgp_Array1OfPnt.hxx>
 #include <TopExp_Explorer.hxx>
@@ -561,42 +563,21 @@ TopoDS_Shape create_vtype_insulator(const vtype_insulator_params &params,
 
 
 TopoDS_Shape create_rounded_base(double D, double H4, double z_bottom) {
-  // 1. 定义母线（圆弧）
+  // 球冠构造: 底圆 (0,0,z_bottom) 半径 D/2, 冠高 H4 (球面经旋转退化极点易产生无效面,
+  // 改用 球体 ∩ 半空间盒子 的布尔交集, 几何精确且拓扑干净)
   const double R = (D * D + 4 * H4 * H4) / (8 * H4);
-  Handle(Geom_TrimmedCurve) profile =
-      GC_MakeArcOfCircle(gp_Pnt(D / 2, 0, z_bottom),
-                         gp_Pnt(0, 0, z_bottom - H4),
-                         gp_Pnt(-D / 2, 0, z_bottom))
-          .Value();
+  const gp_Pnt center(0, 0, z_bottom - H4 + R);
 
-  // 2. 创建旋转曲面
-  Handle(Geom_SurfaceOfRevolution) revolSurface = new Geom_SurfaceOfRevolution(
-      profile, gp_Ax1(gp_Pnt(0, 0, z_bottom), gp_Dir(0, 0, -1)) // 旋转轴
-  );
-
-  // 3. 转换为拓扑面
-  TopoDS_Face face =
-      BRepBuilderAPI_MakeFace(revolSurface, Precision::Confusion()).Face();
-
-  BRepBuilderAPI_MakeWire wireMaker(BRepBuilderAPI_MakeEdge(
-      new Geom_Circle(gp_Ax2(gp_Pnt(0, 0, z_bottom), gp_Dir(0, 0, 1)), D / 2)));
-
-  // 4. 封闭底部（添加圆形平面）
-  TopoDS_Face bottom_face = BRepBuilderAPI_MakeFace(wireMaker.Wire()).Face();
-
-  // 5. 缝合为壳体
-  BRepBuilderAPI_Sewing sewer;
-  sewer.Add(face);
-  sewer.Add(bottom_face);
-  sewer.Perform();
-  TopoDS_Shell shell = TopoDS::Shell(sewer.SewedShape());
-
-  // 6. 转换为实体
-  BRepBuilderAPI_MakeSolid solidMaker(shell);
-  if (!solidMaker.IsDone()) {
-    throw Standard_ConstructionError("实体转换失败");
+  BRepPrimAPI_MakeSphere sphereMaker(center, R);
+  const double big = D * 2 + R;
+  BRepPrimAPI_MakeBox boxMaker(gp_Pnt(-big, -big, center.Z() - R - 1),
+                               gp_Pnt(big, big, z_bottom));
+  BRepAlgoAPI_Common common(sphereMaker.Shape(), boxMaker.Shape());
+  common.Build();
+  if (!common.IsDone() || common.Shape().IsNull()) {
+    throw Standard_ConstructionError("球冠实体创建失败");
   }
-  return solidMaker.Shape();
+  return common.Shape();
 }
 
 
@@ -624,27 +605,18 @@ TopoDS_Shape create_bored_pile_base(const bored_pile_params &params) {
     throw Standard_ConstructionError("HA高度必须为正数 (H1 + H2 > H3)");
   }
 
-  // 创建HA段（上部圆柱段）
-  const gp_Ax2 ha_axis(gp_Pnt(0, 0, 0), gp_Dir(0, 0, -1));
+  // 创建HA段（上部圆柱段, 占据 z∈[-HA, 0]）
+  const gp_Ax2 ha_axis(gp_Pnt(0, 0, -HA), gp_Dir(0, 0, 1));
   BRepPrimAPI_MakeCylinder ha_cylinder(ha_axis, params.d / 2, HA);
 
-  // 创建过渡段（锥形段）
+  // 创建过渡段（锥形段, 占据 z∈[-HA-H2, -HA], 上端 d/2 下端 D/2）
   TopoDS_Shape transition;
   if (params.D != params.d) {
-    // 计算锥形段参数
-    const double bottomRadius = params.D / 2; // 底部半径
-    const double topRadius = params.d / 2;    // 顶部半径
-    const double coneHeight = params.H2;      // 锥体高度
-
-    // 创建锥形轴（从HA段底部向下延伸）
-    const gp_Ax2 coneAxis(gp_Pnt(0, 0, -HA), // 起始点：HA段底部位置
-                          gp_Dir(0, 0, -1),  // 主方向：向下
-                          gp_Dir(1, 0, 0));  // 参考方向：X轴
-
-    // 直接生成锥形实体
-    BRepPrimAPI_MakeCone coneMaker(coneAxis, topRadius, bottomRadius,
-                                   coneHeight);
-    coneMaker.Build(); // 显式构建
+    const gp_Ax2 coneAxis(gp_Pnt(0, 0, -(HA + params.H2)), gp_Dir(0, 0, 1),
+                          gp_Dir(1, 0, 0));
+    BRepPrimAPI_MakeCone coneMaker(coneAxis, params.D / 2, params.d / 2,
+                                   params.H2);
+    coneMaker.Build();
 
     if (!coneMaker.IsDone()) {
       throw Standard_ConstructionError("锥形段创建失败");
@@ -653,25 +625,22 @@ TopoDS_Shape create_bored_pile_base(const bored_pile_params &params) {
     transition = coneMaker.Shape();
   }
 
-  // 创建H3段（下部圆柱段）
-  const gp_Ax2 h3_axis(gp_Pnt(0, 0, -(HA + params.H2)), gp_Dir(0, 0, -1));
+  // 创建H3段（下部圆柱段, 占据 z∈[-HA-H2-H3, -HA-H2]）
+  const gp_Ax2 h3_axis(gp_Pnt(0, 0, -(HA + params.H2)), gp_Dir(0, 0, 1));
   BRepPrimAPI_MakeCylinder h3_cylinder(h3_axis, params.D / 2, params.H3);
   // H4段构建部分(H4段为一个圆底)
   const double z_h3_bottom = -(HA + params.H2 + params.H3);
   auto h4Shape = create_rounded_base(params.D, params.H4, z_h3_bottom);
 
-  // 组合所有部件
-  TopoDS_Compound result;
-  BRep_Builder builder;
-  builder.MakeCompound(result);
-
-  builder.Add(result, ha_cylinder.Shape());
-  if (params.D != params.d)
-    builder.Add(result, transition);
-  builder.Add(result, h3_cylinder.Shape());
-  builder.Add(result, h4Shape);
-
-  return result;
+  // 组合所有部件: 顺序布尔融合为单一实体。
+  // 之前的 Compound 各段接触/重叠共存会被 BRepCheck 判为无效形状。
+  TopoDS_Shape fused = ha_cylinder.Shape();
+  if (params.D != params.d) {
+    fused = BRepAlgoAPI_Fuse(fused, transition).Shape();
+  }
+  fused = BRepAlgoAPI_Fuse(fused, h3_cylinder.Shape()).Shape();
+  fused = BRepAlgoAPI_Fuse(fused, h4Shape).Shape();
+  return fused;
 }
 
 
@@ -746,7 +715,7 @@ TopoDS_Shape create_pile_cap_base(const pile_cap_params &params) {
     if (!face.IsDone()) {
       throw Standard_ConstructionError("Failed to create square column face");
     }
-    cap = BRepPrimAPI_MakePrism(face.Face(), gp_Vec(0, 0, params.H4)).Shape();
+    cap = BRepPrimAPI_MakePrism(face.Face(), gp_Vec(0, 0, params.H1)).Shape();
   }
 
   // 创建承台底板
@@ -799,7 +768,8 @@ TopoDS_Shape create_pile_cap_base(const pile_cap_params &params) {
     piles.push_back(mover.Shape());
   }
 
-  // 合并所有桩
+  // 各部件均已是单独的有效实体 (桩体内部已融合), 组装为 Compound;
+  // Compound 中互不干涉的有效实体会被 BRepCheck 判定为有效
   for (const auto &pile : piles) {
     builder.Add(result, pile);
   }
@@ -2848,6 +2818,15 @@ TopoDS_Shape create_precast_metal_support_base(
   resultBuilder.Add(result, columns);
   resultBuilder.Add(result, braces);
 
+    // BRepCheck 自检: 仅在判定无效时执行 ShapeFix 兜底
+  if (!BRepCheck_Analyzer(result).IsValid()) {
+    ShapeFix_Shape fixer(result);
+    fixer.Perform();
+    const TopoDS_Shape &fixed = fixer.Shape();
+    if (!fixed.IsNull() && BRepCheck_Analyzer(fixed).IsValid()) {
+      return fixed;
+    }
+  }
   return result;
 }
 

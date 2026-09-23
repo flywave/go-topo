@@ -628,8 +628,13 @@ TopoDS_Shape create_truncated_cone(const truncated_cone_params &params) {
   // 创建圆台体（底面中心在原点，Z轴方向为高度方向）
   gp_Ax2 axis(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1));
 
-  // OCCT的MakeCone需要半角参数，通过半径和高度计算
-  double angle = atan((params.bottomRadius - params.topRadius) / params.height);
+  // 等径时 MakeCone 抛 ConstructionError, 按规范语义(圆台上下底相等)退化为圆柱
+  if (std::abs(params.bottomRadius - params.topRadius) <
+      Precision::Confusion()) {
+    return BRepPrimAPI_MakeCylinder(axis, params.bottomRadius, params.height)
+        .Shape();
+  }
+
   BRepPrimAPI_MakeCone coneMaker(axis, params.bottomRadius, params.topRadius,
                                  params.height);
 
@@ -747,18 +752,23 @@ TopoDS_Shape create_ring(const ring_params &params) {
     throw Standard_ConstructionError("Ring radius must be positive");
   if (params.tubeRadius <= 0.0 || params.tubeRadius >= params.ringRadius)
     throw Standard_ConstructionError("Tube radius must be in (0, R)");
-  if (params.angle <= 0.0 || params.angle > 2 * M_PI + 1e-6)
+  double ringAngle = params.angle;
+  if (ringAngle <= 0.0) {
+    // 规范语义: Rad 省略(<=0) 取默认整圆 2PI
+    ringAngle = 2 * M_PI;
+  } else if (ringAngle > 2 * M_PI + 1e-6) {
     throw Standard_ConstructionError("Angle must be in (0, 2PI]");
+  }
 
   // 完整圆环情况
-  if (std::fabs(params.angle - 2 * M_PI) < 1e-6) { // float32 的 2π 与 double 2π 差 ~1.7e-7
+  if (std::fabs(ringAngle - 2 * M_PI) < 1e-6) { // float32 的 2π 与 double 2π 差 ~1.7e-7
     gp_Ax2 axis(gp::Origin(), gp::DZ(), gp::DX());
     return BRepPrimAPI_MakeTorus(axis, params.ringRadius, params.tubeRadius)
         .Shape();
   } else { // 部分圆环（弯管）情况
     // 1. 创建路径圆弧（XY平面）
     gp_Circ pathCircle(gp_Ax2(gp::Origin(), gp::DZ()), params.ringRadius);
-    GC_MakeArcOfCircle maker(pathCircle, 0.0, params.angle, true);
+    GC_MakeArcOfCircle maker(pathCircle, 0.0, ringAngle, true);
     if (!maker.IsDone())
       throw Standard_ConstructionError("Failed to create arc");
     Handle(Geom_TrimmedCurve) arc = maker.Value();
@@ -1106,14 +1116,18 @@ TopoDS_Shape create_circular_gasket(const circular_gasket_params &params) {
   if (params.height <= 0.0) {
     throw Standard_ConstructionError("Height must be positive");
   }
-  if (params.angle <= 0.0 || params.angle > 2 * M_PI + 1e-6) {
+  double gasketAngle = params.angle;
+  if (gasketAngle <= 0.0) {
+    // 规范语义: Rad 省略(<=0) 取默认整圆 2PI
+    gasketAngle = 2 * M_PI;
+  } else if (gasketAngle > 2 * M_PI + 1e-6) {
     throw Standard_ConstructionError("Angle must be in (0, 2PI]");
   }
 
   // 完整圆环情况保持原逻辑
-  if (std::fabs(params.angle - 2 * M_PI) < 1e-6) { // float32 的 2π 与 double 2π 差 ~1.7e-7
+  if (std::fabs(gasketAngle - 2 * M_PI) < 1e-6) { // float32 的 2π 与 double 2π 差 ~1.7e-7
     TopoDS_Face baseFace = create_annular_face(
-        params.outerRadius, params.innerRadius, params.angle);
+        params.outerRadius, params.innerRadius, gasketAngle);
     gp_Vec extrusionVec(0, 0, params.height);
     return BRepPrimAPI_MakePrism(baseFace, extrusionVec).Shape();
   }
@@ -1134,7 +1148,7 @@ TopoDS_Shape create_circular_gasket(const circular_gasket_params &params) {
   double pathRadius = (params.innerRadius + params.outerRadius) / 2.0;
   gp_Circ pathCircle(gp_Ax2(gp::Origin(), gp::DZ()), pathRadius);
   Handle(Geom_TrimmedCurve) pathArc =
-      GC_MakeArcOfCircle(pathCircle, 0, params.angle, false).Value();
+      GC_MakeArcOfCircle(pathCircle, 0, gasketAngle, false).Value();
 
   TopoDS_Wire pathWire =
       BRepBuilderAPI_MakeWire(BRepBuilderAPI_MakeEdge(pathArc).Edge()).Wire();
@@ -1185,13 +1199,17 @@ TopoDS_Shape create_table_gasket(const table_gasket_params &params) {
       params.outerRadius <= params.topRadius || params.height <= 0) {
     throw Standard_ConstructionError("Invalid parameters");
   }
-  if (params.angle <= 0 || params.angle > 2 * M_PI + 1e-6) {
+  double tableGasketAngle = params.angle;
+  if (tableGasketAngle <= 0) {
+    // 规范语义: Rad 省略(<=0) 取默认整圆 2PI
+    tableGasketAngle = 2 * M_PI;
+  } else if (tableGasketAngle > 2 * M_PI + 1e-6) {
     throw Standard_ConstructionError("Angle must be in (0, 2PI]");
   }
   gp_Ax2 axis(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1));
 
   // 完整圆形情况
-  if (std::abs(params.angle - 2 * M_PI) < 1e-6) {
+  if (std::abs(tableGasketAngle - 2 * M_PI) < 1e-6) {
     // 创建底部大圆台（IR到OR）
     BRepPrimAPI_MakeCone bottomCone(axis, params.outerRadius, params.topRadius,
                                     params.height);
@@ -1230,7 +1248,7 @@ TopoDS_Shape create_table_gasket(const table_gasket_params &params) {
     // 2. 创建扫掠路径（绕Z轴的圆弧）
     gp_Circ pathCircle(gp_Ax2(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)), 1.0);
     Handle(Geom_Curve) pathCurve = new Geom_Circle(pathCircle);
-    TopoDS_Edge pathEdge = BRepBuilderAPI_MakeEdge(pathCurve, 0, params.angle);
+    TopoDS_Edge pathEdge = BRepBuilderAPI_MakeEdge(pathCurve, 0, tableGasketAngle);
     TopoDS_Wire pathWire = BRepBuilderAPI_MakeWire(pathEdge).Wire();
 
     // 3. 扫掠生成扇形
@@ -1717,14 +1735,18 @@ sample_curve_points(const std::vector<std::vector<gp_Pnt>> &controlPoints,
  * @throws Standard_ConstructionError 如果参数不合法
  */
 TopoDS_Shape create_angle_steel(const angle_steel_params &params) {
+  // 规范语义: 不等边角钢长肢在前 (L75X50X5), 传入反了自动交换.
+  angle_steel_params p = params;
+  if (p.L2 > p.L1) {
+    double tmpL = p.L1;
+    p.L1 = p.L2;
+    p.L2 = tmpL;
+  }
   // 参数验证
-  if (params.L1 <= 0 || params.L2 <= 0 || params.X <= 0 || params.length <= 0) {
+  if (p.L1 <= 0 || p.L2 <= 0 || p.X <= 0 || p.length <= 0) {
     throw Standard_ConstructionError("All dimensions must be positive");
   }
-  if (params.L2 >= params.L1) {
-    throw Standard_ConstructionError("L2 must be less than L1");
-  }
-  if (params.X >= params.L1 || params.X >= params.L2) {
+  if (p.X >= p.L1 || p.X >= p.L2) {
     throw Standard_ConstructionError(
         "Thickness must be less than both L1 and L2");
   }
@@ -1734,12 +1756,12 @@ TopoDS_Shape create_angle_steel(const angle_steel_params &params) {
 
   // 关键点定义（工业标准不等边角钢形状）
   gp_Pnt p1(0, 0, 0);                 // 原点(角钢内角点)
-  gp_Pnt p2(0, 0, params.L1);         // 长边顶点
-  gp_Pnt p3(0, -params.X, params.L1); // 长边厚度点
-  gp_Pnt p4(0, -params.X, params.X);  // 新增折角点
-  gp_Pnt p5(0, -params.L2, params.X); // 短边顶点
-  gp_Pnt p6(0, -params.L2, 0);        // 短边端点
-  gp_Pnt p7(0, -params.X, 0);         // 厚度点
+  gp_Pnt p2(0, 0, p.L1);         // 长边顶点
+  gp_Pnt p3(0, -p.X, p.L1); // 长边厚度点
+  gp_Pnt p4(0, -p.X, p.X);  // 新增折角点
+  gp_Pnt p5(0, -p.L2, p.X); // 短边顶点
+  gp_Pnt p6(0, -p.L2, 0);        // 短边端点
+  gp_Pnt p7(0, -p.X, 0);         // 厚度点
 
   // 添加边线（按工业标准顺序连接）
   wireMaker.Add(BRepBuilderAPI_MakeEdge(p1, p2).Edge()); // 长边外缘
@@ -1762,7 +1784,7 @@ TopoDS_Shape create_angle_steel(const angle_steel_params &params) {
 
   // 沿X轴拉伸
   BRepPrimAPI_MakePrism prismMaker(faceMaker.Face(),
-                                   gp_Vec(params.length, 0, 0));
+                                   gp_Vec(p.length, 0, 0));
 
   return prismMaker.Shape();
 }

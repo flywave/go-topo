@@ -7349,6 +7349,15 @@ TopoDS_Shape create_cable_tray(const cable_tray_params &params) {
     }
   }
 
+  // BRepCheck 自检: 仅在判定无效时执行 ShapeFix 兜底
+  if (!BRepCheck_Analyzer(result).IsValid()) {
+    ShapeFix_Shape fixer(result);
+    fixer.Perform();
+    const TopoDS_Shape &fixed = fixer.Shape();
+    if (!fixed.IsNull() && BRepCheck_Analyzer(fixed).IsValid()) {
+      return fixed;
+    }
+  }
   return result;
 }
 
