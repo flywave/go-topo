@@ -821,8 +821,8 @@ func (p *PoleTowerParams) Validate() error {
 		v.relation(b.ID != "", "Bodies[%d].ID 不能为空", i)
 		validateSliceLen(v, fmt.Sprintf("Bodies[%d].Nodes", i), b.Nodes, 1)
 		for j, leg := range b.Legs {
+			// 接腿段可仅声明高度与杆件 (节点与相邻段共用), 不强制 Nodes 非空
 			v.relation(leg.ID != "", "Bodies[%d].Legs[%d].ID 不能为空", i, j)
-			validateSliceLen(v, fmt.Sprintf("Bodies[%d].Legs[%d].Nodes", i, j), leg.Nodes, 1)
 		}
 	}
 	for i, m := range p.Members {
