@@ -22,45 +22,53 @@ import (
 	"unsafe"
 )
 
+// 布尔运算类型 (src/topo_c_api.h: enum { BOOLFUSE, BOOLCUT, BOOLCOMMON })
+// 以字面量钉死数值: 不经 cgo 常量转换, 避免 pkg.go.dev / CGO_ENABLED=0 分析环境
+// 中 "constant unknown with invalid type" 的显示与诊断问题; 一致性由
+// topo_const_alignment_test.go 对照 C 枚举运行时校验。
 const (
-	FUSE   = int(C.BOOLFUSE)
-	CUT    = int(C.BOOLCUT)
-	COMMON = int(C.BOOLCOMMON)
+	FUSE   = 0 // BOOLFUSE
+	CUT    = 1 // BOOLCUT
+	COMMON = 2 // BOOLCOMMON
 )
 
+// 方向枚举 (src/topo_c_api.h: enum { DIR_WEST.. DIR_DOWN })
 const (
-	WEST  = int(C.DIR_WEST)
-	EAST  = int(C.DIR_EAST)
-	NORTH = int(C.DIR_NORTH)
-	SOUTH = int(C.DIR_SOUTH)
-	UP    = int(C.DIR_UP)
-	DOWN  = int(C.DIR_DOWN)
+	WEST  = 0
+	EAST  = 1
+	NORTH = 2
+	SOUTH = 3
+	UP    = 4
+	DOWN  = 5
 )
 
+// 纹理类型 (src/topo_c_api.h: enum { TextureCube.. TextureNormalAutoScale })
 const (
-	TextureCube            = int(C.TextureCube)
-	TextureNormal          = int(C.TextureNormal)
-	TextureNormalAutoScale = int(C.TextureNormalAutoScale)
+	TextureCube            = 0
+	TextureNormal          = 1
+	TextureNormalAutoScale = 2
 )
 
+// 形状类型 (src/topo_c_api.h: enum { TopoSolid.. TopoShape })
 const (
-	TopoSolid     = int(C.TopoSolid)
-	TopoShell     = int(C.TopoShell)
-	TopoFace      = int(C.TopoFace)
-	TopoEdge      = int(C.TopoEdge)
-	TopoVertex    = int(C.TopoVertex)
-	TopoWire      = int(C.TopoWire)
-	TopoCompound  = int(C.TopoCompound)
-	TopoCompSolid = int(C.TopoCompSolid)
-	TopoShape     = int(C.TopoShape)
+	TopoSolid     = 0
+	TopoShell     = 1
+	TopoFace      = 2
+	TopoEdge      = 3
+	TopoVertex    = 4
+	TopoWire      = 5
+	TopoCompound  = 6
+	TopoCompSolid = 7
+	TopoShape     = 8
 )
 
+// 朝向枚举 (src/topo_c_api.h: enum { ORI_FORWARD.. ORI_UNKNOW })
 const (
-	FORWARD  = int(C.ORI_FORWARD)
-	REVERSED = int(C.ORI_REVERSED)
-	INTERNAL = int(C.ORI_INTERNAL)
-	EXTERNAL = int(C.ORI_EXTERNAL)
-	UNKNOW   = int(C.ORI_UNKNOW)
+	FORWARD  = 0
+	REVERSED = 1
+	INTERNAL = 2
+	EXTERNAL = 3
+	UNKNOW   = 4
 )
 
 type TopoLocation struct {
