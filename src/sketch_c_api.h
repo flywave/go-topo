@@ -192,6 +192,15 @@ SKETCHCAPICALL void sketch_sort(sketch_t *sk, void *userdata,
 SKETCHCAPICALL bool sketch_has_error(sketch_t *sk);
 SKETCHCAPICALL const char *sketch_error(sketch_t *sk);
 
+/* The last solve()'s report, read from solve_status(). status is the NLopt
+   result code (1-4 = converged; anything else failed), cost the residual,
+   dof the number of solved entity DOF groups (0 = nothing was solved).
+   Defaults on an unsolved or errored sketch: status 0, cost +inf, dof 0. */
+SKETCHCAPICALL int sketch_solve_status_status(sketch_t *sk);
+SKETCHCAPICALL double sketch_solve_status_cost(sketch_t *sk);
+SKETCHCAPICALL int sketch_solve_status_iters(sketch_t *sk);
+SKETCHCAPICALL int sketch_solve_status_dof(sketch_t *sk);
+
 #ifdef __cplusplus
 }
 #endif

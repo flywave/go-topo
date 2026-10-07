@@ -8789,6 +8789,187 @@ TOPOCAPICALL topo_shape_t *topo_chamfer(topo_shape_t *baseShape,
   return nullptr;
 }
 
+// ---- 拓扑邻接查询 (roadmap T1.2) ----
+TOPOCAPICALL topo_face_t *topo_get_edge_faces(topo_shape_t *shp,
+                                              topo_edge_t *e, int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    auto faces = flywave::topo::get_edge_faces(*shp->shp, *cast_to_topo(*e));
+    auto *result = new topo_face_t[faces.size()];
+    for (size_t i = 0; i < faces.size(); i++) {
+      result[i] = topo_face_t{
+          .shp = new topo_shape_t{
+              .shp = std::make_shared<flywave::topo::face>(faces[i])}};
+    }
+    *count = static_cast<int>(faces.size());
+    return result;
+  } catch (...) {
+    *count = 0;
+    return nullptr;
+  }
+}
+
+TOPOCAPICALL topo_edge_t topo_get_common_edge(topo_face_t f1, topo_face_t f2) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    auto result = flywave::topo::get_common_edge(*cast_to_topo(f1),
+                                                 *cast_to_topo(f2));
+    if (result) {
+      return topo_edge_t{.shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::edge>(*result)}};
+    }
+  } catch (...) {
+  }
+  return topo_edge_t{nullptr};
+}
+
+TOPOCAPICALL int topo_face_is_planar(topo_face_t f) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    return flywave::topo::face_is_planar(*cast_to_topo(f)) ? 1 : 0;
+  } catch (...) {
+    return 0;
+  }
+}
+
+TOPOCAPICALL topo_edge_t topo_get_opposite_edge(topo_shape_t *shp,
+                                                topo_edge_t *e,
+                                                double tolerance,
+                                                dir3d_t along, int hasAlong) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    boost::optional<gp_Dir> alongDir;
+    if (hasAlong) {
+      alongDir = gp_Dir(along.x, along.y, along.z);
+    }
+    auto result = flywave::topo::get_opposite_edge(*shp->shp,
+                                                   *cast_to_topo(*e), tolerance,
+                                                   alongDir);
+    if (result) {
+      return topo_edge_t{.shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::edge>(*result)}};
+    }
+  } catch (...) {
+  }
+  return topo_edge_t{nullptr};
+}
+
+TOPOCAPICALL topo_edge_t topo_get_next_adjacent_edge(topo_shape_t *shp,
+                                                      topo_edge_t *e,
+                                                      double tolerance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    auto result = flywave::topo::get_next_adjacent_edge(*shp->shp,
+                                                        *cast_to_topo(*e),
+                                                        tolerance);
+    if (result) {
+      return topo_edge_t{.shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::edge>(*result)}};
+    }
+  } catch (...) {
+  }
+  return topo_edge_t{nullptr};
+}
+
+TOPOCAPICALL topo_edge_t topo_get_prev_adjacent_edge(topo_shape_t *shp,
+                                                      topo_edge_t *e,
+                                                      double tolerance) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    auto result = flywave::topo::get_prev_adjacent_edge(*shp->shp,
+                                                        *cast_to_topo(*e),
+                                                        tolerance);
+    if (result) {
+      return topo_edge_t{.shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::edge>(*result)}};
+    }
+  } catch (...) {
+  }
+  return topo_edge_t{nullptr};
+}
+
+TOPOCAPICALL topo_edge_t topo_closest_edge(topo_shape_t *shp, pnt3d_t p) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    auto result = flywave::topo::closest_edge(*shp->shp,
+                                              gp_Pnt(p.x, p.y, p.z));
+    if (result) {
+      return topo_edge_t{.shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::edge>(*result)}};
+    }
+  } catch (...) {
+  }
+  return topo_edge_t{nullptr};
+}
+
+TOPOCAPICALL topo_edge_t *topo_tangent_edge_chain(topo_shape_t *shp,
+                                                  topo_edge_t *seed,
+                                                  double tolerance,
+                                                  int *count) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    auto chain = flywave::topo::tangent_edge_chain(*shp->shp,
+                                                   *cast_to_topo(*seed),
+                                                   tolerance);
+    auto *result = new topo_edge_t[chain.size()];
+    for (size_t i = 0; i < chain.size(); i++) {
+      result[i] = topo_edge_t{.shp = new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::edge>(chain[i])}};
+    }
+    *count = static_cast<int>(chain.size());
+    return result;
+  } catch (...) {
+    *count = 0;
+    return nullptr;
+  }
+}
+
+// ---- 距离+角度倒角 (roadmap T1.3) ----
+TOPOCAPICALL topo_shape_t *topo_chamfer_angle(topo_shape_t *shp,
+                                              topo_edge_t *edges,
+                                              int edgeCount, double distance,
+                                              double angleDegrees,
+                                              topo_face_t *refFaces,
+                                              int refFaceCount) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    std::vector<flywave::topo::edge> edgeVec;
+    for (int i = 0; i < edgeCount; i++) {
+      edgeVec.emplace_back(*cast_to_topo(edges[i]));
+    }
+    std::vector<flywave::topo::face> refVec;
+    for (int i = 0; i < refFaceCount; i++) {
+      refVec.emplace_back(*cast_to_topo(refFaces[i]));
+    }
+    auto result = flywave::topo::chamfer_angle(*shp->shp, edgeVec, distance,
+                                               angleDegrees, refVec);
+    if (result) {
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(*result)};
+    }
+  } catch (...) {
+  }
+  return nullptr;
+}
+
+// ---- 指定单位的 STEP 导出 (roadmap T1.5) ----
+TOPOCAPICALL int topo_shape_export_step_unit(topo_shape_t *shp,
+                                             const char *fileName,
+                                             int write_pcurves,
+                                             int precision_mode,
+                                             const char *unit) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    return shp->shp->export_step_unit(
+               fileName, write_pcurves != 0, precision_mode,
+               unit ? std::string(unit) : std::string())
+               ? 1
+               : 0;
+  } catch (...) {
+    return 0;
+  }
+}
+
 // Extrusion operations
 TOPOCAPICALL topo_shape_t *topo_extrude(topo_shape_t *shape,
                                         vec3d_t direction) {

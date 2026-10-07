@@ -70,6 +70,44 @@ boost::optional<shape> chamfer(const shape &baseShape,
                                const std::vector<edge> &edges, double distance,
                                boost::optional<double> distance2 = boost::none);
 
+// ---- 拓扑邻接查询 (对应 modeling-api 邻接命令集; EdgeSpecifier 的解析基础) ----
+
+// 一条边在 shp 中的所有相邻面
+std::vector<face> get_edge_faces(const shape &shp, const edge &e);
+
+// 两个面共享的边; 多条共享边 (退化情形) 时返回探索序第一条
+boost::optional<edge> get_common_edge(const face &f1, const face &f2);
+
+bool face_is_planar(const face &f);
+
+// 与 e 平行相距最远的"对面"边 (候选限与 e 共享面、不共享端点的边);
+// along 给定时按"从 e 中点指向候选中点"的偏移方向点积 > 0 过滤
+// (同 modeling-api 的 along_vector 语义)
+boost::optional<edge>
+get_opposite_edge(const shape &shp, const edge &e, double tolerance = 1e-6,
+                  const boost::optional<gp_Dir> &along = boost::none);
+
+// 端点相接的下一/上一条边: 在 e 的邻接面上找共享末/首顶点的边,
+// 切向最连续者优先 (并列取探索序第一条)
+boost::optional<edge> get_next_adjacent_edge(const shape &shp, const edge &e,
+                                             double tolerance = 1e-6);
+boost::optional<edge> get_prev_adjacent_edge(const shape &shp, const edge &e,
+                                             double tolerance = 1e-6);
+
+// 离点最近的边 (无 3D 曲线的边跳过)
+boost::optional<edge> closest_edge(const shape &shp, const gp_Pnt &p);
+
+// 从 seed 沿 G1 连续性双向扩展的边链 (含 seed);
+// tolerance = 相邻边在公共顶点处的切向夹角上限 (弧度)
+std::vector<edge> tangent_edge_chain(const shape &shp, const edge &seed,
+                                     double tolerance = 1e-4);
+
+// 距离+角度倒角 (angle_degrees 为度; refFaces 为每条边指定角度基准面,
+// 缺省时取该边第一条相邻面 — 基准面决定 distance 落在哪一侧)
+boost::optional<shape>
+chamfer_angle(const shape &shp, const std::vector<edge> &edges, double distance,
+              double angle_degrees, const std::vector<face> &refFaces = {});
+
 boost::optional<shape> extrude(const shape &shape, const gp_Vec &direction);
 
 boost::optional<shape> extrude_linear(const topo::wire &outerWire,

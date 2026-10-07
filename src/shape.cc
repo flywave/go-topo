@@ -1571,6 +1571,27 @@ bool shape::export_step(const std::string &fileName, bool write_pcurves,
   return writer.Write(fileName.c_str());
 }
 
+bool shape::export_step_unit(const std::string &fileName, bool write_pcurves,
+                             int precision_mode,
+                             const std::string &unit) const {
+  if (!unit.empty()) {
+    static const char *kUnits[] = {"INCH", "MM", "FT", "MI",  "M",
+                                   "KM",   "MIL", "UM", "CM", "UIN"};
+    bool valid = false;
+    for (const char *u : kUnits) {
+      if (unit == u) {
+        valid = true;
+        break;
+      }
+    }
+    if (!valid) {
+      return false;
+    }
+    Interface_Static::SetCVal("write.step.unit", unit.c_str());
+  }
+  return export_step(fileName, write_pcurves, precision_mode);
+}
+
 bool shape::export_stl(const std::string &fileName, double deflection) const {
   try {
     BRepMesh_IncrementalMesh mesh(_shape, deflection);

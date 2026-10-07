@@ -226,6 +226,10 @@ public:
 
   bool export_step(const std::string &fileName, bool write_pcurves = true,
                    int precision_mode = 0) const;
+  // 指定写出单位的 STEP 导出 (unit: INCH/MM/FT/MI/M/KM/MIL/UM/CM/UIN,
+  // 空串 = 不改全局设置沿用默认 MM; 非法单位返回 false)
+  bool export_step_unit(const std::string &fileName, bool write_pcurves,
+                        int precision_mode, const std::string &unit) const;
   bool export_stl(const std::string &fileName,
                   double deflection = 0.1) const;
   bool export_brep(const std::string &fileName) const;

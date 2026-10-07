@@ -830,3 +830,26 @@ func (c *Sketch) Err() error {
 	}
 	return nil
 }
+
+// SketchSolveStatus — the last solve()'s report.
+//
+// Status is the NLopt result code (1-4 = converged, 4 the only clean pass;
+// anything else failed, 0 = never solved or the solver threw — check Err).
+// Cost is the residual. DOF is the number of solved entity groups (0 = the
+// constraints did not reach any geometry).
+type SketchSolveStatus struct {
+	Status int
+	Cost   float64
+	Iters  int
+	DOF    int
+}
+
+// SolveStatus reads the kernel's solve_status() report.
+func (c *Sketch) SolveStatus() SketchSolveStatus {
+	return SketchSolveStatus{
+		Status: int(C.sketch_solve_status_status(c.inner.val)),
+		Cost:   float64(C.sketch_solve_status_cost(c.inner.val)),
+		Iters:  int(C.sketch_solve_status_iters(c.inner.val)),
+		DOF:    int(C.sketch_solve_status_dof(c.inner.val)),
+	}
+}

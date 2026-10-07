@@ -13,6 +13,8 @@
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
+#include <BRepAdaptor_Curve.hxx>
+#include <BRepAdaptor_Surface.hxx>
 #include <BRepFeat_MakeDPrism.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
@@ -65,8 +67,15 @@
 #include <gp_Pnt.hxx>
 #include <gp_Vec.hxx>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <vector>
+
+// 拓扑邻接查询 (T1.2)
+#include <BRep_Tool.hxx>
+#include <TopExp.hxx>
+#include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
+#include <TopTools_ListIteratorOfListOfShape.hxx>
 
 // 添加轮廓线采样所需的头文件
 #include <BRepAdaptor_Curve.hxx>
@@ -624,6 +633,492 @@ boost::optional<shape> chamfer(const shape &baseShape,
     return boost::make_optional<shape>(chamferBuilder.Shape());
   } catch (const std::exception &e) {
     std::cerr << "Error in fuse operation: " << e.what() << std::endl;
+    return boost::none;
+  }
+}
+
+// ---- 拓扑邻接查询 (T1.2) ----
+
+std::vector<face> get_edge_faces(const shape &shp, const edge &e) {
+  std::vector<face> result;
+  if (shp.is_null() || e.is_null()) {
+    return result;
+  }
+  try {
+    TopTools_IndexedDataMapOfShapeListOfShape ancestors;
+    TopExp::MapShapesAndAncestors(shp.value(), TopAbs_EDGE, TopAbs_FACE,
+                                  ancestors);
+    const int idx = ancestors.FindIndex(e.value());
+    if (idx == 0) {
+      return result;
+    }
+    for (TopTools_ListIteratorOfListOfShape it(ancestors.FindFromIndex(idx));
+         it.More(); it.Next()) {
+      result.emplace_back(it.Value());
+    }
+  } catch (...) {
+  }
+  return result;
+}
+
+boost::optional<edge> get_common_edge(const face &f1, const face &f2) {
+  if (f1.is_null() || f2.is_null()) {
+    return boost::none;
+  }
+  try {
+    for (TopExp_Explorer ex1(f1.value(), TopAbs_EDGE); ex1.More(); ex1.Next()) {
+      const TopoDS_Edge &e = TopoDS::Edge(ex1.Current());
+      for (TopExp_Explorer ex2(f2.value(), TopAbs_EDGE); ex2.More();
+           ex2.Next()) {
+        if (e.IsSame(ex2.Current())) {
+          return edge(e);
+        }
+      }
+    }
+  } catch (...) {
+  }
+  return boost::none;
+}
+
+bool face_is_planar(const face &f) {
+  if (f.is_null()) {
+    return false;
+  }
+  try {
+    BRepAdaptor_Surface adaptor(f.value());
+    return adaptor.GetType() == GeomAbs_Plane;
+  } catch (...) {
+    return false;
+  }
+}
+
+namespace {
+
+// 边-边最短距离; 失败时返回 max() 表示"不可量"
+double edge_pair_distance(const edge &a, const edge &b) {
+  try {
+    BRepExtrema_DistShapeShape dist(a.value(), b.value());
+    if (dist.IsDone() && dist.NbSolution() > 0) {
+      return dist.Value();
+    }
+  } catch (...) {
+  }
+  return std::numeric_limits<double>::max();
+}
+
+TopoDS_Vertex edge_first_vertex(const edge &e) {
+  TopoDS_Vertex vf, vl;
+  TopExp::Vertices(e.value(), vf, vl);
+  return vf;
+}
+
+TopoDS_Vertex edge_last_vertex(const edge &e) {
+  TopoDS_Vertex vf, vl;
+  TopExp::Vertices(e.value(), vf, vl);
+  return vl;
+}
+
+// 端点切向: 此版 OCCT 的 BRepAdaptor_Curve 无 FirstTangent/LastTangent, 用 D1 求
+bool edge_endpoint_tangent(const edge &e, bool atStart, gp_Vec &out) {
+  try {
+    BRepAdaptor_Curve c(e.value());
+    gp_Pnt p;
+    gp_Vec d;
+    c.D1(atStart ? c.FirstParameter() : c.LastParameter(), p, d);
+    if (d.Magnitude() <= 0.0) {
+      return false;
+    }
+    out = d;
+    return true;
+  } catch (...) {
+    return false;
+  }
+}
+
+// e 在顶点 v 处"离开 v"的行进方向 (v 是 e 的首顶点或末顶点)
+bool edge_leaving_tangent(const edge &e, const TopoDS_Vertex &v, gp_Vec &out) {
+  TopoDS_Vertex vf, vl;
+  TopExp::Vertices(e.value(), vf, vl);
+  if (vf.IsNull() || vl.IsNull()) {
+    return false;
+  }
+  if (v.IsSame(vf)) {
+    return edge_endpoint_tangent(e, true, out);
+  }
+  if (v.IsSame(vl)) {
+    if (!edge_endpoint_tangent(e, false, out)) {
+      return false;
+    }
+    out = -out;
+    return true;
+  }
+  return false;
+}
+
+// e 在顶点 v 处"抵达 v"的行进方向
+bool edge_arriving_tangent(const edge &e, const TopoDS_Vertex &v, gp_Vec &out) {
+  TopoDS_Vertex vf, vl;
+  TopExp::Vertices(e.value(), vf, vl);
+  if (vf.IsNull() || vl.IsNull()) {
+    return false;
+  }
+  if (v.IsSame(vl)) {
+    return edge_endpoint_tangent(e, false, out);
+  }
+  if (v.IsSame(vf)) {
+    if (!edge_endpoint_tangent(e, true, out)) {
+      return false;
+    }
+    out = -out;
+    return true;
+  }
+  return false;
+}
+
+boost::optional<gp_Pnt> curve_midpoint(const edge &c) {
+  try {
+    BRepAdaptor_Curve cv(c.value());
+    return gp_Pnt(cv.Value((cv.FirstParameter() + cv.LastParameter()) / 2.0));
+  } catch (...) {
+    return boost::none;
+  }
+}
+
+bool shares_vertex(const edge &a, const edge &b) {
+  TopoDS_Vertex af, al, bf, bl;
+  TopExp::Vertices(a.value(), af, al);
+  TopExp::Vertices(b.value(), bf, bl);
+  if (af.IsNull() || al.IsNull() || bf.IsNull() || bl.IsNull()) {
+    return false;
+  }
+  return af.IsSame(bf) || af.IsSame(bl) || al.IsSame(bf) || al.IsSame(bl);
+}
+
+// 在与 e 共享端点 v 的边里挑切向最连续的 (dot 最大); 并列取探索序第一条
+boost::optional<edge> pick_adjacent_at_vertex(const shape &shp, const edge &e,
+                                              const TopoDS_Vertex &v,
+                                              const gp_Vec &refTangent) {
+  if (shp.is_null() || v.IsNull()) {
+    return boost::none;
+  }
+  boost::optional<edge> best;
+  double bestDot = 0.0; // 低于 0 (折返) 的候选不选
+  for (const face &f : get_edge_faces(shp, e)) {
+    for (TopExp_Explorer ex(f.value(), TopAbs_EDGE); ex.More(); ex.Next()) {
+      edge cand(TopoDS::Edge(ex.Current()));
+      if (cand.is_null() || cand.is_same(e)) {
+        continue;
+      }
+      TopoDS_Vertex cf, cl;
+      TopExp::Vertices(cand.value(), cf, cl);
+      if (cf.IsNull() || cl.IsNull()) {
+        continue;
+      }
+      if (!(v.IsSame(cf) || v.IsSame(cl))) {
+        continue;
+      }
+      gp_Vec candTangent;
+      if (!edge_leaving_tangent(cand, v, candTangent)) {
+        continue;
+      }
+      const double denom = refTangent.Magnitude() * candTangent.Magnitude();
+      if (denom <= 0.0) {
+        continue;
+      }
+      const double dot = refTangent.Dot(candTangent) / denom;
+      if (!best || dot > bestDot) {
+        bestDot = dot;
+        best = cand;
+      }
+    }
+  }
+  return best;
+}
+
+} // namespace
+
+boost::optional<edge>
+get_opposite_edge(const shape &shp, const edge &e, double tolerance,
+                  const boost::optional<gp_Dir> &along) {
+  if (shp.is_null() || e.is_null()) {
+    return boost::none;
+  }
+  // along 语义 (同 modeling-api): 过滤的是"从 e 指向候选"的偏移方向,
+  // 而非候选边自身的走向
+  const boost::optional<gp_Pnt> eMid = curve_midpoint(e);
+
+  boost::optional<edge> best;
+  double bestDist = -1.0;
+  std::vector<edge> seen;
+  for (const face &f : get_edge_faces(shp, e)) {
+    for (TopExp_Explorer ex(f.value(), TopAbs_EDGE); ex.More(); ex.Next()) {
+      edge cand(TopoDS::Edge(ex.Current()));
+      if (cand.is_null() || cand.is_same(e)) {
+        continue;
+      }
+      bool dup = false;
+      for (const edge &s : seen) {
+        if (cand.is_same(s)) {
+          dup = true;
+          break;
+        }
+      }
+      if (dup) {
+        continue;
+      }
+      seen.push_back(cand);
+      if (shares_vertex(e, cand)) {
+        continue;
+      }
+      if (along && eMid) {
+        const boost::optional<gp_Pnt> cMid = curve_midpoint(cand);
+        if (cMid) {
+          gp_Vec offset(*eMid, *cMid);
+          if (offset.Magnitude() > tolerance &&
+              offset.Normalized().Dot(*along) <= 0.0) {
+            continue;
+          }
+        }
+      }
+      const double d = edge_pair_distance(e, cand);
+      if (d <= tolerance || d >= std::numeric_limits<double>::max()) {
+        continue;
+      }
+      if (d > bestDist) {
+        bestDist = d;
+        best = cand;
+      }
+    }
+  }
+  return best;
+}
+
+boost::optional<edge> get_next_adjacent_edge(const shape &shp, const edge &e,
+                                             double tolerance) {
+  (void)tolerance;
+  TopoDS_Vertex vl = edge_last_vertex(e);
+  if (vl.IsNull()) {
+    return boost::none;
+  }
+  gp_Vec refT;
+  if (!edge_arriving_tangent(e, vl, refT)) {
+    return boost::none;
+  }
+  return pick_adjacent_at_vertex(shp, e, vl, refT);
+}
+
+boost::optional<edge> get_prev_adjacent_edge(const shape &shp, const edge &e,
+                                             double tolerance) {
+  (void)tolerance;
+  TopoDS_Vertex vf = edge_first_vertex(e);
+  if (vf.IsNull()) {
+    return boost::none;
+  }
+  gp_Vec refT;
+  // "上一条边在首顶点处抵达 e" ⇒ 参考方向取反向的离开方向
+  if (!edge_leaving_tangent(e, vf, refT)) {
+    return boost::none;
+  }
+  refT = -refT;
+  return pick_adjacent_at_vertex(shp, e, vf, refT);
+}
+
+boost::optional<edge> closest_edge(const shape &shp, const gp_Pnt &p) {
+  if (shp.is_null()) {
+    return boost::none;
+  }
+  boost::optional<edge> best;
+  double bestDist = std::numeric_limits<double>::max();
+  for (TopExp_Explorer ex(shp.value(), TopAbs_EDGE); ex.More(); ex.Next()) {
+    edge cand(TopoDS::Edge(ex.Current()));
+    if (cand.is_null()) {
+      continue;
+    }
+    try {
+      BRepAdaptor_Curve c(cand.value());
+      GeomAPI_ProjectPointOnCurve proj(p, c.Curve().Curve());
+      if (proj.NbPoints() > 0 && proj.LowerDistance() < bestDist) {
+        bestDist = proj.LowerDistance();
+        best = cand;
+      }
+    } catch (...) {
+      // 无 3D 曲线的边 (仅 pcurve) 跳过
+    }
+  }
+  return best;
+}
+
+std::vector<edge> tangent_edge_chain(const shape &shp, const edge &seed,
+                                     double tolerance) {
+  std::vector<edge> chain;
+  if (shp.is_null() || seed.is_null()) {
+    return chain;
+  }
+
+  // 在 shp 内解析 seed: BRepBuilderAPI_MakeWire 会拷贝边, 调用方持有的
+  // 逻辑边与 shp 内部边可能不是同一 TShape — IsSame 失败时按几何匹配
+  // (端点位置双向重合 + 中点重合)
+  boost::optional<edge> resolved;
+  {
+    const boost::optional<gp_Pnt> seedMid = curve_midpoint(seed);
+    TopoDS_Vertex sf, sl;
+    TopExp::Vertices(seed.value(), sf, sl);
+    for (TopExp_Explorer ex(shp.value(), TopAbs_EDGE); ex.More(); ex.Next()) {
+      edge cand(TopoDS::Edge(ex.Current()));
+      if (cand.is_null()) {
+        continue;
+      }
+      if (cand.is_same(seed)) {
+        resolved = cand;
+        break;
+      }
+      if (!seedMid || sf.IsNull() || sl.IsNull()) {
+        continue;
+      }
+      TopoDS_Vertex cf, cl;
+      TopExp::Vertices(cand.value(), cf, cl);
+      if (cf.IsNull() || cl.IsNull()) {
+        continue;
+      }
+      const boost::optional<gp_Pnt> candMid = curve_midpoint(cand);
+      if (!candMid || seedMid->Distance(*candMid) > 1e-6) {
+        continue;
+      }
+      gp_Pnt sfP, slP, cfP, clP;
+      try {
+        sfP = BRep_Tool::Pnt(sf);
+        slP = BRep_Tool::Pnt(sl);
+        cfP = BRep_Tool::Pnt(cf);
+        clP = BRep_Tool::Pnt(cl);
+      } catch (...) {
+        continue;
+      }
+      const bool forward = sfP.Distance(cfP) <= 1e-6 && slP.Distance(clP) <= 1e-6;
+      const bool reversed = sfP.Distance(clP) <= 1e-6 && slP.Distance(cfP) <= 1e-6;
+      if (forward || reversed) {
+        resolved = cand;
+        break;
+      }
+    }
+    if (!resolved) {
+      return chain;
+    }
+  }
+  const edge &seedInShp = *resolved;
+
+  // 顶点 -> 共享该顶点的边 邻接表
+  TopTools_IndexedDataMapOfShapeListOfShape vertexEdges;
+  TopExp::MapShapesAndAncestors(shp.value(), TopAbs_VERTEX, TopAbs_EDGE,
+                                vertexEdges);
+
+  std::vector<edge> visited;
+  auto markVisited = [&](const edge &e) { visited.push_back(e); };
+  auto isVisited = [&](const edge &e) {
+    for (const edge &v : visited) {
+      if (e.is_same(v)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  markVisited(seedInShp);
+  chain.push_back(seedInShp);
+  std::vector<edge> frontier{seedInShp};
+
+  while (!frontier.empty()) {
+    std::vector<edge> next;
+    for (const edge &cur : frontier) {
+      TopoDS_Vertex ends[2];
+      TopoDS_Vertex vf, vl;
+      TopExp::Vertices(cur.value(), vf, vl);
+      ends[0] = vf;
+      ends[1] = vl;
+      for (int ei = 0; ei < 2; ei++) {
+        const TopoDS_Vertex &v = ends[ei];
+        if (v.IsNull()) {
+          continue;
+        }
+        gp_Vec arriveT;
+        if (!edge_arriving_tangent(cur, v, arriveT)) {
+          continue;
+        }
+        const int idx = vertexEdges.FindIndex(v);
+        if (idx == 0) {
+          continue;
+        }
+        for (TopTools_ListIteratorOfListOfShape it(vertexEdges.FindFromIndex(idx));
+             it.More(); it.Next()) {
+          edge cand(TopoDS::Edge(it.Value()));
+          if (cand.is_null() || cand.is_same(cur) || isVisited(cand)) {
+            continue;
+          }
+          gp_Vec leaveT;
+          if (!edge_leaving_tangent(cand, v, leaveT)) {
+            continue;
+          }
+          const double denom = arriveT.Magnitude() * leaveT.Magnitude();
+          if (denom <= 0.0) {
+            continue;
+          }
+          double dot = arriveT.Dot(leaveT) / denom;
+          dot = std::max(-1.0, std::min(1.0, dot));
+          const double angle = std::acos(dot);
+          if (angle <= tolerance) {
+            markVisited(cand);
+            chain.push_back(cand);
+            next.push_back(cand);
+          }
+        }
+      }
+    }
+    frontier = next;
+  }
+  return chain;
+}
+
+boost::optional<shape>
+chamfer_angle(const shape &shp, const std::vector<edge> &edges, double distance,
+              double angle_degrees, const std::vector<face> &refFaces) {
+  if (shp.is_null() || edges.empty()) {
+    std::cerr << "ChamferAngle: null shape or no edges" << std::endl;
+    return boost::none;
+  }
+  if (distance <= 0) {
+    std::cerr << "ChamferAngle: distance must be positive" << std::endl;
+    return boost::none;
+  }
+  if (angle_degrees <= 0 || angle_degrees >= 180) {
+    std::cerr << "ChamferAngle: angle must be in (0, 180) degrees" << std::endl;
+    return boost::none;
+  }
+
+  try {
+    BRepFilletAPI_MakeChamfer chamferBuilder(shp);
+    const double angleRad = angle_degrees * M_PI / 180.0;
+
+    for (size_t i = 0; i < edges.size(); i++) {
+      const TopoDS_Edge &occEdge = edges[i].value();
+      TopoDS_Face ref;
+      if (i < refFaces.size() && !refFaces[i].is_null()) {
+        ref = TopoDS::Face(refFaces[i].value());
+      } else {
+        const std::vector<face> fs = get_edge_faces(shp, edges[i]);
+        if (fs.empty()) {
+          throw std::runtime_error("No adjacent face found for edge");
+        }
+        ref = TopoDS::Face(fs.front().value());
+      }
+      chamferBuilder.AddDA(distance, angleRad, occEdge, ref);
+    }
+
+    chamferBuilder.Build();
+    if (!chamferBuilder.IsDone()) {
+      throw std::runtime_error("ChamferAngle operation failed");
+    }
+    return boost::make_optional<shape>(chamferBuilder.Shape());
+  } catch (const std::exception &e) {
+    std::cerr << "Error in chamfer_angle operation: " << e.what() << std::endl;
     return boost::none;
   }
 }

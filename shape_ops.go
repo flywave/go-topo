@@ -163,6 +163,150 @@ func Chamfer(shp *Shape, edges []*Edge, distance1, distance2 float64, hasDistanc
 	return NewShape(result)
 }
 
+// ---- 拓扑邻接查询 (roadmap T1.2) ----
+
+func GetEdgeFaces(shp *Shape, e *Edge) []*Face {
+	var count C.int
+	faces := C.topo_get_edge_faces(shp.inner.val, &e.inner.val, &count)
+	if faces == nil {
+		return nil
+	}
+	defer C.topo_free_array(unsafe.Pointer(faces))
+
+	faceSlice := (*[1 << 30]C.struct__topo_face_t)(unsafe.Pointer(faces))[:count:count]
+	result := make([]*Face, count)
+	for i := range faceSlice {
+		result[i] = &Face{inner: &innerFace{val: faceSlice[i]}}
+		runtime.SetFinalizer(result[i].inner, (*innerFace).free)
+	}
+	return result
+}
+
+func GetCommonEdge(f1, f2 *Face) *Edge {
+	result := C.topo_get_common_edge(f1.inner.val, f2.inner.val)
+	if result.shp == nil {
+		return nil
+	}
+	p := &Edge{inner: &innerEdge{val: result}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
+func FaceIsPlanar(f *Face) bool {
+	return C.topo_face_is_planar(f.inner.val) != 0
+}
+
+func GetOppositeEdge(shp *Shape, e *Edge, tolerance float64, along Dir3, hasAlong bool) *Edge {
+	hasAlongInt := C.int(0)
+	if hasAlong {
+		hasAlongInt = C.int(1)
+	}
+	result := C.topo_get_opposite_edge(shp.inner.val, &e.inner.val,
+		C.double(tolerance), along.val, hasAlongInt)
+	if result.shp == nil {
+		return nil
+	}
+	p := &Edge{inner: &innerEdge{val: result}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
+func GetNextAdjacentEdge(shp *Shape, e *Edge, tolerance float64) *Edge {
+	result := C.topo_get_next_adjacent_edge(shp.inner.val, &e.inner.val, C.double(tolerance))
+	if result.shp == nil {
+		return nil
+	}
+	p := &Edge{inner: &innerEdge{val: result}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
+func GetPrevAdjacentEdge(shp *Shape, e *Edge, tolerance float64) *Edge {
+	result := C.topo_get_prev_adjacent_edge(shp.inner.val, &e.inner.val, C.double(tolerance))
+	if result.shp == nil {
+		return nil
+	}
+	p := &Edge{inner: &innerEdge{val: result}}
+	runtime.SetFinalizer(p.inner, (*innerEdge).free)
+	return p
+}
+
+func ClosestEdge(shp *Shape, p Point3) *Edge {
+	result := C.topo_closest_edge(shp.inner.val, p.val)
+	if result.shp == nil {
+		return nil
+	}
+	p2 := &Edge{inner: &innerEdge{val: result}}
+	runtime.SetFinalizer(p2.inner, (*innerEdge).free)
+	return p2
+}
+
+func TangentEdgeChain(shp *Shape, seed *Edge, tolerance float64) []*Edge {
+	var count C.int
+	edges := C.topo_tangent_edge_chain(shp.inner.val, &seed.inner.val, C.double(tolerance), &count)
+	if edges == nil {
+		return nil
+	}
+	defer C.topo_free_array(unsafe.Pointer(edges))
+
+	edgeSlice := (*[1 << 30]C.struct__topo_edge_t)(unsafe.Pointer(edges))[:count:count]
+	result := make([]*Edge, count)
+	for i := range edgeSlice {
+		result[i] = &Edge{inner: &innerEdge{val: edgeSlice[i]}}
+		runtime.SetFinalizer(result[i].inner, (*innerEdge).free)
+	}
+	return result
+}
+
+// ---- 距离+角度倒角 (roadmap T1.3) ----
+
+// ChamferAngle 角度倒角: refFaces 为每条边指定角度基准面 (决定 distance 落在哪一侧),
+// 传 nil 时每条边取其第一条相邻面。
+func ChamferAngle(shp *Shape, edges []*Edge, distance, angleDegrees float64, refFaces []*Face) *Shape {
+	count := len(edges)
+	if count == 0 {
+		return nil
+	}
+	cEdges := make([]C.struct__topo_edge_t, count)
+	for i, edge := range edges {
+		cEdges[i] = edge.inner.val
+	}
+	var cFaces []C.struct__topo_face_t
+	if len(refFaces) > 0 {
+		cFaces = make([]C.struct__topo_face_t, len(refFaces))
+		for i, face := range refFaces {
+			cFaces[i] = face.inner.val
+		}
+	}
+	var facesPtr *C.struct__topo_face_t
+	if len(cFaces) > 0 {
+		facesPtr = &cFaces[0]
+	}
+	result := C.topo_chamfer_angle(shp.inner.val, &cEdges[0], C.int(count),
+		C.double(distance), C.double(angleDegrees), facesPtr, C.int(len(cFaces)))
+	if result == nil {
+		return nil
+	}
+	return NewShape(result)
+}
+
+// ---- 指定单位的 STEP 导出 (roadmap T1.5) ----
+
+// ExportStepUnit unit 取 INCH/MM/FT/MI/M/KM/MIL/UM/CM/UIN, 空串沿用默认 MM;
+// 非法单位返回 false。
+func (s *Shape) ExportStepUnit(fileName string, writePcurves bool, precisionMode int, unit string) bool {
+	cFileName := C.CString(fileName)
+	defer C.free(unsafe.Pointer(cFileName))
+	cUnit := C.CString(unit)
+	defer C.free(unsafe.Pointer(cUnit))
+	pc := C.int(0)
+	if writePcurves {
+		pc = C.int(1)
+	}
+	return C.topo_shape_export_step_unit(s.inner.val, cFileName, pc,
+		C.int(precisionMode), cUnit) != 0
+}
+
 func Extrude(shape *Shape, direction Vector3) *Shape {
 	result := C.topo_extrude(shape.inner.val, direction.val)
 	if result == nil {

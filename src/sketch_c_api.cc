@@ -5,6 +5,8 @@
 #include "topo_impl.hh"
 #include "workplane_impl.hh"
 
+#include <limits>
+
 namespace flywave {
 namespace topo {
 
@@ -857,6 +859,68 @@ const char *sketch_error(sketch_t *sk) {
   }
   catch (...) {
     return nullptr;
+  }
+}
+
+// --- solve_status readers --------------------------------------------------
+// sketch::solve() fills an internal map keyed "cost" (double), "iters" (int),
+// "status" (int, the NLopt result code) and "x" (one solved vector per
+// entity). Exposed as scalar getters so the host language can judge
+// convergence (residual, NLopt code, DOF count) without shipping the whole
+// variant map across the C boundary. Defaults on an unsolved or errored
+// sketch: status 0, cost +inf, iters 0, dof 0.
+
+static int sketch_solve_status_int(sketch_t *sk, const char *key, int fallback) {
+  try {
+    const auto &m = sk->ptr->solve_status();
+    auto it = m.find(key);
+    if (it == m.end())
+      return fallback;
+    if (auto p = boost::get<int>(&it->second))
+      return *p;
+    if (auto p = boost::get<double>(&it->second))
+      return static_cast<int>(*p);
+    return fallback;
+  } catch (...) {
+    return fallback;
+  }
+}
+
+int sketch_solve_status_status(sketch_t *sk) {
+  return sketch_solve_status_int(sk, "status", 0);
+}
+
+double sketch_solve_status_cost(sketch_t *sk) {
+  try {
+    const auto &m = sk->ptr->solve_status();
+    auto it = m.find("cost");
+    if (it == m.end())
+      return std::numeric_limits<double>::infinity();
+    if (auto p = boost::get<double>(&it->second))
+      return *p;
+    if (auto p = boost::get<int>(&it->second))
+      return static_cast<double>(*p);
+    return std::numeric_limits<double>::infinity();
+  } catch (...) {
+    return std::numeric_limits<double>::infinity();
+  }
+}
+
+int sketch_solve_status_iters(sketch_t *sk) {
+  return sketch_solve_status_int(sk, "iters", 0);
+}
+
+int sketch_solve_status_dof(sketch_t *sk) {
+  try {
+    const auto &m = sk->ptr->solve_status();
+    auto it = m.find("x");
+    if (it == m.end())
+      return 0;
+    if (auto p = boost::get<std::vector<std::vector<double>>>(&it->second))
+      return static_cast<int>(p->size());
+    return 0;
+  } catch (...) {
+    return 0;
   }
 }
 

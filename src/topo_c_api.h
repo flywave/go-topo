@@ -1502,6 +1502,40 @@ TOPOCAPICALL topo_shape_t *topo_chamfer(topo_shape_t *baseShape,
                                         double distance1, double distance2,
                                         bool hasDistance2);
 
+// ---- 拓扑邻接查询 (roadmap T1.2) ----
+TOPOCAPICALL topo_face_t *topo_get_edge_faces(topo_shape_t *shp,
+                                              topo_edge_t *e, int *count);
+TOPOCAPICALL topo_edge_t topo_get_common_edge(topo_face_t f1, topo_face_t f2);
+TOPOCAPICALL int topo_face_is_planar(topo_face_t f);
+TOPOCAPICALL topo_edge_t topo_get_opposite_edge(topo_shape_t *shp,
+                                                topo_edge_t *e,
+                                                double tolerance,
+                                                dir3d_t along, int hasAlong);
+TOPOCAPICALL topo_edge_t topo_get_next_adjacent_edge(topo_shape_t *shp,
+                                                     topo_edge_t *e,
+                                                     double tolerance);
+TOPOCAPICALL topo_edge_t topo_get_prev_adjacent_edge(topo_shape_t *shp,
+                                                     topo_edge_t *e,
+                                                     double tolerance);
+TOPOCAPICALL topo_edge_t topo_closest_edge(topo_shape_t *shp, pnt3d_t p);
+TOPOCAPICALL topo_edge_t *topo_tangent_edge_chain(topo_shape_t *shp,
+                                                  topo_edge_t *seed,
+                                                  double tolerance,
+                                                  int *count);
+// ---- 距离+角度倒角 (roadmap T1.3) ----
+TOPOCAPICALL topo_shape_t *topo_chamfer_angle(topo_shape_t *shp,
+                                              topo_edge_t *edges,
+                                              int edgeCount, double distance,
+                                              double angleDegrees,
+                                              topo_face_t *refFaces,
+                                              int refFaceCount);
+// ---- 指定单位的 STEP 导出 (roadmap T1.5) ----
+TOPOCAPICALL int topo_shape_export_step_unit(topo_shape_t *shp,
+                                             const char *fileName,
+                                             int write_pcurves,
+                                             int precision_mode,
+                                             const char *unit);
+
 TOPOCAPICALL topo_shape_t *topo_extrude(topo_shape_t *shape, vec3d_t direction);
 TOPOCAPICALL topo_shape_t *topo_extrude_linear(topo_wire_t outerWire,
                                                topo_wire_t *innerWires,
