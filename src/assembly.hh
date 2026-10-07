@@ -125,6 +125,13 @@ public:
 
   std::vector<std::shared_ptr<assembly>> children() const { return children_; }
 
+  // metadata — 节点级键值扩展 (参数化配方经 set_parametric 存于此,
+  // copy/move 携带)。set 在键已存在时覆盖。
+  void set_metadata(const std::string &key, boost::any value);
+  const std::unordered_map<std::string, boost::any> &metadata() const {
+    return metadata_;
+  }
+
   bool has_error() const;
 
   void set_error(const std::string &error) const;

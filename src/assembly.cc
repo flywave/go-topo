@@ -583,6 +583,10 @@ assembly::add(assembly_object obj, std::shared_ptr<topo_location> loc,
   return add(newAssembly);
 }
 
+void assembly::set_metadata(const std::string &key, boost::any value) {
+  metadata_[key] = std::move(value);
+}
+
 assembly &assembly::remove(const std::string &name) {
   try {
     auto it = objects_.find(name);
