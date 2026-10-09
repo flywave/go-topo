@@ -8214,6 +8214,504 @@ create_water_tunnel_centerline(water_tunnel_params_t params) {
   }
 }
 
+// ================= 矿山专业图元 (minebim P 线) =================
+
+namespace {
+
+mine_shaft_params mine_shaft_from_c(const mine_shaft_params_t &params) {
+  mine_shaft_params cpp_params;
+  cpp_params.shape = params.shape;
+  cpp_params.innerRadius = params.innerRadius;
+  cpp_params.outerRadius = params.outerRadius;
+  cpp_params.innerLength = params.innerLength;
+  cpp_params.innerWidth = params.innerWidth;
+  cpp_params.outerLength = params.outerLength;
+  cpp_params.outerWidth = params.outerWidth;
+  cpp_params.depth = params.depth;
+  return cpp_params;
+}
+
+} // namespace
+
+PRIMCAPICALL topo_shape_t *create_mine_shaft(mine_shaft_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    return new topo_shape_t{.shp = std::make_shared<shape>(
+                                flywave::topo::create_mine_shaft(mine_shaft_from_c(params)))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_mine_shaft_at(mine_shaft_params_t params, pnt3d_t collarCenter) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(flywave::topo::create_mine_shaft(
+            mine_shaft_from_c(params),
+            gp_Pnt(collarCenter.x, collarCenter.y, collarCenter.z)))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_orepass(mine_orepass_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_orepass_params cpp_params;
+    cpp_params.center =
+        gp_Pnt(params.center.x, params.center.y, params.center.z);
+    for (int i = 0; i < params.numStations; ++i) {
+      cpp_params.stations.push_back(
+          {params.stations[i].depth, params.stations[i].radius});
+    }
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(flywave::topo::create_mine_orepass(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *
+create_mine_fault_lens(mine_fault_lens_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_fault_lens_params cpp_params;
+    cpp_params.center = gp_Pnt(params.center.x, params.center.y, params.center.z);
+    cpp_params.strike = gp_Dir(params.strike.x, params.strike.y, params.strike.z);
+    cpp_params.dipAzimuth =
+        gp_Dir(params.dipAzimuth.x, params.dipAzimuth.y, params.dipAzimuth.z);
+    cpp_params.dipAngle = params.dipAngle;
+    cpp_params.zoneWidth = params.zoneWidth;
+    cpp_params.zoneLength = params.zoneLength;
+    cpp_params.topElev = params.topElev;
+    cpp_params.bottomElev = params.bottomElev;
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(flywave::topo::create_mine_fault_lens(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_lining(mine_lining_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_lining_params cpp_params;
+    for (int i = 0; i < params.numPoints; ++i) {
+      cpp_params.section.push_back(
+          gp_Pnt(params.points[i].x, params.points[i].y, params.points[i].z));
+    }
+    cpp_params.thickness = params.thickness;
+    cpp_params.length = params.length;
+    cpp_params.dir = gp_Dir(params.dir.x, params.dir.y, params.dir.z);
+    return new topo_shape_t{
+        .shp = std::make_shared<shape>(flywave::topo::create_mine_lining(cpp_params))};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+// ---------- 矿山图元公共转换 ----------
+namespace {
+
+std::vector<gp_Pnt> mine_pnts(const pnt3d_t *arr, int n) {
+  std::vector<gp_Pnt> v;
+  v.reserve(n);
+  for (int i = 0; i < n; ++i)
+    v.push_back(gp_Pnt(arr[i].x, arr[i].y, arr[i].z));
+  return v;
+}
+gp_Dir mine_dir(const dir3d_t &d) { return gp_Dir(d.x, d.y, d.z); }
+gp_Pnt mine_pnt(const pnt3d_t &p) { return gp_Pnt(p.x, p.y, p.z); }
+
+} // namespace
+
+PRIMCAPICALL topo_shape_t *create_mine_roadway(mine_roadway_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_roadway_params cpp;
+    cpp.section = mine_section_cast(params.section);
+    cpp.width = params.width;
+    cpp.height = params.height;
+    cpp.path = mine_pnts(params.path, params.numPath);
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_roadway(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_chamber(mine_chamber_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_chamber_params cpp{mine_pnt(params.center), params.length, params.width, params.height};
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_chamber(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_workingface(mine_workingface_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_workingface_params cpp{mine_pnt(params.origin), mine_dir(params.dir),
+                                params.faceLength, params.advance, params.seamThickness};
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_workingface(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_heading(mine_heading_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_heading_params cpp;
+    cpp.center = mine_pnt(params.center);
+    cpp.dir = mine_dir(params.dir);
+    cpp.section = mine_section_cast(params.section);
+    cpp.width = params.width;
+    cpp.height = params.height;
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_heading(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_area_body(mine_area_body_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_area_body_params cpp;
+    cpp.boundary = mine_pnts(params.boundary, params.numBoundary);
+    cpp.baseZ = params.baseZ;
+    cpp.height = params.height;
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_area_body(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_bolt_row(mine_bolt_row_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_bolt_row_params cpp;
+    cpp.origin = mine_pnt(params.origin);
+    cpp.axis = mine_dir(params.axis);
+    cpp.section = mine_section_cast(params.section);
+    cpp.width = params.width;
+    cpp.height = params.height;
+    cpp.rowCount = params.rowCount;
+    cpp.perRow = params.perRow;
+    cpp.spacing = params.spacing;
+    cpp.boltLength = params.boltLength;
+    cpp.diameter = params.diameter;
+    cpp.cable = params.cable != 0;
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_bolt_row(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_usteel_row(mine_usteel_row_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_usteel_row_params cpp;
+    cpp.origin = mine_pnt(params.origin);
+    cpp.axis = mine_dir(params.axis);
+    cpp.section = mine_section_cast(params.section);
+    cpp.width = params.width;
+    cpp.height = params.height;
+    cpp.thickness = params.thickness;
+    cpp.spacing = params.spacing;
+    cpp.count = params.count;
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_usteel_row(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_shield_row(mine_shield_row_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_shield_row_params cpp;
+    cpp.origin = mine_pnt(params.origin);
+    cpp.dir = mine_dir(params.dir);
+    cpp.count = params.count;
+    cpp.centerDist = params.centerDist;
+    cpp.beamWidth = params.beamWidth;
+    cpp.beamThick = params.beamThick;
+    cpp.height = params.height;
+    cpp.maxLegPairs = params.maxLegPairs;
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_shield_row(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_vent_wall(mine_vent_wall_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_vent_wall_params cpp;
+    cpp.section = mine_section_cast(params.section);
+    cpp.width = params.width;
+    cpp.height = params.height;
+    cpp.thickness = params.thickness;
+    cpp.center = mine_pnt(params.center);
+    cpp.axis = mine_dir(params.axis);
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_vent_wall(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_box_wall(mine_box_wall_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_box_wall_params cpp{params.width, params.height, params.thickness,
+                             mine_pnt(params.center), mine_dir(params.axis)};
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_box_wall(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_vent_door(mine_vent_door_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_vent_door_params cpp;
+    cpp.width = params.width; cpp.height = params.height;
+    cpp.doorWidth = params.doorWidth; cpp.doorHeight = params.doorHeight;
+    cpp.doorThick = params.doorThick; cpp.frameWidth = params.frameWidth;
+    cpp.openAngleDeg = params.openAngleDeg;
+    cpp.center = mine_pnt(params.center); cpp.axis = mine_dir(params.axis);
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_vent_door(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_vent_window(mine_vent_window_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_vent_window_params cpp{params.width, params.height, params.thickness,
+                                params.winWidth, params.winHeight, params.winSill,
+                                params.bars, mine_pnt(params.center), mine_dir(params.axis)};
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_vent_window(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_vent_bridge(mine_vent_bridge_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_vent_bridge_params cpp{params.span, params.width, params.thickness,
+                                params.apex, mine_pnt(params.center), mine_dir(params.axis)};
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_vent_bridge(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_vent_duct(mine_vent_duct_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_vent_duct_params cpp;
+    cpp.path = mine_pnts(params.path, params.numPath);
+    cpp.diameter = params.diameter;
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_vent_duct(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_collapse_pillar(mine_collapse_pillar_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_collapse_pillar_params cpp{mine_pnt(params.bottomCenter), params.bottomLong,
+                                    params.bottomShort, params.topLong, params.topShort,
+                                    params.height};
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_collapse_pillar(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_water_gate_wall(mine_water_gate_wall_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_water_gate_wall_params cpp{params.width, params.height, params.thickness,
+                                    params.doorWidth, params.doorHeight,
+                                    mine_pnt(params.center), mine_dir(params.axis)};
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_water_gate_wall(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_water_gate(mine_water_gate_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_water_gate_params cpp{params.width, params.height, params.doorWidth,
+                               params.doorHeight, params.doorThick, params.frameWidth,
+                               mine_pnt(params.center), mine_dir(params.axis)};
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_water_gate(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_borehole(mine_borehole_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_borehole_params cpp;
+    cpp.collar = mine_pnt(params.collar);
+    cpp.axis = mine_dir(params.axis);
+    cpp.diameter = params.diameter;
+    for (int i = 0; i < params.numLayers; ++i)
+      cpp.layers.push_back({params.layers[i].from, params.layers[i].to});
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_borehole(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_rail_track(mine_rail_track_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_rail_track_params cpp;
+    cpp.path = mine_pnts(params.path, params.numPath);
+    cpp.gauge = params.gauge;
+    cpp.doubleTrack = params.doubleTrack != 0;
+    cpp.centerDistance = params.centerDistance;
+    cpp.sleeperSpacing = params.sleeperSpacing;
+    cpp.sleeperMax = params.sleeperMax;
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_rail_track(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_turnout(mine_turnout_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_turnout_params cpp{mine_pnt(params.origin), mine_dir(params.axis),
+                            params.gauge, params.frogNo, params.length};
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_turnout(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_belt(mine_belt_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_belt_params cpp;
+    cpp.path = mine_pnts(params.path, params.numPath);
+    cpp.beltWidth = params.beltWidth;
+    cpp.frameHeight = params.frameHeight;
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_belt(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_scraper(mine_scraper_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_scraper_params cpp;
+    cpp.path = mine_pnts(params.path, params.numPath);
+    cpp.panWidth = params.panWidth;
+    cpp.panHeight = params.panHeight;
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_scraper(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_monorail(mine_monorail_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_monorail_params cpp;
+    cpp.path = mine_pnts(params.path, params.numPath);
+    cpp.railHeight = params.railHeight;
+    cpp.flangeWidth = params.flangeWidth;
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_monorail(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_pipe_run(mine_pipe_run_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_pipe_run_params cpp;
+    cpp.path = mine_pnts(params.path, params.numPath);
+    cpp.diameter = params.diameter;
+    cpp.bracketSpacing = params.bracketSpacing;
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_pipe_run(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_cable_run(mine_cable_run_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_cable_run_params cpp;
+    cpp.path = mine_pnts(params.path, params.numPath);
+    cpp.diameter = params.diameter;
+    cpp.lines = params.lines;
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_cable_run(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_shotcrete(mine_shotcrete_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_shotcrete_params cpp;
+    cpp.origin = mine_pnt(params.origin);
+    cpp.axis = mine_dir(params.axis);
+    cpp.section = mine_section_cast(params.section);
+    cpp.width = params.width;
+    cpp.height = params.height;
+    cpp.thickness = params.thickness;
+    cpp.length = params.length;
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_shotcrete(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_trench(mine_trench_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_trench_params cpp;
+    cpp.path = mine_pnts(params.path, params.numPath);
+    cpp.section = mine_section_cast(params.section);
+    cpp.width = params.width;
+    cpp.height = params.height;
+    cpp.sideOffset = params.sideOffset;
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_trench(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_junction(mine_junction_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_junction_params cpp;
+    cpp.center = mine_pnt(params.center);
+    cpp.mainAxis = mine_dir(params.mainAxis);
+    cpp.branchAngleDeg = params.branchAngleDeg;
+    cpp.section = mine_section_cast(params.section);
+    cpp.width = params.width;
+    cpp.height = params.height;
+    cpp.mainLength = params.mainLength;
+    cpp.branchLength = params.branchLength;
+    cpp.reinforceLength = params.reinforceLength;
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_junction(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_vent_station(mine_vent_station_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_vent_station_params cpp;
+    cpp.section = mine_section_cast(params.section);
+    cpp.width = params.width;
+    cpp.height = params.height;
+    cpp.postWidth = params.postWidth;
+    cpp.depth = params.depth;
+    cpp.center = mine_pnt(params.center);
+    cpp.axis = mine_dir(params.axis);
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_vent_station(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_steel_band(mine_steel_band_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_steel_band_params cpp{params.length, params.width, params.thickness,
+                               params.holeCount, params.holeDia, params.holeEdge};
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_steel_band(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_pipe_fitting(mine_pipe_fitting_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_pipe_fitting_params cpp{mine_pnt(params.center), mine_dir(params.mainAxis),
+                                 params.branchAngleDeg, params.mainLength,
+                                 params.branchLength, params.diameter};
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_pipe_fitting(cpp))};
+  } catch (...) { return nullptr; }
+}
+
+PRIMCAPICALL topo_shape_t *create_mine_fence(mine_fence_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    mine_fence_params cpp;
+    cpp.width = params.width;
+    cpp.height = params.height;
+    cpp.postWidth = params.postWidth;
+    cpp.barWidth = params.barWidth;
+    cpp.thickness = params.thickness;
+    cpp.bars = params.bars;
+    cpp.center = mine_pnt(params.center);
+    cpp.axis = mine_dir(params.axis);
+    return new topo_shape_t{.shp = std::make_shared<shape>(flywave::topo::create_mine_fence(cpp))};
+  } catch (...) { return nullptr; }
+}
+
 #ifdef __cplusplus
 }
 #endif

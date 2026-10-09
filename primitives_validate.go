@@ -1647,8 +1647,478 @@ func specValidationError(params interface{}) error {
 		return p.Validate()
 	case CableRayParams:
 		return p.Validate()
+	case MineShaftParams:
+		return p.Validate()
+	case MineOrepassParams:
+		return p.Validate()
+	case MineFaultLensParams:
+		return p.Validate()
+	case MineLiningParams:
+		return p.Validate()
+	case MineShotcreteParams:
+		return p.Validate()
+	case MineRoadwayParams:
+		return p.Validate()
+	case MineChamberParams:
+		return p.Validate()
+	case MineWorkingfaceParams:
+		return p.Validate()
+	case MineHeadingParams:
+		return p.Validate()
+	case MineAreaBodyParams:
+		return p.Validate()
+	case MineBoltRowParams:
+		return p.Validate()
+	case MineUsteelRowParams:
+		return p.Validate()
+	case MineShieldRowParams:
+		return p.Validate()
+	case MineVentWallParams:
+		return p.Validate()
+	case MineBoxWallParams:
+		return p.Validate()
+	case MineVentDoorParams:
+		return p.Validate()
+	case MineVentWindowParams:
+		return p.Validate()
+	case MineVentBridgeParams:
+		return p.Validate()
+	case MineVentDuctParams:
+		return p.Validate()
+	case MineCollapsePillarParams:
+		return p.Validate()
+	case MineWaterGateWallParams:
+		return p.Validate()
+	case MineWaterGateParams:
+		return p.Validate()
+	case MineBoreholeParams:
+		return p.Validate()
+	case MineRailTrackParams:
+		return p.Validate()
+	case MineTurnoutParams:
+		return p.Validate()
+	case MineBeltParams:
+		return p.Validate()
+	case MineScraperParams:
+		return p.Validate()
+	case MineMonorailParams:
+		return p.Validate()
+	case MinePipeRunParams:
+		return p.Validate()
+	case MineCableRunParams:
+		return p.Validate()
+	case MineTrenchParams:
+		return p.Validate()
+	case MineJunctionParams:
+		return p.Validate()
+	case MineVentStationParams:
+		return p.Validate()
+	case MineSteelBandParams:
+		return p.Validate()
+	case MinePipeFittingParams:
+		return p.Validate()
+	case MineFenceParams:
+		return p.Validate()
 	}
 	return nil
+}
+
+// MineFence(栅栏)。
+func (p *MineFenceParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	mineDim(v, "POSTWIDTH", p.PostWidth)
+	mineDim(v, "BARWIDTH", p.BarWidth)
+	mineDim(v, "THICKNESS", p.Thickness)
+	v.relation(p.Bars >= 1 && p.Bars <= 64, "bars 须在 [1,64]")
+	v.relation(p.PostWidth*2 < p.Width, "立柱须窄于跨")
+	return v.err()
+}
+
+// MineTrench(水沟)。
+func (p *MineTrenchParams) Validate() error {
+	v := &specValidator{}
+	v.relation(len(p.Path) >= 2, "path 须 ≥2 点 (当前 %d)", len(p.Path))
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	v.relation(p.Section >= MineSectionRect && p.Section <= MineSectionEllipse, "section 枚举非法")
+	return v.err()
+}
+
+// MineJunction(交岔点)。
+func (p *MineJunctionParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	mineDim(v, "MAINLENGTH", p.MainLength)
+	mineDim(v, "BRANCHLENGTH", p.BranchLength)
+	v.relation(p.BranchAngleDeg > 0 && p.BranchAngleDeg < 180, "branchAngle 须在 (0,180) 度")
+	v.relation(p.ReinforceLength >= 0, "reinforceLength 须 ≥0")
+	v.relation(p.Section >= MineSectionRect && p.Section <= MineSectionEllipse, "section 枚举非法")
+	return v.err()
+}
+
+// MineVentStation(测风站)。
+func (p *MineVentStationParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	mineDim(v, "POSTWIDTH", p.PostWidth)
+	mineDim(v, "DEPTH", p.Depth)
+	v.relation(p.PostWidth*2 < p.Width, "立柱宽须小于半跨")
+	return v.err()
+}
+
+// MineSteelBand(钢带)。
+func (p *MineSteelBandParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "LENGTH", p.Length)
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "THICKNESS", p.Thickness)
+	v.relation(p.HoleCount >= 0, "holeCount 须 ≥0")
+	if p.HoleCount > 0 {
+		mineDim(v, "HOLDIA", p.HoleDia)
+		v.relation(p.HoleEdge >= 0 && 2*p.HoleEdge < p.Length, "孔位须在带长内")
+	}
+	return v.err()
+}
+
+// MinePipeFitting(三通)。
+func (p *MinePipeFittingParams) Validate() error {
+	v := &specValidator{}
+	v.relation(p.Diameter > 0 && p.Diameter <= 1, "diameter 须在 (0,1]")
+	mineDim(v, "MAINLENGTH", p.MainLength)
+	mineDim(v, "BRANCHLENGTH", p.BranchLength)
+	v.relation(p.BranchAngleDeg > 0 && p.BranchAngleDeg < 180, "branchAngle 须在 (0,180) 度")
+	return v.err()
+}
+
+// ================= 矿山专业图元 (minebim P 线, Q/SHJ 0035.3-2012) =================
+
+// MineShaft(立井井筒): 圆形 inner>0 且 outer>inner; 矩形 内长宽>0 且外>内; depth>0。
+func (p *MineShaftParams) Validate() error {
+	v := &specValidator{}
+	positive(v, "DEPTH", p.Depth)
+	switch p.Shape {
+	case MineShaftCircle:
+		positive(v, "INNERR", p.InnerRadius)
+		v.relation(p.OuterRadius > p.InnerRadius, "OUTERR 须 > INNERR (当前 %v <= %v)", p.OuterRadius, p.InnerRadius)
+	case MineShaftRect:
+		positive(v, "INNERL", p.InnerLength)
+		positive(v, "INNERW", p.InnerWidth)
+		v.relation(p.OuterLength > p.InnerLength, "OUTERL 须 > INNERL (当前 %v <= %v)", p.OuterLength, p.InnerLength)
+		v.relation(p.OuterWidth > p.InnerWidth, "OUTERW 须 > INNERW (当前 %v <= %v)", p.OuterWidth, p.InnerWidth)
+	default:
+		v.relation(false, "SHAPE 枚举非法 (当前 %d, 允许 0=圆形/1=矩形)", p.Shape)
+	}
+	return v.err()
+}
+
+// MineOrepass(煤仓/溜煤眼): ≥2 站, radius>0, depth≥0 严格递增。
+func (p *MineOrepassParams) Validate() error {
+	v := &specValidator{}
+	v.relation(len(p.Stations) >= 2, "站位数须 ≥2 (当前 %d)", len(p.Stations))
+	last := float32(-1)
+	for i, st := range p.Stations {
+		positive(v, fmt.Sprintf("R[%d]", i), st.Radius)
+		nonNegative(v, fmt.Sprintf("D[%d]", i), st.Depth)
+		v.relation(st.Depth > last, "站位深度须严格递增 (站 %d: %v <= %v)", i, st.Depth, last)
+		last = st.Depth
+	}
+	return v.err()
+}
+
+// MineFaultLens(断层破碎带透镜体): dip∈(0,90), width/length>0, top>bottom,
+// 走向与倾向不平行。
+func (p *MineFaultLensParams) Validate() error {
+	v := &specValidator{}
+	v.relation(p.DipAngle > 0 && p.DipAngle < 90, "DIP 须在 (0,90) 度 (当前 %v)", p.DipAngle)
+	positive(v, "WIDTH", p.ZoneWidth)
+	positive(v, "LENGTH", p.ZoneLength)
+	v.relation(p.TopElev > p.BottomElev, "TOP 须 > BOTTOM (当前 %v <= %v)", p.TopElev, p.BottomElev)
+	sd := p.Strike.Data()
+	dd := p.DipAzimuth.Data()
+	dot := sd[0]*dd[0] + sd[1]*dd[1]
+	v.relation(math.Abs(dot) < 0.999, "走向与倾向不得平行 (dot=%v)", dot)
+	return v.err()
+}
+
+// MineLining(支护衬砌壳): ≥3 点, thickness/length>0。
+func (p *MineLiningParams) Validate() error {
+	v := &specValidator{}
+	v.relation(len(p.Points) >= 3, "断面点数须 ≥3 (当前 %d)", len(p.Points))
+	positive(v, "THICKNESS", p.Thickness)
+	positive(v, "LENGTH", p.Length)
+	return v.err()
+}
+
+// MineShotcrete(喷浆壳, 断面枚举式)。
+func (p *MineShotcreteParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	mineDim(v, "THICKNESS", p.Thickness)
+	mineDim(v, "LENGTH", p.Length)
+	v.relation(p.Section >= MineSectionRect && p.Section <= MineSectionEllipse, "section 枚举非法")
+	return v.err()
+}
+
+// ================= 矿山 A~F 组全量校验 (与 C++ 侧同口径, 提前 fail-closed) =================
+
+func mineDim(v *specValidator, name string, val float32) {
+	positive(v, name, val)
+}
+
+// MineRoadway(巷道): path ≥2, 宽高正值, 断面枚举。
+func (p *MineRoadwayParams) Validate() error {
+	v := &specValidator{}
+	v.relation(len(p.Path) >= 2, "path 须 ≥2 点 (当前 %d)", len(p.Path))
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	v.relation(p.Section >= MineSectionRect && p.Section <= MineSectionEllipse, "section 枚举非法")
+	return v.err()
+}
+
+// MineChamber(硐室)。
+func (p *MineChamberParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "LENGTH", p.Length)
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	return v.err()
+}
+
+// MineWorkingface(工作面)。
+func (p *MineWorkingfaceParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "FACELENGTH", p.FaceLength)
+	mineDim(v, "ADVANCE", p.Advance)
+	mineDim(v, "THICKNESS", p.SeamThickness)
+	return v.err()
+}
+
+// MineHeading(迎头)。
+func (p *MineHeadingParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	v.relation(p.Section >= MineSectionRect && p.Section <= MineSectionEllipse, "section 枚举非法")
+	return v.err()
+}
+
+// MineAreaBody(面状体)。
+func (p *MineAreaBodyParams) Validate() error {
+	v := &specValidator{}
+	v.relation(len(p.Boundary) >= 3, "boundary 须 ≥3 点 (当前 %d)", len(p.Boundary))
+	mineDim(v, "HEIGHT", p.Height)
+	return v.err()
+}
+
+// MineBoltRow(锚杆排)。
+func (p *MineBoltRowParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	mineDim(v, "SPACING", p.Spacing)
+	mineDim(v, "BOLTLEN", p.BoltLen)
+	mineDim(v, "DIAMETER", p.Diameter)
+	v.relation(p.RowCount >= 1 && p.RowCount <= 12, "rowCount 须在 [1,12]")
+	v.relation(p.PerRow >= 1 && p.PerRow <= 8, "perRow 须在 [1,8]")
+	return v.err()
+}
+
+// MineUsteelRow(U型钢排)。
+func (p *MineUsteelRowParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	mineDim(v, "THICKNESS", p.Thickness)
+	mineDim(v, "SPACING", p.Spacing)
+	v.relation(p.Count >= 1 && p.Count <= 20, "count 须在 [1,20]")
+	return v.err()
+}
+
+// MineShieldRow(支架排)。
+func (p *MineShieldRowParams) Validate() error {
+	v := &specValidator{}
+	positive(v, "CENTERDIST", p.CenterDist)
+	mineDim(v, "BEAMWIDTH", p.BeamWidth)
+	mineDim(v, "BEAMTHICK", p.BeamThick)
+	mineDim(v, "HEIGHT", p.Height)
+	v.relation(p.Count >= 1 && p.Count <= 400, "count 须在 [1,400]")
+	v.relation(p.MaxLegPairs > 0, "maxLegPairs 须 >0")
+	return v.err()
+}
+
+// MineVentWall(风墙)。
+func (p *MineVentWallParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	mineDim(v, "THICKNESS", p.Thickness)
+	v.relation(p.Section >= MineSectionRect && p.Section <= MineSectionEllipse, "section 枚举非法")
+	return v.err()
+}
+
+// MineBoxWall(矩形墙)。
+func (p *MineBoxWallParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	mineDim(v, "THICKNESS", p.Thickness)
+	return v.err()
+}
+
+// MineVentDoor(风门)。
+func (p *MineVentDoorParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	mineDim(v, "DOORWIDTH", p.DoorWidth)
+	mineDim(v, "DOORHEIGHT", p.DoorHeight)
+	mineDim(v, "DOORTHICK", p.DoorThick)
+	mineDim(v, "FRAMEWIDTH", p.FrameWidth)
+	v.relation(p.DoorWidth < p.Width && p.DoorHeight < p.Height, "门洞须小于断面")
+	return v.err()
+}
+
+// MineVentWindow(风窗)。
+func (p *MineVentWindowParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	mineDim(v, "THICKNESS", p.Thickness)
+	mineDim(v, "WINWIDTH", p.WinWidth)
+	mineDim(v, "WINHEIGHT", p.WinHeight)
+	v.relation(p.WinWidth < p.Width && p.WinSill+p.WinHeight < p.Height, "窗须位于墙内")
+	v.relation(p.Bars >= 0, "bars 须 ≥0")
+	return v.err()
+}
+
+// MineVentBridge(风桥)。
+func (p *MineVentBridgeParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "SPAN", p.Span)
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "THICKNESS", p.Thickness)
+	mineDim(v, "APEX", p.Apex)
+	return v.err()
+}
+
+// MineVentDuct(风筒)。
+func (p *MineVentDuctParams) Validate() error {
+	v := &specValidator{}
+	v.relation(len(p.Path) >= 2, "path 须 ≥2 点 (当前 %d)", len(p.Path))
+	mineDim(v, "DIAMETER", p.Diameter)
+	return v.err()
+}
+
+// MineCollapsePillar(陷落柱)。
+func (p *MineCollapsePillarParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "BOTTOMLONG", p.BottomLong)
+	mineDim(v, "BOTTOMSHORT", p.BottomShort)
+	mineDim(v, "TOPLONG", p.TopLong)
+	mineDim(v, "TOPSHORT", p.TopShort)
+	mineDim(v, "HEIGHT", p.Height)
+	v.relation(p.BottomShort <= p.BottomLong && p.TopShort <= p.TopLong, "长轴须 ≥ 短轴")
+	return v.err()
+}
+
+// MineWaterGateWall(水闸墙)。
+func (p *MineWaterGateWallParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	mineDim(v, "THICKNESS", p.Thickness)
+	v.relation(p.DoorWidth >= 0 && p.DoorHeight >= 0, "门洞须 ≥0")
+	v.relation(p.DoorWidth == 0 || (p.DoorWidth < p.Width && p.DoorHeight < p.Height), "门洞须位于断面内")
+	return v.err()
+}
+
+// MineWaterGate(水闸门)。
+func (p *MineWaterGateParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "WIDTH", p.Width)
+	mineDim(v, "HEIGHT", p.Height)
+	mineDim(v, "DOORWIDTH", p.DoorWidth)
+	mineDim(v, "DOORHEIGHT", p.DoorHeight)
+	mineDim(v, "DOORTHICK", p.DoorThick)
+	mineDim(v, "FRAMEWIDTH", p.FrameWidth)
+	v.relation(p.DoorWidth < p.Width && p.DoorHeight < p.Height, "门须位于断面内")
+	return v.err()
+}
+
+// MineBorehole(钻孔)。
+func (p *MineBoreholeParams) Validate() error {
+	v := &specValidator{}
+	mineDim(v, "DIAMETER", p.Diameter)
+	return v.err()
+}
+
+// MineRailTrack(轨道)。
+func (p *MineRailTrackParams) Validate() error {
+	v := &specValidator{}
+	v.relation(len(p.Path) >= 2, "path 须 ≥2 点 (当前 %d)", len(p.Path))
+	v.relation(p.Gauge > 0 && p.Gauge <= 2, "gauge 须在 (0,2]")
+	v.relation(!p.DoubleTrack || p.CenterDistance > p.Gauge, "双轨中心距须 > 轨距")
+	v.relation(p.SleeperSpacing >= 0, "sleeperSpacing 须 ≥0")
+	return v.err()
+}
+
+// MineTurnout(道岔)。
+func (p *MineTurnoutParams) Validate() error {
+	v := &specValidator{}
+	v.relation(p.Gauge > 0, "gauge 须 >0")
+	v.relation(p.FrogNo >= 2 && p.FrogNo <= 30, "frogNo 须在 [2,30]")
+	v.relation(p.Length > 0 && p.Length <= 200, "length 须在 (0,200]")
+	return v.err()
+}
+
+// MineBelt(带式输送机)。
+func (p *MineBeltParams) Validate() error {
+	v := &specValidator{}
+	v.relation(len(p.Path) >= 2, "path 须 ≥2 点 (当前 %d)", len(p.Path))
+	v.relation(p.BeltWidth > 0 && p.BeltWidth <= 2.5, "beltWidth 须在 (0,2.5]")
+	mineDim(v, "FRAMEHEIGHT", p.FrameHeight)
+	return v.err()
+}
+
+// MineScraper(刮板机)。
+func (p *MineScraperParams) Validate() error {
+	v := &specValidator{}
+	v.relation(len(p.Path) >= 2, "path 须 ≥2 点 (当前 %d)", len(p.Path))
+	mineDim(v, "PANWIDTH", p.PanWidth)
+	mineDim(v, "PANHEIGHT", p.PanHeight)
+	return v.err()
+}
+
+// MineMonorail(单轨吊)。
+func (p *MineMonorailParams) Validate() error {
+	v := &specValidator{}
+	v.relation(len(p.Path) >= 2, "path 须 ≥2 点 (当前 %d)", len(p.Path))
+	v.relation(p.RailHeight > 0 && p.RailHeight <= 0.5, "railHeight 须在 (0,0.5]")
+	v.relation(p.FlangeWidth > 0 && p.FlangeWidth <= 0.3, "flangeWidth 须在 (0,0.3]")
+	return v.err()
+}
+
+// MinePipeRun(管路)。
+func (p *MinePipeRunParams) Validate() error {
+	v := &specValidator{}
+	v.relation(len(p.Path) >= 2, "path 须 ≥2 点 (当前 %d)", len(p.Path))
+	v.relation(p.Diameter > 0 && p.Diameter <= 1, "diameter 须在 (0,1]")
+	v.relation(p.BracketSpacing >= 0, "bracketSpacing 须 ≥0")
+	return v.err()
+}
+
+// MineCableRun(电缆)。
+func (p *MineCableRunParams) Validate() error {
+	v := &specValidator{}
+	v.relation(len(p.Path) >= 2, "path 须 ≥2 点 (当前 %d)", len(p.Path))
+	v.relation(p.Diameter > 0 && p.Diameter <= 0.2, "diameter 须在 (0,0.2]")
+	v.relation(p.Lines >= 1 && p.Lines <= 6, "lines 须在 [1,6]")
+	return v.err()
 }
 
 // rejectParams Create* 入口统一防御: NaN 或规范值域违规均拒绝。

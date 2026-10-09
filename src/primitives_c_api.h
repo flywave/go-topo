@@ -2292,6 +2292,436 @@ PRIMCAPICALL topo_shape_t *create_water_tunnel(water_tunnel_params_t params);
 
 PRIMCAPICALL topo_wire_t create_water_tunnel_centerline(water_tunnel_params_t params);
 
+// ================= 矿山专业图元 (minebim P 线) =================
+// 约定: 断面枚举 int 对齐 Go MineSection (0 rect/1 trap/2 arch/3 arc-arch/
+// 4 horseshoe/5 circle/6 ellipse); bool 以 int 传递; 数组由 Go 侧 malloc/free。
+
+typedef struct {
+  int shape; // 0=圆形, 1=矩形
+  double innerRadius;
+  double outerRadius;
+  double innerLength;
+  double innerWidth;
+  double outerLength;
+  double outerWidth;
+  double depth;
+} mine_shaft_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_shaft(mine_shaft_params_t params);
+PRIMCAPICALL topo_shape_t *create_mine_shaft_at(mine_shaft_params_t params,
+                                                pnt3d_t collarCenter);
+
+typedef struct {
+  double depth;
+  double radius;
+} mine_orepass_station_t;
+
+typedef struct {
+  pnt3d_t center; // 上口中心
+  mine_orepass_station_t *stations;
+  int numStations;
+} mine_orepass_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_orepass(mine_orepass_params_t params);
+
+typedef struct {
+  int section;
+  double width;
+  double height;
+  pnt3d_t *path; // 中心线 3D (含标高)
+  int numPath;
+} mine_roadway_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_roadway(mine_roadway_params_t params);
+
+typedef struct {
+  pnt3d_t center; // 底面中心
+  double length;
+  double width;
+  double height;
+} mine_chamber_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_chamber(mine_chamber_params_t params);
+
+typedef struct {
+  pnt3d_t origin;
+  dir3d_t dir;
+  double faceLength;
+  double advance;
+  double seamThickness;
+} mine_workingface_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_mine_workingface(mine_workingface_params_t params);
+
+typedef struct {
+  pnt3d_t center;
+  dir3d_t dir;
+  int section;
+  double width;
+  double height;
+} mine_heading_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_heading(mine_heading_params_t params);
+
+typedef struct {
+  pnt3d_t *boundary;
+  int numBoundary;
+  double baseZ;
+  double height;
+} mine_area_body_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_mine_area_body(mine_area_body_params_t params);
+
+typedef struct {
+  pnt3d_t origin;
+  dir3d_t axis;
+  int section;
+  double width;
+  double height;
+  int rowCount;
+  int perRow;
+  double spacing;
+  double boltLength;
+  double diameter;
+  int cable;
+} mine_bolt_row_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_bolt_row(mine_bolt_row_params_t params);
+
+typedef struct {
+  pnt3d_t origin;
+  dir3d_t axis;
+  int section;
+  double width;
+  double height;
+  double thickness;
+  double spacing;
+  int count;
+} mine_usteel_row_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_mine_usteel_row(mine_usteel_row_params_t params);
+
+typedef struct {
+  pnt3d_t origin;
+  dir3d_t dir;
+  int count;
+  double centerDist;
+  double beamWidth;
+  double beamThick;
+  double height;
+  int maxLegPairs;
+} mine_shield_row_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_mine_shield_row(mine_shield_row_params_t params);
+
+typedef struct {
+  int section;
+  double width;
+  double height;
+  double thickness;
+  pnt3d_t center;
+  dir3d_t axis;
+} mine_vent_wall_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_vent_wall(mine_vent_wall_params_t params);
+
+typedef struct {
+  double width;
+  double height;
+  double thickness;
+  pnt3d_t center;
+  dir3d_t axis;
+} mine_box_wall_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_box_wall(mine_box_wall_params_t params);
+
+typedef struct {
+  double width;
+  double height;
+  double doorWidth;
+  double doorHeight;
+  double doorThick;
+  double frameWidth;
+  double openAngleDeg;
+  pnt3d_t center;
+  dir3d_t axis;
+} mine_vent_door_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_vent_door(mine_vent_door_params_t params);
+
+typedef struct {
+  double width;
+  double height;
+  double postWidth;
+  double barWidth;
+  double thickness;
+  int bars;
+  pnt3d_t center;
+  dir3d_t axis;
+} mine_fence_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_fence(mine_fence_params_t params);
+
+typedef struct {
+  double width;
+  double height;
+  double thickness;
+  double winWidth;
+  double winHeight;
+  double winSill;
+  int bars;
+  pnt3d_t center;
+  dir3d_t axis;
+} mine_vent_window_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_mine_vent_window(mine_vent_window_params_t params);
+
+typedef struct {
+  double span;
+  double width;
+  double thickness;
+  double apex;
+  pnt3d_t center;
+  dir3d_t axis;
+} mine_vent_bridge_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_mine_vent_bridge(mine_vent_bridge_params_t params);
+
+typedef struct {
+  pnt3d_t *path;
+  int numPath;
+  double diameter;
+} mine_vent_duct_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_vent_duct(mine_vent_duct_params_t params);
+
+typedef struct {
+  pnt3d_t bottomCenter;
+  double bottomLong;
+  double bottomShort;
+  double topLong;
+  double topShort;
+  double height;
+} mine_collapse_pillar_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_mine_collapse_pillar(mine_collapse_pillar_params_t params);
+
+typedef struct {
+  pnt3d_t center;
+  dir3d_t strike;
+  dir3d_t dipAzimuth;
+  double dipAngle; // 度
+  double zoneWidth;
+  double zoneLength;
+  double topElev;
+  double bottomElev;
+} mine_fault_lens_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_mine_fault_lens(mine_fault_lens_params_t params);
+
+typedef struct {
+  double width;
+  double height;
+  double thickness;
+  double doorWidth;
+  double doorHeight;
+  pnt3d_t center;
+  dir3d_t axis;
+} mine_water_gate_wall_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_mine_water_gate_wall(mine_water_gate_wall_params_t params);
+
+typedef struct {
+  double width;
+  double height;
+  double doorWidth;
+  double doorHeight;
+  double doorThick;
+  double frameWidth;
+  pnt3d_t center;
+  dir3d_t axis;
+} mine_water_gate_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_mine_water_gate(mine_water_gate_params_t params);
+
+typedef struct {
+  double from;
+  double to;
+} mine_borehole_layer_t;
+
+typedef struct {
+  pnt3d_t collar;
+  dir3d_t axis;
+  double diameter;
+  mine_borehole_layer_t *layers;
+  int numLayers;
+} mine_borehole_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_borehole(mine_borehole_params_t params);
+
+typedef struct {
+  pnt3d_t *path;
+  int numPath;
+  double gauge;
+  int doubleTrack;
+  double centerDistance;
+  double sleeperSpacing;
+  int sleeperMax;
+} mine_rail_track_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_mine_rail_track(mine_rail_track_params_t params);
+
+typedef struct {
+  pnt3d_t origin;
+  dir3d_t axis;
+  double gauge;
+  double frogNo;
+  double length;
+} mine_turnout_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_turnout(mine_turnout_params_t params);
+
+typedef struct {
+  pnt3d_t *path;
+  int numPath;
+  double beltWidth;
+  double frameHeight;
+} mine_belt_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_belt(mine_belt_params_t params);
+
+typedef struct {
+  pnt3d_t *path;
+  int numPath;
+  double panWidth;
+  double panHeight;
+} mine_scraper_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_scraper(mine_scraper_params_t params);
+
+typedef struct {
+  pnt3d_t *path;
+  int numPath;
+  double railHeight;
+  double flangeWidth;
+} mine_monorail_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_monorail(mine_monorail_params_t params);
+
+typedef struct {
+  pnt3d_t *path;
+  int numPath;
+  double diameter;
+  double bracketSpacing;
+} mine_pipe_run_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_pipe_run(mine_pipe_run_params_t params);
+
+typedef struct {
+  pnt3d_t *path;
+  int numPath;
+  double diameter;
+  int lines;
+} mine_cable_run_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_cable_run(mine_cable_run_params_t params);
+
+typedef struct {
+  pnt3d_t *points; // 断面闭合折线
+  int numPoints;
+  double thickness;
+  double length;
+  dir3d_t dir;
+} mine_lining_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_lining(mine_lining_params_t params);
+
+typedef struct {
+  pnt3d_t *path;
+  int numPath;
+  int section;
+  double width;
+  double height;
+  double sideOffset;
+} mine_trench_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_trench(mine_trench_params_t params);
+
+typedef struct {
+  pnt3d_t center;
+  dir3d_t mainAxis;
+  double branchAngleDeg;
+  int section;
+  double width;
+  double height;
+  double mainLength;
+  double branchLength;
+  double reinforceLength;
+} mine_junction_params_t;
+
+PRIMCAPICALL topo_shape_t *create_mine_junction(mine_junction_params_t params);
+
+typedef struct {
+  int section;
+  double width;
+  double height;
+  double postWidth;
+  double depth;
+  pnt3d_t center;
+  dir3d_t axis;
+} mine_vent_station_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_mine_vent_station(mine_vent_station_params_t params);
+
+typedef struct {
+  double length;
+  double width;
+  double thickness;
+  int holeCount;
+  double holeDia;
+  double holeEdge;
+} mine_steel_band_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_mine_steel_band(mine_steel_band_params_t params);
+
+typedef struct {
+  pnt3d_t center;
+  dir3d_t mainAxis;
+  double branchAngleDeg;
+  double mainLength;
+  double branchLength;
+  double diameter;
+} mine_pipe_fitting_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_mine_pipe_fitting(mine_pipe_fitting_params_t params);
+
+typedef struct {
+  pnt3d_t origin;
+  dir3d_t axis;
+  int section;
+  double width;
+  double height;
+  double thickness;
+  double length;
+} mine_shotcrete_params_t;
+
+PRIMCAPICALL topo_shape_t *
+create_mine_shotcrete(mine_shotcrete_params_t params);
+
 #ifdef __cplusplus
 }
 #endif

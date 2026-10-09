@@ -255,6 +255,154 @@ func galleryCases() []galleryEntry {
 		{"CableRay(光缆槽盒)", "EC", func() *Shape {
 			return CreateCableRay(CableRayParams{OuterLength: 240, OuterHeight: 120, InnerLength: 200, InnerHeight: 90, CoverThickness: 6})
 		}, false},
+		// ===== 矿山专业 (minebim P 线, Q/SHJ 0035.3-2012) =====
+		{"MineShaft(圆形立井)", "MINE", func() *Shape {
+			return CreateMineShaft(MineShaftParams{Shape: MineShaftCircle, InnerRadius: 3, OuterRadius: 3.5, Depth: 60})
+		}, false},
+		{"MineShaft(矩形立井)", "MINE", func() *Shape {
+			return CreateMineShaft(MineShaftParams{Shape: MineShaftRect, InnerLength: 4, InnerWidth: 3, OuterLength: 5, OuterWidth: 4, Depth: 50})
+		}, false},
+		{"MineOrepass(煤仓变径)", "MINE", func() *Shape {
+			return CreateMineOrepass(MineOrepassParams{
+				Center: NewPoint3([3]float64{0, 0, 0}),
+				Stations: []MineOrepassStation{
+					{Depth: 0, Radius: 2.5}, {Depth: 20, Radius: 2.5}, {Depth: 35, Radius: 1.5}, {Depth: 60, Radius: 1.5},
+				},
+			})
+		}, false},
+		{"MineFaultLens(断层透镜体)", "MINE", func() *Shape {
+			return CreateMineFaultLens(MineFaultLensParams{
+				Center: NewPoint3([3]float64{0, 0, 0}), Strike: NewDir3FromXYZ([3]float64{1, 0, 0}),
+				DipAzimuth: NewDir3FromXYZ([3]float64{0, 1, 0}), DipAngle: 30,
+				ZoneWidth: 8, ZoneLength: 120, TopElev: 50, BottomElev: -150,
+			})
+		}, false},
+		{"MineRoadway(半圆拱巷道)", "MINE", func() *Shape {
+			return CreateMineRoadway(MineRoadwayParams{Section: MineSectionArch, Width: 4.6, Height: 3.6, Path: []Point3{
+				NewPoint3([3]float64{0, 0, 0}), NewPoint3([3]float64{200, 0, -5}), NewPoint3([3]float64{200, 120, -5})}})
+		}, false},
+		{"MineRoadway(圆弧拱)", "MINE", func() *Shape {
+			return CreateMineRoadway(MineRoadwayParams{Section: MineSectionArcArch, Width: 4.6, Height: 3.8, Path: []Point3{
+				NewPoint3([3]float64{0, 0, 0}), NewPoint3([3]float64{120, 0, 0})}})
+		}, false},
+		{"MineRoadway(椭圆)", "MINE", func() *Shape {
+			return CreateMineRoadway(MineRoadwayParams{Section: MineSectionEllipse, Width: 4.2, Height: 3.8, Path: []Point3{
+				NewPoint3([3]float64{0, 0, 0}), NewPoint3([3]float64{120, 0, 0})}})
+		}, false},
+		{"MineChamber(硐室)", "MINE", func() *Shape {
+			return CreateMineChamber(MineChamberParams{Center: NewPoint3([3]float64{50, 50, 0}), Length: 8, Width: 5, Height: 4})
+		}, false},
+		{"MineBoltRow(锚杆排)", "MINE", func() *Shape {
+			return CreateMineBoltRow(MineBoltRowParams{Origin: NewPoint3([3]float64{0, 0, 0}), Axis: NewDir3FromXYZ([3]float64{1, 0, 0}),
+				Section: MineSectionArch, Width: 4.6, Height: 3.6, RowCount: 3, PerRow: 5, Spacing: 1.2, BoltLen: 2.2, Diameter: 0.022})
+		}, false},
+		{"MineShotcrete(喷浆壳)", "MINE", func() *Shape {
+			return CreateMineShotcrete(MineShotcreteParams{Origin: NewPoint3([3]float64{0, 0, 0}), Axis: NewDir3FromXYZ([3]float64{1, 0, 0}),
+				Section: MineSectionArch, Width: 4.6, Height: 3.6, Thickness: 0.12, Length: 30})
+		}, false},
+		{"MineUsteelRow(U型钢排)", "MINE", func() *Shape {
+			return CreateMineUsteelRow(MineUsteelRowParams{Origin: NewPoint3([3]float64{0, 0, 0}), Axis: NewDir3FromXYZ([3]float64{1, 0, 0}),
+				Section: MineSectionArch, Width: 4.6, Height: 3.6, Thickness: 0.12, Spacing: 0.8, Count: 4})
+		}, false},
+		{"MineShieldRow(支架排)", "MINE", func() *Shape {
+			return CreateMineShieldRow(MineShieldRowParams{Origin: NewPoint3([3]float64{0, 0, 0}), Dir: NewDir3FromXYZ([3]float64{0, 1, 0}),
+				Count: 12, CenterDist: 1.75, BeamWidth: 1.8, BeamThick: 0.3, Height: 3.2, MaxLegPairs: 24})
+		}, false},
+		{"MineVentWall(风墙)", "MINE", func() *Shape {
+			return CreateMineVentWall(MineVentWallParams{Section: MineSectionArch, Width: 4.6, Height: 3.6, Thickness: 0.5,
+				Center: NewPoint3([3]float64{100, 0, 0}), Axis: NewDir3FromXYZ([3]float64{1, 0, 0})})
+		}, false},
+		{"MineVentDoor(风门开启)", "MINE", func() *Shape {
+			return CreateMineVentDoor(MineVentDoorParams{Width: 4.6, Height: 3.6, DoorWidth: 2, DoorHeight: 2.2, DoorThick: 0.08,
+				FrameWidth: 0.3, OpenAngleDeg: 80, Center: NewPoint3([3]float64{50, 0, 0}), Axis: NewDir3FromXYZ([3]float64{1, 0, 0})})
+		}, false},
+		{"MineVentWindow(风窗)", "MINE", func() *Shape {
+			return CreateMineVentWindow(MineVentWindowParams{Width: 4.6, Height: 3.2, Thickness: 0.5, WinWidth: 1.2, WinHeight: 0.8,
+				WinSill: 1.2, Bars: 4, Center: NewPoint3([3]float64{60, 0, 0}), Axis: NewDir3FromXYZ([3]float64{1, 0, 0})})
+		}, false},
+		{"MineVentBridge(风桥)", "MINE", func() *Shape {
+			return CreateMineVentBridge(MineVentBridgeParams{Span: 4, Width: 3.4, Thickness: 0.4, Apex: 3.2,
+				Center: NewPoint3([3]float64{0, 0, 0}), Axis: NewDir3FromXYZ([3]float64{1, 0, 0})})
+		}, false},
+		{"MineVentDuct(风筒)", "MINE", func() *Shape {
+			return CreateMineVentDuct(MineVentDuctParams{Path: []Point3{NewPoint3([3]float64{0, 0, 2.6}), NewPoint3([3]float64{120, 0, 2.6})}, Diameter: 0.8})
+		}, false},
+		{"MineCollapsePillar(陷落柱)", "MINE", func() *Shape {
+			return CreateMineCollapsePillar(MineCollapsePillarParams{BottomCenter: NewPoint3([3]float64{300, 300, -460}),
+				BottomLong: 24, BottomShort: 15.6, TopLong: 40, TopShort: 26, Height: 150})
+		}, false},
+		{"MineWaterGate(水闸门)", "MINE", func() *Shape {
+			return CreateMineWaterGate(MineWaterGateParams{Width: 4.2, Height: 3.4, DoorWidth: 1.6, DoorHeight: 2,
+				DoorThick: 0.15, FrameWidth: 0.35, Center: NewPoint3([3]float64{0, 750, 0}), Axis: NewDir3FromXYZ([3]float64{1, 0, 0})})
+		}, false},
+		{"MineBorehole(分层钻孔)", "MINE", func() *Shape {
+			return CreateMineBorehole(MineBoreholeParams{Collar: NewPoint3([3]float64{100, 900, 1240}),
+				Axis: NewDir3FromXYZ([3]float64{0.25, 0.25, -0.94}), Diameter: 0.13,
+				Layers: []MineBoreholeLayer{{From: 0, To: 200}, {From: 200, To: 350}, {From: 350, To: 500}}})
+		}, false},
+		{"MineRailTrack(轨道)", "MINE", func() *Shape {
+			return CreateMineRailTrack(MineRailTrackParams{Path: []Point3{NewPoint3([3]float64{0, 0, 0}), NewPoint3([3]float64{200, 0, 0})},
+				Gauge: 0.9, SleeperSpacing: 0.7, SleeperMax: 300})
+		}, false},
+		{"MineTurnout(道岔)", "MINE", func() *Shape {
+			return CreateMineTurnout(MineTurnoutParams{Origin: NewPoint3([3]float64{50, 0, 0}), Axis: NewDir3FromXYZ([3]float64{1, 0, 0}),
+				Gauge: 0.9, FrogNo: 9, Length: 30})
+		}, false},
+		{"MineBelt(带式输送机)", "MINE", func() *Shape {
+			return CreateMineBelt(MineBeltParams{Path: []Point3{NewPoint3([3]float64{0, 0, 0}), NewPoint3([3]float64{400, 0, 0})},
+				BeltWidth: 1.2, FrameHeight: 0.9})
+		}, false},
+		{"MineMonorail(单轨吊)", "MINE", func() *Shape {
+			return CreateMineMonorail(MineMonorailParams{Path: []Point3{NewPoint3([3]float64{0, 0, 0}), NewPoint3([3]float64{150, 0, 0})},
+				RailHeight: 0.155, FlangeWidth: 0.068})
+		}, false},
+		{"MinePipeRun(管路+托架)", "MINE", func() *Shape {
+			return CreateMinePipeRun(MinePipeRunParams{Path: []Point3{NewPoint3([3]float64{0, 0, 0.3}), NewPoint3([3]float64{120, 0, 0.3})},
+				Diameter: 0.15, BracketSpacing: 3})
+		}, false},
+		{"MineCableRun(多缆)", "MINE", func() *Shape {
+			return CreateMineCableRun(MineCableRunParams{Path: []Point3{NewPoint3([3]float64{0, 0, 2.2}), NewPoint3([3]float64{120, 0, 2.2})},
+				Diameter: 0.05, Lines: 3})
+		}, false},
+		{"MineTrench(水沟)", "MINE", func() *Shape {
+			return CreateMineTrench(MineTrenchParams{Path: []Point3{NewPoint3([3]float64{0, 0, 0}), NewPoint3([3]float64{120, 0, 0})},
+				Section: MineSectionTrap, Width: 0.5, Height: 0.4, SideOffset: 1.6})
+		}, false},
+		{"MineJunction(交岔点)", "MINE", func() *Shape {
+			return CreateMineJunction(MineJunctionParams{Center: NewPoint3([3]float64{100, 100, 0}),
+				MainAxis: NewDir3FromXYZ([3]float64{1, 0, 0}), BranchAngleDeg: 45,
+				Section: MineSectionArch, Width: 4.2, Height: 3.4,
+				MainLength: 60, BranchLength: 40, ReinforceLength: 0.6})
+		}, false},
+		{"MineVentStation(测风站)", "MINE", func() *Shape {
+			return CreateMineVentStation(MineVentStationParams{Section: MineSectionRect, Width: 4.2, Height: 3.2,
+				PostWidth: 0.2, Depth: 0.15, Center: NewPoint3([3]float64{50, 0, 0}), Axis: NewDir3FromXYZ([3]float64{1, 0, 0})})
+		}, false},
+		{"MineSteelBand(钢带)", "MINE", func() *Shape {
+			return CreateMineSteelBand(MineSteelBandParams{Length: 3, Width: 0.28, Thickness: 0.003,
+				HoleCount: 5, HoleDia: 0.043, HoleEdge: 0.15})
+		}, false},
+		{"MinePipeFitting(三通)", "MINE", func() *Shape {
+			return CreateMinePipeFitting(MinePipeFittingParams{Center: NewPoint3([3]float64{200, 0, 2.4}),
+				MainAxis: NewDir3FromXYZ([3]float64{1, 0, 0}), BranchAngleDeg: 90,
+				MainLength: 4, BranchLength: 2.4, Diameter: 0.15})
+		}, false},
+		{"MineLining(半圆拱衬砌)", "MINE", func() *Shape {
+			w, h := 4.6, 3.6
+			hw := w / 2
+			wall := h - hw
+			raw := [][2]float64{{-hw, 0}, {-hw, wall}}
+			for i := 1; i <= 10; i++ {
+				a := math.Pi - float64(i)/10*math.Pi
+				raw = append(raw, [2]float64{hw * math.Cos(a), wall + hw*math.Sin(a)})
+			}
+			raw = append(raw, [2]float64{hw, 0})
+			pts := make([]Point3, 0, len(raw))
+			for _, q := range raw {
+				pts = append(pts, NewPoint3([3]float64{q[0], q[1], 0}))
+			}
+			return CreateMineLining(MineLiningParams{Points: pts, Thickness: 0.12, Length: 20, Dir: NewDir3FromXYZ([3]float64{0, 0, 1})})
+		}, false},
 	}
 }
 

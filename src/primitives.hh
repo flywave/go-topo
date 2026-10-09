@@ -19,6 +19,9 @@
 
 #include "transition_mode.hh"
 
+// 矿山专业参数化图元 (minebim P 线): 自包含声明, 必须在命名空间外 include。
+#include "primitives_mine.hh"
+
 namespace flywave {
 namespace topo {
 
