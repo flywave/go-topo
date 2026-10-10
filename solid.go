@@ -512,7 +512,7 @@ func (s *Solid) Revolve(f *Face, p1, p2 Point3, angle float64) int {
 
 func (s *Solid) Loft(profiles []Shape, ruled bool, tolerance float64) int {
 	// 在C堆上分配数组
-	cProfiles := C.malloc(C.size_t(len(profiles)) * C.size_t(unsafe.Sizeof(C.struct__topo_shape_t{})))
+	cProfiles := C.malloc(C.size_t(len(profiles)) * C.size_t(unsafe.Sizeof(uintptr(0))))
 	defer C.free(cProfiles)
 
 	// 转换为切片以便填充数据
@@ -574,7 +574,7 @@ func (s *Solid) SweepCompound(spine *Wire, profiles []SweepProfile, cornerMode i
 
 func (s *Solid) Sweep(spine *Wire, profiles []Shape, cornerMode int) int {
 	// 分配C内存
-	cProfiles := C.malloc(C.size_t(len(profiles)) * C.size_t(unsafe.Sizeof(C.struct__topo_shape_t{})))
+	cProfiles := C.malloc(C.size_t(len(profiles)) * C.size_t(unsafe.Sizeof(uintptr(0))))
 	defer C.free(cProfiles)
 
 	profilesSlice := (*[1<<30 - 1]*C.struct__topo_shape_t)(unsafe.Pointer(cProfiles))[:len(profiles)]

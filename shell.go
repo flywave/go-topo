@@ -40,7 +40,7 @@ func (s *Shell) Sweep(spine *Wire, profiles []Shape, cornerMode int) (int, error
 	}
 
 	// 在C堆上分配内存
-	cProfiles := C.malloc(C.size_t(len(profiles)) * C.size_t(unsafe.Sizeof(C.struct__topo_shape_t{})))
+	cProfiles := C.malloc(C.size_t(len(profiles)) * C.size_t(unsafe.Sizeof(uintptr(0))))
 	defer C.free(cProfiles)
 
 	profilesSlice := (*[1<<30 - 1]*C.struct__topo_shape_t)(unsafe.Pointer(cProfiles))[:len(profiles):len(profiles)]

@@ -275,7 +275,7 @@ func NewLinearXYZConstraintDim1(ppc []PinpointConstraint, coffes []float64) (*Li
 	}
 
 	// 在C堆上分配内存
-	cConstraints := C.malloc(C.size_t(len(ppc)) * C.size_t(unsafe.Sizeof(C.struct__plate_pinpoint_constraint_t{})))
+	cConstraints := C.malloc(C.size_t(len(ppc)) * C.size_t(unsafe.Sizeof(uintptr(0))))
 	defer C.free(cConstraints)
 
 	cCoeffs := C.malloc(C.size_t(len(coffes)) * C.size_t(unsafe.Sizeof(C.double(0))))
@@ -533,7 +533,7 @@ func NewSampledCurveConstraint(ppc []PinpointConstraint) (*SampledCurveConstrain
 	}
 
 	// 在C堆上分配内存
-	cConstraints := C.malloc(C.size_t(len(ppc)) * C.size_t(unsafe.Sizeof(C.struct__plate_pinpoint_constraint_t{})))
+	cConstraints := C.malloc(C.size_t(len(ppc)) * C.size_t(unsafe.Sizeof(uintptr(0))))
 	defer C.free(cConstraints)
 
 	// 填充数据

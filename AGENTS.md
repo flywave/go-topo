@@ -135,6 +135,12 @@ OCCT 把与外环**同绕向**的内环读成凸台而非孔: 面拓扑正确但
 
 排查手法: 这类崩溃的栈落在**析构/finalizer**里, 与最初触发它的测试相隔很远, 别按崩溃点附近的功能去猜。用「换回未修复的 lib 重跑」做对照可确认因果关系。
 
+## C API 不完整类型不能用作数组元素尺寸 (已修复五处堆越界)
+
+cgo 对头文件里只有前置声明的不完整类型 (`typedef struct _topo_shape_t topo_shape_t;`, 无定义) 生成 **0 字节**占位类型 (`runtime/cgo.Incomplete`), 所以 `unsafe.Sizeof(C.struct__topo_shape_t{})` == 0。给 `**topo_shape_t` 这类"元素指针数组"分配 C 堆内存必须按**指针**定长 (`unsafe.Sizeof(uintptr(0))`, 同 compound.go 的写法); 按 `sizeof(结构体)` 定长会 `malloc(0)` 后仍按 8 字节/元素越界写 —— ≥3 个元素即越过 malloc(0) 最小块的可用空间。小写入量被分配器冗余空间吞掉, 不立刻崩, 属于静默堆破坏。
+
+2026-10 修复的五处: `Shell.Sweep` (shell.go)、`Solid.Loft` / `Solid.Sweep` (solid.go)、`NewLinearXYZConstraintDim1` / `NewSampledCurveConstraint` (plate_plate.go)。全库审计结论: 其余出现在 `unsafe.Sizeof(C.struct...)` 里的类型头文件里都有完整定义, 不完整类型的只有 `_topo_shape_t` 与 `_plate_pinpoint_constraint_t` (`_topo_sweep_profile_t` 在 libs 头里是匿名但完整的 struct typedef, 安全)。判别方法: `go tool cgo` 生成的 `_cgo_gotypes.go` 中类型若声明为 `_cgopackage.Incomplete` 即 0 字节。回归: `TestCgoProfilePointerArrays` (cgo_profile_array_test.go, 8 元素走全部五条路径; 检出越界需 `go test -asan`, darwin/arm64 不支持 ASan 时退化为冒烟)。
+
 ## 已知残留: TestFitCenterlineRobustness 约 7% 抖动 (非缺陷)
 
 `bounding_pipe.cc` 的中心线拟合在**近退化几何**上结果有微幅抖动, 表现为 `TestFitCenterlineRobustness` 约 7% 的运行失败, 且每次失败的子用例不同 (实测: 一次 `Helix_tight_coil` 返回 nil, 另一次 `U-bend` 长度短 17%)。
