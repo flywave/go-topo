@@ -86,6 +86,9 @@ func GeomMakeBSplineCurve(poles []Point3, knots []float64, multiplicities []int,
 	if len(poles) == 0 || len(knots) == 0 || len(multiplicities) == 0 {
 		return nil
 	}
+	if len(knots) != len(multiplicities) {
+		return nil
+	}
 
 	// 分配C内存
 	cPoints := C.malloc(C.size_t(len(poles)) * C.size_t(unsafe.Sizeof(C.struct__pnt3d_t{})))
@@ -108,16 +111,21 @@ func GeomMakeBSplineCurve(poles []Point3, knots []float64, multiplicities []int,
 		*(*C.int)(unsafe.Pointer(uintptr(cMults) + uintptr(i)*unsafe.Sizeof(C.int(0)))) = C.int(multiplicities[i])
 	}
 
+	cg := C.geom_make_bspline_curve(
+		(*C.struct__pnt3d_t)(cPoints),
+		(*C.double)(cKnots),
+		(*C.int)(cMults),
+		C.int(len(poles)),
+		C.int(len(knots)),
+		C.int(degree),
+		C.bool(periodic),
+	)
+	if cg == nil {
+		return nil
+	}
 	return &GeomBSplineCurve{
 		inner: &innerGeomBSplineCurve{
-			geom: C.geom_make_bspline_curve(
-				(*C.struct__pnt3d_t)(cPoints),
-				(*C.double)(cKnots),
-				(*C.int)(cMults),
-				C.int(len(poles)),
-				C.int(degree),
-				C.bool(periodic),
-			),
+			geom: cg,
 		},
 	}
 }
@@ -158,18 +166,23 @@ func GeomMakeBSplineCurveFromWeight(poles []Point3, weights []float64, knots []f
 		*(*C.int)(unsafe.Pointer(uintptr(cMults) + uintptr(i)*unsafe.Sizeof(C.int(0)))) = C.int(multiplicities[i])
 	}
 
+	cg := C.geom_make_bspline_curve_from_weight(
+		(*C.struct__pnt3d_t)(cPoints),
+		(*C.double)(cWeights),
+		(*C.double)(cKnots),
+		(*C.int)(cMults),
+		C.int(len(poles)),
+		C.int(len(knots)),
+		C.int(degree),
+		C.bool(periodic),
+		C.bool(false),
+	)
+	if cg == nil {
+		return nil
+	}
 	return &GeomBSplineCurve{
 		inner: &innerGeomBSplineCurve{
-			geom: C.geom_make_bspline_curve_from_weight(
-				(*C.struct__pnt3d_t)(cPoints),
-				(*C.double)(cWeights),
-				(*C.double)(cKnots),
-				(*C.int)(cMults),
-				C.int(len(poles)),
-				C.int(degree),
-				C.bool(periodic),
-				C.bool(false),
-			),
+			geom: cg,
 		},
 	}
 }

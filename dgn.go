@@ -148,8 +148,59 @@ func (r *DgnReader) wireFor(e *scene.Entity) *Wire {
 		return r.arcWire(e, false)
 	case scene.KindEllipse:
 		return r.arcWire(e, true)
+	case scene.KindBSplineCurve:
+		return r.bsplineWire(e)
 	}
 	return nil // text / celldef / cellref / complexheader: metadata only
+}
+
+// bsplineWire builds an exact OCCT B-spline edge from the assembled poles
+// and full expanded knot vector (v7 type 27; scene.KindBSplineCurve).
+// Knot multiplicities are recovered from the expanded vector; rational
+// curves (weights present) go through the weighted constructor.
+func (r *DgnReader) bsplineWire(e *scene.Entity) *Wire {
+	if len(e.Points) < 2 || len(e.Knots) == 0 || e.Degree < 1 {
+		return nil
+	}
+	poles := make([]Point3, len(e.Points))
+	for i, p := range e.Points {
+		poles[i] = NewPoint3(r.scalePoint(p))
+	}
+	uniq, mults := knotsToMults(e.Knots)
+	var g *GeomBSplineCurve
+	if len(e.Weights) == len(poles) {
+		g = GeomMakeBSplineCurveFromWeight(poles, e.Weights, uniq, mults, e.Degree, false)
+	} else {
+		g = GeomMakeBSplineCurve(poles, uniq, mults, e.Degree, false)
+	}
+	if g == nil {
+		return nil
+	}
+	c := g.Curve()
+	if c == nil {
+		return nil
+	}
+	edge := TopoMakeEdgeFromCurve(*c)
+	if edge == nil || edge.IsNull() {
+		return nil
+	}
+	return TopoMakeWireFromEdge(*edge)
+}
+
+// knotsToMults compresses an expanded knot vector into OCCT's
+// (unique knots, multiplicities) form.
+func knotsToMults(knots []float64) ([]float64, []int) {
+	uniq := []float64{knots[0]}
+	mults := []int{1}
+	for _, k := range knots[1:] {
+		if k == uniq[len(uniq)-1] {
+			mults[len(mults)-1]++
+			continue
+		}
+		uniq = append(uniq, k)
+		mults = append(mults, 1)
+	}
+	return uniq, mults
 }
 
 // arcWire builds a wire for an arc/ellipse. Full circles/ellipses use the

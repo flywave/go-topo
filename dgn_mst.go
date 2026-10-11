@@ -40,14 +40,22 @@ func DgnToMstEps(path string, eps float64) ([]*mst.Mesh, error) {
 	return r.toMst(eps), nil
 }
 
-// toMst tessellates every wire-bearing entity into one outline MeshNode.
+// toMst tessellates every wire-bearing entity into one outline MeshNode
+// and cones into a face MeshNode.
 func (r *DgnReader) toMst(eps float64) []*mst.Mesh {
 	mesh := mst.NewMesh()
 	mesh.Materials = append(mesh.Materials, &mst.BaseMaterial{
 		Color: [3]byte{255, 255, 255},
 	})
 	for i := range r.ents {
-		pts := r.tessellate(&r.ents[i], eps)
+		e := &r.ents[i]
+		if e.Kind == scene.KindCone {
+			if nd := r.coneNode(e); nd != nil {
+				mesh.Nodes = append(mesh.Nodes, nd)
+			}
+			continue
+		}
+		pts := r.tessellate(e, eps)
 		if len(pts) < 2 {
 			continue
 		}
@@ -91,8 +99,10 @@ func (r *DgnReader) tessellate(e *scene.Entity, eps float64) [][3]float64 {
 		return r.tessArc(e, false, eps)
 	case scene.KindEllipse:
 		return r.tessArc(e, true, eps)
+	case scene.KindBSplineCurve:
+		return r.tessBSpline(e)
 	}
-	return nil
+	return nil // text / cell / point-string / metadata; cone handled by coneNode
 }
 
 // tessArc samples an arc (circle or ellipse) at chordal error eps.
@@ -186,4 +196,189 @@ func arcOutlinePoint(a *scene.Arc, c [3]float64, rx, ry, theta float64) [3]float
 		v = [3]float64{cs*v[0] - sn*v[1], sn*v[0] + cs*v[1], v[2]}
 	}
 	return [3]float64{c[0] + v[0], c[1] + v[1], c[2] + v[2]}
+}
+
+// tessBSpline samples an assembled B-spline curve (scene.KindBSplineCurve)
+// with de Boor's algorithm at n+1 uniform parameters across the domain
+// [knots[degree], knots[len−1−degree]]; n = clamp(2·poles, 16, 128).
+// Pure Go — the mesh path stays cgo-free.
+func (r *DgnReader) tessBSpline(e *scene.Entity) [][3]float64 {
+	if len(e.Points) < 2 || len(e.Knots) == 0 || e.Degree < 1 {
+		return nil
+	}
+	poles := make([][3]float64, len(e.Points))
+	for i, p := range e.Points {
+		poles[i] = r.scalePoint(p)
+	}
+	n := 2 * len(poles)
+	if n < 16 {
+		n = 16
+	}
+	if n > 128 {
+		n = 128
+	}
+	t0 := e.Knots[e.Degree]
+	t1 := e.Knots[len(e.Knots)-1-e.Degree]
+	pts := make([][3]float64, n+1)
+	for i := 0; i <= n; i++ {
+		t := t0 + (t1-t0)*float64(i)/float64(n)
+		pts[i] = deBoor(poles, e.Knots, e.Weights, e.Degree, t)
+	}
+	return pts
+}
+
+// deBoor evaluates a (possibly rational) clamped B-spline at parameter t.
+// Weights nil means non-rational (homogeneous weight 1). The algorithm
+// works in homogeneous space and divides by w at the end.
+func deBoor(poles [][3]float64, knots []float64, weights []float64, degree int, t float64) [3]float64 {
+	p := degree
+	t0, t1 := knots[p], knots[len(knots)-1-p]
+	if t < t0 {
+		t = t0
+	}
+	if t > t1 {
+		t = t1
+	}
+	// span k: knots[k] <= t < knots[k+1], k in [p, n]
+	n := len(poles) - 1
+	k := n
+	for i := p; i < n; i++ {
+		if t < knots[i+1] {
+			k = i
+			break
+		}
+	}
+	type hp struct{ x, y, z, w float64 }
+	d := make([]hp, p+1)
+	for j := 0; j <= p; j++ {
+		idx := k - p + j
+		wt := 1.0
+		if idx < len(weights) {
+			wt = weights[idx]
+		}
+		d[j] = hp{poles[idx][0] * wt, poles[idx][1] * wt, poles[idx][2] * wt, wt}
+	}
+	for lev := 1; lev <= p; lev++ {
+		for j := p; j >= lev; j-- {
+			i := k - p + j
+			denom := knots[i+p-lev+1] - knots[i]
+			alpha := 0.0
+			if denom != 0 {
+				alpha = (t - knots[i]) / denom
+			}
+			d[j].x = (1-alpha)*d[j-1].x + alpha*d[j].x
+			d[j].y = (1-alpha)*d[j-1].y + alpha*d[j].y
+			d[j].z = (1-alpha)*d[j-1].z + alpha*d[j].z
+			d[j].w = (1-alpha)*d[j-1].w + alpha*d[j].w
+		}
+	}
+	if d[p].w == 0 {
+		return poles[k]
+	}
+	return [3]float64{d[p].x / d[p].w, d[p].y / d[p].w, d[p].z / d[p].w}
+}
+
+// coneSegmentCount is the ring resolution of a triangulated cone/frustum.
+const coneSegmentCount = 32
+
+// coneNode triangulates a KindCone frustum into a face MeshNode: two
+// rings of coneSegmentCount+1 vertices (closed seam) plus cap fans from
+// the center points. A zero radius collapses that end to its apex.
+func (r *DgnReader) coneNode(e *scene.Entity) *mst.MeshNode {
+	if len(e.Points) < 2 {
+		return nil
+	}
+	c1 := r.scalePoint(e.Points[0])
+	c2 := r.scalePoint(e.Points[1])
+	r1, r2 := e.Radii[0], e.Radii[1]
+	if r.units > 0 {
+		r1 /= r.units
+		r2 /= r.units
+	}
+	if r1 < 0 {
+		r1 = -r1
+	}
+	if r2 < 0 {
+		r2 = -r2
+	}
+	if r1 == 0 && r2 == 0 {
+		return nil
+	}
+	// orthonormal frame around the axis
+	axis := [3]float64{c2[0] - c1[0], c2[1] - c1[1], c2[2] - c1[2]}
+	al := math.Sqrt(axis[0]*axis[0] + axis[1]*axis[1] + axis[2]*axis[2])
+	if al == 0 {
+		axis = [3]float64{0, 0, 1}
+		al = 1
+	}
+	axis = [3]float64{axis[0] / al, axis[1] / al, axis[2] / al}
+	helper := [3]float64{1, 0, 0}
+	if math.Abs(axis[0]) > 0.9 {
+		helper = [3]float64{0, 1, 0}
+	}
+	u := [3]float64{
+		axis[1]*helper[2] - axis[2]*helper[1],
+		axis[2]*helper[0] - axis[0]*helper[2],
+		axis[0]*helper[1] - axis[1]*helper[0],
+	}
+	ul := math.Sqrt(u[0]*u[0] + u[1]*u[1] + u[2]*u[2])
+	u = [3]float64{u[0] / ul, u[1] / ul, u[2] / ul}
+	v := [3]float64{
+		axis[1]*u[2] - axis[2]*u[1],
+		axis[2]*u[0] - axis[0]*u[2],
+		axis[0]*u[1] - axis[1]*u[0],
+	}
+
+	n := coneSegmentCount
+	verts := make([]vec3.T, 0, 2*(n+1)+2)
+	ring := func(c [3]float64, rad float64) {
+		for i := 0; i <= n; i++ {
+			a := 2 * math.Pi * float64(i) / float64(n)
+			cs, sn := math.Cos(a), math.Sin(a)
+			p := [3]float64{
+				c[0] + rad*(cs*u[0]+sn*v[0]),
+				c[1] + rad*(cs*u[1]+sn*v[1]),
+				c[2] + rad*(cs*u[2]+sn*v[2]),
+			}
+			verts = append(verts, vec3.T{float32(p[0]), float32(p[1]), float32(p[2])})
+		}
+	}
+	ring(c1, r1)
+	ring(c2, r2)
+	c1Idx := uint32(len(verts))
+	verts = append(verts, vec3.T{float32(c1[0]), float32(c1[1]), float32(c1[2])})
+	c2Idx := uint32(len(verts))
+	verts = append(verts, vec3.T{float32(c2[0]), float32(c2[1]), float32(c2[2])})
+
+	r1Base, r2Base := uint32(0), uint32(n+1)
+	face := func(a, b, c uint32) *mst.Face {
+		return &mst.Face{Vertex: [3]uint32{a, b, c}}
+	}
+	var faces []*mst.Face
+	for i := 0; i < n; i++ {
+		a, b := r1Base+uint32(i), r1Base+uint32(i+1)
+		c, d := r2Base+uint32(i), r2Base+uint32(i+1)
+		switch {
+		case r1 > 0 && r2 > 0:
+			faces = append(faces, face(a, c, d), face(a, d, b))
+		case r1 == 0: // apex at c1
+			faces = append(faces, face(c1Idx, c, d))
+		default: // apex at c2
+			faces = append(faces, face(a, c2Idx, b))
+		}
+	}
+	if r1 > 0 {
+		for i := 0; i < n; i++ {
+			faces = append(faces, face(c1Idx, r1Base+uint32(i+1), r1Base+uint32(i)))
+		}
+	}
+	if r2 > 0 {
+		for i := 0; i < n; i++ {
+			faces = append(faces, face(c2Idx, r2Base+uint32(i), r2Base+uint32(i+1)))
+		}
+	}
+	return &mst.MeshNode{
+		Vertices:  verts,
+		FaceGroup: []*mst.MeshTriangle{{Batchid: 0, Faces: faces}},
+	}
 }

@@ -39,7 +39,8 @@ func TestDgnReaderV7Sample(t *testing.T) {
 	want := map[string]int{
 		"ComplexHeader": 19,
 		"Segment":       5814,
-		"Polyline":      36 + 47 + 2522,
+		"Polyline":      36 + 47,
+		"BSplineCurve":  2522,
 		"Arc":           317,
 		"Ellipse":       6,
 		"CellDef":       223 + 115,
@@ -54,7 +55,8 @@ func TestDgnReaderV7Sample(t *testing.T) {
 		}
 	}
 	// geometry kinds must have wires; metadata kinds must not
-	geo := counts["Segment"] + counts["Polyline"] + counts["Arc"] + counts["Ellipse"]
+	geo := counts["Segment"] + counts["Polyline"] + counts["Arc"] +
+		counts["Ellipse"] + counts["BSplineCurve"]
 	if wires != geo {
 		t.Fatalf("wires=%d want %d (geometry kinds)", wires, geo)
 	}
@@ -86,6 +88,27 @@ func TestDgnReaderSegmentEndpoints(t *testing.T) {
 		return
 	}
 	t.Fatal("no polyline wire found")
+}
+
+// TestDgnReaderSampleZ proves the sample maps full 3D coordinates:
+// wire endpoints carry non-zero Z (master units), not a 2D flattening.
+func TestDgnReaderSampleZ(t *testing.T) {
+	r := loadSampleReader(t)
+	have3d := 0
+	for _, e := range r.GetElements() {
+		if e.Wire == nil {
+			continue
+		}
+		sp := e.Wire.StartPoint().Data()
+		ep := e.Wire.EndPoint().Data()
+		if sp[2] != 0 || ep[2] != 0 {
+			have3d++
+		}
+	}
+	if have3d == 0 {
+		t.Fatal("no 3D geometry: all wire endpoints have Z=0")
+	}
+	t.Logf("wires with non-zero Z: %d", have3d)
 }
 
 // TestDgnReaderSyntheticArc checks arc→three-point-arc conversion on a
@@ -158,4 +181,123 @@ func syntheticArcDoc() []byte {
 	doc = append(doc, arcBody...)
 	doc = append(doc, 0xFF, 0xFF)
 	return doc
+}
+
+// appendSyntheticTCB appends the 3D magic + a minimal 1:1-unit TCB to doc.
+func appendSyntheticTCB(doc []byte) []byte {
+	doc = append(doc, 0xC8, 0x09, 0xFE, 0x02) // 3D magic (byte0 bit6 = Is3D)
+	tcb := make([]byte, 1532)
+	putSw := func(bodyOff int, v int32) {
+		u := uint32(v)
+		tcb[bodyOff] = byte(u >> 16)
+		tcb[bodyOff+1] = byte(u >> 24)
+		tcb[bodyOff+2] = byte(u)
+		tcb[bodyOff+3] = byte(u >> 8)
+	}
+	putSw(1108, 1) // subunits per master = 1
+	putSw(1112, 1) // uor per subunit = 1
+	return append(doc, tcb...)
+}
+
+// syntheticBSplinePoles are the control points of syntheticBSplineDoc.
+var syntheticBSplinePoles = [][3]float64{
+	{0, 0, 0}, {0, 30, 10}, {20, 50, 10}, {40, 30, 0}, {40, 0, 0},
+}
+
+// syntheticBSplineDoc builds a minimal in-memory 3D v7 file: TCB (1:1
+// units) + one clamped cubic B-spline stored as the v7 sibling triple
+// header(27, order 4, 5 poles, 1 interior knot 0.5) + knot(26) + poles(21).
+func syntheticBSplineDoc() []byte {
+	doc := appendSyntheticTCB(nil)
+
+	// 27 header: desc_words@32=0, flags@36=(order-2)|0x10, curvetype@37=0,
+	// numpoles@38 u16le, numknots@40 u16le
+	hbody := make([]byte, 42)
+	hbody[36] = (4 - 2) | 0x10
+	hbody[38], hbody[39] = 5, 0
+	hbody[40], hbody[41] = 1, 0
+	doc = append(doc, 0x01, 27, 21, 0)
+	doc = append(doc, hbody...)
+
+	// 26 interior knot: one value 0.5 → int32(0.5·(2^31−1)) = 2^30−1
+	kbody := make([]byte, 36)
+	godgn.V7PutInt32(kbody[32:], 1<<30-1)
+	doc = append(doc, 0x01, 26, 18, 0)
+	doc = append(doc, kbody...)
+
+	// 21 poles: u16 count@32, count×3D point (12B) from 34
+	pbody := make([]byte, 34+5*12)
+	pbody[32], pbody[33] = 5, 0
+	for i, p := range syntheticBSplinePoles {
+		o := 34 + i*12
+		godgn.V7PutInt32(pbody[o:], int32(p[0]))
+		godgn.V7PutInt32(pbody[o+4:], int32(p[1]))
+		godgn.V7PutInt32(pbody[o+8:], int32(p[2]))
+	}
+	doc = append(doc, 0x01, 21, 47, 0)
+	doc = append(doc, pbody...)
+	doc = append(doc, 0xFF, 0xFF)
+	return doc
+}
+
+// syntheticConeDoc builds a minimal 3D v7 file: TCB + one CONE(23) —
+// vertical cylinder r=10 from (0,0,0) to (0,0,50).
+func syntheticConeDoc() []byte {
+	doc := appendSyntheticTCB(nil)
+	cbody := make([]byte, 114) // unknown u16@32, quat@34, c1@50, r1@74, c2@82, r2@106
+	godgn.V7PutDouble(cbody[74:], 10)
+	godgn.V7PutDouble(cbody[98:], 50)
+	godgn.V7PutDouble(cbody[106:], 10)
+	doc = append(doc, 0x01, 23, 57, 0)
+	doc = append(doc, cbody...)
+	doc = append(doc, 0xFF, 0xFF)
+	return doc
+}
+
+// TestDgnReaderSyntheticBSpline checks the assembled curve wire: clamped
+// ends land exactly on the first/last pole.
+func TestDgnReaderSyntheticBSpline(t *testing.T) {
+	r := NewDgnReader()
+	if err := r.LoadBytes(syntheticBSplineDoc()); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	els := r.GetElements()
+	if len(els) != 1 {
+		t.Fatalf("elements=%d", len(els))
+	}
+	e := els[0]
+	if e.Type != "BSplineCurve" {
+		t.Fatalf("type=%s", e.Type)
+	}
+	if e.Wire == nil {
+		t.Fatal("bspline wire is nil")
+	}
+	sp := e.Wire.StartPoint().Data()
+	if math.Abs(sp[0]) > 1e-6 || math.Abs(sp[1]) > 1e-6 || math.Abs(sp[2]) > 1e-6 {
+		t.Fatalf("start = %v want pole0 (0,0,0)", sp)
+	}
+	ep := e.Wire.EndPoint().Data()
+	if math.Abs(ep[0]-40) > 1e-6 || math.Abs(ep[1]) > 1e-6 {
+		t.Fatalf("end = %v want pole4 (40,0,0)", ep)
+	}
+}
+
+// TestDgnReaderSyntheticCone checks the cone reaches the bridge as
+// metadata (KindCone carries no wire; the mesh path owns it).
+func TestDgnReaderSyntheticCone(t *testing.T) {
+	r := NewDgnReader()
+	if err := r.LoadBytes(syntheticConeDoc()); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	els := r.GetElements()
+	if len(els) != 1 {
+		t.Fatalf("elements=%d", len(els))
+	}
+	e := els[0]
+	if e.Type != "Cone" {
+		t.Fatalf("type=%s", e.Type)
+	}
+	if e.Wire != nil {
+		t.Fatal("cone must not produce a wire")
+	}
 }

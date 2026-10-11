@@ -141,6 +141,15 @@ cgo 对头文件里只有前置声明的不完整类型 (`typedef struct _topo_s
 
 2026-10 修复的五处: `Shell.Sweep` (shell.go)、`Solid.Loft` / `Solid.Sweep` (solid.go)、`NewLinearXYZConstraintDim1` / `NewSampledCurveConstraint` (plate_plate.go)。全库审计结论: 其余出现在 `unsafe.Sizeof(C.struct...)` 里的类型头文件里都有完整定义, 不完整类型的只有 `_topo_shape_t` 与 `_plate_pinpoint_constraint_t` (`_topo_sweep_profile_t` 在 libs 头里是匿名但完整的 struct typedef, 安全)。判别方法: `go tool cgo` 生成的 `_cgo_gotypes.go` 中类型若声明为 `_cgopackage.Incomplete` 即 0 字节。回归: `TestCgoProfilePointerArrays` (cgo_profile_array_test.go, 8 元素走全部五条路径; 检出越界需 `go test -asan`, darwin/arm64 不支持 ASan 时退化为冒烟)。
 
+## OCCT NCollection_Array1 构造是 (Lower, Upper) 不是 length (已修复 22 处)
+
+`TColgp_Array1OfPnt pnts{0, n}` 建的是 **n+1** 个元素 (Upper=n → Length=n+1)。geometry_c_api.cc 里按 `count` 个元素填充时末位留下**未初始化元素** (double/int 为垃圾值, gp_Pnt 默认 (0,0,0)):
+
+- Geom_BSplineCurve 路径: CheckCurveData 逐对检查相邻 knot, 末位垃圾/NaN → **恒报 "Knots interval values too close"** → 返回 nullptr → Go 侧 `Curve()` 解引用空指针 SIGSEGV。表现为"任何 knots 都构造失败", 极难联想到 off-by-one (数组 Value() 回读只看已写元素, 全部正确)。
+- Bezier/曲面路径: 多出一个 (0,0,0) 极点/一整行零值, **静默污染几何**。
+
+2026-10 修复: 全部 22 处改为 `{0, static_cast<Standard_Integer>(count-1)}` (Array2 同理 row-1/col-1); `geom_make_bspline_curve[_from_weight]` 另把 knots/mults 数组长度从 poles 数改为独立的 `KnotCount` 参数 (旧版按 poles 定长, 真实 knot 数 ≠ poles 数时越界读)。Go 侧 `GeomMakeBSplineCurve*` 对 C 返回 nullptr 统一返回 nil。教训: OCCT 数组 brace-init 与 `std::initializer_list` 无关的版本也要按 (Lower,Upper) 语义写; 排查时先用**纯 C++ 同数据对照**分离 cgo 层与 OCCT 层。
+
 ## 已知残留: TestFitCenterlineRobustness 约 7% 抖动 (非缺陷)
 
 `bounding_pipe.cc` 的中心线拟合在**近退化几何**上结果有微幅抖动, 表现为 `TestFitCenterlineRobustness` 约 7% 的运行失败, 且每次失败的子用例不同 (实测: 一次 `Helix_tight_coil` 返回 nil, 另一次 `U-bend` 长度短 17%)。

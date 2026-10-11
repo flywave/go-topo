@@ -6625,7 +6625,7 @@ geom_make_axis2_placement_of_point_nvx(pnt3d_t P, dir3d_t N, dir3d_t VX) {
 
 geom_bezier_curve_t *geom_make_bezier_curve(pnt3d_t *CurvePoles, int count) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array1OfPnt pnts{0, static_cast<Standard_Integer>(count)};
+  TColgp_Array1OfPnt pnts{0, static_cast<Standard_Integer>(count - 1)};
   for (int i = 0; i < count; i++) {
     pnts.SetValue(i, cast_to_gp(CurvePoles[i]));
   }
@@ -6644,8 +6644,8 @@ geom_bezier_curve_t *geom_make_bezier_curve_from_weight(pnt3d_t *CurvePoles,
                                                         double *PoleWeights,
                                                         int count) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array1OfPnt pnts{0, static_cast<Standard_Integer>(count)};
-  TColStd_Array1OfReal wei{0, static_cast<Standard_Integer>(count)};
+  TColgp_Array1OfPnt pnts{0, static_cast<Standard_Integer>(count - 1)};
+  TColStd_Array1OfReal wei{0, static_cast<Standard_Integer>(count - 1)};
   for (int i = 0; i < count; i++) {
     pnts.SetValue(i, cast_to_gp(CurvePoles[i]));
     wei.SetValue(i, PoleWeights[i]);
@@ -6663,50 +6663,76 @@ geom_bezier_curve_t *geom_make_bezier_curve_from_weight(pnt3d_t *CurvePoles,
 
 geom_bspline_curve_t *geom_make_bspline_curve(pnt3d_t *Poles, double *Knots,
                                               int *Multiplicities, int count,
-                                              int Degree, _Bool Periodic) {
+                                              int KnotCount, int Degree,
+                                              _Bool Periodic) {
+  if (count <= 0 || KnotCount <= 0 || Poles == nullptr || Knots == nullptr ||
+      Multiplicities == nullptr) {
+    return nullptr;
+  }
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array1OfPnt pnts{0, static_cast<Standard_Integer>(count)};
-  TColStd_Array1OfReal kntss{0, static_cast<Standard_Integer>(count)};
-  TColStd_Array1OfInteger mu{0, static_cast<Standard_Integer>(count)};
+  // Array bounds are (Lower, Upper): length = Upper - Lower + 1.
+  TColgp_Array1OfPnt pnts{0, static_cast<Standard_Integer>(count - 1)};
+  TColStd_Array1OfReal kntss{0, static_cast<Standard_Integer>(KnotCount - 1)};
+  TColStd_Array1OfInteger mu{0, static_cast<Standard_Integer>(KnotCount - 1)};
   for (int i = 0; i < count; i++) {
     pnts.SetValue(i, cast_to_gp(Poles[i]));
+  }
+  for (int i = 0; i < KnotCount; i++) {
     kntss.SetValue(i, Knots[i]);
     mu.SetValue(i, Multiplicities[i]);
   }
   return new geom_bspline_curve_t{
       new Geom_BSplineCurve(pnts, kntss, mu, Degree, Periodic)};
   }
+  catch (const Standard_Failure &e) {
+    fprintf(stderr, "geom_make_bspline_curve: OCC %s\n", e.GetMessageString());
+    return nullptr;
+  }
   catch (const std::exception &e) {
-    (void)e;
+    fprintf(stderr, "geom_make_bspline_curve: %s\n", e.what());
     return nullptr;
   }
   catch (...) {
+    fprintf(stderr, "geom_make_bspline_curve: unknown exception\n");
     return nullptr;
   }
 }
 
 geom_bspline_curve_t *geom_make_bspline_curve_from_weight(
     pnt3d_t *Poles, double *Weights, double *Knots, int *Multiplicities,
-    int count, int Degree, _Bool Periodic, _Bool CheckRational) {
+    int count, int KnotCount, int Degree, _Bool Periodic,
+    _Bool CheckRational) {
+  if (count <= 0 || KnotCount <= 0 || Poles == nullptr || Weights == nullptr ||
+      Knots == nullptr || Multiplicities == nullptr) {
+    return nullptr;
+  }
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array1OfPnt pnts{0, static_cast<Standard_Integer>(count)};
-  TColStd_Array1OfReal wei{0, static_cast<Standard_Integer>(count)};
-  TColStd_Array1OfReal kntss{0, static_cast<Standard_Integer>(count)};
-  TColStd_Array1OfInteger mu{0, static_cast<Standard_Integer>(count)};
+  TColgp_Array1OfPnt pnts{0, static_cast<Standard_Integer>(count - 1)};
+  TColStd_Array1OfReal wei{0, static_cast<Standard_Integer>(count - 1)};
+  TColStd_Array1OfReal kntss{0, static_cast<Standard_Integer>(KnotCount - 1)};
+  TColStd_Array1OfInteger mu{0, static_cast<Standard_Integer>(KnotCount - 1)};
   for (int i = 0; i < count; i++) {
     pnts.SetValue(i, cast_to_gp(Poles[i]));
     wei.SetValue(i, Weights[i]);
+  }
+  for (int i = 0; i < KnotCount; i++) {
     kntss.SetValue(i, Knots[i]);
     mu.SetValue(i, Multiplicities[i]);
   }
   return new geom_bspline_curve_t{new Geom_BSplineCurve(
       pnts, wei, kntss, mu, Degree, Periodic, CheckRational)};
   }
+  catch (const Standard_Failure &e) {
+    fprintf(stderr, "geom_make_bspline_curve_from_weight: OCC %s\n",
+            e.GetMessageString());
+    return nullptr;
+  }
   catch (const std::exception &e) {
-    (void)e;
+    fprintf(stderr, "geom_make_bspline_curve_from_weight: %s\n", e.what());
     return nullptr;
   }
   catch (...) {
+    fprintf(stderr, "geom_make_bspline_curve_from_weight: unknown exception\n");
     return nullptr;
   }
 }
@@ -6714,8 +6740,8 @@ geom_bspline_curve_t *geom_make_bspline_curve_from_weight(
 geom_bezier_surface_t *geom_make_bezier_surface(pnt3d_t *SurfacePoles, int row,
                                                 int col) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col), 0,
-                         static_cast<Standard_Integer>(row)};
+  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col - 1), 0,
+                         static_cast<Standard_Integer>(row - 1)};
   for (int i = 0; i < row; i++) {
     for (int j = 0; j < col; j++) {
       pnt.SetValue(i, j, cast_to_gp(SurfacePoles[i * col + j]));
@@ -6736,10 +6762,10 @@ geom_bezier_surface_t *
 geom_make_bezier_surface_from_weight(pnt3d_t *SurfacePoles, double *PoleWeights,
                                      int row, int col) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col), 0,
-                         static_cast<Standard_Integer>(row)};
-  TColStd_Array2OfReal wei{0, static_cast<Standard_Integer>(col), 0,
-                           static_cast<Standard_Integer>(row)};
+  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col - 1), 0,
+                         static_cast<Standard_Integer>(row - 1)};
+  TColStd_Array2OfReal wei{0, static_cast<Standard_Integer>(col - 1), 0,
+                         static_cast<Standard_Integer>(row - 1)};
   for (int i = 0; i < row; i++) {
     for (int j = 0; j < col; j++) {
       pnt.SetValue(i, j, cast_to_gp(SurfacePoles[i * col + j]));
@@ -6763,21 +6789,21 @@ geom_make_bspline_surface(pnt3d_t *Poles, double *UKnots, double *VKnots,
                           int UCount, int VCount, int UDegree, int VDegree,
                           _Bool UPeriodic, _Bool VPeriodic) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col), 0,
-                         static_cast<Standard_Integer>(row)};
+  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col - 1), 0,
+                         static_cast<Standard_Integer>(row - 1)};
   for (int i = 0; i < row; i++) {
     for (int j = 0; j < col; j++) {
       pnt.SetValue(i, j, cast_to_gp(Poles[i * col + j]));
     }
   }
-  TColStd_Array1OfInteger umus{0, static_cast<Standard_Integer>(UCount)};
-  TColStd_Array1OfReal ukets{0, static_cast<Standard_Integer>(UCount)};
+  TColStd_Array1OfInteger umus{0, static_cast<Standard_Integer>(UCount - 1)};
+  TColStd_Array1OfReal ukets{0, static_cast<Standard_Integer>(UCount - 1)};
   for (int i = 0; i < UCount; i++) {
     ukets.SetValue(i, UKnots[i]);
     umus.SetValue(i, UMults[i]);
   }
-  TColStd_Array1OfReal vkets{0, static_cast<Standard_Integer>(VCount)};
-  TColStd_Array1OfInteger vmus{0, static_cast<Standard_Integer>(VCount)};
+  TColStd_Array1OfReal vkets{0, static_cast<Standard_Integer>(VCount - 1)};
+  TColStd_Array1OfInteger vmus{0, static_cast<Standard_Integer>(VCount - 1)};
   for (int i = 0; i < VCount; i++) {
     vmus.SetValue(i, VMults[i]);
     vkets.SetValue(i, VKnots[i]);
@@ -6799,24 +6825,24 @@ geom_bspline_surface_t *geom_make_bspline_surface_from_weight(
     int *UMults, int *VMults, int row, int col, int UCount, int VCount,
     int UDegree, int VDegree, _Bool UPeriodic, _Bool VPeriodic) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col), 0,
-                         static_cast<Standard_Integer>(row)};
-  TColStd_Array2OfReal wei{0, static_cast<Standard_Integer>(col), 0,
-                           static_cast<Standard_Integer>(row)};
+  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col - 1), 0,
+                         static_cast<Standard_Integer>(row - 1)};
+  TColStd_Array2OfReal wei{0, static_cast<Standard_Integer>(col - 1), 0,
+                         static_cast<Standard_Integer>(row - 1)};
   for (int i = 0; i < row; i++) {
     for (int j = 0; j < col; j++) {
       pnt.SetValue(i, j, cast_to_gp(Poles[i * col + j]));
       wei.SetValue(i, j, Weights[i * col + j]);
     }
   }
-  TColStd_Array1OfInteger umus{0, static_cast<Standard_Integer>(UCount)};
-  TColStd_Array1OfReal ukets{0, static_cast<Standard_Integer>(UCount)};
+  TColStd_Array1OfInteger umus{0, static_cast<Standard_Integer>(UCount - 1)};
+  TColStd_Array1OfReal ukets{0, static_cast<Standard_Integer>(UCount - 1)};
   for (int i = 0; i < UCount; i++) {
     ukets.SetValue(i, UKnots[i]);
     umus.SetValue(i, UMults[i]);
   }
-  TColStd_Array1OfReal vkets{0, static_cast<Standard_Integer>(VCount)};
-  TColStd_Array1OfInteger vmus{0, static_cast<Standard_Integer>(VCount)};
+  TColStd_Array1OfReal vkets{0, static_cast<Standard_Integer>(VCount - 1)};
+  TColStd_Array1OfInteger vmus{0, static_cast<Standard_Integer>(VCount - 1)};
   for (int i = 0; i < VCount; i++) {
     vmus.SetValue(i, VMults[i]);
     vkets.SetValue(i, VKnots[i]);
@@ -7066,7 +7092,7 @@ geom2d_make_bezier_bisec_pc_curve(geom2d_curve_t *Cu, pnt2d_t P, double Side,
 geom2d_bezier_curve_t *geom2d_make_bezier_curve(pnt2d_t *CurvePoles,
                                                 int count) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array1OfPnt2d pnts{0, static_cast<Standard_Integer>(count)};
+  TColgp_Array1OfPnt2d pnts{0, static_cast<Standard_Integer>(count - 1)};
   for (int i = 0; i < count; i++) {
     pnts.SetValue(i, cast_to_gp(CurvePoles[i]));
   }
@@ -7085,8 +7111,8 @@ geom2d_bezier_curve_t *geom2d_make_bezier_curve_with_weight(pnt2d_t *CurvePoles,
                                                             double *PoleWeights,
                                                             int count) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array1OfPnt2d pnts{0, static_cast<Standard_Integer>(count)};
-  TColStd_Array1OfReal wei{0, static_cast<Standard_Integer>(count)};
+  TColgp_Array1OfPnt2d pnts{0, static_cast<Standard_Integer>(count - 1)};
+  TColStd_Array1OfReal wei{0, static_cast<Standard_Integer>(count - 1)};
   for (int i = 0; i < count; i++) {
     pnts.SetValue(i, cast_to_gp(CurvePoles[i]));
     wei.SetValue(i, PoleWeights[i]);
@@ -7107,9 +7133,9 @@ geom2d_bspline_curve_t *geom2d_make_bspline_curve(pnt2d_t *Poles, double *Knots,
                                                   int Count, int Degree,
                                                   _Bool Periodic) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array1OfPnt2d pnts{0, static_cast<Standard_Integer>(Count)};
-  TColStd_Array1OfReal kents{0, static_cast<Standard_Integer>(Count)};
-  TColStd_Array1OfInteger mus{0, static_cast<Standard_Integer>(Count)};
+  TColgp_Array1OfPnt2d pnts{0, static_cast<Standard_Integer>(Count - 1)};
+  TColStd_Array1OfReal kents{0, static_cast<Standard_Integer>(Count - 1)};
+  TColStd_Array1OfInteger mus{0, static_cast<Standard_Integer>(Count - 1)};
   for (int i = 0; i < Count; i++) {
     pnts.SetValue(i, cast_to_gp(Poles[i]));
     kents.SetValue(i, Knots[i]);
@@ -7132,10 +7158,10 @@ geom2d_make_bspline_curve_with_weight(pnt2d_t *CurvePoles, double *Weights,
                                       double *Knots, int *Multiplicities,
                                       int Count, int Degree, _Bool Periodic) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array1OfPnt2d pnts{0, static_cast<Standard_Integer>(Count)};
-  TColStd_Array1OfReal wei{0, static_cast<Standard_Integer>(Count)};
-  TColStd_Array1OfReal kents{0, static_cast<Standard_Integer>(Count)};
-  TColStd_Array1OfInteger mus{0, static_cast<Standard_Integer>(Count)};
+  TColgp_Array1OfPnt2d pnts{0, static_cast<Standard_Integer>(Count - 1)};
+  TColStd_Array1OfReal wei{0, static_cast<Standard_Integer>(Count - 1)};
+  TColStd_Array1OfReal kents{0, static_cast<Standard_Integer>(Count - 1)};
+  TColStd_Array1OfInteger mus{0, static_cast<Standard_Integer>(Count - 1)};
   for (int i = 0; i < Count; i++) {
     pnts.SetValue(i, cast_to_gp(CurvePoles[i]));
     kents.SetValue(i, Knots[i]);

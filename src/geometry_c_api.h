@@ -667,10 +667,10 @@ geom_make_bezier_curve_from_weight(pnt3d_t *CurvePoles, double *PoleWeights,
                                    int count);
 GEOMCAPICALL geom_bspline_curve_t *
 geom_make_bspline_curve(pnt3d_t *Poles, double *Knots, int *Multiplicities,
-                        int count, int Degree, _Bool Periodic);
+                        int count, int KnotCount, int Degree, _Bool Periodic);
 GEOMCAPICALL geom_bspline_curve_t *geom_make_bspline_curve_from_weight(
     pnt3d_t *Poles, double *Weights, double *Knots, int *Multiplicities,
-    int count, int Degree, _Bool Periodic, _Bool CheckRational);
+    int count, int KnotCount, int Degree, _Bool Periodic, _Bool CheckRational);
 
 GEOMCAPICALL geom_bezier_surface_t *
 geom_make_bezier_surface(pnt3d_t *SurfacePoles, int row, int col);
