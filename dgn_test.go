@@ -92,7 +92,34 @@ func TestDgnReaderSegmentEndpoints(t *testing.T) {
 // synthetic in-memory v7 file with a known 2D arc (start=0, sweep=90,
 // radius=100, origin=(0,0)).
 func TestDgnReaderSyntheticArc(t *testing.T) {
-	// v7 2D magic + minimal TCB (1276B body so ParseV7TCB passes)
+	doc := syntheticArcDoc()
+
+	r := NewDgnReader()
+	if err := r.LoadBytes(doc); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	els := r.GetElements()
+	if len(els) != 1 {
+		t.Fatalf("elements=%d", len(els))
+	}
+	e := els[0]
+	if e.Type != "Arc" {
+		t.Fatalf("type=%s", e.Type)
+	}
+	if e.Wire == nil {
+		t.Fatal("arc wire is nil")
+	}
+	// three-point arc through (100,0), (~70.7,70.7), (0,100):
+	// start point must be (100,0,0)
+	sp := e.Wire.StartPoint().Data()
+	if math.Abs(sp[0]-100) > 1e-6 || math.Abs(sp[1]) > 1e-6 {
+		t.Fatalf("start point = %v", sp)
+	}
+}
+
+// syntheticArcDoc builds a minimal in-memory v7 file: TCB (units 1:1,
+// scale=1) + one 2D ARC (start=0°, sweep=90°, radius=100, origin=(0,0)).
+func syntheticArcDoc() []byte {
 	doc := []byte{0x08, 0x09, 0xFE, 0x02}
 	tcb := make([]byte, 1532)
 	// halfword-swapped int32 encoding (V7Int32 inverse): value 1 → 00 00 01 00
@@ -130,26 +157,5 @@ func TestDgnReaderSyntheticArc(t *testing.T) {
 	doc = append(doc, hdr...)
 	doc = append(doc, arcBody...)
 	doc = append(doc, 0xFF, 0xFF)
-
-	r := NewDgnReader()
-	if err := r.LoadBytes(doc); err != nil {
-		t.Fatalf("load: %v", err)
-	}
-	els := r.GetElements()
-	if len(els) != 1 {
-		t.Fatalf("elements=%d", len(els))
-	}
-	e := els[0]
-	if e.Type != "Arc" {
-		t.Fatalf("type=%s", e.Type)
-	}
-	if e.Wire == nil {
-		t.Fatal("arc wire is nil")
-	}
-	// three-point arc through (100,0), (~70.7,70.7), (0,100):
-	// start point must be (100,0,0)
-	sp := e.Wire.StartPoint().Data()
-	if math.Abs(sp[0]-100) > 1e-6 || math.Abs(sp[1]) > 1e-6 {
-		t.Fatalf("start point = %v", sp)
-	}
+	return doc
 }
