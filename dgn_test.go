@@ -458,3 +458,33 @@ func TestDgnReaderMeshShape(t *testing.T) {
 		t.Fatal("out-of-range face bridged")
 	}
 }
+
+// TestDgnReaderV7RealPublicSamples bridges the Aspose public v7 samples
+// (D129): Nikon_D90_Camera.dgn is a real 3D wireframe of 60 B-spline
+// curves, truncated on the last pole record — the reader must load it and
+// convert the 59 complete curves to exact OCCT B-spline wires.
+func TestDgnReaderV7RealPublicSamples(t *testing.T) {
+	r := NewDgnReader()
+	if err := r.Load("../go-dgn/dgn/testdata/Nikon_D90_Camera.dgn"); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	curves, wires := 0, 0
+	for _, e := range r.GetElements() {
+		if e.Type == "BSplineCurve" {
+			curves++
+			if e.Wire != nil {
+				wires++
+			}
+		}
+	}
+	if curves != 59 || wires != 59 {
+		t.Fatalf("BSplineCurve=%d (wired=%d), want 59/59", curves, wires)
+	}
+
+	for _, name := range []string{"V7-Imperial-Arch-01-Seed2D.dgn", "V7-Imperial-Arch-02-Seed3D.dgn"} {
+		r2 := NewDgnReader()
+		if err := r2.Load("../go-dgn/dgn/testdata/" + name); err != nil {
+			t.Fatalf("%s: load: %v", name, err)
+		}
+	}
+}

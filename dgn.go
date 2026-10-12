@@ -146,6 +146,15 @@ func (r *DgnReader) scalePoint(p scene.Point) [3]float64 {
 	return [3]float64{p.X, p.Y, p.Z}
 }
 
+// edgeValid reports whether e carries a real OCCT edge: the C edge
+// constructors return a zero struct on failure (degenerate input throws
+// inside OCCT), leaving the inner shp pointer nil — dereferencing or
+// calling IsNull on such a value segfaults (real-sample case: the
+// zero-length segment in Nikon_D90_Camera.dgn).
+func edgeValid(e *Edge) bool {
+	return e != nil && e.inner != nil && e.inner.val.shp != nil
+}
+
 func (r *DgnReader) wireFor(e *scene.Entity) *Wire {
 	switch e.Kind {
 	case scene.KindSegment:
@@ -154,7 +163,10 @@ func (r *DgnReader) wireFor(e *scene.Entity) *Wire {
 		}
 		p1 := NewPoint3(r.scalePoint(e.Points[0]))
 		p2 := NewPoint3(r.scalePoint(e.Points[1]))
-		return TopoMakeWireFromEdge(*TopoMakeEdgeFromTwoPoint(p1, p2))
+		if ed := TopoMakeEdgeFromTwoPoint(p1, p2); edgeValid(ed) {
+			return TopoMakeWireFromEdge(*ed)
+		}
+		return nil
 	case scene.KindPolyline:
 		if len(e.Points) < 2 {
 			return nil
@@ -163,7 +175,12 @@ func (r *DgnReader) wireFor(e *scene.Entity) *Wire {
 		for i := 0; i+1 < len(e.Points); i++ {
 			p1 := NewPoint3(r.scalePoint(e.Points[i]))
 			p2 := NewPoint3(r.scalePoint(e.Points[i+1]))
-			edges = append(edges, *TopoMakeEdgeFromTwoPoint(p1, p2))
+			if ed := TopoMakeEdgeFromTwoPoint(p1, p2); edgeValid(ed) {
+				edges = append(edges, *ed)
+			}
+		}
+		if len(edges) == 0 {
+			return nil
 		}
 		return TopoMakeWireFromEdges(edges)
 	case scene.KindArc:
@@ -203,7 +220,7 @@ func (r *DgnReader) bsplineWire(e *scene.Entity) *Wire {
 		return nil
 	}
 	edge := TopoMakeEdgeFromCurve(*c)
-	if edge == nil || edge.IsNull() {
+	if !edgeValid(edge) {
 		return nil
 	}
 	return TopoMakeWireFromEdge(*edge)
@@ -252,9 +269,11 @@ func (r *DgnReader) arcWire(e *scene.Entity, ellipse bool) *Wire {
 		if a.Quat != [4]float64{} {
 			normal, xnormal = quatBasis(a.Quat)
 		}
-		edge := TopoMakeEllipse(rMajor, rMinor, center, normal, xnormal,
-			startRad, startRad+sweepRad, 1)
-		return TopoMakeWireFromEdge(*edge)
+		if edge := TopoMakeEllipse(rMajor, rMinor, center, normal, xnormal,
+			startRad, startRad+sweepRad, 1); edgeValid(edge) {
+			return TopoMakeWireFromEdge(*edge)
+		}
+		return nil
 	}
 
 	if math.Abs(sweepRad) >= 2*math.Pi-1e-9 {
@@ -264,8 +283,10 @@ func (r *DgnReader) arcWire(e *scene.Entity, ellipse bool) *Wire {
 			n, _ := quatBasis(a.Quat)
 			normal = n
 		}
-		edge := TopoMakeCircle(rMajor, center, normal, 0, 2*math.Pi, true)
-		return TopoMakeWireFromEdge(*edge)
+		if edge := TopoMakeCircle(rMajor, center, normal, 0, 2*math.Pi, true); edgeValid(edge) {
+			return TopoMakeWireFromEdge(*edge)
+		}
+		return nil
 	}
 
 	// three-point arc: start, mid, end in the arc plane
@@ -273,7 +294,10 @@ func (r *DgnReader) arcWire(e *scene.Entity, ellipse bool) *Wire {
 	p1 := NewPoint3(arcPoint(a, c, rMajor, startRad))
 	p2 := NewPoint3(arcPoint(a, c, rMajor, mid))
 	p3 := NewPoint3(arcPoint(a, c, rMajor, startRad+sweepRad))
-	return TopoMakeWireFromEdge(*TopoMakeThreePointArc(p1, p2, p3))
+	if edge := TopoMakeThreePointArc(p1, p2, p3); edgeValid(edge) {
+		return TopoMakeWireFromEdge(*edge)
+	}
+	return nil
 }
 
 // arcPoint maps an angle on the arc plane to a world point: rotate the
