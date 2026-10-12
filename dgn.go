@@ -7,7 +7,8 @@ package topo
 //
 // Coordinate contract:
 //   - v7 files: TCB master-unit mapping applied (SceneV7AtMaster)
-//   - v8 files: raw UOR unless SetUnits(uorPerMaster) is called first
+//   - v8 files: master units via the document resolution
+//     (SceneV8ModelAtMaster); SetUnits is no longer needed
 //   - Transform is a column-major 4×4 for cell placements (nil otherwise)
 
 import (
@@ -19,10 +20,13 @@ import (
 	"github.com/flywave/go-dgn/dgn/scene"
 )
 
-// DgnElement is one geometry-bearing DGN element. Wire is nil for
-// metadata-only kinds (text, cell defs, complex headers).
+// DgnElement is one geometry-bearing DGN element. Wire carries curve
+// geometry; Shape carries face/solid geometry (KindCone frustum, KindSolid
+// mesh face sets). Metadata-only kinds (text, cell defs, complex headers)
+// have neither.
 type DgnElement struct {
 	Wire      *Wire
+	Shape     *Shape
 	Id        int
 	ParentId  int
 	Name      string
@@ -30,6 +34,14 @@ type DgnElement struct {
 	Level     int
 	Color     int
 	Transform *[16]float64
+	// BRep is non-nil for SmartSolid/SmartSurface entities (v8 type-2
+	// cell header + 0x522E kernel BRep linkage): metadata-only solids —
+	// the geometry stays native parasolid/ACIS, which no OCCT path
+	// consumes, so Wire/Shape are nil.
+	BRep *scene.BRep
+	// DefID is the definition element a v8 shared-cell reference
+	// instances (D112); 0 when the reference resolves by name only.
+	DefID uint64
 }
 
 // DgnReader loads a DGN file (v7 or v8) and converts it to topo elements.
@@ -69,17 +81,16 @@ func (r *DgnReader) LoadBytes(b []byte) error {
 		if err != nil {
 			return fmt.Errorf("dgn: v8: %w", err)
 		}
+		doc, err := f.V8()
+		if err != nil {
+			return fmt.Errorf("dgn: v8: %w", err)
+		}
+		// Per-model scene with UOR→master scaling applied by go-dgn
+		// (D104). The old ElementChunks path missed model-nested graphics
+		// chunks ("#NNNNNN/Dgn^G/$1") entirely.
 		var all []scene.Entity
-		for _, s := range f.ElementChunks() {
-			chunk, err := f.Stream(s.Name)
-			if err != nil {
-				continue
-			}
-			idx := godgn.BuildChunkIndex(chunk)
-			if len(idx.Offsets) == 0 {
-				continue
-			}
-			ents, err := godgn.SceneV8(chunk, godgn.Dir{Base: 0, Offsets: idx.Offsets})
+		for _, m := range doc.Models {
+			ents, err := godgn.SceneV8ModelAtMaster(doc, m)
 			if err != nil {
 				continue
 			}
@@ -112,6 +123,17 @@ func (r *DgnReader) build() {
 		if w := r.wireFor(e); w != nil {
 			de.Wire = w
 		}
+		if s := r.shapeFor(e); s != nil {
+			de.Shape = s
+		}
+		de.BRep = e.BRep
+		if de.BRep != nil && de.Shape == nil {
+			// SmartSolid (v8 0x522E): rebuild the exact B-rep from the
+			// ACIS SAT payload (D114). Parasolid payloads stay
+			// metadata-only (no Go consumer path).
+			de.Shape = AcisBRepToShape(de.BRep.Data)
+		}
+		de.DefID = e.DefID
 		r.elements = append(r.elements, de)
 	}
 }
@@ -288,4 +310,117 @@ func quatBasis(q [4]float64) (normal, xnormal Vector3) {
 	n := quatRotate(q, [3]float64{0, 0, 1})
 	x := quatRotate(q, [3]float64{1, 0, 0})
 	return NewVector3(n), NewVector3(x)
+}
+
+// shapeFor builds face/solid geometry: the KindCone frustum as a real
+// cone solid, the KindSolid mesh as a compound of its face loops.
+func (r *DgnReader) shapeFor(e *scene.Entity) *Shape {
+	switch e.Kind {
+	case scene.KindCone:
+		return r.coneShape(e)
+	case scene.KindSolid:
+		return r.meshShape(e)
+	}
+	return nil
+}
+
+// coneShape builds the frustum P1/R1 → P2/R2 as an OCCT cone solid
+// (planar caps included). Degenerate axes (zero height) and zero radii
+// pairs produce no shape.
+func (r *DgnReader) coneShape(e *scene.Entity) *Shape {
+	if len(e.Points) < 2 {
+		return nil
+	}
+	p1 := r.scalePoint(e.Points[0])
+	p2 := r.scalePoint(e.Points[1])
+	r1, r2 := e.Radii[0], e.Radii[1]
+	if r.units > 0 {
+		r1 /= r.units
+		r2 /= r.units
+	}
+	if r1 < 0 {
+		r1 = -r1
+	}
+	if r2 < 0 {
+		r2 = -r2
+	}
+	axis := [3]float64{p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]}
+	h := math.Sqrt(axis[0]*axis[0] + axis[1]*axis[1] + axis[2]*axis[2])
+	if h == 0 || (r1 == 0 && r2 == 0) {
+		return nil
+	}
+	n := [3]float64{axis[0] / h, axis[1] / h, axis[2] / h}
+	a := NewAxis2(NewPoint3(p1), NewDir3FromXYZ(n))
+	// OCCT BRepPrimAPI_MakeCone rejects equal radii (throws, leaving an
+	// empty shell that crashes downstream) — bridge those as cylinders.
+	var shell *Shell
+	if math.Abs(r1-r2) <= 1e-12*(1+math.Abs(r1)) {
+		shell = TopoMakeShellFromCylinderAxis2(a, r1, h)
+	} else {
+		shell = TopoMakeShellFromConeAxis2(a, r1, r2, h)
+	}
+	if shell == nil {
+		return nil
+	}
+	if ss, err := shell.ToShape(); err != nil || ss == nil || ss.IsNull() {
+		return nil // primitive construction failed inside OCCT
+	}
+	solid := TopoMakeSolidFromShell(shell)
+	if solid == nil || solid.IsNull() {
+		return nil
+	}
+	sh := solid.ToShape()
+	if sh == nil || sh.IsNull() {
+		return nil
+	}
+	return sh
+}
+
+// meshShape turns a KindSolid's face loops (vertex indices into Points)
+// into polygon faces aggregated as one compound shape. Entities without
+// decodable faces (clouds, ambiguous index streams) produce no shape —
+// the vertices remain on the Entity.
+func (r *DgnReader) meshShape(e *scene.Entity) *Shape {
+	if len(e.Faces) == 0 || len(e.Points) == 0 {
+		return nil
+	}
+	pts := make([]Point3, len(e.Points))
+	for i, p := range e.Points {
+		pts[i] = NewPoint3(r.scalePoint(p))
+	}
+	shapes := make([]Shape, 0, len(e.Faces))
+	for _, f := range e.Faces {
+		if len(f) < 3 {
+			continue
+		}
+		fp := make([]Point3, 0, len(f))
+		ok := true
+		for _, idx := range f {
+			if idx < 0 || int(idx) >= len(pts) {
+				ok = false
+				break
+			}
+			fp = append(fp, pts[idx])
+		}
+		if !ok {
+			continue
+		}
+		face := TopoMakeFaceFromPoints(fp)
+		if face == nil || face.IsNull() {
+			continue
+		}
+		shapes = append(shapes, *face.ToShape())
+	}
+	if len(shapes) == 0 {
+		return nil
+	}
+	comp := TopoCompoundMake(shapes)
+	if comp == nil || comp.IsNull() {
+		return nil
+	}
+	sh := comp.ToShape()
+	if sh == nil || sh.IsNull() {
+		return nil
+	}
+	return sh
 }

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	godgn "github.com/flywave/go-dgn/dgn"
+	"github.com/flywave/go-dgn/dgn/scene"
 )
 
 const samplePath = "../go-dgn/sample.dgn"
@@ -300,6 +301,18 @@ func TestDgnReaderSyntheticCone(t *testing.T) {
 	if e.Wire != nil {
 		t.Fatal("cone must not produce a wire")
 	}
+	// the frustum bridges as a real cone solid: P1=(0,0,0) R1=10 →
+	// P2=(0,0,50) R2=10, so the bbox is the swept envelope
+	if e.Shape == nil || e.Shape.IsNull() {
+		t.Fatal("cone shape is nil")
+	}
+	d := e.Shape.BBox().Data() // minx,miny,minz,maxx,maxy,maxz
+	tol := 1e-6
+	for i, want := range [][2]float64{{-10, 10}, {-10, 10}, {0, 50}} {
+		if math.Abs(d[i]-want[0]) > tol || math.Abs(d[i+3]-want[1]) > tol {
+			t.Fatalf("bbox axis %d = (%g,%g) want %v", i, d[i], d[i+3], want)
+		}
+	}
 }
 
 // putSwInt32LE writes a little-endian u16 (element-header word counts).
@@ -410,5 +423,38 @@ func TestDgnReaderCellTree(t *testing.T) {
 	}
 	if defnSegs != 2 || topSegs != 0 {
 		t.Fatalf("defnSegs=%d topSegs=%d want 2/0", defnSegs, topSegs)
+	}
+}
+
+// TestDgnReaderMeshShape drives the scene→topo mesh mapping directly (the
+// v8 file-level assembly is covered in go-dgn): a 2×3 point grid with two
+// derived quad faces becomes a face compound spanning the grid envelope.
+func TestDgnReaderMeshShape(t *testing.T) {
+	r := NewDgnReader()
+	e := &scene.Entity{
+		Kind: scene.KindSolid,
+		Points: []scene.Point{
+			{X: 0, Y: 0, Z: 1}, {X: 1, Y: 0, Z: 1}, {X: 2, Y: 0, Z: 1},
+			{X: 0, Y: 0, Z: 0}, {X: 1, Y: 0, Z: 0}, {X: 2, Y: 0, Z: 0},
+		},
+		Faces: [][]int32{{0, 3, 4, 1}, {1, 4, 5, 2}},
+	}
+	sh := r.meshShape(e)
+	if sh == nil || sh.IsNull() {
+		t.Fatal("mesh shape is nil")
+	}
+	d := sh.BBox().Data()
+	tol := 1e-6
+	for i, want := range [][2]float64{{0, 2}, {0, 0}, {0, 1}} {
+		if math.Abs(d[i]-want[0]) > tol || math.Abs(d[i+3]-want[1]) > tol {
+			t.Fatalf("bbox axis %d = (%g,%g) want %v", i, d[i], d[i+3], want)
+		}
+	}
+
+	// faces with out-of-range indices are dropped, not bridged
+	bad := &scene.Entity{Kind: scene.KindSolid, Points: e.Points[:3],
+		Faces: [][]int32{{0, 1, 9}}}
+	if sh := r.meshShape(bad); sh != nil {
+		t.Fatal("out-of-range face bridged")
 	}
 }

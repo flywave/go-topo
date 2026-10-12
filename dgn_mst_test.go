@@ -5,6 +5,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	mst "github.com/flywave/go-mst"
+	"github.com/flywave/go-dgn/dgn/scene"
 )
 
 // TestDgnToMstSample converts the 16MB v7 sample and locks the mesh
@@ -262,5 +265,80 @@ func TestDgnToMstSharedCellInstances(t *testing.T) {
 	s := nd.Vertices[0]
 	if math.Abs(float64(s[0])) > 1e-6 || math.Abs(float64(s[1])) > 1e-6 {
 		t.Errorf("instance start = %v want defn-local (0,0,0) at identity", s)
+	}
+}
+
+// TestDgnToMstMeshFaces checks the mesh exit: a KindSolid with face loops
+// becomes one triangle node — two quads fan-triangulated to 4 triangles.
+func TestDgnToMstMeshFaces(t *testing.T) {
+	r := NewDgnReader()
+	e := &scene.Entity{
+		Kind: scene.KindSolid,
+		Points: []scene.Point{
+			{X: 0, Y: 0, Z: 1}, {X: 1, Y: 0, Z: 1}, {X: 2, Y: 0, Z: 1},
+			{X: 0, Y: 0, Z: 0}, {X: 1, Y: 0, Z: 0}, {X: 2, Y: 0, Z: 0},
+		},
+		Faces: [][]int32{{0, 3, 4, 1}, {1, 4, 5, 2}},
+	}
+	nd := r.meshNode(e)
+	if nd == nil {
+		t.Fatal("no mesh node")
+	}
+	tris := 0
+	for _, g := range nd.FaceGroup {
+		tris += len(g.Faces)
+	}
+	if tris != 4 {
+		t.Fatalf("triangles = %d want 4", tris)
+	}
+	for _, v := range nd.Vertices {
+		if v[0] < -1e-3 || v[0] > 2+1e-3 || v[1] < -1e-3 || v[1] > 1e-3 || v[2] < -1e-3 || v[2] > 1+1e-3 {
+			t.Fatalf("vertex out of envelope: %v", v)
+		}
+	}
+
+	// faceless meshes (clouds, undecodable indices) produce no node
+	if nd := r.meshNode(&scene.Entity{Kind: scene.KindSolid, Points: e.Points}); nd != nil {
+		t.Fatal("faceless mesh produced a node")
+	}
+}
+
+// TestDgnToMstV8SharedCellInstance pins v8 shared-cell instancing (D112):
+// the reference resolves its definition by DefID, re-emits the
+// definition's DefnOnly geometry, and applies the reference placement —
+// the child segment lands translated by (10,20,30).
+func TestDgnToMstV8SharedCellInstance(t *testing.T) {
+	r := NewDgnReader()
+	r.ents = []scene.Entity{
+		{
+			Kind:      scene.KindCellRef,
+			ID:        100,
+			DefID:     200,
+			Transform: &[16]float64{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 10, 20, 30, 1},
+		},
+		{Kind: scene.KindCellDef, ID: 200, Name: "CELL01"},
+		{
+			Kind:     scene.KindSegment,
+			ID:       201,
+			ParentID: 200, DefnOnly: true,
+			Points: []scene.Point{{X: 5, Y: 6, Z: 0}, {X: 15, Y: 16, Z: 0}},
+		},
+	}
+	meshes := r.toMst(0.1)
+	var node *mst.MeshNode
+	for _, m := range meshes {
+		for _, nd := range m.Nodes {
+			if len(nd.EdgeGroup) > 0 && len(nd.Vertices) == 2 {
+				node = nd
+			}
+		}
+	}
+	if node == nil {
+		t.Fatal("no instanced outline node")
+	}
+	// child endpoints (5,6,0)-(15,16,0) translated by the placement
+	if node.Vertices[0][0] != 15 || node.Vertices[0][1] != 26 || node.Vertices[0][2] != 30 ||
+		node.Vertices[1][0] != 25 || node.Vertices[1][1] != 36 || node.Vertices[1][2] != 30 {
+		t.Fatalf("instance vertices = %v", node.Vertices)
 	}
 }

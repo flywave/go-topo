@@ -7,9 +7,10 @@ package topo
 //	n = ceil(sweep / (2*acos(1 - eps/r)))   // r = primary axis
 //	clamped to [3, 256] segments
 //
-// One MeshNode per wire-bearing element (Segment/Polyline/Arc/Ellipse/
-// BSplineCurve), EdgeGroup edges = consecutive vertex index pairs; cones
-// become face MeshNodes. BIM placement (D93): cell-header (v7 type 2)
+// One MeshNode per geometry-bearing element: wire kinds (Segment/Polyline/
+// Arc/Ellipse/BSplineCurve) get EdgeGroup outline edges, cones become
+// face MeshNodes, and mesh solids (scene.KindSolid) become triangle-face
+// MeshNodes (fan-triangulated loops). BIM placement (D93): cell-header (v7 type 2)
 // transforms are multiplied DOWN the ancestor chain here (§6.5 consumer
 // duty), and shared-cell refs (type 35) instance their definition (type
 // 34) geometry — DefnOnly definition-space entities never render raw.
@@ -129,6 +130,14 @@ func (r *DgnReader) toMst(eps float64) []*mst.Mesh {
 		}
 		if e.Kind == scene.KindCellRef {
 			di, ok := defnByName[e.Name]
+			if !ok && e.DefID != 0 {
+				// v8 shared-cell references resolve by definition element
+				// id (the 0x2716 dependency root, D112); the name path
+				// stays for v7 and name-carrying v8 definitions.
+				if pi, inID := byID[e.DefID]; inID && r.ents[pi].Kind == scene.KindCellDef {
+					di, ok = pi, true
+				}
+			}
 			if !ok {
 				continue
 			}
@@ -168,31 +177,23 @@ func (r *DgnReader) toMst(eps float64) []*mst.Mesh {
 func tessKind(k scene.Kind) bool {
 	switch k {
 	case scene.KindSegment, scene.KindPolyline, scene.KindArc,
-		scene.KindEllipse, scene.KindBSplineCurve, scene.KindCone:
+		scene.KindEllipse, scene.KindBSplineCurve, scene.KindCone,
+		scene.KindSolid:
 		return true
 	}
 	return false
 }
 
-// nodeFor converts one entity into a MeshNode (outline or cone faces),
-// applying the placement transform t (nil = identity).
+// nodeFor converts one entity into a MeshNode (outline, cone faces or
+// mesh triangles), applying the placement transform t (nil = identity).
 func (r *DgnReader) nodeFor(e *scene.Entity, eps float64, t *[16]float64) *mst.MeshNode {
 	if e.Kind == scene.KindCone {
 		nd := r.coneNode(e)
-		if nd == nil {
-			return nil
-		}
-		if t != nil {
-			for i := range nd.Vertices {
-				p := mat4Point(t, [3]float64{
-					float64(nd.Vertices[i][0]),
-					float64(nd.Vertices[i][1]),
-					float64(nd.Vertices[i][2]),
-				})
-				nd.Vertices[i] = vec3.T{float32(p[0]), float32(p[1]), float32(p[2])}
-			}
-		}
-		return nd
+		return transformNode(nd, t)
+	}
+	if e.Kind == scene.KindSolid {
+		nd := r.meshNode(e)
+		return transformNode(nd, t)
 	}
 	pts := r.tessellate(e, eps)
 	if len(pts) < 2 {
@@ -214,6 +215,65 @@ func (r *DgnReader) nodeFor(e *scene.Entity, eps float64, t *[16]float64) *mst.M
 	}
 	node.EdgeGroup[0].Edges = edges
 	return node
+}
+
+// transformNode applies the placement transform to every node vertex
+// (nil = identity; nil nodes pass through).
+func transformNode(nd *mst.MeshNode, t *[16]float64) *mst.MeshNode {
+	if nd == nil || t == nil {
+		return nd
+	}
+	for i := range nd.Vertices {
+		p := mat4Point(t, [3]float64{
+			float64(nd.Vertices[i][0]),
+			float64(nd.Vertices[i][1]),
+			float64(nd.Vertices[i][2]),
+		})
+		nd.Vertices[i] = vec3.T{float32(p[0]), float32(p[1]), float32(p[2])}
+	}
+	return nd
+}
+
+// meshNode converts a KindSolid mesh into one triangle MeshNode: the
+// vertex pool becomes the node vertices and each face loop is fan
+// triangulated (p0, pi, pi+1). Entities without decodable faces produce
+// no node (clouds still appear through their own element metadata).
+func (r *DgnReader) meshNode(e *scene.Entity) *mst.MeshNode {
+	if len(e.Faces) == 0 || len(e.Points) == 0 {
+		return nil
+	}
+	verts := make([]vec3.T, len(e.Points))
+	for i, p := range e.Points {
+		sp := r.scalePoint(p)
+		verts[i] = vec3.T{float32(sp[0]), float32(sp[1]), float32(sp[2])}
+	}
+	inRange := func(i int32) bool { return i >= 0 && int(i) < len(e.Points) }
+	var faces []*mst.Face
+	for _, f := range e.Faces {
+		if len(f) < 3 {
+			continue
+		}
+		valid := true
+		for _, idx := range f {
+			if !inRange(idx) {
+				valid = false
+				break
+			}
+		}
+		if !valid { // any out-of-range index drops the whole face
+			continue
+		}
+		for j := 1; j+1 < len(f); j++ {
+			faces = append(faces, &mst.Face{Vertex: [3]uint32{uint32(f[0]), uint32(f[j]), uint32(f[j+1])}})
+		}
+	}
+	if len(faces) == 0 {
+		return nil
+	}
+	return &mst.MeshNode{
+		Vertices:  verts,
+		FaceGroup: []*mst.MeshTriangle{{Batchid: 0, Faces: faces}},
+	}
 }
 
 // mat4Mul composes two column-major 4×4 transforms: result = a ∘ b.
