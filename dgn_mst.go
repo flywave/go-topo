@@ -7,9 +7,15 @@ package topo
 //	n = ceil(sweep / (2*acos(1 - eps/r)))   // r = primary axis
 //	clamped to [3, 256] segments
 //
-// One MeshNode per wire-bearing element (Segment/Polyline/Arc/Ellipse),
-// EdgeGroup edges = consecutive vertex index pairs. Cell/complex-group
-// transforms are NOT pre-multiplied here (§6.5: consumers descend them).
+// One MeshNode per wire-bearing element (Segment/Polyline/Arc/Ellipse/
+// BSplineCurve), EdgeGroup edges = consecutive vertex index pairs; cones
+// become face MeshNodes. BIM placement (D93): cell-header (v7 type 2)
+// transforms are multiplied DOWN the ancestor chain here (§6.5 consumer
+// duty), and shared-cell refs (type 35) instance their definition (type
+// 34) geometry — DefnOnly definition-space entities never render raw.
+// CellRef placement is identity in sample.dgn (39/39 bbox-verified);
+// a non-nil Entity.Transform on the ref will be applied when a placing
+// sample pins the field layout.
 
 import (
 	"math"
@@ -41,39 +47,197 @@ func DgnToMstEps(path string, eps float64) ([]*mst.Mesh, error) {
 }
 
 // toMst tessellates every wire-bearing entity into one outline MeshNode
-// and cones into a face MeshNode.
+// and cones into a face MeshNode, applying cell placement transforms and
+// instancing shared-cell refs.
 func (r *DgnReader) toMst(eps float64) []*mst.Mesh {
 	mesh := mst.NewMesh()
 	mesh.Materials = append(mesh.Materials, &mst.BaseMaterial{
 		Color: [3]byte{255, 255, 255},
 	})
+
+	byID := make(map[uint64]int, len(r.ents))
+	kids := make(map[uint64][]int, len(r.ents))
+	for i := range r.ents {
+		byID[r.ents[i].ID] = i
+		if r.ents[i].ParentID != 0 {
+			kids[r.ents[i].ParentID] = append(kids[r.ents[i].ParentID], i)
+		}
+	}
+
+	// worldTransform: accumulated cell-header placement down the ancestor
+	// chain (complex headers and shared defns contribute identity).
+	worldCache := make([]*[16]float64, len(r.ents))
+	worldDone := make([]bool, len(r.ents))
+	var worldOf func(i int) *[16]float64
+	worldOf = func(i int) *[16]float64 {
+		if worldDone[i] {
+			return worldCache[i]
+		}
+		worldDone[i] = true
+		pid := r.ents[i].ParentID
+		if pid == 0 {
+			return nil
+		}
+		pi, ok := byID[pid]
+		if !ok {
+			return nil
+		}
+		pm := worldOf(pi)
+		pt := r.ents[pi].Transform // set only by cell headers (type 2)
+		switch {
+		case pm != nil && pt != nil:
+			worldCache[i] = mat4Mul(pm, pt)
+		case pm != nil:
+			worldCache[i] = pm
+		case pt != nil:
+			worldCache[i] = pt
+		}
+		return worldCache[i]
+	}
+
+	// defnGeometry collects the DefnOnly tessellable descendants of a
+	// shared-cell definition (nested defs inlined — no refs inside defs
+	// in the sample).
+	var collect func(idx int, out *[]int)
+	collect = func(idx int, out *[]int) {
+		for _, c := range kids[r.ents[idx].ID] {
+			ce := &r.ents[c]
+			if ce.DefnOnly && tessKind(ce.Kind) {
+				*out = append(*out, c)
+			}
+			collect(c, out)
+		}
+	}
+	defnByName := make(map[string]int, len(r.ents))
+	for i := range r.ents {
+		if r.ents[i].Kind == scene.KindCellDef && !r.ents[i].DefnOnly && r.ents[i].Name != "" {
+			if _, dup := defnByName[r.ents[i].Name]; !dup {
+				defnByName[r.ents[i].Name] = i
+			}
+		}
+	}
+
+	emit := func(e *scene.Entity, t *[16]float64) {
+		if nd := r.nodeFor(e, eps, t); nd != nil {
+			mesh.Nodes = append(mesh.Nodes, nd)
+		}
+	}
 	for i := range r.ents {
 		e := &r.ents[i]
-		if e.Kind == scene.KindCone {
-			if nd := r.coneNode(e); nd != nil {
-				mesh.Nodes = append(mesh.Nodes, nd)
+		if e.DefnOnly {
+			continue // definition space renders only through CellRefs
+		}
+		if e.Kind == scene.KindCellRef {
+			di, ok := defnByName[e.Name]
+			if !ok {
+				continue
+			}
+			var geo []int
+			collect(di, &geo)
+			// instance world = ref's cell chain ∘ ref placement ∘ defn chain
+			rw := worldOf(i)
+			for _, gi := range geo {
+				var t *[16]float64
+				dw := worldOf(gi)
+				switch {
+				case rw != nil && e.Transform != nil && dw != nil:
+					t = mat4Mul(rw, mat4Mul(e.Transform, dw))
+				case rw != nil && e.Transform != nil:
+					t = mat4Mul(rw, e.Transform)
+				case rw != nil && dw != nil:
+					t = mat4Mul(rw, dw)
+				case e.Transform != nil && dw != nil:
+					t = mat4Mul(e.Transform, dw)
+				case rw != nil:
+					t = rw
+				case e.Transform != nil:
+					t = e.Transform
+				case dw != nil:
+					t = dw
+				}
+				emit(&r.ents[gi], t)
 			}
 			continue
 		}
-		pts := r.tessellate(e, eps)
-		if len(pts) < 2 {
-			continue
-		}
-		node := &mst.MeshNode{
-			Vertices:  make([]vec3.T, len(pts)),
-			EdgeGroup: []*mst.MeshOutline{{Batchid: 0}},
-		}
-		edges := make([][2]uint32, len(pts)-1)
-		for j, p := range pts {
-			node.Vertices[j] = vec3.T{float32(p[0]), float32(p[1]), float32(p[2])}
-			if j > 0 {
-				edges[j-1] = [2]uint32{uint32(j - 1), uint32(j)}
-			}
-		}
-		node.EdgeGroup[0].Edges = edges
-		mesh.Nodes = append(mesh.Nodes, node)
+		emit(e, worldOf(i))
 	}
 	return []*mst.Mesh{mesh}
+}
+
+// tessKind reports whether a scene kind produces mesh nodes.
+func tessKind(k scene.Kind) bool {
+	switch k {
+	case scene.KindSegment, scene.KindPolyline, scene.KindArc,
+		scene.KindEllipse, scene.KindBSplineCurve, scene.KindCone:
+		return true
+	}
+	return false
+}
+
+// nodeFor converts one entity into a MeshNode (outline or cone faces),
+// applying the placement transform t (nil = identity).
+func (r *DgnReader) nodeFor(e *scene.Entity, eps float64, t *[16]float64) *mst.MeshNode {
+	if e.Kind == scene.KindCone {
+		nd := r.coneNode(e)
+		if nd == nil {
+			return nil
+		}
+		if t != nil {
+			for i := range nd.Vertices {
+				p := mat4Point(t, [3]float64{
+					float64(nd.Vertices[i][0]),
+					float64(nd.Vertices[i][1]),
+					float64(nd.Vertices[i][2]),
+				})
+				nd.Vertices[i] = vec3.T{float32(p[0]), float32(p[1]), float32(p[2])}
+			}
+		}
+		return nd
+	}
+	pts := r.tessellate(e, eps)
+	if len(pts) < 2 {
+		return nil
+	}
+	node := &mst.MeshNode{
+		Vertices:  make([]vec3.T, len(pts)),
+		EdgeGroup: []*mst.MeshOutline{{Batchid: 0}},
+	}
+	edges := make([][2]uint32, len(pts)-1)
+	for j, p := range pts {
+		if t != nil {
+			p = mat4Point(t, p)
+		}
+		node.Vertices[j] = vec3.T{float32(p[0]), float32(p[1]), float32(p[2])}
+		if j > 0 {
+			edges[j-1] = [2]uint32{uint32(j - 1), uint32(j)}
+		}
+	}
+	node.EdgeGroup[0].Edges = edges
+	return node
+}
+
+// mat4Mul composes two column-major 4×4 transforms: result = a ∘ b.
+func mat4Mul(a, b *[16]float64) *[16]float64 {
+	var out [16]float64
+	for col := 0; col < 4; col++ {
+		for row := 0; row < 4; row++ {
+			s := 0.0
+			for k := 0; k < 4; k++ {
+				s += a[k*4+row] * b[col*4+k]
+			}
+			out[col*4+row] = s
+		}
+	}
+	return &out
+}
+
+// mat4Point applies a column-major 4×4 to a point.
+func mat4Point(m *[16]float64, p [3]float64) [3]float64 {
+	return [3]float64{
+		m[0]*p[0] + m[4]*p[1] + m[8]*p[2] + m[12],
+		m[1]*p[0] + m[5]*p[1] + m[9]*p[2] + m[13],
+		m[2]*p[0] + m[6]*p[1] + m[10]*p[2] + m[14],
+	}
 }
 
 // tessellate returns the outline point sequence of one entity in output

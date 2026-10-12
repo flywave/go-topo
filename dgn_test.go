@@ -301,3 +301,114 @@ func TestDgnReaderSyntheticCone(t *testing.T) {
 		t.Fatal("cone must not produce a wire")
 	}
 }
+
+// putSwInt32LE writes a little-endian u16 (element-header word counts).
+func putSwInt32LE(b []byte, v uint16) {
+	b[0] = byte(v)
+	b[1] = byte(v >> 8)
+}
+
+// syntheticLine3D builds a 3D LINE(3) body (56B): points (x1,y1,z1)-(x2,y2,z2).
+func syntheticLine3D(x1, y1, z1, x2, y2, z2 int32) []byte {
+	body := make([]byte, 56)
+	vals := []int32{x1, y1, z1, x2, y2, z2}
+	for i, v := range vals {
+		godgn.V7PutInt32(body[32+i*4:], v)
+	}
+	return body
+}
+
+// syntheticCellDoc builds a 3D v7 file: TCB + one legacy cell header (type
+// 2) translating by (100,200,300), containing a line (0,0,0)-(10,0,0).
+func syntheticCellDoc() []byte {
+	doc := appendSyntheticTCB(nil)
+	line := syntheticLine3D(0, 0, 0, 10, 0, 0) // words 28
+	// header body 120B (words 60); span = 62 + 30 = 92 → tot = 73
+	hbody := make([]byte, 120)
+	putSwInt32LE(hbody[32:], 73)
+	for _, off := range []int{72, 88, 104} { // Trans diag ≈ 1.0 (i32/2^31)
+		godgn.V7PutInt32(hbody[off:], 1<<31-1)
+	}
+	godgn.V7PutInt32(hbody[108:], 100) // origin
+	godgn.V7PutInt32(hbody[112:], 200)
+	godgn.V7PutInt32(hbody[116:], 300)
+	doc = append(doc, 0x01, 2, 60, 0)
+	doc = append(doc, hbody...)
+	doc = append(doc, 0x01, 3, 28, 0)
+	doc = append(doc, line...)
+	doc = append(doc, 0xFF, 0xFF)
+	return doc
+}
+
+// syntheticSharedCellDoc builds a 3D v7 file: TCB + shared cell defn
+// "CELL01" (type 34, containing a line (0,0,0)-(10,0,0)) + a matching ref
+// (type 35), plus a second defn "CELL02" with a line but NO ref.
+func syntheticSharedCellDoc() []byte {
+	doc := appendSyntheticTCB(nil)
+	line := syntheticLine3D(0, 0, 0, 10, 0, 0) // words 28
+
+	// defn CELL01: body 176B (words 88); span = 90 + 30 = 120 → tot = 101
+	d1 := make([]byte, 176)
+	putSwInt32LE(d1[32:], 101)
+	copy(d1[160:], "CELL01")
+	doc = append(doc, 0x01, 34, 88, 0)
+	doc = append(doc, d1...)
+	doc = append(doc, 0x01, 3, 28, 0)
+	doc = append(doc, line...)
+
+	// ref CELL01: body 176B (words 88)
+	ref := make([]byte, 176)
+	copy(ref[160:], "CELL01")
+	doc = append(doc, 0x01, 35, 88, 0)
+	doc = append(doc, ref...)
+
+	// defn CELL02 (no ref): span = 90 + 30 = 120 → tot = 101
+	d2 := make([]byte, 176)
+	putSwInt32LE(d2[32:], 101)
+	copy(d2[160:], "CELL02")
+	doc = append(doc, 0x01, 34, 88, 0)
+	doc = append(doc, d2...)
+	doc = append(doc, 0x01, 3, 28, 0)
+	doc = append(doc, line...)
+
+	doc = append(doc, 0xFF, 0xFF)
+	return doc
+}
+
+// TestDgnReaderCellTree checks the D93 hierarchy: cell children are
+// nested under their CellDef parents; shared-defn interiors are DefnOnly.
+func TestDgnReaderCellTree(t *testing.T) {
+	r := NewDgnReader()
+	if err := r.LoadBytes(syntheticCellDoc()); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	els := r.GetElements()
+	if len(els) != 2 {
+		t.Fatalf("elements=%d want 2", len(els))
+	}
+	if els[0].Type != "CellDef" || els[1].Type != "Segment" {
+		t.Fatalf("types=%s,%s", els[0].Type, els[1].Type)
+	}
+	if els[1].ParentId != els[0].Id {
+		t.Fatalf("segment parent=%d want cell %d", els[1].ParentId, els[0].Id)
+	}
+
+	r2 := NewDgnReader()
+	if err := r2.LoadBytes(syntheticSharedCellDoc()); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	var defnSegs, topSegs int
+	for _, e := range r2.ents {
+		if e.Kind.String() != "Segment" {
+			continue
+		}
+		if e.DefnOnly {
+			defnSegs++
+		} else {
+			topSegs++
+		}
+	}
+	if defnSegs != 2 || topSegs != 0 {
+		t.Fatalf("defnSegs=%d topSegs=%d want 2/0", defnSegs, topSegs)
+	}
+}

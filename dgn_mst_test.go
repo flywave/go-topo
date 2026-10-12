@@ -23,8 +23,8 @@ func TestDgnToMstSample(t *testing.T) {
 		t.Fatalf("meshes=%d want 1", len(meshes))
 	}
 	m := meshes[0]
-	if len(m.Nodes) != 8742 {
-		t.Fatalf("nodes=%d want 8742", len(m.Nodes))
+	if len(m.Nodes) != 8639 {
+		t.Fatalf("nodes=%d want 8639", len(m.Nodes))
 	}
 	if len(m.Materials) != 1 {
 		t.Errorf("materials=%d want 1 (default white)", len(m.Materials))
@@ -66,9 +66,11 @@ func TestDgnToMstSample(t *testing.T) {
 	t.Logf("nodes=%d verts=%d edges=%d arcs>64seg=%d",
 		len(m.Nodes), totalVerts, totalEdges, arcNodes)
 	// deterministic tessellation goldens (DefaultArcEpsilon = 0.1;
-	// bspline curves sampled via de Boor, n = clamp(2·poles, 16, 128))
-	if totalVerts != 202059 || totalEdges != 193317 {
-		t.Errorf("verts/edges = %d/%d want 202059/193317", totalVerts, totalEdges)
+	// bspline curves sampled via de Boor, n = clamp(2·poles, 16, 128);
+	// D93: cell chains multiplied down, 39 CellRefs instance their defns,
+	// DefnOnly definition-space geometry never renders raw)
+	if totalVerts != 201390 || totalEdges != 192751 {
+		t.Errorf("verts/edges = %d/%d want 201390/192751", totalVerts, totalEdges)
 	}
 }
 
@@ -207,5 +209,58 @@ func TestDgnToMstCone(t *testing.T) {
 		if math.Abs(float64(v[2])) > 1e-6 {
 			t.Fatalf("ring1 vertex %d z=%v want 0", i, v[2])
 		}
+	}
+}
+
+// TestDgnToMstCellPlacement checks the D93 transform multiply-down: a
+// legacy cell header translating by (100,200,300) places its line child.
+func TestDgnToMstCellPlacement(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "cell.dgn")
+	if err := os.WriteFile(path, syntheticCellDoc(), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	meshes, err := DgnToMst(path)
+	if err != nil {
+		t.Fatalf("DgnToMst: %v", err)
+	}
+	if len(meshes) != 1 || len(meshes[0].Nodes) != 1 {
+		t.Fatalf("meshes/nodes wrong: %d/%d", len(meshes), len(meshes[0].Nodes))
+	}
+	nd := meshes[0].Nodes[0]
+	if len(nd.Vertices) != 2 {
+		t.Fatalf("vertices=%d want 2", len(nd.Vertices))
+	}
+	s, e := nd.Vertices[0], nd.Vertices[1]
+	if math.Abs(float64(s[0])-100) > 1e-3 || math.Abs(float64(s[1])-200) > 1e-3 ||
+		math.Abs(float64(s[2])-300) > 1e-3 {
+		t.Errorf("start = %v want (100,200,300)", s)
+	}
+	if math.Abs(float64(e[0])-110) > 1e-3 || math.Abs(float64(e[1])-200) > 1e-3 {
+		t.Errorf("end = %v want (110,200,300)", e)
+	}
+}
+
+// TestDgnToMstSharedCellInstances checks D93 shared-cell semantics: the
+// defn "CELL01" interior renders exactly once via its ref; defn "CELL02"
+// has no ref and renders never.
+func TestDgnToMstSharedCellInstances(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "shared.dgn")
+	if err := os.WriteFile(path, syntheticSharedCellDoc(), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	meshes, err := DgnToMst(path)
+	if err != nil {
+		t.Fatalf("DgnToMst: %v", err)
+	}
+	if len(meshes) != 1 || len(meshes[0].Nodes) != 1 {
+		t.Fatalf("meshes/nodes wrong: %d/%d", len(meshes), len(meshes[0].Nodes))
+	}
+	nd := meshes[0].Nodes[0]
+	if len(nd.Vertices) != 2 {
+		t.Fatalf("vertices=%d want 2", len(nd.Vertices))
+	}
+	s := nd.Vertices[0]
+	if math.Abs(float64(s[0])) > 1e-6 || math.Abs(float64(s[1])) > 1e-6 {
+		t.Errorf("instance start = %v want defn-local (0,0,0) at identity", s)
 	}
 }

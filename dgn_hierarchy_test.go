@@ -46,8 +46,8 @@ func TestDgnHierarchySample(t *testing.T) {
 	if children == 0 {
 		t.Fatal("no elements with ParentId > 0 — grouping broken")
 	}
-	if children != 56 {
-		t.Errorf("children=%d want 56 (sample grouping golden)", children)
+	if children != 9002 {
+		t.Errorf("children=%d want 9002 (56 complex-group + cell spans, D93)", children)
 	}
 	t.Logf("children=%d parentKinds=%v", children, parentKinds)
 
