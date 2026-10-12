@@ -1,26 +1,31 @@
-// D120: split a face-like shape by edges lying on it
-// (BRepFeat_SplitShape). Used by the DGN ACIS bridge to trim extrusion
-// bands along their real splitting curves.
+// D120/D121: cgo wrappers for the DGN ACIS bridge (go-topo dgn_acis.go):
+//   - toposplit_split_by_edges: split a face-like shape by edges lying on
+//     it (BRepFeat_SplitShape);
+//   - toposplit_trim_band: project a wire onto a face along dir, split
+//     the face by the projected wire, and keep the piece containing the
+//     keep point (BRepProj_Projection + BRepFeat_SplitShape).
+// (Exact bounding box lives in topo_c_api.cc:
+// topo_shape_bounding_box_optimal — BRepBndLib::AddOptimal.)
 #include "topo_c_api.h"
 #include "cgo_lock.hh"
 #include "topo_impl.hh"
 
 #include <BRepFeat_SplitShape.hxx>
+#include <BRepProj_Projection.hxx>
 #include <BRepBndLib.hxx>
 #include <Bnd_Box.hxx>
-#include <BRepProj_Projection.hxx>
 #include <BRep_Tool.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopoDS.hxx>
 #include <TopoDS_Compound.hxx>
 #include <BRep_Builder.hxx>
 #include <gp_Dir.hxx>
 #include <gp_Pnt.hxx>
-#include <TopAbs_ShapeEnum.hxx>
-#include <TopExp_Explorer.hxx>
-#include <TopoDS.hxx>
 #include <memory>
 
-extern "C" topo_shape_t *toposplit_split_by_edges(topo_shape_t *S, topo_shape_t **edges,
-                                       int count) {
+extern "C" topo_shape_t *toposplit_split_by_edges(topo_shape_t *S,
+                                                  topo_shape_t **edges,
+                                                  int count) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(
       flywave::topo::topo_glock());
   try {
@@ -47,12 +52,11 @@ extern "C" topo_shape_t *toposplit_split_by_edges(topo_shape_t *S, topo_shape_t 
   }
 }
 
-// D121: project a wire onto a face along dir, split the face by the
-// projected wire (BRepFeat_SplitShape), and return the piece containing
-// keepPoint. Returns null on any failure (caller falls back).
-extern "C" topo_shape_t *toposplit_trim_band(topo_shape_t *band, topo_shape_t *wire,
-                                  topo_shape_t *keepShape, double dx,
-                                  double dy, double dz) {
+extern "C" topo_shape_t *toposplit_trim_band(topo_shape_t *band,
+                                             topo_shape_t *wire,
+                                             topo_shape_t *keepShape,
+                                             double dx, double dy,
+                                             double dz) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(
       flywave::topo::topo_glock());
   try {
@@ -60,7 +64,6 @@ extern "C" topo_shape_t *toposplit_trim_band(topo_shape_t *band, topo_shape_t *w
     const TopoDS_Shape &splitWire = wire->shp->value();
     const TopoDS_Shape &keep = keepShape->shp->value();
 
-    // 1. project the splitting wire onto the band surface
     BRepProj_Projection proj(splitWire, faceShape, gp_Dir(dx, dy, dz));
     if (!proj.IsDone()) {
       return nullptr;
@@ -70,7 +73,6 @@ extern "C" topo_shape_t *toposplit_trim_band(topo_shape_t *band, topo_shape_t *w
       return nullptr;
     }
 
-    // 2. split the band by the projected wire
     BRepFeat_SplitShape ss;
     ss.Init(faceShape);
     for (TopExp_Explorer pe(projWire, TopAbs_EDGE); pe.More(); pe.Next()) {
@@ -83,17 +85,12 @@ extern "C" topo_shape_t *toposplit_trim_band(topo_shape_t *band, topo_shape_t *w
     }
     ss.Build();
 
-    // 3. keep the resulting piece(s) containing the keep point (the end
-    //    loop center, i.e. the face's own boundary side)
     TopoDS_Shape result = ss.Shape();
-    TopoDS_Compound mc;
     BRep_Builder builder;
+    TopoDS_Compound mc;
     builder.MakeCompound(mc);
     bool any = false;
-    bool outside = false;
     for (TopExp_Explorer rf(result, TopAbs_FACE); rf.More(); rf.Next()) {
-      // keep-piece test: the piece whose vertices' bbox contains the
-      // keepShape center is the wanted side; the other side is dropped.
       Bnd_Box box;
       BRepBndLib::Add(rf.Current(), box);
       double xmin, ymin, zmin, xmax, ymax, zmax;
@@ -112,20 +109,14 @@ extern "C" topo_shape_t *toposplit_trim_band(topo_shape_t *band, topo_shape_t *w
       if (in) {
         builder.Add(mc, rf.Current());
         any = true;
-      } else {
-        outside = true;
       }
     }
     if (!any) {
       return nullptr;
     }
-    if (!outside) {
-      // nothing trimmed — return the whole band unchanged
-      return new topo_shape_t{std::make_shared<flywave::topo::shape>(
-          static_cast<const topo_shape_t &>(*band).shp->value())};
-    }
-    return new topo_shape_t{std::make_shared<flywave::topo::shape>(
-        static_cast<const TopoDS_Shape &>(mc))};
+    // if no piece was dropped, mc holds every resulting face anyway —
+    // return the kept-piece compound uniformly.
+    return new topo_shape_t{std::make_shared<flywave::topo::shape>(mc)};
   } catch (...) {
     return nullptr;
   }

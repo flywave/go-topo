@@ -133,6 +133,26 @@ bbox_t topo_shape_bounding_box(topo_shape_t *p) {
   }
 }
 
+// D127: exact bounding box (BRepBndLib::AddOptimal — tight on curved
+// faces where the default Add over-approximates by control points).
+bbox_t topo_shape_bounding_box_optimal(topo_shape_t *p, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
+    Bnd_Box b;
+    BRepBndLib::AddOptimal(p->shp->value(), b);
+    b.SetGap(tol);
+    gp_Pnt mn = b.CornerMin();
+    gp_Pnt mx = b.CornerMax();
+    return bbox_t{mn.X(), mn.Y(), mn.Z(), mx.X(), mx.Y(), mx.Z()};
+  }
+  catch (const std::exception &e) {
+    (void)e;
+    return bbox_t{};
+  }
+  catch (...) {
+    return bbox_t{};
+  }
+}
+
 int topo_shape_hash_code(topo_shape_t *p) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try { return p->shp->hash_code();   }
   catch (const std::exception &e) {

@@ -635,9 +635,9 @@ func coneBandShape(doc *sat.Doc, f sat.Face, sr sat.Rec, sharedCurve int) *Shape
 		return full
 	}
 	// cut by the splitting ellipse wire: project it along the cone axis
-	// onto the band (D120 SplitShape + BRepProj path) and keep the piece
-	// containing the end-ellipse center — the band then matches the real
-	// boundary exactly along the splitting curve.
+	// onto the band (D120/D121 SplitShape + BRepProj path) and keep the
+	// piece containing the end-ellipse center — the band then matches the
+	// real boundary exactly along the splitting curve.
 	if trimmed := trimBand(full, sw.ToShape(), [3]float64(splitEl.Origin),
 		[3]float64{n[0], n[1], n[2]}); trimmed != nil && !trimmed.IsNull() {
 		return trimmed
@@ -663,4 +663,11 @@ func loopEllipses(doc *sat.Doc, loops [][]sat.EdgeNode) []sat.Ellipse {
 		}
 	}
 	return out
+}
+
+// BBoxOptimal returns the exact bounding box (BRepBndLib::AddOptimal —
+// tight on curved faces where the default BBox over-approximates by
+// control points).
+func (s *Shape) BBoxOptimal(tol float64) BBox {
+	return BBox{val: C.topo_shape_bounding_box_optimal(s.inner.val, C.double(tol))}
 }

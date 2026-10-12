@@ -139,6 +139,7 @@ TOPOCAPICALL _Bool topo_shape_equals(topo_shape_t *p, topo_shape_t *o);
 TOPOCAPICALL int topo_shape_type(topo_shape_t *p);
 
 TOPOCAPICALL bbox_t topo_shape_bounding_box(topo_shape_t *p);
+TOPOCAPICALL bbox_t topo_shape_bounding_box_optimal(topo_shape_t *p, double tol);
 TOPOCAPICALL int topo_shape_hash_code(topo_shape_t *p);
 TOPOCAPICALL int topo_shape_transform(topo_shape_t *p, trsf_t mat);
 TOPOCAPICALL int topo_shape_translate(topo_shape_t *p, vec3d_t delta);

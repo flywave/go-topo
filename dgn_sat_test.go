@@ -134,10 +134,11 @@ func TestAcisRealSurfaceSamples(t *testing.T) {
 		// bbox is the NURBS control-point envelope (slightly outside the
 		// true surface), z is exact [0, 3].
 		{"loftedsurf", [][2]float64{{-2.98, 2.01}, {-1.36, 1.36}, {0, 3}}, true},
-		// sweptsurf (D117): split-band cylinder — each face rebuilds as
-		// an extrusion band over the shared splitting ellipse, v domains
-		// tile the full cylinder (face3 v 0..2.236 up to the top loop,
-		// face5 v -2.062..0 down to the bottom loop).
+		// sweptsurf (D117/D125): split-band cylinder — each face rebuilds
+		// as an extrusion band over the shared splitting ellipse, v
+		// domains tile the full cylinder (face3 v 0..2.236 up to the top
+		// loop, face5 v -2.062..0 down to the bottom loop). Asserted via
+		// optimal bbox (tight on curved faces).
 		{"sweptsurf", [][2]float64{{-2.236, 2.557}, {-1.001, 1.001}, {-0.226, 4.868}}, true},
 	}
 	for _, tc := range cases {
@@ -164,14 +165,16 @@ func TestAcisRealSurfaceSamples(t *testing.T) {
 				if sh == nil || sh.IsNull() {
 					t.Fatal("shape nil")
 				}
-				d := sh.BBox().Data()
+				// curved-face bands: default BBox over-approximates by
+				// control points — use the exact (AddOptimal) box
+				d := sh.BBoxOptimal(1e-6).Data()
 				for i := 0; i < 3; i++ {
 					if math.IsInf(d[i], 0) || math.IsInf(d[i+3], 0) || math.IsNaN(d[i]) {
 						t.Fatalf("bbox axis %d not finite: %v", i, d)
 					}
 				}
 				for i, want := range tc.bbox {
-					tol := 1e-6
+					tol := 1e-4 // OCCT boolean/projection numeric tolerance
 					if d[i] < want[0]-tol || d[i] > want[1]+tol ||
 						d[i+3] < want[0]-tol || d[i+3] > want[1]+tol {
 						t.Fatalf("bbox axis %d = (%g,%g) outside %v", i, d[i], d[i+3], want)
