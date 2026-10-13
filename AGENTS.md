@@ -67,6 +67,8 @@ cmake --install build --prefix libs/darwin_arm
 | `geometry.go` | Geometry type constants |
 | `geometry_creator.go` | Curve/surface creation helpers |
 | `dxf.go` / `ifc.go` | DXF/IFC import |
+| `rvt.go` | RVT import (via github.com/flywave/go-rvt): `RvtReader` emits every geometry-bearing element — identity/class, world BBox, exact curve wires (segments/arcs); Revit 2023 files additionally carry BuiltInCategory, host/owner/container references, placement kinds, exact type names (`TypeName` via the type-layer join — 47 walls + 8 slabs named), reconstructed sketch-plan profiles (`Profile` + extruded `Shape` — floors/roofs/ceilings) and wall bodies (`Shape` from location lines/arcs × exact type layer thickness × Z extent). Coverage contract: bridge output == go-rvt GeometryManifest, enforced by `rvt_test.go` |
+| `nwd.go` | NWD (Navisworks) import (via github.com/flywave/go-nwd): `NwdReader` emits geometry blocks — identity/kind, world BBox, exact vertices, and edge-compound `Shape` for line sets; triangle sets carry vertices only until the quantized index table is located (go-nwd U21) with an opt-in `SetTriangleSoup` best effort. Also exposes the container metadata, partition root and CDA property keys. Real-sample test `nwd_test.go` |
 | `mesh.go` / `topo_export.go` | Mesh export via callback |
 | `selector.go` / `workplane.go` / `sketch.go` | Higher-level modeling |
 

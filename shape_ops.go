@@ -321,7 +321,11 @@ func ExtrudeLinear(wire *Wire, innerWires []*Wire, normal Vector3, taper float64
 	for i, innerWire := range innerWires {
 		cInnerWires[i] = innerWire.inner.val
 	}
-	result := C.topo_extrude_linear(wire.inner.val, &cInnerWires[0], C.int(count), normal.val, C.double(taper))
+	var cPtr *C.struct__topo_wire_t
+	if count > 0 {
+		cPtr = &cInnerWires[0]
+	}
+	result := C.topo_extrude_linear(wire.inner.val, cPtr, C.int(count), normal.val, C.double(taper))
 	if result == nil {
 		return nil
 	}
@@ -334,7 +338,11 @@ func ExtrudeLinearWithRotation(wire *Wire, innerWires []*Wire, center Point3, no
 	for i, innerWire := range innerWires {
 		cInnerWires[i] = innerWire.inner.val
 	}
-	result := C.topo_extrude_linear_with_rotation(wire.inner.val, &cInnerWires[0], C.int(count), center.val, normal.val, C.double(angleDegrees))
+	var cPtr *C.struct__topo_wire_t
+	if count > 0 {
+		cPtr = &cInnerWires[0]
+	}
+	result := C.topo_extrude_linear_with_rotation(wire.inner.val, cPtr, C.int(count), center.val, normal.val, C.double(angleDegrees))
 	if result == nil {
 		return nil
 	}

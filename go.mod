@@ -21,6 +21,12 @@ require (
 require (
 	github.com/flywave/gltf v0.20.4-0.20250828104044-ebb99e75f3cc // indirect
 	github.com/flywave/go-delaunay v0.0.0-00010101000000-000000000000 // indirect
+	github.com/flywave/go-nwd v0.0.0
+	github.com/flywave/go-rvt v0.0.0
 	github.com/pkg/errors v0.9.1 // indirect
 	golang.org/x/image v0.26.0 // indirect
 )
+
+replace github.com/flywave/go-rvt => ../go-rvt
+
+replace github.com/flywave/go-nwd => ../go-nwd

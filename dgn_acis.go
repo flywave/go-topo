@@ -20,16 +20,12 @@ package topo
 
 /*
 #include "geometry_c_api.h"
+#include "topo_c_api.h"
 #cgo CFLAGS: -I  ./libs
 #cgo linux CXXFLAGS: -I ./libs  -std=gnu++14
 #cgo darwin,amd64 CXXFLAGS: -I ./libs  -std=gnu++14
 #cgo darwin,arm64 CXXFLAGS: -I ./libs  -std=gnu++14
 #cgo windows CXXFLAGS: -I ./libs  -std=gnu++14
-*/
-import "C"
-
-/*
-#include "topo_c_api.h"
 extern topo_shape_t *toposplit_split_by_edges(topo_shape_t *S, topo_shape_t **edges, int count);
 extern topo_shape_t *toposplit_trim_band(topo_shape_t *band, topo_shape_t *wire, topo_shape_t *keep, double dx, double dy, double dz);
 */
