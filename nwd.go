@@ -16,9 +16,9 @@ package topo
 //   - TriangleSetElement (type 94) triangle indices use a quantized,
 //     compressed index table that go-nwd decodes structurally
 //     (DecodeIndexTable, findings N58) but whose per-element region is not
-//     yet located (U21). Vertices are emitted; triangle faces are built
-//     only when SetTriangleSoup(true) and the block vertex count is a
-//     multiple of 3 (triangle-soup convention — best effort);
+//     yet located (U21). Only the unambiguous small polygons are built:
+//     3 vertices -> one triangle, 4 -> one quad. Larger elements
+//     (fans/strips) emit vertices only, never wrong geometry;
 //   - PointSetElement (type 96) emits vertices with no Shape.
 //
 // Units: NWD geometry is stored in the file's model units (typically
@@ -56,7 +56,6 @@ type NwdElement struct {
 // elements.
 type NwdReader struct {
 	scale    float64
-	triSoup  bool
 	file     *nwd.File
 	elements []*NwdElement
 
@@ -70,12 +69,6 @@ func NewNwdReader() *NwdReader { return &NwdReader{scale: 1} }
 // SetScale sets the unit multiplier applied to NWD geometry. Call before
 // Load. (NWD is commonly in meters; 1 preserves it.)
 func (r *NwdReader) SetScale(f float64) { r.scale = f }
-
-// SetTriangleSoup enables best-effort face construction for triangle
-// elements whose vertex count is a multiple of 3 (non-indexed triangle
-// soup). Off by default because NWD triangle indices are not yet decoded
-// (go-nwd U21); enable only when the source is known to be soup.
-func (r *NwdReader) SetTriangleSoup(v bool) { r.triSoup = v }
 
 // Load parses the NWD file at path.
 func (r *NwdReader) Load(path string) error {
@@ -184,21 +177,52 @@ func nwdKind(t int) string {
 	}
 }
 
-// shapeFor builds a topo Shape for a geometry block. Line sets become an
-// edge compound; triangle sets become a face compound only in
-// triangle-soup mode with a vertex count divisible by 3.
+// shapeFor builds a topo Shape for a geometry block.
+//   - LineSet (95): vertices → edge compound (exact for the dominant
+//     2-vertex segments; longer elements chain as a polyline).
+//   - TriangleSet (94): only the unambiguous small polygons are built —
+//     3 vertices → one triangle, 4 vertices → one quad (two triangles).
+//     Larger elements (6/10-vertex fans/strips) require the quantized
+//     index table that go-nwd does not yet locate (U21), so they emit no
+//     Shape (vertices + BBox only) rather than wrong geometry.
+//   - PointSet (96): no Shape.
 func (r *NwdReader) shapeFor(el *NwdElement, pts []Point3) *Shape {
 	switch el.ElementType {
-	case 95: // LineSet: consecutive vertex pairs are segments.
+	case 95:
 		return edgeCompound(pts)
-	case 94: // TriangleSet
-		if !r.triSoup || len(pts)%3 != 0 {
-			return nil
+	case 94:
+		switch len(pts) {
+		case 3:
+			if s := faceCompound([]Point3{pts[0], pts[1], pts[2]}); s != nil {
+				el.TriangleCount = 1
+				return s
+			}
+		case 4:
+			if s := faceCompound([]Point3{pts[0], pts[1], pts[2], pts[0], pts[2], pts[3]}); s != nil {
+				el.TriangleCount = 2
+				return s
+			}
 		}
-		return triangleCompound(pts, &el.TriangleCount)
+		return nil
 	default:
 		return nil
 	}
+}
+
+// faceCompound builds planar triangle faces from consecutive vertex
+// triples and returns them as a compound Shape.
+func faceCompound(tris []Point3) *Shape {
+	shapes := make([]Shape, 0, len(tris)/3)
+	for i := 0; i+2 < len(tris); i += 3 {
+		f := TopoMakeFaceFromPoints([]Point3{tris[i], tris[i+1], tris[i+2]})
+		if !faceValid(f) {
+			continue
+		}
+		if s := f.ToShape(); s != nil && !s.IsNull() {
+			shapes = append(shapes, *s)
+		}
+	}
+	return compoundShape(shapes)
 }
 
 // edgeCompound chains consecutive vertex pairs into edges and returns them
@@ -217,25 +241,6 @@ func edgeCompound(pts []Point3) *Shape {
 			shapes = append(shapes, *s)
 		}
 	}
-	return compoundShape(shapes)
-}
-
-// triangleCompound builds one planar face per 3 consecutive vertices.
-func triangleCompound(pts []Point3, triCount *int) *Shape {
-	shapes := make([]Shape, 0, len(pts)/3)
-	for i := 0; i+2 < len(pts); i += 3 {
-		f := TopoMakeFaceFromPoints([]Point3{pts[i], pts[i+1], pts[i+2]})
-		if !faceValid(f) {
-			continue
-		}
-		if s := f.ToShape(); s != nil && !s.IsNull() {
-			shapes = append(shapes, *s)
-		}
-	}
-	if len(shapes) == 0 {
-		return nil
-	}
-	*triCount = len(shapes)
 	return compoundShape(shapes)
 }
 

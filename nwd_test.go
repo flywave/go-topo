@@ -32,50 +32,31 @@ func TestNwdReaderRealSample(t *testing.T) {
 	if len(els) < 1000 {
 		t.Fatalf("elements=%d want >=1000", len(els))
 	}
-	total := 0
-	shaped := 0
-	var tri, line, point int
+	total, shaped, faces, tri, line := 0, 0, 0, 0, 0
 	for _, e := range els {
 		total += e.VertexCount
 		if e.Shape != nil {
 			shaped++
+			faces += e.TriangleCount
 		}
 		switch e.ElementType {
 		case 94:
 			tri++
 		case 95:
 			line++
-		case 96:
-			point++
 		}
 	}
 	if total < 100000 {
 		t.Errorf("total vertices=%d want >=100000", total)
 	}
-	// Line sets bridge to edge compounds; triangles wait on U21.
-	if line == 0 || shaped == 0 {
-		t.Errorf("line=%d shaped=%d (want >0)", line, shaped)
+	// Line sets bridge to edge compounds; small polygons to faces.
+	if line == 0 || shaped == 0 || faces == 0 {
+		t.Errorf("line=%d shaped=%d faces=%d (want >0)", line, shaped, faces)
 	}
-	t.Logf("elements=%d vertices=%d shaped=%d triangle=%d line=%d point=%d",
-		len(els), total, shaped, tri, line, point)
-}
-
-func TestNwdReaderTriangleSoup(t *testing.T) {
-	if _, err := os.Stat(nwdSample); err != nil {
-		t.Skipf("real NWD sample not present: %v", err)
+	// Faces come only from the unambiguous 3/4-vertex triangle elements.
+	if faces > tri {
+		t.Errorf("faces=%d exceeds triangle elements=%d", faces, tri)
 	}
-	r := NewNwdReader()
-	r.SetTriangleSoup(true)
-	if err := r.Load(nwdSample); err != nil {
-		t.Fatalf("Load: %v", err)
-	}
-	built := 0
-	for _, e := range r.GetElements() {
-		if e.TriangleCount > 0 {
-			built++
-		}
-	}
-	// Best-effort soup only; must not panic and should build some faces
-	// for the fraction of triangle blocks with vertex counts %3==0.
-	t.Logf("triangle-soup blocks with faces: %d", built)
+	t.Logf("elements=%d vertices=%d shaped=%d faces=%d triangle=%d line=%d",
+		len(els), total, shaped, faces, tri, line)
 }
