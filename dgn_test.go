@@ -649,3 +649,24 @@ func TestDgnReaderV8TxDOTTerrain3D(t *testing.T) {
 		t.Fatalf("Polyline=%d wired=%d, want >=100 all wired", polylines, wired)
 	}
 }
+
+// TestDgnReaderV8TxDOTTerrainMesh verifies the OpenRoads terrain XAttribute
+// decode end to end: the 428-vertex terrain surface (state-plane f64s,
+// D143) must reach go-topo as a KindSolid point-mesh entity.
+func TestDgnReaderV8TxDOTTerrainMesh(t *testing.T) {
+	r := NewDgnReader()
+	if err := r.Load("../go-dgn/dgn/testdata/txdot-rudderplaza-terrain.dgn"); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	terrains := 0
+	for _, e := range r.GetElements() {
+		// the terrain decodes to a KindSolid mesh entity — the only Solid
+		// in this file (428 vertices, 7 in-range faces of the TIN so far).
+		if e.Type == "Solid" {
+			terrains++
+		}
+	}
+	if terrains != 1 {
+		t.Fatalf("terrain mesh entities=%d, want 1", terrains)
+	}
+}

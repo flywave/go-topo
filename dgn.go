@@ -102,6 +102,12 @@ func (r *DgnReader) LoadBytes(b []byte) error {
 		if defEnts, err := godgn.SceneV8SharedCellDefs(doc); err == nil {
 			all = append(all, defEnts...)
 		}
+		// OpenRoads terrain surfaces live as XAttribute families in the
+		// attribute-side heaps (Dgn^CA/$N) — decoded to point-mesh
+		// KindSolid entities (D143).
+		if tEnts, err := godgn.SceneV8Terrain(doc); err == nil {
+			all = append(all, tEnts...)
+		}
 		r.ents = all
 	default:
 		return fmt.Errorf("dgn: unrecognized format")
