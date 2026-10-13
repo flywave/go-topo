@@ -266,6 +266,10 @@ func GeomMakeBezierSurfaceFromWeight(poles [][]Point3, weights [][]float64) *Geo
 	}
 }
 
+// GeomMakeBSplineSurface builds a B-spline surface. poles is
+// [u][v]: the grid's OUTER dimension is the U direction (OCCT's
+// TColgp_Array2OfPnt first axis pairs with UKnots/UMults — verified by
+// construction, D131); uMults[i]/vMults[i] pair with uKnots[i]/vKnots[i].
 func GeomMakeBSplineSurface(poles [][]Point3, uKnots, vKnots []float64, uMults, vMults []int, uDegree, vDegree int, uPeriodic, vPeriodic bool) *GeomBSplineSurface {
 	if len(poles) == 0 || len(poles[0]) == 0 {
 		return nil

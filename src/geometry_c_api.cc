@@ -6740,8 +6740,8 @@ geom_bspline_curve_t *geom_make_bspline_curve_from_weight(
 geom_bezier_surface_t *geom_make_bezier_surface(pnt3d_t *SurfacePoles, int row,
                                                 int col) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col - 1), 0,
-                         static_cast<Standard_Integer>(row - 1)};
+  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(row - 1), 0,
+                         static_cast<Standard_Integer>(col - 1)};
   for (int i = 0; i < row; i++) {
     for (int j = 0; j < col; j++) {
       pnt.SetValue(i, j, cast_to_gp(SurfacePoles[i * col + j]));
@@ -6762,10 +6762,10 @@ geom_bezier_surface_t *
 geom_make_bezier_surface_from_weight(pnt3d_t *SurfacePoles, double *PoleWeights,
                                      int row, int col) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col - 1), 0,
-                         static_cast<Standard_Integer>(row - 1)};
-  TColStd_Array2OfReal wei{0, static_cast<Standard_Integer>(col - 1), 0,
-                         static_cast<Standard_Integer>(row - 1)};
+  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(row - 1), 0,
+                         static_cast<Standard_Integer>(col - 1)};
+  TColStd_Array2OfReal wei{0, static_cast<Standard_Integer>(row - 1), 0,
+                         static_cast<Standard_Integer>(col - 1)};
   for (int i = 0; i < row; i++) {
     for (int j = 0; j < col; j++) {
       pnt.SetValue(i, j, cast_to_gp(SurfacePoles[i * col + j]));
@@ -6789,8 +6789,10 @@ geom_make_bspline_surface(pnt3d_t *Poles, double *UKnots, double *VKnots,
                           int UCount, int VCount, int UDegree, int VDegree,
                           _Bool UPeriodic, _Bool VPeriodic) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col - 1), 0,
-                         static_cast<Standard_Integer>(row - 1)};
+  // poles arrive row-major (row × col); the Array2 dimensions must match
+  // the fill loops below or non-square grids throw on SetValue (D131).
+  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(row - 1), 0,
+                         static_cast<Standard_Integer>(col - 1)};
   for (int i = 0; i < row; i++) {
     for (int j = 0; j < col; j++) {
       pnt.SetValue(i, j, cast_to_gp(Poles[i * col + j]));
@@ -6825,10 +6827,10 @@ geom_bspline_surface_t *geom_make_bspline_surface_from_weight(
     int *UMults, int *VMults, int row, int col, int UCount, int VCount,
     int UDegree, int VDegree, _Bool UPeriodic, _Bool VPeriodic) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock()); try {
-  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(col - 1), 0,
-                         static_cast<Standard_Integer>(row - 1)};
-  TColStd_Array2OfReal wei{0, static_cast<Standard_Integer>(col - 1), 0,
-                         static_cast<Standard_Integer>(row - 1)};
+  TColgp_Array2OfPnt pnt{0, static_cast<Standard_Integer>(row - 1), 0,
+                         static_cast<Standard_Integer>(col - 1)};
+  TColStd_Array2OfReal wei{0, static_cast<Standard_Integer>(row - 1), 0,
+                         static_cast<Standard_Integer>(col - 1)};
   for (int i = 0; i < row; i++) {
     for (int j = 0; j < col; j++) {
       pnt.SetValue(i, j, cast_to_gp(Poles[i * col + j]));

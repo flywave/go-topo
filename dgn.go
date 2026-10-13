@@ -155,6 +155,12 @@ func edgeValid(e *Edge) bool {
 	return e != nil && e.inner != nil && e.inner.val.shp != nil
 }
 
+// faceValid is edgeValid's face counterpart (the face constructors share
+// the zero-struct-on-failure convention).
+func faceValid(f *Face) bool {
+	return f != nil && f.inner != nil && f.inner.val.shp != nil
+}
+
 func (r *DgnReader) wireFor(e *scene.Entity) *Wire {
 	switch e.Kind {
 	case scene.KindSegment:
@@ -344,8 +350,70 @@ func (r *DgnReader) shapeFor(e *scene.Entity) *Shape {
 		return r.coneShape(e)
 	case scene.KindSolid:
 		return r.meshShape(e)
+	case scene.KindBSplineSurface:
+		return r.bsplineSurfaceShape(e)
 	}
 	return nil
+}
+
+// bsplineSurfaceShape builds an exact OCCT B-spline face over the full
+// parametric rectangle (untrimmed — v7 type-25 boundary elements are not
+// consumed yet, D131). Knots arrive fully expanded (clamped 0/1 ends),
+// so knotsToMults recovers the (unique, multiplicity) form. The scene
+// grid is v-major ([v][u], ISFF row-major); GeomMakeBSplineSurface's
+// Array2 first dimension is the U direction, so the grid is transposed
+// here.
+func (r *DgnReader) bsplineSurfaceShape(e *scene.Entity) *Shape {
+	sp := e.BSplineSurface
+	if sp == nil || len(sp.Poles) == 0 || len(sp.Poles[0]) == 0 ||
+		len(sp.UKnots) == 0 || len(sp.VKnots) == 0 ||
+		sp.UDegree < 1 || sp.VDegree < 1 {
+		return nil
+	}
+	polesV := len(sp.Poles)
+	polesU := len(sp.Poles[0])
+	grid := make([][]Point3, polesU)
+	for u := 0; u < polesU; u++ {
+		grid[u] = make([]Point3, polesV)
+		for v := 0; v < polesV; v++ {
+			if len(sp.Poles[v]) != polesU {
+				return nil
+			}
+			grid[u][v] = NewPoint3(r.scalePoint(sp.Poles[v][u]))
+		}
+	}
+	uniqU, multU := knotsToMults(sp.UKnots)
+	uniqV, multV := knotsToMults(sp.VKnots)
+	var g *GeomBSplineSurface
+	if sp.Weights != nil {
+		if len(sp.Weights) != polesV {
+			return nil
+		}
+		wg := make([][]float64, polesU)
+		for u := 0; u < polesU; u++ {
+			wg[u] = make([]float64, polesV)
+			for v := 0; v < polesV; v++ {
+				if len(sp.Weights[v]) != polesU {
+					return nil
+				}
+				wg[u][v] = sp.Weights[v][u]
+			}
+		}
+		g = GeomMakeBSplineSurfaceFromWeight(grid, wg, uniqU, uniqV,
+			multU, multV, sp.UDegree, sp.VDegree, false, false)
+	} else {
+		g = GeomMakeBSplineSurface(grid, uniqU, uniqV, multU, multV,
+			sp.UDegree, sp.VDegree, false, false)
+	}
+	if g == nil || g.inner == nil || g.inner.geom == nil {
+		return nil
+	}
+	face := TopoMakeFaceFromSurfaceParm(g.Surface(),
+		uniqU[0], uniqU[len(uniqU)-1], uniqV[0], uniqV[len(uniqV)-1], 1e-6)
+	if !faceValid(face) {
+		return nil
+	}
+	return face.ToShape()
 }
 
 // coneShape builds the frustum P1/R1 → P2/R2 as an OCCT cone solid

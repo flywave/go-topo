@@ -1,6 +1,7 @@
 package topo
 
 import (
+	"encoding/binary"
 	"math"
 	"os"
 	"testing"
@@ -485,6 +486,80 @@ func TestDgnReaderV7RealPublicSamples(t *testing.T) {
 		r2 := NewDgnReader()
 		if err := r2.Load("../go-dgn/dgn/testdata/" + name); err != nil {
 			t.Fatalf("%s: load: %v", name, err)
+		}
+	}
+}
+
+// TestDgnReaderV7SyntheticBSplineSurface builds a minimal v7 byte stream
+// (TCB + type-24 surface header + u-knots + poles) and bridges it end to
+// end: the reader must yield a BSplineSurface entity whose shape is an
+// exact OCCT bilinear face spanning the pole grid (D131 — type 24 was
+// silently dropped by the scene walk before).
+func TestDgnReaderV7SyntheticBSplineSurface(t *testing.T) {
+	putI32 := func(b []byte, off int, v int32) {
+		// v7 fields use the word-swapped DGN_INT32 order
+		godgn.V7PutInt32(b[off:], v)
+	}
+	frame := func(b0, typ byte, body []byte) []byte {
+		out := make([]byte, 4+len(body))
+		out[0], out[1] = b0, typ
+		binary.LittleEndian.PutUint16(out[2:], uint16(len(body)/2))
+		copy(out[4:], body)
+		return out
+	}
+
+	tcbBody := make([]byte, 1532) // words=0x02FE — the v7 magic Detect() pins (b[2]=FE b[3]=02)
+	putI32(tcbBody, 1108, 1)      // SubunitsPerMaster
+	putI32(tcbBody, 1112, 1)      // UORPerSubunit → scale 1
+	stream := frame(0xC8, 9, tcbBody)
+
+	hdr := make([]byte, 54)
+	hdr[38] = 3 // NumPolesU
+	hdr[40] = 1 // NumKnotsU
+	hdr[46] = 2 // NumPolesV
+	stream = append(stream, frame(0x40, 24, hdr)...)
+
+	uknots := make([]byte, 36)
+	putI32(uknots, 32, 1<<30) // ≈0.5 interior knot
+	stream = append(stream, frame(0x40, 26, uknots)...)
+
+	poles := make([]byte, 34+6*12)
+	poles[32] = 6
+	coords := [6][3]int32{
+		{0, 0, 0}, {10, 0, 0}, {20, 0, 2},
+		{0, 10, 0}, {10, 10, 1}, {20, 10, 3},
+	}
+	for i, c := range coords {
+		putI32(poles, 34+i*12, c[0])
+		putI32(poles, 34+i*12+4, c[1])
+		putI32(poles, 34+i*12+8, c[2])
+	}
+	stream = append(stream, frame(0x40, 21, poles)...)
+	stream = append(stream, 0xFF, 0xFF)
+
+	r := NewDgnReader()
+	if err := r.LoadBytes(stream); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	var surf *DgnElement
+	for _, e := range r.GetElements() {
+		if e.Type == "BSplineSurface" {
+			surf = e
+		}
+	}
+	if surf == nil {
+		t.Fatal("no BSplineSurface element bridged")
+	}
+	if surf.Shape == nil || surf.Shape.IsNull() {
+		t.Fatal("surface shape missing — type 24 still dropped?")
+	}
+	// bilinear face interpolates the pole grid: bbox = grid envelope
+	d := surf.Shape.BBoxOptimal(1e-6).Data()
+	want := [][2]float64{{0, 20}, {0, 10}, {0, 3}}
+	t.Logf("full bbox: %v", d)
+	for i, w := range want {
+		if math.Abs(d[i]-w[0]) > 1e-4 || math.Abs(d[i+3]-w[1]) > 1e-4 {
+			t.Fatalf("bbox axis %d = (%g,%g) want %v", i, d[i], d[i+3], w)
 		}
 	}
 }
