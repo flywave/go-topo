@@ -596,3 +596,33 @@ func TestDgnReaderV8TxDOTSharedCell(t *testing.T) {
 		t.Fatalf("CellDef=%d, definitions missing", defs)
 	}
 }
+
+// TestDgnReaderV8TxDOTPlateGirder stress-tests the shared-cell chain on
+// the TxDOT plate girder standard (OpenBridge output): 1062 shared-cell
+// references against 64 Dgn^Nm library definitions — the largest real
+// SharedCell corpus in the repo, all resolving (D141).
+func TestDgnReaderV8TxDOTPlateGirder(t *testing.T) {
+	r := NewDgnReader()
+	if err := r.Load("../go-dgn/dgn/testdata/txdot-cd-pb-20.dgn"); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	refs, defs, resolved := 0, 0, 0
+	byID := map[int]bool{}
+	for _, e := range r.GetElements() {
+		byID[e.Id] = true
+		switch e.Type {
+		case "CellRef":
+			refs++
+		case "CellDef":
+			defs++
+		}
+	}
+	for _, e := range r.GetElements() {
+		if e.Type == "CellRef" && byID[int(e.DefID)] {
+			resolved++
+		}
+	}
+	if refs != 1062 || resolved != 1062 || defs < 64 {
+		t.Fatalf("CellRef=%d resolved=%d CellDef=%d, want 1062/1062 and defs>=64", refs, resolved, defs)
+	}
+}
