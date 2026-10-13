@@ -659,14 +659,19 @@ func TestDgnReaderV8TxDOTTerrainMesh(t *testing.T) {
 		t.Fatalf("load: %v", err)
 	}
 	terrains := 0
+	var terrainShape *Shape
 	for _, e := range r.GetElements() {
 		// the terrain decodes to a KindSolid mesh entity — the only Solid
-		// in this file (428 vertices, 7 in-range faces of the TIN so far).
+		// in this file (428 vertices, Delaunay TIN faces, D150).
 		if e.Type == "Solid" {
 			terrains++
+			terrainShape = e.Shape
 		}
 	}
 	if terrains != 1 {
 		t.Fatalf("terrain mesh entities=%d, want 1", terrains)
+	}
+	if terrainShape == nil || terrainShape.IsNull() {
+		t.Fatal("terrain TIN shape missing")
 	}
 }
