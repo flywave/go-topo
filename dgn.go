@@ -96,6 +96,12 @@ func (r *DgnReader) LoadBytes(b []byte) error {
 			}
 			all = append(all, ents...)
 		}
+		// Shared-cell definitions live in the Dgn^Nm library chunks,
+		// outside every model storage — real files (TxDOT Matt23) hang
+		// all 0x2716 dependency roots there (D135).
+		if defEnts, err := godgn.SceneV8SharedCellDefs(doc); err == nil {
+			all = append(all, defEnts...)
+		}
 		r.ents = all
 	default:
 		return fmt.Errorf("dgn: unrecognized format")

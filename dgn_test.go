@@ -563,3 +563,36 @@ func TestDgnReaderV7SyntheticBSplineSurface(t *testing.T) {
 		}
 	}
 }
+
+// TestDgnReaderV8TxDOTSharedCell bridges the TxDOT standard plan sheet
+// (D135): the first real v8 file with SharedCellInstance references whose
+// 0x2716 roots live in the Dgn^Nm definition library chunks — before the
+// SceneV8SharedCellDefs fix the whole chain silently failed to resolve.
+func TestDgnReaderV8TxDOTSharedCell(t *testing.T) {
+	r := NewDgnReader()
+	if err := r.Load("../go-dgn/dgn/testdata/txdot-matt23.dgn"); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	refs, defs, resolved := 0, 0, 0
+	byID := map[int]bool{}
+	for _, e := range r.GetElements() {
+		byID[e.Id] = true
+		switch e.Type {
+		case "CellRef":
+			refs++
+		case "CellDef":
+			defs++
+		}
+	}
+	for _, e := range r.GetElements() {
+		if e.Type == "CellRef" && byID[int(e.DefID)] {
+			resolved++
+		}
+	}
+	if refs != 12 || resolved != 12 {
+		t.Fatalf("CellRef=%d resolved=%d, want 12/12", refs, resolved)
+	}
+	if defs < 12 {
+		t.Fatalf("CellDef=%d, definitions missing", defs)
+	}
+}
