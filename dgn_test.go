@@ -626,3 +626,26 @@ func TestDgnReaderV8TxDOTPlateGirder(t *testing.T) {
 		t.Fatalf("CellRef=%d resolved=%d CellDef=%d, want 1062/1062 and defs>=64", refs, resolved, defs)
 	}
 }
+
+// TestDgnReaderV8TxDOTTerrain3D bridges the OpenRoads terrain working
+// file's true-3D feature lines (Line3d/LineString3d, D142) — every
+// geometry-bearing entity must produce a wire, exercising the 3D polyline
+// bridge on real data for the first time.
+func TestDgnReaderV8TxDOTTerrain3D(t *testing.T) {
+	r := NewDgnReader()
+	if err := r.Load("../go-dgn/dgn/testdata/txdot-rudderplaza-terrain.dgn"); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	polylines, wired := 0, 0
+	for _, e := range r.GetElements() {
+		if e.Type == "Polyline" {
+			polylines++
+			if e.Wire != nil {
+				wired++
+			}
+		}
+	}
+	if polylines < 100 || wired != polylines {
+		t.Fatalf("Polyline=%d wired=%d, want >=100 all wired", polylines, wired)
+	}
+}
