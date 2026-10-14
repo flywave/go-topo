@@ -25,7 +25,9 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/flywave/go-rvt/rvt"
@@ -72,6 +74,11 @@ type RvtElement struct {
 	// framed data name (system families: "Generic 150mm"; family
 	// instances: the family symbol's name; 2023+).
 	TypeName string
+
+	// Transform is the family instance's placement as a column-major 4×4
+	// (rotation from the instance's X/Y/Z axes, translation from its
+	// origin; 2023+, nil when the data holds none).
+	Transform *[16]float64
 }
 
 // RvtReader loads an RVT file (OLE/CFB) and converts it to topo elements.
@@ -155,7 +162,19 @@ func (r *RvtReader) LoadBytes(b []byte) error {
 		var typeThickness map[uint32]float64
 		var typeJoin map[uint32]uint32
 		var typeNames map[uint32]string
+		var instTransforms map[uint32]rvt.InstanceTransform
 		if rep.Version >= 2023 {
+			// family-instance placements (doors, windows, furniture, …)
+			fiTag := rep.Schema.ByName("FamilyInstance")
+			if fiTag != nil {
+				fiIDs := make(map[uint32]bool)
+				for i := range rep.Records {
+					if rep.Records[i].ClassTag == fiTag.Tag && rep.Records[i].IsPlacedInstance() {
+						fiIDs[rep.Records[i].ElementID] = true
+					}
+				}
+				instTransforms = rvt.ScanInstanceTransforms(part, rep.Schema, fiIDs, rep.Version)
+			}
 			wallLines = rvt.ScanFirstBoundedLines(part, rep.Schema, walls, rep.Version)
 			wallArcs = rvt.ScanFirstBoundedArcs(part, rep.Schema, walls, rep.Version)
 			// exact wall thickness: the type element's compound layer sum,
@@ -177,6 +196,7 @@ func (r *RvtReader) LoadBytes(b []byte) error {
 		}
 		// type names: every framed record type (FamilySymbol envelopes)
 		// plus every layer-carrying type element
+		symJoin := rvt.SymbolTypeJoin(rep.Records, part, rep.Schema, rep.Version)
 		nameIDs := make(map[uint32]bool, len(byID))
 		for i := range rep.Records {
 			if rep.Records[i].IsTypeSymbol() {
@@ -185,6 +205,9 @@ func (r *RvtReader) LoadBytes(b []byte) error {
 		}
 		for id := range typeThickness {
 			nameIDs[id] = true
+		}
+		for _, sym := range symJoin {
+			nameIDs[sym] = true
 		}
 		if len(nameIDs) > 0 {
 			typeNames = rvt.ScanElementDataNames(part, rep.Schema, nameIDs, rep.Version)
@@ -203,11 +226,26 @@ func (r *RvtReader) LoadBytes(b []byte) error {
 			re.Placed = rec.IsPlacedInstance()
 			re.TypeSymbol = rec.IsTypeSymbol()
 			if typeNames != nil {
-				if ty, ok := typeJoin[uint32(re.Id)]; ok {
+				// family dimension first: a hosted instance's type is its
+				// FamilySymbol, not the host's system-family type
+				if sym, ok := symJoin[uint32(re.Id)]; ok {
+					re.TypeName = typeNames[sym]
+				} else if ty, ok := typeJoin[uint32(re.Id)]; ok {
 					re.TypeName = typeNames[ty]
 				} else if rec.IsTypeSymbol() {
 					re.TypeName = typeNames[uint32(re.Id)]
 				}
+			}
+			if t, ok := instTransforms[uint32(re.Id)]; ok {
+				// column-major 4×4 (the DgnElement convention): columns
+				// are the instance's X, Y, Z axes, column 3 = translation
+				m := [16]float64{
+					t.Axes[0][0], t.Axes[0][1], t.Axes[0][2], 0,
+					t.Axes[1][0], t.Axes[1][1], t.Axes[1][2], 0,
+					t.Axes[2][0], t.Axes[2][1], t.Axes[2][2], 0,
+					t.Origin[0] * r.scale, t.Origin[1] * r.scale, t.Origin[2] * r.scale, 1,
+				}
+				re.Transform = &m
 			}
 			if profile := rep.Profiles[uint32(re.Id)]; profile != nil {
 				re.Profile = profile
@@ -221,8 +259,349 @@ func (r *RvtReader) LoadBytes(b []byte) error {
 				}
 			}
 		}
+		r.proxyAndOpenings(rep, byID, wallLines)
+		symJoinForDims := symJoin
+		votedDims := rvt.VoteInstanceDims(part, rep.Schema, symJoinForDims, rep.Version)
+		r.dimLeafBoxesAndOpenings(part, rep, byID, wallLines, instTransforms, symJoinForDims, votedDims)
 	}
 	return nil
+}
+
+// rvtDimRe matches type names carrying their dimensions in millimetres
+// ("800 x 2100").
+var rvtDimRe = regexp.MustCompile(`^(\d{3,4})\s*[xX]\s*(\d{3,4})$`)
+
+// dimFeet parses a "W x H" millimetre type name into feet (0,0 when the
+// name carries no dimensions).
+func dimFeet(name string) (float64, float64) {
+	m := rvtDimRe.FindStringSubmatch(strings.TrimSpace(name))
+	if m == nil {
+		return 0, 0
+	}
+	w, err1 := strconv.Atoi(m[1])
+	h, err2 := strconv.Atoi(m[2])
+	if err1 != nil || err2 != nil {
+		return 0, 0
+	}
+	const mmToFeet = 0.003280839895013123
+	return float64(w) * mmToFeet, float64(h) * mmToFeet
+}
+
+// dimLeafBoxesAndOpenings upgrades placed doors/windows whose type name
+// carries their dimensions: the element's shape becomes an oriented leaf
+// box (type width × host thickness × type height, placed at the instance
+// transform), and a precise opening is cut from the resolved host wall.
+func (r *RvtReader) dimLeafBoxesAndOpenings(part *rvt.Partition, rep *rvt.RecordsReport, byID map[uint32]*rvt.ElementRecord, wallLines map[uint32]*rvt.BoundedLine, transforms map[uint32]rvt.InstanceTransform, symJoin map[uint32]uint32, votedDims map[uint32][2]float64) {
+	_ = part // reserved: pair-scan windows
+	for i := range rep.Records {
+		rec := &rep.Records[i]
+		if rec.Category != rvtCategoryDoors && rec.Category != rvtCategoryWindows {
+			continue
+		}
+		if !rec.IsPlacedInstance() || rec.PrecedingRef == 0 {
+			continue
+		}
+		re := byElemOf(r.elements, rec.ElementID)
+		if re == nil {
+			continue
+		}
+		w, h := dimFeet(re.TypeName)
+		isWindow := rec.Category == rvtCategoryWindows
+		trusted := w > 0
+		if w <= 0 {
+			// symbol-voted dimensions (same-type instances agree on the
+			// type's width/height constants) — trusted: the constants are
+			// agreed by nearly every instance of the type
+			if vd, ok := votedDims[symJoin[rec.ElementID]]; ok && (!isWindow || recHasPositiveZ(rec)) {
+				w, h = vd[0], vd[1]
+				trusted = true
+			}
+		}
+		if w <= 0 && !isWindow {
+			// last resort for single-instance door types: the symbol's
+			// first plausible (height, width) f64 pair (heuristic — the
+			// layout is verified on only 1 of 15 door symbols, R121).
+			// The leaf is built best-effort; the wall is NOT cut (the
+			// heuristic pair can misplace the opening and OCCT booleans
+			// on misplaced slivers hang).
+			if sw, sh, ok2 := rvt.ScanFirstDimPair(part, rep.Schema, symJoin[rec.ElementID], rep.Version); ok2 {
+				w, h = sw, sh
+			}
+		}
+		if w <= 0 || h <= 0 {
+			continue
+		}
+		t, hasT := transforms[rec.ElementID]
+		if !hasT {
+			continue
+		}
+		host, line := r.resolveHost(rec, byID, wallLines, transforms, isWindow)
+		if host == nil || line == nil {
+			continue
+		}
+		wallElem := byElemOf(r.elements, host.ElementID)
+		if wallElem == nil {
+			continue
+		}
+		thk := r.wallThickness(host.BBox)
+		if thk <= 0 {
+			continue
+		}
+		// windows: the record bbox z center is the leaf's z center (the
+		// instance origin z is the sill measured from an unknown base —
+		// R115); doors: the origin is the leaf base
+		var leaf *Shape
+		if isWindow && re.BBox != nil {
+			leaf = r.orientedBoxCenterZ(t, w, thk, h, re.BBox.Data()[2], re.BBox.Data()[5])
+		} else {
+			leaf = r.orientedBox(t, w, thk, h)
+		}
+		if leaf == nil {
+			continue
+		}
+		re.Shape = leaf
+		if wallElem.Shape == nil {
+			continue
+		}
+		// boolean cut gates:
+		//   trusted dims (name- or vote-verified): AABB overlap suffices;
+		//   heuristic pair-scan dims: require geometry consistency — the
+		//   leaf's z span must fit within the wall's z range and the
+		//   wall's location line must cross the leaf's plan footprint
+		//   (OCCT booleans on misplaced slivers hang, R122)
+		allowed := false
+		if trusted {
+			allowed = r.leafOverlapsWall(t, w, thk, h, host.BBox)
+		} else {
+			a0, b0 := line.Endpoints()
+			zFit := t.Origin[2] >= host.BBox[2]-0.1 && t.Origin[2]+h <= host.BBox[5]+0.5
+			allowed = zFit && lineCutsBBox(a0, b0, leafPlanBBox(t, w, thk))
+		}
+		if allowed {
+			if cut := Cut(wallElem.Shape, leaf, 1e-3, false); cut != nil && !cut.IsNull() {
+				wallElem.Shape = cut
+			}
+		}
+	}
+}
+
+// leafPlanBBox is the leaf's plan AABB (origin-centered, rotated).
+func leafPlanBBox(t rvt.InstanceTransform, w, thk float64) [6]float64 {
+	ux, uy := t.Axes[0][0], t.Axes[0][1]
+	mag := math.Hypot(ux, uy)
+	if mag < 1e-9 {
+		return [6]float64{}
+	}
+	ux, uy = ux/mag, uy/mag
+	px, py := -uy, ux
+	hw, half := w/2, thk/2
+	minX, minY := math.Inf(1), math.Inf(1)
+	maxX, maxY := math.Inf(-1), math.Inf(-1)
+	for _, sa := range []float64{-hw, hw} {
+		for _, ac := range []float64{-half, half} {
+			x := t.Origin[0] + sa*ux + ac*px
+			y := t.Origin[1] + sa*uy + ac*py
+			minX, maxX = math.Min(minX, x), math.Max(maxX, x)
+			minY, maxY = math.Min(minY, y), math.Max(maxY, y)
+		}
+	}
+	return [6]float64{minX, minY, 0, maxX, maxY, 0}
+}
+
+// leafOverlapsWall gates the boolean cut: the leaf's world AABB must
+// overlap the host wall's bbox — heuristic dim pairs can land far from
+// the wall and OCCT booleans on non-intersecting slivers can hang.
+func (r *RvtReader) leafOverlapsWall(t rvt.InstanceTransform, w, thk, h float64, hostBBox [6]float64) bool {
+	ux, uy := t.Axes[0][0], t.Axes[0][1]
+	mag := math.Hypot(ux, uy)
+	if mag < 1e-9 {
+		return false
+	}
+	ux, uy = ux/mag, uy/mag
+	px, py := -uy, ux
+	hw, half := w/2, thk/2
+	minX, minY := math.Inf(1), math.Inf(1)
+	maxX, maxY := math.Inf(-1), math.Inf(-1)
+	for _, sa := range []float64{-hw, hw} {
+		for _, ac := range []float64{-half, half} {
+			x := t.Origin[0] + sa*ux + ac*px
+			y := t.Origin[1] + sa*uy + ac*py
+			minX, maxX = math.Min(minX, x), math.Max(maxX, x)
+			minY, maxY = math.Min(minY, y), math.Max(maxY, y)
+		}
+	}
+	const tol = 0.05
+	return maxX >= hostBBox[0]-tol && minX <= hostBBox[3]+tol &&
+		maxY >= hostBBox[1]-tol && minY <= hostBBox[4]+tol &&
+		t.Origin[2] >= hostBBox[2]-tol && t.Origin[2]+h <= hostBBox[5]+tol
+}
+
+// resolveHost finds a window's host wall: the preceding reference when it
+// names a placed wall whose line cuts the opening's footprint, else the
+// unique placed wall whose location line passes within 1.5 ft of the
+// instance transform origin (the window sits ON its host's centerline).
+func (r *RvtReader) resolveHost(rec *rvt.ElementRecord, byID map[uint32]*rvt.ElementRecord, wallLines map[uint32]*rvt.BoundedLine, transforms map[uint32]rvt.InstanceTransform, skipZ bool) (*rvt.ElementRecord, *rvt.BoundedLine) {
+	if prev, has := byID[rec.PrecedingRef]; has && prev.Category == rvtCategoryWalls && prev.IsPlacedInstance() {
+		if l, ok := wallLines[prev.ElementID]; ok {
+			a, b := l.Endpoints()
+			if lineCutsBBox(a, b, rec.BBox) {
+				return prev, l
+			}
+		}
+	}
+	t, hasT := transforms[rec.ElementID]
+	if !hasT {
+		return nil, nil
+	}
+	ox, oy := t.Origin[0], t.Origin[1]
+	oz := t.Origin[2]
+	hits := 0
+	var host *rvt.ElementRecord
+	var best *rvt.BoundedLine
+	for id, l := range wallLines {
+		a, b := l.Endpoints()
+		dx, dy := b[0]-a[0], b[1]-a[1]
+		l2 := dx*dx + dy*dy
+		if l2 < 1e-12 {
+			continue
+		}
+		tp := ((ox-a[0])*dx + (oy-a[1])*dy) / l2
+		if tp <= 0.001 || tp >= 0.999 {
+			continue
+		}
+		cx, cy := a[0]+tp*dx, a[1]+tp*dy
+		if math.Hypot(ox-cx, oy-cy) > 1.5 {
+			continue
+		}
+		if !skipZ {
+			// doors: the origin z is the leaf base and must sit within the
+			// wall's z range; windows: the origin z is a sill measured from
+			// an unknown base (R115) — the leaf z comes from the record
+			// bbox center instead, so no z gate here
+			if oz < math.Min(a[2], b[2])-1 || oz > math.Max(a[2], b[2])+1 {
+				continue
+			}
+		}
+		hits++
+		host = byID[id]
+		best = l
+	}
+	if hits == 1 {
+		return host, best
+	}
+	return nil, nil
+}
+
+// recHasPositiveZ guards the window leaf placement: the record bbox must
+// have a positive z extent to provide the leaf's z center.
+func recHasPositiveZ(rec *rvt.ElementRecord) bool {
+	return rec.BBox[5] > rec.BBox[2]
+}
+
+// byElemOf finds the bridged element by id.
+func byElemOf(els []*RvtElement, id uint32) *RvtElement {
+	for _, re := range els {
+		if re.Id == uint64(id) {
+			return re
+		}
+	}
+	return nil
+}
+
+// orientedBoxCenterZ builds the W×T×H box with its plan frame at the
+// transform origin but the z extent centered on zc (window leaves: the
+// instance origin z is the sill measured from an unknown base, while the
+// record bbox z center is the leaf's true center — findings R115).
+func (r *RvtReader) orientedBoxCenterZ(t rvt.InstanceTransform, w, thk, h, zMin, zMax float64) *Shape {
+	zc := (zMin + zMax) / 2
+	ux, uy := t.Axes[0][0], t.Axes[0][1]
+	mag := math.Hypot(ux, uy)
+	if mag < 1e-9 {
+		return nil
+	}
+	ux, uy = ux/mag, uy/mag
+	px, py := -uy, ux
+	half := thk / 2
+	hw := w / 2
+	hh := h / 2
+	z0 := zc - hh
+	if z0 <= 0 {
+		return nil
+	}
+	corner := func(along, across float64) Point3 {
+		return NewPoint3([3]float64{
+			(t.Origin[0] + along*ux + across*px) * r.scale,
+			(t.Origin[1] + along*uy + across*py) * r.scale,
+			z0 * r.scale,
+		})
+	}
+	var edges []Edge
+	pts := []Point3{
+		corner(-hw, -half),
+		corner(hw, -half),
+		corner(hw, half),
+		corner(-hw, half),
+	}
+	for i := 0; i < 4; i++ {
+		ed := TopoMakeEdgeFromTwoPoint(pts[i], pts[(i+1)%4])
+		if !edgeValid(ed) {
+			return nil
+		}
+		edges = append(edges, *ed)
+	}
+	wire := TopoMakeWireFromEdges(edges)
+	if wire == nil || wire.IsNull() {
+		return nil
+	}
+	s := ExtrudeLinear(wire, nil, NewVector3([3]float64{0, 0, h * r.scale}), 0)
+	if s == nil || s.IsNull() {
+		return nil
+	}
+	return s
+}
+
+// orientedBox builds a W×T×H box at the transform origin, rotated by the
+// instance's plan X axis (W along X, T along the plan normal).
+func (r *RvtReader) orientedBox(t rvt.InstanceTransform, w, thk, h float64) *Shape {
+	ux, uy := t.Axes[0][0], t.Axes[0][1]
+	mag := math.Hypot(ux, uy)
+	if mag < 1e-9 {
+		return nil
+	}
+	ux, uy = ux/mag, uy/mag
+	px, py := -uy, ux
+	half := thk / 2
+	hw := w / 2
+	corner := func(along, across, up float64) Point3 {
+		return NewPoint3([3]float64{
+			(t.Origin[0] + along*ux + across*px) * r.scale,
+			(t.Origin[1] + along*uy + across*py) * r.scale,
+			(t.Origin[2] + up) * r.scale,
+		})
+	}
+	var edges []Edge
+	pts := []Point3{
+		corner(-hw, -half, 0),
+		corner(hw, -half, 0),
+		corner(hw, half, 0),
+		corner(-hw, half, 0),
+	}
+	for i := 0; i < 4; i++ {
+		ed := TopoMakeEdgeFromTwoPoint(pts[i], pts[(i+1)%4])
+		if !edgeValid(ed) {
+			return nil
+		}
+		edges = append(edges, *ed)
+	}
+	wire := TopoMakeWireFromEdges(edges)
+	if wire == nil || wire.IsNull() {
+		return nil
+	}
+	s := ExtrudeLinear(wire, nil, NewVector3([3]float64{0, 0, h * r.scale}), 0)
+	if s == nil || s.IsNull() {
+		return nil
+	}
+	return s
 }
 
 // rvtCategoryWalls is Autodesk BuiltInCategory.OST_Walls.
@@ -424,6 +803,12 @@ func (r *RvtReader) build(m *rvt.Model) {
 			re.ClassName = e.ClassName
 			re.CategoryID = e.CategoryID
 			re.FamilyID = e.FamilyID
+			// ElementHeader CategoryId lives in the same BuiltInCategory
+			// space (verified 2022: wall-class 8/8 = OST_Walls); records
+			// overwrite it on 2023 with the same value
+			if e.CategoryID < 0 {
+				re.Category = int64(e.CategoryID)
+			}
 		}
 		if g.BBox != nil {
 			bb := NewBBox([6]float64{
@@ -581,4 +966,113 @@ func finitePt(p [3]float64) bool {
 
 func (r *RvtReader) pt(p geom.Point3) [3]float64 {
 	return [3]float64{p.X * r.scale, p.Y * r.scale, p.Z * r.scale}
+}
+
+
+// proxyAndOpenings gives every bbox-bearing element without a real shape
+// a box proxy solid (the element's record envelope), then cuts
+// door/window openings from their host walls where the host is
+// unambiguous: the preceding reference names a placed wall whose
+// location line passes through the opening's plan footprint (measured:
+// 15 of 33 doors+windows on rac_basic_2023; the rest keep full walls
+// rather than guess).
+func (r *RvtReader) proxyAndOpenings(rep *rvt.RecordsReport, byID map[uint32]*rvt.ElementRecord, wallLines map[uint32]*rvt.BoundedLine) {
+	byElem := make(map[uint64]*RvtElement, len(r.elements))
+	for _, re := range r.elements {
+		if re.BBox != nil && re.Shape == nil {
+			d := re.BBox.Data()
+			if d[3] > d[0] && d[4] > d[1] && d[5] > d[2] {
+				re.Shape = CreateBoxShape(BoxShapeParams{
+					Point1: NewPoint3([3]float64{d[0], d[1], d[2]}),
+					Point2: NewPoint3([3]float64{d[3], d[4], d[5]}),
+				})
+			}
+		}
+		byElem[re.Id] = re
+	}
+	// openings: placed doors/windows whose preceding reference is a
+	// placed wall with a location line through the opening's footprint
+	for i := range rep.Records {
+		rec := &rep.Records[i]
+		if rec.Category != rvtCategoryDoors && rec.Category != rvtCategoryWindows {
+			continue
+		}
+		if !rec.IsPlacedInstance() || rec.PrecedingRef == 0 {
+			continue
+		}
+		host := byID[rec.PrecedingRef]
+		if host == nil || host.Category != rvtCategoryWalls || !host.IsPlacedInstance() {
+			continue
+		}
+		line, has := wallLines[host.ElementID]
+		if !has {
+			continue
+		}
+		a, b := line.Endpoints()
+		if !lineCutsBBox(a, b, rec.BBox) {
+			continue
+		}
+		wallElem := byElem[uint64(host.ElementID)]
+		opening := byElem[uint64(rec.ElementID)]
+		if wallElem == nil || opening == nil || wallElem.Shape == nil || opening.Shape == nil {
+			continue
+		}
+		if cut := Cut(wallElem.Shape, opening.Shape, 1e-3, false); cut != nil && !cut.IsNull() {
+			wallElem.Shape = cut
+		}
+	}
+}
+
+// rvtCategoryDoors / rvtCategoryWindows are Autodesk BuiltInCategory ids.
+const (
+	rvtCategoryDoors   = -2_000_023
+	rvtCategoryWindows = -2_000_014
+)
+
+// lineCutsBBox reports whether the segment's plan projection crosses the
+// bbox's plan footprint (slab method).
+func lineCutsBBox(a, b [3]float64, bb [6]float64) bool {
+	dx, dy := b[0]-a[0], b[1]-a[1]
+	t0, t1 := 0.0, 1.0
+	if math.Abs(dx) < 1e-12 {
+		if a[0] < bb[0] || a[0] > bb[3] {
+			return false
+		}
+	} else {
+		ta := (bb[0] - a[0]) / dx
+		tb := (bb[3] - a[0]) / dx
+		if ta > tb {
+			ta, tb = tb, ta
+		}
+		if ta > t0 {
+			t0 = ta
+		}
+		if tb < t1 {
+			t1 = tb
+		}
+		if t0 > t1 {
+			return false
+		}
+	}
+	if math.Abs(dy) < 1e-12 {
+		if a[1] < bb[1] || a[1] > bb[4] {
+			return false
+		}
+	} else {
+		ta := (bb[1] - a[1]) / dy
+		tb := (bb[4] - a[1]) / dy
+		if ta > tb {
+			ta, tb = tb, ta
+		}
+		if ta > t0 {
+			t0 = ta
+		}
+		if tb < t1 {
+			t1 = tb
+		}
+		if t0 > t1 {
+			return false
+		}
+	}
+	return true
 }

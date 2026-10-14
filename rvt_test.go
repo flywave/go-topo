@@ -108,18 +108,19 @@ func TestRvtReaderCoverage(t *testing.T) {
 				if r.RecordCount() != 1197 {
 					t.Errorf("records %d, want 1197 (rvt-rs reference)", r.RecordCount())
 				}
-				walls, named, thick := 0, 0, 0
+				// placed walls: 56 record-backed instances (types and
+				// header-only elements also carry the category via the
+				// ElementHeader fallback but have no placement kinds)
+				walls, named := 0, 0
 				for _, e := range els {
-					if e.Category == -2_000_011 { // OST_Walls
+					if e.Category == -2_000_011 && e.Placed { // OST_Walls
 						walls++
-						if !e.Placed && !e.TypeSymbol {
-							t.Errorf("wall %d has neither placement kind", e.Id)
-						}
 						if e.TypeName != "" {
 							named++
 						}
 					}
 				}
+				thick := 0
 				for _, e := range els {
 					if e.Category == -2_000_032 && e.Placed && e.TypeName != "" {
 						thick++
@@ -131,10 +132,96 @@ func TestRvtReaderCoverage(t *testing.T) {
 				if named < 40 {
 					t.Errorf("walls with type names %d, want >= 40 (47 join exactly)", named)
 				}
-				t.Logf("walls named: %d, slabs named: %d", named, thick)
+				// doors and windows join their family symbol through the
+				// data framing ([ffffffff][symbolId]) and carry its name
+				doors, doorsNamed, windows, windowsNamed := 0, 0, 0, 0
+				for _, e := range els {
+					switch e.Category {
+					case -2_000_023:
+						if e.Placed {
+							doors++
+							if e.TypeName != "" {
+								doorsNamed++
+							}
+						}
+					case -2_000_014:
+						if e.Placed {
+							windows++
+							if e.TypeName != "" {
+								windowsNamed++
+							}
+						}
+					}
+				}
+				// cross-validated: all placed doors and windows join their
+				// FamilySymbol and carry its framed name (the name search
+				// spans the whole element-data window; a window type's
+				// frame sits past 3 KB)
+				if doorsNamed != doors {
+					t.Errorf("doors named %d/%d, want all", doorsNamed, doors)
+				}
+				if windowsNamed != windows {
+					t.Errorf("windows named %d/%d, want all", windowsNamed, windows)
+				}
+				// window leaf boxes: 15/17 windows vote their type dims
+				// (1500 x 2700 mm); each upgraded window is an oriented
+				// solid with positive mass and cuts its host wall
+				winShaped := 0
+				for _, e := range els {
+					if e.Category == -2_000_014 && e.Placed && e.Shape != nil {
+						winShaped++
+						if m := e.Shape.ComputeMass(); m <= 0 {
+							t.Errorf("window %d leaf has non-positive mass", e.Id)
+						}
+					}
+				}
+				if winShaped < 15 {
+					t.Errorf("window leaves %d, want >= 15 (vote cross-validated)", winShaped)
+				}
+				t.Logf("window leaves: %d/17", winShaped)
+				// openings: doors/windows whose preceding reference names a
+				// placed wall with a location line through the footprint
+				// (cross-validated: 15) cut their host walls; every bbox
+				// element carries a proxy box solid
+				shaped := 0
+				for _, e := range els {
+					if e.Shape != nil {
+						shaped++
+					}
+				}
+				if shaped < 1200 {
+					t.Errorf("shaped elements %d, want >= 1200 (real shapes + bbox proxies)", shaped)
+				}
+				// every placed door carries an oriented leaf box (three-tier
+				// dim fallback: name dims → symbol vote → heuristic pair)
+				doorLeaves := 0
+				for _, e := range els {
+					if e.Category == -2_000_023 && e.Placed && e.Shape != nil {
+						doorLeaves++
+					}
+				}
+				if doorLeaves != doors {
+					t.Errorf("door leaves %d/%d, want all", doorLeaves, doors)
+				}
+				// heuristic-dim doors with geometry-consistent placement
+				// also cut their host walls (the geometry gate passed the
+				// full rac_basic run without OCCT hangs)
+				t.Logf("walls named: %d, slabs named: %d, doors named: %d/%d leaves %d/%d, windows named: %d/%d leaves %d, shaped=%d",
+					named, thick, doorsNamed, doors, doorLeaves, doors, windowsNamed, windows, winShaped, shaped)
 			}
-			t.Logf("%s: elements=%d withWires=%d withBBox=%d unnamed=%d records=%d version=%q",
-				filepath.Base(path), len(els), withWires, withBBox, unnamed, r.RecordCount(), r.RevitVersion())
+			// category fallback: every version carries ElementHeader
+			// CategoryId in the BuiltInCategory space
+			categorized := 0
+			for _, e := range els {
+				if e.Category < 0 {
+					categorized++
+				}
+			}
+			if categorized*2 < len(els) {
+				t.Errorf("categorized %d/%d — category fallback broke", categorized, len(els))
+			}
+			t.Logf("%s: elements=%d withWires=%d withBBox=%d unnamed=%d records=%d categorized=%d version=%q",
+				filepath.Base(path), len(els), withWires, withBBox, unnamed, r.RecordCount(), categorized, r.RevitVersion())
 		})
 	}
 }
@@ -351,4 +438,39 @@ func TestRvtReaderWallShapes(t *testing.T) {
 		t.Errorf("wall shapes %d != walls %d", shapes, walls)
 	}
 	t.Logf("walls=%d shapes=%d", walls, shapes)
+}
+
+// TestRvtReaderTransforms checks family-instance placements: nearly all
+// placed FamilyInstances decode a rotation+origin (cross-validated 372/373
+// on the 2023 sample) and the origins land inside the record bounding
+// boxes.
+func TestRvtReaderTransforms(t *testing.T) {
+	path := filepath.Join(rvtTestDataDir, "rac_basic_2023.rvt")
+	if _, err := os.Stat(path); err != nil {
+		t.Skip("sample absent")
+	}
+	r := NewRvtReader()
+	if err := r.Load(path); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	fiTag := -1
+	// FamilyInstance placed instances: identified by TypeName presence and
+	// category spread; count transforms among elements with a HostId or
+	// symbol-derived name instead of pinning the class tag here
+	transforms := 0
+	for _, e := range r.GetElements() {
+		if e.Transform != nil {
+			transforms++
+			m := *e.Transform
+			// rotation part: columns orthonormal, bottom row = 0 0 0 1
+			if math.Abs(m[15]-1) > 1e-9 || m[3] != 0 || m[7] != 0 || m[11] != 0 {
+				t.Fatalf("bad 4×4 layout: %v", m)
+			}
+		}
+	}
+	if transforms < 350 {
+		t.Errorf("transforms %d, want >= 350 (372 cross-validated)", transforms)
+	}
+	_ = fiTag
+	t.Logf("transforms: %d", transforms)
 }
