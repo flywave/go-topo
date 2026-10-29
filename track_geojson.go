@@ -25,7 +25,7 @@ type TrackGeoProperties struct {
 	SleeperWidth     float64 `json:"sleeperWidth"`     // 默认 260
 	SleeperHeight    float64 `json:"sleeperHeight"`    // 默认 200
 	SleeperSpacing   float64 `json:"sleeperSpacing"`   // 默认 600
-	BallastTopWidth  float64 `json:"ballastTopWidth"`  // 道床顶宽(mm), 默认 3600; 0=不生成道床
+	BallastTopWidth  float64 `json:"ballastTopWidth"`  // 道床顶宽(mm); 缺省 0=不生成道床, 显式传入 (如 3600) 启用
 	BallastThickness float64 `json:"ballastThickness"` // 默认 300
 	BallastSlope     float64 `json:"ballastSlope"`     // 边坡 1:n, 默认 1.5
 	NoSleepers       bool    `json:"noSleepers"`       // true=不生成轨枕, 默认生成
@@ -80,18 +80,18 @@ func standardRailDims(kgPerMeter float64) (float64, float64, float64) {
 }
 
 type geoJSONFeature struct {
-	Type       string `json:"type"`
-	Geometry   struct {
-		Type        string          `json:"type"`
-		Coordinates [][]float64     `json:"coordinates"`
+	Type     string `json:"type"`
+	Geometry struct {
+		Type        string      `json:"type"`
+		Coordinates [][]float64 `json:"coordinates"`
 	} `json:"geometry"`
 	Properties TrackGeoProperties `json:"properties"`
 }
 
 type geoJSONInput struct {
-	Type       string           `json:"type"`
-	Features   []geoJSONFeature `json:"features"`
-	Geometry   *struct {
+	Type     string           `json:"type"`
+	Features []geoJSONFeature `json:"features"`
+	Geometry *struct {
 		Type        string      `json:"type"`
 		Coordinates [][]float64 `json:"coordinates"`
 	} `json:"geometry"`
@@ -139,12 +139,24 @@ func ParseTrackGeoJSON(data []byte) ([]Point3, TrackGeoProperties, error) {
 	return pts, props, nil
 }
 
+// raiseCenterlineToRailTop 钢轨中心线抬升到轨枕顶面
+// (中心线平面 = 道床顶/轨枕底, 钢轨不得与轨枕同层互穿)
+func raiseCenterlineToRailTop(pts []Point3, sleeperHeight float64) []Point3 {
+	out := make([]Point3, len(pts))
+	for i, p := range pts {
+		d := p.Data()
+		out[i] = NewPoint3([3]float64{d[0], d[1], d[2] + sleeperHeight})
+	}
+	return out
+}
+
 // CreateTrackFromCenterline 由中心线派生完整正线: 钢轨×2 + 轨枕 + 道床
 func CreateTrackFromCenterline(centerline []Point3, props TrackGeoProperties) *Assembly {
 	props.withDefaults()
 	railH, headW, baseW := standardRailDims(props.RailType)
 
-	rails := CreateRailPairFromPoints(centerline, props.Gauge, props.SuperElevation, railH, headW, baseW)
+	rails := CreateRailPairFromPoints(raiseCenterlineToRailTop(centerline, props.SleeperHeight),
+		props.Gauge, props.SuperElevation, railH, headW, baseW)
 	if rails == nil {
 		return nil
 	}

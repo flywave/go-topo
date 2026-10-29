@@ -1258,7 +1258,8 @@ create_mast_assembly(mast_assembly_params_t params) {
       params.mastType,   params.mastHeight,    params.cantileverType,
       params.hasCrossArm != 0, params.armDiameter, params.stagger,
       params.compType,   params.ratedTension,  params.hasGuyWire != 0,
-      params.contactHeight, params.structureHeight, params.sideOffset};
+      params.contactHeight, params.structureHeight, params.sideOffset,
+      params.tensionPlaneY};
   try {
     return new topo_shape_t{
         .shp = std::make_shared<shape>(create_mast_assembly(cpp_params))};
@@ -1275,7 +1276,8 @@ create_mast_assembly_with_place(mast_assembly_params_t params, pnt3d_t position,
       params.mastType,   params.mastHeight,    params.cantileverType,
       params.hasCrossArm != 0, params.armDiameter, params.stagger,
       params.compType,   params.ratedTension,  params.hasGuyWire != 0,
-      params.contactHeight, params.structureHeight, params.sideOffset};
+      params.contactHeight, params.structureHeight, params.sideOffset,
+      params.tensionPlaneY};
   gp_Pnt cpp_pos(position.x, position.y, position.z);
   gp_Dir cpp_dir(direction.x, direction.y, direction.z);
   gp_Dir cpp_up(upDir.x, upDir.y, upDir.z);
@@ -1523,7 +1525,8 @@ RAILCAPICALL topo_shape_t *create_switch_rail_with_place(switch_rail_params_t pa
 RAILCAPICALL topo_shape_t *create_frog(frog_params_t params) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   frog_params cpp_params{params.turnoutNo, params.gauge, params.railHeight,
-                          params.railHeadWidth, params.railBaseWidth};
+                          params.railHeadWidth, params.railBaseWidth,
+                          params.frogAngle, params.sleeperSpacing};
   try {
     return new topo_shape_t{.shp = std::make_shared<shape>(create_frog(cpp_params))};
   } catch (...) { return nullptr; }
@@ -1534,12 +1537,53 @@ RAILCAPICALL topo_shape_t *create_frog_with_place(frog_params_t params,
                                                    dir3d_t direction, dir3d_t upDir) {
   std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
   frog_params cpp_params{params.turnoutNo, params.gauge, params.railHeight,
-                          params.railHeadWidth, params.railBaseWidth};
+                          params.railHeadWidth, params.railBaseWidth,
+                          params.frogAngle, params.sleeperSpacing};
   gp_Pnt p(position.x, position.y, position.z);
   gp_Dir d(direction.x, direction.y, direction.z);
   gp_Dir u(upDir.x, upDir.y, upDir.z);
   try {
     return new topo_shape_t{.shp = std::make_shared<shape>(create_frog(cpp_params, p, d, u))};
+  } catch (...) { return nullptr; }
+}
+
+// ===========================================================================
+// 32b. Diamond Crossing
+// ===========================================================================
+RAILCAPICALL topo_shape_t *create_diamond(diamond_params_t params) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  diamond_params cpp_params;
+  cpp_params.frogAngle = params.frogAngle;
+  cpp_params.turnoutNo = params.turnoutNo;
+  cpp_params.gauge = params.gauge;
+  cpp_params.railHeight = params.railHeight;
+  cpp_params.railHeadWidth = params.railHeadWidth;
+  cpp_params.railBaseWidth = params.railBaseWidth;
+  cpp_params.sleeperSpacing = params.sleeperSpacing;
+  cpp_params.sleeperHeight = params.sleeperHeight;
+  try {
+    return new topo_shape_t{.shp = std::make_shared<shape>(create_diamond(cpp_params))};
+  } catch (...) { return nullptr; }
+}
+
+RAILCAPICALL topo_shape_t *create_diamond_with_place(diamond_params_t params,
+                                                     pnt3d_t position,
+                                                     dir3d_t direction, dir3d_t upDir) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  diamond_params cpp_params;
+  cpp_params.frogAngle = params.frogAngle;
+  cpp_params.turnoutNo = params.turnoutNo;
+  cpp_params.gauge = params.gauge;
+  cpp_params.railHeight = params.railHeight;
+  cpp_params.railHeadWidth = params.railHeadWidth;
+  cpp_params.railBaseWidth = params.railBaseWidth;
+  cpp_params.sleeperSpacing = params.sleeperSpacing;
+  cpp_params.sleeperHeight = params.sleeperHeight;
+  gp_Pnt p(position.x, position.y, position.z);
+  gp_Dir d(direction.x, direction.y, direction.z);
+  gp_Dir u(upDir.x, upDir.y, upDir.z);
+  try {
+    return new topo_shape_t{.shp = std::make_shared<shape>(create_diamond(cpp_params, p, d, u))};
   } catch (...) { return nullptr; }
 }
 
@@ -1551,7 +1595,7 @@ RAILCAPICALL topo_shape_t *create_turnout(turnout_params_t params) {
   turnout_params cpp_params{params.turnoutNo, params.isLeftHand != 0, params.gauge,
                              params.railHeight, params.railHeadWidth, params.railBaseWidth, params.webThickness,
                              params.switchRailLength, params.leadCurveRadius, params.frogLength,
-                             params.sleeperCount, params.sleeperSpacing};
+                             params.sleeperCount, params.sleeperSpacing, params.sleeperHeight};
   try {
     return new topo_shape_t{.shp = std::make_shared<shape>(create_turnout(cpp_params))};
   } catch (...) { return nullptr; }
@@ -1564,7 +1608,7 @@ RAILCAPICALL topo_shape_t *create_turnout_with_place(turnout_params_t params,
   turnout_params cpp_params{params.turnoutNo, params.isLeftHand != 0, params.gauge,
                              params.railHeight, params.railHeadWidth, params.railBaseWidth, params.webThickness,
                              params.switchRailLength, params.leadCurveRadius, params.frogLength,
-                             params.sleeperCount, params.sleeperSpacing};
+                             params.sleeperCount, params.sleeperSpacing, params.sleeperHeight};
   gp_Pnt p(position.x, position.y, position.z);
   gp_Dir d(direction.x, direction.y, direction.z);
   gp_Dir u(upDir.x, upDir.y, upDir.z);

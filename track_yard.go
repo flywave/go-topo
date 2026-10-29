@@ -166,9 +166,12 @@ func frogTableFor(n int) frogTable {
 		t.leadR, t.swLen = 5000000, 19200
 	default: // 12
 		n = 12
-		t.leadR, t.swLen = 350000, 7700
+		t.leadR, t.swLen = 330000, 7700 // 普通固定型辙叉 (350k 为提速道岔值)
 	}
 	t.frogTotal = 1435 * float64(n) * 0.28
+	if n == 12 {
+		t.frogTotal = 4500 // 实际 12号辙叉 ~4.5m (与 C++ calculate_frog_params 镜像)
+	}
 	return t
 }
 

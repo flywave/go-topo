@@ -781,6 +781,7 @@ struct mast_assembly_params {
   double contactHeight = 5300.0;    // 导高(mm)
   double structureHeight = 1400.0;  // 结构高度(mm)
   double sideOffset = 2900.0;       // 支柱侧面限界 CX(mm, 柱中心至线路中心)
+  double tensionPlaneY = -250.0;    // 下锚张力平面 Y (跨距侧: 下锚支/补偿/坠砣所在; 拉线自动布在对侧顺线路)
 };
 
 TopoDS_Shape create_mast_assembly(const mast_assembly_params &params);
@@ -935,6 +936,8 @@ struct frog_params {
   double railHeight;         // 轨高(mm)
   double railHeadWidth;      // 轨头宽(mm)
   double railBaseWidth;      // 轨底宽(mm)
+  double frogAngle = 0.0;      // 辙叉角(rad); 0=由 turnoutNo 推算 atan(1/N), >0 用实测角 (菱形交叉)
+  double sleeperSpacing = 0.0; // 交叉区岔枕间距(mm); 0=不生成 (道岔内部辙叉由 create_turnout 布枕)
 };
 
 TopoDS_Shape create_frog(const frog_params &params);
@@ -942,6 +945,26 @@ TopoDS_Shape create_frog(const frog_params &params,
                           const gp_Pnt &position,
                           const gp_Dir &direction = gp::DX(),
                           const gp_Dir &upDir = gp::DZ());
+
+// =========================================================================
+// TRACK: 32b. Diamond Crossing (菱形交叉 — 真菱形编织区)
+// =========================================================================
+struct diamond_params {
+  double frogAngle = 0.0;        // 交叉角(rad); 0=由 turnoutNo 推算 atan(1/N)
+  int turnoutNo = 9;             // frogAngle<=0 时的号数
+  double gauge = 1435.0;         // 轨距(mm)
+  double railHeight = 176.0;     // 钢轨断面
+  double railHeadWidth = 73.0;
+  double railBaseWidth = 150.0;
+  double sleeperSpacing = 600.0; // 交叉区岔枕间距(mm); 0=不生成
+  double sleeperHeight = 200.0;  // 岔枕高(mm); 轨底平面 z=0, 岔枕在其下
+};
+
+TopoDS_Shape create_diamond(const diamond_params &params);
+TopoDS_Shape create_diamond(const diamond_params &params,
+                            const gp_Pnt &position,
+                            const gp_Dir &direction = gp::DX(),
+                            const gp_Dir &upDir = gp::DZ());
 
 // =========================================================================
 // TRACK: 34. Frog Auto-Calculation (辙叉自动查表) — KEPT, used by create_turnout
@@ -974,6 +997,8 @@ struct turnout_params {
   double frogLength;            // 辙叉长度(mm) — reserved, 当前未生效 (辙叉尺寸由 turnoutNo 查表推算)
   int sleeperCount;             // 岔枕数量
   double sleeperSpacing;        // 岔枕间距(mm), >0 时优先于 sleeperCount 按间距推算数量
+                                // (count/spacing 均缺省时取 600)
+  double sleeperHeight = 200.0; // 岔枕高(mm)=轨底抬高量, 与邻接股道轨面齐平
 };
 
 TopoDS_Shape create_turnout(const turnout_params &params);

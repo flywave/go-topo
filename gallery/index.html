@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>GIM 参数化图元图库</title>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<style>
+  body{margin:0;background:#f5f6f8;font-family:-apple-system,'PingFang SC',sans-serif;}
+  #grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px;}
+  .card{position:relative;background:#fff;border:1px solid #d8dce2;border-radius:8px;overflow:hidden;height:300px;}
+  .card canvas{width:100%!important;height:100%!important;display:block;}
+  .label{position:absolute;left:8px;top:6px;font-size:13px;font-weight:600;color:#1a1a1a;background:rgba(255,255,255,.82);padding:2px 8px;border-radius:5px;}
+  .group{position:absolute;right:8px;top:6px;font-size:11px;color:#4a6b8a;background:rgba(230,240,250,.9);padding:2px 6px;border-radius:4px;}
+  .skip{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#a33;font-size:13px;text-align:center;padding:12px;}
+  .head{padding:10px 16px 0;font-size:15px;color:#333;}
+  #single .card{height:calc(100vh - 40px);}
+</style>
+</head>
+<body>
+<div class="head" id="head"></div>
+<div id="grid"></div>
+<script type="module">
+import * as THREE from 'three';
+import {STLLoader} from 'three/addons/loaders/STLLoader.js';
+
+const qs = new URLSearchParams(location.search);
+const resp = await fetch('manifest.json');
+const items = await resp.json();
+const one = qs.get('i');
+const page = parseInt(qs.get('page') || '0', 10);
+const list = one !== null ? [items[+one]] : items.slice(page*12, page*12+12);
+const head = document.getElementById('head');
+head.textContent = one !== null ? `模型详情: ${items[+one].name} [${items[+one].group}]`
+  : `GIM 参数化图元图库 — 第 ${page+1} / ${Math.ceil(items.length/12)} 页 (共 ${items.length} 项)`;
+
+const grid = document.getElementById('grid');
+if (one !== null) grid.style.gridTemplateColumns = '1fr';
+
+for (const it of list) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  const label = document.createElement('div'); label.className='label'; label.textContent = it.name;
+  const grp = document.createElement('div'); grp.className='group'; grp.textContent = it.group;
+  card.appendChild(label); card.appendChild(grp);
+  grid.appendChild(card);
+  if (!it.ok) {
+    const s = document.createElement('div'); s.className='skip'; s.textContent = 'SKIP: ' + (it.note||'未生成'); card.appendChild(s);
+    continue;
+  }
+  const canvas = document.createElement('canvas');
+  card.appendChild(canvas);
+  const w = card.clientWidth, h = card.clientHeight;
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+  renderer.setSize(w, h, false);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xffffff);
+  const camera = new THREE.PerspectiveCamera(40, w/h, 1, 1e6);
+  camera.up.set(0,0,1);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 1.1));
+  const dl = new THREE.DirectionalLight(0xffffff, 1.4); dl.position.set(1, -2, 3); scene.add(dl);
+  const geo = new STLLoader().parse(await (await fetch('stl/'+it.file)).arrayBuffer());
+  geo.computeBoundingBox();
+  const bb = geo.boundingBox, ctr = bb.getCenter(new THREE.Vector3()), size = bb.getSize(new THREE.Vector3());
+  const radius = Math.max(size.x, size.y, size.z) || 1;
+  geo.translate(-ctr.x, -ctr.y, -ctr.z);
+  const mat = new THREE.MeshStandardMaterial({color:0x4a7fb5, metalness:0.15, roughness:0.55, flatShading:false});
+  const mesh = new THREE.Mesh(geo, mat);
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 30), new THREE.LineBasicMaterial({color:0x224466, transparent:true, opacity:0.35}));
+  const group = new THREE.Group(); group.add(mesh); group.add(edges);
+  scene.add(group);
+  const dist = radius * 2.1;
+  camera.position.set(dist*0.85, -dist*0.85, dist*0.6);
+  camera.lookAt(0,0,0);
+  renderer.render(scene, camera);
+}
+</script>
+</body>
+</html>

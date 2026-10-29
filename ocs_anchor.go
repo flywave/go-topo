@@ -15,19 +15,52 @@ import (
 // =========================================================================
 
 type AnchorSectionInput struct {
-	Centerline      []Point3  `json:"centerline"`      // 线路中心线 (mm)
-	ContactHeight   float64   `json:"contactHeight"`   // 导高, 默认 5300
-	StructureHeight float64   `json:"structureHeight"` // 结构高度, 默认 1400
-	SpanLength      float64   `json:"spanLength"`      // 标准跨距, 默认 50000
-	MastHeight      float64   `json:"mastHeight"`      // 柱高, 默认 8000
-	MastType        int       `json:"mastType"`        // 1-钢柱, 2-混凝土柱
-	SideOffset      float64   `json:"sideOffset"`      // 侧面限界 CX, 默认 2900
-	MastSide        float64   `json:"mastSide"`        // 支柱在线路左侧(+1)/右侧(-1), 默认 +1
-	StaggerTable    []float64 `json:"staggerTable"`    // 各定位点拉出值; 空则自动之字 ±300
-	HasCompensator  bool      `json:"hasCompensator"`  // 两端锚柱设补偿装置
-	ContactWireDia  float64   `json:"contactWireDia"`  // 接触线直径, 默认 12.9
-	MessengerDia    float64   `json:"messengerDia"`    // 承力索直径, 默认 13.5
-	DropperSpacing  float64   `json:"dropperSpacing"`  // 吊弦间距, 默认 8000
+	Centerline      []Point3       `json:"centerline"`         // 线路中心线 (mm)
+	ContactHeight   float64        `json:"contactHeight"`      // 导高, 默认 5300
+	StructureHeight float64        `json:"structureHeight"`    // 结构高度, 默认 1400
+	SpanLength      float64        `json:"spanLength"`         // 标准跨距, 默认 50000
+	MastHeight      float64        `json:"mastHeight"`         // 柱高, 默认 8000
+	MastType        int            `json:"mastType"`           // 1-钢柱, 2-混凝土柱
+	SideOffset      float64        `json:"sideOffset"`         // 侧面限界 CX, 默认 2900
+	MastSide        float64        `json:"mastSide"`           // 支柱在线路左侧(+1)/右侧(-1), 默认 +1
+	StaggerTable    []float64      `json:"staggerTable"`       // 各定位点拉出值; 空则自动之字 ±300
+	HasCompensator  bool           `json:"hasCompensator"`     // 两端锚柱设补偿装置
+	ContactWireDia  float64        `json:"contactWireDia"`     // 接触线直径, 默认 12.9
+	MessengerDia    float64        `json:"messengerDia"`       // 承力索直径, 默认 13.5
+	DropperSpacing  float64        `json:"dropperSpacing"`     // 吊弦间距, 默认 8000
+	AuxWires        []AuxWireInput `json:"auxWires,omitempty"` // 附加导线配置 (AF正馈线/回流线/加强线)
+}
+
+// AuxWireInput 附加导线配置: 沿线路在支柱 field 侧 (或对侧) 悬挂
+type AuxWireInput struct {
+	Kind     string  `json:"kind"`     // AF(正馈线) / PW(回流线) / F(加强线)
+	Offset   float64 `json:"offset"`   // 距线路中心横向偏移 (mm), 默认 5000
+	Height   float64 `json:"height"`   // 悬挂高度 (mm), 默认 8000
+	Diameter float64 `json:"diameter"` // 线径 (mm), 默认 14
+	SagRatio float64 `json:"sagRatio"` // 弛度比 (×跨距), 默认 0.008
+	Side     float64 `json:"side"`     // 线路左(+1)/右(-1), 默认同 MastSide
+	Bracket  bool    `json:"bracket"`  // 支柱装附加导线支架
+}
+
+func (a *AuxWireInput) withDefaults(mastSide float64) {
+	if a.Kind == "" {
+		a.Kind = "AF"
+	}
+	if a.Offset <= 0 {
+		a.Offset = 5000
+	}
+	if a.Height <= 0 {
+		a.Height = 8000
+	}
+	if a.Diameter <= 0 {
+		a.Diameter = 14
+	}
+	if a.SagRatio <= 0 {
+		a.SagRatio = 0.008
+	}
+	if a.Side == 0 {
+		a.Side = mastSide
+	}
 }
 
 // 线上点 + 横向单位向量 (left of travel)

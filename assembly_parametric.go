@@ -35,9 +35,14 @@ type ParametricElement struct {
 // 返回的 loc 仅在节点 JSON 未携带 location 时作为缺省放置; 节点 location 优先
 type ParametricBuilder func(params json.RawMessage) (shape *Shape, loc *TopoLocation, err error)
 
+// AssemblyParametricBuilder 由参数 JSON 重建一颗子装配树 (功能单元级:
+// 跨距/股道等 — 前端按该粒度编辑, 子零件由 builder 确定性再生, 不逐件暴露)
+type AssemblyParametricBuilder func(params json.RawMessage, name string) (*Assembly, error)
+
 var (
 	parametricBuildersMu sync.RWMutex
 	parametricBuilders   = map[string]ParametricBuilder{}
+	assemblyBuilders     = map[string]AssemblyParametricBuilder{}
 )
 
 // RegisterParametricBuilder 注册参数化 builder, fn 为 nil 时注销
@@ -55,6 +60,23 @@ func lookupParametricBuilder(typeName string) ParametricBuilder {
 	parametricBuildersMu.RLock()
 	defer parametricBuildersMu.RUnlock()
 	return parametricBuilders[typeName]
+}
+
+// RegisterAssemblyBuilder 注册装配级 builder (优先于同名的形状 builder), fn 为 nil 时注销
+func RegisterAssemblyBuilder(typeName string, fn AssemblyParametricBuilder) {
+	parametricBuildersMu.Lock()
+	defer parametricBuildersMu.Unlock()
+	if fn == nil {
+		delete(assemblyBuilders, typeName)
+		return
+	}
+	assemblyBuilders[typeName] = fn
+}
+
+func lookupAssemblyBuilder(typeName string) AssemblyParametricBuilder {
+	parametricBuildersMu.RLock()
+	defer parametricBuildersMu.RUnlock()
+	return assemblyBuilders[typeName]
 }
 
 // SetParametric 设置装配自身的参数化配方, 返回自身便于链式调用
@@ -124,7 +146,9 @@ func (c *Assembly) exportParametricNode(self *ParametricData, children map[strin
 }
 
 // RebuildFromParametric 由 ExportParametric 导出的 JSON 重建装配
-// 有配方的节点经注册的 builder 重建几何; 无配方的节点重建为占位容器 (原点 vertex)
+// 有形状配方的节点经注册的 builder 重建几何; 有装配配方 (RegisterAssemblyBuilder)
+// 的节点整棵子树由 builder 确定性再生 (导出的 children 作为编辑面, 不参与重建);
+// 无配方的节点重建为占位容器 (原点 vertex)
 // 节点类型未注册 builder 时返回明确错误, 不静默跳过
 func RebuildFromParametric(data []byte) (*Assembly, error) {
 	var root ParametricElement
@@ -134,7 +158,17 @@ func RebuildFromParametric(data []byte) (*Assembly, error) {
 	return rebuildParametricNode(&root)
 }
 
-func rebuildParametricNode(el *ParametricElement) (*Assembly, error) {
+func rebuildParametricNode(el *ParametricElement) (*Assembly, error) { // 装配级配方: 整棵子树由 builder 再生 (功能单元粒度重建)
+	if el.Type != "" {
+		if afn := lookupAssemblyBuilder(el.Type); afn != nil {
+			as, err := afn(el.Params, el.Name)
+			if err != nil {
+				return nil, fmt.Errorf("assembly: build element %q (type %q): %w", el.Name, el.Type, err)
+			}
+			as.SetParametric(&ParametricData{Type: el.Type, Params: el.Params})
+			return as, nil
+		}
+	}
 	var shape *Shape
 	var bloc *TopoLocation
 	if el.Type != "" {
@@ -151,30 +185,63 @@ func rebuildParametricNode(el *ParametricElement) (*Assembly, error) {
 		}
 		shape = s
 		bloc = l
-	} else {
-		// 无配方: 容器节点, 用原点 vertex 占位 (空 compound 是 null shape, assembly 构造不接受)
-		shape = NewVertex(0, 0, 0).ToShape()
-	}
-	loc := bloc
-	if el.Location != nil {
-		d := *el.Location
-		loc = NewTopoLocation(NewTrsf(d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11]))
 	}
 	var color *Color
 	if el.Color != nil {
 		cl := NewColor(*el.Color)
 		color = &cl
 	}
-	as := NewAssembly(NewAssemblyObjectFromShpe(*shape), loc, el.Name, color)
-	if el.Type != "" {
-		as.SetParametric(&ParametricData{Type: el.Type, Params: el.Params})
+	// 无配方容器: 先重建子树, 占位 vertex 放子树几何中心
+	// (原装配的容器 vertex 也在自身几何内; 原点 vertex 会污染全局 bbox)
+	if el.Type == "" {
+		var children []*Assembly
+		for _, ch := range el.Children {
+			childAs, err := rebuildParametricNode(ch)
+			if err != nil {
+				return nil, err
+			}
+			children = append(children, childAs)
+		}
+		cx, cy, cz := 0.0, 0.0, 0.0
+		if len(children) > 0 {
+			bb := children[0].ToCompound().BBox().Data()
+			for _, ch := range children[1:] {
+				cb := ch.ToCompound().BBox().Data()
+				for i := 0; i < 3; i++ {
+					if cb[i] < bb[i] {
+						bb[i] = cb[i]
+					}
+				}
+				for i := 3; i < 6; i++ {
+					if cb[i] > bb[i] {
+						bb[i] = cb[i]
+					}
+				}
+			}
+			cx, cy, cz = (bb[0]+bb[3])/2, (bb[1]+bb[4])/2, (bb[2]+bb[5])/2
+		}
+		as := NewAssembly(NewAssemblyObjectFromShpe(*NewVertex(cx, cy, cz).ToShape()), nil, el.Name, color)
+		for _, childAs := range children {
+			as.AddAssembly(childAs, nil, "", nil)
+			if as.HasError() {
+				return nil, fmt.Errorf("assembly: add child: %s", as.Error())
+			}
+		}
+		return as, nil
 	}
+	loc := bloc
+	if el.Location != nil {
+		d := *el.Location
+		loc = NewTopoLocation(NewTrsf(d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8], d[9], d[10], d[11]))
+	}
+	as := NewAssembly(NewAssemblyObjectFromShpe(*shape), loc, el.Name, color)
+	as.SetParametric(&ParametricData{Type: el.Type, Params: el.Params})
 	for _, ch := range el.Children {
 		childAs, err := rebuildParametricNode(ch)
 		if err != nil {
 			return nil, err
 		}
-		// loc/color 传 nil, 保留子节点自身构造时的值
+		// loc 传节点自身 location (装配级配方的节点由父放置时保持导出位置), color 传 nil
 		as.AddAssembly(childAs, nil, "", nil)
 		if as.HasError() {
 			return nil, fmt.Errorf("assembly: add child %q: %s", ch.Name, as.Error())

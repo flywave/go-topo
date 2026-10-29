@@ -1667,6 +1667,56 @@ TOPOCAPICALL void topo_free_points(pnt3d_t *points);
 TOPOCAPICALL topo_shape_t *
 topo_create_bounding_centerline_shape(double radius, topo_wire_t path);
 
+/* Sew independent faces into a connected shell and wrap it into a solid
+ * (BRepBuilderAPI_Sewing + BRepBuilderAPI_MakeSolid + ShapeFix). Returns a
+ * solid when the sewn result contains a closed shell, the raw sewn shape
+ * otherwise, and null when no face could be added. Caller frees with
+ * topo_shape_free. */
+TOPOCAPICALL topo_shape_t *topo_sew_faces_to_solid(const topo_face_t *faces,
+                                                   int count, double tol);
+
+/* Repair a face at the given tolerance (ShapeFix_Shape with precision and
+ * max tolerance set): fills missing pcurves on edges of analytic faces that
+ * BRepBuilderAPI_MakeFace leaves behind. Returns the fixed face (caller
+ * frees with topo_face_free) or null on failure. */
+TOPOCAPICALL topo_face_t *topo_face_fix_with_tol(topo_face_t *face,
+                                                 double tol);
+
+/* ==== analytic surface intersection (scanbim B-1) ====
+ * Build Geom_Surface handles from primitive parameters (ownership: caller
+ * frees with geom_surface_free), intersect two of them exactly
+ * (GeomAPI_IntSS — the OdGeSurfacesIntersector equivalent), and inspect the
+ * resulting curves: project a 3D point to its curve parameter, read the
+ * natural parameter range, evaluate the curve. Shared edges are then built
+ * with topo_edge_make_edge_from_curve_p between two projected parameters. */
+TOPOCAPICALL geom_surface_t *geom_surface_make_plane(pnt3d_t p, dir3d_t d);
+TOPOCAPICALL geom_surface_t *geom_surface_make_cylinder(axis2_t a,
+                                                        double radius);
+TOPOCAPICALL geom_surface_t *geom_surface_make_sphere(axis3_t a,
+                                                      double radius);
+TOPOCAPICALL geom_surface_t *geom_surface_make_cone(axis2_t a,
+                                                    double half_angle,
+                                                    double radius);
+TOPOCAPICALL int topo_geom_surfaces_intersect(geom_surface_t *a,
+                                              geom_surface_t *b, double tol,
+                                              geom_curve_t ***out);
+TOPOCAPICALL void topo_geom_curve_ptr_array_free(geom_curve_t **arr);
+TOPOCAPICALL double topo_geom_curve_project_param(geom_curve_t *c, pnt3d_t p);
+TOPOCAPICALL int topo_geom_curve_param_range(geom_curve_t *c, double *u0,
+                                             double *u1);
+TOPOCAPICALL pnt3d_t topo_geom_curve_value(geom_curve_t *c, double u);
+
+/* Edge on the exact curve between parameters u1/u2 whose VERTICES sit at
+ * the given 3D points (which may deviate from the curve up to tol — the
+ * deviation lands in the vertex/edge tolerance). scanbim B-1: mesh corner
+ * vertices + exact intersection curve. */
+TOPOCAPICALL topo_edge_t topo_edge_make_edge_curve_verts_tol(geom_curve_t *L,
+                                                             pnt3d_t P1,
+                                                             pnt3d_t P2,
+                                                             double u1,
+                                                             double u2,
+                                                             double tol);
+
 #ifdef __cplusplus
 }
 #endif

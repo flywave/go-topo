@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>铁路参数化视觉验收</title>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<style>
+  body{margin:0;background:#eef1f5;font-family:-apple-system,'PingFang SC',sans-serif;}
+  .head{padding:10px 16px;font-size:15px;color:#333;display:flex;gap:14px;align-items:baseline;}
+  .head a{color:#2a6496;}
+  #grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 12px 12px;}
+  .card{position:relative;background:#fff;border:1px solid #d8dce2;border-radius:8px;overflow:hidden;height:320px;}
+  .card canvas{width:100%!important;height:100%!important;display:block;}
+  .card.pass{border-color:#bfe3bf;}
+  .card.fail{border-color:#e6b0b0;box-shadow:0 0 0 1px rgba(200,60,60,.35);}
+  .label{position:absolute;left:8px;top:6px;font-size:13px;font-weight:600;color:#111;background:rgba(255,255,255,.85);padding:2px 8px;border-radius:5px;max-width:75%;z-index:2;}
+  .group{position:absolute;right:8px;top:6px;font-size:11px;color:#4a6b8a;background:rgba(230,240,250,.92);padding:2px 6px;border-radius:4px;z-index:2;}
+  .badge{position:absolute;left:8px;bottom:34px;font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px;z-index:2;}
+  .badge.pass{background:#d9f2d9;color:#1d7a1d;}
+  .badge.fail{background:#fadcdc;color:#a32020;}
+  .badge.dev{background:#fdeccc;color:#9a6a00;}
+  .dims{position:absolute;left:0;right:0;bottom:0;font-size:11px;color:#333;background:rgba(248,249,250,.94);padding:4px 8px;border-top:1px solid #e4e7eb;z-index:2;line-height:1.5;}
+  .dims b{color:#8a5a00;}
+  .skip{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#6a7480;font-size:13px;text-align:center;padding:12px;background:#fff;z-index:1;}
+  /* detail */
+  #detail{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 12px 12px;}
+  #detail .view{position:relative;background:#fff;border:1px solid #d8dce2;border-radius:8px;overflow:hidden;height:44vh;}
+  #detail .view canvas{width:100%!important;height:100%!important;display:block;}
+  #detail .vtag{position:absolute;left:8px;top:6px;font-size:12px;font-weight:600;background:rgba(255,255,255,.85);padding:2px 8px;border-radius:5px;z-index:2;}
+  #info{margin:0 12px 12px;background:#fff;border:1px solid #d8dce2;border-radius:8px;padding:12px 16px;font-size:13px;line-height:1.7;}
+  #info table{border-collapse:collapse;margin-top:6px;}
+  #info td,#info th{border:1px solid #e0e4ea;padding:3px 12px;font-size:12.5px;text-align:left;}
+  #info th{background:#f4f6f9;}
+  .ok{color:#1d7a1d;font-weight:600;} .bad{color:#a32020;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="head" id="head"></div>
+<div id="grid"></div>
+<div id="detail" style="display:none"></div>
+<div id="info" style="display:none"></div>
+<script type="module">
+import * as THREE from 'three';
+import {STLLoader} from 'three/addons/loaders/STLLoader.js';
+
+const qs = new URLSearchParams(location.search);
+const resp = await fetch('manifest.json?v=' + (location.search ? encodeURIComponent(location.search) : '0'));
+const items = await resp.json();
+const one = qs.get('i');
+const page = parseInt(qs.get('page') || '0', 10);
+const shot = qs.get('shot') === '1';
+const list = one !== null ? [items[+one]] : items.slice(page*12, page*12+12);
+const head = document.getElementById('head');
+if (one !== null) {
+  const it = items[+one];
+  const vtxt = it.verdict==='pass' ? '通过' : (it.verdict==='skip' ? '跳过' : (it.knownDev ? '未通过 (已知偏差)' : '未通过'));
+  const vcls = it.verdict==='pass' ? 'ok' : (it.knownDev ? '' : 'bad');
+  head.innerHTML = `<a href="?page=0">&larr; 返回图库</a> &nbsp; <b>${it.name}</b> [${it.group}] — 判定 <b class="${vcls}">${vtxt}</b>`;
+} else {
+  const npass = items.filter(x=>x.verdict==='pass').length;
+  head.innerHTML = `铁路参数化视觉验收 — 第 ${page+1} / ${Math.ceil(items.length/12)} 页 (共 ${items.length} 项, 通过 ${npass})
+    &nbsp;<a href="?shot=1&page=${page}">截图模式</a>`;
+}
+
+function fmtDim(v){ return v>=10000 ? (v/1000).toFixed(1)+'m' : v.toFixed(0)+'mm'; }
+
+// —— 单卡渲染: iso / front / top / side ——
+async function renderView(container, it, camMode){
+  const canvas = document.createElement('canvas');
+  container.appendChild(canvas);
+  const w = container.clientWidth, h = container.clientHeight;
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, preserveDrawingBuffer:true});
+  renderer.setSize(w, h, false);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xffffff);
+  const camera = new THREE.PerspectiveCamera(40, w/h, 1, 1e7);
+  camera.up.set(0,0,1);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 1.1));
+  const dl = new THREE.DirectionalLight(0xffffff, 1.4); dl.position.set(1, -2, 3); scene.add(dl);
+  const geo = new STLLoader().parse(await (await fetch(it.file)).arrayBuffer());
+  geo.computeBoundingBox();
+  const bb = geo.boundingBox, ctr = bb.getCenter(new THREE.Vector3()), size = bb.getSize(new THREE.Vector3());
+  geo.translate(-ctr.x, -ctr.y, -ctr.z);
+  // 包围盒线框 (金色, 提供尺度感知)
+  const boxHelper = new THREE.Box3Helper(new THREE.Box3(
+    new THREE.Vector3(-size.x/2,-size.y/2,-size.z/2), new THREE.Vector3(size.x/2,size.y/2,size.z/2)),
+    new THREE.Color(0xd8a400));
+  const mat = new THREE.MeshStandardMaterial({color:0x4a7fb5, metalness:0.15, roughness:0.55});
+  const mesh = new THREE.Mesh(geo, mat);
+  const group = new THREE.Group(); group.add(mesh); group.add(boxHelper);
+  scene.add(group);
+  const radius = Math.max(size.x, size.y, size.z) || 1;
+  const dist = radius * 2.1;
+  if (camMode === 'front')      camera.position.set(0, -dist, 0);
+  else if (camMode === 'top')   camera.position.set(0, 0, dist);
+  else if (camMode === 'side')  camera.position.set(dist, 0, 0);
+  else                          camera.position.set(dist*0.85, -dist*0.85, dist*0.6);
+  camera.lookAt(0,0,0);
+  renderer.render(scene, camera);
+}
+
+if (one !== null) {
+  // —— 详情页: 四个正交视图 + 判定表 ——
+  document.getElementById('grid').style.display = 'none';
+  const detail = document.getElementById('detail'); detail.style.display = 'grid';
+  const it = items[+one];
+  for (const [mode, tag] of [['iso','轴测'],['front','正视 (Y-)'],['top','俯视 (Z+)'],['side','侧视 (X+)']]) {
+    const v = document.createElement('div'); v.className = 'view';
+    const t = document.createElement('div'); t.className='vtag'; t.textContent = tag; v.appendChild(t);
+    detail.appendChild(v);
+    if (it.verdict !== 'skip') await renderView(v, it, mode);
+  }
+  const info = document.getElementById('info'); info.style.display = 'block';
+  const dimTxt = it.dims ? `实测外廓 ${fmtDim(it.dims[0])} × ${fmtDim(it.dims[1])} × ${fmtDim(it.dims[2])}` : '';
+  let html = `<div>${dimTxt}${it.note? ' — <i>'+it.note+'</i>':''}</div>`;
+  if (it.checks && it.checks.length) {
+    html += '<table><tr><th>检查项</th><th>期望</th><th>实测</th><th>判定</th></tr>';
+    for (const ck of it.checks) {
+      html += `<tr><td>${ck.what}</td><td>${ck.want}</td><td>${ck.got}</td><td class="${ck.pass?'ok':'bad'}">${ck.pass?'✓':'✗'}</td></tr>`;
+    }
+    html += '</table>';
+  }
+  info.innerHTML = html;
+} else {
+  // —— 网格页 ——
+  const grid = document.getElementById('grid');
+  for (const it of list) {
+    const card = document.createElement('div');
+    card.className = 'card ' + (it.verdict==='pass'?'pass':(it.verdict==='fail'?'fail':''));
+    const label = document.createElement('div'); label.className='label'; label.textContent = it.name;
+    const grp = document.createElement('div'); grp.className='group'; grp.textContent = it.group;
+    const idx = items.indexOf(it);
+    label.style.cursor = 'pointer'; label.onclick = ()=>{ location.href = '?i='+idx; };
+    card.appendChild(label); card.appendChild(grp);
+    const fails = (it.checks||[]).filter(c=>!c.pass).length;
+    const badge = document.createElement('div');
+    if (it.verdict==='pass') { badge.className='badge pass'; badge.textContent='通过'; }
+    else if (it.verdict==='skip') { badge.className='badge dev'; badge.textContent='跳过'; }
+    else if (it.knownDev) { badge.className='badge dev'; badge.textContent='已知偏差×'+fails; }
+    else { badge.className='badge fail'; badge.textContent='未通过×'+fails; }
+    card.appendChild(badge);
+    const dims = document.createElement('div'); dims.className='dims';
+    const d = it.dims || [0,0,0];
+    dims.innerHTML = `${fmtDim(d[0])} × ${fmtDim(d[1])} × ${fmtDim(d[2])}` + (it.expect? ` <b>期望: ${it.expect}</b>`:'');
+    card.appendChild(dims);
+    grid.appendChild(card);
+    if (it.verdict === 'skip' || !it.file) {
+      const s = document.createElement('div'); s.className='skip'; s.textContent = it.note || '仅参数化闭环检查, 无几何'; card.appendChild(s);
+      continue;
+    }
+    await renderView(card, it, 'iso');
+  }
+}
+if (shot) { document.title = 'READY'; }
+</script>
+</body>
+</html>

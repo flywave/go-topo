@@ -353,8 +353,10 @@ func (c *Assembly) GetElements() []*AssemblyElament {
 	return result
 }
 
-// Get 按名查找元素 (顶层对象用短名, 嵌套元素用 "a/b" 相对路径, 与 Remove 语义一致)
-// 注意: 返回元素的 Location 是从根累计的世界变换
+// Get 按名查找元素, 三级解析:
+//  1. 顶层短名 ("mast_0") 或 "根名/短名"
+//  2. 全路径 ("span_0/cw_0", 中间段为子装配名, 末段为元素名; 允许带根名前缀)
+//  3. 全树唯一深度名 (跨容器, 唯一才命中)
 func (c *Assembly) Get(name string) (*AssemblyElament, bool) {
 	root := c.GetName()
 	for _, el := range c.GetElements() {
@@ -362,6 +364,57 @@ func (c *Assembly) Get(name string) (*AssemblyElament, bool) {
 		if en == name || en == root+"/"+name {
 			return el, true
 		}
+	}
+	if strings.Contains(name, "/") {
+		// 路径寻址
+		segs := strings.Split(name, "/")
+		cur := c
+		for i := 0; i < len(segs)-1; i++ {
+			if i == 0 && segs[0] == root {
+				continue
+			}
+			found := false
+			for _, ch := range cur.Children() {
+				if ch.GetName() == segs[i] {
+					cur = ch
+					found = true
+					break
+				}
+			}
+			if !found {
+				return nil, false
+			}
+		}
+		for _, el := range cur.GetElements() {
+			if el.GetName() == segs[len(segs)-1] {
+				return el, true
+			}
+		}
+		return nil, false
+	}
+	// 深度唯一名
+	var hit *AssemblyElament
+	var unique = true
+	var find func(a *Assembly)
+	find = func(a *Assembly) {
+		for _, el := range a.GetElements() {
+			if el.GetName() == name {
+				if hit != nil {
+					unique = false
+					return
+				}
+				hit = el
+			}
+		}
+		for _, ch := range a.Children() {
+			if unique {
+				find(ch)
+			}
+		}
+	}
+	find(c)
+	if unique && hit != nil {
+		return hit, true
 	}
 	return nil, false
 }

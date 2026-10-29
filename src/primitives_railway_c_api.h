@@ -677,6 +677,7 @@ typedef struct {
   double contactHeight;
   double structureHeight;
   double sideOffset;
+  double tensionPlaneY;
 } mast_assembly_params_t;
 
 RAILCAPICALL topo_shape_t *
@@ -830,6 +831,8 @@ typedef struct {
   double railHeight;
   double railHeadWidth;
   double railBaseWidth; double webThickness;
+  double frogAngle;       // rad; 0=由 turnoutNo 推算, >0 用实测角 (菱形交叉任意交角)
+  double sleeperSpacing;  // 交叉区岔枕间距(mm); 0=不生成
 } frog_params_t;
 
 RAILCAPICALL topo_shape_t *create_frog(frog_params_t params);
@@ -837,6 +840,26 @@ RAILCAPICALL topo_shape_t *create_frog_with_place(frog_params_t params,
                                                    pnt3d_t position,
                                                    dir3d_t direction,
                                                    dir3d_t upDir);
+
+// ===========================================================================
+// 32b. Diamond Crossing (菱形交叉)
+// ===========================================================================
+typedef struct {
+  double frogAngle;       // rad; 0=由 turnoutNo 推算
+  int turnoutNo;
+  double gauge;
+  double railHeight;
+  double railHeadWidth;
+  double railBaseWidth;
+  double sleeperSpacing;  // 0=不生成岔枕
+  double sleeperHeight;
+} diamond_params_t;
+
+RAILCAPICALL topo_shape_t *create_diamond(diamond_params_t params);
+RAILCAPICALL topo_shape_t *create_diamond_with_place(diamond_params_t params,
+                                                     pnt3d_t position,
+                                                     dir3d_t direction,
+                                                     dir3d_t upDir);
 
 // ===========================================================================
 // 33. Turnout (单开道岔)
@@ -852,7 +875,8 @@ typedef struct {
   double leadCurveRadius;
   double frogLength;
   int sleeperCount;
-  double sleeperSpacing;
+  double sleeperSpacing;  // >0 按间距布岔枕; count/spacing 均缺省时取 600
+  double sleeperHeight;   // 岔枕高(mm)=轨底抬高量, 0=200
 } turnout_params_t;
 
 RAILCAPICALL topo_shape_t *create_turnout(turnout_params_t params);

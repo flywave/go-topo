@@ -7,6 +7,30 @@
 #include "standard_impl.hh"
 #include "topo_impl.hh"
 
+#include <BRep_Builder.hxx>
+#include <BRep_Tool.hxx>
+#include <BRepBuilderAPI_MakeSolid.hxx>
+#include <BRepBuilderAPI_Sewing.hxx>
+#include <BRepLib.hxx>
+#include <ShapeFix_Shape.hxx>
+#include <TopAbs_ShapeEnum.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopoDS.hxx>
+#include <TopoDS_Shell.hxx>
+#include <TopoDS_Solid.hxx>
+#include <TopTools_ListOfShape.hxx>
+#include <TopTools_ListIteratorOfListOfShape.hxx>
+#include <GeomAPI_IntSS.hxx>
+#include <GeomAPI_ProjectPointOnCurve.hxx>
+#include <GeomAdaptor_Curve.hxx>
+#include <Geom_ConicalSurface.hxx>
+#include <Geom_CylindricalSurface.hxx>
+#include <Geom_Plane.hxx>
+#include <Geom_SphericalSurface.hxx>
+#include <BRepBuilderAPI_MakeVertex.hxx>
+#include <Precision.hxx>
+#include <algorithm>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <vector>
@@ -9699,6 +9723,500 @@ TOPOCAPICALL void topo_free_outline_points(pnt3d_t **outlines, int *outline_size
     (void)e;
   }
   catch (...) {
+  }
+}
+
+// Sew independent faces into a connected shell, optionally wrapped into a
+// solid. Follows the heal_geometry recipe: sewing merges coincident edges
+// within tol, reorients faces coherently; when the sewn result contains a
+// shell it is wrapped into a solid with outward orientation and repaired by
+// ShapeFix at the same precision.
+topo_shape_t *topo_sew_faces_to_solid(const topo_face_t *faces, int count,
+                                      double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    if (!faces || count <= 0) {
+      return nullptr;
+    }
+    if (tol <= 0) {
+      tol = 1e-6;
+    }
+    BRepBuilderAPI_Sewing sew(tol, Standard_True, Standard_True, Standard_True,
+                              Standard_False);
+    int added = 0;
+    try {
+      for (int i = 0; i < count; i++) {
+        if (!faces[i].shp) {
+          continue;
+        }
+        const TopoDS_Shape &s = faces[i].shp->shp->value();
+        if (s.IsNull() || s.ShapeType() != TopAbs_FACE) {
+          continue;
+        }
+        sew.Add(TopoDS::Face(s));
+        added++;
+      }
+      if (added == 0) {
+        return nullptr;
+      }
+      sew.Perform();
+    }
+    catch (...) {
+      // diagnose: sew in chunks to locate the offending faces
+      if (getenv("BREP_DEBUG")) {
+        std::fprintf(stderr, "[sew] full sew threw; bisecting %d faces\n",
+                     added);
+        for (int base = 0; base < count; base += 200) {
+          try {
+            BRepBuilderAPI_Sewing probe(tol, Standard_True, Standard_True,
+                                        Standard_True, Standard_False);
+            for (int i = base; i < std::min(base + 200, count); i++) {
+              if (!faces[i].shp)
+                continue;
+              const TopoDS_Shape &fs = faces[i].shp->shp->value();
+              if (fs.IsNull() || fs.ShapeType() != TopAbs_FACE)
+                continue;
+              probe.Add(TopoDS::Face(fs));
+            }
+            probe.Perform();
+            std::fprintf(stderr, "[sew] chunk [%d,%d) ok\n", base,
+                         std::min(base + 200, count));
+          }
+          catch (...) {
+            std::fprintf(stderr, "[sew] chunk [%d,%d) THREW\n", base,
+                         std::min(base + 200, count));
+            for (int i = base; i < std::min(base + 200, count); i++) {
+              if (!faces[i].shp)
+                continue;
+              const TopoDS_Shape &fs = faces[i].shp->shp->value();
+              if (fs.IsNull() || fs.ShapeType() != TopAbs_FACE)
+                continue;
+              try {
+                BRepBuilderAPI_Sewing one(tol, Standard_True, Standard_True,
+                                          Standard_True, Standard_False);
+                one.Add(TopoDS::Face(fs));
+                one.Perform();
+              }
+              catch (...) {
+                std::fprintf(stderr, "[sew] face %d THREW alone\n", i);
+              }
+            }
+          }
+        }
+      }
+      throw;
+    }
+    TopoDS_Shape sewn = sew.SewedShape();
+    if (sewn.IsNull()) {
+      return nullptr;
+    }
+
+    TopoDS_Shape body;
+    try {
+      // collect free shells from the sewn result (may be a single shell or
+      // a compound of shells)
+      TopTools_ListOfShape shells;
+      TopExp_Explorer exp;
+      for (exp.Init(sewn, TopAbs_SHELL); exp.More(); exp.Next()) {
+        TopoDS_Shape sh = exp.Current();
+        if (!BRep_Tool::IsClosed(TopoDS::Shell(sh))) {
+          continue;
+        }
+        shells.Append(sh);
+      }
+      if (shells.Extent() == 0) {
+        // open result: return the sewn shape as-is (caller decides)
+        if (getenv("BREP_DEBUG")) {
+          int nsh = 0, ncl = 0;
+          for (exp.Init(sewn, TopAbs_SHELL); exp.More(); exp.Next()) {
+            nsh++;
+            if (BRep_Tool::IsClosed(TopoDS::Shell(exp.Current())))
+              ncl++;
+          }
+          int nface = 0;
+          for (exp.Init(sewn, TopAbs_FACE); exp.More(); exp.Next())
+            nface++;
+          std::fprintf(stderr,
+                       "[sew] open result: shells=%d closed=%d faces=%d\n",
+                       nsh, ncl, nface);
+          // free-edge dump: which boundary edges failed to merge (endpoints)
+          TopExp_Explorer ee(sewn, TopAbs_EDGE);
+          for (; ee.More(); ee.Next()) {
+            TopoDS_Edge e = TopoDS::Edge(ee.Current());
+            // count face incidences of this edge, remember the face kinds
+            int nf = 0;
+            bool fCyl = false, fCone = false, fPln = false, fSph = false,
+                 fOth = false;
+            TopExp_Explorer fe(sewn, TopAbs_FACE);
+            for (; fe.More(); fe.Next()) {
+              TopExp_Explorer ee2(fe.Current(), TopAbs_EDGE);
+              bool has = false;
+              for (; ee2.More(); ee2.Next()) {
+                if (ee2.Current().IsSame(e)) {
+                  has = true;
+                  nf++;
+                }
+              }
+              if (!has)
+                continue;
+              TopoDS_Face f = TopoDS::Face(fe.Current());
+              TopLoc_Location loc;
+              const Handle(Geom_Surface) &gs =
+                  BRep_Tool::Surface(f, loc);
+              if (!gs.IsNull()) {
+                if (gs->IsKind(STANDARD_TYPE(Geom_CylindricalSurface)))
+                  fCyl = true;
+                else if (gs->IsKind(STANDARD_TYPE(Geom_ConicalSurface)))
+                  fCone = true;
+                else if (gs->IsKind(STANDARD_TYPE(Geom_Plane)))
+                  fPln = true;
+                else if (gs->IsKind(STANDARD_TYPE(Geom_SphericalSurface)))
+                  fSph = true;
+                else
+                  fOth = true;
+              }
+            }
+            if (nf >= 2)
+              continue;
+            double a, b;
+            Handle(Geom_Curve) cv = BRep_Tool::Curve(e, a, b);
+            gp_Pnt p1, p2;
+            if (!cv.IsNull()) {
+              cv->D0(a, p1);
+              cv->D0(b, p2);
+            }
+            const char *sname = "?";
+            {
+              TopExp_Explorer fe2(sewn, TopAbs_FACE);
+              for (; fe2.More(); fe2.Next()) {
+                TopExp_Explorer ee3(fe2.Current(), TopAbs_EDGE);
+                bool has = false;
+                for (; ee3.More(); ee3.Next())
+                  if (ee3.Current().IsSame(e)) {
+                    has = true;
+                    break;
+                  }
+                if (!has)
+                  continue;
+                TopoDS_Face f = TopoDS::Face(fe2.Current());
+                TopLoc_Location loc;
+                const Handle(Geom_Surface) &gs = BRep_Tool::Surface(f, loc);
+                if (!gs.IsNull())
+                  sname = gs->DynamicType()->Name();
+                break;
+              }
+            }
+            std::fprintf(stderr,
+                         "[sew] free edge nf=%d degen=%d tol=%.4f face surf=%s"
+                         " (%.3f,%.3f,%.3f)-(%.3f,%.3f,%.3f)\n",
+                         nf, BRep_Tool::Degenerated(e),
+                         BRep_Tool::Tolerance(e), sname, p1.X(), p1.Y(),
+                         p1.Z(), p2.X(), p2.Y(), p2.Z());
+          }
+        }
+        return new topo_shape_t{
+            .shp = std::make_shared<flywave::topo::shape>(sewn)};
+      }
+
+      if (shells.Extent() == 1) {
+        BRepBuilderAPI_MakeSolid ms(TopoDS::Shell(shells.First()));
+        if (!ms.IsDone()) {
+          return new topo_shape_t{
+              .shp = std::make_shared<flywave::topo::shape>(sewn)};
+        }
+        body = ms.Solid();
+        BRepLib::OrientClosedSolid(TopoDS::Solid(body));
+      } else {
+        TopoDS_Compound comp;
+        BRep_Builder bb;
+        bb.MakeCompound(comp);
+        for (TopTools_ListIteratorOfListOfShape it(shells); it.More();
+             it.Next()) {
+          BRepBuilderAPI_MakeSolid ms(TopoDS::Shell(it.Value()));
+          if (!ms.IsDone()) {
+            continue;
+          }
+          TopoDS_Solid sol = ms.Solid();
+          BRepLib::OrientClosedSolid(sol);
+          bb.Add(comp, sol);
+        }
+        body = comp;
+      }
+    }
+    catch (...) {
+      // solid wrapping failed: the sewn shells are still usable — degrade
+      // to the raw sewn shape instead of losing the work
+      if (getenv("BREP_DEBUG")) {
+        std::fprintf(stderr, "[sew] solid wrapping threw; returning raw\n");
+      }
+      return new topo_shape_t{
+          .shp = std::make_shared<flywave::topo::shape>(sewn)};
+    }
+
+    // repair pass at sewing precision (fills missing pcurves, tolerance
+    // issues) — same pattern as mesh::heal_geometry. A repair failure must
+    // not discard the sewn result: degrade to the unfixed body.
+    try {
+      Handle(ShapeFix_Shape) sfs = new ShapeFix_Shape;
+      sfs->Init(body);
+      sfs->SetPrecision(tol);
+      sfs->SetMaxTolerance(std::max(tol * 100, 1e-4));
+      sfs->Perform();
+      TopoDS_Shape fixed = sfs->Shape();
+      if (!fixed.IsNull()) {
+        body = fixed;
+      }
+    }
+    catch (const Standard_Failure &sf) {
+      if (getenv("BREP_DEBUG")) {
+        std::fprintf(stderr, "[sew] shapefix Standard_Failure: %s\n",
+                     sf.GetMessageString());
+      }
+    }
+    catch (...) {
+      if (getenv("BREP_DEBUG")) {
+        std::fprintf(stderr, "[sew] shapefix unknown exception\n");
+      }
+    }
+    return new topo_shape_t{.shp = std::make_shared<flywave::topo::shape>(body)};
+  }
+  catch (const Standard_Failure &sf) {
+    if (getenv("BREP_DEBUG")) {
+      std::fprintf(stderr, "[sew] Standard_Failure: %s\n",
+                   sf.GetMessageString());
+    }
+    return nullptr;
+  }
+  catch (const std::exception &e) {
+    if (getenv("BREP_DEBUG")) {
+      std::fprintf(stderr, "[sew] exception: %s\n", e.what());
+    }
+    return nullptr;
+  }
+  catch (...) {
+    if (getenv("BREP_DEBUG")) {
+      std::fprintf(stderr, "[sew] unknown exception\n");
+    }
+    return nullptr;
+  }
+}
+
+topo_face_t *topo_face_fix_with_tol(topo_face_t *face, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    if (!face || !face->shp || tol <= 0) {
+      return nullptr;
+    }
+    const TopoDS_Shape &s = face->shp->shp->value();
+    if (s.IsNull() || s.ShapeType() != TopAbs_FACE) {
+      return nullptr;
+    }
+    if (tol <= 0) {
+      tol = 1e-6;
+    }
+    Handle(ShapeFix_Shape) sfs = new ShapeFix_Shape;
+    sfs->Init(s);
+    sfs->SetPrecision(tol);
+    sfs->SetMaxTolerance(std::max(tol * 100, 1e-4));
+    sfs->Perform();
+    TopoDS_Shape fixed = sfs->Shape();
+    if (fixed.IsNull()) {
+      return nullptr;
+    }
+    return new topo_face_t{.shp = new topo_shape_t{
+                               .shp = std::make_shared<flywave::topo::shape>(
+                                   fixed)}};
+  }
+  catch (const Standard_Failure &sf) {
+    if (getenv("BREP_DEBUG")) {
+      std::fprintf(stderr, "[facefix] Standard_Failure: %s\n",
+                   sf.GetMessageString());
+    }
+    return nullptr;
+  }
+  catch (...) {
+    return nullptr;
+  }
+}
+
+// ==== analytic surface intersection (scanbim B-1: OdGeSurfacesIntersector
+// equivalent). Builds Geom_Surface handles from primitive parameters and
+// intersects them via GeomAPI_IntSS; the returned curves are exact analytic
+// intersections. Callers bound the useful span with
+// topo_geom_curve_project_param and make the shared edge with
+// topo_edge_make_edge_from_curve_p. ====
+
+geom_surface_t *geom_surface_make_plane(pnt3d_t p, dir3d_t d) {
+  try {
+    Handle(Geom_Surface) s = new Geom_Plane(cast_to_gp(p), cast_to_gp(d));
+    return new geom_surface_t{.handle = s};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+geom_surface_t *geom_surface_make_cylinder(axis2_t a, double radius) {
+  try {
+    if (radius <= 0) {
+      return nullptr;
+    }
+    Handle(Geom_Surface) s =
+        new Geom_CylindricalSurface(cast_to_gp(a), radius);
+    return new geom_surface_t{.handle = s};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+geom_surface_t *geom_surface_make_sphere(axis3_t a, double radius) {
+  try {
+    if (radius <= 0) {
+      return nullptr;
+    }
+    Handle(Geom_Surface) s = new Geom_SphericalSurface(cast_to_gp(a), radius);
+    return new geom_surface_t{.handle = s};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+geom_surface_t *geom_surface_make_cone(axis2_t a, double half_angle,
+                                       double radius) {
+  try {
+    if (radius < 0) {
+      return nullptr;
+    }
+    Handle(Geom_Surface) s =
+        new Geom_ConicalSurface(cast_to_gp(a), half_angle, radius);
+    return new geom_surface_t{.handle = s};
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+int topo_geom_surfaces_intersect(geom_surface_t *a, geom_surface_t *b,
+                                 double tol, geom_curve_t ***out) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    if (out) {
+      *out = nullptr;
+    }
+    if (!a || !b || !a->handle || !b->handle || !out) {
+      return 0;
+    }
+    if (tol <= 0) {
+      tol = 1e-7;
+    }
+    GeomAPI_IntSS inter(a->handle, b->handle, tol);
+    if (!inter.IsDone()) {
+      return 0;
+    }
+    int n = inter.NbLines();
+    if (n <= 0) {
+      return 0;
+    }
+    geom_curve_t **curves =
+        (geom_curve_t **)calloc((size_t)n, sizeof(geom_curve_t *));
+    if (!curves) {
+      return 0;
+    }
+    for (int i = 1; i <= n; i++) {
+      Handle(Geom_Curve) c = inter.Line(i);
+      if (c.IsNull()) {
+        continue;
+      }
+      curves[i - 1] = new geom_curve_t{.handle = c};
+    }
+    *out = curves;
+    return n;
+  } catch (...) {
+    return 0;
+  }
+}
+
+void topo_geom_curve_ptr_array_free(geom_curve_t **arr) { free(arr); }
+
+double topo_geom_curve_project_param(geom_curve_t *c, pnt3d_t p) {
+  try {
+    if (!c || !c->handle) {
+      return 1e308;
+    }
+    GeomAPI_ProjectPointOnCurve proj(cast_to_gp(p), c->handle);
+    if (proj.NbPoints() <= 0) {
+      return 1e308;
+    }
+    return proj.LowerDistanceParameter();
+  } catch (...) {
+    return 1e308;
+  }
+}
+
+int topo_geom_curve_param_range(geom_curve_t *c, double *u0, double *u1) {
+  try {
+    if (!c || !c->handle || !u0 || !u1) {
+      return 0;
+    }
+    GeomAdaptor_Curve ac(c->handle);
+    double a = ac.FirstParameter(), b = ac.LastParameter();
+    // OCCT represents infinite curves with +/-1e100 bounds — report those
+    // as rangeless; callers bound infinite curves by projected parameters.
+    if (!(a < b) || std::fabs(a) > 1e10 || std::fabs(b) > 1e10) {
+      return 0;
+    }
+    *u0 = a;
+    *u1 = b;
+    return 1;
+  } catch (...) {
+    return 0;
+  }
+}
+
+pnt3d_t topo_geom_curve_value(geom_curve_t *c, double u) {
+  pnt3d_t out{0, 0, 0};
+  try {
+    if (!c || !c->handle) {
+      return out;
+    }
+    gp_Pnt p = c->handle->Value(u);
+    out = pnt3d_t{p.X(), p.Y(), p.Z()};
+  } catch (...) {
+  }
+  return out;
+}
+
+topo_edge_t topo_edge_make_edge_curve_verts_tol(geom_curve_t *L, pnt3d_t P1,
+                                                pnt3d_t P2, double u1,
+                                                double u2, double tol) {
+  std::lock_guard<std::recursive_mutex> ___cgo_glock(flywave::topo::topo_glock());
+  try {
+    if (!L || !L->handle || u1 == u2) {
+      return topo_edge_t{};
+    }
+    if (u1 > u2) {
+      std::swap(u1, u2);
+      std::swap(P1, P2);
+    }
+    // vertices at the given 3D points (which may sit up to tol OFF the
+    // curve — e.g. mesh corner vertices vs an exact intersection curve).
+    // The vertices keep the DEFAULT tolerance — they coincide exactly with
+    // the neighboring polyline edges' vertices, which is what wire building
+    // and sewing merge on; the geometric deviation goes into the EDGE
+    // tolerance alone.
+    TopoDS_Edge E;
+    BRep_Builder B;
+    B.MakeEdge(E, L->handle, tol > 0 ? tol : Precision::Confusion());
+    B.Range(E, u1, u2);
+    TopoDS_Vertex v1 = BRepBuilderAPI_MakeVertex(cast_to_gp(P1)).Vertex();
+    TopoDS_Vertex v2 = BRepBuilderAPI_MakeVertex(cast_to_gp(P2)).Vertex();
+    B.Add(E, v1.Oriented(TopAbs_FORWARD));
+    B.Add(E, v2.Oriented(TopAbs_REVERSED));
+    if (E.IsNull()) {
+      return topo_edge_t{};
+    }
+    return topo_edge_t{.shp = new topo_shape_t{
+                           .shp = std::make_shared<flywave::topo::edge>(E)}};
+  } catch (...) {
+    return topo_edge_t{};
   }
 }
 

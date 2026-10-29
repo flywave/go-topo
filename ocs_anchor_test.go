@@ -4,6 +4,7 @@ import (
 	"math"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 )
 
@@ -215,7 +216,7 @@ func TestAnchorLayoutJSONRoundTrip(t *testing.T) {
 	}
 }
 
-// FromLayout 装配: 命名唯一 + 关键子件可按名寻址
+// FromLayout 装配: 命名唯一 + 铁路专业层级 (支柱装置/跨距) + 关键子件可按名寻址
 func TestAnchorFromLayoutNaming(t *testing.T) {
 	_, layout, err := CreateAnchorSectionWithLayout(anchorTestInput())
 	if err != nil {
@@ -236,13 +237,38 @@ func TestAnchorFromLayoutNaming(t *testing.T) {
 		}
 		seen[n] = true
 	}
-	// 根容器 + 6 支柱 + 5 接触线 + 5 承力索 + 30 吊弦 = 47
-	if len(seen) != 47 {
-		t.Fatalf("expected 47 elements, got %d", len(seen))
+	// 根容器 + 6 支柱装置 + 5 跨距 + 跨内 (5 接触线 + 5 承力索 + 30 吊弦)
+	// + 端锚下引线 (2 端 × 接触线/承力索) = 56
+	if len(seen) != 56 {
+		t.Fatalf("expected 56 elements, got %d", len(seen))
 	}
+	// 顶层: 支柱装置 + 跨距 (金具/线索零件按跨距分组, 不暴露在顶层)
+	var top []string
+	for _, ch := range as.Children() {
+		top = append(top, ch.GetName())
+	}
+	sort.Strings(top)
+	if len(top) != 11 {
+		t.Fatalf("expected 11 top-level children (6 mast + 5 span), got %v", top)
+	}
+	for _, name := range top {
+		wantPrefix := "mast_"
+		if strings.HasPrefix(name, "span_") {
+			wantPrefix = "span_"
+		}
+		if !strings.HasPrefix(name, wantPrefix) {
+			t.Fatalf("unexpected top-level element %q (want mast_*/span_* only)", name)
+		}
+	}
+	// 寻址: 顶层短名 / 跨内路径 / 深度唯一名 三种方式
 	for _, name := range []string{"mast_0", "mast_5", "cw_0", "mw_4", "dropper_0_0", "dropper_4_5"} {
 		if _, ok := as.Get(name); !ok {
-			t.Fatalf("element %q not found", name)
+			t.Fatalf("element %q not found (deep)", name)
+		}
+	}
+	for _, name := range []string{"span_0/cw_0", "span_4/dropper_4_5", "anchor_section/mast_3"} {
+		if _, ok := as.Get(name); !ok {
+			t.Fatalf("element %q not found (path)", name)
 		}
 	}
 }

@@ -1411,6 +1411,7 @@ type MastAssemblyParams struct {
 	ContactHeight   float64 `json:"contactHeight"`   // 导高(mm), 默认 5300
 	StructureHeight float64 `json:"structureHeight"` // 结构高度(mm), 默认 1400
 	SideOffset      float64 `json:"sideOffset"`      // 侧面限界 CX(mm), 默认 2900
+	TensionPlaneY   float64 `json:"tensionPlaneY"`   // 下锚张力平面 Y (跨距侧, 坠砣所在; 拉线自动布对侧), 0=默认 -250
 }
 
 // withDefaults 兜底零值参数 (如 RebuildFromParametric 读到残缺 JSON),
@@ -1448,6 +1449,11 @@ func (p *MastAssemblyParams) to_struct() C.mast_assembly_params_t {
 	c.contactHeight = C.double(p.ContactHeight)
 	c.structureHeight = C.double(p.StructureHeight)
 	c.sideOffset = C.double(p.SideOffset)
+	tp := p.TensionPlaneY
+	if tp == 0 {
+		tp = -250
+	}
+	c.tensionPlaneY = C.double(tp)
 	return c
 }
 
@@ -1583,7 +1589,7 @@ type DisconnectorParams struct {
 	BaseWidth       float64 `json:"baseWidth"`       // 默认 220
 	InsulatorHeight float64 `json:"insulatorHeight"` // 默认 600
 	BladeLength     float64 `json:"bladeLength"`     // 默认 800
-	OpenAngle       float64 `json:"openAngle"`       // 分闸角度°, 默认 75
+	OpenAngle       float64 `json:"openAngle"`       // 分闸角度°, 0=合闸, 未设(负)默认 75
 }
 
 func (p *DisconnectorParams) withDefaults() {
@@ -1599,9 +1605,9 @@ func (p *DisconnectorParams) withDefaults() {
 	if p.BladeLength <= 0 {
 		p.BladeLength = 800
 	}
-	if p.OpenAngle <= 0 {
+	if p.OpenAngle < 0 {
 		p.OpenAngle = 75
-	}
+	} // 0=合闸 (触刀水平闭合), 负值/未设走默认分闸 75°
 }
 
 func (p *DisconnectorParams) to_struct() C.disconnector_params_t {
@@ -1870,6 +1876,8 @@ type FrogParams struct {
 	RailHeight    float64 `json:"railHeight"`
 	RailHeadWidth float64 `json:"railHeadWidth"`
 	RailBaseWidth float64 `json:"railBaseWidth"`
+	FrogAngle     float64 `json:"frogAngle"`     // 辙叉角(rad); 0=由号数推算, >0 用实测角 (菱形交叉任意交角)
+	SleeperSpacing float64 `json:"sleeperSpacing"` // 交叉区岔枕间距(mm); 0=不生成
 }
 
 func (p *FrogParams) to_struct() C.frog_params_t {
@@ -1879,6 +1887,8 @@ func (p *FrogParams) to_struct() C.frog_params_t {
 		railHeight:    C.double(p.RailHeight),
 		railHeadWidth: C.double(p.RailHeadWidth),
 		railBaseWidth: C.double(p.RailBaseWidth),
+		frogAngle:     C.double(p.FrogAngle),
+		sleeperSpacing: C.double(p.SleeperSpacing),
 	}
 }
 
@@ -1891,6 +1901,48 @@ func CreateFrog(params FrogParams) *Shape {
 
 func CreateFrogWithPlace(params FrogParams, position Point3, direction, upDir Dir3) *Shape {
 	shp := C.create_frog_with_place(params.to_struct(), position.val, direction.val, upDir.val)
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+// =========================================================================
+// 32b. Diamond Crossing (菱形交叉 — 真菱形编织区)
+// =========================================================================
+
+type DiamondParams struct {
+	FrogAngle      float64 `json:"frogAngle"`      // 交叉角(rad); 0=由号数推算
+	TurnoutNo      int     `json:"turnoutNo"`      // frogAngle<=0 时的号数
+	Gauge          float64 `json:"gauge"`
+	RailHeight     float64 `json:"railHeight"`
+	RailHeadWidth  float64 `json:"railHeadWidth"`
+	RailBaseWidth  float64 `json:"railBaseWidth"`
+	SleeperSpacing float64 `json:"sleeperSpacing"` // 交叉区岔枕间距; 0=不生成
+	SleeperHeight  float64 `json:"sleeperHeight"`
+}
+
+func (p *DiamondParams) to_struct() C.diamond_params_t {
+	return C.diamond_params_t{
+		frogAngle:      C.double(p.FrogAngle),
+		turnoutNo:      C.int(p.TurnoutNo),
+		gauge:          C.double(p.Gauge),
+		railHeight:     C.double(p.RailHeight),
+		railHeadWidth:  C.double(p.RailHeadWidth),
+		railBaseWidth:  C.double(p.RailBaseWidth),
+		sleeperSpacing: C.double(p.SleeperSpacing),
+		sleeperHeight:  C.double(p.SleeperHeight),
+	}
+}
+
+func CreateDiamond(params DiamondParams) *Shape {
+	shp := C.create_diamond(params.to_struct())
+	s := &Shape{inner: &innerShape{val: shp}}
+	runtime.SetFinalizer(s.inner, (*innerShape).free)
+	return s
+}
+
+func CreateDiamondWithPlace(params DiamondParams, position Point3, direction, upDir Dir3) *Shape {
+	shp := C.create_diamond_with_place(params.to_struct(), position.val, direction.val, upDir.val)
 	s := &Shape{inner: &innerShape{val: shp}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
@@ -1911,7 +1963,8 @@ type TurnoutParams struct {
 	LeadCurveRadius  float64 `json:"leadCurveRadius"`
 	FrogLength       float64 `json:"frogLength"`
 	SleeperCount     int     `json:"sleeperCount"`
-	SleeperSpacing   float64 `json:"sleeperSpacing"`
+	SleeperSpacing   float64 `json:"sleeperSpacing"` // count/spacing 均缺省时 C 侧取 600
+	SleeperHeight    float64 `json:"sleeperHeight"`  // 岔枕高=轨底抬高, 0=200; 与邻接股道轨面齐平
 }
 
 func (p *TurnoutParams) to_struct() C.turnout_params_t {
@@ -1927,6 +1980,7 @@ func (p *TurnoutParams) to_struct() C.turnout_params_t {
 		frogLength:       C.double(p.FrogLength),
 		sleeperCount:     C.int(p.SleeperCount),
 		sleeperSpacing:   C.double(p.SleeperSpacing),
+		sleeperHeight:    C.double(p.SleeperHeight),
 	}
 }
 

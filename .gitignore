@@ -29,4 +29,10 @@ build
 /tests
 .cache
 example_*.step
-gallery
+galleryacceptance/
+
+# 验收/图库可视化产物 (STL 模型占空间; 仅保留查看器 html)
+acceptance/*
+!acceptance/index.html
+gallery/*
+!gallery/index.html

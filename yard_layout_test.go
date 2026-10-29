@@ -57,7 +57,7 @@ func TestComputeYardLayout(t *testing.T) {
 	if tn.TurnoutNo != 12 { // 侧线 R=350m → 12 号
 		t.Fatalf("expect turnout no 12, got %d", tn.TurnoutNo)
 	}
-	// 主入边 (0,0)→(100,0) 终点应被裁掉 岔前段 (swLen+2000)
+	// 主入边 (0,0)→(100,0) 终点应被裁掉 岔前段 (基本轨前伸 2600)
 	if layout.Tracks[0].TrimS != 0 || layout.Tracks[0].TrimE <= 0 {
 		t.Fatalf("track0 trim wrong: S=%.0f E=%.0f", layout.Tracks[0].TrimS, layout.Tracks[0].TrimE)
 	}
@@ -76,8 +76,9 @@ func TestComputeYardLayoutCrossing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ComputeYardLayout failed: %v", err)
 	}
-	if len(layout.Tracks) != 2 {
-		t.Fatalf("expect 2 tracks, got %d", len(layout.Tracks))
+	// 菱形让位分段: 两股道在交叉点附近各断成 2 段
+	if len(layout.Tracks) != 4 {
+		t.Fatalf("expect 4 tracks (2 线 × 2 段), got %d", len(layout.Tracks))
 	}
 	if len(layout.Turnouts) != 0 {
 		t.Fatalf("expect 0 turnouts, got %d", len(layout.Turnouts))
@@ -89,10 +90,10 @@ func TestComputeYardLayoutCrossing(t *testing.T) {
 	if cr.Position[0] < 199000 || cr.Position[0] > 201000 {
 		t.Fatalf("crossing x wrong: %.0f", cr.Position[0])
 	}
-	// 未识别道岔, 两股道均不裁剪
+	// 分段后每段即最终几何, 无需端部裁剪
 	for i, tr := range layout.Tracks {
-		if tr.TrimS != 0 {
-			t.Fatalf("track%d TrimS should be 0, got %.0f", i, tr.TrimS)
+		if tr.TrimS != 0 || tr.TrimE != 0 {
+			t.Fatalf("track%d 应为已分段几何 (TrimS=TrimE=0), got %.0f/%.0f", i, tr.TrimS, tr.TrimE)
 		}
 	}
 }
@@ -130,11 +131,12 @@ func TestCreateYardFromLayoutNaming(t *testing.T) {
 		t.Fatalf("from layout: %v", err)
 	}
 	names := collectAssemblyNames(as, nil)
-	// 3 边 × (钢轨+轨枕) + 1 道岔 = 7, 且全部唯一
-	if len(names) != 7 {
-		t.Fatalf("expect 7 unique names, got %d: %v", len(names), names)
+	// 根 yard + 3 track_i + 3×(rails+sleepers) + turnout = 11, 且全部唯一
+	if len(names) != 11 {
+		t.Fatalf("expect 11 unique names, got %d: %v", len(names), names)
 	}
-	for _, want := range []string{"rails_0", "sleepers_0", "rails_1", "sleepers_1", "rails_2", "sleepers_2", "turnout_0"} {
+	for _, want := range []string{"yard", "track_0", "track_1", "track_2",
+		"rails_0", "sleepers_0", "rails_1", "sleepers_1", "rails_2", "sleepers_2", "turnout_0"} {
 		if !names[want] {
 			t.Fatalf("missing element %q", want)
 		}
