@@ -63,7 +63,6 @@ cmake --install build --prefix libs/darwin_arm
 | `primitives.go` | Box, sphere, cylinder, prism creation |
 | `primitives_railway.go` | Railway OCS & track primitives (50+ types) |
 | `assembly_parametric.go` | Assembly parametric data (ParametricData, Export/RebuildFromParametric, builder registry) |
-| `ocs_layout.go` | Anchor-section layout round-trip (ComputeAnchorSectionLayout / CreateAnchorSectionFromLayout) |
 | `geometry.go` | Geometry type constants |
 | `geometry_creator.go` | Curve/surface creation helpers |
 | `dxf.go` / `ifc.go` | DXF/IFC import |
@@ -90,8 +89,6 @@ All 50+ railway types are being ported across 4 layers. See `RAILWAY_PORTING_PLA
 - `topo_test.go` — basic shape creation, wire ops, multi-segment pipe
 - `shape_ops_test.go` — centerline fitting, wire sampling, shape outline, catenary
 - `dxf_test.go`, `ifc_test.go` — DXF/IFC import (may require external fixture files)
-- `track_geojson_test.go` — GeoJSON 中心线解析 + 正线生成
-- `track_yard_test.go` — 站场生成 (道岔识别 / 菱形交叉)
 
 Run: `go test -v -count=1 ./...`
 Run one test: `go test -v -run TestSampleCenterlineWire ./...`
@@ -113,25 +110,43 @@ OCCT 把与外环**同绕向**的内环读成凸台而非孔: 面拓扑正确但
 
 回归: `face_wire_winding_test.go` (同绕向用例 skip 并注明原因)。
 
-## GeoJSON 轨道输入 (track_geojson.go / track_yard.go / yard_layout.go)
+## 轨道/站场: go-topo 仅基本图元 (2026-10-29 二步定稿)
 
-- `ParseTrackGeoJSON` / `CreateTrackFromGeoJSON` — 单条中心线 (LineString/Feature/FeatureCollection) → 正线装配 (钢轨×2 + 轨枕 + 道床), 坐标默认米 (coordScale=1000)
-- `CreateYardFromGeoJSON` — FeatureCollection 组网: 端点聚类节点 (50mm 容差) → 度=3 节点识别单开道岔 (自动判定开向/号数/裁剪邻边) → `CreateTurnoutWithPlace`; 边中部相交 → 菱形交叉 → `CreateFrogWithPlace`
-- 站场布局闭环 (yard_layout.go): `ComputeYardLayout` 纯识别计算 → `YardLayout` (Tracks 原始中心线+TrimS/TrimE 裁剪弧长+Props / Turnouts 开向号数+辙叉角+岔枕参数+CreateTurnoutWithPlace 全参 / Crossings 实测交叉角+交叉岔枕间距 / Warnings, 全 JSON tag, `ToJSON`/`YardLayoutFromJSON`) 可存库/前端编辑校正 → `CreateYardFromLayout` 确定性再生成; `CreateYardFromGeoJSON` = Compute + FromLayout, `CreateYardFromGeoJSONWithLayout` 同时返回装配+布局; 装配层级 (2026-10 重组): 根 "yard" → **股道子装配** `track_i` (yard_track **装配级配方**: 原始中心线+裁剪+参数, 可整股重建) 内含叶片 `rails_i`/`sleepers_i` (yard_rails/yard_sleepers 配方), 顶层另有 `turnout_i`/`crossing_i` 功能单元 (yard_turnout/yard_crossing 配方); builder 均在 yard_layout.go init 注册, 支持 `ExportParametric`→`RebuildFromParametric` 往返; 根容器占位 vertex 在布局几何中心 (不得污染 ToCompound bbox)
-- 侧股辙叉几何实测 (2026-10 重构, 替代旧 15~35m 弦向夹角法): 沿侧股边行走到横向偏出主向线 2hg 处 (辙叉理论交点), 该点方向角 ≈ 辙叉角 → 号数 snap 到 {9,12,18,30,42}; 导曲线半径实测拟合 — 直侧线 `R = 4hg/tan²α` (模型自洽, 岔后出口角恰为侧线角无折点), 曲侧线 `R = arc/α` (岔后线形与侧线连续), 拟合失败退回查表; 侧股裁剪弧长按**岔后出口点在侧股边上的投影**定位 (曲侧线重合, 直侧线取最近接续点), 投影不可靠退回 `frogX+frogTotal+500` 弧长估算
-- 曲线主向守卫: 直基本轨道岔模型与主线线形在道岔区 (岔前 2600 / 岔后 frogX+frogTotal) 内横向偏差 >100mm 时**不出岔** (不裁剪不记录), 原因写入 `YardLayout.Warnings` — 道岔按规范应设在直线上, 曲线主线的 GeoJSON 数据由此显式暴露而非产出错位几何
-- 岔枕配合道岔 (C++ `create_turnout`): 岔枕沿直股均布, 长度跟随侧股两轨 (Ro/Ri 圆) 位置渐次加长 (2500→最长 5200, 端部裕量 150), 中心向侧股侧平移, 承轨槽按直股 ±hg + 侧股 yo/yi 四轨位去重布槽; `TurnoutParams.SleeperSpacing/SleeperCount` 均缺省时 C 侧取 600 (站场路径从此有岔枕), `SleeperHeight` (0=200) 同时控制岔枕高与轨底抬高与邻接股道齐平
-- 导曲线坪心收直 + 全长对标 (2026-10 二轮, 对照标准布置图/实物渲染): 导曲线外/内股圆弧止于辙叉心切点 (θ=thFrog), 岔后顺辙叉角**直段**引出 (原圆弧过岔心继续弯, 与直的辙叉尖轨冲突); 岔枕 yo/yi 同步分段 (岔心前圆弧/岔心后直线)。**全长对齐专线标准**: 岔前段 x0=−2600 (基本轨前伸; 原取 −swLen−2000 把尖轨全长错当地岔前段, 全长虚增 ~7m) + 12号表值改普通固定型 R330k/辙叉 4.5m → 9号全长 29.2m (标准 29.57, −2.3%)、12号 37.9m (标准 36.82, +2.9%), 已退出 knownDev; 站场主入边裁剪同步 2600, 岔后出口点按直线段镜像
-- 菱形交叉真菱形 (2026-10 二轮, C++ `create_diamond`, 对照实物照片重做): 交叉角实测 (`DiamondParams.FrogAngle` >0, 0=由号数推算向后兼容); 结构 = 两线各两轨在 4 处交叉 — 长对角端 2 处**锐角辙叉** (双 V 尖刨削轨 + 翼轨×2 + 护轨×2 [沿A/沿B]) + 短对角端 2 处**钝角交叉** (断轨 + 轮缘槽 40mm), 菱形沿线路展开 `2·hg·cot(α/2)` (1/12 约 43m, 直角约 5.2m, 实测闸门 43064×6081); 岔枕垂直主线均布、长度按全部轨线采样包络 (2500→5200); 轨底平面 z=0, 岔枕在其下 (站场放置时 Go 侧抬升 sleeperHeight, 配方存抬高后位置)
-- 站场交叉让位分段 (2026-10 二轮): `YardCrossingLayout.Span` = 菱形沿线路半展长 (锐角交点距中心 + 裕量), `ComputeYardLayout` 把交叉点附近区间从股道**切开** (交点投影定位, 分段 <2m 丢弃), 每段独立成 track_i 子装配 — 交叉区钢轨/岔枕由菱形单元提供, 消除单元轨与股道轨重叠; 旧布局 JSON 无 Span 时不分段 (旧行为)
+**go-topo 铁路范围 = 基本图元** (单个 `Create*` 参数化单元: 钢轨/轨枕/扣件/道岔/
+菱形/辙叉/支柱部件/关节/开关柱…), **不再持有任何区段级装配 builder**:
 
-## 接触网锚段生成 (ocs_anchor.go / ocs_layout.go)
+- `CreateYardFromLayout` / `YardLayout` 布局契约 / `yard_*` 配方 → 上移
+  `flywave-topovis/railway/yard_layout.go` (含 yard_track 装配级 builder 注册);
+- `CreateAnchorSectionFromLayout` / `AnchorSectionLayout` 契约 / `ocs_span`/
+  `ocs_messenger_wire`/`ocs_dropper`/`ocs_aux_*` 配方 → 上移
+  `flywave-topovis/railway/anchor_layout.go`;
+- `CreateTrackFromCenterline`/`CreateTrackFromGeoJSON`/`ParseTrackGeoJSON`/
+  `TrackGeoProperties`/`standardRailDims`/`track_fasteners` 配方 → 上移
+  `flywave-topovis/railway/track_assembly.go`;
+- **部件级装配也上移** (多图元焊装的功能单元, 非基本图元):
+  `CreateOcsSupportWithPlace`(支柱装置)/`CreateOcsJoint`(锚段关节)/
+  `CreateSwitchMastWithPlace`(开关柱) 及 `ocs_mast`/`ocs_contact_wire`/
+  `ocs_support`/`ocs_cantilever`/`ocs_crossarm` 配方 → `flywave-topovis/railway/`
+  的 `support.go`/`joint.go`/`switch_mast.go` (ocs_anchor.go 已删);
+- 生成规则 (识别/布柱/弛度) 在 `flywave-topovis/railway/rules` (先期已上移);
+- **go-topo 最终保留 (铁路域)**: `primitives_railway.go` 的基本图元
+  (单个 Create* 出单一 Shape: 钢轨/轨枕/扣件/道岔/菱形/辙叉/腕臂管系/绝缘子/
+  线索/补偿装置/支柱本体 `CreateMastAssembly` 等) + `CreateFastenerLayout`
+  (扣件布点原语) + `polyline.go` 折线助手 (ptDist/polyArcLens/dist3, 图元与
+  rvt 共用)。
+
+配方闭环机制: 全部铁路配方 builder 在 topovis 各包 init 中
+`topo.RegisterParametricBuilder` 注册 — 因此**铁路配方的重建要求 import
+flywave-topovis/railway** (go-topo 单独 import 时这些类型未注册, 这是分层的
+有意约束)。
+
+## 接触网: 参数化部件 (ocs_anchor.go / ocs_support.go / ocs_joint.go / ocs_switch_mast.go)
 
 - `CreateAnchorSection(AnchorSectionInput)` — 线路中心线 + 锚段规格 → 完整锚段装配: 支柱装配×N (`CalcOcsSpanPositions` 柱位, 端柱自动带补偿装置+拉线) + 跨间承力索(弛度 1.5%跨距) + 接触线(之字拉出值, 缺省 ±300) + 吊弦群 (间距 8m, 长度按两索抛物线求差)
-- 布局闭环 (ocs_layout.go): `ComputeAnchorSectionLayout` 纯计算全部中间数据 → `AnchorSectionLayout` (Spec/Masts/Spans/Droppers, 全 JSON tag, `ToJSON`/`AnchorSectionLayoutFromJSON`) 可存库/前端编辑 → `CreateAnchorSectionFromLayout` 确定性再生成; `CreateAnchorSectionWithLayout` 同时返回装配+布局
+- 锚段布局闭环 (ocs_anchor.go 布局契约镜像 + topovis `railway/anchor_layout.go`): `AnchorSectionLayout` → `CreateAnchorSectionFromLayout` 确定性再生成 (已上移 topovis); 布柱/之字/弛度建议由 topovis `rules.GenerateAnchorSection` 产出
 - 装配层级 (2026-10 重组): 根容器 "anchor_section" → 顶层仅 **支柱装置** `mast_i` (ocs_mast 配方, 支柱局部生成原点=柱底中心 +X 朝线路, Location 放置可整柱移设) + **跨距子装配** `span_i` (ocs_span **装配级配方**: 两索端点/弛度/吊弦 T 表, 可单跨整棵重建); 跨内叶片 `cw_i`/`mw_i`/`dropper_{span}_{idx}` (叶片配方, 世界坐标烘焙)。`Assembly.Get` 支持顶层短名/路径 (`span_0/cw_0`)/全树唯一深度名 三级寻址; 支持 `ExportParametric`→`RebuildFromParametric` 往返 (装配级 builder 经 `RegisterAssemblyBuilder` 注册, 优先于叶片 builder)。评审详见 `docs/铁路装配体系评审.md`
 - `CreateRatchetCompensator` / `CreateWeightStack` — 棘轮补偿装置 (轮盘+V形绳槽+减重孔+补偿绳+坠砣串)
-- 支柱角色 (2026-10, ocs_support.go): `MastRole` = 中间柱(非锚柱)/锚柱/转换柱/中心柱; `CreateOcsSupportWithPlace` 按角色组装支柱装置子装配 (单腕臂角色=柱体复合体 1 叶片; 转换柱/中心柱=柱体+双腕臂 3 叶片, `ocs_support` 装配级配方/`ocs_cantilever` 叶片配方)。锚段布局 `AnchorMastLayout.Role` 自动标注端柱=锚柱/中间柱=非锚柱 (配方携带 role)。GeoJSON 锚段入口 (anchor_geojson.go): `CreateAnchorSectionFromGeoJSON(data)` — 线路中心线 GeoJSON (Feature/LineString, 米×coordScale) + properties 全量布置参数 (导高/跨距/之字表/补偿/附加导线 `auxWires`[]) → 锚段; 支柱以各柱里程法向朝向线路 (曲线径向), 附加导线折线/支架沿线生成 (`ocs_aux_wire`/`ocs_aux_bracket` 叶片配方)。四跨锚段关节: `CreateOcsJoint(OcsJointInput)` → `joint` 装配 (锚柱B-转换柱-转换柱-锚柱A + A/B 段接触线并行[非绝缘200/绝缘500] + 非工作支抬升下锚; `OcsJointLayout` JSON 可编辑, `ocs_joint` 装配级 builder 再生成)。转换柱/中心柱为**横担+双叉臂**结构 (上下横担承托叉臂根部, 导线定位点随 ArmYOffset 同步错开); `create_level_cantilever` 仰角为负角上抬 (−angle 绕 +Y, 与斜腕臂同约定 — 正角曾致平腕臂下垂/定位管悬空); 斜轴向管件 (斜腕臂/定位管/斜撑) 放置**不能用 gp_Ax3(P, up, axis) 帧** — X 方向会被投影到 up 的垂直面, 斜向 z 分量静默丢失致全部退化为水平管 (2026-10 修 `axis_placement_trsf`: 绕 Y 俯仰 + 绕 Z 偏航), 线夹方块以管轴作 zDir 时 xDir 必须取垂直参考否则共线帧报错; `MastAssemblyParams.TensionPlaneY` 下锚张力平面 (跨距侧坠砣/下锚支), 拉线自动布对侧顺线路 45° 平衡张力 (原拉线横穿柱侧 90° 违背受力原理; 端柱按跨距朝向自动定边)
+- 支柱角色 (2026-10, ocs_support.go): `MastRole` = 中间柱(非锚柱)/锚柱/转换柱/中心柱; `CreateOcsSupportWithPlace` 按角色组装支柱装置子装配 (单腕臂角色=柱体复合体 1 叶片; 转换柱/中心柱=柱体+双腕臂 3 叶片, `ocs_support` 装配级配方/`ocs_cantilever` 叶片配方)。锚段布局 `AnchorMastLayout.Role` 显式标注端柱=锚柱/中间柱=非锚柱 (builder 按 Role 出装置)。GeoJSON 锚段入口在 topovis 门面: `railway.GenerateAnchorSectionAssembly(data)` — 线路中心线 GeoJSON (Feature/LineString, 米×coordScale) + properties 全量布置参数 → rules 布柱 → 锚段; 支柱以各柱里程法向朝向线路 (曲线径向), 附加导线折线/支架沿线生成 (`ocs_aux_wire`/`ocs_aux_bracket` 叶片配方)。四跨锚段关节: `CreateOcsJoint(OcsJointInput)` → `joint` 装配 (锚柱B-转换柱-转换柱-锚柱A + A/B 段接触线并行[非绝缘200/绝缘500] + 非工作支抬升下锚; `OcsJointLayout` JSON 可编辑, `ocs_joint` 装配级 builder 再生成)。转换柱/中心柱为**横担+双叉臂**结构 (上下横担承托叉臂根部, 导线定位点随 ArmYOffset 同步错开); `create_level_cantilever` 仰角为负角上抬 (−angle 绕 +Y, 与斜腕臂同约定 — 正角曾致平腕臂下垂/定位管悬空); 斜轴向管件 (斜腕臂/定位管/斜撑) 放置**不能用 gp_Ax3(P, up, axis) 帧** — X 方向会被投影到 up 的垂直面, 斜向 z 分量静默丢失致全部退化为水平管 (2026-10 修 `axis_placement_trsf`: 绕 Y 俯仰 + 绕 Z 偏航), 线夹方块以管轴作 zDir 时 xDir 必须取垂直参考否则共线帧报错; `MastAssemblyParams.TensionPlaneY` 下锚张力平面 (跨距侧坠砣/下锚支), 拉线自动布对侧顺线路 45° 平衡张力 (原拉线横穿柱侧 90° 违背受力原理; 端柱按跨距朝向自动定边)
 - `CreateSwitchMastWithPlace(SwitchMastParams)` — 开关柱 (接触网引入变电站): 杆型可选 (`MastType` 1=格构钢柱/2=H型钢柱/3=混凝土支柱) + 腕臂定位 + 顶部**三梁矩形框**×2 (两纵梁沿线路 `CrossarmSpan` + 中横梁联接 `FrameWidth` + 四角斜撑落地, `switchMastFrame`) 装 GW4 双柱式隔离开关 ×3~4 组 (`SwitchCount`, 默认 4; 每组两支柱绝缘子分别坐两纵梁 — `BaseLength=FrameWidth+200` 使双柱恰落梁中心, 刀闸横跨两梁之间; OpenAngle 0=合闸/负=默认75分闸) + T连接线 (承力索挂点→开关进线端) + 馈线引出线 (沿线上/下行 ±Y) + 回流线支臂/回流线/引下线; `ocs_switch_mast` 装配级 builder 整棵重建
 - `CreateAuxiliaryWire` — 附加导线本体 (带弛度扫掠)
 - `create_mast_assembly` 已按导高/结构高度/CX 尺寸链重构: 上下连接座→棒式绝缘子→平腕臂(仰角3°)→斜腕臂(三角桁架 65% 处对接)→承力索座→定位管(内端=定位管座装斜腕臂 28% 下段, 外端伸至定位点, 坡度 ~9-13° 贴近规范 1:5~1:10)→定位管斜撑+两端线夹; 拉出值 ±300 之字使平腕臂/定位管一长一短交替 (短臂 1670/1479, 长臂 2270/1957)
@@ -159,9 +174,9 @@ cgo 对头文件里只有前置声明的不完整类型 (`typedef struct _topo_s
 
 2026-10 修复: 全部 22 处改为 `{0, static_cast<Standard_Integer>(count-1)}` (Array2 同理 row-1/col-1); `geom_make_bspline_curve[_from_weight]` 另把 knots/mults 数组长度从 poles 数改为独立的 `KnotCount` 参数 (旧版按 poles 定长, 真实 knot 数 ≠ poles 数时越界读)。Go 侧 `GeomMakeBSplineCurve*` 对 C 返回 nullptr 统一返回 nil。教训: OCCT 数组 brace-init 与 `std::initializer_list` 无关的版本也要按 (Lower,Upper) 语义写; 排查时先用**纯 C++ 同数据对照**分离 cgo 层与 OCCT 层。
 
-## 铁路参数化视觉验收体系 (railway_acceptance_test.go / acceptance/)
+## 铁路参数化视觉验收体系 (已迁至 flywave-topovis railway/rules/acceptance)
 
-以真实名义参数 (GB 2585 钢轨 / TB 10001 / TB 10009) 生成 65 项铁路/接触网用例, 四道闸门: 生成有效性 → 尺寸符合性 (bbox vs 真实工程值) → 布局 JSON 闭环 → three.js 四视图目检。运行 `ACCEPTANCE_DIR=./acceptance go test -run TestGenerateRailwayAcceptance -v .`, 查看 `python3 -m http.server 8318 --directory acceptance`。详见 `docs/铁路视觉验收体系.md`。当前结果: **63 通过 / 2 已知偏差 / 0 失败** (已知偏差 = 道岔零角度切线模型致全长超专线标准 ~20%, 单列报告不计失败)。体系落地时修复的 6 处真缺陷 (均已回归): 轨/枕同层互穿 (轨底抬至枕顶)、曲线超高只转道床 (轨/枕同步倾转)、create_fastener 丢轨距 (改 ±gauge/2 成对)、接触线 bottomRadius=0 抛异常 (走默认)、**线索弛度只有参数一半** (三点 Bezier 控制点偏移须 2×sag, 否则实际垂度=sag/2)、悬索硬横跨吊弦零直径崩溃 (缺省 cableDiameter×0.4)。2026-10 视觉评审再修 2 处: **接触线/承力索/附加导线扫掠体支柱两侧断开** (MakePipeShell 对大垂度 Bezier 路径扫出跨弦伪面+端部缺面, 实测网格面积达真管 24 倍 — 三函数改沿曲线采样截面 ThruSections 放样, bbox 闸门测不出此缺陷, 须逐点测"理论中心线到网格顶点距离"); **AF 附加导线支架呈异常大板** (CROSS_ARM 类型是实心箱梁 — 改管臂 `auxBracketArmShapes`, 生成与 `buildOcsAuxBracket` 重建共用同构; 注意柱位配对须用**平面距离**, 3D 距离被柱位 z=0 vs 导线 z=8000 拉到 >3000 会全跳过; 斜撑方向必须携带 z 分量 — slant cantilever 放置重载倾角全靠 axisDirection, 给水平向量会退化成与主臂平行的第二根横杆)。经验教训: 大装配 (数百实体) 的 `BRepCheck_Analyzer` 十分钟级且持 topo_glock 阻塞其它 cgo — 用例表 heavyCases 跳过; 未三角化的 `Bnd_Box` 按极点估算对 Bezier 索高估 ~1.2× — 尺寸闸门须**先三角化再取 bbox**; `TrackGeoProperties.BallastTopWidth` 缺省 0=不生成道床 (不是 3600); cgo 大形状在用例间强制 `runtime.GC()+FreeOSMemory()`, 否则叠加 OOM。
+> **2026-10-29 迁移**: go-topo 定位为**底层参数化库**, 视觉验收体系随"组装算法上移"迁至 `flywave-topovis/railway/rules/acceptance/` (生成器 + index.html 查看器)。迁移后 GeoJSON 驱动的站场/锚段用例走 rules 生成门面 (`GenerateYardAssembly`/`GenerateAnchorSectionAssembly`) 并检查 Junctions/Issues; 零件/装配与参数化闭环闸门仍直接验收本仓 builder。运行: 在 flywave-topovis 下 `ACCEPTANCE_DIR=./railway/rules/acceptance go test -run TestGenerateRailwayAcceptance -v ./railway/rules/acceptance/`。历史记录 (闸门设计/65+ 用例目录/体系落地时修复的 6+2 处真缺陷/经验教训) 详见 `docs/铁路视觉验收体系.md`。关键教训仍适用: 大装配 `BRepCheck_Analyzer` 十分钟级且持 topo_glock — heavyCases 跳过 IsValid; 尺寸闸门须**先三角化再取 bbox** (未三角化 Bnd_Box 对 Bezier 索高估 ~1.2×); cgo 大形状用例间强制 `runtime.GC()+FreeOSMemory()` 防 OOM。
 
 ## 已知残留: TestFitCenterlineRobustness 约 7% 抖动 (非缺陷)
 

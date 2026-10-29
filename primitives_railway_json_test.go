@@ -2,7 +2,6 @@ package topo
 
 import (
 	"encoding/json"
-	"strings"
 	"testing"
 )
 
@@ -120,33 +119,5 @@ func TestRailwayParamsCamelCaseJSON(t *testing.T) {
 		if _, ok := m[k]; !ok {
 			t.Errorf("StraightTrackParams missing key %q", k)
 		}
-	}
-}
-
-// ExportParametric 导出的配方 params 载荷必须为 camelCase (供前端/topotypes 消费)
-func TestAnchorParametricExportCamelCase(t *testing.T) {
-	as, err := CreateAnchorSection(anchorTestInput())
-	if err != nil {
-		t.Fatalf("create anchor section failed: %v", err)
-	}
-	data, err := as.ExportParametric()
-	if err != nil {
-		t.Fatalf("ExportParametric failed: %v", err)
-	}
-	s := string(data)
-	// ocs_mast 配方内嵌 MastAssemblyParams, ocs_dropper 内嵌 DropperParams
-	for _, k := range []string{`"mastType"`, `"mastHeight"`, `"contactHeight"`, `"wireDiameter"`, `"clampLength"`} {
-		if !strings.Contains(s, k) {
-			t.Errorf("exported parametric missing camelCase key %s", k)
-		}
-	}
-	for _, k := range []string{`"MastType"`, `"MastHeight"`, `"ContactHeight"`, `"WireDiameter"`, `"ClampLength"`} {
-		if strings.Contains(s, k) {
-			t.Errorf("exported parametric still contains PascalCase key %s", k)
-		}
-	}
-	// 往返不破坏
-	if _, err := RebuildFromParametric(data); err != nil {
-		t.Fatalf("RebuildFromParametric failed: %v", err)
 	}
 }

@@ -1416,7 +1416,7 @@ type MastAssemblyParams struct {
 
 // withDefaults 兜底零值参数 (如 RebuildFromParametric 读到残缺 JSON),
 // 避免 mastHeight=0 / contactHeight=0 直接进入 C 侧生成退化几何。
-func (p *MastAssemblyParams) withDefaults() {
+func (p *MastAssemblyParams) WithDefaults() {
 	if p.MastHeight <= 0 {
 		p.MastHeight = 8000
 	}
@@ -1435,7 +1435,7 @@ func (p *MastAssemblyParams) withDefaults() {
 }
 
 func (p *MastAssemblyParams) to_struct() C.mast_assembly_params_t {
-	p.withDefaults()
+	p.WithDefaults()
 	var c C.mast_assembly_params_t
 	c.mastType = C.int(p.MastType)
 	c.mastHeight = C.double(p.MastHeight)
@@ -1871,23 +1871,23 @@ func CreateSwitchRailWithPlace(params SwitchRailParams, position Point3, directi
 // =========================================================================
 
 type FrogParams struct {
-	TurnoutNo     int     `json:"turnoutNo"`
-	Gauge         float64 `json:"gauge"`
-	RailHeight    float64 `json:"railHeight"`
-	RailHeadWidth float64 `json:"railHeadWidth"`
-	RailBaseWidth float64 `json:"railBaseWidth"`
-	FrogAngle     float64 `json:"frogAngle"`     // 辙叉角(rad); 0=由号数推算, >0 用实测角 (菱形交叉任意交角)
+	TurnoutNo      int     `json:"turnoutNo"`
+	Gauge          float64 `json:"gauge"`
+	RailHeight     float64 `json:"railHeight"`
+	RailHeadWidth  float64 `json:"railHeadWidth"`
+	RailBaseWidth  float64 `json:"railBaseWidth"`
+	FrogAngle      float64 `json:"frogAngle"`      // 辙叉角(rad); 0=由号数推算, >0 用实测角 (菱形交叉任意交角)
 	SleeperSpacing float64 `json:"sleeperSpacing"` // 交叉区岔枕间距(mm); 0=不生成
 }
 
 func (p *FrogParams) to_struct() C.frog_params_t {
 	return C.frog_params_t{
-		turnoutNo:     C.int(p.TurnoutNo),
-		gauge:         C.double(p.Gauge),
-		railHeight:    C.double(p.RailHeight),
-		railHeadWidth: C.double(p.RailHeadWidth),
-		railBaseWidth: C.double(p.RailBaseWidth),
-		frogAngle:     C.double(p.FrogAngle),
+		turnoutNo:      C.int(p.TurnoutNo),
+		gauge:          C.double(p.Gauge),
+		railHeight:     C.double(p.RailHeight),
+		railHeadWidth:  C.double(p.RailHeadWidth),
+		railBaseWidth:  C.double(p.RailBaseWidth),
+		frogAngle:      C.double(p.FrogAngle),
 		sleeperSpacing: C.double(p.SleeperSpacing),
 	}
 }
@@ -1911,8 +1911,8 @@ func CreateFrogWithPlace(params FrogParams, position Point3, direction, upDir Di
 // =========================================================================
 
 type DiamondParams struct {
-	FrogAngle      float64 `json:"frogAngle"`      // 交叉角(rad); 0=由号数推算
-	TurnoutNo      int     `json:"turnoutNo"`      // frogAngle<=0 时的号数
+	FrogAngle      float64 `json:"frogAngle"` // 交叉角(rad); 0=由号数推算
+	TurnoutNo      int     `json:"turnoutNo"` // frogAngle<=0 时的号数
 	Gauge          float64 `json:"gauge"`
 	RailHeight     float64 `json:"railHeight"`
 	RailHeadWidth  float64 `json:"railHeadWidth"`
@@ -2249,145 +2249,6 @@ func CalcFrogTable(turnoutNo int, gauge float64) (frogAngleRad, frogLength, lead
 	return
 }
 
-type OcsMastPosition struct {
-	Mileage          float64 `json:"mileage"`          // 里程(m)
-	Position         Point3  `json:"position"`         // 柱底中心
-	MastHeight       float64 `json:"mastHeight"`       // 柱高(mm)
-	BeamBottomZ      float64 `json:"beamBottomZ"`      // 横梁底部 Z
-	ContactWireZ     float64 `json:"contactWireZ"`     // 接触线 Z
-	MessengerWireZ   float64 `json:"messengerWireZ"`   // 承力索 Z
-	Stagger          float64 `json:"stagger"`          // 拉出值(mm)
-	HangerPostLength float64 `json:"hangerPostLength"` // 吊柱长度
-	BracketMountZ    float64 `json:"bracketMountZ"`    // 腕臂底座 Z
-	InsulatorMountZ  float64 `json:"insulatorMountZ"`  // 绝缘子 Z
-	RegistrationArmZ float64 `json:"registrationArmZ"` // 定位器 Z
-	IsTensionMast    bool    `json:"isTensionMast"`    // 是否锚柱
-}
-
-type OcsSpanInput struct {
-	Centerline      []Point3  `json:"centerline"`      // 线路中心线
-	ContactHeight   float64   `json:"contactHeight"`   // 导高 默认 5300
-	StructureHeight float64   `json:"structureHeight"` // 结构高度 默认 1400
-	StaggerTable    []float64 `json:"staggerTable"`    // 拉出值
-	SpanLength      float64   `json:"spanLength"`      // 标准跨距 默认 50000
-	MastHeight      float64   `json:"mastHeight"`      // 支柱高度
-	HasCompensator  bool      `json:"hasCompensator"`  // 两端设补偿
-}
-
-type OcsSpanOutput struct {
-	Masts          []OcsMastPosition `json:"masts"`
-	TotalLength    float64           `json:"totalLength"`
-	MastCount      int               `json:"mastCount"`
-	BeamBottomZ    float64           `json:"beamBottomZ"`
-	ContactWireZ   float64           `json:"contactWireZ"`
-	MessengerWireZ float64           `json:"messengerWireZ"`
-}
-
-func CalcOcsSpanPositions(input OcsSpanInput) OcsSpanOutput {
-	out := OcsSpanOutput{}
-	if len(input.Centerline) < 2 || input.SpanLength <= 0 {
-		return out
-	}
-
-	CH := input.ContactHeight
-	if CH <= 0 {
-		CH = 5300
-	}
-	SH := input.StructureHeight
-	if SH <= 0 {
-		SH = 1400
-	}
-	MH := input.MastHeight
-	if MH <= 0 {
-		MH = 8000
-	}
-	spanLen := input.SpanLength
-	if spanLen <= 0 {
-		spanLen = 50000
-	}
-
-	beamBottomZ := CH + SH
-	systemMargin := 800.0
-
-	out.ContactWireZ = CH
-	out.MessengerWireZ = CH + SH
-	out.BeamBottomZ = beamBottomZ
-
-	if MH < beamBottomZ+systemMargin {
-		return out
-	}
-
-	// 计算总弧长
-	totalLen := 0.0
-	for i := 0; i < len(input.Centerline)-1; i++ {
-		dx := input.Centerline[i+1].val.x - input.Centerline[i].val.x
-		dy := input.Centerline[i+1].val.y - input.Centerline[i].val.y
-		dz := input.Centerline[i+1].val.z - input.Centerline[i].val.z
-		totalLen += math.Sqrt(float64(dx*dx + dy*dy + dz*dz))
-	}
-	out.TotalLength = totalLen
-	// 柱数向上取整, 保证实际跨距 mastSpacing <= SpanLength;
-	// 旧实现 int(totalLen/spanLen)+1 会让实际跨距最大膨胀到近 2 倍标准跨距,
-	// 与 ocs_layout 按标准跨距计算的弛度/吊弦数不一致。
-	out.MastCount = int(math.Ceil(totalLen/spanLen)) + 1
-	if out.MastCount < 2 {
-		out.MastCount = 2
-	}
-
-	mastSpacing := totalLen / float64(out.MastCount-1)
-
-	for m := 0; m < out.MastCount; m++ {
-		dist := float64(m) * mastSpacing
-		acc := 0.0
-		pos := input.Centerline[0]
-		for j := 0; j < len(input.Centerline)-1; j++ {
-			dx := float64(input.Centerline[j+1].val.x - input.Centerline[j].val.x)
-			dy := float64(input.Centerline[j+1].val.y - input.Centerline[j].val.y)
-			dz := float64(input.Centerline[j+1].val.z - input.Centerline[j].val.z)
-			segLen := math.Sqrt(dx*dx + dy*dy + dz*dz)
-			if acc+segLen >= dist || j == len(input.Centerline)-2 {
-				t := 0.0
-				if segLen > 0 {
-					t = (dist - acc) / segLen
-				}
-				if t < 0 {
-					t = 0
-				}
-				if t > 1 {
-					t = 1
-				}
-				px := float64(input.Centerline[j].val.x) + dx*t
-				py := float64(input.Centerline[j].val.y) + dy*t
-				pz := float64(input.Centerline[j].val.z) + dz*t
-				pos = NewPoint3([3]float64{px, py, pz})
-				break
-			}
-			acc += segLen
-		}
-		stagger := 0.0
-		if m < len(input.StaggerTable) {
-			stagger = input.StaggerTable[m]
-		}
-
-		mp := OcsMastPosition{
-			Mileage:          dist / 1000,
-			Position:         pos,
-			MastHeight:       MH,
-			BeamBottomZ:      beamBottomZ,
-			ContactWireZ:     CH,
-			MessengerWireZ:   CH + SH,
-			Stagger:          stagger,
-			HangerPostLength: MH - beamBottomZ - float64(systemMargin)*0.5,
-			BracketMountZ:    beamBottomZ - 100,
-			InsulatorMountZ:  beamBottomZ - 600,
-			RegistrationArmZ: CH,
-			IsTensionMast:    input.HasCompensator && (m == 0 || m == out.MastCount-1),
-		}
-		out.Masts = append(out.Masts, mp)
-	}
-	return out
-}
-
 // =========================================================================
 // 37. Straight Track (直线轨道段)
 // =========================================================================
@@ -2536,6 +2397,61 @@ func CreateSleeperLayout(centerline []Point3, length, width, height, spacing, ga
 	s := &Shape{inner: &innerShape{val: C.create_sleeper_layout(cParams)}}
 	runtime.SetFinalizer(s.inner, (*innerShape).free)
 	return s
+}
+
+// CreateFastenerLayout 沿中心线布置扣件对 (每枕一组, 两轨各一套):
+// 布点规则与 create_sleeper_layout 一致 (弧长等距, 步距=全长/floor(全长/间距),
+// 首末点各一组)。centerline 应为轨底面高度 (枕顶平面); 垫板厚 padThickness
+// 向轨底面以下伸出, 在"轨底=枕顶"的现有约定下嵌入枕顶, 弹条/挡板均在枕顶之上。
+func CreateFastenerLayout(centerline []Point3, spacing, gauge, padThickness float64) *Shape {
+	if len(centerline) < 2 || spacing <= 0 {
+		return nil
+	}
+	acc := polyArcLens(centerline)
+	total := acc[len(acc)-1]
+	if total < spacing {
+		return nil
+	}
+	count := int(math.Floor(total / spacing))
+	if count < 1 {
+		count = 1
+	}
+	step := total / float64(count)
+	up := NewDir3FromXYZ([3]float64{0, 0, 1})
+	var shapes []Shape
+	for i := 0; i <= count; i++ {
+		d := float64(i) * step
+		j := 1
+		for j < len(acc)-1 && acc[j] < d {
+			j++
+		}
+		seg := acc[j] - acc[j-1]
+		t := 0.0
+		if seg > 1e-9 {
+			t = (d - acc[j-1]) / seg
+		}
+		d0, d1 := centerline[j-1].Data(), centerline[j].Data()
+		if math.Hypot(d1[0]-d0[0], d1[1]-d0[1]) < 1e-9 {
+			continue
+		}
+		pos := NewPoint3([3]float64{
+			d0[0] + (d1[0]-d0[0])*t, d0[1] + (d1[1]-d0[1])*t, d0[2] + (d1[2]-d0[2])*t})
+		dx, dy := d1[0]-d0[0], d1[1]-d0[1]
+		l := math.Hypot(dx, dy)
+		tan := [3]float64{1, 0, 0}
+		if l > 1e-9 {
+			tan = [3]float64{dx / l, dy / l, 0}
+		}
+		f := CreateFastenerWithPlace(FastenerParams{Gauge: gauge, PadThickness: padThickness},
+			pos, NewDir3FromXYZ(tan), up)
+		if f != nil && !f.IsNull() {
+			shapes = append(shapes, *f)
+		}
+	}
+	if len(shapes) == 0 {
+		return nil
+	}
+	return TopoCompoundMake(shapes).ToShape()
 }
 
 // =========================================================================

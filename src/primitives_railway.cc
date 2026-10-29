@@ -5348,6 +5348,11 @@ TopoDS_Shape create_straight_track(const straight_track_params &params) {
     slp.width = params.sleeperWidth; slp.height = params.sleeperHeight;
     slp.gauge = params.gauge;
     try { bld.Add(cmp, create_sleeper_line(slp)); } catch (...) { warn_part_failed("create_straight_track", "sleeper"); }
+    // 扣件对 (每枕一组, 两轨各一套; 轨底面 = 枕顶平面)
+    try {
+      bld.Add(cmp, create_fastener_pair(
+          pos.Translated(gp_Vec(0, 0, params.sleeperHeight)), side, params.gauge, 10.0));
+    } catch (...) { warn_part_failed("create_straight_track", "fastener"); }
   }
 
   // Ballast (沿中心线放样梯形断面)
@@ -5429,16 +5434,24 @@ TopoDS_Shape create_curve_track(const curve_track_params &params) {
     slp.endPoint = pos.Translated(rv * params.sleeperLength / 2);
     slp.width = params.sleeperWidth; slp.height = params.sleeperHeight;
     slp.gauge = params.gauge;
+    // 超高: 轨枕随道床顶面一起绕线路切向倾转 (外缘抬起, 绕中心线平面)
+    gp_Trsf cant;
+    const bool hasCant = fabs(params.superElevation) > Precision::Confusion();
+    if (hasCant) {
+      double ang = -((sweep > 0) ? 1.0 : -1.0) * atan2(params.superElevation, params.gauge);
+      cant.SetRotation(gp_Ax1(pos, gp_Dir(-sin(a), cos(a), 0)), ang);
+    }
     TopoDS_Shape sleeper;
     try { sleeper = create_sleeper_line(slp); } catch (...) { warn_part_failed("create_curve_track", "sleeper"); continue; }
-    // 超高: 轨枕随道床顶面一起绕线路切向倾转 (外缘抬起, 绕中心线平面)
-    if (fabs(params.superElevation) > Precision::Confusion()) {
-      double ang = -((sweep > 0) ? 1.0 : -1.0) * atan2(params.superElevation, params.gauge);
-      gp_Ax1 ax(pos, gp_Dir(-sin(a), cos(a), 0));
-      gp_Trsf rot; rot.SetRotation(ax, ang);
-      sleeper = BRepBuilderAPI_Transform(sleeper, rot).Shape();
-    }
+    if (hasCant) sleeper = BRepBuilderAPI_Transform(sleeper, cant).Shape();
     bld.Add(cmp, sleeper);
+    // 扣件对 (每枕一组, 轨底面 = 枕顶平面; 超高时与轨枕同步倾转)
+    try {
+      TopoDS_Shape fast = create_fastener_pair(
+          gp_Pnt(pos.X(), pos.Y(), params.sleeperHeight), radial, params.gauge, 10.0);
+      if (hasCant) fast = BRepBuilderAPI_Transform(fast, cant).Shape();
+      bld.Add(cmp, fast);
+    } catch (...) { warn_part_failed("create_curve_track", "fastener"); }
   }
 
   // Ballast (沿曲线中心线放样, 超高 → 断面绕切向倾转, 符号取扫掠方向使外侧抬起)
